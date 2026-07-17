@@ -7,6 +7,7 @@
 /// re-doing the arithmetic; pass an explicit ISO8601 to narrow.
 library;
 
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
@@ -60,22 +61,33 @@ class ListDueRoutinesTool implements DeviceTool {
       limit: limit,
     );
 
-    return <String, Object?>{
-      'as_of': asOf.toUtc().toIso8601String(),
-      'routines': due
+    return withEvidence(
+      result: <String, Object?>{
+        'as_of': asOf.toUtc().toIso8601String(),
+        'routines': due
+            .map(
+              (r) => <String, Object?>{
+                'id': r.id,
+                'statement': r.statement,
+                'interval_days': r.intervalDays,
+                'scope': r.scope,
+                'next_due_at': r.nextDueAt.toUtc().toIso8601String(),
+                'last_done_at': r.lastDoneAt?.toUtc().toIso8601String(),
+                'days_until_due': r.daysUntilDue(now),
+              },
+            )
+            .toList(growable: false),
+      },
+      anchors: due
+          .take(8)
           .map(
-            (r) => <String, Object?>{
-              'id': r.id,
-              'statement': r.statement,
-              'interval_days': r.intervalDays,
-              'scope': r.scope,
-              'next_due_at': r.nextDueAt.toUtc().toIso8601String(),
-              'last_done_at': r.lastDoneAt?.toUtc().toIso8601String(),
-              'days_until_due': r.daysUntilDue(now),
-            },
-          )
-          .toList(growable: false),
-    };
+            (routine) => EvidenceAnchor(
+              entityTable: 'knowledge_routines',
+              entityId: routine.id,
+              label: routine.statement,
+            ),
+          ),
+    );
   }
 }
 

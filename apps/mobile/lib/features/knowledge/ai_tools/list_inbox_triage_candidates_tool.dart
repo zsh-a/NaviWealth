@@ -7,6 +7,7 @@
 /// classifier decides what to emit.
 library;
 
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
@@ -60,13 +61,25 @@ class ListInboxTriageCandidatesTool implements DeviceTool {
       limit: scanLimit,
     );
     final triagedIds = await triage.triagedNoteIds(ownerUserId: ownerUserId);
-    final candidates = notes
+    final candidateNotes = notes
         .where((note) => !triagedIds.contains(note.id))
         .take(limit)
-        .map(_noteRecord)
         .toList(growable: false);
 
-    return <String, Object?>{'notes': candidates};
+    return withEvidence(
+      result: <String, Object?>{
+        'notes': candidateNotes.map(_noteRecord).toList(growable: false),
+      },
+      anchors: candidateNotes
+          .take(8)
+          .map(
+            (note) => EvidenceAnchor(
+              entityTable: 'knowledge_notes',
+              entityId: note.id,
+              label: note.title,
+            ),
+          ),
+    );
   }
 
   static Map<String, Object?> _noteRecord(KnowledgeNote note) {

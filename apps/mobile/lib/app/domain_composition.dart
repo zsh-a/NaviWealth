@@ -31,6 +31,7 @@ import '../core/ai/write/persisted_undo_dispatcher.dart';
 import '../core/auth/domain_scope.dart';
 import '../core/auth/providers.dart' as auth_providers;
 import '../core/command_palette/command_palette_entry.dart';
+import '../core/lifeos/action_outcome.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/shell/domain_shell.dart';
 import '../core/shell/domain_tabs_shell.dart';
@@ -38,9 +39,13 @@ import '../core/shell/entity_route_resolver.dart';
 import '../design_system/preferences/theme_preferences.dart';
 import '../features/ai_chat/composition/ai_chat_surface.dart';
 import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
+import '../features/execution/composition/execution_route_paths.dart';
 import '../features/finance/composition/finance_route_paths.dart';
+import '../features/health/composition/health_route_paths.dart';
+import '../features/knowledge/composition/knowledge_route_paths.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'domain_packs.dart';
+import 'life_action_outcomes.dart';
 import 'share_intents/share_intent_navigation.dart';
 import 'shell/shell_chrome.dart';
 
@@ -55,6 +60,7 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
           (context, widgetRef) => askAi(context, widgetRef),
     ),
     domainPackRegistryProvider.overrideWith((ref) => resolvedPacks),
+    actionOutcomeSummariesProvider.overrideWith(watchLifeActionOutcomes),
     deviceToolsProvider.overrideWith(
       (ref) => domainDeviceTools(ref.watch(activeDomainPacksProvider)),
     ),
@@ -118,6 +124,23 @@ String? appEntityRouteResolver(EntityRouteRef ref) {
       ref.entityId,
     ),
     EntityRouteTables.optionsTradeJournal => FinanceRoutes.planIncome,
+    'health_metrics' => HealthRoutes.trend,
+    'knowledge_notes' => KnowledgeRoutes.object('note', ref.entityId),
+    'knowledge_decisions' => KnowledgeRoutes.decision(ref.entityId),
+    'knowledge_principles' => KnowledgeRoutes.object('principle', ref.entityId),
+    'knowledge_assumptions' => KnowledgeRoutes.object(
+      'assumption',
+      ref.entityId,
+    ),
+    'knowledge_concepts' => KnowledgeRoutes.object('concept', ref.entityId),
+    'knowledge_experiments' => KnowledgeRoutes.object(
+      'experiment',
+      ref.entityId,
+    ),
+    'knowledge_routines' => KnowledgeRoutes.object('routine', ref.entityId),
+    'execution_actions' => ExecutionRoutes.action(ref.entityId),
+    'execution_commitments' => ExecutionRoutes.commitment(ref.entityId),
+    'execution_projects' || 'execution_progress' => ExecutionRoutes.review,
     _ => null,
   };
 }

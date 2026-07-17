@@ -5,6 +5,7 @@
 /// query, optionally narrowed by topic/time. Pure read — Drift only.
 library;
 
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
@@ -73,11 +74,22 @@ class RecallDecisionTool implements DeviceTool {
       limit: limit,
     );
     final now = DateTime.now().toUtc();
-    return <String, Object?>{
-      'decisions': hits
-          .map((hit) => _decisionToWire(hit, now))
-          .toList(growable: false),
-    };
+    return withEvidence(
+      result: <String, Object?>{
+        'decisions': hits
+            .map((hit) => _decisionToWire(hit, now))
+            .toList(growable: false),
+      },
+      anchors: hits
+          .take(8)
+          .map(
+            (hit) => EvidenceAnchor(
+              entityTable: 'knowledge_decisions',
+              entityId: hit.decision.id,
+              label: hit.decision.question,
+            ),
+          ),
+    );
   }
 
   static Map<String, Object?> _decisionToWire(

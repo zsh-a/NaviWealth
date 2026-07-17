@@ -1325,6 +1325,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String executionOutcomeSignalCleared(String source) {
+    return '$source：信号已消退';
+  }
+
+  @override
+  String executionOutcomeSignalStillActive(String source) {
+    return '$source：信号仍存在';
+  }
+
+  @override
   String get lifeSignalOpenExecution => '打开执行域';
 
   @override

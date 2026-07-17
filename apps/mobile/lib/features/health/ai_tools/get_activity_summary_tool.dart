@@ -8,6 +8,7 @@ library;
 
 import 'dart:convert';
 
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
@@ -72,7 +73,7 @@ class GetActivitySummaryTool implements DeviceTool {
       limit: daysBack * 5 + 10,
     );
     final now = DateTime.now().toUtc();
-    return shape(
+    final result = shape(
       steps: data[HealthMetricKind.stepsDaily] ?? const <HealthMetric>[],
       energy:
           data[HealthMetricKind.activeEnergyDaily] ?? const <HealthMetric>[],
@@ -82,6 +83,20 @@ class GetActivitySummaryTool implements DeviceTool {
           const <HealthMetric>[],
       daysBack: daysBack,
       now: now,
+    );
+    return withEvidence(
+      result: result,
+      anchors: data.values
+          .expand((rows) => rows)
+          .take(8)
+          .map(
+            (metric) => EvidenceAnchor(
+              entityTable: 'health_metrics',
+              entityId: metric.id,
+              label:
+                  '${metric.kind.wire} · ${metric.capturedAt.toLocal().toIso8601String().substring(0, 10)}',
+            ),
+          ),
     );
   }
 

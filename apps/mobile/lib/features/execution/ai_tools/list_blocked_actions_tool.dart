@@ -1,3 +1,4 @@
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
@@ -41,9 +42,11 @@ class ListBlockedActionsTool implements DeviceTool {
     final commitments = await repo.listActiveCommitments(
       ownerUserId: ownerUserId,
     );
-    final blocked = actions
+    final blockedActions = actions
         .where((a) => a.status == ExecutionActionStatus.blocked)
         .take(limit)
+        .toList(growable: false);
+    final blocked = blockedActions
         .map(
           (a) => <String, Object?>{
             'id': a.id,
@@ -62,6 +65,17 @@ class ListBlockedActionsTool implements DeviceTool {
           },
         )
         .toList(growable: false);
-    return <String, Object?>{'actions': blocked};
+    return withEvidence(
+      result: <String, Object?>{'actions': blocked},
+      anchors: blockedActions
+          .take(8)
+          .map(
+            (action) => EvidenceAnchor(
+              entityTable: 'execution_actions',
+              entityId: action.id,
+              label: action.title,
+            ),
+          ),
+    );
   }
 }

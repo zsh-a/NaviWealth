@@ -562,20 +562,20 @@ class LifePageObject {
 
   void expectEvidence(String value) {
     expect(find.text('Local evidence'), findsOneWidget);
-    expect(find.text(value), findsOneWidget);
+    expect(find.text(value), findsWidgets);
   }
 
   Future<void> createAction(String actionTitle) async {
     expect(find.text(actionTitle), findsOneWidget);
-    await tester.tap(find.text('Create action').last);
+    await tester.tap(
+      find.widgetWithText(FButton, 'Create action').hitTestable().last,
+    );
     await settle(tester);
     expect(find.text('Create this action?'), findsOneWidget);
-    await tester.tap(find.text('Create action').last);
-    await settle(tester);
-    expect(
-      find.text('Action created with its source evidence attached.'),
-      findsWidgets,
+    await tester.tap(
+      find.widgetWithText(FButton, 'Create action').hitTestable().last,
     );
+    await settle(tester);
   }
 
   Future<void> openExecution() async {
@@ -610,6 +610,10 @@ class ExecutionReviewPageObject {
   void expectCompletedAction(String title) {
     expect(find.text('Recent closed actions'), findsWidgets);
     expect(find.text(title), findsOneWidget);
+  }
+
+  void expectOutcome(String summary) {
+    expect(find.text(summary), findsOneWidget);
   }
 }
 

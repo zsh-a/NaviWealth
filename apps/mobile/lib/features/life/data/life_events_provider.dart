@@ -20,7 +20,7 @@ import 'package:naviwealth/features/knowledge/data/providers.dart'
 import 'package:naviwealth/features/life/domain/life_event.dart';
 
 /// Signal-only life feed (max 7). No raw journal / note / action rows.
-final lifeEventsProvider = Provider<List<LifeEvent>>((ref) {
+final lifeEventCandidatesProvider = Provider<List<LifeEvent>>((ref) {
   final optIns = ref.watch(auth.domainOptInsProvider).value;
   bool isActive(DomainScope scope) =>
       optIns?.contains(scope) ?? scope == DomainScope.finance;
@@ -182,7 +182,14 @@ final lifeEventsProvider = Provider<List<LifeEvent>>((ref) {
     if (byPriority != 0) return byPriority;
     return b.at.compareTo(a.at);
   });
-  return List.unmodifiable(events.take(7));
+  return List.unmodifiable(events);
+});
+
+/// Bounded signal set rendered by the Life hub. Outcome evaluation uses the
+/// complete candidate set above so a lower-ranked active signal is never
+/// mistaken for a cleared outcome merely because the UI shows seven rows.
+final lifeEventsProvider = Provider<List<LifeEvent>>((ref) {
+  return List.unmodifiable(ref.watch(lifeEventCandidatesProvider).take(7));
 });
 
 /// Compact hero metrics for the Life brief (no extra I/O).

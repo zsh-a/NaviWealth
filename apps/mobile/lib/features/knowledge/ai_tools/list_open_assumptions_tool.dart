@@ -6,6 +6,7 @@
 /// flag the shaky ones.
 library;
 
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
@@ -86,6 +87,18 @@ class ListOpenAssumptionsTool implements DeviceTool {
         })
         .toList(growable: false);
 
-    return <String, Object?>{'assumptions': out};
+    return withEvidence(
+      result: <String, Object?>{'assumptions': out},
+      anchors: assumptions
+          .take(limit)
+          .take(8)
+          .map(
+            (assumption) => EvidenceAnchor(
+              entityTable: 'knowledge_assumptions',
+              entityId: assumption.id,
+              label: assumption.statement,
+            ),
+          ),
+    );
   }
 }

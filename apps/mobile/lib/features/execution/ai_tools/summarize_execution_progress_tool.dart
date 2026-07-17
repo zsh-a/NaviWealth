@@ -1,3 +1,4 @@
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
@@ -43,42 +44,58 @@ class SummarizeExecutionProgressTool implements DeviceTool {
       ownerUserId: ownerUserId,
       limit: limit,
     );
-    return <String, Object?>{
-      'open_action_count': actions.length,
-      'blocked_action_count': actions
-          .where((a) => a.status == ExecutionActionStatus.blocked)
-          .length,
-      'active_project_count': projects.length,
-      'active_commitment_count': commitments.length,
-      'active_projects': projects
-          .map(executionProjectJson)
-          .take(20)
-          .toList(growable: false),
-      'active_commitments': commitments
-          .map(
-            (commitment) =>
-                executionCommitmentJson(commitment, projects: projects),
-          )
-          .take(20)
-          .toList(growable: false),
-      'recent_progress': progress
-          .map(
-            (p) => <String, Object?>{
-              'id': p.id,
-              'action_id': p.actionId,
-              'project_id': p.projectId,
-              'project_title': executionProjectTitle(projects, p.projectId),
-              'commitment_id': p.commitmentId,
-              'commitment_title': executionCommitmentTitle(
-                commitments,
-                p.commitmentId,
-              ),
-              'kind': p.kind.wire,
-              'note': p.note,
-              'created_at': p.createdAt.toUtc().toIso8601String(),
-            },
-          )
-          .toList(growable: false),
-    };
+    return withEvidence(
+      result: <String, Object?>{
+        'open_action_count': actions.length,
+        'blocked_action_count': actions
+            .where((a) => a.status == ExecutionActionStatus.blocked)
+            .length,
+        'active_project_count': projects.length,
+        'active_commitment_count': commitments.length,
+        'active_projects': projects
+            .map(executionProjectJson)
+            .take(20)
+            .toList(growable: false),
+        'active_commitments': commitments
+            .map(
+              (commitment) =>
+                  executionCommitmentJson(commitment, projects: projects),
+            )
+            .take(20)
+            .toList(growable: false),
+        'recent_progress': progress
+            .map(
+              (p) => <String, Object?>{
+                'id': p.id,
+                'action_id': p.actionId,
+                'project_id': p.projectId,
+                'project_title': executionProjectTitle(projects, p.projectId),
+                'commitment_id': p.commitmentId,
+                'commitment_title': executionCommitmentTitle(
+                  commitments,
+                  p.commitmentId,
+                ),
+                'kind': p.kind.wire,
+                'note': p.note,
+                'created_at': p.createdAt.toUtc().toIso8601String(),
+              },
+            )
+            .toList(growable: false),
+      },
+      anchors: <EvidenceAnchor>[
+        for (final action in actions.take(4))
+          EvidenceAnchor(
+            entityTable: 'execution_actions',
+            entityId: action.id,
+            label: action.title,
+          ),
+        for (final entry in progress.take(4))
+          EvidenceAnchor(
+            entityTable: 'execution_progress',
+            entityId: entry.id,
+            label: entry.note,
+          ),
+      ],
+    );
   }
 }

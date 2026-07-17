@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/ui/agent_result_card.dart';
+import '../../../core/lifeos/action_outcome.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -61,6 +62,7 @@ class _ReviewBody extends ConsumerWidget {
     final progressAsync = ref.watch(executionRecentProgressProvider);
     final closedActionsAsync = ref.watch(executionClosedActionsProvider);
     final relations = ref.watch(executionReviewRelationsProvider).value;
+    final outcomes = ref.watch(actionOutcomeSummariesProvider);
     final error = progressAsync.error ?? closedActionsAsync.error;
     if (error != null) {
       return AppEmptyState.error(
@@ -153,6 +155,7 @@ class _ReviewBody extends ConsumerWidget {
               blockedProgressNote: l10n.executionProgressBlockedDefault,
               doneProgressNote: l10n.executionProgressDoneDefault,
               droppedProgressNote: l10n.executionProgressDroppedDefault,
+              outcome: outcomes[action.id],
             ),
             const SizedBox(height: AppSpacing.s8),
           ],

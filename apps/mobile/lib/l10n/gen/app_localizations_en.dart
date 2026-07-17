@@ -1364,11 +1364,20 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String executionOutcomeSignalCleared(String source) {
+    return '$source: signal cleared';
+  }
+
+  @override
+  String executionOutcomeSignalStillActive(String source) {
+    return '$source: signal still active';
+  }
+
+  @override
   String get lifeSignalOpenExecution => 'Open Execution';
 
   @override
-  String get lifeSignalActionReviewFinance =>
-      'Review today\'s finance activity';
+  String get lifeSignalActionReviewFinance => 'Review finance activity today';
 
   @override
   String get lifeSignalActionProtectRecovery => 'Protect recovery today';

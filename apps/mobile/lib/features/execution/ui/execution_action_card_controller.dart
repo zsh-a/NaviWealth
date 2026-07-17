@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/lifeos/action_outcome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/execution_models.dart';
@@ -20,6 +21,7 @@ class ExecutionActionCardController extends ConsumerStatefulWidget {
     this.commitmentLabel,
     this.onOpen,
     this.showActions = true,
+    this.outcome,
   });
 
   final ExecutionAction action;
@@ -32,6 +34,7 @@ class ExecutionActionCardController extends ConsumerStatefulWidget {
   final String? commitmentLabel;
   final VoidCallback? onOpen;
   final bool showActions;
+  final ActionOutcomeSummary? outcome;
 
   @override
   ConsumerState<ExecutionActionCardController> createState() =>
@@ -78,6 +81,7 @@ class _ExecutionActionCardControllerState
       commitmentLabel: widget.commitmentLabel,
       onOpen: widget.onOpen,
       showActions: widget.showActions,
+      outcome: widget.outcome,
       onEdit: _busy ? () {} : widget.onEdit,
       onRecordProgress: _busy ? () {} : widget.onRecordProgress,
       onStart: () => _changeStatus(ExecutionActionStatus.doing),

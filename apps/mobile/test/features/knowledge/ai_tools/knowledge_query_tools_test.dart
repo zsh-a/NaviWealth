@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/production_ai_catalog.dart';
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
@@ -215,6 +216,11 @@ void main() {
       final kinds = results.map((e) => (e as Map)['kind']).toSet();
       // Notes + concepts both indexed under the queried phrase show up.
       expect(kinds, containsAll(<String>['note', 'concept']));
+      final evidence = readEvidence(out);
+      expect(
+        evidence.map((anchor) => anchor.entityTable),
+        containsAll(<String>['knowledge_notes', 'knowledge_concepts']),
+      );
     });
 
     test('types filter narrows to requested sources', () async {
@@ -356,6 +362,9 @@ void main() {
       final decisions = (out['decisions'] as List).cast<Object?>();
       expect(decisions.single as Map, containsPair('id', 'd1'));
       expect(decisions.single as Map, contains('score'));
+      final evidence = readEvidence(out);
+      expect(evidence.single.entityTable, 'knowledge_decisions');
+      expect(evidence.single.entityId, 'd1');
     });
   });
 

@@ -5,6 +5,7 @@
 /// first-half / second-half delta for trend detection.
 library;
 
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
@@ -55,7 +56,20 @@ class GetBodyBatteryTrendTool implements DeviceTool {
       limit: windowDays + 10,
     );
     final now = DateTime.now().toUtc();
-    return shape(rows, windowDays: windowDays, now: now);
+    final result = shape(rows, windowDays: windowDays, now: now);
+    return withEvidence(
+      result: result,
+      anchors: rows
+          .take(8)
+          .map(
+            (metric) => EvidenceAnchor(
+              entityTable: 'health_metrics',
+              entityId: metric.id,
+              label:
+                  'Body Battery · ${metric.capturedAt.toLocal().toIso8601String().substring(0, 10)}',
+            ),
+          ),
+    );
   }
 
   static int _normalizeWindow(Object? raw) {

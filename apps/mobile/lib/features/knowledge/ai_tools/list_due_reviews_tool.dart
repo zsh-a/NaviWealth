@@ -5,6 +5,7 @@
 /// and status is still pending verification.
 library;
 
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
@@ -53,20 +54,31 @@ class ListDueReviewsTool implements DeviceTool {
     );
 
     final now = DateTime.now().toUtc();
-    return <String, Object?>{
-      'decisions': due
+    return withEvidence(
+      result: <String, Object?>{
+        'decisions': due
+            .map(
+              (d) => <String, Object?>{
+                'id': d.id,
+                'question': d.question,
+                'selected': d.selectedLabel,
+                'status': d.status.wire,
+                'review_date': d.reviewDate?.toUtc().toIso8601String(),
+                'days_overdue': d.daysOverdue(asOf),
+                'age_days': now.difference(d.decidedAt.toUtc()).inDays,
+              },
+            )
+            .toList(growable: false),
+      },
+      anchors: due
+          .take(8)
           .map(
-            (d) => <String, Object?>{
-              'id': d.id,
-              'question': d.question,
-              'selected': d.selectedLabel,
-              'status': d.status.wire,
-              'review_date': d.reviewDate?.toUtc().toIso8601String(),
-              'days_overdue': d.daysOverdue(asOf),
-              'age_days': now.difference(d.decidedAt.toUtc()).inDays,
-            },
-          )
-          .toList(growable: false),
-    };
+            (decision) => EvidenceAnchor(
+              entityTable: 'knowledge_decisions',
+              entityId: decision.id,
+              label: decision.question,
+            ),
+          ),
+    );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
@@ -42,17 +43,28 @@ class ListOpenActionsTool implements DeviceTool {
     final commitments = await repo.listActiveCommitments(
       ownerUserId: ownerUserId,
     );
-    return <String, Object?>{
-      'actions': actions
+    return withEvidence(
+      result: <String, Object?>{
+        'actions': actions
+            .map(
+              (action) => _actionJson(
+                action,
+                projects: projects,
+                commitments: commitments,
+              ),
+            )
+            .toList(growable: false),
+      },
+      anchors: actions
+          .take(8)
           .map(
-            (action) => _actionJson(
-              action,
-              projects: projects,
-              commitments: commitments,
+            (action) => EvidenceAnchor(
+              entityTable: 'execution_actions',
+              entityId: action.id,
+              label: action.title,
             ),
-          )
-          .toList(growable: false),
-    };
+          ),
+    );
   }
 }
 

@@ -10,6 +10,7 @@
 /// `find_similar_knowledge` for that).
 library;
 
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
@@ -92,10 +93,32 @@ class SearchKnowledgeTool implements DeviceTool {
       topK: topK,
     );
 
-    return <String, Object?>{
-      'results': results.map(_hitToWire).toList(growable: false),
-    };
+    return withEvidence(
+      result: <String, Object?>{
+        'results': results.map(_hitToWire).toList(growable: false),
+      },
+      anchors: results
+          .take(8)
+          .map(
+            (hit) => EvidenceAnchor(
+              entityTable: _tableForKind(hit.kind),
+              entityId: hit.id,
+              label: hit.title,
+            ),
+          ),
+    );
   }
+
+  static String _tableForKind(String kind) => switch (kind) {
+    'note' => 'knowledge_notes',
+    'decision' => 'knowledge_decisions',
+    'principle' => 'knowledge_principles',
+    'assumption' => 'knowledge_assumptions',
+    'concept' => 'knowledge_concepts',
+    'experiment' => 'knowledge_experiments',
+    'routine' => 'knowledge_routines',
+    _ => 'knowledge_notes',
+  };
 
   static Map<String, Object?> _hitToWire(KnowledgeSearchHit hit) =>
       <String, Object?>{

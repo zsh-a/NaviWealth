@@ -115,6 +115,27 @@ void main() {
     expect(find.text('Known asset'), findsOneWidget);
   });
 
+  testWidgets('renders cross-domain evidence with the source label', (
+    tester,
+  ) async {
+    final invocation = _withEvidence([
+      <String, Object?>{
+        'entity_table': 'knowledge_assumptions',
+        'entity_id': 'assumption-1',
+        'label': 'Revenue growth remains durable',
+      },
+      <String, Object?>{
+        'entity_table': 'execution_actions',
+        'entity_id': 'action-1',
+        'label': 'Review the assumption',
+      },
+    ]);
+    await _pump(tester, invocation);
+
+    expect(find.text('Revenue growth remains durable'), findsOneWidget);
+    expect(find.text('Review the assumption'), findsOneWidget);
+  });
+
   testWidgets('falls back to legacy heuristic when no evidence array', (
     tester,
   ) async {

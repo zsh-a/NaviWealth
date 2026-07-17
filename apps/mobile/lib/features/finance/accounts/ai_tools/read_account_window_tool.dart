@@ -17,6 +17,7 @@
 library;
 
 import 'package:decimal/decimal.dart';
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/features/finance/ai_tools/shared/scoped/scoped_window.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
@@ -112,7 +113,7 @@ class ReadAccountWindowTool implements DeviceTool {
       }
     }
 
-    return shape(
+    final result = shape(
       entries,
       accountId: accountId,
       from: from,
@@ -125,6 +126,22 @@ class ReadAccountWindowTool implements DeviceTool {
       categoryFilter: (categoryFilter != null && categoryFilter.isNotEmpty)
           ? categoryFilter
           : null,
+    );
+    final transactions = result['transactions'];
+    return withEvidence(
+      result: result,
+      anchors: <EvidenceAnchor>[
+        EvidenceAnchor(entityTable: 'accounts', entityId: accountId),
+        if (transactions is List)
+          for (final row in transactions.whereType<Map<String, Object?>>().take(
+            7,
+          ))
+            EvidenceAnchor(
+              entityTable: 'journal_entries',
+              entityId: row['id'] as String,
+              label: row['note_excerpt'] as String?,
+            ),
+      ],
     );
   }
 

@@ -4,6 +4,7 @@
 /// Delegates to [RecoveryScorer] for the scoring math.
 library;
 
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
@@ -56,7 +57,7 @@ class GetRecoverySignalTool implements DeviceTool {
       limit: 50,
     );
 
-    return shape(
+    final result = shape(
       hrv: data[HealthMetricKind.hrvDaily] ?? const <HealthMetric>[],
       sleep: data[HealthMetricKind.sleepSession] ?? const <HealthMetric>[],
       rhr: data[HealthMetricKind.rhrDaily] ?? const <HealthMetric>[],
@@ -64,6 +65,18 @@ class GetRecoverySignalTool implements DeviceTool {
       bodyBattery:
           data[HealthMetricKind.bodyBatteryDaily] ?? const <HealthMetric>[],
       stress: data[HealthMetricKind.stressDaily] ?? const <HealthMetric>[],
+    );
+    final evidenceRows = data.values.expand((rows) => rows).take(8);
+    return withEvidence(
+      result: result,
+      anchors: evidenceRows.map(
+        (metric) => EvidenceAnchor(
+          entityTable: 'health_metrics',
+          entityId: metric.id,
+          label:
+              '${metric.kind.wire} · ${metric.capturedAt.toLocal().toIso8601String().substring(0, 10)}',
+        ),
+      ),
     );
   }
 

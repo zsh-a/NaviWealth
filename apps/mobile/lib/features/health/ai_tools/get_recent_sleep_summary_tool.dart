@@ -8,6 +8,7 @@
 /// enough last week".
 library;
 
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
@@ -65,7 +66,20 @@ class GetRecentSleepSummaryTool implements DeviceTool {
       limit: (daysBack * 1.5).ceil().clamp(10, 200),
     );
     final now = DateTime.now().toUtc();
-    return shape(rows, daysBack: daysBack, now: now);
+    final result = shape(rows, daysBack: daysBack, now: now);
+    return withEvidence(
+      result: result,
+      anchors: rows
+          .take(8)
+          .map(
+            (metric) => EvidenceAnchor(
+              entityTable: 'health_metrics',
+              entityId: metric.id,
+              label:
+                  'Sleep · ${metric.capturedAt.toLocal().toIso8601String().substring(0, 10)}',
+            ),
+          ),
+    );
   }
 
   /// Pure shaper — exposed for unit tests so the round-trip from raw

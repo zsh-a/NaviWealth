@@ -10,6 +10,7 @@
 /// generic `asset` container) so the output shape is byte-identical.
 library;
 
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/features/finance/accounts/domain/account_semantics.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
@@ -63,7 +64,7 @@ class ListPaymentAccountsTool implements DeviceTool {
     }
 
     final accounts = await ctx.ref.read(accountsStreamProvider.future);
-    return shape(
+    final result = shape(
       accounts,
       purpose: purpose,
       currency: input['currency'] is String
@@ -72,6 +73,19 @@ class ListPaymentAccountsTool implements DeviceTool {
       maxResults: input['max_results'] is num
           ? (input['max_results'] as num).toInt()
           : 8,
+    );
+    final rows = result['accounts'];
+    return withEvidence(
+      result: result,
+      anchors: rows is List
+          ? rows.whereType<Map<String, Object?>>().map(
+              (row) => EvidenceAnchor(
+                entityTable: 'accounts',
+                entityId: row['id'] as String,
+                label: row['name'] as String?,
+              ),
+            )
+          : const <EvidenceAnchor>[],
     );
   }
 

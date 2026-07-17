@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
@@ -482,6 +483,9 @@ void main() {
     expect(action['title'], 'Triage inbox actions');
     expect(action['project_title'], 'AI execution context');
     expect(action['commitment_title'], 'Weekly execution review');
+    final evidence = readEvidence((out as Map).cast<String, Object?>());
+    expect(evidence.single.entityTable, 'execution_actions');
+    expect(evidence.single.entityId, 'a1');
   });
 
   test('summarize_execution_progress includes active rollup context', () async {
@@ -538,5 +542,10 @@ void main() {
     );
     expect((progress.single as Map)['project_title'], 'ExecutionOS prod-basic');
     expect((progress.single as Map)['commitment_title'], 'Friday review');
+    final evidence = readEvidence((out as Map).cast<String, Object?>());
+    expect(
+      evidence.map((anchor) => anchor.entityTable),
+      contains('execution_progress'),
+    );
   });
 }

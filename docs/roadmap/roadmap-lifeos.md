@@ -45,12 +45,20 @@ The first production cross-domain loop is now complete:
   instead of writing into an inactive domain.
 - `life_execution_loop_flow_test.dart` proves the Health recovery vertical
   slice from signal through completed Review history.
+- `life_finance_knowledge_execution_flow_test.dart` now proves the same
+  source-preserving loop for Finance day evidence and the Knowledge inbox.
+- Execution Review compares a completed action's source reference with the
+  complete current Life signal candidate set and labels the outcome as
+  cleared or still active. The comparison is deliberately observational; it
+  does not claim that completing the action caused the source signal to move.
 
 Keep this as the canonical pattern: originating domains contribute evidence
 and suggested intent, `proposalApplierProvider` owns confirmed application,
 and ExecutionOS owns action lifecycle. Do not add a second cross-domain task
-store. Next, deepen outcome summaries and add representative Finance and
-Knowledge loop flows where they add behavior beyond the shared path.
+store. Proposal appliers are resolved lazily after routing by kind, so an
+Execution confirmation does not wait for unrelated domain repository graphs.
+Next, deepen domain-specific outcome interpretation only where a domain has a
+real, deterministic before/after signal.
 
 ### 2. High-Quality Data Ingestion
 
@@ -66,10 +74,10 @@ fixture corpus beyond Alipay and hardening provider-specific parsing:
 
 ### 3. Task-Spine Maintenance
 
-The stable task spine now covers 15 journeys: the original 12 Finance/global
-jobs plus optional-domain enablement, Knowledge capture, and the Life signal
-to Execution Review loop. Maintain task-level tests and product polish around
-durable user jobs, not pages:
+The stable task spine now covers 17 journeys: the original 12 Finance/global
+jobs plus optional-domain enablement, Knowledge capture, and Health, Finance,
+and Knowledge Life-signal-to-Execution-Review loops. Maintain task-level tests
+and product polish around durable user jobs, not pages:
 
 - Add account.
 - Import CSV or statement.
@@ -95,6 +103,19 @@ Device AI should be auditable by construction:
   result actions do not depend on one seed domain's registry.
 - Memory retrieval should be evaluated for answer quality, not only for
   successful vector lookup.
+
+Current hardening baseline:
+
+- Batch proposal UI includes progress, recovery, durable undo, and focused
+  contract/widget tests.
+- Standard agent-result intents are contributed by every agent-capable pack
+  and de-duplicated in app composition.
+- Fixed Memory answer-quality cases score required facts, forbidden claims,
+  and expected/forbidden evidence ids.
+- High-value Finance account/holding reads, all Health summary/trend reads,
+  Knowledge search/review reads, and Execution list/summary reads emit
+  navigable `EvidenceAnchor`s. Continue migrating lower-value legacy reads as
+  they are changed; do not infer anchors from arbitrary JSON ids.
 
 ### 5. Observability And Diagnostics
 

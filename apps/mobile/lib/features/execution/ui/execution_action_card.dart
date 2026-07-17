@@ -16,6 +16,7 @@ class ExecutionActionCard extends StatelessWidget {
     this.commitmentLabel,
     this.onOpen,
     this.showActions = true,
+    this.outcome,
   });
 
   final ExecutionAction action;
@@ -31,6 +32,7 @@ class ExecutionActionCard extends StatelessWidget {
   final String? commitmentLabel;
   final VoidCallback? onOpen;
   final bool showActions;
+  final ActionOutcomeSummary? outcome;
 
   @override
   Widget build(BuildContext context) {
@@ -140,6 +142,30 @@ class ExecutionActionCard extends StatelessWidget {
                                     label: action.source.labelSnapshot!,
                                     size: AppBadgeSize.compact,
                                     icon: FLucideIcons.link,
+                                  ),
+                                if (outcome != null)
+                                  AppBadge(
+                                    label: switch (outcome!.status) {
+                                      ActionOutcomeStatus.signalCleared =>
+                                        l10n.executionOutcomeSignalCleared(
+                                          outcome!.sourceLabel,
+                                        ),
+                                      ActionOutcomeStatus.signalStillActive =>
+                                        l10n.executionOutcomeSignalStillActive(
+                                          outcome!.sourceLabel,
+                                        ),
+                                    },
+                                    tone:
+                                        outcome!.status ==
+                                            ActionOutcomeStatus.signalCleared
+                                        ? AppBadgeTone.success
+                                        : AppBadgeTone.warning,
+                                    size: AppBadgeSize.compact,
+                                    icon:
+                                        outcome!.status ==
+                                            ActionOutcomeStatus.signalCleared
+                                        ? FLucideIcons.circleCheck
+                                        : FLucideIcons.refreshCw,
                                   ),
                               ],
                             ),

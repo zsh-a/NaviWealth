@@ -837,13 +837,23 @@
   "lifeSignalActionCreated": "Action created with its source evidence attached.",
   "@lifeSignalActionCreated": { "description": "Success message after applying a Life-to-Execution proposal" },
   "lifeSignalActionFailed": "Could not create action: {error}",
+  "executionOutcomeSignalCleared": "{source}: signal cleared",
+  "@executionOutcomeSignalCleared": {
+    "description": "Outcome badge when a completed cross-domain action's source signal is no longer active",
+    "placeholders": { "source": { "type": "String" } }
+  },
+  "executionOutcomeSignalStillActive": "{source}: signal still active",
+  "@executionOutcomeSignalStillActive": {
+    "description": "Outcome badge when a completed cross-domain action's source signal remains active",
+    "placeholders": { "source": { "type": "String" } }
+  },
   "@lifeSignalActionFailed": {
     "description": "Failure message for a Life-to-Execution proposal",
     "placeholders": { "error": { "type": "String" } }
   },
   "lifeSignalOpenExecution": "Open Execution",
   "@lifeSignalOpenExecution": { "description": "Open Execution Today after creating a Life action" },
-  "lifeSignalActionReviewFinance": "Review today's finance activity",
+  "lifeSignalActionReviewFinance": "Review finance activity today",
   "@lifeSignalActionReviewFinance": { "description": "Suggested action title for a Finance day signal" },
   "lifeSignalActionProtectRecovery": "Protect recovery today",
   "@lifeSignalActionProtectRecovery": { "description": "Suggested action title for a strained recovery signal" },

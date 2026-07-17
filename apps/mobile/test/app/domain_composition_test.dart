@@ -33,7 +33,9 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/shell/domain_shell.dart';
 import 'package:naviwealth/core/shell/entity_route_resolver.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/features/execution/composition/execution_route_paths.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/knowledge/composition/knowledge_route_paths.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -277,6 +279,24 @@ void main() {
         ),
       ),
       FinanceRoutes.activityEntry('entry-1'),
+    );
+    expect(
+      resolver(
+        const EntityRouteRef(
+          entityTable: 'knowledge_assumptions',
+          entityId: 'assumption-1',
+        ),
+      ),
+      KnowledgeRoutes.object('assumption', 'assumption-1'),
+    );
+    expect(
+      resolver(
+        const EntityRouteRef(
+          entityTable: 'execution_actions',
+          entityId: 'action-1',
+        ),
+      ),
+      ExecutionRoutes.action('action-1'),
     );
     expect(
       resolver(const EntityRouteRef(entityTable: 'unknown', entityId: 'id-1')),

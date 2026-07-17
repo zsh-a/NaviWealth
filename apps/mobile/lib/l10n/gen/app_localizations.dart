@@ -2456,6 +2456,18 @@ abstract class AppLocalizations {
   /// **'Could not create action: {error}'**
   String lifeSignalActionFailed(String error);
 
+  /// Outcome badge when a completed cross-domain action's source signal is no longer active
+  ///
+  /// In en, this message translates to:
+  /// **'{source}: signal cleared'**
+  String executionOutcomeSignalCleared(String source);
+
+  /// Outcome badge when a completed cross-domain action's source signal remains active
+  ///
+  /// In en, this message translates to:
+  /// **'{source}: signal still active'**
+  String executionOutcomeSignalStillActive(String source);
+
   /// Open Execution Today after creating a Life action
   ///
   /// In en, this message translates to:
@@ -2465,7 +2477,7 @@ abstract class AppLocalizations {
   /// Suggested action title for a Finance day signal
   ///
   /// In en, this message translates to:
-  /// **'Review today\'s finance activity'**
+  /// **'Review finance activity today'**
   String get lifeSignalActionReviewFinance;
 
   /// Suggested action title for a strained recovery signal

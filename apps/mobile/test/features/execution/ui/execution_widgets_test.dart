@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/lifeos/action_outcome.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/theme/app_theme.dart';
@@ -375,6 +376,32 @@ void main() {
     expect(find.text('Review budget delta'), findsOneWidget);
     expect(find.byIcon(FLucideIcons.play), findsNothing);
     expect(find.byIcon(FLucideIcons.ellipsis), findsNothing);
+  });
+
+  testWidgets('closed action card renders the cross-domain outcome summary', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        ExecutionActionCard(
+          action: _action(status: ExecutionActionStatus.done),
+          outcome: const ActionOutcomeSummary(
+            status: ActionOutcomeStatus.signalCleared,
+            sourceLabel: 'HealthOS',
+          ),
+          showActions: false,
+          onEdit: () {},
+          onStart: () {},
+          onBlock: () {},
+          onResume: () {},
+          onDone: () {},
+          onDrop: () {},
+          onRecordProgress: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('HealthOS: signal cleared'), findsOneWidget);
   });
 
   testWidgets(

@@ -44,9 +44,9 @@ void main() {
       await execution.completeAction('Protect recovery today');
 
       await AppShell(tester).openTab('Review');
-      ExecutionReviewPageObject(
-        tester,
-      ).expectCompletedAction('Protect recovery today');
+      final review = ExecutionReviewPageObject(tester);
+      review.expectCompletedAction('Protect recovery today');
+      review.expectOutcome('Health: signal still active');
       await closeApp(tester);
     },
     tags: 'flow',

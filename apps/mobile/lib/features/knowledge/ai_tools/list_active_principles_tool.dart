@@ -3,6 +3,7 @@
 /// Provides the active Principle set used by scheduled KnowledgeOS agents.
 library;
 
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
@@ -47,12 +48,21 @@ class ListActivePrinciplesTool implements DeviceTool {
     final principles = await repo.listActivePrinciples(
       ownerUserId: ownerUserId,
     );
-    return <String, Object?>{
-      'principles': principles
-          .take(limit)
-          .map(_principleRecord)
-          .toList(growable: false),
-    };
+    final shown = principles.take(limit).toList(growable: false);
+    return withEvidence(
+      result: <String, Object?>{
+        'principles': shown.map(_principleRecord).toList(growable: false),
+      },
+      anchors: shown
+          .take(8)
+          .map(
+            (principle) => EvidenceAnchor(
+              entityTable: 'knowledge_principles',
+              entityId: principle.id,
+              label: principle.statement,
+            ),
+          ),
+    );
   }
 
   static Map<String, Object?> _principleRecord(KnowledgePrinciple principle) {

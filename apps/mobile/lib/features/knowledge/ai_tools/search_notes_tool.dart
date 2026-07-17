@@ -12,6 +12,7 @@
 /// index, Drift is source-of-truth (mirrors the trade journal pattern).
 library;
 
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
@@ -72,9 +73,20 @@ class SearchNotesTool implements DeviceTool {
       project: project,
       limit: limit,
     );
-    return <String, Object?>{
-      'notes': hits.map((hit) => _record(hit, query)).toList(growable: false),
-    };
+    return withEvidence(
+      result: <String, Object?>{
+        'notes': hits.map((hit) => _record(hit, query)).toList(growable: false),
+      },
+      anchors: hits
+          .take(8)
+          .map(
+            (hit) => EvidenceAnchor(
+              entityTable: 'knowledge_notes',
+              entityId: hit.id,
+              label: hit.title,
+            ),
+          ),
+    );
   }
 
   static Map<String, Object?> _record(KnowledgeSearchHit hit, String query) {

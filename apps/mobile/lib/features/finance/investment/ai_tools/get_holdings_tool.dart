@@ -10,6 +10,7 @@
 /// freshness gate (§4.6.1).
 library;
 
+import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 
@@ -42,12 +43,27 @@ class GetHoldingsTool implements DeviceTool {
     Map<String, Object?> input,
   ) async {
     final snapshot = await ctx.ref.read(devicePortfolioSnapshotProvider.future);
-    return shape(
+    final result = shape(
       snapshot,
       inputAsOf: input['as_of'] is String ? input['as_of'] as String : null,
       inputBaseCurrency: input['base_currency'] is String
           ? input['base_currency'] as String
           : null,
+    );
+    final holdings = result['holdings'];
+    return withEvidence(
+      result: result,
+      anchors: holdings is Map
+          ? holdings.values
+                .whereType<Map<Object?, Object?>>()
+                .map((row) => row['asset_id'])
+                .whereType<String>()
+                .take(8)
+                .map(
+                  (assetId) =>
+                      EvidenceAnchor(entityTable: 'assets', entityId: assetId),
+                )
+          : const <EvidenceAnchor>[],
     );
   }
 
