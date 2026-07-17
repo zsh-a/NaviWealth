@@ -29,9 +29,8 @@ class _BatchProposalView extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.only(top: AppSpacing.s8),
       decoration: BoxDecoration(
-        color: colors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: colors.border),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: colors.border, width: AppStroke.hairline),
       ),
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
@@ -300,37 +299,27 @@ class _BatchCollapsedView extends StatelessWidget {
         return const SizedBox.shrink();
     }
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.s8),
-      child: FCard.raw(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s12,
-            vertical: AppSpacing.s8,
+      padding: const EdgeInsets.only(top: AppSpacing.s6),
+      child: Row(
+        children: [
+          Icon(icon, size: AppIconSizes.xs, color: color),
+          const SizedBox(width: AppSpacing.s6),
+          Expanded(
+            child: Text(
+              label,
+              style: AiType.meta(context).copyWith(color: color),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-          child: Row(
-            children: [
-              Icon(icon, size: AppIconSizes.sm, color: color),
-              const SizedBox(width: AppSpacing.s8),
-              Expanded(
-                child: Text(
-                  label,
-                  style: context.theme.typography.body.sm.copyWith(
-                    color: context.theme.colors.foreground,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (onUndoRequest != null &&
-                  applyState.status == ProposalApplyStatus.applied &&
-                  applyState.appliedAt != null)
-                _UndoCountdownButton(
-                  appliedAt: applyState.appliedAt!,
-                  onUndo: onUndoRequest!,
-                ),
-            ],
-          ),
-        ),
+          if (onUndoRequest != null &&
+              applyState.status == ProposalApplyStatus.applied &&
+              applyState.appliedAt != null)
+            _UndoCountdownButton(
+              appliedAt: applyState.appliedAt!,
+              onUndo: onUndoRequest!,
+            ),
+        ],
       ),
     );
   }

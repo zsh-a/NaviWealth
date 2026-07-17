@@ -2700,6 +2700,15 @@
   "aiChatComposerSendTooltip": "Send (⌘/Ctrl + Enter)",
   "aiChatComposerStopTooltip": "Stop generating",
   "aiChatThinking": "Thinking…",
+  "aiChatToolsUsed": "{count, plural, =1{1 tool used} other{{count} tools used}}",
+  "@aiChatToolsUsed": {
+    "description": "Collapsed summary under an assistant turn that called read tools.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiChatToolsExpand": "Show details",
+  "@aiChatToolsExpand": { "description": "Affordance to expand the collapsed tool-steps group." },
+  "aiChatToolsCollapse": "Hide details",
+  "@aiChatToolsCollapse": { "description": "Affordance to collapse expanded tool-steps." },
   "aiChatRunningTool": "Running {tool}",
   "@aiChatRunningTool": {
     "description": "Streaming indicator while the assistant is waiting for a tool call. {tool} is already a localized friendly name from friendlyToolName().",
@@ -2745,6 +2754,15 @@
   "@aiChatEditUserMessageWarning": { "description": "Warning shown in the edit sheet about branch-replace semantics." },
   "aiChatEditUserMessageSubmit": "Save and resend",
   "@aiChatEditUserMessageSubmit": { "description": "Submit button label in the edit-and-resend sheet." },
+  "aiChatEditUserMessageHint": "Edit in composer, then send to replace this turn",
+  "@aiChatEditUserMessageHint": { "description": "Toast/hint after tapping edit on a user message — content is loaded into the composer." },
+  "aiChatDecisionAllowCustom": "Or type your own option below.",
+  "@aiChatDecisionAllowCustom": { "description": "Hint under an ask_user decision card when free-form replies are allowed." },
+  "aiChatDecisionReply": "I choose \"{label}\". Continue under this option.",
+  "@aiChatDecisionReply": {
+    "description": "Natural-language reply written back when the user picks a decision option.",
+    "placeholders": { "label": { "type": "String" } }
+  },
   "aiChatProposalEditMoreFields": "More fields",
   "@aiChatProposalEditMoreFields": { "description": "Footer toggle in the proposal edit sheet that expands the curated fields list to every payload key." },
   "aiChatProposalEditStandardFields": "Standard fields",

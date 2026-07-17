@@ -4804,6 +4804,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatThinking => '正在思考…';
 
   @override
+  String aiChatToolsUsed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '使用了 $count 个工具',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiChatToolsExpand => '展开详情';
+
+  @override
+  String get aiChatToolsCollapse => '收起';
+
+  @override
   String aiChatRunningTool(String tool) {
     return '正在 $tool';
   }
@@ -4864,6 +4880,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiChatEditUserMessageSubmit => '保存并重发';
+
+  @override
+  String get aiChatEditUserMessageHint => '已填入输入框，发送后将替换本轮及之后内容';
+
+  @override
+  String get aiChatDecisionAllowCustom => '或在下方直接输入你的方案。';
+
+  @override
+  String aiChatDecisionReply(String label) {
+    return '我选择「$label」。请在此方案下继续。';
+  }
 
   @override
   String get aiChatProposalEditMoreFields => '更多字段';

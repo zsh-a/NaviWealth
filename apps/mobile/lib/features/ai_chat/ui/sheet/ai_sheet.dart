@@ -11,11 +11,11 @@
 ///    tablet / desktop → a 480×600 draggable floating card whose
 ///    position persists across opens.
 ///  - **invocation** (`invocation != null`): the object-semantic
-///    surface (§5.4 "AI 进入用户当前页面"). Spins up a fresh thread
-///    titled from the intent, fires the rendered prompt immediately,
-///    offers reply chips + an "expand to chat" footer, and has no
-///    composer. Bottom sheet at every width — it carries its own
-///    context header, so it never free-floats.
+///    surface. Spins up a fresh thread titled from the intent, fires
+///    the rendered prompt immediately, offers structured `ask_user`
+///    decisions + an "expand to chat" footer, and has no composer.
+///    Bottom sheet at every width — it carries its own context header,
+///    so it never free-floats.
 ///
 /// Hard constraints (§5.8) carried over from the invocation surface:
 ///   - The only entry point for AI from outside the chat tab
@@ -45,7 +45,6 @@ import '../ai_navigation.dart';
 import '../chat_composer.dart';
 import '../chat_conversation_view.dart';
 import '../decision_request.dart';
-import '../llm_profile_chip.dart';
 
 part 'views.dart';
 part 'overlay.dart';
@@ -225,17 +224,6 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
     }
   }
 
-  void _sendChip(String sessionId, String chip) {
-    ref
-        .read(chatControllerProvider(sessionId).notifier)
-        .send(
-          chip,
-          turnMetadata: ChatTurnMetadata(
-            invocationTrace: widget.invocation?.toTraceJson(),
-          ),
-        );
-  }
-
   void _chooseDecision(
     String sessionId,
     DecisionSelectionRequest selection, {
@@ -323,8 +311,6 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
         AppSpacing.s16,
         AppSpacing.s16,
       ),
-      invocationIntent: widget.invocation!.intent,
-      onReplyChip: (chip) => _sendChip(sessionId, chip),
       onDecisionSelect: (selection) => _chooseDecision(sessionId, selection),
       loadingBuilder: (_) => const _BodySkeleton(),
       emptyBuilder: (_) => const _BodySkeleton(),
@@ -401,17 +387,6 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
                     horizontal: 12,
                     vertical: 8,
                   ),
-                  // Only surface a tappable choice list when the model
-                  // actually wrote a menu — no generic canned reply chips
-                  // trailing every plain turn.
-                  suggestCannedReplies: false,
-                  // A tap sends the chosen option as the next user message.
-                  onReplyChip: (chip) {
-                    final routeCtx = ref.read(aiContextProvider);
-                    ref
-                        .read(chatControllerProvider(activeId).notifier)
-                        .send(chip, systemContext: routeCtx.toSystemContext());
-                  },
                   onDecisionSelect: (selection) {
                     final routeCtx = ref.read(aiContextProvider);
                     _chooseDecision(
@@ -432,10 +407,8 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
                   ),
                 ),
         ),
-        if (activeId != null) ...[
-          const LlmProfileChip(),
+        if (activeId != null)
           _ConversationComposer(sessionId: activeId, prefill: widget.prefill),
-        ],
       ],
     );
   }

@@ -28,12 +28,12 @@ class _ExpandedView extends ConsumerWidget {
         ? plan.summaryZh
         : l10n.aiChatProposalSummaryEdited(plan.summaryZh);
 
+    // Heavy tier: bordered block with payload details (no muted fill).
     return Container(
       margin: const EdgeInsets.only(top: AppSpacing.s8),
       decoration: BoxDecoration(
-        color: colors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: colors.border),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: colors.border, width: AppStroke.hairline),
       ),
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
@@ -43,15 +43,15 @@ class _ExpandedView extends ConsumerWidget {
             children: [
               Icon(
                 _iconFor(registry, plan.kind),
-                size: AppIconSizes.h18,
-                color: colors.foreground,
+                size: AppIconSizes.sm,
+                color: colors.mutedForeground,
               ),
               const SizedBox(width: AppSpacing.s8),
               Text(
                 l10n.aiChatProposalPendingHeader(
                   proposalKindLabel(l10n, registry, plan.kind),
                 ),
-                style: context.captionStyle,
+                style: AiType.meta(context),
               ),
             ],
           ),
@@ -148,85 +148,93 @@ class _OneTapView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final registry = ref.watch(proposalKindRegistryProvider);
-    return Container(
-      margin: const EdgeInsets.only(top: AppSpacing.s8),
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s12,
-        AppSpacing.s10,
-        AppSpacing.s8,
-        AppSpacing.s10,
-      ),
-      decoration: BoxDecoration(
-        color: AiTone.surfaceTint(
-          context,
-        ).withValues(alpha: AppOpacity.prominent),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    final colors = context.theme.colors;
+    // Light tier: hairline row, no fill — summary + primary confirm.
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.s8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: colors.border, width: AppStroke.hairline),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s12,
+            AppSpacing.s10,
+            AppSpacing.s10,
+            AppSpacing.s10,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const AiSparkle(),
-              const SizedBox(width: AppSpacing.s6),
+              Row(
+                children: [
+                  Icon(
+                    _iconFor(registry, plan.kind),
+                    size: AppIconSizes.xs,
+                    color: colors.mutedForeground,
+                  ),
+                  const SizedBox(width: AppSpacing.s6),
+                  Expanded(
+                    child: Text(
+                      proposalKindLabel(l10n, registry, plan.kind),
+                      style: AiType.meta(context),
+                    ),
+                  ),
+                  if (_isApplying)
+                    const SizedBox(
+                      width: AppIconSizes.xs,
+                      height: AppIconSizes.xs,
+                      child: FCircularProgress(size: .xs),
+                    )
+                  else
+                    FButton(
+                      variant: FButtonVariant.primary,
+                      size: FButtonSizeVariant.sm,
+                      mainAxisSize: MainAxisSize.min,
+                      onPress: onConfirm,
+                      child: Text(l10n.aiChatProposalConfirm),
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s6),
               Text(
-                proposalKindLabel(l10n, registry, plan.kind),
-                style: AiType.meta(context),
+                plan.summaryZh,
+                style: AiType.body(context),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              const Spacer(),
-              if (_isApplying)
-                const SizedBox(
-                  width: AppIconSizes.xs,
-                  height: AppIconSizes.xs,
-                  child: FCircularProgress(size: .xs),
-                )
-              else
-                AiPill(
-                  // Retry on errored state — reuse the Confirm label;
-                  // tapping again drives the same _onConfirm path
-                  // which the apply state machine treats as a retry.
-                  label: l10n.aiChatProposalConfirm,
-                  state: AiPillState.selected,
-                  onTap: _isApplying ? null : onConfirm,
+              if (_isErrored && applyState.errorMessage != null) ...[
+                const SizedBox(height: AppSpacing.s6),
+                Text(
+                  applyState.errorMessage!,
+                  style: AiType.meta(
+                    context,
+                  ).copyWith(color: AiTone.error(context)),
                 ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          Text(
-            plan.summaryZh,
-            style: AiType.body(context),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (_isErrored && applyState.errorMessage != null) ...[
-            const SizedBox(height: AppSpacing.s6),
-            Text(
-              applyState.errorMessage!,
-              style: AiType.meta(
-                context,
-              ).copyWith(color: AiTone.error(context)),
-            ),
-          ],
-          const SizedBox(height: AppSpacing.s4),
-          Row(
-            children: [
-              FButton(
-                variant: FButtonVariant.ghost,
-                size: FButtonSizeVariant.sm,
-                mainAxisSize: MainAxisSize.min,
-                onPress: _isApplying ? null : onEdit,
-                child: Text(l10n.aiChatProposalEdit),
-              ),
-              FButton(
-                variant: FButtonVariant.ghost,
-                size: FButtonSizeVariant.sm,
-                mainAxisSize: MainAxisSize.min,
-                onPress: _isApplying ? null : onCancel,
-                child: Text(l10n.commonCancel),
+              ],
+              const SizedBox(height: AppSpacing.s4),
+              Row(
+                children: [
+                  FButton(
+                    variant: FButtonVariant.ghost,
+                    size: FButtonSizeVariant.sm,
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: _isApplying ? null : onEdit,
+                    child: Text(l10n.aiChatProposalEdit),
+                  ),
+                  FButton(
+                    variant: FButtonVariant.ghost,
+                    size: FButtonSizeVariant.sm,
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: _isApplying ? null : onCancel,
+                    child: Text(l10n.commonCancel),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

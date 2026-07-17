@@ -43,38 +43,29 @@ class _CollapsedView extends StatelessWidget {
         return const SizedBox.shrink();
     }
 
+    // Quiet meta line — no card chrome after the decision is done.
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.s8),
-      child: FCard.raw(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s12,
-            vertical: AppSpacing.s8,
+      padding: const EdgeInsets.only(top: AppSpacing.s6),
+      child: Row(
+        children: [
+          Icon(icon, size: AppIconSizes.xs, color: color),
+          const SizedBox(width: AppSpacing.s6),
+          Expanded(
+            child: Text(
+              label,
+              style: AiType.meta(context).copyWith(color: color),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-          child: Row(
-            children: [
-              Icon(icon, size: AppIconSizes.sm, color: color),
-              const SizedBox(width: AppSpacing.s8),
-              Expanded(
-                child: Text(
-                  label,
-                  style: context.theme.typography.body.sm.copyWith(
-                    color: context.theme.colors.foreground,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (onUndoRequest != null &&
-                  applyState.status == ProposalApplyStatus.applied &&
-                  applyState.appliedAt != null)
-                _UndoCountdownButton(
-                  appliedAt: applyState.appliedAt!,
-                  onUndo: onUndoRequest!,
-                ),
-            ],
-          ),
-        ),
+          if (onUndoRequest != null &&
+              applyState.status == ProposalApplyStatus.applied &&
+              applyState.appliedAt != null)
+            _UndoCountdownButton(
+              appliedAt: applyState.appliedAt!,
+              onUndo: onUndoRequest!,
+            ),
+        ],
       ),
     );
   }
@@ -173,7 +164,11 @@ class _ClarificationView extends ConsumerWidget {
     final turn = ref.watch(chatControllerProvider(sessionId));
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.s8),
-      child: FCard.raw(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: colors.border, width: AppStroke.hairline),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s12),
           child: Column(
@@ -183,16 +178,16 @@ class _ClarificationView extends ConsumerWidget {
                 children: [
                   Icon(
                     FLucideIcons.circleHelp,
-                    size: AppIconSizes.h18,
+                    size: AppIconSizes.sm,
                     color: colors.mutedForeground,
                   ),
                   const SizedBox(width: AppSpacing.s8),
-                  Text(
-                    l10n.aiChatProposalNeedsClarificationHeader(
-                      proposalKindLabel(l10n, registry, plan.kind),
-                    ),
-                    style: context.captionStyle.copyWith(
-                      color: context.theme.colors.foreground,
+                  Expanded(
+                    child: Text(
+                      l10n.aiChatProposalNeedsClarificationHeader(
+                        proposalKindLabel(l10n, registry, plan.kind),
+                      ),
+                      style: AiType.meta(context),
                     ),
                   ),
                 ],

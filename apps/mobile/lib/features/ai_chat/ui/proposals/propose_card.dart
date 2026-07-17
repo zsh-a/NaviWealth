@@ -99,6 +99,9 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
       case ProposalApplyStatus.pending:
       case ProposalApplyStatus.errored:
       case ProposalApplyStatus.applying:
+        // Two visual tiers only:
+        //  - light: oneTap
+        //  - heavy: confirmDiff / swipe / typed (typed adds a token gate)
         final mode = deriveInteractionModeForPlan(plan);
         return switch (mode) {
           InteractionMode.oneTap => _OneTapView(

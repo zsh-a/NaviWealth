@@ -13,16 +13,8 @@ import 'messages/message_bubble.dart';
 /// loading / error / empty states — shared by every AI chat surface
 /// (full page, slide-up sheet, intent bottom sheet).
 ///
-/// Before this existed, `_ChatPaneState`, `_SheetMessagesState` and the
-/// bottom-sheet body each re-implemented this independently and had
-/// already drifted: the bottom sheet, for instance, never followed the
-/// stream to the bottom. Routing all three through one widget keeps
-/// follow-scroll, message animation and reply-chip wiring identical and
-/// makes a message-level affordance (copy / retry / feedback) a
-/// one-place change instead of three.
-///
-/// The host owns chrome around the timeline (headers, composer,
-/// summary cards); this widget owns only the scrollable conversation.
+/// The host owns chrome around the timeline (headers, composer);
+/// this widget owns only the scrollable conversation.
 class ChatConversationView extends ConsumerStatefulWidget {
   const ChatConversationView({
     super.key,
@@ -31,26 +23,15 @@ class ChatConversationView extends ConsumerStatefulWidget {
       horizontal: AppSpacing.s16,
       vertical: AppSpacing.s12,
     ),
-    this.invocationIntent,
-    this.onReplyChip,
     this.onDecisionSelect,
     this.emptyBuilder,
     this.loadingBuilder,
-    this.suggestCannedReplies = true,
   });
 
   final String sessionId;
 
   /// Inset around the message list. Sheets run tighter than the page.
   final EdgeInsets padding;
-
-  /// Invocation intent that triggered this turn, forwarded to
-  /// [MessageBubble] so the reply-chip suggester can specialise.
-  final String? invocationIntent;
-
-  /// When non-null, completed assistant turns render reply chips and
-  /// call this with the tapped chip text.
-  final void Function(String chip)? onReplyChip;
 
   final void Function(DecisionSelectionRequest selection)? onDecisionSelect;
 
@@ -62,11 +43,6 @@ class ChatConversationView extends ConsumerStatefulWidget {
   /// Defaults to a centered progress indicator; the full page passes an
   /// [AiChatSkeleton], the intent sheet a shimmer.
   final WidgetBuilder? loadingBuilder;
-
-  /// Forwarded to [MessageBubble]. False on the conversation sheet so
-  /// plain turns don't trail generic canned reply chips — only a menu the
-  /// model actually wrote becomes a tappable choice list.
-  final bool suggestCannedReplies;
 
   @override
   ConsumerState<ChatConversationView> createState() =>
@@ -195,12 +171,9 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
               itemBuilder: (_, i) => MessageBubble(
                 sessionId: widget.sessionId,
                 message: messages[i],
-                invocationIntent: widget.invocationIntent,
-                onReplyChip: widget.onReplyChip,
                 onDecisionSelect: widget.onDecisionSelect,
                 isLastAssistant: i == lastAssistantIdx,
                 isLastUser: i == lastUserIdx,
-                suggestCannedReplies: widget.suggestCannedReplies,
                 animateIn: animateMessageIds.contains(messages[i].id),
               ),
             ),

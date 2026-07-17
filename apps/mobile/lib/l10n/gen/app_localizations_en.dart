@@ -5059,6 +5059,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatThinking => 'Thinking…';
 
   @override
+  String aiChatToolsUsed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tools used',
+      one: '1 tool used',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiChatToolsExpand => 'Show details';
+
+  @override
+  String get aiChatToolsCollapse => 'Hide details';
+
+  @override
   String aiChatRunningTool(String tool) {
     return 'Running $tool';
   }
@@ -5121,6 +5138,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiChatEditUserMessageSubmit => 'Save and resend';
+
+  @override
+  String get aiChatEditUserMessageHint =>
+      'Edit in composer, then send to replace this turn';
+
+  @override
+  String get aiChatDecisionAllowCustom => 'Or type your own option below.';
+
+  @override
+  String aiChatDecisionReply(String label) {
+    return 'I choose \"$label\". Continue under this option.';
+  }
 
   @override
   String get aiChatProposalEditMoreFields => 'More fields';

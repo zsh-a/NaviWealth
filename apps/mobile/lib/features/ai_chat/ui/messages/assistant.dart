@@ -1,23 +1,31 @@
 part of 'message_bubble.dart';
 
-class _AssistantBubble extends StatelessWidget {
+class _AssistantBubble extends StatefulWidget {
   const _AssistantBubble({
     required this.sessionId,
     required this.message,
-    this.onReplyChip,
     this.onDecisionSelect,
-    this.invocationIntent,
     this.isLastAssistant = false,
-    this.suggestCannedReplies = true,
   });
 
   final String sessionId;
   final ChatMessage message;
-  final void Function(String chip)? onReplyChip;
   final void Function(DecisionSelectionRequest selection)? onDecisionSelect;
-  final String? invocationIntent;
   final bool isLastAssistant;
-  final bool suggestCannedReplies;
+
+  @override
+  State<_AssistantBubble> createState() => _AssistantBubbleState();
+}
+
+class _AssistantBubbleState extends State<_AssistantBubble> {
+  /// Multi-tool group is collapsed by default when the turn is complete.
+  bool _toolsExpanded = false;
+
+  String get sessionId => widget.sessionId;
+  ChatMessage get message => widget.message;
+  bool get isLastAssistant => widget.isLastAssistant;
+  void Function(DecisionSelectionRequest selection)? get onDecisionSelect =>
+      widget.onDecisionSelect;
 
   bool get _isError =>
       message.role == ChatRole.error ||
@@ -28,16 +36,9 @@ class _AssistantBubble extends StatelessWidget {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     final errorMessage = _localizedErrorMessage(context, message.errorMessage);
-    // Calm error treatment (§5.6): the body — reasoning panel, tool
-    // cards, model text — must stay readable. The error is signalled by
-    // a soft destructive border + a leading ⚠ + the destructive
-    // `errorMessage` line, never by drowning the whole bubble in a
-    // saturated red fill (which tanks contrast on the muted reasoning
-    // text). The icon is the a11y-friendly half of the cue — for users
-    // who can't perceive the border tint, the icon + role announcement
-    // still signal "this turn errored".
     final textColor = colors.foreground;
     final isStreaming = message.status == ChatMessageStatus.streaming;
+    final hasProgress = isStreaming && message.progress != null;
 
     final showTruncation =
         !isStreaming &&
@@ -71,14 +72,15 @@ class _AssistantBubble extends StatelessWidget {
           _ReasoningPanel(text: message.reasoningText!),
           const SizedBox(height: AppSpacing.s8),
         ],
-        if (isStreaming && message.progress != null) ...[
+        if (hasProgress) ...[
           _LongTaskProgressRow(progress: message.progress!),
           const SizedBox(height: AppSpacing.s8),
         ],
-        ..._buildInterleavedBlocks(
+        ..._buildAnswerBlocks(
           context: context,
           textColor: textColor,
           isStreaming: isStreaming,
+          suppressEmptyStatus: hasProgress,
         ),
         if (errorMessage != null && errorMessage.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s8),
@@ -92,242 +94,288 @@ class _AssistantBubble extends StatelessWidget {
         if (showTruncation)
           _TruncationFooter(sessionId: sessionId, reason: message.stopReason!),
         if (!isStreaming &&
-            !_isError &&
             message.role == ChatRole.assistant &&
-            message.status == ChatMessageStatus.complete)
-          AiTransparencyIndicator(messageId: message.id),
-        // Inline per-message actions: copy (always on completed /
-        // errored assistant rows) + regenerate (only on the trailing
-        // assistant row, so a mid-thread tap can't silently discard
-        // follow-up turns).
-        if (!isStreaming && message.role == ChatRole.assistant)
+            isLastAssistant)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.s6),
+            padding: const EdgeInsets.only(top: AppSpacing.s4),
             child: _AssistantActions(
               sessionId: sessionId,
               message: message,
-              canRegenerate: isLastAssistant,
-            ),
-          ),
-        // Generic rules-based reply chips under completed
-        // assistant turns. Gated by [suggestCannedReplies] so the
-        // conversation sheet stays quiet (it relies on the model's own
-        // structured `ask_user` decision card instead — see
-        // `_renderToolEntry`). The invocation surface keeps these as its
-        // guided next-step affordance.
-        if (onReplyChip != null &&
-            suggestCannedReplies &&
-            !isStreaming &&
-            !_isError &&
-            message.role == ChatRole.assistant &&
-            message.status == ChatMessageStatus.complete)
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.s8),
-            child: _ReplyChips(
-              toolNames: {for (final t in message.toolCalls) t.name},
-              invocationIntent: invocationIntent,
-              onTap: onReplyChip!,
+              canRegenerate: true,
             ),
           ),
       ],
     );
 
-    // One calm surface for every state. An abnormal end is marked by a
-    // soft destructive hairline (accent, not fill) so the content stays
-    // legible — matches the SoftCard / AiTone "error is an accent"
-    // discipline used across the AI surfaces.
-    final bubble = Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s12,
-        vertical: AppSpacing.s8,
-      ),
-      decoration: BoxDecoration(
-        color: colors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(
-          color: _isError
-              ? colors.destructive.withValues(alpha: AppOpacity.scrim)
-              : colors.border,
-          width: _isError ? AppStroke.medium : AppStroke.hairline,
-        ),
-      ),
-      child: body,
-    );
-
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _AssistantAvatar(),
-          const SizedBox(width: AppSpacing.s8),
-          Flexible(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+      child: Semantics(
+        container: true,
+        label: _isError
+            ? l10n.aiChatSemanticsAssistantError
+            : l10n.aiChatSemanticsAssistantMessage,
+        child: DecoratedBox(
+          decoration: _isError
+              ? BoxDecoration(
+                  border: Border(
+                    left: BorderSide(
+                      color: colors.destructive.withValues(
+                        alpha: AppOpacity.scrim,
+                      ),
+                      width: AppStroke.medium,
+                    ),
+                  ),
+                )
+              : const BoxDecoration(),
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: _isError ? AppSpacing.s10 : AppSpacing.s0,
+            ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 720),
-              child: Semantics(
-                container: true,
-                label: _isError
-                    ? l10n.aiChatSemanticsAssistantError
-                    : l10n.aiChatSemanticsAssistantMessage,
-                child: RepaintBoundary(child: bubble),
-              ),
+              child: RepaintBoundary(child: body),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  String? _localizedErrorMessage(BuildContext context, String? message) {
-    if (message == null || message.isEmpty) return message;
-    return switch (message) {
+  String? _localizedErrorMessage(BuildContext context, String? raw) {
+    if (raw == null || raw.isEmpty) return raw;
+    return switch (raw) {
       'device_unavailable' => AppLocalizations.of(
         context,
       ).aiChatDeviceUnavailable,
-      _ => message,
+      _ => raw,
     };
   }
 
-  /// Walks `displaySegments` and `toolCalls` in lock-step so the bubble
-  /// renders text → tool → text → tool in the same order the model
-  /// emitted them, instead of grouping all tool cards above a single
-  /// concatenated paragraph.
-  ///
-  /// A pending propose-batch action header still floats to the top of
-  /// the list because it is a per-turn summary, not a narrative element.
-  List<Widget> _buildInterleavedBlocks({
+  /// Answer-first layout:
+  ///  1. prose (joined segments)
+  ///  2. streaming status when no progress row
+  ///  3. collapsed read-tool steps
+  ///  4. propose / ask_user actions
+  List<Widget> _buildAnswerBlocks({
     required BuildContext context,
     required Color textColor,
     required bool isStreaming,
+    required bool suppressEmptyStatus,
   }) {
-    final segments = message.displaySegments;
     final tools = message.toolCalls;
-    final l10n = AppLocalizations.of(context);
+    final segments = message.displaySegments;
 
-    // Surface the optional batch propose-confirm header.
-    final pending = <({ToolInvocation invocation, ReadyProposalPlan plan})>[];
-    final plansById = <String, ProposalPlan>{};
+    final pendingBatch =
+        <({ToolInvocation invocation, ReadyProposalPlan plan})>[];
+    final readTools = <ToolInvocation>[];
+    final actionWidgets = <Widget>[];
+
     for (final t in tools) {
-      if (!isProposeTool(t.name)) continue;
-      final plan = ProposalPlan.tryParse(t.output);
-      if (plan == null) continue;
-      plansById[t.id] = plan;
-      if (plan is ReadyProposalPlan) {
-        final state = t.applyState ?? ProposalApplyState.pending;
-        if (state.status == ProposalApplyStatus.pending ||
-            state.status == ProposalApplyStatus.errored) {
-          pending.add((invocation: t, plan: plan));
+      if (isProposeTool(t.name)) {
+        final plan = ProposalPlan.tryParse(t.output);
+        if (plan == null) continue;
+        if (plan is ReadyProposalPlan) {
+          final state = t.applyState ?? ProposalApplyState.pending;
+          if (state.status == ProposalApplyStatus.pending ||
+              state.status == ProposalApplyStatus.errored) {
+            pendingBatch.add((invocation: t, plan: plan));
+          }
+        }
+        actionWidgets.add(
+          ProposeCard(
+            sessionId: sessionId,
+            message: message,
+            invocation: t,
+            plan: plan,
+          ),
+        );
+        continue;
+      }
+      if (t.name == kAskUserToolName) {
+        final request = DecisionRequest.tryParse(t.output);
+        if (request != null) {
+          final selected = t.decisionSelection;
+          final interactive =
+              selected == null &&
+              isLastAssistant &&
+              onDecisionSelect != null;
+          actionWidgets.add(
+            DecisionCard(
+              request: request,
+              selectedOptionId: selected?.optionId,
+              interactive: interactive,
+              onSelect: (option, reply) {
+                onDecisionSelect?.call(
+                  DecisionSelectionRequest(
+                    messageId: message.id,
+                    toolInvocationId: t.id,
+                    option: option,
+                    reply: reply,
+                  ),
+                );
+              },
+            ),
+          );
+          continue;
         }
       }
+      readTools.add(t);
     }
 
     final blocks = <Widget>[];
-    if (pending.length >= 2) {
+    var emitted = false;
+    void gap() {
+      if (emitted) blocks.add(const SizedBox(height: AppSpacing.s8));
+    }
+
+    if (pendingBatch.length >= 2) {
       blocks.add(
         ProposeBatchActions(
           sessionId: sessionId,
           message: message,
-          pending: pending,
+          pending: pendingBatch,
         ),
       );
+      emitted = true;
     }
 
-    bool anythingEmittedYet = false;
-    void addGapIfNeeded() {
-      if (anythingEmittedYet) {
-        blocks.add(const SizedBox(height: AppSpacing.s8));
-      }
-    }
+    // Join non-empty prose segments into one readable answer body.
+    final proseParts = [
+      for (final s in segments)
+        if (s.trim().isNotEmpty) s,
+    ];
+    final prose = proseParts.join('\n\n');
+    final pendingTool = isStreaming ? _findPendingToolName(tools) : null;
+    final showStreamingBody =
+        isStreaming && !suppressEmptyStatus && prose.isEmpty;
+    final showStreamingCaret = isStreaming && prose.isNotEmpty;
 
-    for (var i = 0; i < segments.length; i++) {
-      final seg = segments[i];
-      final isLastSeg = i == segments.length - 1;
-      final shouldRenderText = seg.isNotEmpty || (isLastSeg && isStreaming);
-      if (shouldRenderText) {
-        addGapIfNeeded();
-        // When the model is mid-flight and has called a tool
-        // whose result hasn't arrived yet, surface the tool name so the
-        // streaming indicator reads "正在 <tool>" instead of generic
-        // "思考中". The pending tool is the *last* invocation without
-        // output (per Anthropic's serial tool-use protocol).
-        final pendingTool = (isLastSeg && isStreaming)
-            ? _findPendingToolName(tools)
-            : null;
-        blocks.add(
-          _AssistantBody(
-            text: seg,
-            isStreaming: isLastSeg && isStreaming,
-            textColor: textColor,
-            pendingToolName: pendingTool,
-          ),
-        );
-        anythingEmittedYet = true;
-      }
-      if (i < tools.length) {
-        addGapIfNeeded();
-        blocks.add(_renderToolEntry(tools[i], plansById[tools[i].id], l10n));
-        anythingEmittedYet = true;
-      }
-    }
-    return blocks;
-  }
-
-  Widget _renderToolEntry(
-    ToolInvocation invocation,
-    ProposalPlan? plan,
-    AppLocalizations l10n,
-  ) {
-    if (isProposeTool(invocation.name) && plan != null) {
-      return ProposeCard(
-        sessionId: sessionId,
-        message: message,
-        invocation: invocation,
-        plan: plan,
+    if (prose.isNotEmpty || showStreamingBody) {
+      gap();
+      blocks.add(
+        _AssistantBody(
+          text: prose,
+          isStreaming: showStreamingBody || showStreamingCaret,
+          textColor: textColor,
+          pendingToolName: showStreamingBody ? pendingTool : null,
+        ),
       );
+      emitted = true;
+    } else if (isStreaming && !suppressEmptyStatus && pendingTool != null) {
+      // Prose already rendered earlier this turn but a tool is pending —
+      // surface it as a quiet status line (when progress row is absent).
+      gap();
+      blocks.add(
+        _AssistantBody(
+          text: '',
+          isStreaming: true,
+          textColor: textColor,
+          pendingToolName: pendingTool,
+        ),
+      );
+      emitted = true;
     }
-    // Structured decision point (`ask_user`): render the interactive
-    // choice card. Only the trailing turn's decision is actionable; a
-    // tap sends the pick back as the next user turn via [onReplyChip].
-    if (invocation.name == kAskUserToolName) {
-      final request = DecisionRequest.tryParse(invocation.output);
-      if (request != null) {
-        final selected = invocation.decisionSelection;
-        final interactive =
-            selected == null &&
-            isLastAssistant &&
-            (onDecisionSelect != null || onReplyChip != null);
-        return DecisionCard(
-          request: request,
-          selectedOptionId: selected?.optionId,
-          interactive: interactive,
-          onSelect: (option, reply) {
-            final handler = onDecisionSelect;
-            if (handler != null) {
-              handler(
-                DecisionSelectionRequest(
-                  messageId: message.id,
-                  toolInvocationId: invocation.id,
-                  option: option,
-                  reply: reply,
-                ),
-              );
-              return;
-            }
-            onReplyChip?.call(reply);
-          },
-        );
-      }
+
+    if (readTools.isNotEmpty) {
+      gap();
+      blocks.add(
+        _ToolStepsGroup(
+          tools: readTools,
+          expanded: _toolsExpanded || isStreaming,
+          onToggle: isStreaming
+              ? null
+              : () => setState(() => _toolsExpanded = !_toolsExpanded),
+          isStreaming: isStreaming,
+        ),
+      );
+      emitted = true;
     }
-    // Inline rendering when a domain renderer is registered;
-    // the legacy card (chevron + raw JSON) remains the fallback for
-    // tools without one, and accessible via long-press on the inline.
-    return ToolInvocationInline(invocation: invocation);
+
+    for (final action in actionWidgets) {
+      gap();
+      blocks.add(action);
+      emitted = true;
+    }
+
+    return blocks;
   }
 }
 
-/// Last unresolved tool name. The model emits tool_use frames
-/// serially under the Anthropic protocol, so the most recent
-/// pending invocation is the one currently being awaited.
+/// Collapsed multi-tool summary; expands into quiet inline steps.
+class _ToolStepsGroup extends StatelessWidget {
+  const _ToolStepsGroup({
+    required this.tools,
+    required this.expanded,
+    required this.onToggle,
+    required this.isStreaming,
+  });
+
+  final List<ToolInvocation> tools;
+  final bool expanded;
+  final VoidCallback? onToggle;
+  final bool isStreaming;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final muted = AiTone.muted(context);
+
+    // Single rich visualization: keep open so the chart is the answer.
+    final single = tools.length == 1 ? tools.first : null;
+    final singleRich =
+        single != null &&
+        !isStreaming &&
+        single.output != null &&
+        renderToolOutput(context, single.name, single.output) != null;
+    if (singleRich) {
+      return ToolInvocationInline(
+        invocation: single,
+        initiallyExpanded: true,
+      );
+    }
+
+    final names = [for (final t in tools) friendlyToolName(l10n, t.name)];
+    final summary = names.length <= 2
+        ? names.join(' · ')
+        : '${names.take(2).join(' · ')} +${names.length - 2}';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FTappable(
+          onPress: onToggle,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
+            child: Row(
+              children: [
+                Icon(FLucideIcons.wrench, size: AppIconSizes.xs, color: muted),
+                const SizedBox(width: AppSpacing.s6),
+                Expanded(
+                  child: Text(
+                    '${l10n.aiChatToolsUsed(tools.length)}  ·  $summary',
+                    style: AiType.meta(context).copyWith(color: muted),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (onToggle != null)
+                  Icon(
+                    expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
+                    size: AppIconSizes.xs,
+                    color: muted,
+                  ),
+              ],
+            ),
+          ),
+        ),
+        if (expanded)
+          for (final t in tools)
+            ToolInvocationInline(invocation: t, initiallyExpanded: false),
+      ],
+    );
+  }
+}
+
 String? _findPendingToolName(List<ToolInvocation> tools) {
   for (var i = tools.length - 1; i >= 0; i--) {
     if (tools[i].status.isPending) return tools[i].name;

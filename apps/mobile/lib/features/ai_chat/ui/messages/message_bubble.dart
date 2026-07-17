@@ -9,16 +9,19 @@ import '../../../../core/ai/progress/long_task_progress.dart';
 import '../../../../core/ai/runtime/device/tools/ask_user_tool.dart'
     show kAskUserToolName;
 import '../../../../core/ai/visual/visual.dart';
+import '../../../../core/shell/settings_route_paths.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../domain/chat_models.dart';
 import '../../state/chat_controller.dart';
-import '../ai_transparency_badge.dart';
+import '../../state/composer_draft.dart';
+import '../ai_navigation.dart';
 import '../decision_card.dart';
 import '../decision_request.dart';
 import '../proposals/propose_batch_actions.dart';
 import '../proposals/propose_card.dart';
-import '../reply_chips.dart';
+import '../tools/renderers/tool_invocation_renderers.dart'
+    show renderToolOutput;
 import '../tools/tool_invocation_card.dart' show friendlyToolName;
 import '../tools/tool_invocation_inline.dart';
 
@@ -29,58 +32,33 @@ part 'support_views.dart';
 /// Renders a single chat row. Roles map to distinct visual treatments:
 ///
 ///  - `user` — right-aligned filled bubble in the primary container.
-///  - `assistant` — left-aligned with a subtle surface bubble; tool
-///    invocations stack underneath.
+///  - `assistant` — left-aligned flat prose; tool results stack underneath.
 ///  - `system` — centered chip-style notice ("已折叠 N 条历史").
-///  - `error` — left-aligned bubble in the error container colour.
+///  - `error` — left-aligned with a soft destructive accent.
 ///
-/// Streaming assistant turns get a small pulsing dot at the end of the
+/// Streaming assistant turns get a small pulsing caret at the end of the
 /// text so the user can tell content is still arriving.
 class MessageBubble extends StatelessWidget {
   const MessageBubble({
     super.key,
     required this.sessionId,
     required this.message,
-    this.onReplyChip,
     this.onDecisionSelect,
-    this.invocationIntent,
     this.isLastAssistant = false,
     this.isLastUser = false,
-    this.suggestCannedReplies = true,
     this.animateIn = true,
   });
 
   final String sessionId;
   final ChatMessage message;
-
-  /// When non-null, completed assistant turns render reply
-  /// chips below the body and call this back with the tapped chip
-  /// text. Caller sends it as the next user turn. Streaming/error
-  /// messages render no chips regardless.
-  final void Function(String chip)? onReplyChip;
   final void Function(DecisionSelectionRequest selection)? onDecisionSelect;
 
-  /// When false, the generic rules-based reply chips
-  /// (`suggestReplyChips`) are suppressed — only a content-derived
-  /// clickable choice list (parsed from a menu the model actually wrote)
-  /// renders. The conversation sheet sets this false so every turn isn't
-  /// trailed by canned "展开细节 / 对比" suggestions; the invocation
-  /// surface keeps them (true) as its guided next-step affordance.
-  final bool suggestCannedReplies;
-
-  /// Invocation intent that triggered this turn. Drives the rules-based chip suggester.
-  final String? invocationIntent;
-
   /// Whether this is the trailing assistant message in the timeline.
-  /// Only the trailing one gets a "regenerate" affordance — discarding
-  /// a mid-thread assistant reply would silently throw away every
-  /// follow-up turn, which is almost never what the user wants.
+  /// Only the trailing one gets a "regenerate" affordance.
   final bool isLastAssistant;
 
   /// Whether this is the trailing user message in the timeline. Only
-  /// the trailing user message gets the "edit & resend" affordance —
-  /// mid-thread edit would silently discard every follow-up turn,
-  /// which is destructive and almost never the user intent.
+  /// the trailing user message gets the "edit" affordance.
   final bool isLastUser;
 
   /// Historical messages are often mounted in bulk when the sheet opens.
@@ -100,11 +78,8 @@ class MessageBubble extends StatelessWidget {
       ChatRole.assistant || ChatRole.error => _AssistantBubble(
         sessionId: sessionId,
         message: message,
-        onReplyChip: onReplyChip,
         onDecisionSelect: onDecisionSelect,
-        invocationIntent: invocationIntent,
         isLastAssistant: isLastAssistant,
-        suggestCannedReplies: suggestCannedReplies,
       ),
     };
     if (!animateIn) return child;
@@ -136,9 +111,6 @@ class _UserBubble extends ConsumerWidget {
 
   final String sessionId;
   final ChatMessage message;
-
-  /// Only the trailing user message gets the edit-and-resend
-  /// affordance — see [MessageBubble.isLastUser].
   final bool isLastUser;
 
   @override
@@ -147,9 +119,6 @@ class _UserBubble extends ConsumerWidget {
     final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
     final turn = ref.watch(chatControllerProvider(sessionId));
-    // Edit is gated to: (a) the trailing user turn, (b) not currently
-    // streaming/flushing — otherwise tapping mid-stream would race the
-    // in-flight pipeline and produce duplicates.
     final showEdit = isLastUser && !turn.isBusy;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
@@ -172,12 +141,7 @@ class _UserBubble extends ConsumerWidget {
                       ),
                       decoration: BoxDecoration(
                         color: colors.primary,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(AppRadius.sm),
-                          topRight: Radius.circular(AppRadius.sm),
-                          bottomLeft: Radius.circular(AppRadius.sm),
-                          bottomRight: Radius.circular(AppRadius.sm),
-                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: SelectableText(
                         message.content,
@@ -194,11 +158,11 @@ class _UserBubble extends ConsumerWidget {
           ),
           if (showEdit)
             Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.s4),
-              child: _ActionButton(
+              padding: const EdgeInsets.only(top: AppSpacing.s2),
+              child: _IconAction(
                 icon: FLucideIcons.pencil,
-                label: l10n.aiChatEditUserMessage,
-                onPressed: () => _editAndResend(context, ref),
+                tooltip: l10n.aiChatEditUserMessage,
+                onPressed: () => _loadIntoComposer(context, ref),
               ),
             ),
         ],
@@ -206,47 +170,17 @@ class _UserBubble extends ConsumerWidget {
     );
   }
 
-  Future<void> _editAndResend(BuildContext context, WidgetRef ref) async {
+  void _loadIntoComposer(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final controller = TextEditingController(text: message.content);
-    final result = await showAppFormSheet<String>(
-      context: context,
-      builder: (ctx) => AppSheet(
-        title: l10n.aiChatEditUserMessageTitle,
-        footer: AppSheetFooter(
-          submitLabel: l10n.aiChatEditUserMessageSubmit,
-          cancelLabel: l10n.commonCancel,
-          // Treat as destructive — saving discards the existing AI
-          // reply (+ any later turns) before re-running the prompt.
-          destructive: true,
-          onSubmit: () => Navigator.of(ctx).pop(controller.text.trim()),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              l10n.aiChatEditUserMessageWarning,
-              style: context.captionStyle.copyWith(height: 1.4),
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            FTextField(
-              control: FTextFieldControl.managed(controller: controller),
-              autofocus: true,
-              minLines: 3,
-              maxLines: 8,
-              keyboardType: TextInputType.multiline,
-              textInputAction: TextInputAction.newline,
-            ),
-          ],
-        ),
-      ),
+    ref.read(chatComposerDraftProvider(sessionId).notifier).state =
+        ComposerDraft(
+          text: message.content,
+          replaceMessageId: message.id,
+        );
+    AppMessenger.show(
+      context,
+      ToastKind.info,
+      l10n.aiChatEditUserMessageHint,
     );
-    if (result == null || result.isEmpty) return;
-    if (result == message.content.trim()) return;
-    if (!context.mounted) return;
-    await ref
-        .read(chatControllerProvider(sessionId).notifier)
-        .editAndResend(messageId: message.id, newContent: result);
   }
 }

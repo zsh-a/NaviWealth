@@ -2,12 +2,7 @@ part of 'message_bubble.dart';
 
 /// Slim, muted hairline + label + "Continue" affordance shown at the
 /// bottom of an assistant bubble when [ChatMessage.stopReason] indicates
-/// the reply is incomplete (max_tokens, refusal, tool-budget exhausted,
-/// connection drop, …).
-///
-/// The footer is purely a UX signal — the message itself is already
-/// persisted as `complete`. Tapping "Continue" sends a hidden user turn
-/// asking the model to pick up where it left off.
+/// the reply is incomplete.
 class _TruncationFooter extends ConsumerWidget {
   const _TruncationFooter({required this.sessionId, required this.reason});
 
@@ -116,29 +111,6 @@ class _ContinueButton extends StatelessWidget {
   }
 }
 
-class _AssistantAvatar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    // The assistant identity glyph is a framed
-    // [AiSparkle]. No ad-hoc `secondary` hue — surface tint + hairline
-    // only (AiTone), per core/ai/visual §5.8.
-    return Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: AiTone.surfaceTint(context),
-        border: Border.all(
-          color: AiTone.outline(context),
-          width: AppStroke.hairline,
-        ),
-      ),
-      alignment: Alignment.center,
-      child: const AiSparkle(size: AppIconSizes.sm),
-    );
-  }
-}
-
 class _SystemNotice extends StatelessWidget {
   const _SystemNotice({required this.text});
   final String text;
@@ -171,46 +143,8 @@ class _SystemNotice extends StatelessWidget {
   }
 }
 
-/// Reply chip row under completed assistant turns.
-/// Now backed by [AiPill] so chips share the capsule's
-/// visual language. Up to 3 chips sourced from `suggestReplyChips`.
-class _ReplyChips extends StatelessWidget {
-  const _ReplyChips({
-    required this.toolNames,
-    required this.invocationIntent,
-    required this.onTap,
-  });
-
-  final Set<String> toolNames;
-  final String? invocationIntent;
-  final void Function(String chip) onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final ids = suggestReplyChips(
-      invocationIntent: invocationIntent,
-      turnTools: toolNames,
-    );
-    if (ids.isEmpty) return const SizedBox.shrink();
-    final l10n = AppLocalizations.of(context);
-    // The localized phrase is both the chip label and the user turn
-    // sent on tap — the model sees natural language, never the id.
-    final labels = [for (final id in ids) localizedReplyChip(l10n, id)];
-    return Wrap(
-      spacing: AppSpacing.s6,
-      runSpacing: AppSpacing.s6,
-      children: [
-        for (final label in labels)
-          AiPill(label: label, onTap: () => onTap(label)),
-      ],
-    );
-  }
-}
-
-/// Inline copy / regenerate row shown under a completed (or errored)
-/// assistant turn. Kept low-contrast on purpose — these are escape
-/// hatches users only reach for when something is off, not primary
-/// affordances competing with the reply chips below them.
+/// Icon-only copy / regenerate / transparency under a completed assistant
+/// turn. Labels live in tooltips so the timeline stays quiet.
 class _AssistantActions extends ConsumerWidget {
   const _AssistantActions({
     required this.sessionId,
@@ -220,10 +154,6 @@ class _AssistantActions extends ConsumerWidget {
 
   final String sessionId;
   final ChatMessage message;
-
-  /// True when this row sits under the trailing assistant message,
-  /// which is the only time regenerate is safe (mid-thread regenerate
-  /// would silently drop every follow-up turn).
   final bool canRegenerate;
 
   @override
@@ -232,14 +162,13 @@ class _AssistantActions extends ConsumerWidget {
     final canCopy = message.content.trim().isNotEmpty;
     if (!canCopy && !canRegenerate) return const SizedBox.shrink();
     final turn = ref.watch(chatControllerProvider(sessionId));
-    return Wrap(
-      spacing: AppSpacing.s4,
-      runSpacing: AppSpacing.s2,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         if (canCopy)
-          _ActionButton(
+          _IconAction(
             icon: FLucideIcons.copy,
-            label: l10n.aiChatMessageCopy,
+            tooltip: l10n.aiChatMessageCopy,
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: message.content));
               if (!context.mounted) return;
@@ -251,11 +180,9 @@ class _AssistantActions extends ConsumerWidget {
             },
           ),
         if (canRegenerate)
-          _ActionButton(
+          _IconAction(
             icon: FLucideIcons.refreshCw,
-            label: l10n.aiChatMessageRegenerate,
-            // Disable while a turn is in flight so a double-tap doesn't
-            // race against the on-going stream.
+            tooltip: l10n.aiChatMessageRegenerate,
             onPressed: turn.isBusy
                 ? null
                 : () {
@@ -264,20 +191,28 @@ class _AssistantActions extends ConsumerWidget {
                         .regenerateLast();
                   },
           ),
+        _IconAction(
+          icon: FLucideIcons.info,
+          tooltip: l10n.aiChatTransparencyOpenDetail,
+          onPressed: () => pushFromAiSurface(
+            context,
+            SettingsRoutes.aiTransparencyDetail(message.id),
+          ),
+        ),
       ],
     );
   }
 }
 
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
+class _IconAction extends StatelessWidget {
+  const _IconAction({
     required this.icon,
-    required this.label,
+    required this.tooltip,
     required this.onPressed,
   });
 
   final IconData icon;
-  final String label;
+  final String tooltip;
   final VoidCallback? onPressed;
 
   @override
@@ -288,20 +223,13 @@ class _ActionButton extends StatelessWidget {
         : context.theme.colors.mutedForeground.withValues(
             alpha: AppOpacity.disabled,
           );
-    return FTappable(
-      onPress: onPressed,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s4,
-          vertical: AppSpacing.s4,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: AppIconSizes.xs, color: color),
-            const SizedBox(width: AppSpacing.s4),
-            Text(label, style: context.captionStyle.copyWith(color: color)),
-          ],
+    return FTooltip(
+      tipBuilder: (_, _) => Text(tooltip),
+      child: FTappable(
+        onPress: onPressed,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s6),
+          child: Icon(icon, size: AppIconSizes.xs, color: color),
         ),
       ),
     );

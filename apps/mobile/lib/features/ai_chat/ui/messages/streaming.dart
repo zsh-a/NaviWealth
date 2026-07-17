@@ -1,5 +1,7 @@
 part of 'message_bubble.dart';
 
+/// Quiet one-line status for long agentic work — same visual weight as
+/// the thinking/pending-tool row, not a dashboard progress card.
 class _LongTaskProgressRow extends StatelessWidget {
   const _LongTaskProgressRow({required this.progress});
 
@@ -8,58 +10,33 @@ class _LongTaskProgressRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final ratio = progress.normalisedRatio;
     final toolName = progress.label == 'tool' ? progress.detail : null;
     final label = toolName == null
         ? progress.label
         : l10n.aiChatRunningTool(friendlyToolName(l10n, toolName));
     final detail = toolName == null ? progress.detail : null;
     final active = AiTone.active(context);
+    final line = detail != null && detail.isNotEmpty ? '$label · $detail' : label;
     return Semantics(
       container: true,
-      label: label,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: active.withValues(alpha: AppOpacity.subtle),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(
-            color: active.withValues(alpha: AppOpacity.focusRing),
+      label: line,
+      child: Row(
+        children: [
+          const AiSparkle(active: true),
+          const SizedBox(width: AppSpacing.s6),
+          Flexible(
+            child: Text(
+              line,
+              style: AiType.meta(context).copyWith(color: active),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.s8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const AiSparkle(active: true),
-                  const SizedBox(width: AppSpacing.s6),
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: AiType.metaStrong(context).copyWith(color: active),
-                    ),
-                  ),
-                ],
-              ),
-              if (detail != null && detail.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.s4),
-                Text(detail, style: context.captionStyle),
-              ],
-              const SizedBox(height: AppSpacing.s8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                child: LinearProgressIndicator(
-                  minHeight: 3,
-                  value: ratio,
-                  backgroundColor: active.withValues(alpha: AppOpacity.subtle),
-                  valueColor: AlwaysStoppedAnimation<Color>(active),
-                ),
-              ),
-            ],
+          const SizedBox(width: AppSpacing.s6),
+          _TypingDots(
+            color: active.withValues(alpha: AppOpacity.strong),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -8610,6 +8610,24 @@ abstract class AppLocalizations {
   /// **'Thinking…'**
   String get aiChatThinking;
 
+  /// Collapsed summary under an assistant turn that called read tools.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 tool used} other{{count} tools used}}'**
+  String aiChatToolsUsed(int count);
+
+  /// Affordance to expand the collapsed tool-steps group.
+  ///
+  /// In en, this message translates to:
+  /// **'Show details'**
+  String get aiChatToolsExpand;
+
+  /// Affordance to collapse expanded tool-steps.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide details'**
+  String get aiChatToolsCollapse;
+
   /// Streaming indicator while the assistant is waiting for a tool call. {tool} is already a localized friendly name from friendlyToolName().
   ///
   /// In en, this message translates to:
@@ -8729,6 +8747,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save and resend'**
   String get aiChatEditUserMessageSubmit;
+
+  /// Toast/hint after tapping edit on a user message — content is loaded into the composer.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit in composer, then send to replace this turn'**
+  String get aiChatEditUserMessageHint;
+
+  /// Hint under an ask_user decision card when free-form replies are allowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Or type your own option below.'**
+  String get aiChatDecisionAllowCustom;
+
+  /// Natural-language reply written back when the user picks a decision option.
+  ///
+  /// In en, this message translates to:
+  /// **'I choose \"{label}\". Continue under this option.'**
+  String aiChatDecisionReply(String label);
 
   /// Footer toggle in the proposal edit sheet that expands the curated fields list to every payload key.
   ///

@@ -58,13 +58,24 @@ class _ConversationComposer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final turn = ref.watch(chatControllerProvider(sessionId));
     final routeCtx = ref.watch(aiContextProvider);
+    final systemContext = routeCtx.toSystemContext();
     return ChatComposer(
+      sessionId: sessionId,
       isStreaming: turn.isStreaming,
       initialText: prefill,
       onSend: (text) {
         ref
             .read(chatControllerProvider(sessionId).notifier)
-            .send(text, systemContext: routeCtx.toSystemContext());
+            .send(text, systemContext: systemContext);
+      },
+      onEditResend: (messageId, text) {
+        ref
+            .read(chatControllerProvider(sessionId).notifier)
+            .editAndResend(
+              messageId: messageId,
+              newContent: text,
+              systemContext: systemContext,
+            );
       },
       onCancel: () {
         ref.read(chatControllerProvider(sessionId).notifier).cancel();

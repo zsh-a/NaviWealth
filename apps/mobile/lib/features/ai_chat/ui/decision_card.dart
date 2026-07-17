@@ -34,52 +34,61 @@ class DecisionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return SoftCard.flat(
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                FLucideIcons.listChecks,
-                size: AppIconSizes.sm,
-                color: colors.primary,
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              Expanded(child: Text(request.title, style: context.labelStyle)),
-            ],
-          ),
-          if (request.context.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.s4),
-            Text(request.context, style: context.captionStyle),
-          ],
-          const SizedBox(height: AppSpacing.s8),
-          for (var i = 0; i < request.options.length; i++) ...[
-            if (i > 0) const SizedBox(height: AppSpacing.s8),
-            _OptionTile(
-              option: request.options[i],
-              selected: request.options[i].id == selectedOptionId,
-              onTap: interactive
-                  ? () {
-                      final option = request.options[i];
-                      onSelect(option, replyFor(option));
-                    }
-                  : null,
+    final l10n = AppLocalizations.of(context);
+    // Flat decision block — border only, no SoftCard fill nesting.
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: colors.border, width: AppStroke.hairline),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  FLucideIcons.listChecks,
+                  size: AppIconSizes.sm,
+                  color: colors.primary,
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(child: Text(request.title, style: context.labelStyle)),
+              ],
             ),
-          ],
-          if (request.allowCustom && interactive) ...[
+            if (request.context.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.s4),
+              Text(request.context, style: context.captionStyle),
+            ],
             const SizedBox(height: AppSpacing.s8),
-            Text('或在下方直接输入你的方案。', style: context.captionStyle),
+            for (var i = 0; i < request.options.length; i++) ...[
+              if (i > 0) const SizedBox(height: AppSpacing.s8),
+              _OptionTile(
+                option: request.options[i],
+                selected: request.options[i].id == selectedOptionId,
+                onTap: interactive
+                    ? () {
+                        final option = request.options[i];
+                        onSelect(option, replyFor(l10n, option));
+                      }
+                    : null,
+              ),
+            ],
+            if (request.allowCustom && interactive) ...[
+              const SizedBox(height: AppSpacing.s8),
+              Text(l10n.aiChatDecisionAllowCustom, style: context.captionStyle),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 
   /// Structured-but-natural reply written back to the conversation so the
   /// agent continues under the chosen constraint.
-  static String replyFor(DecisionOption o) => '我选择「${o.label}」。请在此方案下继续。';
+  static String replyFor(AppLocalizations l10n, DecisionOption o) =>
+      l10n.aiChatDecisionReply(o.label);
 }
 
 class _OptionTile extends StatelessWidget {

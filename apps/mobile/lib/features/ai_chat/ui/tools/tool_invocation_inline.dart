@@ -1,19 +1,11 @@
-/// Inline tool attribution + domain renderer (no card chrome).
+/// Inline tool step for the conversation timeline.
 ///
-/// Replaces the card-shaped `ToolInvocationCard` for tools that have a
-/// domain renderer registered in `tool_invocation_renderers.dart`.
-/// The card chrome (border, chevron, JSON viewer) becomes a long-press
-/// affordance that pops a sheet with the full debug view.
-///
-/// Tools *without* a domain renderer continue to use the legacy card —
-/// raw JSON is what's actually useful for them, and the card chrome
-/// is the only way to surface the chevron + raw toggle.
-///
-/// Result: a chat turn that called `get_holdings` + `get_asset_allocation`
-/// reads as a continuous answer with two embedded visualisations,
-/// rather than two collapsible Postman-style cards stacked between
-/// text segments.
+/// Always a quiet one-line attribution; body (domain renderer or compact
+/// summary) expands on tap. No card chrome in the stream — raw JSON lives
+/// behind long-press debug.
 library;
+
+import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
@@ -25,118 +17,102 @@ import '../../domain/chat_models.dart';
 import 'renderers/tool_invocation_renderers.dart';
 import 'tool_invocation_card.dart';
 
-class ToolInvocationInline extends StatelessWidget {
-  const ToolInvocationInline({super.key, required this.invocation});
+class ToolInvocationInline extends StatefulWidget {
+  const ToolInvocationInline({
+    super.key,
+    required this.invocation,
+    this.initiallyExpanded = false,
+  });
 
   final ToolInvocation invocation;
 
-  /// Pick the cleanest rendering: inline when a domain renderer is
-  /// available, fall back to the legacy card otherwise.
+  /// When true, body starts open (e.g. single-tool turns with a chart).
+  final bool initiallyExpanded;
+
   static Widget pick(ToolInvocation invocation) {
-    return _InlineDispatcher(invocation: invocation);
+    return ToolInvocationInline(invocation: invocation);
   }
 
   @override
-  Widget build(BuildContext context) {
-    return _InlineDispatcher(invocation: invocation);
-  }
+  State<ToolInvocationInline> createState() => _ToolInvocationInlineState();
 }
 
-class _InlineDispatcher extends StatelessWidget {
-  const _InlineDispatcher({required this.invocation});
-
-  final ToolInvocation invocation;
+class _ToolInvocationInlineState extends State<ToolInvocationInline> {
+  late bool _expanded = widget.initiallyExpanded;
 
   @override
-  Widget build(BuildContext context) {
-    // Probe for a domain renderer. We only switch to inline mode when
-    // the renderer succeeds — otherwise the card with the JSON viewer
-    // remains the best fallback.
-    final body = invocation.output == null
-        ? null
-        : renderToolOutput(context, invocation.name, invocation.output);
-    if (body == null) {
-      return ToolInvocationCard(invocation: invocation);
+  void didUpdateWidget(ToolInvocationInline oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initiallyExpanded != widget.initiallyExpanded &&
+        widget.initiallyExpanded) {
+      _expanded = true;
     }
-    return _InlineLayout(invocation: invocation, body: body);
   }
-}
-
-class _InlineLayout extends StatelessWidget {
-  const _InlineLayout({required this.invocation, required this.body});
-
-  final ToolInvocation invocation;
-  final Widget body;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(
-        top: AppSpacing.s10,
-        bottom: AppSpacing.s4,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _AttributionRow(invocation: invocation),
-          const SizedBox(height: AppSpacing.s6),
-          body,
-        ],
-      ),
-    );
-  }
-}
-
-/// The single muted line under the assistant's prose that tells the
-/// user "the model used this tool". Typography-only: sparkle + tool
-/// name in monospace + nothing else. Long-press pops the legacy debug
-/// card so power users / bug reports can still see raw IO.
-class _AttributionRow extends StatelessWidget {
-  const _AttributionRow({required this.invocation});
-
-  final ToolInvocation invocation;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    // Long-press to view raw I/O was an invisible power-user gesture —
-    // we keep it for muscle memory, but a tiny info icon at the end of
-    // the row makes the affordance discoverable for everyone else.
-    return GestureDetector(
-      onLongPress: () => _openDebugSheet(context),
-      behavior: HitTestBehavior.opaque,
-      child: Row(
+    final invocation = widget.invocation;
+    final pending = invocation.status.isPending;
+    final label = friendlyToolName(l10n, invocation.name);
+    final body = invocation.output == null
+        ? null
+        : renderToolOutput(context, invocation.name, invocation.output);
+    final hasBody = body != null || invocation.output != null;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.s4, bottom: AppSpacing.s2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Per-tool icon picked from `toolIcon` — gives the row a
-          // glanceable identity (chart vs flag vs subscription) that
-          // the generic sparkle previously washed out.
-          Icon(
-            toolIcon(invocation.name),
-            size: AppIconSizes.xs,
-            color: AiTone.muted(context),
-          ),
-          const SizedBox(width: AppSpacing.s6),
-          Flexible(
-            child: Text(
-              _friendly(invocation.name),
-              style: AiType.meta(context).copyWith(fontFamily: 'monospace'),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s6),
-          FTooltip(
-            tipBuilder: (_, _) => Text(l10n.aiChatToolDebugTooltip),
+          GestureDetector(
+            onLongPress: () => _openDebugSheet(context),
+            behavior: HitTestBehavior.opaque,
             child: FTappable(
-              onPress: () => _openDebugSheet(context),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.s2),
-                child: Icon(
-                  FLucideIcons.info,
-                  size: 12,
-                  color: AiTone.muted(context),
-                ),
+              onPress: hasBody && !pending
+                  ? () => setState(() => _expanded = !_expanded)
+                  : null,
+              child: Row(
+                children: [
+                  Icon(
+                    pending
+                        ? FLucideIcons.hourglass
+                        : toolIcon(invocation.name),
+                    size: AppIconSizes.xs,
+                    color: AiTone.muted(context),
+                  ),
+                  const SizedBox(width: AppSpacing.s6),
+                  Flexible(
+                    child: Text(
+                      label,
+                      style: AiType.meta(context).copyWith(
+                        color: AiTone.muted(context),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (hasBody && !pending) ...[
+                    const SizedBox(width: AppSpacing.s4),
+                    Icon(
+                      _expanded
+                          ? FLucideIcons.chevronUp
+                          : FLucideIcons.chevronDown,
+                      size: AppIconSizes.xs,
+                      color: AiTone.muted(context),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
+          if (_expanded && !pending) ...[
+            const SizedBox(height: AppSpacing.s6),
+            if (body != null)
+              body
+            else if (invocation.output != null)
+              _CompactOutput(output: invocation.output),
+          ],
         ],
       ),
     );
@@ -156,11 +132,7 @@ class _AttributionRow extends StatelessWidget {
               AppSpacing.s24,
             ),
             children: [
-              // Reuse the existing card — it ships its own chevron / JSON
-              // viewer. From inside the bottom sheet the chrome reads as
-              // "developer detail", which is exactly what long-press
-              // promised.
-              ToolInvocationCard(invocation: invocation),
+              ToolInvocationCard(invocation: widget.invocation),
             ],
           ),
         ),
@@ -169,8 +141,36 @@ class _AttributionRow extends StatelessWidget {
   }
 }
 
-/// Friendly tool name. Keeps the monospace identifier for trace-able
-/// debugging — UX research showed users do *learn* tool names from
-/// chat, and obscuring them with translated labels makes follow-up
-/// questions ("did you check holdings?") harder.
-String _friendly(String name) => name;
+/// Truncated plain-text dump for tools without a domain renderer.
+class _CompactOutput extends StatelessWidget {
+  const _CompactOutput({required this.output});
+
+  final Object? output;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = _preview(output);
+    return Text(
+      text,
+      style: context.captionStyle.copyWith(
+        color: AiTone.muted(context),
+        height: 1.4,
+        fontFamily: 'monospace',
+      ),
+      maxLines: 6,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  String _preview(Object? value) {
+    try {
+      final encoded = const JsonEncoder.withIndent('  ').convert(value);
+      if (encoded.length <= 400) return encoded;
+      return '${encoded.substring(0, 400)}…';
+    } catch (_) {
+      final raw = value.toString();
+      if (raw.length <= 400) return raw;
+      return '${raw.substring(0, 400)}…';
+    }
+  }
+}
