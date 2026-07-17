@@ -249,6 +249,70 @@ void main() {
     expect(prefs.getInt(_task.dueAtPreferenceKey), isNull);
   });
 
+  test('runIfDue retains due flag when foreground bootstrap fails', () async {
+    final dueAt = DateTime.utc(2026, 7, 5, 8);
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      _task.dueAtPreferenceKey: dueAt.millisecondsSinceEpoch,
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final preferences = InMemoryAgentPreferenceStore();
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final catchUp = AgentBackgroundCatchUpRunner(
+      dueFlags: AgentDueFlagStore(prefs: prefs),
+      preferences: preferences,
+      controller: AgentRunController(
+        runner: AgentRunner(
+          runtime: MemoryRuntime(
+            embedder: StubEmbedder(),
+            memoryStore: SqliteMemoryStore(db: db),
+            eventStore: SqliteEventStore(db: db),
+          ),
+          ownerUserId: 'u',
+          preferenceStore: preferences,
+        ),
+        agents: <Agent>[_StubAgent()],
+        ref: container.read(_refProvider),
+      ),
+      currentUserId: () async => throw StateError('auth not ready'),
+      domainOptIns: () async => DomainOptIns.financeOnly,
+    );
+
+    await expectLater(
+      catchUp.runIfDue(
+        binding: const AgentBackgroundTaskBinding(
+          agentId: 'agent-1',
+          domain: DomainScope.finance,
+          task: _task,
+        ),
+      ),
+      throwsStateError,
+    );
+
+    expect(
+      prefs.getInt(_task.dueAtPreferenceKey),
+      dueAt.millisecondsSinceEpoch,
+    );
+  });
+
+  test('acknowledgeDue preserves a newer background wake-up', () async {
+    final original = DateTime.utc(2026, 7, 5, 8);
+    final newer = DateTime.utc(2026, 7, 5, 9);
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      _task.dueAtPreferenceKey: original.millisecondsSinceEpoch,
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final store = AgentDueFlagStore(prefs: prefs);
+    expect(await store.peekDueFresh(_task), original);
+
+    await prefs.setInt(_task.dueAtPreferenceKey, newer.millisecondsSinceEpoch);
+
+    expect(await store.acknowledgeDue(_task, original), isFalse);
+    expect(store.peekDue(_task), newer);
+  });
+
   test('runIfDue still runs notification-disabled agents', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{
       _task.dueAtPreferenceKey: DateTime.utc(

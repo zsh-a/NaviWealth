@@ -42,10 +42,27 @@ class AgentDueFlagStore {
     return DateTime.fromMillisecondsSinceEpoch(millis, isUtc: true);
   }
 
+  /// Refreshes the platform store before reading. Android WorkManager runs in
+  /// a separate isolate, so the foreground SharedPreferences cache may not
+  /// include the due timestamp that the background callback just wrote.
+  Future<DateTime?> peekDueFresh(BackgroundTaskSpec task) async {
+    await _prefs.reload();
+    return peekDue(task);
+  }
+
+  /// Removes [dueAt] only if no newer background wake-up replaced it while
+  /// the foreground agent was running.
+  Future<bool> acknowledgeDue(BackgroundTaskSpec task, DateTime dueAt) async {
+    await _prefs.reload();
+    final expectedMillis = dueAt.toUtc().millisecondsSinceEpoch;
+    if (_prefs.getInt(task.dueAtPreferenceKey) != expectedMillis) return false;
+    return _prefs.remove(task.dueAtPreferenceKey);
+  }
+
   Future<DateTime?> consumeDue(BackgroundTaskSpec task) async {
-    final dueAt = peekDue(task);
+    final dueAt = await peekDueFresh(task);
     if (dueAt == null) return null;
-    await _prefs.remove(task.dueAtPreferenceKey);
+    await acknowledgeDue(task, dueAt);
     return dueAt;
   }
 }
@@ -73,22 +90,29 @@ class AgentBackgroundCatchUpRunner {
     required AgentBackgroundTaskBinding binding,
     Future<void> Function()? beforeRun,
   }) async {
-    final dueAt = await _dueFlags.consumeDue(binding.task);
+    final dueAt = await _dueFlags.peekDueFresh(binding.task);
     if (dueAt == null) return null;
     final optIns = await _domainOptIns();
-    if (!optIns.contains(binding.domain)) return null;
+    if (!optIns.contains(binding.domain)) {
+      await _dueFlags.acknowledgeDue(binding.task, dueAt);
+      return null;
+    }
     final ownerUserId = await _currentUserId();
     final enabled = await _preferences.isEnabled(
       ownerUserId: ownerUserId,
       agentId: binding.agentId,
     );
-    if (!enabled) return null;
+    if (!enabled) {
+      await _dueFlags.acknowledgeDue(binding.task, dueAt);
+      return null;
+    }
     final results = await _controller.tick(
       now: dueAt,
       onlyAgentIds: <String>[binding.agentId],
       trigger: AgentRunTrigger.backgroundDue,
       beforeRun: beforeRun == null ? null : (_) => beforeRun(),
     );
+    await _dueFlags.acknowledgeDue(binding.task, dueAt);
     return results.isEmpty ? null : results.first;
   }
 }
