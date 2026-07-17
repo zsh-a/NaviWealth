@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_stream_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/chat/frb_chat_runner.dart';
+import 'package:naviwealth/app/agent_runtime/persistence/agent_runtime_chat_snapshot_store.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/runtime/chat_agent.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_system_prompt.dart'
@@ -329,6 +330,93 @@ void main() {
         },
       },
     ]);
+  });
+
+  test('resumes completed tool results from a persisted chat snapshot', () async {
+    final store = InMemoryAgentRuntimeChatSnapshotStore();
+    await store.save(
+      snapshot: _chatRecoverySnapshot(dispatchStatus: 'completed'),
+    );
+    final streamBridge = _streamBridge(
+      _FakeLlmBridge(),
+      events: const <String>[
+        '{"kind":"round_finished","response":{"content":"recovered","finish_reason":"stop"},"round":2,"metadata":{"status":"completed","chat_state":{"protocol_version":"agent.v1","turn_id":"turn-recovery","provider":"mock","model":"mock","messages":[],"round":2,"pending_tool_calls":[]}}}',
+        '{"kind":"done","round":2,"metadata":{"stop_reason":"end_turn"}}',
+      ],
+    );
+    var toolCalls = 0;
+    final runner = FrbChatRunner(
+      streamBridge: streamBridge,
+      snapshotStore: store,
+      toolLineHandler: (_) async {
+        toolCalls += 1;
+        throw StateError('completed tools must not replay');
+      },
+    );
+
+    final events = await runner
+        .runTurn(
+          const ChatAgentTurnRequest(
+            turnId: 'turn-recovery',
+            messages: <ChatAgentMessage>[
+              ChatAgentMessage(role: 'user', content: 'resume'),
+            ],
+          ),
+        )
+        .toList();
+
+    expect(toolCalls, 0);
+    expect(streamBridge.requests, hasLength(1));
+    final metadata =
+        streamBridge.requests.single['metadata'] as Map<String, Object?>;
+    expect(metadata['chat_state'], isA<Map<String, Object?>>());
+    expect(metadata['tool_results'], hasLength(1));
+    expect(events.whereType<TextEvent>().single.text, 'recovered');
+    expect(await store.loadResumable('turn-recovery'), isNull);
+  });
+
+  test('does not replay interrupted at-most-once tools', () async {
+    final store = InMemoryAgentRuntimeChatSnapshotStore();
+    await store.save(
+      snapshot: _chatRecoverySnapshot(
+        dispatchStatus: 'dispatching',
+        replayPolicy: 'at_most_once',
+        includeResult: false,
+      ),
+    );
+    final streamBridge = _streamBridge(
+      _FakeLlmBridge(),
+      events: const <String>[],
+    );
+    var toolCalls = 0;
+    final runner = FrbChatRunner(
+      streamBridge: streamBridge,
+      snapshotStore: store,
+      toolLineHandler: (_) async {
+        toolCalls += 1;
+        return '{}';
+      },
+    );
+
+    final events = await runner
+        .runTurn(
+          const ChatAgentTurnRequest(
+            turnId: 'turn-recovery',
+            messages: <ChatAgentMessage>[
+              ChatAgentMessage(role: 'user', content: 'resume'),
+            ],
+          ),
+        )
+        .toList();
+
+    expect(toolCalls, 0);
+    expect(streamBridge.requests, isEmpty);
+    expect(
+      events.whereType<ErrorEvent>().single.code,
+      'frb_chat_at_most_once_interrupted',
+    );
+    expect(events.last, isA<DoneEvent>());
+    expect(await store.loadResumable('turn-recovery'), isNull);
   });
 
   test('reports a missing FRB tool host without continuing', () async {
@@ -702,6 +790,56 @@ void main() {
     expect((events[1] as ErrorEvent).code, 'frb_llm_stream_error');
     expect((events[2] as DoneEvent).stopReason, 'error');
   });
+}
+
+Map<String, Object?> _chatRecoverySnapshot({
+  required String dispatchStatus,
+  String replayPolicy = 'safe_retry',
+  bool includeResult = true,
+}) {
+  return <String, Object?>{
+    'protocol_version': 'agent.v1',
+    'snapshot_version': 1,
+    'status': 'requires_tool_results',
+    'state': <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'turn_id': 'turn-recovery',
+      'provider': 'mock',
+      'model': 'mock',
+      'messages': const <Object?>[],
+      'round': 1,
+      'pending_tool_calls': const <Object?>[
+        <String, Object?>{
+          'id': 'call-recovery',
+          'name': 'write_task',
+          'input': <String, Object?>{'id': 'task-1'},
+        },
+      ],
+    },
+    'tool_dispatches': <Object?>[
+      <String, Object?>{
+        'call': const <String, Object?>{
+          'id': 'call-recovery',
+          'name': 'write_task',
+          'input': <String, Object?>{'id': 'task-1'},
+        },
+        'replay_policy': replayPolicy,
+        'status': dispatchStatus,
+        if (includeResult)
+          'result': const <String, Object?>{
+            'tool_call_id': 'call-recovery',
+            'tool_name': 'write_task',
+            'output': <String, Object?>{'ok': true},
+            'is_error': false,
+            'outcome': <String, Object?>{
+              'status': 'ok',
+              'retryable': false,
+              'details': <String, Object?>{},
+            },
+          },
+      },
+    ],
+  };
 }
 
 _RecordingStreamBridge _streamBridge(

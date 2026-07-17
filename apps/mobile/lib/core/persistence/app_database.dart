@@ -134,7 +134,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 41;
+  int get schemaVersion => 42;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -156,6 +156,7 @@ class AppDatabase extends _$AppDatabase {
       await _createKnowledgeInboxTriage(this);
       await _createAgentRuns(this);
       await _createAgentRuntimeCheckpoints(this);
+      await _createAgentRuntimeChatSnapshots(this);
       await _createAgentArtifacts(this);
       await _createDataMaintenanceRuns(this);
       await _createAgentPreferences(this);
@@ -663,6 +664,11 @@ class AppDatabase extends _$AppDatabase {
           column: 'presentation_json',
           definition: "TEXT NOT NULL DEFAULT '{}'",
         );
+      }
+      // v41 -> v42: durable chat-turn snapshots and tool dispatch journals
+      // allow Android process recovery without replaying uncertain writes.
+      if (from < 42) {
+        await _createAgentRuntimeChatSnapshots(this);
       }
     },
     beforeOpen: (details) async {

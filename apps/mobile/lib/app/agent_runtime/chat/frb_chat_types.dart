@@ -31,6 +31,9 @@ class FrbStreamRoundState {
   Map<String, Object?>? get chatState =>
       frbObjectOrNull(_finishMetadata['chat_state']);
 
+  Map<String, Object?>? get chatSnapshot =>
+      frbObjectOrNull(_finishMetadata['chat_snapshot']);
+
   String? get doneStopReason => _doneStopReason;
 
   TokenUsage? get usage => _usage ?? frbUsageFromResponse(_response);

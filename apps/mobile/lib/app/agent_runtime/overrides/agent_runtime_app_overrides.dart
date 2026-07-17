@@ -10,11 +10,14 @@ import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_profile_compl
 import 'package:naviwealth/app/agent_runtime/bridges/frb_llm_connectivity_probe.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/app/agent_runtime/chat/frb_chat_runner.dart';
+import 'package:naviwealth/app/agent_runtime/persistence/drift_agent_runtime_chat_snapshot_store.dart';
 import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_runner.dart';
 import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_host.dart';
 import 'package:naviwealth/app/agent_runtime/trace/agent_runtime_trace_recorder.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart'
     as llm_credentials;
+import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/ai_chat/data/providers.dart'
     as ai_chat_providers;
 import 'package:naviwealth/features/finance/activity/data/activity_entry_insight_client.dart';
@@ -53,6 +56,10 @@ List<Override> agentRuntimeAppProviderOverrides() => <Override>[
           tool.toJson(),
       ],
       toolLineHandler: toolHost.handleLine,
+      snapshotStore: DriftAgentRuntimeChatSnapshotStore(
+        databaseReader: () => ref.read(appDatabaseProvider.future),
+        ownerUserIdReader: ref.watch(currentUserIdProvider),
+      ),
     );
   }),
   activityEntryInsightClientProvider.overrideWith((ref) {

@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 41', () {
-      expect(db.schemaVersion, 41);
+    test('is 42', () {
+      expect(db.schemaVersion, 42);
     });
   });
 
@@ -316,6 +316,27 @@ void main() {
           'effect_kind',
           'effect_id',
           'effect_payload_json',
+          'created_at',
+          'updated_at',
+          'expires_at',
+        ]),
+      );
+    });
+
+    test('agent_runtime_chat_snapshots table has recovery columns', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(agent_runtime_chat_snapshots)')
+          .get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll(<String>[
+          'owner_user_id',
+          'turn_id',
+          'snapshot_version',
+          'revision',
+          'status',
+          'snapshot_json',
           'created_at',
           'updated_at',
           'expires_at',

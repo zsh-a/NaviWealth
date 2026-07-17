@@ -84,6 +84,12 @@ Future<void> _createAgentRuntimeCheckpoints(AppDatabase db) async {
   }
 }
 
+Future<void> _createAgentRuntimeChatSnapshots(AppDatabase db) async {
+  for (final stmt in agentRuntimeChatSnapshotDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
 Future<void> _createAgentArtifacts(AppDatabase db) async {
   for (final stmt in agentArtifactDdl) {
     await db.customStatement(stmt);

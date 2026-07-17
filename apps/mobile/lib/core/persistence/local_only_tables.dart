@@ -11,6 +11,8 @@
 /// - `agent_runtime_checkpoints` — resumable Rust-owned runtime snapshots and
 ///   host-effect journals. These are high-frequency local execution records,
 ///   never product sync objects.
+/// - `agent_runtime_chat_snapshots` — versioned chat-turn state and tool
+///   dispatch journals used to recover after Android process reclamation.
 /// - `options_opportunity_cache` — scoring engine output. Each device
 ///   computes its own opportunities from its own chain pull
 ///   (`docs/domains/options-income.md` §6.2).
@@ -137,6 +139,39 @@ const List<String> agentRuntimeCheckpointDdl = [
   createAgentRuntimeCheckpoints,
   createAgentRuntimeCheckpointsPendingIndex,
   createAgentRuntimeCheckpointsUpdatedIndex,
+];
+
+const String createAgentRuntimeChatSnapshots = '''
+CREATE TABLE IF NOT EXISTS agent_runtime_chat_snapshots (
+  owner_user_id    TEXT NOT NULL,
+  turn_id          TEXT NOT NULL,
+  snapshot_version INTEGER NOT NULL,
+  revision         INTEGER NOT NULL DEFAULT 0,
+  status           TEXT NOT NULL,
+  snapshot_json    TEXT NOT NULL,
+  created_at       INTEGER NOT NULL,
+  updated_at       INTEGER NOT NULL,
+  expires_at       INTEGER,
+  PRIMARY KEY (owner_user_id, turn_id),
+  CHECK (revision >= 0),
+  CHECK (status IN (
+    'ready_for_model',
+    'requires_tool_results',
+    'completed',
+    'cancelled',
+    'failed'
+  ))
+)
+''';
+
+const String createAgentRuntimeChatSnapshotsPendingIndex = '''
+CREATE INDEX IF NOT EXISTS idx_agent_runtime_chat_snapshots_pending
+  ON agent_runtime_chat_snapshots(owner_user_id, status, updated_at DESC)
+''';
+
+const List<String> agentRuntimeChatSnapshotDdl = <String>[
+  createAgentRuntimeChatSnapshots,
+  createAgentRuntimeChatSnapshotsPendingIndex,
 ];
 
 const String createAgentArtifacts = '''

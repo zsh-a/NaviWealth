@@ -1279,7 +1279,38 @@ void main() {
         .get();
     expect(tables, hasLength(1));
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 41);
+    expect(version.read<int>('user_version'), 42);
+  });
+
+  test('migrates v41 by creating chat runtime snapshots', () async {
+    final dir = await Directory.systemTemp.createTemp(
+      'naviwealth_chat_snapshot_migration_',
+    );
+    addTearDown(() async {
+      if (await dir.exists()) await dir.delete(recursive: true);
+    });
+    final file = File('${dir.path}/naviwealth.db');
+    final legacy = sqlite3.open(file.path);
+    try {
+      legacy.execute('PRAGMA user_version = 41');
+    } finally {
+      legacy.close();
+    }
+
+    final db = AppDatabase(
+      DatabaseConnection(NativeDatabase(file, logStatements: false)),
+    );
+    addTearDown(db.close);
+
+    final tables = await db
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'table' "
+          "AND name = 'agent_runtime_chat_snapshots'",
+        )
+        .get();
+    expect(tables, hasLength(1));
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.read<int>('user_version'), 42);
   });
 
   test('migrates v23 options journal rows through v26 additions', () async {
@@ -1815,7 +1846,7 @@ void main() {
       expect(row.readNullable<String>('operation_token'), equals(null));
       expect(row.read<int>('invocation_started'), 0);
       final version = await db.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 41);
+      expect(version.read<int>('user_version'), 42);
     },
   );
 }

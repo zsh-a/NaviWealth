@@ -13,6 +13,7 @@ import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_stream_br
 import 'package:naviwealth/app/agent_runtime/chat/frb_chat_event.dart';
 import 'package:naviwealth/app/agent_runtime/chat/frb_chat_trace_mapper.dart';
 import 'package:naviwealth/app/agent_runtime/chat/frb_chat_types.dart';
+import 'package:naviwealth/app/agent_runtime/persistence/agent_runtime_chat_snapshot_store.dart';
 import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/progress/long_task_progress.dart';
@@ -29,11 +30,13 @@ class FrbChatRunner implements ChatAgent {
     required AgentRuntimeLlmStreamBridge streamBridge,
     List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
     AgentRuntimeToolLineHandler? toolLineHandler,
+    AgentRuntimeChatSnapshotStore? snapshotStore,
     int maxToolRounds = kMaxToolRounds,
     String agentId = kFrbChatRunnerAgentId,
   }) : _streamBridge = streamBridge,
        _toolsReader = (() => tools),
        _toolLineHandler = toolLineHandler,
+       _snapshotStore = snapshotStore,
        _maxToolRounds = maxToolRounds,
        _agentId = agentId;
 
@@ -41,17 +44,20 @@ class FrbChatRunner implements ChatAgent {
     required AgentRuntimeLlmStreamBridge streamBridge,
     required List<Map<String, Object?>> Function() toolsReader,
     AgentRuntimeToolLineHandler? toolLineHandler,
+    AgentRuntimeChatSnapshotStore? snapshotStore,
     int maxToolRounds = kMaxToolRounds,
     String agentId = kFrbChatRunnerAgentId,
   }) : _streamBridge = streamBridge,
        _toolsReader = toolsReader,
        _toolLineHandler = toolLineHandler,
+       _snapshotStore = snapshotStore,
        _maxToolRounds = maxToolRounds,
        _agentId = agentId;
 
   final AgentRuntimeLlmStreamBridge _streamBridge;
   final List<Map<String, Object?>> Function() _toolsReader;
   final AgentRuntimeToolLineHandler? _toolLineHandler;
+  final AgentRuntimeChatSnapshotStore? _snapshotStore;
   final int _maxToolRounds;
   final String _agentId;
 
@@ -114,6 +120,35 @@ class FrbChatRunner implements ChatAgent {
     var roundsUsed = 0;
     Map<String, Object?>? chatState;
     var toolResults = const <Map<String, Object?>>[];
+    AgentRuntimeChatSnapshotRecord? snapshotRecord;
+    final snapshotStore = _snapshotStore;
+    final turnId = request.turnId;
+    if (snapshotStore != null && turnId != null && turnId.isNotEmpty) {
+      snapshotRecord = await snapshotStore.loadResumable(turnId);
+      if (snapshotRecord case final record?) {
+        final recovery = await _recoverChatSnapshot(
+          record: record,
+          store: snapshotStore,
+          toolLineHandler: _toolLineHandler,
+        );
+        snapshotRecord = recovery.record;
+        for (final event in recovery.events) {
+          yield event;
+        }
+        if (recovery.errorCode case final code?) {
+          yield ErrorEvent(recovery.errorMessage!, code: code);
+          yield DoneEvent(stopReason: 'error', rounds: recovery.round);
+          return;
+        }
+        if (recovery.awaitingUser) {
+          yield DoneEvent(stopReason: 'end_turn', rounds: recovery.round);
+          return;
+        }
+        chatState = recovery.chatState;
+        toolResults = recovery.toolResults;
+        roundsUsed = recovery.round;
+      }
+    }
     while (true) {
       final nextRound = roundsUsed + 1;
       roundsUsed = nextRound;
@@ -303,6 +338,23 @@ class FrbChatRunner implements ChatAgent {
         status: AiSpanStatus.ok,
       );
       if (state.status != 'requires_tool_results') {
+        final terminalState = state.chatState;
+        if (snapshotStore != null &&
+            turnId != null &&
+            turnId.isNotEmpty &&
+            terminalState != null) {
+          final terminalSnapshot =
+              state.chatSnapshot ??
+              _buildTerminalChatSnapshot(
+                state: terminalState,
+                status: 'completed',
+                stopReason: state.doneStopReason ?? state.stopReason,
+              );
+          snapshotRecord = await snapshotStore.save(
+            snapshot: terminalSnapshot,
+            expectedRevision: snapshotRecord?.revision,
+          );
+        }
         yield DoneEvent(
           stopReason: state.doneStopReason ?? state.stopReason,
           rounds: roundsUsed,
@@ -317,6 +369,20 @@ class FrbChatRunner implements ChatAgent {
         );
         yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
         return;
+      }
+      Map<String, Object?>? activeSnapshot;
+      if (snapshotStore != null && turnId != null && turnId.isNotEmpty) {
+        activeSnapshot =
+            state.chatSnapshot ??
+            _buildPendingChatSnapshot(
+              state: chatState,
+              calls: state.requiredToolCalls,
+              tools: tools,
+            );
+        snapshotRecord = await snapshotStore.save(
+          snapshot: activeSnapshot,
+          expectedRevision: snapshotRecord?.revision,
+        );
       }
 
       final toolLineHandler = _toolLineHandler;
@@ -348,6 +414,17 @@ class FrbChatRunner implements ChatAgent {
           for (final batchCall in readOnlyBatch) {
             final toolStart = DateTime.now().toUtc();
             yield _toolProgress(batchCall, toolStart);
+            if (activeSnapshot != null) {
+              activeSnapshot = _withDispatchState(
+                activeSnapshot,
+                callId: batchCall.stringId,
+                status: 'dispatching',
+              );
+              snapshotRecord = await snapshotStore!.save(
+                snapshot: activeSnapshot,
+                expectedRevision: snapshotRecord?.revision,
+              );
+            }
             outcomes.add(
               _dispatchChatTool(
                 dispatcher: dispatcher,
@@ -360,11 +437,34 @@ class FrbChatRunner implements ChatAgent {
             yield _toolSpan(outcome, parentId: roundId, round: roundsUsed);
             yield _toolResult(outcome);
             resultBlocks.add(outcome.result.toChatToolResult());
+            if (activeSnapshot != null) {
+              activeSnapshot = _withDispatchState(
+                activeSnapshot,
+                callId: outcome.call.stringId,
+                status: 'completed',
+                result: outcome.result.toChatToolResult(),
+              );
+              snapshotRecord = await snapshotStore!.save(
+                snapshot: activeSnapshot,
+                expectedRevision: snapshotRecord?.revision,
+              );
+            }
           }
           readOnlyBatch.clear();
         }
         final toolStart = DateTime.now().toUtc();
         yield _toolProgress(call, toolStart);
+        if (activeSnapshot != null) {
+          activeSnapshot = _withDispatchState(
+            activeSnapshot,
+            callId: call.stringId,
+            status: 'dispatching',
+          );
+          snapshotRecord = await snapshotStore!.save(
+            snapshot: activeSnapshot,
+            expectedRevision: snapshotRecord?.revision,
+          );
+        }
         final outcome = await _dispatchChatTool(
           dispatcher: dispatcher,
           call: call,
@@ -373,6 +473,18 @@ class FrbChatRunner implements ChatAgent {
         yield _toolSpan(outcome, parentId: roundId, round: roundsUsed);
         yield _toolResult(outcome);
         resultBlocks.add(outcome.result.toChatToolResult());
+        if (activeSnapshot != null) {
+          activeSnapshot = _withDispatchState(
+            activeSnapshot,
+            callId: call.stringId,
+            status: 'completed',
+            result: outcome.result.toChatToolResult(),
+          );
+          snapshotRecord = await snapshotStore!.save(
+            snapshot: activeSnapshot,
+            expectedRevision: snapshotRecord?.revision,
+          );
+        }
         if (call.name == kAskUserToolName && !outcome.result.isError) {
           awaitingUser = true;
         }
@@ -382,6 +494,17 @@ class FrbChatRunner implements ChatAgent {
         for (final batchCall in readOnlyBatch) {
           final toolStart = DateTime.now().toUtc();
           yield _toolProgress(batchCall, toolStart);
+          if (activeSnapshot != null) {
+            activeSnapshot = _withDispatchState(
+              activeSnapshot,
+              callId: batchCall.stringId,
+              status: 'dispatching',
+            );
+            snapshotRecord = await snapshotStore!.save(
+              snapshot: activeSnapshot,
+              expectedRevision: snapshotRecord?.revision,
+            );
+          }
           outcomes.add(
             _dispatchChatTool(
               dispatcher: dispatcher,
@@ -394,6 +517,18 @@ class FrbChatRunner implements ChatAgent {
           yield _toolSpan(outcome, parentId: roundId, round: roundsUsed);
           yield _toolResult(outcome);
           resultBlocks.add(outcome.result.toChatToolResult());
+          if (activeSnapshot != null) {
+            activeSnapshot = _withDispatchState(
+              activeSnapshot,
+              callId: outcome.call.stringId,
+              status: 'completed',
+              result: outcome.result.toChatToolResult(),
+            );
+            snapshotRecord = await snapshotStore!.save(
+              snapshot: activeSnapshot,
+              expectedRevision: snapshotRecord?.revision,
+            );
+          }
         }
       }
       if (awaitingUser) {
@@ -403,6 +538,256 @@ class FrbChatRunner implements ChatAgent {
       toolResults = resultBlocks;
     }
   }
+}
+
+Future<_ChatSnapshotRecovery> _recoverChatSnapshot({
+  required AgentRuntimeChatSnapshotRecord record,
+  required AgentRuntimeChatSnapshotStore store,
+  required AgentRuntimeToolLineHandler? toolLineHandler,
+}) async {
+  var currentRecord = record;
+  var snapshot = Map<String, Object?>.from(record.snapshot);
+  final state = chatSnapshotObject(snapshot['state'], 'snapshot.state');
+  final round = state['round'] is int ? state['round']! as int : 0;
+  final events = <AiChatEvent>[];
+  final results = <Map<String, Object?>>[];
+  var awaitingUser = false;
+  final rawDispatches = snapshot['tool_dispatches'];
+  if (rawDispatches is! List) {
+    return _ChatSnapshotRecovery.failed(
+      record: record,
+      round: round,
+      code: 'frb_chat_snapshot_corrupt',
+      message: 'Persisted chat snapshot has no tool dispatch journal',
+    );
+  }
+  for (final value in rawDispatches) {
+    final dispatch = chatSnapshotObject(value, 'snapshot.tool_dispatch');
+    final callObject = chatSnapshotObject(
+      dispatch['call'],
+      'snapshot.tool_dispatch.call',
+    );
+    final call = AgentRuntimeToolCall(
+      id: callObject['id'] ?? '',
+      name: frbString(callObject['name']),
+      input: callObject['input'],
+    );
+    final status = frbString(dispatch['status']);
+    if (status == 'completed') {
+      final result = chatSnapshotObject(
+        dispatch['result'],
+        'snapshot.tool_dispatch.result',
+      );
+      results.add(result);
+      if (call.name == kAskUserToolName && result['is_error'] != true) {
+        awaitingUser = true;
+      }
+      continue;
+    }
+    final replayPolicy = frbString(dispatch['replay_policy']);
+    if (status == 'interrupted' ||
+        (status == 'dispatching' && replayPolicy == 'at_most_once')) {
+      snapshot = _withDispatchState(
+        snapshot,
+        callId: call.stringId,
+        status: 'interrupted',
+      );
+      snapshot = <String, Object?>{
+        ...snapshot,
+        'status': 'failed',
+        'error': <String, Object?>{
+          'code': 'interrupted_at_most_once',
+          'message': "Tool '${call.name}' may already have executed",
+        },
+      };
+      currentRecord = await store.save(
+        snapshot: snapshot,
+        expectedRevision: currentRecord.revision,
+      );
+      return _ChatSnapshotRecovery.failed(
+        record: currentRecord,
+        round: round,
+        code: 'frb_chat_at_most_once_interrupted',
+        message:
+            "Tool '${call.name}' was interrupted after dispatch and cannot "
+            'be replayed safely.',
+      );
+    }
+    if (toolLineHandler == null) {
+      return _ChatSnapshotRecovery.failed(
+        record: currentRecord,
+        round: round,
+        code: 'frb_chat_tool_host_unavailable',
+        message: 'Cannot recover chat tools without a tool host',
+      );
+    }
+    final startedAt = DateTime.now().toUtc();
+    events.add(_toolProgress(call, startedAt));
+    snapshot = _withDispatchState(
+      snapshot,
+      callId: call.stringId,
+      status: 'dispatching',
+    );
+    currentRecord = await store.save(
+      snapshot: snapshot,
+      expectedRevision: currentRecord.revision,
+    );
+    final outcome = await _dispatchChatTool(
+      dispatcher: AgentRuntimeToolDispatcher(handler: toolLineHandler),
+      call: call,
+      startedAt: startedAt,
+    );
+    events
+      ..add(_toolSpan(outcome, parentId: 'r$round', round: round))
+      ..add(_toolResult(outcome));
+    final result = outcome.result.toChatToolResult();
+    results.add(result);
+    snapshot = _withDispatchState(
+      snapshot,
+      callId: call.stringId,
+      status: 'completed',
+      result: result,
+    );
+    currentRecord = await store.save(
+      snapshot: snapshot,
+      expectedRevision: currentRecord.revision,
+    );
+    if (call.name == kAskUserToolName && !outcome.result.isError) {
+      awaitingUser = true;
+    }
+  }
+  return _ChatSnapshotRecovery(
+    record: currentRecord,
+    chatState: state,
+    toolResults: results,
+    events: events,
+    round: round,
+    awaitingUser: awaitingUser,
+  );
+}
+
+Map<String, Object?> _buildPendingChatSnapshot({
+  required Map<String, Object?> state,
+  required List<AgentRuntimeToolCall> calls,
+  required List<Map<String, Object?>> tools,
+}) {
+  final replayPolicies = <String, String>{
+    for (final tool in tools)
+      if (tool['name'] case final String name)
+        name:
+            tool['replay_policy'] as String? ??
+            (tool['risk'] == 'read_only' ? 'safe_retry' : 'at_most_once'),
+  };
+  return <String, Object?>{
+    'protocol_version': 'agent.v1',
+    'snapshot_version': kAgentRuntimeChatSnapshotVersion,
+    'status': 'requires_tool_results',
+    'state': state,
+    'tool_dispatches': <Object?>[
+      for (final call in calls)
+        <String, Object?>{
+          'call': <String, Object?>{
+            'id': call.id,
+            'name': call.name,
+            'input': call.input,
+          },
+          'replay_policy': replayPolicies[call.name] ?? 'at_most_once',
+          'status': 'pending',
+        },
+    ],
+  };
+}
+
+Map<String, Object?> _buildTerminalChatSnapshot({
+  required Map<String, Object?> state,
+  required String status,
+  required String stopReason,
+}) {
+  return <String, Object?>{
+    'protocol_version': 'agent.v1',
+    'snapshot_version': kAgentRuntimeChatSnapshotVersion,
+    'status': status,
+    'state': state,
+    'tool_dispatches': const <Object?>[],
+    'stop_reason': stopReason,
+  };
+}
+
+Map<String, Object?> _withDispatchState(
+  Map<String, Object?> snapshot, {
+  required String callId,
+  required String status,
+  Map<String, Object?>? result,
+}) {
+  final rawDispatches = snapshot['tool_dispatches'];
+  if (rawDispatches is! List) {
+    throw const AgentRuntimeChatSnapshotException(
+      AgentRuntimeChatSnapshotErrorCode.corrupt,
+      'chat snapshot tool_dispatches must be an array',
+    );
+  }
+  var found = false;
+  final dispatches = <Object?>[
+    for (final value in rawDispatches)
+      (() {
+        final dispatch = Map<String, Object?>.from(
+          chatSnapshotObject(value, 'snapshot.tool_dispatch'),
+        );
+        final call = chatSnapshotObject(
+          dispatch['call'],
+          'snapshot.tool_dispatch.call',
+        );
+        if ((call['id']?.toString() ?? '') != callId) return dispatch;
+        found = true;
+        dispatch['status'] = status;
+        if (result == null) {
+          dispatch.remove('result');
+        } else {
+          dispatch['result'] = result;
+        }
+        return dispatch;
+      })(),
+  ];
+  if (!found) {
+    throw AgentRuntimeChatSnapshotException(
+      AgentRuntimeChatSnapshotErrorCode.corrupt,
+      'chat snapshot does not contain tool call $callId',
+    );
+  }
+  return <String, Object?>{...snapshot, 'tool_dispatches': dispatches};
+}
+
+final class _ChatSnapshotRecovery {
+  const _ChatSnapshotRecovery({
+    required this.record,
+    required this.chatState,
+    required this.toolResults,
+    required this.events,
+    required this.round,
+    required this.awaitingUser,
+  }) : errorCode = null,
+       errorMessage = null;
+
+  const _ChatSnapshotRecovery.failed({
+    required this.record,
+    required this.round,
+    required String code,
+    required String message,
+  }) : chatState = null,
+       toolResults = const <Map<String, Object?>>[],
+       events = const <AiChatEvent>[],
+       awaitingUser = false,
+       errorCode = code,
+       errorMessage = message;
+
+  final AgentRuntimeChatSnapshotRecord record;
+  final Map<String, Object?>? chatState;
+  final List<Map<String, Object?>> toolResults;
+  final List<AiChatEvent> events;
+  final int round;
+  final bool awaitingUser;
+  final String? errorCode;
+  final String? errorMessage;
 }
 
 Set<String> _readOnlyToolNames(List<Map<String, Object?>> tools) {
