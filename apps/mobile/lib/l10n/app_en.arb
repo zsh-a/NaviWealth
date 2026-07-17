@@ -809,6 +809,56 @@
   "@lifeSignalAgentTitle": { "description": "Life signal: agent result fallback title" },
   "lifeSignalAgentSubtitle": "Open Finance brief",
   "@lifeSignalAgentSubtitle": { "description": "Life signal: agent result subtitle" },
+  "lifeSignalDetailTitle": "Signal details",
+  "@lifeSignalDetailTitle": { "description": "Title of the Life signal evidence sheet" },
+  "lifeSignalEvidenceTitle": "Local evidence",
+  "@lifeSignalEvidenceTitle": { "description": "Evidence section in the Life signal sheet" },
+  "lifeSignalRecoveryScoreEvidence": "Recovery score: {score}",
+  "@lifeSignalRecoveryScoreEvidence": {
+    "description": "Recovery evidence shown before creating an action",
+    "placeholders": { "score": { "type": "String" } }
+  },
+  "lifeSignalCreateAction": "Create action",
+  "@lifeSignalCreateAction": { "description": "Create an ExecutionOS action from a Life signal" },
+  "lifeSignalEnableExecution": "Enable ExecutionOS",
+  "@lifeSignalEnableExecution": { "description": "Open domain settings before converting a signal to an action" },
+  "lifeSignalOpenSource": "Open source",
+  "@lifeSignalOpenSource": { "description": "Open the domain surface that produced a Life signal" },
+  "lifeSignalActionConfirmTitle": "Create this action?",
+  "@lifeSignalActionConfirmTitle": { "description": "Confirmation title for a Life-to-Execution proposal" },
+  "lifeSignalActionConfirmBody": "{title}\n\nSource: {source}",
+  "@lifeSignalActionConfirmBody": {
+    "description": "Confirmation summary for a Life-to-Execution proposal",
+    "placeholders": {
+      "title": { "type": "String" },
+      "source": { "type": "String" }
+    }
+  },
+  "lifeSignalActionCreated": "Action created with its source evidence attached.",
+  "@lifeSignalActionCreated": { "description": "Success message after applying a Life-to-Execution proposal" },
+  "lifeSignalActionFailed": "Could not create action: {error}",
+  "@lifeSignalActionFailed": {
+    "description": "Failure message for a Life-to-Execution proposal",
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "lifeSignalOpenExecution": "Open Execution",
+  "@lifeSignalOpenExecution": { "description": "Open Execution Today after creating a Life action" },
+  "lifeSignalActionReviewFinance": "Review today's finance activity",
+  "@lifeSignalActionReviewFinance": { "description": "Suggested action title for a Finance day signal" },
+  "lifeSignalActionProtectRecovery": "Protect recovery today",
+  "@lifeSignalActionProtectRecovery": { "description": "Suggested action title for a strained recovery signal" },
+  "lifeSignalActionReviewKnowledge": "Review the Knowledge inbox",
+  "@lifeSignalActionReviewKnowledge": { "description": "Suggested action title for a Knowledge inbox signal" },
+  "lifeSignalActionReviewAgent": "Review the latest Finance insight",
+  "@lifeSignalActionReviewAgent": { "description": "Suggested action title for a Finance agent signal" },
+  "lifeSignalActionNote": "From {source}: {detail}",
+  "@lifeSignalActionNote": {
+    "description": "Action note preserving the source signal evidence",
+    "placeholders": {
+      "source": { "type": "String" },
+      "detail": { "type": "String" }
+    }
+  },
   "financeAgentResultsLoading": "Checking agent results",
   "@financeAgentResultsLoading": { "description": "Home FinanceOS agent result panel loading title" },
   "financeAgentResultsLoadingBody": "Recent FinanceOS reviews are loading.",

@@ -103,6 +103,9 @@ void main() {
         'test/flow/rebalance_flow_test.dart',
         'test/flow/options_income_flow_test.dart',
         'test/flow/ai_chat_flow_test.dart',
+        'test/flow/domain_opt_in_flow_test.dart',
+        'test/flow/knowledge_capture_flow_test.dart',
+        'test/flow/life_execution_loop_flow_test.dart',
       ];
 
       for (final path in flowFiles) {
@@ -391,13 +394,18 @@ void main() {
       final config = File(
         '${appRoot.path}/test/golden/flutter_test_config.dart',
       );
+      final setup = File('${appRoot.path}/test/golden/_golden_setup.dart');
 
       expect(config.existsSync(), isTrue);
-      final text = config.readAsStringSync();
-      expect(text, contains('skipGoldenAssertion'));
-      expect(text, contains('Platform.isLinux'));
-      expect(text, contains('autoUpdateGoldenFiles'));
-      expect(text, contains('enableRealShadows: true'));
+      expect(setup.existsSync(), isTrue);
+      final configText = config.readAsStringSync();
+      final setupText = setup.readAsStringSync();
+      expect(configText, isNot(contains('package:golden_toolkit')));
+      expect(configText, contains('await testMain()'));
+      expect(setupText, contains('Platform.isLinux'));
+      expect(setupText, contains('autoUpdateGoldenFiles'));
+      expect(setupText, contains('debugDisableShadows = false'));
+      expect(setupText, contains('matchesGoldenFile'));
     });
 
     test('golden inventory stays documented', () {
@@ -459,7 +467,7 @@ void main() {
 
       expect(strategy.existsSync(), isTrue);
       final text = strategy.readAsStringSync();
-      expect(text, contains('All 12 task flows are seeded'));
+      expect(text, contains('All 15 task flows are seeded'));
       expect(text, contains('finance_ledger_e2e_test.dart'));
       expect(text, contains('P1-G E2E-1..5 markers'));
       expect(text, contains('There is no known-failing allowlist'));

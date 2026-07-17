@@ -16,6 +16,7 @@ class LifeEvent {
     this.params = const <String>[],
     this.routePath,
     this.priority = LifeSignalPriority.normal,
+    this.actionSuggestion,
   });
 
   final String id;
@@ -25,6 +26,33 @@ class LifeEvent {
   final List<String> params;
   final String? routePath;
   final LifeSignalPriority priority;
+
+  /// Optional, reviewable bridge from this cross-domain signal into
+  /// ExecutionOS. The Life UI turns it into an `execution_action` proposal;
+  /// this object never writes Execution rows directly.
+  final LifeActionSuggestion? actionSuggestion;
+}
+
+/// Domain-neutral metadata for converting a Life signal into a concrete next
+/// action. Visible copy is resolved by the Life UI so it stays localized.
+@immutable
+class LifeActionSuggestion {
+  const LifeActionSuggestion({
+    required this.template,
+    required this.sourceRowFamily,
+    this.sourceRowId,
+  });
+
+  final LifeActionTemplate template;
+  final String sourceRowFamily;
+  final String? sourceRowId;
+}
+
+enum LifeActionTemplate {
+  reviewFinanceActivity,
+  protectRecovery,
+  reviewKnowledgeInbox,
+  reviewAgentInsight,
 }
 
 enum LifeSignalPriority { high, normal }

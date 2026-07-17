@@ -30,20 +30,46 @@ one domain's real user workflow; do not add untriggered domains.
 
 ## Priority Order
 
-### 1. Multi-Domain Foundation Convergence
+### 1. Cross-Domain User Loop Depth
 
-Make the current four-domain system coherent before adding new domains.
+The first production cross-domain loop is now complete:
 
-- Keep `DomainPack` as the single domain inventory.
-- Keep domain opt-in behavior centralized through `activeDomainPacksProvider`.
-- Ensure tools, prompts, shell specs, agents, and command palette entries
-  all derive from active packs.
-- Remove stale docs or code paths that still describe KnowledgeOS or
-  HealthOS as untriggered future domains.
+- Life Hub turns local Finance, Health, Knowledge, and agent state into
+  actionable signals.
+- Opening a signal shows the local evidence before offering an action.
+- The user explicitly confirms an existing `execution_action` proposal; the
+  resulting Execution Action keeps a domain-neutral source reference and the
+  evidence snapshot in its note/reason.
+- Execution Today owns completion, and Execution Review closes the visible
+  loop. If ExecutionOS is disabled, the flow routes through domain settings
+  instead of writing into an inactive domain.
+- `life_execution_loop_flow_test.dart` proves the Health recovery vertical
+  slice from signal through completed Review history.
 
-### 2. Task-Spine Completion
+Keep this as the canonical pattern: originating domains contribute evidence
+and suggested intent, `proposalApplierProvider` owns confirmed application,
+and ExecutionOS owns action lifecycle. Do not add a second cross-domain task
+store. Next, deepen outcome summaries and add representative Finance and
+Knowledge loop flows where they add behavior beyond the shared path.
 
-Grow task-level tests and product polish around durable user jobs, not pages:
+### 2. High-Quality Data Ingestion
+
+FinanceOS value is still limited by manual data entry. The ingest substrate
+and provider detection exist; the next step is expanding the real, redacted
+fixture corpus beyond Alipay and hardening provider-specific parsing:
+
+- Add representative WeChat Pay and bank debit/credit export fixtures only
+  from redacted real files or confirmed user demand.
+- Keep review and dedup explicit.
+- Do not call the LLM synchronously on capture/import save paths.
+- Treat imported data as draft until the user confirms it.
+
+### 3. Task-Spine Maintenance
+
+The stable task spine now covers 15 journeys: the original 12 Finance/global
+jobs plus optional-domain enablement, Knowledge capture, and the Life signal
+to Execution Review loop. Maintain task-level tests and product polish around
+durable user jobs, not pages:
 
 - Add account.
 - Import CSV or statement.
@@ -52,18 +78,9 @@ Grow task-level tests and product polish around durable user jobs, not pages:
 - Plan options income.
 - Backup, restore, and export.
 
-Each task should earn a flow test, a primary-surface golden where useful,
-and a targeted integration or contract test for its data path.
-
-### 3. High-Quality Data Ingestion
-
-FinanceOS value is limited by manual data entry. The ingest substrate exists;
-the next step is provider-specific parsing for real user files:
-
-- Start with the most common user-provided source.
-- Keep review and dedup explicit.
-- Do not call the LLM synchronously on capture/import save paths.
-- Treat imported data as draft until the user confirms it.
+New journeys should earn a flow test only when they represent a durable job,
+plus a primary-surface golden where useful and a targeted integration or
+contract test for the data path.
 
 ### 4. AI Evidence, Proposal, And Memory Quality
 
@@ -84,7 +101,8 @@ Device AI should be auditable by construction:
 Default-off observability should become useful for development and opt-in
 production diagnostics:
 
-- Wire the chosen crash backend behind `OptInCrashReporter`.
+- Sentry initialization is wired in `app/bootstrap.dart` behind
+  `OptInCrashReporter` and the user's diagnostics preference.
 - Surface sync and performance diagnostics in developer-facing views.
 - Keep payload capture disabled unless the user explicitly enables verbose
   local diagnostics.
@@ -115,10 +133,27 @@ installable and diagnosable before more native runtime is added:
 
 - Verify iOS and Android bundling paths.
 - Keep Web on stub behavior.
-- Provide model install and recovery UX.
+- Model download, verification, deletion, and recovery diagnostics are
+  available in the AI Models settings surface.
 - Test embedder fingerprint changes and vector invalidation.
 
-### 9. Engineering Debt Burn-Down
+### 9. Dependency Maintenance
+
+Maintenance pass completed on 2026-07-17:
+
+- Replaced discontinued `golden_toolkit` with Flutter's native
+  `matchesGoldenFile` matcher plus the repository's deterministic font,
+  platform, bounded-pump, and real-shadow harness.
+- Upgraded compatible runtime patches for Dio, Drift, Sentry, SQLite,
+  image/image picker, local auth, sharing, package info, logging, UUID, and
+  cross-file support.
+- Keep `flutter_riverpod` at 3.2.1 until the recorded resumed-provider
+  regression is fixed; keep `receive_sharing_intent` at 1.8.1 while the native
+  Rust plugin requires CocoaPods; keep `drift_dev` at 2.34.0 until its analyzer
+  requirement converges with Freezed. FRB beta and Forui upgrades require
+  targeted native/UI validation rather than blind version bumps.
+
+### 10. Engineering Debt Burn-Down
 
 Keep the ratchets moving down:
 
@@ -127,7 +162,7 @@ Keep the ratchets moving down:
 - Keep boundary lint gates green.
 - Prefer contract tests for cross-language or cross-domain seams.
 
-### 10. Completion Audit Discipline
+### 11. Completion Audit Discipline
 
 Before claiming a roadmap item done, prove it from current state:
 

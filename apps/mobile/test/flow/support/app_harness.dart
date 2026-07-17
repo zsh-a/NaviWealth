@@ -24,6 +24,8 @@ import 'package:naviwealth/app/share_intents/share_intent_service.dart';
 import 'package:naviwealth/core/ai/contracts/privacy_mode_provider.dart';
 import 'package:naviwealth/core/ai/write/providers.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
@@ -102,6 +104,10 @@ class FlowDataHarness {
   }
 
   Future<void> dispose() => db.close();
+
+  Future<void> enableDomains(Iterable<DomainScope> scopes) {
+    return DomainOptInStore(db).write(DomainOptIns(scopes.toSet()));
+  }
 }
 
 /// Boots `NaviWealthApp` on a phone-sized surface and pumps it to a
@@ -113,6 +119,7 @@ Future<void> bootApp(
   WidgetTester tester, {
   FlowSeed seed = const FlowSeed(),
   FlowDataHarness? liveData,
+  String initialLocation = '/',
   Map<String, Object> initialPrefs = const {},
   List<Override> extraOverrides = const [],
 }) async {
@@ -150,11 +157,10 @@ Future<void> bootApp(
         // routes, active-domain aggregators, and domain-owned provider
         // seams stay in sync.
         ...lifeOsDomainCompositionOverrides(),
-        // Task flows exercise FinanceOS jobs. Production now opens on the
-        // cross-domain Life hub, so pin the test router to Finance Today
-        // instead of making every Page Object depend on the hub UI.
+        // Most legacy task flows start on Finance Today. Cross-domain tasks
+        // pass `/life` or a domain route explicitly.
         appRouterProvider.overrideWith(
-          (ref) => buildAppRouter(ref, initialLocation: '/'),
+          (ref) => buildAppRouter(ref, initialLocation: initialLocation),
         ),
         // Data layer → deterministic streams. Seeded from [FlowSeed] so a
         // Task can assert on rendered balances without touching Drift.

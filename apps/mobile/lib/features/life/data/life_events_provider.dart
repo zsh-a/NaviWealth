@@ -42,6 +42,11 @@ final lifeEventsProvider = Provider<List<LifeEvent>>((ref) {
           params: [verdict!, ?score],
           routePath: HealthRoutes.today,
           priority: LifeSignalPriority.high,
+          actionSuggestion: LifeActionSuggestion(
+            template: LifeActionTemplate.protectRecovery,
+            sourceRowFamily: 'health:health_metrics',
+            sourceRowId: 'recovery:${_dayKey(now)}',
+          ),
         ),
       );
     }
@@ -115,6 +120,11 @@ final lifeEventsProvider = Provider<List<LifeEvent>>((ref) {
             template: LifeEventTemplate.financeDaySummary,
             params: ['${todayEntries.length}', '$expenseCount', '$incomeCount'],
             routePath: FinanceRoutes.activity,
+            actionSuggestion: LifeActionSuggestion(
+              template: LifeActionTemplate.reviewFinanceActivity,
+              sourceRowFamily: 'fin:journal_entries',
+              sourceRowId: 'day:${_dayKey(now)}',
+            ),
           ),
         );
       }
@@ -135,6 +145,11 @@ final lifeEventsProvider = Provider<List<LifeEvent>>((ref) {
           template: LifeEventTemplate.agentResult,
           params: [label],
           routePath: FinanceRoutes.home,
+          actionSuggestion: LifeActionSuggestion(
+            template: LifeActionTemplate.reviewAgentInsight,
+            sourceRowFamily: 'agent_artifacts',
+            sourceRowId: primary.id,
+          ),
         ),
       );
     }
@@ -152,6 +167,11 @@ final lifeEventsProvider = Provider<List<LifeEvent>>((ref) {
           template: LifeEventTemplate.knowledgeInbox,
           params: ['$count'],
           routePath: KnowledgeRoutes.inbox,
+          actionSuggestion: const LifeActionSuggestion(
+            template: LifeActionTemplate.reviewKnowledgeInbox,
+            sourceRowFamily: 'know:knowledge_notes',
+            sourceRowId: 'inbox',
+          ),
         ),
       );
     }
@@ -222,3 +242,10 @@ class LifeHeroSummary {
 final lifeWorkbenchDomainsProvider = Provider<List<DomainPack>>((ref) {
   return ref.watch(activeDomainPacksProvider);
 });
+
+String _dayKey(DateTime value) {
+  final local = value.toLocal();
+  final month = local.month.toString().padLeft(2, '0');
+  final day = local.day.toString().padLeft(2, '0');
+  return '${local.year}-$month-$day';
+}

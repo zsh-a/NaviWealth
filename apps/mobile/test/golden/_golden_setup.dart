@@ -1,13 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -101,8 +102,50 @@ void _verifyGoldenFontAssets() {
 Future<void> loadGoldenFonts() async {
   if (_fontsLoaded) return;
   _verifyGoldenFontAssets();
-  await loadAppFonts();
+  await _loadAppFonts();
   _fontsLoaded = true;
+}
+
+Future<void> _loadAppFonts() async {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  final manifest = await rootBundle.loadStructuredData<Iterable<dynamic>>(
+    'FontManifest.json',
+    (text) async => jsonDecode(text) as Iterable<dynamic>,
+  );
+  for (final rawFont in manifest) {
+    final font = rawFont as Map<String, dynamic>;
+    final family = font['family'] as String?;
+    if (family == null || family.isEmpty) continue;
+    final loader = FontLoader(family);
+    final assets = font['fonts'] as List<dynamic>? ?? const <dynamic>[];
+    for (final rawAsset in assets) {
+      final asset = rawAsset as Map<String, dynamic>;
+      final path = asset['asset'] as String?;
+      if (path != null && path.isNotEmpty) {
+        loader.addFont(rootBundle.load(path));
+      }
+    }
+    await loader.load();
+  }
+}
+
+/// Declares a visual regression test with real shadows and deterministic
+/// cleanup, using Flutter's native golden matcher rather than a wrapper
+/// package.
+void testVisualGolden(
+  String description,
+  Future<void> Function(WidgetTester tester) body, {
+  Object? tags = 'golden',
+}) {
+  testWidgets(description, (tester) async {
+    final previous = debugDisableShadows;
+    debugDisableShadows = false;
+    try {
+      await body(tester);
+    } finally {
+      debugDisableShadows = previous;
+    }
+  }, tags: tags);
 }
 
 /// Pump a single mobile-size golden of [child] under [variant] and write
@@ -112,9 +155,8 @@ Future<void> loadGoldenFonts() async {
 /// stubs its own data providers without leaking dependencies into the
 /// shared harness.
 ///
-/// Wrap the call in [testGoldens] from `golden_toolkit` and add the
-/// `'golden'` tag so `flutter test --tags=golden` picks it up. See any of
-/// the page tests in this directory for the canonical pattern.
+/// Wrap the call in [testVisualGolden] so real-shadow behavior and the
+/// `'golden'` tag stay consistent across the suite.
 Future<void> pumpAndSnapshotMobile(
   WidgetTester tester, {
   required String name,
@@ -185,20 +227,20 @@ Future<void> pumpAndSnapshotMobile(
   await expectGoldenSurface('goldens/${name}_${variant.filenameSuffix}.png');
 }
 
-/// Compare the whole app surface against [goldenPath] without
-/// GoldenToolkit's implicit pumpAndSettle.
+/// Compare the whole app surface against [goldenPath] without an implicit
+/// pumpAndSettle.
 ///
 /// The directory-local flutter_test_config skips PNG assertion off Linux.
 /// This helper mirrors that policy because it intentionally bypasses
-/// GoldenToolkit's [screenMatchesGolden] to avoid settling on intentionally
-/// live tickers.
+/// It intentionally uses Flutter's native matcher to avoid settling on
+/// intentionally live tickers.
 Future<void> expectGoldenSurface(String goldenPath) async {
   if (!Platform.isLinux && !autoUpdateGoldenFiles) return;
 
   await expectLater(find.byType(MaterialApp), matchesGoldenFile(goldenPath));
 }
 
-/// Convenience: declare a `testGoldens` block that captures a page in every
+/// Convenience: declare a visual-golden block that captures a page in every
 /// theme variant. The closure receives the variant so callers can pass it to
 /// [pumpAndSnapshotMobile].
 void runAllVariants(
@@ -206,7 +248,7 @@ void runAllVariants(
   Future<void> Function(WidgetTester tester, GoldenTheme variant) body,
 ) {
   for (final variant in GoldenTheme.values) {
-    testGoldens(
+    testVisualGolden(
       '$pageName — ${variant.filenameSuffix}',
       (tester) => body(tester, variant),
       tags: 'golden',
@@ -369,7 +411,7 @@ void runResponsiveGolden(
   )
   body,
 }) {
-  testGoldens(
+  testVisualGolden(
     description,
     (tester) => body(tester, profile),
     tags: const ['golden', 'responsive-golden'],

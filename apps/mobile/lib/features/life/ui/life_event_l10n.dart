@@ -44,6 +44,33 @@ extension LifeEventL10n on LifeEvent {
         return l10n.lifeSignalAgentSubtitle;
     }
   }
+
+  String localizedEvidence(AppLocalizations l10n) {
+    if (template == LifeEventTemplate.recoveryAlert && params.length > 1) {
+      return l10n.lifeSignalRecoveryScoreEvidence(params[1]);
+    }
+    return localizedSubtitle(l10n);
+  }
+
+  String? localizedActionTitle(AppLocalizations l10n) {
+    return switch (actionSuggestion?.template) {
+      LifeActionTemplate.reviewFinanceActivity =>
+        l10n.lifeSignalActionReviewFinance,
+      LifeActionTemplate.protectRecovery =>
+        l10n.lifeSignalActionProtectRecovery,
+      LifeActionTemplate.reviewKnowledgeInbox =>
+        l10n.lifeSignalActionReviewKnowledge,
+      LifeActionTemplate.reviewAgentInsight => l10n.lifeSignalActionReviewAgent,
+      null => null,
+    };
+  }
+
+  String localizedActionNote(AppLocalizations l10n) {
+    return l10n.lifeSignalActionNote(
+      localizedTitle(l10n),
+      localizedEvidence(l10n),
+    );
+  }
 }
 
 extension LifeHeroSummaryL10n on LifeHeroSummary {

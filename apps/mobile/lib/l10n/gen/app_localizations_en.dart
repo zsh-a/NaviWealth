@@ -1327,6 +1327,64 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lifeSignalAgentSubtitle => 'Open Finance brief';
 
   @override
+  String get lifeSignalDetailTitle => 'Signal details';
+
+  @override
+  String get lifeSignalEvidenceTitle => 'Local evidence';
+
+  @override
+  String lifeSignalRecoveryScoreEvidence(String score) {
+    return 'Recovery score: $score';
+  }
+
+  @override
+  String get lifeSignalCreateAction => 'Create action';
+
+  @override
+  String get lifeSignalEnableExecution => 'Enable ExecutionOS';
+
+  @override
+  String get lifeSignalOpenSource => 'Open source';
+
+  @override
+  String get lifeSignalActionConfirmTitle => 'Create this action?';
+
+  @override
+  String lifeSignalActionConfirmBody(String title, String source) {
+    return '$title\n\nSource: $source';
+  }
+
+  @override
+  String get lifeSignalActionCreated =>
+      'Action created with its source evidence attached.';
+
+  @override
+  String lifeSignalActionFailed(String error) {
+    return 'Could not create action: $error';
+  }
+
+  @override
+  String get lifeSignalOpenExecution => 'Open Execution';
+
+  @override
+  String get lifeSignalActionReviewFinance =>
+      'Review today\'s finance activity';
+
+  @override
+  String get lifeSignalActionProtectRecovery => 'Protect recovery today';
+
+  @override
+  String get lifeSignalActionReviewKnowledge => 'Review the Knowledge inbox';
+
+  @override
+  String get lifeSignalActionReviewAgent => 'Review the latest Finance insight';
+
+  @override
+  String lifeSignalActionNote(String source, String detail) {
+    return 'From $source: $detail';
+  }
+
+  @override
   String get financeAgentResultsLoading => 'Checking agent results';
 
   @override

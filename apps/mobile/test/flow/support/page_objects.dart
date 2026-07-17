@@ -486,6 +486,131 @@ class SettingsPageObject {
     await tester.tap(action.first);
     await settle(tester);
   }
+
+  Future<void> openDomains() async {
+    final action = find.text('Domain management');
+    expect(action, findsWidgets, reason: 'domains settings row missing');
+    await tester.ensureVisible(action.first);
+    await settle(tester);
+    await tester.tap(action.first);
+    await settle(tester);
+  }
+}
+
+class DomainsPageObject {
+  DomainsPageObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectLanded() {
+    expect(find.text('Domain management'), findsWidgets);
+    expect(find.text('KnowledgeOS'), findsOneWidget);
+    expect(find.text('ExecutionOS'), findsOneWidget);
+  }
+
+  Future<void> enable(String label) async {
+    final card = find.ancestor(
+      of: find.text(label),
+      matching: find.byType(AppGroupedSurface),
+    );
+    final toggle = find.descendant(of: card, matching: find.byType(FSwitch));
+    expect(toggle, findsOneWidget, reason: '$label toggle missing');
+    await tester.ensureVisible(toggle);
+    await settle(tester);
+    await tester.tap(toggle);
+    await settle(tester);
+  }
+}
+
+class KnowledgeInboxPageObject {
+  KnowledgeInboxPageObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectLanded() => expect(find.text('Inbox'), findsWidgets);
+
+  Future<void> captureNote(String body) async {
+    final add = find.bySemanticsLabel('New capture');
+    expect(add, findsOneWidget, reason: 'knowledge capture action missing');
+    await tester.tap(add);
+    await settle(tester);
+
+    await tester.enterText(find.widgetWithText(FTextField, 'Content'), body);
+    await tester.tap(find.text('Note').last);
+    await settle(tester);
+    await tester.tap(find.text('Save as Note').last);
+    await settle(tester);
+  }
+
+  void expectNoteVisible(String body) {
+    expect(find.textContaining(body), findsWidgets);
+  }
+}
+
+class LifePageObject {
+  LifePageObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectSignal(String title) => expect(find.text(title), findsOneWidget);
+
+  Future<void> openSignal(String title) async {
+    expectSignal(title);
+    await tester.tap(find.text(title));
+    await settle(tester);
+  }
+
+  void expectEvidence(String value) {
+    expect(find.text('Local evidence'), findsOneWidget);
+    expect(find.text(value), findsOneWidget);
+  }
+
+  Future<void> createAction(String actionTitle) async {
+    expect(find.text(actionTitle), findsOneWidget);
+    await tester.tap(find.text('Create action').last);
+    await settle(tester);
+    expect(find.text('Create this action?'), findsOneWidget);
+    await tester.tap(find.text('Create action').last);
+    await settle(tester);
+    expect(
+      find.text('Action created with its source evidence attached.'),
+      findsWidgets,
+    );
+  }
+
+  Future<void> openExecution() async {
+    await tester.tap(find.text('Open Execution').last);
+    await settle(tester);
+  }
+}
+
+class ExecutionTodayPageObject {
+  ExecutionTodayPageObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectAction(String title) => expect(find.text(title), findsOneWidget);
+
+  Future<void> completeAction(String title) async {
+    expect(find.text(title), findsOneWidget);
+    final menu = find.bySemanticsLabel('More actions').hitTestable();
+    expect(menu, findsOneWidget, reason: 'action overflow menu missing');
+    await tester.tap(menu);
+    await settle(tester);
+    await tester.tap(find.text('Done').last);
+    await settle(tester);
+  }
+}
+
+class ExecutionReviewPageObject {
+  ExecutionReviewPageObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectCompletedAction(String title) {
+    expect(find.text('Recent closed actions'), findsWidgets);
+    expect(find.text(title), findsOneWidget);
+  }
 }
 
 /// Settings → Backup & Restore.

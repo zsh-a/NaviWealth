@@ -1289,6 +1289,62 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeSignalAgentSubtitle => '打开财务简报';
 
   @override
+  String get lifeSignalDetailTitle => '信号详情';
+
+  @override
+  String get lifeSignalEvidenceTitle => '本地证据';
+
+  @override
+  String lifeSignalRecoveryScoreEvidence(String score) {
+    return '恢复分数：$score';
+  }
+
+  @override
+  String get lifeSignalCreateAction => '创建行动';
+
+  @override
+  String get lifeSignalEnableExecution => '启用 ExecutionOS';
+
+  @override
+  String get lifeSignalOpenSource => '打开来源';
+
+  @override
+  String get lifeSignalActionConfirmTitle => '创建这条行动？';
+
+  @override
+  String lifeSignalActionConfirmBody(String title, String source) {
+    return '$title\n\n来源：$source';
+  }
+
+  @override
+  String get lifeSignalActionCreated => '行动已创建，并保留了来源证据。';
+
+  @override
+  String lifeSignalActionFailed(String error) {
+    return '无法创建行动：$error';
+  }
+
+  @override
+  String get lifeSignalOpenExecution => '打开执行域';
+
+  @override
+  String get lifeSignalActionReviewFinance => '复核今日财务流水';
+
+  @override
+  String get lifeSignalActionProtectRecovery => '今天优先保护恢复';
+
+  @override
+  String get lifeSignalActionReviewKnowledge => '整理知识收件箱';
+
+  @override
+  String get lifeSignalActionReviewAgent => '复核最新财务洞察';
+
+  @override
+  String lifeSignalActionNote(String source, String detail) {
+    return '来自「$source」：$detail';
+  }
+
+  @override
   String get financeAgentResultsLoading => '正在检查 agent 结果';
 
   @override

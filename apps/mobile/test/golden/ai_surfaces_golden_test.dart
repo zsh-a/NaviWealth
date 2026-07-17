@@ -16,7 +16,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:naviwealth/core/ai/visual/visual.dart';
 import 'package:naviwealth/features/ai_chat/ui/tools/renderers/tool_invocation_renderers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -59,7 +58,7 @@ Future<void> _pumpComponent(
 }
 
 void main() {
-  testGoldens('AiPill — neutral / selected / error', (tester) async {
+  testVisualGolden('AiPill — neutral / selected / error', (tester) async {
     await _pumpComponent(
       tester,
       name: 'ai_pill_variants',
@@ -75,7 +74,7 @@ void main() {
     );
   }, tags: 'golden');
 
-  testGoldens('AiObjectCapsule (Wave 33)', (tester) async {
+  testVisualGolden('AiObjectCapsule (Wave 33)', (tester) async {
     await _pumpComponent(
       tester,
       name: 'ai_object_capsule',
@@ -87,7 +86,9 @@ void main() {
     );
   }, tags: 'golden');
 
-  testGoldens('asset_allocation domain renderer (Wave 34)', (tester) async {
+  testVisualGolden('asset_allocation domain renderer (Wave 34)', (
+    tester,
+  ) async {
     await _pumpComponent(
       tester,
       name: 'asset_allocation_view',
@@ -116,7 +117,9 @@ void main() {
     );
   }, tags: 'golden');
 
-  testGoldens('subscription_changes domain renderer (Wave 34)', (tester) async {
+  testVisualGolden('subscription_changes domain renderer (Wave 34)', (
+    tester,
+  ) async {
     await _pumpComponent(
       tester,
       name: 'subscription_changes_view',

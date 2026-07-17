@@ -115,6 +115,7 @@ class MarketHttpClient {
         case DioExceptionType.connectionTimeout:
         case DioExceptionType.sendTimeout:
         case DioExceptionType.receiveTimeout:
+        case DioExceptionType.transformTimeout:
         case DioExceptionType.connectionError:
           return NetworkException(
             err.message ?? 'connection error',

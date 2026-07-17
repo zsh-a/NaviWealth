@@ -412,16 +412,14 @@ class _KnowledgeCaptureSheetState
           ? l10n.knowledgeCaptureClassifyingSubtitle
           : l10n.knowledgeCaptureComposeSubtitle,
       footer: switch (stage) {
-        _CaptureStage.composing || _CaptureStage.saving => AppSheetFooter(
-          submitLabel: stage == _CaptureStage.saving
-              ? l10n.knowledgeCaptureSaving
-              : _manualKind == null
+        _CaptureStage.composing => AppSheetFooter(
+          submitLabel: _manualKind == null
               ? l10n.knowledgeCaptureSave
               : l10n.knowledgeCaptureSaveTyped(
                   _captureKindShortLabel(l10n, _manualKind!),
                 ),
           cancelLabel: l10n.knowledgeCaptureCancel,
-          busy: !_canSave,
+          enabled: _canSave,
           onSubmit: () {
             _saveAndClassify();
           },
@@ -437,7 +435,7 @@ class _KnowledgeCaptureSheetState
           onSubmit: _acceptUpgrade,
           onCancel: _dismissSuggestion,
         ),
-        _ => null,
+        _CaptureStage.saving || _CaptureStage.classifying => null,
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,

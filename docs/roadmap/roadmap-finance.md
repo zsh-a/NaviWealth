@@ -31,6 +31,9 @@ Highest product leverage is reducing manual entry:
 - The parser entry point is now provider-aware (`statement_ingest_parser.dart`)
   for Alipay, WeChat Pay, and bank debit/credit exports; new providers should
   extend that detection layer rather than adding ad hoc UI parsing.
+- The representative file corpus currently contains a redacted Alipay export.
+  WeChat Pay and bank parser unit fixtures are synthetic; add real redacted
+  corpus files before claiming production-format coverage for those sources.
 - Keep imported rows in reviewable draft state.
 - Use deterministic parsing first; LLM/OCR can suggest, not silently commit.
 - Add dedup coverage for account, expense, trade, and transfer imports.

@@ -29,7 +29,7 @@ sake.
 
 ```
          AI exploratory + semantic   ~1%   nightly, non-blocking
-        Flow / Task (Page Objects)   ~4%   10–15 journeys, test/flow + integration_test
+       Flow / Task (Page Objects)   ~4%   ~15 journeys, test/flow + integration_test
        Contract (Dart↔Rust↔wire)     ~5%   schema-driven, blocking
       Golden (visual regression)     ~5%   expanded surfaces + breakpoints, Linux-pinned
      Integration (real Drift chain)  ~10%  UI→repo→Drift→domain, real connection
@@ -40,7 +40,7 @@ Percentages are directional, not quotas. The base stays unit-heavy.
 
 ## 3. The Task spine (the stable contract)
 
-These ~12 journeys are the flow-test backbone. Each one earns: a flow
+These 15 journeys are the flow-test backbone. Each one earns: a flow
 test (`test/flow/` now, `integration_test/` on-device later), a Page
 Object, and a golden of its primary surface.
 
@@ -58,11 +58,15 @@ Object, and a golden of its primary surface.
 | 10 | 生成 FIRE 报告 | Generate FIRE report | FIRE dashboard |
 | 11 | 本地加密备份/恢复 | Encrypted backup / restore | Settings → backup |
 | 12 | 导出 | Export | Settings → export |
+| 13 | 启用可选域 | Enable optional domain | Settings → Domain management |
+| 14 | 捕获知识笔记 | Capture Knowledge note | KnowledgeOS → Inbox |
+| 15 | 处理 Life 信号并闭环 | Act on a Life signal | Life → Execution Today → Review |
 
-All 12 task flows are seeded under `test/flow/`: net worth, account creation,
+All 15 task flows are seeded under `test/flow/`: net worth, account creation,
 transaction entry, statement import, sync navigation coverage, AI chat,
 portfolio analysis, rebalance, options income, FIRE report, backup restore,
-and export backup.
+export backup, optional-domain enablement, Knowledge note capture, and the
+Life evidence → Execution action → completed Review loop.
 
 ## 4. Layers — what each is for and how to write it
 
@@ -142,8 +146,14 @@ Plan hub and land on the risk/preferences setup surface), and
 and land on the Portfolio analysis surface), and
 `restore_backup_flow_test.dart` (Task #11 — discover Backup & Restore through
 global Settings, import a backup file, and pass restore credentials to the
-restore boundary), and `ai_chat_flow_test.dart` (Task #6 — open the
-shell-level AI sheet, send a question, and render the assistant reply).
+restore boundary), `ai_chat_flow_test.dart` (Task #6 — open the shell-level AI
+sheet, send a question, and render the assistant reply),
+`domain_opt_in_flow_test.dart` (Task #13 — enable KnowledgeOS through the real
+domain settings store), `knowledge_capture_flow_test.dart` (Task #14 — save an
+offline Note through the real Knowledge repository), and
+`life_execution_loop_flow_test.dart` (Task #15 — inspect local Health evidence,
+confirm an `execution_action` proposal, finish it in Today, and see it in
+Review).
 
 ### Contract (Dart↔Rust↔wire, ~5%)
 The client and the Rust Worker share a wire format but no generated
@@ -167,9 +177,10 @@ responses. Keep the enum manifest and sync fixture set complete as the contract
 surface evolves.
 
 ### Golden (visual, ~5%)
-`test/golden/` via golden_toolkit, Linux-pinned (`flutter_test_config.dart`
-skips comparison off Linux; CI `golden-regression` job is the source of
-truth). 17 golden test files currently produce 50 PNG baselines; page
+`test/golden/` uses Flutter's native `matchesGoldenFile` matcher through the
+repository's deterministic harness. Comparison remains Linux-pinned (other
+hosts still pump the surfaces; CI `golden-regression` is the source of truth).
+17 golden test files currently produce 61 PNG baselines; page
 surfaces primarily run dark + colorblind variants, while AI primitive
 goldens use component-scoped light surfaces. Expand to every Task's
 primary surface and add responsive breakpoints (phone/tablet/web) ahead
@@ -277,7 +288,7 @@ path once the production connection implements database encryption.
   The 11 JWT-domain / sync-LWW tests now gate PRs.
 - ✅ Web smoke wired up — `web-smoke.yml`: chromium on PRs, full matrix nightly.
 - ✅ Non-golden mobile tests are zero-failure blocking checks in CI.
-- ✅ Flow layer seeded — `test/flow/` with Page Object Model + all 12 task
+- ✅ Flow layer seeded — `test/flow/` with Page Object Model + all 15 task
   flows.
 - ✅ Integration layer seeded — `test/integration/` real-Drift harness +
   net-worth coverage in every direction (manual asset, liability, securities).
@@ -292,12 +303,13 @@ path once the production connection implements database encryption.
   liabilities, and ledger-reconstructed securities — through the real chain.
 - ✅ On-device `integration_test/` stood up (real file DB boot, repository
   write smoke, backup/restore, and emulator CI).
-- Flow layer: 12 of 12 Tasks done (view net worth, add account, add
+- Flow layer: 15 of 15 Tasks done (view net worth, add account, add
   transaction entry, import statement drafts, portfolio analysis, rebalance,
   options income, FIRE report, backup restore, export backup, navigate
-  primaries, AI chat). Next expansion should deepen these flows with selected
-  golden surfaces and on-device `integration_test/` coverage rather than adding
-  more page-bound smoke tests.
+  primaries, AI chat, enable an optional domain, capture Knowledge, and close a
+  Life signal through Execution Review). Next expansion should deepen these
+  flows with selected golden surfaces and on-device `integration_test/`
+  coverage rather than adding more page-bound smoke tests.
 - Contracts-as-code: AI enum wire manifest now gates against Dart code and
   `sync-v3` row-change/request/response fixtures gate against Dart/Rust
   serializers, including edge-case server envelopes. Next work is keeping new

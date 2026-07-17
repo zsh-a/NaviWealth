@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -123,14 +122,14 @@ Future<void> pumpReadmeScreenshot(
     tester.view.physicalSize,
     Size(logicalSize.width * dpr, logicalSize.height * dpr),
   );
-  await expectLater(find.byType(MaterialApp), matchesGoldenFile(goldenPath));
+  await expectGoldenSurface(goldenPath);
 }
 
 void readmeScreenshot(
   String description, {
   required Future<void> Function(WidgetTester tester) body,
 }) {
-  testGoldens(
+  testVisualGolden(
     description,
     body,
     tags: const <String>['golden', 'readme-screenshot'],

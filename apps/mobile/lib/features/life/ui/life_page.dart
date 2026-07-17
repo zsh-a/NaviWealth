@@ -14,6 +14,7 @@ import 'package:naviwealth/features/finance/composition/finance_route_paths.dart
 import 'package:naviwealth/features/life/data/life_events_provider.dart';
 import 'package:naviwealth/features/life/domain/life_event.dart';
 import 'package:naviwealth/features/life/ui/life_event_l10n.dart';
+import 'package:naviwealth/features/life/ui/life_signal_sheet.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 /// Max attention rows when the list is collapsed.
@@ -67,6 +68,9 @@ class LifePage extends ConsumerWidget {
           secondary: [
             _AttentionSection(
               events: events,
+              executionEnabled: packs.any(
+                (pack) => pack.scope == DomainScope.execution,
+              ),
               l10n: l10n,
               timeLabel: (at) => formatters.time(at),
               iconFor: _iconFor,
@@ -337,6 +341,7 @@ class _DomainChip extends StatelessWidget {
 class _AttentionSection extends StatefulWidget {
   const _AttentionSection({
     required this.events,
+    required this.executionEnabled,
     required this.l10n,
     required this.timeLabel,
     required this.iconFor,
@@ -345,6 +350,7 @@ class _AttentionSection extends StatefulWidget {
   });
 
   final List<LifeEvent> events;
+  final bool executionEnabled;
   final AppLocalizations l10n;
   final String Function(DateTime at) timeLabel;
   final IconData Function(LifeEvent e) iconFor;
@@ -398,8 +404,7 @@ class _AttentionSectionState extends State<_AttentionSection> {
           ? const <LifeEvent>[]
           : normal.take(remaining).toList(growable: false);
     }
-    final hiddenCount =
-        events.length - shownHigh.length - shownNormal.length;
+    final hiddenCount = events.length - shownHigh.length - shownNormal.length;
     final showToggle = events.length > _kAttentionCollapsedCap;
 
     return Column(
@@ -424,9 +429,7 @@ class _AttentionSectionState extends State<_AttentionSection> {
                   icon: widget.iconFor(e),
                   accent: widget.accentFor(e),
                   domainLabel: widget.domainLabel(e.domain),
-                  onOpen: e.routePath == null
-                      ? null
-                      : () => context.go(e.routePath!),
+                  onOpen: _onOpen(context, e),
                 ),
             ],
             timeLabel: widget.timeLabel,
@@ -453,9 +456,7 @@ class _AttentionSectionState extends State<_AttentionSection> {
                   icon: widget.iconFor(e),
                   accent: widget.accentFor(e),
                   domainLabel: widget.domainLabel(e.domain),
-                  onOpen: e.routePath == null
-                      ? null
-                      : () => context.go(e.routePath!),
+                  onOpen: _onOpen(context, e),
                 ),
             ],
             timeLabel: widget.timeLabel,
@@ -474,5 +475,19 @@ class _AttentionSectionState extends State<_AttentionSection> {
         ],
       ],
     );
+  }
+
+  VoidCallback? _onOpen(BuildContext context, LifeEvent event) {
+    if (event.actionSuggestion != null) {
+      return () async {
+        await showLifeSignalSheet(
+          context: context,
+          event: event,
+          executionEnabled: widget.executionEnabled,
+        );
+      };
+    }
+    final path = event.routePath;
+    return path == null ? null : () => context.go(path);
   }
 }

@@ -358,6 +358,7 @@ class AppSheetFooter extends StatelessWidget {
     this.onCancel,
     this.cancelKey,
     this.busy = false,
+    this.enabled = true,
     this.destructive = false,
   });
 
@@ -372,6 +373,7 @@ class AppSheetFooter extends StatelessWidget {
   final VoidCallback? onCancel;
   final Key? cancelKey;
   final bool busy;
+  final bool enabled;
   final bool destructive;
 
   @override
@@ -395,7 +397,7 @@ class AppSheetFooter extends StatelessWidget {
             variant: destructive
                 ? FButtonVariant.destructive
                 : FButtonVariant.primary,
-            onPress: onSubmit,
+            onPress: enabled ? onSubmit : null,
             busy: busy,
             label: submitLabel,
           ),

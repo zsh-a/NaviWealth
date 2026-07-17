@@ -66,11 +66,21 @@ class AppBusyButton extends StatelessWidget {
             child: FCircularProgress(size: FCircularProgressSizeVariant.sm),
           ),
           const SizedBox(width: AppSpacing.s8),
-          Text(effectiveLabel),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(effectiveLabel, maxLines: 1),
+            ),
+          ),
         ],
       );
     } else {
-      child = Text(effectiveLabel);
+      child = Flexible(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(effectiveLabel, maxLines: 1),
+        ),
+      );
     }
 
     return FButton(

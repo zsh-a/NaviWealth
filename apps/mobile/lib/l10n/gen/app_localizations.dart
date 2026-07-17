@@ -2396,6 +2396,102 @@ abstract class AppLocalizations {
   /// **'Open Finance brief'**
   String get lifeSignalAgentSubtitle;
 
+  /// Title of the Life signal evidence sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Signal details'**
+  String get lifeSignalDetailTitle;
+
+  /// Evidence section in the Life signal sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Local evidence'**
+  String get lifeSignalEvidenceTitle;
+
+  /// Recovery evidence shown before creating an action
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery score: {score}'**
+  String lifeSignalRecoveryScoreEvidence(String score);
+
+  /// Create an ExecutionOS action from a Life signal
+  ///
+  /// In en, this message translates to:
+  /// **'Create action'**
+  String get lifeSignalCreateAction;
+
+  /// Open domain settings before converting a signal to an action
+  ///
+  /// In en, this message translates to:
+  /// **'Enable ExecutionOS'**
+  String get lifeSignalEnableExecution;
+
+  /// Open the domain surface that produced a Life signal
+  ///
+  /// In en, this message translates to:
+  /// **'Open source'**
+  String get lifeSignalOpenSource;
+
+  /// Confirmation title for a Life-to-Execution proposal
+  ///
+  /// In en, this message translates to:
+  /// **'Create this action?'**
+  String get lifeSignalActionConfirmTitle;
+
+  /// Confirmation summary for a Life-to-Execution proposal
+  ///
+  /// In en, this message translates to:
+  /// **'{title}\n\nSource: {source}'**
+  String lifeSignalActionConfirmBody(String title, String source);
+
+  /// Success message after applying a Life-to-Execution proposal
+  ///
+  /// In en, this message translates to:
+  /// **'Action created with its source evidence attached.'**
+  String get lifeSignalActionCreated;
+
+  /// Failure message for a Life-to-Execution proposal
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create action: {error}'**
+  String lifeSignalActionFailed(String error);
+
+  /// Open Execution Today after creating a Life action
+  ///
+  /// In en, this message translates to:
+  /// **'Open Execution'**
+  String get lifeSignalOpenExecution;
+
+  /// Suggested action title for a Finance day signal
+  ///
+  /// In en, this message translates to:
+  /// **'Review today\'s finance activity'**
+  String get lifeSignalActionReviewFinance;
+
+  /// Suggested action title for a strained recovery signal
+  ///
+  /// In en, this message translates to:
+  /// **'Protect recovery today'**
+  String get lifeSignalActionProtectRecovery;
+
+  /// Suggested action title for a Knowledge inbox signal
+  ///
+  /// In en, this message translates to:
+  /// **'Review the Knowledge inbox'**
+  String get lifeSignalActionReviewKnowledge;
+
+  /// Suggested action title for a Finance agent signal
+  ///
+  /// In en, this message translates to:
+  /// **'Review the latest Finance insight'**
+  String get lifeSignalActionReviewAgent;
+
+  /// Action note preserving the source signal evidence
+  ///
+  /// In en, this message translates to:
+  /// **'From {source}: {detail}'**
+  String lifeSignalActionNote(String source, String detail);
+
   /// Home FinanceOS agent result panel loading title
   ///
   /// In en, this message translates to:
