@@ -43,9 +43,13 @@ Current evidence:
 
 - Provider detection exists for Alipay, WeChat Pay, bank, broker, and generic
   statements.
-- The checked-in representative corpus contains an Alipay export. WeChat Pay
-  and bank coverage is still synthetic and must not be described as verified
+- The checked-in representative corpus contains an Alipay export with an
+  auto-discovered, privacy-safe row-level expectation manifest. WeChat Pay and
+  bank coverage is still synthetic and must not be described as verified
   production-format support.
+- Confirmation requires a selected statement account and batch confirmation
+  excludes duplicate and likely-duplicate drafts. Unsupported trade principal
+  and transfer/refund rows remain closed before draft creation.
 
 Exit evidence:
 

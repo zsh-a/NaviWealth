@@ -32,9 +32,14 @@ Current evidence:
 
 - `statement_ingest_parser.dart` detects Alipay, WeChat Pay, bank, broker, and
   generic formats.
-- A privacy-safe representative Alipay file is checked in. WeChat Pay and bank
-  parser tests use synthetic inputs and do not establish production-format
-  support.
+- A privacy-safe representative Alipay file is checked in with an
+  auto-discovered expectation manifest that pins every accepted and rejected
+  row. WeChat Pay and bank parser tests use synthetic inputs and do not
+  establish production-format support.
+- Confirmation requires a selected statement account; duplicate and
+  likely-duplicate drafts are excluded from batch confirmation. Trade
+  principal and transfer/refund inputs remain rejected before draft creation
+  until typed destinations exist.
 
 Exit evidence:
 
@@ -45,8 +50,9 @@ Exit evidence:
 - Pin provider, accepted/rejected counts, status handling, amount direction,
   currency, description/payee normalization, and raw-text-free diagnostics for
   every representative file.
-- Cover duplicate account, expense, trade, and transfer outcomes at the
-  confirmation boundary.
+- Keep account selection and expense/income duplicate outcomes covered at the
+  confirmation boundary. When typed trade or transfer destinations are added,
+  add their dedup and confirmation contracts before accepting those rows.
 - Imported rows remain drafts until explicit confirmation; deterministic
   parsing remains primary and LLM/OCR suggestions never silently commit.
 

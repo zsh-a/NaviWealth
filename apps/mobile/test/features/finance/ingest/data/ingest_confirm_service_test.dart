@@ -192,6 +192,25 @@ void main() {
   });
 
   group('IngestConfirmService lifecycle', () {
+    test('requires a statement account before reserving a draft', () async {
+      final applier = _FakeApplier(onApply: (_) async => _applied('unused'));
+      final store = _FakeLifecycleStore();
+      final service = IngestConfirmService(applier: applier, store: store);
+
+      await expectLater(
+        service.confirm(_draft(), fromAccountId: ''),
+        throwsA(
+          isA<IngestConfirmException>().having(
+            (error) => error.code,
+            'code',
+            IngestConfirmError.accountRequired,
+          ),
+        ),
+      );
+      expect(applier.appliedPlans, isEmpty);
+      expect(store.updates, isEmpty);
+    });
+
     test('confirm returns the draft and complete applied state', () async {
       final state = _applied('entry-1');
       final applier = _FakeApplier(onApply: (_) async => state);
@@ -330,6 +349,12 @@ void main() {
           IngestReviewItem(
             draft: _draft(id: 'duplicate', verdict: DedupVerdict.duplicate),
           ),
+          IngestReviewItem(
+            draft: _draft(
+              id: 'likely-duplicate',
+              verdict: DedupVerdict.likelyDuplicate,
+            ),
+          ),
           IngestReviewItem(draft: _draft(id: 'bad')),
           IngestReviewItem(
             draft: _draft(id: 'settled', status: DraftStatus.dismissed),
@@ -347,6 +372,11 @@ void main() {
       expect(result.failures.single.item.draftId, 'bad');
       expect(result.completed, 3);
       expect(progress, [(1, 3), (2, 3), (3, 3)]);
+      expect(applier.appliedPlans.map((plan) => plan.proposalId), [
+        'good-1',
+        'bad',
+        'good-2',
+      ]);
     });
 
     test('large confirmation uses bounded lifecycle batches', () async {

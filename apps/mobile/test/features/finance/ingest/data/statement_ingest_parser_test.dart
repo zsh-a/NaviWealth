@@ -1,9 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/ingest/data/statement_ingest_parser.dart';
 import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
-import 'package:naviwealth/features/finance/ingest/domain/ingest_parse_diagnostics.dart';
 
 void main() {
   group('statement provider detection', () {
@@ -42,25 +39,6 @@ void main() {
   });
 
   group('parseStatementLedger', () {
-    test('file corpus reports every Alipay row outcome', () {
-      final raw = File(
-        'test/fixtures/finance/ingest/alipay_representative.csv',
-      ).readAsStringSync();
-      final report = parseStatementLedgerReport(raw);
-
-      expect(report.provider, StatementProvider.alipay);
-      expect(report.rows, hasLength(2));
-      expect(report.ledger.candidateRowCount, 5);
-      expect(report.ledger.accountsForEveryCandidate, isTrue);
-      expect(report.ledger.issues.map((issue) => issue.code), [
-        IngestParseIssueCode.unsupportedDirection,
-        IngestParseIssueCode.unsupportedDirection,
-        IngestParseIssueCode.ignoredStatus,
-      ]);
-      expect(report.rows[0].categoryHint, 'dining');
-      expect(report.rows[1].categoryHint, 'groceries');
-    });
-
     test('Alipay uses payment time rather than creation time', () {
       final rows = parseStatementLedger(
         '#支付宝交易记录明细查询\n'
@@ -155,6 +133,20 @@ void main() {
       expect(rows.single.description, contains('withholding tax'));
       expect(rows.single.amountMinor, -370);
       expect(rows.single.categoryHint, 'tax:withholding');
+    });
+
+    test('trade principal and transfers stay outside the cash ledger', () {
+      final brokerRows = parseStatementLedger(
+        'Date,Action,Symbol,Description,Fees & Comm,Amount,Currency\n'
+        '2026-05-10,BUY,AAPL,Bought 10 shares,,-1000.00,USD\n',
+      );
+      final transferRows = parseStatementLedger(
+        '交易日期,交易摘要,交易对方,贷方金额,币种\n'
+        '2026-05-11,转账收入,示例用户,1000.00,CNY\n',
+      );
+
+      expect(brokerRows, isEmpty);
+      expect(transferRows, isEmpty);
     });
   });
 }

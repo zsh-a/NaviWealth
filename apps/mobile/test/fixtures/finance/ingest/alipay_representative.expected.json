@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "fixture": "alipay_representative.csv",
+  "defaultCurrency": "CNY",
+  "privacy": {
+    "containsUserData": false,
+    "diagnosticFields": ["lineNumber", "code"]
+  },
+  "expected": {
+    "provider": "alipay",
+    "candidateRowCount": 5,
+    "acceptedRowCount": 2,
+    "skippedRowCount": 3,
+    "diagnosticsComplete": true,
+    "accountsForEveryCandidate": true,
+    "rows": [
+      {
+        "occurredAt": "2026-07-10T00:00:00.000Z",
+        "description": "示例餐厅 · 午餐 · 餐饮美食 · 余额",
+        "amountMinor": -3150,
+        "currency": "CNY",
+        "kind": "expense",
+        "categoryHint": "dining"
+      },
+      {
+        "occurredAt": "2026-07-07T00:00:00.000Z",
+        "description": "示例超市 · 纸巾,家庭装 · 日用百货 · 银行卡",
+        "amountMinor": -2880,
+        "currency": "CNY",
+        "kind": "expense",
+        "categoryHint": "groceries"
+      }
+    ],
+    "issues": [
+      {"lineNumber": 5, "code": "unsupportedDirection"},
+      {"lineNumber": 6, "code": "unsupportedDirection"},
+      {"lineNumber": 8, "code": "ignoredStatus"}
+    ]
+  }
+}
