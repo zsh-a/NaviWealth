@@ -8,7 +8,7 @@ import '../data/providers.dart';
 import '../domain/wheel_lifecycle.dart';
 
 /// `/plan/wheel` — per-underlying Wheel cycle review
-/// (`docs/roadmap-next.md` §3.3).
+/// (`docs/domains/options-income.md` §12 P4).
 ///
 /// Reads [wheelLifecyclesProvider] which derives cycles from the
 /// existing trade journal stream — no new sync table, no extra IO.

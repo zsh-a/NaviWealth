@@ -152,8 +152,8 @@ class _MarketColorPreview extends StatelessWidget {
   }
 }
 
-/// Opt-in toggle for anonymous crash + breadcrumb telemetry
-/// (`roadmap-next.md` §3.6). Defaults to OFF: flipping this only takes
+/// Opt-in toggle for anonymous crash + breadcrumb telemetry. Defaults to OFF:
+/// flipping this only takes
 /// effect on the next error captured, not retroactively, and even when
 /// enabled it stays a no-op until the Sentry integration registers a
 /// real [crashReporterDelegateProvider].

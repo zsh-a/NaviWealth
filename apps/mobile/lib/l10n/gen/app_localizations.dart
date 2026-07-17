@@ -278,7 +278,7 @@ abstract class AppLocalizations {
   /// **'Recurring buy plan'**
   String get planDcaSectionSubtitle;
 
-  /// Plan hub: monthly category budget section title (roadmap-next.md §3.2)
+  /// Plan hub: monthly category budget section title
   ///
   /// In en, this message translates to:
   /// **'Budget'**
@@ -368,7 +368,7 @@ abstract class AppLocalizations {
   /// **'Could not save budget: {error}'**
   String planBudgetSaveFailed(String error);
 
-  /// Plan hub: options Wheel lifecycle section title (roadmap-next.md §3.3)
+  /// Plan hub: options Wheel lifecycle section title
   ///
   /// In en, this message translates to:
   /// **'Wheel cycles'**
@@ -398,7 +398,7 @@ abstract class AppLocalizations {
   /// **'Record a sell-put or covered-call trade and the cycle will surface here.'**
   String get planWheelEmptyBody;
 
-  /// Holding detail tab title for upcoming corporate actions (roadmap-next.md §3.5)
+  /// Holding detail tab title for upcoming corporate actions
   ///
   /// In en, this message translates to:
   /// **'Upcoming events'**
@@ -9324,13 +9324,13 @@ abstract class AppLocalizations {
   /// **'Liability {id}'**
   String aiChatToolJumpLiability(String id);
 
-  /// Evidence chip label deep-linking to a ledger journal entry (roadmap-next.md §3.4)
+  /// Evidence chip label deep-linking to a ledger journal entry
   ///
   /// In en, this message translates to:
   /// **'Entry {id}'**
   String aiChatToolJumpJournalEntry(String id);
 
-  /// Evidence chip label deep-linking to an options trade journal entry (roadmap-next.md §3.4)
+  /// Evidence chip label deep-linking to an options trade journal entry
   ///
   /// In en, this message translates to:
   /// **'Trade {id}'**

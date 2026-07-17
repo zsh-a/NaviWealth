@@ -114,7 +114,7 @@ class Categories extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-/// Monthly category budgets (`roadmap-next.md` §3.2 Budget MVP).
+/// Monthly category budgets owned by FinanceOS.
 ///
 /// One row per (categoryId, periodMonth) — pinning a budget to a category
 /// + calendar month lets the dashboard read "this month's progress" with a

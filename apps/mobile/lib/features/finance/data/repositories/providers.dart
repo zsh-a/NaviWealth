@@ -130,7 +130,7 @@ final priceRepositoryProvider = FutureProvider<PriceRepository>((ref) async {
   return PriceRepository(db: db, outbox: outbox, stamper: stamper);
 });
 
-/// Budget MVP (`roadmap-next.md` §3.2). Monthly category budgets backed
+/// Monthly category budgets backed
 /// by the `budgets` SyncableTable.
 final budgetRepositoryProvider = FutureProvider<BudgetRepository>((ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
@@ -163,7 +163,7 @@ final budgetsForMonthProvider = StreamProvider.autoDispose
 /// reporting surfaces subscribe to this rather than to budgets + postings
 /// directly, so "budget overspend nudges safetyLevel" remains one provider
 /// read.
-/// (`docs/roadmap-next.md` §3.2 — Budget × FIRE松耦合.)
+/// This keeps the Budget → FIRE dependency one-way and read-model based.
 final monthlyBudgetSignalProvider = Provider.autoDispose
     .family<AsyncValue<BudgetSignal>, String>((ref, periodMonth) {
       final summaryAsync = ref.watch(monthlyBudgetSummaryProvider(periodMonth));

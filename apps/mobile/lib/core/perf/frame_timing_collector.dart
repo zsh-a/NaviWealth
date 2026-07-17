@@ -10,8 +10,8 @@ import 'refresh_rate.dart';
 /// once via [attach] and stays passive otherwise — every operation is
 /// constant-time and allocation-free on the hot path.
 ///
-/// Observability M2 (`docs/roadmap-next.md` §4 M-5) uses it as the single
-/// source of frame data; [PerfTraceRecorder] layers per-route windows on
+/// This is the single source of frame data; [PerfTraceRecorder] layers
+/// per-route windows on
 /// top so a caller can ask "what did the last 5s of Wealth tab look
 /// like" without re-sampling the platform.
 class FrameTimingCollector {

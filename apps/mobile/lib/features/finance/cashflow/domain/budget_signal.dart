@@ -1,6 +1,6 @@
 /// Classified budget posture for a single month — the bridge between
 /// the budget read-model and FIRE / dashboard / AI consumers
-/// (`docs/roadmap-next.md` §3.2).
+/// through the Finance-owned monthly budget read-model seam.
 ///
 /// Pure derivation over [MonthlyBudgetSummary]: no IO, no state. FIRE
 /// engine consumes this through a provider so its safety-level

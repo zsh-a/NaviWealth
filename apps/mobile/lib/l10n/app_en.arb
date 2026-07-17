@@ -64,7 +64,7 @@
   "planDcaSectionSubtitle": "Recurring buy plan",
   "@planDcaSectionSubtitle": { "description": "Plan hub: DCA simulator section subtitle" },
   "planBudgetSectionTitle": "Budget",
-  "@planBudgetSectionTitle": { "description": "Plan hub: monthly category budget section title (roadmap-next.md §3.2)" },
+  "@planBudgetSectionTitle": { "description": "Plan hub: monthly category budget section title" },
   "planBudgetSectionSubtitle": "Monthly category caps",
   "@planBudgetSectionSubtitle": { "description": "Plan hub: budget section subtitle" },
   "planBudgetTitle": "Budget",
@@ -94,7 +94,7 @@
   "planBudgetSaveFailed": "Could not save budget: {error}",
   "@planBudgetSaveFailed": { "placeholders": { "error": { "type": "String" } } },
   "planWheelSectionTitle": "Wheel cycles",
-  "@planWheelSectionTitle": { "description": "Plan hub: options Wheel lifecycle section title (roadmap-next.md §3.3)" },
+  "@planWheelSectionTitle": { "description": "Plan hub: options Wheel lifecycle section title" },
   "planWheelSectionSubtitle": "Sell-put + covered-call review",
   "@planWheelSectionSubtitle": { "description": "Plan hub: Wheel section subtitle" },
   "planWheelTitle": "Wheel cycles",
@@ -104,7 +104,7 @@
   "planWheelEmptyBody": "Record a sell-put or covered-call trade and the cycle will surface here.",
   "@planWheelEmptyBody": { "description": "Empty state body explaining when cycles appear" },
   "investmentEventTimelineTitle": "Upcoming events",
-  "@investmentEventTimelineTitle": { "description": "Holding detail tab title for upcoming corporate actions (roadmap-next.md §3.5)" },
+  "@investmentEventTimelineTitle": { "description": "Holding detail tab title for upcoming corporate actions" },
   "investmentEventTimelineEmpty": "No upcoming dividends or splits in the next 90 days.",
   "@investmentEventTimelineEmpty": { "description": "Empty state body when no corporate actions are scheduled" },
   "investmentEventTimelineError": "Couldn't load upcoming events.",
@@ -2946,12 +2946,12 @@
   },
   "aiChatToolJumpJournalEntry": "Entry {id}",
   "@aiChatToolJumpJournalEntry": {
-    "description": "Evidence chip label deep-linking to a ledger journal entry (roadmap-next.md §3.4)",
+    "description": "Evidence chip label deep-linking to a ledger journal entry",
     "placeholders": { "id": { "type": "String" } }
   },
   "aiChatToolJumpTradeJournal": "Trade {id}",
   "@aiChatToolJumpTradeJournal": {
-    "description": "Evidence chip label deep-linking to an options trade journal entry (roadmap-next.md §3.4)",
+    "description": "Evidence chip label deep-linking to an options trade journal entry",
     "placeholders": { "id": { "type": "String" } }
   },
   "aiChatToolEvidenceLabel": "Evidence",

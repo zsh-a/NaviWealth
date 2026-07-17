@@ -11,7 +11,8 @@ Included:
 - Steps, active energy, workouts, workout duration, distance.
 - VO2 max pipeline where platform support exists.
 - Weight and body fat as explicit low-frequency manual or AI-confirmed entries.
-- Morning Briefing as the first HealthOS agent.
+- Read-only Garmin Connect ingestion through the narrow native runtime.
+- Morning Briefing, Recovery Alert, and Weekly Summary agents.
 
 Excluded:
 
@@ -28,6 +29,7 @@ Excluded:
 |---|---|---|
 | iOS | HealthKit via `package:health` | Read-only |
 | Android | Health Connect via `package:health` | Read-only |
+| iOS / Android | Garmin Connect through `lifeos_native` + FRB | Read-only import |
 | Web/Desktop | Stub adapter | Not supported |
 
 Key files:
@@ -37,6 +39,9 @@ Key files:
 - `features/health/data/health_platform_adapter_stub.dart`
 - `features/health/data/health_sync_service.dart`
 - `features/health/data/health_metric_repository.dart`
+- `features/health/data/garmin/garmin_bridge.dart`
+- `features/health/data/garmin/garmin_sync_controller.dart`
+- `features/health/data/garmin/garmin_snapshot_writer.dart`
 
 `HealthSyncService.syncRange()` fetches platform data, converts it to `HealthMetric`, and upserts only changed rows. Unchanged rows do not create outbox work.
 
@@ -91,9 +96,10 @@ Contributions:
 - Scope: `DomainScope.health`.
 - Shell: `features/health/composition/health_domain_shell.dart`.
 - Routes: `features/health/composition/health_routes.dart`.
-- Tabs: Today, Trend, Plan.
+- Tabs: Today, Trends. The legacy `/health/plan` deep link redirects to Today;
+  recovery-plan content lives in the Today hero.
 - Tools: `features/health/health_ai_tools.dart`.
-- Agent: `MorningBriefingAgent`.
+- Agents: Morning Briefing, Recovery Alert, Weekly Summary.
 - Command palette: `features/health/composition/health_command_palette.dart`.
 
 HealthOS is active only when the user enables it in Settings.
@@ -104,13 +110,11 @@ HealthOS is active only when the user enables it in Settings.
 |---|---|
 | Today | Sleep, HRV, recovery, workout cards, latest Morning Briefing, manual run |
 | Trend | HRV, sleep hours, workout minutes line charts |
-| Plan | Recovery score, inputs, simple training load suggestion, medical disclaimer |
 
 Key files:
 
 - `features/health/ui/health_today_page.dart`
 - `features/health/ui/health_trend_page.dart`
-- `features/health/ui/health_plan_page.dart`
 - `features/settings/ui/domains_settings_page.dart`
 
 ## AI Tools
@@ -161,7 +165,20 @@ Event examples:
 - `weight_recorded`
 - `body_fat_recorded`
 
-## Morning Briefing
+## Agents
+
+| Agent | Purpose |
+|---|---|
+| Morning Briefing | Daily recovery briefing with deterministic fallback |
+| Recovery Alert | Surfaces material recovery-risk signals |
+| Weekly Summary | Reviews the recent Health window |
+
+All three produce the shared agent artifact/result contract and are registered
+through `kHealthPack`. Morning Briefing and Recovery Alert support per-agent
+notification preferences; disabling HealthOS removes all three from active
+composition.
+
+### Morning Briefing
 
 Agent:
 

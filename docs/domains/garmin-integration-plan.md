@@ -1,6 +1,6 @@
-# Garmin Connect Integration — Implementation Plan
+# Garmin Connect Integration
 
-> **Status**: Phase 2 Rust core + Dart shell + FRB bindings implemented
+> **Status**: Current implementation reference; Phase 1–2 delivery complete
 > **Date**: 2026-06-08
 > **Domain**: HealthOS
 > **Scope**: Add Garmin Connect as a health data provider — Rust core, Dart shell
@@ -624,7 +624,7 @@ All existing lints pass unchanged:
 
 ---
 
-## 6. Implementation Timeline
+## 6. Delivered Baseline
 
 | Phase | Status | Deliverable |
 |---|---|---|

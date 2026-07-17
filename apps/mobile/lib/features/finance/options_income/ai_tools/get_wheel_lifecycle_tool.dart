@@ -5,7 +5,7 @@ import 'package:naviwealth/features/finance/options_income/domain/options_strate
 import 'package:naviwealth/features/finance/options_income/domain/wheel_lifecycle.dart';
 
 /// `get_wheel_lifecycle` — return the per-underlying Wheel cycle posture
-/// (`docs/roadmap-next.md` §3.3 P4). Read-only derived view over the
+/// (`docs/domains/options-income.md` §12 P4). Read-only derived view over the
 /// already-synced trade journal — no extra IO. When [input.symbol] is
 /// provided, returns just that underlying's cycle; otherwise returns the
 /// full list ordered by stage salience (open positions first).

@@ -6,8 +6,7 @@ import 'crash_reporter.dart';
 
 /// User preference: ship anonymised crash reports + breadcrumbs.
 ///
-/// **Defaults to OFF.** Per `roadmap-next.md` §3.6 + `roadmap-midterm-
-/// execution.md` MT-2.6.M1, crash reporting must be opt-in — sending
+/// **Defaults to OFF.** Crash reporting must be opt-in — sending
 /// telemetry without explicit consent is a non-starter for a local-first
 /// finance app where the same process holds the user's keys, balances,
 /// and Decimal P&L history.

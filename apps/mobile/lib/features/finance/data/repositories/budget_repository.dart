@@ -6,7 +6,7 @@ import 'package:naviwealth/core/sync/op_outbox.dart';
 import 'package:uuid/uuid.dart';
 
 /// Read / write API for monthly category budgets
-/// (`docs/roadmap-next.md` §3.2 — Budget MVP).
+/// through the Finance-owned repository boundary.
 ///
 /// Every mutation rides on the same sync envelope as the rest of the
 /// SyncableTable family: write the row + enqueue a dirty pointer inside a

@@ -55,7 +55,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   // Eager-init the frame timing collector so the addTimingsCallback
   // subscription is in place before the first frame ships. Otherwise
   // PerfTraceRecorder windows opened at startup would race the first
-  // few frames and miss them. `roadmap-next.md` §4 M-5.
+  // few frames and miss them.
   container.read(frameTimingCollectorProvider);
 
   FlutterError.onError = (details) {

@@ -38,6 +38,7 @@ nav:
   - AI:
       - Device AI Architecture: ai/ai-architecture.md
       - Runtime Event Contract: ai/ai-protocol.md
+      - Agent Experience: ai/agent-experience.md
   - Sync:
       - Sync v3 Protocol: sync/sync-v3.md
       - Protocol Test Catalogue: sync/sync-protocol-tests.md
@@ -53,4 +54,3 @@ nav:
   - Roadmap:
       - LifeOS Roadmap: roadmap/roadmap-lifeos.md
       - FinanceOS Roadmap: roadmap/roadmap-finance.md
-      - Agent Experience Plan: roadmap/agent-experience-plan.md

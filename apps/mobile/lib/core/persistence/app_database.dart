@@ -287,7 +287,7 @@ class AppDatabase extends _$AppDatabase {
         await customStatement(createOpOutbox);
         await customStatement(createOpOutboxIndex);
       }
-      // v14 → v15: monthly category budgets (`roadmap-next.md` §3.2). One
+      // v14 → v15: monthly category budgets. One
       // row per (categoryId, periodMonth). Sync rides on the row-state
       // protocol like every other SyncableTable — no special wiring.
       if (from < 15) {

@@ -8,7 +8,7 @@ import 'package:naviwealth/features/finance/data/market/providers/yfinance_corpo
 import 'package:naviwealth/features/finance/investment/domain/reporting/event_timeline.dart';
 
 /// Fetch + cache for per-symbol corporate-action events
-/// (`docs/roadmap-next.md` §3.5).
+/// for the Finance investment event timeline.
 ///
 /// Wraps the yfinance chart endpoint (already used for historical bars)
 /// with `events=div,splits` and the [parseYahooCorporateActions] parser.

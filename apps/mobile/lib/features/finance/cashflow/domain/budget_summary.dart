@@ -1,5 +1,5 @@
 /// Read-model joining a calendar month's budget plans with the realised
-/// spend for that month (`docs/roadmap-next.md` §3.2). Pure domain — no
+/// spend for that month. Pure domain — no
 /// I/O — so the FIRE engine and the Plan-tab dashboard can both consume
 /// the same shape without re-querying.
 library;

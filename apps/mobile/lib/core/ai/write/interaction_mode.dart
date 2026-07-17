@@ -74,7 +74,7 @@ InteractionMode _deriveBatchPlanMode(BatchProposalPlan batch) {
   return _modeForRank(rank);
 }
 
-/// `roadmap-next.md` §4 M-2 — most-conservative-child wins. Order
+/// Batch proposals use a most-conservative-child policy. Order
 /// (least → most friction): `oneTap` < `swipe` < `confirmDiff` <
 /// `typed`. Batches never include `typed` children (the envelope
 /// rejects [ExternalSideEffect] at construction), so the upper bound

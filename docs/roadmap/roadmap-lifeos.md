@@ -1,210 +1,190 @@
 # NaviWealth LifeOS Roadmap
 
-Status: active cross-domain roadmap.
+Status: active cross-domain sequencing SSOT.
 
-This document owns product and engineering sequencing that cuts across
-FinanceOS, HealthOS, KnowledgeOS, and ExecutionOS. Domain-specific behavior remains in
-the domain SSOTs:
+Last reviewed: 2026-07-17.
 
-- FinanceOS: `roadmap-finance.md`
+This roadmap contains only work that changes cross-domain product outcomes or
+shared delivery risk. Current architecture belongs in the architecture SSOTs,
+domain behavior belongs in domain SSOTs, and test-layer policy belongs in the
+testing strategy:
+
+- FinanceOS sequencing: `roadmap-finance.md`
 - HealthOS: `../domains/healthos-domain.md`
 - KnowledgeOS: `../domains/knowledgeos-domain.md`
 - ExecutionOS: `../domains/executionos-domain.md`
 - Shell and registration seams: `../architecture/lifeos-shell.md`
 - Hard boundaries and non-goals: `../architecture/lifeos-architecture-northstar.md`
+- Test task inventory and coverage layers: `../development/testing-strategy.md`
 
-## Current Product Shape
+## Product Snapshot
 
-NaviWealth is now a local-first Personal LifeOS:
+NaviWealth is a local-first Personal LifeOS. FinanceOS is always on; HealthOS,
+KnowledgeOS, and ExecutionOS are user opt-in. Device AI remains native-only,
+Web has neither an AI runtime nor Health platform integration, and the backend
+remains a schema-agnostic Sync v3 row store.
 
-| Domain | Activation | Primary value |
-|---|---|---|
-| FinanceOS | Always on | Wealth, cashflow, FIRE, investment, options income |
-| HealthOS | User opt-in | Recovery signals, health trends, morning briefing |
-| KnowledgeOS | User opt-in | Decision memory, assumptions, routines, review work |
-| ExecutionOS | User opt-in | Personal actions, projects, commitments, progress review |
+The first production cross-domain loop is complete: Life signals expose local
+evidence, confirmed proposals create source-preserving Execution actions, and
+Execution Review shows whether the current source signal is cleared or still
+active without claiming causality.
 
-FinanceOS remains the seed domain, but the active roadmap is no longer
-Finance-only. New work should improve the shared LifeOS substrate or close
-one domain's real user workflow; do not add untriggered domains.
+## Now
 
-## Priority Order
+Keep at most three initiatives in this section. An initiative leaves `Now`
+only when its exit evidence is present in the repository.
 
-### 1. Cross-Domain User Loop Depth
+### N1. Real-World Statement Ingestion Quality
 
-The first production cross-domain loop is now complete:
+Outcome: reduce manual Finance entry without allowing imported rows to bypass
+review, deduplication, or explicit confirmation.
 
-- Life Hub turns local Finance, Health, Knowledge, and agent state into
-  actionable signals.
-- Opening a signal shows the local evidence before offering an action.
-- The user explicitly confirms an existing `execution_action` proposal; the
-  resulting Execution Action keeps a domain-neutral source reference and the
-  evidence snapshot in its note/reason.
-- Execution Today owns completion, and Execution Review closes the visible
-  loop. If ExecutionOS is disabled, the flow routes through domain settings
-  instead of writing into an inactive domain.
-- `life_execution_loop_flow_test.dart` proves the Health recovery vertical
-  slice from signal through completed Review history.
-- `life_finance_knowledge_execution_flow_test.dart` now proves the same
-  source-preserving loop for Finance day evidence and the Knowledge inbox.
-- Execution Review compares a completed action's source reference with the
-  complete current Life signal candidate set and labels the outcome as
-  cleared or still active. The comparison is deliberately observational; it
-  does not claim that completing the action caused the source signal to move.
+Current evidence:
 
-Keep this as the canonical pattern: originating domains contribute evidence
-and suggested intent, `proposalApplierProvider` owns confirmed application,
-and ExecutionOS owns action lifecycle. Do not add a second cross-domain task
-store. Proposal appliers are resolved lazily after routing by kind, so an
-Execution confirmation does not wait for unrelated domain repository graphs.
-Next, deepen domain-specific outcome interpretation only where a domain has a
-real, deterministic before/after signal.
+- Provider detection exists for Alipay, WeChat Pay, bank, broker, and generic
+  statements.
+- The checked-in representative corpus contains an Alipay export. WeChat Pay
+  and bank coverage is still synthetic and must not be described as verified
+  production-format support.
 
-### 2. High-Quality Data Ingestion
+Exit evidence:
 
-FinanceOS value is still limited by manual data entry. The ingest substrate
-and provider detection exist; the next step is expanding the real, redacted
-fixture corpus beyond Alipay and hardening provider-specific parsing:
+- Add redacted representative WeChat Pay and bank debit/credit fixtures only
+  after real samples or confirmed user demand are available.
+- Each representative fixture pins provider detection, accepted/rejected row
+  counts, direction, amount, status filtering, and privacy-safe diagnostics.
+- Dedup behavior is covered for account, expense, trade, and transfer import
+  paths.
+- Capture remains offline-first: no synchronous LLM call, and every imported
+  row remains a draft until confirmation.
 
-- Add representative WeChat Pay and bank debit/credit export fixtures only
-  from redacted real files or confirmed user demand.
-- Keep review and dedup explicit.
-- Do not call the LLM synchronously on capture/import save paths.
-- Treat imported data as draft until the user confirms it.
+Owner: FinanceOS. Cross-domain roadmap ownership reflects its current product
+priority; parser and workflow details remain in `roadmap-finance.md`.
 
-### 3. Task-Spine Maintenance
+### N2. Cross-Domain Outcome And Agent Quality
 
-The stable task spine now covers 17 journeys: the original 12 Finance/global
-jobs plus optional-domain enablement, Knowledge capture, and Health, Finance,
-and Knowledge Life-signal-to-Execution-Review loops. Maintain task-level tests
-and product polish around durable user jobs, not pages:
+Outcome: make proactive results useful, evidence-backed, and low-noise rather
+than increasing the number of agents or creating another AI destination.
 
-- Add account.
-- Import CSV or statement.
-- Ask AI with local evidence.
-- Generate FIRE report.
-- Plan options income.
-- Backup, restore, and export.
+Current evidence:
 
-New journeys should earn a flow test only when they represent a durable job,
-plus a primary-surface golden where useful and a targeted integration or
-contract test for the data path.
-
-### 4. AI Evidence, Proposal, And Memory Quality
-
-Device AI should be auditable by construction:
-
-- Tool outputs should return `EvidenceAnchor` where they cite local state.
-- Write tools should return proposals or use explicit confirmation.
-- Batch proposals need UI, undo, and progress treatment before they become
-  normal agent output.
-- Standard agent-result follow-up intents should be contributed by every
-  agent-capable domain and de-duplicated at domain composition, so shared
-  result actions do not depend on one seed domain's registry.
-- Memory retrieval should be evaluated for answer quality, not only for
-  successful vector lookup.
-
-Current hardening baseline:
-
-- Batch proposal UI includes progress, recovery, durable undo, and focused
-  contract/widget tests.
-- Standard agent-result intents are contributed by every agent-capable pack
-  and de-duplicated in app composition.
-- Fixed Memory answer-quality cases score required facts, forbidden claims,
+- The Health, Finance, and Knowledge signal-to-Execution flows preserve source
+  references through completion and Review.
+- Agent results share one artifact, presentation, intent, proposal, trace, and
+  visibility model across active `DomainPack`s.
+- Fixed answer-quality cases already score required facts, forbidden claims,
   and expected/forbidden evidence ids.
-- High-value Finance account/holding reads, all Health summary/trend reads,
-  Knowledge search/review reads, and Execution list/summary reads emit
-  navigable `EvidenceAnchor`s. Continue migrating lower-value legacy reads as
-  they are changed; do not infer anchors from arbitrary JSON ids.
 
-### 5. Observability And Diagnostics
+Exit evidence:
 
-Default-off observability should become useful for development and opt-in
-production diagnostics:
+- Every production agent has executable ready, no-finding or skip/failure
+  cases appropriate to its behavior, with evidence and action-intent checks.
+- New cross-domain outcome interpretation is added only for deterministic
+  before/after signals and keeps observational wording where causality cannot
+  be established.
+- The evaluation report exposes high-signal result rate, no-finding rate,
+  dismissed/snoozed result rate, evidence-navigation success, and forbidden
+  claim failures without capturing private payloads.
+- Lower-value legacy read tools gain `EvidenceAnchor`s only when touched by a
+  real workflow; ids are not guessed from arbitrary JSON.
 
-- Sentry initialization is wired in `app/bootstrap.dart` behind
-  `OptInCrashReporter` and the user's diagnostics preference.
-- Surface sync and performance diagnostics in developer-facing views.
-- Keep payload capture disabled unless the user explicitly enables verbose
-  local diagnostics.
+### N3. iOS Native Runtime Distribution Confidence
 
-### 6. Sync Hardening
+Outcome: make the narrow Rust EmbeddingGemma and agent-runtime surface
+installable and diagnosable on iOS before expanding native capability.
 
-Sync v3 remains row-state LWW. Near-term work should harden the protocol,
-not redesign it:
+Current evidence:
 
-- Add Dart-to-Rust wire contract tests.
-- Make conflicts and skipped rows diagnosable.
-- Start E2EE only after the v3 stability window is met.
-- Keep the backend schema-agnostic.
+- Android arm64 release builds and Android emulator integration tests run in
+  CI.
+- Model download, verification, deletion, recovery diagnostics, fingerprint
+  changes, and stale-vector deletion are implemented and tested.
+- Web remains on stub behavior.
 
-### 7. Bootstrap And Startup Composition
+Exit evidence:
 
-The startup composition now separates first-paint prerequisites from deferred
-work:
+- A macOS CI job builds iOS with `--no-codesign` through the production
+  CocoaPods/cargokit path.
+- An iOS simulator or device smoke proves the bundled native library loads,
+  missing model files fall back safely, and installed model files resolve.
+- Packaging failures identify whether the native library, ONNX Runtime, or
+  model bundle is missing without exposing user content.
+- The current CocoaPods dependency is recorded explicitly while Swift Package
+  Manager support remains unavailable.
 
-- `bootstrap.dart` waits only for framework/URL setup, formatter data, warm
-  preferences, and crash-reporter initialization. Independent prerequisites
-  start concurrently.
-- Provider overrides, lazy embedder loading, and post-frame work live in small
-  modules under `app/bootstrap/`.
-- Authentication restore, sync, maintenance, Memory Runtime/indexers, agent
-  catch-up, LLM credential warm-up, domain background hooks, and the debug
-  backend health check no longer block `runApp()`.
-- Auth-gated startup is reactive, so a user who logs in or chooses local-only
-  after a logged-out cold start still mounts sync/memory/agent work.
-- Domain background hooks remain registry-driven and observe auth plus domain
-  opt-ins, including cancellation for disabled optional domains.
+## Next
 
-### 8. Native Embedding Distribution
+These are accepted follow-ups but are not allowed to displace `Now` work
+without an explicit reorder.
 
-The Rust EmbeddingGemma path is a narrow native surface. It should be made
-installable and diagnosable before more native runtime is added:
+### Sync V3 Stability Gate
 
-- Verify iOS and Android bundling paths.
-- Keep Web on stub behavior.
-- Model download, verification, deletion, and recovery diagnostics are
-  available in the AI Models settings surface.
-- Test embedder fingerprint changes and vector invalidation.
+Define the production stability window before deciding on Sync E2EE. The gate
+must specify release duration, successful-cycle rate, fatal protocol errors,
+conflict/skipped-row diagnostics, reset-generation failures, and recovery
+evidence. Existing Dart/Rust serializer fixtures and conflict diagnostics are
+baseline, not future work.
 
-### 9. Dependency Maintenance
+### On-Device Database Encryption Decision
 
-Maintenance pass completed on 2026-07-17:
+The on-device integration layer proves the real file-backed Drift connection,
+migrations, repository writes, and backup/restore, but the SQLCipher
+PRAGMA/key-recovery path is not implemented. Either promote database-at-rest
+encryption into a scoped initiative with key-loss/recovery acceptance tests or
+record an explicit non-goal and threat-model rationale.
 
-- Replaced discontinued `golden_toolkit` with Flutter's native
-  `matchesGoldenFile` matcher plus the repository's deterministic font,
-  platform, bounded-pump, and real-shadow harness.
-- Upgraded compatible runtime patches for Dio, Drift, Sentry, SQLite,
-  image/image picker, local auth, sharing, package info, logging, UUID, and
-  cross-file support.
-- Keep `flutter_riverpod` at 3.2.1 until the recorded resumed-provider
-  regression is fixed; keep `receive_sharing_intent` at 1.8.1 while the native
-  Rust plugin requires CocoaPods; keep `drift_dev` at 2.34.0 until its analyzer
-  requirement converges with Freezed. FRB beta and Forui upgrades require
-  targeted native/UI validation rather than blind version bumps.
+### Data Portability Recovery Matrix
 
-### 10. Engineering Debt Burn-Down
+Extend the existing backup/restore/export task coverage only around real
+failure modes: wrong passphrase, corrupt/truncated archive, interrupted
+restore, cross-version migration, and large datasets. Do not add more
+page-bound navigation tests as a proxy for recovery correctness.
 
-Keep the ratchets moving down:
+## Triggered Bets
 
-- Keep the non-golden test suite at zero failures; do not introduce failure
-  allowlists.
-- Keep boundary lint gates green.
-- Prefer contract tests for cross-language or cross-domain seams.
+Triggered work stays out of `Now` and `Next` until its evidence is recorded.
 
-### 11. Completion Audit Discipline
+| Area | Trigger | Required decision |
+|---|---|---|
+| Sync E2EE | Sync v3 meets the documented production stability gate | Threat model, key recovery, Rust/Dart boundary |
+| New statement provider | Redacted real sample or repeated measured manual-entry pain | Format support and fixture ownership |
+| Wider native engine | Demonstrated performance or security delta with a current caller | ADR and narrow FRB surface |
+| Future LifeOS domain | Explicit user need that cannot fit an existing domain | New ADR and real domain package |
+| Collaboration/social/publishing | No current trigger; outside product boundaries | Northstar change required |
 
-Before claiming a roadmap item done, prove it from current state:
+## Completed Baseline
 
-- Identify the authoritative file, test, command, or runtime behavior.
-- Verify the full stated scope, not a narrow proxy.
-- Update the owning SSOT when the implementation changes the roadmap.
+The following are current-state guarantees and must not be reintroduced as
+future roadmap phases:
 
-## Anti-Goals
+- Registry-driven multi-domain shell, opt-in, routes, tools, prompts, agents,
+  proposal appliers, settings, data management, and background hooks.
+- Source-preserving Health, Finance, and Knowledge Life-signal-to-Execution
+  loops with task-level flow coverage.
+- Unified agent artifacts, result UI, preferences, scheduling, follow-up
+  intents, trace links, visibility state, and FinanceOS agents.
+- Batch proposal progress, recovery, durable undo, and focused contracts.
+- Memory answer-quality fixtures and navigable anchors for high-value reads.
+- Opt-in Sentry wiring plus Sync and performance diagnostic surfaces.
+- Dart/Rust Sync v3 serializer fixtures, accepted-ack behavior, conflict and
+  skipped-row diagnostics, and domain reset generations.
+- Deferred startup composition: auth restore, sync, maintenance, Memory,
+  agents, credentials, domain background work, and debug health checks do not
+  block first paint.
+- Native model lifecycle diagnostics and embedding fingerprint invalidation.
+- The 2026-07-17 dependency maintenance pass and native Flutter golden harness.
 
-- Do not add TimeOS, LivingOS, or any future domain without a new ADR.
-- Do not turn sync v3 into CRDT, event sourcing, or schema negotiation.
-- Do not add a backend AI relay.
-- Do not put domain entities into `core/` contracts.
-- Do not introduce social, collaboration, publishing, or entertainment
-  surfaces.
+## Roadmap Operating Rules
+
+- `Now` contains outcomes, not completed implementation history or permanent
+  engineering policy.
+- Every initiative states current evidence and exit evidence. A broad verb such
+  as “improve”, “harden”, or “deepen” is insufficient without observable scope.
+- Triggered bets do not enter scheduled work until their trigger is recorded.
+- Architecture boundaries and anti-goals are referenced from the Northstar;
+  they are not duplicated here.
+- When implementation satisfies an exit criterion, update this roadmap in the
+  same change and move the item to `Completed Baseline` or a release changelog.
+- Mutable roadmap section numbers must not be used as source-code contract
+  references; code should cite a stable architecture/domain SSOT or the owning
+  test instead.

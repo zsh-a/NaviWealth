@@ -1,5 +1,4 @@
-/// AI Copilot M1 — compact user profile (see `roadmap-midterm-execution.md`
-/// §2.5 M1.1).
+/// Compact, provider-neutral user profile for device AI context.
 ///
 /// The profile is a single small JSON-shaped struct injected into the AI
 /// system prompt so the model can ground its answers in the user's actual
@@ -144,9 +143,9 @@ class ExpenseObservation {
 }
 
 /// Compose a [UserProfile] from raw aggregates. **Pure function** — no
-/// I/O, no FX conversion (caller pre-converts to [baseCurrency]). The 50ms
-/// / 10k-entries perf target in `roadmap-midterm-execution.md` §2.5 M1.6
-/// is achievable because this is a single O(n) pass plus a sort over the
+/// I/O, no FX conversion (caller pre-converts to [baseCurrency]). The bounded
+/// history performance target is achievable because this is a single O(n)
+/// pass plus a sort over the
 /// distinct category set.
 ///
 /// [topCategoryLimit] defaults to 5 — every extra slot in [topCategories]

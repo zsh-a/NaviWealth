@@ -1,7 +1,7 @@
 # NaviWealth — Testing Strategy (Production-Grade Delivery)
 
 **Status:** Active SSOT for test architecture. Owns the test pyramid, the
-Task spine, the CI gate design, and the burn-down roadmap. Read this
+Task spine, the CI gate design, and current coverage/gaps. Read this
 before adding a new test *layer* or changing a CI test gate.
 
 Related: `docs/sync/sync-protocol-tests.md` (sync case matrix), `docs/sync/sync-e2e-manual.md`
@@ -29,7 +29,7 @@ sake.
 
 ```
          AI exploratory + semantic   ~1%   nightly, non-blocking
-       Flow / Task (Page Objects)   ~4%   ~15 journeys, test/flow + integration_test
+       Flow / Task (Page Objects)   ~4%   17 journeys, test/flow + integration_test
        Contract (Dart↔Rust↔wire)     ~5%   schema-driven, blocking
       Golden (visual regression)     ~5%   expanded surfaces + breakpoints, Linux-pinned
      Integration (real Drift chain)  ~10%  UI→repo→Drift→domain, real connection
@@ -40,33 +40,36 @@ Percentages are directional, not quotas. The base stays unit-heavy.
 
 ## 3. The Task spine (the stable contract)
 
-These 15 journeys are the flow-test backbone. Each one earns: a flow
-test (`test/flow/` now, `integration_test/` on-device later), a Page
-Object, and a golden of its primary surface.
+These 17 journeys are the stable product-test backbone. Coverage can use a
+headless flow, protocol E2E, on-device integration, or a combination appropriate
+to the task. Page Objects and primary-surface goldens are added where the UI is
+part of the durable contract; test-file count is not the journey count.
 
 | # | Task (cn) | Task (en) | Primary surface |
 |---|-----------|-----------|-----------------|
 | 1 | 查看净资产 | View net worth | Home / Today |
 | 2 | 添加账户 | Add account | Wealth → account editor |
 | 3 | 添加交易 | Add transaction | Investment → trade entry |
-| 4 | 导入账单/CSV | Import CSV / statement | Ingest |
-| 5 | 多端同步 | Multi-device sync | (protocol — see §6) |
-| 6 | AI 问答 | Ask the AI | AI chat |
-| 7 | 执行资产分析 | Run portfolio analysis | Analytics |
-| 8 | 再平衡 | Rebalance | Rebalance execution |
-| 9 | 期权收入计划 | Plan options income | Options income |
-| 10 | 生成 FIRE 报告 | Generate FIRE report | FIRE dashboard |
-| 11 | 本地加密备份/恢复 | Encrypted backup / restore | Settings → backup |
-| 12 | 导出 | Export | Settings → export |
-| 13 | 启用可选域 | Enable optional domain | Settings → Domain management |
-| 14 | 捕获知识笔记 | Capture Knowledge note | KnowledgeOS → Inbox |
-| 15 | 处理 Life 信号并闭环 | Act on a Life signal | Life → Execution Today → Review |
+| 4 | 账户间转账 | Transfer between accounts | Activity → transfer entry |
+| 5 | 导入账单/CSV | Import CSV / statement | Ingest |
+| 6 | 管理月度预算 | Manage monthly budget | Plan → Budget |
+| 7 | 多端同步 | Multi-device sync | Sync protocol/status |
+| 8 | AI 问答 | Ask the AI | AI sheet/chat |
+| 9 | 执行资产分析 | Run portfolio analysis | Analytics |
+| 10 | 再平衡 | Rebalance | Rebalance execution |
+| 11 | 期权收入计划 | Plan options income | Options income |
+| 12 | 生成 FIRE 报告 | Generate FIRE report | FIRE dashboard |
+| 13 | 本地加密备份/恢复 | Encrypted backup / restore | Settings → backup |
+| 14 | 导出 | Export | Settings → export |
+| 15 | 启用可选域 | Enable optional domain | Settings → Domain management |
+| 16 | 捕获知识笔记 | Capture Knowledge note | KnowledgeOS → Inbox |
+| 17 | 处理 Life 信号并闭环 | Act on a Life signal | Life → Execution Today → Review |
 
-All 15 task flows are seeded under `test/flow/`: net worth, account creation,
-transaction entry, statement import, sync navigation coverage, AI chat,
-portfolio analysis, rebalance, options income, FIRE report, backup restore,
-export backup, optional-domain enablement, Knowledge note capture, and the
-Life evidence → Execution action → completed Review loop.
+The repository currently has 18 `test/flow/*_test.dart` files. They are not a
+second task inventory: `navigation_flow_test.dart` is an auxiliary shell route
+smoke, backup/export use separate flows, and Task 17 has separate Health and
+Finance/Knowledge evidence scenarios. Task 7 is primarily proven by Sync v3
+contract and deterministic multi-device E2E coverage rather than a page flow.
 
 ## 4. Layers — what each is for and how to write it
 
@@ -124,36 +127,18 @@ When the layout is refactored, only the Page Object changes; the Task
 body does not. Use a bounded `settle()` pump, never `pumpAndSettle`
 (stream/timer surfaces can hang).
 
-Seeds: `net_worth_flow_test.dart` (Task #1 — land on Today, move between
-destinations), `add_account_flow_test.dart` (Task #2 — discover account
-creation from Wealth, save through the real repository into in-memory Drift,
-and return to the live account list), `add_transaction_flow_test.dart`
-(Task #3 — discover the Activity quick-add menu and enter the trade-entry
-form), `import_statement_flow_test.dart` (Task #4 — discover the Activity
-ingest queue, paste a statement, and stage reviewable drafts),
-`navigation_flow_test.dart` (route-smoke across all four FinanceOS primary
-tabs — Today / Activity / Wealth / Plan — asserting each resolves and keeps
-the shell mounted rather than hitting the 404 page), and
-`export_backup_flow_test.dart` (Task #12 — discover Backup & Restore through
-global Settings, enter an export passphrase, and hand encrypted bytes to the
-file-save boundary), and `fire_report_flow_test.dart` (Task #10 — discover
-FIRE from the Plan hub and land on the report/setup surface), and
-`rebalance_flow_test.dart` (Task #8 — discover Rebalance from the Plan hub
-and land on the rebalance prerequisite surface), and
-`options_income_flow_test.dart` (Task #9 — discover Income Planner from the
-Plan hub and land on the risk/preferences setup surface), and
-`portfolio_analysis_flow_test.dart` (Task #7 — discover Holdings from Wealth
-and land on the Portfolio analysis surface), and
-`restore_backup_flow_test.dart` (Task #11 — discover Backup & Restore through
-global Settings, import a backup file, and pass restore credentials to the
-restore boundary), `ai_chat_flow_test.dart` (Task #6 — open the shell-level AI
-sheet, send a question, and render the assistant reply),
-`domain_opt_in_flow_test.dart` (Task #13 — enable KnowledgeOS through the real
-domain settings store), `knowledge_capture_flow_test.dart` (Task #14 — save an
-offline Note through the real Knowledge repository), and
-`life_execution_loop_flow_test.dart` (Task #15 — inspect local Health evidence,
-confirm an `execution_action` proposal, finish it in Today, and see it in
-Review).
+Current flow mapping:
+
+| Tasks | Flow coverage |
+|---|---|
+| 1–6 | `net_worth`, `add_account`, `add_transaction`, `transfer`, `import_statement`, `budget` |
+| 8–12 | `ai_chat`, `portfolio_analysis`, `rebalance`, `options_income`, `fire_report` |
+| 13–16 | `restore_backup`, `export_backup`, `domain_opt_in`, `knowledge_capture` |
+| 17 | `life_execution_loop`, `life_finance_knowledge_execution` |
+
+`navigation_flow_test.dart` is an auxiliary Finance shell smoke. Keep selectors
+inside Page Objects and outcomes inside the task test. Do not create a new flow
+just to mirror a page when an existing durable journey already covers it.
 
 ### Contract (Dart↔Rust↔wire, ~5%)
 The client and the Rust Worker share a wire format but no generated
@@ -192,7 +177,7 @@ multi-device convergence with deterministic time. The current blocking bundle
 also includes `test/e2e/finance_ledger_e2e_test.dart`, so protocol behavior and
 Finance ledger convergence are proven together. `sync_e2e_test.dart` carries
 the P1-G E2E-1..5 markers; `docs/sync/sync-protocol-tests.md` remains the broader
-case matrix. This is the canonical Task #5 coverage.
+case matrix. This is the canonical Task #7 coverage.
 
 `test/e2e/agent_runtime_finance_memory_e2e_test.dart` is a gated real-LLM
 runtime scenario. It is present in the suite by default, but the provider-backed
@@ -251,7 +236,7 @@ There is no known-failing allowlist: any non-golden test failure fails CI.
 Golden PNG comparison remains isolated in the Linux-pinned
 `golden-regression` job.
 
-## 6. On-device integration (`integration_test/`) — the next layer
+## 6. On-device integration (`integration_test/`)
 
 `test/flow/` runs headless under `flutter test` and stubs the data layer.
 It does **not** exercise SQLCipher, the platform secure-storage key path,
@@ -278,73 +263,40 @@ harness or `core/persistence/`), not the unit-test VM. Run locally with:
 `flutter test integration_test/ -d <device>` (needs a full Apple/Android
 toolchain — it can't run on the headless `flutter test` host).
 
-Next here: broaden the on-device layer to the SQLCipher PRAGMA/key-recovery
-path once the production connection implements database encryption.
+The production connection does not yet implement the SQLCipher
+PRAGMA/key-recovery path. The LifeOS roadmap owns the decision to implement or
+explicitly reject database-at-rest encryption; this testing SSOT owns the
+required on-device coverage once that product decision is made.
 
-## 7. Roadmap
+## 7. Current Coverage And Known Gaps
 
-**P0 — close CI holes (done in this change set):**
-- ✅ Backend tests run in CI — `cargo test` (native host) added to `backend.yml`.
-  The 11 JWT-domain / sync-LWW tests now gate PRs.
-- ✅ Web smoke wired up — `web-smoke.yml`: chromium on PRs, full matrix nightly.
-- ✅ Non-golden mobile tests are zero-failure blocking checks in CI.
-- ✅ Flow layer seeded — `test/flow/` with Page Object Model + all 15 task
-  flows.
-- ✅ Integration layer seeded — `test/integration/` real-Drift harness +
-  net-worth coverage in every direction (manual asset, liability, securities).
-- ✅ On-device `integration_test/` seeded — real file-backed DB boot/migrate/
-  reopen, backup/restore, and journal-repository write smokes +
-  `integration-device.yml` Android-emulator runner (§6).
-- Both new layers run inside the existing `flutter test` job (tagged `flow`
-  / `integration` in `dart_test.yaml`); no emulator required.
+Current baseline:
 
-**P1 — fill the missing layers (in progress):**
-- ✅ Net-worth read model covered in every direction — manual assets,
-  liabilities, and ledger-reconstructed securities — through the real chain.
-- ✅ On-device `integration_test/` stood up (real file DB boot, repository
-  write smoke, backup/restore, and emulator CI).
-- Flow layer: 15 of 15 Tasks done (view net worth, add account, add
-  transaction entry, import statement drafts, portfolio analysis, rebalance,
-  options income, FIRE report, backup restore, export backup, navigate
-  primaries, AI chat, enable an optional domain, capture Knowledge, and close a
-  Life signal through Execution Review). Next expansion should deepen these
-  flows with selected golden surfaces and on-device `integration_test/`
-  coverage rather than adding more page-bound smoke tests.
-- Contracts-as-code: AI enum wire manifest now gates against Dart code and
-  `sync-v3` row-change/request/response fixtures gate against Dart/Rust
-  serializers, including edge-case server envelopes. Next work is keeping new
-  contract variants fixture-backed as they are introduced.
-- Expand golden coverage to each Task surface + responsive breakpoints.
-- Keep the non-golden suite at zero failures. Runtime skips are limited by
-  `test/testing_infrastructure_contract_test.dart` to platform/native/artifact
-  dependency gates; temporary product/test regressions should be fixed, not
-  hidden behind a new skip.
+- Backend tests, Web smoke, non-golden Flutter tests, Linux-pinned goldens,
+  contract fixtures, and boundary lints are blocking CI checks.
+- Headless flows cover the 17-task inventory with auxiliary route smoke where
+  useful.
+- Real-Drift integration covers net worth through manual assets, liabilities,
+  and ledger-reconstructed securities.
+- Android on-device integration covers database boot/migration/reopen,
+  backup/restore, and a journal repository write.
+- Sync v3 request/response fixtures are generated from the Dart/Rust
+  serializers, including pagination and accepted-row edge cases.
+- State-machine tests cover conventional async state, chat streaming,
+  ingestion, Sync retry/progress, and diagnostic providers.
+- The nightly AI semantic surrogate verifies selected finance surfaces and can
+  hand artifacts to an optional external vision validator.
 
-**P2 — modern differentiators:**
-- ✅ Seeded: `ConventionalAsyncNotifier` now has state-machine coverage for
-  build, refresh-with-previous, refresh error, reload semantics, and mutate
-  success/error. `ChatController` also has AI-chat graph coverage for idle →
-  streaming → idle, busy-turn suppression, error unwind, and cancellation.
-  `IngestController` now has import-graph coverage for device CSV
-  persistence, pending-draft dedup, privacy-gated Vision refusal, Vision
-  parse persistence + trace metadata, and DB-boot rejection. `SyncEngine` now
-  has sync-graph coverage for stale dirty-pointer cleanup and partial pull
-  progress when a later page fails into backoff. Sync diagnostics providers
-  now cover seeded status events plus cursor, local HLC, outbox depth, and
-  local row-count refresh on status changes. `SyncStatusPage` now has widget
-  coverage for offline/error/conflict diagnostics, cursor/outbox/local-count
-  rendering, and status-event UI refresh, plus a mobile golden for the
-  diagnostic offline/conflict first viewport and responsive-breakpoint checks
-  for compact stacked vs. wide one-row stat tiles. AI boundary copy now avoids
-  stale cloud-inference/mirror language in user-visible badges and analytical
-  device-tool descriptors. Selected semantic/vision surrogate coverage now
-  verifies the AI-rendered net-worth, allocation, and account-list surfaces at
-  phone width, and `ai-semantic.yml` runs it nightly with optional screenshot
-  artifact upload plus an external vision-agent webhook.
-- AI exploratory + semantic: the repo side is wired. To enable model-based
-  screenshot review, configure an external service behind
-  `AI_VISION_AGENT_WEBHOOK_URL` that consumes the manifest and downloaded
-  artifact.
+Known coverage gaps are descriptive, not a second product roadmap:
+
+- iOS native build/load smoke is not present in CI.
+- SQLCipher key setup and recovery cannot be tested until the production
+  connection implements database-at-rest encryption.
+- Goldens and on-device tests should deepen existing durable journeys when a
+  real rendering or platform risk is identified.
+- Runtime skips remain limited by `testing_infrastructure_contract_test.dart`
+  to platform/native/artifact dependency gates; product regressions must not
+  create a failure allowlist.
 
 ## 8. Conventions
 

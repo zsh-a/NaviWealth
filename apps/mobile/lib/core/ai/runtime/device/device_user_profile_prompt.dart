@@ -1,6 +1,5 @@
 /// Render a [ContextPack] into a short system-prompt appendix that grounds
-/// the model in the user's actual finance posture (MT-2.5.M1.2,
-/// `docs/roadmap-midterm-execution.md`).
+/// the model in the user's actual finance posture.
 ///
 /// The appendix is rendered in Chinese to match
 /// [kDeviceSystemPromptBase]'s register and keeps to a tight byte budget:
@@ -15,8 +14,8 @@ library;
 import '../../contracts/base_context.dart';
 import '../../contracts/context_pack.dart';
 
-/// Maximum length in bytes for the rendered appendix (UTF-8). Mirrors
-/// MT-2.5.M1.3's "8KB hard cap" budget but for the *appendix only* —
+/// Maximum length in bytes for the rendered appendix (UTF-8). This is the
+/// budget for the *appendix only* —
 /// the full system prompt + clock + appendix stays well under 16KB.
 const int kUserProfileAppendixByteCap = 1024;
 

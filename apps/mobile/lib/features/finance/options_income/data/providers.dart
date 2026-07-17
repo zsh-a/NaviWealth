@@ -159,7 +159,7 @@ final optionsTradeStatsProvider =
     });
 
 /// Per-underlying Wheel lifecycles derived from the live trade journal
-/// (`roadmap-next.md` §3.3 P4). Pure derivation — no extra reads — so
+/// (`docs/domains/options-income.md` §12 P4). Pure derivation — no extra reads — so
 /// this provider rebuilds whenever the journal stream emits.
 ///
 /// Sorted by current stage's salience: open positions first, then resting

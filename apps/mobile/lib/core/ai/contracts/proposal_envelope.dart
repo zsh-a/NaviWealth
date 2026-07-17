@@ -92,8 +92,8 @@ class ExternalTarget {
   final String endpoint;
 }
 
-/// `roadmap-next.md` §4 M-2 — multiple local mutations the user wants
-/// to apply (and undo) as one gesture. Wraps a non-empty list of
+/// Multiple local mutations the user wants to apply (and undo) as one
+/// gesture. Wraps a non-empty list of
 /// [LocalImmediateWrite] or [LocalProposal] children; mixing in any
 /// [ExternalSideEffect] is rejected at construction so a single Apply
 /// can never silently fire a broker order alongside memo edits.

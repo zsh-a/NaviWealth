@@ -1,6 +1,5 @@
 /// Evidence anchor — a stable reference from a tool result back to the
-/// local entity it was derived from (`roadmap-midterm-execution.md`
-/// §2.5 MT-2.5.M1.4 / `roadmap-next.md` §3.4).
+/// local entity it was derived from. See `docs/ai/ai-protocol.md`.
 ///
 /// Tools that return analytical aggregates (anomalies, breakdowns,
 /// duplicate charges, …) emit an `evidence` field alongside their

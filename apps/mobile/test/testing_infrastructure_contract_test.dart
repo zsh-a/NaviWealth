@@ -467,7 +467,11 @@ void main() {
 
       expect(strategy.existsSync(), isTrue);
       final text = strategy.readAsStringSync();
-      expect(text, contains('All 15 task flows are seeded'));
+      expect(
+        text,
+        contains('These 17 journeys are the stable product-test backbone'),
+      );
+      expect(text, contains('18 `test/flow/*_test.dart` files'));
       expect(text, contains('finance_ledger_e2e_test.dart'));
       expect(text, contains('P1-G E2E-1..5 markers'));
       expect(text, contains('There is no known-failing allowlist'));
@@ -533,6 +537,9 @@ void main() {
 
     test('production runtime overrides keep scheduled agents on FRB seams', () {
       final bootstrap = File('${appRoot.path}/lib/app/bootstrap.dart');
+      final bootstrapOverrides = File(
+        '${appRoot.path}/lib/app/bootstrap/bootstrap_provider_overrides.dart',
+      );
       final runtimeOverrides = File(
         '${appRoot.path}/lib/app/agent_runtime/overrides/agent_runtime_provider_overrides.dart',
       );
@@ -541,14 +548,22 @@ void main() {
       );
 
       expect(bootstrap.existsSync(), isTrue);
+      expect(bootstrapOverrides.existsSync(), isTrue);
       expect(runtimeOverrides.existsSync(), isTrue);
       expect(runtimeWiringDir.existsSync(), isTrue);
       expect(
         bootstrap.readAsStringSync(),
+        contains('buildBootstrapProviderOverrides('),
+        reason:
+            'bootstrap should delegate provider graph assembly to the '
+            'bootstrap override module.',
+      );
+      expect(
+        bootstrapOverrides.readAsStringSync(),
         contains('...agentRuntimeProviderOverrides()'),
         reason:
-            'bootstrap should delegate FRB runtime wiring to the centralized '
-            'runtime override module.',
+            'the bootstrap override module should delegate FRB runtime wiring '
+            'to the centralized runtime override module.',
       );
 
       final text = _dartFiles(

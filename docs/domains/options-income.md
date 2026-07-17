@@ -4,7 +4,7 @@
 > 关联：[`ai-architecture.md`](../ai/ai-architecture.md)、[`ai-protocol.md`](../ai/ai-protocol.md)、[`roadmap-finance.md`](../roadmap/roadmap-finance.md)、[`market-data-providers.md`](./market-data-providers.md)、[`sync-v3.md`](../sync/sync-v3.md)
 > 定位：在 NaviWealth 已有的"持仓 + 现金 + FIRE 现金桶 + 风险偏好"之上，新增一个**低频期权现金流规划器**。
 >
-> 状态（2026-05-21）：P0–P3 已实现并通过分析与测试。MVP 行情源锁定 yfinance；AI tool **只读 cache**，不触发实时扫描。P4（Wheel / Income Cycle 状态机）与 P5（Tradier OAuth 接入）仍待启动。
+> 状态（2026-07-17）：P0–P4 已实现并通过分析与测试。MVP 行情源锁定 yfinance；AI tool **只读 cache**，不触发实时扫描。P5（Tradier OAuth 接入）是触发式工作，尚未排期。
 
 ---
 
@@ -597,6 +597,10 @@ if (kIsWeb) return const SizedBox.shrink();
 | **P3** | Trade Journal + `propose_options_journal_entry` tool + activity 接入 | — | ❌ |
 | **P4** | Wheel / Income Cycle 状态机 + 复盘视图 | yfinance | ❌ |
 | **P5** | Tradier sandbox 接入 | Tradier (OAuth) | ✅ 新增 `routes/market/options.rs` 透传 |
+
+P0–P4 是当前实现基线，不再作为未来 phase 维护。P5 只有在确认需要
+authenticated options data，并完成 credential custody、revocation、proxy
+边界和 typed-confirmation 设计后，才进入 FinanceOS `Now`。
 
 P0/P3 不需要新增 backend 业务表；服务端通过 [`sync-v3.md`](../sync/sync-v3.md) 的 `sync_rows` 统一存储 opaque payload。
 **评分 / 候选生成 / opportunity cache 永远不上 server。** 这条线在 P5 接 OAuth 行情源时也不能松——P5 的 backend route 仅做凭证持有 + HTTP 透传，禁止 normalize / cache / score。

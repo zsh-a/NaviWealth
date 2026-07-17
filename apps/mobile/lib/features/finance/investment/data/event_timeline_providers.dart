@@ -34,7 +34,7 @@ final corporateActionsServiceProvider = Provider<CorporateActionsService>((
   return CorporateActionsService(http: http, logger: ref.watch(loggerProvider));
 });
 
-/// Per-symbol corporate-action events (`docs/roadmap-next.md` §3.5).
+/// Per-symbol corporate-action events for the Finance investment timeline.
 /// UI surfaces (holding detail "事件" tab) subscribe to this; the
 /// [CorporateActionsService] supplies events via the yfinance chart
 /// endpoint with a 12-hour TTL cache.

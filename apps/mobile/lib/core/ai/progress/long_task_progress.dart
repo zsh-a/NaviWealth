@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-/// `roadmap-next.md` §4 M-2 — descriptor for a long-running AI task
-/// the UI should keep the user oriented inside of.
+/// Descriptor for a long-running AI task the UI should keep the user
+/// oriented inside of.
 ///
 /// Producers (device agent loop, batch applier, tool dispatcher) push
 /// a [LongTaskProgress] each time something observable changes; the

@@ -9,7 +9,7 @@ import '../data/event_timeline_providers.dart';
 import '../domain/reporting/event_timeline.dart';
 
 /// Embeddable "Upcoming events" section for the holding detail page
-/// (`docs/roadmap-next.md` §3.5).
+/// backed by the Finance investment event-timeline read model.
 ///
 /// Reads [upcomingEventsForSymbolProvider] and renders a compact list of
 /// the next 90 days of corporate actions for [symbol]. Falls back to a

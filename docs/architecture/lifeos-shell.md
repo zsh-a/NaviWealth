@@ -58,7 +58,7 @@ features/<domain>/
 
 | Domain | Scope | Shell tabs | Tools | Agents |
 |---|---|---|---|---|
-| FinanceOS | `finance` | Today, Activity, Wealth, Plan | `kFinanceDeviceTools` | none |
+| FinanceOS | `finance` | Today, Activity, Wealth, Plan | `kFinanceDeviceTools` | Weekly Wealth Review, Cashflow Anomaly Review, FIRE Plan Drift Monitor, Options Income Risk Review |
 | HealthOS | `health` | Today, Trends | `kHealthDeviceTools` | Morning Briefing, Recovery Alert, Weekly Summary |
 | KnowledgeOS | `knowledge` | Inbox, Library, Review | `kKnowledgeDeviceTools` | Review, Assumption, Contradiction, Inbox Triage, Routine Due |
 | ExecutionOS | `execution` | Today, Commitments, Review | `kExecutionDeviceTools` | Review |

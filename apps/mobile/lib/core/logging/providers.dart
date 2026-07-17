@@ -17,7 +17,7 @@ final crashReporterDelegateProvider = Provider<CrashReporter>(
 /// Crash reporter binding visible to the rest of the app. Wraps
 /// [crashReporterDelegateProvider] in an [OptInCrashReporter] that drops
 /// every event unless the user has explicitly turned crash reporting on
-/// in Settings (`roadmap-next.md` §3.6). The opt-in default is OFF.
+/// in Settings. The opt-in default is OFF.
 ///
 /// Falls back to the raw delegate when [crashReportingEnabledProvider]
 /// is unreachable (e.g. tests that never override [sharedPreferencesProvider]).
