@@ -133,8 +133,18 @@ void main() {
       'read_only',
     );
     expect(
+      tools.firstWhere((tool) => tool['name'] == 'read_fake')['replay_policy'],
+      'safe_retry',
+    );
+    expect(
       tools.firstWhere((tool) => tool['name'] == 'propose_fake')['risk'],
       'medium',
+    );
+    expect(
+      tools.firstWhere(
+        (tool) => tool['name'] == 'propose_fake',
+      )['replay_policy'],
+      'at_most_once',
     );
     expect(
       tools.firstWhere((tool) => tool['name'] == 'propose_fake')['metadata'],

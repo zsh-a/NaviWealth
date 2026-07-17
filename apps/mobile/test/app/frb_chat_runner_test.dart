@@ -235,6 +235,11 @@ void main() {
         'tool_name': 'read_task',
         'output': <String, Object?>{'title': 'Task title'},
         'is_error': false,
+        'outcome': <String, Object?>{
+          'status': 'ok',
+          'retryable': false,
+          'details': <String, Object?>{},
+        },
       },
     ]);
   });
@@ -306,12 +311,22 @@ void main() {
         'tool_name': 'read_first',
         'output': <String, Object?>{'name': 'read_first'},
         'is_error': false,
+        'outcome': <String, Object?>{
+          'status': 'ok',
+          'retryable': false,
+          'details': <String, Object?>{},
+        },
       },
       <String, Object?>{
         'tool_call_id': 'call_2',
         'tool_name': 'read_second',
         'output': <String, Object?>{'name': 'read_second'},
         'is_error': false,
+        'outcome': <String, Object?>{
+          'status': 'ok',
+          'retryable': false,
+          'details': <String, Object?>{},
+        },
       },
     ]);
   });

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_dispatcher.dart';
 import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_host.dart';
 import 'package:naviwealth/core/ai/composition/device_tools_provider.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
@@ -33,15 +34,23 @@ void main() {
       'tool': 'read_fake',
       'input': <String, Object?>{'id': 'abc'},
     });
+    expect(json['outcome'], <String, Object?>{
+      'status': 'ok',
+      'retryable': false,
+      'details': <String, Object?>{},
+    });
     expect(dispatcher.calls.single.name, 'read_fake');
   });
 
-  test('tool result error envelopes are returned as result payloads', () async {
+  test('nested policy denial remains a result with explicit outcome', () async {
     final host = AgentRuntimeToolHost(
       dispatcher: _FakeDispatcher(
         output: const <String, Object?>{
-          'error': 'denied',
-          'code': 'policy_denied',
+          'error': <String, Object?>{
+            'code': 'policy_denied',
+            'message': 'denied',
+          },
+          'policy_denied': true,
         },
       ),
     );
@@ -57,9 +66,63 @@ void main() {
     final json = jsonDecode(response) as Map<String, Object?>;
     expect(json['error'], isNull);
     expect(json['result'], <String, Object?>{
-      'error': 'denied',
-      'code': 'policy_denied',
+      'error': <String, Object?>{'code': 'policy_denied', 'message': 'denied'},
+      'policy_denied': true,
     });
+    expect(json['outcome'], <String, Object?>{
+      'status': 'policy_denied',
+      'code': 'policy_denied',
+      'message': 'denied',
+      'retryable': false,
+      'details': <String, Object?>{},
+    });
+  });
+
+  test('dispatcher propagates outcome into chat tool results', () async {
+    final dispatcher = AgentRuntimeToolDispatcher(
+      handler: AgentRuntimeToolHost(
+        dispatcher: _FakeDispatcher(
+          output: const <String, Object?>{
+            'error': <String, Object?>{
+              'code': 'policy_denied',
+              'message': 'blocked',
+            },
+            'policy_denied': true,
+          },
+        ),
+      ).handleLine,
+    );
+
+    final result = await dispatcher.call(
+      const AgentRuntimeToolCall(id: 'denied', name: 'blocked'),
+    );
+
+    expect(result.isError, isTrue);
+    expect(result.errorCode, 'policy_denied');
+    expect(result.outcome['status'], 'policy_denied');
+    expect(result.toChatToolResult()['outcome'], result.outcome);
+  });
+
+  test('legacy host payload without outcome is still classified', () async {
+    final dispatcher = AgentRuntimeToolDispatcher(
+      handler: (_) async => jsonEncode(<String, Object?>{
+        'jsonrpc': '2.0',
+        'id': 'legacy',
+        'result': <String, Object?>{
+          'error': 'timed out',
+          'code': 'tool_timeout',
+        },
+      }),
+    );
+
+    final result = await dispatcher.call(
+      const AgentRuntimeToolCall(id: 'legacy', name: 'slow_tool'),
+    );
+
+    expect(result.isError, isTrue);
+    expect(result.errorCode, 'tool_timeout');
+    expect(result.outcome, containsPair('status', 'error'));
+    expect(result.outcome, containsPair('retryable', true));
   });
 
   test('invalid requests return JSON-RPC errors', () async {

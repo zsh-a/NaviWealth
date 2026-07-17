@@ -75,7 +75,7 @@ class AgentRuntimeToolHost {
         name,
         params['input'] ?? const <String, Object?>{},
       );
-      return _encode(_result(id, result));
+      return _encode(_result(id, result, outcome: _inferOutcome(result)));
     } catch (e) {
       return _encode(_error(id, -32000, 'tool host error: $e'));
     }
@@ -94,10 +94,56 @@ Future<void> runAgentRuntimeToolHostLines({
 
 String _encode(Map<String, Object?> value) => jsonEncode(value);
 
-Map<String, Object?> _result(Object? id, Object? result) {
-  final response = <String, Object?>{'jsonrpc': '2.0', 'result': result};
+Map<String, Object?> _result(
+  Object? id,
+  Object? result, {
+  required Map<String, Object?> outcome,
+}) {
+  final response = <String, Object?>{
+    'jsonrpc': '2.0',
+    'result': result,
+    'outcome': outcome,
+  };
   if (id != null) response['id'] = id;
   return response;
+}
+
+Map<String, Object?> _inferOutcome(Object? output) {
+  final object = output is Map
+      ? output.map((key, value) => MapEntry(key.toString(), value))
+      : const <String, Object?>{};
+  final nested = object['error'];
+  final nestedObject = nested is Map
+      ? nested.map((key, value) => MapEntry(key.toString(), value))
+      : const <String, Object?>{};
+  final code =
+      _nonEmptyString(object['code']) ?? _nonEmptyString(nestedObject['code']);
+  final message =
+      _nonEmptyString(object['message']) ??
+      _nonEmptyString(nestedObject['message']) ??
+      (nested is String && nested.isNotEmpty ? nested : null);
+  final hasError = nested != null || object['policy_denied'] == true;
+  final status = switch (code) {
+    'policy_denied' || 'runtime_not_allowed' => 'policy_denied',
+    'approval_required' || 'confirmation_required' => 'approval_required',
+    'user_cancel' || 'user_cancelled' || 'cancelled' => 'cancelled',
+    _ when hasError => 'error',
+    _ => 'ok',
+  };
+  final outcome = <String, Object?>{
+    'status': status,
+    'retryable': object['retryable'] == true || code == 'tool_timeout',
+    'details': object['details'] is Map
+        ? Map<String, Object?>.from(object['details']! as Map)
+        : const <String, Object?>{},
+  };
+  if (status != 'ok' && code != null) outcome['code'] = code;
+  if (status != 'ok' && message != null) outcome['message'] = message;
+  return outcome;
+}
+
+String? _nonEmptyString(Object? value) {
+  return value is String && value.isNotEmpty ? value : null;
 }
 
 Map<String, Object?> _error(Object? id, int code, String message) {

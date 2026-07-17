@@ -215,6 +215,7 @@ class AgentRuntimeToolSpec {
     required this.description,
     required this.inputSchema,
     required this.risk,
+    required this.replayPolicy,
     required this.metadata,
   });
 
@@ -222,11 +223,13 @@ class AgentRuntimeToolSpec {
     DeviceTool tool, {
     ToolDescriptor? descriptor,
   }) {
+    final risk = _runtimeRisk(tool, descriptor);
     return AgentRuntimeToolSpec(
       name: tool.name,
       description: tool.description,
       inputSchema: _jsonObject(tool.inputSchema),
-      risk: _runtimeRisk(tool, descriptor),
+      risk: risk,
+      replayPolicy: risk == 'read_only' ? 'safe_retry' : 'at_most_once',
       metadata: <String, Object?>{
         if (descriptor != null) ...descriptor.toJson(),
       },
@@ -237,6 +240,7 @@ class AgentRuntimeToolSpec {
   final String description;
   final Map<String, Object?> inputSchema;
   final String risk;
+  final String replayPolicy;
   final Map<String, Object?> metadata;
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -244,6 +248,7 @@ class AgentRuntimeToolSpec {
     'description': description,
     'input_schema': inputSchema,
     'risk': risk,
+    'replay_policy': replayPolicy,
     if (metadata.isNotEmpty) 'metadata': metadata,
   };
 }
