@@ -2401,6 +2401,8 @@
   "expenseReportBaseCurrency": "基础货币 {currency} · 月均按 {months} 个月折算",
   "expenseReportCategoryShare": "类目占比",
   "expenseReportUncategorized": "未分类",
+  "expenseReportOtherCategories": "其他",
+  "expenseReportOtherCategoryCount": "{count, plural, other{{count} 个类目}}",
   "expenseReportNoExpenses": "本期没有支出记录。",
   "expenseReportMonthLabel": "{month}月",
   "expenseReportMonthlyTrend": "月度趋势",

@@ -1,28 +1,26 @@
 part of 'expense_report_sections.dart';
 
 class _Pie extends StatelessWidget {
-  const _Pie({required this.report, required this.categoryById});
+  const _Pie({
+    required this.report,
+    required this.categoryById,
+    required this.slices,
+  });
 
   final ExpenseReport report;
   final Map<String, Account> categoryById;
+  final List<ExpenseReportPieSlice> slices;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final slices = <Slice>[
-      for (var i = 0; i < report.byCategory.length; i++)
+    final chartSlices = <Slice>[
+      for (final slice in slices)
         Slice(
-          label: _categoryLabel(
-            l10n,
-            categoryById[report.byCategory[i].expenseAccountId],
-            l10n.expenseReportUncategorized,
-          ),
-          value: report.byCategory[i].total.amount.toDouble(),
-          colorOverride:
-              categoryById[report.byCategory[i].expenseAccountId]
-                  ?.expenseAccentColor(context, ordinal: i) ??
-              ChartPalette.of(context).accentAt(i),
-          meta: report.byCategory[i],
+          label: slice.labelKey,
+          value: slice.breakdown.total.amount.toDouble(),
+          colorOverride: slice.color,
+          meta: slice.breakdown,
         ),
     ];
     return LayoutBuilder(
@@ -36,7 +34,7 @@ class _Pie extends StatelessWidget {
           child: SizedBox.square(
             dimension: size,
             child: NwPieChart(
-              slices: slices,
+              slices: chartSlices,
               hole: 0.66,
               minLabelPercent: 7,
               drillDown: SliceDrillDown((slice) {
@@ -48,6 +46,10 @@ class _Pie extends StatelessWidget {
                     breakdown: breakdown,
                     categoryById: categoryById,
                     baseCurrency: report.baseCurrency,
+                    otherSource: expenseReportOtherSource(
+                      byCategory: report.byCategory,
+                      breakdown: breakdown,
+                    ),
                   ),
                 );
               }),
@@ -61,10 +63,15 @@ class _Pie extends StatelessWidget {
 }
 
 class _PieLegend extends StatelessWidget {
-  const _PieLegend({required this.report, required this.categoryById});
+  const _PieLegend({
+    required this.report,
+    required this.categoryById,
+    required this.slices,
+  });
 
   final ExpenseReport report;
   final Map<String, Account> categoryById;
+  final List<ExpenseReportPieSlice> slices;
 
   @override
   Widget build(BuildContext context) {
@@ -73,32 +80,29 @@ class _PieLegend extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (var i = 0; i < report.byCategory.length; i++)
+        for (final slice in slices)
           _LegendRow(
-            color:
-                categoryById[report.byCategory[i].expenseAccountId]
-                    ?.expenseAccentColor(context, ordinal: i) ??
-                ChartPalette.of(context).accentAt(i),
-            label: _categoryLabel(
-              l10n,
-              categoryById[report.byCategory[i].expenseAccountId],
-              l10n.expenseReportUncategorized,
-            ),
-            valueInBase: report.byCategory[i].total.amount.toDouble(),
+            color: slice.color,
+            label: slice.labelKey,
+            valueInBase: slice.breakdown.total.amount.toDouble(),
             currencyCode: report.baseCurrency,
             percent: total == 0
                 ? 0
-                : report.byCategory[i].total.amount.toDouble() / total,
+                : slice.breakdown.total.amount.toDouble() / total,
             onTap: () => showAppFormSheet<void>(
               context: context,
               builder: (ctx) => _CategoryDrillDown(
-                breakdown: report.byCategory[i],
+                breakdown: slice.breakdown,
                 categoryById: categoryById,
                 baseCurrency: report.baseCurrency,
+                otherSource: expenseReportOtherSource(
+                  byCategory: report.byCategory,
+                  breakdown: slice.breakdown,
+                ),
               ),
             ),
           ),
-        if (report.byCategory.isEmpty)
+        if (slices.isEmpty)
           Text(l10n.expenseReportNoExpenses, style: context.captionStyle),
       ],
     );

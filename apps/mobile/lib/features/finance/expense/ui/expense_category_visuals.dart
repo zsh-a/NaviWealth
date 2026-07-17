@@ -4,6 +4,10 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/shared/ui/account_color.dart';
 
+import '../domain/expense_category_seed_colors.dart';
+import '../domain/expense_report.dart';
+import '../domain/expense_report_pie.dart';
+
 /// UI-side visual lookup for expense [Account]s.
 ///
 /// The account row stores `icon` (a string token) and `color` (a hex
@@ -49,42 +53,6 @@ const Map<String, IconData> kExpenseCategoryIcons = <String, IconData>{
 /// Fallback glyph for unknown / missing icon tokens.
 const IconData kExpenseCategoryFallbackIcon = FLucideIcons.tag;
 
-const Color _kDefaultExpenseSeedAccent = ExpenseCategoryColors.red;
-
-const Map<String, Color> _kExpenseCategoryAccentByIcon = <String, Color>{
-  'restaurant': ExpenseCategoryColors.orange,
-  'fastfood': ExpenseCategoryColors.orange,
-  'local_cafe': ExpenseCategoryColors.amber,
-  'local_grocery_store': ExpenseCategoryColors.lime,
-  'directions_car': ExpenseCategoryColors.sky,
-  'directions_bus': ExpenseCategoryColors.sky,
-  'local_taxi': ExpenseCategoryColors.skyDark,
-  'home': ExpenseCategoryColors.indigo,
-  'apartment': ExpenseCategoryColors.slate,
-  'bolt': ExpenseCategoryColors.yellow,
-  'chair': ExpenseCategoryColors.cyanBrand,
-  'sports_esports': ExpenseCategoryColors.purple,
-  'movie': ExpenseCategoryColors.purple,
-  'medical_services': ExpenseCategoryColors.red,
-  'local_hospital': ExpenseCategoryColors.rose,
-  'school': ExpenseCategoryColors.emerald,
-  'shopping_bag': ExpenseCategoryColors.pink,
-  'shopping_cart': ExpenseCategoryColors.lime,
-  'flight': ExpenseCategoryColors.blue,
-  'phone_android': ExpenseCategoryColors.slateDark,
-  'smartphone': ExpenseCategoryColors.slateDark,
-  'card_giftcard': ExpenseCategoryColors.amberLight,
-  'redeem': ExpenseCategoryColors.amberLight,
-  'pets': ExpenseCategoryColors.violet,
-  'fitness_center': ExpenseCategoryColors.emeraldLight,
-  'show_chart': ExpenseCategoryColors.blue,
-  'receipt_long': ExpenseCategoryColors.gray,
-  'request_quote': ExpenseCategoryColors.rose,
-  'credit_card': ExpenseCategoryColors.slateDark,
-  'category': ExpenseCategoryColors.cyan,
-  'more_horiz': ExpenseCategoryColors.gray,
-};
-
 extension ExpenseAccountVisuals on Account {
   /// Icon resolved from [icon]. Falls back to a generic glyph so the
   /// picker never shows a missing-icon hole.
@@ -99,32 +67,101 @@ extension ExpenseAccountVisuals on Account {
     return parseAccountColor(color);
   }
 
-  /// Display accent for expense surfaces.
+  /// Display accent for expense surfaces (list, picker, report).
   ///
-  /// System expense categories were historically seeded with the same red
-  /// value, which makes the picker and report read as one flat block. Treat
-  /// that seed as a domain default and resolve a softer category-specific
-  /// accent by icon; user-picked colours still win.
+  /// Resolution order (unified):
+  /// 1. system path from the account id → [kExpenseCategorySeedHexByPath]
+  /// 2. persisted [color]
+  /// 3. icon token → [kExpenseCategorySeedHexByIcon]
+  /// 4. [ChartPalette.accentAt] for the series ordinal
   Color expenseAccentColor(BuildContext context, {int ordinal = 0}) {
+    final pathHex = expenseCategoryHexForAccountId(id);
+    if (pathHex != null) {
+      final parsed = parseAccountColor(pathHex);
+      if (parsed != null) return parsed;
+    }
+
     final stored = accentColor;
-    final base = stored == null || _isDefaultExpenseSeedAccent(stored)
-        ? _kExpenseCategoryAccentByIcon[icon] ??
-              ChartPalette.of(context).accentAt(ordinal)
-        : stored;
-    return _harmonizeExpenseAccent(context, base);
+    if (stored != null) return stored;
+
+    final iconToken = icon;
+    if (iconToken != null) {
+      final iconHex = kExpenseCategorySeedHexByIcon[iconToken];
+      if (iconHex != null) {
+        final parsed = parseAccountColor(iconHex);
+        if (parsed != null) return parsed;
+      }
+    }
+
+    return ChartPalette.of(context).accentAt(ordinal);
   }
 }
 
-bool _isDefaultExpenseSeedAccent(Color color) {
-  return (color.r * 255).round() ==
-          (_kDefaultExpenseSeedAccent.r * 255).round() &&
-      (color.g * 255).round() == (_kDefaultExpenseSeedAccent.g * 255).round() &&
-      (color.b * 255).round() == (_kDefaultExpenseSeedAccent.b * 255).round();
+/// Extracts the `expense:`-relative path from a system account id, e.g.
+/// `system-account:u1:expense:dining` → `dining`.
+String? expenseCategoryPathFromAccountId(String accountId) {
+  const marker = ':expense:';
+  final index = accountId.indexOf(marker);
+  if (index < 0) return null;
+  final path = accountId.substring(index + marker.length);
+  return path.isEmpty ? null : path;
 }
 
-Color _harmonizeExpenseAccent(BuildContext context, Color color) {
-  final colors = context.theme.colors;
-  final isDark = colors.brightness == Brightness.dark;
-  final anchor = isDark ? colors.foreground : colors.primary;
-  return Color.lerp(color, anchor, isDark ? 0.04 : 0.07) ?? color;
+/// Canonical hex for a system expense account id, if known.
+String? expenseCategoryHexForAccountId(String accountId) {
+  final path = expenseCategoryPathFromAccountId(accountId);
+  if (path == null) return null;
+  return kExpenseCategorySeedHexByPath[path];
+}
+
+/// Colour for a report category row / pie slice.
+Color expenseReportSliceColor(
+  BuildContext context, {
+  required String expenseAccountId,
+  Account? account,
+  int ordinal = 0,
+}) {
+  if (expenseAccountId == kExpenseReportPieOtherId) {
+    return ExpenseCategoryColors.pieOther;
+  }
+  if (account != null) {
+    return account.expenseAccentColor(context, ordinal: ordinal);
+  }
+  final pathHex = expenseCategoryHexForAccountId(expenseAccountId);
+  if (pathHex != null) {
+    final parsed = parseAccountColor(pathHex);
+    if (parsed != null) return parsed;
+  }
+  return ChartPalette.of(context).accentAt(ordinal);
+}
+
+/// One resolved pie slice: breakdown + colour + display label.
+typedef ExpenseReportPieSlice = ({
+  CategoryBreakdown breakdown,
+  Color color,
+  String labelKey,
+});
+
+/// Builds pie slices for [report], collapsing the long tail and resolving
+/// colours once so the donut and legend stay in lockstep.
+List<ExpenseReportPieSlice> buildExpenseReportPieSlices(
+  BuildContext context, {
+  required ExpenseReport report,
+  required Map<String, Account> categoryById,
+  required String Function(CategoryBreakdown breakdown) labelOf,
+}) {
+  final collapsed = collapseExpenseCategoriesForPie(report.byCategory);
+  return [
+    for (var i = 0; i < collapsed.length; i++)
+      (
+        breakdown: collapsed[i],
+        color: expenseReportSliceColor(
+          context,
+          expenseAccountId: collapsed[i].expenseAccountId,
+          account: categoryById[collapsed[i].expenseAccountId],
+          ordinal: i,
+        ),
+        labelKey: labelOf(collapsed[i]),
+      ),
+  ];
 }

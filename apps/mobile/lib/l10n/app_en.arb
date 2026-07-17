@@ -4346,6 +4346,15 @@
   "@expenseReportCategoryShare": { "description": "Expense report: category pie chart section title" },
   "expenseReportUncategorized": "Uncategorized",
   "@expenseReportUncategorized": { "description": "Expense report: fallback category name" },
+  "expenseReportOtherCategories": "Other",
+  "@expenseReportOtherCategories": {
+    "description": "Expense report: pie roll-up slice for remaining categories"
+  },
+  "expenseReportOtherCategoryCount": "{count, plural, =1{1 category} other{{count} categories}}",
+  "@expenseReportOtherCategoryCount": {
+    "description": "Expense report: subtitle for the Other roll-up row",
+    "placeholders": { "count": { "type": "int" } }
+  },
   "expenseReportNoExpenses": "No expenses in this period.",
   "@expenseReportNoExpenses": { "description": "Expense report: empty state" },
   "expenseReportMonthLabel": "{month}月",

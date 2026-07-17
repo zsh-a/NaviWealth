@@ -177,35 +177,54 @@ class KnowledgeTypeColors {
 
 /// Expense-category accent colours.
 ///
-/// Each expense icon maps to a distinct hue so the picker, list, and report
-/// screens read as a varied palette rather than a flat red block. Values are
-/// Tailwind-derived and chosen to stay accessible against both light and dark
-/// surfaces. The default seed accent (red500) is intentionally omitted from
-/// this map — callers treat its absence as "use the category hue".
+/// Named tokens for expense UI (picker chips, list avatars, report pie).
+/// Hex values match `kExpenseCategorySeedHexByPath` in the Finance expense
+/// domain — keep both sides in lockstep when adjusting hues.
+///
+/// Palette rules:
+/// - every taxonomy leaf has a unique hex
+/// - hues are stepped for categorical charts (not brand monochrome)
+/// - neutrals reserved for long-tail / "other" / fee-like buckets
 class ExpenseCategoryColors {
   const ExpenseCategoryColors._();
 
-  static const Color orange = Color(0xFFF97316); // restaurant, fastfood
-  static const Color amber = ColorPalette.amber500; // local_cafe
-  static const Color lime = Color(0xFF65A30D); // grocery, shopping_cart
-  static const Color sky = Color(0xFF0EA5E9); // car, bus
-  static const Color skyDark = Color(0xFF0284C7); // taxi
-  static const Color indigo = Color(0xFF6366F1); // home
-  static const Color slate = Color(0xFF64748B); // apartment
-  static const Color yellow = Color(0xFFEAB308); // utilities (bolt)
-  static const Color cyanBrand = ColorPalette.cyanBrand500; // furniture
-  static const Color purple = Color(
-    0xFFA855F7,
-  ); // entertainment (esports, movie)
-  static const Color red = ColorPalette.red500; // medical_services
-  static const Color rose = ColorPalette.red600; // local_hospital
-  static const Color emerald = ColorPalette.green600; // education (school)
-  static const Color pink = Color(0xFFEC4899); // shopping_bag
-  static const Color blue = ColorPalette.cyanBrand700; // flight
-  static const Color slateDark = Color(0xFF475569); // phone, credit_card
-  static const Color amberLight = Color(0xFFF59E0B); // gifts
-  static const Color violet = Color(0xFF8B5CF6); // pets
-  static const Color emeraldLight = ColorPalette.green500; // fitness
-  static const Color cyan = ColorPalette.cyan500; // category
-  static const Color gray = ColorPalette.neutral500; // receipts, more
+  static const Color dining = Color(0xFFEA580C);
+  static const Color groceries = Color(0xFF65A30D);
+  static const Color coffee = Color(0xFFCA8A04);
+  static const Color transport = Color(0xFF0284C7);
+  static const Color rideHailing = Color(0xFF0F766E);
+  static const Color housing = Color(0xFF4F46E5);
+  static const Color utilities = Color(0xFFEAB308);
+  static const Color household = Color(0xFF0891B2);
+  static const Color shopping = Color(0xFFDB2777);
+  static const Color subscriptions = Color(0xFF7C3AED);
+  static const Color entertainment = Color(0xFFC026D3);
+  static const Color medical = Color(0xFFE11D48);
+  static const Color fitness = Color(0xFF059669);
+  static const Color education = Color(0xFF2563EB);
+  static const Color travel = Color(0xFF1D4ED8);
+  static const Color communication = Color(0xFF0E7490);
+  static const Color gift = Color(0xFFD97706);
+  static const Color familySupport = Color(0xFFBE123C);
+  static const Color pets = Color(0xFF9333EA);
+  static const Color trading = Color(0xFF334155);
+  static const Color tradingFee = Color(0xFF64748B);
+  static const Color tradingTax = Color(0xFF9F1239);
+  static const Color tradingInterest = Color(0xFF475569);
+  static const Color tax = Color(0xFFB91C1C);
+  static const Color taxWithholding = Color(0xFF881337);
+  static const Color other = Color(0xFF6B7280);
+
+  // Icon-only extras (custom categories / aliases).
+  static const Color fastfood = Color(0xFFF97316);
+  static const Color car = Color(0xFF0369A1);
+  static const Color apartment = Color(0xFF6366F1);
+  static const Color movie = Color(0xFFA855F7);
+  static const Color hospital = Color(0xFFFB7185);
+  static const Color cart = Color(0xFF16A34A);
+  static const Color redeem = Color(0xFFF43F5E);
+  static const Color category = Color(0xFF06B6D4);
+
+  /// Muted roll-up colour for pie "Other" slices.
+  static const Color pieOther = other;
 }

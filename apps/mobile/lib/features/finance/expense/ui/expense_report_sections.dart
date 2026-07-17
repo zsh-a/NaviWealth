@@ -10,6 +10,7 @@ import 'package:naviwealth/features/finance/shared/l10n/account_l10n.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../domain/expense_report.dart';
+import '../domain/expense_report_pie.dart';
 import 'expense_category_visuals.dart';
 
 part 'expense_report_category_list.dart';
@@ -51,11 +52,24 @@ class ExpenseCategoryPieCard extends StatelessWidget {
             else
               LayoutBuilder(
                 builder: (context, c) {
+                  final l10n = AppLocalizations.of(context);
+                  final slices = buildExpenseReportPieSlices(
+                    context,
+                    report: report,
+                    categoryById: categoryById,
+                    labelOf: (breakdown) =>
+                        _breakdownLabel(l10n, breakdown, categoryById),
+                  );
                   final isWide = c.maxWidth >= Breakpoints.mobile;
-                  final pie = _Pie(report: report, categoryById: categoryById);
+                  final pie = _Pie(
+                    report: report,
+                    categoryById: categoryById,
+                    slices: slices,
+                  );
                   final legend = _PieLegend(
                     report: report,
                     categoryById: categoryById,
+                    slices: slices,
                   );
                   if (isWide) {
                     return Row(
@@ -165,7 +179,10 @@ class ExpenseCategoryListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    if (report.byCategory.isEmpty) {
+    // Same Top-N + Other collapse as the pie so share, legend, and list
+    // describe one categorical view.
+    final categories = collapseExpenseCategoriesForPie(report.byCategory);
+    if (categories.isEmpty) {
       return const SizedBox.shrink();
     }
     return SoftCard.flat(
@@ -191,11 +208,15 @@ class ExpenseCategoryListCard extends StatelessWidget {
                 style: context.theme.typography.body.md,
               ),
             ),
-            for (final breakdown in report.byCategory)
+            for (final breakdown in categories)
               _CategoryTile(
                 breakdown: breakdown,
                 categoryById: categoryById,
                 baseCurrency: report.baseCurrency,
+                otherSource: expenseReportOtherSource(
+                  byCategory: report.byCategory,
+                  breakdown: breakdown,
+                ),
               ),
           ],
         ),

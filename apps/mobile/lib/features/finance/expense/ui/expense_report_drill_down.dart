@@ -5,19 +5,25 @@ class _CategoryDrillDown extends StatelessWidget {
     required this.breakdown,
     required this.categoryById,
     required this.baseCurrency,
+    this.otherSource,
   });
 
   final CategoryBreakdown breakdown;
   final Map<String, Account> categoryById;
   final String baseCurrency;
 
+  /// Pre-collapse tail rows when drilling into the pie "Other" bucket.
+  final List<CategoryBreakdown>? otherSource;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
     final category = categoryById[breakdown.expenseAccountId];
-    final entries = [...breakdown.items]
-      ..sort((a, b) => b.tradeDate.compareTo(a.tradeDate));
+    final isOther = breakdown.expenseAccountId == kExpenseReportPieOtherId;
+    final groupedOther = isOther
+        ? (otherSource ?? const <CategoryBreakdown>[])
+        : null;
 
     return DraggableScrollableSheet(
       expand: false,
@@ -38,17 +44,19 @@ class _CategoryDrillDown extends StatelessWidget {
               Row(
                 children: [
                   Icon(
-                    category?.iconData ?? FLucideIcons.banknote,
-                    color: context.theme.colors.primary,
+                    isOther
+                        ? FLucideIcons.ellipsis
+                        : (category?.iconData ?? FLucideIcons.banknote),
+                    color: expenseReportSliceColor(
+                      context,
+                      expenseAccountId: breakdown.expenseAccountId,
+                      account: category,
+                    ),
                   ),
                   const SizedBox(width: AppSpacing.s8),
                   Expanded(
                     child: Text(
-                      _categoryLabel(
-                        l10n,
-                        category,
-                        l10n.expenseReportUncategorized,
-                      ),
+                      _breakdownLabel(l10n, breakdown, categoryById),
                       style: context.rowTitleStyle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -63,33 +71,140 @@ class _CategoryDrillDown extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.s4),
               Text(
-                l10n.expenseReportItemCount(entries.length),
+                isOther && groupedOther != null
+                    ? l10n.expenseReportOtherCategoryCount(groupedOther.length)
+                    : l10n.expenseReportItemCount(breakdown.items.length),
                 style: context.captionStyle,
               ),
               const SizedBox(height: AppSpacing.s12),
               const FDivider(),
               Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  itemCount: entries.length,
-                  itemBuilder: (ctx, i) {
-                    final exp = entries[i];
-                    return _ExpenseLine(
-                      expense: exp,
-                      formatter: formatter,
-                      onTap: () {
-                        Navigator.of(ctx).pop();
-                        context.push(FinanceRoutes.expense(exp.id));
-                      },
-                    );
-                  },
-                ),
+                child:
+                    isOther && groupedOther != null && groupedOther.isNotEmpty
+                    ? _OtherGroupedList(
+                        groups: groupedOther,
+                        categoryById: categoryById,
+                        baseCurrency: baseCurrency,
+                        formatter: formatter,
+                        scrollController: scrollController,
+                      )
+                    : Builder(
+                        builder: (ctx) {
+                          final entries = [
+                            ...breakdown.items,
+                          ]..sort((a, b) => b.tradeDate.compareTo(a.tradeDate));
+                          return ListView.builder(
+                            controller: scrollController,
+                            itemCount: entries.length,
+                            itemBuilder: (ctx, i) {
+                              final exp = entries[i];
+                              return _ExpenseLine(
+                                expense: exp,
+                                formatter: formatter,
+                                onTap: () {
+                                  Navigator.of(ctx).pop();
+                                  context.push(FinanceRoutes.expense(exp.id));
+                                },
+                              );
+                            },
+                          );
+                        },
+                      ),
               ),
             ],
           ),
         );
       },
     );
+  }
+}
+
+/// "Other" drill-down: one section per original category so long-tail
+/// spend stays discoverable after the pie roll-up.
+class _OtherGroupedList extends StatelessWidget {
+  const _OtherGroupedList({
+    required this.groups,
+    required this.categoryById,
+    required this.baseCurrency,
+    required this.formatter,
+    required this.scrollController,
+  });
+
+  final List<CategoryBreakdown> groups;
+  final Map<String, Account> categoryById;
+  final String baseCurrency;
+  final AppFormatters formatter;
+  final ScrollController scrollController;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final children = <Widget>[];
+    for (final group in groups) {
+      final account = categoryById[group.expenseAccountId];
+      final accent = expenseReportSliceColor(
+        context,
+        expenseAccountId: group.expenseAccountId,
+        account: account,
+      );
+      final entries = [...group.items]
+        ..sort((a, b) => b.tradeDate.compareTo(a.tradeDate));
+      children.add(
+        Padding(
+          padding: const EdgeInsets.only(
+            top: AppSpacing.s12,
+            bottom: AppSpacing.s4,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: AppSpacing.s10,
+                height: AppSpacing.s10,
+                decoration: BoxDecoration(
+                  color: accent,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              Expanded(
+                child: Text(
+                  _breakdownLabel(l10n, group, categoryById),
+                  style: context.labelStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              MoneyText(
+                amount: group.total.amount.toDouble(),
+                currencyCode: baseCurrency,
+                compact: true,
+                style: context.captionStyle,
+              ),
+            ],
+          ),
+        ),
+      );
+      children.add(
+        Text(
+          l10n.expenseReportItemCount(entries.length),
+          style: context.captionStyle,
+        ),
+      );
+      for (final exp in entries) {
+        children.add(
+          _ExpenseLine(
+            expense: exp,
+            formatter: formatter,
+            onTap: () {
+              Navigator.of(context).pop();
+              context.push(FinanceRoutes.expense(exp.id));
+            },
+          ),
+        );
+      }
+    }
+
+    return ListView(controller: scrollController, children: children);
   }
 }
 

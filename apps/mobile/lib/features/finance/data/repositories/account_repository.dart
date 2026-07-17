@@ -6,6 +6,7 @@ import 'package:naviwealth/core/sync/op_outbox.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/expense/domain/expense_category_seed_colors.dart';
 import 'package:uuid/uuid.dart';
 
 import 'account_mutation_receipt.dart';

@@ -5,18 +5,27 @@ class _CategoryTile extends StatelessWidget {
     required this.breakdown,
     required this.categoryById,
     required this.baseCurrency,
+    this.otherSource,
   });
 
   final CategoryBreakdown breakdown;
   final Map<String, Account> categoryById;
   final String baseCurrency;
 
+  /// When [breakdown] is the pie "Other" roll-up, the original tail rows
+  /// (still sorted descending) so drill-down can group by category.
+  final List<CategoryBreakdown>? otherSource;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final category = categoryById[breakdown.expenseAccountId];
-    final accent =
-        category?.expenseAccentColor(context) ?? context.theme.colors.primary;
+    final isOther = breakdown.expenseAccountId == kExpenseReportPieOtherId;
+    final accent = expenseReportSliceColor(
+      context,
+      expenseAccountId: breakdown.expenseAccountId,
+      account: category,
+    );
     return FTappable(
       onPress: () => showAppFormSheet<void>(
         context: context,
@@ -24,6 +33,7 @@ class _CategoryTile extends StatelessWidget {
           breakdown: breakdown,
           categoryById: categoryById,
           baseCurrency: baseCurrency,
+          otherSource: otherSource,
         ),
       ),
       child: Padding(
@@ -39,7 +49,9 @@ class _CategoryTile extends StatelessWidget {
               child: Align(
                 alignment: AlignmentDirectional.centerStart,
                 child: Icon(
-                  category?.iconData ?? FLucideIcons.banknote,
+                  isOther
+                      ? FLucideIcons.ellipsis
+                      : (category?.iconData ?? FLucideIcons.banknote),
                   size: AppIconSizes.md,
                   color: accent.withValues(alpha: AppOpacity.prominent),
                 ),
@@ -51,18 +63,18 @@ class _CategoryTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _categoryLabel(
-                      l10n,
-                      category,
-                      l10n.expenseReportUncategorized,
-                    ),
+                    _breakdownLabel(l10n, breakdown, categoryById),
                     style: context.labelStyle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: AppSpacing.s2),
                   Text(
-                    l10n.expenseReportItemCount(breakdown.items.length),
+                    isOther && otherSource != null
+                        ? l10n.expenseReportOtherCategoryCount(
+                            otherSource!.length,
+                          )
+                        : l10n.expenseReportItemCount(breakdown.items.length),
                     style: context.captionStyle,
                   ),
                 ],

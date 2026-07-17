@@ -7712,6 +7712,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get expenseReportUncategorized => '未分类';
 
   @override
+  String get expenseReportOtherCategories => '其他';
+
+  @override
+  String expenseReportOtherCategoryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个类目',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get expenseReportNoExpenses => '本期没有支出记录。';
 
   @override

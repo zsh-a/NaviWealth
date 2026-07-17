@@ -31,8 +31,10 @@ class _SystemAccountSeed {
   /// Material icon name (e.g. `work`, `restaurant`).
   final String icon;
 
-  /// Hex color used for the avatar tint. Picked per-category so all
-  /// income leaves share a green family, expenses red, equity blue.
+  /// Hex color used for the avatar tint and categorical charts.
+  /// Income leaves share a green family, equity a blue family; each
+  /// expense leaf uses a distinct hue from
+  /// [kExpenseCategorySeedHexByPath].
   final String color;
 
   bool get isRoot => parentPath == null;
@@ -120,13 +122,15 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
   ),
 
   // ---- Everyday expense leaves + Trading / Tax branches ----
+  // Colours come from kExpenseCategorySeedHexByPath — one distinct hue
+  // per leaf so list avatars and the report pie share the same palette.
   _SystemAccountSeed(
     path: 'expense:dining',
     parentPath: 'expense',
     name: 'Dining',
     category: AccountSide.expense,
     icon: 'restaurant',
-    color: '#EF4444',
+    color: kExpenseColorDining,
   ),
   _SystemAccountSeed(
     path: 'expense:groceries',
@@ -134,7 +138,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Groceries',
     category: AccountSide.expense,
     icon: 'local_grocery_store',
-    color: '#EF4444',
+    color: kExpenseColorGroceries,
   ),
   _SystemAccountSeed(
     path: 'expense:coffee',
@@ -142,7 +146,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Coffee',
     category: AccountSide.expense,
     icon: 'local_cafe',
-    color: '#EF4444',
+    color: kExpenseColorCoffee,
   ),
   _SystemAccountSeed(
     path: 'expense:transport',
@@ -150,7 +154,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Transport',
     category: AccountSide.expense,
     icon: 'directions_bus',
-    color: '#EF4444',
+    color: kExpenseColorTransport,
   ),
   _SystemAccountSeed(
     path: 'expense:rideHailing',
@@ -158,7 +162,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Ride Hailing',
     category: AccountSide.expense,
     icon: 'local_taxi',
-    color: '#EF4444',
+    color: kExpenseColorRideHailing,
   ),
   _SystemAccountSeed(
     path: 'expense:housing',
@@ -166,7 +170,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Housing',
     category: AccountSide.expense,
     icon: 'home',
-    color: '#EF4444',
+    color: kExpenseColorHousing,
   ),
   _SystemAccountSeed(
     path: 'expense:utilities',
@@ -174,7 +178,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Utilities',
     category: AccountSide.expense,
     icon: 'bolt',
-    color: '#EF4444',
+    color: kExpenseColorUtilities,
   ),
   _SystemAccountSeed(
     path: 'expense:household',
@@ -182,7 +186,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Household',
     category: AccountSide.expense,
     icon: 'chair',
-    color: '#EF4444',
+    color: kExpenseColorHousehold,
   ),
   _SystemAccountSeed(
     path: 'expense:shopping',
@@ -190,7 +194,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Shopping',
     category: AccountSide.expense,
     icon: 'shopping_bag',
-    color: '#EF4444',
+    color: kExpenseColorShopping,
   ),
   _SystemAccountSeed(
     path: 'expense:subscriptions',
@@ -198,7 +202,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Subscriptions',
     category: AccountSide.expense,
     icon: 'credit_card',
-    color: '#EF4444',
+    color: kExpenseColorSubscriptions,
   ),
   _SystemAccountSeed(
     path: 'expense:entertainment',
@@ -206,7 +210,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Entertainment',
     category: AccountSide.expense,
     icon: 'sports_esports',
-    color: '#EF4444',
+    color: kExpenseColorEntertainment,
   ),
   _SystemAccountSeed(
     path: 'expense:medical',
@@ -214,7 +218,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Medical',
     category: AccountSide.expense,
     icon: 'medical_services',
-    color: '#EF4444',
+    color: kExpenseColorMedical,
   ),
   _SystemAccountSeed(
     path: 'expense:fitness',
@@ -222,7 +226,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Fitness',
     category: AccountSide.expense,
     icon: 'fitness_center',
-    color: '#EF4444',
+    color: kExpenseColorFitness,
   ),
   _SystemAccountSeed(
     path: 'expense:education',
@@ -230,7 +234,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Education',
     category: AccountSide.expense,
     icon: 'school',
-    color: '#EF4444',
+    color: kExpenseColorEducation,
   ),
   _SystemAccountSeed(
     path: 'expense:travel',
@@ -238,7 +242,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Travel',
     category: AccountSide.expense,
     icon: 'flight',
-    color: '#EF4444',
+    color: kExpenseColorTravel,
   ),
   _SystemAccountSeed(
     path: 'expense:communication',
@@ -246,7 +250,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Communication',
     category: AccountSide.expense,
     icon: 'smartphone',
-    color: '#EF4444',
+    color: kExpenseColorCommunication,
   ),
   _SystemAccountSeed(
     path: 'expense:gift',
@@ -254,7 +258,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Gift',
     category: AccountSide.expense,
     icon: 'card_giftcard',
-    color: '#EF4444',
+    color: kExpenseColorGift,
   ),
   _SystemAccountSeed(
     path: 'expense:familySupport',
@@ -262,7 +266,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Family Support',
     category: AccountSide.expense,
     icon: 'redeem',
-    color: '#EF4444',
+    color: kExpenseColorFamilySupport,
   ),
   _SystemAccountSeed(
     path: 'expense:pets',
@@ -270,7 +274,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Pets',
     category: AccountSide.expense,
     icon: 'pets',
-    color: '#EF4444',
+    color: kExpenseColorPets,
   ),
   _SystemAccountSeed(
     path: 'expense:trading',
@@ -278,7 +282,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Trading',
     category: AccountSide.expense,
     icon: 'show_chart',
-    color: '#EF4444',
+    color: kExpenseColorTrading,
   ),
   _SystemAccountSeed(
     path: 'expense:trading:fee',
@@ -286,7 +290,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Trading Fee',
     category: AccountSide.expense,
     icon: 'receipt_long',
-    color: '#EF4444',
+    color: kExpenseColorTradingFee,
   ),
   _SystemAccountSeed(
     path: 'expense:trading:tax',
@@ -294,7 +298,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Trading Tax',
     category: AccountSide.expense,
     icon: 'request_quote',
-    color: '#EF4444',
+    color: kExpenseColorTradingTax,
   ),
   _SystemAccountSeed(
     path: 'expense:trading:interest',
@@ -302,7 +306,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Trading Interest',
     category: AccountSide.expense,
     icon: 'credit_card',
-    color: '#EF4444',
+    color: kExpenseColorTradingInterest,
   ),
   _SystemAccountSeed(
     path: 'expense:tax',
@@ -310,7 +314,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Tax',
     category: AccountSide.expense,
     icon: 'request_quote',
-    color: '#EF4444',
+    color: kExpenseColorTax,
   ),
   _SystemAccountSeed(
     path: 'expense:tax:withholding',
@@ -318,7 +322,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Withholding Tax',
     category: AccountSide.expense,
     icon: 'request_quote',
-    color: '#EF4444',
+    color: kExpenseColorTaxWithholding,
   ),
   _SystemAccountSeed(
     path: 'expense:other',
@@ -326,7 +330,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Other Expense',
     category: AccountSide.expense,
     icon: 'more_horiz',
-    color: '#EF4444',
+    color: kExpenseColorOther,
   ),
 
   // ---- Equity leaves ----

@@ -8083,6 +8083,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseReportUncategorized => 'Uncategorized';
 
   @override
+  String get expenseReportOtherCategories => 'Other';
+
+  @override
+  String expenseReportOtherCategoryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count categories',
+      one: '1 category',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get expenseReportNoExpenses => 'No expenses in this period.';
 
   @override

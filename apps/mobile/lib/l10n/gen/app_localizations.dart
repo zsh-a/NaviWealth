@@ -13727,6 +13727,18 @@ abstract class AppLocalizations {
   /// **'Uncategorized'**
   String get expenseReportUncategorized;
 
+  /// Expense report: pie roll-up slice for remaining categories
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get expenseReportOtherCategories;
+
+  /// Expense report: subtitle for the Other roll-up row
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 category} other{{count} categories}}'**
+  String expenseReportOtherCategoryCount(int count);
+
   /// Expense report: empty state
   ///
   /// In en, this message translates to:
