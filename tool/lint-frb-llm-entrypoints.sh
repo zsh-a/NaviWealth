@@ -126,14 +126,17 @@ if [[ -n "$legacy_vision_trace_constant_violations" ]]; then
 fi
 
 BOOTSTRAP="$LIB/app/bootstrap.dart"
+BOOTSTRAP_OVERRIDES="$LIB/app/bootstrap/bootstrap_provider_overrides.dart"
 RUNTIME_WIRING="$LIB/app/agent_runtime"
 
-if ! grep -q '\.\.\.agentRuntimeProviderOverrides()' "$BOOTSTRAP"; then
-  echo "✖ bootstrap does not install centralized FRB runtime overrides:" >&2
-  echo "  $BOOTSTRAP" >&2
+if ! grep -q "bootstrap/bootstrap_provider_overrides.dart" "$BOOTSTRAP" || \
+   ! grep -q '\.\.\.agentRuntimeProviderOverrides()' "$BOOTSTRAP_OVERRIDES"; then
+  echo "✖ bootstrap composition does not install centralized FRB runtime overrides:" >&2
+  echo "  $BOOTSTRAP_OVERRIDES" >&2
   echo >&2
-  echo "Keep app/bootstrap.dart delegating to agentRuntimeProviderOverrides()" >&2
-  echo "so runtime wiring stays centralized." >&2
+  echo "Keep app/bootstrap.dart delegating to bootstrap_provider_overrides.dart," >&2
+  echo "and keep that module delegating to agentRuntimeProviderOverrides(), so" >&2
+  echo "runtime wiring stays centralized." >&2
   exit 1
 fi
 

@@ -1,189 +1,62 @@
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../core/ai/llm_credentials/providers.dart' as llm_credentials;
-import '../core/ai/local/embedding/embedder.dart';
-import '../core/ai/local/embedding/embedder_path_resolution.dart';
-import '../core/ai/local/embedding/rust_gemma_embedder.dart';
-import '../core/ai/local/memory/providers.dart' as memory_providers;
-import '../core/auth/providers.dart' as core_auth;
 import '../core/config/app_config.dart';
-import '../core/config/providers.dart';
-import '../core/data_management/providers.dart';
 import '../core/format/formatters.dart';
 import '../core/logging/app_logger.dart';
-import '../core/logging/crash_reporter.dart';
-import '../core/logging/logging_crash_reporter.dart';
 import '../core/logging/providers.dart';
 import '../core/logging/sentry_crash_reporter.dart';
 import '../core/perf/providers.dart';
-import '../core/sync/providers.dart';
-import '../design_system/preferences/theme_preferences.dart';
-import '../features/auth/data/auth_controller.dart';
-import '../features/auth/data/auth_route_guard.dart';
-import 'agent_runtime/overrides/agent_runtime_provider_overrides.dart';
-import 'domain_bootstrap.dart';
-import 'domain_composition.dart';
-import 'routing/route_guard.dart';
+import 'bootstrap/bootstrap_provider_overrides.dart';
 
 /// Initializes the app shell: framework binding, URL strategy, and the global
 /// error pipeline (Flutter framework errors, async zone errors, and the
 /// platform dispatcher channel) all funnel through [AppLogger] → [CrashReporter].
 ///
-/// Returns a [ProviderContainer] pre-seeded with the bootstrap logger and a
-/// warm [SharedPreferences] handle so theme/market-color preferences resolve
-/// synchronously on first build. The caller hosts it inside
-/// `UncontrolledProviderScope`.
+/// Returns a [ProviderContainer] pre-seeded with the bootstrap logger and warm
+/// preferences. Authentication, network diagnostics, Memory Runtime, native
+/// model discovery, sync, and domain background work start after first paint.
 Future<ProviderContainer> bootstrap({AppConfig? config}) async {
+  final started = Stopwatch()..start();
   WidgetsFlutterBinding.ensureInitialized();
   // Clean URLs on web (e.g. /portfolio instead of /#/portfolio).
   // No-op elsewhere.
   usePathUrlStrategy();
-  await AppFormatters.ensureInitialized();
-
-  final prefs = await SharedPreferences.getInstance();
   final effectiveConfig = config ?? AppConfig.dev;
-  final sentryReady = await initializeSentryCrashReporter(effectiveConfig);
-
-  // Resolve embedder asset paths before the container is built
-  // so the override list knows whether to wire the Rust embedder. Each
-  // path can come from either an `AppConfig` dart-define override (dev
-  // / test) or from the in-app installer's on-disk install dir. When
-  // any required path is missing we leave `embedderProvider` on its
-  // [StubEmbedder] default and let the user install the bundle from
-  // Settings → AI Models.
-  final resolvedEmbedderPaths = await resolveEmbedderPaths(effectiveConfig);
+  // These independent critical prerequisites run concurrently. Preferences
+  // and formatter data are needed by the first widget build; Sentry must be
+  // ready before the global error handlers are installed.
+  final preferencesFuture = SharedPreferences.getInstance();
+  final formattersFuture = AppFormatters.ensureInitialized();
+  final sentryFuture = initializeSentryCrashReporter(effectiveConfig);
+  final preferences = await preferencesFuture;
+  await formattersFuture;
+  final sentryReady = await sentryFuture;
 
   final container = ProviderContainer(
     // Riverpod 3 retries failed async providers by default, which can keep
     // `.future` consumers in loading indefinitely. Business retries are
     // explicit (user Retry, sync backoff, provider-specific policy).
     retry: (_, _) => null,
-    overrides: [
-      if (config != null) appConfigProvider.overrideWithValue(config),
-      sharedPreferencesProvider.overrideWithValue(prefs),
-      // `roadmap-next.md` §3.6 — Sentry is installed only when a build
-      // supplies SENTRY_DSN and SDK init succeeds. Otherwise debug builds
-      // keep routing captureError / breadcrumbs through Talker so engineers
-      // can verify the opt-in pipeline without shipping telemetry.
-      if (sentryReady)
-        crashReporterDelegateProvider.overrideWithValue(
-          const SentryCrashReporter(),
-        )
-      else if (kDebugMode)
-        crashReporterDelegateProvider.overrideWith(
-          (ref) => LoggingCrashReporter(talker: ref.watch(talkerProvider)),
-        ),
-      // Plug the AuthRouteGuard into the empty default. The guard
-      // reads `authControllerProvider` per redirect; auth state changes
-      // bump `routeRedirectVersionProvider` which makes go_router re-run
-      // the full redirect chain. Skipped when `bypassAuth` is on so dev
-      // builds can browse the app without a session.
-      routeGuardsProvider.overrideWith(
-        (ref) => <RouteGuard>[
-          if (!effectiveConfig.bypassAuth) ref.watch(authRouteGuardProvider),
-          ref.watch(domainOptInRouteGuardProvider),
-        ],
-      ),
-      ...agentRuntimeProviderOverrides(),
-      // Feed the access token to the SyncEngine so /sync requests are
-      // authenticated once a session is active. The fetcher
-      // closes over Riverpod's container, so token rotation is picked up
-      // on every request without re-creating the SyncEngine.
-      syncAuthTokenProvider.overrideWith(
-        (ref) =>
-            () async => ref
-                .read(authControllerProvider.notifier)
-                .currentSession()
-                ?.accessToken,
-      ),
-      // Wire the AuthInterceptor's hooks to the live controller so any
-      // future `authedDioProvider` consumer (feature endpoints that need
-      // refresh-on-401) gets the correct session + recovery behaviour.
-      core_auth.authSessionReaderProvider.overrideWith(
-        (ref) =>
-            () => ref.read(authControllerProvider.notifier).currentSession(),
-      ),
-      core_auth.authSessionProvider.overrideWith((ref) {
-        final state = ref.watch(authControllerProvider).value;
-        return state is AuthLoggedIn ? state.session : null;
-      }),
-      core_auth.authStateProvider.overrideWith(
-        (ref) => ref.watch(authControllerProvider).value,
-      ),
-      core_auth.authOnUnauthorizedProvider.overrideWith(
-        (ref) =>
-            () => ref.read(authControllerProvider.notifier).refreshIfPossible(),
-      ),
-      core_auth.switchToLocalOnlyProvider.overrideWith(
-        (ref) =>
-            () => ref.read(authControllerProvider.notifier).switchToLocalOnly(),
-      ),
-      core_auth.domainOptInTokenRefreshProvider.overrideWith(
-        (ref) => () async {
-          await ref.read(authControllerProvider.notifier).refreshIfPossible();
-        },
-      ),
-      // LifeOS domain inventory + active-domain aggregators
-      // (`docs/architecture/lifeos-shell.md` §4): tools, prompt blocks, agents, shell
-      // specs, domain provider seams, and the registry all derive from
-      // the DomainPack list.
-      ...lifeOsDomainCompositionOverrides(),
-      // Swap in the Rust
-      // EmbeddingGemma embedder when the user has configured a model
-      // directory. Loading is async (FRB init + ONNX session warm-up
-      // takes a few seconds); the override returns a Future that the
-      // memoryRuntimeProvider awaits. On any failure (missing dylib,
-      // missing model, malformed config) we log and fall back to
-      // [StubEmbedder] so the app boots regardless.
-      if (resolvedEmbedderPaths.isComplete)
-        memory_providers.embedderProvider.overrideWith(
-          (ref) async => _loadRustEmbedderOrFallback(
-            modelDir: resolvedEmbedderPaths.modelDir,
-            ortDylibPath: resolvedEmbedderPaths.ortDylibPath,
-            libraryPath: resolvedEmbedderPaths.libraryPath,
-            logger: ref.read(loggerProvider),
-          ),
-        ),
-    ],
+    overrides: buildBootstrapProviderOverrides(
+      config: effectiveConfig,
+      preferences: preferences,
+      sentryReady: sentryReady,
+    ),
   );
   // Force eager creation so AppLogger.instance is ready before any error
   // handler fires.
   final logger = container.read(loggerProvider);
-  if (resolvedEmbedderPaths.isComplete) {
-    logger.i(
-      'Rust embedder path resolution complete '
-      '(modelDir=${resolvedEmbedderPaths.modelDir}, '
-      'ortDylibPath=${resolvedEmbedderPaths.ortDylibPath}, '
-      'libraryPath=${resolvedEmbedderPaths.libraryPath ?? '<plugin-loader>'})',
-    );
-  } else {
-    logger.i(
-      'Rust embedder not configured; using StubEmbedder '
-      '(missing: ${resolvedEmbedderPaths.missingInputs.join(', ')})',
-    );
-  }
   // Eager-init the frame timing collector so the addTimingsCallback
   // subscription is in place before the first frame ships. Otherwise
   // PerfTraceRecorder windows opened at startup would race the first
   // few frames and miss them. `roadmap-next.md` §4 M-5.
   container.read(frameTimingCollectorProvider);
-
-  // Warm up the LLM credentials FutureProvider so the secure-storage
-  // load runs in parallel with the first frame instead of cold-starting
-  // when the user first taps an AI surface. The Capture sheet
-  // (`KnowledgeCaptureSheet`) reads `captureClassifierProvider`
-  // synchronously via `ref.read` — if credentials were still loading,
-  // it would fall back to the heuristic classifier and never recover
-  // for that one save. Fire-and-forget: the actual value is consumed
-  // through `ref.watch` chains; we just need the future to start.
-  unawaited(container.read(llm_credentials.llmCredentialsProvider.future));
 
   FlutterError.onError = (details) {
     if (isBenignDuplicateKeyDownAssertion(details)) {
@@ -205,147 +78,15 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
     return true;
   };
 
+  logger.i(
+    'NaviWealth critical bootstrap complete '
+    '(${logger.environment.name}, elapsedMs=${started.elapsedMilliseconds})',
+  );
   if (kDebugMode) {
-    logger.i('NaviWealth bootstrap complete (${logger.environment.name})');
     logger.i('API_BASE_URL: ${effectiveConfig.apiBaseUrl}');
-
-    // Network connectivity diagnostic
-    final testDio = Dio(
-      BaseOptions(
-        baseUrl: effectiveConfig.apiBaseUrl,
-        connectTimeout: const Duration(seconds: 5),
-      ),
-    );
-    try {
-      final resp = await testDio.get<dynamic>('/health');
-      logger.i('Backend health check: ${resp.statusCode} ${resp.data}');
-    } on DioException catch (e) {
-      logger.e(
-        'Backend health check FAILED',
-        error: e,
-        stackTrace: StackTrace.current,
-      );
-      logger.e('  type: ${e.type}');
-      logger.e('  message: ${e.message}');
-      logger.e('  error: ${e.error}');
-    }
-  }
-
-  // Restore the persisted auth session before bootstrapping foreground sync
-  // and startup jobs. Otherwise those jobs can observe the transient
-  // "unknown" auth state and fail before the controller has read storage.
-  if (!effectiveConfig.bypassAuth) {
-    await container.read(authControllerProvider.future);
-  }
-
-  // Start foreground sync and active-domain Memory indexers once auth has
-  // settled. Domain-owned background jobs mount through DomainPack below.
-  final authState = container.read(authControllerProvider).value;
-  if (authState is AuthLoggedIn || authState is AuthLocalOnly) {
-    container.read(syncSchedulerBootstrapProvider);
-    container.read(dataMaintenanceBootstrapProvider);
-    _scheduleMemoryRuntimeStartupTasks(container: container, logger: logger);
-    container.read(memoryLayerBootstrapProvider);
-  } else {
-    logger.i('Foreground sync startup tasks skipped until auth is ready');
-    logger.i('Memory Runtime startup tasks skipped until auth is ready');
-    logger.i('Memory Layer indexers skipped until auth is ready');
-  }
-  // Mount domain-owned background bootstraps (scheduler registration and
-  // pending native wakeup drains). DomainPack remains the startup inventory.
-  container.read(domainBackgroundBootstrapProvider);
-  if (authState is AuthLoggedIn || authState is AuthLocalOnly) {
-    container.read(agentForegroundSchedulerBootstrapProvider);
   }
 
   return container;
-}
-
-/// Kick off Memory Runtime maintenance without blocking first paint.
-///
-/// Real EmbeddingGemma startup includes FRB init + ONNX session warm-up,
-/// which can take long enough to look like a black screen if awaited
-/// before `runApp()`. These jobs are startup hygiene only; callers that
-/// need memory later still await [memoryRuntimeProvider] normally.
-void _scheduleMemoryRuntimeStartupTasks({
-  required ProviderContainer container,
-  required AppLogger logger,
-}) {
-  // If the embedder changed
-  // since last run (e.g. swapping Stub ↔ Rust EmbeddingGemma), invalidate
-  // any memory_embeddings produced by a different fingerprint so the next
-  // indexer cycle re-embeds with the current model.
-  unawaited(() async {
-    try {
-      final runtime = await container.read(
-        memory_providers.memoryRuntimeProvider.future,
-      );
-      final dropped = await runtime.dropStaleVectors();
-      if (dropped > 0) {
-        logger.i('Memory Runtime dropped $dropped stale embeddings on boot');
-      }
-    } on Object catch (e, st) {
-      logger.w(
-        'Memory Runtime stale-vector sweep failed',
-        error: e,
-        stackTrace: st,
-      );
-    }
-  }());
-}
-
-/// Construct the Rust EmbeddingGemma embedder, or log + fall back to
-/// [StubEmbedder]. Async because `RustGemmaEmbedder.load` is
-/// (FRB init + ONNX warm-up); centralised so the embedder override
-/// stays a single-expression in the Riverpod overrides list.
-Future<Embedder> _loadRustEmbedderOrFallback({
-  required String modelDir,
-  required String ortDylibPath,
-  required String? libraryPath,
-  required AppLogger logger,
-}) async {
-  final started = Stopwatch()..start();
-  logger.i(
-    'Rust embedder loading started '
-    '(modelDir=$modelDir, ortDylibPath=$ortDylibPath, '
-    'libraryPath=${libraryPath ?? '<plugin-loader>'})',
-  );
-  try {
-    final embedder = await RustGemmaEmbedder.load(
-      modelDir: modelDir,
-      ortDylibPath: ortDylibPath,
-      libraryPath: libraryPath,
-    ).timeout(const Duration(seconds: 90));
-    logger.i(
-      'Rust embedder loaded (${embedder.fingerprint}, '
-      'dim=${embedder.dimension}, elapsed=${started.elapsed})',
-    );
-    return embedder;
-  } on TimeoutException catch (e, st) {
-    logger.w(
-      'Rust embedder load timed out; falling back to StubEmbedder '
-      '(elapsed=${started.elapsed})',
-      error: e,
-      stackTrace: st,
-    );
-    return StubEmbedder();
-  } on RustEmbedderUnavailable catch (e, st) {
-    logger.w(
-      'Rust embedder unavailable; falling back to StubEmbedder '
-      '(elapsed=${started.elapsed})',
-      error: e,
-      stackTrace: st,
-    );
-    return StubEmbedder();
-  } on Object catch (e, st) {
-    logger.w(
-      'Rust embedder load failed unexpectedly; falling back to StubEmbedder '
-      '(elapsed=${started.elapsed})',
-      error: e,
-      stackTrace: st,
-    );
-    return StubEmbedder();
-  }
 }
 
 /// Flutter can occasionally receive a duplicate platform KeyDown without an

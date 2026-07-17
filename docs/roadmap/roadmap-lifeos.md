@@ -140,12 +140,21 @@ not redesign it:
 
 ### 7. Bootstrap And Startup Composition
 
-`bootstrap.dart` is the current composition root, but startup concerns should
-stay modular:
+The startup composition now separates first-paint prerequisites from deferred
+work:
 
-- Move domain startup jobs into small startup modules.
-- Keep provider overrides grouped by concern.
-- Make eager background jobs opt-in aware and cheap at first paint.
+- `bootstrap.dart` waits only for framework/URL setup, formatter data, warm
+  preferences, and crash-reporter initialization. Independent prerequisites
+  start concurrently.
+- Provider overrides, lazy embedder loading, and post-frame work live in small
+  modules under `app/bootstrap/`.
+- Authentication restore, sync, maintenance, Memory Runtime/indexers, agent
+  catch-up, LLM credential warm-up, domain background hooks, and the debug
+  backend health check no longer block `runApp()`.
+- Auth-gated startup is reactive, so a user who logs in or chooses local-only
+  after a logged-out cold start still mounts sync/memory/agent work.
+- Domain background hooks remain registry-driven and observe auth plus domain
+  opt-ins, including cancellation for disabled optional domains.
 
 ### 8. Native Embedding Distribution
 

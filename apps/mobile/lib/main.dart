@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
 import 'app/bootstrap.dart';
+import 'app/bootstrap/post_frame_startup.dart';
 
 Future<void> main() async {
   await runGuarded(() async {
@@ -13,5 +14,6 @@ Future<void> main() async {
         child: const NaviWealthApp(),
       ),
     );
+    schedulePostFrameStartup(container);
   });
 }
