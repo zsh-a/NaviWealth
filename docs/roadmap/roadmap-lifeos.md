@@ -121,6 +121,10 @@ Current evidence:
   completed its transactional wipe, force-stops the app, then launches a fresh
   verifier against the same application data. The workflow preserves its log;
   a green emulator run remains the required external device evidence.
+- Successful backup export and restore now emit machine-readable diagnostics
+  containing only schema version, full/domain scope, table count, aggregate
+  row count, byte count, duration, and outcome. The tested restore summary
+  excludes table names, row ids, and payload values.
 
 Exit evidence:
 
@@ -128,7 +132,6 @@ Exit evidence:
   process interruption or documents the platform-specific recovery path.
 - Generic export preserves currency and money semantics through shared
   formatters and machine-readable values.
-- Release diagnostics expose archive schema and row counts without user data.
 
 ## Next
 

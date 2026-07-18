@@ -278,6 +278,11 @@ Restore through Page Objects, and restores encrypted bytes through
 insert error after the destructive transaction has started, closes the
 database, reopens the same file, and proves both the previous account and its
 outbox pointer survived the durable rollback.
+Successful export and restore also emit `core.backup.*.completed` diagnostic
+events with only archive schema version, full/domain scope, table count, total
+row count, byte count where applicable, duration, and outcome. `RestoreResult`
+exposes the same aggregate through `toDiagnosticJson()`; table names, row ids,
+and payload values are deliberately absent and covered by a privacy assertion.
 `backup_process_interruption_integration_test.dart` adds the destructive
 Android case as a two-process protocol. Its interrupt phase restores a large,
 valid archive and the workflow waits for the production log emitted after the

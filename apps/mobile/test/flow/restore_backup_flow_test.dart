@@ -41,7 +41,11 @@ void main() {
             }) async {
               restorePassphrase = passphrase;
               restoredBytes = Uint8List.fromList(fileBytes);
-              return const RestoreResult(tableCounts: {'accounts': 2});
+              return const RestoreResult(
+                tableCounts: {'accounts': 2},
+                archiveSchemaVersion: 42,
+                archiveDomain: null,
+              );
             };
           }),
         ],

@@ -16,10 +16,26 @@ const _backupMagic = 'naviwealth.backup.v1';
 
 /// Result of a successful backup restore.
 class RestoreResult {
-  const RestoreResult({required this.tableCounts});
+  const RestoreResult({
+    required this.tableCounts,
+    required this.archiveSchemaVersion,
+    required this.archiveDomain,
+  });
+
   final Map<String, int> tableCounts;
+  final int archiveSchemaVersion;
+  final DomainScope? archiveDomain;
 
   int get totalRows => tableCounts.values.fold(0, (sum, c) => sum + c);
+  int get tableCount => tableCounts.length;
+
+  /// Machine-readable diagnostics without table names, row ids, or payloads.
+  Map<String, Object> toDiagnosticJson() => <String, Object>{
+    'schema_version': archiveSchemaVersion,
+    'domain': archiveDomain?.wire ?? 'full',
+    'table_count': tableCount,
+    'row_count': totalRows,
+  };
 }
 
 /// Thrown when the backup's schema version is newer than the app's.
@@ -130,6 +146,18 @@ class BackupService {
       'backup: export complete (${bytes.length} bytes, '
       '$totalRows rows, ${sw.elapsedMilliseconds}ms)',
     );
+    _logger.event(
+      'core.backup.export.completed',
+      fields: <String, Object?>{
+        'schema_version': schemaVersion,
+        'domain': domain?.wire ?? 'full',
+        'table_count': tableCounts.length,
+        'row_count': totalRows,
+        'file_bytes_count': bytes.length,
+        'duration_ms': sw.elapsedMilliseconds,
+        'outcome': 'success',
+      },
+    );
     return bytes;
   }
 
@@ -233,8 +261,10 @@ class BackupService {
         '${backupDomainWire ?? 'full archive'}',
       );
     }
+    final backupDomain = backupDomainWire == null
+        ? null
+        : DomainScope.tryParse(backupDomainWire);
     if (backupDomainWire != null) {
-      final backupDomain = DomainScope.tryParse(backupDomainWire);
       if (backupDomain == null) {
         throw BackupValidationException(
           'Unknown backup domain: $backupDomainWire',
@@ -376,11 +406,23 @@ class BackupService {
         '(${txSw.elapsedMilliseconds}ms)',
       );
 
-      final result = RestoreResult(tableCounts: tableCounts);
+      final result = RestoreResult(
+        tableCounts: tableCounts,
+        archiveSchemaVersion: backupSchema,
+        archiveDomain: backupDomain,
+      );
       sw.stop();
       _logger.i(
         'backup: restore complete (${result.totalRows} rows, '
         '${sw.elapsedMilliseconds}ms total)',
+      );
+      _logger.event(
+        'core.backup.restore.completed',
+        fields: <String, Object?>{
+          ...result.toDiagnosticJson(),
+          'duration_ms': sw.elapsedMilliseconds,
+          'outcome': 'success',
+        },
       );
       return result;
     } finally {

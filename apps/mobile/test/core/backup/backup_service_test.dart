@@ -283,12 +283,15 @@ void main() {
       );
       expect(await countRows(targetDb, 'tags'), 1);
 
-      await restoreService.restoreBackup(
+      final domainResult = await restoreService.restoreBackup(
         passphrase: testPassphrase,
         fileBytes: bytes,
         expectedDomain: DomainScope.knowledge,
       );
 
+      expect(domainResult.archiveDomain, DomainScope.knowledge);
+      expect(domainResult.archiveSchemaVersion, targetDb.schemaVersion);
+      expect(domainResult.toDiagnosticJson()['domain'], 'knowledge');
       expect(await countRows(targetDb, 'knowledge_notes'), 1);
       expect(await countRows(targetDb, 'tags'), 1);
     });
@@ -325,6 +328,19 @@ void main() {
       // Verify row counts.
       expect(result.tableCounts['accounts'], 2);
       expect(result.tableCounts['tags'], 1);
+      expect(result.archiveSchemaVersion, targetDb.schemaVersion);
+      expect(result.archiveDomain, isNull);
+      expect(result.tableCount, kBackupTables.length);
+      expect(result.totalRows, 3);
+      expect(result.toDiagnosticJson(), <String, Object>{
+        'schema_version': targetDb.schemaVersion,
+        'domain': 'full',
+        'table_count': kBackupTables.length,
+        'row_count': 3,
+      });
+      final diagnosticJson = jsonEncode(result.toDiagnosticJson());
+      expect(diagnosticJson, isNot(contains('accounts')));
+      expect(diagnosticJson, isNot(contains('Source Account')));
 
       // Verify actual data.
       expect(await countRows(targetDb, 'accounts'), 2);
