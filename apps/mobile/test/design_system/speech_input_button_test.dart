@@ -83,6 +83,75 @@ void main() {
     expect(find.byIcon(FLucideIcons.square), findsNothing);
     await tester.pump(const Duration(milliseconds: 200));
   });
+
+  testWidgets('user edits cancel dictation and are never overwritten', (
+    tester,
+  ) async {
+    final recognizer = _FakeSpeechRecognizer();
+    final controller = TextEditingController(text: '原始内容');
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [speechRecognizerProvider.overrideWithValue(recognizer)],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: SpeechInputButton(controller: controller)),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(FLucideIcons.mic));
+    await tester.pump();
+    recognizer.session.add('语音草稿');
+    await tester.pump();
+    expect(controller.text, '原始内容\n语音草稿');
+
+    controller.text = '用户手动修改';
+    await tester.pump();
+    await tester.pump();
+    recognizer.session.add('迟到的识别结果');
+    await tester.pump();
+
+    expect(recognizer.session.cancelled, isTrue);
+    expect(controller.text, '用户手动修改');
+    expect(find.byIcon(FLucideIcons.mic), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 200));
+  });
+
+  testWidgets('background transition finalizes an active session', (
+    tester,
+  ) async {
+    final recognizer = _FakeSpeechRecognizer();
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [speechRecognizerProvider.overrideWithValue(recognizer)],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: SpeechInputButton(controller: controller)),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(FLucideIcons.mic));
+    await tester.pump();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(recognizer.session.stopped, isTrue);
+    expect(controller.text, '今天完成了月度复盘，并制定了明日计划');
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byIcon(FLucideIcons.mic), findsOneWidget);
+  });
 }
 
 class _FakeSpeechRecognizer implements SpeechRecognizer {
@@ -102,6 +171,7 @@ class _FakeSpeechSession implements SpeechRecognitionSession {
   bool cancelled = false;
 
   void add(String text) {
+    if (_events.isClosed) return;
     _events.add(SpeechRecognitionEvent(text: text, isFinal: false));
   }
 
@@ -111,12 +181,13 @@ class _FakeSpeechSession implements SpeechRecognitionSession {
   @override
   Future<void> cancel() async {
     cancelled = true;
-    unawaited(_events.close());
+    if (!_events.isClosed) unawaited(_events.close());
   }
 
   @override
   Future<void> stop() async {
     stopped = true;
+    if (_events.isClosed) return;
     _events.add(
       const SpeechRecognitionEvent(text: '今天完成了月度复盘，并制定了明日计划', isFinal: true),
     );

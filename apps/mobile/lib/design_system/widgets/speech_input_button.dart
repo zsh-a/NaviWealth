@@ -34,17 +34,30 @@ class SpeechInputButton extends ConsumerStatefulWidget {
 
 enum _SpeechButtonState { idle, starting, listening, stopping }
 
-class _SpeechInputButtonState extends ConsumerState<SpeechInputButton> {
+class _SpeechInputButtonState extends ConsumerState<SpeechInputButton>
+    with WidgetsBindingObserver {
   _SpeechButtonState _state = _SpeechButtonState.idle;
   SpeechRecognitionSession? _session;
   StreamSubscription<SpeechRecognitionEvent>? _events;
   String _baseText = '';
+  bool _writingTranscript = false;
 
   bool get _busy => _state != _SpeechButtonState.idle;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    widget.controller.addListener(_handleControllerChanged);
+  }
+
+  @override
   void didUpdateWidget(SpeechInputButton oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_handleControllerChanged);
+      widget.controller.addListener(_handleControllerChanged);
+    }
     if (oldWidget.enabled && !widget.enabled && _busy) {
       unawaited(_cancel());
     }
@@ -52,9 +65,28 @@ class _SpeechInputButtonState extends ConsumerState<SpeechInputButton> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    widget.controller.removeListener(_handleControllerChanged);
     unawaited(_events?.cancel());
     unawaited(_session?.cancel());
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!_busy || state == AppLifecycleState.resumed) return;
+    if (_state == _SpeechButtonState.listening) {
+      unawaited(_stop());
+    } else {
+      unawaited(_cancel());
+    }
+  }
+
+  void _handleControllerChanged() {
+    if (_writingTranscript || !_busy) return;
+    // User edits always win. Stop the pending/native session instead of
+    // allowing a later partial result to overwrite their draft.
+    unawaited(_cancel());
   }
 
   Future<void> _toggle() =>
@@ -107,6 +139,7 @@ class _SpeechInputButtonState extends ConsumerState<SpeechInputButton> {
           AppMessenger.show(context, ToastKind.error, l10n.speechInputFailed);
           unawaited(_cancel());
         },
+        onDone: () => unawaited(_reset()),
       );
       setState(() => _state = _SpeechButtonState.listening);
     } on SpeechRecognitionException catch (error) {
@@ -118,7 +151,8 @@ class _SpeechInputButtonState extends ConsumerState<SpeechInputButton> {
         SpeechRecognitionErrorCode.permissionDenied =>
           l10n.speechInputPermissionDenied,
         SpeechRecognitionErrorCode.recorderUnavailable ||
-        SpeechRecognitionErrorCode.runtimeUnavailable => l10n.speechInputFailed,
+        SpeechRecognitionErrorCode.runtimeUnavailable ||
+        SpeechRecognitionErrorCode.sessionBusy => l10n.speechInputFailed,
       };
       AppMessenger.show(context, ToastKind.error, message);
     } on Object {
@@ -134,10 +168,15 @@ class _SpeechInputButtonState extends ConsumerState<SpeechInputButton> {
         ? ''
         : '\n';
     final text = '$_baseText$separator${event.text}';
-    widget.controller.value = TextEditingValue(
-      text: text,
-      selection: TextSelection.collapsed(offset: text.length),
-    );
+    _writingTranscript = true;
+    try {
+      widget.controller.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+    } finally {
+      _writingTranscript = false;
+    }
   }
 
   Future<void> _stop() async {
@@ -174,7 +213,9 @@ class _SpeechInputButtonState extends ConsumerState<SpeechInputButton> {
     final events = _events;
     _events = null;
     _session = null;
-    if (mounted) setState(() => _state = _SpeechButtonState.idle);
+    if (mounted && _state != _SpeechButtonState.idle) {
+      setState(() => _state = _SpeechButtonState.idle);
+    }
     await events?.cancel();
   }
 
@@ -201,7 +242,7 @@ class _SpeechInputButtonState extends ConsumerState<SpeechInputButton> {
         child: loading
             ? const SizedBox.square(
                 dimension: AppIconSizes.sm,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator(strokeWidth: AppStroke.branch),
               )
             : Icon(listening ? FLucideIcons.square : FLucideIcons.mic),
       ),

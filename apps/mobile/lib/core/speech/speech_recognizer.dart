@@ -23,6 +23,7 @@ enum SpeechRecognitionErrorCode {
   permissionDenied,
   recorderUnavailable,
   runtimeUnavailable,
+  sessionBusy,
 }
 
 class SpeechRecognitionException implements Exception {

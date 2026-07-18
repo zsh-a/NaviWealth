@@ -1,0 +1,54 @@
+name: asr-native-smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/lib/core/speech/**'
+      - 'apps/mobile/tool/asr_native_smoke.dart'
+      - 'apps/mobile/tool/run-asr-native-smoke.sh'
+      - 'apps/mobile/pubspec.yaml'
+      - 'apps/mobile/pubspec.lock'
+      - '.github/workflows/asr-native-smoke.yml'
+  pull_request:
+    paths:
+      - 'apps/mobile/lib/core/speech/**'
+      - 'apps/mobile/tool/asr_native_smoke.dart'
+      - 'apps/mobile/tool/run-asr-native-smoke.sh'
+      - 'apps/mobile/pubspec.yaml'
+      - 'apps/mobile/pubspec.lock'
+      - '.github/workflows/asr-native-smoke.yml'
+  schedule:
+    - cron: '23 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: asr-native-smoke-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    working-directory: apps/mobile
+
+jobs:
+  native-inference:
+    name: pinned Mandarin native inference
+    runs-on: macos-14
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Cache pinned ASR model and WAV
+        uses: actions/cache@v6
+        with:
+          path: .cache/asr-native-smoke
+          key: asr-native-smoke-zipformer-zh-14m-v1
+      - name: Run checksummed native inference regression
+        run: tool/run-asr-native-smoke.sh .cache/asr-native-smoke

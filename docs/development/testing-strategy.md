@@ -224,10 +224,12 @@ PR  ├─ analyze --fatal-infos + boundary lints      (mobile.yml, existing)
     ├─ golden regression (Linux-pinned)             ~30 s    (existing)
     ├─ cargo test (backend, native host)            ~1 min   ← ADDED
     ├─ contract tests                               ~30 s
+    ├─ native ASR pinned-WAV regression             speech changes, macOS
     └─ web smoke (chromium)                         ~2 min   ← ADDED (web-smoke.yml)
 Nightly ├─ web smoke full matrix (Firefox/WebKit/OPFS)       ← ADDED
         ├─ AI semantic surrogate                             ← ADDED (ai-semantic.yml)
         └─ external AI vision-agent webhook + screenshot artifacts ← OPTIONAL
+Weekly ─ native ASR pinned model/WAV exact-transcript smoke
 ```
 
 **Zero-failure unit/widget gate.** `mobile.yml` runs
@@ -235,6 +237,15 @@ Nightly ├─ web smoke full matrix (Firefox/WebKit/OPFS)       ← ADDED
 There is no known-failing allowlist: any non-golden test failure fails CI.
 Golden PNG comparison remains isolated in the Linux-pinned
 `golden-regression` job.
+
+**Native ASR regression gate.** `.github/workflows/asr-native-smoke.yml` runs
+on speech-runtime dependency changes, every Monday, and by manual dispatch. It
+downloads model and Mandarin WAV fixtures pinned by SHA-256, loads the actual
+macOS `sherpa_onnx` dynamic libraries, and requires an exact transcript from
+the production streaming recognizer configuration. The runner emits audio
+duration, inference duration, and real-time factor without logging transcript
+content as diagnostics. Run the same gate locally from `apps/mobile/` with
+`tool/run-asr-native-smoke.sh <cache-dir>`.
 
 ## 6. On-device integration (`integration_test/`)
 
@@ -286,6 +297,10 @@ Current baseline:
   ingestion, Sync retry/progress, and diagnostic providers.
 - The nightly AI semantic surrogate verifies selected finance surfaces and can
   hand artifacts to an optional external vision validator.
+- Managed speech unit/widget tests cover exclusive sessions, startup and stream
+  failures, maximum duration, background finalization, user-edit protection,
+  transcript-free diagnostics, and repeated-session cleanup. A pinned native
+  ASR inference smoke covers the Dart-to-native model path on macOS.
 
 Known coverage gaps are descriptive, not a second product roadmap:
 

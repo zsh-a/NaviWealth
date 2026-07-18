@@ -284,9 +284,19 @@ Location:
 Behavior:
 
 - Native mobile/desktop uses the opt-in INT8 Mandarin streaming Zipformer.
+- Managed recognition owns one application-wide microphone session. Concurrent
+  starts fail deterministically with `session_busy`, and every completion,
+  cancellation, startup failure, or stream error releases the session lease.
+- A recognition session is bounded to five minutes. Reaching the limit emits
+  the final transcript available from the native engine and closes the session.
+- Moving the app out of the foreground finalizes active dictation. Editing the
+  draft while recognition is starting or active cancels dictation, so a late
+  partial result cannot overwrite user-authored text.
 - Microphone PCM is consumed in memory and is neither persisted nor synced.
 - Partial/final transcripts only update an editable text controller. Sending,
   saving, tool invocation, and proposal application remain explicit user actions.
+- Speech diagnostics retain only counters, durations, and stable error enums.
+  Microphone bytes and transcript text are never passed to diagnostics or logs.
 - AI Chat and Knowledge Inbox are the first callers; domains do not own or
   import the recognizer implementation.
 - Web uses the unsupported stub and keeps microphone access disabled.
@@ -296,9 +306,11 @@ Behavior:
   the checksummed official sherpa-onnx GitHub Release archive when the primary
   host is unreachable. Archive extraction runs off the UI isolate and retains
   only the four manifest-declared runtime files.
-- `apps/mobile/tool/asr_native_smoke.dart` exercises the production recognizer
-  configuration against a WAV file and the dynamic libraries from a macOS
-  build, providing an explicit native inference smoke path.
+- `apps/mobile/tool/run-asr-native-smoke.sh` downloads checksummed, pinned model
+  and WAV fixtures and invokes `asr_native_smoke.dart` against the production
+  recognizer configuration. `.github/workflows/asr-native-smoke.yml` runs the
+  exact-transcript native regression for relevant changes, weekly, and on
+  manual dispatch.
 
 ## Sync V3
 

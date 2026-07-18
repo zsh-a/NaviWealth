@@ -31,6 +31,13 @@ tool/setup-drift-web.sh    # sqlite3.wasm + drift_worker.dart.js
 tool/build-cn-fonts.sh     # app-cn-base.woff2 + app-cn-ext.woff2（CN 字体子集）
 ```
 
+macOS 上可运行固定模型和普通话 WAV 的原生 ASR 回归。脚本会将文件缓存到
+指定目录、逐个校验 SHA-256，并断言生产流式识别配置的完整转录结果：
+
+```bash
+tool/run-asr-native-smoke.sh .cache/asr-native-smoke
+```
+
 > Web 字体子集化的细节见 [`docs/design/13-web-fonts.md`](docs/design/13-web-fonts.md)。`build-cn-fonts.sh` 自动扫描 `lib/` 中文字符并产出 ≤250 KB 首屏 woff2，CI 在 `flutter build web` 之前会重新构建。
 
 ## 目录结构
@@ -178,6 +185,11 @@ wrangler pages deploy --branch main
 2. `golden regression (mobile)` — `flutter test test/golden --tags=golden`，PR 上 byte-diff 失败
 3. `build Android arm64 AAB` — release cross-compile、native payload 完整性与 16 KiB ELF 对齐检查
 4. `build web` — `flutter build web --release`
+
+`.github/workflows/asr-native-smoke.yml` 独立运行真实 `sherpa_onnx` 推理：
+语音运行时相关变更会在 PR/main 上触发，同时每周一和手动调度也会执行。
+模型与 WAV 均固定 SHA-256；诊断仅输出音频时长、推理时长和实时因子，不
+记录转录文本。
 
 架构 lint gates（CI 和本地均可运行）：
 
