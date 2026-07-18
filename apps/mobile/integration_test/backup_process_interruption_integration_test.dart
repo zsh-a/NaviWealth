@@ -8,8 +8,8 @@
 
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:naviwealth/core/backup/backup_codec.dart';
@@ -123,6 +123,9 @@ void main() {
       expect(outboxRows, hasLength(1));
       expect(outboxRows.single.read<String>('table_name'), 'accounts');
       expect(outboxRows.single.read<String>('row_id'), 'preserved-acct');
+      debugPrint(
+        'backup: interruption verification preserved account + outbox',
+      );
       await reopened.close();
       await _deleteDbFiles();
     },

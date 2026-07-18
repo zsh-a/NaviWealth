@@ -295,7 +295,12 @@ transactional wipe, then sends `adb shell am force-stop`. A separately compiled
 verify phase reopens the same app database and requires the previous account
 and outbox pointer to be intact. The first phase uses Flutter's
 `--no-uninstall` option so the fresh process observes the same application data;
-the workflow fails if restore commits before the force-stop arrives.
+the workflow fails if restore commits before the force-stop arrives. The
+runner binds every invocation to the explicit `adb` serial, requires the app
+to have a live PID at the destructive-wipe marker, and verifies that PID is
+gone after `am force-stop`. The fresh process must emit a dedicated rollback
+evidence marker after both account and outbox assertions; a skipped verifier
+therefore cannot create a false green run.
 `apps/mobile/integration_test/journal_repository_integration_test.dart` covers
 a high-value non-UI write path: `JournalEntryRepository.create()` writes a
 balanced journal entry, postings, and Drift-backed outbox pointers through the
@@ -305,8 +310,12 @@ The `integration_test` dev dependency is wired in `pubspec.yaml`.
 Because it needs a real device, it runs via the `integration-device.yml`
 workflow on an Android emulator (nightly + manual + PRs touching the
 harness, backup, Sync, or persistence code), not the unit-test VM. The workflow
-retains a machine-readable event stream plus the process-interruption log for
-failed emulator runs. Run the ordinary suite locally with
+retains a machine-readable event stream, the process-interruption log, and a
+privacy-safe interruption evidence JSON. That summary contains only platform,
+API level, commit, timestamp, interruption exit status, marker
+booleans, and the fixed preserved account/outbox assertion counts. It is
+written only after the fresh-process evidence marker is observed. Run the
+ordinary suite locally with
 `flutter test integration_test/ -d <android-device>` and the forced-stop case
 with `bash tool/run-android-backup-interruption.sh`; neither can run on the
 headless `flutter test` host.

@@ -131,8 +131,11 @@ Current evidence:
   full database close/reopen. Android emulator CI owns the device evidence.
 - A two-process Android harness now waits until a large valid restore has
   completed its transactional wipe, force-stops the app, then launches a fresh
-  verifier against the same application data. The workflow preserves its log;
-  a green emulator run remains the required external device evidence.
+  verifier against the same application data. It binds to the explicit
+  emulator serial, proves the target PID existed and then stopped, rejects a
+  skipped verifier through a dedicated evidence marker, and preserves a
+  privacy-safe JSON summary with the raw log. A green emulator run containing
+  that summary remains the required external device evidence.
 - Successful backup export and restore now emit machine-readable diagnostics
   containing only schema version, full/domain scope, table count, aggregate
   row count, byte count, duration, and outcome. The tested restore summary

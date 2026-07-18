@@ -76,6 +76,10 @@ Current evidence:
   insert error, then closes and reopens the database to prove the previous
   account and outbox pointer were durably rolled back. Android emulator CI
   owns the device run.
+- The two-process Android interruption runner now proves it targeted a live
+  app PID, confirms `am force-stop` removed it, rejects skipped verification,
+  and writes a privacy-safe evidence JSON only after the fresh process proves
+  the preserved account and outbox pointer.
 - Generic encrypted export pins currency and money semantics with a
   cross-currency liability fixture. ISO currency plus high-precision decimal
   principal, rate, and payment fields survive decrypt/restore exactly, without
