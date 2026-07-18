@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
@@ -10,6 +11,11 @@ void main() {
   testWidgets(
     'Task: Act on Life signal user reviews evidence, creates an action, and closes the loop',
     (tester) async {
+      var recovery = <String, Object?>{
+        'score': 42,
+        'verdict': 'strained',
+        'inputs': const <String, Object?>{},
+      };
       final data = await FlowDataHarness.create();
       addTearDown(data.dispose);
       await data.enableDomains(const <DomainScope>[
@@ -22,13 +28,7 @@ void main() {
         liveData: data,
         initialLocation: '/life',
         extraOverrides: <Override>[
-          recoverySignalProvider.overrideWith(
-            (ref) async => <String, Object?>{
-              'score': 42,
-              'verdict': 'strained',
-              'inputs': const <String, Object?>{},
-            },
-          ),
+          recoverySignalProvider.overrideWith((ref) async => recovery),
         ],
       );
 
@@ -46,7 +46,21 @@ void main() {
       await AppShell(tester).openTab('Review');
       final review = ExecutionReviewPageObject(tester);
       review.expectCompletedAction('Protect recovery today');
-      review.expectOutcome('Health: signal still active');
+      review.expectOutcome('Health: signal still detected');
+
+      recovery = <String, Object?>{
+        'score': 78,
+        'verdict': 'balanced',
+        'inputs': const <String, Object?>{},
+      };
+      final outcomeContext = tester.element(
+        find.text('Health: signal still detected'),
+      );
+      ProviderScope.containerOf(
+        outcomeContext,
+      ).invalidate(recoverySignalProvider);
+      await tester.pumpAndSettle();
+      review.expectOutcome('Health: signal no longer detected');
       await closeApp(tester);
     },
     tags: 'flow',

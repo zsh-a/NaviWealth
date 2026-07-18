@@ -33,6 +33,28 @@ class LifeEvent {
   final LifeActionSuggestion? actionSuggestion;
 }
 
+/// One coherent observation of the cross-domain Life signal surface.
+///
+/// [evaluatedSourceFamilies] contains only source families whose upstream
+/// provider produced a value without an error for this observation. Consumers
+/// must not interpret an absent event as a cleared signal unless its family is
+/// present in this set.
+@immutable
+class LifeSignalSnapshot {
+  const LifeSignalSnapshot({
+    required this.observedAt,
+    required this.events,
+    required this.evaluatedSourceFamilies,
+  });
+
+  final DateTime observedAt;
+  final List<LifeEvent> events;
+  final Set<String> evaluatedSourceFamilies;
+
+  bool evaluated(String sourceRowFamily) =>
+      evaluatedSourceFamilies.contains(sourceRowFamily);
+}
+
 /// Domain-neutral metadata for converting a Life signal into a concrete next
 /// action. Visible copy is resolved by the Life UI so it stays localized.
 @immutable

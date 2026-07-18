@@ -2459,13 +2459,13 @@ abstract class AppLocalizations {
   /// Outcome badge when a completed cross-domain action's source signal is no longer active
   ///
   /// In en, this message translates to:
-  /// **'{source}: signal cleared'**
+  /// **'{source}: signal no longer detected'**
   String executionOutcomeSignalCleared(String source);
 
   /// Outcome badge when a completed cross-domain action's source signal remains active
   ///
   /// In en, this message translates to:
-  /// **'{source}: signal still active'**
+  /// **'{source}: signal still detected'**
   String executionOutcomeSignalStillActive(String source);
 
   /// Open Execution Today after creating a Life action

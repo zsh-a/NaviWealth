@@ -1365,12 +1365,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String executionOutcomeSignalCleared(String source) {
-    return '$source: signal cleared';
+    return '$source: signal no longer detected';
   }
 
   @override
   String executionOutcomeSignalStillActive(String source) {
-    return '$source: signal still active';
+    return '$source: signal still detected';
   }
 
   @override

@@ -385,9 +385,11 @@ void main() {
       _wrap(
         ExecutionActionCard(
           action: _action(status: ExecutionActionStatus.done),
-          outcome: const ActionOutcomeSummary(
+          outcome: ActionOutcomeSummary(
             status: ActionOutcomeStatus.signalCleared,
             sourceLabel: 'HealthOS',
+            sourceCapturedAt: DateTime.utc(2026, 7, 16),
+            evaluatedAt: DateTime.utc(2026, 7, 18),
           ),
           showActions: false,
           onEdit: () {},
@@ -401,7 +403,7 @@ void main() {
       ),
     );
 
-    expect(find.text('HealthOS: signal cleared'), findsOneWidget);
+    expect(find.text('HealthOS: signal no longer detected'), findsOneWidget);
   });
 
   testWidgets(

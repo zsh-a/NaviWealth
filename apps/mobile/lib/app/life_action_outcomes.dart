@@ -7,18 +7,31 @@ import 'package:naviwealth/features/life/domain/life_event.dart';
 
 Map<String, ActionOutcomeSummary> deriveLifeActionOutcomes({
   required Iterable<ExecutionAction> closedActions,
-  required Iterable<LifeEvent> currentSignals,
+  required LifeSignalSnapshot currentSnapshot,
 }) {
   final currentKeys = <String>{
-    for (final signal in currentSignals)
+    for (final signal in currentSnapshot.events)
       if (signal.actionSuggestion case final suggestion?)
         _sourceKey(suggestion.sourceRowFamily, suggestion.sourceRowId),
   };
   final outcomes = <String, ActionOutcomeSummary>{};
   for (final action in closedActions) {
     if (action.status != ExecutionActionStatus.done) continue;
+    final completedAt = action.completedAt?.toUtc();
+    if (completedAt == null ||
+        action.createdAt.toUtc().isAfter(completedAt) ||
+        !currentSnapshot.observedAt.toUtc().isAfter(completedAt)) {
+      continue;
+    }
     final family = action.source.rowFamily;
-    if (family == null || family.isEmpty) continue;
+    final rowId = action.source.rowId;
+    if (family == null ||
+        family.isEmpty ||
+        rowId == null ||
+        rowId.isEmpty ||
+        !currentSnapshot.evaluated(family)) {
+      continue;
+    }
     final key = _sourceKey(family, action.source.rowId);
     outcomes[action.id] = ActionOutcomeSummary(
       status: currentKeys.contains(key)
@@ -26,6 +39,8 @@ Map<String, ActionOutcomeSummary> deriveLifeActionOutcomes({
           : ActionOutcomeStatus.signalCleared,
       sourceLabel:
           action.source.labelSnapshot ?? action.source.domain ?? family,
+      sourceCapturedAt: action.createdAt.toUtc(),
+      evaluatedAt: currentSnapshot.observedAt.toUtc(),
     );
   }
   return Map.unmodifiable(outcomes);
@@ -36,7 +51,7 @@ Map<String, ActionOutcomeSummary> watchLifeActionOutcomes(Ref ref) {
   if (closed == null) return const {};
   return deriveLifeActionOutcomes(
     closedActions: closed,
-    currentSignals: ref.watch(lifeEventCandidatesProvider),
+    currentSnapshot: ref.watch(lifeSignalSnapshotProvider),
   );
 }
 

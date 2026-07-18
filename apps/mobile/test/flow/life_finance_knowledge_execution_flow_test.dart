@@ -34,7 +34,7 @@ void main() {
         signalTitle: 'Today · 3 entries',
         evidence: '2 expenses · 1 income · open ledger',
         actionTitle: 'Review finance activity today',
-        outcome: 'Finance: signal still active',
+        outcome: 'Finance: signal still detected',
       );
     },
     tags: 'flow',
@@ -57,7 +57,7 @@ void main() {
         signalTitle: '4 notes in inbox',
         evidence: 'Review or capture in Knowledge',
         actionTitle: 'Review the Knowledge inbox',
-        outcome: 'Knowledge: signal still active',
+        outcome: 'Knowledge: signal still detected',
       );
     },
     tags: 'flow',

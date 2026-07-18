@@ -1326,12 +1326,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String executionOutcomeSignalCleared(String source) {
-    return '$source：信号已消退';
+    return '$source：当前未再检测到信号';
   }
 
   @override
   String executionOutcomeSignalStillActive(String source) {
-    return '$source：信号仍存在';
+    return '$source：当前仍检测到信号';
   }
 
   @override

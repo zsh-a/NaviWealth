@@ -837,12 +837,12 @@
   "lifeSignalActionCreated": "Action created with its source evidence attached.",
   "@lifeSignalActionCreated": { "description": "Success message after applying a Life-to-Execution proposal" },
   "lifeSignalActionFailed": "Could not create action: {error}",
-  "executionOutcomeSignalCleared": "{source}: signal cleared",
+  "executionOutcomeSignalCleared": "{source}: signal no longer detected",
   "@executionOutcomeSignalCleared": {
     "description": "Outcome badge when a completed cross-domain action's source signal is no longer active",
     "placeholders": { "source": { "type": "String" } }
   },
-  "executionOutcomeSignalStillActive": "{source}: signal still active",
+  "executionOutcomeSignalStillActive": "{source}: signal still detected",
   "@executionOutcomeSignalStillActive": {
     "description": "Outcome badge when a completed cross-domain action's source signal remains active",
     "placeholders": { "source": { "type": "String" } }

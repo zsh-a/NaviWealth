@@ -19,17 +19,28 @@ import 'package:naviwealth/features/knowledge/data/providers.dart'
     as knowledge_data;
 import 'package:naviwealth/features/life/domain/life_event.dart';
 
-/// Signal-only life feed (max 7). No raw journal / note / action rows.
-final lifeEventCandidatesProvider = Provider<List<LifeEvent>>((ref) {
+const String kLifeHealthMetricSourceFamily = 'health:health_metrics';
+const String kLifeFinanceJournalSourceFamily = 'fin:journal_entries';
+const String kLifeAgentArtifactSourceFamily = 'agent_artifacts';
+const String kLifeKnowledgeNoteSourceFamily = 'know:knowledge_notes';
+
+/// Complete candidate observation used by both the Life feed and deterministic
+/// Action outcome comparison. No raw journal / note / action rows are exposed.
+final lifeSignalSnapshotProvider = Provider<LifeSignalSnapshot>((ref) {
   final optIns = ref.watch(auth.domainOptInsProvider).value;
   bool isActive(DomainScope scope) =>
       optIns?.contains(scope) ?? scope == DomainScope.finance;
 
   final events = <LifeEvent>[];
-  final now = DateTime.now();
+  final evaluatedSourceFamilies = <String>{};
+  final now = DateTime.now().toUtc();
 
   if (isActive(DomainScope.health)) {
-    final out = ref.watch(recoverySignalProvider).value;
+    final recovery = ref.watch(recoverySignalProvider);
+    if (_isSettledValue(recovery)) {
+      evaluatedSourceFamilies.add(kLifeHealthMetricSourceFamily);
+    }
+    final out = _isSettledValue(recovery) ? recovery.value : null;
     final verdict = out?['verdict']?.toString();
     if (verdict == 'strained') {
       final score = out?['score']?.toString();
@@ -44,7 +55,7 @@ final lifeEventCandidatesProvider = Provider<List<LifeEvent>>((ref) {
           priority: LifeSignalPriority.high,
           actionSuggestion: LifeActionSuggestion(
             template: LifeActionTemplate.protectRecovery,
-            sourceRowFamily: 'health:health_metrics',
+            sourceRowFamily: kLifeHealthMetricSourceFamily,
             sourceRowId: 'recovery:${_dayKey(now)}',
           ),
         ),
@@ -91,7 +102,11 @@ final lifeEventCandidatesProvider = Provider<List<LifeEvent>>((ref) {
   }
 
   if (isActive(DomainScope.finance)) {
-    final feed = ref.watch(activityFeedProvider).value;
+    final activity = ref.watch(activityFeedProvider);
+    if (_isSettledValue(activity)) {
+      evaluatedSourceFamilies.add(kLifeFinanceJournalSourceFamily);
+    }
+    final feed = _isSettledValue(activity) ? activity.value : null;
     if (feed != null) {
       final todayStart = DateTime(now.year, now.month, now.day);
       final todayEntries = feed.entries
@@ -122,7 +137,7 @@ final lifeEventCandidatesProvider = Provider<List<LifeEvent>>((ref) {
             routePath: FinanceRoutes.activity,
             actionSuggestion: LifeActionSuggestion(
               template: LifeActionTemplate.reviewFinanceActivity,
-              sourceRowFamily: 'fin:journal_entries',
+              sourceRowFamily: kLifeFinanceJournalSourceFamily,
               sourceRowId: 'day:${_dayKey(now)}',
             ),
           ),
@@ -130,9 +145,15 @@ final lifeEventCandidatesProvider = Provider<List<LifeEvent>>((ref) {
       }
     }
 
-    final agentBundle = ref
-        .watch(finance_agent_providers.latestFinanceAgentResultsProvider)
-        .value;
+    final agentResults = ref.watch(
+      finance_agent_providers.latestFinanceAgentResultsProvider,
+    );
+    if (_isSettledValue(agentResults)) {
+      evaluatedSourceFamilies.add(kLifeAgentArtifactSourceFamily);
+    }
+    final agentBundle = _isSettledValue(agentResults)
+        ? agentResults.value
+        : null;
     final artifacts = agentBundle?.artifacts;
     if (artifacts != null && artifacts.isNotEmpty) {
       final primary = artifacts.first;
@@ -147,7 +168,7 @@ final lifeEventCandidatesProvider = Provider<List<LifeEvent>>((ref) {
           routePath: FinanceRoutes.home,
           actionSuggestion: LifeActionSuggestion(
             template: LifeActionTemplate.reviewAgentInsight,
-            sourceRowFamily: 'agent_artifacts',
+            sourceRowFamily: kLifeAgentArtifactSourceFamily,
             sourceRowId: primary.id,
           ),
         ),
@@ -156,7 +177,11 @@ final lifeEventCandidatesProvider = Provider<List<LifeEvent>>((ref) {
   }
 
   if (isActive(DomainScope.knowledge)) {
-    final notes = ref.watch(knowledge_data.knowledgeInboxNotesProvider).value;
+    final inboxNotes = ref.watch(knowledge_data.knowledgeInboxNotesProvider);
+    if (_isSettledValue(inboxNotes)) {
+      evaluatedSourceFamilies.add(kLifeKnowledgeNoteSourceFamily);
+    }
+    final notes = _isSettledValue(inboxNotes) ? inboxNotes.value : null;
     final count = notes?.length ?? 0;
     if (count >= 3) {
       events.add(
@@ -169,7 +194,7 @@ final lifeEventCandidatesProvider = Provider<List<LifeEvent>>((ref) {
           routePath: KnowledgeRoutes.inbox,
           actionSuggestion: const LifeActionSuggestion(
             template: LifeActionTemplate.reviewKnowledgeInbox,
-            sourceRowFamily: 'know:knowledge_notes',
+            sourceRowFamily: kLifeKnowledgeNoteSourceFamily,
             sourceRowId: 'inbox',
           ),
         ),
@@ -182,7 +207,17 @@ final lifeEventCandidatesProvider = Provider<List<LifeEvent>>((ref) {
     if (byPriority != 0) return byPriority;
     return b.at.compareTo(a.at);
   });
-  return List.unmodifiable(events);
+  return LifeSignalSnapshot(
+    observedAt: now,
+    events: List.unmodifiable(events),
+    evaluatedSourceFamilies: Set.unmodifiable(evaluatedSourceFamilies),
+  );
+});
+
+/// Signal-only Life feed candidates. Outcome evaluation consumes the snapshot
+/// above so loading/error absence can never masquerade as a cleared signal.
+final lifeEventCandidatesProvider = Provider<List<LifeEvent>>((ref) {
+  return ref.watch(lifeSignalSnapshotProvider).events;
 });
 
 /// Bounded signal set rendered by the Life hub. Outcome evaluation uses the
@@ -256,3 +291,6 @@ String _dayKey(DateTime value) {
   final day = local.day.toString().padLeft(2, '0');
   return '${local.year}-$month-$day';
 }
+
+bool _isSettledValue<T>(AsyncValue<T> value) =>
+    value.hasValue && !value.hasError && !value.isLoading;

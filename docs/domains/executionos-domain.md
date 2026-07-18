@@ -104,6 +104,14 @@ sourceLabelSnapshot
 
 It must not import sibling domain business entities.
 
+Completed-action outcome badges are observational before/after comparisons,
+not causal attribution. A result is emitted only when the Action has a concrete
+source row id, that source family completed a successful current evaluation,
+and the evaluation occurred after completion. Loading, failed, disabled, or
+otherwise unevaluated source families produce no outcome instead of being
+misreported as cleared. User copy says whether the signal is currently
+detected; it never says the Action caused the change.
+
 ## AI Tools
 
 Tool barrel: `features/execution/execution_ai_tools.dart`.

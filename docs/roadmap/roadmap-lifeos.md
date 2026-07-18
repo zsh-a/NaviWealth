@@ -93,12 +93,15 @@ Current evidence:
   domain fixture; behavior-specific failure coverage remains attached to the
   Agent that can produce that failure, such as Execution review budget
   exhaustion.
+- Life-to-Execution outcome comparison now carries a coherent observation time
+  and explicit source-family completeness. It emits a before/after result only
+  for a concrete source captured by the Action and successfully re-evaluated
+  after completion; loading, failed, or disabled sources remain unknown. The
+  contract fixes attribution to observational and UI copy says detected/not
+  detected rather than implying the Action caused a change.
 
 Exit evidence:
 
-- New cross-domain outcome interpretation is added only for deterministic
-  before/after signals and keeps observational wording where causality cannot
-  be established.
 - The evaluation report exposes high-signal result rate, no-finding rate,
   dismissed/snoozed result rate, evidence-navigation success, and forbidden
   claim failures without capturing private payloads.
