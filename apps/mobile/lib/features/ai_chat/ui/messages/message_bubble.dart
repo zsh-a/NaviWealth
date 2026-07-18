@@ -3,12 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../../core/ai/composition/ai_context.dart';
 import '../../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../../core/ai/composition/proposal_plan.dart';
 import '../../../../core/ai/progress/long_task_progress.dart';
 import '../../../../core/ai/runtime/device/tools/ask_user_tool.dart'
     show kAskUserToolName;
 import '../../../../core/ai/visual/visual.dart';
+import '../../../../core/haptics/haptics.dart';
 import '../../../../core/shell/settings_route_paths.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -135,25 +137,32 @@ class _UserBubble extends ConsumerWidget {
                   child: Semantics(
                     container: true,
                     label: l10n.aiChatSemanticsUserMessage,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.s14,
-                        vertical: AppSpacing.s10,
+                    child: GestureDetector(
+                      onLongPress: () => _showUserActions(
+                        context,
+                        ref,
+                        canEdit: showEdit,
                       ),
-                      decoration: BoxDecoration(
-                        color: colors.primary,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(AppRadius.lg),
-                          topRight: Radius.circular(AppRadius.lg),
-                          bottomLeft: Radius.circular(AppRadius.lg),
-                          bottomRight: Radius.circular(AppRadius.sm),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s14,
+                          vertical: AppSpacing.s10,
                         ),
-                      ),
-                      child: SelectableText(
-                        message.content,
-                        style: typography.body.sm.copyWith(
-                          height: 1.5,
-                          color: colors.primaryForeground,
+                        decoration: BoxDecoration(
+                          color: colors.primary,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(AppRadius.lg),
+                            topRight: Radius.circular(AppRadius.lg),
+                            bottomLeft: Radius.circular(AppRadius.lg),
+                            bottomRight: Radius.circular(AppRadius.sm),
+                          ),
+                        ),
+                        child: SelectableText(
+                          message.content,
+                          style: typography.body.sm.copyWith(
+                            height: 1.5,
+                            color: colors.primaryForeground,
+                          ),
                         ),
                       ),
                     ),
@@ -170,6 +179,53 @@ class _UserBubble extends ConsumerWidget {
                 tooltip: l10n.aiChatEditUserMessage,
                 onPressed: () => _loadIntoComposer(context, ref),
               ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showUserActions(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool canEdit,
+  }) async {
+    final l10n = AppLocalizations.of(context);
+    Haptics.selection();
+    final actions = <AppAdaptiveAction>[
+      AppAdaptiveAction(
+        icon: FLucideIcons.copy,
+        title: l10n.aiChatMessageCopy,
+        onPress: () async {
+          await Clipboard.setData(ClipboardData(text: message.content));
+          if (!context.mounted) return;
+          AppMessenger.show(
+            context,
+            ToastKind.success,
+            l10n.aiChatMessageCopied,
+          );
+        },
+      ),
+      if (canEdit)
+        AppAdaptiveAction(
+          icon: FLucideIcons.pencil,
+          title: l10n.aiChatEditUserMessage,
+          onPress: () => _loadIntoComposer(context, ref),
+        ),
+    ];
+    await showAppSheet<void>(
+      context: context,
+      title: l10n.aiChatMessageActionsTitle,
+      builder: (sheetContext) => AppActionSheetList(
+        children: [
+          for (final action in actions)
+            AppActionSheetTile(
+              icon: action.icon,
+              title: action.title,
+              onPress: () {
+                Navigator.of(sheetContext).pop();
+                action.onPress();
+              },
             ),
         ],
       ),

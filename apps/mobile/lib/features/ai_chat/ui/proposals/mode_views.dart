@@ -28,90 +28,101 @@ class _ExpandedView extends ConsumerWidget {
         ? plan.summaryZh
         : l10n.aiChatProposalSummaryEdited(plan.summaryZh);
 
-    // Heavy tier: bordered block with payload details (no muted fill).
-    return Container(
-      margin: const EdgeInsets.only(top: AppSpacing.s8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: colors.border, width: AppStroke.hairline),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                _iconFor(registry, plan.kind),
-                size: AppIconSizes.sm,
-                color: colors.mutedForeground,
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              Text(
-                l10n.aiChatProposalPendingHeader(
-                  proposalKindLabel(l10n, registry, plan.kind),
+    // Heavy tier: SoftCard with clear primary CTA hierarchy.
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.s8),
+      child: SoftCard.raised(
+        padding: const EdgeInsets.all(AppSpacing.s12),
+        borderRadius: AppRadius.md,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  _iconFor(registry, plan.kind),
+                  size: AppIconSizes.sm,
+                  color: colors.primary,
                 ),
-                style: AiType.meta(context),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s6),
-          Text(
-            summary,
-            style: context.rowTitleStyle.copyWith(color: colors.foreground),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          ProposalPayloadDetails(plan: plan, overrides: overrides),
-          if (plan.warnings.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.s10),
-            // Warnings are the user's last chance to spot a wrong
-            // proposal before applying — they need to read as *content*,
-            // not meta. We don't introduce a new warning hue (§5.6
-            // AiTone discipline: one alive color, one alert color),
-            // instead we lift them into a surfaceTint callout with an
-            // accent stripe + heavier icon/weight so they stand out
-            // against the body without going destructive-red.
-            _WarningCallout(warnings: plan.warnings),
-          ],
-          if (isErrored && applyState.errorMessage != null) ...[
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(
+                  child: Text(
+                    l10n.aiChatProposalPendingHeader(
+                      proposalKindLabel(l10n, registry, plan.kind),
+                    ),
+                    style: AiType.meta(context),
+                  ),
+                ),
+                if (isApplying)
+                  const SizedBox(
+                    width: AppIconSizes.sm,
+                    height: AppIconSizes.sm,
+                    child: FCircularProgress(),
+                  ),
+              ],
+            ),
             const SizedBox(height: AppSpacing.s8),
             Text(
-              l10n.aiChatProposalFailure(applyState.errorMessage!),
-              style: context.captionStyle.copyWith(
-                color: context.theme.colors.destructive,
-              ),
+              summary,
+              style: context.rowTitleStyle.copyWith(color: colors.foreground),
             ),
-          ],
-          const SizedBox(height: AppSpacing.s12),
-          Wrap(
-            spacing: AppSpacing.s8,
-            runSpacing: AppSpacing.s4,
-            children: [
-              FButton(
-                variant: FButtonVariant.primary,
-                onPress: isApplying ? null : onConfirm,
-                prefix: const Icon(FLucideIcons.check, size: AppIconSizes.xs),
-                child: Text(
-                  isApplying
-                      ? l10n.aiChatProposalApplying
-                      : l10n.aiChatProposalConfirm,
+            const SizedBox(height: AppSpacing.s10),
+            ProposalPayloadDetails(plan: plan, overrides: overrides),
+            if (plan.warnings.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.s10),
+              _WarningCallout(warnings: plan.warnings),
+            ],
+            if (isErrored && applyState.errorMessage != null) ...[
+              const SizedBox(height: AppSpacing.s8),
+              Text(
+                l10n.aiChatProposalFailure(applyState.errorMessage!),
+                style: context.captionStyle.copyWith(
+                  color: context.theme.colors.destructive,
                 ),
               ),
-              FButton(
-                variant: FButtonVariant.outline,
-                onPress: isApplying ? null : onCancel,
-                prefix: const Icon(FLucideIcons.x, size: AppIconSizes.xs),
-                child: Text(l10n.commonCancel),
-              ),
-              FButton(
-                variant: FButtonVariant.ghost,
-                onPress: isApplying ? null : onEdit,
-                prefix: const Icon(FLucideIcons.pencil, size: AppIconSizes.xs),
-                child: Text(l10n.aiChatProposalEdit),
-              ),
             ],
-          ),
-        ],
+            const SizedBox(height: AppSpacing.s14),
+            Row(
+              children: [
+                Expanded(
+                  child: FButton(
+                    variant: FButtonVariant.primary,
+                    onPress: isApplying ? null : onConfirm,
+                    prefix: isApplying
+                        ? null
+                        : const Icon(FLucideIcons.check, size: AppIconSizes.xs),
+                    child: Text(
+                      isApplying
+                          ? l10n.aiChatProposalApplying
+                          : l10n.aiChatProposalConfirm,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            Row(
+              children: [
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: isApplying ? null : onEdit,
+                  prefix: const Icon(
+                    FLucideIcons.pencil,
+                    size: AppIconSizes.xs,
+                  ),
+                  child: Text(l10n.aiChatProposalEdit),
+                ),
+                const SizedBox(width: AppSpacing.s4),
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: isApplying ? null : onCancel,
+                  prefix: const Icon(FLucideIcons.x, size: AppIconSizes.xs),
+                  child: Text(l10n.commonCancel),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -149,91 +160,86 @@ class _OneTapView extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final registry = ref.watch(proposalKindRegistryProvider);
     final colors = context.theme.colors;
-    // Light tier: hairline row, no fill — summary + primary confirm.
+    // Light tier: compact SoftCard — one primary confirm + quiet secondaries.
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.s8),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: colors.border, width: AppStroke.hairline),
+      child: SoftCard.flat(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s12,
+          AppSpacing.s10,
+          AppSpacing.s10,
+          AppSpacing.s10,
         ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.s12,
-            AppSpacing.s10,
-            AppSpacing.s10,
-            AppSpacing.s10,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    _iconFor(registry, plan.kind),
-                    size: AppIconSizes.xs,
-                    color: colors.mutedForeground,
+        borderRadius: AppRadius.md,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  _iconFor(registry, plan.kind),
+                  size: AppIconSizes.xs,
+                  color: colors.primary,
+                ),
+                const SizedBox(width: AppSpacing.s6),
+                Expanded(
+                  child: Text(
+                    proposalKindLabel(l10n, registry, plan.kind),
+                    style: AiType.meta(context),
                   ),
-                  const SizedBox(width: AppSpacing.s6),
-                  Expanded(
-                    child: Text(
-                      proposalKindLabel(l10n, registry, plan.kind),
-                      style: AiType.meta(context),
-                    ),
+                ),
+                if (_isApplying)
+                  const SizedBox(
+                    width: AppIconSizes.xs,
+                    height: AppIconSizes.xs,
+                    child: FCircularProgress(size: .xs),
+                  )
+                else
+                  FButton(
+                    variant: FButtonVariant.primary,
+                    size: FButtonSizeVariant.sm,
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: onConfirm,
+                    child: Text(l10n.aiChatProposalConfirm),
                   ),
-                  if (_isApplying)
-                    const SizedBox(
-                      width: AppIconSizes.xs,
-                      height: AppIconSizes.xs,
-                      child: FCircularProgress(size: .xs),
-                    )
-                  else
-                    FButton(
-                      variant: FButtonVariant.primary,
-                      size: FButtonSizeVariant.sm,
-                      mainAxisSize: MainAxisSize.min,
-                      onPress: onConfirm,
-                      child: Text(l10n.aiChatProposalConfirm),
-                    ),
-                ],
-              ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s6),
+            Text(
+              plan.summaryZh,
+              style: AiType.body(context),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (_isErrored && applyState.errorMessage != null) ...[
               const SizedBox(height: AppSpacing.s6),
               Text(
-                plan.summaryZh,
-                style: AiType.body(context),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (_isErrored && applyState.errorMessage != null) ...[
-                const SizedBox(height: AppSpacing.s6),
-                Text(
-                  applyState.errorMessage!,
-                  style: AiType.meta(
-                    context,
-                  ).copyWith(color: AiTone.error(context)),
-                ),
-              ],
-              const SizedBox(height: AppSpacing.s4),
-              Row(
-                children: [
-                  FButton(
-                    variant: FButtonVariant.ghost,
-                    size: FButtonSizeVariant.sm,
-                    mainAxisSize: MainAxisSize.min,
-                    onPress: _isApplying ? null : onEdit,
-                    child: Text(l10n.aiChatProposalEdit),
-                  ),
-                  FButton(
-                    variant: FButtonVariant.ghost,
-                    size: FButtonSizeVariant.sm,
-                    mainAxisSize: MainAxisSize.min,
-                    onPress: _isApplying ? null : onCancel,
-                    child: Text(l10n.commonCancel),
-                  ),
-                ],
+                applyState.errorMessage!,
+                style: AiType.meta(
+                  context,
+                ).copyWith(color: AiTone.error(context)),
               ),
             ],
-          ),
+            const SizedBox(height: AppSpacing.s4),
+            Row(
+              children: [
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  size: FButtonSizeVariant.sm,
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: _isApplying ? null : onEdit,
+                  child: Text(l10n.aiChatProposalEdit),
+                ),
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  size: FButtonSizeVariant.sm,
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: _isApplying ? null : onCancel,
+                  child: Text(l10n.commonCancel),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

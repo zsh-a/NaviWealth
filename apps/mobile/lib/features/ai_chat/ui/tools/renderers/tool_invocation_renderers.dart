@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../../design_system/design_system.dart';
 import '../../../../../l10n/gen/app_localizations.dart';
+import '../../ai_navigation.dart';
 
 part 'asset_allocation.dart';
 part 'analytical_lists.dart';

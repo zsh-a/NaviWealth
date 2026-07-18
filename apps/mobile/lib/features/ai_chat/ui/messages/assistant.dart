@@ -1,6 +1,6 @@
 part of 'message_bubble.dart';
 
-class _AssistantBubble extends StatefulWidget {
+class _AssistantBubble extends ConsumerStatefulWidget {
   const _AssistantBubble({
     required this.sessionId,
     required this.message,
@@ -14,10 +14,10 @@ class _AssistantBubble extends StatefulWidget {
   final bool isLastAssistant;
 
   @override
-  State<_AssistantBubble> createState() => _AssistantBubbleState();
+  ConsumerState<_AssistantBubble> createState() => _AssistantBubbleState();
 }
 
-class _AssistantBubbleState extends State<_AssistantBubble> {
+class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
   /// Multi-tool group is collapsed by default when the turn is complete.
   bool _toolsExpanded = false;
 
@@ -104,7 +104,10 @@ class _AssistantBubbleState extends State<_AssistantBubble> {
               canRegenerate: true,
             ),
           ),
-          if (message.status == ChatMessageStatus.complete)
+          // Action hierarchy: pending proposal / interactive decision win
+          // over follow-up chips so the primary next step is unambiguous.
+          if (message.status == ChatMessageStatus.complete &&
+              !_hasBlockingAction(message))
             _FollowUpChips(
               sessionId: sessionId,
               tools: message.toolCalls,
@@ -120,29 +123,84 @@ class _AssistantBubbleState extends State<_AssistantBubble> {
         label: _isError
             ? l10n.aiChatSemanticsAssistantError
             : l10n.aiChatSemanticsAssistantMessage,
-        child: DecoratedBox(
-          decoration: _isError
-              ? BoxDecoration(
-                  border: Border(
-                    left: BorderSide(
-                      color: colors.destructive.withValues(
-                        alpha: AppOpacity.scrim,
+        child: GestureDetector(
+          onLongPress: () => _showAssistantActions(context),
+          child: DecoratedBox(
+            decoration: _isError
+                ? BoxDecoration(
+                    border: Border(
+                      left: BorderSide(
+                        color: colors.destructive.withValues(
+                          alpha: AppOpacity.scrim,
+                        ),
+                        width: AppStroke.medium,
                       ),
-                      width: AppStroke.medium,
                     ),
-                  ),
-                )
-              : const BoxDecoration(),
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: _isError ? AppSpacing.s10 : AppSpacing.s0,
-            ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 720),
-              child: RepaintBoundary(child: body),
+                  )
+                : const BoxDecoration(),
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: _isError ? AppSpacing.s10 : AppSpacing.s0,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: RepaintBoundary(child: body),
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Future<void> _showAssistantActions(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final text = message.content.trim();
+    if (text.isEmpty && !isLastAssistant) return;
+    Haptics.selection();
+    await showAppSheet<void>(
+      context: context,
+      title: l10n.aiChatMessageActionsTitle,
+      builder: (sheetContext) => AppActionSheetList(
+        children: [
+          if (text.isNotEmpty)
+            AppActionSheetTile(
+              icon: FLucideIcons.copy,
+              title: l10n.aiChatMessageCopy,
+              onPress: () async {
+                Navigator.of(sheetContext).pop();
+                await Clipboard.setData(ClipboardData(text: message.content));
+                if (!context.mounted) return;
+                AppMessenger.show(
+                  context,
+                  ToastKind.success,
+                  l10n.aiChatMessageCopied,
+                );
+              },
+            ),
+          if (isLastAssistant)
+            AppActionSheetTile(
+              icon: FLucideIcons.refreshCw,
+              title: l10n.aiChatMessageRegenerate,
+              onPress: () {
+                Navigator.of(sheetContext).pop();
+                ref
+                    .read(chatControllerProvider(sessionId).notifier)
+                    .regenerateLast();
+              },
+            ),
+          AppActionSheetTile(
+            icon: FLucideIcons.info,
+            title: l10n.aiChatTransparencyOpenDetail,
+            onPress: () {
+              Navigator.of(sheetContext).pop();
+              pushFromAiSurface(
+                context,
+                SettingsRoutes.aiTransparencyDetail(message.id),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -440,6 +498,30 @@ class _ToolStepsGroup extends StatelessWidget {
   }
 }
 
+/// Whether this turn still has a structured action that should own focus
+/// (pending proposal apply or unanswered ask_user decision).
+bool _hasBlockingAction(ChatMessage message) {
+  for (final t in message.toolCalls) {
+    if (isProposeTool(t.name)) {
+      final plan = ProposalPlan.tryParse(t.output);
+      if (plan is ReadyProposalPlan) {
+        final state = t.applyState ?? ProposalApplyState.pending;
+        if (state.status == ProposalApplyStatus.pending ||
+            state.status == ProposalApplyStatus.errored ||
+            state.status == ProposalApplyStatus.applying) {
+          return true;
+        }
+      }
+      continue;
+    }
+    if (t.name == kAskUserToolName) {
+      final request = DecisionRequest.tryParse(t.output);
+      if (request != null && t.decisionSelection == null) return true;
+    }
+  }
+  return false;
+}
+
 /// Context follow-up chips under the trailing complete assistant turn.
 class _FollowUpChips extends ConsumerWidget {
   const _FollowUpChips({
@@ -461,9 +543,10 @@ class _FollowUpChips extends ConsumerWidget {
     );
     if (chipIds.isEmpty) return const SizedBox.shrink();
 
+    final systemContext = ref.watch(aiContextProvider).toSystemContext();
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.s10),
+      padding: const EdgeInsets.only(top: AppSpacing.s12),
       child: Wrap(
         spacing: AppSpacing.s8,
         runSpacing: AppSpacing.s8,
@@ -473,7 +556,9 @@ class _FollowUpChips extends ConsumerWidget {
               label: localizedReplyChip(l10n, id),
               onPressed: () {
                 final label = localizedReplyChip(l10n, id);
-                ref.read(chatControllerProvider(sessionId).notifier).send(label);
+                ref
+                    .read(chatControllerProvider(sessionId).notifier)
+                    .send(label, systemContext: systemContext);
               },
               borderColor: colors.border,
               foreground: colors.foreground,

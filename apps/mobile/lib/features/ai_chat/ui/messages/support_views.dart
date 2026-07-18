@@ -59,9 +59,14 @@ class _TruncationFooter extends ConsumerWidget {
                   enabled: !turn.isBusy,
                   label: l10n.aiChatTruncatedContinue,
                   onPressed: () {
+                    final systemContext =
+                        ref.read(aiContextProvider).toSystemContext();
                     ref
                         .read(chatControllerProvider(sessionId).notifier)
-                        .send(l10n.aiChatTruncatedContinuePrompt);
+                        .send(
+                          l10n.aiChatTruncatedContinuePrompt,
+                          systemContext: systemContext,
+                        );
                   },
                 ),
             ],
@@ -166,18 +171,10 @@ class _AssistantActions extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (canCopy)
-          _IconAction(
-            icon: FLucideIcons.copy,
+          _CopyIconAction(
             tooltip: l10n.aiChatMessageCopy,
-            onPressed: () async {
-              await Clipboard.setData(ClipboardData(text: message.content));
-              if (!context.mounted) return;
-              AppMessenger.show(
-                context,
-                ToastKind.success,
-                l10n.aiChatMessageCopied,
-              );
-            },
+            copiedTooltip: l10n.aiChatMessageCopied,
+            text: message.content,
           ),
         if (canRegenerate)
           _IconAction(
@@ -200,6 +197,60 @@ class _AssistantActions extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _CopyIconAction extends StatefulWidget {
+  const _CopyIconAction({
+    required this.tooltip,
+    required this.copiedTooltip,
+    required this.text,
+  });
+
+  final String tooltip;
+  final String copiedTooltip;
+  final String text;
+
+  @override
+  State<_CopyIconAction> createState() => _CopyIconActionState();
+}
+
+class _CopyIconActionState extends State<_CopyIconAction> {
+  bool _copied = false;
+
+  Future<void> _copy() async {
+    await Clipboard.setData(ClipboardData(text: widget.text));
+    Haptics.success();
+    if (!mounted) return;
+    setState(() => _copied = true);
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+    if (mounted) setState(() => _copied = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _copied
+        ? context.theme.colors.primary
+        : context.theme.colors.mutedForeground;
+    return FTooltip(
+      tipBuilder: (_, _) =>
+          Text(_copied ? widget.copiedTooltip : widget.tooltip),
+      child: FTappable(
+        onPress: _copy,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s6),
+          child: AnimatedSwitcher(
+            duration: AppMotionPolicy.duration(context, Motion.fast),
+            child: Icon(
+              _copied ? FLucideIcons.check : FLucideIcons.copy,
+              key: ValueKey(_copied),
+              size: AppIconSizes.xs,
+              color: color,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

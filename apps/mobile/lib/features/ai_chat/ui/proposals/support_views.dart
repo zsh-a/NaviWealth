@@ -43,29 +43,36 @@ class _CollapsedView extends StatelessWidget {
         return const SizedBox.shrink();
     }
 
-    // Quiet meta line — no card chrome after the decision is done.
+    // Success/terminal state — soft surface with optional timed undo.
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.s6),
-      child: Row(
-        children: [
-          Icon(icon, size: AppIconSizes.xs, color: color),
-          const SizedBox(width: AppSpacing.s6),
-          Expanded(
-            child: Text(
-              label,
-              style: AiType.meta(context).copyWith(color: color),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+      child: SoftCard.flat(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s8,
+        ),
+        borderRadius: AppRadius.md,
+        child: Row(
+          children: [
+            Icon(icon, size: AppIconSizes.sm, color: color),
+            const SizedBox(width: AppSpacing.s8),
+            Expanded(
+              child: Text(
+                label,
+                style: AiType.meta(context).copyWith(color: color),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-          ),
-          if (onUndoRequest != null &&
-              applyState.status == ProposalApplyStatus.applied &&
-              applyState.appliedAt != null)
-            _UndoCountdownButton(
-              appliedAt: applyState.appliedAt!,
-              onUndo: onUndoRequest!,
-            ),
-        ],
+            if (onUndoRequest != null &&
+                applyState.status == ProposalApplyStatus.applied &&
+                applyState.appliedAt != null)
+              _UndoCountdownButton(
+                appliedAt: applyState.appliedAt!,
+                onUndo: onUndoRequest!,
+              ),
+          ],
+        ),
       ),
     );
   }

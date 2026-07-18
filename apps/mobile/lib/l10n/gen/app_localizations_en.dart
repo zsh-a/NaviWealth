@@ -5118,6 +5118,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatJumpToLatest => 'Latest';
 
   @override
+  String aiChatJumpToLatestWithCount(int count) {
+    return 'Latest · $count';
+  }
+
+  @override
+  String get aiChatDateToday => 'Today';
+
+  @override
+  String get aiChatDateYesterday => 'Yesterday';
+
+  @override
+  String get aiChatMessageActionsTitle => 'Message';
+
+  @override
+  String aiChatDecisionSelected(String label) {
+    return 'Selected: $label';
+  }
+
+  @override
+  String get aiChatDecisionCustomHint => 'Type your own option…';
+
+  @override
+  String get aiToolOpenWealth => 'Open wealth';
+
+  @override
   String get aiChatJumpToLatestTooltip => 'Jump to latest';
 
   @override

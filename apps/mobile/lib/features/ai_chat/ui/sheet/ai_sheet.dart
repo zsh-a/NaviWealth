@@ -31,6 +31,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/composition/ai_context.dart';
 
+import '../../../../core/ai/composition/ai_context_summary.dart';
 import '../../../../core/ai/intent/intent.dart';
 import '../../../../core/ai/visual/visual.dart';
 import '../../../../core/auth/current_user.dart';
@@ -395,15 +396,8 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
                       systemContext: routeCtx.toSystemContext(),
                     );
                   },
-                  emptyBuilder: (context) => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.s24),
-                      child: Text(
-                        AppLocalizations.of(context).aiChatSheetEmpty,
-                        style: context.bodyCaptionStyle,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
+                  emptyBuilder: (context) => _SheetEmptyConversation(
+                    sessionId: activeId,
                   ),
                 ),
         ),

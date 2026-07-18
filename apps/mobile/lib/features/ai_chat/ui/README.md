@@ -12,13 +12,14 @@ Keep larger screen internals grouped by responsibility:
 ## UX contract
 
 - Timeline owns answers; system meta is quiet (icon-only actions, no noisy chrome).
-- Structured next steps: `ask_user` / proposals, plus up to 3 follow-up chips on the trailing complete assistant turn.
-- Blank state is a single suggestion list (≤3); no stacked discovery chrome.
+- Structured next steps: pending proposal / interactive decision own focus; follow-up chips only when neither is blocking.
+- Blank state is a single suggestion list (≤3) on full page and sheet; no stacked discovery chrome.
 - Composer owns model profile caption and edit-and-resend drafts (visible edit banner).
 - Answer-first turn layout: prose → primary visualization (pinned) → collapsed read-tool steps → propose/decision → follow-ups.
-- Message actions only on the trailing assistant turn.
-- Tool visualizations use `ToolResultSurface` (SoftCard) with honest metric labels.
+- Message actions: icon bar on trailing assistant; long-press action sheet on any message.
+- Tool visualizations use `ToolResultSurface` (SoftCard) with honest metric labels and domain jump links.
 - History list shows title + last-message preview + relative time; mobile history is a near-full-height sheet.
-- Proposals: light (oneTap) vs heavy (confirmDiff/typed); applied state is a meta line.
+- Timeline date separators + jump-to-latest chip with unseen count.
+- Proposals: primary Confirm CTA, SoftCard surfaces, success haptic; applied state is a quiet soft meta row with timed undo.
 
 Do not add page part files back to the `ui/` root.

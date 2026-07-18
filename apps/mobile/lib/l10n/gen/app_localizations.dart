@@ -8694,6 +8694,48 @@ abstract class AppLocalizations {
   /// **'Latest'**
   String get aiChatJumpToLatest;
 
+  /// Jump-to-latest chip when messages arrived while the user was scrolled up.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest · {count}'**
+  String aiChatJumpToLatestWithCount(int count);
+
+  /// Date separator label for messages sent today.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get aiChatDateToday;
+
+  /// Date separator label for messages sent yesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get aiChatDateYesterday;
+
+  /// Title of the long-press action sheet for a chat message.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get aiChatMessageActionsTitle;
+
+  /// Collapsed summary of an answered ask_user decision.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected: {label}'**
+  String aiChatDecisionSelected(String label);
+
+  /// Placeholder for free-form ask_user custom option input.
+  ///
+  /// In en, this message translates to:
+  /// **'Type your own option…'**
+  String get aiChatDecisionCustomHint;
+
+  /// Jump link from the AI net cash-flow card to the wealth hub.
+  ///
+  /// In en, this message translates to:
+  /// **'Open wealth'**
+  String get aiToolOpenWealth;
+
   /// Tooltip on the floating button that re-anchors the conversation to the most recent message after the user has scrolled up.
   ///
   /// In en, this message translates to:

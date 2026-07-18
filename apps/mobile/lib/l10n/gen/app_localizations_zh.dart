@@ -4855,6 +4855,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatJumpToLatest => '最新';
 
   @override
+  String aiChatJumpToLatestWithCount(int count) {
+    return '最新 · $count';
+  }
+
+  @override
+  String get aiChatDateToday => '今天';
+
+  @override
+  String get aiChatDateYesterday => '昨天';
+
+  @override
+  String get aiChatMessageActionsTitle => '消息操作';
+
+  @override
+  String aiChatDecisionSelected(String label) {
+    return '已选择：$label';
+  }
+
+  @override
+  String get aiChatDecisionCustomHint => '输入你的选项…';
+
+  @override
+  String get aiToolOpenWealth => '打开财富页';
+
+  @override
   String get aiChatJumpToLatestTooltip => '跳到最新';
 
   @override

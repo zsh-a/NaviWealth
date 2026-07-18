@@ -204,6 +204,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
     try {
       final applier = await ref.read(proposalApplierProvider.future);
       final result = await applier.apply(effective);
+      Haptics.success();
       await _persistWithRepo(repo, result);
     } on ProposalApplyException catch (e) {
       Haptics.error();

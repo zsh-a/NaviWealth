@@ -266,3 +266,110 @@ class _Footer extends StatelessWidget {
     );
   }
 }
+
+/// Compact empty state for sheet conversation mode — mirrors the full
+/// page suggestion list so half-screen AI does not feel like a poorer
+/// surface.
+class _SheetEmptyConversation extends ConsumerWidget {
+  const _SheetEmptyConversation({required this.sessionId});
+
+  final String sessionId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final summary = ref.watch(aiContextSummaryProvider)(l10n);
+    final suggestions = _sheetSuggestions(l10n, summary);
+    final systemContext = ref.watch(aiContextProvider).toSystemContext();
+
+    void send(String text) {
+      ref
+          .read(chatControllerProvider(sessionId).notifier)
+          .send(text, systemContext: systemContext);
+    }
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s24,
+        AppSpacing.s16,
+        AppSpacing.s16,
+      ),
+      children: [
+        Text(
+          l10n.aiChatEmptyTitle,
+          textAlign: TextAlign.center,
+          style: context.rowTitleStyle.copyWith(color: colors.foreground),
+        ),
+        const SizedBox(height: AppSpacing.s6),
+        Text(
+          l10n.aiChatSheetEmpty,
+          textAlign: TextAlign.center,
+          style: context.captionStyle,
+        ),
+        if (suggestions.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s16),
+          for (var i = 0; i < suggestions.length; i++) ...[
+            if (i > 0) const SizedBox(height: AppSpacing.s8),
+            FTappable(
+              onPress: () => send(suggestions[i].$1),
+              child: SoftCard.flat(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s12,
+                  vertical: AppSpacing.s10,
+                ),
+                borderRadius: AppRadius.md,
+                child: Row(
+                  children: [
+                    Icon(
+                      suggestions[i].$2,
+                      size: AppIconSizes.sm,
+                      color: colors.primary,
+                    ),
+                    const SizedBox(width: AppSpacing.s10),
+                    Expanded(
+                      child: Text(
+                        suggestions[i].$1,
+                        style: context.theme.typography.body.sm,
+                      ),
+                    ),
+                    Icon(
+                      FLucideIcons.chevronRight,
+                      size: AppIconSizes.xs,
+                      color: colors.mutedForeground,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+}
+
+List<(String, IconData)> _sheetSuggestions(
+  AppLocalizations l10n,
+  AiContextSummary s,
+) {
+  final out = <(String, IconData)>[];
+  for (final fact in s.facts) {
+    final suggestion = fact.suggestion;
+    if (suggestion != null) out.add((suggestion, fact.icon));
+  }
+  if (out.length > 2) out.removeRange(2, out.length);
+  final defaults = <(String, IconData)>[
+    (l10n.aiChatEmptySuggestion1, FLucideIcons.calendar),
+    (l10n.aiChatEmptySuggestion2, FLucideIcons.shield),
+    (l10n.aiChatEmptySuggestion3, FLucideIcons.chartPie),
+  ];
+  final existing = {for (final s in out) s.$1};
+  for (final d in defaults) {
+    if (out.length >= 3) break;
+    if (existing.contains(d.$1)) continue;
+    out.add(d);
+  }
+  return out;
+}

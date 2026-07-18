@@ -210,6 +210,34 @@ class _NetWorthSparklineState extends State<_NetWorthSparkline> {
             ' · ${l10n.aiToolNetWorthVsStart}',
             style: context.microCaptionStyle,
           ),
+          const SizedBox(height: AppSpacing.s8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FTappable(
+              onPress: () {
+                // Wealth hub is the full net-worth surface; path is stable
+                // App route contract (avoid cross-feature import).
+                pushFromAiSurface(context, '/wealth');
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    l10n.aiToolOpenWealth,
+                    style: context.captionLabelStyle.copyWith(
+                      color: context.theme.colors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s4),
+                  Icon(
+                    FLucideIcons.arrowUpRight,
+                    size: AppIconSizes.xs,
+                    color: context.theme.colors.primary,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

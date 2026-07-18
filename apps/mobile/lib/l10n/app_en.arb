@@ -2733,6 +2733,26 @@
   "@aiChatJumpToLatest": {
     "description": "Short label on the floating jump-to-latest control in the chat timeline."
   },
+  "aiChatJumpToLatestWithCount": "Latest · {count}",
+  "@aiChatJumpToLatestWithCount": {
+    "description": "Jump-to-latest chip when messages arrived while the user was scrolled up.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiChatDateToday": "Today",
+  "@aiChatDateToday": { "description": "Date separator label for messages sent today." },
+  "aiChatDateYesterday": "Yesterday",
+  "@aiChatDateYesterday": { "description": "Date separator label for messages sent yesterday." },
+  "aiChatMessageActionsTitle": "Message",
+  "@aiChatMessageActionsTitle": { "description": "Title of the long-press action sheet for a chat message." },
+  "aiChatDecisionSelected": "Selected: {label}",
+  "@aiChatDecisionSelected": {
+    "description": "Collapsed summary of an answered ask_user decision.",
+    "placeholders": { "label": { "type": "String" } }
+  },
+  "aiChatDecisionCustomHint": "Type your own option…",
+  "@aiChatDecisionCustomHint": { "description": "Placeholder for free-form ask_user custom option input." },
+  "aiToolOpenWealth": "Open wealth",
+  "@aiToolOpenWealth": { "description": "Jump link from the AI net cash-flow card to the wealth hub." },
   "aiChatJumpToLatestTooltip": "Jump to latest",
   "@aiChatJumpToLatestTooltip": {
     "description": "Tooltip on the floating button that re-anchors the conversation to the most recent message after the user has scrolled up."
