@@ -38,7 +38,9 @@ Map<String, Object?> holdingSnapshotJson(HoldingSnapshot snap, Asset? asset) {
     'type': asset?.type.name,
     'net_quantity': snap.quantity.toString(),
     'asset_currency': snap.assetCurrency,
-    'market_value_asset_currency': snap.marketValueInAssetCurrency.toString(),
+    'unit_price_asset_currency': snap.unitPriceInAssetCurrency?.toString(),
+    'market_value_asset_currency': snap.calculatedMarketValueInAssetCurrency
+        .toString(),
     'cost_basis_asset_currency': snap.costBasisInAssetCurrency.toString(),
     'base_currency': snap.baseCurrency,
     'market_value_base': snap.marketValueInBase.toString(),
@@ -67,12 +69,17 @@ AnalyticalUpload holdingSnapshotToUpload(HoldingSnapshot snap) {
       'as_of': snap.asOf.toUtc().toIso8601String(),
       'quantity': snap.quantity.toString(),
       'cost_basis_in_asset_currency': snap.costBasisInAssetCurrency.toString(),
-      'market_value_in_asset_currency': snap.marketValueInAssetCurrency
+      'unit_price_in_asset_currency': snap.unitPriceInAssetCurrency?.toString(),
+      'market_value_in_asset_currency': snap
+          .calculatedMarketValueInAssetCurrency
           .toString(),
       'cost_basis_in_base': snap.costBasisInBase.toString(),
       'market_value_in_base': snap.marketValueInBase.toString(),
       'unrealized_pnl_in_base': snap.unrealizedPnlInBase.toString(),
       'weight': snap.weight.toString(),
+      'price_confidence': snap.priceConfidence?.name,
+      'price_source': snap.priceSource,
+      'price_as_of': snap.priceAsOf?.toUtc().toIso8601String(),
     },
   );
 }

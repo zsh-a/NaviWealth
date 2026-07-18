@@ -43,7 +43,7 @@ class AssetHoldingCard extends ConsumerWidget {
                 scaleOnInfinitePrecision: 8,
               )
             : null;
-        final marketValueAsset = snap?.marketValueInAssetCurrency;
+        final marketValueAsset = snap?.calculatedMarketValueInAssetCurrency;
         return SoftCard.raised(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.s16),
@@ -66,7 +66,7 @@ class AssetHoldingCard extends ConsumerWidget {
                   label: l10n.assetDetailAverageCost,
                   trailing: AnimatedMoneyText(
                     amount: avgCost?.toDouble(),
-                    currencyCode: asset.currency,
+                    currencyCode: snap?.assetCurrency ?? asset.currency,
                     fractionDigits: assetDetailPriceFractionDigits(asset.type),
                   ),
                 ),
@@ -77,7 +77,7 @@ class AssetHoldingCard extends ConsumerWidget {
                     tag: 'asset-${asset.id}-value',
                     child: AnimatedMoneyText(
                       amount: marketValueAsset?.toDouble(),
-                      currencyCode: asset.currency,
+                      currencyCode: snap?.assetCurrency ?? asset.currency,
                       style: context.theme.typography.body.md,
                     ),
                   ),

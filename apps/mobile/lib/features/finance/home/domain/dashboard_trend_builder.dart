@@ -396,6 +396,7 @@ class DashboardTrendBuilder {
         final key = 'security:${issue.assetId}';
         switch (issue.cause) {
           case HoldingValuationIssueCause.missingPrice:
+          case HoldingValuationIssueCause.currencyMismatch:
             qualities[key] = TrendComponentQuality.estimated;
             break;
           case HoldingValuationIssueCause.missingFx:

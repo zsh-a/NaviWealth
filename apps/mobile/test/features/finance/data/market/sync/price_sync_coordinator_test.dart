@@ -171,6 +171,16 @@ void main() {
       final firstBatch = outbox.queued;
       expect(firstBatch, hasLength(1));
       expect(firstBatch.single.table, 'prices');
+      final recorded = await priceRepo.latestAt(
+        unit: asset.id,
+        quoteCurrency: 'USD',
+        asOf: DateTime.utc(2026, 5, 14, 23, 59),
+      );
+      expect(
+        recorded?.observedOn,
+        DateTime.utc(2026, 5, 14, 12),
+        reason: 'snapshot keeps the quote observation time',
+      );
 
       // Second cycle on same UTC day → no new row written.
       await coordinator.triggerNow();

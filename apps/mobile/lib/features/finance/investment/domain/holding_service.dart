@@ -1,7 +1,7 @@
 import 'models/holding_snapshot.dart';
 import 'models/lot.dart';
 
-enum HoldingValuationIssueCause { missingFx, missingPrice }
+enum HoldingValuationIssueCause { missingFx, missingPrice, currencyMismatch }
 
 class HoldingValuationIssue {
   const HoldingValuationIssue({

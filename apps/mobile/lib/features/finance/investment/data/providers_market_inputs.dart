@@ -34,6 +34,13 @@ DateTime _floorToDay(DateTime d) {
 final holdingPriceSourceProvider = FutureProvider<HoldingPriceSource>((
   ref,
 ) async {
+  // Re-resolve live prices after each successful market sync. Selecting only
+  // lastSuccessAt avoids rebuilding for the intermediate syncing event.
+  ref.watch(
+    priceSyncStatusEventStreamProvider.select(
+      (event) => event.value?.lastSuccessAt,
+    ),
+  );
   final rows = ref.watch(_priceRowsStreamProvider).value ?? const <PriceRow>[];
   final ledgerSource = InMemoryHoldingPriceSource([
     for (final row in rows)

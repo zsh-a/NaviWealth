@@ -4453,6 +4453,8 @@
   "assetDetailNewTradeLabel": "New trade",
   "@assetDetailNewTradeLabel": { "description": "Asset detail: new trade button label" },
   "assetDetailLastClose": "Latest close",
+  "assetDetailValuationPrice": "Valuation price",
+  "@assetDetailValuationPrice": { "description": "Asset detail: per-unit price used for current market-value calculation" },
   "@assetDetailLastClose": { "description": "Asset detail hero: label above latest available close price" },
   "assetDetailUnknown": "Unknown",
   "@assetDetailUnknown": { "description": "Asset detail: fallback for unknown market" },

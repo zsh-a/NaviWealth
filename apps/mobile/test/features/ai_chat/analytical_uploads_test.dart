@@ -196,6 +196,7 @@ void main() {
         weight: Decimal.parse('0.25'),
         baseCurrency: 'USD',
         asOf: DateTime.utc(2026, 5, 12, 9, 30),
+        unitPriceInAssetCurrency: Decimal.parse('190'),
       );
       // Mirror the providers.dart mapping inline:
       final upload = AnalyticalUpload(
@@ -209,12 +210,18 @@ void main() {
           'quantity': snap.quantity.toString(),
           'cost_basis_in_asset_currency': snap.costBasisInAssetCurrency
               .toString(),
-          'market_value_in_asset_currency': snap.marketValueInAssetCurrency
+          'unit_price_in_asset_currency': snap.unitPriceInAssetCurrency
+              ?.toString(),
+          'market_value_in_asset_currency': snap
+              .calculatedMarketValueInAssetCurrency
               .toString(),
           'cost_basis_in_base': snap.costBasisInBase.toString(),
           'market_value_in_base': snap.marketValueInBase.toString(),
           'unrealized_pnl_in_base': snap.unrealizedPnlInBase.toString(),
           'weight': snap.weight.toString(),
+          'price_confidence': snap.priceConfidence?.name,
+          'price_source': snap.priceSource,
+          'price_as_of': snap.priceAsOf?.toUtc().toIso8601String(),
         },
       );
       expect(upload.kind, 'investment_performance');

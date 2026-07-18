@@ -51,7 +51,8 @@ class AssetPnLCard extends ConsumerWidget {
     final hasPosition = (snap?.quantity.sign ?? 0) > 0;
     final unrealizedAsset = snap == null
         ? null
-        : snap.marketValueInAssetCurrency - snap.costBasisInAssetCurrency;
+        : snap.calculatedMarketValueInAssetCurrency -
+              snap.costBasisInAssetCurrency;
     final unrealizedPct =
         (snap == null || snap.costBasisInAssetCurrency.sign <= 0)
         ? null
@@ -61,7 +62,7 @@ class AssetPnLCard extends ConsumerWidget {
 
     final dailyChange = (snap == null || !hasPosition)
         ? null
-        : dailyChangeFromHistory(historyAsync, snap.quantity);
+        : dailyChangeFromValuation(historyAsync, snap);
 
     return SoftCard.raised(
       child: Padding(
@@ -88,7 +89,7 @@ class AssetPnLCard extends ConsumerWidget {
                       const SizedBox(height: AppSpacing.s4),
                       DeltaText(
                         value: unrealizedAsset?.toDouble(),
-                        currencyCode: asset.currency,
+                        currencyCode: snap?.assetCurrency ?? asset.currency,
                         style: context.theme.typography.body.md,
                       ),
                     ],
@@ -113,7 +114,7 @@ class AssetPnLCard extends ConsumerWidget {
               label: l10n.assetDetailTodayChange,
               trailing: _DailyChangeView(
                 value: dailyChange,
-                currency: asset.currency,
+                currency: snap?.assetCurrency ?? asset.currency,
                 isLoading: historyAsync?.isLoading ?? false,
                 isStale: historyAsync?.value?.isStale ?? false,
                 hasHistory: marketKey != null,

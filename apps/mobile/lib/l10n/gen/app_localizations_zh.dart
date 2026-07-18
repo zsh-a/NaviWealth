@@ -7869,6 +7869,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assetDetailLastClose => '最新收盘价';
 
   @override
+  String get assetDetailValuationPrice => '估值单价';
+
+  @override
   String get assetDetailUnknown => '未知';
 
   @override

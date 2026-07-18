@@ -2445,6 +2445,8 @@
   "assetDetailSyncMetadataTooltip": "同步元数据",
   "assetDetailNewTradeLabel": "新交易",
   "assetDetailLastClose": "最新收盘价",
+  "assetDetailValuationPrice": "估值单价",
+  "@assetDetailValuationPrice": { "description": "资产详情：用于计算当前市值的每单位价格" },
   "assetDetailUnknown": "未知",
   "assetDetailHoldingsLoadError": "持仓加载失败：{error}",
   "assetDetailHoldingsTitle": "持仓",

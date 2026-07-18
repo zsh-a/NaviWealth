@@ -217,7 +217,7 @@ void main() {
     );
 
     test(
-      'sampled holdings retain the currency that failed FX conversion',
+      'currency-mismatched quotes fall back to cost basis safely',
       () async {
         final env = await IntegrationEnv.create(
           extraOverrides: [
@@ -253,12 +253,16 @@ void main() {
           DateTime.utc(2026, 1, 12),
         ])).single;
 
-        expect(sample.snapshots, isEmpty);
+        final snapshot = sample.snapshots['NASDAQ:AAPL'];
+        expect(snapshot, isNotNull);
+        expect(snapshot!.assetCurrency, 'CNY');
+        expect(snapshot.unitPriceInAssetCurrency, Decimal.fromInt(20));
+        expect(snapshot.marketValueInAssetCurrency, Decimal.fromInt(200));
         expect(sample.issues.single.assetId, 'NASDAQ:AAPL');
-        expect(sample.issues.single.currency, 'USD');
+        expect(sample.issues.single.currency, 'CNY');
         expect(
           sample.issues.single.cause,
-          HoldingValuationIssueCause.missingFx,
+          HoldingValuationIssueCause.currencyMismatch,
         );
       },
       tags: 'integration',

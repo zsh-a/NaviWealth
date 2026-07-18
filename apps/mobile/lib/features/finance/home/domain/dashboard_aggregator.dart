@@ -219,7 +219,7 @@ class DashboardAggregator {
       name: asset.name ?? asset.symbol,
       subtitle: '${snap.quantity} · ${asset.currency}',
       valueInBase: Money(snap.marketValueInBase, baseCurrency),
-      nativeAmount: snap.marketValueInAssetCurrency,
+      nativeAmount: snap.calculatedMarketValueInAssetCurrency,
       nativeCurrency: snap.assetCurrency,
       routeHint: FinanceRoutes.wealthAsset(asset.id),
     );

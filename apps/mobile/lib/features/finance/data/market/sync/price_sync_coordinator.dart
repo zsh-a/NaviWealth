@@ -313,8 +313,9 @@ class PriceSyncCoordinator with WidgetsBindingObserver {
     if (resp.data.currency.toUpperCase() != asset.currency.toUpperCase()) {
       return false;
     }
-    final today = _floorToUtcDay(_clock.now());
-    final tomorrow = today.add(const Duration(days: 1));
+    final observedAt = resp.data.asOf.toUtc();
+    final observedDay = _floorToUtcDay(observedAt);
+    final tomorrow = observedDay.add(const Duration(days: 1));
     final existing = await prices.latestAt(
       unit: asset.id,
       quoteCurrency: asset.currency,
@@ -322,7 +323,7 @@ class PriceSyncCoordinator with WidgetsBindingObserver {
     );
     if (existing != null) {
       final existingDay = _floorToUtcDay(existing.observedOn);
-      if (!existingDay.isBefore(today)) {
+      if (!existingDay.isBefore(observedDay)) {
         // Already have a row for today (manual or auto). Skip.
         return false;
       }
@@ -331,7 +332,7 @@ class PriceSyncCoordinator with WidgetsBindingObserver {
       await prices.record(
         unit: asset.id,
         quoteCurrency: asset.currency,
-        observedOn: today,
+        observedOn: observedAt,
         perUnit: resp.data.price,
         source: 'auto:${resp.source}',
       );

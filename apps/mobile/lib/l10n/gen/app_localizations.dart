@@ -13979,6 +13979,12 @@ abstract class AppLocalizations {
   /// **'Latest close'**
   String get assetDetailLastClose;
 
+  /// Asset detail: per-unit price used for current market-value calculation
+  ///
+  /// In en, this message translates to:
+  /// **'Valuation price'**
+  String get assetDetailValuationPrice;
+
   /// Asset detail: fallback for unknown market
   ///
   /// In en, this message translates to:

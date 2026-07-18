@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
@@ -65,15 +66,47 @@ PriceHistoryKey? assetDetailHistoryKey(Asset asset) {
   return PriceHistoryKey(symbol: asset.symbol, market: market, days: 30);
 }
 
-Decimal? dailyChangeFromHistory(
+Decimal? valuationComparisonClose(
+  List<HistoricalBar> bars, {
+  required Decimal? valuationPrice,
+  required DateTime? valuationAsOf,
+}) {
+  if (bars.isEmpty) return null;
+  final sorted = [...bars]..sort((a, b) => a.asOf.compareTo(b.asOf));
+  final latest = sorted.last;
+  if (valuationPrice == null) {
+    return sorted.length < 2 ? null : sorted[sorted.length - 2].close;
+  }
+  if (_sameUtcDay(valuationAsOf, latest.asOf)) {
+    return sorted.length < 2 ? null : sorted[sorted.length - 2].close;
+  }
+  return latest.close;
+}
+
+Decimal? dailyChangeFromValuation(
   AsyncValue<MarketResponse<List<HistoricalBar>>>? historyAsync,
-  Decimal quantity,
+  HoldingSnapshot snapshot,
 ) {
   final bars = historyAsync?.value?.data;
-  if (bars == null || bars.length < 2) return null;
-  final last = bars[bars.length - 1].close;
-  final prev = bars[bars.length - 2].close;
-  return (last - prev) * quantity;
+  if (bars == null || bars.isEmpty) return null;
+  final price = snapshot.unitPriceInAssetCurrency;
+  if (price == null) return null;
+  final comparison = valuationComparisonClose(
+    bars,
+    valuationPrice: price,
+    valuationAsOf: snapshot.priceAsOf,
+  );
+  if (comparison == null) return null;
+  return (price - comparison) * snapshot.quantity;
+}
+
+bool _sameUtcDay(DateTime? a, DateTime b) {
+  if (a == null) return false;
+  final left = a.toUtc();
+  final right = b.toUtc();
+  return left.year == right.year &&
+      left.month == right.month &&
+      left.day == right.day;
 }
 
 String formatAssetDetailQuantity(Decimal qty) {

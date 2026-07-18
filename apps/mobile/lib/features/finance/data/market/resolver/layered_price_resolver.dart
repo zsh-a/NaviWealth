@@ -19,12 +19,14 @@ import 'price_resolver.dart';
 /// Tier order (top wins):
 ///   1. Broker — currently no-op; the [BrokerPriceSource] interface is the
 ///      seam for a future direct-broker integration.
-///   2. Ledger (fresh) — `prices` row within [PriceResolverPolicy.ledgerFreshWindow].
+///   2. Manual ledger price — an explicit user valuation always wins.
 ///   3. Live quote — composite market service. Skipped when [asOf] is too far
 ///      in the past or the asset has no quotable symbol.
-///   4. Historical bar — most recent daily close within
+///   4. Ledger (fresh) — recent auto snapshots are an offline fallback after
+///      the live provider, never a reason to freeze an intraday valuation.
+///   5. Historical bar — most recent daily close within
 ///      [PriceResolverPolicy.historicalLookback].
-///   5. Ledger (stale) — last-known row, downgraded to [PriceConfidence.stale].
+///   6. Ledger (stale) — last-known row, downgraded to [PriceConfidence.stale].
 ///
 /// Cross-device cache note: Phase E daily-close write-back stores
 /// `auto:<provider>` rows in the synced `prices` ledger. Those rows flow
@@ -60,10 +62,12 @@ class LayeredPriceResolver implements PriceResolver {
     if (brokerHit != null) return brokerHit;
 
     final freshLedger = await _ledgerFreshTier(asset, at);
-    if (freshLedger != null) return freshLedger;
+    if (freshLedger?.confidence == PriceConfidence.manual) return freshLedger;
 
     final live = await _liveQuoteTier(asset, at, now);
     if (live != null) return live;
+
+    if (freshLedger != null) return freshLedger;
 
     final bar = await _historicalBarTier(asset, at);
     if (bar != null) return bar;

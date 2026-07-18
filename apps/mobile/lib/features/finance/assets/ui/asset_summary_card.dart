@@ -16,17 +16,27 @@ class AssetSummaryCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final historyKey = assetDetailHistoryKey(asset);
+    final holding = ref.watch(assetHoldingSnapshotProvider(asset.id)).value;
     final history = historyKey == null
         ? null
         : ref.watch(assetPriceHistoryProvider(historyKey));
     final bars = [...?history?.value?.data]
       ..sort((a, b) => a.asOf.compareTo(b.asOf));
     final latest = bars.isEmpty ? null : bars.last;
-    final previous = bars.length < 2 ? null : bars[bars.length - 2];
+    final valuationPrice = holding?.unitPriceInAssetCurrency;
+    final displayedPrice = valuationPrice ?? latest?.close;
+    final comparisonClose = valuationComparisonClose(
+      bars,
+      valuationPrice: valuationPrice,
+      valuationAsOf: holding?.priceAsOf,
+    );
     final changePercent =
-        latest == null || previous == null || previous.close.sign == 0
+        displayedPrice == null ||
+            comparisonClose == null ||
+            comparisonClose.sign == 0
         ? null
-        : ((latest.close - previous.close) / previous.close).toDouble() * 100;
+        : ((displayedPrice - comparisonClose) / comparisonClose).toDouble() *
+              100;
     return SoftCard.hero(
       padding: AppPageRhythm.heroPadding,
       child: Column(
@@ -60,7 +70,12 @@ class AssetSummaryCard extends ConsumerWidget {
             ),
           ],
           const SizedBox(height: AppSpacing.s16),
-          Text(l10n.assetDetailLastClose, style: context.captionStyle),
+          Text(
+            valuationPrice == null
+                ? l10n.assetDetailLastClose
+                : l10n.assetDetailValuationPrice,
+            style: context.captionStyle,
+          ),
           const SizedBox(height: AppSpacing.s4),
           if (history?.isLoading == true && latest == null)
             const SkeletonBox(width: 160, height: 30, radius: 6)
@@ -70,8 +85,8 @@ class AssetSummaryCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: AnimatedMoneyText(
-                    amount: latest?.close.toDouble(),
-                    currencyCode: asset.currency,
+                    amount: displayedPrice?.toDouble(),
+                    currencyCode: holding?.assetCurrency ?? asset.currency,
                     fractionDigits: assetDetailPriceFractionDigits(asset.type),
                     style: TypographyTokens.numericTitleStrong,
                   ),

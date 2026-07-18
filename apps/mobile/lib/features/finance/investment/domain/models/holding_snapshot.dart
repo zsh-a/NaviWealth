@@ -27,6 +27,7 @@ class HoldingSnapshot {
     required this.weight,
     required this.baseCurrency,
     required this.asOf,
+    this.unitPriceInAssetCurrency,
     this.priceConfidence,
     this.priceSource,
     this.priceAsOf,
@@ -49,6 +50,23 @@ class HoldingSnapshot {
   final String baseCurrency;
   final DateTime asOf;
 
+  /// Exact per-unit price used to derive [marketValueInAssetCurrency].
+  ///
+  /// Kept on the snapshot so detail surfaces can display the same price that
+  /// powered valuation instead of independently fetching a historical close.
+  /// Null is supported for legacy snapshots constructed before price
+  /// provenance was captured.
+  final Decimal? unitPriceInAssetCurrency;
+
+  /// Market value from the canonical per-unit valuation input.
+  ///
+  /// Legacy snapshots without [unitPriceInAssetCurrency] retain their stored
+  /// market value; current snapshots always evaluate as `quantity × price`.
+  Decimal get calculatedMarketValueInAssetCurrency =>
+      unitPriceInAssetCurrency == null
+      ? marketValueInAssetCurrency
+      : quantity * unitPriceInAssetCurrency!;
+
   /// Trust level of the price used to derive [marketValueInAssetCurrency].
   /// Null when the snapshot was built without a resolver-sourced price
   /// (legacy tests, manual-valuation cost-basis fallback path).
@@ -69,6 +87,7 @@ class HoldingSnapshot {
     Decimal? marketValueInBase,
     Decimal? unrealizedPnlInBase,
     DateTime? asOf,
+    Decimal? unitPriceInAssetCurrency,
     PriceConfidence? priceConfidence,
     String? priceSource,
     DateTime? priceAsOf,
@@ -86,6 +105,8 @@ class HoldingSnapshot {
       weight: weight ?? this.weight,
       baseCurrency: baseCurrency,
       asOf: asOf ?? this.asOf,
+      unitPriceInAssetCurrency:
+          unitPriceInAssetCurrency ?? this.unitPriceInAssetCurrency,
       priceConfidence: priceConfidence ?? this.priceConfidence,
       priceSource: priceSource ?? this.priceSource,
       priceAsOf: priceAsOf ?? this.priceAsOf,
@@ -107,6 +128,7 @@ class HoldingSnapshot {
         other.weight == weight &&
         other.baseCurrency == baseCurrency &&
         other.asOf == asOf &&
+        other.unitPriceInAssetCurrency == unitPriceInAssetCurrency &&
         other.priceConfidence == priceConfidence &&
         other.priceSource == priceSource &&
         other.priceAsOf == priceAsOf;
@@ -125,6 +147,7 @@ class HoldingSnapshot {
     weight,
     baseCurrency,
     asOf,
+    unitPriceInAssetCurrency,
     priceConfidence,
     priceSource,
     priceAsOf,

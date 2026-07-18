@@ -107,7 +107,7 @@ void main() {
         policy: policy ?? const PriceResolverPolicy(),
       );
 
-  test('tier 2 wins when a fresh ledger row exists', () async {
+  test('explicit manual ledger price wins over a live quote', () async {
     final asset = _asset(market: 'us_stock', symbol: 'AAPL');
     // Ledger row 1h old.
     await priceRepo.record(
@@ -141,6 +141,34 @@ void main() {
       0,
       reason: 'ledger fresh-tier should short-circuit',
     );
+  });
+
+  test('live quote wins over a fresh automatic ledger snapshot', () async {
+    final asset = _asset(market: 'us_stock', symbol: 'AAPL');
+    await priceRepo.record(
+      unit: asset.id,
+      quoteCurrency: 'USD',
+      observedOn: clock.now().subtract(const Duration(hours: 1)),
+      perUnit: Decimal.parse('200.00'),
+      source: 'auto:yfinance',
+    );
+    market.quotes['AAPL'] = MarketResponse(
+      data: Quote(
+        symbol: 'AAPL',
+        currency: 'USD',
+        price: Decimal.parse('250.00'),
+        asOf: clock.now(),
+      ),
+      freshness: DataFreshness.live,
+      source: 'yfinance',
+      fetchedAt: clock.now(),
+    );
+
+    final r = await buildResolver().resolve(asset);
+
+    expect(r!.value, Decimal.parse('250.00'));
+    expect(r.confidence, PriceConfidence.realTime);
+    expect(market.quoteCalls, 1);
   });
 
   test(

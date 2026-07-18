@@ -8246,6 +8246,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assetDetailLastClose => 'Latest close';
 
   @override
+  String get assetDetailValuationPrice => 'Valuation price';
+
+  @override
   String get assetDetailUnknown => 'Unknown';
 
   @override

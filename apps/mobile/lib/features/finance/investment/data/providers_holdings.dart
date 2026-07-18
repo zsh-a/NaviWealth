@@ -116,7 +116,11 @@ class _LedgerHoldingService implements SampledHoldingService {
       final acc = entry.value;
       if (acc.quantity == Decimal.zero) continue;
 
-      final observedPrice = prices.priceFor(entry.key, asOf: asOf);
+      final resolvedPrice = prices.priceFor(entry.key, asOf: asOf);
+      final hasCurrencyMismatch =
+          resolvedPrice != null &&
+          resolvedPrice.currency.toUpperCase() != acc.currency.toUpperCase();
+      final observedPrice = hasCurrencyMismatch ? null : resolvedPrice;
       final price =
           observedPrice ??
           HoldingPrice(
@@ -126,12 +130,14 @@ class _LedgerHoldingService implements SampledHoldingService {
             source: 'cost_basis',
             asOf: asOf,
           );
-      if (observedPrice == null) {
+      if (resolvedPrice == null || hasCurrencyMismatch) {
         issues.add(
           HoldingValuationIssue(
             assetId: entry.key,
             currency: acc.currency,
-            cause: HoldingValuationIssueCause.missingPrice,
+            cause: hasCurrencyMismatch
+                ? HoldingValuationIssueCause.currencyMismatch
+                : HoldingValuationIssueCause.missingPrice,
           ),
         );
       }
@@ -185,6 +191,7 @@ class _LedgerHoldingService implements SampledHoldingService {
         weight: Decimal.zero,
         baseCurrency: baseCurrency,
         asOf: asOf,
+        unitPriceInAssetCurrency: price.price,
         priceConfidence: price.confidence,
         priceSource: price.source,
         priceAsOf: price.asOf,
