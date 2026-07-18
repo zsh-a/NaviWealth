@@ -88,11 +88,14 @@ Current evidence:
   to exact or dynamic route families; both every action route and a
   representative path for every evidence family are opened through the
   production router instead of receiving a string-only shape check.
+- Production registry parity now requires every registered Agent to have both
+  ready and no-finding corpus coverage. Each case is executed in its real
+  domain fixture; behavior-specific failure coverage remains attached to the
+  Agent that can produce that failure, such as Execution review budget
+  exhaustion.
 
 Exit evidence:
 
-- Every production agent has executable ready, no-finding or skip/failure
-  cases appropriate to its behavior, with evidence and action-intent checks.
 - New cross-domain outcome interpretation is added only for deterministic
   before/after signals and keeps observational wording where causality cannot
   be established.

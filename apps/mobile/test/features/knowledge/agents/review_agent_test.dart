@@ -33,6 +33,41 @@ void main() {
     prefs = await SharedPreferences.getInstance();
   });
 
+  test('run reports no finding when nothing is due', () async {
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+        memoryRuntimeProvider.overrideWith((ref) async => _FakeMemoryRuntime()),
+      ],
+    );
+    addTearDown(container.dispose);
+    const agent = ReviewAgent(
+      dueReader: _FixedReviewDueReader(
+        ReviewDueSnapshot(
+          dueReviews: <ReviewDecisionItem>[],
+          staleAssumptions: <ReviewAssumptionItem>[],
+        ),
+      ),
+    );
+
+    final result = await _runAgent(
+      container,
+      agent,
+      DateTime.utc(2026, 7, 5, 9),
+    );
+
+    expect(result.status, AgentRunStatus.skipped);
+    expect(result.artifactId, isNull);
+    final failures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'knowledge.review.no_finding',
+      ),
+      result: result,
+    );
+    expect(failures, isEmpty, reason: failures.join('\n'));
+  });
+
   test('run persists a weekly review artifact with evidence', () async {
     final db = makeTestDatabase();
     addTearDown(db.close);

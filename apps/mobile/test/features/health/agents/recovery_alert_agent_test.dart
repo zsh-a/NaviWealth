@@ -144,6 +144,39 @@ void main() {
     );
   });
 
+  test('reports no finding for a stable recovery signal', () async {
+    final container = ProviderContainer(
+      overrides: [
+        currentUserIdProvider.overrideWithValue(() async => _owner),
+        memoryRuntimeProvider.overrideWith((ref) async => _FakeMemoryRuntime()),
+      ],
+    );
+    addTearDown(container.dispose);
+    final ref = container.read(_refProvider);
+    final agent = RecoveryAlertAgent(
+      signalReader: _FallbackReader(
+        RecoveryAlertSignalRead.skipped(
+          source: 'test',
+          reason: 'no sustained HRV decline detected',
+        ),
+      ),
+    );
+
+    final result = await agent.run(
+      AgentContext(ref: ref, now: DateTime.utc(2026, 6, 29, 8)),
+    );
+
+    expect(result.status, AgentRunStatus.skipped);
+    expect(result.artifactId, isNull);
+    final failures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'health.recovery_alert.no_finding',
+      ),
+      result: result,
+    );
+    expect(failures, isEmpty, reason: failures.join('\n'));
+  });
+
   test(
     'writes a unified recovery alert artifact from an alert signal',
     () async {

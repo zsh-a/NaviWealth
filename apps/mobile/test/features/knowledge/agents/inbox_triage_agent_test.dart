@@ -541,6 +541,13 @@ void main() {
         AgentRunStatus.skipped,
         reason: 'the only note is already triaged',
       );
+      final failures = evaluateAgentOutcomeCase(
+        regressionCase: agentOutcomeRegressionCaseById(
+          'knowledge.inbox_triage.no_finding',
+        ),
+        result: res,
+      );
+      expect(failures, isEmpty, reason: failures.join('\n'));
 
       final rec = await triage.findForNote('n1');
       expect(

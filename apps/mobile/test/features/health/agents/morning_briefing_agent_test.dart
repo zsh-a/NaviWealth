@@ -106,6 +106,13 @@ void main() {
       );
       expect(out.status, AgentRunStatus.skipped);
       expect(out.memoryId, isNull);
+      final failures = evaluateAgentOutcomeCase(
+        regressionCase: agentOutcomeRegressionCaseById(
+          'health.morning_briefing.no_finding',
+        ),
+        result: out,
+      );
+      expect(failures, isEmpty, reason: failures.join('\n'));
     });
 
     test(

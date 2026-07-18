@@ -46,6 +46,13 @@ void main() {
     expect(result.status, AgentRunStatus.skipped);
     expect(result.summary, 'no cashflow anomaly detected');
     expect(result.artifactId, isNull);
+    final failures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'finance.cashflow_anomaly_review.no_finding',
+      ),
+      result: result,
+    );
+    expect(failures, isEmpty, reason: failures.join('\n'));
   });
 
   test('persists deterministic cashflow anomaly artifact', () async {

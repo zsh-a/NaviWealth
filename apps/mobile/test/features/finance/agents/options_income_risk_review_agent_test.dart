@@ -61,6 +61,13 @@ void main() {
     expect(result.status, AgentRunStatus.skipped);
     expect(result.summary, 'no options income scan available');
     expect(result.artifactId, isNull);
+    final failures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'finance.options_income_risk_review.no_finding',
+      ),
+      result: result,
+    );
+    expect(failures, isEmpty, reason: failures.join('\n'));
   });
 
   test('skips clean low-risk scans', () async {

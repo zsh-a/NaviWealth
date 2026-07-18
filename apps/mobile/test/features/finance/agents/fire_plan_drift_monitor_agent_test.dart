@@ -79,6 +79,13 @@ void main() {
     expect(result.status, AgentRunStatus.skipped);
     expect(result.summary, 'no FIRE plan drift detected');
     expect(result.artifactId, isNull);
+    final failures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'finance.fire_plan_drift_monitor.no_finding',
+      ),
+      result: result,
+    );
+    expect(failures, isEmpty, reason: failures.join('\n'));
   });
 
   test('persists deterministic FIRE drift artifact', () async {

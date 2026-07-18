@@ -76,6 +76,13 @@ const String kAgentOutcomeDomainOptOutTag = 'domain_opt_out';
 const List<AgentOutcomeRegressionCase>
 agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
   AgentOutcomeRegressionCase(
+    id: 'finance.weekly_wealth_review.no_finding',
+    agentId: 'weekly_wealth_review',
+    domain: 'finance',
+    snapshotId: 'finance.weekly_wealth_review.empty_portfolio',
+    expectedStatus: AgentOutcomeRegressionStatus.noFinding,
+  ),
+  AgentOutcomeRegressionCase(
     id: 'finance.weekly_wealth_review.ready',
     agentId: 'weekly_wealth_review',
     domain: 'finance',
@@ -111,6 +118,13 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedActionIntents: <String>{kFinanceReviewWealthIntent},
     expectedActionRoutes: <String>{'/wealth'},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
+  ),
+  AgentOutcomeRegressionCase(
+    id: 'finance.cashflow_anomaly_review.no_finding',
+    agentId: 'cashflow_anomaly_review',
+    domain: 'finance',
+    snapshotId: 'finance.cashflow_anomaly_review.no_anomaly',
+    expectedStatus: AgentOutcomeRegressionStatus.noFinding,
   ),
   AgentOutcomeRegressionCase(
     id: 'finance.cashflow_anomaly_review.ready',
@@ -152,6 +166,13 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedActionIntents: <String>{kAgentExplainResultIntent},
     expectedActionRoutes: <String>{'/activity/cashflow'},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
+  ),
+  AgentOutcomeRegressionCase(
+    id: 'finance.fire_plan_drift_monitor.no_finding',
+    agentId: 'fire_plan_drift_monitor',
+    domain: 'finance',
+    snapshotId: 'finance.fire_plan_drift_monitor.healthy_plan',
+    expectedStatus: AgentOutcomeRegressionStatus.noFinding,
   ),
   AgentOutcomeRegressionCase(
     id: 'finance.fire_plan_drift_monitor.ready',
@@ -209,6 +230,13 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
   AgentOutcomeRegressionCase(
+    id: 'finance.options_income_risk_review.no_finding',
+    agentId: 'options_income_risk_review',
+    domain: 'finance',
+    snapshotId: 'finance.options_income_risk_review.clean_scan',
+    expectedStatus: AgentOutcomeRegressionStatus.noFinding,
+  ),
+  AgentOutcomeRegressionCase(
     id: 'finance.options_income_risk_review.ready',
     agentId: 'options_income_risk_review',
     domain: 'finance',
@@ -260,6 +288,13 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
   AgentOutcomeRegressionCase(
+    id: 'health.morning_briefing.no_finding',
+    agentId: 'morning_briefing',
+    domain: 'health',
+    snapshotId: 'health.morning_briefing.empty_health_window',
+    expectedStatus: AgentOutcomeRegressionStatus.noFinding,
+  ),
+  AgentOutcomeRegressionCase(
     id: 'health.morning_briefing.ready',
     agentId: 'morning_briefing',
     domain: 'health',
@@ -276,6 +311,13 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
     expectedActionRoutes: <String>{'/health'},
+  ),
+  AgentOutcomeRegressionCase(
+    id: 'health.recovery_alert.no_finding',
+    agentId: 'recovery_alert',
+    domain: 'health',
+    snapshotId: 'health.recovery_alert.stable_hrv',
+    expectedStatus: AgentOutcomeRegressionStatus.noFinding,
   ),
   AgentOutcomeRegressionCase(
     id: 'health.recovery_alert.ready',
@@ -324,6 +366,13 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedActionRoutes: <String>{'/health/trend'},
   ),
   AgentOutcomeRegressionCase(
+    id: 'knowledge.assumption.no_finding',
+    agentId: 'knowledge_assumption',
+    domain: 'knowledge',
+    snapshotId: 'knowledge.assumption.no_stale_assumptions',
+    expectedStatus: AgentOutcomeRegressionStatus.noFinding,
+  ),
+  AgentOutcomeRegressionCase(
     id: 'knowledge.assumption.ready',
     agentId: 'knowledge_assumption',
     domain: 'knowledge',
@@ -339,6 +388,13 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedActionKinds: <String>{'open_object'},
     expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
     expectedActionRoutes: <String>{'/knowledge/review'},
+  ),
+  AgentOutcomeRegressionCase(
+    id: 'knowledge.inbox_triage.no_finding',
+    agentId: 'knowledge_inbox_triage',
+    domain: 'knowledge',
+    snapshotId: 'knowledge.inbox_triage.no_untriaged_notes',
+    expectedStatus: AgentOutcomeRegressionStatus.noFinding,
   ),
   AgentOutcomeRegressionCase(
     id: 'knowledge.inbox_triage.ready',
@@ -385,6 +441,13 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     tags: <String>{kAgentOutcomePromptInjectionTag},
   ),
   AgentOutcomeRegressionCase(
+    id: 'knowledge.review.no_finding',
+    agentId: 'knowledge_review',
+    domain: 'knowledge',
+    snapshotId: 'knowledge.review.nothing_due',
+    expectedStatus: AgentOutcomeRegressionStatus.noFinding,
+  ),
+  AgentOutcomeRegressionCase(
     id: 'knowledge.review.ready',
     agentId: 'knowledge_review',
     domain: 'knowledge',
@@ -426,6 +489,13 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
     expectedActionRoutes: <String>{'/knowledge/review'},
     tags: <String>{kAgentOutcomeToolFailureTag},
+  ),
+  AgentOutcomeRegressionCase(
+    id: 'execution.review.no_finding',
+    agentId: 'execution_review',
+    domain: 'execution',
+    snapshotId: 'execution.review.no_signals',
+    expectedStatus: AgentOutcomeRegressionStatus.noFinding,
   ),
   AgentOutcomeRegressionCase(
     id: 'execution.review.ready',

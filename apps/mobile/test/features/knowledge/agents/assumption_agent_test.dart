@@ -152,6 +152,46 @@ void main() {
     );
   });
 
+  test('run reports no finding when no assumption is stale', () async {
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+        memoryRuntimeProvider.overrideWith((ref) async => _FakeMemoryRuntime()),
+      ],
+    );
+    addTearDown(container.dispose);
+    const agent = AssumptionAgent(
+      assumptionReader: _FixedAssumptionReader(
+        AssumptionReviewSnapshot(
+          open: <AssumptionReviewItem>[
+            AssumptionReviewItem(
+              id: 'assumption-fresh',
+              statement: 'Demand holds',
+              daysSinceVerify: 7,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    final result = await _runAgent(
+      container,
+      agent,
+      DateTime.utc(2026, 7, 5, 8),
+    );
+
+    expect(result.status, AgentRunStatus.skipped);
+    expect(result.artifactId, isNull);
+    final failures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'knowledge.assumption.no_finding',
+      ),
+      result: result,
+    );
+    expect(failures, isEmpty, reason: failures.join('\n'));
+  });
+
   test('run persists a stale-assumption artifact with evidence', () async {
     final db = makeTestDatabase();
     addTearDown(db.close);

@@ -248,6 +248,13 @@ void main() {
 
     expect(result.status, AgentRunStatus.skipped);
     expect(result.summary, 'no execution signals to review');
+    final failures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'execution.review.no_finding',
+      ),
+      result: result,
+    );
+    expect(failures, isEmpty, reason: failures.join('\n'));
   });
 
   test('budget exhausted runtime failure matches outcome corpus', () async {
