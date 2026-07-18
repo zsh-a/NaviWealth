@@ -8,6 +8,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_evidence_navigation_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_intents.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart';
@@ -34,8 +35,12 @@ Widget _wrap(Widget child, {List<Override> overrides = const <Override>[]}) {
   );
 }
 
-Widget _wrapWithRouter(GoRouter router) {
+Widget _wrapWithRouter(
+  GoRouter router, {
+  List<Override> overrides = const <Override>[],
+}) {
   return ProviderScope(
+    overrides: overrides,
     child: MaterialApp.router(
       theme: AppTheme.light(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -474,6 +479,7 @@ void main() {
   testWidgets('detail evidence opens its registered domain route', (
     tester,
   ) async {
+    final navigationStore = _RecordingNavigationStore();
     final router = GoRouter(
       routes: [
         GoRoute(
@@ -510,7 +516,16 @@ void main() {
     );
     addTearDown(router.dispose);
 
-    await tester.pumpWidget(_wrapWithRouter(router));
+    await tester.pumpWidget(
+      _wrapWithRouter(
+        router,
+        overrides: [
+          agentEvidenceNavigationStoreProvider.overrideWith(
+            (ref) async => navigationStore,
+          ),
+        ],
+      ),
+    );
     await tester.tap(find.text('Open artifact'));
     await tester.pumpAndSettle();
     final evidenceSection = find.text('Evidence & method');
@@ -523,6 +538,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('evidence detail'), findsOneWidget);
+    expect(navigationStore.outcomes, <bool>[true]);
   });
 
   testWidgets('detail primary action opens its registered domain route', (
@@ -837,6 +853,26 @@ void main() {
 
     expect(find.byType(FCircularProgress), findsNothing);
   });
+}
+
+class _RecordingNavigationStore implements AgentEvidenceNavigationStore {
+  final List<bool> outcomes = <bool>[];
+
+  @override
+  Future<void> record({
+    required DateTime occurredAt,
+    required bool succeeded,
+  }) async {
+    outcomes.add(succeeded);
+  }
+
+  @override
+  Future<AgentEvidenceNavigationSummary> summarize({
+    required DateTime since,
+  }) async => AgentEvidenceNavigationSummary(
+    attempts: outcomes.length,
+    successes: outcomes.where((value) => value).length,
+  );
 }
 
 class _FakeArtifactStore implements AgentArtifactStore {

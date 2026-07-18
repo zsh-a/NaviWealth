@@ -79,8 +79,10 @@ Current evidence:
 - Fixed answer-quality cases already score required facts, forbidden claims,
   and expected/forbidden evidence ids.
 - A privacy-safe 30-day local quality report now exposes completed, ready,
-  no-finding, failed, dismissed/snoozed, and evidence-anchor coverage metrics
-  without exporting artifact text or evidence ids.
+  no-finding, failed, dismissed/snoozed, evidence-anchor coverage, and actual
+  evidence-navigation success metrics without exporting artifact text,
+  evidence ids, or routes. Navigation history stores only a timestamp and
+  whether the production router accepted the user's click.
 - The fixed answer-quality gate emits privacy-safe forbidden-claim/evidence and
   missing-fact/evidence failure counts. Outcome cases now bind evidence types
   to exact or dynamic route families; both every action route and a

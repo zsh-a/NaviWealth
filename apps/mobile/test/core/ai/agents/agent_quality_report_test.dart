@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_evidence_navigation_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_quality_report.dart';
 
 import '../../persistence/test_database.dart';
@@ -100,6 +101,9 @@ void main() {
 
       final report = await SqliteAgentQualityReportReader(
         db,
+        evidenceNavigationStore: const _StubNavigationStore(
+          AgentEvidenceNavigationSummary(attempts: 4, successes: 3),
+        ),
       ).read(ownerUserId: 'user-1', since: since, now: now);
 
       expect(report.completedRuns, 3);
@@ -109,6 +113,8 @@ void main() {
       expect(report.artifactCount, 2);
       expect(report.dismissedOrSnoozedRate, 0.5);
       expect(report.evidenceAnchorCoverageRate, 0.5);
+      expect(report.evidenceNavigationAttempts, 4);
+      expect(report.evidenceNavigationSuccessRate, 0.75);
 
       final encoded = report.toJson().toString();
       expect(encoded, isNot(contains('Private')));
@@ -130,5 +136,23 @@ void main() {
     expect(report.completedRuns, 0);
     expect(report.highSignalRate, 0);
     expect(report.evidenceAnchorCoverageRate, 0);
+    expect(report.evidenceNavigationSuccessRate, 0);
   });
+}
+
+class _StubNavigationStore implements AgentEvidenceNavigationStore {
+  const _StubNavigationStore(this.summary);
+
+  final AgentEvidenceNavigationSummary summary;
+
+  @override
+  Future<void> record({
+    required DateTime occurredAt,
+    required bool succeeded,
+  }) async {}
+
+  @override
+  Future<AgentEvidenceNavigationSummary> summarize({
+    required DateTime since,
+  }) async => summary;
 }

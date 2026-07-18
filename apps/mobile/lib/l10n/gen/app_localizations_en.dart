@@ -6663,6 +6663,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get agentQualityEvidenceNavigationNoSamples =>
+      'No evidence-open samples';
+
+  @override
+  String agentQualityEvidenceNavigationRate(int percent, int count) {
+    return 'Evidence opened $percent% · $count attempts';
+  }
+
+  @override
   String get agentSettingsNeverRun => 'Never run';
 
   @override

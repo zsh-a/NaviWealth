@@ -1990,6 +1990,8 @@
   "agentQualityFailureRate": "失败 {percent}%",
   "agentQualitySuppressedRate": "隐藏或延后 {percent}%",
   "agentQualityEvidenceRate": "证据可达 {percent}%",
+  "agentQualityEvidenceNavigationNoSamples": "暂无证据打开样本",
+  "agentQualityEvidenceNavigationRate": "证据打开成功 {percent}% · {count} 次尝试",
   "agentSettingsNeverRun": "尚未运行",
   "agentSettingsLastRunAt": "上次运行 {date}",
   "agentSettingsAroundTime": "约 {time}",

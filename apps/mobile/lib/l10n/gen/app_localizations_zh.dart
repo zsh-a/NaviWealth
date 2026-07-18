@@ -6337,6 +6337,14 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get agentQualityEvidenceNavigationNoSamples => '暂无证据打开样本';
+
+  @override
+  String agentQualityEvidenceNavigationRate(int percent, int count) {
+    return '证据打开成功 $percent% · $count 次尝试';
+  }
+
+  @override
   String get agentSettingsNeverRun => '尚未运行';
 
   @override

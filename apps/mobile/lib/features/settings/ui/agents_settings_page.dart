@@ -200,12 +200,12 @@ class _AgentQualitySummary extends StatelessWidget {
               ),
             ],
           ),
-          if (report.completedRuns > 0) ...[
-            const SizedBox(height: AppSpacing.s12),
-            Wrap(
-              spacing: AppSpacing.s12,
-              runSpacing: AppSpacing.s6,
-              children: [
+          const SizedBox(height: AppSpacing.s12),
+          Wrap(
+            spacing: AppSpacing.s12,
+            runSpacing: AppSpacing.s6,
+            children: [
+              if (report.completedRuns > 0) ...[
                 _OverviewFragment(
                   text: l10n.agentQualityReadyRate(
                     _percentage(report.highSignalRate),
@@ -223,6 +223,8 @@ class _AgentQualitySummary extends StatelessWidget {
                   ),
                   danger: hasFailures,
                 ),
+              ],
+              if (report.artifactCount > 0) ...[
                 _OverviewFragment(
                   text: l10n.agentQualitySuppressedRate(
                     _percentage(report.dismissedOrSnoozedRate),
@@ -234,8 +236,16 @@ class _AgentQualitySummary extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ],
+              _OverviewFragment(
+                text: report.evidenceNavigationAttempts == 0
+                    ? l10n.agentQualityEvidenceNavigationNoSamples
+                    : l10n.agentQualityEvidenceNavigationRate(
+                        _percentage(report.evidenceNavigationSuccessRate),
+                        report.evidenceNavigationAttempts,
+                      ),
+              ),
+            ],
+          ),
         ],
       ),
     );

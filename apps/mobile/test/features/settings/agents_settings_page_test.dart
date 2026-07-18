@@ -151,6 +151,8 @@ void main() {
               dismissedOrSnoozedArtifacts: 1,
               evidenceBearingArtifacts: 4,
               fullyAnchoredEvidenceArtifacts: 3,
+              evidenceNavigationAttempts: 5,
+              evidenceNavigationSuccesses: 4,
             ),
           ),
         ],
@@ -178,6 +180,7 @@ void main() {
     expect(find.text('10 completed runs'), findsOneWidget);
     expect(find.text('Ready 60%'), findsOneWidget);
     expect(find.text('Evidence-linked 75%'), findsOneWidget);
+    expect(find.text('Evidence opened 80% · 5 attempts'), findsOneWidget);
     expect(find.text('FinanceOS'), findsOneWidget);
     expect(find.text('Run now'), findsNothing);
     expect(find.text('Notifications'), findsNothing);

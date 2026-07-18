@@ -3,12 +3,14 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../auth/current_user.dart';
 import '../../auth/domain_scope.dart';
 import '../../persistence/providers.dart';
 import 'agent_artifact.dart';
 import 'agent_artifact_store.dart';
+import 'agent_evidence_navigation_store.dart';
 import 'agent_preference_store.dart';
 import 'agent_presentation.dart';
 import 'agent_quality_report.dart';
@@ -36,12 +38,24 @@ final agentArtifactStoreProvider = FutureProvider<AgentArtifactStore>((
   return SqliteAgentArtifactStore(db: db);
 });
 
+final agentEvidenceNavigationStoreProvider =
+    FutureProvider<AgentEvidenceNavigationStore>((ref) async {
+      final preferences = await SharedPreferences.getInstance();
+      return SharedPreferencesAgentEvidenceNavigationStore(preferences);
+    });
+
 final agentQualityReportProvider =
     FutureProvider.autoDispose<AgentQualityReport>((ref) async {
       final db = await ref.watch(appDatabaseProvider.future);
+      final navigationStore = await ref.watch(
+        agentEvidenceNavigationStoreProvider.future,
+      );
       final ownerUserId = await ref.read(currentUserIdProvider)();
       final now = DateTime.now().toUtc();
-      return SqliteAgentQualityReportReader(db).read(
+      return SqliteAgentQualityReportReader(
+        db,
+        evidenceNavigationStore: navigationStore,
+      ).read(
         ownerUserId: ownerUserId,
         since: now.subtract(const Duration(days: 30)),
         now: now,

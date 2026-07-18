@@ -1946,7 +1946,7 @@ class _MetricDetails extends StatelessWidget {
   }
 }
 
-class _EvidenceMethodAccordion extends StatelessWidget {
+class _EvidenceMethodAccordion extends ConsumerWidget {
   const _EvidenceMethodAccordion({
     required this.evidence,
     required this.methodology,
@@ -1960,7 +1960,7 @@ class _EvidenceMethodAccordion extends StatelessWidget {
   final Color color;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return FAccordion(
       children: [
@@ -2004,22 +2004,29 @@ class _EvidenceMethodAccordion extends StatelessWidget {
                       child: _MetricDetails(metrics: method.details),
                     ),
                 ],
-                for (final ref in evidence) ...[
+                for (final evidenceRef in evidence) ...[
                   _DetailTile(
                     icon: FLucideIcons.fileText,
-                    title: ref.label ?? l10n.agentResultEvidenceSection,
+                    title: evidenceRef.label ?? l10n.agentResultEvidenceSection,
                     body:
-                        ref.description ??
+                        evidenceRef.description ??
                         l10n.agentResultEvidenceAvailableBody,
                     color: color,
-                    trailingIcon: ref.route == null
+                    trailingIcon: evidenceRef.route == null
                         ? null
                         : FLucideIcons.externalLink,
-                    onPress: ref.route == null
+                    onPress: evidenceRef.route == null
                         ? null
-                        : () => _openArtifactRoute(context, ref.route!),
+                        : () => _openEvidenceRoute(
+                            context,
+                            evidenceRef.route!,
+                            record: (succeeded) => _recordEvidenceNavigation(
+                              ref,
+                              succeeded: succeeded,
+                            ),
+                          ),
                   ),
-                  if (ref.details.isNotEmpty)
+                  if (evidenceRef.details.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
                         AppSpacing.s40,
@@ -2027,7 +2034,7 @@ class _EvidenceMethodAccordion extends StatelessWidget {
                         AppSpacing.s4,
                         AppSpacing.s8,
                       ),
-                      child: _MetricDetails(metrics: ref.details),
+                      child: _MetricDetails(metrics: evidenceRef.details),
                     ),
                 ],
                 if (traceId case final id?)
@@ -2282,6 +2289,44 @@ void _openArtifactRoute(BuildContext context, String route) {
   } else {
     unawaited(router.push<void>(route));
   }
+}
+
+void _openEvidenceRoute(
+  BuildContext context,
+  String route, {
+  required void Function(bool succeeded) record,
+}) {
+  final router = GoRouter.of(context);
+
+  void push() {
+    try {
+      unawaited(router.push<void>(route));
+      record(true);
+    } on Object {
+      record(false);
+      rethrow;
+    }
+  }
+
+  if (appSheetOverlayDepthListenable.value > 0) {
+    unawaited(closeSheetThen(context, push));
+  } else {
+    push();
+  }
+}
+
+void _recordEvidenceNavigation(WidgetRef ref, {required bool succeeded}) {
+  unawaited(
+    ref
+        .read(agent_providers.agentEvidenceNavigationStoreProvider.future)
+        .then(
+          (store) => store.record(
+            occurredAt: DateTime.now().toUtc(),
+            succeeded: succeeded,
+          ),
+        )
+        .onError((_, _) {}),
+  );
 }
 
 IconData _iconForKind(AgentArtifactKind kind) => switch (kind) {

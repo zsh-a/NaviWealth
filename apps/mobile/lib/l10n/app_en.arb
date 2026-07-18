@@ -3621,6 +3621,18 @@
     "description": "Share of evidence-bearing Agent artifacts whose evidence references all have routes.",
     "placeholders": { "percent": { "type": "int", "example": "90" } }
   },
+  "agentQualityEvidenceNavigationNoSamples": "No evidence-open samples",
+  "@agentQualityEvidenceNavigationNoSamples": {
+    "description": "Agent quality summary shown before any evidence navigation attempts exist."
+  },
+  "agentQualityEvidenceNavigationRate": "Evidence opened {percent}% · {count} attempts",
+  "@agentQualityEvidenceNavigationRate": {
+    "description": "Share of Agent evidence navigation attempts accepted by the app router.",
+    "placeholders": {
+      "percent": { "type": "int", "example": "95" },
+      "count": { "type": "int", "example": "20" }
+    }
+  },
   "agentSettingsNeverRun": "Never run",
   "@agentSettingsNeverRun": { "description": "Subtitle when an agent has no run history." },
   "agentSettingsLastRunAt": "Last run {date}",

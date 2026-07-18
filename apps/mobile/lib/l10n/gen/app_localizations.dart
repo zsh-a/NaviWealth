@@ -11310,6 +11310,18 @@ abstract class AppLocalizations {
   /// **'Evidence-linked {percent}%'**
   String agentQualityEvidenceRate(int percent);
 
+  /// Agent quality summary shown before any evidence navigation attempts exist.
+  ///
+  /// In en, this message translates to:
+  /// **'No evidence-open samples'**
+  String get agentQualityEvidenceNavigationNoSamples;
+
+  /// Share of Agent evidence navigation attempts accepted by the app router.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence opened {percent}% · {count} attempts'**
+  String agentQualityEvidenceNavigationRate(int percent, int count);
+
   /// Subtitle when an agent has no run history.
   ///
   /// In en, this message translates to:

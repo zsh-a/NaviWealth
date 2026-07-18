@@ -1,13 +1,15 @@
 /// Privacy-safe aggregate quality report for scheduled LifeOS agents.
 ///
-/// The report reads only lifecycle state and evidence-link structure. It never
-/// exports summaries, titles, evidence ids, payloads, or user-authored text.
+/// The report reads only lifecycle state, evidence-link structure, and
+/// timestamp/boolean navigation outcomes. It never exports summaries, titles,
+/// evidence ids, routes, payloads, or user-authored text.
 library;
 
 import 'package:drift/drift.dart';
 
 import '../../persistence/app_database.dart';
 import 'agent_artifact.dart';
+import 'agent_evidence_navigation_store.dart';
 
 class AgentQualityReport {
   const AgentQualityReport({
@@ -20,6 +22,8 @@ class AgentQualityReport {
     required this.dismissedOrSnoozedArtifacts,
     required this.evidenceBearingArtifacts,
     required this.fullyAnchoredEvidenceArtifacts,
+    required this.evidenceNavigationAttempts,
+    required this.evidenceNavigationSuccesses,
   });
 
   final DateTime windowStart;
@@ -31,6 +35,8 @@ class AgentQualityReport {
   final int dismissedOrSnoozedArtifacts;
   final int evidenceBearingArtifacts;
   final int fullyAnchoredEvidenceArtifacts;
+  final int evidenceNavigationAttempts;
+  final int evidenceNavigationSuccesses;
 
   int get completedRuns => readyRuns + noFindingRuns + failedRuns;
 
@@ -41,6 +47,8 @@ class AgentQualityReport {
       _rate(dismissedOrSnoozedArtifacts, artifactCount);
   double get evidenceAnchorCoverageRate =>
       _rate(fullyAnchoredEvidenceArtifacts, evidenceBearingArtifacts);
+  double get evidenceNavigationSuccessRate =>
+      _rate(evidenceNavigationSuccesses, evidenceNavigationAttempts);
 
   Map<String, Object> toJson() => <String, Object>{
     'window_start': windowStart.toUtc().toIso8601String(),
@@ -58,13 +66,20 @@ class AgentQualityReport {
     'failure_rate': failureRate,
     'dismissed_or_snoozed_rate': dismissedOrSnoozedRate,
     'evidence_anchor_coverage_rate': evidenceAnchorCoverageRate,
+    'evidence_navigation_attempts': evidenceNavigationAttempts,
+    'evidence_navigation_successes': evidenceNavigationSuccesses,
+    'evidence_navigation_success_rate': evidenceNavigationSuccessRate,
   };
 }
 
 class SqliteAgentQualityReportReader {
-  const SqliteAgentQualityReportReader(this._db);
+  const SqliteAgentQualityReportReader(
+    this._db, {
+    AgentEvidenceNavigationStore? evidenceNavigationStore,
+  }) : _evidenceNavigationStore = evidenceNavigationStore;
 
   final AppDatabase _db;
+  final AgentEvidenceNavigationStore? _evidenceNavigationStore;
 
   Future<AgentQualityReport> read({
     required String ownerUserId,
@@ -125,6 +140,9 @@ class SqliteAgentQualityReportReader {
         fullyAnchored++;
       }
     }
+    final navigation =
+        await _evidenceNavigationStore?.summarize(since: since) ??
+        const AgentEvidenceNavigationSummary(attempts: 0, successes: 0);
 
     return AgentQualityReport(
       windowStart: since.toUtc(),
@@ -136,6 +154,8 @@ class SqliteAgentQualityReportReader {
       dismissedOrSnoozedArtifacts: suppressed,
       evidenceBearingArtifacts: evidenceBearing,
       fullyAnchoredEvidenceArtifacts: fullyAnchored,
+      evidenceNavigationAttempts: navigation.attempts,
+      evidenceNavigationSuccesses: navigation.successes,
     );
   }
 }
