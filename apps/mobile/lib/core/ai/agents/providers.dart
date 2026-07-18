@@ -11,6 +11,7 @@ import 'agent_artifact.dart';
 import 'agent_artifact_store.dart';
 import 'agent_preference_store.dart';
 import 'agent_presentation.dart';
+import 'agent_quality_report.dart';
 import 'agent_registry.dart';
 import 'agent_run_store.dart';
 
@@ -34,6 +35,18 @@ final agentArtifactStoreProvider = FutureProvider<AgentArtifactStore>((
   final db = await ref.watch(appDatabaseProvider.future);
   return SqliteAgentArtifactStore(db: db);
 });
+
+final agentQualityReportProvider =
+    FutureProvider.autoDispose<AgentQualityReport>((ref) async {
+      final db = await ref.watch(appDatabaseProvider.future);
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      final now = DateTime.now().toUtc();
+      return SqliteAgentQualityReportReader(db).read(
+        ownerUserId: ownerUserId,
+        since: now.subtract(const Duration(days: 30)),
+        now: now,
+      );
+    });
 
 class AgentResultScope {
   const AgentResultScope({

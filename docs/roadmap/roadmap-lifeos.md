@@ -2,7 +2,7 @@
 
 Status: active cross-domain sequencing SSOT.
 
-Last reviewed: 2026-07-17.
+Last reviewed: 2026-07-18.
 
 This roadmap contains only work that changes cross-domain product outcomes or
 shared delivery risk. Current architecture belongs in the architecture SSOTs,
@@ -78,6 +78,9 @@ Current evidence:
   visibility model across active `DomainPack`s.
 - Fixed answer-quality cases already score required facts, forbidden claims,
   and expected/forbidden evidence ids.
+- A privacy-safe 30-day local quality report now exposes completed, ready,
+  no-finding, failed, dismissed/snoozed, and evidence-anchor coverage metrics
+  without exporting artifact text or evidence ids.
 
 Exit evidence:
 
@@ -92,29 +95,28 @@ Exit evidence:
 - Lower-value legacy read tools gain `EvidenceAnchor`s only when touched by a
   real workflow; ids are not guessed from arbitrary JSON.
 
-### N3. iOS Native Runtime Distribution Confidence
+### N3. Data Portability Recovery Correctness
 
-Outcome: make the narrow Rust EmbeddingGemma and agent-runtime surface
-installable and diagnosable on iOS before expanding native capability.
+Outcome: make encrypted recovery trustworthy under destructive failure modes,
+not merely navigable from Settings.
 
 Current evidence:
 
-- Android arm64 release builds and Android emulator integration tests run in
-  CI.
-- Model download, verification, deletion, recovery diagnostics, fingerprint
-  changes, and stale-vector deletion are implemented and tested.
-- Web remains on stub behavior.
+- Restore validates authenticated payload structure and row counts before
+  pausing Sync or opening the destructive transaction.
+- Wrong passphrases, truncated/corrupt archives, incomplete current-schema
+  archives, and failed row inserts preserve the existing database.
+- Wipe, row insertion, and Sync outbox enqueue use one real Drift transaction.
+- Older known-table archives preserve Sync metadata, and a 1,000-row recovery
+  fixture is bounded to ten seconds in the deterministic test environment.
 
 Exit evidence:
 
-- A macOS CI job builds iOS with `--no-codesign` through the production
-  CocoaPods/cargokit path.
-- An iOS simulator or device smoke proves the bundled native library loads,
-  missing model files fall back safely, and installed model files resolve.
-- Packaging failures identify whether the native library, ONNX Runtime, or
-  model bundle is missing without exposing user content.
-- The current CocoaPods dependency is recorded explicitly while Swift Package
-  Manager support remains unavailable.
+- On-device Android recovery keeps the same atomicity guarantees under a
+  process interruption or documents the platform-specific recovery path.
+- Generic export preserves currency and money semantics through shared
+  formatters and machine-readable values.
+- Release diagnostics expose archive schema and row counts without user data.
 
 ## Next
 
@@ -123,11 +125,12 @@ without an explicit reorder.
 
 ### Sync V3 Stability Gate
 
-Define the production stability window before deciding on Sync E2EE. The gate
-must specify release duration, successful-cycle rate, fatal protocol errors,
-conflict/skipped-row diagnostics, reset-generation failures, and recovery
-evidence. Existing Dart/Rust serializer fixtures and conflict diagnostics are
-baseline, not future work.
+The client now persists a privacy-safe rolling window of the latest 50 terminal
+cycles in local-only `sync_meta`. The gate requires at least 10 cycles spanning
+14 days, at least 95 percent success, zero fatal protocol errors, and zero
+generation-reset failures. It also reports retryable failures, recovery after a
+failed cycle, local wins, and ignored rows. The remaining exit evidence is a
+real release window that reaches the gate before any Sync E2EE decision.
 
 ### On-Device Database Encryption Decision
 
@@ -136,13 +139,6 @@ migrations, repository writes, and backup/restore, but the SQLCipher
 PRAGMA/key-recovery path is not implemented. Either promote database-at-rest
 encryption into a scoped initiative with key-loss/recovery acceptance tests or
 record an explicit non-goal and threat-model rationale.
-
-### Data Portability Recovery Matrix
-
-Extend the existing backup/restore/export task coverage only around real
-failure modes: wrong passphrase, corrupt/truncated archive, interrupted
-restore, cross-version migration, and large datasets. Do not add more
-page-bound navigation tests as a proxy for recovery correctness.
 
 ## Triggered Bets
 
@@ -153,6 +149,7 @@ Triggered work stays out of `Now` and `Next` until its evidence is recorded.
 | Sync E2EE | Sync v3 meets the documented production stability gate | Threat model, key recovery, Rust/Dart boundary |
 | New statement provider | Redacted real sample or repeated measured manual-entry pain | Format support and fixture ownership |
 | Wider native engine | Demonstrated performance or security delta with a current caller | ADR and narrow FRB surface |
+| iOS native distribution | iOS returns to the active platform scope | CocoaPods/cargokit CI and simulator/device smoke |
 | Future LifeOS domain | Explicit user need that cannot fit an existing domain | New ADR and real domain package |
 | Collaboration/social/publishing | No current trigger; outside product boundaries | Northstar change required |
 

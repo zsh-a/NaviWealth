@@ -2,7 +2,7 @@
 
 Status: active FinanceOS sequencing SSOT.
 
-Last reviewed: 2026-07-17.
+Last reviewed: 2026-07-18.
 
 FinanceOS is the always-on seed domain. This document contains only
 Finance-specific product sequencing. Cross-domain shell, Memory Runtime,
@@ -66,15 +66,18 @@ Current evidence:
 - Backup, restore, and export have task-level flows.
 - Android on-device integration opens the production file-backed database and
   restores encrypted bytes through `BackupService`.
+- Logical payloads are fully validated before destructive work. Wrong
+  passphrases, corrupt/truncated archives, incomplete archives, and insertion
+  failures preserve existing rows; inserts and Sync outbox pointers roll back
+  together.
+- Older known-table archives preserve Sync metadata, and a deterministic
+  1,000-row restore stays inside a ten-second test budget.
 
 Exit evidence:
 
-- Wrong-passphrase and corrupt/truncated archive failures preserve the existing
-  database and return actionable errors.
-- Interrupted restore is atomic or has a tested recovery path.
-- Cross-version restore runs required migrations without losing sync metadata.
-- A representative large dataset stays within documented time and memory
-  bounds.
+- Prove interruption recovery on the production Android file-backed database.
+- Expand the representative dataset only when measured production exports
+  exceed the current 1,000-row boundary.
 - Generic export preserves currency and money semantics through shared
   formatters and machine-readable values.
 

@@ -220,7 +220,7 @@ Target: **< 12 min** of blocking PR checks; heavy/flaky-prone work nightly.
 ```
 PR  ├─ analyze --fatal-infos + boundary lints      (mobile.yml, existing)
     ├─ build_runner freshness + l10n parity         (existing)
-    ├─ flutter test (unit + widget + flow + integ.)  ~3 min   flow/integ run here today
+    ├─ flutter test (4 shards; unit/widget/flow/integ.)       flow/integ run here today
     ├─ golden regression (Linux-pinned)             ~30 s    (existing)
     ├─ cargo test (backend, native host)            ~1 min   ← ADDED
     ├─ contract tests                               ~30 s
@@ -232,9 +232,13 @@ Nightly ├─ web smoke full matrix (Firefox/WebKit/OPFS)       ← ADDED
 Weekly ─ native ASR pinned model/WAV exact-transcript smoke
 ```
 
-**Zero-failure unit/widget gate.** `mobile.yml` runs
-`flutter test --coverage --reporter=expanded --exclude-tags=golden` directly.
-There is no known-failing allowlist: any non-golden test failure fails CI.
+**Zero-failure unit/widget gate.** `mobile.yml` distributes
+`flutter test --coverage --reporter=expanded --exclude-tags=golden` across four
+deterministic shards with bounded concurrency. There is no known-failing
+allowlist: any non-golden test failure fails CI. Each shard always uploads its
+machine-readable JSON event stream for seven days, so a timeout or runner
+failure retains the last completed test and error events instead of leaving
+only an incomplete console log.
 Golden PNG comparison remains isolated in the Linux-pinned
 `golden-regression` job.
 

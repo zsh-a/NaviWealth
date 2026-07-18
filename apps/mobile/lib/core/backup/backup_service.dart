@@ -6,6 +6,7 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import '../../core/persistence/app_database.dart';
 import '../auth/domain_scope.dart';
 import '../logging/app_logger.dart';
+import '../sync/drift_sync_storage.dart';
 import '../sync/op_outbox.dart';
 import '../sync/sync_table_registry.dart';
 import 'backup_codec.dart';
@@ -180,39 +181,52 @@ class BackupService {
       '(${decryptSw.elapsedMilliseconds}ms)',
     );
 
-    // 4. Parse and validate JSON structure.
+    // 4. Parse and validate the entire logical payload before pausing sync or
+    // opening the destructive transaction. A malformed archive must never get
+    // far enough to clear a table.
     _logger.d('backup: parsing and validating JSON');
-    final json = jsonDecode(utf8.decode(plaintext)) as Map<String, Object?>;
-    final header = json['header'] as Map<String, Object?>?;
-    if (header == null || header['magic'] != _backupMagic) {
+    final root = _decodeJsonObject(plaintext);
+    final header = _requireObject(root['header'], 'header');
+    if (header['magic'] != _backupMagic) {
       _logger.e(
         'backup: invalid magic — '
-        'got=${header?['magic']}, expected=$_backupMagic',
+        'got=${header['magic']}, expected=$_backupMagic',
       );
       throw const BackupValidationException('Invalid backup magic');
     }
 
-    final backupSchema = header['schemaVersion'] as int?;
-    final createdAt = header['createdAt'] as String?;
-    final headerTables = header['tables'] as Map<String, Object?>?;
+    final backupSchema = _requireInt(header['schemaVersion'], 'schemaVersion');
+    if (backupSchema != envelope.schemaVersion) {
+      throw const BackupValidationException(
+        'Envelope and payload schema versions do not match',
+      );
+    }
+    final createdAt = _requireString(header['createdAt'], 'createdAt');
+    if (DateTime.tryParse(createdAt) == null) {
+      throw const BackupValidationException('Invalid createdAt timestamp');
+    }
+    final headerTables = _requireObject(header['tables'], 'header.tables');
     _logger.d(
       'backup: header — schema=$backupSchema, created=$createdAt, '
-      'tables=${headerTables?.keys.toList()}',
+      'tables=${headerTables.keys.toList()}',
     );
 
-    final data = json['data'] as Map<String, Object?>?;
-    if (data == null) {
-      _logger.e('backup: missing data section');
-      throw const BackupValidationException('Missing data section');
-    }
+    final dataRaw = _requireObject(root['data'], 'data');
+    final data = <String, List<Map<String, Object?>>>{};
 
-    for (final key in data.keys) {
+    for (final entry in dataRaw.entries) {
+      final key = entry.key;
       if (!isBackupTable(key)) {
         _logger.e('backup: unknown table "$key"');
         throw BackupValidationException('Unknown table: $key');
       }
+      data[key] = _requireRows(entry.value, key);
     }
-    final backupDomainWire = header['domain'] as String?;
+    final backupDomainValue = header['domain'];
+    if (backupDomainValue != null && backupDomainValue is! String) {
+      throw const BackupValidationException('Invalid backup domain');
+    }
+    final backupDomainWire = backupDomainValue as String?;
     if (expectedDomain != null && backupDomainWire != expectedDomain.wire) {
       throw BackupValidationException(
         'Expected ${expectedDomain.wire} backup, got '
@@ -236,15 +250,74 @@ class BackupService {
       }
     }
 
+    final declaredTables = headerTables.keys.toSet();
+    final actualTables = data.keys.toSet();
+    if (!_setsEqual(declaredTables, actualTables)) {
+      throw BackupValidationException(
+        'Header/data table mismatch: declared=${declaredTables.length}, '
+        'actual=${actualTables.length}',
+      );
+    }
+
+    // Current-schema archives must be complete for their declared scope.
+    // Older logical archives may legitimately predate newly registered tables;
+    // their rows still migrate through the current Drift schema on insertion.
+    if (backupSchema == _db.schemaVersion) {
+      final expectedTables = backupDomainWire == null
+          ? kBackupTables.toSet()
+          : <String>{
+              for (final registration in kSyncTableRegistrations)
+                if (registration.backupEligible &&
+                    registration.domainPrefix ==
+                        _prefixForScope(
+                          DomainScope.tryParse(backupDomainWire)!,
+                        ))
+                  registration.table,
+            };
+      if (!_setsEqual(actualTables, expectedTables)) {
+        throw BackupValidationException(
+          'Incomplete current-schema archive: expected '
+          '${expectedTables.length} tables, got ${actualTables.length}',
+        );
+      }
+    }
+
     final restoreTableCounts = <String, int>{};
     for (final entry in data.entries) {
-      restoreTableCounts[entry.key] = (entry.value as List<Object?>).length;
+      final declaredCount = _requireInt(
+        headerTables[entry.key],
+        'header.tables.${entry.key}',
+      );
+      if (declaredCount < 0 || declaredCount != entry.value.length) {
+        throw BackupValidationException(
+          'Row count mismatch for ${entry.key}: declared=$declaredCount, '
+          'actual=${entry.value.length}',
+        );
+      }
+      for (final row in entry.value) {
+        if (row.isEmpty) {
+          throw BackupValidationException('Empty row in ${entry.key}');
+        }
+        if (shouldEnqueueRestoreOpForBackupTable(entry.key) &&
+            _extractRowId(entry.key, row).isEmpty) {
+          throw BackupValidationException(
+            'Missing primary key in ${entry.key}',
+          );
+        }
+      }
+      restoreTableCounts[entry.key] = entry.value.length;
     }
     final totalIncoming = restoreTableCounts.values.fold(0, (s, c) => s + c);
     _logger.d(
       'backup: validation passed — $totalIncoming rows across '
       '${restoreTableCounts.length} tables',
     );
+
+    if (!isOutboxBoundToDatabase(_outbox, _db)) {
+      throw StateError(
+        'Backup restore requires a transaction-bound outbox store',
+      );
+    }
 
     // 5. Pause sync to prevent concurrent mutations.
     _logger.d('backup: pausing sync');
@@ -282,11 +355,10 @@ class BackupService {
         // Insert restored rows and enqueue ops.
         for (final entry in data.entries) {
           final tableName = entry.key;
-          final rows = entry.value as List<Object?>;
+          final rows = entry.value;
           var count = 0;
 
-          for (final rowRaw in rows) {
-            final row = rowRaw as Map<String, Object?>;
+          for (final row in rows) {
             await _insertRow(tableName, row);
             if (shouldEnqueueRestoreOpForBackupTable(tableName)) {
               await _enqueueRestoreOp(tableName, row);
@@ -373,6 +445,57 @@ class BackupService {
     return value?.toString() ?? '';
   }
 }
+
+Map<String, Object?> _decodeJsonObject(Uint8List plaintext) {
+  try {
+    return _requireObject(jsonDecode(utf8.decode(plaintext)), 'root');
+  } on BackupValidationException {
+    rethrow;
+  } on Object catch (error) {
+    throw BackupValidationException('Malformed backup payload: $error');
+  }
+}
+
+Map<String, Object?> _requireObject(Object? value, String field) {
+  if (value is! Map<Object?, Object?>) {
+    throw BackupValidationException('$field must be an object');
+  }
+  final result = <String, Object?>{};
+  for (final entry in value.entries) {
+    final key = entry.key;
+    if (key is! String) {
+      throw BackupValidationException('$field contains a non-string key');
+    }
+    result[key] = entry.value;
+  }
+  return result;
+}
+
+List<Map<String, Object?>> _requireRows(Object? value, String table) {
+  if (value is! List<Object?>) {
+    throw BackupValidationException('Table $table must contain a row list');
+  }
+  return <Map<String, Object?>>[
+    for (var index = 0; index < value.length; index++)
+      _requireObject(value[index], '$table[$index]'),
+  ];
+}
+
+int _requireInt(Object? value, String field) {
+  if (value is int) return value;
+  if (value is num && value.isFinite && value == value.roundToDouble()) {
+    return value.toInt();
+  }
+  throw BackupValidationException('$field must be an integer');
+}
+
+String _requireString(Object? value, String field) {
+  if (value is String && value.isNotEmpty) return value;
+  throw BackupValidationException('$field must be a non-empty string');
+}
+
+bool _setsEqual<T>(Set<T> left, Set<T> right) =>
+    left.length == right.length && left.containsAll(right);
 
 String _prefixForScope(DomainScope scope) => switch (scope) {
   DomainScope.finance => kFinanceDomainPrefix,

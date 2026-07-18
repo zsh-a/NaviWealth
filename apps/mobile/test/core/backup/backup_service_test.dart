@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
+import 'package:drift/drift.dart' show Variable;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/backup/backup_codec.dart';
@@ -10,7 +12,6 @@ import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 
 import '../../core/persistence/test_database.dart';
-import '../sync/_outbox_test_ext.dart';
 
 void main() {
   const testIterations = 1000; // fast for tests
@@ -19,11 +20,9 @@ void main() {
 
   late BackupService service;
   late BackupCodec codec;
-  late InMemoryOutboxStore outbox;
 
   setUp(() {
     codec = BackupCodec();
-    outbox = InMemoryOutboxStore();
   });
 
   /// Insert a minimal test account row into the database.
@@ -162,7 +161,7 @@ void main() {
     return BackupService(
       db: db,
       codec: codec,
-      outbox: outbox,
+      outbox: DriftOutboxStore(db),
       deviceId: testDeviceId,
       stampHlc: () async => Hlc(
         wallMillis: DateTime.now().millisecondsSinceEpoch,
@@ -170,6 +169,29 @@ void main() {
         nodeId: testDeviceId,
       ),
     );
+  }
+
+  Future<Uint8List> encryptPayload(
+    AppDatabase db,
+    Map<String, Object?> payload, {
+    int? schemaVersion,
+  }) async {
+    final envelope = await codec.encrypt(
+      passphrase: testPassphrase,
+      plaintext: Uint8List.fromList(utf8.encode(jsonEncode(payload))),
+      schemaVersion: schemaVersion ?? db.schemaVersion,
+      iterations: testIterations,
+    );
+    return envelope.encodeBytes();
+  }
+
+  Future<Map<String, Object?>> decryptPayload(Uint8List bytes) async {
+    final envelope = BackupEnvelope.decodeBytes(bytes);
+    final plaintext = await codec.decrypt(
+      passphrase: testPassphrase,
+      envelope: envelope,
+    );
+    return jsonDecode(utf8.decode(plaintext)) as Map<String, Object?>;
   }
 
   group('BackupService', () {
@@ -310,24 +332,30 @@ void main() {
     });
 
     test('wrong passphrase throws BackupAuthenticationException', () async {
-      final db = makeTestDatabase();
-      addTearDown(db.close);
-      await insertTestAccount(db);
+      final sourceDb = makeTestDatabase();
+      addTearDown(sourceDb.close);
+      await insertTestAccount(sourceDb);
 
-      service = makeService(db);
+      service = makeService(sourceDb);
       final bytes = await service.exportBackup(
         passphrase: testPassphrase,
         overrideIterations: testIterations,
       );
 
-      final restoreService = makeService(makeTestDatabase());
-      expect(
-        () => restoreService.restoreBackup(
+      final targetDb = makeTestDatabase();
+      addTearDown(targetDb.close);
+      await insertTestAccount(targetDb, id: 'preserved');
+      final restoreService = makeService(targetDb);
+      await expectLater(
+        restoreService.restoreBackup(
           passphrase: 'wrong-passphrase',
           fileBytes: bytes,
         ),
         throwsA(isA<BackupAuthenticationException>()),
       );
+      expect(await countRows(targetDb, 'accounts'), 1);
+      final rows = await targetDb.customSelect('SELECT id FROM accounts').get();
+      expect(rows.single.read<String>('id'), 'preserved');
     });
 
     test('newer schema version throws BackupSchemaTooNewException', () async {
@@ -414,12 +442,14 @@ void main() {
         fileBytes: bytes,
       );
 
-      // Verify dirty pointers were enqueued for the restored rows.
-      final ops = outbox.queued;
-      expect(ops.length, 2); // 1 account + 1 tag
-
-      // Pointers should reference the correct tables.
-      final tableNames = ops.map((o) => o.table).toSet();
+      // Verify dirty pointers were enqueued transactionally with the rows.
+      final ops = await targetDb
+          .customSelect('SELECT table_name, row_id FROM op_outbox')
+          .get();
+      expect(ops, hasLength(2)); // 1 account + 1 tag
+      final tableNames = ops
+          .map((row) => row.read<String>('table_name'))
+          .toSet();
       expect(tableNames, containsAll(['accounts', 'tags']));
     });
 
@@ -450,11 +480,212 @@ void main() {
             .get();
         expect(rows.single.read<String>('user_id'), 'user-1');
 
-        final profileOps = outbox.queued
-            .where((op) => op.table == 'options_strategy_profile')
-            .toList();
+        final profileOps = await targetDb
+            .customSelect(
+              'SELECT row_id FROM op_outbox '
+              'WHERE table_name = ?',
+              variables: [Variable.withString('options_strategy_profile')],
+            )
+            .get();
         expect(profileOps, hasLength(1));
-        expect(profileOps.single.rowId, 'user-1');
+        expect(profileOps.single.read<String>('row_id'), 'user-1');
+      },
+    );
+
+    test('truncated archive preserves the existing database', () async {
+      final targetDb = makeTestDatabase();
+      addTearDown(targetDb.close);
+      await insertTestAccount(targetDb, id: 'preserved');
+
+      final restoreService = makeService(targetDb);
+      await expectLater(
+        restoreService.restoreBackup(
+          passphrase: testPassphrase,
+          fileBytes: Uint8List.fromList(utf8.encode('{"magic":')),
+        ),
+        throwsA(isA<FormatException>()),
+      );
+
+      final rows = await targetDb.customSelect('SELECT id FROM accounts').get();
+      expect(rows.single.read<String>('id'), 'preserved');
+    });
+
+    test('malformed authenticated payload preserves existing data', () async {
+      final targetDb = makeTestDatabase();
+      addTearDown(targetDb.close);
+      await insertTestAccount(targetDb, id: 'preserved');
+      final envelope = await codec.encrypt(
+        passphrase: testPassphrase,
+        plaintext: Uint8List.fromList(utf8.encode('{not-json')),
+        schemaVersion: targetDb.schemaVersion,
+        iterations: testIterations,
+      );
+
+      await expectLater(
+        makeService(targetDb).restoreBackup(
+          passphrase: testPassphrase,
+          fileBytes: envelope.encodeBytes(),
+        ),
+        throwsA(isA<BackupValidationException>()),
+      );
+      final rows = await targetDb.customSelect('SELECT id FROM accounts').get();
+      expect(rows.single.read<String>('id'), 'preserved');
+    });
+
+    test('incomplete current-schema archive is rejected before wipe', () async {
+      final sourceDb = makeTestDatabase();
+      addTearDown(sourceDb.close);
+      await insertTestAccount(sourceDb);
+      final exported = await makeService(sourceDb).exportBackup(
+        passphrase: testPassphrase,
+        overrideIterations: testIterations,
+      );
+      final payload = await decryptPayload(exported);
+      final header = payload['header'] as Map<String, Object?>;
+      final data = payload['data'] as Map<String, Object?>;
+      (header['tables'] as Map<String, Object?>).remove('tags');
+      data.remove('tags');
+      final incomplete = await encryptPayload(sourceDb, payload);
+
+      final targetDb = makeTestDatabase();
+      addTearDown(targetDb.close);
+      await insertTestAccount(targetDb, id: 'preserved');
+      await expectLater(
+        makeService(
+          targetDb,
+        ).restoreBackup(passphrase: testPassphrase, fileBytes: incomplete),
+        throwsA(isA<BackupValidationException>()),
+      );
+      final rows = await targetDb.customSelect('SELECT id FROM accounts').get();
+      expect(rows.single.read<String>('id'), 'preserved');
+    });
+
+    test(
+      'older schema archive restores known rows without clearing sync metadata',
+      () async {
+        final sourceDb = makeTestDatabase();
+        addTearDown(sourceDb.close);
+        await insertTestAccount(sourceDb, id: 'legacy-account');
+        final exported = await makeService(sourceDb).exportBackup(
+          passphrase: testPassphrase,
+          overrideIterations: testIterations,
+        );
+        final payload = await decryptPayload(exported);
+        final header = payload['header'] as Map<String, Object?>;
+        final data = payload['data'] as Map<String, Object?>;
+        final accounts = data['accounts'];
+        header
+          ..['schemaVersion'] = sourceDb.schemaVersion - 1
+          ..['tables'] = <String, Object?>{'accounts': 1};
+        payload['data'] = <String, Object?>{'accounts': accounts};
+        final legacyArchive = await encryptPayload(
+          sourceDb,
+          payload,
+          schemaVersion: sourceDb.schemaVersion - 1,
+        );
+
+        final targetDb = makeTestDatabase();
+        addTearDown(targetDb.close);
+        await targetDb.customStatement(
+          'INSERT INTO sync_meta(key, value) VALUES (?, ?)',
+          <Object?>['sync.cursor', '42'],
+        );
+        final result = await makeService(
+          targetDb,
+        ).restoreBackup(passphrase: testPassphrase, fileBytes: legacyArchive);
+
+        expect(result.tableCounts, <String, int>{'accounts': 1});
+        final account = await targetDb
+            .customSelect('SELECT id FROM accounts')
+            .getSingle();
+        expect(account.read<String>('id'), 'legacy-account');
+        final cursor = await targetDb
+            .customSelect(
+              'SELECT value FROM sync_meta WHERE key = ?',
+              variables: <Variable<Object>>[Variable.withString('sync.cursor')],
+            )
+            .getSingle();
+        expect(cursor.read<String>('value'), '42');
+      },
+    );
+
+    test(
+      'restores a representative 1000-row archive within the test budget',
+      () async {
+        final sourceDb = makeTestDatabase();
+        addTearDown(sourceDb.close);
+        await sourceDb.transaction(() async {
+          for (var i = 0; i < 1000; i++) {
+            await insertTestAccount(
+              sourceDb,
+              id: 'account-$i',
+              name: 'Account $i',
+            );
+          }
+        });
+        final bytes = await makeService(sourceDb).exportBackup(
+          passphrase: testPassphrase,
+          overrideIterations: testIterations,
+        );
+
+        final targetDb = makeTestDatabase();
+        addTearDown(targetDb.close);
+        final stopwatch = Stopwatch()..start();
+        final result = await makeService(
+          targetDb,
+        ).restoreBackup(passphrase: testPassphrase, fileBytes: bytes);
+        stopwatch.stop();
+
+        expect(result.tableCounts['accounts'], 1000);
+        expect(await countRows(targetDb, 'accounts'), 1000);
+        expect(stopwatch.elapsed, lessThan(const Duration(seconds: 10)));
+      },
+    );
+
+    test(
+      'failed row insertion rolls data and outbox back atomically',
+      () async {
+        final sourceDb = makeTestDatabase();
+        addTearDown(sourceDb.close);
+        await insertTestAccount(sourceDb);
+        final exported = await makeService(sourceDb).exportBackup(
+          passphrase: testPassphrase,
+          overrideIterations: testIterations,
+        );
+        final payload = await decryptPayload(exported);
+        final header = payload['header'] as Map<String, Object?>;
+        final data = payload['data'] as Map<String, Object?>;
+        final accounts = data['accounts'] as List<Object?>;
+        accounts.add(<String, Object?>{'id': 'invalid-row'});
+        (header['tables'] as Map<String, Object?>)['accounts'] =
+            accounts.length;
+        final invalid = await encryptPayload(sourceDb, payload);
+
+        final targetDb = makeTestDatabase();
+        addTearDown(targetDb.close);
+        await insertTestAccount(targetDb, id: 'preserved');
+        final targetOutbox = DriftOutboxStore(targetDb);
+        await targetOutbox.enqueue(table: 'accounts', rowId: 'preserved');
+
+        var resumed = false;
+        await expectLater(
+          makeService(targetDb).restoreBackup(
+            passphrase: testPassphrase,
+            fileBytes: invalid,
+            resumeSync: () => resumed = true,
+          ),
+          throwsA(anything),
+        );
+        expect(resumed, isTrue);
+        final rows = await targetDb
+            .customSelect('SELECT id FROM accounts')
+            .get();
+        expect(rows.single.read<String>('id'), 'preserved');
+        final pointers = await targetDb
+            .customSelect('SELECT table_name, row_id FROM op_outbox')
+            .get();
+        expect(pointers, hasLength(1));
+        expect(pointers.single.read<String>('row_id'), 'preserved');
       },
     );
 

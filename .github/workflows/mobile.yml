@@ -116,9 +116,10 @@ jobs:
           ./tool/lint-frb-llm-entrypoints.sh
 
   test-shards:
-    name: test shard ${{ matrix.shard }} / 3
+    name: test shard ${{ matrix.shard }} / 4
     runs-on: ubuntu-latest
     needs: prepare-font-assets
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -135,15 +136,27 @@ jobs:
           path: apps/mobile/assets/fonts
       - run: flutter --version
       - run: flutter pub get
+      - name: Prepare test result directory
+        run: mkdir -p test-results
       - name: Run tests
         run: >
           flutter test
           --coverage
           --coverage-path=coverage/lcov-${{ matrix.shard }}.info
           --reporter=expanded
+          --file-reporter=json:test-results/shard-${{ matrix.shard }}.json
+          --concurrency=4
           --exclude-tags=golden
           --total-shards=4
           --shard-index=${{ matrix.shard }}
+      - name: Upload shard test events
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-test-events-shard-${{ matrix.shard }}
+          path: apps/mobile/test-results/shard-${{ matrix.shard }}.json
+          if-no-files-found: warn
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         with:
           name: mobile-coverage-shard-${{ matrix.shard }}

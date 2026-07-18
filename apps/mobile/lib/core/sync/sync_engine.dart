@@ -11,6 +11,7 @@ import 'op_outbox.dart';
 import 'retry.dart';
 import 'row_applier.dart';
 import 'sync_api_client.dart';
+import 'sync_stability.dart';
 import 'sync_status.dart';
 import 'sync_table_registry.dart';
 
@@ -59,12 +60,14 @@ class SyncEngine {
     AppLogger? logger,
     DomainGenerationStore? generationStore,
     DomainResetHandler? resetHandler,
+    SyncStabilityRecorder? stabilityRecorder,
   }) : _clock = clock,
        _backoff = backoff,
        _random = random ?? Random(),
        _logger = logger ?? AppLogger.instance,
        _generationStore = generationStore ?? InMemoryDomainGenerationStore(),
-       _resetHandler = resetHandler ?? const NoopDomainResetHandler();
+       _resetHandler = resetHandler ?? const NoopDomainResetHandler(),
+       _stabilityRecorder = stabilityRecorder;
 
   final SyncApiClient api;
   final PendingRows pending;
@@ -78,6 +81,7 @@ class SyncEngine {
   final AppLogger _logger;
   final DomainGenerationStore _generationStore;
   final DomainResetHandler _resetHandler;
+  final SyncStabilityRecorder? _stabilityRecorder;
 
   EngineState _state = EngineState.idle;
   EngineState get state => _state;
@@ -87,6 +91,8 @@ class SyncEngine {
   Duration? _nextBackoff;
   Duration? get nextBackoff => _nextBackoff;
   DateTime? _lastSuccessAt;
+  int _cycleGenerationResets = 0;
+  int _cycleGenerationResetFailures = 0;
 
   Future<Hlc> _loadLocalHlc() async {
     final hlc = await cursors.readLocalHlc();
@@ -124,6 +130,8 @@ class SyncEngine {
     var pushed = 0;
     var pulled = 0;
     var conflicts = const SyncConflictDiagnostics.empty();
+    _cycleGenerationResets = 0;
+    _cycleGenerationResetFailures = 0;
     _state = EngineState.syncing;
     _emitStatus(
       SyncStatus.syncing,
@@ -209,11 +217,13 @@ class SyncEngine {
         fields: {'pushed_count': pushed, 'pulled_count': pulled},
       );
       _emitStatus(SyncStatus.online, conflicts: conflicts);
-      return SyncCycleResult(
-        pushed: pushed,
-        pulled: pulled,
-        errors: const [],
-        conflicts: conflicts,
+      return _recordStability(
+        SyncCycleResult(
+          pushed: pushed,
+          pulled: pulled,
+          errors: const [],
+          conflicts: conflicts,
+        ),
       );
     }
     operation.fail(
@@ -227,12 +237,40 @@ class SyncEngine {
         'error_count': errors.length,
       },
     );
-    return _handleErrors(
-      errors,
-      pushed: pushed,
-      pulled: pulled,
-      conflicts: conflicts,
+    return _recordStability(
+      _handleErrors(
+        errors,
+        pushed: pushed,
+        pulled: pulled,
+        conflicts: conflicts,
+      ),
     );
+  }
+
+  Future<SyncCycleResult> _recordStability(SyncCycleResult result) async {
+    try {
+      await _stabilityRecorder?.record(
+        SyncStabilitySample(
+          at: _clock.now(),
+          success: result.success,
+          retryableFailures: result.errors
+              .where((error) => error.isRetryable)
+              .length,
+          fatalFailures: result.errors
+              .where((error) => !error.isRetryable)
+              .length,
+          localWins: result.conflicts.localWins,
+          ignoredRows: result.conflicts.ignoredRows,
+          generationResets: _cycleGenerationResets,
+          generationResetFailures: _cycleGenerationResetFailures,
+        ),
+      );
+    } on Object catch (error) {
+      // Diagnostics must never turn an otherwise valid sync outcome into a
+      // failed cycle or hide the original protocol result from the caller.
+      _logger.w('sync: failed to persist stability sample ($error)');
+    }
+    return result;
   }
 
   /// Read the dirty-row set, dedupe to one [RowChange] per row, and cap the
@@ -311,7 +349,13 @@ class SyncEngine {
     for (final entry in serverGenerations.entries) {
       final current = local[entry.key] ?? 0;
       if (current != entry.value) {
-        await _resetHandler.resetLocalDomain(entry.key);
+        try {
+          await _resetHandler.resetLocalDomain(entry.key);
+          _cycleGenerationResets++;
+        } on Object {
+          _cycleGenerationResetFailures++;
+          rethrow;
+        }
       }
       await _generationStore.write(entry.key, entry.value);
     }

@@ -17,6 +17,7 @@ import 'sync_api_client.dart';
 import 'sync_backfill.dart';
 import 'sync_engine.dart';
 import 'sync_scheduler.dart';
+import 'sync_stability.dart';
 import 'sync_status.dart';
 
 /// Auth token source. Reads the current access token from
@@ -100,6 +101,14 @@ final syncOutboxDepthProvider = FutureProvider<int>((ref) async {
   return DriftOutboxStore(db).depth();
 });
 
+final syncStabilityReportProvider = FutureProvider<SyncStabilityReport>((
+  ref,
+) async {
+  ref.watch(syncStatusEventStreamProvider);
+  final db = await ref.watch(appDatabaseProvider.future);
+  return DriftSyncStabilityStore(db).readReport();
+});
+
 final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
   final session = ref.watch(authSessionProvider);
   if (session == null) return null;
@@ -126,6 +135,7 @@ final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
     ),
     resetHandler: resetHandler,
     logger: ref.read(loggerProvider),
+    stabilityRecorder: DriftSyncStabilityStore(db),
   );
 
   final backfilled = await SyncBackfill(

@@ -17,6 +17,7 @@ import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/core/sync/row_applier.dart';
 import 'package:naviwealth/core/sync/sync_api_client.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
+import 'package:naviwealth/core/sync/sync_stability.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
 
 import '../../core/persistence/test_database.dart';
@@ -75,6 +76,13 @@ class RecordingDomainResetHandler implements DomainResetHandler {
 
   @override
   Future<void> resetLocalDomain(String domain) async => domains.add(domain);
+}
+
+class FailingStabilityRecorder implements SyncStabilityRecorder {
+  @override
+  Future<void> record(SyncStabilitySample sample) {
+    throw StateError('diagnostic storage unavailable');
+  }
 }
 
 /// Recording [RowApplier]-shaped fake. RowApplier is a concrete class, so the
@@ -201,6 +209,24 @@ void main() {
         'fin:accounts',
       });
       expect(await pending.depth(), 0, reason: 'pointers acknowledged');
+    });
+
+    test('diagnostic persistence failure does not fail a sync cycle', () async {
+      engine = SyncEngine(
+        api: api,
+        pending: pending,
+        cursors: cursors,
+        applier: applier,
+        deviceId: _dev,
+        statusBus: bus,
+        clock: clock,
+        stabilityRecorder: FailingStabilityRecorder(),
+      );
+
+      final result = await engine.run();
+
+      expect(result.success, isTrue);
+      expect(bus.current.status, SyncStatus.online);
     });
 
     test('multiple ops on the same row collapse to one RowChange', () async {
