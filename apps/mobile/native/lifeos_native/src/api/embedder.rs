@@ -25,7 +25,7 @@
 //! Threadsafety: `TextEmbedding` is `Send + Sync` (via Mutex);
 //! concurrent calls to `embed` are serialised by ORT's session.
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use fastembed::{
     InitOptionsUserDefined, Pooling, TextEmbedding, TokenizerFiles, UserDefinedEmbeddingModel,
 };

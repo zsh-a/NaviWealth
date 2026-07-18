@@ -64,18 +64,22 @@ mod tests {
 
     #[test]
     fn pending_mfa_cannot_make_requests() {
-        assert!(!GarminAuthState::PendingMfa {
-            session_ticket: "ticket".into()
-        }
-        .can_make_requests());
+        assert!(
+            !GarminAuthState::PendingMfa {
+                session_ticket: "ticket".into()
+            }
+            .can_make_requests()
+        );
     }
 
     #[test]
     fn authenticated_can_make_requests() {
-        assert!(GarminAuthState::Authenticated {
-            expires_at: Utc::now() + chrono::Duration::hours(1)
-        }
-        .can_make_requests());
+        assert!(
+            GarminAuthState::Authenticated {
+                expires_at: Utc::now() + chrono::Duration::hours(1)
+            }
+            .can_make_requests()
+        );
     }
 
     #[test]
@@ -85,10 +89,12 @@ mod tests {
 
     #[test]
     fn error_cannot_make_requests() {
-        assert!(!GarminAuthState::Error {
-            message: "fail".into()
-        }
-        .can_make_requests());
+        assert!(
+            !GarminAuthState::Error {
+                message: "fail".into()
+            }
+            .can_make_requests()
+        );
     }
 
     #[test]
@@ -118,10 +124,12 @@ mod tests {
     #[test]
     fn non_authenticated_never_needs_refresh() {
         assert!(!GarminAuthState::Unauthenticated.needs_refresh());
-        assert!(!GarminAuthState::PendingMfa {
-            session_ticket: "t".into()
-        }
-        .needs_refresh());
+        assert!(
+            !GarminAuthState::PendingMfa {
+                session_ticket: "t".into()
+            }
+            .needs_refresh()
+        );
         assert!(!GarminAuthState::Refreshing.needs_refresh());
     }
 

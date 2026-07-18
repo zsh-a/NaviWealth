@@ -5,10 +5,10 @@
 //! - Enforces minimum interval between requests
 //! - Exponential backoff on 429 responses
 
-use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, Ordering};
 use tokio::sync::Semaphore;
-use tokio::time::{sleep, Duration, Instant};
+use tokio::time::{Duration, Instant, sleep};
 
 /// Default max concurrent requests to Garmin API.
 const DEFAULT_MAX_CONCURRENT: usize = 2;

@@ -5,7 +5,7 @@
 //!
 //! 429 responses trigger exponential backoff and automatic retry (max 3).
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use chrono::NaiveDate;
 use reqwest::Client;
 use serde_json::Value;
@@ -21,8 +21,7 @@ const CONNECT_API_BASE_GLOBAL: &str = "https://connectapi.garmin.com";
 
 /// Native API headers (matching python-garminconnect mobile flow).
 const NATIVE_USER_AGENT: &str = "GCM-Android-5.23";
-const NATIVE_X_GARMIN_UA: &str =
-    "com.garmin.android.apps.connectmobile/5.23; ; Google/sdk_gphone64_arm64/google; Android/33; Dalvik/2.1.0";
+const NATIVE_X_GARMIN_UA: &str = "com.garmin.android.apps.connectmobile/5.23; ; Google/sdk_gphone64_arm64/google; Android/33; Dalvik/2.1.0";
 
 fn api_base(is_cn: bool) -> &'static str {
     if is_cn {

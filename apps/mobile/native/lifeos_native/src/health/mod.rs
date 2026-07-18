@@ -20,16 +20,16 @@ pub(crate) mod garmin;
 pub(crate) mod provider;
 pub(crate) mod sync_engine;
 
-use anyhow::{anyhow, Result};
-use std::sync::atomic::{AtomicBool, Ordering};
+use anyhow::{Result, anyhow};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tokio::sync::Mutex;
 
 use crate::frb_generated::StreamSink;
 
+use garmin::GarminProvider;
 use garmin::client::GarminClient;
 use garmin::token_store::{InMemoryTokenStore, StoredSession, TokenStore};
-use garmin::GarminProvider;
 use sync_engine::HealthSyncEngine;
 
 const GARMIN_ACTIVITY_PAGE_SIZE: u32 = 50;

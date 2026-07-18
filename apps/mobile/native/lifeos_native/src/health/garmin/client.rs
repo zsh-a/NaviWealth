@@ -8,7 +8,7 @@
 //!   2. POST ticket to DI token endpoint → get `access_token` + `refresh_token`
 //!   3. API calls use `Authorization: Bearer {access_token}`
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use base64::Engine;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
