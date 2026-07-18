@@ -11,6 +11,7 @@ import 'app_interaction.dart';
 const double kFloatingGlassNavBarHeight = AppSpacing.s64;
 const double _kDestinationHeight = 52;
 const double _kIconSlotSize = 26;
+const double _kAssistantLabelBreakpoint = 390;
 
 /// A floating glass-morphism bottom navigation bar.
 ///
@@ -74,51 +75,57 @@ class FloatingGlassNavBar extends StatelessWidget {
         ? colors.border.withValues(alpha: AppOpacity.emphasis)
         : ColorPalette.navySoftBorder.withValues(alpha: AppOpacity.strong);
 
-    return RepaintBoundary(
-      child: Container(
-        height: kFloatingGlassNavBarHeight,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          border: Border.all(color: borderColor, width: AppStroke.hairline),
-          boxShadow: AppShadow.nav,
-        ),
-        clipBehavior: Clip.antiAlias,
-        // Keep the glass tone but avoid BackdropFilter. A live backdrop blur
-        // must resample the routed page while it changes and was a major
-        // raster cost during tab navigation; this near-opaque surface retains
-        // the same hierarchy without coupling its paint to page contents.
-        child: ColoredBox(
-          color: glassColor,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s8,
-              vertical: AppSpacing.s6,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compactAssistant =
+            constraints.maxWidth < _kAssistantLabelBreakpoint;
+        return RepaintBoundary(
+          child: Container(
+            height: kFloatingGlassNavBarHeight,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.full),
+              border: Border.all(color: borderColor, width: AppStroke.hairline),
+              boxShadow: AppShadow.nav,
             ),
-            child: Row(
-              children: [
-                for (var i = 0; i < items.length; i++)
-                  Expanded(
-                    child: _NavTabButton(
-                      tab: items[i],
-                      selected: i == selectedIndex,
-                      onTap: () => onIndexChanged(i),
-                    ),
-                  ),
-                if (onAssistantAction != null)
-                  Padding(
-                    padding: const EdgeInsets.only(left: AppSpacing.s8),
-                    child: _AssistantActionButton(
-                      icon: assistantIcon,
-                      label: assistantLabel,
-                      semanticLabel: assistantSemanticLabel,
-                      onTap: onAssistantAction!,
-                    ),
-                  ),
-              ],
+            clipBehavior: Clip.antiAlias,
+            // Keep the glass tone but avoid BackdropFilter. A live backdrop
+            // blur must resample the routed page while it changes and was a
+            // major raster cost during tab navigation.
+            child: ColoredBox(
+              color: glassColor,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s8,
+                  vertical: AppSpacing.s6,
+                ),
+                child: Row(
+                  children: [
+                    for (var i = 0; i < items.length; i++)
+                      Expanded(
+                        child: _NavTabButton(
+                          tab: items[i],
+                          selected: i == selectedIndex,
+                          onTap: () => onIndexChanged(i),
+                        ),
+                      ),
+                    if (onAssistantAction != null)
+                      Padding(
+                        padding: const EdgeInsets.only(left: AppSpacing.s8),
+                        child: _AssistantActionButton(
+                          icon: assistantIcon,
+                          label: compactAssistant ? null : assistantLabel,
+                          semanticLabel: assistantSemanticLabel,
+                          compact: compactAssistant,
+                          onTap: onAssistantAction!,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -222,12 +229,14 @@ class _AssistantActionButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.semanticLabel,
+    required this.compact,
     required this.onTap,
   });
 
   final IconData icon;
   final String? label;
   final String? semanticLabel;
+  final bool compact;
   final VoidCallback onTap;
 
   @override
@@ -243,8 +252,12 @@ class _AssistantActionButton extends StatelessWidget {
         child: Container(
           key: const ValueKey<String>('floating-nav.assistant'),
           height: AppSpacing.s40,
-          constraints: const BoxConstraints(minWidth: AppSpacing.s64),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10),
+          constraints: BoxConstraints(
+            minWidth: compact ? AppSpacing.s40 : AppSpacing.s64,
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? AppSpacing.s8 : AppSpacing.s10,
+          ),
           decoration: BoxDecoration(
             color: Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.full),

@@ -124,9 +124,9 @@ class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
     setState(() {
       _query = raw;
       _filtered = next;
-      _selectedIndex = next.isEmpty
-          ? 0
-          : _selectedIndex.clamp(0, next.length - 1);
+      // A new query is a new result set. Always focus its best match instead
+      // of carrying a stale row index across unrelated results.
+      _selectedIndex = 0;
     });
   }
 

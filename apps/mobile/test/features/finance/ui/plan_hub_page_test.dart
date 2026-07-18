@@ -158,7 +158,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Next steps'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Strategies'),
+      160,
+      scrollable: find.byType(Scrollable).last,
+    );
     expect(find.text('Strategies'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('expands more tools and navigates to feature routes', (

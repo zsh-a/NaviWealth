@@ -133,7 +133,7 @@ class _WealthHubBody extends ConsumerWidget {
             ),
             children: [
               AppCollapsingStage(
-                child: _NetWorthHero(
+                child: _BalanceOverview(
                   baseCurrency: baseCurrency,
                   netWorth: netWorth,
                   totalAssets: totalAssets,
@@ -172,8 +172,8 @@ class _WealthHubBody extends ConsumerWidget {
   }
 }
 
-class _NetWorthHero extends ConsumerWidget {
-  const _NetWorthHero({
+class _BalanceOverview extends ConsumerWidget {
+  const _BalanceOverview({
     required this.baseCurrency,
     required this.netWorth,
     required this.totalAssets,
@@ -189,8 +189,14 @@ class _NetWorthHero extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
-    return SoftCard.hero(
-      padding: AppPageRhythm.heroPadding,
+    // Wealth is an analytical workspace, so its balance summary sits directly
+    // on the canvas and lets the trend card own visual emphasis. Today keeps
+    // the tappable net-worth hero for quick status and navigation.
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s4,
+        vertical: AppSpacing.s8,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

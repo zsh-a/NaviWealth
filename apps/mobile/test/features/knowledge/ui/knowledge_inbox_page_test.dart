@@ -49,4 +49,11 @@ void main() {
     expect(find.text('Weekly review'), findsOneWidget);
     expect(find.text('Search knowledge'), findsOneWidget);
   });
+
+  testWidgets('keeps capture in the shared shell header', (tester) async {
+    await pumpInbox(tester);
+
+    expect(find.byIcon(FLucideIcons.plus), findsOneWidget);
+    expect(find.byType(AppFloatingActionSurface), findsNothing);
+  });
 }

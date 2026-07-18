@@ -20,52 +20,23 @@ import '../domain/knowledge_models.dart';
 import '_widgets.dart';
 import 'knowledge_capture_sheet.dart';
 
-class KnowledgeInboxPage extends ConsumerStatefulWidget {
+class KnowledgeInboxPage extends ConsumerWidget {
   const KnowledgeInboxPage({super.key});
 
   @override
-  ConsumerState<KnowledgeInboxPage> createState() => _KnowledgeInboxPageState();
-}
-
-class _KnowledgeInboxPageState extends ConsumerState<KnowledgeInboxPage>
-    with KnowledgeFabScrollHideMixin {
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
       title: l10n.knowledgeInboxTitle,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: NotificationListener<ScrollUpdateNotification>(
-              onNotification: onScrollUpdate,
-              child: const _InboxBody(),
-            ),
-          ),
-          Positioned(
-            right: AppSpacing.s16,
-            bottom: shellTabFloatingActionBottom(context),
-            child: KnowledgeFloatingActionMotion(
-              hidden: fabHidden,
-              child: const _InboxCaptureFab(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Icon-only FAB for the Inbox's primary action: quick knowledge capture.
-class _InboxCaptureFab extends ConsumerWidget {
-  const _InboxCaptureFab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return AppFloatingActionSurface(
-      icon: FLucideIcons.plus,
-      tooltip: AppLocalizations.of(context).knowledgeCaptureAction,
-      onPress: () => showKnowledgeCaptureSheet(context, ref),
+      directActionBudget: 1,
+      actions: [
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.plus,
+          label: l10n.knowledgeCaptureAction,
+          onPress: () => showKnowledgeCaptureSheet(context, ref),
+        ),
+      ],
+      child: const _InboxBody(),
     );
   }
 }

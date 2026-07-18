@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_feed_provider.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_feed_query.dart';
 import 'package:naviwealth/features/finance/activity/ui/activity_page.dart';
@@ -158,5 +159,35 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(container.read(activityFeedQueryProvider).kinds, isEmpty);
+  });
+
+  testWidgets('search debounces query updates and can stay collapsed', (
+    tester,
+  ) async {
+    final container = _container();
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+
+    final searchButton = find.widgetWithIcon(
+      AppIconButton,
+      FLucideIcons.search,
+    );
+    await tester.tap(searchButton);
+    await tester.pump();
+    expect(find.byType(FTextField), findsOneWidget);
+
+    await tester.enterText(find.byType(FTextField), 'coffee');
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(container.read(activityFeedQueryProvider).searchText, isEmpty);
+
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(container.read(activityFeedQueryProvider).searchText, 'coffee');
+
+    await tester.tap(searchButton);
+    await tester.pumpAndSettle();
+    expect(find.byType(FTextField), findsNothing);
+    expect(container.read(activityFeedQueryProvider).searchText, 'coffee');
   });
 }

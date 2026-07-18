@@ -224,6 +224,50 @@ void main() {
       expect(invoked, ['two']);
     });
 
+    testWidgets('typing a new query resets selection to its best match', (
+      tester,
+    ) async {
+      final invoked = <String>[];
+      await tester.pumpWidget(
+        _wrap(
+          Builder(
+            builder: (ctx) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () => showCommandPalette(
+                  ctx,
+                  commands: <CommandPaletteEntry>[
+                    CommandPaletteEntry(
+                      id: 'alpha',
+                      label: 'Alpha target',
+                      icon: Icons.bolt,
+                      run: (_) => invoked.add('alpha'),
+                    ),
+                    CommandPaletteEntry(
+                      id: 'beta',
+                      label: 'Beta target',
+                      icon: Icons.bolt,
+                      run: (_) => invoked.add('beta'),
+                    ),
+                  ],
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.enterText(find.byType(TextField), 'target');
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+
+      expect(invoked, ['alpha']);
+    });
+
     testWidgets('Esc dismisses the palette without running any command', (
       tester,
     ) async {

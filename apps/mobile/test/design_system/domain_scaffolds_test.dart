@@ -126,7 +126,7 @@ void main() {
         _wrap(
           Center(
             child: SizedBox(
-              width: 360,
+              width: 420,
               child: FloatingGlassNavBar(
                 items: const [
                   FloatingNavTab(
@@ -186,6 +186,51 @@ void main() {
       await tester.tap(assistant);
       await tester.pumpAndSettle();
       expect(assistantTaps, 1);
+    });
+
+    testWidgets('hides the assistant label on narrow navigation bars', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          Center(
+            child: SizedBox(
+              width: 360,
+              child: FloatingGlassNavBar(
+                items: const [
+                  FloatingNavTab(
+                    icon: FLucideIcons.inbox,
+                    selectedIcon: FLucideIcons.inbox,
+                    label: 'Inbox',
+                  ),
+                  FloatingNavTab(
+                    icon: FLucideIcons.bookOpen,
+                    selectedIcon: FLucideIcons.bookOpen,
+                    label: 'Library',
+                  ),
+                  FloatingNavTab(
+                    icon: FLucideIcons.clipboardCheck,
+                    selectedIcon: FLucideIcons.clipboardCheck,
+                    label: 'Review',
+                  ),
+                ],
+                selectedIndex: 0,
+                onIndexChanged: (_) {},
+                onAssistantAction: () {},
+                assistantLabel: 'Ask AI',
+                assistantSemanticLabel: 'Open assistant',
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final assistant = find.byKey(
+        const ValueKey<String>('floating-nav.assistant'),
+      );
+      expect(find.text('Ask AI'), findsNothing);
+      expect(find.bySemanticsLabel('Open assistant'), findsOneWidget);
+      expect(tester.getSize(assistant).width, AppSpacing.s40);
     });
   });
 }

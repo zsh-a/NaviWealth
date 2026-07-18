@@ -140,9 +140,11 @@ class _DockChrome extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final viewportWidth = MediaQuery.sizeOf(context).width;
-        if (viewportWidth < Breakpoints.mobile) {
-          // Mobile: the per-page DomainSwitcherTitle (AppBar / FHeader)
-          // is the only switch surface — keeps vertical space free.
+        if (viewportWidth < Breakpoints.shellDesktop) {
+          // Compact and tablet layouts already expose the domain switcher in
+          // the page header. Keeping the outer domain dock hidden here avoids
+          // stacking it beside the inner tablet tab rail, which otherwise
+          // consumes 136 px before page content begins on a 600 px viewport.
           return child;
         }
         return Row(

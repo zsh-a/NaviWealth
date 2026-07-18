@@ -6,8 +6,9 @@
 /// the sheet shared by both entries and any other surface that wants to
 /// expose the picker.
 ///
-/// Desktop (≥ 600 px) keeps its always-visible left dock in
-/// `app_dock_shell.dart` — vertical space isn't at a premium there.
+/// Full desktop (≥ [Breakpoints.shellDesktop]) keeps its always-visible left
+/// dock in `app_dock_shell.dart`. Tablet widths keep the switcher in the page
+/// header so the domain dock and tab rail never stack side by side.
 library;
 
 import 'dart:async';

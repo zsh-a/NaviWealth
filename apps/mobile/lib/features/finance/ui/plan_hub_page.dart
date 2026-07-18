@@ -236,14 +236,7 @@ class _PlanNextSteps extends StatelessWidget {
       children: [
         Text(l10n.planCoreSectionTitle, style: context.mutedLabelStyle),
         const SizedBox(height: AppSpacing.s10),
-        Row(
-          children: [
-            for (var i = 0; i < steps.length; i++) ...[
-              if (i > 0) const SizedBox(width: AppSpacing.s10),
-              Expanded(child: _PlanTile(spec: steps[i])),
-            ],
-          ],
-        ),
+        _PlanTileGrid(tiles: steps),
       ],
     );
   }
@@ -293,24 +286,46 @@ class _PlanMoreToolsState extends State<_PlanMoreTools> {
           visible: _open,
           child: Padding(
             padding: const EdgeInsets.only(top: AppSpacing.s10),
-            child: Wrap(
-              spacing: AppSpacing.s10,
-              runSpacing: AppSpacing.s10,
-              children: [
-                for (final spec in tools)
-                  SizedBox(
-                    width:
-                        (MediaQuery.sizeOf(context).width -
-                            AppSpacing.s16 * 2 -
-                            AppSpacing.s10) /
-                        2,
-                    child: _PlanTile(spec: spec),
-                  ),
-              ],
-            ),
+            child: _PlanTileGrid(tiles: tools, maxColumns: 3),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PlanTileGrid extends StatelessWidget {
+  const _PlanTileGrid({required this.tiles, this.maxColumns = 2});
+
+  final List<_PlanTileSpec> tiles;
+  final int maxColumns;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = AppSpacing.s10;
+        // Compact action tiles remain legible at two-up phone widths because
+        // labels wrap to two lines. This also keeps the disclosure section in
+        // the initial lazy-list build range at large accessibility text sizes.
+        const minTileWidth = 136.0;
+        final fittingColumns =
+            ((constraints.maxWidth + gap) / (minTileWidth + gap)).floor();
+        final columns = fittingColumns.clamp(1, maxColumns);
+        final tileWidth =
+            (constraints.maxWidth - gap * (columns - 1)) / columns;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final tile in tiles)
+              SizedBox(
+                width: tileWidth,
+                child: _PlanTile(spec: tile),
+              ),
+          ],
+        );
+      },
     );
   }
 }

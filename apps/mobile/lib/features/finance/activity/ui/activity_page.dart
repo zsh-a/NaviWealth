@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -132,7 +134,13 @@ class _ActivityFilterBar extends ConsumerStatefulWidget {
 }
 
 class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
+  static const _searchDebounceDuration = Duration(milliseconds: 220);
+
   late final TextEditingController _searchController;
+  Timer? _searchDebounce;
+  String? _pendingSearchText;
+  bool _searchHydrated = false;
+  bool _suppressSearchChange = false;
   bool _searchOpen = false;
 
   @override
@@ -143,8 +151,37 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _syncSearchText(String value) {
+    if (_searchController.text == value) return;
+    _suppressSearchChange = true;
+    _searchController.value = TextEditingValue(
+      text: value,
+      selection: TextSelection.collapsed(offset: value.length),
+    );
+    _suppressSearchChange = false;
+  }
+
+  void _scheduleSearch(ActivityFeedQueryController controller, String value) {
+    if (_suppressSearchChange) return;
+    _searchDebounce?.cancel();
+    _pendingSearchText = value;
+    _searchDebounce = Timer(_searchDebounceDuration, () {
+      if (!mounted) return;
+      controller.mutateQuery((q) => q.copyWith(searchText: value));
+      setState(() => _pendingSearchText = null);
+    });
+  }
+
+  void _clearSearch(ActivityFeedQueryController controller) {
+    _searchDebounce?.cancel();
+    _pendingSearchText = null;
+    _syncSearchText('');
+    controller.mutateQuery((q) => q.copyWith(searchText: ''));
   }
 
   @override
@@ -160,12 +197,14 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
         ? l10n.activityFeedFilterTitle
         : '${l10n.activityFeedFilterTitle} · $sheetFilterCount';
 
-    // Keep search field text in sync when URL hydrates a query.
-    if (!_searchOpen &&
-        query.searchText.isNotEmpty &&
-        _searchController.text != query.searchText) {
-      _searchController.text = query.searchText;
-      _searchOpen = true;
+    // Hydrate the initial deep-linked query once. Afterwards panel visibility
+    // remains a user choice, even while a search filter stays active.
+    if (!_searchHydrated) {
+      _syncSearchText(query.searchText);
+      _searchOpen = query.searchText.isNotEmpty;
+      _searchHydrated = true;
+    } else if (_pendingSearchText == null) {
+      _syncSearchText(query.searchText);
     }
 
     final chips = <_KindChipSpec>[
@@ -238,16 +277,25 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
           ),
           if (_searchOpen) ...[
             const SizedBox(height: AppSpacing.s8),
-            FTextField(
-              control: FTextFieldControl.managed(
-                controller: _searchController,
-                onChange: (value) {
-                  controller.mutateQuery(
-                    (q) => q.copyWith(searchText: value.text),
-                  );
-                },
-              ),
-              hint: l10n.activityFeedSearchHint,
+            Row(
+              children: [
+                Expanded(
+                  child: FTextField(
+                    control: FTextFieldControl.managed(
+                      controller: _searchController,
+                      onChange: (value) =>
+                          _scheduleSearch(controller, value.text),
+                    ),
+                    hint: l10n.activityFeedSearchHint,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                AppIconButton(
+                  icon: FLucideIcons.x,
+                  tooltip: l10n.activityFeedFilterClear,
+                  onPress: () => _clearSearch(controller),
+                ),
+              ],
             ),
           ],
           if (query.hasSheetFilters || query.searchText.trim().isNotEmpty) ...[
