@@ -73,9 +73,8 @@ jobs:
           arch: x86_64
           working-directory: apps/mobile
           script: |
-            mkdir -p test-results
             device_id="$(adb get-serialno | tr -d '\r')"
-            flutter test integration_test/ -d "$device_id" --reporter=expanded --file-reporter=json:test-results/android-integration.json
+            bash tool/run-android-integration.sh "$device_id"
             bash tool/run-android-backup-interruption.sh
       - name: Upload integration test events
         if: always()
@@ -84,6 +83,8 @@ jobs:
           name: android-integration-test-events
           path: |
             apps/mobile/test-results/android-integration.json
+            apps/mobile/test-results/android-integration.log
+            apps/mobile/test-results/android-database-encryption.json
             apps/mobile/test-results/android-backup-process-interruption.log
             apps/mobile/test-results/android-backup-process-interruption.json
           if-no-files-found: warn

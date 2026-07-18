@@ -269,11 +269,14 @@ the host; the on-device layer closes the packaged-platform gap:
 
 ✅ Seeded. `apps/mobile/integration_test/database_boot_integration_test.dart`
 opens the **real** file-backed `AppDatabase` through `openAppConnection()`
-(Keystore-backed 256-bit key + SQLCipher PRAGMA + path_provider +
+(SQLCipher PRAGMA + path_provider +
 `createInBackground` + on-disk migration to schemaVersion). It requires a
 non-plaintext file header, rejects a wrong key, and proves a write survives a
 full close/reopen cycle — the production connection every headless test
-bypasses via `NativeDatabase.memory`.
+bypasses via `NativeDatabase.memory`. Its Android-only secure-storage case then
+uses the production `FlutterSecureKeyStore` and key resolver, proves the
+random 256-bit key survives a new store instance, rejects a missing key beside
+encrypted bytes, restores the original key, and reopens the same database.
 `apps/mobile/integration_test/backup_restore_integration_test.dart` then boots
 the real app shell with that file-backed DB, drives Settings → Backup &
 Restore through Page Objects, and restores encrypted bytes through
@@ -313,14 +316,18 @@ The `integration_test` dev dependency is wired in `pubspec.yaml`.
 Because it needs a real device, it runs via the `integration-device.yml`
 workflow on an Android emulator (nightly + manual + PRs touching the
 harness, backup, Sync, or persistence code), not the unit-test VM. The workflow
-retains a machine-readable event stream, the process-interruption log, and a
-privacy-safe interruption evidence JSON. That summary contains only platform,
-API level, commit, timestamp, interruption exit status, marker
-booleans, and the fixed preserved account/outbox assertion counts. It is
-written only after the fresh-process evidence marker is observed. Run the
-ordinary suite locally with
-`flutter test integration_test/ -d <android-device>` and the forced-stop case
-with `bash tool/run-android-backup-interruption.sh`; neither can run on the
+retains a machine-readable event stream, the ordinary integration log, a
+privacy-safe database-encryption evidence JSON, the process-interruption log,
+and its separate interruption evidence JSON. `run-android-integration.sh`
+fails even after a nominally green Flutter run unless dedicated markers prove
+SQLCipher availability, encrypted bytes, correct/wrong-key behavior, plaintext
+migration, Android Keystore persistence and fail-closed behavior, successful
+backup restore, and durable failed-restore rollback. Both summaries contain
+only platform, API level, commit, timestamp, fixed booleans, and—in the
+interruption case—the exit status and fixed preserved account/outbox counts.
+Run the ordinary suite locally with
+`bash tool/run-android-integration.sh <android-device>` and the forced-stop
+case with `bash tool/run-android-backup-interruption.sh`; neither can run on the
 headless `flutter test` host.
 
 `database_encryption_test.dart` also creates real files with the bundled

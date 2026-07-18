@@ -13,6 +13,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -163,6 +164,7 @@ void main() {
       expect(accountIds, contains('source-acct'));
       expect(accountIds, isNot(contains('stale-acct')));
       expect(await DriftOutboxStore(targetDb).depth(), 1);
+      debugPrint('backup: encrypted restore completed on file database');
       await closeApp(tester);
     },
   );
@@ -257,6 +259,7 @@ void main() {
       expect(outboxRows, hasLength(1));
       expect(outboxRows.single.read<String>('table_name'), 'accounts');
       expect(outboxRows.single.read<String>('row_id'), 'preserved-acct');
+      debugPrint('backup: failed restore rollback persisted after reopen');
     },
   );
 }

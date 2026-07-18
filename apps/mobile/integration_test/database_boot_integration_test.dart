@@ -4,7 +4,7 @@
 // via makeTestDatabase(), which bypasses the production connection: real
 // file I/O, SQLCipher unlock, path_provider, the background-isolate open, and
 // the on-disk migration to schemaVersion. This test closes that gap by opening the
-// REAL AppDatabase through openAppConnection() on a real platform
+// REAL AppDatabase through AppDatabase.open() on a real platform
 // (run on macOS/Android, NOT the host `flutter test` VM) and proving a
 // write survives a full close / reopen cycle.
 //
@@ -14,11 +14,15 @@
 
 import 'dart:io';
 
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNotNull;
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/persistence/database_encryption.dart';
+import 'package:naviwealth/core/persistence/database_encryption_platform.dart';
+import 'package:naviwealth/core/security/flutter_secure_key_store.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:path/path.dart' as p;
@@ -30,25 +34,30 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   const dbFileName = 'integration_boot_test.sqlite';
+  const keystoreDbFileName = 'integration_keystore_test.sqlite';
+  final secureStore = FlutterSecureKeyStore();
 
-  Future<void> deleteDbFile() async {
+  Future<void> deleteDbFiles() async {
     final dir = await getApplicationDocumentsDirectory();
-    final path = p.join(dir.path, dbFileName);
-    for (final suffix in <String>[
-      '',
-      '-wal',
-      '-shm',
-      '-journal',
-      '.encrypting',
-      '.plaintext-backup',
-    ]) {
-      final file = File('$path$suffix');
-      if (file.existsSync()) file.deleteSync();
+    for (final name in <String>[dbFileName, keystoreDbFileName]) {
+      final path = p.join(dir.path, name);
+      for (final suffix in <String>[
+        '',
+        '-wal',
+        '-shm',
+        '-journal',
+        '.encrypting',
+        '.plaintext-backup',
+      ]) {
+        final file = File('$path$suffix');
+        if (file.existsSync()) file.deleteSync();
+      }
     }
+    await secureStore.delete(databaseEncryptionKeyStorageKey);
   }
 
-  setUp(deleteDbFile);
-  tearDown(deleteDbFile);
+  setUp(deleteDbFiles);
+  tearDown(deleteDbFiles);
 
   testWidgets('real file-backed AppDatabase migrates, persists, and reopens', (
     tester,
@@ -64,6 +73,7 @@ void main() {
         .customSelect('PRAGMA cipher_version;')
         .getSingle();
     expect(cipherVersion.data.values.single, isNotEmpty);
+    debugPrint('database-encryption: sqlcipher available');
 
     // A query forces the LazyDatabase to actually open + migrate.
     final initial = await db.select(db.accounts).get();
@@ -90,6 +100,7 @@ void main() {
     final file = File(p.join(dir.path, dbFileName));
     final header = String.fromCharCodes(file.readAsBytesSync().take(16));
     expect(header, isNot('SQLite format 3\u0000'));
+    debugPrint('database-encryption: encrypted header verified');
 
     // 3. Reopen the same file — the row must still be there, proving the
     //    write hit disk through the production connection, not memory.
@@ -100,6 +111,7 @@ void main() {
     final rows = await reopened.select(reopened.accounts).get();
     expect(rows.map((r) => r.id), contains('boot-acct'));
     await reopened.close();
+    debugPrint('database-encryption: correct key reopen verified');
 
     final wrongKey = integrationDatabaseEncryptionKey.replaceFirst('7a', '8b');
     final locked = AppDatabase.open(
@@ -110,6 +122,7 @@ void main() {
       locked.customSelect('SELECT count(*) FROM accounts;').get(),
       throwsA(anything),
     );
+    debugPrint('database-encryption: wrong key rejected');
     try {
       await locked.close();
     } on Object {
@@ -154,5 +167,59 @@ void main() {
     );
     expect(File('${file.path}.encrypting').existsSync(), isFalse);
     expect(File('${file.path}.plaintext-backup').existsSync(), isFalse);
+    debugPrint('database-encryption: plaintext migration verified');
   });
+
+  testWidgets(
+    'Android production secure storage preserves and fails closed for the key',
+    (_) async {
+      if (!Platform.isAndroid) return;
+
+      final firstKey = await resolveDatabaseEncryptionKey(
+        store: secureStore,
+        dbFileName: keystoreDbFileName,
+      );
+      expect(firstKey, isNotNull);
+      expect(DatabaseEncryptionKeyManager.isValidKey(firstKey!), isTrue);
+
+      final db = AppDatabase.open(
+        dbFileName: keystoreDbFileName,
+        encryptionKey: firstKey,
+      );
+      await db.select(db.accounts).get();
+      await db.close();
+
+      final secondKey = await resolveDatabaseEncryptionKey(
+        store: FlutterSecureKeyStore(),
+        dbFileName: keystoreDbFileName,
+      );
+      expect(secondKey, firstKey);
+      debugPrint('database-encryption: android keystore key persisted');
+
+      await secureStore.delete(databaseEncryptionKeyStorageKey);
+      await expectLater(
+        resolveDatabaseEncryptionKey(
+          store: FlutterSecureKeyStore(),
+          dbFileName: keystoreDbFileName,
+        ),
+        throwsA(
+          isA<DatabaseEncryptionException>().having(
+            (error) => error.code,
+            'code',
+            DatabaseEncryptionFailureCode.keyMissing,
+          ),
+        ),
+      );
+      debugPrint('database-encryption: missing keystore key failed closed');
+
+      await secureStore.write(databaseEncryptionKeyStorageKey, firstKey);
+      final reopened = AppDatabase.open(
+        dbFileName: keystoreDbFileName,
+        encryptionKey: firstKey,
+      );
+      await reopened.select(reopened.accounts).get();
+      await reopened.close();
+      debugPrint('database-encryption: restored keystore key reopened');
+    },
+  );
 }

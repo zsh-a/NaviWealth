@@ -127,6 +127,14 @@ Current evidence:
 - Android cloud backup and device-to-device transfer are disabled because the
   OS cannot port the non-exportable Keystore key with SQLCipher bytes. Sync and
   app-owned encrypted exports remain the supported portability paths.
+- The Android suite now exercises the production secure-storage resolver in
+  addition to fixed-key cipher behavior: it requires key persistence across a
+  new `FlutterSecureKeyStore` instance, fail-closed handling after key removal,
+  and successful reopen after the original key is restored. Its CI wrapper
+  rejects a nominally green Flutter run when any encryption, migration,
+  Keystore, or backup/restore evidence marker is missing, and emits a separate
+  privacy-safe JSON summary. A green emulator artifact is still required
+  before this initiative can leave `Now`.
 
 Exit evidence:
 
