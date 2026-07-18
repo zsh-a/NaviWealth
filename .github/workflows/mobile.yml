@@ -282,6 +282,7 @@ jobs:
           flutter build appbundle
           --release
           --target-platform android-arm64
+          --android-project-arg=naviwealth-arm64-only=true
           --dart-define=API_BASE_URL=http://127.0.0.1:8787
           --dart-define=GIT_SHA=${{ github.sha }}
       - name: Verify arm64 native payload and 16 KiB compatibility

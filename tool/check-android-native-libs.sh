@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Validate the arm64 native payload shipped in an Android APK or AAB.
+# Validate the arm64-only native payload shipped in an Android APK or AAB.
 #
 # The Play Store requires 16 KiB page-size compatibility. This checks the
 # ELF LOAD segment alignment for every arm64 shared library, verifies the
-# runtime's required libraries are present, and (for APKs) verifies that
-# uncompressed .so entries are 16 KiB zip-aligned.
+# runtime's required libraries are present, rejects libraries for unexpected
+# ABIs, and (for APKs) verifies that uncompressed .so entries are 16 KiB
+# zip-aligned.
 
 set -euo pipefail
 
@@ -68,10 +69,24 @@ fi
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-ENTRY_LIST="$TMP_DIR/entries.txt"
+ALL_NATIVE_ENTRIES="$TMP_DIR/all-native-entries.txt"
+ENTRY_LIST="$TMP_DIR/arm64-entries.txt"
+UNEXPECTED_ABI_ENTRIES="$TMP_DIR/unexpected-abi-entries.txt"
+
 unzip -Z1 "$ARCHIVE" \
-  | grep -E '(^|/)lib/arm64-v8a/[^/]+\.so$' \
-  | LC_ALL=C sort > "$ENTRY_LIST" || true
+  | grep -E '(^|/)lib/[^/]+/[^/]+\.so$' \
+  | LC_ALL=C sort > "$ALL_NATIVE_ENTRIES" || true
+
+grep -E '(^|/)lib/arm64-v8a/[^/]+\.so$' \
+  "$ALL_NATIVE_ENTRIES" > "$ENTRY_LIST" || true
+grep -Ev '(^|/)lib/arm64-v8a/[^/]+\.so$' \
+  "$ALL_NATIVE_ENTRIES" > "$UNEXPECTED_ABI_ENTRIES" || true
+
+if [[ -s "$UNEXPECTED_ABI_ENTRIES" ]]; then
+  echo "ERROR: $ARCHIVE contains native libraries for non-arm64 ABIs:" >&2
+  sed 's/^/  /' "$UNEXPECTED_ABI_ENTRIES" >&2
+  exit 1
+fi
 
 if [[ ! -s "$ENTRY_LIST" ]]; then
   echo "ERROR: $ARCHIVE contains no arm64-v8a shared libraries" >&2

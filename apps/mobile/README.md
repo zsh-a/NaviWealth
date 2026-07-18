@@ -11,11 +11,13 @@ flutter test
 flutter analyze --fatal-infos
 flutter build web --release
 flutter build apk --debug
-flutter build appbundle --release --target-platform android-arm64
+flutter build appbundle --release --target-platform android-arm64 \
+  --android-project-arg=naviwealth-arm64-only=true
 flutter build ios --debug --no-codesign  # macOS only
 ```
 
-Android release 产物必须通过 native payload 与 16 KiB page-size 检查：
+Android release 产物仅打包 `arm64-v8a`，并且必须通过 native payload、
+非 arm64 ABI 排除与 16 KiB page-size 检查：
 
 ```bash
 ../../tool/check-android-native-libs.sh build/app/outputs/bundle/release/app-release.aab

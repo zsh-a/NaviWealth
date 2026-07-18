@@ -66,6 +66,21 @@ android {
         versionName = flutter.versionName
     }
 
+    // --target-platform only controls generated Flutter code. Prebuilt FFI
+    // plugins can still contribute jniLibs for every ABI, so arm64 release
+    // jobs opt into filtering those libraries at the packaging boundary.
+    if (providers.gradleProperty("naviwealth-arm64-only").orNull == "true") {
+        packaging {
+            jniLibs {
+                excludes += setOf(
+                    "**/armeabi-v7a/**",
+                    "**/x86/**",
+                    "**/x86_64/**",
+                )
+            }
+        }
+    }
+
     signingConfigs {
         create("release") {
             val keystorePath = System.getenv("KEYSTORE_FILE")
