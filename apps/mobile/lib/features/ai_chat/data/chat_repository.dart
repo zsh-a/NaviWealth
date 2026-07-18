@@ -105,6 +105,9 @@ class ChatRepository
 
   Future<void> deleteSession(String id) => _store.deleteSession(id);
 
+  Future<int> deleteArchivedSessions(String ownerUserId) =>
+      _store.deleteArchivedSessions(ownerUserId);
+
   /// Generates the context-truncation notice text. Callers in the UI layer
   /// may prefer `AppLocalizations.chatContextTruncated(count)` for proper
   /// i18n; this static is provided for data-layer callers that lack

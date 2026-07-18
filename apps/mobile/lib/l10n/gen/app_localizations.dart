@@ -8940,6 +8940,30 @@ abstract class AppLocalizations {
   /// **'Hide archive'**
   String get aiChatSessionsHideArchived;
 
+  /// Permanently delete all archived sessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear archive'**
+  String get aiChatSessionsClearArchive;
+
+  /// Confirm sheet title for deleting all archived sessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear archive?'**
+  String get aiChatSessionsClearArchiveTitle;
+
+  /// Confirm sheet body for clearing the archive.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes every archived conversation. This cannot be undone.'**
+  String get aiChatSessionsClearArchiveBody;
+
+  /// Toast after clearing the archive.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted {count, plural, =1{1 archived conversation} other{{count} archived conversations}}'**
+  String aiChatSessionsClearArchiveDone(int count);
+
   /// Empty state when all sessions are archived.
   ///
   /// In en, this message translates to:

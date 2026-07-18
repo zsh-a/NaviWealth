@@ -211,25 +211,37 @@ class _ChatPane extends ConsumerWidget {
         child: Column(
           children: [
             Expanded(
-              child: ChatConversationView(
-                sessionId: sessionId,
-                onDecisionSelect: (selection) {
-                  ref
-                      .read(chatControllerProvider(sessionId).notifier)
-                      .chooseDecision(
-                        messageId: selection.messageId,
-                        toolInvocationId: selection.toolInvocationId,
-                        selection: DecisionSelection(
-                          optionId: selection.option.id,
-                          label: selection.option.label,
-                          reply: selection.reply,
-                          selectedAt: DateTime.now().toUtc(),
-                        ),
-                        systemContext: systemContext,
-                      );
-                },
-                loadingBuilder: (_) => const AiChatSkeleton(),
-                emptyBuilder: (_) => _EmptyConversation(onSuggest: send),
+              child: AnimatedSwitcher(
+                duration: AppMotionPolicy.duration(context, Motion.medium),
+                switchInCurve: Motion.standardDecelerate,
+                switchOutCurve: Motion.standardAccelerate,
+                transitionBuilder: (child, anim) => FadeTransition(
+                  opacity: anim,
+                  child: child,
+                ),
+                child: KeyedSubtree(
+                  key: ValueKey(sessionId),
+                  child: ChatConversationView(
+                    sessionId: sessionId,
+                    onDecisionSelect: (selection) {
+                      ref
+                          .read(chatControllerProvider(sessionId).notifier)
+                          .chooseDecision(
+                            messageId: selection.messageId,
+                            toolInvocationId: selection.toolInvocationId,
+                            selection: DecisionSelection(
+                              optionId: selection.option.id,
+                              label: selection.option.label,
+                              reply: selection.reply,
+                              selectedAt: DateTime.now().toUtc(),
+                            ),
+                            systemContext: systemContext,
+                          );
+                    },
+                    loadingBuilder: (_) => const AiChatSkeleton(),
+                    emptyBuilder: (_) => _EmptyConversation(onSuggest: send),
+                  ),
+                ),
               ),
             ),
             ChatComposer(

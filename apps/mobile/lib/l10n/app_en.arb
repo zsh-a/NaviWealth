@@ -2841,6 +2841,17 @@
   },
   "aiChatSessionsHideArchived": "Hide archive",
   "@aiChatSessionsHideArchived": { "description": "Toggle to hide archived sessions again." },
+  "aiChatSessionsClearArchive": "Clear archive",
+  "@aiChatSessionsClearArchive": { "description": "Permanently delete all archived sessions." },
+  "aiChatSessionsClearArchiveTitle": "Clear archive?",
+  "@aiChatSessionsClearArchiveTitle": { "description": "Confirm sheet title for deleting all archived sessions." },
+  "aiChatSessionsClearArchiveBody": "This permanently deletes every archived conversation. This cannot be undone.",
+  "@aiChatSessionsClearArchiveBody": { "description": "Confirm sheet body for clearing the archive." },
+  "aiChatSessionsClearArchiveDone": "Deleted {count, plural, =1{1 archived conversation} other{{count} archived conversations}}",
+  "@aiChatSessionsClearArchiveDone": {
+    "description": "Toast after clearing the archive.",
+    "placeholders": { "count": { "type": "int" } }
+  },
   "aiChatSessionsEmptyActive": "No active conversations",
   "@aiChatSessionsEmptyActive": { "description": "Empty state when all sessions are archived." },
   "aiChatSessionPinAction": "Pin",

@@ -207,6 +207,31 @@ class ChatHistoryStore {
     _notify();
   }
 
+  /// Permanently delete every archived session owned by [ownerUserId].
+  Future<int> deleteArchivedSessions(String ownerUserId) async {
+    final rows = await _db
+        .customSelect(
+          'SELECT id FROM chat_sessions '
+          'WHERE owner_user_id = ?1 AND COALESCE(archived, 0) = 1',
+          variables: [Variable<String>(ownerUserId)],
+        )
+        .get();
+    if (rows.isEmpty) return 0;
+    for (final row in rows) {
+      final id = row.read<String>('id');
+      await _db.customStatement(
+        'DELETE FROM chat_messages WHERE session_id = ?1',
+        <Object?>[id],
+      );
+      await _db.customStatement(
+        'DELETE FROM chat_sessions WHERE id = ?1',
+        <Object?>[id],
+      );
+    }
+    _notify();
+    return rows.length;
+  }
+
   // ─── messages ──────────────────────────────────────────────────────
 
   Stream<List<ChatMessage>> watchMessages(String sessionId) {

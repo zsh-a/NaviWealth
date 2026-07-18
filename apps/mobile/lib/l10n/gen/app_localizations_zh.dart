@@ -4990,6 +4990,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatSessionsHideArchived => '隐藏归档';
 
   @override
+  String get aiChatSessionsClearArchive => '清空归档';
+
+  @override
+  String get aiChatSessionsClearArchiveTitle => '清空归档？';
+
+  @override
+  String get aiChatSessionsClearArchiveBody => '将永久删除所有已归档对话，此操作不可撤销。';
+
+  @override
+  String aiChatSessionsClearArchiveDone(int count) {
+    return '已删除 $count 个归档对话';
+  }
+
+  @override
   String get aiChatSessionsEmptyActive => '没有进行中的对话';
 
   @override

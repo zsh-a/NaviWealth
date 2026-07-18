@@ -84,39 +84,59 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
                   ),
                   if (s.any((e) => e.archived)) ...[
                     const SizedBox(height: AppSpacing.s8),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: FTappable(
-                        onPress: () =>
-                            setState(() => _showArchived = !_showArchived),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.s4,
-                            vertical: AppSpacing.s2,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _showArchived
-                                    ? FLucideIcons.archiveRestore
-                                    : FLucideIcons.archive,
-                                size: AppIconSizes.xs,
-                                color: context.theme.colors.mutedForeground,
-                              ),
-                              const SizedBox(width: AppSpacing.s6),
-                              Text(
-                                _showArchived
-                                    ? l10n.aiChatSessionsHideArchived
-                                    : l10n.aiChatSessionsShowArchived(
-                                        s.where((e) => e.archived).length,
-                                      ),
-                                style: context.microCaptionStyle,
-                              ),
-                            ],
+                    Row(
+                      children: [
+                        FTappable(
+                          onPress: () =>
+                              setState(() => _showArchived = !_showArchived),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.s4,
+                              vertical: AppSpacing.s2,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _showArchived
+                                      ? FLucideIcons.archiveRestore
+                                      : FLucideIcons.archive,
+                                  size: AppIconSizes.xs,
+                                  color: context.theme.colors.mutedForeground,
+                                ),
+                                const SizedBox(width: AppSpacing.s6),
+                                Text(
+                                  _showArchived
+                                      ? l10n.aiChatSessionsHideArchived
+                                      : l10n.aiChatSessionsShowArchived(
+                                          s.where((e) => e.archived).length,
+                                        ),
+                                  style: context.microCaptionStyle,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
+                        if (_showArchived) ...[
+                          const Spacer(),
+                          FTappable(
+                            onPress: () =>
+                                _confirmClearArchive(context, ref, userId),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.s4,
+                                vertical: AppSpacing.s2,
+                              ),
+                              child: Text(
+                                l10n.aiChatSessionsClearArchive,
+                                style: context.microCaptionStyle.copyWith(
+                                  color: context.theme.colors.destructive,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ],
@@ -248,6 +268,40 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
   Future<void> _toggleArchive(WidgetRef ref, ChatSession session) async {
     final repo = await ref.read(chatRepositoryProvider.future);
     await repo.setSessionArchived(session.id, archived: !session.archived);
+  }
+
+  Future<void> _confirmClearArchive(
+    BuildContext context,
+    WidgetRef ref,
+    String ownerUserId,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final ok = await showAppFormSheet<bool>(
+      context: context,
+      builder: (ctx) => AppSheet(
+        title: l10n.aiChatSessionsClearArchiveTitle,
+        footer: AppSheetFooter(
+          submitLabel: l10n.commonDelete,
+          cancelLabel: l10n.commonCancel,
+          destructive: true,
+          onSubmit: () => Navigator.of(ctx).pop(true),
+        ),
+        child: Text(
+          l10n.aiChatSessionsClearArchiveBody,
+          style: context.bodyCaptionStyle.copyWith(height: 1.4),
+        ),
+      ),
+    );
+    if (ok != true) return;
+    final repo = await ref.read(chatRepositoryProvider.future);
+    final deleted = await repo.deleteArchivedSessions(ownerUserId);
+    if (!context.mounted || deleted == 0) return;
+    setState(() => _showArchived = false);
+    AppMessenger.show(
+      context,
+      ToastKind.success,
+      l10n.aiChatSessionsClearArchiveDone(deleted),
+    );
   }
 
   Future<void> _confirmDelete(

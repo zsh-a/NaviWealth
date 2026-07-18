@@ -64,12 +64,17 @@ class AiMarkdown extends StatefulWidget {
     this.baseStyle,
     this.trailing,
     this.selectable = true,
+    this.streaming = false,
   });
 
   final String text;
   final TextStyle? baseStyle;
   final InlineSpan? trailing;
   final bool selectable;
+
+  /// When true, skip [AnimatedSize] and prefer lighter text selection
+  /// so high-frequency streaming rebuilds stay smooth.
+  final bool streaming;
 
   @override
   State<AiMarkdown> createState() => _AiMarkdownState();
@@ -120,21 +125,19 @@ class _AiMarkdownState extends State<AiMarkdown> {
         children.add(SizedBox(height: _gapAfter(blocks[i], blocks[i + 1])));
       }
     }
-    // Streaming causes the block list to *restructure* mid-flight —
-    // a "| a | b |" paragraph flips to a Table when the separator
-    // arrives, a new fenced code block opens, etc. Without smoothing,
-    // the bubble snaps between layouts and reads as jittery; with
-    // AnimatedSize keyed off the parsed AST shape, the height change
-    // glides on the AI motion curve.
+    final column = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: children,
+    );
+    // Streaming rebuilds ~10×/s — AnimatedSize on every token costs
+    // layout thrash. Only smooth height changes once the turn settles.
+    if (widget.streaming) return column;
     return AnimatedSize(
       duration: AppMotionPolicy.duration(context, AiMotion.short),
       curve: AiMotion.standard,
       alignment: Alignment.topLeft,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: children,
-      ),
+      child: column,
     );
   }
 

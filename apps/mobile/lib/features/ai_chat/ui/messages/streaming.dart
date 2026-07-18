@@ -111,6 +111,8 @@ class _AssistantBody extends StatelessWidget {
     return AiMarkdown(
       text: text,
       baseStyle: base,
+      selectable: !isStreaming,
+      streaming: isStreaming,
       trailing: isStreaming
           ? WidgetSpan(
               alignment: PlaceholderAlignment.middle,

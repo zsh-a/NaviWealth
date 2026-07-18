@@ -110,6 +110,11 @@ void main() {
       expect(archived.archived, isTrue);
       // Archiving clears pin.
       expect(archived.pinned, isFalse);
+
+      await store.setSessionArchived('sess-new', archived: true);
+      final deleted = await store.deleteArchivedSessions('user-1');
+      expect(deleted, 2);
+      expect(await store.listSessions('user-1'), isEmpty);
     });
 
     test('updateMessage rewrites content and tool calls in place', () async {

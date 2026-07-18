@@ -5263,6 +5263,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatSessionsHideArchived => 'Hide archive';
 
   @override
+  String get aiChatSessionsClearArchive => 'Clear archive';
+
+  @override
+  String get aiChatSessionsClearArchiveTitle => 'Clear archive?';
+
+  @override
+  String get aiChatSessionsClearArchiveBody =>
+      'This permanently deletes every archived conversation. This cannot be undone.';
+
+  @override
+  String aiChatSessionsClearArchiveDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count archived conversations',
+      one: '1 archived conversation',
+    );
+    return 'Deleted $_temp0';
+  }
+
+  @override
   String get aiChatSessionsEmptyActive => 'No active conversations';
 
   @override
