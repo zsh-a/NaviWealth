@@ -6755,5 +6755,21 @@
   "knowledgeAgentInboxProposalSuggestionPlural": "suggestions",
   "knowledgeAgentInboxAction": "Review inbox suggestions",
   "ingestKindExpense": "Expense",
-  "ingestKindIncome": "Income"
+  "ingestKindIncome": "Income",
+  "databaseUnlockLoading": "Unlocking your local data…",
+  "databaseRecoveryTitle": "Local data is locked",
+  "databaseRecoveryMissingKeyMessage": "This device no longer has the key for the encrypted local database. Your data has not been overwritten. If you have an encrypted backup, reset this unreadable local copy and restore the backup from Settings.",
+  "databaseRecoveryInvalidKeyMessage": "The stored database key is damaged. Your encrypted local data has not been modified. You can retry or reset this unreadable copy before restoring an encrypted backup.",
+  "databaseRecoveryUnlockFailedMessage": "The device key could not unlock this local database. No data was changed. You can retry or reset the unreadable copy before restoring an encrypted backup.",
+  "databaseRecoveryMigrationTitle": "Local data upgrade paused",
+  "databaseRecoveryMigrationMessage": "NaviWealth could not safely finish encrypting the existing database. The original copy is preserved. Retry after checking free storage; do not reset unless you have a verified backup.",
+  "databaseRecoveryUnavailableTitle": "Local data is unavailable",
+  "databaseRecoveryUnavailableMessage": "The secure database could not be opened. Retry first. If the problem continues, keep the app data intact and review the diagnostic log before taking destructive action.",
+  "databaseRecoveryRetry": "Retry unlock",
+  "databaseRecoveryResetAction": "Reset unreadable local data",
+  "databaseRecoveryResetting": "Resetting local data…",
+  "databaseRecoveryResetConfirmTitle": "Reset unreadable local data?",
+  "databaseRecoveryResetConfirmBody": "This permanently removes the encrypted database on this device. It cannot recover a missing device key. Continue only if this local copy is unrecoverable or you have an encrypted backup to restore afterward.",
+  "databaseRecoveryResetConfirmAction": "Reset local data",
+  "databaseRecoveryResetFailed": "Local data could not be reset. Nothing else was changed."
 }

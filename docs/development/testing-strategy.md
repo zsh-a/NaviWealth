@@ -80,8 +80,8 @@ form logic, money/FX, domain services, and individual widgets are proven.
 
 ### Integration (real chain, ~10%)
 Exercises **repository → real Drift → read model** with a real
-`AppDatabase` (in-memory, SQLCipher bypassed), so writes and stream reads
-are real. `test/integration/support/integration_env.dart` wires a real DB
+`AppDatabase` (unkeyed in-memory, production encryption bootstrap bypassed), so
+writes and stream reads are real. `test/integration/support/integration_env.dart` wires a real DB
 into the production provider graph (`appDatabaseProvider` overridden),
 faking only the non-deterministic edges — auth (`AuthLocalOnly` → Noop
 outbox) and the HLC stamper (`makeStubStamper()`, the sanctioned seam).
@@ -263,14 +263,17 @@ content as diagnostics. Run the same gate locally from `apps/mobile/` with
 ## 6. On-device integration (`integration_test/`)
 
 `test/flow/` runs headless under `flutter test` and stubs the data layer.
-It does **not** exercise SQLCipher, the platform secure-storage key path,
-or a real on-device Drift connection. The on-device layer closes that gap:
+It does **not** exercise the platform secure-storage key path or a real
+on-device Drift connection. Focused native file tests exercise SQLCipher on
+the host; the on-device layer closes the packaged-platform gap:
 
 ✅ Seeded. `apps/mobile/integration_test/database_boot_integration_test.dart`
 opens the **real** file-backed `AppDatabase` through `openAppConnection()`
-(path_provider + `createInBackground` + on-disk migration to schemaVersion)
-and proves a write survives a full close/reopen cycle — the production
-connection every headless test bypasses via `NativeDatabase.memory`.
+(Keystore-backed 256-bit key + SQLCipher PRAGMA + path_provider +
+`createInBackground` + on-disk migration to schemaVersion). It requires a
+non-plaintext file header, rejects a wrong key, and proves a write survives a
+full close/reopen cycle — the production connection every headless test
+bypasses via `NativeDatabase.memory`.
 `apps/mobile/integration_test/backup_restore_integration_test.dart` then boots
 the real app shell with that file-backed DB, drives Settings → Backup &
 Restore through Page Objects, and restores encrypted bytes through
@@ -320,10 +323,12 @@ ordinary suite locally with
 with `bash tool/run-android-backup-interruption.sh`; neither can run on the
 headless `flutter test` host.
 
-The production connection does not yet implement the SQLCipher
-PRAGMA/key-recovery path. The LifeOS roadmap owns the decision to implement or
-explicitly reject database-at-rest encryption; this testing SSOT owns the
-required on-device coverage once that product decision is made.
+`database_encryption_test.dart` also creates real files with the bundled
+SQLCipher library. It pins correct-key reopen, wrong-key byte preservation,
+plaintext export migration, valid and corrupt interrupted-swap recovery, key
+loss fail-closed behavior, and the exact reset artifact allowlist. Widget tests
+pin the root recovery gate: only missing/invalid/wrong-key states offer a
+destructive reset, while migration and unknown failures preserve local bytes.
 
 ## 7. Current Coverage And Known Gaps
 
@@ -335,8 +340,9 @@ Current baseline:
   useful.
 - Real-Drift integration covers net worth through manual assets, liabilities,
   and ledger-reconstructed securities.
-- Android on-device integration covers database boot/migration/reopen,
-  backup/restore, and a journal repository write.
+- Android on-device integration owns database encryption, boot/migration/reopen,
+  backup/restore, and a journal repository write. A green packaged emulator run
+  remains required release evidence for newly added SQLCipher assertions.
 - Sync v3 request/response fixtures are generated from the Dart/Rust
   serializers, including pagination and accepted-row edge cases.
 - State-machine tests cover conventional async state, chat streaming,
@@ -351,8 +357,8 @@ Current baseline:
 Known coverage gaps are descriptive, not a second product roadmap:
 
 - iOS native build/load smoke is not present in CI.
-- SQLCipher key setup and recovery cannot be tested until the production
-  connection implements database-at-rest encryption.
+- Android SQLCipher packaging and Keystore behavior still require the emulator
+  integration gate; host native tests do not substitute for device evidence.
 - Goldens and on-device tests should deepen existing durable journeys when a
   real rendering or platform risk is identified.
 - Runtime skips remain limited by `testing_infrastructure_contract_test.dart`

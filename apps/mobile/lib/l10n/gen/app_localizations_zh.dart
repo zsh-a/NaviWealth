@@ -12656,4 +12656,58 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ingestKindIncome => '收入';
+
+  @override
+  String get databaseUnlockLoading => '正在解锁本地数据…';
+
+  @override
+  String get databaseRecoveryTitle => '本地数据已锁定';
+
+  @override
+  String get databaseRecoveryMissingKeyMessage =>
+      '此设备已没有加密本地数据库所需的密钥。现有数据未被覆盖。如果你有加密备份，可重置这份无法读取的本地数据，再从设置中恢复备份。';
+
+  @override
+  String get databaseRecoveryInvalidKeyMessage =>
+      '设备中保存的数据库密钥已损坏。加密数据没有被修改。你可以重试，或重置无法读取的副本后恢复加密备份。';
+
+  @override
+  String get databaseRecoveryUnlockFailedMessage =>
+      '设备密钥无法解锁本地数据库，数据没有被修改。你可以重试，或重置无法读取的副本后恢复加密备份。';
+
+  @override
+  String get databaseRecoveryMigrationTitle => '本地数据升级已暂停';
+
+  @override
+  String get databaseRecoveryMigrationMessage =>
+      'NaviWealth 无法安全完成现有数据库的加密迁移，原始副本仍被保留。请检查可用存储空间后重试；没有已验证备份时不要重置。';
+
+  @override
+  String get databaseRecoveryUnavailableTitle => '本地数据暂不可用';
+
+  @override
+  String get databaseRecoveryUnavailableMessage =>
+      '安全数据库无法打开。请先重试；如果问题持续，请保留应用数据并检查诊断日志，不要直接执行破坏性操作。';
+
+  @override
+  String get databaseRecoveryRetry => '重新解锁';
+
+  @override
+  String get databaseRecoveryResetAction => '重置无法读取的本地数据';
+
+  @override
+  String get databaseRecoveryResetting => '正在重置本地数据…';
+
+  @override
+  String get databaseRecoveryResetConfirmTitle => '重置无法读取的本地数据？';
+
+  @override
+  String get databaseRecoveryResetConfirmBody =>
+      '这会永久删除此设备上的加密数据库，且无法找回已丢失的设备密钥。仅当本地副本确定无法恢复，或你已有可随后恢复的加密备份时继续。';
+
+  @override
+  String get databaseRecoveryResetConfirmAction => '重置本地数据';
+
+  @override
+  String get databaseRecoveryResetFailed => '无法重置本地数据，其他内容未被更改。';
 }

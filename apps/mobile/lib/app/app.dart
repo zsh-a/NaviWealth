@@ -9,6 +9,7 @@ import 'package:forui/forui.dart';
 import '../core/ai/composition/ask_ai.dart';
 import '../core/command_palette/command_palette.dart';
 import '../core/lifeos/domain_pack.dart';
+import '../core/persistence/database_unlock_gate.dart';
 import '../core/pwa/pwa_update_banner.dart';
 import '../core/security/biometric_lock_gate.dart';
 import '../core/shell/shell_preferences.dart';
@@ -151,11 +152,13 @@ class NaviWealthApp extends ConsumerWidget {
                     if (path != null) router.go(path);
                   },
                   child: BiometricLockGate(
-                    child: NativeUpdateBanner(
-                      child: PwaUpdateBanner(
-                        child: NotificationPayloadRouteListener(
-                          router: router,
-                          child: child ?? const SizedBox.shrink(),
+                    child: DatabaseUnlockGate(
+                      child: NativeUpdateBanner(
+                        child: PwaUpdateBanner(
+                          child: NotificationPayloadRouteListener(
+                            router: router,
+                            child: child ?? const SizedBox.shrink(),
+                          ),
                         ),
                       ),
                     ),

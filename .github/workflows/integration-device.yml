@@ -2,8 +2,9 @@ name: integration-device
 
 # On-device integration tests (apps/mobile/integration_test/). These open
 # the REAL file-backed AppDatabase through the production native connection
-# (path_provider + createInBackground + on-disk migration) — the boot path
-# every headless `flutter test` bypasses via NativeDatabase.memory.
+# (Keystore key + SQLCipher + path_provider + createInBackground + on-disk
+# migration) — the boot path every headless `flutter test` bypasses via an
+# unkeyed NativeDatabase.memory.
 #
 # They need a real device, so they run on an Android emulator rather than
 # the unit-test VM. Kept off the fast PR path (emulator boot is slow);
@@ -16,6 +17,8 @@ on:
       - 'apps/mobile/lib/core/backup/**'
       - 'apps/mobile/lib/core/persistence/**'
       - 'apps/mobile/lib/core/sync/**'
+      - 'apps/mobile/android/**'
+      - 'apps/mobile/pubspec.yaml'
       - 'apps/mobile/native/lifeos_native/**'
       - '.gitmodules'
       - 'third_party/agent-runtime'

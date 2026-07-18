@@ -9,7 +9,10 @@ import '../../core/logging/app_logger.dart';
 /// Uses [WasmDatabase.open], which auto-selects the best available browser
 /// storage in this order: OPFS (shared/locks) → shared IndexedDB →
 /// unsafe IndexedDB → in-memory.
-QueryExecutor openConnectionImpl({required String dbFileName}) {
+QueryExecutor openConnectionImpl({
+  required String dbFileName,
+  required String? encryptionKey,
+}) {
   return DatabaseConnection.delayed(_openWebConnection(dbFileName));
 }
 

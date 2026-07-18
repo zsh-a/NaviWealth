@@ -23,6 +23,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../test/features/finance/data/repositories/_stub_stamper.dart';
+import 'support/database_encryption_fixture.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +33,14 @@ void main() {
 
   Future<void> deleteDbFile() async {
     final dir = await getApplicationDocumentsDirectory();
-    for (final suffix in ['', '-shm', '-wal']) {
+    for (final suffix in [
+      '',
+      '-shm',
+      '-wal',
+      '-journal',
+      '.encrypting',
+      '.plaintext-backup',
+    ]) {
       final file = File(p.join(dir.path, '$dbFileName$suffix'));
       if (file.existsSync()) file.deleteSync();
     }
@@ -44,7 +52,10 @@ void main() {
   testWidgets(
     'JournalEntryRepository writes ledger rows and outbox through real DB',
     (tester) async {
-      AppDatabase? openDb = AppDatabase.open(dbFileName: dbFileName);
+      AppDatabase? openDb = AppDatabase.open(
+        dbFileName: dbFileName,
+        encryptionKey: integrationDatabaseEncryptionKey,
+      );
       addTearDown(() async {
         await openDb?.close();
       });
@@ -97,7 +108,10 @@ void main() {
       await openDb.close();
       openDb = null;
 
-      final reopened = AppDatabase.open(dbFileName: dbFileName);
+      final reopened = AppDatabase.open(
+        dbFileName: dbFileName,
+        encryptionKey: integrationDatabaseEncryptionKey,
+      );
       openDb = reopened;
       final reopenedRepo = JournalEntryRepository(
         db: reopened,

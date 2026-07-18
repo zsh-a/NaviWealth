@@ -6,6 +6,13 @@ version: 0.8.15+1
 environment:
   sdk: ^3.11.5
 
+# package:sqlite3 3.x bundles native libraries through Dart build hooks.
+# Native NaviWealth builds use SQLCipher; Web continues to load sqlite3.wasm.
+hooks:
+  user_defines:
+    sqlite3:
+      source: sqlcipher
+
 dependencies:
   archive: ^4.0.9
   charset: ^2.0.1

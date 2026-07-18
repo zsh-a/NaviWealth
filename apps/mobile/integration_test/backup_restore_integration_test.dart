@@ -29,6 +29,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../test/flow/support/app_harness.dart';
 import '../test/flow/support/page_objects.dart';
+import 'support/database_encryption_fixture.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -41,7 +42,14 @@ void main() {
   Future<void> deleteDbFiles() async {
     final dir = await getApplicationDocumentsDirectory();
     for (final name in [sourceDbFileName, targetDbFileName]) {
-      for (final suffix in ['', '-shm', '-wal']) {
+      for (final suffix in [
+        '',
+        '-shm',
+        '-wal',
+        '-journal',
+        '.encrypting',
+        '.plaintext-backup',
+      ]) {
         final file = File(p.join(dir.path, '$name$suffix'));
         if (file.existsSync()) file.deleteSync();
       }
@@ -56,7 +64,10 @@ void main() {
     (tester) async {
       _installReceiveSharingIntentMocks();
 
-      final sourceDb = AppDatabase.open(dbFileName: sourceDbFileName);
+      final sourceDb = AppDatabase.open(
+        dbFileName: sourceDbFileName,
+        encryptionKey: integrationDatabaseEncryptionKey,
+      );
       var sourceClosed = false;
       addTearDown(() async {
         if (!sourceClosed) await sourceDb.close();
@@ -80,7 +91,10 @@ void main() {
       await sourceDb.close();
       sourceClosed = true;
 
-      final targetDb = AppDatabase.open(dbFileName: targetDbFileName);
+      final targetDb = AppDatabase.open(
+        dbFileName: targetDbFileName,
+        encryptionKey: integrationDatabaseEncryptionKey,
+      );
       final data = FlowDataHarness(
         db: targetDb,
         outbox: InMemoryOutboxStore(),
@@ -157,7 +171,10 @@ void main() {
     'failed restore rollback survives closing and reopening the real database',
     (tester) async {
       final codec = BackupCodec();
-      final sourceDb = AppDatabase.open(dbFileName: sourceDbFileName);
+      final sourceDb = AppDatabase.open(
+        dbFileName: sourceDbFileName,
+        encryptionKey: integrationDatabaseEncryptionKey,
+      );
       var sourceClosed = false;
       addTearDown(() async {
         if (!sourceClosed) await sourceDb.close();
@@ -195,7 +212,10 @@ void main() {
       await sourceDb.close();
       sourceClosed = true;
 
-      final targetDb = AppDatabase.open(dbFileName: targetDbFileName);
+      final targetDb = AppDatabase.open(
+        dbFileName: targetDbFileName,
+        encryptionKey: integrationDatabaseEncryptionKey,
+      );
       var targetClosed = false;
       addTearDown(() async {
         if (!targetClosed) await targetDb.close();
@@ -225,7 +245,10 @@ void main() {
       await targetDb.close();
       targetClosed = true;
 
-      final reopened = AppDatabase.open(dbFileName: targetDbFileName);
+      final reopened = AppDatabase.open(
+        dbFileName: targetDbFileName,
+        encryptionKey: integrationDatabaseEncryptionKey,
+      );
       addTearDown(reopened.close);
       expect(await _accountIds(reopened), <String>['preserved-acct']);
       final outboxRows = await reopened

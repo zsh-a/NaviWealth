@@ -102,6 +102,39 @@ Exit evidence:
 - On-device Android recovery keeps the same atomicity guarantees under a
   process interruption or documents the platform-specific recovery path.
 
+### N3. Android Database-At-Rest Encryption
+
+Outcome: protect native local data at rest without silently losing existing
+plaintext installs or replacing a missing device key.
+
+Current evidence:
+
+- Native builds select the SQLCipher community library through the supported
+  `sqlite3` 3.x build hook and refuse to open unless `cipher_version` is
+  available.
+- A random 256-bit database key is stored through Android Keystore-backed
+  secure storage. An existing encrypted file with a missing or malformed key
+  fails closed; the client never generates a destructive replacement key.
+- Existing plaintext SQLite files are exported into a validated encrypted
+  temporary database. The original is retained through the swap, and the next
+  launch can finish a process interruption or fall back from corrupt staged
+  bytes without dropping rows.
+- Native file tests prove a non-plaintext header, correct-key reopen,
+  wrong-key rejection without byte changes, plaintext migration, interrupted
+  migration recovery, and narrowly scoped reset. The root unlock gate exposes
+  retry and a double-confirmed local reset only for unrecoverable key failures;
+  migration and unknown failures remain non-destructive.
+- Android cloud backup and device-to-device transfer are disabled because the
+  OS cannot port the non-exportable Keystore key with SQLCipher bytes. Sync and
+  app-owned encrypted exports remain the supported portability paths.
+
+Exit evidence:
+
+- A green Android emulator integration run proves SQLCipher availability,
+  encrypted file bytes, correct-key reopen, wrong-key rejection, legacy
+  plaintext migration, and existing backup/restore journeys on the packaged
+  application.
+
 ## Next
 
 These are accepted follow-ups but are not allowed to displace `Now` work
@@ -117,14 +150,6 @@ whether evidence is still collecting, failing, or passing, identifies exact
 blockers, and can copy aggregate JSON without row ids or payloads. The remaining
 exit evidence is a real release window that reaches the gate before any Sync
 E2EE decision.
-
-### On-Device Database Encryption Decision
-
-The on-device integration layer proves the real file-backed Drift connection,
-migrations, repository writes, and backup/restore, but the SQLCipher
-PRAGMA/key-recovery path is not implemented. Either promote database-at-rest
-encryption into a scoped initiative with key-loss/recovery acceptance tests or
-record an explicit non-goal and threat-model rationale.
 
 ## Triggered Bets
 

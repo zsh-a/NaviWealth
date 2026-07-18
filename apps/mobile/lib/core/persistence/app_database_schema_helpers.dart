@@ -13,20 +13,8 @@ Future<void> _addColumnIfMissing(
 }
 
 Future<void> _createChatTables(AppDatabase db) async {
+  await _createChatSessionsTable(db);
   const stmts = <String>[
-    '''
-CREATE TABLE IF NOT EXISTS chat_sessions (
-  id              TEXT PRIMARY KEY,
-  owner_user_id   TEXT NOT NULL,
-  title           TEXT NOT NULL,
-  model           TEXT,
-  created_at      INTEGER NOT NULL,
-  updated_at      INTEGER NOT NULL,
-  last_message_at INTEGER,
-  pinned          INTEGER NOT NULL DEFAULT 0,
-  archived        INTEGER NOT NULL DEFAULT 0
-)
-''',
     '''
 CREATE TABLE IF NOT EXISTS chat_messages (
   id                  TEXT PRIMARY KEY,
@@ -46,14 +34,32 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
 )
 ''',
-    'CREATE INDEX IF NOT EXISTS idx_chat_sessions_owner_last '
-        'ON chat_sessions(owner_user_id, last_message_at)',
     'CREATE INDEX IF NOT EXISTS idx_chat_messages_session_created '
         'ON chat_messages(session_id, created_at)',
   ];
   for (final stmt in stmts) {
     await db.customStatement(stmt);
   }
+}
+
+Future<void> _createChatSessionsTable(AppDatabase db) async {
+  await db.customStatement('''
+CREATE TABLE IF NOT EXISTS chat_sessions (
+  id              TEXT PRIMARY KEY,
+  owner_user_id   TEXT NOT NULL,
+  title           TEXT NOT NULL,
+  model           TEXT,
+  created_at      INTEGER NOT NULL,
+  updated_at      INTEGER NOT NULL,
+  last_message_at INTEGER,
+  pinned          INTEGER NOT NULL DEFAULT 0,
+  archived        INTEGER NOT NULL DEFAULT 0
+)
+''');
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_chat_sessions_owner_last '
+    'ON chat_sessions(owner_user_id, last_message_at)',
+  );
 }
 
 Future<void> _createDataMaintenanceRuns(AppDatabase db) async {

@@ -9,15 +9,15 @@ import 'secure_key_store.dart';
 ///   [IOSOptions.accessibility] = `first_unlock` so iCloud-restored
 ///   backups can re-derive a fresh DB key on the new device, but the
 ///   secret never leaves the device.
-/// - Android: relies on the Keystore via EncryptedSharedPreferences. We
-///   force the encrypted backend even on older Android versions to stay
-///   consistent.
+/// - Android: uses the plugin's RSA-OAEP + AES-GCM default backed by Android
+///   Keystore. Crash-safe cipher migration is enabled because this store owns
+///   the database master key.
 class FlutterSecureKeyStore implements SecureKeyStore {
   FlutterSecureKeyStore({FlutterSecureStorage? storage})
     : _storage =
           storage ??
           const FlutterSecureStorage(
-            aOptions: AndroidOptions(),
+            aOptions: AndroidOptions(migrateWithBackup: true),
             iOptions: IOSOptions(
               accessibility: KeychainAccessibility.first_unlock,
             ),

@@ -117,8 +117,13 @@ final class AppDatabaseTransactionScope {
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
-  AppDatabase.open({String? dbFileName})
-    : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
+  AppDatabase.open({String? dbFileName, String? encryptionKey})
+    : super(
+        openAppConnection(
+          dbFileName: dbFileName ?? defaultDbFileName,
+          encryptionKey: encryptionKey,
+        ),
+      );
 
   Future<T> transactionWithScope<T>(
     Future<T> Function(AppDatabaseTransactionScope scope) action,
@@ -672,6 +677,10 @@ class AppDatabase extends _$AppDatabase {
       }
       // v42 -> v43: chat session pin/archive flags for history management.
       if (from < 43) {
+        // Partial legacy fixtures and damaged-but-recoverable installs may not
+        // have chat tables yet. Recreate the idempotent base before altering
+        // columns so an unrelated optional subsystem cannot block DB startup.
+        await _createChatSessionsTable(this);
         await _addColumnIfMissing(
           this,
           table: 'chat_sessions',

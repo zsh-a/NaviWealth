@@ -20,6 +20,8 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import 'support/database_encryption_fixture.dart';
+
 const _phase = String.fromEnvironment('BACKUP_INTERRUPTION_PHASE');
 const _sourceDbFileName = 'integration_interrupt_source.sqlite';
 const _targetDbFileName = 'integration_interrupt_target.sqlite';
@@ -35,7 +37,10 @@ void main() {
     (_) async {
       await _deleteDbFiles();
       final codec = BackupCodec();
-      final sourceDb = AppDatabase.open(dbFileName: _sourceDbFileName);
+      final sourceDb = AppDatabase.open(
+        dbFileName: _sourceDbFileName,
+        encryptionKey: integrationDatabaseEncryptionKey,
+      );
       await _forceOpen(sourceDb);
       await _insertAccount(
         sourceDb,
@@ -78,7 +83,10 @@ void main() {
       );
       await sourceDb.close();
 
-      final targetDb = AppDatabase.open(dbFileName: _targetDbFileName);
+      final targetDb = AppDatabase.open(
+        dbFileName: _targetDbFileName,
+        encryptionKey: integrationDatabaseEncryptionKey,
+      );
       addTearDown(targetDb.close);
       await _forceOpen(targetDb);
       await _insertAccount(
@@ -114,7 +122,10 @@ void main() {
         reason: 'The interrupt phase database must survive process restart.',
       );
 
-      final reopened = AppDatabase.open(dbFileName: _targetDbFileName);
+      final reopened = AppDatabase.open(
+        dbFileName: _targetDbFileName,
+        encryptionKey: integrationDatabaseEncryptionKey,
+      );
       await _forceOpen(reopened);
       expect(await _accountIds(reopened), <String>['preserved-acct']);
       final outboxRows = await reopened
@@ -141,7 +152,14 @@ Future<File> _dbFile(String name) async {
 Future<void> _deleteDbFiles() async {
   for (final name in [_sourceDbFileName, _targetDbFileName]) {
     final base = await _dbFile(name);
-    for (final suffix in ['', '-shm', '-wal']) {
+    for (final suffix in [
+      '',
+      '-shm',
+      '-wal',
+      '-journal',
+      '.encrypting',
+      '.plaintext-backup',
+    ]) {
       final file = File('${base.path}$suffix');
       if (file.existsSync()) file.deleteSync();
     }

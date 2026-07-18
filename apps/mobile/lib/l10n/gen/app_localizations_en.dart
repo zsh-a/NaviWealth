@@ -13267,4 +13267,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ingestKindIncome => 'Income';
+
+  @override
+  String get databaseUnlockLoading => 'Unlocking your local data…';
+
+  @override
+  String get databaseRecoveryTitle => 'Local data is locked';
+
+  @override
+  String get databaseRecoveryMissingKeyMessage =>
+      'This device no longer has the key for the encrypted local database. Your data has not been overwritten. If you have an encrypted backup, reset this unreadable local copy and restore the backup from Settings.';
+
+  @override
+  String get databaseRecoveryInvalidKeyMessage =>
+      'The stored database key is damaged. Your encrypted local data has not been modified. You can retry or reset this unreadable copy before restoring an encrypted backup.';
+
+  @override
+  String get databaseRecoveryUnlockFailedMessage =>
+      'The device key could not unlock this local database. No data was changed. You can retry or reset the unreadable copy before restoring an encrypted backup.';
+
+  @override
+  String get databaseRecoveryMigrationTitle => 'Local data upgrade paused';
+
+  @override
+  String get databaseRecoveryMigrationMessage =>
+      'NaviWealth could not safely finish encrypting the existing database. The original copy is preserved. Retry after checking free storage; do not reset unless you have a verified backup.';
+
+  @override
+  String get databaseRecoveryUnavailableTitle => 'Local data is unavailable';
+
+  @override
+  String get databaseRecoveryUnavailableMessage =>
+      'The secure database could not be opened. Retry first. If the problem continues, keep the app data intact and review the diagnostic log before taking destructive action.';
+
+  @override
+  String get databaseRecoveryRetry => 'Retry unlock';
+
+  @override
+  String get databaseRecoveryResetAction => 'Reset unreadable local data';
+
+  @override
+  String get databaseRecoveryResetting => 'Resetting local data…';
+
+  @override
+  String get databaseRecoveryResetConfirmTitle =>
+      'Reset unreadable local data?';
+
+  @override
+  String get databaseRecoveryResetConfirmBody =>
+      'This permanently removes the encrypted database on this device. It cannot recover a missing device key. Continue only if this local copy is unrecoverable or you have an encrypted backup to restore afterward.';
+
+  @override
+  String get databaseRecoveryResetConfirmAction => 'Reset local data';
+
+  @override
+  String get databaseRecoveryResetFailed =>
+      'Local data could not be reset. Nothing else was changed.';
 }

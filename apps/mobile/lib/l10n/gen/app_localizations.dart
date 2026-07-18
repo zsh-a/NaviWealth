@@ -22469,6 +22469,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Income'**
   String get ingestKindIncome;
+
+  /// No description provided for @databaseUnlockLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocking your local data…'**
+  String get databaseUnlockLoading;
+
+  /// No description provided for @databaseRecoveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Local data is locked'**
+  String get databaseRecoveryTitle;
+
+  /// No description provided for @databaseRecoveryMissingKeyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This device no longer has the key for the encrypted local database. Your data has not been overwritten. If you have an encrypted backup, reset this unreadable local copy and restore the backup from Settings.'**
+  String get databaseRecoveryMissingKeyMessage;
+
+  /// No description provided for @databaseRecoveryInvalidKeyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The stored database key is damaged. Your encrypted local data has not been modified. You can retry or reset this unreadable copy before restoring an encrypted backup.'**
+  String get databaseRecoveryInvalidKeyMessage;
+
+  /// No description provided for @databaseRecoveryUnlockFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The device key could not unlock this local database. No data was changed. You can retry or reset the unreadable copy before restoring an encrypted backup.'**
+  String get databaseRecoveryUnlockFailedMessage;
+
+  /// No description provided for @databaseRecoveryMigrationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Local data upgrade paused'**
+  String get databaseRecoveryMigrationTitle;
+
+  /// No description provided for @databaseRecoveryMigrationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'NaviWealth could not safely finish encrypting the existing database. The original copy is preserved. Retry after checking free storage; do not reset unless you have a verified backup.'**
+  String get databaseRecoveryMigrationMessage;
+
+  /// No description provided for @databaseRecoveryUnavailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Local data is unavailable'**
+  String get databaseRecoveryUnavailableTitle;
+
+  /// No description provided for @databaseRecoveryUnavailableMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The secure database could not be opened. Retry first. If the problem continues, keep the app data intact and review the diagnostic log before taking destructive action.'**
+  String get databaseRecoveryUnavailableMessage;
+
+  /// No description provided for @databaseRecoveryRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry unlock'**
+  String get databaseRecoveryRetry;
+
+  /// No description provided for @databaseRecoveryResetAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset unreadable local data'**
+  String get databaseRecoveryResetAction;
+
+  /// No description provided for @databaseRecoveryResetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Resetting local data…'**
+  String get databaseRecoveryResetting;
+
+  /// No description provided for @databaseRecoveryResetConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset unreadable local data?'**
+  String get databaseRecoveryResetConfirmTitle;
+
+  /// No description provided for @databaseRecoveryResetConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently removes the encrypted database on this device. It cannot recover a missing device key. Continue only if this local copy is unrecoverable or you have an encrypted backup to restore afterward.'**
+  String get databaseRecoveryResetConfirmBody;
+
+  /// No description provided for @databaseRecoveryResetConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset local data'**
+  String get databaseRecoveryResetConfirmAction;
+
+  /// No description provided for @databaseRecoveryResetFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Local data could not be reset. Nothing else was changed.'**
+  String get databaseRecoveryResetFailed;
 }
 
 class _AppLocalizationsDelegate

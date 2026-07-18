@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 42', () {
-      expect(db.schemaVersion, 42);
+    test('is 43', () {
+      expect(db.schemaVersion, 43);
     });
   });
 
