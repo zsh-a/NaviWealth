@@ -3,10 +3,8 @@
 # Rust target triple, placing the resulting `libonnxruntime.{dylib,so}`
 # into the requested destination directory.
 #
-# Called by:
-#   - tool/build-lifeos-native.sh (standalone dev build)
-#   - rust_builder/{macos,ios}/lifeos_native.podspec (cargokit-driven
-#     `flutter run` / `flutter build`)
+# Called by the platform embedding scripts used from Gradle/Xcode during
+# normal `flutter run` and `flutter build` commands.
 #
 # Why a separate script: `ort 2.0.0-rc.12` (the version `fastembed`
 # pulls in) is built against ONNX Runtime 1.24.2. The CocoaPods

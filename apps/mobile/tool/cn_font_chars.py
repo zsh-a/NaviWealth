@@ -75,22 +75,36 @@ _ALWAYS_INCLUDE: list[int] = (
 # Source trees whose Chinese text is NOT first-paint web UI and therefore
 # must not inflate the `base` (first-paint) subset:
 #
-#   core/ai/runtime/device/  The device LLM runtime is !kIsWeb-gated — web
-#                            has no AI (see docs/ai-architecture.md §4.6).
-#                            Its tool descriptions / system prompt are
-#                            model-facing strings, and on the web build this
-#                            font ships to they are dead code: those glyphs
-#                            can never paint on web.
-#   core/ai/regression/      AI eval / regression corpus fixtures — test
-#                            data, never rendered as UI on any platform.
+#   core/ai/                 AI runtime, prompt, regression, and native-only
+#                            support text. Web has no AI runtime; display copy
+#                            that can paint belongs in ARB and is scanned there.
+#   features/*/{ai_tools,agents,data,domain,composition}/
+#                            Model prompts, persistence messages, matching
+#                            dictionaries, and domain internals. User-facing
+#                            copy belongs in ARB and is scanned separately.
 #
 # Anything these legitimately render on native (the *deferred* /ai route) is
 # still covered by the lazy `ext` tier, so excluding them here costs at most
 # a one-time FOUT on first AI use on native — never tofu, never a web cost.
 _FIRST_PAINT_EXCLUDE_PREFIXES: tuple[str, ...] = (
-    "core/ai/runtime/device/",
-    "core/ai/regression/",
+    "app/agent_runtime/",
+    "core/ai/",
 )
+
+_FIRST_PAINT_EXCLUDE_PARTS = frozenset(
+    {"ai_tools", "agents", "composition", "data", "domain"}
+)
+
+
+def _is_first_paint_excluded(rel: str) -> bool:
+    if rel.startswith(_FIRST_PAINT_EXCLUDE_PREFIXES):
+        return True
+    parts = pathlib.PurePosixPath(rel).parts
+    if parts and parts[-1].endswith("_ai_tools.dart"):
+        return True
+    return len(parts) >= 3 and parts[0] == "features" and bool(
+        _FIRST_PAINT_EXCLUDE_PARTS.intersection(parts[2:-1])
+    )
 
 
 def _gb2312_codepoints() -> set[int]:
@@ -126,7 +140,6 @@ def _strip_dart_comments(text: str) -> str:
 def scan_codebase(root: pathlib.Path) -> set[int]:
     """Return every renderable non-ASCII code point that appears in source."""
     found: set[int] = set()
-    cn_literal_allowlist = _load_cn_literal_allowlist(root.parent)
     for path in root.rglob("*"):
         if not path.is_file():
             continue
@@ -137,13 +150,7 @@ def scan_codebase(root: pathlib.Path) -> set[int]:
         if "/gen/" in rel or rel.endswith(".g.dart") or rel.endswith(".freezed.dart"):
             continue
         # Skip model-facing / web-dead trees — not first-paint web UI.
-        if rel.startswith(_FIRST_PAINT_EXCLUDE_PREFIXES):
-            continue
-        # FIR-99 allowlisted Dart files are either migration debt or semantic
-        # corpora (AI prompts, match keywords, persisted proposal text). They
-        # should not inflate the first-paint CN subset; the ext tier covers
-        # those glyphs lazily if such text is rendered later.
-        if path.suffix == ".dart" and f"lib/{rel}" in cn_literal_allowlist:
+        if _is_first_paint_excluded(rel):
             continue
         try:
             text = path.read_text(encoding="utf-8")
@@ -154,19 +161,6 @@ def scan_codebase(root: pathlib.Path) -> set[int]:
         for ch in NON_ASCII_RE.findall(text):
             found.add(ord(ch))
     return found
-
-
-def _load_cn_literal_allowlist(mobile_root: pathlib.Path) -> set[str]:
-    allowlist = mobile_root / "tool" / "cn_literal_allowlist.txt"
-    if not allowlist.exists():
-        return set()
-    entries: set[str] = set()
-    for line in allowlist.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if stripped and not stripped.startswith("#"):
-            entries.add(stripped)
-    return entries
-
 
 def write_unicodes(path: pathlib.Path, codepoints: set[int]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)

@@ -107,38 +107,6 @@ cd apps/mobile && flutter_rust_bridge_codegen generate
 
 Then `flutter run` rebuilds the native lib automatically.
 
-### Out-of-Flutter build (optional repo-root `tool/build-lifeos-native.sh`)
-
-The legacy `tool/build-lifeos-native.sh` is **only needed** when:
-
-- Running `flutter test` on desktop (test harness can't go through
-  the plugin loader; tests pass an explicit `libraryPath` from
-  `native/lifeos_native/dist/macos/`)
-- Producing standalone artefacts (xcframework for cross-repo sharing,
-  Rust-only CI smoke build, container image, etc.)
-
-```bash
-# Host build (Apple Silicon → aarch64-apple-darwin)
-tool/build-lifeos-native.sh macos
-# → apps/mobile/native/lifeos_native/dist/macos/liblifeos_native.dylib  (~18 MB)
-
-# Universal macOS
-tool/build-lifeos-native.sh macos universal
-
-# iOS xcframework (also produced by cargokit during flutter build ios)
-tool/build-lifeos-native.sh ios
-
-# Android (also produced by cargokit during flutter build apk).
-# Requires ANDROID_NDK_HOME + cargo-ndk.
-tool/build-lifeos-native.sh android
-```
-
-> **Build-time download:** the `ort` crate's `download-binaries`
-> feature fetches a prebuilt ONNX Runtime native lib from Microsoft
-> on first build. The **build machine** needs network access once.
-> The final dylib is self-contained — runtime does not need a
-> separate `libonnxruntime.{dylib,so}`.
-
 ## Model files
 
 The Rust embedder loads `EmbeddingGemma-300M` (INT8 ONNX) from a
@@ -189,11 +157,10 @@ force-loaded into the Flutter app). The dylib is discovered at
 runtime via `ORT_DYLIB_PATH`.
 
 **`tool/fetch-onnxruntime.sh`** downloads the correct
-`libonnxruntime` version for the cargo target and places it
-alongside `liblifeos_native.dylib`:
+`libonnxruntime` version for a cargo target. Production Flutter builds invoke
+the platform embedding scripts from Gradle/Xcode and place the library in the
+application bundle:
 
-- `tool/build-lifeos-native.sh macos` calls it automatically — both
-  files end up in `apps/mobile/native/lifeos_native/dist/macos/`
 - `bootstrap.dart`'s `_discoverBundledOrtDylib` finds it at runtime
   via path math around `Platform.resolvedExecutable` (no
   `--dart-define` needed for the dev path)
@@ -235,8 +202,8 @@ ORT flow. Files live in:
 
 - `<app_support>/embedders/embeddinggemma-300m-onnx/` — 6 files
   (`model_quantized.onnx` + `model_quantized.onnx_data` + 4 JSON)
-- `<liblifeos_native dir>/libonnxruntime.dylib` — build-bundled by
-  cargokit / `tool/build-lifeos-native.sh`
+- `<liblifeos_native dir>/libonnxruntime.dylib` — bundled by the normal
+  Flutter platform build
 
 ### Developer overrides (`--dart-define`)
 
@@ -250,16 +217,17 @@ flutter run -d macos \
   --dart-define=RUST_EMBEDDER_ORT_DYLIB_PATH=$HOME/models/onnxruntime/libonnxruntime.dylib
 ```
 
-For `flutter test` on desktop (test harness doesn't go through the
-plugin loader, so the lifeos_native dylib also needs an explicit
-path):
+For a real native embedding test outside the plugin loader, build the Rust
+crate directly and pass its dylib explicitly:
 
 ```bash
-tool/build-lifeos-native.sh macos
+cd apps/mobile/native/lifeos_native
+cargo build --release
+cd ../../../..
 flutter test \
   --dart-define=RUST_EMBEDDER_MODEL_DIR=$HOME/models/embeddinggemma-300m-ONNX \
   --dart-define=RUST_EMBEDDER_ORT_DYLIB_PATH=$HOME/models/onnxruntime/libonnxruntime.dylib \
-  --dart-define=RUST_EMBEDDER_LIBRARY_PATH=$PWD/apps/mobile/native/lifeos_native/dist/macos/liblifeos_native.dylib
+  --dart-define=RUST_EMBEDDER_LIBRARY_PATH=$PWD/apps/mobile/native/lifeos_native/target/release/liblifeos_native.dylib
 ```
 
 Both `--dart-define` paths override the in-app installer artefact

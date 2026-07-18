@@ -77,7 +77,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 | Device tool descriptor catalog | `features/finance/options_income/ai_tools/` + `features/finance/finance_ai_tools.dart` | profile / opportunity / wheel lifecycle descriptors live with the owning domain tool registrations and are exposed through `DomainPack.toolDescriptors`。 |
 | Money 类型 | CLAUDE.md「Money」 | 所有期权金额走 `Money` + `Decimal`。 |
 | Web 无 AI | CLAUDE.md「AI」 | Income Planner 通过 `kIsWeb` 短路；`web_smoke` 反向断言不出现期权文案。 |
-| Modal 系统 | memory: modal_system | 详情面板用 `showAppFormSheet` + `AppSheetFooter`；CI 由 `tool/check-modal-helpers.sh` 守护。 |
+| Modal 系统 | memory: modal_system | 详情面板用 `showAppFormSheet` + `AppSheetFooter`，并由设计系统 widget tests 覆盖。 |
 | Forui + design tokens | `apps/mobile/lib/design_system/` | `FCard` / `FButton` + `AppSpacing` / `AppRadius`，不写魔法数字。 |
 
 ### 2.2 不会被打破的现有原则

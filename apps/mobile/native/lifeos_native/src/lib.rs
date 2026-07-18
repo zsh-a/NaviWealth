@@ -4,7 +4,7 @@
 //! (D-1.7c per `docs/architecture/lifeos-shell.md` §6.6). The only thing the
 //! generator scans is `crate::api`; everything else is private
 //! implementation. `frb_generated` is produced by the codegen at
-//! `tool/build-lifeos-native.sh` / on-demand `flutter_rust_bridge_codegen generate`.
+//! on demand by `flutter_rust_bridge_codegen generate`.
 
 pub mod api;
 

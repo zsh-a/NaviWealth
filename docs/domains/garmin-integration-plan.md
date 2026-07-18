@@ -616,11 +616,11 @@ Full flow: Dart UI → FRB → Rust client (mock HTTP) → snapshot → Dart wri
 
 ### 5.4 CI Gates
 
-All existing lints pass unchanged:
-- `lint-no-finance-in-core.sh` — no Garmin code in `core/` (it's in `lifeos_native` + `features/health`)
+The active architecture checks pass unchanged:
+- `lint-no-feature-in-shared.sh` — no Health feature imports from shared layers
 - `lint-cross-feature-imports.sh` — no cross-feature leaks
-- `lint-row-family-prefix.sh` — `health:` prefix maintained
-- `check-tool-descriptors.sh` — no new tools until Phase 3
+- `domain_prefix_test.dart` — `health:` prefix maintained
+- `device_degradation_test.dart` — no descriptor drift until Phase 3
 
 ---
 
@@ -641,7 +641,7 @@ asserts that `lib/src/rust/api/health.dart`, `frb_generated.dart`,
 `frb_generated.{io,web}.dart`, and `native/lifeos_native/src/frb_generated.rs`
 continue to expose the Garmin auth, sync, cancel, cursor, logout, export, and
 `GarminSyncProgress` bridge symbols. When the Rust API surface changes, rerun
-`tool/build-lifeos-native.sh` and keep this contract green.
+`flutter_rust_bridge_codegen generate` and keep this contract green.
 
 ---
 

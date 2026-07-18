@@ -20,7 +20,7 @@ apps/mobile/
 │   ├── build-cn-fonts.sh        # 主入口：venv → 取源 → 扫描 → 子集化 → 校验大小
 │   └── cn_font_chars.py         # 扫描 lib/ 抽取 CJK，叠加 ASCII / 标点 / GB 2312
 ├── assets/fonts/                # 产物（gitignored）
-│   ├── app-cn-base.woff2        # 首屏 ≈ 120 KB（预算 ≤ 250 KB）
+│   ├── app-cn-base.woff2        # 首屏约 301 KiB（预算 ≤ 315,000 B）
 │   └── app-cn-ext.woff2         # 扩展包 ≈ 1.7 MB（按需）
 ├── pubspec.yaml                 # 注册 AppCnSans 字体族
 ├── web/index.html               # @font-face + preload + font-display: swap

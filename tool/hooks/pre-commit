@@ -29,9 +29,3 @@ dart format --set-exit-if-changed "${dart_paths[@]}"
 
 echo "pre-commit: flutter analyze..."
 (cd "$mobile_dir" && flutter analyze --fatal-infos)
-
-# i18n guard — fail fast on new CN string literals so reviewers don't have
-# to wait on CI to catch the regression. The script is the same one
-# mobile.yml runs, so a green pre-commit means a green job for this check.
-echo "pre-commit: cn-literal-check..."
-(cd "$mobile_dir" && dart tool/check_cn_literals.dart)

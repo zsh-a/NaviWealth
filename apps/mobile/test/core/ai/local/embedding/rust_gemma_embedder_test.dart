@@ -4,7 +4,7 @@
 /// These tests skip when the host doesn't have a built
 /// `liblifeos_native.dylib`. Build it with:
 ///
-///   tool/build-lifeos-native.sh macos
+///   cd apps/mobile/native/lifeos_native && cargo build --release
 ///
 /// CI doesn't build the dylib by default (cargo + fastembed +
 /// downloaded ORT binaries pulls 120+ crates and ~18 MB native lib);
@@ -21,7 +21,6 @@ import 'package:naviwealth/src/rust/api/embedder.dart' as frb;
 
 // Candidate paths relative to `apps/mobile/` (flutter test cwd).
 const _candidateDylibPaths = <String>[
-  'native/lifeos_native/dist/macos/liblifeos_native.dylib',
   'native/lifeos_native/target/release/liblifeos_native.dylib',
 ];
 
@@ -41,7 +40,8 @@ String? _findDylib() {
 void main() {
   final dylibPath = _findDylib();
   final skipReason = dylibPath == null
-      ? 'liblifeos_native.dylib not found; run tool/build-lifeos-native.sh macos'
+      ? 'liblifeos_native.dylib not found; run cargo build --release in '
+            'apps/mobile/native/lifeos_native'
       : null;
 
   group('lifeos_native FRB bindings', () {

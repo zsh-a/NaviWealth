@@ -11,10 +11,8 @@
 #                that keeps the schema and migration history)
 #   -y, --yes    skip the "are you sure?" prompt
 #
-# After a --full reset (or any time `users` was emptied) you must
-# re-create the operator account before the mobile app can log in:
-#
-#   tool/register-user/register.sh
+# After a reset, create the first account through the app's normal
+# registration screen after the backend is running.
 #
 # This script never edits wrangler.toml and never deletes the D1
 # instance itself, so the database_id stays stable.
@@ -120,8 +118,8 @@ cat <<EOF
 ✓ done.
 
 Next steps:
-  - Re-register the operator user (required if 'users' was wiped):
-      tool/register-user/register.sh
+  - Start the backend and create the first account through the app's
+    normal registration screen.
   - Restart the mobile app / clear its local DB so it doesn't try to
     push stale ops against an empty server (the sync engine will
     reconcile, but a clean slate avoids confusing tombstone churn).

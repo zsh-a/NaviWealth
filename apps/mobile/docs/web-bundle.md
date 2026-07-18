@@ -160,7 +160,7 @@ woff2 is already brotli-compressed, so the on-disk size *is* the wire size.
 It is **not** part of the `main.dart.js` 800 KB target above — it is a
 separate first-paint asset, HTTP-cached after the cold visit.
 
-**Budget: `BASE_BUDGET_BYTES` = 300,000 B (~293 KiB).** This is a tripwire,
+**Budget: `BASE_BUDGET_BYTES` = 315,000 B (~308 KiB).** This is a tripwire,
 not a hard limit: the build fails when `base` exceeds it so a human looks at
 *why* it grew before the line moves.
 
@@ -171,11 +171,14 @@ regression-fixture text that does **not** paint on web (the device AI
 runtime is `!kIsWeb`-gated — see `docs/ai/ai-architecture.md` §4.6). Two
 changes landed together:
 
-1. `tool/cn_font_chars.py` now scopes `core/ai/runtime/device/**` and
-   `core/ai/regression/**` out of the *base* scan (model-facing / web-dead;
-   `ext` still covers anything they render on native).
-2. The budget was raised to ~293 KiB so the legitimate, ever-growing
-   l10n/UI corpus has headroom without nuisance CI failures per feature.
+1. `tool/cn_font_chars.py` scopes device AI plus feature `ai_tools`, `agents`,
+   `data`, `domain`, and `composition` trees out of the *base* scan
+   (model-facing or non-UI; `ext` still covers deferred text).
+2. The budget was raised to ~308 KiB on 2026-07-18 when the old per-file
+   CN-literal allowlist was retired. The structural scan includes all actual
+   UI source and ARB copy without coupling font generation to a lint baseline.
+3. The resulting budget gives the legitimate, ever-growing l10n/UI corpus
+   headroom without nuisance CI failures per feature.
 
 When the build fails on this budget:
 

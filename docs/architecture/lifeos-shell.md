@@ -259,7 +259,8 @@ Current native runtime:
 - Dart adapter: `core/ai/local/embedding/rust_gemma_embedder.dart`.
 - Generated bindings: `apps/mobile/lib/src/rust/`.
 - Model installer: `core/ai/local/embedding/model_*`.
-- Build helper: `tool/build-lifeos-native.sh` from the repository root.
+- Native build: the `rust_builder` Flutter plugin invokes cargokit from the
+  normal `flutter run` and `flutter build` commands.
 
 Behavior:
 
@@ -362,31 +363,24 @@ Not allowed:
 Run these when touching architecture boundaries:
 
 ```bash
-./tool/lint-no-finance-in-core.sh
 ./tool/lint-no-feature-in-shared.sh
-./tool/lint-design-system-domain-neutral.sh
-./tool/lint-no-legacy-mobile-domain.sh
 ./tool/lint-cross-feature-imports.sh
-./tool/lint-finance-domain-model-path.sh
 ./tool/lint-finance-domain-data-imports.sh
-./tool/lint-finance-dashboard-read-model-path.sh
-./tool/lint-row-family-prefix.sh
 ./tool/lint-domain-neutral-contracts.sh
 ./tool/lint-frb-llm-entrypoints.sh
-./tool/check-tool-descriptors.sh
+./tool/check-ai-contract-wire-enums.sh
 ```
 
 Expected guarantees:
 
-- `core/ai/runtime/` does not import domain features.
+- Shared layers do not import domain features.
 - `features/ai_chat/` does not import sibling features directly.
-- `design_system/` stays free of domain business value objects.
-- The retired top-level mobile `domain/` package does not return.
-- Finance core models stay under `features/finance/domain/models/`, not the
-  data-layer repository directory.
-- Row change literals in sync code carry domain prefixes.
+- Finance domain code does not import data-layer repositories or Drift rows.
 - Domain-neutral contracts do not mention domain business types.
-- Tool descriptors mirror registered tools.
+- AI contract wire enums match the checked-in serializer fixture.
+
+Tool descriptor registration and sync row-family behavior are covered by the
+regular Flutter test suite rather than duplicated shell wrappers.
 
 ## Change Checklist
 

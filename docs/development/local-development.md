@@ -27,11 +27,12 @@ cd apps/backend
 cargo check --target wasm32-unknown-unknown          # build check
 echo "JWT_SECRET=$(openssl rand -hex 32)" > .dev.vars # local secret (gitignored)
 wrangler d1 migrations apply naviwealth --local      # init local SQLite
-../../tool/register-user/register.sh --email you@example.com --execute --local
 wrangler dev                                         # serves http://127.0.0.1:8787
 ```
 
-Verify: `curl http://127.0.0.1:8787/health`.
+Verify with `curl http://127.0.0.1:8787/health`, then create the first account
+from the mobile app's registration screen. Registration uses the same
+`POST /auth/register` path in local and production environments.
 
 ---
 

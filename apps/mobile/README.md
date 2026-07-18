@@ -180,18 +180,12 @@ wrangler pages deploy --branch main
 架构 lint gates（CI 和本地均可运行）：
 
 ```bash
-./tool/lint-no-finance-in-core.sh        # core/ 不含 finance 导入
 ./tool/lint-no-feature-in-shared.sh      # core/design_system 不反向依赖 features
-./tool/lint-design-system-domain-neutral.sh # design_system 不依赖 domain 业务值对象
-./tool/lint-no-legacy-mobile-domain.sh   # 顶层 lib/domain 旧入口不回流
 ./tool/lint-cross-feature-imports.sh     # feature 间无跨域导入
-./tool/lint-finance-domain-model-path.sh # Finance 核心模型不回流 data/domain
 ./tool/lint-finance-domain-data-imports.sh # Finance domain 不依赖 data/repository 层
-./tool/lint-finance-dashboard-read-model-path.sh # dashboard 读模型不回流 home/data
-./tool/lint-row-family-prefix.sh         # sync 行族前缀正确
 ./tool/lint-domain-neutral-contracts.sh  # 域中立契约不含域类型
 ./tool/lint-frb-llm-entrypoints.sh       # 生产 LLM/agent 入口保持 FRB seam
-./tool/check-tool-descriptors.sh         # 工具描述符与注册一致
+./tool/check-ai-contract-wire-enums.sh   # AI wire enum fixture 一致
 ```
 
 Android / iOS 构建在 `release.yml` 里跟着 tag 跑，不属于 PR 必需 check。

@@ -40,7 +40,7 @@ SOURCE_STAMP="$SOURCE_DIR/.sha256"
 
 BASE_OUT="$ASSETS_DIR/app-cn-base.woff2"
 EXT_OUT="$ASSETS_DIR/app-cn-ext.woff2"
-BASE_BUDGET_BYTES="${BASE_BUDGET_BYTES:-300000}"  # first-paint web budget (~293 KiB); rationale in docs/web-bundle.md
+BASE_BUDGET_BYTES="${BASE_BUDGET_BYTES:-315000}"  # first-paint web budget (~308 KiB); rationale in docs/web-bundle.md
 CHECK_CN_FONT_SIZE="${CHECK_CN_FONT_SIZE:-true}"
 
 mkdir -p "$CACHE_DIR" "$ASSETS_DIR" "$SOURCE_DIR" "$UNICODE_DIR"

@@ -143,8 +143,8 @@ just to mirror a page when an existing durable journey already covers it.
 ### Contract (Dart↔Rust↔wire, ~5%)
 The client and the Rust Worker share a wire format but no generated
 types. Today: `test/core/ai/contracts/contracts_roundtrip_test.dart`
-(ContextPack snake_case stability) + `tool/check-enum-mirror.sh`.
-`check-enum-mirror.sh` now gates the mobile-local AI enum wire manifest
+(ContextPack snake_case stability) + `tool/check-ai-contract-wire-enums.sh`.
+The script gates the mobile-local AI enum wire manifest
 (`docs/fixtures/ai_contract_wire_enums.json`) against
 `apps/mobile/tool/dump_ai_contract_wire_enums.dart`, so enum wire strings are
 generated from Dart code instead of inferred by grep. The `sync-v3` shared

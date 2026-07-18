@@ -140,12 +140,6 @@ apps/mobile/tool/build-cn-fonts.sh
 apps/mobile/tool/build-latin-fonts.sh
 ```
 
-Native embedding runtime:
-
-```bash
-rtk bash tool/build-lifeos-native.sh macos
-```
-
 Backend:
 
 ```bash
@@ -170,18 +164,12 @@ rtk npm test
 Project lint gates:
 
 ```bash
-./tool/lint-no-finance-in-core.sh
 ./tool/lint-no-feature-in-shared.sh
-./tool/lint-design-system-domain-neutral.sh
-./tool/lint-no-legacy-mobile-domain.sh
 ./tool/lint-cross-feature-imports.sh
-./tool/lint-finance-domain-model-path.sh
 ./tool/lint-finance-domain-data-imports.sh
-./tool/lint-finance-dashboard-read-model-path.sh
-./tool/lint-row-family-prefix.sh
 ./tool/lint-domain-neutral-contracts.sh
 ./tool/lint-frb-llm-entrypoints.sh
-./tool/check-tool-descriptors.sh
+./tool/check-ai-contract-wire-enums.sh
 ```
 
 ## Dart And Flutter Conventions

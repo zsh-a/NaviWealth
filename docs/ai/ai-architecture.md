@@ -70,7 +70,8 @@ composition root 聚合，再由 `AgentRuntimeToolHost` 形成实际 dispatch al
 
 `ToolDescriptor` 的治理轴为 `name`、`access`、`risk`、
 `requires_confirmation`、`allowed_context_tier` 与 `side_effect`。
-`tool/check-tool-descriptors.sh` 守护 descriptor 与生产工具目录一致。
+生产工具目录与 descriptor 的双向一致性由
+`device_degradation_test.dart` 直接守护。
 
 ### 3.2 ProposalEnvelope
 
@@ -171,9 +172,8 @@ Finance ingest 的 `FrbVisionIngestClient` 与 `UnavailableVisionIngestClient` �
 
 - `flutter analyze --fatal-infos`
 - 非 golden `flutter test`
-- `tool/check-tool-descriptors.sh`
+- `tool/check-ai-contract-wire-enums.sh`
 - `tool/lint-frb-llm-entrypoints.sh`
-- `tool/check-ui-baselines.sh`
 
 Apple 平台发布前，Runner 与 Share Extension 必须使用同一个 App Group
 `group.com.naviwealth.naviwealth`，并以真实 provisioning profile 验证签名归档。

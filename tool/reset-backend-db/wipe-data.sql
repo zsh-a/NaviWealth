@@ -27,6 +27,6 @@ DELETE FROM read_model_freshness_meta;
 DELETE FROM ai_request_log;
 
 -- Auth identities live in `users` / `devices`. Wiping them logs every client
--- out and forces a fresh `tool/register-user/register.sh`.
+-- out and forces a fresh registration through the normal app flow.
 DELETE FROM devices;
 DELETE FROM users;

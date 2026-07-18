@@ -84,11 +84,14 @@ its own tool barrel.
 Run from the repository root:
 
 ```bash
-./tool/check-tool-descriptors.sh
-./tool/check-enum-mirror.sh
+./tool/check-ai-contract-wire-enums.sh
+cd apps/mobile
+flutter test test/core/ai/contracts/contracts_roundtrip_test.dart \
+  test/core/ai/runtime/device/device_degradation_test.dart
 ```
 
-Both scripts now run the Dart contract tests; the retired backend
+The manifest check pins wire enum strings. The Dart tests pin descriptor
+roundtrips and the bidirectional production registry. The retired backend
 `tool_descriptor_dump` and Rust enum mirror no longer exist.
 
 ## Decision Points (`ask_user`)

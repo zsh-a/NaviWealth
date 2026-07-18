@@ -46,10 +46,9 @@ A new Flutter FFI plugin project.
   # NOTE: `libonnxruntime.dylib` is intentionally NOT bundled via this
   # podspec. ORT shipping into the production .app bundle needs a
   # Frameworks-folder install + code-signing path that's iOS/macOS
-  # release-build specific (cf. lifeos-shell §6.6). For now developers
-  # run `tool/build-lifeos-native.sh macos` (which fetches ORT into
-  # `dist/macos/`) and pass `--dart-define=RUST_EMBEDDER_ORT_DYLIB_PATH=...`
-  # at `flutter run` / `flutter test` time.
+  # release-build specific (cf. lifeos-shell embedding runtime). Developers
+  # can pass `--dart-define=RUST_EMBEDDER_ORT_DYLIB_PATH=...` at
+  # `flutter run` / `flutter test` time for a manually staged library.
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     # Flutter.framework does not contain a i386 slice.
