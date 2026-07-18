@@ -72,6 +72,7 @@ class LifeActionSuggestion {
 
 enum LifeActionTemplate {
   reviewFinanceActivity,
+  reviewFinanceBudget,
   protectRecovery,
   reviewKnowledgeInbox,
   reviewAgentInsight,
@@ -83,6 +84,9 @@ enum LifeSignalPriority { high, normal }
 enum LifeEventTemplate {
   /// Today: N entries · net cash movement summary.
   financeDaySummary,
+
+  /// Current-month spending is near or above the configured budget.
+  financeBudgetPressure,
 
   /// Recovery is strained (or similar alert).
   recoveryAlert,

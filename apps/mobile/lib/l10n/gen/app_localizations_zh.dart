@@ -1253,6 +1253,17 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get lifeSignalFinanceBudgetStrainedTitle => '本月预算需要关注';
+
+  @override
+  String get lifeSignalFinanceBudgetOverTitle => '本月预算已超支';
+
+  @override
+  String lifeSignalFinanceBudgetSubtitle(String periodMonth) {
+    return '$periodMonth 支出状态 · 打开预算';
+  }
+
+  @override
   String get lifeSignalRecoveryTitle => '恢复需要关照';
 
   @override
@@ -1339,6 +1350,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get lifeSignalActionReviewFinance => '复核今日财务流水';
+
+  @override
+  String get lifeSignalActionReviewBudget => '复核本月预算';
 
   @override
   String get lifeSignalActionProtectRecovery => '今天优先保护恢复';

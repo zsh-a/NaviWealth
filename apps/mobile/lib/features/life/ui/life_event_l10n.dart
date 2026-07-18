@@ -9,6 +9,10 @@ extension LifeEventL10n on LifeEvent {
       case LifeEventTemplate.financeDaySummary:
         final n = params.isNotEmpty ? params.first : '0';
         return l10n.lifeSignalFinanceDayTitle(n);
+      case LifeEventTemplate.financeBudgetPressure:
+        return params.isNotEmpty && params.first == 'over_budget'
+            ? l10n.lifeSignalFinanceBudgetOverTitle
+            : l10n.lifeSignalFinanceBudgetStrainedTitle;
       case LifeEventTemplate.recoveryAlert:
         return l10n.lifeSignalRecoveryTitle;
       case LifeEventTemplate.executionBlocked:
@@ -32,6 +36,9 @@ extension LifeEventL10n on LifeEvent {
         final expense = params.length > 1 ? params[1] : '0';
         final income = params.length > 2 ? params[2] : '0';
         return l10n.lifeSignalFinanceDaySubtitle(expense, income);
+      case LifeEventTemplate.financeBudgetPressure:
+        final periodMonth = params.length > 1 ? params[1] : '';
+        return l10n.lifeSignalFinanceBudgetSubtitle(periodMonth);
       case LifeEventTemplate.recoveryAlert:
         return l10n.lifeSignalRecoverySubtitle;
       case LifeEventTemplate.executionBlocked:
@@ -56,6 +63,8 @@ extension LifeEventL10n on LifeEvent {
     return switch (actionSuggestion?.template) {
       LifeActionTemplate.reviewFinanceActivity =>
         l10n.lifeSignalActionReviewFinance,
+      LifeActionTemplate.reviewFinanceBudget =>
+        l10n.lifeSignalActionReviewBudget,
       LifeActionTemplate.protectRecovery =>
         l10n.lifeSignalActionProtectRecovery,
       LifeActionTemplate.reviewKnowledgeInbox =>

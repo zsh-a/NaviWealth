@@ -112,6 +112,11 @@ otherwise unevaluated source families produce no outcome instead of being
 misreported as cleared. User copy says whether the signal is currently
 detected; it never says the Action caused the change.
 
+Aggregate read-model sources use a stable, bounded identity rather than a
+guessed business row id. The current Finance budget-pressure loop uses
+`fin:budgets` plus `month:YYYY-MM`; a settled monthly read can therefore match
+the same posture signal or establish that it is no longer detected.
+
 ## AI Tools
 
 Tool barrel: `features/execution/execution_ai_tools.dart`.

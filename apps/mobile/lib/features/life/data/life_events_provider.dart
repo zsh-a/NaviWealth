@@ -10,7 +10,9 @@ import 'package:naviwealth/features/execution/domain/execution_models.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_feed_provider.dart';
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
+import 'package:naviwealth/features/finance/cashflow/domain/budget_signal.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/entry_kind.dart';
 import 'package:naviwealth/features/health/composition/health_route_paths.dart';
 import 'package:naviwealth/features/health/ui/health_today_providers.dart';
@@ -21,6 +23,7 @@ import 'package:naviwealth/features/life/domain/life_event.dart';
 
 const String kLifeHealthMetricSourceFamily = 'health:health_metrics';
 const String kLifeFinanceJournalSourceFamily = 'fin:journal_entries';
+const String kLifeFinanceBudgetSourceFamily = 'fin:budgets';
 const String kLifeAgentArtifactSourceFamily = 'agent_artifacts';
 const String kLifeKnowledgeNoteSourceFamily = 'know:knowledge_notes';
 
@@ -102,6 +105,32 @@ final lifeSignalSnapshotProvider = Provider<LifeSignalSnapshot>((ref) {
   }
 
   if (isActive(DomainScope.finance)) {
+    final periodMonth = _monthKey(now);
+    final budget = ref.watch(monthlyBudgetSignalProvider(periodMonth));
+    if (_isSettledValue(budget)) {
+      evaluatedSourceFamilies.add(kLifeFinanceBudgetSourceFamily);
+    }
+    final budgetSignal = _isSettledValue(budget) ? budget.value : null;
+    if (budgetSignal == BudgetSignal.strained ||
+        budgetSignal == BudgetSignal.overBudget) {
+      events.add(
+        LifeEvent(
+          id: 'sig-fin-budget-$periodMonth',
+          at: now,
+          domain: DomainScope.finance,
+          template: LifeEventTemplate.financeBudgetPressure,
+          params: [budgetSignal!.wire, periodMonth],
+          routePath: FinanceRoutes.planBudget,
+          priority: LifeSignalPriority.high,
+          actionSuggestion: LifeActionSuggestion(
+            template: LifeActionTemplate.reviewFinanceBudget,
+            sourceRowFamily: kLifeFinanceBudgetSourceFamily,
+            sourceRowId: 'month:$periodMonth',
+          ),
+        ),
+      );
+    }
+
     final activity = ref.watch(activityFeedProvider);
     if (_isSettledValue(activity)) {
       evaluatedSourceFamilies.add(kLifeFinanceJournalSourceFamily);
@@ -290,6 +319,12 @@ String _dayKey(DateTime value) {
   final month = local.month.toString().padLeft(2, '0');
   final day = local.day.toString().padLeft(2, '0');
   return '${local.year}-$month-$day';
+}
+
+String _monthKey(DateTime value) {
+  final local = value.toLocal();
+  final month = local.month.toString().padLeft(2, '0');
+  return '${local.year}-$month';
 }
 
 bool _isSettledValue<T>(AsyncValue<T> value) =>

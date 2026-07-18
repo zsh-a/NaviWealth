@@ -85,6 +85,7 @@ class LifePage extends ConsumerWidget {
 
   static IconData _iconFor(LifeEvent e) => switch (e.template) {
     LifeEventTemplate.financeDaySummary => FLucideIcons.receipt,
+    LifeEventTemplate.financeBudgetPressure => FLucideIcons.gauge,
     LifeEventTemplate.recoveryAlert => FLucideIcons.heartPulse,
     LifeEventTemplate.executionBlocked => FLucideIcons.octagonAlert,
     LifeEventTemplate.executionDue => FLucideIcons.calendarClock,

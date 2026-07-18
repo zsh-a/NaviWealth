@@ -99,6 +99,10 @@ Current evidence:
   after completion; loading, failed, or disabled sources remain unknown. The
   contract fixes attribution to observational and UI copy says detected/not
   detected rather than implying the Action caused a change.
+- Finance current-month budget pressure is the first deterministic Finance
+  interpretation on that contract. Strained or over-budget posture produces a
+  source-preserving Action, and only a later settled monthly budget read can
+  report whether the signal remains detected.
 
 Exit evidence:
 
@@ -186,6 +190,8 @@ future roadmap phases:
   proposal appliers, settings, data management, and background hooks.
 - Source-preserving Health, Finance, and Knowledge Life-signal-to-Execution
   loops with task-level flow coverage.
+- Deterministic Finance budget-pressure before/after interpretation through
+  the same observational Life-to-Execution contract.
 - Unified agent artifacts, result UI, preferences, scheduling, follow-up
   intents, trace links, visibility state, and FinanceOS agents.
 - Batch proposal progress, recovery, durable undo, and focused contracts.

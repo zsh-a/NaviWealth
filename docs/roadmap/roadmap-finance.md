@@ -89,13 +89,6 @@ Exit evidence:
 
 ## Next
 
-### Finance Outcome Interpretation
-
-Add Finance-specific before/after interpretation to the Life → Execution loop
-only where the signal is deterministic, such as budget posture or a stale
-import queue. Preserve source references and observational language; action
-completion must not be presented as proof of financial causality.
-
 ### Investment Decision Portability
 
 Before adding a jurisdiction-specific tax export, collect enough product
@@ -120,6 +113,10 @@ Finance business data.
 
 ## Completed Baseline
 
+- Deterministic current-month budget pressure participates in the Life →
+  Execution loop. Strained or over-budget posture preserves the `fin:budgets`
+  month aggregate source; a later settled budget read reports only whether the
+  same signal is still detected, without causal attribution.
 - Accounts, assets, liabilities, expenses, investments, activity, and wealth
   workflows.
 - FIRE planning through Phase 0–5.

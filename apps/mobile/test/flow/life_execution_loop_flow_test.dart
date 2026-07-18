@@ -1,7 +1,10 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show AsyncValue, ProviderScope;
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/budget_signal.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/health/ui/health_today_providers.dart';
 
 import 'support/app_harness.dart';
@@ -65,4 +68,61 @@ void main() {
     },
     tags: 'flow',
   );
+
+  testWidgets(
+    'Task: Improve budget posture user creates an action and sees a later observation',
+    (tester) async {
+      var budgetSignal = BudgetSignal.overBudget;
+      final data = await FlowDataHarness.create();
+      addTearDown(data.dispose);
+      await data.enableDomains(const <DomainScope>[DomainScope.execution]);
+
+      await bootApp(
+        tester,
+        liveData: data,
+        initialLocation: '/life',
+        extraOverrides: <Override>[
+          monthlyBudgetSignalProvider.overrideWith((ref, periodMonth) {
+            return AsyncValue.data(budgetSignal);
+          }),
+        ],
+      );
+
+      final life = LifePageObject(tester);
+      life.expectSignal('Monthly budget exceeded');
+      await life.openSignal('Monthly budget exceeded');
+      life.expectEvidence(
+        '${_periodMonth(DateTime.now())} spending posture · open budget',
+      );
+      await life.createAction("Review this month's budget");
+      await life.openExecution();
+
+      final execution = ExecutionTodayPageObject(tester);
+      execution.expectAction("Review this month's budget");
+      await execution.completeAction("Review this month's budget");
+
+      await AppShell(tester).openTab('Review');
+      final review = ExecutionReviewPageObject(tester);
+      review.expectCompletedAction("Review this month's budget");
+      review.expectOutcome('Finance: signal still detected');
+
+      budgetSignal = BudgetSignal.comfortable;
+      final outcomeContext = tester.element(
+        find.text('Finance: signal still detected'),
+      );
+      ProviderScope.containerOf(
+        outcomeContext,
+      ).invalidate(monthlyBudgetSignalProvider(_periodMonth(DateTime.now())));
+      await tester.pumpAndSettle();
+      review.expectOutcome('Finance: signal no longer detected');
+      await closeApp(tester);
+    },
+    tags: 'flow',
+  );
+}
+
+String _periodMonth(DateTime value) {
+  final local = value.toLocal();
+  return '${local.year.toString().padLeft(4, '0')}-'
+      '${local.month.toString().padLeft(2, '0')}';
 }

@@ -2336,6 +2336,24 @@ abstract class AppLocalizations {
   /// **'{expense} expenses · {income} income · open ledger'**
   String lifeSignalFinanceDaySubtitle(String expense, String income);
 
+  /// Life signal title when current-month spending is nearing the budget limit
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly budget needs attention'**
+  String get lifeSignalFinanceBudgetStrainedTitle;
+
+  /// Life signal title when current-month spending exceeds the budget
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly budget exceeded'**
+  String get lifeSignalFinanceBudgetOverTitle;
+
+  /// Life signal subtitle for current-month budget pressure
+  ///
+  /// In en, this message translates to:
+  /// **'{periodMonth} spending posture · open budget'**
+  String lifeSignalFinanceBudgetSubtitle(String periodMonth);
+
   /// Life signal: strained recovery title
   ///
   /// In en, this message translates to:
@@ -2479,6 +2497,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Review finance activity today'**
   String get lifeSignalActionReviewFinance;
+
+  /// Suggested action title for a Finance budget pressure signal
+  ///
+  /// In en, this message translates to:
+  /// **'Review this month\'s budget'**
+  String get lifeSignalActionReviewBudget;
 
   /// Suggested action title for a strained recovery signal
   ///

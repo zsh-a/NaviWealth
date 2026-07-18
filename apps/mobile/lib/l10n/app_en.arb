@@ -780,6 +780,15 @@
       "income": { "type": "String" }
     }
   },
+  "lifeSignalFinanceBudgetStrainedTitle": "Monthly budget needs attention",
+  "@lifeSignalFinanceBudgetStrainedTitle": { "description": "Life signal title when current-month spending is nearing the budget limit" },
+  "lifeSignalFinanceBudgetOverTitle": "Monthly budget exceeded",
+  "@lifeSignalFinanceBudgetOverTitle": { "description": "Life signal title when current-month spending exceeds the budget" },
+  "lifeSignalFinanceBudgetSubtitle": "{periodMonth} spending posture · open budget",
+  "@lifeSignalFinanceBudgetSubtitle": {
+    "description": "Life signal subtitle for current-month budget pressure",
+    "placeholders": { "periodMonth": { "type": "String" } }
+  },
   "lifeSignalRecoveryTitle": "Recovery needs care",
   "@lifeSignalRecoveryTitle": { "description": "Life signal: strained recovery title" },
   "lifeSignalRecoverySubtitle": "Open Health brief",
@@ -855,6 +864,8 @@
   "@lifeSignalOpenExecution": { "description": "Open Execution Today after creating a Life action" },
   "lifeSignalActionReviewFinance": "Review finance activity today",
   "@lifeSignalActionReviewFinance": { "description": "Suggested action title for a Finance day signal" },
+  "lifeSignalActionReviewBudget": "Review this month's budget",
+  "@lifeSignalActionReviewBudget": { "description": "Suggested action title for a Finance budget pressure signal" },
   "lifeSignalActionProtectRecovery": "Protect recovery today",
   "@lifeSignalActionProtectRecovery": { "description": "Suggested action title for a strained recovery signal" },
   "lifeSignalActionReviewKnowledge": "Review the Knowledge inbox",

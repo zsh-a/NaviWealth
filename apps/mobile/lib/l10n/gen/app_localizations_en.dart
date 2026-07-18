@@ -1291,6 +1291,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get lifeSignalFinanceBudgetStrainedTitle =>
+      'Monthly budget needs attention';
+
+  @override
+  String get lifeSignalFinanceBudgetOverTitle => 'Monthly budget exceeded';
+
+  @override
+  String lifeSignalFinanceBudgetSubtitle(String periodMonth) {
+    return '$periodMonth spending posture · open budget';
+  }
+
+  @override
   String get lifeSignalRecoveryTitle => 'Recovery needs care';
 
   @override
@@ -1378,6 +1390,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lifeSignalActionReviewFinance => 'Review finance activity today';
+
+  @override
+  String get lifeSignalActionReviewBudget => 'Review this month\'s budget';
 
   @override
   String get lifeSignalActionProtectRecovery => 'Protect recovery today';
