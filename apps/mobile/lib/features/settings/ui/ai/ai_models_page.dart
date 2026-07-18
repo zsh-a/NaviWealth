@@ -1,10 +1,8 @@
 /// AI Models settings (D-1.7c).
 ///
-/// Lets users download / verify / delete the model bundles the Rust
-/// embedder needs (EmbeddingGemma weights + ONNX Runtime native lib).
-/// Replaces the old `--dart-define`-driven manual setup with an
-/// in-app installer; the bootstrap auto-discovery picks up installed
-/// bundles next run.
+/// Lets users download, verify, and delete optional device-model bundles for
+/// memory retrieval and speech recognition. Native runtimes remain build-time
+/// dependencies while model weights are explicit, user-controlled downloads.
 ///
 /// Deliberately minimal UI:
 ///   - One card per bundle, status-driven (NotInstalled / Installing /

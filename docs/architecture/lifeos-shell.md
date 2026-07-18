@@ -269,6 +269,37 @@ Behavior:
 - Fingerprint changes drop stale vectors and allow reindexing.
 - Web does not load the native embedder.
 
+## Speech Input Runtime
+
+Speech recognition is a domain-neutral input capability, not an AI tool and
+not a source of automatic writes.
+
+Location:
+
+- Contract and platform selection: `core/speech/`.
+- Native engine: the `sherpa_onnx` Dart FFI plugin backed by C++ and ONNX Runtime.
+- Reusable draft control: `design_system/widgets/speech_input_button.dart`.
+- Model bundle: the shared AI model installer under `core/ai/local/embedding/model_*`.
+
+Behavior:
+
+- Native mobile/desktop uses the opt-in INT8 Mandarin streaming Zipformer.
+- Microphone PCM is consumed in memory and is neither persisted nor synced.
+- Partial/final transcripts only update an editable text controller. Sending,
+  saving, tool invocation, and proposal application remain explicit user actions.
+- AI Chat and Knowledge Inbox are the first callers; domains do not own or
+  import the recognizer implementation.
+- Web uses the unsupported stub and keeps microphone access disabled.
+- Android packages the ONNX Runtime supplied by `sherpa_onnx`; the Rust
+  embedder dynamically reuses that single process-wide library.
+- Model installation prefers individually checksummed files and falls back to
+  the checksummed official sherpa-onnx GitHub Release archive when the primary
+  host is unreachable. Archive extraction runs off the UI isolate and retains
+  only the four manifest-declared runtime files.
+- `apps/mobile/tool/asr_native_smoke.dart` exercises the production recognizer
+  configuration against a WAV file and the dynamic libraries from a macOS
+  build, providing an explicit native inference smoke path.
+
 ## Sync V3
 
 Location:

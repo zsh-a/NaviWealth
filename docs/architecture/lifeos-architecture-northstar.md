@@ -173,6 +173,11 @@ Current Rust surface:
   Rust.
 - Generated FRB bindings under `apps/mobile/lib/src/rust/`.
 
+The separate `sherpa_onnx` C++/Dart-FFI dependency is allowed only behind the
+domain-neutral `core/speech/` contract. It consumes microphone PCM and emits
+draft text; it does not own business policy, persistence, tools, or automatic
+writes. Web uses a stub and does not load the native runtime.
+
 Do not move business logic, Money math, market fetchers, SQL access, domain
 repositories, or local LLM model inference into Rust.
 

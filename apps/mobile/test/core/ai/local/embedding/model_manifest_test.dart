@@ -41,6 +41,41 @@ void main() {
     });
   });
 
+  group('streamingZipformerZhBundle', () {
+    final bundle = streamingZipformerZhBundle();
+
+    test('contains only the four production INT8 recognition files', () {
+      expect(
+        bundle.files.map((file) => file.localName),
+        containsAll(<String>[
+          'encoder-epoch-99-avg-1.int8.onnx',
+          'decoder-epoch-99-avg-1.int8.onnx',
+          'joiner-epoch-99-avg-1.int8.onnx',
+          'tokens.txt',
+        ]),
+      );
+      expect(bundle.files, hasLength(4));
+      expect(bundle.files.every((file) => file.sha256?.length == 64), isTrue);
+    });
+
+    test('download is approximately 25 MB', () {
+      expect(bundle.totalSizeBytes, greaterThan(24 * 1024 * 1024));
+      expect(bundle.totalSizeBytes, lessThan(26 * 1024 * 1024));
+    });
+
+    test('has a verified official GitHub archive fallback', () {
+      final archive = bundle.archiveFallback;
+      expect(archive, isNotNull);
+      expect(archive!.url, contains('github.com/k2-fsa/sherpa-onnx/releases'));
+      expect(archive.sizeBytes, 74004050);
+      expect(archive.sha256, hasLength(64));
+      expect(
+        archive.rootDirectory,
+        'sherpa-onnx-streaming-zipformer-zh-14M-2023-02-23',
+      );
+    });
+  });
+
   // ONNX Runtime is intentionally NOT in the Dart-side manifest —
   // it's build-time managed by tool/fetch-onnxruntime.sh + discovered
   // at runtime by discoverBundledOrtDylib.

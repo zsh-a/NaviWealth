@@ -22,16 +22,16 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 // NOTE: stale third-party plugins can still publish Kotlin compile tasks with
-// languageVersion/apiVersion 1.6. Flutter stable now runs KGP 2.2.x, where
-// 1.6 is rejected before tests even install on the emulator. Configure every
-// Kotlin Android task lazily so already-created and future plugin tasks are
-// normalized without afterEvaluate ordering traps.
+// languageVersion/apiVersion 1.6. Flutter stable now runs KGP 2.2.x, while
+// current plugins such as record_android require Kotlin 1.9 enum entries.
+// Configure every Kotlin Android task lazily so already-created and future
+// plugin tasks are normalized without afterEvaluate ordering traps.
 subprojects {
     fun normalizeKotlinCompileLanguage() {
         tasks.withType<KotlinCompile>().configureEach {
             compilerOptions {
-                languageVersion.set(KotlinVersion.KOTLIN_1_8)
-                apiVersion.set(KotlinVersion.KOTLIN_1_8)
+                languageVersion.set(KotlinVersion.KOTLIN_1_9)
+                apiVersion.set(KotlinVersion.KOTLIN_1_9)
             }
         }
     }

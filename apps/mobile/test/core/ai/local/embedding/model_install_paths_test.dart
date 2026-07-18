@@ -93,4 +93,23 @@ void main() {
       expect(await paths.isComplete(_bundle), isFalse);
     });
   });
+
+  test(
+    'resolveModelInstallRoot migrates the legacy embedders folder',
+    () async {
+      final support = await Directory.systemTemp.createTemp('model-root-');
+      addTearDown(() async {
+        if (support.existsSync()) await support.delete(recursive: true);
+      });
+      final legacy = Directory(p.join(support.path, 'embedders'));
+      await legacy.create();
+      await File(p.join(legacy.path, 'marker')).writeAsString('installed');
+
+      final root = await resolveModelInstallRoot(support);
+
+      expect(root.path, p.join(support.path, 'ai-models'));
+      expect(File(p.join(root.path, 'marker')).readAsStringSync(), 'installed');
+      expect(legacy.existsSync(), isFalse);
+    },
+  );
 }

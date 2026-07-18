@@ -4801,6 +4801,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatComposerStopTooltip => '停止生成';
 
   @override
+  String get speechInputStartTooltip => '开始语音输入';
+
+  @override
+  String get speechInputStopTooltip => '停止并保留文字';
+
+  @override
+  String get speechInputStartingTooltip => '正在准备端侧语音识别…';
+
+  @override
+  String get speechInputModelMissing => '请先下载中文实时语音模型';
+
+  @override
+  String get speechInputUnsupported => '当前平台暂不支持端侧语音输入';
+
+  @override
+  String get speechInputPermissionDenied => '需要麦克风权限才能使用语音输入';
+
+  @override
+  String get speechInputFailed => '语音识别启动失败，请稍后重试';
+
+  @override
   String get aiChatThinking => '正在思考…';
 
   @override
@@ -6269,7 +6290,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAiModelsTitle => 'AI 模型';
 
   @override
-  String get settingsAiModelsSubtitle => '下载与管理本地 EmbeddingGemma 模型';
+  String get settingsAiModelsSubtitle => '下载与管理本地 AI 和语音模型';
 
   @override
   String get aiLlmRuntimeCheckTitle => 'Agent Runtime';
@@ -6907,11 +6928,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsAiModelsHint =>
-      'AI 记忆检索默认走轻量 stub。下载 EmbeddingGemma 模型后重启应用即可启用本地多语言句向量（768-d）。文件保存在本机，不上传任何远端。ONNX Runtime 引擎已随 app 一起构建，无需单独管理。';
+      '模型文件仅保存在本机，不会上传。EmbeddingGemma 用于本地记忆检索；Zipformer 用于普通话实时语音输入。ONNX Runtime 已随应用构建，无需单独管理。';
 
   @override
   String get settingsAiModelsFootnote =>
-      '下载完成后，请重启应用让 Memory Runtime 使用新 embedder。已有的记忆条目会在下次 indexer 周期自动用新模型重新生成 vector，原始 typed records 保持不变。';
+      '语音模型下载后可在下一次点击麦克风时直接使用。EmbeddingGemma 下载后需重启应用，已有记忆会在下次索引周期自动重新生成向量，原始记录保持不变。';
 
   @override
   String settingsAiModelsStateLoadFailed(String error) {
@@ -6947,7 +6968,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsAiModelsDeleteBody =>
-      '删除后 AI 检索会自动回到 stub embedder。重新下载需要再走一次网络。';
+      '删除后，对应的端侧能力将不可用或回退到轻量实现。重新启用需要再次联网下载。';
 
   @override
   String get settingsAiModelsActiveRuntimeTitle => '当前运行的 embedder';

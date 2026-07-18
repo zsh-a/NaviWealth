@@ -14,6 +14,7 @@ library;
 
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'model_downloader.dart';
@@ -131,11 +132,15 @@ class ModelInstallController extends AsyncNotifier<ModelBundleState> {
   Future<ModelBundleState> build() async {
     final paths = await ref.watch(modelInstallPathsProvider.future);
     _paths = paths;
-    _downloader ??= ModelDownloader();
+    _downloader ??= ref.read(modelDownloaderProvider);
     final dir = paths.dirForBundle(_bundle);
     if (!dir.existsSync()) {
       await dir.create(recursive: true);
     }
+    await _downloader!.cleanupTransientFiles(
+      bundle: _bundle,
+      destDir: dir.path,
+    );
     final fileStates = <ModelFileState>[
       for (final f in _bundle.files) await _scanFileState(f, dir.path),
     ];
@@ -210,6 +215,17 @@ class ModelInstallController extends AsyncNotifier<ModelBundleState> {
             ),
           );
         } on Object catch (e) {
+          if (e is! StateError || !e.message.contains('cancelled')) {
+            if (current.bundle.archiveFallback != null) {
+              await _installArchiveFallback(
+                downloader: downloader,
+                current: current,
+                cancellation: cancellation,
+                primaryError: e,
+              );
+              break;
+            }
+          }
           _updateFile(
             i,
             state.value!.files[i].copyWith(
@@ -227,6 +243,83 @@ class ModelInstallController extends AsyncNotifier<ModelBundleState> {
       state = AsyncData(after.copyWith(isInstalling: false));
       _cancellation = null;
     }
+  }
+
+  Future<void> _installArchiveFallback({
+    required ModelDownloader downloader,
+    required ModelBundleState current,
+    required DownloadCancellation cancellation,
+    required Object primaryError,
+  }) async {
+    _updateArchiveProgress(0);
+    try {
+      await downloader.downloadArchiveFallback(
+        bundle: current.bundle,
+        destDir: current.installDir,
+        cancel: cancellation,
+        onProgress: (received, total) {
+          final archiveSize =
+              total ?? current.bundle.archiveFallback!.sizeBytes;
+          final ratio = archiveSize <= 0 ? 0.0 : received / archiveSize;
+          _updateArchiveProgress(ratio.clamp(0.0, 1.0));
+        },
+      );
+      final latest = state.value;
+      if (latest == null) return;
+      state = AsyncData(
+        latest.copyWith(
+          files: [
+            for (final fileState in latest.files)
+              fileState.copyWith(
+                status: ModelFileStatus.installed,
+                bytesDownloaded: fileState.file.sizeBytes ?? 0,
+                clearError: true,
+              ),
+          ],
+        ),
+      );
+    } on Object catch (fallbackError) {
+      final latest = state.value;
+      if (latest == null) return;
+      final message =
+          'primary download failed: $primaryError; '
+          'archive fallback failed: $fallbackError';
+      state = AsyncData(
+        latest.copyWith(
+          files: [
+            for (final fileState in latest.files)
+              if (fileState.status == ModelFileStatus.installed)
+                fileState
+              else
+                fileState.copyWith(
+                  status: ModelFileStatus.failed,
+                  error: message,
+                ),
+          ],
+        ),
+      );
+    }
+  }
+
+  void _updateArchiveProgress(double ratio) {
+    final latest = state.value;
+    if (latest == null) return;
+    state = AsyncData(
+      latest.copyWith(
+        files: [
+          for (final fileState in latest.files)
+            if (fileState.status == ModelFileStatus.installed)
+              fileState
+            else
+              fileState.copyWith(
+                status: ModelFileStatus.downloading,
+                bytesDownloaded: ((fileState.file.sizeBytes ?? 0) * ratio)
+                    .round(),
+                clearError: true,
+              ),
+        ],
+      ),
+    );
   }
 
   /// Abort the in-flight install. Files already on disk stay; the
@@ -263,21 +356,24 @@ class ModelInstallController extends AsyncNotifier<ModelBundleState> {
   }
 }
 
-/// Per-bundle install controller. The Settings UI listens on this
-/// for the bundles it cares about (EmbeddingGemma + ORT).
+final modelDownloaderProvider = Provider<ModelDownloader>((ref) {
+  return ModelDownloader();
+});
+
+/// Per-bundle install controller. The Settings UI listens on this for every
+/// optional device model.
 final modelInstallProvider = AsyncNotifierProvider.autoDispose
     .family<ModelInstallController, ModelBundleState, ModelBundle>(
       ModelInstallController.new,
     );
 
-/// Static list of bundles the app knows how to install. The UI
-/// iterates this. Extending: add another entry (e.g. for a future
-/// Whisper model) — no other touchpoints needed.
+/// Static list of bundles the app knows how to install. The UI iterates this;
+/// each native capability elects its own installed bundle.
 ///
 /// ONNX Runtime is **not** on this list — it's a Rust crate
 /// dependency managed at build time by `tool/fetch-onnxruntime.sh`,
 /// not user-installable data. See `lifeos-shell.md` §6.6 + the
 /// `discoverBundledOrtDylib` resolver.
 final knownModelBundlesProvider = Provider<List<ModelBundle>>((ref) {
-  return [embeddingGemmaBundle()];
+  return [embeddingGemmaBundle(), if (!kIsWeb) streamingZipformerZhBundle()];
 });

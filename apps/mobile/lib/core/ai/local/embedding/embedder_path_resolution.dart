@@ -82,7 +82,10 @@ Future<EmbedderPathResolution> resolveEmbedderPaths(
     try {
       final support =
           supportDirectory ?? await getApplicationSupportDirectory();
-      final root = Directory(p.join(support.path, 'embedders'));
+      final root = await resolveModelInstallRoot(
+        support,
+        createIfMissing: false,
+      );
       final gemma = embeddingGemmaBundle();
       final gemmaDir = Directory(p.join(root.path, gemma.id));
       final paths = ModelInstallPaths.unsafeForDir(root);
@@ -135,14 +138,16 @@ String? discoverBundledOrtDylib({
   final execDir = File(
     resolvedExecutable ?? Platform.resolvedExecutable,
   ).parent;
-  final dylibName = platform == EmbedderHostPlatform.macos
-      ? 'libonnxruntime.dylib'
-      : 'libonnxruntime.so';
+  final dylibNames = platform == EmbedderHostPlatform.macos
+      ? const ['libonnxruntime.1.27.0.dylib', 'libonnxruntime.dylib']
+      : const ['libonnxruntime.so'];
 
   final candidates = <String>[
-    if (platform == EmbedderHostPlatform.macos)
-      p.join(execDir.parent.path, 'Frameworks', dylibName),
-    p.join(execDir.path, dylibName),
+    for (final dylibName in dylibNames) ...[
+      if (platform == EmbedderHostPlatform.macos)
+        p.join(execDir.parent.path, 'Frameworks', dylibName),
+      p.join(execDir.path, dylibName),
+    ],
   ];
   for (final candidate in candidates) {
     final normalised = p.normalize(candidate);

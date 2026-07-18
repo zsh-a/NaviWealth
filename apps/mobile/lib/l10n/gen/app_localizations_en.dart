@@ -5056,6 +5056,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatComposerStopTooltip => 'Stop generating';
 
   @override
+  String get speechInputStartTooltip => 'Start voice input';
+
+  @override
+  String get speechInputStopTooltip => 'Stop and keep transcript';
+
+  @override
+  String get speechInputStartingTooltip =>
+      'Preparing on-device speech recognition…';
+
+  @override
+  String get speechInputModelMissing =>
+      'Download the real-time Chinese speech model first';
+
+  @override
+  String get speechInputUnsupported =>
+      'On-device voice input is unavailable on this platform';
+
+  @override
+  String get speechInputPermissionDenied =>
+      'Microphone permission is required for voice input';
+
+  @override
+  String get speechInputFailed =>
+      'Speech recognition could not start. Try again later';
+
+  @override
   String get aiChatThinking => 'Thinking…';
 
   @override
@@ -6575,7 +6601,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAiModelsSubtitle =>
-      'Download and manage the local EmbeddingGemma model';
+      'Download and manage local AI and speech models';
 
   @override
   String get aiLlmRuntimeCheckTitle => 'Agent runtime';
@@ -7258,11 +7284,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAiModelsHint =>
-      'AI memory retrieval uses the lightweight stub by default. Download EmbeddingGemma and restart the app to enable local multilingual sentence vectors (768-d). Files stay on this device and are never uploaded. ONNX Runtime is bundled with the app.';
+      'Model files stay on this device and are never uploaded. EmbeddingGemma powers local memory retrieval; Zipformer powers real-time Mandarin voice input. ONNX Runtime is bundled with the app.';
 
   @override
   String get settingsAiModelsFootnote =>
-      'After download, restart the app so Memory Runtime uses the new embedder. Existing memory records will be re-indexed with the new model in the next indexer cycle; original typed records stay unchanged.';
+      'The speech model is available on the next microphone tap. After downloading EmbeddingGemma, restart the app; existing memories are re-indexed in the next cycle and original records remain unchanged.';
 
   @override
   String settingsAiModelsStateLoadFailed(String error) {
@@ -7298,7 +7324,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAiModelsDeleteBody =>
-      'After deletion, AI retrieval will fall back to the stub embedder. Redownloading requires network access again.';
+      'After deletion, the corresponding on-device capability becomes unavailable or falls back to its lightweight implementation. Re-enabling it requires another download.';
 
   @override
   String get settingsAiModelsActiveRuntimeTitle => 'Running embedder';

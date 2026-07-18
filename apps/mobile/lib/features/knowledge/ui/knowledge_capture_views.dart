@@ -231,6 +231,10 @@ class _ComposeBody extends StatelessWidget {
           minLines: 4,
           maxLines: 8,
         ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: SpeechInputButton(controller: bodyController),
+        ),
       ],
     );
   }
@@ -292,11 +296,7 @@ class _CaptureKindChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppFilterChip(
-      label: label,
-      active: selected,
-      onPress: onTap,
-    );
+    return AppFilterChip(label: label, active: selected, onPress: onTap);
   }
 }
 

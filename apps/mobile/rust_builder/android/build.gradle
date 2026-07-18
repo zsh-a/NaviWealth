@@ -55,55 +55,7 @@ cargokit {
     libname = "lifeos_native"
 }
 
-// ONNX Runtime is dynamically loaded by the Rust `ort-load-dynamic`
-// feature, so Android release/debug artifacts must package
-// libonnxruntime.so for every ABI that Cargokit builds.
-android.libraryVariants.all { variant ->
-    def buildType = variant.buildType.name
-    def capitalized = buildType.capitalize()
-    def ortJniDir = file("$buildDir/generated/onnxruntime/jniLibs/$buildType")
-    android.sourceSets.maybeCreate(buildType).jniLibs.srcDir(ortJniDir)
-
-    def task = tasks.register("embedOnnxRuntime${capitalized}") {
-        outputs.dir(ortJniDir)
-        outputs.upToDateWhen { false }
-        doLast {
-            def platforms = []
-            try {
-                platforms = com.flutter.gradle.FlutterPluginUtils.getTargetPlatforms(project).collect()
-            } catch (Exception ignored) {
-                platforms = ["android-arm64"]
-            }
-            if (buildType == "debug") {
-                platforms.add("android-arm")
-                platforms.add("android-x86")
-                platforms.add("android-x64")
-            }
-            def triples = platforms.collect { platform ->
-                switch (platform) {
-                    case "android-arm64": return "aarch64-linux-android"
-                    case "android-arm": return "armv7-linux-androideabi"
-                    case "android-x64": return "x86_64-linux-android"
-                    case "android-x86": return "i686-linux-android"
-                    default: return null
-                }
-            }.findAll { it != null }.unique()
-            if (triples.isEmpty()) {
-                triples = ["aarch64-linux-android"]
-            }
-            exec {
-                executable "../../../../tool/embed-onnxruntime-android.sh"
-                args ortJniDir.absolutePath, triples.join(",")
-            }
-        }
-    }
-
-    tasks.whenTaskAdded { newTask ->
-        if (newTask.name == "merge${capitalized}NativeLibs") {
-            newTask.dependsOn(task)
-        }
-    }
-    tasks.matching { it.name == "merge${capitalized}NativeLibs" }.configureEach {
-        dependsOn(task)
-    }
-}
+// `sherpa_onnx` owns the single packaged libonnxruntime.so for every Android
+// ABI. The Rust embedder dynamically resolves that same runtime by soname.
+// Packaging a second copy here causes a Gradle merge collision and risks
+// loading two incompatible ORT versions in one process.

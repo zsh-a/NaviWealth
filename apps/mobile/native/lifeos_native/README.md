@@ -157,16 +157,16 @@ force-loaded into the Flutter app). The dylib is discovered at
 runtime via `ORT_DYLIB_PATH`.
 
 **`tool/fetch-onnxruntime.sh`** downloads the correct
-`libonnxruntime` version for a cargo target. Production Flutter builds invoke
-the platform embedding scripts from Gradle/Xcode and place the library in the
-application bundle:
+`libonnxruntime` version for standalone tests. Production Flutter builds use
+the matching native runtime packaged by `sherpa_onnx`:
 
-- `bootstrap.dart`'s `_discoverBundledOrtDylib` finds it at runtime
+- bootstrap path discovery finds it at runtime
   via path math around `Platform.resolvedExecutable` (no
   `--dart-define` needed for the dev path)
-- ORT version is pinned to **1.24.2** to match what
-  `ort 2.0.0-rc.12` expects (the version `fastembed 5.13` brings
-  in); the script cache lives in `.cache/onnxruntime/`
+- ORT version is pinned to **1.27.0**, shared with `sherpa_onnx 1.13.4` so
+  Android packages one `libonnxruntime.so` per ABI. The Rust `ort` client uses
+  the compatible C API from that process-wide runtime; the script cache lives
+  in `.cache/onnxruntime/`.
 
 Downloading manually is only needed if `fetch-onnxruntime.sh` can't
 hit the network (firewalled CI). The script is small and easy to
@@ -189,9 +189,8 @@ recommended path for end users is the **in-app installer** under
 2. Tap "下载" on EmbeddingGemma (~330 MB)
 3. Restart the app — bootstrap auto-detects:
    - the in-app installer's model dir at
-     `<app_support>/embedders/embeddinggemma-300m-onnx/`
-   - the build-bundled `libonnxruntime.dylib` next to the executable
-     (placed there by `tool/fetch-onnxruntime.sh`)
+     `<app_support>/ai-models/embeddinggemma-300m-onnx/`
+   - the sherpa-bundled `libonnxruntime.1.27.0.dylib` next to the executable
    then swaps in the Rust embedder. The Memory Runtime's
    `dropStaleVectors()` clears embeddings from the prior fingerprint,
    and the next indexer cycle re-embeds with EmbeddingGemma. Typed
@@ -200,10 +199,9 @@ recommended path for end users is the **in-app installer** under
 No `--dart-define` needed for the in-app installer + build-bundled
 ORT flow. Files live in:
 
-- `<app_support>/embedders/embeddinggemma-300m-onnx/` — 6 files
+- `<app_support>/ai-models/embeddinggemma-300m-onnx/` — 6 files
   (`model_quantized.onnx` + `model_quantized.onnx_data` + 4 JSON)
-- `<liblifeos_native dir>/libonnxruntime.dylib` — bundled by the normal
-  Flutter platform build
+- `<app>/Frameworks/libonnxruntime.1.27.0.dylib` — bundled by sherpa-onnx
 
 ### Developer overrides (`--dart-define`)
 

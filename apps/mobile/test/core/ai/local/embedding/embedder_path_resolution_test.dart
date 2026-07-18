@@ -45,7 +45,7 @@ void main() {
     'detects an installed EmbeddingGemma bundle under app support',
     () async {
       final bundle = embeddingGemmaBundle();
-      final dir = Directory(p.join(tmp.path, 'embedders', bundle.id));
+      final dir = Directory(p.join(tmp.path, 'ai-models', bundle.id));
       await dir.create(recursive: true);
       for (final f in bundle.files) {
         final disk = File(p.join(dir.path, f.localName));
@@ -72,6 +72,22 @@ void main() {
     final frameworks = Directory(p.join(tmp.path, 'Frameworks'));
     await frameworks.create(recursive: true);
     final ort = p.join(frameworks.path, 'libonnxruntime.dylib');
+    await File(ort).writeAsBytes(const [1]);
+
+    expect(
+      discoverBundledOrtDylib(
+        hostPlatform: EmbedderHostPlatform.macos,
+        resolvedExecutable: exec,
+      ),
+      ort,
+    );
+  });
+
+  test('prefers sherpa bundled versioned macOS ORT', () async {
+    final exec = p.join(tmp.path, 'MacOS', 'NaviWealth');
+    final frameworks = Directory(p.join(tmp.path, 'Frameworks'));
+    await frameworks.create(recursive: true);
+    final ort = p.join(frameworks.path, 'libonnxruntime.1.27.0.dylib');
     await File(ort).writeAsBytes(const [1]);
 
     expect(

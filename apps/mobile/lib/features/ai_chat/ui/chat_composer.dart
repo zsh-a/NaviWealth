@@ -182,6 +182,11 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.s8),
+                  SpeechInputButton(
+                    controller: _controller,
+                    enabled: !widget._busy,
+                  ),
+                  const SizedBox(width: AppSpacing.s8),
                   _TrailingButton(
                     controller: _controller,
                     isStreaming: widget.isStreaming,
@@ -223,9 +228,9 @@ class _ProfileCaption extends ConsumerWidget {
                 const SizedBox(width: AppSpacing.s4),
                 Text(
                   active.displayName,
-                  style: AiType.meta(context).copyWith(
-                    color: AiTone.muted(context),
-                  ),
+                  style: AiType.meta(
+                    context,
+                  ).copyWith(color: AiTone.muted(context)),
                 ),
               ],
             ),

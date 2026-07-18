@@ -1,0 +1,210 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../core/shell/settings_route_paths.dart';
+import '../../core/speech/speech_recognizer.dart';
+import '../../core/speech/speech_recognizer_provider.dart';
+import '../../l10n/gen/app_localizations.dart';
+import '../tokens/dimens_tokens.dart';
+import 'app_toast.dart';
+
+/// Reusable push-to-dictate control that only writes editable draft text.
+///
+/// Recognition never submits the form or invokes an AI tool. The caller's
+/// [controller] remains the source of truth and the user can edit the final
+/// transcript before sending or saving it.
+class SpeechInputButton extends ConsumerStatefulWidget {
+  const SpeechInputButton({
+    super.key,
+    required this.controller,
+    this.enabled = true,
+  });
+
+  final TextEditingController controller;
+  final bool enabled;
+
+  @override
+  ConsumerState<SpeechInputButton> createState() => _SpeechInputButtonState();
+}
+
+enum _SpeechButtonState { idle, starting, listening, stopping }
+
+class _SpeechInputButtonState extends ConsumerState<SpeechInputButton> {
+  _SpeechButtonState _state = _SpeechButtonState.idle;
+  SpeechRecognitionSession? _session;
+  StreamSubscription<SpeechRecognitionEvent>? _events;
+  String _baseText = '';
+
+  bool get _busy => _state != _SpeechButtonState.idle;
+
+  @override
+  void didUpdateWidget(SpeechInputButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.enabled && !widget.enabled && _busy) {
+      unawaited(_cancel());
+    }
+  }
+
+  @override
+  void dispose() {
+    unawaited(_events?.cancel());
+    unawaited(_session?.cancel());
+    super.dispose();
+  }
+
+  Future<void> _toggle() =>
+      _state == _SpeechButtonState.listening ? _stop() : _start();
+
+  Future<void> _start() async {
+    if (!widget.enabled || _busy) return;
+    setState(() => _state = _SpeechButtonState.starting);
+    final l10n = AppLocalizations.of(context);
+    try {
+      final recognizer = ref.read(speechRecognizerProvider);
+      final status = await recognizer.status();
+      if (!mounted) return;
+      if (!widget.enabled || _state != _SpeechButtonState.starting) return;
+      switch (status.availability) {
+        case SpeechRecognizerAvailability.modelNotInstalled:
+          setState(() => _state = _SpeechButtonState.idle);
+          AppMessenger.show(
+            context,
+            ToastKind.info,
+            l10n.speechInputModelMissing,
+          );
+          unawaited(context.push(SettingsRoutes.aiModels));
+          return;
+        case SpeechRecognizerAvailability.unsupported:
+          setState(() => _state = _SpeechButtonState.idle);
+          AppMessenger.show(
+            context,
+            ToastKind.warning,
+            l10n.speechInputUnsupported,
+          );
+          return;
+        case SpeechRecognizerAvailability.ready:
+          break;
+      }
+
+      _baseText = widget.controller.text;
+      final session = await recognizer.start();
+      if (!mounted ||
+          !widget.enabled ||
+          _state != _SpeechButtonState.starting) {
+        await session.cancel();
+        return;
+      }
+      _session = session;
+      _events = session.events.listen(
+        _applyTranscript,
+        onError: (Object error, StackTrace stackTrace) {
+          if (!mounted) return;
+          AppMessenger.show(context, ToastKind.error, l10n.speechInputFailed);
+          unawaited(_cancel());
+        },
+      );
+      setState(() => _state = _SpeechButtonState.listening);
+    } on SpeechRecognitionException catch (error) {
+      if (!mounted || _state != _SpeechButtonState.starting) return;
+      setState(() => _state = _SpeechButtonState.idle);
+      final message = switch (error.code) {
+        SpeechRecognitionErrorCode.modelNotInstalled =>
+          l10n.speechInputModelMissing,
+        SpeechRecognitionErrorCode.permissionDenied =>
+          l10n.speechInputPermissionDenied,
+        SpeechRecognitionErrorCode.recorderUnavailable ||
+        SpeechRecognitionErrorCode.runtimeUnavailable => l10n.speechInputFailed,
+      };
+      AppMessenger.show(context, ToastKind.error, message);
+    } on Object {
+      if (!mounted || _state != _SpeechButtonState.starting) return;
+      setState(() => _state = _SpeechButtonState.idle);
+      AppMessenger.show(context, ToastKind.error, l10n.speechInputFailed);
+    }
+  }
+
+  void _applyTranscript(SpeechRecognitionEvent event) {
+    if (!mounted) return;
+    final separator = _baseText.isEmpty || RegExp(r'\s$').hasMatch(_baseText)
+        ? ''
+        : '\n';
+    final text = '$_baseText$separator${event.text}';
+    widget.controller.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+
+  Future<void> _stop() async {
+    final session = _session;
+    if (session == null || _state != _SpeechButtonState.listening) return;
+    setState(() => _state = _SpeechButtonState.stopping);
+    try {
+      await session.stop();
+      // A session may publish its final transcript asynchronously immediately
+      // before stop completes. Yield once before detaching the listener.
+      await Future<void>.delayed(Duration.zero);
+    } on Object {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).speechInputFailed,
+        );
+      }
+    } finally {
+      await _reset();
+    }
+  }
+
+  Future<void> _cancel() async {
+    try {
+      await _session?.cancel();
+    } finally {
+      await _reset();
+    }
+  }
+
+  Future<void> _reset() async {
+    final events = _events;
+    _events = null;
+    _session = null;
+    if (mounted) setState(() => _state = _SpeechButtonState.idle);
+    await events?.cancel();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (kIsWeb) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    final listening = _state == _SpeechButtonState.listening;
+    final loading =
+        _state == _SpeechButtonState.starting ||
+        _state == _SpeechButtonState.stopping;
+    final tooltip = listening
+        ? l10n.speechInputStopTooltip
+        : loading
+        ? l10n.speechInputStartingTooltip
+        : l10n.speechInputStartTooltip;
+    return FTooltip(
+      tipBuilder: (_, _) => Text(tooltip),
+      child: FButton.icon(
+        variant: listening
+            ? FButtonVariant.destructive
+            : FButtonVariant.secondary,
+        onPress: widget.enabled && !loading ? _toggle : null,
+        child: loading
+            ? const SizedBox.square(
+                dimension: AppIconSizes.sm,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(listening ? FLucideIcons.square : FLucideIcons.mic),
+      ),
+    );
+  }
+}

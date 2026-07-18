@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,6 +29,8 @@ String _sha256Hex(List<int> bytes) => sha256.convert(bytes).toString();
 
 Dio _dioWith(_DownloadReply reply) =>
     Dio()..httpClientAdapter = _DownloadAdapter(reply);
+
+const _realArchivePath = String.fromEnvironment('ASR_ARCHIVE_PATH');
 
 class _DownloadReply {
   const _DownloadReply(
@@ -60,6 +63,32 @@ class _DownloadAdapter implements HttpClientAdapter {
       200,
       headers: <String, List<String>>{
         Headers.contentLengthHeader: <String>[reply.payload.length.toString()],
+        Headers.contentTypeHeader: <String>['application/octet-stream'],
+      },
+    );
+  }
+}
+
+class _FileDownloadAdapter implements HttpClientAdapter {
+  _FileDownloadAdapter(this.path);
+
+  final String path;
+
+  @override
+  void close({bool force = false}) {}
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    final file = File(path);
+    return ResponseBody(
+      file.openRead().map(Uint8List.fromList),
+      200,
+      headers: <String, List<String>>{
+        Headers.contentLengthHeader: <String>[(await file.length()).toString()],
         Headers.contentTypeHeader: <String>['application/octet-stream'],
       },
     );
@@ -198,4 +227,77 @@ void main() {
       expect(bytes[0], newPayload[0]);
     });
   });
+
+  test('archive fallback extracts and verifies only manifest files', () async {
+    final first = _bytes(512, seed: 3);
+    final second = _bytes(768, seed: 5);
+    final archive = Archive()
+      ..addFile(ArchiveFile.bytes('model-root/one.bin', first))
+      ..addFile(ArchiveFile.bytes('model-root/two.bin', second))
+      ..addFile(ArchiveFile.string('model-root/ignored.txt', 'not installed'));
+    final tarBytes = TarEncoder().encodeBytes(archive);
+    final archiveBytes = BZip2Encoder().encodeBytes(tarBytes);
+    final bundle = ModelBundle(
+      id: 'archive-test',
+      displayName: 'Archive test',
+      description: 'Archive test',
+      archiveFallback: ModelArchiveSource(
+        url: 'https://models.test/model.tar.bz2',
+        sizeBytes: archiveBytes.length,
+        sha256: _sha256Hex(archiveBytes),
+        rootDirectory: 'model-root',
+      ),
+      files: [
+        ModelFile(
+          localName: 'one.bin',
+          url: 'https://primary.test/one.bin',
+          sizeBytes: first.length,
+          sha256: _sha256Hex(first),
+        ),
+        ModelFile(
+          localName: 'two.bin',
+          url: 'https://primary.test/two.bin',
+          sizeBytes: second.length,
+          sha256: _sha256Hex(second),
+        ),
+      ],
+    );
+
+    await ModelDownloader(
+      dio: _dioWith(_DownloadReply(archiveBytes)),
+    ).downloadArchiveFallback(bundle: bundle, destDir: tmp.path);
+
+    expect(await File(p.join(tmp.path, 'one.bin')).readAsBytes(), first);
+    expect(await File(p.join(tmp.path, 'two.bin')).readAsBytes(), second);
+    expect(File(p.join(tmp.path, 'ignored.txt')).existsSync(), isFalse);
+    expect(
+      Directory(
+        tmp.path,
+      ).listSync().whereType<File>().map((file) => p.basename(file.path)),
+      unorderedEquals(<String>['one.bin', 'two.bin']),
+    );
+  });
+
+  test(
+    'real official archive matches the production manifest',
+    () async {
+      final dio = Dio()
+        ..httpClientAdapter = _FileDownloadAdapter(_realArchivePath);
+      final bundle = streamingZipformerZhBundle();
+
+      await ModelDownloader(
+        dio: dio,
+      ).downloadArchiveFallback(bundle: bundle, destDir: tmp.path);
+
+      expect(
+        Directory(
+          tmp.path,
+        ).listSync().whereType<File>().map((file) => p.basename(file.path)),
+        unorderedEquals(bundle.files.map((file) => file.localName)),
+      );
+    },
+    skip: _realArchivePath.isEmpty
+        ? 'Set ASR_ARCHIVE_PATH to run the official archive smoke.'
+        : false,
+  );
 }

@@ -7,12 +7,13 @@
 # normal `flutter run` and `flutter build` commands.
 #
 # Why a separate script: `ort 2.0.0-rc.12` (the version `fastembed`
-# pulls in) is built against ONNX Runtime 1.24.2. The CocoaPods
+# pulls in) uses the ONNX Runtime C API. Keep this aligned with the sherpa-onnx
+# native packages so the app ships one runtime per process. The CocoaPods
 # `onnxruntime-c` pod only publishes up to 1.21.0, which is ABI-
 # incompatible. We side-step that by fetching the matching dylib
 # directly from Microsoft's GitHub release.
 #
-# The dylib version (e.g. `libonnxruntime.1.24.2.dylib`) is renamed
+# The dylib version (e.g. `libonnxruntime.1.27.0.dylib`) is renamed
 # to the unversioned `libonnxruntime.dylib` so our embedder loader
 # can use a stable filename across ORT bumps.
 #
@@ -29,7 +30,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-ORT_VERSION="1.24.2"
+ORT_VERSION="1.27.0"
 ORT_CACHE="$REPO_ROOT/.cache/onnxruntime/$ORT_VERSION"
 
 TARGET="${1:-}"
@@ -123,7 +124,7 @@ fi
 cp -f "$EXTRACT_DIR/$INNER_LIB" "$DEST_DIR/$OUT_NAME"
 
 # macOS: the dylib's `LC_ID_DYLIB` typically points at the upstream
-# install path (e.g. `@rpath/libonnxruntime.1.24.2.dylib`). When ort
+# install path (e.g. `@rpath/libonnxruntime.1.27.0.dylib`). When ort
 # dlopens it under our chosen filename, dyld can complain that the
 # loaded library's id doesn't match. Patch the id to the simpler
 # unversioned name so `dlopen("libonnxruntime.dylib")` is consistent.

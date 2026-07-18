@@ -8604,6 +8604,48 @@ abstract class AppLocalizations {
   /// **'Stop generating'**
   String get aiChatComposerStopTooltip;
 
+  /// No description provided for @speechInputStartTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Start voice input'**
+  String get speechInputStartTooltip;
+
+  /// No description provided for @speechInputStopTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop and keep transcript'**
+  String get speechInputStopTooltip;
+
+  /// No description provided for @speechInputStartingTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing on-device speech recognition…'**
+  String get speechInputStartingTooltip;
+
+  /// No description provided for @speechInputModelMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Download the real-time Chinese speech model first'**
+  String get speechInputModelMissing;
+
+  /// No description provided for @speechInputUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'On-device voice input is unavailable on this platform'**
+  String get speechInputUnsupported;
+
+  /// No description provided for @speechInputPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone permission is required for voice input'**
+  String get speechInputPermissionDenied;
+
+  /// No description provided for @speechInputFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Speech recognition could not start. Try again later'**
+  String get speechInputFailed;
+
   /// No description provided for @aiChatThinking.
   ///
   /// In en, this message translates to:
@@ -11187,7 +11229,7 @@ abstract class AppLocalizations {
   /// Settings tile subtitle for local AI model management
   ///
   /// In en, this message translates to:
-  /// **'Download and manage the local EmbeddingGemma model'**
+  /// **'Download and manage local AI and speech models'**
   String get settingsAiModelsSubtitle;
 
   /// Title for the LLM settings card that checks the FRB-backed agent runtime path
@@ -12343,13 +12385,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAiModelsHint.
   ///
   /// In en, this message translates to:
-  /// **'AI memory retrieval uses the lightweight stub by default. Download EmbeddingGemma and restart the app to enable local multilingual sentence vectors (768-d). Files stay on this device and are never uploaded. ONNX Runtime is bundled with the app.'**
+  /// **'Model files stay on this device and are never uploaded. EmbeddingGemma powers local memory retrieval; Zipformer powers real-time Mandarin voice input. ONNX Runtime is bundled with the app.'**
   String get settingsAiModelsHint;
 
   /// No description provided for @settingsAiModelsFootnote.
   ///
   /// In en, this message translates to:
-  /// **'After download, restart the app so Memory Runtime uses the new embedder. Existing memory records will be re-indexed with the new model in the next indexer cycle; original typed records stay unchanged.'**
+  /// **'The speech model is available on the next microphone tap. After downloading EmbeddingGemma, restart the app; existing memories are re-indexed in the next cycle and original records remain unchanged.'**
   String get settingsAiModelsFootnote;
 
   /// No description provided for @settingsAiModelsStateLoadFailed.
@@ -12415,7 +12457,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAiModelsDeleteBody.
   ///
   /// In en, this message translates to:
-  /// **'After deletion, AI retrieval will fall back to the stub embedder. Redownloading requires network access again.'**
+  /// **'After deletion, the corresponding on-device capability becomes unavailable or falls back to its lightweight implementation. Re-enabling it requires another download.'**
   String get settingsAiModelsDeleteBody;
 
   /// No description provided for @settingsAiModelsActiveRuntimeTitle.

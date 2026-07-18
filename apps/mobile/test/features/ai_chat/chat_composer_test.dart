@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -76,20 +77,22 @@ Future<void> _pumpComposer(
   String? initialText,
 }) {
   return tester.pumpWidget(
-    MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: locale,
-      home: Scaffold(
-        body: Align(
-          alignment: Alignment.bottomCenter,
-          child: ChatComposer(
-            isStreaming: isStreaming,
-            initialText: initialText,
-            onSend: onSend,
-            onCancel: onCancel,
+    ProviderScope(
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: locale,
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.bottomCenter,
+            child: ChatComposer(
+              isStreaming: isStreaming,
+              initialText: initialText,
+              onSend: onSend,
+              onCancel: onCancel,
+            ),
           ),
         ),
       ),

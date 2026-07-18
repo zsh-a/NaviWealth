@@ -7,6 +7,7 @@ environment:
   sdk: ^3.11.5
 
 dependencies:
+  archive: ^4.0.9
   charset: ^2.0.1
   collection: ^1.19.1
   cross_file: ^0.3.5+4
@@ -57,9 +58,11 @@ dependencies:
   # SwiftPM-only on iOS, but this app's local lifeos_native FFI plugin still
   # relies on Cargokit's CocoaPods build phase for Rust.
   receive_sharing_intent: 1.8.1
+  record: ^7.1.1
   sentry_flutter: ^9.24.0
   share_plus: ^13.2.1
   shared_preferences: ^2.5.5
+  sherpa_onnx: ^1.13.4
   sqlite3: ^3.4.0
   talker: ^5.1.19
   talker_dio_logger: ^5.1.19

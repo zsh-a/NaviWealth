@@ -1,7 +1,7 @@
 /// Install-directory conventions for embedder model bundles
 /// (D-1.7c per `docs/architecture/lifeos-shell.md` §6.6).
 ///
-/// Bundles live under `<app_support>/embedders/<bundle.id>/`. App
+/// Bundles live under `<app_support>/ai-models/<bundle.id>/`. App
 /// Support is the right home: it survives app updates, doesn't sync
 /// to iCloud, and isn't visible in the iOS Files app (we don't want
 /// users casually deleting model files).
@@ -27,7 +27,7 @@ class ModelInstallPaths {
   factory ModelInstallPaths.unsafeForDir(Directory rootDir) =>
       ModelInstallPaths._(rootDir);
 
-  /// `<app_support>/embedders/`. Bundles live in subdirs named after
+  /// `<app_support>/ai-models/`. Bundles live in subdirs named after
   /// [ModelBundle.id].
   final Directory rootDir;
 
@@ -62,15 +62,29 @@ class ModelInstallPaths {
   }
 }
 
+/// Returns the shared model root and migrates the pre-ASR `embedders` folder
+/// in place. [createIfMissing] is false for read-only bootstrap discovery.
+Future<Directory> resolveModelInstallRoot(
+  Directory supportDirectory, {
+  bool createIfMissing = true,
+}) async {
+  final root = Directory(p.join(supportDirectory.path, 'ai-models'));
+  final legacyRoot = Directory(p.join(supportDirectory.path, 'embedders'));
+  if (!root.existsSync() && legacyRoot.existsSync()) {
+    await legacyRoot.rename(root.path);
+  }
+  if (createIfMissing && !root.existsSync()) {
+    await root.create(recursive: true);
+  }
+  return root;
+}
+
 /// Resolves the install root once at app start; cached for the
 /// lifetime of the process. Tests can override with a temp dir.
 final modelInstallPathsProvider = FutureProvider<ModelInstallPaths>((
   ref,
 ) async {
   final support = await getApplicationSupportDirectory();
-  final root = Directory(p.join(support.path, 'embedders'));
-  if (!root.existsSync()) {
-    await root.create(recursive: true);
-  }
+  final root = await resolveModelInstallRoot(support);
   return ModelInstallPaths._(root);
 });
