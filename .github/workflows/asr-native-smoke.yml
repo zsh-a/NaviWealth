@@ -49,6 +49,6 @@ jobs:
         uses: actions/cache@v6
         with:
           path: .cache/asr-native-smoke
-          key: asr-native-smoke-zipformer-zh-14m-v1
+          key: asr-native-smoke-zipformer-large-ctc-zh-2025-v1
       - name: Run checksummed native inference regression
         run: tool/run-asr-native-smoke.sh .cache/asr-native-smoke

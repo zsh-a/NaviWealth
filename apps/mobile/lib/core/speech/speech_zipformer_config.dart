@@ -4,24 +4,21 @@ import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa;
 const speechInputSampleRate = 16000;
 
 /// Builds the one authoritative native configuration for the bundled Mandarin
-/// streaming Zipformer. The app runtime and the native smoke tool share this
-/// function so verification cannot silently drift from production settings.
-sherpa.OnlineRecognizerConfig streamingZipformerZhConfig(
+/// streaming Zipformer Large CTC. The app runtime and native smoke tool share
+/// this function so verification cannot silently drift from production.
+sherpa.OnlineRecognizerConfig streamingZipformerLargeCtcZhConfig(
   String modelDirectory,
 ) {
   String modelPath(String name) => p.join(modelDirectory, name);
 
   return sherpa.OnlineRecognizerConfig(
     model: sherpa.OnlineModelConfig(
-      transducer: sherpa.OnlineTransducerModelConfig(
-        encoder: modelPath('encoder-epoch-99-avg-1.int8.onnx'),
-        decoder: modelPath('decoder-epoch-99-avg-1.int8.onnx'),
-        joiner: modelPath('joiner-epoch-99-avg-1.int8.onnx'),
+      zipformer2Ctc: sherpa.OnlineZipformer2CtcModelConfig(
+        model: modelPath('model.int8.onnx'),
       ),
       tokens: modelPath('tokens.txt'),
-      numThreads: 2,
+      numThreads: 1,
       debug: false,
-      modelType: 'zipformer',
     ),
     enableEndpoint: true,
     rule1MinTrailingSilence: 2.0,

@@ -32,7 +32,7 @@ void main(List<String> arguments) {
 
   final stopwatch = Stopwatch()..start();
   final recognizer = sherpa.OnlineRecognizer(
-    streamingZipformerZhConfig(modelDir),
+    streamingZipformerLargeCtcZhConfig(modelDir),
   );
   final stream = recognizer.createStream();
   try {

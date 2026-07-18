@@ -25,7 +25,9 @@ class SherpaSpeechRecognizer implements SpeechRecognizer {
   @override
   Future<SpeechRecognizerStatus> status() async {
     final paths = await resolvePaths();
-    final installed = await paths.isComplete(streamingZipformerZhBundle());
+    final installed = await paths.isComplete(
+      streamingZipformerLargeCtcZhBundle(),
+    );
     return SpeechRecognizerStatus(
       installed
           ? SpeechRecognizerAvailability.ready
@@ -37,7 +39,7 @@ class SherpaSpeechRecognizer implements SpeechRecognizer {
   @override
   Future<SpeechRecognitionSession> start() async {
     final paths = await resolvePaths();
-    final bundle = streamingZipformerZhBundle();
+    final bundle = streamingZipformerLargeCtcZhBundle();
     if (!await paths.isComplete(bundle)) {
       throw const SpeechRecognitionException(
         SpeechRecognitionErrorCode.modelNotInstalled,
@@ -70,7 +72,7 @@ class SherpaSpeechRecognizer implements SpeechRecognizer {
       }
       final dir = paths.dirForBundle(bundle);
       recognizer = sherpa.OnlineRecognizer(
-        streamingZipformerZhConfig(dir.path),
+        streamingZipformerLargeCtcZhConfig(dir.path),
       );
       recognitionStream = recognizer.createStream();
       final audio = await recorder.startStream(

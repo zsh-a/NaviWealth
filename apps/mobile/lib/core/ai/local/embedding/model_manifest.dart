@@ -161,59 +161,44 @@ ModelBundle embeddingGemmaBundle() {
   );
 }
 
-/// True-streaming Mandarin Zipformer transducer (14M, INT8).
+/// True-streaming Mandarin Zipformer Large CTC (INT8).
 ///
-/// The ONNX files are mirrored as individual immutable files on Hugging Face,
-/// which lets the existing atomic downloader verify every weight without
-/// adding an archive extraction dependency. SHA-256 values are the upstream
-/// LFS object ids for the three models; `tokens.txt` was verified from the
-/// pinned upstream revision.
-ModelBundle streamingZipformerZhBundle() {
+/// The ONNX model is mirrored as an immutable file on Hugging Face, which lets
+/// the existing atomic downloader verify the weight without requiring archive
+/// extraction. SHA-256 values are the upstream LFS object id for the model and
+/// a digest verified from the pinned upstream revision for `tokens.txt`.
+ModelBundle streamingZipformerLargeCtcZhBundle() {
   const baseUrl =
       'https://huggingface.co/csukuangfj/'
-      'sherpa-onnx-streaming-zipformer-zh-14M-2023-02-23/resolve/main';
+      'sherpa-onnx-streaming-zipformer-ctc-zh-int8-2025-06-30/resolve/main';
   return const ModelBundle(
-    id: 'streaming-zipformer-zh-14m-2023-02-23',
-    displayName: 'Zipformer 中文实时语音 (INT8)',
-    description: '约 25 MB，普通话真流式端侧识别',
+    id: 'streaming-zipformer-large-ctc-zh-int8-2025-06-30',
+    displayName: 'Zipformer Large CTC 中文实时语音 (INT8)',
+    description: '约 155 MB，普通话真流式端侧识别',
     archiveFallback: ModelArchiveSource(
       url:
           'https://github.com/k2-fsa/sherpa-onnx/releases/download/'
           'asr-models/'
-          'sherpa-onnx-streaming-zipformer-zh-14M-2023-02-23.tar.bz2',
-      sizeBytes: 74004050,
+          'sherpa-onnx-streaming-zipformer-ctc-zh-int8-2025-06-30.tar.bz2',
+      sizeBytes: 127965713,
       sha256:
-          '2cbd71b640d9c37d3784f29367333a4577b0398b62e9deeed418170b081cba8b',
-      rootDirectory: 'sherpa-onnx-streaming-zipformer-zh-14M-2023-02-23',
+          'f2ab7a5deb02717801f6a5b26c751b42f8a2db891b07f5b095e6da7442081448',
+      rootDirectory: 'sherpa-onnx-streaming-zipformer-ctc-zh-int8-2025-06-30',
     ),
     files: [
       ModelFile(
-        localName: 'encoder-epoch-99-avg-1.int8.onnx',
-        url: '$baseUrl/encoder-epoch-99-avg-1.int8.onnx',
-        sizeBytes: 21621684,
+        localName: 'model.int8.onnx',
+        url: '$baseUrl/model.int8.onnx',
+        sizeBytes: 162290887,
         sha256:
-            '1c556ea57cec304e55ec4b72e52c1cc098bb01476ed7d90f3de939fe126487b1',
-      ),
-      ModelFile(
-        localName: 'decoder-epoch-99-avg-1.int8.onnx',
-        url: '$baseUrl/decoder-epoch-99-avg-1.int8.onnx',
-        sizeBytes: 1888682,
-        sha256:
-            '22f123bb8cba9b38974b3df18a3f45e7081f4985ebb2e075d9f21f618c468bbf',
-      ),
-      ModelFile(
-        localName: 'joiner-epoch-99-avg-1.int8.onnx',
-        url: '$baseUrl/joiner-epoch-99-avg-1.int8.onnx',
-        sizeBytes: 1795562,
-        sha256:
-            'a7cf9d82757bdcf786059454495a9ca95e4bd7347f72473fc08d794475c36169',
+            '24ffdc19ba9aaed5a6a9beaede1e087745217d82425cf4041bca0c696661801e',
       ),
       ModelFile(
         localName: 'tokens.txt',
         url: '$baseUrl/tokens.txt',
-        sizeBytes: 48697,
+        sizeBytes: 20628,
         sha256:
-            '8b294db9045d6e5f94647f4c1eec1af4da143a75053c399611444b378ff966ac',
+            '6193c7ea1c96d0d9a1e9652789b40d13a8a913b434a5451e93158f5a09fd6652',
       ),
     ],
   );

@@ -283,7 +283,7 @@ void main() {
     () async {
       final dio = Dio()
         ..httpClientAdapter = _FileDownloadAdapter(_realArchivePath);
-      final bundle = streamingZipformerZhBundle();
+      final bundle = streamingZipformerLargeCtcZhBundle();
 
       await ModelDownloader(
         dio: dio,

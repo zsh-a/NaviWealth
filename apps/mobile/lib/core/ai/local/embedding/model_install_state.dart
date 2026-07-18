@@ -375,5 +375,8 @@ final modelInstallProvider = AsyncNotifierProvider.autoDispose
 /// not user-installable data. See `lifeos-shell.md` §6.6 + the
 /// `discoverBundledOrtDylib` resolver.
 final knownModelBundlesProvider = Provider<List<ModelBundle>>((ref) {
-  return [embeddingGemmaBundle(), if (!kIsWeb) streamingZipformerZhBundle()];
+  return [
+    embeddingGemmaBundle(),
+    if (!kIsWeb) streamingZipformerLargeCtcZhBundle(),
+  ];
 });

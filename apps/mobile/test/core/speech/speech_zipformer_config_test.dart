@@ -3,24 +3,18 @@ import 'package:naviwealth/core/speech/speech_zipformer_config.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
-  test('builds the production streaming Zipformer configuration', () {
-    final config = streamingZipformerZhConfig('/models/zipformer');
+  test('builds the production streaming Zipformer Large CTC config', () {
+    final config = streamingZipformerLargeCtcZhConfig('/models/zipformer');
 
     expect(
-      config.model.transducer.encoder,
-      p.join('/models/zipformer', 'encoder-epoch-99-avg-1.int8.onnx'),
-    );
-    expect(
-      config.model.transducer.decoder,
-      p.join('/models/zipformer', 'decoder-epoch-99-avg-1.int8.onnx'),
-    );
-    expect(
-      config.model.transducer.joiner,
-      p.join('/models/zipformer', 'joiner-epoch-99-avg-1.int8.onnx'),
+      config.model.zipformer2Ctc.model,
+      p.join('/models/zipformer', 'model.int8.onnx'),
     );
     expect(config.model.tokens, p.join('/models/zipformer', 'tokens.txt'));
-    expect(config.model.modelType, 'zipformer');
-    expect(config.model.numThreads, 2);
+    expect(config.model.transducer.encoder, isEmpty);
+    expect(config.model.transducer.decoder, isEmpty);
+    expect(config.model.transducer.joiner, isEmpty);
+    expect(config.model.numThreads, 1);
     expect(config.enableEndpoint, isTrue);
     expect(config.rule1MinTrailingSilence, 2.0);
     expect(config.rule2MinTrailingSilence, 0.8);

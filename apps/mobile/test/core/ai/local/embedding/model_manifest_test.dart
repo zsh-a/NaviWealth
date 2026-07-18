@@ -41,37 +41,32 @@ void main() {
     });
   });
 
-  group('streamingZipformerZhBundle', () {
-    final bundle = streamingZipformerZhBundle();
+  group('streamingZipformerLargeCtcZhBundle', () {
+    final bundle = streamingZipformerLargeCtcZhBundle();
 
-    test('contains only the four production INT8 recognition files', () {
+    test('contains only the two production INT8 recognition files', () {
       expect(
         bundle.files.map((file) => file.localName),
-        containsAll(<String>[
-          'encoder-epoch-99-avg-1.int8.onnx',
-          'decoder-epoch-99-avg-1.int8.onnx',
-          'joiner-epoch-99-avg-1.int8.onnx',
-          'tokens.txt',
-        ]),
+        containsAll(<String>['model.int8.onnx', 'tokens.txt']),
       );
-      expect(bundle.files, hasLength(4));
+      expect(bundle.files, hasLength(2));
       expect(bundle.files.every((file) => file.sha256?.length == 64), isTrue);
     });
 
-    test('download is approximately 25 MB', () {
-      expect(bundle.totalSizeBytes, greaterThan(24 * 1024 * 1024));
-      expect(bundle.totalSizeBytes, lessThan(26 * 1024 * 1024));
+    test('download is approximately 155 MB', () {
+      expect(bundle.totalSizeBytes, greaterThan(154 * 1024 * 1024));
+      expect(bundle.totalSizeBytes, lessThan(156 * 1024 * 1024));
     });
 
     test('has a verified official GitHub archive fallback', () {
       final archive = bundle.archiveFallback;
       expect(archive, isNotNull);
       expect(archive!.url, contains('github.com/k2-fsa/sherpa-onnx/releases'));
-      expect(archive.sizeBytes, 74004050);
+      expect(archive.sizeBytes, 127965713);
       expect(archive.sha256, hasLength(64));
       expect(
         archive.rootDirectory,
-        'sherpa-onnx-streaming-zipformer-zh-14M-2023-02-23',
+        'sherpa-onnx-streaming-zipformer-ctc-zh-int8-2025-06-30',
       );
     });
   });
