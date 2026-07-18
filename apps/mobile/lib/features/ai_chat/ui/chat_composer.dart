@@ -53,6 +53,7 @@ class ChatComposer extends ConsumerStatefulWidget {
 class _ChatComposerState extends ConsumerState<ChatComposer> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  late final ComposerDraftStore _draftStore;
   Timer? _persistTimer;
 
   /// When set, next submit replaces this user turn instead of appending.
@@ -61,6 +62,7 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
   @override
   void initState() {
     super.initState();
+    _draftStore = ref.read(composerDraftStoreProvider);
     if (widget.initialText != null && widget.initialText!.isNotEmpty) {
       _controller.text = widget.initialText!;
     } else {
@@ -76,20 +78,19 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
     // Flush latest text once on dispose so a quick leave still saves.
     final sessionId = widget.sessionId;
     final text = _controller.text;
-    final shouldPersist = sessionId != null && _replaceMessageId == null;
-    final store = shouldPersist ? ref.read(composerDraftStoreProvider) : null;
+    final persistSessionId = _replaceMessageId == null ? sessionId : null;
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
-    if (store != null && sessionId != null) {
-      unawaited(store.save(sessionId, text));
+    if (persistSessionId != null) {
+      unawaited(_draftStore.save(persistSessionId, text));
     }
   }
 
   void _restorePersistedDraft() {
     final sessionId = widget.sessionId;
     if (sessionId == null) return;
-    final saved = ref.read(composerDraftStoreProvider).load(sessionId);
+    final saved = _draftStore.load(sessionId);
     if (saved == null || saved.isEmpty) return;
     _controller
       ..text = saved
@@ -181,9 +182,7 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
         color: colors.background,
         border: Border(
           top: BorderSide(
-            color: colors.border.withValues(
-              alpha: AppOpacity.scrim,
-            ),
+            color: colors.border.withValues(alpha: AppOpacity.scrim),
           ),
         ),
       ),
@@ -226,9 +225,7 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
               if (sessionId != null) const _ProfileCaption(),
               DecoratedBox(
                 decoration: BoxDecoration(
-                  color: colors.muted.withValues(
-                    alpha: AppOpacity.prominent,
-                  ),
+                  color: colors.muted.withValues(alpha: AppOpacity.prominent),
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                   border: Border.all(
                     color: editing
