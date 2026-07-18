@@ -376,33 +376,55 @@ class AppSheetFooter extends StatelessWidget {
   final bool enabled;
   final bool destructive;
 
+  static const _stackedBreakpoint = 480.0;
+  static const _largeTextScale = 1.3;
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: FButton(
-            key: cancelKey,
-            variant: FButtonVariant.outline,
-            onPress: busy
-                ? null
-                : (onCancel ?? () => Navigator.of(context).maybePop()),
-            child: Text(cancelLabel),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.s12),
-        Expanded(
-          child: AppBusyButton(
-            buttonKey: submitKey,
-            variant: destructive
-                ? FButtonVariant.destructive
-                : FButtonVariant.primary,
-            onPress: enabled ? onSubmit : null,
-            busy: busy,
-            label: submitLabel,
-          ),
-        ),
-      ],
+    final cancel = FButton(
+      key: cancelKey,
+      variant: FButtonVariant.outline,
+      onPress: busy
+          ? null
+          : (onCancel ?? () => Navigator.of(context).maybePop()),
+      child: Text(cancelLabel),
+    );
+    final submit = AppBusyButton(
+      buttonKey: submitKey,
+      variant: destructive
+          ? FButtonVariant.destructive
+          : FButtonVariant.primary,
+      onPress: enabled ? onSubmit : null,
+      busy: busy,
+      label: submitLabel,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textScale = MediaQuery.textScalerOf(context).scale(1);
+        final stacked =
+            constraints.maxWidth < _stackedBreakpoint ||
+            textScale > _largeTextScale;
+        if (stacked) {
+          return Column(
+            key: const ValueKey<String>('app-sheet-footer.stacked'),
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              cancel,
+              const SizedBox(height: AppSpacing.s8),
+              submit,
+            ],
+          );
+        }
+        return Row(
+          key: const ValueKey<String>('app-sheet-footer.horizontal'),
+          children: [
+            Expanded(child: cancel),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(child: submit),
+          ],
+        );
+      },
     );
   }
 }

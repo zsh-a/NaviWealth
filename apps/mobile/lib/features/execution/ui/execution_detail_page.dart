@@ -46,7 +46,11 @@ class ExecutionActionDetailPage extends ConsumerWidget {
           ),
       ],
       child: actionAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
+        loading: () => AppListPageSkeleton(
+          padding: _detailPadding(context),
+          itemCount: 2,
+          showControls: false,
+        ),
         error: (error, _) => ExecutionStateView(
           icon: FLucideIcons.circleX,
           title: l10n.commonError,
@@ -103,7 +107,11 @@ class ExecutionCommitmentDetailPage extends ConsumerWidget {
           ),
       ],
       child: commitmentAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
+        loading: () => AppListPageSkeleton(
+          padding: _detailPadding(context),
+          itemCount: 3,
+          showControls: false,
+        ),
         error: (error, _) => ExecutionStateView(
           icon: FLucideIcons.circleX,
           title: l10n.commonError,
@@ -234,7 +242,7 @@ class _RelatedActionsSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return actionsAsync.when(
-      loading: () => const Center(child: FCircularProgress()),
+      loading: () => const _DetailSectionSkeleton(),
       error: (error, _) => ExecutionStateView(
         icon: FLucideIcons.circleX,
         title: l10n.commonError,
@@ -303,7 +311,7 @@ class _ProgressTimeline extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return entries.when(
-      loading: () => const Center(child: FCircularProgress()),
+      loading: () => const _DetailSectionSkeleton(),
       error: (error, _) => ExecutionStateView(
         icon: FLucideIcons.circleX,
         title: l10n.commonError,
@@ -338,6 +346,32 @@ class _ProgressTimeline extends StatelessWidget {
             ],
         ],
       ),
+    );
+  }
+}
+
+class _DetailSectionSkeleton extends StatelessWidget {
+  const _DetailSectionSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SkeletonBox(width: 168, height: 18, radius: AppRadius.sm),
+        SizedBox(height: AppSpacing.s12),
+        SkeletonCard(
+          padding: EdgeInsets.all(AppSpacing.s12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 196, height: 15, radius: AppRadius.sm),
+              SizedBox(height: AppSpacing.s8),
+              SkeletonBox(height: 11, radius: AppRadius.sm),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
