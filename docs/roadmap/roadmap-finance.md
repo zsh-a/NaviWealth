@@ -76,14 +76,16 @@ Current evidence:
   insert error, then closes and reopens the database to prove the previous
   account and outbox pointer were durably rolled back. Android emulator CI
   owns the device run.
+- Generic encrypted export pins currency and money semantics with a
+  cross-currency liability fixture. ISO currency plus high-precision decimal
+  principal, rate, and payment fields survive decrypt/restore exactly, without
+  localized symbols or grouping separators.
 
 Exit evidence:
 
 - Prove interruption recovery on the production Android file-backed database.
 - Expand the representative dataset only when measured production exports
   exceed the current 1,000-row boundary.
-- Generic export preserves currency and money semantics through shared
-  formatters and machine-readable values.
 
 ## Next
 

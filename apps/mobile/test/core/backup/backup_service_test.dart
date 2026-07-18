@@ -79,6 +79,35 @@ void main() {
     );
   }
 
+  Future<void> insertTestLiability(AppDatabase db) async {
+    final now = DateTime.utc(2026, 1, 1).millisecondsSinceEpoch;
+    const hlc = Hlc(
+      wallMillis: 1700000000003,
+      counter: 0,
+      nodeId: testDeviceId,
+    );
+    await db.customStatement(
+      'INSERT INTO liabilities '
+      '(id, type, name, principal, interest_rate, currency, monthly_payment, '
+      'owner_user_id, updated_at, updated_by_device, hlc, deleted_at) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      <Object?>[
+        'liability-usd',
+        'mortgage',
+        'Cross-currency fixture',
+        '1234567890.12345678',
+        '0.0375',
+        'USD',
+        '98765.4321',
+        'user-1',
+        now,
+        testDeviceId,
+        hlc.toString(),
+        null,
+      ],
+    );
+  }
+
   Future<void> insertOptionsStrategyProfile(AppDatabase db) async {
     final now = DateTime.utc(2026, 1, 1).toIso8601String();
     const hlc = Hlc(
@@ -295,6 +324,57 @@ void main() {
       expect(await countRows(targetDb, 'knowledge_notes'), 1);
       expect(await countRows(targetDb, 'tags'), 1);
     });
+
+    test(
+      'generic export preserves currency and exact decimal machine values',
+      () async {
+        final sourceDb = makeTestDatabase();
+        addTearDown(sourceDb.close);
+        await insertTestLiability(sourceDb);
+
+        final bytes = await makeService(sourceDb).exportBackup(
+          passphrase: testPassphrase,
+          overrideIterations: testIterations,
+        );
+        final envelope = BackupEnvelope.decodeBytes(bytes);
+        final plaintext = await codec.decrypt(
+          passphrase: testPassphrase,
+          envelope: envelope,
+        );
+        final payload =
+            jsonDecode(utf8.decode(plaintext)) as Map<String, Object?>;
+        final data = payload['data'] as Map<String, Object?>;
+        final liabilities = data['liabilities'] as List<Object?>;
+        final exported = liabilities.single as Map<String, Object?>;
+
+        expect(exported['currency'], 'USD');
+        expect(exported['principal'], '1234567890.12345678');
+        expect(exported['interest_rate'], '0.0375');
+        expect(exported['monthly_payment'], '98765.4321');
+        final principal = exported['principal'].toString();
+        expect(principal, isNot(contains(r'$')));
+        expect(principal, isNot(contains(',')));
+
+        final targetDb = makeTestDatabase();
+        addTearDown(targetDb.close);
+        await makeService(
+          targetDb,
+        ).restoreBackup(passphrase: testPassphrase, fileBytes: bytes);
+        final restored = await targetDb
+            .customSelect(
+              'SELECT principal, interest_rate, currency, monthly_payment '
+              'FROM liabilities WHERE id = ?',
+              variables: const <Variable<Object>>[
+                Variable<String>('liability-usd'),
+              ],
+            )
+            .getSingle();
+        expect(restored.read<String>('currency'), 'USD');
+        expect(restored.read<String>('principal'), '1234567890.12345678');
+        expect(restored.read<String>('interest_rate'), '0.0375');
+        expect(restored.read<String>('monthly_payment'), '98765.4321');
+      },
+    );
 
     test('round-trip: export then restore into fresh database', () async {
       final sourceDb = makeTestDatabase();

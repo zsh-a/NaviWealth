@@ -125,13 +125,14 @@ Current evidence:
   containing only schema version, full/domain scope, table count, aggregate
   row count, byte count, duration, and outcome. The tested restore summary
   excludes table names, row ids, and payload values.
+- The generic encrypted export now has a cross-currency money contract test:
+  ISO currency and high-precision decimal principal, rate, and payment fields
+  survive decrypt/restore exactly, without symbols, grouping, or locale text.
 
 Exit evidence:
 
 - On-device Android recovery keeps the same atomicity guarantees under a
   process interruption or documents the platform-specific recovery path.
-- Generic export preserves currency and money semantics through shared
-  formatters and machine-readable values.
 
 ## Next
 

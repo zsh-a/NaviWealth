@@ -283,6 +283,11 @@ events with only archive schema version, full/domain scope, table count, total
 row count, byte count where applicable, duration, and outcome. `RestoreResult`
 exposes the same aggregate through `toDiagnosticJson()`; table names, row ids,
 and payload values are deliberately absent and covered by a privacy assertion.
+The same suite pins the generic backup's portable money contract with a
+cross-currency liability: ISO currency remains `USD`, and principal, interest
+rate, and monthly payment remain exact decimal strings through decrypt and
+restore. Machine values must never contain currency symbols, grouping
+separators, or locale-dependent display text.
 `backup_process_interruption_integration_test.dart` adds the destructive
 Android case as a two-process protocol. Its interrupt phase restores a large,
 valid archive and the workflow waits for the production log emitted after the
