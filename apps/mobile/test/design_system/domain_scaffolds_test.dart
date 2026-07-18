@@ -160,7 +160,7 @@ void main() {
         tester.getSize(find.byType(FloatingGlassNavBar)).height,
         kFloatingGlassNavBarHeight,
       );
-      expect(find.byType(BackdropFilter), findsOneWidget);
+      expect(find.byType(BackdropFilter), findsNothing);
       final navSurface = tester.widget<Container>(
         find
             .descendant(

@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
@@ -16,10 +14,9 @@ const double _kIconSlotSize = 26;
 
 /// A floating glass-morphism bottom navigation bar.
 ///
-/// Renders as a compact, translucent dock that floats above the content
-/// with a backdrop blur effect. The optional assistant action sits inside the
-/// same height as the tab destinations so the dock does not cover page-level
-/// floating actions.
+/// Renders as a compact, translucent dock that floats above the content. The
+/// optional assistant action sits inside the same height as the tab
+/// destinations so the dock does not cover page-level floating actions.
 ///
 /// Tabs share the remaining width evenly. The optional assistant action is a
 /// separate, low-emphasis affordance at the trailing edge so it never reads as
@@ -86,37 +83,38 @@ class FloatingGlassNavBar extends StatelessWidget {
           boxShadow: AppShadow.nav,
         ),
         clipBehavior: Clip.antiAlias,
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: AppBlur.nav, sigmaY: AppBlur.nav),
-          child: ColoredBox(
-            color: glassColor,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s8,
-                vertical: AppSpacing.s6,
-              ),
-              child: Row(
-                children: [
-                  for (var i = 0; i < items.length; i++)
-                    Expanded(
-                      child: _NavTabButton(
-                        tab: items[i],
-                        selected: i == selectedIndex,
-                        onTap: () => onIndexChanged(i),
-                      ),
+        // Keep the glass tone but avoid BackdropFilter. A live backdrop blur
+        // must resample the routed page while it changes and was a major
+        // raster cost during tab navigation; this near-opaque surface retains
+        // the same hierarchy without coupling its paint to page contents.
+        child: ColoredBox(
+          color: glassColor,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s8,
+              vertical: AppSpacing.s6,
+            ),
+            child: Row(
+              children: [
+                for (var i = 0; i < items.length; i++)
+                  Expanded(
+                    child: _NavTabButton(
+                      tab: items[i],
+                      selected: i == selectedIndex,
+                      onTap: () => onIndexChanged(i),
                     ),
-                  if (onAssistantAction != null)
-                    Padding(
-                      padding: const EdgeInsets.only(left: AppSpacing.s8),
-                      child: _AssistantActionButton(
-                        icon: assistantIcon,
-                        label: assistantLabel,
-                        semanticLabel: assistantSemanticLabel,
-                        onTap: onAssistantAction!,
-                      ),
+                  ),
+                if (onAssistantAction != null)
+                  Padding(
+                    padding: const EdgeInsets.only(left: AppSpacing.s8),
+                    child: _AssistantActionButton(
+                      icon: assistantIcon,
+                      label: assistantLabel,
+                      semanticLabel: assistantSemanticLabel,
+                      onTap: onAssistantAction!,
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
         ),

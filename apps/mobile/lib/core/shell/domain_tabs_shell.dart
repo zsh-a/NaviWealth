@@ -43,68 +43,7 @@ class DomainTabsShell extends ConsumerStatefulWidget {
   ConsumerState<DomainTabsShell> createState() => _DomainTabsShellState();
 }
 
-class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _fade;
-  late final Animation<Offset> _slide;
-  bool _initialEntranceHandled = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this);
-    _fade = CurvedAnimation(
-      parent: _controller,
-      curve: Motion.emphasizedDecelerate,
-    );
-    _slide = Tween<Offset>(
-      begin: const Offset(0, AppSpacing.s6),
-      end: Offset.zero,
-    ).animate(_fade);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _controller.duration = AppMotionPolicy.duration(context, Motion.medium);
-    final motionEnabled = AppMotionPolicy.isEnabled(
-      context,
-      role: AppMotionRole.transition,
-    );
-    if (!motionEnabled) {
-      _initialEntranceHandled = true;
-      _controller.value = 1;
-      return;
-    }
-    if (_initialEntranceHandled) return;
-    _initialEntranceHandled = true;
-    _controller.value = 0;
-    // Let the destination shell complete its first layout before animating.
-    // This keeps cold provider setup out of the visible transition frames.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _controller.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(DomainTabsShell old) {
-    super.didUpdateWidget(old);
-    if (widget.shell.currentIndex != old.shell.currentIndex) {
-      if (!AppMotionPolicy.isEnabled(context, role: AppMotionRole.transition)) {
-        _controller.value = 1;
-      } else {
-        _controller.forward(from: 0);
-      }
-    }
-  }
-
+class _DomainTabsShellState extends ConsumerState<DomainTabsShell> {
   void _onSelected(int i) {
     widget.shell.goBranch(i, initialLocation: i == widget.shell.currentIndex);
   }
@@ -113,19 +52,11 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
   Widget build(BuildContext context) {
     final tabs = widget.spec.tabs;
     final index = widget.shell.currentIndex;
-    // StatefulNavigationShell owns a GlobalKey and must stay mounted exactly
-    // once. Animate its presentation in place instead of cross-fading two
-    // keyed snapshots, which would retain the same shell in both subtrees.
-    final animatedChild = FadeTransition(
-      key: const ValueKey<String>('domain-shell.content-transition'),
-      opacity: _fade,
-      child: AnimatedBuilder(
-        animation: _slide,
-        builder: (context, child) =>
-            Transform.translate(offset: _slide.value, child: child),
-        child: widget.shell,
-      ),
-    );
+    // Branch roots are already retained by StatefulShellRoute.indexedStack.
+    // Present the selected branch directly: animating the entire navigation
+    // shell forces full-screen opacity/transform compositing on every tab
+    // change, which is especially expensive for chart and glass surfaces.
+    final shellChild = widget.shell;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -138,7 +69,7 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
             tabs: tabs,
             selectedIndex: index,
             onDestinationSelected: _onSelected,
-            child: animatedChild,
+            child: shellChild,
           );
         }
         if (width >= DomainTabsShell._tabletBreakpoint) {
@@ -146,14 +77,14 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
             tabs: tabs,
             selectedIndex: index,
             onDestinationSelected: _onSelected,
-            child: animatedChild,
+            child: shellChild,
           );
         }
         return _MobileLayout(
           tabs: tabs,
           selectedIndex: index,
           onDestinationSelected: _onSelected,
-          child: animatedChild,
+          child: shellChild,
         );
       },
     );

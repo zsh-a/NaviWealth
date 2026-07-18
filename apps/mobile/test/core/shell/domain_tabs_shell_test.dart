@@ -84,26 +84,10 @@ void main() {
       ),
     );
 
-    final shellTransition = find.byKey(
-      const ValueKey<String>('domain-shell.content-transition'),
-    );
-    expect(shellTransition, findsOneWidget);
     expect(
-      tester.widget<FadeTransition>(shellTransition).opacity.value,
-      0,
-      reason: 'The destination lays out before its entrance animation starts.',
+      find.byKey(const ValueKey<String>('domain-shell.content-transition')),
+      findsNothing,
     );
-
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 110));
-    final midOpacity = tester
-        .widget<FadeTransition>(shellTransition)
-        .opacity
-        .value;
-    expect(midOpacity, greaterThan(0));
-    expect(midOpacity, lessThan(1));
-    await tester.pumpAndSettle();
-
     expect(find.text('one'), findsOneWidget);
 
     router.go('/two');
@@ -111,8 +95,6 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byType(StatefulNavigationShell), findsOneWidget);
-
-    await tester.pumpAndSettle();
     expect(find.text('two'), findsOneWidget);
   });
 
