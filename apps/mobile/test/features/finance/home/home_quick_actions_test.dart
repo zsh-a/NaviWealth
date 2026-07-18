@@ -35,6 +35,37 @@ void main() {
     expect(find.text('Transfer'), findsOneWidget);
     expect(find.text('Add account'), findsNothing);
     expect(find.text('Import'), findsNothing);
+    expect(find.byIcon(FLucideIcons.chevronRight), findsNWidgets(2));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('active home keeps the two-column strip on regular widths', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(420, 420);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: FTheme(
+          data: FThemes.slate.light.desktop,
+          child: const Scaffold(
+            body: Padding(
+              padding: EdgeInsets.all(8),
+              child: HomeQuickActions(mode: HomeQuickActionMode.active),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Record entry'), findsOneWidget);
+    expect(find.text('Transfer'), findsOneWidget);
     expect(find.byIcon(FLucideIcons.chevronRight), findsNothing);
     expect(tester.takeException(), isNull);
   });

@@ -150,14 +150,13 @@ class _TodayListState extends ConsumerState<_TodayList> {
           onRefresh: _refresh,
           greeting: const SizedBox.shrink(),
           stage: AppCollapsingStage(
-            child: SoftCard.hero(
+            child: Padding(
               padding: AppPageRhythm.heroPadding,
-              borderless: true,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    l10n.executionTodayTitle,
+                    l10n.executionOverviewFocus,
                     style: context.mutedLabelStyle,
                   ),
                   const SizedBox(height: AppPageRhythm.row),

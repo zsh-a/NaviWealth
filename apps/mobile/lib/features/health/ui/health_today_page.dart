@@ -302,6 +302,7 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
       if (!await service.hasPermissions()) {
         final granted = await service.requestPermissions();
         if (!granted) {
+          if (!mounted) return;
           setState(() {
             _lastResult = HealthSyncResult.skipped(
               startedAt: DateTime.now().toUtc(),
@@ -314,6 +315,7 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
         }
       }
       final result = await service.syncRange();
+      if (!mounted) return;
       setState(() => _lastResult = result);
       ref.invalidate(healthTodaySnapshotProvider);
     } finally {
@@ -327,63 +329,78 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
     final optIns = ref.watch(core_auth.domainOptInsProvider).value;
     final enabled = optIns?.contains(DomainScope.health) ?? false;
 
-    return SoftCard(
-      level: SoftCardLevel.raised,
-      borderless: true,
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      child: Row(
-        children: [
-          AppIconTile(
-            icon: enabled ? FLucideIcons.activity : FLucideIcons.circleOff,
-            color: _healthKitColor(enabled),
-            size: 32,
-            iconSize: AppIconSizes.h18,
-            backgroundOpacity: AppOpacity.whisper,
-            foregroundOpacity: AppOpacity.strong,
-          ),
-          const SizedBox(width: AppSpacing.s10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.healthKitTitle,
-                  style: context.labelStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: AppSpacing.s2),
-                Text(
-                  _healthKitText(l10n, enabled),
-                  style: context.captionStyle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          if (_syncing)
-            const SizedBox(
-              width: AppIconSizes.sm,
-              height: AppIconSizes.sm,
-              child: FCircularProgress(),
-            )
-          else
-            FButton(
-              variant: FButtonVariant.outline,
-              onPress: enabled ? _syncHealthKit : null,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-                  const SizedBox(width: AppSpacing.s6),
-                  Text(l10n.healthSyncAction),
-                ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compactAction = constraints.maxWidth < 360;
+        return SoftCard(
+          level: SoftCardLevel.raised,
+          borderless: true,
+          padding: const EdgeInsets.all(AppSpacing.s12),
+          child: Row(
+            children: [
+              AppIconTile(
+                icon: enabled ? FLucideIcons.activity : FLucideIcons.circleOff,
+                color: _healthKitColor(enabled),
+                size: 32,
+                iconSize: AppIconSizes.h18,
+                backgroundOpacity: AppOpacity.whisper,
+                foregroundOpacity: AppOpacity.strong,
               ),
-            ),
-        ],
-      ),
+              const SizedBox(width: AppSpacing.s10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.healthKitTitle,
+                      style: context.labelStyle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(
+                      _healthKitText(l10n, enabled),
+                      style: context.captionStyle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              if (compactAction)
+                AppIconButton(
+                  icon: FLucideIcons.refreshCw,
+                  onPress: enabled ? _syncHealthKit : null,
+                  tooltip: l10n.healthSyncAction,
+                  surface: AppIconButtonSurface.softMuted,
+                  size: 40,
+                  iconSize: AppIconSizes.xs,
+                  busy: _syncing,
+                )
+              else if (_syncing)
+                const SizedBox(
+                  width: AppIconSizes.sm,
+                  height: AppIconSizes.sm,
+                  child: FCircularProgress(),
+                )
+              else
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: enabled ? _syncHealthKit : null,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
+                      const SizedBox(width: AppSpacing.s6),
+                      Text(l10n.healthSyncAction),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -464,4 +481,3 @@ class _HealthPanelHeader extends StatelessWidget {
     );
   }
 }
-
