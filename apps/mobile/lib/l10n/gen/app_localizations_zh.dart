@@ -4520,13 +4520,19 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get aiToolNetWorthEmpty => '区间内没有净资产数据';
+  String get aiToolNetWorthEmpty => '区间内没有累计净现金流数据';
 
   @override
-  String get aiToolCurrentNetWorth => '当前净资产';
+  String get aiToolCurrentNetWorth => '累计净现金流';
 
   @override
-  String get aiToolNetWorthSeriesName => '净资产';
+  String get aiToolNetWorthSeriesName => '累计净现金流';
+
+  @override
+  String get aiToolNetWorthMethodNote => '月度累计净现金流 · 非市值净资产';
+
+  @override
+  String get aiToolNetWorthVsStart => '相对区间起点';
 
   @override
   String aiToolSamplePointCount(int count) {
@@ -4846,6 +4852,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get aiChatJumpToLatest => '最新';
+
+  @override
   String get aiChatJumpToLatestTooltip => '跳到最新';
 
   @override
@@ -4906,6 +4915,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatEditUserMessageHint => '已填入输入框，发送后将替换本轮及之后内容';
 
   @override
+  String get aiChatEditBannerTitle => '正在编辑消息 — 发送后将替换本轮';
+
+  @override
+  String get aiChatEditCancel => '取消';
+
+  @override
+  String aiChatSessionMessageCount(int count) {
+    return '$count 条消息';
+  }
+
+  @override
   String get aiChatDecisionAllowCustom => '或在下方直接输入你的方案。';
 
   @override
@@ -4926,6 +4946,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String aiChatSessionsSearchEmpty(String query) {
     return '未找到与「$query」匹配的对话';
   }
+
+  @override
+  String get aiChatSessionsSearchClear => '清除搜索';
 
   @override
   String get aiChatSessionsGroupToday => '今天';

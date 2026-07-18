@@ -67,6 +67,11 @@ void main() {
         ToolInvocationStatus.completed,
       );
       expect((messages[1].toolCalls.single.output! as Map)['rows'], isEmpty);
+
+      final sessions = await store.listSessions('user-1');
+      expect(sessions, hasLength(1));
+      expect(sessions.single.preview, '约 ¥123,456。');
+      expect(sessions.single.messageCount, 2);
     });
 
     test('updateMessage rewrites content and tool calls in place', () async {

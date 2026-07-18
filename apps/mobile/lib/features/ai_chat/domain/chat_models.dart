@@ -357,6 +357,8 @@ class ChatSession {
     required this.updatedAt,
     this.lastMessageAt,
     this.model,
+    this.preview,
+    this.messageCount = 0,
   });
 
   final String id;
@@ -366,4 +368,11 @@ class ChatSession {
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? lastMessageAt;
+
+  /// Last non-empty user/assistant content for the history list.
+  /// Loaded with the session row (subquery); not persisted as its own column.
+  final String? preview;
+
+  /// Total messages in the session (all roles). Used for list meta only.
+  final int messageCount;
 }

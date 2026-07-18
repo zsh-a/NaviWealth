@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart' show Colors;
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -111,12 +110,24 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
           final filtered = query.isEmpty
               ? sessions
               : sessions
-                    .where((s) => s.title.toLowerCase().contains(query))
+                    .where((s) {
+                      final title = s.title.toLowerCase();
+                      final preview = (s.preview ?? '').toLowerCase();
+                      return title.contains(query) || preview.contains(query);
+                    })
                     .toList(growable: false);
           if (filtered.isEmpty) {
             return _PanelMessage(
               icon: FLucideIcons.searchX,
               message: l10n.aiChatSessionsSearchEmpty(_query),
+              action: FButton(
+                variant: FButtonVariant.outline,
+                onPress: () {
+                  _searchCtrl.clear();
+                  setState(() => _query = '');
+                },
+                child: Text(l10n.aiChatSessionsSearchClear),
+              ),
             );
           }
           final now = DateTime.now();

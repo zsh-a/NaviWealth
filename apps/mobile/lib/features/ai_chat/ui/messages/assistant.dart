@@ -95,7 +95,7 @@ class _AssistantBubbleState extends State<_AssistantBubble> {
           _TruncationFooter(sessionId: sessionId, reason: message.stopReason!),
         if (!isStreaming &&
             message.role == ChatRole.assistant &&
-            isLastAssistant)
+            isLastAssistant) ...[
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.s4),
             child: _AssistantActions(
@@ -104,6 +104,12 @@ class _AssistantBubbleState extends State<_AssistantBubble> {
               canRegenerate: true,
             ),
           ),
+          if (message.status == ChatMessageStatus.complete)
+            _FollowUpChips(
+              sessionId: sessionId,
+              tools: message.toolCalls,
+            ),
+        ],
       ],
     );
 
@@ -302,6 +308,9 @@ class _AssistantBubbleState extends State<_AssistantBubble> {
 }
 
 /// Collapsed multi-tool summary; expands into quiet inline steps.
+///
+/// When one or more tools produce a rich visualization, the highest-priority
+/// one is pinned open as the answer artifact; remaining steps stay collapsible.
 class _ToolStepsGroup extends StatelessWidget {
   const _ToolStepsGroup({
     required this.tools,
@@ -326,13 +335,31 @@ class _ToolStepsGroup extends StatelessWidget {
         single != null &&
         !isStreaming &&
         single.output != null &&
-        renderToolOutput(context, single.name, single.output) != null;
+        isRichToolOutput(single.name, single.output);
     if (singleRich) {
       return ToolInvocationInline(
         invocation: single,
         initiallyExpanded: true,
+        showAsPrimary: true,
       );
     }
+
+    ToolInvocation? primary;
+    if (!isStreaming) {
+      final rich = tools
+          .where((t) => isRichToolOutput(t.name, t.output))
+          .toList(growable: false);
+      if (rich.isNotEmpty) {
+        rich.sort(
+          (a, b) => richToolPriority(a.name).compareTo(richToolPriority(b.name)),
+        );
+        primary = rich.first;
+      }
+    }
+
+    final secondary = primary == null
+        ? tools
+        : tools.where((t) => t.id != primary!.id).toList(growable: false);
 
     final names = [for (final t in tools) friendlyToolName(l10n, t.name)];
     final summary = names.length <= 2
@@ -342,36 +369,157 @@ class _ToolStepsGroup extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FTappable(
-          onPress: onToggle,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
-            child: Row(
-              children: [
-                Icon(FLucideIcons.wrench, size: AppIconSizes.xs, color: muted),
-                const SizedBox(width: AppSpacing.s6),
-                Expanded(
-                  child: Text(
-                    '${l10n.aiChatToolsUsed(tools.length)}  ·  $summary',
-                    style: AiType.meta(context).copyWith(color: muted),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (onToggle != null)
+        if (primary != null)
+          ToolInvocationInline(
+            invocation: primary,
+            initiallyExpanded: true,
+            showAsPrimary: true,
+          ),
+        if (secondary.isNotEmpty) ...[
+          FTappable(
+            onPress: onToggle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
+              child: Row(
+                children: [
                   Icon(
-                    expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
+                    FLucideIcons.wrench,
                     size: AppIconSizes.xs,
                     color: muted,
                   ),
-              ],
+                  const SizedBox(width: AppSpacing.s6),
+                  Expanded(
+                    child: Text(
+                      primary == null
+                          ? '${l10n.aiChatToolsUsed(tools.length)}  ·  $summary'
+                          : '${l10n.aiChatToolsUsed(secondary.length)}  ·  '
+                                '${[
+                                  for (final t in secondary)
+                                    friendlyToolName(l10n, t.name),
+                                ].take(2).join(' · ')}'
+                                '${secondary.length > 2 ? ' +${secondary.length - 2}' : ''}',
+                      style: AiType.meta(context).copyWith(color: muted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (onToggle != null)
+                    AnimatedRotation(
+                      turns: expanded ? 0.5 : 0,
+                      duration: AppMotionPolicy.duration(context, Motion.fast),
+                      child: Icon(
+                        FLucideIcons.chevronDown,
+                        size: AppIconSizes.xs,
+                        color: muted,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
-        ),
-        if (expanded)
-          for (final t in tools)
-            ToolInvocationInline(invocation: t, initiallyExpanded: false),
+          AnimatedSize(
+            duration: AppMotionPolicy.duration(context, Motion.medium),
+            curve: Motion.standardDecelerate,
+            alignment: Alignment.topCenter,
+            child: expanded || isStreaming
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final t in secondary)
+                        ToolInvocationInline(
+                          invocation: t,
+                          initiallyExpanded: false,
+                        ),
+                    ],
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+        ],
       ],
+    );
+  }
+}
+
+/// Context follow-up chips under the trailing complete assistant turn.
+class _FollowUpChips extends ConsumerWidget {
+  const _FollowUpChips({
+    required this.sessionId,
+    required this.tools,
+  });
+
+  final String sessionId;
+  final List<ToolInvocation> tools;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final turn = ref.watch(chatControllerProvider(sessionId));
+    if (turn.isBusy) return const SizedBox.shrink();
+
+    final chipIds = suggestReplyChips(
+      turnTools: {for (final t in tools) t.name},
+    );
+    if (chipIds.isEmpty) return const SizedBox.shrink();
+
+    final colors = context.theme.colors;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.s10),
+      child: Wrap(
+        spacing: AppSpacing.s8,
+        runSpacing: AppSpacing.s8,
+        children: [
+          for (final id in chipIds)
+            _FollowUpChip(
+              label: localizedReplyChip(l10n, id),
+              onPressed: () {
+                final label = localizedReplyChip(l10n, id);
+                ref.read(chatControllerProvider(sessionId).notifier).send(label);
+              },
+              borderColor: colors.border,
+              foreground: colors.foreground,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FollowUpChip extends StatelessWidget {
+  const _FollowUpChip({
+    required this.label,
+    required this.onPressed,
+    required this.borderColor,
+    required this.foreground,
+  });
+
+  final String label;
+  final VoidCallback onPressed;
+  final Color borderColor;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) {
+    return FTappable(
+      onPress: onPressed,
+      child: AnimatedContainer(
+        duration: AppMotionPolicy.duration(context, Motion.fast),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s8,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          border: Border.all(color: borderColor, width: AppStroke.hairline),
+          color: context.theme.colors.background,
+        ),
+        child: Text(
+          label,
+          style: context.captionStyle.copyWith(
+            color: foreground,
+            height: 1.2,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -8169,20 +8169,32 @@ abstract class AppLocalizations {
   /// No description provided for @aiToolNetWorthEmpty.
   ///
   /// In en, this message translates to:
-  /// **'No net worth data in this range'**
+  /// **'No cumulative net cash-flow data in this range'**
   String get aiToolNetWorthEmpty;
 
   /// No description provided for @aiToolCurrentNetWorth.
   ///
   /// In en, this message translates to:
-  /// **'Current net worth'**
+  /// **'Cumulative net cash flow'**
   String get aiToolCurrentNetWorth;
 
   /// No description provided for @aiToolNetWorthSeriesName.
   ///
   /// In en, this message translates to:
-  /// **'Net worth'**
+  /// **'Cumulative net cash flow'**
   String get aiToolNetWorthSeriesName;
+
+  /// Caption under the AI net-cash-flow card clarifying methodology vs true net worth.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly cumulative net cash flow · not mark-to-market net worth'**
+  String get aiToolNetWorthMethodNote;
+
+  /// Delta chip context for net cash-flow change over the series window.
+  ///
+  /// In en, this message translates to:
+  /// **'vs range start'**
+  String get aiToolNetWorthVsStart;
 
   /// No description provided for @aiToolSamplePointCount.
   ///
@@ -8676,6 +8688,12 @@ abstract class AppLocalizations {
   /// **'Running {tool}'**
   String aiChatRunningTool(String tool);
 
+  /// Short label on the floating jump-to-latest control in the chat timeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest'**
+  String get aiChatJumpToLatest;
+
   /// Tooltip on the floating button that re-anchors the conversation to the most recent message after the user has scrolled up.
   ///
   /// In en, this message translates to:
@@ -8796,6 +8814,24 @@ abstract class AppLocalizations {
   /// **'Edit in composer, then send to replace this turn'**
   String get aiChatEditUserMessageHint;
 
+  /// Banner above the composer while an edit-and-resend draft is active.
+  ///
+  /// In en, this message translates to:
+  /// **'Editing message — send to replace this turn'**
+  String get aiChatEditBannerTitle;
+
+  /// Cancel button on the edit-and-resend composer banner.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get aiChatEditCancel;
+
+  /// Message count meta under a session list row.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 message} other{{count} messages}}'**
+  String aiChatSessionMessageCount(int count);
+
   /// Hint under an ask_user decision card when free-form replies are allowed.
   ///
   /// In en, this message translates to:
@@ -8831,6 +8867,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No conversations match \"{query}\"'**
   String aiChatSessionsSearchEmpty(String query);
+
+  /// Clears the sessions panel search query when no results match.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get aiChatSessionsSearchClear;
 
   /// Section header in the sessions panel for conversations with their last message today (local time).
   ///

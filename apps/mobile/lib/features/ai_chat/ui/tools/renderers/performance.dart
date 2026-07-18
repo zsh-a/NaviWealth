@@ -28,16 +28,12 @@ class _XirrSummary extends StatelessWidget {
         ? '${_displayDate(from)} → ${_displayDate(to)}'
         : l10n.aiToolAllHistory;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: AppSpacing.s4,
-      ),
+    return ToolResultSurface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(scopeLabel, style: context.microCaptionStyle),
-          const SizedBox(height: AppSpacing.s4),
+          const SizedBox(height: AppSpacing.s6),
           if (rate == null)
             Text(l10n.aiToolXirrUnavailable, style: context.bodyCaptionStyle)
           else
@@ -47,7 +43,7 @@ class _XirrSummary extends StatelessWidget {
               fractionDigits: 2,
               style: TypographyTokens.numericTitle,
             ),
-          const SizedBox(height: AppSpacing.s4),
+          const SizedBox(height: AppSpacing.s6),
           Text(
             '$rangeLabel · ${l10n.aiToolCashFlowCount(flows.length)}',
             style: context.captionStyle,
@@ -59,18 +55,28 @@ class _XirrSummary extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// compute_net_worth / get_net_worth_summary -> mini sparkline + endpoints.
+// compute_net_worth / get_net_worth_summary -> answer-grade trend card.
 // Legacy payload: { from, to, granularity, series: [ { date, value, currency } ] }
 // Device payload: { from, to, series: [ { year_month, cumulative_minor, currency } ] }
+//
+// Device tool is monthly cumulative *net cash flow*, not mark-to-market
+// net worth — labels and captions must say so honestly.
 // ---------------------------------------------------------------------------
 
-class _NetWorthSparkline extends StatelessWidget {
+class _NetWorthSparkline extends StatefulWidget {
   const _NetWorthSparkline({required this.output});
   final Object? output;
 
   @override
+  State<_NetWorthSparkline> createState() => _NetWorthSparklineState();
+}
+
+class _NetWorthSparklineState extends State<_NetWorthSparkline> {
+  ChartPoint? _scrub;
+
+  @override
   Widget build(BuildContext context) {
-    final outMap = _asMap(output);
+    final outMap = _asMap(widget.output);
     if (outMap == null) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
     final raw = _asList(outMap['series']) ?? const <Object?>[];
@@ -87,28 +93,36 @@ class _NetWorthSparkline extends StatelessWidget {
       if (c != null && c.isNotEmpty) currency = c;
     }
     if (points.isEmpty) {
-      return _EmptyResult(message: l10n.aiToolNetWorthEmpty);
+      return ToolResultSurface(
+        child: _EmptyResult(message: l10n.aiToolNetWorthEmpty),
+      );
     }
     points.sort((a, b) => a.$1.compareTo(b.$1));
     final start = points.first.$2;
     final end = points.last.$2;
     final delta = end - start;
+    final pct = start.abs() < 1e-9 ? null : (delta / start.abs()) * 100;
 
     final chartPoints = <ChartPoint>[
       for (final p in points)
-        ChartPoint(x: p.$1.millisecondsSinceEpoch.toDouble(), y: p.$2),
+        ChartPoint(
+          x: p.$1.millisecondsSinceEpoch.toDouble(),
+          y: p.$2,
+          meta: p.$1,
+        ),
     ];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: AppSpacing.s4,
-      ),
+    final displayAmount = _scrub?.y ?? end;
+    final displayDate = _scrub?.meta is DateTime
+        ? _scrub!.meta! as DateTime
+        : points.last.$1;
+
+    return ToolResultSurface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Column(
@@ -116,42 +130,84 @@ class _NetWorthSparkline extends StatelessWidget {
                   children: [
                     Text(
                       l10n.aiToolCurrentNetWorth,
-                      style: context.microCaptionStyle,
+                      style: context.microLabelStyle.copyWith(
+                        color: context.theme.colors.mutedForeground,
+                      ),
                     ),
-                    MoneyText(
-                      amount: end,
+                    const SizedBox(height: AppSpacing.s4),
+                    AnimatedMoneyText(
+                      amount: displayAmount,
                       currencyCode: currency,
                       style: TypographyTokens.numericTitle,
                       color: context.theme.colors.foreground,
+                      showSign: displayAmount < 0,
+                      duration: Motion.ambient,
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(
+                      _scrub != null
+                          ? _displayDate(displayDate)
+                          : l10n.aiToolNetWorthMethodNote,
+                      style: context.microCaptionStyle,
                     ),
                   ],
                 ),
               ),
-              DeltaChip(value: delta, format: DeltaFormat.currency),
+              const SizedBox(width: AppSpacing.s8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  DeltaChip(
+                    value: delta,
+                    format: DeltaFormat.currency,
+                    currencyCode: currency,
+                  ),
+                  if (pct != null) ...[
+                    const SizedBox(height: AppSpacing.s4),
+                    DeltaChip(
+                      value: pct,
+                      format: DeltaFormat.percent,
+                      fractionDigits: 1,
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s8),
+          const SizedBox(height: AppSpacing.s12),
           SizedBox(
-            height: AppControlHeights.chipRail,
+            height: 112,
             child: NwLineChart(
               series: [
                 ChartSeries(
                   name: l10n.aiToolNetWorthSeriesName,
                   points: chartPoints,
                   intent: SeriesIntent.primary,
-                  fillOpacity: 0.12,
+                  fillOpacity: 0.16,
                 ),
               ],
-              xAxis: const TimeAxis(showGrid: false, maxLabels: 0),
+              xAxis: const TimeAxis(showGrid: false, maxLabels: 2),
               yAxis: const ValueAxis(showGrid: false, maxLabels: 0),
-              aspectRatio: 4,
+              aspectRatio: null,
               filled: true,
               downsample: false,
+              heroDots: true,
+              showDots: points.length <= 14,
+              showXAxis: true,
+              showYAxis: false,
+              showTouchXAxisLabel: true,
+              curved: false,
+              onScrub: (point) {
+                if (!mounted) return;
+                setState(() => _scrub = point);
+              },
             ),
           ),
-          const SizedBox(height: AppSpacing.s4),
+          const SizedBox(height: AppSpacing.s8),
           Text(
-            '${_displayDate(points.first.$1)} → ${_displayDate(points.last.$1)} · ${l10n.aiToolSamplePointCount(points.length)}',
+            '${_displayDate(points.first.$1)} → ${_displayDate(points.last.$1)}'
+            ' · ${l10n.aiToolSamplePointCount(points.length)}'
+            ' · ${l10n.aiToolNetWorthVsStart}',
             style: context.microCaptionStyle,
           ),
         ],

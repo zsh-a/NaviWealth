@@ -232,19 +232,32 @@ class _JumpToBottomChip extends StatelessWidget {
       child: FTappable(
         onPress: onPressed,
         child: Container(
-          width: 36,
-          height: 36,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s12,
+            vertical: AppSpacing.s8,
+          ),
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
+            borderRadius: BorderRadius.circular(AppRadius.full),
             color: colors.background,
             border: Border.all(color: colors.border),
             boxShadow: AppShadow.elevation2,
           ),
-          alignment: Alignment.center,
-          child: Icon(
-            FLucideIcons.arrowDown,
-            size: AppIconSizes.h18,
-            color: colors.foreground,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                FLucideIcons.arrowDown,
+                size: AppIconSizes.sm,
+                color: colors.foreground,
+              ),
+              const SizedBox(width: AppSpacing.s6),
+              Text(
+                l10n.aiChatJumpToLatest,
+                style: context.captionLabelStyle.copyWith(
+                  color: colors.foreground,
+                ),
+              ),
+            ],
           ),
         ),
       ),

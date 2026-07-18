@@ -2568,9 +2568,17 @@
   "@aiToolCashFlowCount": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "aiToolNetWorthEmpty": "No net worth data in this range",
-  "aiToolCurrentNetWorth": "Current net worth",
-  "aiToolNetWorthSeriesName": "Net worth",
+  "aiToolNetWorthEmpty": "No cumulative net cash-flow data in this range",
+  "aiToolCurrentNetWorth": "Cumulative net cash flow",
+  "aiToolNetWorthSeriesName": "Cumulative net cash flow",
+  "aiToolNetWorthMethodNote": "Monthly cumulative net cash flow · not mark-to-market net worth",
+  "@aiToolNetWorthMethodNote": {
+    "description": "Caption under the AI net-cash-flow card clarifying methodology vs true net worth."
+  },
+  "aiToolNetWorthVsStart": "vs range start",
+  "@aiToolNetWorthVsStart": {
+    "description": "Delta chip context for net cash-flow change over the series window."
+  },
   "aiToolSamplePointCount": "{count, plural, =1{1 sample point} other{{count} sample points}}",
   "@aiToolSamplePointCount": {
     "placeholders": { "count": { "type": "int" } }
@@ -2721,6 +2729,10 @@
     "description": "Streaming indicator while the assistant is waiting for a tool call. {tool} is already a localized friendly name from friendlyToolName().",
     "placeholders": { "tool": { "type": "String" } }
   },
+  "aiChatJumpToLatest": "Latest",
+  "@aiChatJumpToLatest": {
+    "description": "Short label on the floating jump-to-latest control in the chat timeline."
+  },
   "aiChatJumpToLatestTooltip": "Jump to latest",
   "@aiChatJumpToLatestTooltip": {
     "description": "Tooltip on the floating button that re-anchors the conversation to the most recent message after the user has scrolled up."
@@ -2763,6 +2775,19 @@
   "@aiChatEditUserMessageSubmit": { "description": "Submit button label in the edit-and-resend sheet." },
   "aiChatEditUserMessageHint": "Edit in composer, then send to replace this turn",
   "@aiChatEditUserMessageHint": { "description": "Toast/hint after tapping edit on a user message — content is loaded into the composer." },
+  "aiChatEditBannerTitle": "Editing message — send to replace this turn",
+  "@aiChatEditBannerTitle": {
+    "description": "Banner above the composer while an edit-and-resend draft is active."
+  },
+  "aiChatEditCancel": "Cancel",
+  "@aiChatEditCancel": {
+    "description": "Cancel button on the edit-and-resend composer banner."
+  },
+  "aiChatSessionMessageCount": "{count, plural, =1{1 message} other{{count} messages}}",
+  "@aiChatSessionMessageCount": {
+    "description": "Message count meta under a session list row.",
+    "placeholders": { "count": { "type": "int" } }
+  },
   "aiChatDecisionAllowCustom": "Or type your own option below.",
   "@aiChatDecisionAllowCustom": { "description": "Hint under an ask_user decision card when free-form replies are allowed." },
   "aiChatDecisionReply": "I choose \"{label}\". Continue under this option.",
@@ -2777,6 +2802,10 @@
   "aiChatSessionsSearchHint": "Search conversations…",
   "@aiChatSessionsSearchHint": { "description": "Placeholder text in the search box at the top of the sessions panel." },
   "aiChatSessionsSearchEmpty": "No conversations match \"{query}\"",
+  "aiChatSessionsSearchClear": "Clear search",
+  "@aiChatSessionsSearchClear": {
+    "description": "Clears the sessions panel search query when no results match."
+  },
   "@aiChatSessionsSearchEmpty": {
     "description": "Empty state shown in the sessions panel when no session titles match the current search query.",
     "placeholders": { "query": { "type": "String" } }

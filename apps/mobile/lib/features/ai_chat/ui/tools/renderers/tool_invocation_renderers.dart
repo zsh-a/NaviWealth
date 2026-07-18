@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
@@ -22,6 +22,72 @@ const int _kMaxVisibleRows = 10;
 /// still drop into raw JSON if they need every entry. Mirrors the spec:
 /// > 数据过大（> 50 条）→ 截断显示前 10 + 提示
 const int _kRawListLimit = 50;
+
+/// Tools whose output is a primary visual answer (chart / KPI card).
+/// Higher priority first — used to pin one artifact above collapsed steps.
+const List<String> kRichVisualizationTools = <String>[
+  'get_net_worth_summary',
+  'compute_net_worth',
+  'get_asset_allocation',
+  'compute_xirr',
+  'get_holdings',
+  'get_industry_breakdown',
+  'get_geo_breakdown',
+  'get_market_cap_breakdown',
+  'get_risk_alerts',
+  'get_recurring_patterns',
+  'get_subscription_changes',
+  'get_refund_links',
+  'list_payment_accounts',
+];
+
+/// Whether [toolName] has a specialized domain renderer registered.
+bool isRichToolOutput(String toolName, Object? output) {
+  if (output == null) return false;
+  return switch (toolName) {
+    'get_holdings' ||
+    'list_payment_accounts' ||
+    'compute_xirr' ||
+    'compute_net_worth' ||
+    'get_net_worth_summary' ||
+    'get_industry_breakdown' ||
+    'get_geo_breakdown' ||
+    'get_market_cap_breakdown' ||
+    'get_risk_alerts' ||
+    'get_asset_allocation' ||
+    'get_recurring_patterns' ||
+    'get_subscription_changes' ||
+    'get_refund_links' => true,
+    _ => false,
+  };
+}
+
+/// Priority score for pinning a visualization (lower = more important).
+int richToolPriority(String toolName) {
+  final i = kRichVisualizationTools.indexOf(toolName);
+  return i < 0 ? 999 : i;
+}
+
+/// Soft answer surface shared by tool result cards in the chat timeline.
+class ToolResultSurface extends StatelessWidget {
+  const ToolResultSurface({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(AppSpacing.s12),
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard.raised(
+      padding: padding,
+      borderRadius: AppRadius.md,
+      child: child,
+    );
+  }
+}
 
 /// Build a specialised body widget for the `output` of [toolName]. Returns
 /// `null` when no renderer is registered for the tool, when the payload

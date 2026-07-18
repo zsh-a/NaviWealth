@@ -22,12 +22,16 @@ class ToolInvocationInline extends StatefulWidget {
     super.key,
     required this.invocation,
     this.initiallyExpanded = false,
+    this.showAsPrimary = false,
   });
 
   final ToolInvocation invocation;
 
   /// When true, body starts open (e.g. single-tool turns with a chart).
   final bool initiallyExpanded;
+
+  /// When true, render as a primary answer artifact (no collapsible chrome).
+  final bool showAsPrimary;
 
   static Widget pick(ToolInvocation invocation) {
     return ToolInvocationInline(invocation: invocation);
@@ -38,13 +42,17 @@ class ToolInvocationInline extends StatefulWidget {
 }
 
 class _ToolInvocationInlineState extends State<ToolInvocationInline> {
-  late bool _expanded = widget.initiallyExpanded;
+  late bool _expanded = widget.initiallyExpanded || widget.showAsPrimary;
 
   @override
   void didUpdateWidget(ToolInvocationInline oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initiallyExpanded != widget.initiallyExpanded &&
         widget.initiallyExpanded) {
+      _expanded = true;
+    }
+    if (oldWidget.showAsPrimary != widget.showAsPrimary &&
+        widget.showAsPrimary) {
       _expanded = true;
     }
   }
@@ -59,6 +67,40 @@ class _ToolInvocationInlineState extends State<ToolInvocationInline> {
         ? null
         : renderToolOutput(context, invocation.name, invocation.output);
     final hasBody = body != null || invocation.output != null;
+    final success = !pending && invocation.status == ToolInvocationStatus.completed;
+
+    if (widget.showAsPrimary && body != null && !pending) {
+      return Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.s4, bottom: AppSpacing.s6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  toolIcon(invocation.name),
+                  size: AppIconSizes.xs,
+                  color: AiTone.muted(context),
+                ),
+                const SizedBox(width: AppSpacing.s6),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: AiType.meta(context).copyWith(
+                      color: AiTone.muted(context),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            body,
+          ],
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.s4, bottom: AppSpacing.s2),
@@ -74,19 +116,29 @@ class _ToolInvocationInlineState extends State<ToolInvocationInline> {
                   : null,
               child: Row(
                 children: [
-                  Icon(
-                    pending
-                        ? FLucideIcons.hourglass
-                        : toolIcon(invocation.name),
-                    size: AppIconSizes.xs,
-                    color: AiTone.muted(context),
+                  AnimatedSwitcher(
+                    duration: AppMotionPolicy.duration(context, Motion.fast),
+                    child: Icon(
+                      pending
+                          ? FLucideIcons.hourglass
+                          : success
+                          ? FLucideIcons.circleCheck
+                          : toolIcon(invocation.name),
+                      key: ValueKey(pending ? 'pending' : 'done'),
+                      size: AppIconSizes.xs,
+                      color: pending
+                          ? AiTone.active(context)
+                          : AiTone.muted(context),
+                    ),
                   ),
                   const SizedBox(width: AppSpacing.s6),
                   Flexible(
                     child: Text(
                       label,
                       style: AiType.meta(context).copyWith(
-                        color: AiTone.muted(context),
+                        color: pending
+                            ? AiTone.active(context)
+                            : AiTone.muted(context),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -94,25 +146,35 @@ class _ToolInvocationInlineState extends State<ToolInvocationInline> {
                   ),
                   if (hasBody && !pending) ...[
                     const SizedBox(width: AppSpacing.s4),
-                    Icon(
-                      _expanded
-                          ? FLucideIcons.chevronUp
-                          : FLucideIcons.chevronDown,
-                      size: AppIconSizes.xs,
-                      color: AiTone.muted(context),
+                    AnimatedRotation(
+                      turns: _expanded ? 0.5 : 0,
+                      duration: AppMotionPolicy.duration(context, Motion.fast),
+                      curve: Motion.standardDecelerate,
+                      child: Icon(
+                        FLucideIcons.chevronDown,
+                        size: AppIconSizes.xs,
+                        color: AiTone.muted(context),
+                      ),
                     ),
                   ],
                 ],
               ),
             ),
           ),
-          if (_expanded && !pending) ...[
-            const SizedBox(height: AppSpacing.s6),
-            if (body != null)
-              body
-            else if (invocation.output != null)
-              _CompactOutput(output: invocation.output),
-          ],
+          AnimatedSize(
+            duration: AppMotionPolicy.duration(context, Motion.medium),
+            curve: Motion.standardDecelerate,
+            alignment: Alignment.topCenter,
+            child: !_expanded || pending
+                ? const SizedBox(width: double.infinity)
+                : Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.s6),
+                    child: body ??
+                        (invocation.output != null
+                            ? _CompactOutput(output: invocation.output)
+                            : const SizedBox.shrink()),
+                  ),
+          ),
         ],
       ),
     );
@@ -150,15 +212,18 @@ class _CompactOutput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = _preview(output);
-    return Text(
-      text,
-      style: context.captionStyle.copyWith(
-        color: AiTone.muted(context),
-        height: 1.4,
-        fontFamily: 'monospace',
+    return ToolResultSurface(
+      padding: const EdgeInsets.all(AppSpacing.s10),
+      child: Text(
+        text,
+        style: context.captionStyle.copyWith(
+          color: AiTone.muted(context),
+          height: 1.4,
+          fontFamily: 'monospace',
+        ),
+        maxLines: 6,
+        overflow: TextOverflow.ellipsis,
       ),
-      maxLines: 6,
-      overflow: TextOverflow.ellipsis,
     );
   }
 

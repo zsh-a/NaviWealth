@@ -17,7 +17,9 @@ class _HoldingsTable extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final holdings = _asMap(outMap['holdings']);
     if (holdings == null || holdings.isEmpty) {
-      return _EmptyResult(message: l10n.aiToolHoldingsEmpty);
+      return ToolResultSurface(
+        child: _EmptyResult(message: l10n.aiToolHoldingsEmpty),
+      );
     }
 
     final rows = <_HoldingRow>[];
@@ -36,20 +38,20 @@ class _HoldingsTable extends StatelessWidget {
         ),
       );
     }
-    if (rows.isEmpty) return _EmptyResult(message: l10n.aiToolHoldingsEmpty);
+    if (rows.isEmpty) {
+      return ToolResultSurface(
+        child: _EmptyResult(message: l10n.aiToolHoldingsEmpty),
+      );
+    }
     rows.sort((a, b) => b.costBasis.compareTo(a.costBasis));
     final visible = rows.take(_kMaxVisibleRows).toList();
     final hidden = rows.length - visible.length;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s8,
-            vertical: AppSpacing.s4,
-          ),
-          child: Row(
+    return ToolResultSurface(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             children: [
               Expanded(
                 flex: 4,
@@ -76,20 +78,17 @@ class _HoldingsTable extends StatelessWidget {
               ),
             ],
           ),
-        ),
-        for (final row in visible) _holdingRowTile(context, row),
-        if (hidden > 0)
-          Padding(
-            padding: const EdgeInsets.only(
-              top: AppSpacing.s4,
-              left: AppSpacing.s8,
+          for (final row in visible) _holdingRowTile(context, row),
+          if (hidden > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s4),
+              child: Text(
+                l10n.aiToolHiddenItems(hidden),
+                style: context.captionStyle,
+              ),
             ),
-            child: Text(
-              l10n.aiToolHiddenItems(hidden),
-              style: context.captionStyle,
-            ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -217,7 +216,9 @@ class _PaymentAccountsView extends StatelessWidget {
       );
     }
     if (rows.isEmpty) {
-      return _EmptyResult(message: l10n.aiToolPaymentAccountsEmpty);
+      return ToolResultSurface(
+        child: _EmptyResult(message: l10n.aiToolPaymentAccountsEmpty),
+      );
     }
 
     final visible = rows.take(_kMaxVisibleRows).toList();
@@ -226,32 +227,26 @@ class _PaymentAccountsView extends StatelessWidget {
         : rows.length;
     final hidden = math.max(0, total - visible.length);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s8,
-            vertical: AppSpacing.s4,
-          ),
-          child: Text(
+    return ToolResultSurface(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
             l10n.aiToolPaymentAccountsTitle,
             style: context.microCaptionStyle,
           ),
-        ),
-        for (final row in visible) _paymentAccountTile(context, row),
-        if (hidden > 0)
-          Padding(
-            padding: const EdgeInsets.only(
-              top: AppSpacing.s4,
-              left: AppSpacing.s8,
+          const SizedBox(height: AppSpacing.s4),
+          for (final row in visible) _paymentAccountTile(context, row),
+          if (hidden > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s4),
+              child: Text(
+                l10n.aiToolHiddenAccounts(hidden),
+                style: context.captionStyle,
+              ),
             ),
-            child: Text(
-              l10n.aiToolHiddenAccounts(hidden),
-              style: context.captionStyle,
-            ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 

@@ -47,19 +47,21 @@ class AssetAllocationView extends StatelessWidget {
       return _EmptyHint(text: l10n.aiToolHoldingsDataMalformed);
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final entry in byCurrency.entries)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.s12),
-            child: _AllocBlock(
-              currency: entry.key,
-              buckets: entry.value,
-              palette: palette,
+    return ToolResultSurface(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final entry in byCurrency.entries)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s12),
+              child: _AllocBlock(
+                currency: entry.key,
+                buckets: entry.value,
+                palette: palette,
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }

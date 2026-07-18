@@ -132,12 +132,15 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
       });
     }
 
+    final editing = _replaceMessageId != null;
+    final colors = context.theme.colors;
+
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.theme.colors.background,
+        color: colors.background,
         border: Border(
           top: BorderSide(
-            color: context.theme.colors.border.withValues(
+            color: colors.border.withValues(
               alpha: AppOpacity.scrim,
             ),
           ),
@@ -156,47 +159,146 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              AnimatedSize(
+                duration: AppMotionPolicy.duration(context, Motion.fast),
+                curve: Motion.standardDecelerate,
+                alignment: Alignment.topCenter,
+                child: editing
+                    ? _EditBanner(
+                        onCancel: () {
+                          setState(() {
+                            _replaceMessageId = null;
+                            _controller.clear();
+                          });
+                        },
+                      )
+                    : const SizedBox(width: double.infinity),
+              ),
               if (sessionId != null) const _ProfileCaption(),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Focus(
-                      onKeyEvent: _onKey,
-                      child: FTextField(
-                        control: FTextFieldControl.managed(
-                          controller: _controller,
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colors.muted.withValues(
+                    alpha: AppOpacity.prominent,
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(
+                    color: editing
+                        ? colors.primary.withValues(alpha: AppOpacity.scrim)
+                        : colors.border.withValues(alpha: AppOpacity.scrim),
+                    width: AppStroke.hairline,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s4,
+                    AppSpacing.s4,
+                    AppSpacing.s4,
+                    AppSpacing.s4,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Focus(
+                          onKeyEvent: _onKey,
+                          child: FTextField(
+                            control: FTextFieldControl.managed(
+                              controller: _controller,
+                            ),
+                            focusNode: _focusNode,
+                            textInputAction: TextInputAction.newline,
+                            keyboardType: TextInputType.multiline,
+                            minLines: 1,
+                            maxLines: 6,
+                            enabled: !widget._busy,
+                            hint: widget.isStreaming
+                                ? l10n.aiChatComposerHintStreaming
+                                : (editing
+                                      ? l10n.aiChatEditUserMessageTitle
+                                      : l10n.aiChatComposerHintIdle),
+                          ),
                         ),
-                        focusNode: _focusNode,
-                        textInputAction: TextInputAction.newline,
-                        keyboardType: TextInputType.multiline,
-                        minLines: 1,
-                        maxLines: 6,
-                        enabled: !widget._busy,
-                        hint: widget.isStreaming
-                            ? l10n.aiChatComposerHintStreaming
-                            : (_replaceMessageId != null
-                                  ? l10n.aiChatEditUserMessageTitle
-                                  : l10n.aiChatComposerHintIdle),
                       ),
-                    ),
+                      const SizedBox(width: AppSpacing.s4),
+                      SpeechInputButton(
+                        controller: _controller,
+                        enabled: !widget._busy,
+                      ),
+                      const SizedBox(width: AppSpacing.s4),
+                      _TrailingButton(
+                        controller: _controller,
+                        isStreaming: widget.isStreaming,
+                        onSend: _send,
+                        onCancel: widget.onCancel,
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: AppSpacing.s8),
-                  SpeechInputButton(
-                    controller: _controller,
-                    enabled: !widget._busy,
-                  ),
-                  const SizedBox(width: AppSpacing.s8),
-                  _TrailingButton(
-                    controller: _controller,
-                    isStreaming: widget.isStreaming,
-                    onSend: _send,
-                    onCancel: widget.onCancel,
-                  ),
-                ],
+                ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EditBanner extends StatelessWidget {
+  const _EditBanner({required this.onCancel});
+
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s8,
+        ),
+        decoration: BoxDecoration(
+          color: colors.primary.withValues(alpha: AppOpacity.subtle),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: colors.primary.withValues(alpha: AppOpacity.scrim),
+            width: AppStroke.hairline,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              FLucideIcons.pencil,
+              size: AppIconSizes.sm,
+              color: colors.primary,
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            Expanded(
+              child: Text(
+                l10n.aiChatEditBannerTitle,
+                style: context.captionLabelStyle.copyWith(
+                  color: colors.foreground,
+                ),
+              ),
+            ),
+            FTappable(
+              onPress: onCancel,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s6,
+                  vertical: AppSpacing.s2,
+                ),
+                child: Text(
+                  l10n.aiChatEditCancel,
+                  style: context.captionLabelStyle.copyWith(
+                    color: colors.primary,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

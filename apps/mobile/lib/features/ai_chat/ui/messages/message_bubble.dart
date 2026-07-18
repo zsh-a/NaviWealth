@@ -20,8 +20,9 @@ import '../decision_card.dart';
 import '../decision_request.dart';
 import '../proposals/propose_batch_actions.dart';
 import '../proposals/propose_card.dart';
+import '../reply_chips.dart';
 import '../tools/renderers/tool_invocation_renderers.dart'
-    show renderToolOutput;
+    show isRichToolOutput, richToolPriority;
 import '../tools/tool_invocation_card.dart' show friendlyToolName;
 import '../tools/tool_invocation_inline.dart';
 
@@ -136,12 +137,17 @@ class _UserBubble extends ConsumerWidget {
                     label: l10n.aiChatSemanticsUserMessage,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.s12,
-                        vertical: AppSpacing.s8,
+                        horizontal: AppSpacing.s14,
+                        vertical: AppSpacing.s10,
                       ),
                       decoration: BoxDecoration(
                         color: colors.primary,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(AppRadius.lg),
+                          topRight: Radius.circular(AppRadius.lg),
+                          bottomLeft: Radius.circular(AppRadius.lg),
+                          bottomRight: Radius.circular(AppRadius.sm),
+                        ),
                       ),
                       child: SelectableText(
                         message.content,

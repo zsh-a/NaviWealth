@@ -34,7 +34,10 @@ Future<void> _expandCard(WidgetTester tester) async {
 }
 
 Future<void> _expandCardAt(WidgetTester tester, int index) async {
-  await tester.tap(find.byKey(_headerKey).at(index));
+  final target = find.byKey(_headerKey).at(index);
+  await tester.ensureVisible(target);
+  await tester.pumpAndSettle();
+  await tester.tap(target);
   await tester.pumpAndSettle();
 }
 
@@ -154,7 +157,7 @@ void main() {
       );
       await _expandCard(tester);
 
-      expect(find.text('当前净资产'), findsOneWidget);
+      expect(find.text('累计净现金流'), findsOneWidget);
       expect(find.textContaining('4 个采样点'), findsOneWidget);
     });
 
@@ -199,7 +202,7 @@ void main() {
       );
       await _expandCard(tester);
 
-      expect(find.text('当前净资产'), findsOneWidget);
+      expect(find.text('累计净现金流'), findsOneWidget);
       expect(find.textContaining('4 个采样点'), findsOneWidget);
       expect(find.text('计算净资产'), findsOneWidget);
     });
@@ -449,13 +452,13 @@ void main() {
           }
 
           expect(tester.takeException(), isNull);
-          expect(find.text('当前净资产'), findsOneWidget);
+          expect(find.text('累计净现金流'), findsOneWidget);
           expect(find.text('stock'), findsOneWidget);
           expect(find.text('cash'), findsOneWidget);
           expect(find.text('可用支付账户'), findsOneWidget);
           expect(find.text('Daily Checking'), findsOneWidget);
           expect(find.text('Wallet Cash'), findsOneWidget);
-          expect(tester.getSemantics(find.text('当前净资产')).label, '当前净资产');
+          expect(tester.getSemantics(find.text('累计净现金流')).label, '累计净现金流');
           expect(
             tester.getSemantics(find.text('Daily Checking')).label,
             'Daily Checking',

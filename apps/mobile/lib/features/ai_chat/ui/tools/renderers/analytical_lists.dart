@@ -23,27 +23,31 @@ class RecurringPatternsView extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final raw = _asList(m?['patterns']) ?? const <Object?>[];
     if (raw.isEmpty) {
-      return _EmptyHint(text: l10n.aiToolRecurringPatternsEmpty);
+      return ToolResultSurface(
+        child: _EmptyHint(text: l10n.aiToolRecurringPatternsEmpty),
+      );
     }
     final visible = raw.take(_kMaxVisibleRows).toList();
     final fmt = NumberFormat.decimalPattern();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final entry in visible)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-            child: _patternRow(context, entry, fmt),
-          ),
-        if (raw.length > visible.length)
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.s4),
-            child: Text(
-              l10n.aiToolMoreItems(raw.length - visible.length),
-              style: context.microCaptionStyle,
+    return ToolResultSurface(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final entry in visible)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+              child: _patternRow(context, entry, fmt),
             ),
-          ),
-      ],
+          if (raw.length > visible.length)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s4),
+              child: Text(
+                l10n.aiToolMoreItems(raw.length - visible.length),
+                style: context.microCaptionStyle,
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -146,26 +150,30 @@ class SubscriptionChangesView extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final raw = _asList(m?['changes']) ?? const <Object?>[];
     if (raw.isEmpty) {
-      return _EmptyHint(text: l10n.aiToolSubscriptionChangesEmpty);
+      return ToolResultSurface(
+        child: _EmptyHint(text: l10n.aiToolSubscriptionChangesEmpty),
+      );
     }
     final visible = raw.take(_kMaxVisibleRows).toList();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final entry in visible)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-            child: _changeRow(context, entry),
-          ),
-        if (raw.length > visible.length)
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.s4),
-            child: Text(
-              l10n.aiToolMoreItems(raw.length - visible.length),
-              style: context.microCaptionStyle,
+    return ToolResultSurface(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final entry in visible)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+              child: _changeRow(context, entry),
             ),
-          ),
-      ],
+          if (raw.length > visible.length)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s4),
+              child: Text(
+                l10n.aiToolMoreItems(raw.length - visible.length),
+                style: context.microCaptionStyle,
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -246,27 +254,31 @@ class RefundLinksView extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final raw = _asList(m?['links']) ?? const <Object?>[];
     if (raw.isEmpty) {
-      return _EmptyHint(text: l10n.aiToolRefundLinksEmpty);
+      return ToolResultSurface(
+        child: _EmptyHint(text: l10n.aiToolRefundLinksEmpty),
+      );
     }
     final visible = raw.take(_kMaxVisibleRows).toList();
     final fmt = NumberFormat.decimalPattern();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final entry in visible)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-            child: _pairRow(context, entry, fmt),
-          ),
-        if (raw.length > visible.length)
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.s4),
-            child: Text(
-              l10n.aiToolMoreItems(raw.length - visible.length),
-              style: context.microCaptionStyle,
+    return ToolResultSurface(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final entry in visible)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+              child: _pairRow(context, entry, fmt),
             ),
-          ),
-      ],
+          if (raw.length > visible.length)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s4),
+              child: Text(
+                l10n.aiToolMoreItems(raw.length - visible.length),
+                style: context.microCaptionStyle,
+              ),
+            ),
+        ],
+      ),
     );
   }
 

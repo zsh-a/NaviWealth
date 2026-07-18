@@ -93,17 +93,28 @@ class _SearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FTextField(
-      control: FTextFieldControl.managed(
-        controller: controller,
-        // FTextFieldControl.managed passes a TextEditingValue, but for
-        // search we only care about the string - unwrap here so callers
-        // keep the cleaner ValueChanged<String> shape.
-        onChange: (v) => onChanged(v.text),
+    final colors = context.theme.colors;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.muted.withValues(alpha: AppOpacity.prominent),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: colors.border.withValues(alpha: AppOpacity.scrim),
+          width: AppStroke.hairline,
+        ),
       ),
-      hint: l10n.aiChatSessionsSearchHint,
-      maxLines: 1,
-      keyboardType: TextInputType.text,
+      child: FTextField(
+        control: FTextFieldControl.managed(
+          controller: controller,
+          // FTextFieldControl.managed passes a TextEditingValue, but for
+          // search we only care about the string - unwrap here so callers
+          // keep the cleaner ValueChanged<String> shape.
+          onChange: (v) => onChanged(v.text),
+        ),
+        hint: l10n.aiChatSessionsSearchHint,
+        maxLines: 1,
+        keyboardType: TextInputType.text,
+      ),
     );
   }
 }

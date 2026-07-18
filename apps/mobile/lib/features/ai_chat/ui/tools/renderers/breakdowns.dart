@@ -48,11 +48,7 @@ class _BreakdownView extends StatelessWidget {
         ),
     ];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: AppSpacing.s4,
-      ),
+    return ToolResultSurface(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [

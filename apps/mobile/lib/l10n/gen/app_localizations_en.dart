@@ -4735,13 +4735,21 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get aiToolNetWorthEmpty => 'No net worth data in this range';
+  String get aiToolNetWorthEmpty =>
+      'No cumulative net cash-flow data in this range';
 
   @override
-  String get aiToolCurrentNetWorth => 'Current net worth';
+  String get aiToolCurrentNetWorth => 'Cumulative net cash flow';
 
   @override
-  String get aiToolNetWorthSeriesName => 'Net worth';
+  String get aiToolNetWorthSeriesName => 'Cumulative net cash flow';
+
+  @override
+  String get aiToolNetWorthMethodNote =>
+      'Monthly cumulative net cash flow · not mark-to-market net worth';
+
+  @override
+  String get aiToolNetWorthVsStart => 'vs range start';
 
   @override
   String aiToolSamplePointCount(int count) {
@@ -5107,6 +5115,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get aiChatJumpToLatest => 'Latest';
+
+  @override
   String get aiChatJumpToLatestTooltip => 'Jump to latest';
 
   @override
@@ -5170,6 +5181,24 @@ class AppLocalizationsEn extends AppLocalizations {
       'Edit in composer, then send to replace this turn';
 
   @override
+  String get aiChatEditBannerTitle =>
+      'Editing message — send to replace this turn';
+
+  @override
+  String get aiChatEditCancel => 'Cancel';
+
+  @override
+  String aiChatSessionMessageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count messages',
+      one: '1 message',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get aiChatDecisionAllowCustom => 'Or type your own option below.';
 
   @override
@@ -5190,6 +5219,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String aiChatSessionsSearchEmpty(String query) {
     return 'No conversations match \"$query\"';
   }
+
+  @override
+  String get aiChatSessionsSearchClear => 'Clear search';
 
   @override
   String get aiChatSessionsGroupToday => 'Today';

@@ -54,8 +54,24 @@ class ChatHistoryStore {
   Future<List<ChatSession>> _listSessions(String ownerUserId) async {
     final rows = await _db
         .customSelect(
-          'SELECT * FROM chat_sessions WHERE owner_user_id = ?1 '
-          'ORDER BY COALESCE(last_message_at, created_at) DESC',
+          // Preview + message_count come from correlated subqueries so the
+          // history list stays informative without a denormalized column.
+          'SELECT s.*, '
+          '('
+          '  SELECT m.content FROM chat_messages m '
+          '  WHERE m.session_id = s.id '
+          '    AND m.role IN (\'user\', \'assistant\', \'error\') '
+          '    AND length(trim(m.content)) > 0 '
+          '  ORDER BY m.created_at DESC, m.id DESC '
+          '  LIMIT 1'
+          ') AS preview, '
+          '('
+          '  SELECT COUNT(*) FROM chat_messages m2 '
+          '  WHERE m2.session_id = s.id'
+          ') AS message_count '
+          'FROM chat_sessions s '
+          'WHERE s.owner_user_id = ?1 '
+          'ORDER BY COALESCE(s.last_message_at, s.created_at) DESC',
           variables: [Variable<String>(ownerUserId)],
         )
         .get();
@@ -96,7 +112,21 @@ class ChatHistoryStore {
   Future<ChatSession?> findSession(String id) async {
     final row = await _db
         .customSelect(
-          'SELECT * FROM chat_sessions WHERE id = ?1',
+          'SELECT s.*, '
+          '('
+          '  SELECT m.content FROM chat_messages m '
+          '  WHERE m.session_id = s.id '
+          '    AND m.role IN (\'user\', \'assistant\', \'error\') '
+          '    AND length(trim(m.content)) > 0 '
+          '  ORDER BY m.created_at DESC, m.id DESC '
+          '  LIMIT 1'
+          ') AS preview, '
+          '('
+          '  SELECT COUNT(*) FROM chat_messages m2 '
+          '  WHERE m2.session_id = s.id'
+          ') AS message_count '
+          'FROM chat_sessions s '
+          'WHERE s.id = ?1',
           variables: [Variable<String>(id)],
         )
         .getSingleOrNull();
@@ -291,6 +321,9 @@ class ChatHistoryStore {
 
   ChatSession _sessionFromRow(QueryRow row) {
     final lastMs = row.readNullable<int>('last_message_at');
+    // Subquery columns are only present on list/find paths that SELECT them.
+    final preview = _tryReadString(row, 'preview');
+    final messageCount = _tryReadInt(row, 'message_count') ?? 0;
     return ChatSession(
       id: row.read<String>('id'),
       ownerUserId: row.read<String>('owner_user_id'),
@@ -307,7 +340,25 @@ class ChatHistoryStore {
       lastMessageAt: lastMs == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(lastMs, isUtc: true),
+      preview: preview == null || preview.trim().isEmpty ? null : preview.trim(),
+      messageCount: messageCount,
     );
+  }
+
+  static String? _tryReadString(QueryRow row, String column) {
+    try {
+      return row.readNullable<String>(column);
+    } on Object {
+      return null;
+    }
+  }
+
+  static int? _tryReadInt(QueryRow row, String column) {
+    try {
+      return row.readNullable<int>(column);
+    } on Object {
+      return null;
+    }
   }
 
   ChatMessage _messageFromRow(QueryRow row) {

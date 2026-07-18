@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/composition/ai_context.dart';
 
 import '../../../core/ai/composition/ai_context_summary.dart';
+import '../../../core/ai/visual/visual.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/shell/master_detail_layout.dart';
 import '../../../core/shell/selection_query.dart';
@@ -57,15 +58,20 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
   }
 
   Future<void> _openSessionsSheet(String ownerUserId, String? activeId) async {
+    final size = MediaQuery.sizeOf(context);
+    final isMobile = Breakpoints.isMobile(size.width);
     await showAppFormSheet<void>(
       context: context,
       builder: (ctx) => AppSheetSurface(
-        borderRadius: const BorderRadius.horizontal(
-          left: Radius.circular(AppRadius.lg),
-        ),
+        borderRadius: isMobile
+            ? const BorderRadius.vertical(top: Radius.circular(AppRadius.lg))
+            : const BorderRadius.horizontal(
+                left: Radius.circular(AppRadius.lg),
+              ),
         safeTop: true,
         child: SizedBox(
-          width: AppControlWidths.aiSessionsPanel,
+          width: isMobile ? size.width : AppControlWidths.aiSessionsPanel,
+          height: isMobile ? size.height * 0.92 : null,
           child: SessionsPanel(
             activeSessionId: activeId,
             onSelect: (id) {
@@ -268,6 +274,8 @@ class _EmptyConversation extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: AppSpacing.s32),
+                  const Center(child: AiSparkle(active: true, size: 18)),
+                  const SizedBox(height: AppSpacing.s16),
                   Text(
                     l10n.aiChatEmptyTitle,
                     textAlign: TextAlign.center,
@@ -349,18 +357,24 @@ class _SuggestionTile extends StatelessWidget {
     final colors = context.theme.colors;
     return FTappable(
       onPress: onTap,
-      child: Container(
+      child: SoftCard.flat(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s14,
           vertical: AppSpacing.s12,
         ),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: colors.border, width: AppStroke.hairline),
-        ),
+        borderRadius: AppRadius.md,
         child: Row(
           children: [
-            Icon(icon, size: AppIconSizes.sm, color: colors.primary),
+            Container(
+              width: AppSpacing.s32,
+              height: AppSpacing.s32,
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: AppOpacity.subtle),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, size: AppIconSizes.sm, color: colors.primary),
+            ),
             const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Text(
