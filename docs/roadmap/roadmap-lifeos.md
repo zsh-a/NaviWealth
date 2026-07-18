@@ -81,6 +81,10 @@ Current evidence:
 - A privacy-safe 30-day local quality report now exposes completed, ready,
   no-finding, failed, dismissed/snoozed, and evidence-anchor coverage metrics
   without exporting artifact text or evidence ids.
+- The fixed answer-quality gate emits privacy-safe forbidden-claim/evidence and
+  missing-fact/evidence failure counts, while every outcome action route is
+  opened through the production router instead of receiving a string-only
+  shape check.
 
 Exit evidence:
 

@@ -55,6 +55,56 @@ final class MemoryAnswerQualityResult {
       forbiddenEvidenceIdsFound.isEmpty;
 }
 
+/// Privacy-safe aggregate emitted by the deterministic answer-quality gate.
+///
+/// Case ids are stable fixture identifiers. Answers, questions, facts,
+/// evidence ids, and retrieved user content are deliberately excluded.
+final class MemoryAnswerQualityReport {
+  MemoryAnswerQualityReport.fromResults(
+    Map<String, MemoryAnswerQualityResult> results,
+  ) : caseCount = results.length,
+      passedCaseCount = results.values.where((result) => result.passed).length,
+      forbiddenClaimFailures = results.values
+          .where((result) => result.forbiddenFactsFound.isNotEmpty)
+          .length,
+      forbiddenEvidenceFailures = results.values
+          .where((result) => result.forbiddenEvidenceIdsFound.isNotEmpty)
+          .length,
+      missingFactFailures = results.values
+          .where((result) => result.missingFacts.isNotEmpty)
+          .length,
+      missingEvidenceFailures = results.values
+          .where((result) => result.missingEvidenceIds.isNotEmpty)
+          .length,
+      failedCaseIds = <String>[
+        for (final entry in results.entries)
+          if (!entry.value.passed) entry.key,
+      ]..sort();
+
+  final int caseCount;
+  final int passedCaseCount;
+  final int forbiddenClaimFailures;
+  final int forbiddenEvidenceFailures;
+  final int missingFactFailures;
+  final int missingEvidenceFailures;
+  final List<String> failedCaseIds;
+
+  bool get passed => caseCount > 0 && passedCaseCount == caseCount;
+  double get passRate => caseCount == 0 ? 0 : passedCaseCount / caseCount;
+
+  Map<String, Object> toJson() => <String, Object>{
+    'case_count': caseCount,
+    'passed_case_count': passedCaseCount,
+    'pass_rate': passRate,
+    'forbidden_claim_failures': forbiddenClaimFailures,
+    'forbidden_evidence_failures': forbiddenEvidenceFailures,
+    'missing_fact_failures': missingFactFailures,
+    'missing_evidence_failures': missingEvidenceFailures,
+    'failed_case_ids': failedCaseIds,
+    'passed': passed,
+  };
+}
+
 Set<String> memoryAnswerEvidenceIds(ContextPackMemory pack) => <String>{
   for (final memory in pack.userPreferences) memory.id,
   for (final memory in pack.relatedDecisions) memory.id,

@@ -145,6 +145,14 @@ cover the behavior appropriate to each agent, including:
 - domain opt-out and inactive-agent behavior;
 - unexpected actions, proposal kinds, evidence ids, or forbidden claims.
 
+The fixed Memory answer-quality gate emits a privacy-safe JSON aggregate with
+case/pass counts plus forbidden-claim, forbidden-evidence, missing-fact, and
+missing-evidence failure counts. It includes only stable failing fixture ids;
+questions, answers, facts, evidence ids, and retrieved content are excluded.
+Separately, every action route declared by the Agent outcome corpus is opened
+through the production `GoRouter` in `router_test.dart`; a string-shaped route
+that resolves to the error page fails the gate.
+
 New production agents must land composition metadata, focused unit tests, and
 executable outcome cases in the same change. Broader quality/noise metrics and
 new cross-domain outcome evaluation are sequenced by LifeOS roadmap item N2.

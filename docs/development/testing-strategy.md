@@ -213,6 +213,13 @@ includes the run URL, artifact API URL, and manifest so the external service can
 assert "net worth + allocation + account list visible; no overlap/truncation."
 Catches layout breakage the deterministic layers can't. Strictly non-blocking.
 
+The blocking deterministic AI quality layer remains part of ordinary Flutter
+tests. `memory_answer_quality_eval_test.dart` prints a privacy-safe JSON
+aggregate containing pass rate and forbidden/missing claim/evidence failure
+counts. `router_test.dart` opens every Agent outcome action route through the
+production router, so declared follow-up destinations must resolve rather than
+merely resemble paths.
+
 ## 5. CI gate design
 
 Target: **< 12 min** of blocking PR checks; heavy/flaky-prone work nightly.

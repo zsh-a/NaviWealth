@@ -24,6 +24,7 @@ import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/app/routing/router.dart';
+import 'package:naviwealth/core/ai/regression/agent_outcome_corpus.dart';
 import 'package:naviwealth/core/auth/auth_api_client.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/shell/desktop_sidebar.dart';
@@ -358,6 +359,24 @@ void main() {
         expect(_currentPath(container), Uri.parse(entry.key).path);
         expect(find.byType(RouteErrorPage), findsNothing);
         expect(find.byType(entry.value), findsOneWidget);
+        await _drainTimers(tester);
+        await tester.pumpWidget(const SizedBox.shrink());
+      }
+    });
+
+    testWidgets('all Agent outcome action routes resolve in the real router', (
+      tester,
+    ) async {
+      final routes = <String>{
+        for (final regressionCase in agentOutcomeRegressionCorpus)
+          ...regressionCase.expectedActionRoutes,
+      }.toList()..sort();
+      expect(routes, isNotEmpty);
+
+      for (final route in routes) {
+        final container = await _pumpAt(tester, initialLocation: route);
+        expect(_currentPath(container), Uri.parse(route).path, reason: route);
+        expect(find.byType(RouteErrorPage), findsNothing, reason: route);
         await _drainTimers(tester);
         await tester.pumpWidget(const SizedBox.shrink());
       }

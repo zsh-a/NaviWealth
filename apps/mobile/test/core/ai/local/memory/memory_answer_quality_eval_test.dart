@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/context_pack_memory.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
@@ -160,6 +162,7 @@ void main() {
       'fire-surplus':
           'Keep the 12-month emergency reserve and protect planned surplus.',
     };
+    final results = <String, MemoryAnswerQualityResult>{};
     for (final evalCase in _corpus) {
       final context = await builder.build(
         ownerUserId: _owner,
@@ -170,6 +173,7 @@ void main() {
         answer: answers[evalCase.id]!,
         context: context,
       );
+      results[evalCase.id] = result;
       expect(
         result.passed,
         isTrue,
@@ -180,6 +184,14 @@ void main() {
             'forbiddenEvidence=${result.forbiddenEvidenceIdsFound}',
       );
     }
+    final report = MemoryAnswerQualityReport.fromResults(results);
+    // CI JSON reporters retain this privacy-safe aggregate without answers,
+    // questions, facts, evidence ids, or retrieved user content.
+    // ignore: avoid_print
+    print('[memory-answer-quality] ${jsonEncode(report.toJson())}');
+    expect(report.passed, isTrue);
+    expect(report.forbiddenClaimFailures, 0);
+    expect(report.forbiddenEvidenceFailures, 0);
   });
 
   test('stale claim and missing evidence fail with deterministic reasons', () {
@@ -202,5 +214,13 @@ void main() {
     expect(result.forbiddenFactsFound, ['hold through earnings']);
     expect(result.missingEvidenceIds, evalCase.expectedEvidenceIds);
     expect(result.score, 0);
+    final report = MemoryAnswerQualityReport.fromResults(
+      <String, MemoryAnswerQualityResult>{evalCase.id: result},
+    );
+    expect(report.passed, isFalse);
+    expect(report.forbiddenClaimFailures, 1);
+    expect(report.forbiddenEvidenceFailures, 0);
+    expect(report.failedCaseIds, <String>['options-before-earnings']);
+    expect(jsonEncode(report.toJson()), isNot(contains('hold through earnings')));
   });
 }
