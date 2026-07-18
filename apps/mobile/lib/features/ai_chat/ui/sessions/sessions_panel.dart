@@ -214,9 +214,11 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
             );
           }
           return ListView.builder(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s8,
-              vertical: AppSpacing.s8,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s8,
+              AppSpacing.s4,
+              AppSpacing.s8,
+              AppSpacing.s16,
             ),
             itemCount: groups.length,
             itemBuilder: (context, i) {
@@ -224,22 +226,23 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (i > 0) const SizedBox(height: AppSpacing.s10),
+                  if (i > 0) const SizedBox(height: AppSpacing.s12),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.s8,
-                      AppSpacing.s4,
-                      AppSpacing.s8,
-                      AppSpacing.s4,
+                      AppSpacing.s12,
+                      AppSpacing.s6,
+                      AppSpacing.s12,
+                      AppSpacing.s6,
                     ),
                     child: Text(
                       group.label,
                       style: context.microLabelStyle.copyWith(
                         color: context.theme.colors.mutedForeground,
+                        letterSpacing: 0.3,
                       ),
                     ),
                   ),
-                  for (final s in group.sessions) ...[
+                  for (final s in group.sessions)
                     _SessionTile(
                       session: s,
                       selected: s.id == widget.activeSessionId,
@@ -249,8 +252,6 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
                       onTogglePin: () => _togglePin(ref, s),
                       onToggleArchive: () => _toggleArchive(ref, s),
                     ),
-                    const SizedBox(height: AppSpacing.s4),
-                  ],
                 ],
               );
             },

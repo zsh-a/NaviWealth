@@ -70,7 +70,8 @@ void main() {
 
       final sessions = await store.listSessions('user-1');
       expect(sessions, hasLength(1));
-      expect(sessions.single.preview, '约 ¥123,456。');
+      // Preview prefers the latest user turn, not the assistant reply.
+      expect(sessions.single.preview, '我的总资产是多少？');
       expect(sessions.single.messageCount, 2);
       expect(sessions.single.pinned, isFalse);
       expect(sessions.single.archived, isFalse);

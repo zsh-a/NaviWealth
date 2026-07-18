@@ -54,17 +54,24 @@ class ChatHistoryStore {
   Future<List<ChatSession>> _listSessions(String ownerUserId) async {
     final rows = await _db
         .customSelect(
-          // Preview + message_count come from correlated subqueries so the
-          // history list stays informative without a denormalized column.
+          // Preview prefers the latest *user* turn (clean question text).
+          // Fall back to the latest non-empty assistant/error content.
           'SELECT s.*, '
-          '('
+          'COALESCE(('
           '  SELECT m.content FROM chat_messages m '
           '  WHERE m.session_id = s.id '
-          '    AND m.role IN (\'user\', \'assistant\', \'error\') '
+          '    AND m.role = \'user\' '
           '    AND length(trim(m.content)) > 0 '
           '  ORDER BY m.created_at DESC, m.id DESC '
           '  LIMIT 1'
-          ') AS preview, '
+          '), ('
+          '  SELECT m.content FROM chat_messages m '
+          '  WHERE m.session_id = s.id '
+          '    AND m.role IN (\'assistant\', \'error\') '
+          '    AND length(trim(m.content)) > 0 '
+          '  ORDER BY m.created_at DESC, m.id DESC '
+          '  LIMIT 1'
+          ')) AS preview, '
           '('
           '  SELECT COUNT(*) FROM chat_messages m2 '
           '  WHERE m2.session_id = s.id'
@@ -114,14 +121,21 @@ class ChatHistoryStore {
     final row = await _db
         .customSelect(
           'SELECT s.*, '
-          '('
+          'COALESCE(('
           '  SELECT m.content FROM chat_messages m '
           '  WHERE m.session_id = s.id '
-          '    AND m.role IN (\'user\', \'assistant\', \'error\') '
+          '    AND m.role = \'user\' '
           '    AND length(trim(m.content)) > 0 '
           '  ORDER BY m.created_at DESC, m.id DESC '
           '  LIMIT 1'
-          ') AS preview, '
+          '), ('
+          '  SELECT m.content FROM chat_messages m '
+          '  WHERE m.session_id = s.id '
+          '    AND m.role IN (\'assistant\', \'error\') '
+          '    AND length(trim(m.content)) > 0 '
+          '  ORDER BY m.created_at DESC, m.id DESC '
+          '  LIMIT 1'
+          ')) AS preview, '
           '('
           '  SELECT COUNT(*) FROM chat_messages m2 '
           '  WHERE m2.session_id = s.id'

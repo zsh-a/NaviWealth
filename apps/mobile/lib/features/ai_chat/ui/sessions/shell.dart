@@ -20,63 +20,50 @@ class _PanelShell extends StatelessWidget {
       color: colors.background,
       child: Column(
         children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: colors.border)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s16,
+              AppSpacing.s14,
+              AppSpacing.s8,
+              AppSpacing.s8,
             ),
-            child: Column(
+            child: Row(
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.s16,
-                    AppSpacing.s16,
-                    AppSpacing.s8,
-                    AppSpacing.s12,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        FLucideIcons.history,
-                        size: AppIconSizes.h18,
-                        color: colors.mutedForeground,
-                      ),
-                      const SizedBox(width: AppSpacing.s8),
-                      Text(
-                        l10n.aiChatSessionsHeader,
-                        style: context.rowTitleStyle.copyWith(
-                          color: colors.foreground,
-                        ),
-                      ),
-                      const Spacer(),
-                      if (onNew != null)
-                        FTooltip(
-                          tipBuilder: (_, _) =>
-                              Text(l10n.aiChatNewSessionTooltip),
-                          child: FButton.icon(
-                            variant: FButtonVariant.secondary,
-                            onPress: onNew,
-                            child: const Icon(
-                              FLucideIcons.plus,
-                              size: AppIconSizes.h18,
-                            ),
-                          ),
-                        ),
-                    ],
+                Expanded(
+                  child: Text(
+                    l10n.aiChatSessionsHeader,
+                    style: context.rowTitleStyle.copyWith(
+                      color: colors.foreground,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-                if (searchBar != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.s12,
-                      0,
-                      AppSpacing.s12,
-                      AppSpacing.s10,
+                if (onNew != null)
+                  FTooltip(
+                    tipBuilder: (_, _) => Text(l10n.aiChatNewSessionTooltip),
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      onPress: onNew,
+                      child: Icon(
+                        FLucideIcons.plus,
+                        size: AppIconSizes.h18,
+                        color: colors.foreground,
+                      ),
                     ),
-                    child: searchBar!,
                   ),
               ],
             ),
           ),
+          if (searchBar != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s12,
+                0,
+                AppSpacing.s12,
+                AppSpacing.s8,
+              ),
+              child: searchBar!,
+            ),
           Expanded(child: child),
         ],
       ),
@@ -97,18 +84,11 @@ class _SearchBar extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.muted.withValues(alpha: AppOpacity.prominent),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: colors.border.withValues(alpha: AppOpacity.scrim),
-          width: AppStroke.hairline,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: FTextField(
         control: FTextFieldControl.managed(
           controller: controller,
-          // FTextFieldControl.managed passes a TextEditingValue, but for
-          // search we only care about the string - unwrap here so callers
-          // keep the cleaner ValueChanged<String> shape.
           onChange: (v) => onChanged(v.text),
         ),
         hint: l10n.aiChatSessionsSearchHint,
