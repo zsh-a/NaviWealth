@@ -12,6 +12,7 @@ on:
   pull_request:
     paths:
       - 'apps/mobile/integration_test/**'
+      - 'apps/mobile/tool/run-android-backup-interruption.sh'
       - 'apps/mobile/lib/core/backup/**'
       - 'apps/mobile/lib/core/persistence/**'
       - 'apps/mobile/lib/core/sync/**'
@@ -68,12 +69,17 @@ jobs:
           api-level: 34
           arch: x86_64
           working-directory: apps/mobile
-          script: mkdir -p test-results && flutter test integration_test/ --reporter=expanded --file-reporter=json:test-results/android-integration.json
+          script: |
+            mkdir -p test-results
+            flutter test integration_test/ --reporter=expanded --file-reporter=json:test-results/android-integration.json
+            bash tool/run-android-backup-interruption.sh
       - name: Upload integration test events
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: android-integration-test-events
-          path: apps/mobile/test-results/android-integration.json
+          path: |
+            apps/mobile/test-results/android-integration.json
+            apps/mobile/test-results/android-backup-process-interruption.log
           if-no-files-found: warn
           retention-days: 7

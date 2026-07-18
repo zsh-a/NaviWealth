@@ -117,6 +117,10 @@ Current evidence:
 - The native file-backed integration suite now forces an in-transaction
   restore failure and proves the previous rows and outbox pointer survive a
   full database close/reopen. Android emulator CI owns the device evidence.
+- A two-process Android harness now waits until a large valid restore has
+  completed its transactional wipe, force-stops the app, then launches a fresh
+  verifier against the same application data. The workflow preserves its log;
+  a green emulator run remains the required external device evidence.
 
 Exit evidence:
 
