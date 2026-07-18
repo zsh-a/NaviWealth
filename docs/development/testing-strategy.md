@@ -265,7 +265,10 @@ connection every headless test bypasses via `NativeDatabase.memory`.
 `apps/mobile/integration_test/backup_restore_integration_test.dart` then boots
 the real app shell with that file-backed DB, drives Settings → Backup &
 Restore through Page Objects, and restores encrypted bytes through
-`BackupService` into the same on-disk database.
+`BackupService` into the same on-disk database. Its failure case forces a row
+insert error after the destructive transaction has started, closes the
+database, reopens the same file, and proves both the previous account and its
+outbox pointer survived the durable rollback.
 `apps/mobile/integration_test/journal_repository_integration_test.dart` covers
 a high-value non-UI write path: `JournalEntryRepository.create()` writes a
 balanced journal entry, postings, and Drift-backed outbox pointers through the
@@ -274,9 +277,10 @@ The `integration_test` dev dependency is wired in `pubspec.yaml`.
 
 Because it needs a real device, it runs via the `integration-device.yml`
 workflow on an Android emulator (nightly + manual + PRs touching the
-harness or `core/persistence/`), not the unit-test VM. Run locally with:
-`flutter test integration_test/ -d <device>` (needs a full Apple/Android
-toolchain — it can't run on the headless `flutter test` host).
+harness, backup, Sync, or persistence code), not the unit-test VM. The workflow
+retains a machine-readable event stream for failed emulator runs. Run locally
+with `flutter test integration_test/ -d <android-device>`; it cannot run on the
+headless `flutter test` host.
 
 The production connection does not yet implement the SQLCipher
 PRAGMA/key-recovery path. The LifeOS roadmap owns the decision to implement or

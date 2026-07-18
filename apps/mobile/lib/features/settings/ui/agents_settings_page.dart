@@ -10,6 +10,7 @@ import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_preference_store.dart';
 import '../../../core/ai/agents/agent_presentation.dart';
+import '../../../core/ai/agents/agent_quality_report.dart';
 import '../../../core/ai/agents/agent_registry.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
@@ -95,6 +96,7 @@ class AgentsSettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final rows = ref.watch(_agentSettingsRowsProvider);
+    final quality = ref.watch(agent_providers.agentQualityReportProvider);
     return AppPageScaffold(
       title: l10n.agentSettingsTitle,
       childPad: false,
@@ -133,6 +135,10 @@ class AgentsSettingsPage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _AgentSettingsOverview(rows: items),
+                  if (quality.value case final report?) ...[
+                    const SizedBox(height: AppSpacing.s12),
+                    _AgentQualitySummary(report: report),
+                  ],
                   const SizedBox(height: AppSpacing.s12),
                   for (var i = 0; i < sections.length; i++) ...[
                     _AgentSettingsDomainSectionView(section: sections[i]),
@@ -148,6 +154,95 @@ class AgentsSettingsPage extends ConsumerWidget {
     );
   }
 }
+
+class _AgentQualitySummary extends StatelessWidget {
+  const _AgentQualitySummary({required this.report});
+
+  final AgentQualityReport report;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final semantic = SemanticColors.of(context);
+    final hasFailures = report.failedRuns > 0;
+    return SoftCard.flat(
+      padding: const EdgeInsets.all(AppSpacing.s14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              AppIconTile(
+                icon: FLucideIcons.chartNoAxesColumnIncreasing,
+                color: hasFailures ? semantic.warning : colors.primary,
+                size: AppSpacing.s32,
+                iconSize: AppIconSizes.sm,
+                backgroundOpacity: AppOpacity.subtle,
+              ),
+              const SizedBox(width: AppSpacing.s10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l10n.agentQualityTitle, style: context.labelStyle),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(
+                      report.completedRuns == 0
+                          ? l10n.agentQualityNoRuns
+                          : l10n.agentQualityCompletedRuns(
+                              report.completedRuns,
+                            ),
+                      style: context.captionStyle,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (report.completedRuns > 0) ...[
+            const SizedBox(height: AppSpacing.s12),
+            Wrap(
+              spacing: AppSpacing.s12,
+              runSpacing: AppSpacing.s6,
+              children: [
+                _OverviewFragment(
+                  text: l10n.agentQualityReadyRate(
+                    _percentage(report.highSignalRate),
+                  ),
+                  emphasis: report.readyRuns > 0,
+                ),
+                _OverviewFragment(
+                  text: l10n.agentQualityNoFindingRate(
+                    _percentage(report.noFindingRate),
+                  ),
+                ),
+                _OverviewFragment(
+                  text: l10n.agentQualityFailureRate(
+                    _percentage(report.failureRate),
+                  ),
+                  danger: hasFailures,
+                ),
+                _OverviewFragment(
+                  text: l10n.agentQualitySuppressedRate(
+                    _percentage(report.dismissedOrSnoozedRate),
+                  ),
+                ),
+                _OverviewFragment(
+                  text: l10n.agentQualityEvidenceRate(
+                    _percentage(report.evidenceAnchorCoverageRate),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+int _percentage(double value) => (value * 100).round().clamp(0, 100);
 
 class _AgentSettingsRow {
   const _AgentSettingsRow({

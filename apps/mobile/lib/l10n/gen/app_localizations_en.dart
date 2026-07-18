@@ -6627,6 +6627,42 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get agentQualityTitle => '30-day quality';
+
+  @override
+  String get agentQualityNoRuns => 'No completed runs in this window';
+
+  @override
+  String agentQualityCompletedRuns(int count) {
+    return '$count completed runs';
+  }
+
+  @override
+  String agentQualityReadyRate(int percent) {
+    return 'Ready $percent%';
+  }
+
+  @override
+  String agentQualityNoFindingRate(int percent) {
+    return 'No finding $percent%';
+  }
+
+  @override
+  String agentQualityFailureRate(int percent) {
+    return 'Failed $percent%';
+  }
+
+  @override
+  String agentQualitySuppressedRate(int percent) {
+    return 'Hidden or delayed $percent%';
+  }
+
+  @override
+  String agentQualityEvidenceRate(int percent) {
+    return 'Evidence-linked $percent%';
+  }
+
+  @override
   String get agentSettingsNeverRun => 'Never run';
 
   @override
@@ -8992,6 +9028,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncStatusStatJustNow => 'now';
+
+  @override
+  String get syncStabilityPassing => 'Stability gate passed';
+
+  @override
+  String get syncStabilityFailing => 'Sync stability needs attention';
+
+  @override
+  String get syncStabilityCollecting => 'Collecting stability evidence';
+
+  @override
+  String syncStabilityWindow(int successful, int total, int days) {
+    return '$successful/$total successful · $days days observed';
+  }
+
+  @override
+  String syncStabilitySuccessRate(int percent) {
+    return 'Success $percent%';
+  }
+
+  @override
+  String syncStabilityFatal(int count) {
+    return 'Fatal $count';
+  }
+
+  @override
+  String syncStabilityResetFailures(int count) {
+    return 'Reset failures $count';
+  }
+
+  @override
+  String syncStabilityRecoveries(int count) {
+    return 'Recoveries $count';
+  }
 
   @override
   String get aiReplyChipCompareLastPeriod => 'Compare to previous period';

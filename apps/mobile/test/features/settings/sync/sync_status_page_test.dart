@@ -15,6 +15,7 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/providers.dart';
+import 'package:naviwealth/core/sync/sync_stability.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/diagnostics/local_table_counts.dart';
@@ -73,6 +74,21 @@ void main() {
             hlc: const Hlc(wallMillis: 42, counter: 1, nodeId: 'dev-1'),
           ),
         );
+    final stability = DriftSyncStabilityStore(db);
+    for (var index = 0; index < 10; index++) {
+      await stability.record(
+        SyncStabilitySample(
+          at: DateTime.utc(2026, 6, 1).add(Duration(days: index * 2)),
+          success: true,
+          retryableFailures: 0,
+          fatalFailures: 0,
+          localWins: 0,
+          ignoredRows: 0,
+          generationResets: 0,
+          generationResetFailures: 0,
+        ),
+      );
+    }
   }
 
   Widget wrap({bool disableAnimations = false}) {
@@ -137,6 +153,8 @@ void main() {
     expect(find.text('Offline'), findsOneWidget);
     expect(find.text('network down'), findsOneWidget);
     expect(find.text('Conflict diagnostics'), findsOneWidget);
+    expect(find.text('Stability gate passed'), findsOneWidget);
+    expect(find.text('Success 100%'), findsOneWidget);
     expect(find.textContaining('2 remote rows'), findsOneWidget);
     expect(find.textContaining('1 remote row was ignored'), findsOneWidget);
     expect(find.text('Pending'), findsOneWidget);

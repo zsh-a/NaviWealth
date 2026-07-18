@@ -109,6 +109,9 @@ Current evidence:
 - Wipe, row insertion, and Sync outbox enqueue use one real Drift transaction.
 - Older known-table archives preserve Sync metadata, and a 1,000-row recovery
   fixture is bounded to ten seconds in the deterministic test environment.
+- The native file-backed integration suite now forces an in-transaction
+  restore failure and proves the previous rows and outbox pointer survive a
+  full database close/reopen. Android emulator CI owns the device evidence.
 
 Exit evidence:
 

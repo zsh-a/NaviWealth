@@ -7,6 +7,7 @@ import '../../../../core/auth/providers.dart';
 import '../../../../core/config/providers.dart';
 import '../../../../core/sync/local_table_counts.dart';
 import '../../../../core/sync/providers.dart';
+import '../../../../core/sync/sync_stability.dart';
 import '../../../../core/sync/sync_status.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';

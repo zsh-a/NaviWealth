@@ -12,7 +12,9 @@ on:
   pull_request:
     paths:
       - 'apps/mobile/integration_test/**'
+      - 'apps/mobile/lib/core/backup/**'
       - 'apps/mobile/lib/core/persistence/**'
+      - 'apps/mobile/lib/core/sync/**'
       - 'apps/mobile/native/lifeos_native/**'
       - '.gitmodules'
       - 'third_party/agent-runtime'
@@ -29,6 +31,7 @@ jobs:
   android-emulator:
     name: integration_test (android emulator)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: apps/mobile
@@ -65,4 +68,12 @@ jobs:
           api-level: 34
           arch: x86_64
           working-directory: apps/mobile
-          script: flutter test integration_test/ --reporter=expanded
+          script: mkdir -p test-results && flutter test integration_test/ --reporter=expanded --file-reporter=json:test-results/android-integration.json
+      - name: Upload integration test events
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-integration-test-events
+          path: apps/mobile/test-results/android-integration.json
+          if-no-files-found: warn
+          retention-days: 7

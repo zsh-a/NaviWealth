@@ -6301,6 +6301,42 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get agentQualityTitle => '近 30 天质量';
+
+  @override
+  String get agentQualityNoRuns => '此周期内暂无已完成运行';
+
+  @override
+  String agentQualityCompletedRuns(int count) {
+    return '已完成 $count 次';
+  }
+
+  @override
+  String agentQualityReadyRate(int percent) {
+    return '有结果 $percent%';
+  }
+
+  @override
+  String agentQualityNoFindingRate(int percent) {
+    return '无发现 $percent%';
+  }
+
+  @override
+  String agentQualityFailureRate(int percent) {
+    return '失败 $percent%';
+  }
+
+  @override
+  String agentQualitySuppressedRate(int percent) {
+    return '隐藏或延后 $percent%';
+  }
+
+  @override
+  String agentQualityEvidenceRate(int percent) {
+    return '证据可达 $percent%';
+  }
+
+  @override
   String get agentSettingsNeverRun => '尚未运行';
 
   @override
@@ -8545,6 +8581,40 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get syncStatusStatJustNow => '刚刚';
+
+  @override
+  String get syncStabilityPassing => '稳定性门禁已通过';
+
+  @override
+  String get syncStabilityFailing => '同步稳定性需要处理';
+
+  @override
+  String get syncStabilityCollecting => '正在积累稳定性证据';
+
+  @override
+  String syncStabilityWindow(int successful, int total, int days) {
+    return '成功 $successful/$total · 已观察 $days 天';
+  }
+
+  @override
+  String syncStabilitySuccessRate(int percent) {
+    return '成功率 $percent%';
+  }
+
+  @override
+  String syncStabilityFatal(int count) {
+    return '致命错误 $count';
+  }
+
+  @override
+  String syncStabilityResetFailures(int count) {
+    return '重置失败 $count';
+  }
+
+  @override
+  String syncStabilityRecoveries(int count) {
+    return '恢复成功 $count';
+  }
 
   @override
   String get aiReplyChipCompareLastPeriod => '对比上一周期';

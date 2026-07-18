@@ -10,6 +10,7 @@ import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
+import 'package:naviwealth/core/ai/agents/agent_quality_report.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_controller.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
@@ -23,6 +24,8 @@ import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/settings/ui/agents_settings_page.dart';
@@ -31,6 +34,11 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../../core/persistence/test_database.dart';
 
 void main() {
+  late AppDatabase db;
+
+  setUp(() => db = makeTestDatabase());
+  tearDown(() => db.close());
+
   testWidgets('renders empty state when no active domain registers agents', (
     tester,
   ) async {
@@ -58,6 +66,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           agentRegistrationProvider.overrideWithValue(
             const <DomainAgentRegistration>[],
@@ -105,6 +114,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           agentRegistrationProvider
               .overrideWithValue(const <DomainAgentRegistration>[
@@ -130,6 +140,19 @@ void main() {
           agent_providers.agentRunStoreProvider.overrideWith(
             (ref) async => runStore,
           ),
+          agent_providers.agentQualityReportProvider.overrideWith(
+            (ref) async => AgentQualityReport(
+              windowStart: DateTime.utc(2026, 6, 5),
+              generatedAt: DateTime.utc(2026, 7, 5),
+              readyRuns: 6,
+              noFindingRuns: 3,
+              failedRuns: 1,
+              artifactCount: 5,
+              dismissedOrSnoozedArtifacts: 1,
+              evidenceBearingArtifacts: 4,
+              fullyAnchoredEvidenceArtifacts: 3,
+            ),
+          ),
         ],
         child: MaterialApp(
           theme: AppTheme.light(),
@@ -151,6 +174,10 @@ void main() {
     expect(find.text('Ready 0'), findsOneWidget);
     expect(find.text('Failed 0'), findsOneWidget);
     expect(find.text('Notifications 1'), findsOneWidget);
+    expect(find.text('30-day quality'), findsOneWidget);
+    expect(find.text('10 completed runs'), findsOneWidget);
+    expect(find.text('Ready 60%'), findsOneWidget);
+    expect(find.text('Evidence-linked 75%'), findsOneWidget);
     expect(find.text('FinanceOS'), findsOneWidget);
     expect(find.text('Run now'), findsNothing);
     expect(find.text('Notifications'), findsNothing);
@@ -182,6 +209,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           agentRegistrationProvider
               .overrideWithValue(const <DomainAgentRegistration>[
@@ -291,6 +319,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           agentRegistrationProvider
               .overrideWithValue(const <DomainAgentRegistration>[
@@ -363,6 +392,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           agentRegistrationProvider
               .overrideWithValue(const <DomainAgentRegistration>[
@@ -434,6 +464,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           agentRegistrationProvider
               .overrideWithValue(const <DomainAgentRegistration>[
@@ -501,6 +532,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           agentRegistrationProvider.overrideWithValue(
             const <DomainAgentRegistration>[
@@ -584,6 +616,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           agentRegistrationProvider.overrideWithValue(
             const <DomainAgentRegistration>[
@@ -660,6 +693,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           agentRegistrationProvider.overrideWithValue(
             const <DomainAgentRegistration>[
@@ -777,6 +811,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           agentRegistrationProvider.overrideWithValue(
             const <DomainAgentRegistration>[
@@ -885,6 +920,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           agentRegistrationProvider.overrideWithValue(
             const <DomainAgentRegistration>[
@@ -981,6 +1017,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           agentRegistrationProvider.overrideWithValue(
             const <DomainAgentRegistration>[

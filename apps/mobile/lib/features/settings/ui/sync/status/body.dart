@@ -15,6 +15,7 @@ class _Body extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final outboxAsync = ref.watch(syncOutboxDepthProvider);
     final cursorAsync = ref.watch(syncCursorProvider);
+    final stabilityAsync = ref.watch(syncStabilityReportProvider);
     final countsAsync = ref.watch(localTableCountsProvider);
     final session = ref.watch(authSessionProvider);
     final config = ref.watch(appConfigProvider);
@@ -49,6 +50,10 @@ class _Body extends ConsumerWidget {
         if (event.conflicts.hasFindings) ...[
           const SizedBox(height: AppSpacing.s12),
           _ConflictCard(diagnostics: event.conflicts),
+        ],
+        if (stabilityAsync.value case final report?) ...[
+          const SizedBox(height: AppSpacing.s12),
+          _StabilityCard(report: report),
         ],
         const SizedBox(height: AppSpacing.s12),
         _DiagnosticsCard(

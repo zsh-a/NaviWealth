@@ -72,6 +72,10 @@ Current evidence:
   together.
 - Older known-table archives preserve Sync metadata, and a deterministic
   1,000-row restore stays inside a ten-second test budget.
+- A native file-backed failure test starts destructive restore work, forces an
+  insert error, then closes and reopens the database to prove the previous
+  account and outbox pointer were durably rolled back. Android emulator CI
+  owns the device run.
 
 Exit evidence:
 

@@ -267,3 +267,89 @@ class _ConflictCard extends StatelessWidget {
     );
   }
 }
+
+class _StabilityCard extends StatelessWidget {
+  const _StabilityCard({required this.report});
+
+  final SyncStabilityReport report;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final semantic = SemanticColors.of(context);
+    final (icon, color, title) = switch (report.gateStatus) {
+      SyncStabilityGateStatus.passing => (
+        FLucideIcons.circleCheck,
+        semantic.success,
+        l10n.syncStabilityPassing,
+      ),
+      SyncStabilityGateStatus.failing => (
+        FLucideIcons.triangleAlert,
+        semantic.danger,
+        l10n.syncStabilityFailing,
+      ),
+      SyncStabilityGateStatus.insufficientData => (
+        FLucideIcons.clock,
+        semantic.warning,
+        l10n.syncStabilityCollecting,
+      ),
+    };
+    return SoftCard.flat(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: AppIconSizes.md),
+          const SizedBox(width: AppSpacing.s10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: context.labelStyle),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  l10n.syncStabilityWindow(
+                    report.successfulCycles,
+                    report.samples.length,
+                    report.observedDuration.inDays,
+                  ),
+                  style: context.captionStyle,
+                ),
+                const SizedBox(height: AppSpacing.s6),
+                Wrap(
+                  spacing: AppSpacing.s12,
+                  runSpacing: AppSpacing.s4,
+                  children: [
+                    Text(
+                      l10n.syncStabilitySuccessRate(
+                        _syncPercentage(report.successRate),
+                      ),
+                      style: context.captionLabelStyle.copyWith(color: color),
+                    ),
+                    Text(
+                      l10n.syncStabilityFatal(report.fatalFailures),
+                      style: context.captionStyle,
+                    ),
+                    Text(
+                      l10n.syncStabilityResetFailures(
+                        report.generationResetFailures,
+                      ),
+                      style: context.captionStyle,
+                    ),
+                    if (report.recoveredCycles > 0)
+                      Text(
+                        l10n.syncStabilityRecoveries(report.recoveredCycles),
+                        style: context.captionStyle,
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+int _syncPercentage(double value) => (value * 100).round().clamp(0, 100);

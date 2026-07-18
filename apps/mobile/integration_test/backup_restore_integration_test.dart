@@ -8,8 +8,9 @@
 //
 // Run:
 //   flutter test integration_test/backup_restore_integration_test.dart -d macos
-//   flutter test integration_test/backup_restore_integration_test.dart -d <android|ios device>
+//   flutter test integration_test/backup_restore_integration_test.dart -d <android device>
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -149,6 +150,90 @@ void main() {
       expect(accountIds, isNot(contains('stale-acct')));
       expect(await DriftOutboxStore(targetDb).depth(), 1);
       await closeApp(tester);
+    },
+  );
+
+  testWidgets(
+    'failed restore rollback survives closing and reopening the real database',
+    (tester) async {
+      final codec = BackupCodec();
+      final sourceDb = AppDatabase.open(dbFileName: sourceDbFileName);
+      var sourceClosed = false;
+      addTearDown(() async {
+        if (!sourceClosed) await sourceDb.close();
+      });
+      await _forceOpen(sourceDb);
+      await _insertAccount(
+        sourceDb,
+        id: 'source-acct',
+        name: 'Source Account',
+        deviceId: deviceId,
+      );
+      final exported = await BackupService(
+        db: sourceDb,
+        codec: codec,
+        outbox: DriftOutboxStore(sourceDb),
+      ).exportBackup(passphrase: passphrase, overrideIterations: 1000);
+      final envelope = BackupEnvelope.decodeBytes(exported);
+      final plaintext = await codec.decrypt(
+        passphrase: passphrase,
+        envelope: envelope,
+      );
+      final payload =
+          jsonDecode(utf8.decode(plaintext)) as Map<String, Object?>;
+      final header = payload['header'] as Map<String, Object?>;
+      final data = payload['data'] as Map<String, Object?>;
+      final accounts = data['accounts'] as List<Object?>;
+      accounts.add(<String, Object?>{'id': 'invalid-row'});
+      (header['tables'] as Map<String, Object?>)['accounts'] = accounts.length;
+      final invalidEnvelope = await codec.encrypt(
+        passphrase: passphrase,
+        plaintext: Uint8List.fromList(utf8.encode(jsonEncode(payload))),
+        schemaVersion: sourceDb.schemaVersion,
+        iterations: 1000,
+      );
+      await sourceDb.close();
+      sourceClosed = true;
+
+      final targetDb = AppDatabase.open(dbFileName: targetDbFileName);
+      var targetClosed = false;
+      addTearDown(() async {
+        if (!targetClosed) await targetDb.close();
+      });
+      await _forceOpen(targetDb);
+      await _insertAccount(
+        targetDb,
+        id: 'preserved-acct',
+        name: 'Preserved Account',
+        deviceId: deviceId,
+      );
+      await DriftOutboxStore(
+        targetDb,
+      ).enqueue(table: 'accounts', rowId: 'preserved-acct');
+
+      await expectLater(
+        BackupService(
+          db: targetDb,
+          codec: codec,
+          outbox: DriftOutboxStore(targetDb),
+        ).restoreBackup(
+          passphrase: passphrase,
+          fileBytes: invalidEnvelope.encodeBytes(),
+        ),
+        throwsA(anything),
+      );
+      await targetDb.close();
+      targetClosed = true;
+
+      final reopened = AppDatabase.open(dbFileName: targetDbFileName);
+      addTearDown(reopened.close);
+      expect(await _accountIds(reopened), <String>['preserved-acct']);
+      final outboxRows = await reopened
+          .customSelect('SELECT table_name, row_id FROM op_outbox')
+          .get();
+      expect(outboxRows, hasLength(1));
+      expect(outboxRows.single.read<String>('table_name'), 'accounts');
+      expect(outboxRows.single.read<String>('row_id'), 'preserved-acct');
     },
   );
 }

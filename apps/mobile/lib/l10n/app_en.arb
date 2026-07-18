@@ -3587,6 +3587,40 @@
     "description": "Compact overview metric showing enabled notification-capable agents with notifications on.",
     "placeholders": { "count": { "type": "int", "example": "3" } }
   },
+  "agentQualityTitle": "30-day quality",
+  "@agentQualityTitle": { "description": "Title for the privacy-safe rolling Agent quality summary." },
+  "agentQualityNoRuns": "No completed runs in this window",
+  "@agentQualityNoRuns": { "description": "Agent quality summary shown before any terminal runs exist." },
+  "agentQualityCompletedRuns": "{count} completed runs",
+  "@agentQualityCompletedRuns": {
+    "description": "Completed Agent runs included in the quality window.",
+    "placeholders": { "count": { "type": "int", "example": "12" } }
+  },
+  "agentQualityReadyRate": "Ready {percent}%",
+  "@agentQualityReadyRate": {
+    "description": "Share of completed Agent runs with a ready result.",
+    "placeholders": { "percent": { "type": "int", "example": "75" } }
+  },
+  "agentQualityNoFindingRate": "No finding {percent}%",
+  "@agentQualityNoFindingRate": {
+    "description": "Share of completed Agent runs with no meaningful finding.",
+    "placeholders": { "percent": { "type": "int", "example": "20" } }
+  },
+  "agentQualityFailureRate": "Failed {percent}%",
+  "@agentQualityFailureRate": {
+    "description": "Share of completed Agent runs that failed.",
+    "placeholders": { "percent": { "type": "int", "example": "5" } }
+  },
+  "agentQualitySuppressedRate": "Hidden or delayed {percent}%",
+  "@agentQualitySuppressedRate": {
+    "description": "Share of Agent artifacts dismissed or snoozed by the user.",
+    "placeholders": { "percent": { "type": "int", "example": "10" } }
+  },
+  "agentQualityEvidenceRate": "Evidence-linked {percent}%",
+  "@agentQualityEvidenceRate": {
+    "description": "Share of evidence-bearing Agent artifacts whose evidence references all have routes.",
+    "placeholders": { "percent": { "type": "int", "example": "90" } }
+  },
   "agentSettingsNeverRun": "Never run",
   "@agentSettingsNeverRun": { "description": "Subtitle when an agent has no run history." },
   "agentSettingsLastRunAt": "Last run {date}",
@@ -4952,6 +4986,41 @@
   "@syncStatusStatNever": { "description": "Stat tile placeholder before first successful sync" },
   "syncStatusStatJustNow": "now",
   "@syncStatusStatJustNow": { "description": "Compact relative-time chip when the event is under a minute old" },
+  "syncStabilityPassing": "Stability gate passed",
+  "@syncStabilityPassing": { "description": "Sync rolling stability window currently meets its release thresholds." },
+  "syncStabilityFailing": "Sync stability needs attention",
+  "@syncStabilityFailing": { "description": "Sync rolling stability window has enough evidence but fails a threshold." },
+  "syncStabilityCollecting": "Collecting stability evidence",
+  "@syncStabilityCollecting": { "description": "Sync rolling stability window has not reached its sample and duration thresholds." },
+  "syncStabilityWindow": "{successful}/{total} successful · {days} days observed",
+  "@syncStabilityWindow": {
+    "description": "Summary of the local rolling Sync stability window.",
+    "placeholders": {
+      "successful": { "type": "int", "example": "19" },
+      "total": { "type": "int", "example": "20" },
+      "days": { "type": "int", "example": "14" }
+    }
+  },
+  "syncStabilitySuccessRate": "Success {percent}%",
+  "@syncStabilitySuccessRate": {
+    "description": "Successful cycle rate in the Sync stability window.",
+    "placeholders": { "percent": { "type": "int", "example": "95" } }
+  },
+  "syncStabilityFatal": "Fatal {count}",
+  "@syncStabilityFatal": {
+    "description": "Fatal protocol error count in the Sync stability window.",
+    "placeholders": { "count": { "type": "int", "example": "0" } }
+  },
+  "syncStabilityResetFailures": "Reset failures {count}",
+  "@syncStabilityResetFailures": {
+    "description": "Domain generation reset failure count in the Sync stability window.",
+    "placeholders": { "count": { "type": "int", "example": "0" } }
+  },
+  "syncStabilityRecoveries": "Recoveries {count}",
+  "@syncStabilityRecoveries": {
+    "description": "Failed Sync cycles followed by a successful cycle in the rolling window.",
+    "placeholders": { "count": { "type": "int", "example": "1" } }
+  },
   "aiReplyChipCompareLastPeriod": "Compare to previous period",
   "aiReplyChipFindKeyDrivers": "Find the key drivers",
   "aiReplyChipHowControlSpending": "How do I rein in spending?",

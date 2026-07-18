@@ -11262,6 +11262,54 @@ abstract class AppLocalizations {
   /// **'Notifications {count}'**
   String agentSettingsOverviewNotificationsOn(int count);
 
+  /// Title for the privacy-safe rolling Agent quality summary.
+  ///
+  /// In en, this message translates to:
+  /// **'30-day quality'**
+  String get agentQualityTitle;
+
+  /// Agent quality summary shown before any terminal runs exist.
+  ///
+  /// In en, this message translates to:
+  /// **'No completed runs in this window'**
+  String get agentQualityNoRuns;
+
+  /// Completed Agent runs included in the quality window.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} completed runs'**
+  String agentQualityCompletedRuns(int count);
+
+  /// Share of completed Agent runs with a ready result.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready {percent}%'**
+  String agentQualityReadyRate(int percent);
+
+  /// Share of completed Agent runs with no meaningful finding.
+  ///
+  /// In en, this message translates to:
+  /// **'No finding {percent}%'**
+  String agentQualityNoFindingRate(int percent);
+
+  /// Share of completed Agent runs that failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed {percent}%'**
+  String agentQualityFailureRate(int percent);
+
+  /// Share of Agent artifacts dismissed or snoozed by the user.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden or delayed {percent}%'**
+  String agentQualitySuppressedRate(int percent);
+
+  /// Share of evidence-bearing Agent artifacts whose evidence references all have routes.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence-linked {percent}%'**
+  String agentQualityEvidenceRate(int percent);
+
   /// Subtitle when an agent has no run history.
   ///
   /// In en, this message translates to:
@@ -15250,6 +15298,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'now'**
   String get syncStatusStatJustNow;
+
+  /// Sync rolling stability window currently meets its release thresholds.
+  ///
+  /// In en, this message translates to:
+  /// **'Stability gate passed'**
+  String get syncStabilityPassing;
+
+  /// Sync rolling stability window has enough evidence but fails a threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync stability needs attention'**
+  String get syncStabilityFailing;
+
+  /// Sync rolling stability window has not reached its sample and duration thresholds.
+  ///
+  /// In en, this message translates to:
+  /// **'Collecting stability evidence'**
+  String get syncStabilityCollecting;
+
+  /// Summary of the local rolling Sync stability window.
+  ///
+  /// In en, this message translates to:
+  /// **'{successful}/{total} successful · {days} days observed'**
+  String syncStabilityWindow(int successful, int total, int days);
+
+  /// Successful cycle rate in the Sync stability window.
+  ///
+  /// In en, this message translates to:
+  /// **'Success {percent}%'**
+  String syncStabilitySuccessRate(int percent);
+
+  /// Fatal protocol error count in the Sync stability window.
+  ///
+  /// In en, this message translates to:
+  /// **'Fatal {count}'**
+  String syncStabilityFatal(int count);
+
+  /// Domain generation reset failure count in the Sync stability window.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset failures {count}'**
+  String syncStabilityResetFailures(int count);
+
+  /// Failed Sync cycles followed by a successful cycle in the rolling window.
+  ///
+  /// In en, this message translates to:
+  /// **'Recoveries {count}'**
+  String syncStabilityRecoveries(int count);
 
   /// No description provided for @aiReplyChipCompareLastPeriod.
   ///
