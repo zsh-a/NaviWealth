@@ -23,6 +23,7 @@ class AgentOutcomeRegressionCase {
     this.expectedSeverity,
     this.expectedTopInsightTitles = const <String>{},
     this.expectedEvidenceTypes = const <String>{},
+    this.expectedEvidenceRoutePatterns = const <String, String>{},
     this.expectedActionKinds = const <String>{},
     this.expectedActionIntents = const <String>{},
     this.expectedActionRoutes = const <String>{},
@@ -49,6 +50,10 @@ class AgentOutcomeRegressionCase {
   final AgentArtifactSeverity? expectedSeverity;
   final Set<String> expectedTopInsightTitles;
   final Set<String> expectedEvidenceTypes;
+
+  /// Expected route per evidence type. A trailing `*` matches a dynamic suffix;
+  /// all other patterns are exact production paths.
+  final Map<String, String> expectedEvidenceRoutePatterns;
   final Set<String> expectedActionKinds;
   final Set<String> expectedActionIntents;
   final Set<String> expectedActionRoutes;
@@ -80,6 +85,10 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.warning,
     expectedTopInsightTitles: <String>{'Net worth', 'Largest allocation'},
     expectedEvidenceTypes: <String>{'finance_holding'},
+    expectedEvidenceRoutePatterns: <String, String>{
+      'finance_holding': '/wealth/assets/*',
+      'currency_mismatch': '/wealth',
+    },
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kFinanceReviewWealthIntent},
     expectedActionRoutes: <String>{'/wealth'},
@@ -94,6 +103,10 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.warning,
     expectedTopInsightTitles: <String>{'Net worth', 'Largest allocation'},
     expectedEvidenceTypes: <String>{'finance_holding'},
+    expectedEvidenceRoutePatterns: <String, String>{
+      'finance_holding': '/wealth/assets/*',
+      'currency_mismatch': '/wealth',
+    },
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kFinanceReviewWealthIntent},
     expectedActionRoutes: <String>{'/wealth'},
@@ -112,6 +125,9 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'Detector source',
     },
     expectedEvidenceTypes: <String>{'anomaly_flag'},
+    expectedEvidenceRoutePatterns: <String, String>{
+      'anomaly_flag': '/activity/cashflow',
+    },
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
     expectedActionRoutes: <String>{'/activity/cashflow'},
@@ -129,6 +145,9 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'Detector source',
     },
     expectedEvidenceTypes: <String>{'anomaly_flag'},
+    expectedEvidenceRoutePatterns: <String, String>{
+      'anomaly_flag': '/activity/cashflow',
+    },
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
     expectedActionRoutes: <String>{'/activity/cashflow'},
@@ -153,6 +172,11 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'fire_finding',
       'fire_stress_test',
     },
+    expectedEvidenceRoutePatterns: <String, String>{
+      'fire_review': '/plan/fire',
+      'fire_finding': '/plan/fire',
+      'fire_stress_test': '/plan/fire',
+    },
     expectedActionKinds: <String>{'open_route'},
     expectedActionRoutes: <String>{'/plan/fire'},
   ),
@@ -175,6 +199,11 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'fire_finding',
       'fire_stress_test',
     },
+    expectedEvidenceRoutePatterns: <String, String>{
+      'fire_review': '/plan/fire',
+      'fire_finding': '/plan/fire',
+      'fire_stress_test': '/plan/fire',
+    },
     expectedActionKinds: <String>{'open_route'},
     expectedActionRoutes: <String>{'/plan/fire'},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
@@ -195,6 +224,10 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceTypes: <String>{
       'options_income_scan',
       'options_opportunity',
+    },
+    expectedEvidenceRoutePatterns: <String, String>{
+      'options_income_scan': '/plan/income',
+      'options_opportunity': '/plan/income',
     },
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
@@ -217,6 +250,10 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'options_income_scan',
       'options_opportunity',
     },
+    expectedEvidenceRoutePatterns: <String, String>{
+      'options_income_scan': '/plan/income',
+      'options_opportunity': '/plan/income',
+    },
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
     expectedActionRoutes: <String>{'/plan/income'},
@@ -232,6 +269,10 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.attention,
     expectedTopInsightTitles: <String>{'Sleep', 'HRV', 'Finance'},
     expectedEvidenceTypes: <String>{'health_event', 'finance_event'},
+    expectedEvidenceRoutePatterns: <String, String>{
+      'health_event': '/health/trend',
+      'finance_event': '/health',
+    },
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
     expectedActionRoutes: <String>{'/health'},
@@ -246,6 +287,9 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.warning,
     expectedTopInsightTitles: <String>{'HRV decline'},
     expectedEvidenceTypes: <String>{'health_metric_trend'},
+    expectedEvidenceRoutePatterns: <String, String>{
+      'health_metric_trend': '/health/trend',
+    },
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kHealthExplainRecoveryAlertIntent},
     expectedActionRoutes: <String>{'/health'},
@@ -272,6 +316,9 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'Workouts',
     },
     expectedEvidenceTypes: <String>{'health_week'},
+    expectedEvidenceRoutePatterns: <String, String>{
+      'health_week': '/health/trend',
+    },
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
     expectedActionRoutes: <String>{'/health/trend'},
@@ -286,6 +333,9 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.attention,
     expectedTopInsightTitles: <String>{'Stale assumptions'},
     expectedEvidenceTypes: <String>{'knowledge_assumption'},
+    expectedEvidenceRoutePatterns: <String, String>{
+      'knowledge_assumption': '/knowledge/library/object/assumption/*',
+    },
     expectedActionKinds: <String>{'open_object'},
     expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
     expectedActionRoutes: <String>{'/knowledge/review'},
@@ -300,6 +350,9 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.info,
     expectedTopInsightTitles: <String>{'New suggestions', 'Classification'},
     expectedEvidenceTypes: <String>{'knowledge_note'},
+    expectedEvidenceRoutePatterns: <String, String>{
+      'knowledge_note': '/knowledge/library/object/note/*',
+    },
     expectedActionKinds: <String>{'open_object'},
     expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
     expectedActionRoutes: <String>{'/knowledge/review'},
@@ -316,6 +369,9 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.warning,
     expectedTopInsightTitles: <String>{'Invalidated assumptions'},
     expectedEvidenceTypes: <String>{'knowledge_decision'},
+    expectedEvidenceRoutePatterns: <String, String>{
+      'knowledge_decision': '/knowledge/library/decision/*',
+    },
     expectedActionKinds: <String>{'open_object'},
     expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
     expectedActionRoutes: <String>{'/knowledge/review'},
@@ -341,6 +397,10 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'knowledge_decision',
       'knowledge_assumption',
     },
+    expectedEvidenceRoutePatterns: <String, String>{
+      'knowledge_decision': '/knowledge/library/decision/*',
+      'knowledge_assumption': '/knowledge/library/object/assumption/*',
+    },
     expectedActionKinds: <String>{'open_object'},
     expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
     expectedActionRoutes: <String>{'/knowledge/review'},
@@ -357,6 +417,10 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceTypes: <String>{
       'knowledge_decision',
       'knowledge_assumption',
+    },
+    expectedEvidenceRoutePatterns: <String, String>{
+      'knowledge_decision': '/knowledge/library/decision/*',
+      'knowledge_assumption': '/knowledge/library/object/assumption/*',
     },
     expectedActionKinds: <String>{'open_object'},
     expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
@@ -377,6 +441,11 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'Due work',
     },
     expectedEvidenceTypes: <String>{'execution_action'},
+    expectedEvidenceRoutePatterns: <String, String>{
+      'execution_action': '/execution/action/*',
+      'execution_project': '/execution/commitments',
+      'execution_commitment': '/execution/commitments/*',
+    },
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
     expectedActionRoutes: <String>{'/execution/review'},
@@ -399,6 +468,9 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.attention,
     expectedTopInsightTitles: <String>{'Overdue routines', 'Upcoming routines'},
     expectedEvidenceTypes: <String>{'knowledge_routine'},
+    expectedEvidenceRoutePatterns: <String, String>{
+      'knowledge_routine': '/knowledge/library/object/routine/*',
+    },
     expectedActionKinds: <String>{'open_object'},
     expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
     expectedActionRoutes: <String>{'/knowledge/review'},

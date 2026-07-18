@@ -123,6 +123,32 @@ List<AgentOutcomeEvaluationFailure> evaluateAgentOutcomeCase({
     );
   }
 
+  final evidenceRoutePatterns = regressionCase.expectedEvidenceRoutePatterns;
+  final routePatternTypes = evidenceRoutePatterns.keys.toSet();
+  if (!routePatternTypes.containsAll(regressionCase.expectedEvidenceTypes)) {
+    add(
+      'corpus.evidence.routePatterns',
+      regressionCase.expectedEvidenceTypes,
+      routePatternTypes,
+    );
+  }
+  for (final type in evidenceTypes.difference(routePatternTypes)) {
+    add('artifact.evidence.$type.routeContract', 'registered', 'missing');
+  }
+  for (final entry in evidenceRoutePatterns.entries) {
+    final routes = <String?>{
+      for (final evidence in artifact.evidence)
+        if (evidence.type == entry.key) evidence.route,
+    };
+    if (routes.isEmpty) continue;
+    if (routes.any(
+      (route) =>
+          route == null || !agentEvidenceRouteMatches(entry.value, route),
+    )) {
+      add('artifact.evidence.${entry.key}.route', entry.value, routes);
+    }
+  }
+
   final actionKinds = {for (final action in artifact.actions) action.kind};
   final missingActionKinds = regressionCase.expectedActionKinds.difference(
     actionKinds,
@@ -277,6 +303,12 @@ AgentOutcomeRegressionStatus _statusFromResult(AgentRunResult result) {
 String? _nonEmpty(String? value) {
   if (value == null || value.isEmpty) return null;
   return value;
+}
+
+bool agentEvidenceRouteMatches(String pattern, String route) {
+  if (!pattern.endsWith('*')) return route == pattern;
+  final prefix = pattern.substring(0, pattern.length - 1);
+  return route.startsWith(prefix) && route.length > prefix.length;
 }
 
 AgentOutcomeRegressionCase agentOutcomeRegressionCaseById(String id) {

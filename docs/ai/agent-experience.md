@@ -150,8 +150,12 @@ case/pass counts plus forbidden-claim, forbidden-evidence, missing-fact, and
 missing-evidence failure counts. It includes only stable failing fixture ids;
 questions, answers, facts, evidence ids, and retrieved content are excluded.
 Separately, every action route declared by the Agent outcome corpus is opened
-through the production `GoRouter` in `router_test.dart`; a string-shaped route
-that resolves to the error page fails the gate.
+through the production `GoRouter` in `router_test.dart`. Evidence-bearing cases
+also declare an evidence-type-to-route contract: exact workflow paths stay
+exact, while entity details use a trailing `*` for the encoded id suffix. The
+outcome evaluator rejects evidence sent to the wrong route family, and the
+router test instantiates every dynamic family with a representative id. A
+string-shaped route that resolves to the error page therefore fails the gate.
 
 New production agents must land composition metadata, focused unit tests, and
 executable outcome cases in the same change. Broader quality/noise metrics and

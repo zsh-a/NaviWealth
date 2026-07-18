@@ -216,9 +216,11 @@ Catches layout breakage the deterministic layers can't. Strictly non-blocking.
 The blocking deterministic AI quality layer remains part of ordinary Flutter
 tests. `memory_answer_quality_eval_test.dart` prints a privacy-safe JSON
 aggregate containing pass rate and forbidden/missing claim/evidence failure
-counts. `router_test.dart` opens every Agent outcome action route through the
-production router, so declared follow-up destinations must resolve rather than
-merely resemble paths.
+counts. Agent outcome cases bind every expected evidence type to an exact route
+or dynamic route family; the evaluator rejects cross-workflow destinations.
+`router_test.dart` opens every action route and a representative path from each
+evidence route family through the production router, so declared destinations
+must resolve rather than merely resemble paths.
 
 ## 5. CI gate design
 

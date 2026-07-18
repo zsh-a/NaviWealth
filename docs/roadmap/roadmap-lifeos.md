@@ -82,9 +82,10 @@ Current evidence:
   no-finding, failed, dismissed/snoozed, and evidence-anchor coverage metrics
   without exporting artifact text or evidence ids.
 - The fixed answer-quality gate emits privacy-safe forbidden-claim/evidence and
-  missing-fact/evidence failure counts, while every outcome action route is
-  opened through the production router instead of receiving a string-only
-  shape check.
+  missing-fact/evidence failure counts. Outcome cases now bind evidence types
+  to exact or dynamic route families; both every action route and a
+  representative path for every evidence family are opened through the
+  production router instead of receiving a string-only shape check.
 
 Exit evidence:
 

@@ -382,6 +382,29 @@ void main() {
       }
     });
 
+    testWidgets(
+      'all Agent evidence route families resolve in the real router',
+      (tester) async {
+        final routes = <String>{
+          for (final regressionCase in agentOutcomeRegressionCorpus)
+            for (final pattern
+                in regressionCase.expectedEvidenceRoutePatterns.values)
+              pattern.endsWith('*')
+                  ? '${pattern.substring(0, pattern.length - 1)}route-probe'
+                  : pattern,
+        }.toList()..sort();
+        expect(routes, isNotEmpty);
+
+        for (final route in routes) {
+          final container = await _pumpAt(tester, initialLocation: route);
+          expect(_currentPath(container), Uri.parse(route).path, reason: route);
+          expect(find.byType(RouteErrorPage), findsNothing, reason: route);
+          await _drainTimers(tester);
+          await tester.pumpWidget(const SizedBox.shrink());
+        }
+      },
+    );
+
     for (final legacy in <String>[
       '/assets',
       '/expenses',

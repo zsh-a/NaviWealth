@@ -26,6 +26,100 @@ void main() {
       expect(failures, isEmpty);
     });
 
+    test('rejects evidence routed outside its registered workflow', () {
+      final failures = evaluateAgentOutcomeCase(
+        regressionCase: agentOutcomeRegressionCaseById(
+          'finance.cashflow_anomaly_review.ready',
+        ),
+        result: AgentRunResult(
+          agentId: 'cashflow_anomaly_review',
+          status: AgentRunStatus.completed,
+          startedAt: DateTime.utc(2026, 7, 5),
+          finishedAt: DateTime.utc(2026, 7, 5, 0, 0, 1),
+          artifactId: 'artifact-1',
+          traceId: 'trace-1',
+        ),
+        artifact: _matchingCashflowArtifact(
+          traceId: 'trace-1',
+          evidenceRoute: '/wealth',
+        ),
+      );
+
+      expect(
+        failures.map((failure) => failure.field),
+        contains('artifact.evidence.anomaly_flag.route'),
+      );
+    });
+
+    test('rejects emitted evidence without a route contract', () {
+      final failures = evaluateAgentOutcomeCase(
+        regressionCase: agentOutcomeRegressionCaseById(
+          'finance.cashflow_anomaly_review.ready',
+        ),
+        result: AgentRunResult(
+          agentId: 'cashflow_anomaly_review',
+          status: AgentRunStatus.completed,
+          startedAt: DateTime.utc(2026, 7, 5),
+          finishedAt: DateTime.utc(2026, 7, 5, 0, 0, 1),
+          artifactId: 'artifact-1',
+          traceId: 'trace-1',
+        ),
+        artifact: _matchingCashflowArtifact(
+          traceId: 'trace-1',
+          additionalEvidence: const <AgentEvidenceRef>[
+            AgentEvidenceRef(
+              type: 'unregistered_source',
+              id: 'source-1',
+              route: '/activity/cashflow',
+            ),
+          ],
+        ),
+      );
+
+      expect(
+        failures.map((failure) => failure.field),
+        contains('artifact.evidence.unregistered_source.routeContract'),
+      );
+    });
+
+    test('evidence route patterns distinguish exact and dynamic paths', () {
+      expect(
+        agentEvidenceRouteMatches('/activity/cashflow', '/activity/cashflow'),
+        isTrue,
+      );
+      expect(
+        agentEvidenceRouteMatches('/activity/cashflow', '/activity/cashflow/1'),
+        isFalse,
+      );
+      expect(
+        agentEvidenceRouteMatches('/wealth/assets/*', '/wealth/assets/asset-1'),
+        isTrue,
+      );
+      expect(
+        agentEvidenceRouteMatches('/wealth/assets/*', '/wealth/assets/'),
+        isFalse,
+      );
+    });
+
+    test('every corpus evidence type declares a valid route pattern', () {
+      for (final regressionCase in agentOutcomeRegressionCorpus) {
+        expect(
+          regressionCase.expectedEvidenceRoutePatterns.keys,
+          containsAll(regressionCase.expectedEvidenceTypes),
+          reason: regressionCase.id,
+        );
+        for (final pattern
+            in regressionCase.expectedEvidenceRoutePatterns.values) {
+          expect(pattern, startsWith('/'), reason: regressionCase.id);
+          expect(
+            pattern.substring(0, pattern.length - 1),
+            isNot(contains('*')),
+            reason: regressionCase.id,
+          );
+        }
+      }
+    });
+
     test('validates direct route actions', () {
       const regressionCase = AgentOutcomeRegressionCase(
         id: 'finance.route.ready',
@@ -363,6 +457,8 @@ AgentArtifact _matchingCashflowArtifact({
   required String? traceId,
   String? actionObjectType = kAgentArtifactObjectType,
   String? actionObjectId = 'artifact-1',
+  String evidenceRoute = '/activity/cashflow',
+  List<AgentEvidenceRef> additionalEvidence = const <AgentEvidenceRef>[],
 }) {
   return AgentArtifact(
     id: 'artifact-1',
@@ -390,12 +486,13 @@ AgentArtifact _matchingCashflowArtifact({
         route: '/activity/cashflow',
       ),
     ],
-    evidence: const <AgentEvidenceRef>[
+    evidence: <AgentEvidenceRef>[
       AgentEvidenceRef(
         type: 'anomaly_flag',
         id: 'flag-1',
-        route: '/activity/cashflow',
+        route: evidenceRoute,
       ),
+      ...additionalEvidence,
     ],
     actions: <AgentAction>[
       AgentAction(
