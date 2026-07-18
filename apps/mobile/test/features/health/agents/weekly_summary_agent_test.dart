@@ -500,6 +500,7 @@ AgentRuntimeCatalog _catalog() {
         description: 'Get recovery signal',
         inputSchema: <String, Object?>{'type': 'object'},
         risk: 'suggest',
+        replayPolicy: 'safe_retry',
         metadata: <String, Object?>{'domain': 'health'},
       ),
       AgentRuntimeToolSpec(
@@ -507,6 +508,7 @@ AgentRuntimeCatalog _catalog() {
         description: 'Get sleep summary',
         inputSchema: <String, Object?>{'type': 'object'},
         risk: 'read',
+        replayPolicy: 'safe_retry',
         metadata: <String, Object?>{'domain': 'health'},
       ),
       AgentRuntimeToolSpec(
@@ -514,6 +516,7 @@ AgentRuntimeCatalog _catalog() {
         description: 'Get activity summary',
         inputSchema: <String, Object?>{'type': 'object'},
         risk: 'read',
+        replayPolicy: 'safe_retry',
         metadata: <String, Object?>{'domain': 'health'},
       ),
     ],

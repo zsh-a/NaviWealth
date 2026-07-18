@@ -153,19 +153,19 @@ class _ConceptNodeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final foreground = active ? colors.primary : colors.foreground;
-    Widget child = SoftCard(
+    Widget child = KnowledgeCardSurface(
       level: active ? SoftCardLevel.raised : SoftCardLevel.flat,
       borderless: !active,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
-      child: Center(
+      child: Align(
+        alignment: Alignment.center,
         child: Text(
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
-          style: context.captionStyle.copyWith(
+          style: (active ? context.labelStyle : context.captionStyle).copyWith(
             color: foreground,
-            fontWeight: active ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
       ),

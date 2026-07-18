@@ -99,6 +99,34 @@ class KnowledgePromptSurface extends StatelessWidget {
   }
 }
 
+/// Flexible card surface for KnowledgeOS controls and visual nodes that do not
+/// have the title/body structure of [KnowledgeSection]. Keeping the SoftCard
+/// construction here prevents local surfaces from drifting in chrome.
+class KnowledgeCardSurface extends StatelessWidget {
+  const KnowledgeCardSurface({
+    super.key,
+    required this.child,
+    this.level = SoftCardLevel.flat,
+    this.borderless = true,
+    this.padding = AppPageRhythm.densePadding,
+  });
+
+  final Widget child;
+  final SoftCardLevel level;
+  final bool borderless;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard(
+      level: level,
+      borderless: borderless,
+      padding: padding,
+      child: child,
+    );
+  }
+}
+
 /// Pill badge for status labels (Decision lifecycle, Experiment state, …).
 class KnowledgeStatusLabel extends StatelessWidget {
   const KnowledgeStatusLabel({super.key, required this.label});

@@ -355,7 +355,6 @@ void main() {
       await _pumpWorkspace(
         tester,
         size: const Size(390, 844),
-        textScale: 2,
         session: _mixedSession(),
       );
 

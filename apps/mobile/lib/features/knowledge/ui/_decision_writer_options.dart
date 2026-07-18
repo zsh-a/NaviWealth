@@ -30,7 +30,7 @@ class _OptionEditorTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-      child: SoftCard(
+      child: KnowledgeCardSurface(
         level: SoftCardLevel.flat,
         borderless: !selected,
         padding: const EdgeInsets.all(AppSpacing.s8),

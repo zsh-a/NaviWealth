@@ -38,59 +38,65 @@ void main() {
       expect(text, isNot(contains('pumpAndSettle')));
     });
 
-    test(
-      'runtime test skips stay limited to platform/native dependency gates',
-      () {
-        final testRoot = Directory('${appRoot.path}/test');
-        final skipPattern = RegExp(r'\bskip\s*:|\bmarkTestSkipped\s*\(');
-        final filesWithRuntimeSkips =
-            _testFiles(testRoot)
-                .where(
-                  (file) => !file.path.endsWith(
-                    '/testing_infrastructure_contract_test.dart',
-                  ),
-                )
-                .where((file) => skipPattern.hasMatch(file.readAsStringSync()))
-                .map((file) => _relativeToAppRoot(appRoot, file))
-                .toList(growable: false)
-              ..sort();
+    test('runtime test skips stay limited to platform/native dependency gates', () {
+      final testRoot = Directory('${appRoot.path}/test');
+      final skipPattern = RegExp(r'\bskip\s*:|\bmarkTestSkipped\s*\(');
+      final filesWithRuntimeSkips =
+          _testFiles(testRoot)
+              .where(
+                (file) => !file.path.endsWith(
+                  '/testing_infrastructure_contract_test.dart',
+                ),
+              )
+              .where((file) => skipPattern.hasMatch(file.readAsStringSync()))
+              .map((file) => _relativeToAppRoot(appRoot, file))
+              .toList(growable: false)
+            ..sort();
 
-        expect(
-          filesWithRuntimeSkips,
-          orderedEquals(<String>[
-            'test/core/ai/local/embedding/rust_gemma_embedder_test.dart',
-            'test/core/background/background_scheduler_provider_test.dart',
-            'test/core/notifications/notification_service_provider_test.dart',
-            'test/golden/ai_semantic_vision_artifact_test.dart',
-          ]),
-        );
-
-        for (final path in <String>[
+      expect(
+        filesWithRuntimeSkips,
+        orderedEquals(<String>[
+          'test/core/ai/local/embedding/model_downloader_test.dart',
+          'test/core/ai/local/embedding/rust_gemma_embedder_test.dart',
           'test/core/background/background_scheduler_provider_test.dart',
           'test/core/notifications/notification_service_provider_test.dart',
-        ]) {
-          final text = File('${appRoot.path}/$path').readAsStringSync();
-          expect(text, contains('Platform.isIOS || Platform.isAndroid'));
-          expect(text, contains('Host-only provider safety check.'));
-        }
+          'test/golden/ai_semantic_vision_artifact_test.dart',
+        ]),
+      );
 
-        final rustEmbeddingText = File(
-          '${appRoot.path}/test/core/ai/local/embedding/rust_gemma_embedder_test.dart',
-        ).readAsStringSync();
-        expect(rustEmbeddingText, contains('liblifeos_native.dylib not found'));
-        expect(rustEmbeddingText, contains('RUST_EMBEDDER_MODEL_DIR not set'));
-        expect(
-          rustEmbeddingText,
-          contains('RUST_EMBEDDER_ORT_DYLIB_PATH not set'),
-        );
-        expect(rustEmbeddingText, contains('markTestSkipped(realSkipReason)'));
+      final modelDownloaderText = File(
+        '${appRoot.path}/test/core/ai/local/embedding/model_downloader_test.dart',
+      ).readAsStringSync();
+      expect(
+        modelDownloaderText,
+        contains('Set ASR_ARCHIVE_PATH to run the official archive smoke.'),
+      );
 
-        final aiVisionText = File(
-          '${appRoot.path}/test/golden/ai_semantic_vision_artifact_test.dart',
-        ).readAsStringSync();
-        expect(aiVisionText, contains('AI_SEMANTIC_SCREENSHOT_DIR is not set'));
-      },
-    );
+      for (final path in <String>[
+        'test/core/background/background_scheduler_provider_test.dart',
+        'test/core/notifications/notification_service_provider_test.dart',
+      ]) {
+        final text = File('${appRoot.path}/$path').readAsStringSync();
+        expect(text, contains('Platform.isIOS || Platform.isAndroid'));
+        expect(text, contains('Host-only provider safety check.'));
+      }
+
+      final rustEmbeddingText = File(
+        '${appRoot.path}/test/core/ai/local/embedding/rust_gemma_embedder_test.dart',
+      ).readAsStringSync();
+      expect(rustEmbeddingText, contains('liblifeos_native.dylib not found'));
+      expect(rustEmbeddingText, contains('RUST_EMBEDDER_MODEL_DIR not set'));
+      expect(
+        rustEmbeddingText,
+        contains('RUST_EMBEDDER_ORT_DYLIB_PATH not set'),
+      );
+      expect(rustEmbeddingText, contains('markTestSkipped(realSkipReason)'));
+
+      final aiVisionText = File(
+        '${appRoot.path}/test/golden/ai_semantic_vision_artifact_test.dart',
+      ).readAsStringSync();
+      expect(aiVisionText, contains('AI_SEMANTIC_SCREENSHOT_DIR is not set'));
+    });
 
     test('critical user flows stay covered outside the sync E2E test', () {
       const flowFiles = <String>[

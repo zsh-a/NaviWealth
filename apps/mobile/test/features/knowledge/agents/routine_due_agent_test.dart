@@ -416,6 +416,7 @@ AgentRuntimeCatalog _catalog() {
         description: 'List due routines',
         inputSchema: <String, Object?>{'type': 'object'},
         risk: 'read',
+        replayPolicy: 'safe_retry',
         metadata: <String, Object?>{'domain': 'knowledge'},
       ),
     ],

@@ -96,7 +96,12 @@ class _WealthHubBody extends ConsumerWidget {
       },
       child: AppAtmosphere(
         child: AppCollapsingScrollHost(
-          padding: EdgeInsets.fromLTRB(hPad, AppSpacing.s4, hPad, 0),
+          padding: EdgeInsets.fromLTRB(
+            hPad,
+            AppSpacing.s4,
+            hPad,
+            AppSpacing.s0,
+          ),
           stickyBuilder: (context, progress) => AppCollapsedSummaryBar(
             progress: progress,
             child: Row(
@@ -150,8 +155,7 @@ class _WealthHubBody extends ConsumerWidget {
                   title: l10n.wealthEmptyTitle,
                   message: l10n.wealthEmptyBody,
                   action: FButton(
-                    onPress: () =>
-                        context.push(FinanceRoutes.wealthAccountNew),
+                    onPress: () => context.push(FinanceRoutes.wealthAccountNew),
                     prefix: const Icon(FLucideIcons.plus),
                     child: Text(l10n.wealthEmptyAction),
                   ),

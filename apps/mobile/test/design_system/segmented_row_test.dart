@@ -143,7 +143,8 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pump();
-    expect(changedTo, 'a');
+    // Activating the already-selected segment is intentionally a no-op.
+    expect(changedTo, isNull);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.sendKeyEvent(LogicalKeyboardKey.space);

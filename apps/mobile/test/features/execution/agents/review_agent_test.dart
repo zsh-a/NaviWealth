@@ -500,6 +500,7 @@ AgentRuntimeCatalog _catalog() {
         description: 'List open actions',
         inputSchema: <String, Object?>{'type': 'object'},
         risk: 'read',
+        replayPolicy: 'safe_retry',
         metadata: <String, Object?>{'domain': 'execution'},
       ),
       AgentRuntimeToolSpec(
@@ -507,6 +508,7 @@ AgentRuntimeCatalog _catalog() {
         description: 'Summarize execution progress',
         inputSchema: <String, Object?>{'type': 'object'},
         risk: 'suggest',
+        replayPolicy: 'safe_retry',
         metadata: <String, Object?>{'domain': 'execution'},
       ),
     ],

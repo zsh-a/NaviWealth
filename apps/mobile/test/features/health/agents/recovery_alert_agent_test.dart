@@ -385,6 +385,7 @@ AgentRuntimeCatalog _catalog() {
         description: 'Get HRV trend',
         inputSchema: <String, Object?>{'type': 'object'},
         risk: 'suggest',
+        replayPolicy: 'safe_retry',
         metadata: <String, Object?>{'domain': 'health'},
       ),
     ],

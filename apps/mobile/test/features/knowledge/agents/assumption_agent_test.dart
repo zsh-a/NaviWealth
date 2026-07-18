@@ -266,6 +266,7 @@ AgentRuntimeCatalog _catalog() {
         description: 'List open assumptions',
         inputSchema: <String, Object?>{'type': 'object'},
         risk: 'read',
+        replayPolicy: 'safe_retry',
         metadata: <String, Object?>{'domain': 'knowledge'},
       ),
     ],

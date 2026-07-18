@@ -599,6 +599,7 @@ AgentRuntimeCatalog _catalog() {
         description: 'List inbox triage candidates',
         inputSchema: <String, Object?>{'type': 'object'},
         risk: 'read',
+        replayPolicy: 'safe_retry',
         metadata: <String, Object?>{'domain': 'knowledge'},
       ),
       AgentRuntimeToolSpec(
@@ -606,6 +607,7 @@ AgentRuntimeCatalog _catalog() {
         description: 'List triage decisions',
         inputSchema: <String, Object?>{'type': 'object'},
         risk: 'read',
+        replayPolicy: 'safe_retry',
         metadata: <String, Object?>{'domain': 'knowledge'},
       ),
     ],
