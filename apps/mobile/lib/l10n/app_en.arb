@@ -5067,6 +5067,33 @@
     "description": "Failed Sync cycles followed by a successful cycle in the rolling window.",
     "placeholders": { "count": { "type": "int", "example": "1" } }
   },
+  "syncStabilityPassingDetail": "All local release thresholds are currently met",
+  "@syncStabilityPassingDetail": { "description": "Explanation shown when the Sync stability gate passes." },
+  "syncStabilityNeedSamples": "{count} more terminal cycles needed",
+  "@syncStabilityNeedSamples": {
+    "description": "Remaining terminal Sync cycles before the stability gate has enough evidence.",
+    "placeholders": { "count": { "type": "int", "example": "3" } }
+  },
+  "syncStabilityNeedDuration": "{days} more observation days needed",
+  "@syncStabilityNeedDuration": {
+    "description": "Remaining observation days before the Sync stability gate has enough evidence.",
+    "placeholders": { "days": { "type": "int", "example": "4" } }
+  },
+  "syncStabilityBelowSuccess": "Needs at least {percent}% success",
+  "@syncStabilityBelowSuccess": {
+    "description": "Sync stability blocker when successful cycles are below the release threshold.",
+    "placeholders": { "percent": { "type": "int", "example": "95" } }
+  },
+  "syncStabilityFatalBlocker": "Fatal protocol errors must return to zero",
+  "@syncStabilityFatalBlocker": { "description": "Sync stability blocker caused by fatal protocol errors." },
+  "syncStabilityResetBlocker": "Generation-reset failures must return to zero",
+  "@syncStabilityResetBlocker": { "description": "Sync stability blocker caused by domain generation-reset failures." },
+  "syncStabilityPrivacyNote": "Device-local aggregate · no row payloads or ids retained",
+  "@syncStabilityPrivacyNote": { "description": "Privacy note for the local Sync stability report." },
+  "syncStabilityCopyEvidence": "Copy evidence",
+  "@syncStabilityCopyEvidence": { "description": "Copies the privacy-safe Sync stability report as JSON." },
+  "syncStabilityEvidenceCopied": "Sync stability evidence copied.",
+  "@syncStabilityEvidenceCopied": { "description": "Toast after copying the Sync stability report." },
   "aiReplyChipCompareLastPeriod": "Compare to previous period",
   "aiReplyChipFindKeyDrivers": "Find the key drivers",
   "aiReplyChipHowControlSpending": "How do I rein in spending?",

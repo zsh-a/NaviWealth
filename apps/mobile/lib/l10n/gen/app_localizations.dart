@@ -15393,6 +15393,60 @@ abstract class AppLocalizations {
   /// **'Recoveries {count}'**
   String syncStabilityRecoveries(int count);
 
+  /// Explanation shown when the Sync stability gate passes.
+  ///
+  /// In en, this message translates to:
+  /// **'All local release thresholds are currently met'**
+  String get syncStabilityPassingDetail;
+
+  /// Remaining terminal Sync cycles before the stability gate has enough evidence.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} more terminal cycles needed'**
+  String syncStabilityNeedSamples(int count);
+
+  /// Remaining observation days before the Sync stability gate has enough evidence.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} more observation days needed'**
+  String syncStabilityNeedDuration(int days);
+
+  /// Sync stability blocker when successful cycles are below the release threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs at least {percent}% success'**
+  String syncStabilityBelowSuccess(int percent);
+
+  /// Sync stability blocker caused by fatal protocol errors.
+  ///
+  /// In en, this message translates to:
+  /// **'Fatal protocol errors must return to zero'**
+  String get syncStabilityFatalBlocker;
+
+  /// Sync stability blocker caused by domain generation-reset failures.
+  ///
+  /// In en, this message translates to:
+  /// **'Generation-reset failures must return to zero'**
+  String get syncStabilityResetBlocker;
+
+  /// Privacy note for the local Sync stability report.
+  ///
+  /// In en, this message translates to:
+  /// **'Device-local aggregate · no row payloads or ids retained'**
+  String get syncStabilityPrivacyNote;
+
+  /// Copies the privacy-safe Sync stability report as JSON.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy evidence'**
+  String get syncStabilityCopyEvidence;
+
+  /// Toast after copying the Sync stability report.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync stability evidence copied.'**
+  String get syncStabilityEvidenceCopied;
+
   /// No description provided for @aiReplyChipCompareLastPeriod.
   ///
   /// In en, this message translates to:

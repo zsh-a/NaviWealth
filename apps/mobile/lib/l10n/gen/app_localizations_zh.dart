@@ -8646,6 +8646,39 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get syncStabilityPassingDetail => '当前已满足全部本地发布门槛';
+
+  @override
+  String syncStabilityNeedSamples(int count) {
+    return '还需 $count 个终态同步周期';
+  }
+
+  @override
+  String syncStabilityNeedDuration(int days) {
+    return '还需观察 $days 天';
+  }
+
+  @override
+  String syncStabilityBelowSuccess(int percent) {
+    return '成功率需至少达到 $percent%';
+  }
+
+  @override
+  String get syncStabilityFatalBlocker => '致命协议错误必须归零';
+
+  @override
+  String get syncStabilityResetBlocker => '代际重置失败必须归零';
+
+  @override
+  String get syncStabilityPrivacyNote => '仅设备本地汇总 · 不保留行数据或 ID';
+
+  @override
+  String get syncStabilityCopyEvidence => '复制证据';
+
+  @override
+  String get syncStabilityEvidenceCopied => '同步稳定性证据已复制。';
+
+  @override
   String get aiReplyChipCompareLastPeriod => '对比上一周期';
 
   @override

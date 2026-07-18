@@ -315,6 +315,11 @@ class _StabilityCard extends StatelessWidget {
                   ),
                   style: context.captionStyle,
                 ),
+                const SizedBox(height: AppSpacing.s4),
+                Text(
+                  _guidance(l10n),
+                  style: context.captionStyle.copyWith(color: color),
+                ),
                 const SizedBox(height: AppSpacing.s6),
                 Wrap(
                   spacing: AppSpacing.s12,
@@ -343,6 +348,54 @@ class _StabilityCard extends StatelessWidget {
                       ),
                   ],
                 ),
+                const SizedBox(height: AppSpacing.s8),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final privacy = Row(
+                      children: [
+                        Icon(
+                          FLucideIcons.shieldCheck,
+                          size: AppIconSizes.xs,
+                          color: context.theme.colors.mutedForeground,
+                        ),
+                        const SizedBox(width: AppSpacing.s6),
+                        Expanded(
+                          child: Text(
+                            l10n.syncStabilityPrivacyNote,
+                            style: context.captionStyle.copyWith(
+                              color: context.theme.colors.mutedForeground,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                    final copy = AppQuietButton(
+                      label: l10n.syncStabilityCopyEvidence,
+                      onPress: () => _copyEvidence(context),
+                      prefix: const Icon(
+                        FLucideIcons.copy,
+                        size: AppIconSizes.xs,
+                      ),
+                    );
+                    if (constraints.maxWidth < 420) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          privacy,
+                          const SizedBox(height: AppSpacing.s8),
+                          copy,
+                        ],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Expanded(child: privacy),
+                        const SizedBox(width: AppSpacing.s8),
+                        copy,
+                      ],
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -350,6 +403,48 @@ class _StabilityCard extends StatelessWidget {
       ),
     );
   }
+
+  String _guidance(AppLocalizations l10n) {
+    if (report.gateStatus == SyncStabilityGateStatus.passing) {
+      return l10n.syncStabilityPassingDetail;
+    }
+    final messages = <String>[
+      for (final issue in report.gateIssues)
+        switch (issue) {
+          SyncStabilityGateIssue.insufficientSamples =>
+            l10n.syncStabilityNeedSamples(report.remainingSamples),
+          SyncStabilityGateIssue.insufficientDuration =>
+            l10n.syncStabilityNeedDuration(
+              _remainingObservationDays(report.remainingWindowDuration),
+            ),
+          SyncStabilityGateIssue.successRateBelowMinimum =>
+            l10n.syncStabilityBelowSuccess(
+              _syncPercentage(report.minimumSuccessRate),
+            ),
+          SyncStabilityGateIssue.fatalFailures =>
+            l10n.syncStabilityFatalBlocker,
+          SyncStabilityGateIssue.generationResetFailures =>
+            l10n.syncStabilityResetBlocker,
+        },
+    ];
+    return messages.join(' · ');
+  }
+
+  Future<void> _copyEvidence(BuildContext context) async {
+    await Clipboard.setData(ClipboardData(text: jsonEncode(report.toJson())));
+    if (!context.mounted) return;
+    AppMessenger.show(
+      context,
+      ToastKind.info,
+      AppLocalizations.of(context).syncStabilityEvidenceCopied,
+    );
+  }
 }
 
 int _syncPercentage(double value) => (value * 100).round().clamp(0, 100);
+
+int _remainingObservationDays(Duration duration) {
+  if (duration <= Duration.zero) return 0;
+  const minutesPerDay = Duration.hoursPerDay * Duration.minutesPerHour;
+  return (duration.inMinutes + minutesPerDay - 1) ~/ minutesPerDay;
+}

@@ -9096,6 +9096,43 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get syncStabilityPassingDetail =>
+      'All local release thresholds are currently met';
+
+  @override
+  String syncStabilityNeedSamples(int count) {
+    return '$count more terminal cycles needed';
+  }
+
+  @override
+  String syncStabilityNeedDuration(int days) {
+    return '$days more observation days needed';
+  }
+
+  @override
+  String syncStabilityBelowSuccess(int percent) {
+    return 'Needs at least $percent% success';
+  }
+
+  @override
+  String get syncStabilityFatalBlocker =>
+      'Fatal protocol errors must return to zero';
+
+  @override
+  String get syncStabilityResetBlocker =>
+      'Generation-reset failures must return to zero';
+
+  @override
+  String get syncStabilityPrivacyNote =>
+      'Device-local aggregate · no row payloads or ids retained';
+
+  @override
+  String get syncStabilityCopyEvidence => 'Copy evidence';
+
+  @override
+  String get syncStabilityEvidenceCopied => 'Sync stability evidence copied.';
+
+  @override
   String get aiReplyChipCompareLastPeriod => 'Compare to previous period';
 
   @override

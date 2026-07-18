@@ -109,12 +109,14 @@ without an explicit reorder.
 
 ### Sync V3 Stability Gate
 
-The client now persists a privacy-safe rolling window of the latest 50 terminal
-cycles in local-only `sync_meta`. The gate requires at least 10 cycles spanning
-14 days, at least 95 percent success, zero fatal protocol errors, and zero
-generation-reset failures. It also reports retryable failures, recovery after a
-failed cycle, local wins, and ignored rows. The remaining exit evidence is a
-real release window that reaches the gate before any Sync E2EE decision.
+The client now sorts terminal samples by timestamp and persists a privacy-safe
+rolling window of the latest 50 cycles in local-only `sync_meta`. The gate
+requires at least 10 cycles spanning 14 days, at least 95 percent success, zero
+fatal protocol errors, and zero generation-reset failures. Settings explains
+whether evidence is still collecting, failing, or passing, identifies exact
+blockers, and can copy aggregate JSON without row ids or payloads. The remaining
+exit evidence is a real release window that reaches the gate before any Sync
+E2EE decision.
 
 ### On-Device Database Encryption Decision
 

@@ -60,13 +60,24 @@ class SyncStabilitySample {
 
 enum SyncStabilityGateStatus { insufficientData, passing, failing }
 
+enum SyncStabilityGateIssue {
+  insufficientSamples,
+  insufficientDuration,
+  successRateBelowMinimum,
+  fatalFailures,
+  generationResetFailures,
+}
+
 class SyncStabilityReport {
-  const SyncStabilityReport({
-    required this.samples,
+  SyncStabilityReport({
+    required List<SyncStabilitySample> samples,
     this.minimumSamples = 10,
     this.minimumSuccessRate = 0.95,
     this.minimumWindowDuration = const Duration(days: 14),
-  });
+  }) : samples = List<SyncStabilitySample>.unmodifiable(
+         List<SyncStabilitySample>.of(samples)
+           ..sort((a, b) => a.at.compareTo(b.at)),
+       );
 
   final List<SyncStabilitySample> samples;
   final int minimumSamples;
@@ -99,20 +110,46 @@ class SyncStabilityReport {
   double get successRate =>
       samples.isEmpty ? 0 : successfulCycles / samples.length;
 
+  DateTime? get windowStart =>
+      samples.isEmpty ? null : samples.first.at.toUtc();
+  DateTime? get windowEnd => samples.isEmpty ? null : samples.last.at.toUtc();
+  int get remainingSamples {
+    final remaining = minimumSamples - samples.length;
+    return remaining > 0 ? remaining : 0;
+  }
+
+  Duration get remainingWindowDuration {
+    final remaining = minimumWindowDuration - observedDuration;
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
+
+  List<SyncStabilityGateIssue> get gateIssues => <SyncStabilityGateIssue>[
+    if (samples.length < minimumSamples)
+      SyncStabilityGateIssue.insufficientSamples,
+    if (observedDuration < minimumWindowDuration)
+      SyncStabilityGateIssue.insufficientDuration,
+    if (samples.isNotEmpty && successRate < minimumSuccessRate)
+      SyncStabilityGateIssue.successRateBelowMinimum,
+    if (fatalFailures > 0) SyncStabilityGateIssue.fatalFailures,
+    if (generationResetFailures > 0)
+      SyncStabilityGateIssue.generationResetFailures,
+  ];
+
   SyncStabilityGateStatus get gateStatus {
-    if (samples.length < minimumSamples ||
-        observedDuration < minimumWindowDuration) {
+    final issues = gateIssues;
+    if (issues.contains(SyncStabilityGateIssue.insufficientSamples) ||
+        issues.contains(SyncStabilityGateIssue.insufficientDuration)) {
       return SyncStabilityGateStatus.insufficientData;
     }
-    if (fatalFailures > 0 ||
-        generationResetFailures > 0 ||
-        successRate < minimumSuccessRate) {
+    if (issues.isNotEmpty) {
       return SyncStabilityGateStatus.failing;
     }
     return SyncStabilityGateStatus.passing;
   }
 
-  Map<String, Object> toJson() => <String, Object>{
+  Map<String, Object?> toJson() => <String, Object?>{
+    'window_start': windowStart?.toIso8601String(),
+    'window_end': windowEnd?.toIso8601String(),
     'sample_count': samples.length,
     'successful_cycles': successfulCycles,
     'failed_cycles': failedCycles,
@@ -128,6 +165,9 @@ class SyncStabilityReport {
     'minimum_samples': minimumSamples,
     'minimum_success_rate': minimumSuccessRate,
     'minimum_window_hours': minimumWindowDuration.inHours,
+    'remaining_samples': remainingSamples,
+    'remaining_window_hours': remainingWindowDuration.inHours,
+    'gate_issues': gateIssues.map((issue) => issue.name).toList(),
     'gate_status': gateStatus.name,
   };
 }
@@ -174,7 +214,8 @@ class DriftSyncStabilityStore implements SyncStabilityRecorder {
 
   @override
   Future<void> record(SyncStabilitySample sample) async {
-    final samples = <SyncStabilitySample>[...await readSamples(), sample];
+    final samples = <SyncStabilitySample>[...await readSamples(), sample]
+      ..sort((a, b) => a.at.compareTo(b.at));
     final retained = samples.length <= windowSize
         ? samples
         : samples.sublist(samples.length - windowSize);

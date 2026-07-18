@@ -114,14 +114,19 @@ records each run locally. It never deletes synced source tables.
 
 ## Production stability gate
 
-The mobile client keeps the latest 50 terminal cycle samples in the local-only
-`sync_meta` key `sync.stability.samples.v1`. Samples contain only timestamps,
-success/failure classes, conflict counters, and generation-reset counters; row
-ids, payloads, error text, and account data are excluded.
+The mobile client normalizes terminal cycle samples by timestamp and keeps the
+latest 50 in the local-only `sync_meta` key
+`sync.stability.samples.v1`. Samples contain only timestamps, success/failure
+classes, conflict counters, and generation-reset counters; row ids, payloads,
+error text, and account data are excluded.
 
 A release window is eligible to pass after at least 10 cycles spanning 14 days.
 It passes only when successful cycles are at least 95 percent, fatal protocol
-errors are zero, and generation-reset failures are zero. The report also
+errors are zero, and generation-reset failures are zero. The report exposes a
+structured `collecting`, `failing`, or `passing` state, exact gate issues,
+window timestamps, and the remaining cycles and observation time. It also
 retains retryable failure counts, failure-to-success recoveries, local LWW wins,
-and ignored rows for diagnosis. This gate is prerequisite evidence for any
-future Sync E2EE decision; serializer fixtures alone do not satisfy it.
+and ignored rows for diagnosis. Settings may copy this aggregate report as
+privacy-safe JSON, which must not contain row ids or payloads. This gate is
+prerequisite evidence for any future Sync E2EE decision; serializer fixtures
+alone do not satisfy it, and a real 14-day release window is still required.

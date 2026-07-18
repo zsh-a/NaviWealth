@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
@@ -28,6 +31,22 @@ const _deviceId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 const _financeDiagnosticsPack = DomainPack(
   scope: DomainScope.finance,
   localTableCountsBuilder: financeLocalTableCounts,
+);
+
+SyncStabilitySample _stabilitySample({
+  required DateTime at,
+  bool success = true,
+  int fatalFailures = 0,
+  int generationResetFailures = 0,
+}) => SyncStabilitySample(
+  at: at,
+  success: success,
+  retryableFailures: success ? 0 : 1,
+  fatalFailures: fatalFailures,
+  localWins: 0,
+  ignoredRows: 0,
+  generationResets: 0,
+  generationResetFailures: generationResetFailures,
 );
 
 void main() {
@@ -91,8 +110,14 @@ void main() {
     }
   }
 
-  Widget wrap({bool disableAnimations = false}) {
+  Widget wrap({
+    bool disableAnimations = false,
+    SyncStabilityReport? stabilityReport,
+  }) {
     return ProviderScope(
+      key: ValueKey<String>(
+        'sync-${stabilityReport?.gateStatus.name ?? 'database'}',
+      ),
       overrides: [
         appDatabaseProvider.overrideWith((_) async => db),
         activeDomainPacksProvider.overrideWithValue([_financeDiagnosticsPack]),
@@ -111,6 +136,10 @@ void main() {
             environment: AppEnvironment.dev,
           ),
         ),
+        if (stabilityReport != null)
+          syncStabilityReportProvider.overrideWith(
+            (ref) async => stabilityReport,
+          ),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -135,11 +164,17 @@ void main() {
     WidgetTester tester,
     Size size, {
     bool disableAnimations = false,
+    SyncStabilityReport? stabilityReport,
   }) async {
     await tester.binding.setSurfaceSize(size);
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await seedDiagnostics();
-    await tester.pumpWidget(wrap(disableAnimations: disableAnimations));
+    await tester.pumpWidget(
+      wrap(
+        disableAnimations: disableAnimations,
+        stabilityReport: stabilityReport,
+      ),
+    );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   }
@@ -147,6 +182,20 @@ void main() {
   testWidgets('renders diagnostics and reacts to status updates', (
     tester,
   ) async {
+    MethodCall? clipboardCall;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') clipboardCall = call;
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
     await pumpPage(tester, const Size(900, 1600));
 
     expect(find.text('Sync Status'), findsOneWidget);
@@ -154,7 +203,27 @@ void main() {
     expect(find.text('network down'), findsOneWidget);
     expect(find.text('Conflict diagnostics'), findsOneWidget);
     expect(find.text('Stability gate passed'), findsOneWidget);
+    expect(
+      find.text('All local release thresholds are currently met'),
+      findsOneWidget,
+    );
     expect(find.text('Success 100%'), findsOneWidget);
+    expect(
+      find.text('Device-local aggregate · no row payloads or ids retained'),
+      findsOneWidget,
+    );
+    expect(find.text('Copy evidence'), findsOneWidget);
+    await tester.tap(find.text('Copy evidence'));
+    await tester.pumpAndSettle();
+    expect(clipboardCall?.method, 'Clipboard.setData');
+    final clipboardArguments =
+        clipboardCall?.arguments as Map<Object?, Object?>;
+    final evidence =
+        jsonDecode(clipboardArguments['text']! as String)
+            as Map<String, Object?>;
+    expect(evidence['gate_status'], 'passing');
+    expect(evidence, isNot(contains('row_ids')));
+    expect(evidence, isNot(contains('payloads')));
     expect(find.textContaining('2 remote rows'), findsOneWidget);
     expect(find.textContaining('1 remote row was ignored'), findsOneWidget);
     expect(find.text('Pending'), findsOneWidget);
@@ -178,6 +247,56 @@ void main() {
     expect(find.text('All synced'), findsOneWidget);
     expect(find.text('Offline'), findsNothing);
     expect(find.text('network down'), findsNothing);
+  });
+
+  testWidgets('explains collecting and failing stability thresholds', (
+    tester,
+  ) async {
+    final start = DateTime.utc(2026, 6, 1);
+    await pumpPage(
+      tester,
+      const Size(900, 1600),
+      stabilityReport: SyncStabilityReport(
+        samples: <SyncStabilitySample>[
+          for (var day = 0; day < 3; day++)
+            _stabilitySample(at: start.add(Duration(days: day))),
+        ],
+      ),
+    );
+
+    expect(find.text('Collecting stability evidence'), findsOneWidget);
+    expect(
+      find.text(
+        '7 more terminal cycles needed · 12 more observation days needed',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.pumpWidget(
+      wrap(
+        stabilityReport: SyncStabilityReport(
+          samples: <SyncStabilitySample>[
+            for (var index = 0; index < 9; index++)
+              _stabilitySample(at: start.add(Duration(days: index * 2))),
+            _stabilitySample(
+              at: start.add(const Duration(days: 18)),
+              success: false,
+              fatalFailures: 1,
+              generationResetFailures: 1,
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sync stability needs attention'), findsOneWidget);
+    expect(
+      find.text(
+        'Needs at least 95% success · Fatal protocol errors must return to zero · Generation-reset failures must return to zero',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('stacks stat tiles on compact width', (tester) async {
