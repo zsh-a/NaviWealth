@@ -96,70 +96,90 @@ class _HoldingsTable extends StatelessWidget {
     final qtyText = NumberFormat.decimalPattern().format(row.quantity);
     final primary = row.symbol ?? row.name ?? row.assetId;
     final secondary = row.symbol != null && row.name != null ? row.name! : null;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: AppSpacing.s6,
-      ),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: context.theme.colors.border.withValues(
-              alpha: AppOpacity.muted,
+    return FTappable(
+      onPress: () {
+        // Stable App route for asset detail (avoid cross-feature import).
+        pushFromAiSurface(
+          context,
+          '/wealth/assets/${Uri.encodeComponent(row.assetId)}',
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s8,
+          vertical: AppSpacing.s6,
+        ),
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: context.theme.colors.border.withValues(
+                alpha: AppOpacity.muted,
+              ),
             ),
           ),
         ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            flex: 4,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  primary,
-                  style: context.captionStyle.copyWith(
-                    color: context.theme.colors.foreground,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (secondary != null)
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              flex: 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    secondary,
-                    style: context.microCaptionStyle,
+                    primary,
+                    style: context.captionStyle.copyWith(
+                      color: context.theme.colors.foreground,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              qtyText,
-              textAlign: TextAlign.right,
-              style: context.captionStyle.copyWith(
-                color: context.theme.colors.foreground,
-                fontFeatures: TypographyTokens.tabularFigures,
+                  if (secondary != null)
+                    Text(
+                      secondary,
+                      style: context.microCaptionStyle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
               ),
             ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: MoneyText(
-                amount: row.costBasis,
-                currencyCode: row.currency,
-                style: context.theme.typography.body.xs,
-                color: context.theme.colors.foreground,
+            Expanded(
+              flex: 3,
+              child: Text(
+                qtyText,
+                textAlign: TextAlign.right,
+                style: context.captionStyle.copyWith(
+                  color: context.theme.colors.foreground,
+                  fontFeatures: TypographyTokens.tabularFigures,
+                ),
               ),
             ),
-          ),
-        ],
+            Expanded(
+              flex: 3,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    MoneyText(
+                      amount: row.costBasis,
+                      currencyCode: row.currency,
+                      style: context.theme.typography.body.xs,
+                      color: context.theme.colors.foreground,
+                    ),
+                    const SizedBox(width: AppSpacing.s4),
+                    Icon(
+                      FLucideIcons.chevronRight,
+                      size: AppIconSizes.xs,
+                      color: context.theme.colors.mutedForeground,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

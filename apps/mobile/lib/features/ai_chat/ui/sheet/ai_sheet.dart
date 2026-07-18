@@ -270,6 +270,8 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
           Expanded(child: _invocationBody()),
           if (_sessionId != null) ...[
             const FDivider(),
+            // Allow follow-up turns in-sheet after the auto-fired intent.
+            _ConversationComposer(sessionId: _sessionId!),
             _Footer(
               onExpand: _expandToChat,
               onDismiss: () => Navigator.of(context).maybePop(),

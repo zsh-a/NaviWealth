@@ -61,6 +61,7 @@ class _XirrSummary extends StatelessWidget {
 //
 // Device tool is monthly cumulative *net cash flow*, not mark-to-market
 // net worth — labels and captions must say so honestly.
+// Multi-currency series are split; the user switches currency chips.
 // ---------------------------------------------------------------------------
 
 class _NetWorthSparkline extends StatefulWidget {
@@ -73,6 +74,25 @@ class _NetWorthSparkline extends StatefulWidget {
 
 class _NetWorthSparklineState extends State<_NetWorthSparkline> {
   ChartPoint? _scrub;
+  String? _currency;
+
+  Map<String, List<(DateTime, double)>> _groupByCurrency(List<Object?> raw) {
+    final byCur = <String, List<(DateTime, double)>>{};
+    for (final item in raw) {
+      final m = _asMap(item);
+      if (m == null) continue;
+      final d = _netWorthPointDate(m);
+      final v = _netWorthPointValue(m);
+      if (d == null || v == null) continue;
+      final c = _asString(m['currency']);
+      final currency = (c != null && c.isNotEmpty) ? c : 'CNY';
+      byCur.putIfAbsent(currency, () => <(DateTime, double)>[]).add((d, v));
+    }
+    for (final list in byCur.values) {
+      list.sort((a, b) => a.$1.compareTo(b.$1));
+    }
+    return byCur;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,24 +100,18 @@ class _NetWorthSparklineState extends State<_NetWorthSparkline> {
     if (outMap == null) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
     final raw = _asList(outMap['series']) ?? const <Object?>[];
-    final points = <(DateTime, double)>[];
-    String currency = 'CNY';
-    for (final item in raw) {
-      final m = _asMap(item);
-      if (m == null) continue;
-      final d = _netWorthPointDate(m);
-      final v = _netWorthPointValue(m);
-      if (d == null || v == null) continue;
-      points.add((d, v));
-      final c = _asString(m['currency']);
-      if (c != null && c.isNotEmpty) currency = c;
-    }
-    if (points.isEmpty) {
+    final byCur = _groupByCurrency(raw);
+    if (byCur.isEmpty) {
       return ToolResultSurface(
         child: _EmptyResult(message: l10n.aiToolNetWorthEmpty),
       );
     }
-    points.sort((a, b) => a.$1.compareTo(b.$1));
+
+    final currencies = byCur.keys.toList()..sort();
+    final currency = _currency != null && byCur.containsKey(_currency)
+        ? _currency!
+        : currencies.first;
+    final points = byCur[currency]!;
     final start = points.first.$2;
     final end = points.last.$2;
     final delta = end - start;
@@ -121,6 +135,24 @@ class _NetWorthSparklineState extends State<_NetWorthSparkline> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (currencies.length > 1) ...[
+            Wrap(
+              spacing: AppSpacing.s6,
+              runSpacing: AppSpacing.s4,
+              children: [
+                for (final c in currencies)
+                  _CurrencyChip(
+                    label: c,
+                    selected: c == currency,
+                    onTap: () => setState(() {
+                      _currency = c;
+                      _scrub = null;
+                    }),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s10),
+          ],
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -244,6 +276,51 @@ class _NetWorthSparklineState extends State<_NetWorthSparkline> {
   }
 }
 
+class _CurrencyChip extends StatelessWidget {
+  const _CurrencyChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return FTappable(
+      onPress: onTap,
+      child: AnimatedContainer(
+        duration: AppMotionPolicy.duration(context, Motion.fast),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s10,
+          vertical: AppSpacing.s4,
+        ),
+        decoration: BoxDecoration(
+          color: selected
+              ? colors.primary.withValues(alpha: AppOpacity.subtle)
+              : colors.muted.withValues(alpha: AppOpacity.prominent),
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          border: Border.all(
+            color: selected
+                ? colors.primary.withValues(alpha: AppOpacity.scrim)
+                : colors.border.withValues(alpha: AppOpacity.scrim),
+            width: AppStroke.hairline,
+          ),
+        ),
+        child: Text(
+          label,
+          style: context.microLabelStyle.copyWith(
+            color: selected ? colors.primary : colors.mutedForeground,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 DateTime? _netWorthPointDate(Map<String, Object?> row) {
   final date = _asDate(row['date']);
   if (date != null) return date;
@@ -263,4 +340,92 @@ double? _netWorthPointValue(Map<String, Object?> row) {
   final minor = _asDouble(row['cumulative_minor']);
   if (minor == null) return null;
   return minor / 100.0;
+}
+
+/// Y-values for a collapsed mini-spark of net-worth-style tool output.
+/// Returns null when the payload is not a usable series.
+List<double>? netWorthSparkValues(Object? output) {
+  final outMap = _asMap(output);
+  if (outMap == null) return null;
+  final raw = _asList(outMap['series']) ?? const <Object?>[];
+  final byCur = <String, List<(DateTime, double)>>{};
+  for (final item in raw) {
+    final m = _asMap(item);
+    if (m == null) continue;
+    final d = _netWorthPointDate(m);
+    final v = _netWorthPointValue(m);
+    if (d == null || v == null) continue;
+    final c = _asString(m['currency']);
+    final currency = (c != null && c.isNotEmpty) ? c : 'CNY';
+    byCur.putIfAbsent(currency, () => <(DateTime, double)>[]).add((d, v));
+  }
+  if (byCur.isEmpty) return null;
+  // Prefer CNY, else first currency by name.
+  final preferred = byCur.containsKey('CNY')
+      ? 'CNY'
+      : (byCur.keys.toList()..sort()).first;
+  final pts = byCur[preferred]!..sort((a, b) => a.$1.compareTo(b.$1));
+  if (pts.length < 2) return null;
+  return [for (final p in pts) p.$2];
+}
+
+/// Tiny sparkline for collapsed multi-tool rows (no interaction).
+class ToolMiniSpark extends StatelessWidget {
+  const ToolMiniSpark({super.key, required this.values});
+
+  final List<double> values;
+
+  @override
+  Widget build(BuildContext context) {
+    if (values.length < 2) return const SizedBox.shrink();
+    final color = context.theme.colors.primary;
+    return SizedBox(
+      width: 40,
+      height: 16,
+      child: CustomPaint(
+        painter: _MiniSparkPainter(values: values, color: color),
+      ),
+    );
+  }
+}
+
+class _MiniSparkPainter extends CustomPainter {
+  _MiniSparkPainter({required this.values, required this.color});
+
+  final List<double> values;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.length < 2) return;
+    var minV = values.first;
+    var maxV = values.first;
+    for (final v in values) {
+      if (v < minV) minV = v;
+      if (v > maxV) maxV = v;
+    }
+    final range = (maxV - minV).abs() < 1e-9 ? 1.0 : (maxV - minV);
+    final path = Path();
+    for (var i = 0; i < values.length; i++) {
+      final x = size.width * (i / (values.length - 1));
+      final y = size.height * (1 - (values[i] - minV) / range);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.25
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _MiniSparkPainter oldDelegate) {
+    return oldDelegate.values != values || oldDelegate.color != color;
+  }
 }

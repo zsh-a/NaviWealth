@@ -18,13 +18,18 @@ import '../../domain/chat_models.dart';
 import '../../state/chat_controller.dart';
 import '../../state/composer_draft.dart';
 import '../ai_navigation.dart';
+import '../ai_transparency_badge.dart';
 import '../decision_card.dart';
 import '../decision_request.dart';
 import '../proposals/propose_batch_actions.dart';
 import '../proposals/propose_card.dart';
 import '../reply_chips.dart';
 import '../tools/renderers/tool_invocation_renderers.dart'
-    show isRichToolOutput, richToolPriority;
+    show
+        isRichToolOutput,
+        netWorthSparkValues,
+        richToolPriority,
+        ToolMiniSpark;
 import '../tools/tool_invocation_card.dart' show friendlyToolName;
 import '../tools/tool_invocation_inline.dart';
 

@@ -104,6 +104,8 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
               canRegenerate: true,
             ),
           ),
+          if (message.status == ChatMessageStatus.complete)
+            AiTransparencyIndicator(messageId: message.id),
           // Action hierarchy: pending proposal / interactive decision win
           // over follow-up chips so the primary next step is unambiguous.
           if (message.status == ChatMessageStatus.complete &&
@@ -461,6 +463,13 @@ class _ToolStepsGroup extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  if (!expanded) ...[
+                    for (final t in secondary.take(2))
+                      if (netWorthSparkValues(t.output) case final ys?) ...[
+                        const SizedBox(width: AppSpacing.s6),
+                        ToolMiniSpark(values: ys),
+                      ],
+                  ],
                   if (onToggle != null)
                     AnimatedRotation(
                       turns: expanded ? 0.5 : 0,
