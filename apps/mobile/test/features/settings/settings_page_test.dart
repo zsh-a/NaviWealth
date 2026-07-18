@@ -161,6 +161,45 @@ void main() {
     );
   });
 
+  group('Settings → Appearance', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    testWidgets('keeps the localized market color choice readable on a phone', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        await _wrap(prefs, initialLocation: AppRoutes.settings),
+      );
+      await tester.pumpAndSettle();
+
+      final label = find.text('Up / down colors');
+      final selected = find.text('Red up / green down (CN)');
+      await tester.ensureVisible(label);
+      await tester.pumpAndSettle();
+
+      expect(label, findsOneWidget);
+      expect(selected, findsOneWidget);
+      expect(
+        tester.getTopLeft(selected).dy,
+        greaterThan(tester.getTopLeft(label).dy),
+      );
+      expect(tester.widget<Text>(label).maxLines, 2);
+      expect(tester.widget<Text>(selected).maxLines, 2);
+
+      await tester.tap(label);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Green up / red down (Intl)'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Green up / red down (Intl)'), findsOneWidget);
+    });
+  });
+
   group('Settings → Domains', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 

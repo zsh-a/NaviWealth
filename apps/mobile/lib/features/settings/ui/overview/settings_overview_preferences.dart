@@ -33,6 +33,7 @@ class _AppearanceSection extends ConsumerWidget {
             for (final m in MarketColorMode.values)
               _marketModeLabel(l10n, m): m,
           },
+          stackValue: true,
           onChanged: (m) => ref.read(marketColorModeProvider.notifier).set(m),
         ),
         const Padding(

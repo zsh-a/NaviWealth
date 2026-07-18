@@ -23,6 +23,7 @@ class InlineSettingRow<T> extends StatefulWidget {
     required this.options,
     required this.onChanged,
     this.subtitle,
+    this.stackValue = false,
   });
 
   final IconData icon;
@@ -31,6 +32,13 @@ class InlineSettingRow<T> extends StatefulWidget {
   final Map<String, T> options;
   final ValueChanged<T> onChanged;
   final String? subtitle;
+
+  /// Places the selected value on its own line below [label].
+  ///
+  /// Use this for localized option labels that would otherwise compete with
+  /// the setting label for one narrow mobile row. The whole surface remains a
+  /// single anchored-popover target.
+  final bool stackValue;
 
   @override
   State<InlineSettingRow<T>> createState() => _InlineSettingRowState<T>();
@@ -94,6 +102,9 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
             vertical: widget.subtitle == null ? AppSpacing.s10 : AppSpacing.s8,
           ),
           child: Row(
+            crossAxisAlignment: widget.stackValue
+                ? CrossAxisAlignment.start
+                : CrossAxisAlignment.center,
             children: [
               _IconChip(icon: widget.icon, colors: colors),
               const SizedBox(width: AppSpacing.s12),
@@ -105,7 +116,7 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
                     Text(
                       widget.label,
                       style: context.theme.typography.body.sm,
-                      maxLines: 1,
+                      maxLines: widget.stackValue ? 2 : 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (widget.subtitle != null)
@@ -118,28 +129,53 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                    if (widget.stackValue) ...[
+                      const SizedBox(height: AppSpacing.s4),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              selectedLabel,
+                              style: context.bodyCaptionStyle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.s4),
+                          Icon(
+                            FLucideIcons.chevronDown,
+                            size: AppIconSizes.xs,
+                            color: colors.mutedForeground.withValues(
+                              alpha: AppOpacity.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(width: AppSpacing.s10),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 172),
-                child: Text(
-                  selectedLabel,
-                  style: context.bodyCaptionStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.end,
+              if (!widget.stackValue) ...[
+                const SizedBox(width: AppSpacing.s10),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 172),
+                  child: Text(
+                    selectedLabel,
+                    style: context.bodyCaptionStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                  ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.s4),
-              Icon(
-                FLucideIcons.chevronDown,
-                size: AppIconSizes.xs,
-                color: colors.mutedForeground.withValues(
-                  alpha: AppOpacity.muted,
+                const SizedBox(width: AppSpacing.s4),
+                Icon(
+                  FLucideIcons.chevronDown,
+                  size: AppIconSizes.xs,
+                  color: colors.mutedForeground.withValues(
+                    alpha: AppOpacity.muted,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
