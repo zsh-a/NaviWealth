@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -51,6 +53,7 @@ class ChatComposer extends ConsumerStatefulWidget {
 class _ChatComposerState extends ConsumerState<ChatComposer> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  Timer? _persistTimer;
 
   /// When set, next submit replaces this user turn instead of appending.
   String? _replaceMessageId;
@@ -60,14 +63,48 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
     super.initState();
     if (widget.initialText != null && widget.initialText!.isNotEmpty) {
       _controller.text = widget.initialText!;
+    } else {
+      _restorePersistedDraft();
     }
+    _controller.addListener(_onTextChanged);
   }
 
   @override
   void dispose() {
+    _persistTimer?.cancel();
+    _controller.removeListener(_onTextChanged);
+    // Flush latest text once on dispose so a quick leave still saves.
+    final sessionId = widget.sessionId;
+    final text = _controller.text;
+    final shouldPersist = sessionId != null && _replaceMessageId == null;
+    final store = shouldPersist ? ref.read(composerDraftStoreProvider) : null;
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
+    if (store != null && sessionId != null) {
+      unawaited(store.save(sessionId, text));
+    }
+  }
+
+  void _restorePersistedDraft() {
+    final sessionId = widget.sessionId;
+    if (sessionId == null) return;
+    final saved = ref.read(composerDraftStoreProvider).load(sessionId);
+    if (saved == null || saved.isEmpty) return;
+    _controller
+      ..text = saved
+      ..selection = TextSelection.collapsed(offset: saved.length);
+  }
+
+  void _onTextChanged() {
+    final sessionId = widget.sessionId;
+    if (sessionId == null || _replaceMessageId != null) return;
+    _persistTimer?.cancel();
+    _persistTimer = Timer(const Duration(milliseconds: 350), () {
+      unawaited(
+        ref.read(composerDraftStoreProvider).save(sessionId, _controller.text),
+      );
+    });
   }
 
   void _applyDraft(ComposerDraft draft) {
@@ -84,10 +121,14 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
     final text = _controller.text;
     if (text.trim().isEmpty) return;
     final replaceId = _replaceMessageId;
+    final sessionId = widget.sessionId;
     setState(() {
       _replaceMessageId = null;
       _controller.clear();
     });
+    if (sessionId != null) {
+      unawaited(ref.read(composerDraftStoreProvider).clear(sessionId));
+    }
     if (replaceId != null) {
       final handler = widget.onEditResend;
       if (handler != null) {
@@ -170,6 +211,14 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
                             _replaceMessageId = null;
                             _controller.clear();
                           });
+                          final sessionId = widget.sessionId;
+                          if (sessionId != null) {
+                            unawaited(
+                              ref
+                                  .read(composerDraftStoreProvider)
+                                  .clear(sessionId),
+                            );
+                          }
                         },
                       )
                     : const SizedBox(width: double.infinity),

@@ -8916,6 +8916,60 @@ abstract class AppLocalizations {
   /// **'Clear search'**
   String get aiChatSessionsSearchClear;
 
+  /// Section header for user-pinned chat sessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned'**
+  String get aiChatSessionsGroupPinned;
+
+  /// Section header for archived chat sessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get aiChatSessionsGroupArchived;
+
+  /// Toggle to reveal archived sessions in the history panel.
+  ///
+  /// In en, this message translates to:
+  /// **'Show archive ({count})'**
+  String aiChatSessionsShowArchived(int count);
+
+  /// Toggle to hide archived sessions again.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide archive'**
+  String get aiChatSessionsHideArchived;
+
+  /// Empty state when all sessions are archived.
+  ///
+  /// In en, this message translates to:
+  /// **'No active conversations'**
+  String get aiChatSessionsEmptyActive;
+
+  /// Pin a chat session to the top of the history list.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin'**
+  String get aiChatSessionPinAction;
+
+  /// Remove the pin from a chat session.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin'**
+  String get aiChatSessionUnpinAction;
+
+  /// Archive a chat session.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get aiChatSessionArchiveAction;
+
+  /// Restore an archived chat session.
+  ///
+  /// In en, this message translates to:
+  /// **'Unarchive'**
+  String get aiChatSessionUnarchiveAction;
+
   /// Section header in the sessions panel for conversations with their last message today (local time).
   ///
   /// In en, this message translates to:

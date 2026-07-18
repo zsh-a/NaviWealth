@@ -22,7 +22,9 @@ CREATE TABLE IF NOT EXISTS chat_sessions (
   model           TEXT,
   created_at      INTEGER NOT NULL,
   updated_at      INTEGER NOT NULL,
-  last_message_at INTEGER
+  last_message_at INTEGER,
+  pinned          INTEGER NOT NULL DEFAULT 0,
+  archived        INTEGER NOT NULL DEFAULT 0
 )
 ''',
     '''

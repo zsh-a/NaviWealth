@@ -7,6 +7,8 @@ class _SessionTile extends StatelessWidget {
     required this.onTap,
     required this.onRename,
     required this.onDelete,
+    required this.onTogglePin,
+    required this.onToggleArchive,
   });
 
   final ChatSession session;
@@ -14,6 +16,8 @@ class _SessionTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onRename;
   final VoidCallback onDelete;
+  final VoidCallback onTogglePin;
+  final VoidCallback onToggleArchive;
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +76,11 @@ class _SessionTile extends StatelessWidget {
                   ),
                   alignment: Alignment.center,
                   child: Icon(
-                    FLucideIcons.messageCircle,
+                    session.archived
+                        ? FLucideIcons.archive
+                        : session.pinned
+                        ? FLucideIcons.pin
+                        : FLucideIcons.messageCircle,
                     size: AppIconSizes.sm,
                     color: selected ? colors.primary : colors.mutedForeground,
                   ),
@@ -84,6 +92,14 @@ class _SessionTile extends StatelessWidget {
                     children: [
                       Row(
                         children: [
+                          if (session.pinned) ...[
+                            Icon(
+                              FLucideIcons.pin,
+                              size: AppIconSizes.xs,
+                              color: colors.primary,
+                            ),
+                            const SizedBox(width: AppSpacing.s4),
+                          ],
                           Expanded(
                             child: Text(
                               session.title,
@@ -134,6 +150,24 @@ class _SessionTile extends StatelessWidget {
                 AppAdaptiveActionMenu(
                   title: l10n.aiChatSessionActionsTitle,
                   actions: <AppAdaptiveAction>[
+                    AppAdaptiveAction(
+                      icon: session.pinned
+                          ? FLucideIcons.pinOff
+                          : FLucideIcons.pin,
+                      title: session.pinned
+                          ? l10n.aiChatSessionUnpinAction
+                          : l10n.aiChatSessionPinAction,
+                      onPress: onTogglePin,
+                    ),
+                    AppAdaptiveAction(
+                      icon: session.archived
+                          ? FLucideIcons.archiveRestore
+                          : FLucideIcons.archive,
+                      title: session.archived
+                          ? l10n.aiChatSessionUnarchiveAction
+                          : l10n.aiChatSessionArchiveAction,
+                      onPress: onToggleArchive,
+                    ),
                     AppAdaptiveAction(
                       icon: FLucideIcons.pencil,
                       title: l10n.aiChatSessionRenameAction,

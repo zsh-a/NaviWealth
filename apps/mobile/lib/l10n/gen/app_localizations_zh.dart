@@ -4976,6 +4976,35 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatSessionsSearchClear => '清除搜索';
 
   @override
+  String get aiChatSessionsGroupPinned => '置顶';
+
+  @override
+  String get aiChatSessionsGroupArchived => '已归档';
+
+  @override
+  String aiChatSessionsShowArchived(int count) {
+    return '显示归档（$count）';
+  }
+
+  @override
+  String get aiChatSessionsHideArchived => '隐藏归档';
+
+  @override
+  String get aiChatSessionsEmptyActive => '没有进行中的对话';
+
+  @override
+  String get aiChatSessionPinAction => '置顶';
+
+  @override
+  String get aiChatSessionUnpinAction => '取消置顶';
+
+  @override
+  String get aiChatSessionArchiveAction => '归档';
+
+  @override
+  String get aiChatSessionUnarchiveAction => '取消归档';
+
+  @override
   String get aiChatSessionsGroupToday => '今天';
 
   @override

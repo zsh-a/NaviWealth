@@ -42,6 +42,7 @@ class SessionsPanel extends ConsumerStatefulWidget {
 class _SessionsPanelState extends ConsumerState<SessionsPanel> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
+  bool _showArchived = false;
 
   @override
   void dispose() {
@@ -74,9 +75,51 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
       searchBar: sessionsAsync.maybeWhen(
         data: (s) => s.isEmpty
             ? null
-            : _SearchBar(
-                controller: _searchCtrl,
-                onChanged: (v) => setState(() => _query = v),
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _SearchBar(
+                    controller: _searchCtrl,
+                    onChanged: (v) => setState(() => _query = v),
+                  ),
+                  if (s.any((e) => e.archived)) ...[
+                    const SizedBox(height: AppSpacing.s8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FTappable(
+                        onPress: () =>
+                            setState(() => _showArchived = !_showArchived),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.s4,
+                            vertical: AppSpacing.s2,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _showArchived
+                                    ? FLucideIcons.archiveRestore
+                                    : FLucideIcons.archive,
+                                size: AppIconSizes.xs,
+                                color: context.theme.colors.mutedForeground,
+                              ),
+                              const SizedBox(width: AppSpacing.s6),
+                              Text(
+                                _showArchived
+                                    ? l10n.aiChatSessionsHideArchived
+                                    : l10n.aiChatSessionsShowArchived(
+                                        s.where((e) => e.archived).length,
+                                      ),
+                                style: context.microCaptionStyle,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
         orElse: () => null,
       ),
@@ -131,7 +174,25 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
             );
           }
           final now = DateTime.now();
-          final groups = _groupByRecency(filtered, now, l10n);
+          final groups = _groupSessions(
+            filtered,
+            now,
+            l10n,
+            includeArchived: _showArchived || query.isNotEmpty,
+          );
+          if (groups.isEmpty) {
+            return _PanelMessage(
+              icon: FLucideIcons.archive,
+              message: l10n.aiChatSessionsEmptyActive,
+              action: FButton(
+                variant: FButtonVariant.outline,
+                onPress: () => setState(() => _showArchived = true),
+                child: Text(l10n.aiChatSessionsShowArchived(
+                  sessions.where((e) => e.archived).length,
+                )),
+              ),
+            );
+          }
           return ListView.builder(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.s8,
@@ -165,6 +226,8 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
                       onTap: () => widget.onSelect(s.id),
                       onDelete: () => _confirmDelete(context, ref, s),
                       onRename: () => _promptRename(context, ref, s),
+                      onTogglePin: () => _togglePin(ref, s),
+                      onToggleArchive: () => _toggleArchive(ref, s),
                     ),
                     const SizedBox(height: AppSpacing.s4),
                   ],
@@ -175,6 +238,16 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
         },
       ),
     );
+  }
+
+  Future<void> _togglePin(WidgetRef ref, ChatSession session) async {
+    final repo = await ref.read(chatRepositoryProvider.future);
+    await repo.setSessionPinned(session.id, pinned: !session.pinned);
+  }
+
+  Future<void> _toggleArchive(WidgetRef ref, ChatSession session) async {
+    final repo = await ref.read(chatRepositoryProvider.future);
+    await repo.setSessionArchived(session.id, archived: !session.archived);
   }
 
   Future<void> _confirmDelete(

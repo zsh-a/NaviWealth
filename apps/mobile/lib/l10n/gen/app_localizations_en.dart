@@ -5249,6 +5249,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatSessionsSearchClear => 'Clear search';
 
   @override
+  String get aiChatSessionsGroupPinned => 'Pinned';
+
+  @override
+  String get aiChatSessionsGroupArchived => 'Archived';
+
+  @override
+  String aiChatSessionsShowArchived(int count) {
+    return 'Show archive ($count)';
+  }
+
+  @override
+  String get aiChatSessionsHideArchived => 'Hide archive';
+
+  @override
+  String get aiChatSessionsEmptyActive => 'No active conversations';
+
+  @override
+  String get aiChatSessionPinAction => 'Pin';
+
+  @override
+  String get aiChatSessionUnpinAction => 'Unpin';
+
+  @override
+  String get aiChatSessionArchiveAction => 'Archive';
+
+  @override
+  String get aiChatSessionUnarchiveAction => 'Unarchive';
+
+  @override
   String get aiChatSessionsGroupToday => 'Today';
 
   @override

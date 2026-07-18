@@ -71,7 +71,8 @@ class ChatHistoryStore {
           ') AS message_count '
           'FROM chat_sessions s '
           'WHERE s.owner_user_id = ?1 '
-          'ORDER BY COALESCE(s.last_message_at, s.created_at) DESC',
+          'ORDER BY COALESCE(s.pinned, 0) DESC, '
+          'COALESCE(s.last_message_at, s.created_at) DESC',
           variables: [Variable<String>(ownerUserId)],
         )
         .get();
@@ -136,8 +137,9 @@ class ChatHistoryStore {
   Future<void> insertSession(ChatSession session) async {
     await _db.customStatement(
       'INSERT INTO chat_sessions '
-      '(id, owner_user_id, title, model, created_at, updated_at, last_message_at) '
-      'VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)',
+      '(id, owner_user_id, title, model, created_at, updated_at, last_message_at, '
+      ' pinned, archived) '
+      'VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)',
       <Object?>[
         session.id,
         session.ownerUserId,
@@ -146,6 +148,8 @@ class ChatHistoryStore {
         session.createdAt.millisecondsSinceEpoch,
         session.updatedAt.millisecondsSinceEpoch,
         session.lastMessageAt?.millisecondsSinceEpoch,
+        session.pinned ? 1 : 0,
+        session.archived ? 1 : 0,
       ],
     );
     _notify();
@@ -155,6 +159,24 @@ class ChatHistoryStore {
     await _db.customStatement(
       'UPDATE chat_sessions SET title = ?2, updated_at = ?3 WHERE id = ?1',
       <Object?>[id, title, DateTime.now().millisecondsSinceEpoch],
+    );
+    _notify();
+  }
+
+  Future<void> setSessionPinned(String id, {required bool pinned}) async {
+    await _db.customStatement(
+      'UPDATE chat_sessions SET pinned = ?2, updated_at = ?3 WHERE id = ?1',
+      <Object?>[id, pinned ? 1 : 0, DateTime.now().millisecondsSinceEpoch],
+    );
+    _notify();
+  }
+
+  Future<void> setSessionArchived(String id, {required bool archived}) async {
+    await _db.customStatement(
+      // Archiving clears pin so the archive list stays simple.
+      'UPDATE chat_sessions SET archived = ?2, pinned = CASE WHEN ?2 = 1 THEN 0 ELSE pinned END, '
+      'updated_at = ?3 WHERE id = ?1',
+      <Object?>[id, archived ? 1 : 0, DateTime.now().millisecondsSinceEpoch],
     );
     _notify();
   }
@@ -342,6 +364,8 @@ class ChatHistoryStore {
           : DateTime.fromMillisecondsSinceEpoch(lastMs, isUtc: true),
       preview: preview == null || preview.trim().isEmpty ? null : preview.trim(),
       messageCount: messageCount,
+      pinned: (_tryReadInt(row, 'pinned') ?? 0) != 0,
+      archived: (_tryReadInt(row, 'archived') ?? 0) != 0,
     );
   }
 

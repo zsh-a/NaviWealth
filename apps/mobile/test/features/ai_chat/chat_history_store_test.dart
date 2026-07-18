@@ -72,6 +72,44 @@ void main() {
       expect(sessions, hasLength(1));
       expect(sessions.single.preview, '约 ¥123,456。');
       expect(sessions.single.messageCount, 2);
+      expect(sessions.single.pinned, isFalse);
+      expect(sessions.single.archived, isFalse);
+    });
+
+    test('pin and archive flags reorder and filter list metadata', () async {
+      final older = ChatSession(
+        id: 'sess-old',
+        ownerUserId: 'user-1',
+        title: 'Older',
+        createdAt: DateTime.utc(2026, 4, 1),
+        updatedAt: DateTime.utc(2026, 4, 1),
+        lastMessageAt: DateTime.utc(2026, 4, 1),
+      );
+      final newer = ChatSession(
+        id: 'sess-new',
+        ownerUserId: 'user-1',
+        title: 'Newer',
+        createdAt: DateTime.utc(2026, 4, 30),
+        updatedAt: DateTime.utc(2026, 4, 30),
+        lastMessageAt: DateTime.utc(2026, 4, 30),
+      );
+      await store.insertSession(older);
+      await store.insertSession(newer);
+
+      var sessions = await store.listSessions('user-1');
+      expect(sessions.map((s) => s.id).toList(), ['sess-new', 'sess-old']);
+
+      await store.setSessionPinned('sess-old', pinned: true);
+      sessions = await store.listSessions('user-1');
+      expect(sessions.first.id, 'sess-old');
+      expect(sessions.first.pinned, isTrue);
+
+      await store.setSessionArchived('sess-old', archived: true);
+      sessions = await store.listSessions('user-1');
+      final archived = sessions.firstWhere((s) => s.id == 'sess-old');
+      expect(archived.archived, isTrue);
+      // Archiving clears pin.
+      expect(archived.pinned, isFalse);
     });
 
     test('updateMessage rewrites content and tool calls in place', () async {

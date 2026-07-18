@@ -97,6 +97,12 @@ class ChatRepository
   Future<void> renameSession(String id, String title) =>
       _store.renameSession(id, title);
 
+  Future<void> setSessionPinned(String id, {required bool pinned}) =>
+      _store.setSessionPinned(id, pinned: pinned);
+
+  Future<void> setSessionArchived(String id, {required bool archived}) =>
+      _store.setSessionArchived(id, archived: archived);
+
   Future<void> deleteSession(String id) => _store.deleteSession(id);
 
   /// Generates the context-truncation notice text. Callers in the UI layer

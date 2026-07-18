@@ -134,7 +134,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 42;
+  int get schemaVersion => 43;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -669,6 +669,21 @@ class AppDatabase extends _$AppDatabase {
       // allow Android process recovery without replaying uncertain writes.
       if (from < 42) {
         await _createAgentRuntimeChatSnapshots(this);
+      }
+      // v42 -> v43: chat session pin/archive flags for history management.
+      if (from < 43) {
+        await _addColumnIfMissing(
+          this,
+          table: 'chat_sessions',
+          column: 'pinned',
+          definition: 'INTEGER NOT NULL DEFAULT 0',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'chat_sessions',
+          column: 'archived',
+          definition: 'INTEGER NOT NULL DEFAULT 0',
+        );
       }
     },
     beforeOpen: (details) async {

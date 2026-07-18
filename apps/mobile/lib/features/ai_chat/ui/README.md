@@ -18,7 +18,8 @@ Keep larger screen internals grouped by responsibility:
 - Answer-first turn layout: prose → primary visualization (pinned) → collapsed read-tool steps → propose/decision → follow-ups.
 - Message actions: icon bar on trailing assistant; long-press action sheet on any message.
 - Tool visualizations use `ToolResultSurface` (SoftCard) with honest metric labels and domain jump links.
-- History list shows title + last-message preview + relative time; mobile history is a near-full-height sheet.
+- History list shows title + last-message preview + relative time; supports pin/archive; mobile history is a near-full-height sheet.
+- Composer free-form drafts persist per session across restarts (edit-and-resend drafts do not).
 - Timeline date separators + jump-to-latest chip with unseen count.
 - Proposals: primary Confirm CTA, SoftCard surfaces, success haptic; applied state is a quiet soft meta row with timed undo.
 

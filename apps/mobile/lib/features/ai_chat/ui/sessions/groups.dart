@@ -7,6 +7,51 @@ class _SessionGroup {
   final List<ChatSession> sessions;
 }
 
+/// Bucket sessions for the history list:
+///  1. Pinned (if any)
+///  2. Recency buckets for non-archived, non-pinned threads
+///  3. Archived (only when [includeArchived] is true)
+///
+/// Sessions arrive sorted pinned-first then newest-first from the store.
+List<_SessionGroup> _groupSessions(
+  List<ChatSession> sessions,
+  DateTime now,
+  AppLocalizations l10n, {
+  required bool includeArchived,
+}) {
+  final pinned = <ChatSession>[];
+  final active = <ChatSession>[];
+  final archived = <ChatSession>[];
+  for (final s in sessions) {
+    if (s.archived) {
+      if (includeArchived) archived.add(s);
+      continue;
+    }
+    if (s.pinned) {
+      pinned.add(s);
+    } else {
+      active.add(s);
+    }
+  }
+
+  final out = <_SessionGroup>[];
+  if (pinned.isNotEmpty) {
+    out.add(
+      _SessionGroup(label: l10n.aiChatSessionsGroupPinned, sessions: pinned),
+    );
+  }
+  out.addAll(_groupByRecency(active, now, l10n));
+  if (archived.isNotEmpty) {
+    out.add(
+      _SessionGroup(
+        label: l10n.aiChatSessionsGroupArchived,
+        sessions: archived,
+      ),
+    );
+  }
+  return out;
+}
+
 /// Bucket sessions by recency of their last message. Sessions arrive
 /// sorted newest-first (per [chatSessionsStreamProvider]), so within
 /// each bucket the order is preserved. Buckets are emitted only when

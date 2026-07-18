@@ -359,6 +359,8 @@ class ChatSession {
     this.model,
     this.preview,
     this.messageCount = 0,
+    this.pinned = false,
+    this.archived = false,
   });
 
   final String id;
@@ -375,4 +377,36 @@ class ChatSession {
 
   /// Total messages in the session (all roles). Used for list meta only.
   final int messageCount;
+
+  /// User-pinned threads float above recency groups.
+  final bool pinned;
+
+  /// Archived threads are hidden from the active list unless the user
+  /// opens the archive filter.
+  final bool archived;
+
+  ChatSession copyWith({
+    String? title,
+    String? model,
+    DateTime? lastMessageAt,
+    String? preview,
+    int? messageCount,
+    bool? pinned,
+    bool? archived,
+    DateTime? updatedAt,
+  }) {
+    return ChatSession(
+      id: id,
+      ownerUserId: ownerUserId,
+      title: title ?? this.title,
+      model: model ?? this.model,
+      createdAt: createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      lastMessageAt: lastMessageAt ?? this.lastMessageAt,
+      preview: preview ?? this.preview,
+      messageCount: messageCount ?? this.messageCount,
+      pinned: pinned ?? this.pinned,
+      archived: archived ?? this.archived,
+    );
+  }
 }
