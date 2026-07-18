@@ -6653,28 +6653,28 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String agentQualityReadyRate(int percent) {
-    return 'Ready $percent%';
+  String agentQualityReadyRate(int percent, int count, int total) {
+    return 'Ready $percent% · $count/$total';
   }
 
   @override
-  String agentQualityNoFindingRate(int percent) {
-    return 'No finding $percent%';
+  String agentQualityNoFindingRate(int percent, int count, int total) {
+    return 'No finding $percent% · $count/$total';
   }
 
   @override
-  String agentQualityFailureRate(int percent) {
-    return 'Failed $percent%';
+  String agentQualityFailureRate(int percent, int count, int total) {
+    return 'Failed $percent% · $count/$total';
   }
 
   @override
-  String agentQualitySuppressedRate(int percent) {
-    return 'Hidden or delayed $percent%';
+  String agentQualitySuppressedRate(int percent, int count, int total) {
+    return 'Hidden or delayed $percent% · $count/$total';
   }
 
   @override
-  String agentQualityEvidenceRate(int percent) {
-    return 'Evidence-linked $percent%';
+  String agentQualityEvidenceRate(int percent, int count, int total) {
+    return 'Evidence-linked $percent% · $count/$total';
   }
 
   @override
@@ -6682,9 +6682,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'No evidence-open samples';
 
   @override
-  String agentQualityEvidenceNavigationRate(int percent, int count) {
-    return 'Evidence opened $percent% · $count attempts';
+  String agentQualityEvidenceNavigationRate(
+    int percent,
+    int successes,
+    int attempts,
+  ) {
+    return 'Evidence opened $percent% · $successes/$attempts';
   }
+
+  @override
+  String get agentQualityPrivacyNote =>
+      'Device-only aggregates · no result content, evidence ids, or routes retained';
 
   @override
   String get agentSettingsNeverRun => 'Never run';

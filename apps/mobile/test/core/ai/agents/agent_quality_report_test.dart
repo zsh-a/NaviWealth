@@ -116,6 +116,30 @@ void main() {
       expect(report.evidenceNavigationAttempts, 4);
       expect(report.evidenceNavigationSuccessRate, 0.75);
 
+      expect(
+        report.toJson().keys,
+        unorderedEquals(<String>{
+          'window_start',
+          'generated_at',
+          'completed_runs',
+          'ready_runs',
+          'no_finding_runs',
+          'failed_runs',
+          'artifact_count',
+          'dismissed_or_snoozed_artifacts',
+          'evidence_bearing_artifacts',
+          'fully_anchored_evidence_artifacts',
+          'high_signal_rate',
+          'no_finding_rate',
+          'failure_rate',
+          'dismissed_or_snoozed_rate',
+          'evidence_anchor_coverage_rate',
+          'evidence_navigation_attempts',
+          'evidence_navigation_successes',
+          'evidence_navigation_success_rate',
+        }),
+      );
+
       final encoded = report.toJson().toString();
       expect(encoded, isNot(contains('Private')));
       expect(encoded, isNot(contains('private-id')));

@@ -2,7 +2,7 @@
 
 Status: active cross-domain sequencing SSOT.
 
-Last reviewed: 2026-07-18.
+Last reviewed: 2026-07-19.
 
 This roadmap contains only work that changes cross-domain product outcomes or
 shared delivery risk. Current architecture belongs in the architecture SSOTs,
@@ -65,54 +65,7 @@ Exit evidence:
 Owner: FinanceOS. Cross-domain roadmap ownership reflects its current product
 priority; parser and workflow details remain in `roadmap-finance.md`.
 
-### N2. Cross-Domain Outcome And Agent Quality
-
-Outcome: make proactive results useful, evidence-backed, and low-noise rather
-than increasing the number of agents or creating another AI destination.
-
-Current evidence:
-
-- The Health, Finance, and Knowledge signal-to-Execution flows preserve source
-  references through completion and Review.
-- Agent results share one artifact, presentation, intent, proposal, trace, and
-  visibility model across active `DomainPack`s.
-- Fixed answer-quality cases already score required facts, forbidden claims,
-  and expected/forbidden evidence ids.
-- A privacy-safe 30-day local quality report now exposes completed, ready,
-  no-finding, failed, dismissed/snoozed, evidence-anchor coverage, and actual
-  evidence-navigation success metrics without exporting artifact text,
-  evidence ids, or routes. Navigation history stores only a timestamp and
-  whether the production router accepted the user's click.
-- The fixed answer-quality gate emits privacy-safe forbidden-claim/evidence and
-  missing-fact/evidence failure counts. Outcome cases now bind evidence types
-  to exact or dynamic route families; both every action route and a
-  representative path for every evidence family are opened through the
-  production router instead of receiving a string-only shape check.
-- Production registry parity now requires every registered Agent to have both
-  ready and no-finding corpus coverage. Each case is executed in its real
-  domain fixture; behavior-specific failure coverage remains attached to the
-  Agent that can produce that failure, such as Execution review budget
-  exhaustion.
-- Life-to-Execution outcome comparison now carries a coherent observation time
-  and explicit source-family completeness. It emits a before/after result only
-  for a concrete source captured by the Action and successfully re-evaluated
-  after completion; loading, failed, or disabled sources remain unknown. The
-  contract fixes attribution to observational and UI copy says detected/not
-  detected rather than implying the Action caused a change.
-- Finance current-month budget pressure is the first deterministic Finance
-  interpretation on that contract. Strained or over-budget posture produces a
-  source-preserving Action, and only a later settled monthly budget read can
-  report whether the signal remains detected.
-
-Exit evidence:
-
-- The evaluation report exposes high-signal result rate, no-finding rate,
-  dismissed/snoozed result rate, evidence-navigation success, and forbidden
-  claim failures without capturing private payloads.
-- Lower-value legacy read tools gain `EvidenceAnchor`s only when touched by a
-  real workflow; ids are not guessed from arbitrary JSON.
-
-### N3. Data Portability Recovery Correctness
+### N2. Data Portability Recovery Correctness
 
 Outcome: make encrypted recovery trustworthy under destructive failure modes,
 not merely navigable from Settings.
@@ -196,9 +149,23 @@ future roadmap phases:
 - Deterministic Finance budget-pressure before/after interpretation through
   the same observational Life-to-Execution contract.
 - Unified agent artifacts, result UI, preferences, scheduling, follow-up
-  intents, trace links, visibility state, and FinanceOS agents.
+  intents, trace links, visibility state, and FinanceOS agents. Every
+  production Agent has executable ready and no-finding corpus coverage.
+- A privacy-safe 30-day local Agent quality report exposes completed/ready,
+  no-finding, failed, dismissed/snoozed, evidence-anchor, and actual navigation
+  success rates with visible sample counts. It retains no result content,
+  evidence ids, or routes; navigation history stores only timestamp and router
+  acceptance.
+- The fixed answer-quality gate emits aggregate forbidden-claim/evidence and
+  missing-fact/evidence failures. Its JSON field allowlist, production route
+  navigation, and cross-domain outcome corpus are deterministic regression
+  contracts.
+- Completed Life-to-Execution outcomes require a concrete source and a later,
+  successful source-family evaluation. Loading, failed, or disabled sources
+  remain unknown, and UI copy is observational rather than causal.
 - Batch proposal progress, recovery, durable undo, and focused contracts.
-- Memory answer-quality fixtures and navigable anchors for high-value reads.
+- Memory answer-quality fixtures and navigable anchors for high-value reads;
+  lower-value legacy tools gain anchors only when touched by a real workflow.
 - Opt-in Sentry wiring plus Sync and performance diagnostic surfaces.
 - Dart/Rust Sync v3 serializer fixtures, accepted-ack behavior, conflict and
   skipped-row diagnostics, and domain reset generations.

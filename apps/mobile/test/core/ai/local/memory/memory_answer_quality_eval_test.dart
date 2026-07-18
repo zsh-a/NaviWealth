@@ -192,6 +192,20 @@ void main() {
     expect(report.passed, isTrue);
     expect(report.forbiddenClaimFailures, 0);
     expect(report.forbiddenEvidenceFailures, 0);
+    expect(
+      report.toJson().keys,
+      unorderedEquals(<String>{
+        'case_count',
+        'passed_case_count',
+        'pass_rate',
+        'forbidden_claim_failures',
+        'forbidden_evidence_failures',
+        'missing_fact_failures',
+        'missing_evidence_failures',
+        'failed_case_ids',
+        'passed',
+      }),
+    );
   });
 
   test('stale claim and missing evidence fail with deterministic reasons', () {
@@ -221,6 +235,9 @@ void main() {
     expect(report.forbiddenClaimFailures, 1);
     expect(report.forbiddenEvidenceFailures, 0);
     expect(report.failedCaseIds, <String>['options-before-earnings']);
-    expect(jsonEncode(report.toJson()), isNot(contains('hold through earnings')));
+    expect(
+      jsonEncode(report.toJson()),
+      isNot(contains('hold through earnings')),
+    );
   });
 }

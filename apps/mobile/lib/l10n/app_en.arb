@@ -3607,43 +3607,66 @@
     "description": "Completed Agent runs included in the quality window.",
     "placeholders": { "count": { "type": "int", "example": "12" } }
   },
-  "agentQualityReadyRate": "Ready {percent}%",
+  "agentQualityReadyRate": "Ready {percent}% · {count}/{total}",
   "@agentQualityReadyRate": {
     "description": "Share of completed Agent runs with a ready result.",
-    "placeholders": { "percent": { "type": "int", "example": "75" } }
+    "placeholders": {
+      "percent": { "type": "int", "example": "75" },
+      "count": { "type": "int", "example": "9" },
+      "total": { "type": "int", "example": "12" }
+    }
   },
-  "agentQualityNoFindingRate": "No finding {percent}%",
+  "agentQualityNoFindingRate": "No finding {percent}% · {count}/{total}",
   "@agentQualityNoFindingRate": {
     "description": "Share of completed Agent runs with no meaningful finding.",
-    "placeholders": { "percent": { "type": "int", "example": "20" } }
+    "placeholders": {
+      "percent": { "type": "int", "example": "20" },
+      "count": { "type": "int", "example": "2" },
+      "total": { "type": "int", "example": "10" }
+    }
   },
-  "agentQualityFailureRate": "Failed {percent}%",
+  "agentQualityFailureRate": "Failed {percent}% · {count}/{total}",
   "@agentQualityFailureRate": {
     "description": "Share of completed Agent runs that failed.",
-    "placeholders": { "percent": { "type": "int", "example": "5" } }
+    "placeholders": {
+      "percent": { "type": "int", "example": "5" },
+      "count": { "type": "int", "example": "1" },
+      "total": { "type": "int", "example": "20" }
+    }
   },
-  "agentQualitySuppressedRate": "Hidden or delayed {percent}%",
+  "agentQualitySuppressedRate": "Hidden or delayed {percent}% · {count}/{total}",
   "@agentQualitySuppressedRate": {
     "description": "Share of Agent artifacts dismissed or snoozed by the user.",
-    "placeholders": { "percent": { "type": "int", "example": "10" } }
+    "placeholders": {
+      "percent": { "type": "int", "example": "10" },
+      "count": { "type": "int", "example": "1" },
+      "total": { "type": "int", "example": "10" }
+    }
   },
-  "agentQualityEvidenceRate": "Evidence-linked {percent}%",
+  "agentQualityEvidenceRate": "Evidence-linked {percent}% · {count}/{total}",
   "@agentQualityEvidenceRate": {
     "description": "Share of evidence-bearing Agent artifacts whose evidence references all have routes.",
-    "placeholders": { "percent": { "type": "int", "example": "90" } }
+    "placeholders": {
+      "percent": { "type": "int", "example": "90" },
+      "count": { "type": "int", "example": "9" },
+      "total": { "type": "int", "example": "10" }
+    }
   },
   "agentQualityEvidenceNavigationNoSamples": "No evidence-open samples",
   "@agentQualityEvidenceNavigationNoSamples": {
     "description": "Agent quality summary shown before any evidence navigation attempts exist."
   },
-  "agentQualityEvidenceNavigationRate": "Evidence opened {percent}% · {count} attempts",
+  "agentQualityEvidenceNavigationRate": "Evidence opened {percent}% · {successes}/{attempts}",
   "@agentQualityEvidenceNavigationRate": {
     "description": "Share of Agent evidence navigation attempts accepted by the app router.",
     "placeholders": {
       "percent": { "type": "int", "example": "95" },
-      "count": { "type": "int", "example": "20" }
+      "successes": { "type": "int", "example": "19" },
+      "attempts": { "type": "int", "example": "20" }
     }
   },
+  "agentQualityPrivacyNote": "Device-only aggregates · no result content, evidence ids, or routes retained",
+  "@agentQualityPrivacyNote": { "description": "Privacy explanation below the rolling Agent quality summary." },
   "agentSettingsNeverRun": "Never run",
   "@agentSettingsNeverRun": { "description": "Subtitle when an agent has no run history." },
   "agentSettingsLastRunAt": "Last run {date}",

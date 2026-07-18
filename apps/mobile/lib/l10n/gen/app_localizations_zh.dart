@@ -6326,37 +6326,44 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String agentQualityReadyRate(int percent) {
-    return '有结果 $percent%';
+  String agentQualityReadyRate(int percent, int count, int total) {
+    return '有结果 $percent% · $count/$total';
   }
 
   @override
-  String agentQualityNoFindingRate(int percent) {
-    return '无发现 $percent%';
+  String agentQualityNoFindingRate(int percent, int count, int total) {
+    return '无发现 $percent% · $count/$total';
   }
 
   @override
-  String agentQualityFailureRate(int percent) {
-    return '失败 $percent%';
+  String agentQualityFailureRate(int percent, int count, int total) {
+    return '失败 $percent% · $count/$total';
   }
 
   @override
-  String agentQualitySuppressedRate(int percent) {
-    return '隐藏或延后 $percent%';
+  String agentQualitySuppressedRate(int percent, int count, int total) {
+    return '隐藏或延后 $percent% · $count/$total';
   }
 
   @override
-  String agentQualityEvidenceRate(int percent) {
-    return '证据可达 $percent%';
+  String agentQualityEvidenceRate(int percent, int count, int total) {
+    return '证据可达 $percent% · $count/$total';
   }
 
   @override
   String get agentQualityEvidenceNavigationNoSamples => '暂无证据打开样本';
 
   @override
-  String agentQualityEvidenceNavigationRate(int percent, int count) {
-    return '证据打开成功 $percent% · $count 次尝试';
+  String agentQualityEvidenceNavigationRate(
+    int percent,
+    int successes,
+    int attempts,
+  ) {
+    return '证据打开成功 $percent% · $successes/$attempts';
   }
+
+  @override
+  String get agentQualityPrivacyNote => '仅在设备本地汇总 · 不保留结果内容、证据 ID 或路由';
 
   @override
   String get agentSettingsNeverRun => '尚未运行';

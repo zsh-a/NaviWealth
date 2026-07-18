@@ -209,17 +209,23 @@ class _AgentQualitySummary extends StatelessWidget {
                 _OverviewFragment(
                   text: l10n.agentQualityReadyRate(
                     _percentage(report.highSignalRate),
+                    report.readyRuns,
+                    report.completedRuns,
                   ),
                   emphasis: report.readyRuns > 0,
                 ),
                 _OverviewFragment(
                   text: l10n.agentQualityNoFindingRate(
                     _percentage(report.noFindingRate),
+                    report.noFindingRuns,
+                    report.completedRuns,
                   ),
                 ),
                 _OverviewFragment(
                   text: l10n.agentQualityFailureRate(
                     _percentage(report.failureRate),
+                    report.failedRuns,
+                    report.completedRuns,
                   ),
                   danger: hasFailures,
                 ),
@@ -228,11 +234,15 @@ class _AgentQualitySummary extends StatelessWidget {
                 _OverviewFragment(
                   text: l10n.agentQualitySuppressedRate(
                     _percentage(report.dismissedOrSnoozedRate),
+                    report.dismissedOrSnoozedArtifacts,
+                    report.artifactCount,
                   ),
                 ),
                 _OverviewFragment(
                   text: l10n.agentQualityEvidenceRate(
                     _percentage(report.evidenceAnchorCoverageRate),
+                    report.fullyAnchoredEvidenceArtifacts,
+                    report.evidenceBearingArtifacts,
                   ),
                 ),
               ],
@@ -241,8 +251,29 @@ class _AgentQualitySummary extends StatelessWidget {
                     ? l10n.agentQualityEvidenceNavigationNoSamples
                     : l10n.agentQualityEvidenceNavigationRate(
                         _percentage(report.evidenceNavigationSuccessRate),
+                        report.evidenceNavigationSuccesses,
                         report.evidenceNavigationAttempts,
                       ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                FLucideIcons.shieldCheck,
+                size: AppIconSizes.xs,
+                color: colors.mutedForeground,
+              ),
+              const SizedBox(width: AppSpacing.s6),
+              Expanded(
+                child: Text(
+                  l10n.agentQualityPrivacyNote,
+                  style: context.captionStyle.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                ),
               ),
             ],
           ),

@@ -178,9 +178,18 @@ void main() {
     expect(find.text('Notifications 1'), findsOneWidget);
     expect(find.text('30-day quality'), findsOneWidget);
     expect(find.text('10 completed runs'), findsOneWidget);
-    expect(find.text('Ready 60%'), findsOneWidget);
-    expect(find.text('Evidence-linked 75%'), findsOneWidget);
-    expect(find.text('Evidence opened 80% · 5 attempts'), findsOneWidget);
+    expect(find.text('Ready 60% · 6/10'), findsOneWidget);
+    expect(find.text('No finding 30% · 3/10'), findsOneWidget);
+    expect(find.text('Failed 10% · 1/10'), findsOneWidget);
+    expect(find.text('Hidden or delayed 20% · 1/5'), findsOneWidget);
+    expect(find.text('Evidence-linked 75% · 3/4'), findsOneWidget);
+    expect(find.text('Evidence opened 80% · 4/5'), findsOneWidget);
+    expect(
+      find.text(
+        'Device-only aggregates · no result content, evidence ids, or routes retained',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('FinanceOS'), findsOneWidget);
     expect(find.text('Run now'), findsNothing);
     expect(find.text('Notifications'), findsNothing);

@@ -11307,32 +11307,32 @@ abstract class AppLocalizations {
   /// Share of completed Agent runs with a ready result.
   ///
   /// In en, this message translates to:
-  /// **'Ready {percent}%'**
-  String agentQualityReadyRate(int percent);
+  /// **'Ready {percent}% · {count}/{total}'**
+  String agentQualityReadyRate(int percent, int count, int total);
 
   /// Share of completed Agent runs with no meaningful finding.
   ///
   /// In en, this message translates to:
-  /// **'No finding {percent}%'**
-  String agentQualityNoFindingRate(int percent);
+  /// **'No finding {percent}% · {count}/{total}'**
+  String agentQualityNoFindingRate(int percent, int count, int total);
 
   /// Share of completed Agent runs that failed.
   ///
   /// In en, this message translates to:
-  /// **'Failed {percent}%'**
-  String agentQualityFailureRate(int percent);
+  /// **'Failed {percent}% · {count}/{total}'**
+  String agentQualityFailureRate(int percent, int count, int total);
 
   /// Share of Agent artifacts dismissed or snoozed by the user.
   ///
   /// In en, this message translates to:
-  /// **'Hidden or delayed {percent}%'**
-  String agentQualitySuppressedRate(int percent);
+  /// **'Hidden or delayed {percent}% · {count}/{total}'**
+  String agentQualitySuppressedRate(int percent, int count, int total);
 
   /// Share of evidence-bearing Agent artifacts whose evidence references all have routes.
   ///
   /// In en, this message translates to:
-  /// **'Evidence-linked {percent}%'**
-  String agentQualityEvidenceRate(int percent);
+  /// **'Evidence-linked {percent}% · {count}/{total}'**
+  String agentQualityEvidenceRate(int percent, int count, int total);
 
   /// Agent quality summary shown before any evidence navigation attempts exist.
   ///
@@ -11343,8 +11343,18 @@ abstract class AppLocalizations {
   /// Share of Agent evidence navigation attempts accepted by the app router.
   ///
   /// In en, this message translates to:
-  /// **'Evidence opened {percent}% · {count} attempts'**
-  String agentQualityEvidenceNavigationRate(int percent, int count);
+  /// **'Evidence opened {percent}% · {successes}/{attempts}'**
+  String agentQualityEvidenceNavigationRate(
+    int percent,
+    int successes,
+    int attempts,
+  );
+
+  /// Privacy explanation below the rolling Agent quality summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Device-only aggregates · no result content, evidence ids, or routes retained'**
+  String get agentQualityPrivacyNote;
 
   /// Subtitle when an agent has no run history.
   ///
