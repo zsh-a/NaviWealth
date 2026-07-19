@@ -5847,6 +5847,15 @@ class AppLocalizationsZh extends AppLocalizations {
       '该现金余额已绑定上方账户。如需迁移到其他账户，请删除该余额后在目标账户重新录入。';
 
   @override
+  String get cashFormCheckingExisting => '正在检查该账户是否已有现金余额…';
+
+  @override
+  String get cashFormExistingFoundTitle => '已找到现有现金余额';
+
+  @override
+  String get cashFormExistingFoundBody => '保存后将更新该账户的现有余额，不会创建重复记录。';
+
+  @override
   String get cashFormMissingAccount => '关联账户不可用';
 
   @override

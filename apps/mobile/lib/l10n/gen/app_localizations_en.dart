@@ -6158,6 +6158,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'This cash balance is linked to the account above. To move it, delete this balance and record it under another account.';
 
   @override
+  String get cashFormCheckingExisting =>
+      'Checking this account for an existing cash balance…';
+
+  @override
+  String get cashFormExistingFoundTitle => 'Existing cash balance found';
+
+  @override
+  String get cashFormExistingFoundBody =>
+      'Saving will update this account’s existing balance instead of creating a duplicate.';
+
+  @override
   String get cashFormMissingAccount => 'Linked account unavailable';
 
   @override

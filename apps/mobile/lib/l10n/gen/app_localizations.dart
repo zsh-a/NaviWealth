@@ -10512,6 +10512,24 @@ abstract class AppLocalizations {
   /// **'This cash balance is linked to the account above. To move it, delete this balance and record it under another account.'**
   String get cashFormAccountLockedHint;
 
+  /// Cash form status while checking the selected account for an existing cash asset
+  ///
+  /// In en, this message translates to:
+  /// **'Checking this account for an existing cash balance…'**
+  String get cashFormCheckingExisting;
+
+  /// Cash form notice title when the selected account already has a cash asset
+  ///
+  /// In en, this message translates to:
+  /// **'Existing cash balance found'**
+  String get cashFormExistingFoundTitle;
+
+  /// Cash form notice explaining duplicate prevention
+  ///
+  /// In en, this message translates to:
+  /// **'Saving will update this account’s existing balance instead of creating a duplicate.'**
+  String get cashFormExistingFoundBody;
+
   /// Fallback shown when editing a cash balance whose linked account is not available in the active account list
   ///
   /// In en, this message translates to:

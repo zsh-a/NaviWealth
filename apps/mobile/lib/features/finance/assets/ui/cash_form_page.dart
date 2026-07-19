@@ -45,6 +45,9 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
   String? _accountId;
   String? _currency = 'CNY';
   bool _busy = false;
+  bool _loadingInitial = false;
+  bool _checkingExistingCash = false;
+  Object? _loadError;
   Asset? _initial;
   Asset? _selectedExistingCash;
   bool _hydratedFromList = false;
@@ -62,7 +65,8 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
     super.initState();
     dirty.bindTextControllers([_balanceController, _nicknameController]);
     if (widget.isEdit) {
-      _loadInitial();
+      _loadingInitial = true;
+      unawaited(_loadInitial());
     } else {
       final defaults = ref.read(formDefaultsProvider);
       _accountId = defaults.assetAccountId;
@@ -74,15 +78,27 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
   }
 
   Future<void> _loadInitial() async {
-    final repo = await ref.read(manualAssetRepositoryProvider.future);
-    final existing = await repo.findById(widget.assetId!);
-    if (existing == null || !mounted) return;
-    await _hydrateExistingCash(existing, locked: true);
-    // Hydrating an existing record is not a user edit.
-    dirty.snapshotBaseline();
+    try {
+      final repo = await ref.read(manualAssetRepositoryProvider.future);
+      final existing = await repo.findById(widget.assetId!);
+      if (existing == null) {
+        throw StateError('cash asset not found');
+      }
+      if (!mounted) return;
+      await _hydrateExistingCash(existing, locked: true);
+      // Hydrating an existing record is not a user edit.
+      dirty.snapshotBaseline();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = error;
+        _loadingInitial = false;
+      });
+    }
   }
 
   Future<void> _save() async {
+    if (_busy || _checkingExistingCash) return;
     if (!_formKey.currentState!.validate()) return;
     final l10n = AppLocalizations.of(context);
     final accountId = _accountId;
@@ -196,16 +212,35 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
               onPress: _busy ? null : _delete,
             ),
         ],
-        child: accountsAsync.whenOrLoading(
-          context: context,
-          error: (e, _) => AppEmptyState.error(
-            title: l10n.commonLoadFailed,
-            message: l10n.cashFormLoadError('$e'),
-            retryLabel: l10n.commonRetry,
-            onRetry: () => ref.invalidate(accountsStreamProvider),
-          ),
-          data: (accounts) => _buildForm(l10n, accounts),
-        ),
+        child: _loadingInitial
+            ? const Center(child: FCircularProgress())
+            : _loadError != null
+            ? AppEmptyState.error(
+                title: l10n.commonLoadFailed,
+                message: l10n.cashFormLoadError(
+                  userSafeErrorMessage(context, _loadError!),
+                ),
+                retryLabel: l10n.commonRetry,
+                onRetry: () {
+                  setState(() {
+                    _loadError = null;
+                    _loadingInitial = true;
+                  });
+                  unawaited(_loadInitial());
+                },
+              )
+            : accountsAsync.whenOrLoading(
+                context: context,
+                error: (e, _) => AppEmptyState.error(
+                  title: l10n.commonLoadFailed,
+                  message: l10n.cashFormLoadError(
+                    userSafeErrorMessage(context, e),
+                  ),
+                  retryLabel: l10n.commonRetry,
+                  onRetry: () => ref.invalidate(accountsStreamProvider),
+                ),
+                data: (accounts) => _buildForm(l10n, accounts),
+              ),
       ),
     );
   }
@@ -253,17 +288,19 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
     final linkedAccount = _accountId == null
         ? null
         : accounts.where((a) => a.id == _accountId).firstOrNull;
+    final onSubmit = _busy || _checkingExistingCash ? null : _save;
     return Form(
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: AppFormScaffoldBody(
+        onSubmit: onSubmit,
         action: SizedBox(
           width: double.infinity,
           child: AppBusyButton(
             label: l10n.cashFormSave,
             busyLabel: l10n.cashFormSaving,
             busy: _busy,
-            onPress: _busy ? null : () => unawaited(_save()),
+            onPress: onSubmit == null ? null : () => unawaited(onSubmit()),
           ),
         ),
         children: [
@@ -288,22 +325,34 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
             onChanged: (v) => _selectAccount(v, eligible),
           ),
           const SizedBox(height: AppSpacing.s12),
-          AmountField(
-            label: l10n.cashFormBalanceLabel,
-            controller: _balanceController,
-            currencyCode: _currency,
-            focusNode: _balanceFocus,
-            onFieldSubmitted: (_) => _nicknameFocus.requestFocus(),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          FTextFormField(
-            control: FTextFieldControl.managed(controller: _nicknameController),
-            label: Text(l10n.cashFormNicknameLabel),
-            description: Text(l10n.cashFormNicknameHelper),
-            focusNode: _nicknameFocus,
-            textInputAction: TextInputAction.done,
-            onSubmit: (_) => _busy ? null : _save(),
-          ),
+          if (_checkingExistingCash)
+            _CashLookupStatus(message: l10n.cashFormCheckingExisting)
+          else ...[
+            if (!widget.isEdit && _selectedExistingCash != null) ...[
+              const _ExistingCashNotice(),
+              const SizedBox(height: AppSpacing.s12),
+            ],
+            AmountField(
+              key: const Key('cash-balance-field'),
+              label: l10n.cashFormBalanceLabel,
+              controller: _balanceController,
+              currencyCode: _currency,
+              focusNode: _balanceFocus,
+              onFieldSubmitted: (_) => _nicknameFocus.requestFocus(),
+            ),
+            const SizedBox(height: AppSpacing.s12),
+            FTextFormField(
+              key: const Key('cash-nickname-field'),
+              control: FTextFieldControl.managed(
+                controller: _nicknameController,
+              ),
+              label: Text(l10n.cashFormNicknameLabel),
+              description: Text(l10n.cashFormNicknameHelper),
+              focusNode: _nicknameFocus,
+              textInputAction: TextInputAction.done,
+              onSubmit: (_) => _busy ? null : _save(),
+            ),
+          ],
         ],
       ),
     );
@@ -336,14 +385,34 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
   }
 
   void _checkExistingCash(String? accountId) {
-    if (widget.isEdit || accountId == null) return;
+    if (widget.isEdit) return;
     final seq = ++_cashLookupSeq;
+    if (accountId == null) {
+      _checkingExistingCash = false;
+      return;
+    }
+    _checkingExistingCash = true;
     scheduleMicrotask(() async {
-      final repo = await ref.read(manualAssetRepositoryProvider.future);
-      final existing = await repo.findCashByAccountId(accountId);
-      if (!mounted || seq != _cashLookupSeq) return;
-      if (existing == null) return;
-      await _hydrateExistingCash(existing, locked: false);
+      try {
+        final repo = await ref.read(manualAssetRepositoryProvider.future);
+        final existing = await repo.findCashByAccountId(accountId);
+        if (!mounted || seq != _cashLookupSeq) return;
+        if (existing == null) {
+          setState(() => _checkingExistingCash = false);
+          return;
+        }
+        await _hydrateExistingCash(existing, locked: false);
+      } catch (error) {
+        if (!mounted || seq != _cashLookupSeq) return;
+        setState(() => _checkingExistingCash = false);
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(
+            context,
+          ).cashFormLoadError(userSafeErrorMessage(context, error)),
+        );
+      }
     });
   }
 
@@ -364,8 +433,73 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
       _nicknameController.text = asset.name ?? '';
       _currency = asset.currency;
       _accountId = accountId;
+      _loadingInitial = false;
+      _checkingExistingCash = false;
+      _loadError = null;
     });
     dirty.snapshotBaseline();
+  }
+}
+
+class _CashLookupStatus extends StatelessWidget {
+  const _CashLookupStatus({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard.flat(
+      child: Row(
+        children: [
+          const SizedBox(
+            width: AppIconSizes.h18,
+            height: AppIconSizes.h18,
+            child: FCircularProgress(),
+          ),
+          const SizedBox(width: AppSpacing.s10),
+          Expanded(child: Text(message, style: context.captionStyle)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExistingCashNotice extends StatelessWidget {
+  const _ExistingCashNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    return SoftCard.flat(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            FLucideIcons.info,
+            size: AppIconSizes.h18,
+            color: colors.primary,
+          ),
+          const SizedBox(width: AppSpacing.s10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.cashFormExistingFoundTitle,
+                  style: context.labelStyle,
+                ),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  l10n.cashFormExistingFoundBody,
+                  style: context.captionStyle,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
