@@ -8154,6 +8154,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transferDateLabel => 'Date & time';
 
   @override
+  String get transferDetailsTitle => 'Date & note';
+
+  @override
   String get transferPreviewTitle => 'Transfer';
 
   @override

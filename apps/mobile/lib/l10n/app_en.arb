@@ -4402,6 +4402,8 @@
   "@transferFxRateEditHelper": { "description": "Transfer form: helper for editing auto-filled rate" },
   "transferDateLabel": "Date & time",
   "@transferDateLabel": { "description": "Transfer form: date field label" },
+  "transferDetailsTitle": "Date & note",
+  "@transferDetailsTitle": { "description": "Transfer form: optional details disclosure title" },
   "transferPreviewTitle": "Transfer",
   "@transferPreviewTitle": { "description": "Transfer form: preview section title" },
   "transferSubmitAction": "Transfer",

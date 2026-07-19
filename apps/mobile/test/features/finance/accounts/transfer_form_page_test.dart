@@ -211,6 +211,54 @@ void main() {
     _expectSubmitWiring(tester, enabled: false);
   });
 
+  testWidgets('keeps optional date and note behind an accessible disclosure', (
+    tester,
+  ) async {
+    await _enlarge(tester);
+    await tester.pumpWidget(
+      _wrap(
+        h,
+        accounts: [
+          _account(id: 'a-bank-a', name: 'Bank A', category: AccountSide.asset),
+          _account(id: 'a-bank-b', name: 'Bank B', category: AccountSide.asset),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final toggle = find.byKey(const Key('transfer-details-toggle-label'));
+    expect(find.text('Date & note'), findsOneWidget);
+    expect(tester.widget<Semantics>(toggle).properties.expanded, isFalse);
+    expect(
+      find.byKey(const Key('date-time-field-date')).hitTestable(),
+      findsNothing,
+    );
+    expect(
+      find.widgetWithText(FTextFormField, 'Notes').hitTestable(),
+      findsNothing,
+    );
+
+    await tester.tap(find.text('Date & note'));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<Semantics>(toggle).properties.expanded, isTrue);
+    expect(
+      find.byKey(const Key('date-time-field-date')).hitTestable(),
+      findsOneWidget,
+    );
+    final notes = find.widgetWithText(FTextFormField, 'Notes');
+    expect(notes.hitTestable(), findsOneWidget);
+    await tester.enterText(notes, 'Move emergency savings');
+    await tester.tap(find.text('Date & note'));
+    await tester.pumpAndSettle();
+    expect(notes.hitTestable(), findsNothing);
+
+    await tester.tap(find.text('Date & note'));
+    await tester.pumpAndSettle();
+    expect(find.text('Move emergency savings'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('PostingsPreview surfaces both legs once form is fillable', (
     tester,
   ) async {

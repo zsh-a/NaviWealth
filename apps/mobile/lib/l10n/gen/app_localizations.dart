@@ -13803,6 +13803,12 @@ abstract class AppLocalizations {
   /// **'Date & time'**
   String get transferDateLabel;
 
+  /// Transfer form: optional details disclosure title
+  ///
+  /// In en, this message translates to:
+  /// **'Date & note'**
+  String get transferDetailsTitle;
+
   /// Transfer form: preview section title
   ///
   /// In en, this message translates to:

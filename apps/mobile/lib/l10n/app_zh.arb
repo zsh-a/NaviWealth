@@ -2409,6 +2409,7 @@
   "transferFxRateHelper": "无汇率记录 — 请手动输入折算金额。",
   "transferFxRateEditHelper": "可编辑以覆盖自动填充的汇率。",
   "transferDateLabel": "日期时间",
+  "transferDetailsTitle": "日期与备注",
   "transferPreviewTitle": "转账",
   "transferSubmitAction": "转账",
   "transferRateLabel": "汇率：1 {from} = {rate} {to}",

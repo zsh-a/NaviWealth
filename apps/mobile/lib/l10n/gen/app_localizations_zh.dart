@@ -7760,6 +7760,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get transferDateLabel => '日期时间';
 
   @override
+  String get transferDetailsTitle => '日期与备注';
+
+  @override
   String get transferPreviewTitle => '转账';
 
   @override

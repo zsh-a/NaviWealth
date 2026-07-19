@@ -56,11 +56,13 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
   final _amountFocus = FocusNode();
   final _toAmountFocus = FocusNode();
   final _noteFocus = FocusNode();
+  final _detailsFocus = FocusNode();
 
   String? _fromAccountId;
   String? _toAccountId;
   late DateTime _date;
   bool _busy = false;
+  bool _detailsExpanded = false;
 
   /// Tracks whether the user has typed into the to-amount field. Until
   /// they do, we keep [_toAmountController] in lock-step with
@@ -87,6 +89,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     _amountFocus.dispose();
     _toAmountFocus.dispose();
     _noteFocus.dispose();
+    _detailsFocus.dispose();
     super.dispose();
   }
 
@@ -317,7 +320,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
               if (isCrossCurrency) {
                 _toAmountFocus.requestFocus();
               } else {
-                _noteFocus.requestFocus();
+                _detailsFocus.requestFocus();
               }
             },
           ),
@@ -332,7 +335,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                   ? l10n.transferFxRateHelper
                   : l10n.transferFxRateEditHelper,
               onChanged: (_) => setState(() {}),
-              onFieldSubmitted: (_) => _noteFocus.requestFocus(),
+              onFieldSubmitted: (_) => _detailsFocus.requestFocus(),
             ),
             if (amount != null && toAmount != null && amount > Decimal.zero)
               Padding(
@@ -349,22 +352,56 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
               ),
           ],
           const SizedBox(height: AppSpacing.s12),
-          DateField(
-            label: l10n.transferDateLabel,
-            initialValue: _date,
-            required: true,
-            includeTime: true,
-            onChanged: (d) {
-              if (d != null) {
-                setState(() {
-                  _date = d;
-                  dirty.markDirty();
-                });
-              }
-            },
+          FAccordion(
+            control: FAccordionControl.lifted(
+              expanded: (_) => _detailsExpanded,
+              onChange: (_, expanded) =>
+                  setState(() => _detailsExpanded = expanded),
+            ),
+            children: [
+              FAccordionItem(
+                key: const Key('transfer-details-disclosure'),
+                focusNode: _detailsFocus,
+                title: Semantics(
+                  key: const Key('transfer-details-toggle-label'),
+                  expanded: _detailsExpanded,
+                  child: Text(l10n.transferDetailsTitle),
+                ),
+                child: Offstage(
+                  offstage: !_detailsExpanded,
+                  child: ExcludeFocus(
+                    excluding: !_detailsExpanded,
+                    child: ExcludeSemantics(
+                      excluding: !_detailsExpanded,
+                      child: Column(
+                        children: [
+                          DateField(
+                            label: l10n.transferDateLabel,
+                            initialValue: _date,
+                            required: true,
+                            includeTime: true,
+                            onChanged: (d) {
+                              if (d != null) {
+                                setState(() {
+                                  _date = d;
+                                  dirty.markDirty();
+                                });
+                              }
+                            },
+                          ),
+                          const SizedBox(height: AppSpacing.s12),
+                          NoteField(
+                            controller: _noteController,
+                            focusNode: _noteFocus,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.s12),
-          NoteField(controller: _noteController, focusNode: _noteFocus),
           const SizedBox(height: AppSpacing.s16),
           if (preview != null)
             PostingsPreview(
