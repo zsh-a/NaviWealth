@@ -29,17 +29,17 @@ class RequiredLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!required) return Text(text, style: style);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(text, style: style),
-        Text(
-          ' *',
-          style: (style ?? DefaultTextStyle.of(context).style).copyWith(
-            color: context.theme.colors.destructive,
+    return Text.rich(
+      TextSpan(
+        text: text,
+        children: [
+          TextSpan(
+            text: ' *',
+            style: TextStyle(color: context.theme.colors.destructive),
           ),
-        ),
-      ],
+        ],
+      ),
+      style: style,
     );
   }
 }

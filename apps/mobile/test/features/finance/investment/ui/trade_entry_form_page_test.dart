@@ -85,11 +85,18 @@ Account _account({
   );
 }
 
-Widget _wrap(Widget child) {
+Widget _wrap(Widget child, {TextScaler? textScaler}) {
   return MaterialApp(
-    builder: (context, child) => AppMessenger.init(
-      child: FTheme(data: FThemes.slate.light.desktop, child: child!),
-    ),
+    builder: (context, child) {
+      Widget content = FTheme(data: FThemes.slate.light.desktop, child: child!);
+      if (textScaler != null) {
+        content = MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+          child: content,
+        );
+      }
+      return AppMessenger.init(child: content);
+    },
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     locale: const Locale('en', 'US'),
@@ -301,6 +308,13 @@ void main() {
     expect(find.text('AAPL — Apple'), findsOneWidget);
     expect(find.text('Sell'), findsOneWidget);
     expect(find.text('USD cash in holding account'), findsOneWidget);
+    final settlementToggle = find.byKey(
+      const Key('trade-entry-settlement-toggle-label'),
+    );
+    expect(
+      tester.widget<Semantics>(settlementToggle).properties.expanded,
+      isFalse,
+    );
     expect(
       find.byKey(const Key('trade-entry-settlement-details')).hitTestable(),
       findsNothing,
@@ -313,6 +327,103 @@ void main() {
       find.byKey(const Key('trade-entry-settlement-details')).hitTestable(),
       findsOneWidget,
     );
+    expect(
+      tester.widget<Semantics>(settlementToggle).properties.expanded,
+      isTrue,
+    );
+  });
+
+  testWidgets('trade details stay accessible and stack costs for large text', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    SharedPreferences.setMockInitialValues(const {});
+    final prefs = await SharedPreferences.getInstance();
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          appDatabaseProvider.overrideWith((_) async => db),
+          accountsStreamProvider.overrideWith(
+            (_) => Stream.value([
+              _account(
+                id: 'broker',
+                name: 'Broker',
+                type: AccountCategory.broker,
+                currency: 'USD',
+              ),
+            ]),
+          ),
+          securitiesSearchServiceProvider.overrideWith(
+            (_) async => _FakeSearch(db: db),
+          ),
+        ],
+        child: _wrap(
+          const TradeEntryFormPage(accountId: 'broker'),
+          textScaler: const TextScaler.linear(2),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final toggle = find.byKey(const Key('trade-entry-advanced-toggle-label'));
+    expect(tester.widget<Semantics>(toggle).properties.expanded, isFalse);
+    expect(
+      tester
+          .widget<Offstage>(
+            find.byKey(const Key('trade-entry-advanced-details')),
+          )
+          .offstage,
+      isTrue,
+    );
+
+    await tester.ensureVisible(find.text('Trade details'));
+    await tester.tap(find.text('Trade details'));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<Semantics>(toggle).properties.expanded, isTrue);
+    expect(
+      tester
+          .widget<Offstage>(
+            find.byKey(const Key('trade-entry-advanced-details')),
+          )
+          .offstage,
+      isFalse,
+    );
+    final fee = find.byKey(const Key('trade-entry-fee'));
+    final tax = find.byKey(const Key('trade-entry-tax'));
+    await tester.ensureVisible(fee);
+    await tester.pumpAndSettle();
+    expect(
+      tester.getTopLeft(tax).dy,
+      greaterThan(tester.getBottomLeft(fee).dy),
+    );
+
+    final feeInput = find.descendant(
+      of: fee,
+      matching: find.byType(FTextFormField),
+    );
+    await tester.enterText(feeInput, '3.25');
+    await tester.ensureVisible(find.text('Trade details'));
+    await tester.tap(find.text('Trade details'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<Semantics>(toggle).properties.expanded, isFalse);
+    await tester.tap(find.text('Trade details'));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<EditableText>(
+            find.descendant(of: fee, matching: find.byType(EditableText)),
+          )
+          .controller
+          .text,
+      '3.25',
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('preflight timeout keeps the trade form retryable', (

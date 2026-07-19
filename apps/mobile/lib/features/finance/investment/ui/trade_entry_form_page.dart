@@ -81,6 +81,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
   final _feeFocus = FocusNode();
   final _taxFocus = FocusNode();
   final _noteFocus = FocusNode();
+  final _settlementFocus = FocusNode(debugLabel: 'trade-settlement');
+  final _advancedFocus = FocusNode(debugLabel: 'trade-advanced');
 
   TradeType _type = TradeType.buy;
   String? _accountId;
@@ -192,6 +194,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     _feeFocus.dispose();
     _taxFocus.dispose();
     _noteFocus.dispose();
+    _settlementFocus.dispose();
+    _advancedFocus.dispose();
     super.dispose();
   }
 
@@ -581,98 +585,133 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     final summary = hasCosts || hasNote
         ? l10n.tradeEntryAdvancedConfigured
         : l10n.tradeEntryAdvancedSummary;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return FAccordion(
+      control: FAccordionControl.lifted(
+        expanded: (_) => _showAdvancedDetails,
+        onChange: (_, expanded) =>
+            setState(() => _showAdvancedDetails = expanded),
+      ),
       children: [
-        SoftCard.flat(
-          padding: EdgeInsets.zero,
-          child: FTappable(
-            onPress: () =>
-                setState(() => _showAdvancedDetails = !_showAdvancedDetails),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.s12),
-              child: Row(
-                children: [
-                  AppIconTile(
-                    icon: FLucideIcons.slidersHorizontal,
-                    color: context.theme.colors.primary,
-                  ),
-                  const SizedBox(width: AppSpacing.s10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.tradeEntryAdvancedTitle,
-                          style: context.labelStyle,
-                        ),
-                        const SizedBox(height: AppSpacing.s2),
-                        Text(summary, style: context.captionStyle),
-                      ],
+        FAccordionItem(
+          key: const Key('trade-entry-advanced-summary'),
+          focusNode: _advancedFocus,
+          title: _disclosureTitle(
+            key: const Key('trade-entry-advanced-toggle-label'),
+            icon: FLucideIcons.slidersHorizontal,
+            title: l10n.tradeEntryAdvancedTitle,
+            summary: summary,
+            expanded: _showAdvancedDetails,
+          ),
+          child: Offstage(
+            key: const Key('trade-entry-advanced-details'),
+            offstage: !_showAdvancedDetails,
+            child: ExcludeFocus(
+              excluding: !_showAdvancedDetails,
+              child: ExcludeSemantics(
+                excluding: !_showAdvancedDetails,
+                child: Column(
+                  children: [
+                    DateField(
+                      label: l10n.tradeEntryDateLabel,
+                      initialValue: _tradeDate,
+                      required: true,
+                      includeTime: true,
+                      onChanged: (date) {
+                        if (date == null) return;
+                        setState(() {
+                          _tradeDate = date;
+                          dirty.markDirty();
+                        });
+                      },
                     ),
-                  ),
-                  Icon(
-                    _showAdvancedDetails
-                        ? FLucideIcons.chevronUp
-                        : FLucideIcons.chevronDown,
-                    size: AppIconSizes.h18,
-                    color: context.theme.colors.mutedForeground,
-                  ),
-                ],
+                    const SizedBox(height: AppSpacing.s12),
+                    _buildTradeCosts(l10n),
+                    const SizedBox(height: AppSpacing.s12),
+                    NoteField(
+                      controller: _noteController,
+                      focusNode: _noteFocus,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
-        if (_showAdvancedDetails)
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.s12),
+      ],
+    );
+  }
+
+  Widget _buildTradeCosts(AppLocalizations l10n) {
+    final feeField = AmountField(
+      key: const Key('trade-entry-fee'),
+      label: l10n.tradeEntryFeeLabel,
+      controller: _feeController,
+      currencyCode: _currency,
+      required: false,
+      focusNode: _feeFocus,
+      onFieldSubmitted: (_) => _taxFocus.requestFocus(),
+    );
+    final taxField = AmountField(
+      key: const Key('trade-entry-tax'),
+      label: l10n.tradeEntryTaxLabel,
+      controller: _taxController,
+      currencyCode: _currency,
+      required: false,
+      focusNode: _taxFocus,
+      onFieldSubmitted: (_) => _noteFocus.requestFocus(),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scaledBodySize = MediaQuery.textScalerOf(context).scale(16);
+        final stackFields = scaledBodySize >= 24 || constraints.maxWidth < 320;
+        if (stackFields) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              feeField,
+              const SizedBox(height: AppSpacing.s12),
+              taxField,
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: feeField),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(child: taxField),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _disclosureTitle({
+    required Key key,
+    required IconData icon,
+    required String title,
+    required String summary,
+    required bool expanded,
+  }) {
+    return Semantics(
+      key: key,
+      expanded: expanded,
+      child: Row(
+        children: [
+          AppIconTile(icon: icon, color: context.theme.colors.primary),
+          const SizedBox(width: AppSpacing.s10),
+          Expanded(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                DateField(
-                  label: l10n.tradeEntryDateLabel,
-                  initialValue: _tradeDate,
-                  required: true,
-                  includeTime: true,
-                  onChanged: (date) {
-                    if (date == null) return;
-                    setState(() {
-                      _tradeDate = date;
-                      dirty.markDirty();
-                    });
-                  },
-                ),
-                const SizedBox(height: AppSpacing.s12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: AmountField(
-                        label: l10n.tradeEntryFeeLabel,
-                        controller: _feeController,
-                        currencyCode: _currency,
-                        required: false,
-                        focusNode: _feeFocus,
-                        onFieldSubmitted: (_) => _taxFocus.requestFocus(),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.s12),
-                    Expanded(
-                      child: AmountField(
-                        label: l10n.tradeEntryTaxLabel,
-                        controller: _taxController,
-                        currencyCode: _currency,
-                        required: false,
-                        focusNode: _taxFocus,
-                        onFieldSubmitted: (_) => _noteFocus.requestFocus(),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.s12),
-                NoteField(controller: _noteController, focusNode: _noteFocus),
+                Text(title, style: context.labelStyle),
+                const SizedBox(height: AppSpacing.s2),
+                Text(summary, style: context.captionStyle),
               ],
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -694,106 +733,83 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         assetCurrency != null &&
         assetCurrency.toUpperCase() != currency.toUpperCase();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return FAccordion(
+      control: FAccordionControl.lifted(
+        expanded: (_) => _showSettlementDetails,
+        onChange: (_, expanded) =>
+            setState(() => _showSettlementDetails = expanded),
+      ),
       children: [
-        SoftCard.flat(
-          padding: EdgeInsets.zero,
-          child: FTappable(
-            key: const Key('trade-entry-settlement-summary'),
-            onPress: () => setState(
-              () => _showSettlementDetails = !_showSettlementDetails,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.s12),
-              child: Row(
-                children: [
-                  AppIconTile(
-                    icon: FLucideIcons.landmark,
-                    color: context.theme.colors.primary,
-                  ),
-                  const SizedBox(width: AppSpacing.s10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.tradeEntrySettlementTitle,
-                          style: context.labelStyle,
-                        ),
-                        const SizedBox(height: AppSpacing.s2),
-                        Text(
-                          summary,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: context.captionStyle,
-                        ),
-                      ],
+        FAccordionItem(
+          key: const Key('trade-entry-settlement-summary'),
+          focusNode: _settlementFocus,
+          title: _disclosureTitle(
+            key: const Key('trade-entry-settlement-toggle-label'),
+            icon: FLucideIcons.landmark,
+            title: l10n.tradeEntrySettlementTitle,
+            summary: summary,
+            expanded: _showSettlementDetails,
+          ),
+          child: Offstage(
+            key: const Key('trade-entry-settlement-details'),
+            offstage: !_showSettlementDetails,
+            child: ExcludeFocus(
+              excluding: !_showSettlementDetails,
+              child: ExcludeSemantics(
+                excluding: !_showSettlementDetails,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    CurrencyPicker(
+                      key: const Key('trade-entry-currency'),
+                      value: _currency,
+                      onChanged: (v) =>
+                          _changeCurrency(v, accounts, explicit: true),
                     ),
-                  ),
-                  Icon(
-                    _showSettlementDetails
-                        ? FLucideIcons.chevronUp
-                        : FLucideIcons.chevronDown,
-                    size: AppIconSizes.h18,
-                    color: context.theme.colors.mutedForeground,
-                  ),
-                ],
+                    const SizedBox(height: AppSpacing.s12),
+                    AccountPicker(
+                      key: const Key('trade-entry-cash-account'),
+                      label: l10n.tradeEntrySettlementAccountLabel,
+                      accounts: _cashAccounts(accounts),
+                      value: _cashAccountId,
+                      onChanged: (v) => setState(() {
+                        _cashAccountId = v;
+                        _cashAccountClearedForCurrency = false;
+                        dirty.markDirty();
+                      }),
+                    ),
+                    const SizedBox(height: AppSpacing.s8),
+                    Text(
+                      l10n.tradeEntrySettlementHelper,
+                      style: context.captionStyle,
+                    ),
+                    if (isCrossCurrency) ...[
+                      const SizedBox(height: AppSpacing.s8),
+                      Text(
+                        l10n.tradeEntryCrossCurrencyHint(
+                          assetCurrency,
+                          currency,
+                        ),
+                        style: context.mutedLabelStyle.copyWith(
+                          color: SemanticColors.of(context).warning,
+                        ),
+                      ),
+                    ],
+                    if (_cashAccountClearedForCurrency) ...[
+                      const SizedBox(height: AppSpacing.s8),
+                      Text(
+                        l10n.tradeEntryCashAccountCurrencyChanged,
+                        style: context.mutedLabelStyle.copyWith(
+                          color: SemanticColors.of(context).warning,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
-        if (_showSettlementDetails)
-          Padding(
-            key: const Key('trade-entry-settlement-details'),
-            padding: const EdgeInsets.only(top: AppSpacing.s12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                CurrencyPicker(
-                  key: const Key('trade-entry-currency'),
-                  value: _currency,
-                  onChanged: (v) =>
-                      _changeCurrency(v, accounts, explicit: true),
-                ),
-                const SizedBox(height: AppSpacing.s12),
-                AccountPicker(
-                  key: const Key('trade-entry-cash-account'),
-                  label: l10n.tradeEntrySettlementAccountLabel,
-                  accounts: _cashAccounts(accounts),
-                  value: _cashAccountId,
-                  onChanged: (v) => setState(() {
-                    _cashAccountId = v;
-                    _cashAccountClearedForCurrency = false;
-                    dirty.markDirty();
-                  }),
-                ),
-                const SizedBox(height: AppSpacing.s8),
-                Text(
-                  l10n.tradeEntrySettlementHelper,
-                  style: context.captionStyle,
-                ),
-                if (isCrossCurrency) ...[
-                  const SizedBox(height: AppSpacing.s8),
-                  Text(
-                    l10n.tradeEntryCrossCurrencyHint(assetCurrency, currency),
-                    style: context.mutedLabelStyle.copyWith(
-                      color: SemanticColors.of(context).warning,
-                    ),
-                  ),
-                ],
-                if (_cashAccountClearedForCurrency) ...[
-                  const SizedBox(height: AppSpacing.s8),
-                  Text(
-                    l10n.tradeEntryCashAccountCurrencyChanged,
-                    style: context.mutedLabelStyle.copyWith(
-                      color: SemanticColors.of(context).warning,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
       ],
     );
   }
