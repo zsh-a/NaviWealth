@@ -15,6 +15,7 @@ class FinancialDecisions extends Table with SyncableTable {
   DateTimeColumn get decidedAt => dateTime()();
   DateTimeColumn get reviewDate => dateTime()();
   TextColumn get actualOutcomeJson => text().nullable()();
+  TextColumn get reviewEvidenceJson => text().nullable()();
   DateTimeColumn get reviewedAt => dateTime().nullable()();
   TextColumn get status => text().withDefault(const Constant('active'))();
 
@@ -47,11 +48,34 @@ class FinancialSignals extends Table with SyncableTable {
 class FinancialMonthlyCloses extends Table with SyncableTable {
   TextColumn get id => text()();
   TextColumn get periodMonth => text()();
-  TextColumn get completedStepsJson =>
-      text().withDefault(const Constant('[]'))();
+  TextColumn get evidenceJson => text().withDefault(const Constant('{}'))();
+  TextColumn get snapshotJson => text().withDefault(const Constant('{}'))();
   TextColumn get status => text().withDefault(const Constant('open'))();
+  TextColumn get overrideReason => text().nullable()();
   DateTimeColumn get startedAt => dateTime()();
   DateTimeColumn get closedAt => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Account-level statement balance evidence for a monthly close.
+///
+/// The ledger balance is captured at verification time so a later posting
+/// cannot rewrite what the user actually reviewed. A new verification simply
+/// replaces the period/account/unit fact with a fresh deterministic result.
+@DataClassName('FinancialReconciliationRow')
+class FinancialReconciliations extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get periodMonth => text()();
+  TextColumn get accountId => text()();
+  TextColumn get unit => text()();
+  TextColumn get statementBalance => text().map(const DecimalConverter())();
+  TextColumn get ledgerBalance => text().map(const DecimalConverter())();
+  TextColumn get difference => text().map(const DecimalConverter())();
+  TextColumn get status => text()();
+  TextColumn get note => text().nullable()();
+  DateTimeColumn get verifiedAt => dateTime()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -74,4 +98,12 @@ const List<String> financePlanningIndexStmts = [
       'ON financial_monthly_closes(owner_user_id, period_month)',
   'CREATE INDEX IF NOT EXISTS idx_financial_monthly_closes_owner_hlc '
       'ON financial_monthly_closes(owner_user_id, hlc)',
+  'CREATE UNIQUE INDEX IF NOT EXISTS idx_financial_reconciliations_fact '
+      'ON financial_reconciliations('
+      'owner_user_id, period_month, account_id, unit)',
+  'CREATE INDEX IF NOT EXISTS idx_financial_reconciliations_period '
+      'ON financial_reconciliations(owner_user_id, period_month, status) '
+      'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_financial_reconciliations_owner_hlc '
+      'ON financial_reconciliations(owner_user_id, hlc)',
 ];

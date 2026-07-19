@@ -135,6 +135,18 @@ Finance business data.
 - Sync v3 row-state coverage with the `fin:` row-family prefix and reset
   generation.
 - Backup, restore, and export navigation/task baselines.
+- Evidence-driven Financial Inbox and Monthly Close: account statement
+  reconciliation, explicit difference overrides, durable close snapshots, and
+  signals for import, runway, FX, balance, anomaly, subscription, valuation,
+  and due decision review.
+- Thirty-/ninety-day Money Runway with spendable-cash policy, scheduled
+  liability payments, deterministic stress scenarios, daily forecast
+  sampling from the Runway workspace, and observed forecast error.
+- Versioned life-event decisions with deterministic alternatives,
+  source-preserving Execution review actions, due-review Inbox signals, and
+  observed outcome evidence.
+- Opt-in local product-evidence reports with bounded daily buckets and an
+  explicit privacy-safe copy action.
 
 ## FinanceOS Boundaries
 

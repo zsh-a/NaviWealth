@@ -39,42 +39,47 @@ class MonthlyCloseRepository {
     );
   }
 
-  Future<MonthlyClose> toggleStep({
-    required String periodMonth,
-    required MonthlyCloseStep step,
-    required DateTime now,
-  }) async {
-    final current = await _find(periodMonth);
-    final completed = {...?current?.completedSteps};
-    completed.contains(step) ? completed.remove(step) : completed.add(step);
-    return _write(
-      current: current,
-      periodMonth: periodMonth,
-      completed: completed,
-      closedAt: null,
-      now: now,
-    );
-  }
-
   Future<MonthlyClose> close({
     required String periodMonth,
+    required MonthlyCloseEvidence evidence,
+    required Map<String, Object?> snapshot,
     required DateTime now,
+    String? overrideReason,
   }) async {
-    final current = await _find(periodMonth);
-    if (current == null || !current.isComplete) {
-      throw StateError('all monthly close steps must be complete');
+    final reason = overrideReason?.trim();
+    if (!evidence.isVerified && (reason == null || reason.isEmpty)) {
+      throw StateError('blocked evidence requires an explicit override');
     }
-    return _write(
-      current: current,
-      periodMonth: periodMonth,
-      completed: current.completedSteps,
-      closedAt: now,
-      now: now,
-    );
+    final stamp = await _stamper.stamp();
+    final current = await _find(periodMonth, stamp.ownerUserId);
+    final id = current?.id ?? _uuid.v4();
+    await _db.transaction(() async {
+      await _db
+          .into(_db.financialMonthlyCloses)
+          .insertOnConflictUpdate(
+            FinancialMonthlyClosesCompanion.insert(
+              id: id,
+              periodMonth: periodMonth,
+              evidenceJson: Value(jsonEncode(evidence.toJson())),
+              snapshotJson: Value(jsonEncode(snapshot)),
+              status: Value(
+                reason == null || reason.isEmpty ? 'closed' : 'overridden',
+              ),
+              overrideReason: Value(reason),
+              startedAt: current?.startedAt ?? now,
+              closedAt: Value(now),
+              ownerUserId: stamp.ownerUserId,
+              updatedAt: stamp.now,
+              updatedByDevice: stamp.deviceId,
+              hlc: stamp.hlc,
+            ),
+          );
+      await _outbox.enqueue(table: _tableName, rowId: id);
+    });
+    return (await _find(periodMonth, stamp.ownerUserId))!;
   }
 
-  Future<MonthlyClose?> _find(String periodMonth) async {
-    final owner = await _stamper.currentUserId();
+  Future<MonthlyClose?> _find(String periodMonth, String owner) async {
     final row =
         await (_db.select(_db.financialMonthlyCloses)..where(
               (table) =>
@@ -86,46 +91,16 @@ class MonthlyCloseRepository {
     return row == null ? null : _fromRow(row);
   }
 
-  Future<MonthlyClose> _write({
-    required MonthlyClose? current,
-    required String periodMonth,
-    required Set<MonthlyCloseStep> completed,
-    required DateTime? closedAt,
-    required DateTime now,
-  }) async {
-    final stamp = await _stamper.stamp();
-    final id = current?.id ?? _uuid.v4();
-    await _db.transaction(() async {
-      await _db
-          .into(_db.financialMonthlyCloses)
-          .insertOnConflictUpdate(
-            FinancialMonthlyClosesCompanion.insert(
-              id: id,
-              periodMonth: periodMonth,
-              completedStepsJson: Value(
-                jsonEncode(completed.map((step) => step.name).toList()..sort()),
-              ),
-              status: Value(closedAt == null ? 'open' : 'closed'),
-              startedAt: current?.startedAt ?? now,
-              closedAt: Value(closedAt),
-              ownerUserId: stamp.ownerUserId,
-              updatedAt: stamp.now,
-              updatedByDevice: stamp.deviceId,
-              hlc: stamp.hlc,
-            ),
-          );
-      await _outbox.enqueue(table: _tableName, rowId: id);
-    });
-    return (await _find(periodMonth))!;
-  }
-
   MonthlyClose _fromRow(FinancialMonthlyCloseRow row) => MonthlyClose(
     id: row.id,
     periodMonth: row.periodMonth,
-    completedSteps: (jsonDecode(row.completedStepsJson) as List<Object?>)
-        .map((name) => MonthlyCloseStep.values.byName(name! as String))
-        .toSet(),
+    evidence: MonthlyCloseEvidence.fromJson(
+      Map<String, Object?>.from(jsonDecode(row.evidenceJson) as Map),
+    ),
+    snapshot: Map<String, Object?>.from(jsonDecode(row.snapshotJson) as Map),
+    status: row.status,
     startedAt: row.startedAt,
+    overrideReason: row.overrideReason,
     closedAt: row.closedAt,
   );
 }

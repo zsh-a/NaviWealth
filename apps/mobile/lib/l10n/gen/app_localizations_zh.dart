@@ -12845,6 +12845,63 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monthlyCloseCompleted => '本月已关闭';
 
   @override
+  String get monthlyCloseReconciliationTitle => '账户对账';
+
+  @override
+  String get monthlyCloseLedgerBalance => '本期末账本余额';
+
+  @override
+  String monthlyCloseDifference(String amount, String unit) {
+    return '差额：$amount $unit';
+  }
+
+  @override
+  String get monthlyCloseEnterStatementBalance => '录入账单余额';
+
+  @override
+  String monthlyCloseStatementBalanceTitle(String account) {
+    return '$account 的账单余额';
+  }
+
+  @override
+  String get monthlyCloseAcceptDifference => '接受差额';
+
+  @override
+  String get monthlyCloseDifferenceReasonTitle => '为什么接受这笔差额？';
+
+  @override
+  String get monthlyCloseDifferenceReasonHint => '记录尚未解决的原因';
+
+  @override
+  String get monthlyCloseWithException => '带例外关账';
+
+  @override
+  String get monthlyCloseExceptionTitle => '说明关账例外';
+
+  @override
+  String get monthlyCloseExceptionHint => '记录为什么接受剩余未验证项';
+
+  @override
+  String get monthlyCloseStateBlocked => '受阻';
+
+  @override
+  String get monthlyCloseStateReady => '待核对';
+
+  @override
+  String get monthlyCloseStateVerified => '已验证';
+
+  @override
+  String get monthlyCloseStateOverridden => '已接受';
+
+  @override
+  String get monthlyCloseVerifiedBody => '关闭本月时，所有依据均已验证。';
+
+  @override
+  String monthlyCloseOverriddenBody(String reason) {
+    return '带例外关闭：$reason';
+  }
+
+  @override
   String financialInboxCount(int count) {
     return '有 $count 项需要处理';
   }
@@ -12884,11 +12941,56 @@ class AppLocalizationsZh extends AppLocalizations {
   String get financialInboxFxBody => '缺失汇率会降低预测可信度。';
 
   @override
+  String financialInboxBalanceTitle(int count) {
+    return '处理 $count 个余额差异';
+  }
+
+  @override
+  String get financialInboxBalanceBody => '账单余额与账本余额不一致。';
+
+  @override
+  String get financialInboxAnomalyTitle => '复核异常支出';
+
+  @override
+  String get financialInboxAnomalyBody => '预计支出与最近月份存在明显差异。';
+
+  @override
+  String financialInboxSubscriptionTitle(int count) {
+    return '复核 $count 个订阅变化';
+  }
+
+  @override
+  String get financialInboxSubscriptionBody => '周期付款的变化超过了本地检测阈值。';
+
+  @override
+  String financialInboxValuationTitle(int count) {
+    return '刷新 $count 个过期估值';
+  }
+
+  @override
+  String get financialInboxValuationBody => '过期价格会降低当前资产状况的可信度。';
+
+  @override
+  String get financialInboxDecisionTitle => '复盘财务决策';
+
+  @override
+  String get financialInboxDecisionBody => '该决策已经到达计划复盘日期。';
+
+  @override
   String get settingsProductMetricsTitle => '本地产品指标';
 
   @override
   String get settingsProductMetricsSubtitle =>
       '自愿开启仅存于设备的漏斗计数；不记录或上传财务数值与身份标识。';
+
+  @override
+  String get settingsProductMetricsCopy => '复制产品验证数据';
+
+  @override
+  String get settingsProductMetricsCopySubtitle => '导出本设备上隐私安全的每日与累计指标。';
+
+  @override
+  String get settingsProductMetricsCopied => '已复制产品验证数据';
 
   @override
   String get lifeEventScenariosTitle => '人生事件推演';
@@ -12974,6 +13076,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get lifeEventDecisionSaved => '已保存决策和假设';
+
+  @override
+  String lifeEventReviewActionTitle(String decision) {
+    return '复盘决策：$decision';
+  }
+
+  @override
+  String get lifeEventReviewActionBody => '将确定性预测与实际财务数据对比，不推断因果关系。';
 
   @override
   String get lifeEventDecisionHistory => '待复盘决策';
@@ -13084,6 +13194,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get moneyRunwayHistoricalError => '近期预测误差';
+
+  @override
+  String get moneyRunwayScenariosTitle => '快速压力测试 · 最低余额';
+
+  @override
+  String get moneyRunwayScenarioPurchase => '立即支出一个月生活费';
+
+  @override
+  String get moneyRunwayScenarioDelayedIncome => '预计收入延迟 14 天';
+
+  @override
+  String get moneyRunwayScenarioReducedIncome => '预计收入减少 30%';
 
   @override
   String moneyRunwayCoverageMonths(Object months) {

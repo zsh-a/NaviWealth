@@ -56,4 +56,48 @@ void main() {
     expect(runway.firstShortfallDate, DateTime.utc(2026, 7, 12));
     expect(runway.minimumExpectedBalance, Decimal.fromInt(-2000));
   });
+
+  test('stress scenarios transform only the intended cash flows', () {
+    final base = buildMoneyRunway(
+      asOf: DateTime.utc(2026, 7, 1),
+      currency: 'CNY',
+      startingBalance: Decimal.fromInt(10000),
+      reserveTarget: Decimal.fromInt(3000),
+      averageMonthlyExpense: Decimal.fromInt(3000),
+      estimatedDailyVariableOutflow: Decimal.zero,
+      scheduledFlows: <RunwayScheduledFlow>[
+        RunwayScheduledFlow(
+          id: 'salary',
+          date: DateTime.utc(2026, 7, 10),
+          amount: Decimal.fromInt(5000),
+          label: 'Salary',
+        ),
+        RunwayScheduledFlow(
+          id: 'rent',
+          date: DateTime.utc(2026, 7, 12),
+          amount: Decimal.fromInt(-2000),
+          label: 'Rent',
+        ),
+      ],
+      confidence: MoneyRunwayConfidence.high,
+    );
+
+    final purchase = applyMoneyRunwayScenario(
+      base,
+      MoneyRunwayScenario.largePurchase(Decimal.fromInt(3000)),
+    );
+    final delayed = applyMoneyRunwayScenario(
+      base,
+      MoneyRunwayScenario.delayedIncome(14),
+    );
+    final reduced = applyMoneyRunwayScenario(
+      base,
+      MoneyRunwayScenario.reducedIncome(reduction: Decimal.parse('0.3')),
+    );
+
+    expect(purchase.balanceAt(90), base.balanceAt(90) - Decimal.fromInt(3000));
+    expect(delayed.balanceAt(15), Decimal.fromInt(8000));
+    expect(delayed.balanceAt(30), base.balanceAt(30));
+    expect(reduced.balanceAt(90), base.balanceAt(90) - Decimal.fromInt(1500));
+  });
 }

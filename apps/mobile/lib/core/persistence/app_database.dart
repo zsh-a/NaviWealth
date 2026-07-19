@@ -91,6 +91,7 @@ final class AppDatabaseTransactionScope {
     FinancialDecisions,
     FinancialSignals,
     FinancialMonthlyCloses,
+    FinancialReconciliations,
     Devices,
     OpLogs,
     MarketQuotes,
@@ -142,7 +143,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 44;
+  int get schemaVersion => 45;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -705,6 +706,21 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(financialMonthlyCloses);
         await _createFinancePlanningIndexes(this);
         await _createRunwayForecastSnapshots(this);
+      }
+      if (from < 45) {
+        // Financial Close 2.0 intentionally replaces the manual checklist
+        // shape with evidence-derived state. The old rows contain no
+        // authoritative financial facts, so there is nothing to migrate.
+        await m.deleteTable('financial_monthly_closes');
+        await m.createTable(financialMonthlyCloses);
+        await m.createTable(financialReconciliations);
+        await _addColumnIfMissing(
+          this,
+          table: 'financial_decisions',
+          column: 'review_evidence_json',
+          definition: 'TEXT',
+        );
+        await _createFinancePlanningIndexes(this);
       }
     },
     beforeOpen: (details) async {

@@ -1,4 +1,13 @@
-enum FinancialInboxKind { importReview, runwayRisk, missingExchangeRate }
+enum FinancialInboxKind {
+  importReview,
+  runwayRisk,
+  missingExchangeRate,
+  balanceMismatch,
+  expenseAnomaly,
+  subscriptionChange,
+  staleValuation,
+  decisionReview,
+}
 
 enum FinancialInboxPriority { attention, important }
 

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/features/finance/life_events/data/financial_decision_repository.dart';
+import 'package:naviwealth/features/finance/life_events/domain/financial_decision.dart';
 import 'package:naviwealth/features/finance/life_events/domain/life_event_scenario.dart';
 
 import '../../../../core/persistence/test_database.dart';
@@ -55,10 +56,16 @@ void main() {
     await repository.review(
       id: created.id,
       actualOutcome: engine.observe(baseline),
+      evidence: FinancialDecisionReviewEvidence(
+        observedAt: DateTime.utc(2026, 10, 17),
+        sourceRowFamilies: const <String>['fin:accounts'],
+        dataCompleteness: 0.8,
+      ),
       now: DateTime.utc(2026, 10, 17),
     );
     final restored = await repository.watchAll().first;
     expect(restored.single.actualOutcome, isNotNull);
+    expect(restored.single.reviewEvidence?.dataCompleteness, 0.8);
     expect(restored.single.reviewedAt?.toUtc(), DateTime.utc(2026, 10, 17));
     expect(await outbox.depth(), 2);
   });

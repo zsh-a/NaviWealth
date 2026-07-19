@@ -15,7 +15,7 @@ class FinancialInboxPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final items = ref.watch(financialInboxProvider);
+    final items = ref.watch(financialInboxScanProvider);
     return AppPageScaffold(
       title: l10n.financialInboxTitle,
       childPad: false,
@@ -25,7 +25,7 @@ class FinancialInboxPage extends ConsumerWidget {
           title: l10n.commonLoadFailed,
           message: '$error',
           retryLabel: l10n.commonRetry,
-          onRetry: () => ref.invalidate(financialInboxProvider),
+          onRetry: () => ref.invalidate(financialInboxScanProvider),
         ),
         data: (rows) => rows.isEmpty
             ? AppEmptyState(
@@ -69,6 +69,31 @@ class _InboxRow extends ConsumerWidget {
         l10n.financialInboxFxTitle(item.count),
         l10n.financialInboxFxBody,
       ),
+      FinancialInboxKind.balanceMismatch => (
+        FLucideIcons.scale,
+        l10n.financialInboxBalanceTitle(item.count),
+        l10n.financialInboxBalanceBody,
+      ),
+      FinancialInboxKind.expenseAnomaly => (
+        FLucideIcons.chartNoAxesCombined,
+        l10n.financialInboxAnomalyTitle,
+        l10n.financialInboxAnomalyBody,
+      ),
+      FinancialInboxKind.subscriptionChange => (
+        FLucideIcons.refreshCcwDot,
+        l10n.financialInboxSubscriptionTitle(item.count),
+        l10n.financialInboxSubscriptionBody,
+      ),
+      FinancialInboxKind.staleValuation => (
+        FLucideIcons.clockAlert,
+        l10n.financialInboxValuationTitle(item.count),
+        l10n.financialInboxValuationBody,
+      ),
+      FinancialInboxKind.decisionReview => (
+        FLucideIcons.clipboardCheck,
+        l10n.financialInboxDecisionTitle,
+        l10n.financialInboxDecisionBody,
+      ),
     };
     return SoftCard.raised(
       borderless: true,
@@ -108,6 +133,7 @@ class _InboxRow extends ConsumerWidget {
                           success: true,
                         );
                   }
+                  ref.invalidate(financialInboxScanProvider);
                   ref.invalidate(financialInboxProvider);
                 },
                 child: Text(l10n.financialInboxResolve),
@@ -124,6 +150,7 @@ class _InboxRow extends ConsumerWidget {
                     until: now.add(const Duration(days: 7)),
                     now: now,
                   );
+                  ref.invalidate(financialInboxScanProvider);
                   ref.invalidate(financialInboxProvider);
                 },
                 child: Text(l10n.financialInboxSnooze),

@@ -6,11 +6,13 @@ import 'package:forui/forui.dart';
 
 import '../../../../core/ai/composition/ask_ai.dart';
 import '../../../../core/format/providers.dart';
+import '../../../../core/lifeos/action_dispatcher.dart';
 import '../../../../core/product/product_metrics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../fire/data/fire_providers.dart';
 import '../../fire/domain/fire_projection.dart';
+import '../../runway/data/money_runway_providers.dart';
 import '../data/financial_decision_providers.dart';
 import '../domain/financial_decision.dart';
 import '../domain/life_event_scenario.dart';
@@ -236,13 +238,25 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
                     final repository = await ref.read(
                       financialDecisionRepositoryProvider.future,
                     );
-                    await repository.create(
+                    final decision = await repository.create(
                       template: widget.template,
                       selectedVariant: _selectedVariant,
                       baseline: widget.baseline,
                       assumptions: assumptions,
                       outcome: groundedOutcome,
                       now: DateTime.now(),
+                    );
+                    await ref.read(lifeActionDispatcherProvider)(
+                      LifeActionDraft(
+                        title: l10n.lifeEventReviewActionTitle(
+                          _templateLabel(l10n, widget.template),
+                        ),
+                        note: l10n.lifeEventReviewActionBody,
+                        sourceDomain: 'finance',
+                        sourceRowFamily: 'financial_decisions',
+                        sourceRowId: decision.id,
+                        dueAt: decision.reviewDate,
+                      ),
                     );
                     await ref
                         .read(productMetricsProvider.notifier)
@@ -323,22 +337,40 @@ class _DecisionRow extends ConsumerWidget {
               const SizedBox(height: AppSpacing.s8),
               FButton(
                 variant: FButtonVariant.ghost,
-                onPress: () async {
-                  final actual = const LifeEventScenarioEngine().observe(
-                    baseline,
-                  );
-                  final repository = await ref.read(
-                    financialDecisionRepositoryProvider.future,
-                  );
-                  await repository.review(
-                    id: decision.id,
-                    actualOutcome: actual,
-                    now: DateTime.now(),
-                  );
-                  await ref
-                      .read(productMetricsProvider.notifier)
-                      .record(ProductFunnelEvent.financialDecisionReviewed);
-                },
+                onPress: decision.reviewDate.isAfter(DateTime.now())
+                    ? null
+                    : () async {
+                        final actual = const LifeEventScenarioEngine().observe(
+                          baseline,
+                        );
+                        final repository = await ref.read(
+                          financialDecisionRepositoryProvider.future,
+                        );
+                        await repository.review(
+                          id: decision.id,
+                          actualOutcome: actual,
+                          evidence: FinancialDecisionReviewEvidence(
+                            observedAt: DateTime.now(),
+                            sourceRowFamilies: const <String>[
+                              'fin:accounts',
+                              'fin:journal_entries',
+                              'fin:financial_decisions',
+                            ],
+                            dataCompleteness:
+                                ref
+                                    .read(moneyRunwayProvider)
+                                    .value
+                                    ?.dataCompleteness ??
+                                0,
+                          ),
+                          now: DateTime.now(),
+                        );
+                        await ref
+                            .read(productMetricsProvider.notifier)
+                            .record(
+                              ProductFunnelEvent.financialDecisionReviewed,
+                            );
+                      },
                 child: Text(l10n.lifeEventCaptureActual),
               ),
             ],

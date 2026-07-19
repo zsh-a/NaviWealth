@@ -80,6 +80,10 @@ kSyncTableRegistrations = <SyncTableRegistration>[
     'financial_monthly_closes',
     domainPrefix: kFinanceDomainPrefix,
   ),
+  SyncTableRegistration(
+    'financial_reconciliations',
+    domainPrefix: kFinanceDomainPrefix,
+  ),
   SyncTableRegistration('devices', domainPrefix: kFinanceDomainPrefix),
   SyncTableRegistration(
     'amortization_entries',

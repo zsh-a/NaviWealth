@@ -73,6 +73,7 @@ LIMIT 12
       );
     }
     var total = 0.0;
+    var evaluated = 0;
     for (final row in rows) {
       final predicted = Decimal.parse(row.read<String>('predicted_balance'));
       final starting = Decimal.parse(row.read<String>('starting_balance'));
@@ -82,11 +83,18 @@ LIMIT 12
           : starting.abs();
       if (denominator > Decimal.zero) {
         total += (error / denominator).toDouble();
+        evaluated++;
       }
+    }
+    if (evaluated == 0) {
+      return RunwayForecastQuality(
+        evaluatedCount: rows.length,
+        meanRelativeError: null,
+      );
     }
     return RunwayForecastQuality(
       evaluatedCount: rows.length,
-      meanRelativeError: total / rows.length,
+      meanRelativeError: total / evaluated,
     );
   }
 

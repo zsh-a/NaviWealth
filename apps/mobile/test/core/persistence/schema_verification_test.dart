@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 44', () {
-      expect(db.schemaVersion, 44);
+    test('is 45', () {
+      expect(db.schemaVersion, 45);
     });
   });
 
@@ -30,6 +30,7 @@ void main() {
       'financial_decisions',
       'financial_signals',
       'financial_monthly_closes',
+      'financial_reconciliations',
     ]) {
       test('$table has sync columns', () async {
         final result = await db.customSelect('PRAGMA table_info($table)').get();
@@ -195,6 +196,45 @@ void main() {
         );
       });
     }
+
+    test('financial close tables use evidence-driven columns', () async {
+      final closeColumns =
+          (await db
+                  .customSelect('PRAGMA table_info(financial_monthly_closes)')
+                  .get())
+              .map((row) => row.read<String>('name'))
+              .toSet();
+      expect(
+        closeColumns,
+        containsAll(<String>[
+          'evidence_json',
+          'snapshot_json',
+          'override_reason',
+          'closed_at',
+        ]),
+      );
+      expect(closeColumns, isNot(contains('completed_steps_json')));
+
+      final reconciliationColumns =
+          (await db
+                  .customSelect('PRAGMA table_info(financial_reconciliations)')
+                  .get())
+              .map((row) => row.read<String>('name'))
+              .toSet();
+      expect(
+        reconciliationColumns,
+        containsAll(<String>[
+          'period_month',
+          'account_id',
+          'unit',
+          'statement_balance',
+          'ledger_balance',
+          'difference',
+          'status',
+          'verified_at',
+        ]),
+      );
+    });
   });
 
   group('ExecutionOS tables exist', () {

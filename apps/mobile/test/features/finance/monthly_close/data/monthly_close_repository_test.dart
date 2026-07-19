@@ -24,21 +24,49 @@ void main() {
 
   tearDown(() => db.close());
 
-  test('month closes only after every evidence step is complete', () async {
-    for (final step in MonthlyCloseStep.values) {
-      await repository.toggleStep(
-        periodMonth: '2026-07',
-        step: step,
-        now: DateTime.utc(2026, 7, 19),
-      );
-    }
+  test('verified evidence closes and preserves its snapshot', () async {
+    final evidence = _evidence(MonthlyCloseStepState.verified);
     final closed = await repository.close(
       periodMonth: '2026-07',
+      evidence: evidence,
+      snapshot: const <String, Object?>{'open_inbox_count': 0},
       now: DateTime.utc(2026, 7, 31),
     );
 
-    expect(closed.isComplete, isTrue);
-    expect(closed.closedAt, isNotNull);
-    expect(await outbox.depth(), MonthlyCloseStep.values.length + 1);
+    expect(closed.isClosed, isTrue);
+    expect(closed.evidence.isVerified, isTrue);
+    expect(closed.snapshot['open_inbox_count'], 0);
+    expect(await outbox.depth(), 1);
+  });
+
+  test('blocked evidence requires and records an explicit override', () async {
+    final evidence = _evidence(MonthlyCloseStepState.blocked);
+    expect(
+      () => repository.close(
+        periodMonth: '2026-07',
+        evidence: evidence,
+        snapshot: const <String, Object?>{},
+        now: DateTime.utc(2026, 7, 31),
+      ),
+      throwsStateError,
+    );
+
+    final closed = await repository.close(
+      periodMonth: '2026-07',
+      evidence: evidence,
+      snapshot: const <String, Object?>{},
+      overrideReason: 'Statement pending',
+      now: DateTime.utc(2026, 7, 31),
+    );
+    expect(closed.status, 'overridden');
+    expect(closed.overrideReason, 'Statement pending');
   });
 }
+
+MonthlyCloseEvidence _evidence(MonthlyCloseStepState state) =>
+    MonthlyCloseEvidence(
+      states: <MonthlyCloseStep, MonthlyCloseStepState>{
+        for (final step in MonthlyCloseStep.values) step: state,
+      },
+      details: const <String, Object?>{},
+    );

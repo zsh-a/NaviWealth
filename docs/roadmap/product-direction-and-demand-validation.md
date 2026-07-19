@@ -314,6 +314,35 @@ financial and health evidence.
 
 ## Recommended Product Sequence
 
+### Implementation Baseline (2026-07-19)
+
+The first two phases now have an executable validation baseline. This is
+implementation evidence, not demand evidence:
+
+- Financial Inbox persists stable signals and now composes import review,
+  runway risk, missing FX, balance mismatch, expense anomaly, subscription
+  change, stale valuation, and due decision-review facts. Incomplete provider
+  loading never resolves an existing signal.
+- Monthly Close is evidence-driven. Account statement balances are compared
+  with the exact period-end ledger sum; balanced, mismatched, and explicitly
+  overridden facts are synced. A close stores its evidence and aggregate
+  snapshot instead of manual checklist state.
+- Money Runway excludes brokerage value from default spendable cash, includes
+  unpaid amortization rows, deduplicates matching scheduled outflows, runs
+  purchase/income-delay/income-reduction stress cases, and records daily
+  30/90-day forecast snapshots when the Runway workspace evaluates current
+  evidence.
+- Saved financial decisions create a source-preserving review action. Due
+  reviews enter Financial Inbox and store the observed source families and
+  data-completeness score alongside the actual outcome.
+- Opt-in product evidence uses local 90-day daily buckets plus cumulative
+  counters. Settings can explicitly copy the privacy-safe aggregate report;
+  no financial values, labels, routes, or row identifiers are included.
+
+The next product step is therefore the six-week task study below. More signal
+types, scenario templates, or domains should be driven by observed failures in
+that study rather than feature-count goals.
+
 ### Phase 1: Activation And Repeated Close
 
 Target window: first 0 to 3 months after product discovery begins.

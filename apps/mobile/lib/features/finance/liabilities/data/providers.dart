@@ -66,8 +66,10 @@ final liabilitySummaryProvider = StreamProvider.autoDispose
 
 /// All liability summaries in a single provider — avoids per-tile stream
 /// subscriptions that are created/destroyed on scroll.
-final allLiabilitySummariesProvider =
-    StreamProvider.autoDispose<Map<String, LiabilitySummary>>((ref) async* {
+final allLiabilitySchedulesProvider =
+    StreamProvider.autoDispose<Map<String, List<AmortizationEntry>>>((
+      ref,
+    ) async* {
       final repo = await ref.watch(liabilityRepositoryProvider.future);
       final liabilities = await ref.watch(liabilitiesStreamProvider.future);
       if (liabilities.isEmpty) {
@@ -81,6 +83,21 @@ final allLiabilitySummariesProvider =
         controllers[liab.id] = repo.watchSchedule(liab.id);
       }
       // Merge all schedule streams into a single stream of maps.
+      yield* _mergeScheduleStreams(controllers, liabilities);
+    });
+
+final allLiabilitySummariesProvider =
+    StreamProvider.autoDispose<Map<String, LiabilitySummary>>((ref) async* {
+      final repo = await ref.watch(liabilityRepositoryProvider.future);
+      final liabilities = await ref.watch(liabilitiesStreamProvider.future);
+      if (liabilities.isEmpty) {
+        yield const {};
+        return;
+      }
+      final controllers = <String, Stream<List<AmortizationEntry>>>{};
+      for (final liability in liabilities) {
+        controllers[liability.id] = repo.watchSchedule(liability.id);
+      }
       yield* _mergeScheduleStreams(controllers, liabilities).map((schedules) {
         final result = <String, LiabilitySummary>{};
         for (final liab in liabilities) {

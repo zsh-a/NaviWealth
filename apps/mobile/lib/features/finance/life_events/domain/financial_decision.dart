@@ -12,6 +12,7 @@ final class FinancialDecision {
     required this.decidedAt,
     required this.reviewDate,
     this.actualOutcome,
+    this.reviewEvidence,
     this.reviewedAt,
   });
 
@@ -25,6 +26,7 @@ final class FinancialDecision {
   final DateTime decidedAt;
   final DateTime reviewDate;
   final LifeEventOutcome? actualOutcome;
+  final FinancialDecisionReviewEvidence? reviewEvidence;
   final DateTime? reviewedAt;
 
   Map<String, Object?> toJson() => {
@@ -38,6 +40,7 @@ final class FinancialDecision {
     'decidedAt': decidedAt.toUtc().toIso8601String(),
     'reviewDate': reviewDate.toUtc().toIso8601String(),
     'actualOutcome': actualOutcome?.toJson(),
+    'reviewEvidence': reviewEvidence?.toJson(),
     'reviewedAt': reviewedAt?.toUtc().toIso8601String(),
   };
 
@@ -65,8 +68,39 @@ final class FinancialDecision {
             : LifeEventOutcome.fromJson(
                 Map<String, Object?>.from(json['actualOutcome']! as Map),
               ),
+        reviewEvidence: json['reviewEvidence'] == null
+            ? null
+            : FinancialDecisionReviewEvidence.fromJson(
+                Map<String, Object?>.from(json['reviewEvidence']! as Map),
+              ),
         reviewedAt: json['reviewedAt'] == null
             ? null
             : DateTime.parse(json['reviewedAt']! as String),
+      );
+}
+
+final class FinancialDecisionReviewEvidence {
+  const FinancialDecisionReviewEvidence({
+    required this.observedAt,
+    required this.sourceRowFamilies,
+    required this.dataCompleteness,
+  });
+
+  final DateTime observedAt;
+  final List<String> sourceRowFamilies;
+  final double dataCompleteness;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'observedAt': observedAt.toUtc().toIso8601String(),
+    'sourceRowFamilies': sourceRowFamilies,
+    'dataCompleteness': dataCompleteness,
+  };
+
+  factory FinancialDecisionReviewEvidence.fromJson(Map<String, Object?> json) =>
+      FinancialDecisionReviewEvidence(
+        observedAt: DateTime.parse(json['observedAt']! as String),
+        sourceRowFamilies: (json['sourceRowFamilies']! as List<Object?>)
+            .cast<String>(),
+        dataCompleteness: (json['dataCompleteness']! as num).toDouble(),
       );
 }

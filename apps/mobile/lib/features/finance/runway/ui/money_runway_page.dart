@@ -162,6 +162,8 @@ class _RunwayContent extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.s16),
+        _ScenarioSection(snapshot: snapshot),
+        const SizedBox(height: AppSpacing.s16),
         SoftCard.raised(
           borderless: true,
           padding: const EdgeInsets.all(AppSpacing.s14),
@@ -247,6 +249,66 @@ class _RunwayContent extends ConsumerWidget {
               color: SemanticColors.of(context).warning,
             ),
           ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ScenarioSection extends ConsumerWidget {
+  const _ScenarioSection({required this.snapshot});
+
+  final MoneyRunwaySnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final formatter = context.formatters(ref);
+    final scenarios = <(String, MoneyRunwaySnapshot)>[
+      (
+        l10n.moneyRunwayScenarioPurchase,
+        applyMoneyRunwayScenario(
+          snapshot,
+          MoneyRunwayScenario.largePurchase(snapshot.averageMonthlyExpense),
+        ),
+      ),
+      (
+        l10n.moneyRunwayScenarioDelayedIncome,
+        applyMoneyRunwayScenario(
+          snapshot,
+          MoneyRunwayScenario.delayedIncome(14),
+        ),
+      ),
+      (
+        l10n.moneyRunwayScenarioReducedIncome,
+        applyMoneyRunwayScenario(
+          snapshot,
+          MoneyRunwayScenario.reducedIncome(reduction: Decimal.parse('0.3')),
+        ),
+      ),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.moneyRunwayScenariosTitle, style: context.mutedLabelStyle),
+        const SizedBox(height: AppSpacing.s8),
+        for (final scenario in scenarios) ...[
+          SoftCard.flat(
+            padding: const EdgeInsets.all(AppSpacing.s12),
+            child: Row(
+              children: [
+                Expanded(child: Text(scenario.$1, style: context.labelStyle)),
+                Text(
+                  formatter.compactCurrency(
+                    scenario.$2.minimumExpectedBalance,
+                    code: scenario.$2.currency,
+                  ),
+                  style: TypographyTokens.numericBodyStrong,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s8),
         ],
       ],
     );

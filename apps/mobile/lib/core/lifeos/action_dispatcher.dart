@@ -30,3 +30,9 @@ final lifeActionDispatcherProvider = Provider<LifeActionDispatcher>(
 );
 
 final lifeActionReviewRouteProvider = Provider<String?>((ref) => null);
+
+/// Domain-neutral read seam used by review workflows. `null` means the
+/// Execution domain is inactive, not that loading failed.
+final lifeOpenActionCountProvider = Provider<AsyncValue<int?>>(
+  (ref) => const AsyncValue.data(null),
+);

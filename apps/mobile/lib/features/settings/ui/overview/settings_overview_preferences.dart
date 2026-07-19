@@ -183,13 +183,36 @@ class _ProductMetricsRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final enabled = ref.watch(productMetricsProvider);
-    return InlineSwitchRow(
-      icon: FLucideIcons.chartNoAxesColumnIncreasing,
-      label: l10n.settingsProductMetricsTitle,
-      subtitle: l10n.settingsProductMetricsSubtitle,
-      value: enabled,
-      onChanged: (next) =>
-          ref.read(productMetricsProvider.notifier).setEnabled(next),
+    return Column(
+      children: [
+        InlineSwitchRow(
+          icon: FLucideIcons.chartNoAxesColumnIncreasing,
+          label: l10n.settingsProductMetricsTitle,
+          subtitle: l10n.settingsProductMetricsSubtitle,
+          value: enabled,
+          onChanged: (next) =>
+              ref.read(productMetricsProvider.notifier).setEnabled(next),
+        ),
+        if (enabled) ...[
+          const AppGradientDivider(),
+          InlineLinkRow(
+            icon: FLucideIcons.copy,
+            label: l10n.settingsProductMetricsCopy,
+            subtitle: l10n.settingsProductMetricsCopySubtitle,
+            onTap: () async {
+              final report = ref
+                  .read(productMetricsProvider.notifier)
+                  .exportAggregates();
+              await Clipboard.setData(ClipboardData(text: jsonEncode(report)));
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(l10n.settingsProductMetricsCopied)),
+                );
+              }
+            },
+          ),
+        ],
+      ],
     );
   }
 }

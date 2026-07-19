@@ -79,6 +79,7 @@ class FinancialDecisionRepository {
   Future<void> review({
     required String id,
     required LifeEventOutcome actualOutcome,
+    required FinancialDecisionReviewEvidence evidence,
     required DateTime now,
   }) async {
     final stamp = await _stamper.stamp();
@@ -91,6 +92,7 @@ class FinancialDecisionRepository {
           .write(
             FinancialDecisionsCompanion(
               actualOutcomeJson: Value(jsonEncode(actualOutcome.toJson())),
+              reviewEvidenceJson: Value(jsonEncode(evidence.toJson())),
               reviewedAt: Value(now),
               status: const Value('reviewed'),
               updatedAt: Value(stamp.now),
@@ -133,6 +135,13 @@ class FinancialDecisionRepository {
         : LifeEventOutcome.fromJson(
             Map<String, Object?>.from(
               jsonDecode(row.actualOutcomeJson!) as Map,
+            ),
+          ),
+    reviewEvidence: row.reviewEvidenceJson == null
+        ? null
+        : FinancialDecisionReviewEvidence.fromJson(
+            Map<String, Object?>.from(
+              jsonDecode(row.reviewEvidenceJson!) as Map,
             ),
           ),
     reviewedAt: row.reviewedAt,

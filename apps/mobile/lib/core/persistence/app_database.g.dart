@@ -17822,6 +17822,17 @@ class $FinancialDecisionsTable extends FinancialDecisions
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _reviewEvidenceJsonMeta =
+      const VerificationMeta('reviewEvidenceJson');
+  @override
+  late final GeneratedColumn<String> reviewEvidenceJson =
+      GeneratedColumn<String>(
+        'review_evidence_json',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _reviewedAtMeta = const VerificationMeta(
     'reviewedAt',
   );
@@ -17860,6 +17871,7 @@ class $FinancialDecisionsTable extends FinancialDecisions
     decidedAt,
     reviewDate,
     actualOutcomeJson,
+    reviewEvidenceJson,
     reviewedAt,
     status,
   ];
@@ -18004,6 +18016,15 @@ class $FinancialDecisionsTable extends FinancialDecisions
         ),
       );
     }
+    if (data.containsKey('review_evidence_json')) {
+      context.handle(
+        _reviewEvidenceJsonMeta,
+        reviewEvidenceJson.isAcceptableOrUnknown(
+          data['review_evidence_json']!,
+          _reviewEvidenceJsonMeta,
+        ),
+      );
+    }
     if (data.containsKey('reviewed_at')) {
       context.handle(
         _reviewedAtMeta,
@@ -18087,6 +18108,10 @@ class $FinancialDecisionsTable extends FinancialDecisions
         DriftSqlType.string,
         data['${effectivePrefix}actual_outcome_json'],
       ),
+      reviewEvidenceJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}review_evidence_json'],
+      ),
       reviewedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}reviewed_at'],
@@ -18139,6 +18164,7 @@ class FinancialDecisionRow extends DataClass
   final DateTime decidedAt;
   final DateTime reviewDate;
   final String? actualOutcomeJson;
+  final String? reviewEvidenceJson;
   final DateTime? reviewedAt;
   final String status;
   const FinancialDecisionRow({
@@ -18157,6 +18183,7 @@ class FinancialDecisionRow extends DataClass
     required this.decidedAt,
     required this.reviewDate,
     this.actualOutcomeJson,
+    this.reviewEvidenceJson,
     this.reviewedAt,
     required this.status,
   });
@@ -18186,6 +18213,9 @@ class FinancialDecisionRow extends DataClass
     if (!nullToAbsent || actualOutcomeJson != null) {
       map['actual_outcome_json'] = Variable<String>(actualOutcomeJson);
     }
+    if (!nullToAbsent || reviewEvidenceJson != null) {
+      map['review_evidence_json'] = Variable<String>(reviewEvidenceJson);
+    }
     if (!nullToAbsent || reviewedAt != null) {
       map['reviewed_at'] = Variable<DateTime>(reviewedAt);
     }
@@ -18214,6 +18244,9 @@ class FinancialDecisionRow extends DataClass
       actualOutcomeJson: actualOutcomeJson == null && nullToAbsent
           ? const Value.absent()
           : Value(actualOutcomeJson),
+      reviewEvidenceJson: reviewEvidenceJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reviewEvidenceJson),
       reviewedAt: reviewedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(reviewedAt),
@@ -18246,6 +18279,9 @@ class FinancialDecisionRow extends DataClass
       actualOutcomeJson: serializer.fromJson<String?>(
         json['actualOutcomeJson'],
       ),
+      reviewEvidenceJson: serializer.fromJson<String?>(
+        json['reviewEvidenceJson'],
+      ),
       reviewedAt: serializer.fromJson<DateTime?>(json['reviewedAt']),
       status: serializer.fromJson<String>(json['status']),
     );
@@ -18269,6 +18305,7 @@ class FinancialDecisionRow extends DataClass
       'decidedAt': serializer.toJson<DateTime>(decidedAt),
       'reviewDate': serializer.toJson<DateTime>(reviewDate),
       'actualOutcomeJson': serializer.toJson<String?>(actualOutcomeJson),
+      'reviewEvidenceJson': serializer.toJson<String?>(reviewEvidenceJson),
       'reviewedAt': serializer.toJson<DateTime?>(reviewedAt),
       'status': serializer.toJson<String>(status),
     };
@@ -18290,6 +18327,7 @@ class FinancialDecisionRow extends DataClass
     DateTime? decidedAt,
     DateTime? reviewDate,
     Value<String?> actualOutcomeJson = const Value.absent(),
+    Value<String?> reviewEvidenceJson = const Value.absent(),
     Value<DateTime?> reviewedAt = const Value.absent(),
     String? status,
   }) => FinancialDecisionRow(
@@ -18310,6 +18348,9 @@ class FinancialDecisionRow extends DataClass
     actualOutcomeJson: actualOutcomeJson.present
         ? actualOutcomeJson.value
         : this.actualOutcomeJson,
+    reviewEvidenceJson: reviewEvidenceJson.present
+        ? reviewEvidenceJson.value
+        : this.reviewEvidenceJson,
     reviewedAt: reviewedAt.present ? reviewedAt.value : this.reviewedAt,
     status: status ?? this.status,
   );
@@ -18348,6 +18389,9 @@ class FinancialDecisionRow extends DataClass
       actualOutcomeJson: data.actualOutcomeJson.present
           ? data.actualOutcomeJson.value
           : this.actualOutcomeJson,
+      reviewEvidenceJson: data.reviewEvidenceJson.present
+          ? data.reviewEvidenceJson.value
+          : this.reviewEvidenceJson,
       reviewedAt: data.reviewedAt.present
           ? data.reviewedAt.value
           : this.reviewedAt,
@@ -18373,6 +18417,7 @@ class FinancialDecisionRow extends DataClass
           ..write('decidedAt: $decidedAt, ')
           ..write('reviewDate: $reviewDate, ')
           ..write('actualOutcomeJson: $actualOutcomeJson, ')
+          ..write('reviewEvidenceJson: $reviewEvidenceJson, ')
           ..write('reviewedAt: $reviewedAt, ')
           ..write('status: $status')
           ..write(')'))
@@ -18396,6 +18441,7 @@ class FinancialDecisionRow extends DataClass
     decidedAt,
     reviewDate,
     actualOutcomeJson,
+    reviewEvidenceJson,
     reviewedAt,
     status,
   );
@@ -18418,6 +18464,7 @@ class FinancialDecisionRow extends DataClass
           other.decidedAt == this.decidedAt &&
           other.reviewDate == this.reviewDate &&
           other.actualOutcomeJson == this.actualOutcomeJson &&
+          other.reviewEvidenceJson == this.reviewEvidenceJson &&
           other.reviewedAt == this.reviewedAt &&
           other.status == this.status);
 }
@@ -18439,6 +18486,7 @@ class FinancialDecisionsCompanion
   final Value<DateTime> decidedAt;
   final Value<DateTime> reviewDate;
   final Value<String?> actualOutcomeJson;
+  final Value<String?> reviewEvidenceJson;
   final Value<DateTime?> reviewedAt;
   final Value<String> status;
   final Value<int> rowid;
@@ -18458,6 +18506,7 @@ class FinancialDecisionsCompanion
     this.decidedAt = const Value.absent(),
     this.reviewDate = const Value.absent(),
     this.actualOutcomeJson = const Value.absent(),
+    this.reviewEvidenceJson = const Value.absent(),
     this.reviewedAt = const Value.absent(),
     this.status = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -18478,6 +18527,7 @@ class FinancialDecisionsCompanion
     required DateTime decidedAt,
     required DateTime reviewDate,
     this.actualOutcomeJson = const Value.absent(),
+    this.reviewEvidenceJson = const Value.absent(),
     this.reviewedAt = const Value.absent(),
     this.status = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -18510,6 +18560,7 @@ class FinancialDecisionsCompanion
     Expression<DateTime>? decidedAt,
     Expression<DateTime>? reviewDate,
     Expression<String>? actualOutcomeJson,
+    Expression<String>? reviewEvidenceJson,
     Expression<DateTime>? reviewedAt,
     Expression<String>? status,
     Expression<int>? rowid,
@@ -18531,6 +18582,8 @@ class FinancialDecisionsCompanion
       if (decidedAt != null) 'decided_at': decidedAt,
       if (reviewDate != null) 'review_date': reviewDate,
       if (actualOutcomeJson != null) 'actual_outcome_json': actualOutcomeJson,
+      if (reviewEvidenceJson != null)
+        'review_evidence_json': reviewEvidenceJson,
       if (reviewedAt != null) 'reviewed_at': reviewedAt,
       if (status != null) 'status': status,
       if (rowid != null) 'rowid': rowid,
@@ -18553,6 +18606,7 @@ class FinancialDecisionsCompanion
     Value<DateTime>? decidedAt,
     Value<DateTime>? reviewDate,
     Value<String?>? actualOutcomeJson,
+    Value<String?>? reviewEvidenceJson,
     Value<DateTime?>? reviewedAt,
     Value<String>? status,
     Value<int>? rowid,
@@ -18573,6 +18627,7 @@ class FinancialDecisionsCompanion
       decidedAt: decidedAt ?? this.decidedAt,
       reviewDate: reviewDate ?? this.reviewDate,
       actualOutcomeJson: actualOutcomeJson ?? this.actualOutcomeJson,
+      reviewEvidenceJson: reviewEvidenceJson ?? this.reviewEvidenceJson,
       reviewedAt: reviewedAt ?? this.reviewedAt,
       status: status ?? this.status,
       rowid: rowid ?? this.rowid,
@@ -18631,6 +18686,9 @@ class FinancialDecisionsCompanion
     if (actualOutcomeJson.present) {
       map['actual_outcome_json'] = Variable<String>(actualOutcomeJson.value);
     }
+    if (reviewEvidenceJson.present) {
+      map['review_evidence_json'] = Variable<String>(reviewEvidenceJson.value);
+    }
     if (reviewedAt.present) {
       map['reviewed_at'] = Variable<DateTime>(reviewedAt.value);
     }
@@ -18661,6 +18719,7 @@ class FinancialDecisionsCompanion
           ..write('decidedAt: $decidedAt, ')
           ..write('reviewDate: $reviewDate, ')
           ..write('actualOutcomeJson: $actualOutcomeJson, ')
+          ..write('reviewEvidenceJson: $reviewEvidenceJson, ')
           ..write('reviewedAt: $reviewedAt, ')
           ..write('status: $status, ')
           ..write('rowid: $rowid')
@@ -19741,18 +19800,30 @@ class $FinancialMonthlyClosesTable extends FinancialMonthlyCloses
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _completedStepsJsonMeta =
-      const VerificationMeta('completedStepsJson');
+  static const VerificationMeta _evidenceJsonMeta = const VerificationMeta(
+    'evidenceJson',
+  );
   @override
-  late final GeneratedColumn<String> completedStepsJson =
-      GeneratedColumn<String>(
-        'completed_steps_json',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-        defaultValue: const Constant('[]'),
-      );
+  late final GeneratedColumn<String> evidenceJson = GeneratedColumn<String>(
+    'evidence_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
+  static const VerificationMeta _snapshotJsonMeta = const VerificationMeta(
+    'snapshotJson',
+  );
+  @override
+  late final GeneratedColumn<String> snapshotJson = GeneratedColumn<String>(
+    'snapshot_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
@@ -19762,6 +19833,17 @@ class $FinancialMonthlyClosesTable extends FinancialMonthlyCloses
     type: DriftSqlType.string,
     requiredDuringInsert: false,
     defaultValue: const Constant('open'),
+  );
+  static const VerificationMeta _overrideReasonMeta = const VerificationMeta(
+    'overrideReason',
+  );
+  @override
+  late final GeneratedColumn<String> overrideReason = GeneratedColumn<String>(
+    'override_reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _startedAtMeta = const VerificationMeta(
     'startedAt',
@@ -19794,8 +19876,10 @@ class $FinancialMonthlyClosesTable extends FinancialMonthlyCloses
     deletedAt,
     id,
     periodMonth,
-    completedStepsJson,
+    evidenceJson,
+    snapshotJson,
     status,
+    overrideReason,
     startedAt,
     closedAt,
   ];
@@ -19863,12 +19947,21 @@ class $FinancialMonthlyClosesTable extends FinancialMonthlyCloses
     } else if (isInserting) {
       context.missing(_periodMonthMeta);
     }
-    if (data.containsKey('completed_steps_json')) {
+    if (data.containsKey('evidence_json')) {
       context.handle(
-        _completedStepsJsonMeta,
-        completedStepsJson.isAcceptableOrUnknown(
-          data['completed_steps_json']!,
-          _completedStepsJsonMeta,
+        _evidenceJsonMeta,
+        evidenceJson.isAcceptableOrUnknown(
+          data['evidence_json']!,
+          _evidenceJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('snapshot_json')) {
+      context.handle(
+        _snapshotJsonMeta,
+        snapshotJson.isAcceptableOrUnknown(
+          data['snapshot_json']!,
+          _snapshotJsonMeta,
         ),
       );
     }
@@ -19876,6 +19969,15 @@ class $FinancialMonthlyClosesTable extends FinancialMonthlyCloses
       context.handle(
         _statusMeta,
         status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('override_reason')) {
+      context.handle(
+        _overrideReasonMeta,
+        overrideReason.isAcceptableOrUnknown(
+          data['override_reason']!,
+          _overrideReasonMeta,
+        ),
       );
     }
     if (data.containsKey('started_at')) {
@@ -19934,14 +20036,22 @@ class $FinancialMonthlyClosesTable extends FinancialMonthlyCloses
         DriftSqlType.string,
         data['${effectivePrefix}period_month'],
       )!,
-      completedStepsJson: attachedDatabase.typeMapping.read(
+      evidenceJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}completed_steps_json'],
+        data['${effectivePrefix}evidence_json'],
+      )!,
+      snapshotJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}snapshot_json'],
       )!,
       status: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}status'],
       )!,
+      overrideReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}override_reason'],
+      ),
       startedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}started_at'],
@@ -19986,8 +20096,10 @@ class FinancialMonthlyCloseRow extends DataClass
   final DateTime? deletedAt;
   final String id;
   final String periodMonth;
-  final String completedStepsJson;
+  final String evidenceJson;
+  final String snapshotJson;
   final String status;
+  final String? overrideReason;
   final DateTime startedAt;
   final DateTime? closedAt;
   const FinancialMonthlyCloseRow({
@@ -19998,8 +20110,10 @@ class FinancialMonthlyCloseRow extends DataClass
     this.deletedAt,
     required this.id,
     required this.periodMonth,
-    required this.completedStepsJson,
+    required this.evidenceJson,
+    required this.snapshotJson,
     required this.status,
+    this.overrideReason,
     required this.startedAt,
     this.closedAt,
   });
@@ -20019,8 +20133,12 @@ class FinancialMonthlyCloseRow extends DataClass
     }
     map['id'] = Variable<String>(id);
     map['period_month'] = Variable<String>(periodMonth);
-    map['completed_steps_json'] = Variable<String>(completedStepsJson);
+    map['evidence_json'] = Variable<String>(evidenceJson);
+    map['snapshot_json'] = Variable<String>(snapshotJson);
     map['status'] = Variable<String>(status);
+    if (!nullToAbsent || overrideReason != null) {
+      map['override_reason'] = Variable<String>(overrideReason);
+    }
     map['started_at'] = Variable<DateTime>(startedAt);
     if (!nullToAbsent || closedAt != null) {
       map['closed_at'] = Variable<DateTime>(closedAt);
@@ -20039,8 +20157,12 @@ class FinancialMonthlyCloseRow extends DataClass
           : Value(deletedAt),
       id: Value(id),
       periodMonth: Value(periodMonth),
-      completedStepsJson: Value(completedStepsJson),
+      evidenceJson: Value(evidenceJson),
+      snapshotJson: Value(snapshotJson),
       status: Value(status),
+      overrideReason: overrideReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(overrideReason),
       startedAt: Value(startedAt),
       closedAt: closedAt == null && nullToAbsent
           ? const Value.absent()
@@ -20061,10 +20183,10 @@ class FinancialMonthlyCloseRow extends DataClass
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       id: serializer.fromJson<String>(json['id']),
       periodMonth: serializer.fromJson<String>(json['periodMonth']),
-      completedStepsJson: serializer.fromJson<String>(
-        json['completedStepsJson'],
-      ),
+      evidenceJson: serializer.fromJson<String>(json['evidenceJson']),
+      snapshotJson: serializer.fromJson<String>(json['snapshotJson']),
       status: serializer.fromJson<String>(json['status']),
+      overrideReason: serializer.fromJson<String?>(json['overrideReason']),
       startedAt: serializer.fromJson<DateTime>(json['startedAt']),
       closedAt: serializer.fromJson<DateTime?>(json['closedAt']),
     );
@@ -20080,8 +20202,10 @@ class FinancialMonthlyCloseRow extends DataClass
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'id': serializer.toJson<String>(id),
       'periodMonth': serializer.toJson<String>(periodMonth),
-      'completedStepsJson': serializer.toJson<String>(completedStepsJson),
+      'evidenceJson': serializer.toJson<String>(evidenceJson),
+      'snapshotJson': serializer.toJson<String>(snapshotJson),
       'status': serializer.toJson<String>(status),
+      'overrideReason': serializer.toJson<String?>(overrideReason),
       'startedAt': serializer.toJson<DateTime>(startedAt),
       'closedAt': serializer.toJson<DateTime?>(closedAt),
     };
@@ -20095,8 +20219,10 @@ class FinancialMonthlyCloseRow extends DataClass
     Value<DateTime?> deletedAt = const Value.absent(),
     String? id,
     String? periodMonth,
-    String? completedStepsJson,
+    String? evidenceJson,
+    String? snapshotJson,
     String? status,
+    Value<String?> overrideReason = const Value.absent(),
     DateTime? startedAt,
     Value<DateTime?> closedAt = const Value.absent(),
   }) => FinancialMonthlyCloseRow(
@@ -20107,8 +20233,12 @@ class FinancialMonthlyCloseRow extends DataClass
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     id: id ?? this.id,
     periodMonth: periodMonth ?? this.periodMonth,
-    completedStepsJson: completedStepsJson ?? this.completedStepsJson,
+    evidenceJson: evidenceJson ?? this.evidenceJson,
+    snapshotJson: snapshotJson ?? this.snapshotJson,
     status: status ?? this.status,
+    overrideReason: overrideReason.present
+        ? overrideReason.value
+        : this.overrideReason,
     startedAt: startedAt ?? this.startedAt,
     closedAt: closedAt.present ? closedAt.value : this.closedAt,
   );
@@ -20129,10 +20259,16 @@ class FinancialMonthlyCloseRow extends DataClass
       periodMonth: data.periodMonth.present
           ? data.periodMonth.value
           : this.periodMonth,
-      completedStepsJson: data.completedStepsJson.present
-          ? data.completedStepsJson.value
-          : this.completedStepsJson,
+      evidenceJson: data.evidenceJson.present
+          ? data.evidenceJson.value
+          : this.evidenceJson,
+      snapshotJson: data.snapshotJson.present
+          ? data.snapshotJson.value
+          : this.snapshotJson,
       status: data.status.present ? data.status.value : this.status,
+      overrideReason: data.overrideReason.present
+          ? data.overrideReason.value
+          : this.overrideReason,
       startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
       closedAt: data.closedAt.present ? data.closedAt.value : this.closedAt,
     );
@@ -20148,8 +20284,10 @@ class FinancialMonthlyCloseRow extends DataClass
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
           ..write('periodMonth: $periodMonth, ')
-          ..write('completedStepsJson: $completedStepsJson, ')
+          ..write('evidenceJson: $evidenceJson, ')
+          ..write('snapshotJson: $snapshotJson, ')
           ..write('status: $status, ')
+          ..write('overrideReason: $overrideReason, ')
           ..write('startedAt: $startedAt, ')
           ..write('closedAt: $closedAt')
           ..write(')'))
@@ -20165,8 +20303,10 @@ class FinancialMonthlyCloseRow extends DataClass
     deletedAt,
     id,
     periodMonth,
-    completedStepsJson,
+    evidenceJson,
+    snapshotJson,
     status,
+    overrideReason,
     startedAt,
     closedAt,
   );
@@ -20181,8 +20321,10 @@ class FinancialMonthlyCloseRow extends DataClass
           other.deletedAt == this.deletedAt &&
           other.id == this.id &&
           other.periodMonth == this.periodMonth &&
-          other.completedStepsJson == this.completedStepsJson &&
+          other.evidenceJson == this.evidenceJson &&
+          other.snapshotJson == this.snapshotJson &&
           other.status == this.status &&
+          other.overrideReason == this.overrideReason &&
           other.startedAt == this.startedAt &&
           other.closedAt == this.closedAt);
 }
@@ -20196,8 +20338,10 @@ class FinancialMonthlyClosesCompanion
   final Value<DateTime?> deletedAt;
   final Value<String> id;
   final Value<String> periodMonth;
-  final Value<String> completedStepsJson;
+  final Value<String> evidenceJson;
+  final Value<String> snapshotJson;
   final Value<String> status;
+  final Value<String?> overrideReason;
   final Value<DateTime> startedAt;
   final Value<DateTime?> closedAt;
   final Value<int> rowid;
@@ -20209,8 +20353,10 @@ class FinancialMonthlyClosesCompanion
     this.deletedAt = const Value.absent(),
     this.id = const Value.absent(),
     this.periodMonth = const Value.absent(),
-    this.completedStepsJson = const Value.absent(),
+    this.evidenceJson = const Value.absent(),
+    this.snapshotJson = const Value.absent(),
     this.status = const Value.absent(),
+    this.overrideReason = const Value.absent(),
     this.startedAt = const Value.absent(),
     this.closedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -20223,8 +20369,10 @@ class FinancialMonthlyClosesCompanion
     this.deletedAt = const Value.absent(),
     required String id,
     required String periodMonth,
-    this.completedStepsJson = const Value.absent(),
+    this.evidenceJson = const Value.absent(),
+    this.snapshotJson = const Value.absent(),
     this.status = const Value.absent(),
+    this.overrideReason = const Value.absent(),
     required DateTime startedAt,
     this.closedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -20243,8 +20391,10 @@ class FinancialMonthlyClosesCompanion
     Expression<DateTime>? deletedAt,
     Expression<String>? id,
     Expression<String>? periodMonth,
-    Expression<String>? completedStepsJson,
+    Expression<String>? evidenceJson,
+    Expression<String>? snapshotJson,
     Expression<String>? status,
+    Expression<String>? overrideReason,
     Expression<DateTime>? startedAt,
     Expression<DateTime>? closedAt,
     Expression<int>? rowid,
@@ -20257,9 +20407,10 @@ class FinancialMonthlyClosesCompanion
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (id != null) 'id': id,
       if (periodMonth != null) 'period_month': periodMonth,
-      if (completedStepsJson != null)
-        'completed_steps_json': completedStepsJson,
+      if (evidenceJson != null) 'evidence_json': evidenceJson,
+      if (snapshotJson != null) 'snapshot_json': snapshotJson,
       if (status != null) 'status': status,
+      if (overrideReason != null) 'override_reason': overrideReason,
       if (startedAt != null) 'started_at': startedAt,
       if (closedAt != null) 'closed_at': closedAt,
       if (rowid != null) 'rowid': rowid,
@@ -20274,8 +20425,10 @@ class FinancialMonthlyClosesCompanion
     Value<DateTime?>? deletedAt,
     Value<String>? id,
     Value<String>? periodMonth,
-    Value<String>? completedStepsJson,
+    Value<String>? evidenceJson,
+    Value<String>? snapshotJson,
     Value<String>? status,
+    Value<String?>? overrideReason,
     Value<DateTime>? startedAt,
     Value<DateTime?>? closedAt,
     Value<int>? rowid,
@@ -20288,8 +20441,10 @@ class FinancialMonthlyClosesCompanion
       deletedAt: deletedAt ?? this.deletedAt,
       id: id ?? this.id,
       periodMonth: periodMonth ?? this.periodMonth,
-      completedStepsJson: completedStepsJson ?? this.completedStepsJson,
+      evidenceJson: evidenceJson ?? this.evidenceJson,
+      snapshotJson: snapshotJson ?? this.snapshotJson,
       status: status ?? this.status,
+      overrideReason: overrideReason ?? this.overrideReason,
       startedAt: startedAt ?? this.startedAt,
       closedAt: closedAt ?? this.closedAt,
       rowid: rowid ?? this.rowid,
@@ -20322,11 +20477,17 @@ class FinancialMonthlyClosesCompanion
     if (periodMonth.present) {
       map['period_month'] = Variable<String>(periodMonth.value);
     }
-    if (completedStepsJson.present) {
-      map['completed_steps_json'] = Variable<String>(completedStepsJson.value);
+    if (evidenceJson.present) {
+      map['evidence_json'] = Variable<String>(evidenceJson.value);
+    }
+    if (snapshotJson.present) {
+      map['snapshot_json'] = Variable<String>(snapshotJson.value);
     }
     if (status.present) {
       map['status'] = Variable<String>(status.value);
+    }
+    if (overrideReason.present) {
+      map['override_reason'] = Variable<String>(overrideReason.value);
     }
     if (startedAt.present) {
       map['started_at'] = Variable<DateTime>(startedAt.value);
@@ -20350,10 +20511,920 @@ class FinancialMonthlyClosesCompanion
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
           ..write('periodMonth: $periodMonth, ')
-          ..write('completedStepsJson: $completedStepsJson, ')
+          ..write('evidenceJson: $evidenceJson, ')
+          ..write('snapshotJson: $snapshotJson, ')
           ..write('status: $status, ')
+          ..write('overrideReason: $overrideReason, ')
           ..write('startedAt: $startedAt, ')
           ..write('closedAt: $closedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $FinancialReconciliationsTable extends FinancialReconciliations
+    with TableInfo<$FinancialReconciliationsTable, FinancialReconciliationRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FinancialReconciliationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($FinancialReconciliationsTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _periodMonthMeta = const VerificationMeta(
+    'periodMonth',
+  );
+  @override
+  late final GeneratedColumn<String> periodMonth = GeneratedColumn<String>(
+    'period_month',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _unitMeta = const VerificationMeta('unit');
+  @override
+  late final GeneratedColumn<String> unit = GeneratedColumn<String>(
+    'unit',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String>
+  statementBalance =
+      GeneratedColumn<String>(
+        'statement_balance',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $FinancialReconciliationsTable.$converterstatementBalance,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> ledgerBalance =
+      GeneratedColumn<String>(
+        'ledger_balance',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $FinancialReconciliationsTable.$converterledgerBalance,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> difference =
+      GeneratedColumn<String>(
+        'difference',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $FinancialReconciliationsTable.$converterdifference,
+      );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _verifiedAtMeta = const VerificationMeta(
+    'verifiedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> verifiedAt = GeneratedColumn<DateTime>(
+    'verified_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    periodMonth,
+    accountId,
+    unit,
+    statementBalance,
+    ledgerBalance,
+    difference,
+    status,
+    note,
+    verifiedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'financial_reconciliations';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FinancialReconciliationRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('period_month')) {
+      context.handle(
+        _periodMonthMeta,
+        periodMonth.isAcceptableOrUnknown(
+          data['period_month']!,
+          _periodMonthMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_periodMonthMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('unit')) {
+      context.handle(
+        _unitMeta,
+        unit.isAcceptableOrUnknown(data['unit']!, _unitMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_unitMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('verified_at')) {
+      context.handle(
+        _verifiedAtMeta,
+        verifiedAt.isAcceptableOrUnknown(data['verified_at']!, _verifiedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_verifiedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FinancialReconciliationRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FinancialReconciliationRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $FinancialReconciliationsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      periodMonth: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}period_month'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+      unit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}unit'],
+      )!,
+      statementBalance: $FinancialReconciliationsTable
+          .$converterstatementBalance
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}statement_balance'],
+            )!,
+          ),
+      ledgerBalance: $FinancialReconciliationsTable.$converterledgerBalance
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}ledger_balance'],
+            )!,
+          ),
+      difference: $FinancialReconciliationsTable.$converterdifference.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}difference'],
+        )!,
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      verifiedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}verified_at'],
+      )!,
+    );
+  }
+
+  @override
+  $FinancialReconciliationsTable createAlias(String alias) {
+    return $FinancialReconciliationsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+  static TypeConverter<Decimal, String> $converterstatementBalance =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterledgerBalance =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterdifference =
+      const DecimalConverter();
+}
+
+class FinancialReconciliationRow extends DataClass
+    implements Insertable<FinancialReconciliationRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String periodMonth;
+  final String accountId;
+  final String unit;
+  final Decimal statementBalance;
+  final Decimal ledgerBalance;
+  final Decimal difference;
+  final String status;
+  final String? note;
+  final DateTime verifiedAt;
+  const FinancialReconciliationRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.periodMonth,
+    required this.accountId,
+    required this.unit,
+    required this.statementBalance,
+    required this.ledgerBalance,
+    required this.difference,
+    required this.status,
+    this.note,
+    required this.verifiedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $FinancialReconciliationsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['period_month'] = Variable<String>(periodMonth);
+    map['account_id'] = Variable<String>(accountId);
+    map['unit'] = Variable<String>(unit);
+    {
+      map['statement_balance'] = Variable<String>(
+        $FinancialReconciliationsTable.$converterstatementBalance.toSql(
+          statementBalance,
+        ),
+      );
+    }
+    {
+      map['ledger_balance'] = Variable<String>(
+        $FinancialReconciliationsTable.$converterledgerBalance.toSql(
+          ledgerBalance,
+        ),
+      );
+    }
+    {
+      map['difference'] = Variable<String>(
+        $FinancialReconciliationsTable.$converterdifference.toSql(difference),
+      );
+    }
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['verified_at'] = Variable<DateTime>(verifiedAt);
+    return map;
+  }
+
+  FinancialReconciliationsCompanion toCompanion(bool nullToAbsent) {
+    return FinancialReconciliationsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      periodMonth: Value(periodMonth),
+      accountId: Value(accountId),
+      unit: Value(unit),
+      statementBalance: Value(statementBalance),
+      ledgerBalance: Value(ledgerBalance),
+      difference: Value(difference),
+      status: Value(status),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      verifiedAt: Value(verifiedAt),
+    );
+  }
+
+  factory FinancialReconciliationRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FinancialReconciliationRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      periodMonth: serializer.fromJson<String>(json['periodMonth']),
+      accountId: serializer.fromJson<String>(json['accountId']),
+      unit: serializer.fromJson<String>(json['unit']),
+      statementBalance: serializer.fromJson<Decimal>(json['statementBalance']),
+      ledgerBalance: serializer.fromJson<Decimal>(json['ledgerBalance']),
+      difference: serializer.fromJson<Decimal>(json['difference']),
+      status: serializer.fromJson<String>(json['status']),
+      note: serializer.fromJson<String?>(json['note']),
+      verifiedAt: serializer.fromJson<DateTime>(json['verifiedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'periodMonth': serializer.toJson<String>(periodMonth),
+      'accountId': serializer.toJson<String>(accountId),
+      'unit': serializer.toJson<String>(unit),
+      'statementBalance': serializer.toJson<Decimal>(statementBalance),
+      'ledgerBalance': serializer.toJson<Decimal>(ledgerBalance),
+      'difference': serializer.toJson<Decimal>(difference),
+      'status': serializer.toJson<String>(status),
+      'note': serializer.toJson<String?>(note),
+      'verifiedAt': serializer.toJson<DateTime>(verifiedAt),
+    };
+  }
+
+  FinancialReconciliationRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? periodMonth,
+    String? accountId,
+    String? unit,
+    Decimal? statementBalance,
+    Decimal? ledgerBalance,
+    Decimal? difference,
+    String? status,
+    Value<String?> note = const Value.absent(),
+    DateTime? verifiedAt,
+  }) => FinancialReconciliationRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    periodMonth: periodMonth ?? this.periodMonth,
+    accountId: accountId ?? this.accountId,
+    unit: unit ?? this.unit,
+    statementBalance: statementBalance ?? this.statementBalance,
+    ledgerBalance: ledgerBalance ?? this.ledgerBalance,
+    difference: difference ?? this.difference,
+    status: status ?? this.status,
+    note: note.present ? note.value : this.note,
+    verifiedAt: verifiedAt ?? this.verifiedAt,
+  );
+  FinancialReconciliationRow copyWithCompanion(
+    FinancialReconciliationsCompanion data,
+  ) {
+    return FinancialReconciliationRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      periodMonth: data.periodMonth.present
+          ? data.periodMonth.value
+          : this.periodMonth,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      unit: data.unit.present ? data.unit.value : this.unit,
+      statementBalance: data.statementBalance.present
+          ? data.statementBalance.value
+          : this.statementBalance,
+      ledgerBalance: data.ledgerBalance.present
+          ? data.ledgerBalance.value
+          : this.ledgerBalance,
+      difference: data.difference.present
+          ? data.difference.value
+          : this.difference,
+      status: data.status.present ? data.status.value : this.status,
+      note: data.note.present ? data.note.value : this.note,
+      verifiedAt: data.verifiedAt.present
+          ? data.verifiedAt.value
+          : this.verifiedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FinancialReconciliationRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('periodMonth: $periodMonth, ')
+          ..write('accountId: $accountId, ')
+          ..write('unit: $unit, ')
+          ..write('statementBalance: $statementBalance, ')
+          ..write('ledgerBalance: $ledgerBalance, ')
+          ..write('difference: $difference, ')
+          ..write('status: $status, ')
+          ..write('note: $note, ')
+          ..write('verifiedAt: $verifiedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    periodMonth,
+    accountId,
+    unit,
+    statementBalance,
+    ledgerBalance,
+    difference,
+    status,
+    note,
+    verifiedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FinancialReconciliationRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.periodMonth == this.periodMonth &&
+          other.accountId == this.accountId &&
+          other.unit == this.unit &&
+          other.statementBalance == this.statementBalance &&
+          other.ledgerBalance == this.ledgerBalance &&
+          other.difference == this.difference &&
+          other.status == this.status &&
+          other.note == this.note &&
+          other.verifiedAt == this.verifiedAt);
+}
+
+class FinancialReconciliationsCompanion
+    extends UpdateCompanion<FinancialReconciliationRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> periodMonth;
+  final Value<String> accountId;
+  final Value<String> unit;
+  final Value<Decimal> statementBalance;
+  final Value<Decimal> ledgerBalance;
+  final Value<Decimal> difference;
+  final Value<String> status;
+  final Value<String?> note;
+  final Value<DateTime> verifiedAt;
+  final Value<int> rowid;
+  const FinancialReconciliationsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.periodMonth = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.unit = const Value.absent(),
+    this.statementBalance = const Value.absent(),
+    this.ledgerBalance = const Value.absent(),
+    this.difference = const Value.absent(),
+    this.status = const Value.absent(),
+    this.note = const Value.absent(),
+    this.verifiedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  FinancialReconciliationsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String periodMonth,
+    required String accountId,
+    required String unit,
+    required Decimal statementBalance,
+    required Decimal ledgerBalance,
+    required Decimal difference,
+    required String status,
+    this.note = const Value.absent(),
+    required DateTime verifiedAt,
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       periodMonth = Value(periodMonth),
+       accountId = Value(accountId),
+       unit = Value(unit),
+       statementBalance = Value(statementBalance),
+       ledgerBalance = Value(ledgerBalance),
+       difference = Value(difference),
+       status = Value(status),
+       verifiedAt = Value(verifiedAt);
+  static Insertable<FinancialReconciliationRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? periodMonth,
+    Expression<String>? accountId,
+    Expression<String>? unit,
+    Expression<String>? statementBalance,
+    Expression<String>? ledgerBalance,
+    Expression<String>? difference,
+    Expression<String>? status,
+    Expression<String>? note,
+    Expression<DateTime>? verifiedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (periodMonth != null) 'period_month': periodMonth,
+      if (accountId != null) 'account_id': accountId,
+      if (unit != null) 'unit': unit,
+      if (statementBalance != null) 'statement_balance': statementBalance,
+      if (ledgerBalance != null) 'ledger_balance': ledgerBalance,
+      if (difference != null) 'difference': difference,
+      if (status != null) 'status': status,
+      if (note != null) 'note': note,
+      if (verifiedAt != null) 'verified_at': verifiedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  FinancialReconciliationsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? periodMonth,
+    Value<String>? accountId,
+    Value<String>? unit,
+    Value<Decimal>? statementBalance,
+    Value<Decimal>? ledgerBalance,
+    Value<Decimal>? difference,
+    Value<String>? status,
+    Value<String?>? note,
+    Value<DateTime>? verifiedAt,
+    Value<int>? rowid,
+  }) {
+    return FinancialReconciliationsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      periodMonth: periodMonth ?? this.periodMonth,
+      accountId: accountId ?? this.accountId,
+      unit: unit ?? this.unit,
+      statementBalance: statementBalance ?? this.statementBalance,
+      ledgerBalance: ledgerBalance ?? this.ledgerBalance,
+      difference: difference ?? this.difference,
+      status: status ?? this.status,
+      note: note ?? this.note,
+      verifiedAt: verifiedAt ?? this.verifiedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $FinancialReconciliationsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (periodMonth.present) {
+      map['period_month'] = Variable<String>(periodMonth.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (unit.present) {
+      map['unit'] = Variable<String>(unit.value);
+    }
+    if (statementBalance.present) {
+      map['statement_balance'] = Variable<String>(
+        $FinancialReconciliationsTable.$converterstatementBalance.toSql(
+          statementBalance.value,
+        ),
+      );
+    }
+    if (ledgerBalance.present) {
+      map['ledger_balance'] = Variable<String>(
+        $FinancialReconciliationsTable.$converterledgerBalance.toSql(
+          ledgerBalance.value,
+        ),
+      );
+    }
+    if (difference.present) {
+      map['difference'] = Variable<String>(
+        $FinancialReconciliationsTable.$converterdifference.toSql(
+          difference.value,
+        ),
+      );
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (verifiedAt.present) {
+      map['verified_at'] = Variable<DateTime>(verifiedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FinancialReconciliationsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('periodMonth: $periodMonth, ')
+          ..write('accountId: $accountId, ')
+          ..write('unit: $unit, ')
+          ..write('statementBalance: $statementBalance, ')
+          ..write('ledgerBalance: $ledgerBalance, ')
+          ..write('difference: $difference, ')
+          ..write('status: $status, ')
+          ..write('note: $note, ')
+          ..write('verifiedAt: $verifiedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -35115,6 +36186,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $FinancialMonthlyClosesTable financialMonthlyCloses =
       $FinancialMonthlyClosesTable(this);
+  late final $FinancialReconciliationsTable financialReconciliations =
+      $FinancialReconciliationsTable(this);
   late final $DevicesTable devices = $DevicesTable(this);
   late final $OpLogsTable opLogs = $OpLogsTable(this);
   late final $MarketQuotesTable marketQuotes = $MarketQuotesTable(this);
@@ -35179,6 +36252,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     financialDecisions,
     financialSignals,
     financialMonthlyCloses,
+    financialReconciliations,
     devices,
     opLogs,
     marketQuotes,
@@ -43329,6 +44403,7 @@ typedef $$FinancialDecisionsTableCreateCompanionBuilder =
       required DateTime decidedAt,
       required DateTime reviewDate,
       Value<String?> actualOutcomeJson,
+      Value<String?> reviewEvidenceJson,
       Value<DateTime?> reviewedAt,
       Value<String> status,
       Value<int> rowid,
@@ -43350,6 +44425,7 @@ typedef $$FinancialDecisionsTableUpdateCompanionBuilder =
       Value<DateTime> decidedAt,
       Value<DateTime> reviewDate,
       Value<String?> actualOutcomeJson,
+      Value<String?> reviewEvidenceJson,
       Value<DateTime?> reviewedAt,
       Value<String> status,
       Value<int> rowid,
@@ -43437,6 +44513,11 @@ class $$FinancialDecisionsTableFilterComposer
 
   ColumnFilters<String> get actualOutcomeJson => $composableBuilder(
     column: $table.actualOutcomeJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get reviewEvidenceJson => $composableBuilder(
+    column: $table.reviewEvidenceJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -43535,6 +44616,11 @@ class $$FinancialDecisionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get reviewEvidenceJson => $composableBuilder(
+    column: $table.reviewEvidenceJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get reviewedAt => $composableBuilder(
     column: $table.reviewedAt,
     builder: (column) => ColumnOrderings(column),
@@ -43618,6 +44704,11 @@ class $$FinancialDecisionsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get reviewEvidenceJson => $composableBuilder(
+    column: $table.reviewEvidenceJson,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get reviewedAt => $composableBuilder(
     column: $table.reviewedAt,
     builder: (column) => column,
@@ -43682,6 +44773,7 @@ class $$FinancialDecisionsTableTableManager
                 Value<DateTime> decidedAt = const Value.absent(),
                 Value<DateTime> reviewDate = const Value.absent(),
                 Value<String?> actualOutcomeJson = const Value.absent(),
+                Value<String?> reviewEvidenceJson = const Value.absent(),
                 Value<DateTime?> reviewedAt = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -43701,6 +44793,7 @@ class $$FinancialDecisionsTableTableManager
                 decidedAt: decidedAt,
                 reviewDate: reviewDate,
                 actualOutcomeJson: actualOutcomeJson,
+                reviewEvidenceJson: reviewEvidenceJson,
                 reviewedAt: reviewedAt,
                 status: status,
                 rowid: rowid,
@@ -43722,6 +44815,7 @@ class $$FinancialDecisionsTableTableManager
                 required DateTime decidedAt,
                 required DateTime reviewDate,
                 Value<String?> actualOutcomeJson = const Value.absent(),
+                Value<String?> reviewEvidenceJson = const Value.absent(),
                 Value<DateTime?> reviewedAt = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -43741,6 +44835,7 @@ class $$FinancialDecisionsTableTableManager
                 decidedAt: decidedAt,
                 reviewDate: reviewDate,
                 actualOutcomeJson: actualOutcomeJson,
+                reviewEvidenceJson: reviewEvidenceJson,
                 reviewedAt: reviewedAt,
                 status: status,
                 rowid: rowid,
@@ -44238,8 +45333,10 @@ typedef $$FinancialMonthlyClosesTableCreateCompanionBuilder =
       Value<DateTime?> deletedAt,
       required String id,
       required String periodMonth,
-      Value<String> completedStepsJson,
+      Value<String> evidenceJson,
+      Value<String> snapshotJson,
       Value<String> status,
+      Value<String?> overrideReason,
       required DateTime startedAt,
       Value<DateTime?> closedAt,
       Value<int> rowid,
@@ -44253,8 +45350,10 @@ typedef $$FinancialMonthlyClosesTableUpdateCompanionBuilder =
       Value<DateTime?> deletedAt,
       Value<String> id,
       Value<String> periodMonth,
-      Value<String> completedStepsJson,
+      Value<String> evidenceJson,
+      Value<String> snapshotJson,
       Value<String> status,
+      Value<String?> overrideReason,
       Value<DateTime> startedAt,
       Value<DateTime?> closedAt,
       Value<int> rowid,
@@ -44305,13 +45404,23 @@ class $$FinancialMonthlyClosesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get completedStepsJson => $composableBuilder(
-    column: $table.completedStepsJson,
+  ColumnFilters<String> get evidenceJson => $composableBuilder(
+    column: $table.evidenceJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get snapshotJson => $composableBuilder(
+    column: $table.snapshotJson,
     builder: (column) => ColumnFilters(column),
   );
 
   ColumnFilters<String> get status => $composableBuilder(
     column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get overrideReason => $composableBuilder(
+    column: $table.overrideReason,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -44370,13 +45479,23 @@ class $$FinancialMonthlyClosesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get completedStepsJson => $composableBuilder(
-    column: $table.completedStepsJson,
+  ColumnOrderings<String> get evidenceJson => $composableBuilder(
+    column: $table.evidenceJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get snapshotJson => $composableBuilder(
+    column: $table.snapshotJson,
     builder: (column) => ColumnOrderings(column),
   );
 
   ColumnOrderings<String> get status => $composableBuilder(
     column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get overrideReason => $composableBuilder(
+    column: $table.overrideReason,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -44427,13 +45546,23 @@ class $$FinancialMonthlyClosesTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get completedStepsJson => $composableBuilder(
-    column: $table.completedStepsJson,
+  GeneratedColumn<String> get evidenceJson => $composableBuilder(
+    column: $table.evidenceJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get snapshotJson => $composableBuilder(
+    column: $table.snapshotJson,
     builder: (column) => column,
   );
 
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get overrideReason => $composableBuilder(
+    column: $table.overrideReason,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get startedAt =>
       $composableBuilder(column: $table.startedAt, builder: (column) => column);
@@ -44495,8 +45624,10 @@ class $$FinancialMonthlyClosesTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String> id = const Value.absent(),
                 Value<String> periodMonth = const Value.absent(),
-                Value<String> completedStepsJson = const Value.absent(),
+                Value<String> evidenceJson = const Value.absent(),
+                Value<String> snapshotJson = const Value.absent(),
                 Value<String> status = const Value.absent(),
+                Value<String?> overrideReason = const Value.absent(),
                 Value<DateTime> startedAt = const Value.absent(),
                 Value<DateTime?> closedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -44508,8 +45639,10 @@ class $$FinancialMonthlyClosesTableTableManager
                 deletedAt: deletedAt,
                 id: id,
                 periodMonth: periodMonth,
-                completedStepsJson: completedStepsJson,
+                evidenceJson: evidenceJson,
+                snapshotJson: snapshotJson,
                 status: status,
+                overrideReason: overrideReason,
                 startedAt: startedAt,
                 closedAt: closedAt,
                 rowid: rowid,
@@ -44523,8 +45656,10 @@ class $$FinancialMonthlyClosesTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 required String id,
                 required String periodMonth,
-                Value<String> completedStepsJson = const Value.absent(),
+                Value<String> evidenceJson = const Value.absent(),
+                Value<String> snapshotJson = const Value.absent(),
                 Value<String> status = const Value.absent(),
+                Value<String?> overrideReason = const Value.absent(),
                 required DateTime startedAt,
                 Value<DateTime?> closedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -44536,8 +45671,10 @@ class $$FinancialMonthlyClosesTableTableManager
                 deletedAt: deletedAt,
                 id: id,
                 periodMonth: periodMonth,
-                completedStepsJson: completedStepsJson,
+                evidenceJson: evidenceJson,
+                snapshotJson: snapshotJson,
                 status: status,
+                overrideReason: overrideReason,
                 startedAt: startedAt,
                 closedAt: closedAt,
                 rowid: rowid,
@@ -44569,6 +45706,436 @@ typedef $$FinancialMonthlyClosesTableProcessedTableManager =
         >,
       ),
       FinancialMonthlyCloseRow,
+      PrefetchHooks Function()
+    >;
+typedef $$FinancialReconciliationsTableCreateCompanionBuilder =
+    FinancialReconciliationsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String periodMonth,
+      required String accountId,
+      required String unit,
+      required Decimal statementBalance,
+      required Decimal ledgerBalance,
+      required Decimal difference,
+      required String status,
+      Value<String?> note,
+      required DateTime verifiedAt,
+      Value<int> rowid,
+    });
+typedef $$FinancialReconciliationsTableUpdateCompanionBuilder =
+    FinancialReconciliationsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> periodMonth,
+      Value<String> accountId,
+      Value<String> unit,
+      Value<Decimal> statementBalance,
+      Value<Decimal> ledgerBalance,
+      Value<Decimal> difference,
+      Value<String> status,
+      Value<String?> note,
+      Value<DateTime> verifiedAt,
+      Value<int> rowid,
+    });
+
+class $$FinancialReconciliationsTableFilterComposer
+    extends Composer<_$AppDatabase, $FinancialReconciliationsTable> {
+  $$FinancialReconciliationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get periodMonth => $composableBuilder(
+    column: $table.periodMonth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String>
+  get statementBalance => $composableBuilder(
+    column: $table.statementBalance,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get ledgerBalance =>
+      $composableBuilder(
+        column: $table.ledgerBalance,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get difference =>
+      $composableBuilder(
+        column: $table.difference,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get verifiedAt => $composableBuilder(
+    column: $table.verifiedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FinancialReconciliationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $FinancialReconciliationsTable> {
+  $$FinancialReconciliationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get periodMonth => $composableBuilder(
+    column: $table.periodMonth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get statementBalance => $composableBuilder(
+    column: $table.statementBalance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ledgerBalance => $composableBuilder(
+    column: $table.ledgerBalance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get difference => $composableBuilder(
+    column: $table.difference,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get verifiedAt => $composableBuilder(
+    column: $table.verifiedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FinancialReconciliationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FinancialReconciliationsTable> {
+  $$FinancialReconciliationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get periodMonth => $composableBuilder(
+    column: $table.periodMonth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<String> get unit =>
+      $composableBuilder(column: $table.unit, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get statementBalance =>
+      $composableBuilder(
+        column: $table.statementBalance,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get ledgerBalance =>
+      $composableBuilder(
+        column: $table.ledgerBalance,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get difference =>
+      $composableBuilder(
+        column: $table.difference,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get verifiedAt => $composableBuilder(
+    column: $table.verifiedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$FinancialReconciliationsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FinancialReconciliationsTable,
+          FinancialReconciliationRow,
+          $$FinancialReconciliationsTableFilterComposer,
+          $$FinancialReconciliationsTableOrderingComposer,
+          $$FinancialReconciliationsTableAnnotationComposer,
+          $$FinancialReconciliationsTableCreateCompanionBuilder,
+          $$FinancialReconciliationsTableUpdateCompanionBuilder,
+          (
+            FinancialReconciliationRow,
+            BaseReferences<
+              _$AppDatabase,
+              $FinancialReconciliationsTable,
+              FinancialReconciliationRow
+            >,
+          ),
+          FinancialReconciliationRow,
+          PrefetchHooks Function()
+        > {
+  $$FinancialReconciliationsTableTableManager(
+    _$AppDatabase db,
+    $FinancialReconciliationsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FinancialReconciliationsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$FinancialReconciliationsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$FinancialReconciliationsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> periodMonth = const Value.absent(),
+                Value<String> accountId = const Value.absent(),
+                Value<String> unit = const Value.absent(),
+                Value<Decimal> statementBalance = const Value.absent(),
+                Value<Decimal> ledgerBalance = const Value.absent(),
+                Value<Decimal> difference = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<DateTime> verifiedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FinancialReconciliationsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                periodMonth: periodMonth,
+                accountId: accountId,
+                unit: unit,
+                statementBalance: statementBalance,
+                ledgerBalance: ledgerBalance,
+                difference: difference,
+                status: status,
+                note: note,
+                verifiedAt: verifiedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String periodMonth,
+                required String accountId,
+                required String unit,
+                required Decimal statementBalance,
+                required Decimal ledgerBalance,
+                required Decimal difference,
+                required String status,
+                Value<String?> note = const Value.absent(),
+                required DateTime verifiedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => FinancialReconciliationsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                periodMonth: periodMonth,
+                accountId: accountId,
+                unit: unit,
+                statementBalance: statementBalance,
+                ledgerBalance: ledgerBalance,
+                difference: difference,
+                status: status,
+                note: note,
+                verifiedAt: verifiedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FinancialReconciliationsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FinancialReconciliationsTable,
+      FinancialReconciliationRow,
+      $$FinancialReconciliationsTableFilterComposer,
+      $$FinancialReconciliationsTableOrderingComposer,
+      $$FinancialReconciliationsTableAnnotationComposer,
+      $$FinancialReconciliationsTableCreateCompanionBuilder,
+      $$FinancialReconciliationsTableUpdateCompanionBuilder,
+      (
+        FinancialReconciliationRow,
+        BaseReferences<
+          _$AppDatabase,
+          $FinancialReconciliationsTable,
+          FinancialReconciliationRow
+        >,
+      ),
+      FinancialReconciliationRow,
       PrefetchHooks Function()
     >;
 typedef $$DevicesTableCreateCompanionBuilder =
@@ -51596,6 +53163,11 @@ class $AppDatabaseManager {
       $$FinancialMonthlyClosesTableTableManager(
         _db,
         _db.financialMonthlyCloses,
+      );
+  $$FinancialReconciliationsTableTableManager get financialReconciliations =>
+      $$FinancialReconciliationsTableTableManager(
+        _db,
+        _db.financialReconciliations,
       );
   $$DevicesTableTableManager get devices =>
       $$DevicesTableTableManager(_db, _db.devices);

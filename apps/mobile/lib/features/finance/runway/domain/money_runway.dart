@@ -5,6 +5,36 @@ enum MoneyRunwayStatus { healthy, watch, shortfall }
 
 enum MoneyRunwayConfidence { low, medium, high }
 
+enum MoneyRunwayScenarioKind { largePurchase, delayedIncome, reducedIncome }
+
+@immutable
+class MoneyRunwayScenario {
+  MoneyRunwayScenario.largePurchase(this.amount)
+    : kind = MoneyRunwayScenarioKind.largePurchase,
+      delayDays = 0,
+      reduction = Decimal.zero,
+      durationDays = 0;
+
+  MoneyRunwayScenario.delayedIncome(this.delayDays)
+    : kind = MoneyRunwayScenarioKind.delayedIncome,
+      amount = Decimal.zero,
+      reduction = Decimal.zero,
+      durationDays = 0;
+
+  MoneyRunwayScenario.reducedIncome({
+    required this.reduction,
+    this.durationDays = 90,
+  }) : kind = MoneyRunwayScenarioKind.reducedIncome,
+       amount = Decimal.zero,
+       delayDays = 0;
+
+  final MoneyRunwayScenarioKind kind;
+  final Decimal amount;
+  final int delayDays;
+  final Decimal reduction;
+  final int durationDays;
+}
+
 @immutable
 class RunwayScheduledFlow {
   const RunwayScheduledFlow({
@@ -189,6 +219,72 @@ MoneyRunwaySnapshot buildMoneyRunway({
     historicalForecastError: historicalForecastError,
     missingCurrencies: Set<String>.unmodifiable(missingCurrencies),
     hasData: hasData,
+  );
+}
+
+MoneyRunwaySnapshot applyMoneyRunwayScenario(
+  MoneyRunwaySnapshot base,
+  MoneyRunwayScenario scenario,
+) {
+  final horizonEnd = base.asOf.add(const Duration(days: 90));
+  final flows = <RunwayScheduledFlow>[];
+  for (final flow in base.scheduledFlows) {
+    switch (scenario.kind) {
+      case MoneyRunwayScenarioKind.largePurchase:
+        flows.add(flow);
+      case MoneyRunwayScenarioKind.delayedIncome:
+        final shifted = flow.amount > Decimal.zero
+            ? flow.date.add(Duration(days: scenario.delayDays))
+            : flow.date;
+        if (!shifted.isAfter(horizonEnd)) {
+          flows.add(
+            RunwayScheduledFlow(
+              id: '${flow.id}:scenario-delay',
+              date: shifted,
+              amount: flow.amount,
+              label: flow.label,
+            ),
+          );
+        }
+      case MoneyRunwayScenarioKind.reducedIncome:
+        final insideWindow = !flow.date.isAfter(
+          base.asOf.add(Duration(days: scenario.durationDays)),
+        );
+        flows.add(
+          RunwayScheduledFlow(
+            id: '${flow.id}:scenario-reduction',
+            date: flow.date,
+            amount: flow.amount > Decimal.zero && insideWindow
+                ? flow.amount * (Decimal.one - scenario.reduction)
+                : flow.amount,
+            label: flow.label,
+          ),
+        );
+    }
+  }
+  if (scenario.kind == MoneyRunwayScenarioKind.largePurchase) {
+    flows.add(
+      RunwayScheduledFlow(
+        id: 'scenario:large-purchase',
+        date: base.asOf,
+        amount: -scenario.amount.abs(),
+        label: 'Scenario purchase',
+      ),
+    );
+  }
+  return buildMoneyRunway(
+    asOf: base.asOf,
+    currency: base.currency,
+    startingBalance: base.startingBalance,
+    reserveTarget: base.reserveTarget,
+    averageMonthlyExpense: base.averageMonthlyExpense,
+    estimatedDailyVariableOutflow: base.estimatedDailyVariableOutflow,
+    scheduledFlows: flows,
+    confidence: base.confidence,
+    dataCompleteness: base.dataCompleteness,
+    historicalForecastError: base.historicalForecastError,
+    missingCurrencies: base.missingCurrencies,
+    hasData: base.hasData,
   );
 }
 

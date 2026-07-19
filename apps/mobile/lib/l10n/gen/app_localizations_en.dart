@@ -13478,6 +13478,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get monthlyCloseCompleted => 'Month closed';
 
   @override
+  String get monthlyCloseReconciliationTitle => 'Account reconciliation';
+
+  @override
+  String get monthlyCloseLedgerBalance =>
+      'Ledger balance at the end of this period';
+
+  @override
+  String monthlyCloseDifference(String amount, String unit) {
+    return 'Difference: $amount $unit';
+  }
+
+  @override
+  String get monthlyCloseEnterStatementBalance => 'Enter statement balance';
+
+  @override
+  String monthlyCloseStatementBalanceTitle(String account) {
+    return 'Statement balance for $account';
+  }
+
+  @override
+  String get monthlyCloseAcceptDifference => 'Accept difference';
+
+  @override
+  String get monthlyCloseDifferenceReasonTitle =>
+      'Why is this difference accepted?';
+
+  @override
+  String get monthlyCloseDifferenceReasonHint => 'Record the unresolved reason';
+
+  @override
+  String get monthlyCloseWithException => 'Close with exception';
+
+  @override
+  String get monthlyCloseExceptionTitle => 'Explain the close exception';
+
+  @override
+  String get monthlyCloseExceptionHint =>
+      'Record why the remaining evidence is accepted';
+
+  @override
+  String get monthlyCloseStateBlocked => 'Blocked';
+
+  @override
+  String get monthlyCloseStateReady => 'Ready';
+
+  @override
+  String get monthlyCloseStateVerified => 'Verified';
+
+  @override
+  String get monthlyCloseStateOverridden => 'Accepted';
+
+  @override
+  String get monthlyCloseVerifiedBody =>
+      'Every evidence check was verified when this month was closed.';
+
+  @override
+  String monthlyCloseOverriddenBody(String reason) {
+    return 'Closed with exception: $reason';
+  }
+
+  @override
   String financialInboxCount(int count) {
     return '$count items need attention';
   }
@@ -13521,11 +13582,62 @@ class AppLocalizationsEn extends AppLocalizations {
       'Missing rates reduce forecast confidence.';
 
   @override
+  String financialInboxBalanceTitle(int count) {
+    return 'Resolve $count balance differences';
+  }
+
+  @override
+  String get financialInboxBalanceBody =>
+      'Statement and ledger balances do not match.';
+
+  @override
+  String get financialInboxAnomalyTitle => 'Review unusual spending';
+
+  @override
+  String get financialInboxAnomalyBody =>
+      'Projected spending differs materially from recent months.';
+
+  @override
+  String financialInboxSubscriptionTitle(int count) {
+    return 'Review $count subscription changes';
+  }
+
+  @override
+  String get financialInboxSubscriptionBody =>
+      'A recurring payment changed beyond the local threshold.';
+
+  @override
+  String financialInboxValuationTitle(int count) {
+    return 'Refresh $count stale valuations';
+  }
+
+  @override
+  String get financialInboxValuationBody =>
+      'Stale prices reduce the reliability of your current position.';
+
+  @override
+  String get financialInboxDecisionTitle => 'Review a financial decision';
+
+  @override
+  String get financialInboxDecisionBody =>
+      'The scheduled outcome review is now due.';
+
+  @override
   String get settingsProductMetricsTitle => 'Local product metrics';
 
   @override
   String get settingsProductMetricsSubtitle =>
       'Opt in to device-only funnel counters. No financial values or identifiers are recorded or uploaded.';
+
+  @override
+  String get settingsProductMetricsCopy => 'Copy product evidence';
+
+  @override
+  String get settingsProductMetricsCopySubtitle =>
+      'Export privacy-safe daily and total aggregates from this device.';
+
+  @override
+  String get settingsProductMetricsCopied => 'Product evidence copied';
 
   @override
   String get lifeEventScenariosTitle => 'Life-event scenarios';
@@ -13616,6 +13728,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lifeEventDecisionSaved => 'Decision and assumptions saved';
+
+  @override
+  String lifeEventReviewActionTitle(String decision) {
+    return 'Review decision: $decision';
+  }
+
+  @override
+  String get lifeEventReviewActionBody =>
+      'Compare the deterministic forecast with observed financial data. Do not infer causality.';
 
   @override
   String get lifeEventDecisionHistory => 'Decisions to review';
@@ -13732,6 +13853,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moneyRunwayHistoricalError => 'Recent forecast error';
+
+  @override
+  String get moneyRunwayScenariosTitle =>
+      'Quick stress tests · minimum balance';
+
+  @override
+  String get moneyRunwayScenarioPurchase => 'Spend one month of expenses now';
+
+  @override
+  String get moneyRunwayScenarioDelayedIncome =>
+      'Delay expected income by 14 days';
+
+  @override
+  String get moneyRunwayScenarioReducedIncome =>
+      'Reduce expected income by 30%';
 
   @override
   String moneyRunwayCoverageMonths(Object months) {

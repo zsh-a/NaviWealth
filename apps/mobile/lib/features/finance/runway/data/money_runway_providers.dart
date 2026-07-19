@@ -10,6 +10,7 @@ import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
+import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
 
 import '../../../../core/auth/current_user.dart';
 import '../../../../core/persistence/providers.dart';
@@ -42,15 +43,24 @@ final moneyRunwayProvider = Provider<AsyncValue<MoneyRunwaySnapshot>>((ref) {
   final recurring = ref.watch(recurringTransactionsProvider);
   final events = ref.watch(cashFlowEventsProvider);
   final accounts = ref.watch(allAccountsStreamProvider);
+  final liabilities = ref.watch(liabilitiesStreamProvider);
+  final schedules = ref.watch(allLiabilitySchedulesProvider);
 
   if (dashboard.isLoading ||
       recurring.isLoading ||
       events.isLoading ||
-      accounts.isLoading) {
+      accounts.isLoading ||
+      liabilities.isLoading ||
+      schedules.isLoading) {
     return const AsyncValue<MoneyRunwaySnapshot>.loading();
   }
   final error =
-      dashboard.error ?? recurring.error ?? events.error ?? accounts.error;
+      dashboard.error ??
+      recurring.error ??
+      events.error ??
+      accounts.error ??
+      liabilities.error ??
+      schedules.error;
   if (error != null) {
     return AsyncValue<MoneyRunwaySnapshot>.error(error, StackTrace.current);
   }
@@ -107,6 +117,79 @@ final moneyRunwayProvider = Provider<AsyncValue<MoneyRunwaySnapshot>>((ref) {
           label: template.entry.payee ?? template.entry.narration,
         ),
       );
+    }
+
+    final liabilitiesById = {
+      for (final liability in liabilities.requireValue) liability.id: liability,
+    };
+    for (final entry in schedules.requireValue.entries) {
+      final liability = liabilitiesById[entry.key];
+      if (liability == null) continue;
+      for (final payment in entry.value) {
+        if (payment.paidAt != null ||
+            payment.dueDate.isBefore(now) ||
+            payment.dueDate.isAfter(window.to)) {
+          continue;
+        }
+        final nativeAmount = payment.principalPayment + payment.interestPayment;
+        Decimal amount;
+        try {
+          amount = converter
+              .convert(
+                Money(nativeAmount, liability.currency),
+                baseCurrency,
+                on: payment.dueDate,
+              )
+              .amount;
+        } on Object {
+          missingCurrencies.add(liability.currency.toUpperCase());
+          continue;
+        }
+        if (_matchesScheduledOutflow(flows, payment.dueDate, amount)) continue;
+        flows.add(
+          RunwayScheduledFlow(
+            id: 'liability:${payment.id}',
+            date: payment.dueDate,
+            amount: -amount.abs(),
+            label: liability.name,
+          ),
+        );
+      }
+    }
+    for (final liability in liabilities.requireValue) {
+      if ((schedules.requireValue[liability.id]?.isNotEmpty ?? false) ||
+          liability.monthlyPayment == null ||
+          liability.monthlyPayment! <= Decimal.zero ||
+          liability.paymentDueDay == null) {
+        continue;
+      }
+      for (var monthOffset = 0; monthOffset <= 3; monthOffset++) {
+        final month = DateTime.utc(now.year, now.month + monthOffset);
+        final due = _clampedMonthDay(month, liability.paymentDueDay!);
+        if (due.isBefore(now) || due.isAfter(window.to)) continue;
+        Decimal amount;
+        try {
+          amount = converter
+              .convert(
+                Money(liability.monthlyPayment!, liability.currency),
+                baseCurrency,
+                on: due,
+              )
+              .amount;
+        } on Object {
+          missingCurrencies.add(liability.currency.toUpperCase());
+          continue;
+        }
+        if (_matchesScheduledOutflow(flows, due, amount)) continue;
+        flows.add(
+          RunwayScheduledFlow(
+            id: 'liability:${liability.id}:${due.year}-${due.month}',
+            date: due,
+            amount: -amount.abs(),
+            label: liability.name,
+          ),
+        );
+      }
     }
 
     final history = events.requireValue.events
@@ -198,13 +281,34 @@ final moneyRunwayProvider = Provider<AsyncValue<MoneyRunwaySnapshot>>((ref) {
 bool _isLiquidAccount(Account account) {
   if (account.archived || account.category != AccountSide.asset) return false;
   return switch (account.type) {
-    AccountCategory.cash ||
-    AccountCategory.bank ||
-    AccountCategory.broker => true,
+    AccountCategory.cash || AccountCategory.bank => true,
+    AccountCategory.broker => false,
     AccountCategory.crypto ||
     AccountCategory.credit ||
     AccountCategory.loan ||
     AccountCategory.asset ||
     AccountCategory.liability => false,
   };
+}
+
+bool _matchesScheduledOutflow(
+  List<RunwayScheduledFlow> flows,
+  DateTime date,
+  Decimal amount,
+) {
+  final day = DateTime.utc(date.year, date.month, date.day);
+  return flows.any((flow) {
+    if (flow.amount >= Decimal.zero) return false;
+    final flowDay = DateTime.utc(
+      flow.date.year,
+      flow.date.month,
+      flow.date.day,
+    );
+    return flowDay == day && flow.amount.abs() == amount.abs();
+  });
+}
+
+DateTime _clampedMonthDay(DateTime month, int requestedDay) {
+  final lastDay = DateTime.utc(month.year, month.month + 1, 0).day;
+  return DateTime.utc(month.year, month.month, requestedDay.clamp(1, lastDay));
 }

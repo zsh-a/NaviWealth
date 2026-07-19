@@ -22836,6 +22836,108 @@ abstract class AppLocalizations {
   /// **'Month closed'**
   String get monthlyCloseCompleted;
 
+  /// No description provided for @monthlyCloseReconciliationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account reconciliation'**
+  String get monthlyCloseReconciliationTitle;
+
+  /// No description provided for @monthlyCloseLedgerBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Ledger balance at the end of this period'**
+  String get monthlyCloseLedgerBalance;
+
+  /// No description provided for @monthlyCloseDifference.
+  ///
+  /// In en, this message translates to:
+  /// **'Difference: {amount} {unit}'**
+  String monthlyCloseDifference(String amount, String unit);
+
+  /// No description provided for @monthlyCloseEnterStatementBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter statement balance'**
+  String get monthlyCloseEnterStatementBalance;
+
+  /// No description provided for @monthlyCloseStatementBalanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Statement balance for {account}'**
+  String monthlyCloseStatementBalanceTitle(String account);
+
+  /// No description provided for @monthlyCloseAcceptDifference.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept difference'**
+  String get monthlyCloseAcceptDifference;
+
+  /// No description provided for @monthlyCloseDifferenceReasonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Why is this difference accepted?'**
+  String get monthlyCloseDifferenceReasonTitle;
+
+  /// No description provided for @monthlyCloseDifferenceReasonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Record the unresolved reason'**
+  String get monthlyCloseDifferenceReasonHint;
+
+  /// No description provided for @monthlyCloseWithException.
+  ///
+  /// In en, this message translates to:
+  /// **'Close with exception'**
+  String get monthlyCloseWithException;
+
+  /// No description provided for @monthlyCloseExceptionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Explain the close exception'**
+  String get monthlyCloseExceptionTitle;
+
+  /// No description provided for @monthlyCloseExceptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Record why the remaining evidence is accepted'**
+  String get monthlyCloseExceptionHint;
+
+  /// No description provided for @monthlyCloseStateBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked'**
+  String get monthlyCloseStateBlocked;
+
+  /// No description provided for @monthlyCloseStateReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get monthlyCloseStateReady;
+
+  /// No description provided for @monthlyCloseStateVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get monthlyCloseStateVerified;
+
+  /// No description provided for @monthlyCloseStateOverridden.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get monthlyCloseStateOverridden;
+
+  /// No description provided for @monthlyCloseVerifiedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Every evidence check was verified when this month was closed.'**
+  String get monthlyCloseVerifiedBody;
+
+  /// No description provided for @monthlyCloseOverriddenBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed with exception: {reason}'**
+  String monthlyCloseOverriddenBody(String reason);
+
   /// No description provided for @financialInboxCount.
   ///
   /// In en, this message translates to:
@@ -22902,6 +23004,66 @@ abstract class AppLocalizations {
   /// **'Missing rates reduce forecast confidence.'**
   String get financialInboxFxBody;
 
+  /// No description provided for @financialInboxBalanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve {count} balance differences'**
+  String financialInboxBalanceTitle(int count);
+
+  /// No description provided for @financialInboxBalanceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Statement and ledger balances do not match.'**
+  String get financialInboxBalanceBody;
+
+  /// No description provided for @financialInboxAnomalyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review unusual spending'**
+  String get financialInboxAnomalyTitle;
+
+  /// No description provided for @financialInboxAnomalyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Projected spending differs materially from recent months.'**
+  String get financialInboxAnomalyBody;
+
+  /// No description provided for @financialInboxSubscriptionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review {count} subscription changes'**
+  String financialInboxSubscriptionTitle(int count);
+
+  /// No description provided for @financialInboxSubscriptionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A recurring payment changed beyond the local threshold.'**
+  String get financialInboxSubscriptionBody;
+
+  /// No description provided for @financialInboxValuationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh {count} stale valuations'**
+  String financialInboxValuationTitle(int count);
+
+  /// No description provided for @financialInboxValuationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Stale prices reduce the reliability of your current position.'**
+  String get financialInboxValuationBody;
+
+  /// No description provided for @financialInboxDecisionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review a financial decision'**
+  String get financialInboxDecisionTitle;
+
+  /// No description provided for @financialInboxDecisionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The scheduled outcome review is now due.'**
+  String get financialInboxDecisionBody;
+
   /// No description provided for @settingsProductMetricsTitle.
   ///
   /// In en, this message translates to:
@@ -22913,6 +23075,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Opt in to device-only funnel counters. No financial values or identifiers are recorded or uploaded.'**
   String get settingsProductMetricsSubtitle;
+
+  /// No description provided for @settingsProductMetricsCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy product evidence'**
+  String get settingsProductMetricsCopy;
+
+  /// No description provided for @settingsProductMetricsCopySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Export privacy-safe daily and total aggregates from this device.'**
+  String get settingsProductMetricsCopySubtitle;
+
+  /// No description provided for @settingsProductMetricsCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Product evidence copied'**
+  String get settingsProductMetricsCopied;
 
   /// No description provided for @lifeEventScenariosTitle.
   ///
@@ -23075,6 +23255,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Decision and assumptions saved'**
   String get lifeEventDecisionSaved;
+
+  /// No description provided for @lifeEventReviewActionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review decision: {decision}'**
+  String lifeEventReviewActionTitle(String decision);
+
+  /// No description provided for @lifeEventReviewActionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare the deterministic forecast with observed financial data. Do not infer causality.'**
+  String get lifeEventReviewActionBody;
 
   /// No description provided for @lifeEventDecisionHistory.
   ///
@@ -23279,6 +23471,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recent forecast error'**
   String get moneyRunwayHistoricalError;
+
+  /// No description provided for @moneyRunwayScenariosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick stress tests · minimum balance'**
+  String get moneyRunwayScenariosTitle;
+
+  /// No description provided for @moneyRunwayScenarioPurchase.
+  ///
+  /// In en, this message translates to:
+  /// **'Spend one month of expenses now'**
+  String get moneyRunwayScenarioPurchase;
+
+  /// No description provided for @moneyRunwayScenarioDelayedIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Delay expected income by 14 days'**
+  String get moneyRunwayScenarioDelayedIncome;
+
+  /// No description provided for @moneyRunwayScenarioReducedIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce expected income by 30%'**
+  String get moneyRunwayScenarioReducedIncome;
 
   /// No description provided for @moneyRunwayCoverageMonths.
   ///

@@ -70,6 +70,14 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
       return (draft) => _dispatchLifeAction(ref, draft);
     }),
     lifeActionReviewRouteProvider.overrideWith((ref) => ExecutionRoutes.review),
+    lifeOpenActionCountProvider.overrideWith((ref) {
+      final executionActive = ref
+          .watch(activeDomainPacksProvider)
+          .any((pack) => pack.scope == DomainScope.execution);
+      if (!executionActive) return const AsyncValue<int?>.data(null);
+      final actions = ref.watch(executionOpenActionsProvider);
+      return actions.whenData((rows) => rows.length);
+    }),
     deviceToolsProvider.overrideWith(
       (ref) => domainDeviceTools(ref.watch(activeDomainPacksProvider)),
     ),
