@@ -1,9 +1,8 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:naviwealth/core/logging/app_logger.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// Save backup bytes to a file.
@@ -35,18 +34,18 @@ Future<bool> saveBackupFileImpl(Uint8List bytes, String fileName) async {
     return true;
   }
 
-  // Mobile: share sheet.
+  // Mobile: share sheet. Let share_plus materialize the in-memory file in its
+  // own cache. On Android the plugin rejects source files already located in
+  // cache/share_plus because it clears that directory before every share.
   logger.d('file_saver: mobile platform, using share sheet');
-  final dir = await getTemporaryDirectory();
-  // Write into the share_plus/ subdirectory so the plugin's FileProvider
-  // can serve the file (its paths config only exposes cache/share_plus/).
-  final shareDir = Directory('${dir.path}/share_plus');
-  if (!await shareDir.exists()) {
-    await shareDir.create(recursive: true);
-  }
-  final file = File('${shareDir.path}/$fileName');
-  await file.writeAsBytes(bytes);
-  logger.d('file_saver: wrote temp file ${file.path}');
-  await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
+  await SharePlus.instance.share(buildMobileBackupShareParams(bytes, fileName));
   return true;
+}
+
+@visibleForTesting
+ShareParams buildMobileBackupShareParams(Uint8List bytes, String fileName) {
+  return ShareParams(
+    files: <XFile>[XFile.fromData(bytes, mimeType: 'application/octet-stream')],
+    fileNameOverrides: <String>[fileName],
+  );
 }
