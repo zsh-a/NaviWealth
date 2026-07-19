@@ -46,6 +46,7 @@ import '../features/execution/composition/execution_route_paths.dart';
 import '../features/execution/data/providers.dart';
 import '../features/execution/domain/execution_models.dart';
 import '../features/finance/composition/finance_route_paths.dart';
+import '../features/finance/inbox/data/financial_inbox_providers.dart';
 import '../features/health/composition/health_route_paths.dart';
 import '../features/knowledge/composition/knowledge_route_paths.dart';
 import '../l10n/gen/app_localizations.dart';
@@ -65,7 +66,32 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
           (context, widgetRef) => askAi(context, widgetRef),
     ),
     domainPackRegistryProvider.overrideWith((ref) => resolvedPacks),
-    actionOutcomeSummariesProvider.overrideWith(watchLifeActionOutcomes),
+    actionOutcomeSummariesProvider.overrideWith((ref) {
+      final outcomes = <String, ActionOutcomeSummary>{
+        ...watchLifeActionOutcomes(ref),
+        ...?ref.watch(financialActionOutcomeSummariesProvider).value,
+      };
+      return Map.unmodifiable(outcomes);
+    }),
+    lifeClosedActionsProvider.overrideWith((ref) {
+      return ref
+          .watch(executionClosedActionsProvider)
+          .whenData(
+            (actions) => <LifeClosedAction>[
+              for (final action in actions)
+                if (action.completedAt != null)
+                  LifeClosedAction(
+                    id: action.id,
+                    status: action.status == ExecutionActionStatus.done
+                        ? LifeClosedActionStatus.done
+                        : LifeClosedActionStatus.dropped,
+                    completedAt: action.completedAt!,
+                    sourceRowFamily: action.source.rowFamily,
+                    sourceRowId: action.source.rowId,
+                  ),
+            ],
+          );
+    }),
     lifeActionDispatcherProvider.overrideWith((ref) {
       return (draft) => _dispatchLifeAction(ref, draft);
     }),

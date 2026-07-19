@@ -143,7 +143,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 46;
+  int get schemaVersion => 47;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -727,6 +727,26 @@ class AppDatabase extends _$AppDatabase {
           table: 'financial_signals',
           column: 'action_id',
           definition: 'TEXT',
+        );
+      }
+      if (from < 47) {
+        await _addColumnIfMissing(
+          this,
+          table: 'financial_signals',
+          column: 'revalidation_status',
+          definition: 'TEXT',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'financial_signals',
+          column: 'revalidated_at',
+          definition: 'INTEGER',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'financial_signals',
+          column: 'action_completed_at',
+          definition: 'INTEGER',
         );
       }
     },

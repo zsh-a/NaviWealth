@@ -15789,6 +15789,18 @@ abstract class AppLocalizations {
   /// **'Review entries'**
   String get ingestReviewTitle;
 
+  /// No description provided for @ingestCopyDiagnostics.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy privacy-safe import diagnostics'**
+  String get ingestCopyDiagnostics;
+
+  /// No description provided for @ingestDiagnosticsCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Import diagnostics copied'**
+  String get ingestDiagnosticsCopied;
+
   /// Ingest review: accounts stream error
   ///
   /// In en, this message translates to:
@@ -23703,7 +23715,7 @@ abstract class AppLocalizations {
   /// No description provided for @financialInboxActionDone.
   ///
   /// In en, this message translates to:
-  /// **'Completed — signal rechecked'**
+  /// **'Completed'**
   String get financialInboxActionDone;
 
   /// No description provided for @financialInboxActionDropped.
@@ -23717,6 +23729,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unavailable'**
   String get financialInboxActionUnknown;
+
+  /// No description provided for @financialInboxRevalidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Source revalidation'**
+  String get financialInboxRevalidation;
+
+  /// No description provided for @financialInboxRevalidationCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleared in a later complete check'**
+  String get financialInboxRevalidationCleared;
+
+  /// No description provided for @financialInboxRevalidationStillDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Still detected after completion'**
+  String get financialInboxRevalidationStillDetected;
+
+  /// No description provided for @financialInboxRevalidationInconclusive.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not complete the source check'**
+  String get financialInboxRevalidationInconclusive;
+
+  /// No description provided for @financialInboxRevalidationActionDropped.
+  ///
+  /// In en, this message translates to:
+  /// **'Action dropped; signal remains open'**
+  String get financialInboxRevalidationActionDropped;
+
+  /// No description provided for @financialInboxRevalidatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Revalidated at'**
+  String get financialInboxRevalidatedAt;
 
   /// No description provided for @monthlyCloseCoverageTitle.
   ///
@@ -23741,6 +23789,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Previous close took {minutes} minutes.'**
   String monthlyClosePreviousDuration(int minutes);
+
+  /// No description provided for @monthlyCloseCarriedForward.
+  ///
+  /// In en, this message translates to:
+  /// **'Still open from last close: {signals} signals, {reconciliations} reconciliation exceptions.'**
+  String monthlyCloseCarriedForward(int signals, int reconciliations);
+
+  /// No description provided for @monthlyCloseHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Close history'**
+  String get monthlyCloseHistoryTitle;
+
+  /// No description provided for @monthlyCloseHistoryExceptions.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} exceptions'**
+  String monthlyCloseHistoryExceptions(int count);
+
+  /// No description provided for @monthlyCloseHistoryDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String monthlyCloseHistoryDuration(int minutes);
 }
 
 class _AppLocalizationsDelegate

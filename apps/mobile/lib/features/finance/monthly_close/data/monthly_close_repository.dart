@@ -61,6 +61,27 @@ class MonthlyCloseRepository {
     );
   }
 
+  Stream<List<MonthlyClose>> watchHistory({int limit = 12}) async* {
+    final owner = await _stamper.currentUserId();
+    final query = _db.select(_db.financialMonthlyCloses)
+      ..where(
+        (table) =>
+            table.ownerUserId.equals(owner) &
+            table.closedAt.isNotNull() &
+            table.deletedAt.isNull(),
+      )
+      ..orderBy([
+        (table) => OrderingTerm(
+          expression: table.periodMonth,
+          mode: OrderingMode.desc,
+        ),
+      ])
+      ..limit(limit);
+    yield* query.watch().map(
+      (rows) => rows.map(_fromRow).toList(growable: false),
+    );
+  }
+
   Future<MonthlyClose> begin({
     required String periodMonth,
     required MonthlyCloseEvidence evidence,

@@ -164,6 +164,8 @@ class _InboxDetail extends ConsumerWidget {
     final actionState = item.actionId == null
         ? const AsyncValue<LifeActionState?>.data(null)
         : ref.watch(lifeActionStateProvider(item.actionId!));
+    final canCreateAction =
+        item.actionId == null || actionState.value == LifeActionState.dropped;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -207,6 +209,17 @@ class _InboxDetail extends ConsumerWidget {
             value: _actionStateLabel(l10n, actionState.value),
           ),
         ],
+        if (item.revalidationStatus != null) ...[
+          _EvidenceRow(
+            label: l10n.financialInboxRevalidation,
+            value: _revalidationLabel(l10n, item.revalidationStatus!),
+          ),
+          if (item.revalidatedAt != null)
+            _EvidenceRow(
+              label: l10n.financialInboxRevalidatedAt,
+              value: _dateTime(item.revalidatedAt!),
+            ),
+        ],
         const SizedBox(height: AppSpacing.s20),
         FButton(
           onPress: () {
@@ -219,7 +232,7 @@ class _InboxDetail extends ConsumerWidget {
         const SizedBox(height: AppSpacing.s8),
         FButton(
           variant: FButtonVariant.secondary,
-          onPress: item.actionId == null
+          onPress: canCreateAction
               ? () => _createAction(context, ref, l10n)
               : () {
                   final route = ref.read(lifeActionReviewRouteProvider);
@@ -229,7 +242,7 @@ class _InboxDetail extends ConsumerWidget {
                   router.push(route);
                 },
           child: Text(
-            item.actionId == null
+            canCreateAction
                 ? l10n.financialInboxCreateAction
                 : l10n.financialInboxViewAction,
           ),
@@ -390,3 +403,17 @@ String _actionStateLabel(AppLocalizations l10n, LifeActionState? state) =>
       LifeActionState.dropped => l10n.financialInboxActionDropped,
       null => l10n.financialInboxActionUnknown,
     };
+
+String _revalidationLabel(
+  AppLocalizations l10n,
+  FinancialSignalRevalidationStatus status,
+) => switch (status) {
+  FinancialSignalRevalidationStatus.cleared =>
+    l10n.financialInboxRevalidationCleared,
+  FinancialSignalRevalidationStatus.stillDetected =>
+    l10n.financialInboxRevalidationStillDetected,
+  FinancialSignalRevalidationStatus.inconclusive =>
+    l10n.financialInboxRevalidationInconclusive,
+  FinancialSignalRevalidationStatus.actionDropped =>
+    l10n.financialInboxRevalidationActionDropped,
+};

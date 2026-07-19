@@ -13,7 +13,7 @@ void main() {
 
     await controller.record(ProductFunnelEvent.importReviewCompleted);
     expect(
-      preferences.getString('naviwealth.product_metrics.aggregates.v4'),
+      preferences.getString('naviwealth.product_metrics.aggregates.v5'),
       isNull,
     );
 
@@ -41,15 +41,29 @@ void main() {
       ProductFunnelEvent.monthlyCloseCompleted,
       success: true,
     );
+    await controller.record(
+      ProductFunnelEvent.financialSignalRevalidatedCleared,
+      success: true,
+      quantity: 2,
+    );
+    await controller.record(
+      ProductFunnelEvent.importCycleCompleted,
+      success: true,
+      quantity: 3,
+    );
+    await controller.record(
+      ProductFunnelEvent.importReviewCorrected,
+      quantity: 2,
+    );
 
     final stored =
         jsonDecode(
               preferences.getString(
-                'naviwealth.product_metrics.aggregates.v4',
+                'naviwealth.product_metrics.aggregates.v5',
               )!,
             )
             as Map<String, Object?>;
-    expect(stored['schema_version'], 4);
+    expect(stored['schema_version'], 5);
     expect(
       (stored['totals']! as Map<String, Object?>)['importReviewCompleted'],
       <String, Object?>{
@@ -66,12 +80,24 @@ void main() {
         'success_count': 1,
       },
     );
+    expect(
+      (stored['totals']!
+          as Map<String, Object?>)['financialSignalRevalidatedCleared'],
+      <String, Object?>{'count': 2, 'success_count': 2},
+    );
+    expect(
+      (stored['totals']! as Map<String, Object?>)['importReviewCorrected'],
+      <String, Object?>{'count': 2},
+    );
 
     final report = controller.exportAggregates();
     expect(report['derived'], <String, Object?>{
       'active_day_count': 2,
       'first_useful_result_day_count': 1,
-      'import_cycle_day_count': 2,
+      'import_cycle_day_count': 1,
+      'import_cycle_count': 3,
+      'completed_second_import_cycle': true,
+      'completed_third_import_cycle': true,
       'inbox_clear_day_count': 0,
       'monthly_close_day_count': 1,
     });

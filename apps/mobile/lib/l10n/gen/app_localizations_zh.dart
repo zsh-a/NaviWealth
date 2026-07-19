@@ -8845,6 +8845,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ingestReviewTitle => '录入待确认';
 
   @override
+  String get ingestCopyDiagnostics => '复制隐私安全的导入诊断';
+
+  @override
+  String get ingestDiagnosticsCopied => '导入诊断已复制';
+
+  @override
   String ingestAccountsLoadError(String error) {
     return '账户加载失败：$error';
   }
@@ -13318,13 +13324,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get financialInboxActionBlocked => '受阻';
 
   @override
-  String get financialInboxActionDone => '已完成，信号已重新检查';
+  String get financialInboxActionDone => '已完成';
 
   @override
   String get financialInboxActionDropped => '已放弃';
 
   @override
   String get financialInboxActionUnknown => '不可用';
+
+  @override
+  String get financialInboxRevalidation => '来源复核';
+
+  @override
+  String get financialInboxRevalidationCleared => '后续完整检查中已消失';
+
+  @override
+  String get financialInboxRevalidationStillDetected => '行动完成后仍被检测到';
+
+  @override
+  String get financialInboxRevalidationInconclusive => '未能完成来源检查';
+
+  @override
+  String get financialInboxRevalidationActionDropped => '行动已放弃，信号保持打开';
+
+  @override
+  String get financialInboxRevalidatedAt => '复核时间';
 
   @override
   String get monthlyCloseCoverageTitle => '账户覆盖率';
@@ -13342,5 +13366,23 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String monthlyClosePreviousDuration(int minutes) {
     return '上次关账耗时 $minutes 分钟。';
+  }
+
+  @override
+  String monthlyCloseCarriedForward(int signals, int reconciliations) {
+    return '上次月结遗留：$signals 个信号，$reconciliations 个对账异常。';
+  }
+
+  @override
+  String get monthlyCloseHistoryTitle => '月结历史';
+
+  @override
+  String monthlyCloseHistoryExceptions(int count) {
+    return '$count 个异常';
+  }
+
+  @override
+  String monthlyCloseHistoryDuration(int minutes) {
+    return '$minutes 分钟';
   }
 }

@@ -13,6 +13,13 @@ enum FinancialInboxPriority { attention, important }
 
 enum FinancialSignalStatus { open, snoozed, resolved }
 
+enum FinancialSignalRevalidationStatus {
+  cleared,
+  stillDetected,
+  inconclusive,
+  actionDropped,
+}
+
 final class FinancialSignalCandidate {
   const FinancialSignalCandidate({
     required this.sourceKey,
@@ -43,6 +50,9 @@ final class FinancialInboxItem {
     required this.firstDetectedAt,
     required this.lastDetectedAt,
     this.actionId,
+    this.revalidationStatus,
+    this.revalidatedAt,
+    this.actionCompletedAt,
   });
 
   final String id;
@@ -55,4 +65,25 @@ final class FinancialInboxItem {
   final DateTime firstDetectedAt;
   final DateTime lastDetectedAt;
   final String? actionId;
+  final FinancialSignalRevalidationStatus? revalidationStatus;
+  final DateTime? revalidatedAt;
+  final DateTime? actionCompletedAt;
+}
+
+final class FinancialSignalRevalidationReport {
+  const FinancialSignalRevalidationReport({
+    this.actionCompleted = 0,
+    this.cleared = 0,
+    this.stillDetected = 0,
+    this.inconclusive = 0,
+    this.actionDropped = 0,
+  });
+
+  final int actionCompleted;
+  final int cleared;
+  final int stillDetected;
+  final int inconclusive;
+  final int actionDropped;
+
+  int get processed => cleared + stillDetected + inconclusive + actionDropped;
 }

@@ -102,6 +102,7 @@ void main() {
       evidence: _evidence(MonthlyCloseStepState.verified),
       snapshot: const <String, Object?>{
         'active_signal_keys': ['old', 'shared'],
+        'reconciliation_exception_keys': ['recon-cleared', 'recon-shared'],
         'close_duration_ms': 120000,
       },
       status: 'closed',
@@ -115,6 +116,7 @@ void main() {
       },
       details: const <String, Object?>{
         'active_signal_keys': ['shared', 'new'],
+        'reconciliation_exception_keys': ['recon-shared', 'recon-new'],
       },
     );
 
@@ -124,7 +126,25 @@ void main() {
     );
     expect(comparison.newSignalKeys, {'new'});
     expect(comparison.clearedSignalKeys, {'old'});
+    expect(comparison.carriedSignalKeys, {'shared'});
+    expect(comparison.carriedReconciliationKeys, {'recon-shared'});
     expect(comparison.previousDuration, const Duration(minutes: 2));
+  });
+
+  test('history returns closed months newest first', () async {
+    final evidence = _evidence(MonthlyCloseStepState.verified);
+    for (final month in const ['2026-05', '2026-07', '2026-06']) {
+      await repository.close(
+        periodMonth: month,
+        evidence: evidence,
+        snapshot: const <String, Object?>{},
+        now: DateTime.utc(2026, 7, 31),
+      );
+    }
+
+    final history = await repository.watchHistory(limit: 2).first;
+
+    expect(history.map((close) => close.periodMonth), ['2026-07', '2026-06']);
   });
 }
 

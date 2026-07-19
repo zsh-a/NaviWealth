@@ -150,6 +150,11 @@ final previousMonthlyCloseProvider = StreamProvider.autoDispose<MonthlyClose?>((
   yield* repository.watchPreviousClosed(ref.watch(currentClosePeriodProvider));
 });
 
+final monthlyCloseHistoryProvider = StreamProvider.autoDispose((ref) async* {
+  final repository = await ref.watch(monthlyCloseRepositoryProvider.future);
+  yield* repository.watchHistory();
+});
+
 final monthlyCloseComparisonProvider =
     Provider.autoDispose<AsyncValue<MonthlyCloseComparison>>((ref) {
       final evidence = ref.watch(monthlyCloseEvidenceProvider);

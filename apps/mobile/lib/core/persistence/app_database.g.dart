@@ -18926,6 +18926,41 @@ class $FinancialSignalsTable extends FinancialSignals
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _revalidationStatusMeta =
+      const VerificationMeta('revalidationStatus');
+  @override
+  late final GeneratedColumn<String> revalidationStatus =
+      GeneratedColumn<String>(
+        'revalidation_status',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _revalidatedAtMeta = const VerificationMeta(
+    'revalidatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> revalidatedAt =
+      GeneratedColumn<DateTime>(
+        'revalidated_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _actionCompletedAtMeta = const VerificationMeta(
+    'actionCompletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> actionCompletedAt =
+      GeneratedColumn<DateTime>(
+        'action_completed_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
@@ -18946,6 +18981,9 @@ class $FinancialSignalsTable extends FinancialSignals
     snoozedUntil,
     resolvedAt,
     actionId,
+    revalidationStatus,
+    revalidatedAt,
+    actionCompletedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -19101,6 +19139,33 @@ class $FinancialSignalsTable extends FinancialSignals
         actionId.isAcceptableOrUnknown(data['action_id']!, _actionIdMeta),
       );
     }
+    if (data.containsKey('revalidation_status')) {
+      context.handle(
+        _revalidationStatusMeta,
+        revalidationStatus.isAcceptableOrUnknown(
+          data['revalidation_status']!,
+          _revalidationStatusMeta,
+        ),
+      );
+    }
+    if (data.containsKey('revalidated_at')) {
+      context.handle(
+        _revalidatedAtMeta,
+        revalidatedAt.isAcceptableOrUnknown(
+          data['revalidated_at']!,
+          _revalidatedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('action_completed_at')) {
+      context.handle(
+        _actionCompletedAtMeta,
+        actionCompletedAt.isAcceptableOrUnknown(
+          data['action_completed_at']!,
+          _actionCompletedAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -19184,6 +19249,18 @@ class $FinancialSignalsTable extends FinancialSignals
         DriftSqlType.string,
         data['${effectivePrefix}action_id'],
       ),
+      revalidationStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}revalidation_status'],
+      ),
+      revalidatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}revalidated_at'],
+      ),
+      actionCompletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}action_completed_at'],
+      ),
     );
   }
 
@@ -19231,6 +19308,9 @@ class FinancialSignalRow extends DataClass
   final DateTime? snoozedUntil;
   final DateTime? resolvedAt;
   final String? actionId;
+  final String? revalidationStatus;
+  final DateTime? revalidatedAt;
+  final DateTime? actionCompletedAt;
   const FinancialSignalRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -19250,6 +19330,9 @@ class FinancialSignalRow extends DataClass
     this.snoozedUntil,
     this.resolvedAt,
     this.actionId,
+    this.revalidationStatus,
+    this.revalidatedAt,
+    this.actionCompletedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -19284,6 +19367,15 @@ class FinancialSignalRow extends DataClass
     if (!nullToAbsent || actionId != null) {
       map['action_id'] = Variable<String>(actionId);
     }
+    if (!nullToAbsent || revalidationStatus != null) {
+      map['revalidation_status'] = Variable<String>(revalidationStatus);
+    }
+    if (!nullToAbsent || revalidatedAt != null) {
+      map['revalidated_at'] = Variable<DateTime>(revalidatedAt);
+    }
+    if (!nullToAbsent || actionCompletedAt != null) {
+      map['action_completed_at'] = Variable<DateTime>(actionCompletedAt);
+    }
     return map;
   }
 
@@ -19315,6 +19407,15 @@ class FinancialSignalRow extends DataClass
       actionId: actionId == null && nullToAbsent
           ? const Value.absent()
           : Value(actionId),
+      revalidationStatus: revalidationStatus == null && nullToAbsent
+          ? const Value.absent()
+          : Value(revalidationStatus),
+      revalidatedAt: revalidatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(revalidatedAt),
+      actionCompletedAt: actionCompletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(actionCompletedAt),
     );
   }
 
@@ -19342,6 +19443,13 @@ class FinancialSignalRow extends DataClass
       snoozedUntil: serializer.fromJson<DateTime?>(json['snoozedUntil']),
       resolvedAt: serializer.fromJson<DateTime?>(json['resolvedAt']),
       actionId: serializer.fromJson<String?>(json['actionId']),
+      revalidationStatus: serializer.fromJson<String?>(
+        json['revalidationStatus'],
+      ),
+      revalidatedAt: serializer.fromJson<DateTime?>(json['revalidatedAt']),
+      actionCompletedAt: serializer.fromJson<DateTime?>(
+        json['actionCompletedAt'],
+      ),
     );
   }
   @override
@@ -19366,6 +19474,9 @@ class FinancialSignalRow extends DataClass
       'snoozedUntil': serializer.toJson<DateTime?>(snoozedUntil),
       'resolvedAt': serializer.toJson<DateTime?>(resolvedAt),
       'actionId': serializer.toJson<String?>(actionId),
+      'revalidationStatus': serializer.toJson<String?>(revalidationStatus),
+      'revalidatedAt': serializer.toJson<DateTime?>(revalidatedAt),
+      'actionCompletedAt': serializer.toJson<DateTime?>(actionCompletedAt),
     };
   }
 
@@ -19388,6 +19499,9 @@ class FinancialSignalRow extends DataClass
     Value<DateTime?> snoozedUntil = const Value.absent(),
     Value<DateTime?> resolvedAt = const Value.absent(),
     Value<String?> actionId = const Value.absent(),
+    Value<String?> revalidationStatus = const Value.absent(),
+    Value<DateTime?> revalidatedAt = const Value.absent(),
+    Value<DateTime?> actionCompletedAt = const Value.absent(),
   }) => FinancialSignalRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -19407,6 +19521,15 @@ class FinancialSignalRow extends DataClass
     snoozedUntil: snoozedUntil.present ? snoozedUntil.value : this.snoozedUntil,
     resolvedAt: resolvedAt.present ? resolvedAt.value : this.resolvedAt,
     actionId: actionId.present ? actionId.value : this.actionId,
+    revalidationStatus: revalidationStatus.present
+        ? revalidationStatus.value
+        : this.revalidationStatus,
+    revalidatedAt: revalidatedAt.present
+        ? revalidatedAt.value
+        : this.revalidatedAt,
+    actionCompletedAt: actionCompletedAt.present
+        ? actionCompletedAt.value
+        : this.actionCompletedAt,
   );
   FinancialSignalRow copyWithCompanion(FinancialSignalsCompanion data) {
     return FinancialSignalRow(
@@ -19444,6 +19567,15 @@ class FinancialSignalRow extends DataClass
           ? data.resolvedAt.value
           : this.resolvedAt,
       actionId: data.actionId.present ? data.actionId.value : this.actionId,
+      revalidationStatus: data.revalidationStatus.present
+          ? data.revalidationStatus.value
+          : this.revalidationStatus,
+      revalidatedAt: data.revalidatedAt.present
+          ? data.revalidatedAt.value
+          : this.revalidatedAt,
+      actionCompletedAt: data.actionCompletedAt.present
+          ? data.actionCompletedAt.value
+          : this.actionCompletedAt,
     );
   }
 
@@ -19467,13 +19599,16 @@ class FinancialSignalRow extends DataClass
           ..write('lastDetectedAt: $lastDetectedAt, ')
           ..write('snoozedUntil: $snoozedUntil, ')
           ..write('resolvedAt: $resolvedAt, ')
-          ..write('actionId: $actionId')
+          ..write('actionId: $actionId, ')
+          ..write('revalidationStatus: $revalidationStatus, ')
+          ..write('revalidatedAt: $revalidatedAt, ')
+          ..write('actionCompletedAt: $actionCompletedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     ownerUserId,
     updatedAt,
     updatedByDevice,
@@ -19492,7 +19627,10 @@ class FinancialSignalRow extends DataClass
     snoozedUntil,
     resolvedAt,
     actionId,
-  );
+    revalidationStatus,
+    revalidatedAt,
+    actionCompletedAt,
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -19514,7 +19652,10 @@ class FinancialSignalRow extends DataClass
           other.lastDetectedAt == this.lastDetectedAt &&
           other.snoozedUntil == this.snoozedUntil &&
           other.resolvedAt == this.resolvedAt &&
-          other.actionId == this.actionId);
+          other.actionId == this.actionId &&
+          other.revalidationStatus == this.revalidationStatus &&
+          other.revalidatedAt == this.revalidatedAt &&
+          other.actionCompletedAt == this.actionCompletedAt);
 }
 
 class FinancialSignalsCompanion extends UpdateCompanion<FinancialSignalRow> {
@@ -19536,6 +19677,9 @@ class FinancialSignalsCompanion extends UpdateCompanion<FinancialSignalRow> {
   final Value<DateTime?> snoozedUntil;
   final Value<DateTime?> resolvedAt;
   final Value<String?> actionId;
+  final Value<String?> revalidationStatus;
+  final Value<DateTime?> revalidatedAt;
+  final Value<DateTime?> actionCompletedAt;
   final Value<int> rowid;
   const FinancialSignalsCompanion({
     this.ownerUserId = const Value.absent(),
@@ -19556,6 +19700,9 @@ class FinancialSignalsCompanion extends UpdateCompanion<FinancialSignalRow> {
     this.snoozedUntil = const Value.absent(),
     this.resolvedAt = const Value.absent(),
     this.actionId = const Value.absent(),
+    this.revalidationStatus = const Value.absent(),
+    this.revalidatedAt = const Value.absent(),
+    this.actionCompletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   FinancialSignalsCompanion.insert({
@@ -19577,6 +19724,9 @@ class FinancialSignalsCompanion extends UpdateCompanion<FinancialSignalRow> {
     this.snoozedUntil = const Value.absent(),
     this.resolvedAt = const Value.absent(),
     this.actionId = const Value.absent(),
+    this.revalidationStatus = const Value.absent(),
+    this.revalidatedAt = const Value.absent(),
+    this.actionCompletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -19609,6 +19759,9 @@ class FinancialSignalsCompanion extends UpdateCompanion<FinancialSignalRow> {
     Expression<DateTime>? snoozedUntil,
     Expression<DateTime>? resolvedAt,
     Expression<String>? actionId,
+    Expression<String>? revalidationStatus,
+    Expression<DateTime>? revalidatedAt,
+    Expression<DateTime>? actionCompletedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -19630,6 +19783,9 @@ class FinancialSignalsCompanion extends UpdateCompanion<FinancialSignalRow> {
       if (snoozedUntil != null) 'snoozed_until': snoozedUntil,
       if (resolvedAt != null) 'resolved_at': resolvedAt,
       if (actionId != null) 'action_id': actionId,
+      if (revalidationStatus != null) 'revalidation_status': revalidationStatus,
+      if (revalidatedAt != null) 'revalidated_at': revalidatedAt,
+      if (actionCompletedAt != null) 'action_completed_at': actionCompletedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -19653,6 +19809,9 @@ class FinancialSignalsCompanion extends UpdateCompanion<FinancialSignalRow> {
     Value<DateTime?>? snoozedUntil,
     Value<DateTime?>? resolvedAt,
     Value<String?>? actionId,
+    Value<String?>? revalidationStatus,
+    Value<DateTime?>? revalidatedAt,
+    Value<DateTime?>? actionCompletedAt,
     Value<int>? rowid,
   }) {
     return FinancialSignalsCompanion(
@@ -19674,6 +19833,9 @@ class FinancialSignalsCompanion extends UpdateCompanion<FinancialSignalRow> {
       snoozedUntil: snoozedUntil ?? this.snoozedUntil,
       resolvedAt: resolvedAt ?? this.resolvedAt,
       actionId: actionId ?? this.actionId,
+      revalidationStatus: revalidationStatus ?? this.revalidationStatus,
+      revalidatedAt: revalidatedAt ?? this.revalidatedAt,
+      actionCompletedAt: actionCompletedAt ?? this.actionCompletedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -19737,6 +19899,15 @@ class FinancialSignalsCompanion extends UpdateCompanion<FinancialSignalRow> {
     if (actionId.present) {
       map['action_id'] = Variable<String>(actionId.value);
     }
+    if (revalidationStatus.present) {
+      map['revalidation_status'] = Variable<String>(revalidationStatus.value);
+    }
+    if (revalidatedAt.present) {
+      map['revalidated_at'] = Variable<DateTime>(revalidatedAt.value);
+    }
+    if (actionCompletedAt.present) {
+      map['action_completed_at'] = Variable<DateTime>(actionCompletedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -19764,6 +19935,9 @@ class FinancialSignalsCompanion extends UpdateCompanion<FinancialSignalRow> {
           ..write('snoozedUntil: $snoozedUntil, ')
           ..write('resolvedAt: $resolvedAt, ')
           ..write('actionId: $actionId, ')
+          ..write('revalidationStatus: $revalidationStatus, ')
+          ..write('revalidatedAt: $revalidatedAt, ')
+          ..write('actionCompletedAt: $actionCompletedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -44938,6 +45112,9 @@ typedef $$FinancialSignalsTableCreateCompanionBuilder =
       Value<DateTime?> snoozedUntil,
       Value<DateTime?> resolvedAt,
       Value<String?> actionId,
+      Value<String?> revalidationStatus,
+      Value<DateTime?> revalidatedAt,
+      Value<DateTime?> actionCompletedAt,
       Value<int> rowid,
     });
 typedef $$FinancialSignalsTableUpdateCompanionBuilder =
@@ -44960,6 +45137,9 @@ typedef $$FinancialSignalsTableUpdateCompanionBuilder =
       Value<DateTime?> snoozedUntil,
       Value<DateTime?> resolvedAt,
       Value<String?> actionId,
+      Value<String?> revalidationStatus,
+      Value<DateTime?> revalidatedAt,
+      Value<DateTime?> actionCompletedAt,
       Value<int> rowid,
     });
 
@@ -45062,6 +45242,21 @@ class $$FinancialSignalsTableFilterComposer
     column: $table.actionId,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get revalidationStatus => $composableBuilder(
+    column: $table.revalidationStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get revalidatedAt => $composableBuilder(
+    column: $table.revalidatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get actionCompletedAt => $composableBuilder(
+    column: $table.actionCompletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$FinancialSignalsTableOrderingComposer
@@ -45162,6 +45357,21 @@ class $$FinancialSignalsTableOrderingComposer
     column: $table.actionId,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get revalidationStatus => $composableBuilder(
+    column: $table.revalidationStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get revalidatedAt => $composableBuilder(
+    column: $table.revalidatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get actionCompletedAt => $composableBuilder(
+    column: $table.actionCompletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$FinancialSignalsTableAnnotationComposer
@@ -45242,6 +45452,21 @@ class $$FinancialSignalsTableAnnotationComposer
 
   GeneratedColumn<String> get actionId =>
       $composableBuilder(column: $table.actionId, builder: (column) => column);
+
+  GeneratedColumn<String> get revalidationStatus => $composableBuilder(
+    column: $table.revalidationStatus,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get revalidatedAt => $composableBuilder(
+    column: $table.revalidatedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get actionCompletedAt => $composableBuilder(
+    column: $table.actionCompletedAt,
+    builder: (column) => column,
+  );
 }
 
 class $$FinancialSignalsTableTableManager
@@ -45299,6 +45524,9 @@ class $$FinancialSignalsTableTableManager
                 Value<DateTime?> snoozedUntil = const Value.absent(),
                 Value<DateTime?> resolvedAt = const Value.absent(),
                 Value<String?> actionId = const Value.absent(),
+                Value<String?> revalidationStatus = const Value.absent(),
+                Value<DateTime?> revalidatedAt = const Value.absent(),
+                Value<DateTime?> actionCompletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => FinancialSignalsCompanion(
                 ownerUserId: ownerUserId,
@@ -45319,6 +45547,9 @@ class $$FinancialSignalsTableTableManager
                 snoozedUntil: snoozedUntil,
                 resolvedAt: resolvedAt,
                 actionId: actionId,
+                revalidationStatus: revalidationStatus,
+                revalidatedAt: revalidatedAt,
+                actionCompletedAt: actionCompletedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -45341,6 +45572,9 @@ class $$FinancialSignalsTableTableManager
                 Value<DateTime?> snoozedUntil = const Value.absent(),
                 Value<DateTime?> resolvedAt = const Value.absent(),
                 Value<String?> actionId = const Value.absent(),
+                Value<String?> revalidationStatus = const Value.absent(),
+                Value<DateTime?> revalidatedAt = const Value.absent(),
+                Value<DateTime?> actionCompletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => FinancialSignalsCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -45361,6 +45595,9 @@ class $$FinancialSignalsTableTableManager
                 snoozedUntil: snoozedUntil,
                 resolvedAt: resolvedAt,
                 actionId: actionId,
+                revalidationStatus: revalidationStatus,
+                revalidatedAt: revalidatedAt,
+                actionCompletedAt: actionCompletedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

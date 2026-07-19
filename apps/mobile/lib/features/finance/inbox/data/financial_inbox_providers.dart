@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/lifeos/action_outcome.dart';
 import '../../../../core/persistence/providers.dart';
+import '../../../../core/product/product_metrics.dart';
 import '../../../../core/sync/mutation_context.dart';
 import '../../../../core/sync/outbox_provider.dart';
 import '../../ai_tools/expense_to_transaction_input.dart';
@@ -28,6 +30,13 @@ final financialSignalRepositoryProvider =
         stamper: await ref.watch(mutationStamperProvider.future),
       );
     });
+
+final financialActionOutcomeSummariesProvider = StreamProvider.autoDispose((
+  ref,
+) async* {
+  final repository = await ref.watch(financialSignalRepositoryProvider.future);
+  yield* repository.watchActionOutcomes();
+});
 
 final financialSignalCandidatesProvider =
     Provider.autoDispose<AsyncValue<List<FinancialSignalCandidate>>>((ref) {
@@ -261,6 +270,107 @@ final financialInboxScanProvider =
         now: ref.watch(financialInboxNowProvider),
       );
     });
+
+/// Background closure of Finance-owned Execution actions. A complete detector
+/// snapshot is required before absence can resolve a signal; loading never
+/// becomes an inferred clearance.
+final financialSignalRevalidationProvider =
+    FutureProvider<FinancialSignalRevalidationReport>((ref) async {
+      final closed = ref.watch(lifeClosedActionsProvider);
+      if (!closed.hasValue) {
+        if (closed.hasError) {
+          Error.throwWithStackTrace(closed.error!, closed.stackTrace!);
+        }
+        return const FinancialSignalRevalidationReport();
+      }
+      final relevant = closed.requireValue
+          .where(
+            (action) =>
+                action.sourceRowFamily == 'fin:financial_signals' &&
+                action.sourceRowId != null,
+          )
+          .toList(growable: false);
+      if (relevant.isEmpty) {
+        return const FinancialSignalRevalidationReport();
+      }
+      final repository = await ref.watch(
+        financialSignalRepositoryProvider.future,
+      );
+      var report = await repository.revalidateClosedActions(
+        actions: relevant
+            .where((action) => action.status == LifeClosedActionStatus.dropped)
+            .toList(growable: false),
+        candidates: const <FinancialSignalCandidate>[],
+        observedAt: _observationAfter(relevant),
+      );
+      final completed = relevant
+          .where((action) => action.status == LifeClosedActionStatus.done)
+          .toList(growable: false);
+      if (completed.isNotEmpty) {
+        final candidates = ref.watch(financialSignalScanCandidatesProvider);
+        if (candidates.isLoading) {
+          await _recordRevalidationMetrics(ref, report);
+          return report;
+        }
+        final completedReport = await repository.revalidateClosedActions(
+          actions: completed,
+          candidates: candidates.hasError ? null : candidates.requireValue,
+          observedAt: _observationAfter(completed),
+        );
+        report = FinancialSignalRevalidationReport(
+          actionCompleted:
+              report.actionCompleted + completedReport.actionCompleted,
+          cleared: report.cleared + completedReport.cleared,
+          stillDetected: report.stillDetected + completedReport.stillDetected,
+          inconclusive: report.inconclusive + completedReport.inconclusive,
+          actionDropped: report.actionDropped + completedReport.actionDropped,
+        );
+      }
+      await _recordRevalidationMetrics(ref, report);
+      return report;
+    });
+
+DateTime _observationAfter(List<LifeClosedAction> actions) {
+  final latest = actions
+      .map((action) => action.completedAt.toUtc())
+      .reduce((a, b) => a.isAfter(b) ? a : b);
+  final now = DateTime.now().toUtc();
+  return now.isAfter(latest)
+      ? now
+      : latest.add(const Duration(microseconds: 1));
+}
+
+Future<void> _recordRevalidationMetrics(
+  Ref ref,
+  FinancialSignalRevalidationReport report,
+) async {
+  final metrics = ref.read(productMetricsProvider.notifier);
+  await metrics.record(
+    ProductFunnelEvent.executionActionCompleted,
+    success: true,
+    quantity: report.actionCompleted,
+  );
+  await metrics.record(
+    ProductFunnelEvent.executionActionDropped,
+    success: false,
+    quantity: report.actionDropped,
+  );
+  await metrics.record(
+    ProductFunnelEvent.financialSignalRevalidatedCleared,
+    success: true,
+    quantity: report.cleared,
+  );
+  await metrics.record(
+    ProductFunnelEvent.financialSignalRevalidatedStillActive,
+    success: false,
+    quantity: report.stillDetected,
+  );
+  await metrics.record(
+    ProductFunnelEvent.financialSignalRevalidationInconclusive,
+    success: false,
+    quantity: report.inconclusive,
+  );
+}
 
 String _periodKey(DateTime value) =>
     '${value.year.toString().padLeft(4, '0')}-'

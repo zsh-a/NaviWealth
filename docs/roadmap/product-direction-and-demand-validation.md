@@ -330,13 +330,18 @@ implementation evidence, not demand evidence:
   loading never resolves an existing signal. Each item exposes its evidence
   and detection window, links back to the source repair route, and can create
   a source-preserving Execution action whose lifecycle remains visible from
-  the signal.
+  the signal. Completing that action now triggers a later Finance evaluation:
+  a complete scan can clear the signal, a redetection keeps it open, and an
+  incomplete scan records an inconclusive result instead of guessing. Dropped
+  actions leave the source signal open and allow a replacement action.
 - Monthly Close is evidence-driven. Account statement balances are compared
   with the exact period-end ledger sum; balanced, mismatched, and explicitly
   overridden facts are synced. A close stores its evidence and aggregate
   snapshot instead of manual checklist state. Open close sessions resume
   after navigation or restart, account coverage is explicit, and subsequent
-  closes compare new and cleared signals plus the previous completion time.
+  closes compare new, cleared, and carried-forward exceptions plus the
+  previous completion time. A compact close history makes repeated-close
+  speed and unresolved exception carry-over visible without exposing values.
 - Money Runway excludes brokerage value from default spendable cash, includes
   unpaid amortization rows, deduplicates matching scheduled outflows, runs
   purchase/income-delay/income-reduction stress cases, and records daily
@@ -348,6 +353,11 @@ implementation evidence, not demand evidence:
 - Opt-in product evidence uses local 90-day daily buckets plus cumulative
   counters. Settings can explicitly copy the privacy-safe aggregate report;
   no financial values, labels, routes, or row identifiers are included.
+  Version 5 adds import-cycle retention, accepted/rejected/deduplicated row
+  counts, account-review corrections, action completion/drop outcomes, and
+  post-action signal revalidation outcomes. Import review can also explicitly
+  copy a parser-quality report containing only stable source/issue enums and
+  counts—never source rows, descriptions, amounts, currencies, or account ids.
 
 The next product step is therefore the six-week task study below. The current
 activation, Inbox, and repeated-close paths are the instrumentation surface

@@ -9319,6 +9319,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ingestReviewTitle => 'Review entries';
 
   @override
+  String get ingestCopyDiagnostics => 'Copy privacy-safe import diagnostics';
+
+  @override
+  String get ingestDiagnosticsCopied => 'Import diagnostics copied';
+
+  @override
   String ingestAccountsLoadError(String error) {
     return 'Failed to load accounts: $error';
   }
@@ -13984,13 +13990,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get financialInboxActionBlocked => 'Blocked';
 
   @override
-  String get financialInboxActionDone => 'Completed — signal rechecked';
+  String get financialInboxActionDone => 'Completed';
 
   @override
   String get financialInboxActionDropped => 'Dropped';
 
   @override
   String get financialInboxActionUnknown => 'Unavailable';
+
+  @override
+  String get financialInboxRevalidation => 'Source revalidation';
+
+  @override
+  String get financialInboxRevalidationCleared =>
+      'Cleared in a later complete check';
+
+  @override
+  String get financialInboxRevalidationStillDetected =>
+      'Still detected after completion';
+
+  @override
+  String get financialInboxRevalidationInconclusive =>
+      'Could not complete the source check';
+
+  @override
+  String get financialInboxRevalidationActionDropped =>
+      'Action dropped; signal remains open';
+
+  @override
+  String get financialInboxRevalidatedAt => 'Revalidated at';
 
   @override
   String get monthlyCloseCoverageTitle => 'Account coverage';
@@ -14008,5 +14036,23 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String monthlyClosePreviousDuration(int minutes) {
     return 'Previous close took $minutes minutes.';
+  }
+
+  @override
+  String monthlyCloseCarriedForward(int signals, int reconciliations) {
+    return 'Still open from last close: $signals signals, $reconciliations reconciliation exceptions.';
+  }
+
+  @override
+  String get monthlyCloseHistoryTitle => 'Close history';
+
+  @override
+  String monthlyCloseHistoryExceptions(int count) {
+    return '$count exceptions';
+  }
+
+  @override
+  String monthlyCloseHistoryDuration(int minutes) {
+    return '$minutes min';
   }
 }

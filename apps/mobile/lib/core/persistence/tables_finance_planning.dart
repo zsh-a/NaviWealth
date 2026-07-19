@@ -40,6 +40,9 @@ class FinancialSignals extends Table with SyncableTable {
   DateTimeColumn get snoozedUntil => dateTime().nullable()();
   DateTimeColumn get resolvedAt => dateTime().nullable()();
   TextColumn get actionId => text().nullable()();
+  TextColumn get revalidationStatus => text().nullable()();
+  DateTimeColumn get revalidatedAt => dateTime().nullable()();
+  DateTimeColumn get actionCompletedAt => dateTime().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

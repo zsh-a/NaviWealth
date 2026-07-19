@@ -5186,6 +5186,8 @@
   "aiCapsuleExpandFallback": "Expand",
 
   "ingestReviewTitle": "Review entries",
+  "ingestCopyDiagnostics": "Copy privacy-safe import diagnostics",
+  "ingestDiagnosticsCopied": "Import diagnostics copied",
   "@ingestReviewTitle": { "description": "Layer 4 ingest review page title" },
   "ingestAccountsLoadError": "Failed to load accounts: {error}",
   "@ingestAccountsLoadError": {
@@ -7016,14 +7018,27 @@
   "financialInboxActionTodo": "To do",
   "financialInboxActionDoing": "In progress",
   "financialInboxActionBlocked": "Blocked",
-  "financialInboxActionDone": "Completed — signal rechecked",
+  "financialInboxActionDone": "Completed",
   "financialInboxActionDropped": "Dropped",
   "financialInboxActionUnknown": "Unavailable",
+  "financialInboxRevalidation": "Source revalidation",
+  "financialInboxRevalidationCleared": "Cleared in a later complete check",
+  "financialInboxRevalidationStillDetected": "Still detected after completion",
+  "financialInboxRevalidationInconclusive": "Could not complete the source check",
+  "financialInboxRevalidationActionDropped": "Action dropped; signal remains open",
+  "financialInboxRevalidatedAt": "Revalidated at",
   "monthlyCloseCoverageTitle": "Account coverage",
   "monthlyCloseCoverageValue": "{accepted}/{total}",
   "@monthlyCloseCoverageValue": { "placeholders": { "accepted": { "type": "int" }, "total": { "type": "int" } } },
   "monthlyCloseSincePrevious": "Since the previous close: {newCount} new signals, {clearedCount} cleared.",
   "@monthlyCloseSincePrevious": { "placeholders": { "newCount": { "type": "int" }, "clearedCount": { "type": "int" } } },
   "monthlyClosePreviousDuration": "Previous close took {minutes} minutes.",
-  "@monthlyClosePreviousDuration": { "placeholders": { "minutes": { "type": "int" } } }
+  "@monthlyClosePreviousDuration": { "placeholders": { "minutes": { "type": "int" } } },
+  "monthlyCloseCarriedForward": "Still open from last close: {signals} signals, {reconciliations} reconciliation exceptions.",
+  "@monthlyCloseCarriedForward": { "placeholders": { "signals": { "type": "int" }, "reconciliations": { "type": "int" } } },
+  "monthlyCloseHistoryTitle": "Close history",
+  "monthlyCloseHistoryExceptions": "{count} exceptions",
+  "@monthlyCloseHistoryExceptions": { "placeholders": { "count": { "type": "int" } } },
+  "monthlyCloseHistoryDuration": "{minutes} min",
+  "@monthlyCloseHistoryDuration": { "placeholders": { "minutes": { "type": "int" } } }
 }

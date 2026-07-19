@@ -71,17 +71,23 @@ final class MonthlyCloseComparison {
   const MonthlyCloseComparison({
     required this.newSignalKeys,
     required this.clearedSignalKeys,
+    required this.carriedSignalKeys,
+    required this.carriedReconciliationKeys,
     required this.previousDuration,
   });
 
   final Set<String> newSignalKeys;
   final Set<String> clearedSignalKeys;
+  final Set<String> carriedSignalKeys;
+  final Set<String> carriedReconciliationKeys;
   final Duration? previousDuration;
 
   bool get hasPrevious =>
       previousDuration != null ||
       newSignalKeys.isNotEmpty ||
-      clearedSignalKeys.isNotEmpty;
+      clearedSignalKeys.isNotEmpty ||
+      carriedSignalKeys.isNotEmpty ||
+      carriedReconciliationKeys.isNotEmpty;
 }
 
 MonthlyCloseComparison compareMonthlyCloseEvidence({
@@ -90,10 +96,20 @@ MonthlyCloseComparison compareMonthlyCloseEvidence({
 }) {
   final currentSignals = _stringSet(current.details['active_signal_keys']);
   final previousSignals = _stringSet(previous?.snapshot['active_signal_keys']);
+  final currentReconciliations = _stringSet(
+    current.details['reconciliation_exception_keys'],
+  );
+  final previousReconciliations = _stringSet(
+    previous?.snapshot['reconciliation_exception_keys'],
+  );
   final durationMs = (previous?.snapshot['close_duration_ms'] as num?)?.toInt();
   return MonthlyCloseComparison(
     newSignalKeys: currentSignals.difference(previousSignals),
     clearedSignalKeys: previousSignals.difference(currentSignals),
+    carriedSignalKeys: currentSignals.intersection(previousSignals),
+    carriedReconciliationKeys: currentReconciliations.intersection(
+      previousReconciliations,
+    ),
     previousDuration: durationMs == null
         ? null
         : Duration(milliseconds: durationMs),

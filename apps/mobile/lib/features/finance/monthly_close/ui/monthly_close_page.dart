@@ -64,6 +64,7 @@ class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
     final evidenceAsync = ref.watch(monthlyCloseEvidenceProvider);
     final targetsAsync = ref.watch(reconciliationTargetsProvider);
     final comparison = ref.watch(monthlyCloseComparisonProvider).value;
+    final history = ref.watch(monthlyCloseHistoryProvider).value ?? const [];
     _ensureSessionStarted(
       period: period,
       close: closeAsync.value,
@@ -131,6 +132,8 @@ class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
                         : l10n.monthlyCloseWithException,
                   ),
                 ),
+                const SizedBox(height: AppSpacing.s24),
+                _CloseHistory(closes: history),
               ],
             ),
           );
@@ -233,6 +236,15 @@ class _CloseProgress extends StatelessWidget {
                 ),
                 style: context.captionStyle,
               ),
+            if (comparison!.carriedSignalKeys.isNotEmpty ||
+                comparison!.carriedReconciliationKeys.isNotEmpty)
+              Text(
+                l10n.monthlyCloseCarriedForward(
+                  comparison!.carriedSignalKeys.length,
+                  comparison!.carriedReconciliationKeys.length,
+                ),
+                style: context.captionStyle,
+              ),
           ],
         ],
       ),
@@ -260,13 +272,13 @@ class _LoadError extends ConsumerWidget {
   }
 }
 
-class _ClosedMonth extends StatelessWidget {
+class _ClosedMonth extends ConsumerWidget {
   const _ClosedMonth({required this.close});
 
   final MonthlyClose close;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s16),
@@ -282,9 +294,77 @@ class _ClosedMonth extends StatelessWidget {
           _CloseStepRow(step: step, state: close.evidence.states[step]!),
           const SizedBox(height: AppSpacing.s8),
         ],
+        const SizedBox(height: AppSpacing.s16),
+        _CloseHistory(
+          closes: ref.watch(monthlyCloseHistoryProvider).value ?? const [],
+        ),
       ],
     );
   }
+}
+
+class _CloseHistory extends StatelessWidget {
+  const _CloseHistory({required this.closes});
+
+  final List<MonthlyClose> closes;
+
+  @override
+  Widget build(BuildContext context) {
+    if (closes.isEmpty) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(l10n.monthlyCloseHistoryTitle, style: context.rowTitleStyle),
+        const SizedBox(height: AppSpacing.s8),
+        for (final close in closes.take(6)) ...[
+          SoftCard.flat(
+            padding: const EdgeInsets.all(AppSpacing.s12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(close.periodMonth, style: context.labelStyle),
+                      const SizedBox(height: AppSpacing.s2),
+                      Text(
+                        l10n.monthlyCloseHistoryExceptions(
+                          _historyExceptionCount(close),
+                        ),
+                        style: context.captionStyle,
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  _historyDuration(l10n, close),
+                  style: TypographyTokens.numericBodyStrong,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s8),
+        ],
+      ],
+    );
+  }
+}
+
+int _historyExceptionCount(MonthlyClose close) =>
+    _snapshotList(close, 'active_signal_keys').length +
+    _snapshotList(close, 'reconciliation_exception_keys').length;
+
+Iterable<Object?> _snapshotList(MonthlyClose close, String key) =>
+    close.snapshot[key] as Iterable<Object?>? ?? const <Object?>[];
+
+String _historyDuration(AppLocalizations l10n, MonthlyClose close) {
+  final milliseconds = (close.snapshot['close_duration_ms'] as num?)?.toInt();
+  return milliseconds == null
+      ? '—'
+      : l10n.monthlyCloseHistoryDuration(
+          Duration(milliseconds: milliseconds).inMinutes,
+        );
 }
 
 class _CloseStepRow extends ConsumerWidget {

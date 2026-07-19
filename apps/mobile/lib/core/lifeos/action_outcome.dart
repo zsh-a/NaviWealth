@@ -1,6 +1,31 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+enum LifeClosedActionStatus { done, dropped }
+
+@immutable
+class LifeClosedAction {
+  const LifeClosedAction({
+    required this.id,
+    required this.status,
+    required this.completedAt,
+    required this.sourceRowFamily,
+    required this.sourceRowId,
+  });
+
+  final String id;
+  final LifeClosedActionStatus status;
+  final DateTime completedAt;
+  final String? sourceRowFamily;
+  final String? sourceRowId;
+}
+
+/// Domain-neutral stream of completed lifecycle actions. Source domains can
+/// observe their own row-family references without importing ExecutionOS.
+final lifeClosedActionsProvider = Provider<AsyncValue<List<LifeClosedAction>>>(
+  (_) => const AsyncValue.data(<LifeClosedAction>[]),
+);
+
 /// Domain-neutral outcome of comparing a completed action's source reference
 /// with the current cross-domain signal set.
 enum ActionOutcomeStatus {

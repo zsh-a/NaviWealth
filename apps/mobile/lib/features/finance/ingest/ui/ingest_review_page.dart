@@ -35,6 +35,7 @@ import '../data/ingest_capture_source.dart';
 import '../data/ingest_confirm_service.dart';
 import '../data/providers.dart';
 import '../domain/ingest_models.dart';
+import '../domain/ingest_quality_report.dart';
 import 'ingest_capture_presentation.dart';
 
 part 'ingest_review/draft_card.dart';
@@ -59,6 +60,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   final List<String> _selectedIds = [];
   final FocusNode _masterFocus = FocusNode(debugLabel: 'ingest review master');
   String? _focusedId;
+  IngestQualityReport? _latestQualityReport;
 
   bool get _isBusy => _busy != null || _captureInProgress;
 
@@ -188,6 +190,12 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
           overflow: TextOverflow.ellipsis,
         ),
       ),
+      if (_latestQualityReport != null)
+        IconButton(
+          tooltip: l10n.ingestCopyDiagnostics,
+          onPressed: _copyLatestQualityReport,
+          icon: const Icon(FLucideIcons.clipboardCopy, size: AppIconSizes.sm),
+        ),
     ],
   );
 
@@ -729,8 +737,18 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     label: AppLocalizations.of(context).ingestExpenseAccountLabel,
     enabled: !_isBusy,
     contentConstraints: const FAutoWidthPortalConstraints(maxHeight: 280),
-    onChanged: (value) => setState(() => _accountId = value),
+    onChanged: _onAccountChanged,
   );
+
+  void _onAccountChanged(String? value) {
+    if (value == _accountId) return;
+    setState(() => _accountId = value);
+    unawaited(
+      ref
+          .read(productMetricsProvider.notifier)
+          .record(ProductFunnelEvent.importReviewCorrected),
+    );
+  }
 
   static String? _defaultAccountId(List<Account> accounts) {
     if (accounts.isEmpty) return null;
@@ -1048,6 +1066,10 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     try {
       final result = await ref.read(ingestControllerProvider).ingest(source);
       if (!mounted) return;
+      final qualityReport = IngestQualityReport.fromResult(source.kind, result);
+      setState(() => _latestQualityReport = qualityReport);
+      await _recordIngestQualityMetrics(result);
+      if (!mounted) return;
       if (result.isRejected) {
         final rejection = result.rejectedReason!;
         _showCaptureParseFailure(
@@ -1081,6 +1103,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       }
     } catch (_) {
       if (mounted) {
+        setState(
+          () => _latestQualityReport = IngestQualityReport.failed(source.kind),
+        );
         _showCaptureParseFailure(
           l10n.ingestParseFailed,
           retry: retry,
@@ -1090,6 +1115,40 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     } finally {
       if (mounted) setState(() => _busy = null);
     }
+  }
+
+  Future<void> _recordIngestQualityMetrics(IngestResult result) async {
+    final metrics = ref.read(productMetricsProvider.notifier);
+    await metrics.record(
+      ProductFunnelEvent.importCycleCompleted,
+      success: !result.isRejected,
+    );
+    await metrics.record(
+      ProductFunnelEvent.importRowsAccepted,
+      success: true,
+      quantity: result.newCount,
+    );
+    await metrics.record(
+      ProductFunnelEvent.importRowsDeduplicated,
+      success: true,
+      quantity: result.duplicateCount,
+    );
+    await metrics.record(
+      ProductFunnelEvent.importRowsRejected,
+      success: false,
+      quantity: result.skippedCount + (result.isRejected ? 1 : 0),
+    );
+  }
+
+  void _copyLatestQualityReport() {
+    final report = _latestQualityReport;
+    if (report == null) return;
+    Clipboard.setData(ClipboardData(text: report.encode()));
+    AppMessenger.show(
+      context,
+      ToastKind.success,
+      AppLocalizations.of(context).ingestDiagnosticsCopied,
+    );
   }
 
   void _showCaptureParseFailure(

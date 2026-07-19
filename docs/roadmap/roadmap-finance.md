@@ -95,6 +95,19 @@ Exit evidence:
 
 ## Next
 
+### Demand-Validation Operations
+
+Use the implemented activation, repeated import, Inbox-to-action, and Monthly
+Close loops in the six-week task study. The next code change must address an
+observed failure in those sessions. In particular, add per-row import editing
+only if real corrections show a repeated field-level pattern; add another
+statement provider only with a redacted representative fixture; and add more
+Inbox detectors only when users repeatedly miss the same consequential work.
+
+The study can use the local aggregate export and per-import privacy-safe
+diagnostic report. It must not add transaction contents, balances, labels,
+account ids, or source row ids to telemetry.
+
 ### Investment Decision Portability
 
 Before adding a jurisdiction-specific tax export, collect enough product
@@ -139,9 +152,12 @@ Finance business data.
   reconciliation, explicit difference overrides, durable close snapshots, and
   signals for import, runway, FX, balance, anomaly, subscription, valuation,
   and due decision review. Inbox items expose evidence and detection history,
-  route to source repair, and retain linked Execution action state. Monthly
-  Close resumes an open period and compares coverage, signal changes, and
-  completion time with the previous close.
+  route to source repair, and retain linked Execution action state. Completed
+  and dropped actions feed a domain-neutral close-out seam; Finance then
+  persists cleared, still-detected, inconclusive, or action-dropped
+  revalidation without inferring causality from incomplete data. Monthly Close
+  resumes an open period, compares coverage, signal changes, carried-forward
+  exceptions, and completion time, and presents recent close history.
 - Resumable Finance activation from first import through review clearance to a
   trustworthy Money Runway result, with an owner-scoped device milestone and
   opt-in first-useful-result timing.
@@ -151,8 +167,10 @@ Finance business data.
 - Versioned life-event decisions with deterministic alternatives,
   source-preserving Execution review actions, due-review Inbox signals, and
   observed outcome evidence.
-- Opt-in local product-evidence reports with bounded daily buckets and an
-  explicit privacy-safe copy action.
+- Opt-in local product-evidence reports with bounded daily buckets, repeat
+  import/action/revalidation counters, and explicit privacy-safe copy actions.
+  Import diagnostics export stable enums and counts only; financial source
+  contents and identifiers are excluded by construction and test.
 
 ## FinanceOS Boundaries
 
