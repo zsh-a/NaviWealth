@@ -2555,7 +2555,7 @@
     "description": "Expense form: disclosure for optional date and note fields"
   },
   "expenseFormDeleteDialogTitle": "Delete expense",
-  "expenseFormDeleteDialogBody": "Delete this expense? This change syncs to your other devices.",
+  "expenseFormDeleteDialogBody": "Delete this expense? You can undo it from the confirmation message, and the change syncs to your other devices.",
   "expenseFormNoAccountsTitle": "Create an account first",
   "expenseFormNoAccountsBody": "Expenses need a funding account. Create one under Accounts, then come back here.",
   "expenseFormNoAccountsCta": "Create account",

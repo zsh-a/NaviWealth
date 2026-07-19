@@ -4451,7 +4451,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get expenseFormDeleteDialogTitle => '删除支出';
 
   @override
-  String get expenseFormDeleteDialogBody => '确认删除此支出？该操作可同步给其他设备。';
+  String get expenseFormDeleteDialogBody => '确认删除此支出？删除后可在提示中撤销，该操作也会同步给其他设备。';
 
   @override
   String get expenseFormNoAccountsTitle => '先创建一个账户';

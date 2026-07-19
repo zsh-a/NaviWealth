@@ -4652,7 +4652,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expenseFormDeleteDialogBody =>
-      'Delete this expense? This change syncs to your other devices.';
+      'Delete this expense? You can undo it from the confirmation message, and the change syncs to your other devices.';
 
   @override
   String get expenseFormNoAccountsTitle => 'Create an account first';

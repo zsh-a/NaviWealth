@@ -1407,7 +1407,7 @@
     "description": "Expense form: disclosure for optional date and note fields"
   },
   "expenseFormDeleteDialogTitle": "删除支出",
-  "expenseFormDeleteDialogBody": "确认删除此支出？该操作可同步给其他设备。",
+  "expenseFormDeleteDialogBody": "确认删除此支出？删除后可在提示中撤销，该操作也会同步给其他设备。",
   "expenseFormNoAccountsTitle": "先创建一个账户",
   "expenseFormNoAccountsBody": "支出需要选择资金账户。前往「账户」新建后再来录入。",
   "expenseFormNoAccountsCta": "去创建",

@@ -8043,7 +8043,7 @@ abstract class AppLocalizations {
   /// No description provided for @expenseFormDeleteDialogBody.
   ///
   /// In en, this message translates to:
-  /// **'Delete this expense? This change syncs to your other devices.'**
+  /// **'Delete this expense? You can undo it from the confirmation message, and the change syncs to your other devices.'**
   String get expenseFormDeleteDialogBody;
 
   /// No description provided for @expenseFormNoAccountsTitle.

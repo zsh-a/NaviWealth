@@ -296,18 +296,27 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     );
     if (ok != true) return;
     final id = _initial!.entry.id;
-    await submitFormAndLeave<void>(
+    await submitFormAndLeave<JournalEntryRepository>(
       dirty: dirty,
       onBusyChanged: _setBusy,
       leaveFallback: FinanceRoutes.activityExpenses,
       failureMessage: (_) => l10n.commonDeleteFailed,
       successMessage: l10n.commonDeleted,
       tag: 'expense-delete',
+      undo: FormUndoPresentation<JournalEntryRepository>(
+        buildAction: (repository) =>
+            FormUndoAction(() => repository.restoreSoftDeleted(id)),
+        actionLabel: l10n.commonUndo,
+        successMessage: l10n.commonUndoSucceeded,
+        failureMessage: (_) => l10n.commonUndoFailed,
+        retryLabel: l10n.commonRetry,
+      ),
       commit: () async {
         final journalRepo = await ref.read(
           journalEntryRepositoryProvider.future,
         );
         await journalRepo.softDelete(id);
+        return journalRepo;
       },
     );
   }

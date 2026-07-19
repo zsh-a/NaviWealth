@@ -179,6 +179,11 @@ void _expectSubmitWiring(WidgetTester tester, {required bool enabled}) {
   }
 }
 
+Finder _amountInput() => find.descendant(
+  of: find.byType(AmountField),
+  matching: find.byType(EditableText),
+);
+
 void main() {
   late _Harness harness;
 
@@ -541,10 +546,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.widgetWithText(FTextFormField, 'Amount'),
-      '12.50',
-    );
+    await tester.enterText(_amountInput(), '12.50');
     await tester.pump();
     _expectSubmitWiring(tester, enabled: true);
 
@@ -558,6 +560,64 @@ void main() {
       await harness.db.select(harness.db.journalEntries).get(),
       hasLength(1),
     );
+  });
+
+  testWidgets('expense delete offers Undo and restores the entry', (
+    tester,
+  ) async {
+    final build = JournalEntryBuilders.expense(
+      date: DateTime.utc(2026, 3, 1),
+      expenseAccountId: 'dining',
+      fromAccountId: 'cash-1',
+      amount: Decimal.parse('15'),
+      currency: 'CNY',
+      narration: 'Lunch',
+    );
+    final original = await harness.repository.create(
+      entry: build.entry,
+      postings: build.postings,
+    );
+    await tester.binding.setSurfaceSize(const Size(900, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      await _wrap(
+        harness: harness,
+        editingId: original.entry.id,
+        preferences: const {},
+        accounts: [
+          _account(id: 'cash-1', name: 'Cash', category: AccountSide.asset),
+        ],
+        allAccounts: [
+          _account(id: 'dining', name: 'Dining', category: AccountSide.expense),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(FLucideIcons.trash2));
+    await tester.pumpAndSettle();
+    expect(
+      find.text(
+        'Delete this expense? You can undo it from the confirmation message, '
+        'and the change syncs to your other devices.',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.widgetWithText(FButton, 'Delete'));
+    await tester.pumpAndSettle();
+
+    expect(await harness.repository.getById(original.entry.id), isNull);
+    expect(find.text('Undo'), findsOneWidget);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    final restored = await harness.repository.getById(original.entry.id);
+    expect(restored, isNotNull);
+    expect(restored!.entry.narration, 'Lunch');
+    expect(restored.postings, hasLength(2));
+    expect(find.text('Change undone'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 7));
   });
 
   testWidgets('expense create success offers Undo and tombstones the entry', (
@@ -583,10 +643,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.widgetWithText(FTextFormField, 'Amount'),
-      '12.50',
-    );
+    await tester.enterText(_amountInput(), '12.50');
     await tester.tap(find.widgetWithText(FButton, 'Save'));
     await tester.pumpAndSettle();
 
@@ -640,7 +697,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.widgetWithText(FTextFormField, 'Amount'), '25');
+    await tester.enterText(_amountInput(), '25');
     await tester.tap(find.widgetWithText(FButton, 'Save'));
     await tester.pumpAndSettle();
 
@@ -689,10 +746,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.widgetWithText(FTextFormField, 'Amount'),
-      '12.50',
-    );
+    await tester.enterText(_amountInput(), '12.50');
     await tester.tap(find.widgetWithText(FButton, 'Save'));
     await tester.pumpAndSettle();
 
