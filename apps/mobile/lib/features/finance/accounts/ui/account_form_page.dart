@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,7 +68,9 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   String? _currency;
   bool _archived = false;
   bool _busy = false;
+  bool _loadingInitial = false;
   bool _advancedExpanded = false;
+  Object? _loadError;
   Account? _initial;
 
   /// Selected parent in the Beancount tree. `null` means top-level.
@@ -92,7 +96,8 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
     ]);
     _nameController.addListener(_onNameChanged);
     if (widget.isEdit) {
-      _loadInitial();
+      _loadingInitial = true;
+      unawaited(_loadInitial());
     } else {
       // Default the new-account currency to the dashboard's base
       // currency — the legacy hard-coded "CNY" forced overseas users to
@@ -106,32 +111,43 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   }
 
   Future<void> _loadInitial() async {
-    final repo = await ref.read(accountRepositoryProvider.future);
-    final existing = await repo.findById(widget.accountId!);
-    if (existing == null || !mounted) return;
-    setState(() {
-      _initial = existing;
-      _nameController.text = existing.name;
-      _institutionController.text = existing.institution ?? '';
-      _accountNumberController.text = existing.accountNumber ?? '';
-      _noteController.text = existing.note ?? '';
-      _type = existing.type;
-      _category = existing.category;
-      _currency = existing.currency;
-      _archived = existing.archived;
-      _parentId = existing.parentId;
-      _icon = existing.icon;
-      _color = existing.color;
-      _advancedExpanded =
-          existing.parentId != null ||
-          existing.icon != null ||
-          existing.color != null ||
-          (existing.institution?.isNotEmpty ?? false) ||
-          (existing.accountNumber?.isNotEmpty ?? false) ||
-          (existing.note?.isNotEmpty ?? false);
-    });
-    // Hydrating an existing record is not a user edit.
-    dirty.snapshotBaseline();
+    try {
+      final repo = await ref.read(accountRepositoryProvider.future);
+      final existing = await repo.findById(widget.accountId!);
+      if (existing == null) throw StateError('account not found');
+      if (!mounted) return;
+      setState(() {
+        _initial = existing;
+        _nameController.text = existing.name;
+        _institutionController.text = existing.institution ?? '';
+        _accountNumberController.text = existing.accountNumber ?? '';
+        _noteController.text = existing.note ?? '';
+        _type = existing.type;
+        _category = existing.category;
+        _currency = existing.currency;
+        _archived = existing.archived;
+        _parentId = existing.parentId;
+        _icon = existing.icon;
+        _color = existing.color;
+        _advancedExpanded =
+            existing.parentId != null ||
+            existing.icon != null ||
+            existing.color != null ||
+            (existing.institution?.isNotEmpty ?? false) ||
+            (existing.accountNumber?.isNotEmpty ?? false) ||
+            (existing.note?.isNotEmpty ?? false);
+        _loadingInitial = false;
+        _loadError = null;
+      });
+      // Hydrating an existing record is not a user edit.
+      dirty.snapshotBaseline();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loadingInitial = false;
+        _loadError = error;
+      });
+    }
   }
 
   Future<void> _save() async {
@@ -270,7 +286,6 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final loadingExisting = widget.isEdit && _initial == null;
     final onSubmit = _busy || _nameController.text.trim().isEmpty
         ? null
         : _save;
@@ -288,14 +303,30 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
         title: title,
         confirmLeave: handleBackIntent,
         actions: [
-          if (widget.isEdit)
-            FHeaderAction(
+          if (widget.isEdit && initial != null)
+            AppHeaderAction(
+              key: const Key('account-delete-action'),
+              semanticsLabel: l10n.accountFormDeleteAction,
               icon: const Icon(FLucideIcons.trash2),
               onPress: _busy ? null : _delete,
             ),
         ],
-        child: loadingExisting
+        child: _loadingInitial
             ? const Center(child: FCircularProgress())
+            : _loadError != null
+            ? AppEmptyState.error(
+                title: l10n.commonLoadFailed,
+                message: userSafeErrorMessage(context, _loadError!),
+                retryLabel: l10n.commonRetry,
+                onRetry: () {
+                  ref.invalidate(accountRepositoryProvider);
+                  setState(() {
+                    _loadError = null;
+                    _loadingInitial = true;
+                  });
+                  unawaited(_loadInitial());
+                },
+              )
             : Form(
                 key: _formKey,
                 autovalidateMode: AutovalidateMode.onUserInteraction,

@@ -122,13 +122,20 @@ Finder _colorSwatch(String hex) {
   });
 }
 
-ProviderScope _wrap(_Harness h, {List<Account>? accounts, String? editingId}) {
+ProviderScope _wrap(
+  _Harness h, {
+  List<Account>? accounts,
+  String? editingId,
+  Future<AccountRepository> Function()? repositoryFactory,
+}) {
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(h.prefs),
       appDatabaseProvider.overrideWith((_) async => h.db),
       outboxStoreProvider.overrideWith((_) async => h.outbox),
       mutationStamperProvider.overrideWith((_) async => h.stamper),
+      if (repositoryFactory != null)
+        accountRepositoryProvider.overrideWith((_) => repositoryFactory()),
       if (accounts != null)
         accountsStreamProvider.overrideWith((_) => Stream.value(accounts)),
     ],
@@ -271,6 +278,59 @@ void main() {
     );
     await tester.pump();
     expect(saveButton().onPress, isNotNull);
+  });
+
+  testWidgets('edit load failure retries before exposing destructive actions', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(360, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = AccountRepository(
+      db: h.db,
+      outbox: h.outbox,
+      stamper: h.stamper,
+    );
+    final account = await repository.create(
+      type: AccountCategory.bank,
+      name: 'Everyday bank',
+      currency: 'CNY',
+    );
+    final firstLoad = Completer<AccountRepository>();
+    var attempts = 0;
+
+    await tester.pumpWidget(
+      _wrap(
+        h,
+        accounts: [account],
+        editingId: account.id,
+        repositoryFactory: () {
+          attempts++;
+          return attempts == 1
+              ? firstLoad.future
+              : Future<AccountRepository>.value(repository);
+        },
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(FCircularProgress), findsOneWidget);
+    expect(find.byKey(const Key('account-delete-action')), findsNothing);
+
+    firstLoad.completeError(StateError('repository unavailable'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.byKey(const Key('account-delete-action')), findsNothing);
+    expect(find.widgetWithText(FTextFormField, 'Account name'), findsNothing);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(FTextFormField, 'Account name'), findsOneWidget);
+    expect(find.text('Everyday bank'), findsWidgets);
+    expect(find.byKey(const Key('account-delete-action')), findsOneWidget);
+    expect(attempts, 2);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('keyboard submit respects disabled state and commits', (
