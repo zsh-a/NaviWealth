@@ -8192,6 +8192,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get depositRateNegative => '利率不能为负';
 
   @override
+  String get depositDetailsTitle => '日期与估值';
+
+  @override
+  String get depositDetailsTermSummary => '到期日、续存与当前价值';
+
+  @override
+  String get depositDetailsDemandSummary => '起息日与当前价值';
+
+  @override
   String get depositValueDateLabel => '起息日';
 
   @override

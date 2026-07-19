@@ -14553,6 +14553,24 @@ abstract class AppLocalizations {
   /// **'Rate cannot be negative'**
   String get depositRateNegative;
 
+  /// Deposit form: disclosure title for dates, valuation, and renewal settings
+  ///
+  /// In en, this message translates to:
+  /// **'Dates & valuation'**
+  String get depositDetailsTitle;
+
+  /// Deposit form: term-deposit disclosure summary
+  ///
+  /// In en, this message translates to:
+  /// **'Maturity, renewal & current value'**
+  String get depositDetailsTermSummary;
+
+  /// Deposit form: demand-deposit disclosure summary
+  ///
+  /// In en, this message translates to:
+  /// **'Value date & current value'**
+  String get depositDetailsDemandSummary;
+
   /// Deposit form: value date field label
   ///
   /// In en, this message translates to:

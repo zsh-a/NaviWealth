@@ -48,6 +48,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
   final _principalFocus = FocusNode();
   final _rateFocus = FocusNode();
   final _valuationFocus = FocusNode();
+  final _detailsFocus = FocusNode(debugLabel: 'deposit-details');
 
   AssetType _kind = AssetType.bankDepositTerm;
   String? _accountId;
@@ -55,6 +56,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
   DateTime? _startDate;
   DateTime? _maturityDate;
   bool _autoRenew = false;
+  bool _detailsExpanded = false;
   bool _busy = false;
   Asset? _initial;
   bool _hydratedFromList = false;
@@ -104,13 +106,23 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
       _startDate = meta.startDate;
       _maturityDate = meta.maturityDate;
       _autoRenew = meta.autoRenew;
+      _detailsExpanded =
+          meta.startDate != null || meta.maturityDate != null || meta.autoRenew;
     });
     // Hydrating an existing record is not a user edit.
     dirty.snapshotBaseline();
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      if (!_detailsAreValid && !_detailsExpanded) {
+        setState(() => _detailsExpanded = true);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _detailsFocus.requestFocus();
+        });
+      }
+      return;
+    }
     final l10n = AppLocalizations.of(context);
     final accountId = _accountId;
     final currency = _currency;
@@ -239,7 +251,18 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
     _principalFocus.dispose();
     _rateFocus.dispose();
     _valuationFocus.dispose();
+    _detailsFocus.dispose();
     super.dispose();
+  }
+
+  bool get _detailsAreValid {
+    if (_kind == AssetType.bankDepositTerm && _maturityDate == null) {
+      return false;
+    }
+    final valuationText = _valuationController.text.trim();
+    if (valuationText.isEmpty) return true;
+    final valuation = Decimal.tryParse(valuationText);
+    return valuation != null && valuation >= Decimal.zero;
   }
 
   @override
@@ -295,6 +318,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: AppFormScaffoldBody(
+        onSubmit: _busy ? null : _save,
         action: SizedBox(
           width: double.infinity,
           child: AppBusyButton(
@@ -324,6 +348,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
                 children: [
                   Expanded(
                     child: _DepositKindChip(
+                      key: const Key('deposit-type-term'),
                       icon: FLucideIcons.lock,
                       label: l10n.depositTypeTerm,
                       selected: _kind == AssetType.bankDepositTerm,
@@ -338,6 +363,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
                   ),
                   Expanded(
                     child: _DepositKindChip(
+                      key: const Key('deposit-type-demand'),
                       icon: FLucideIcons.piggyBank,
                       label: l10n.depositTypeDemand,
                       selected: _kind == AssetType.bankDepositDemand,
@@ -365,8 +391,9 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
           ),
           const SizedBox(height: AppSpacing.s12),
           FTextFormField(
+            key: const Key('deposit-name-field'),
             control: FTextFieldControl.managed(controller: _nameController),
-            label: Text(l10n.depositNameLabel),
+            label: RequiredLabel(l10n.depositNameLabel),
             description: Text(l10n.depositNameHelper),
             focusNode: _nameFocus,
             textInputAction: TextInputAction.next,
@@ -385,6 +412,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
           ),
           const SizedBox(height: AppSpacing.s12),
           AmountField(
+            key: const Key('deposit-principal-field'),
             label: l10n.depositPrincipalLabel,
             controller: _principalController,
             currencyCode: _currency,
@@ -393,10 +421,11 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
           ),
           const SizedBox(height: AppSpacing.s12),
           FTextFormField(
+            key: const Key('deposit-rate-field'),
             control: FTextFieldControl.managed(
               controller: _ratePercentController,
             ),
-            label: Text(l10n.depositRateLabel),
+            label: RequiredLabel(l10n.depositRateLabel),
             description: Text(l10n.depositRateHelper),
             focusNode: _rateFocus,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -409,49 +438,105 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
               if (parsed < Decimal.zero) return l10n.depositRateNegative;
               return null;
             },
-            onSubmit: (_) => _valuationFocus.requestFocus(),
+            onSubmit: (_) {
+              _rateFocus.unfocus();
+              if (!_detailsExpanded) {
+                setState(() => _detailsExpanded = true);
+              }
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _detailsFocus.requestFocus();
+              });
+            },
           ),
           const SizedBox(height: AppSpacing.s12),
-          DateField(
-            label: l10n.depositValueDateLabel,
-            initialValue: _startDate,
-            onChanged: (d) => setState(() {
-              _startDate = d;
-              dirty.markDirty();
-            }),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          DateField(
-            label: l10n.depositMaturityDateLabel,
-            initialValue: _maturityDate,
-            required: _kind == AssetType.bankDepositTerm,
-            onChanged: (d) => setState(() {
-              _maturityDate = d;
-              dirty.markDirty();
-            }),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          AmountField(
-            label: l10n.depositCurrentValuationLabel,
-            controller: _valuationController,
-            currencyCode: _currency,
-            required: false,
-            helperText: l10n.depositCurrentValuationHelper,
-            focusNode: _valuationFocus,
-            textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => _busy ? null : _save(),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          if (_kind == AssetType.bankDepositTerm)
-            FSwitch(
-              label: Text(l10n.depositAutoRenewTitle),
-              description: Text(l10n.depositAutoRenewSubtitle),
-              value: _autoRenew,
-              onChange: (v) => setState(() {
-                _autoRenew = v;
-                dirty.markDirty();
-              }),
+          FAccordion(
+            control: FAccordionControl.lifted(
+              expanded: (_) => _detailsExpanded,
+              onChange: (_, expanded) =>
+                  setState(() => _detailsExpanded = expanded),
             ),
+            children: [
+              FAccordionItem(
+                key: const Key('deposit-details-disclosure'),
+                focusNode: _detailsFocus,
+                title: Semantics(
+                  key: const Key('deposit-details-toggle-label'),
+                  expanded: _detailsExpanded,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l10n.depositDetailsTitle),
+                      const SizedBox(height: AppSpacing.s2),
+                      Text(
+                        _kind == AssetType.bankDepositTerm
+                            ? l10n.depositDetailsTermSummary
+                            : l10n.depositDetailsDemandSummary,
+                        style: context.captionStyle,
+                      ),
+                    ],
+                  ),
+                ),
+                child: Offstage(
+                  key: const Key('deposit-details-fields'),
+                  offstage: !_detailsExpanded,
+                  child: ExcludeFocus(
+                    excluding: !_detailsExpanded,
+                    child: ExcludeSemantics(
+                      excluding: !_detailsExpanded,
+                      child: Column(
+                        children: [
+                          DateField(
+                            key: const Key('deposit-value-date-field'),
+                            label: l10n.depositValueDateLabel,
+                            initialValue: _startDate,
+                            onChanged: (d) => setState(() {
+                              _startDate = d;
+                              dirty.markDirty();
+                            }),
+                          ),
+                          const SizedBox(height: AppSpacing.s12),
+                          DateField(
+                            key: const Key('deposit-maturity-date-field'),
+                            label: l10n.depositMaturityDateLabel,
+                            initialValue: _maturityDate,
+                            required: _kind == AssetType.bankDepositTerm,
+                            onChanged: (d) => setState(() {
+                              _maturityDate = d;
+                              dirty.markDirty();
+                            }),
+                          ),
+                          const SizedBox(height: AppSpacing.s12),
+                          AmountField(
+                            key: const Key('deposit-valuation-field'),
+                            label: l10n.depositCurrentValuationLabel,
+                            controller: _valuationController,
+                            currencyCode: _currency,
+                            required: false,
+                            helperText: l10n.depositCurrentValuationHelper,
+                            focusNode: _valuationFocus,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) => _busy ? null : _save(),
+                          ),
+                          if (_kind == AssetType.bankDepositTerm) ...[
+                            const SizedBox(height: AppSpacing.s12),
+                            FSwitch(
+                              label: Text(l10n.depositAutoRenewTitle),
+                              description: Text(l10n.depositAutoRenewSubtitle),
+                              value: _autoRenew,
+                              onChange: (v) => setState(() {
+                                _autoRenew = v;
+                                dirty.markDirty();
+                              }),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -489,6 +574,7 @@ class _PromptCreateAccount extends StatelessWidget {
 
 class _DepositKindChip extends StatelessWidget {
   const _DepositKindChip({
+    super.key,
     required this.icon,
     required this.label,
     required this.selected,
@@ -505,32 +591,44 @@ class _DepositKindChip extends StatelessWidget {
     final colors = context.theme.colors;
     final stateColor = selected ? colors.primary : colors.mutedForeground;
 
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s12,
-          vertical: AppSpacing.s8,
-        ),
-        decoration: selected
-            ? BoxDecoration(
-                color: colors.primary.withValues(alpha: AppOpacity.medium),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              )
-            : null,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: AppIconSizes.h18, color: stateColor),
-            const SizedBox(width: AppSpacing.s4),
-            Text(
-              label,
-              style: selected
-                  ? context.labelStyle.copyWith(color: stateColor)
-                  : context.mediumLabelStyle.copyWith(color: stateColor),
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: ExcludeSemantics(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s12,
+                vertical: AppSpacing.s8,
+              ),
+              decoration: selected
+                  ? BoxDecoration(
+                      color: colors.primary.withValues(
+                        alpha: AppOpacity.medium,
+                      ),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    )
+                  : null,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: AppIconSizes.h18, color: stateColor),
+                  const SizedBox(width: AppSpacing.s4),
+                  Text(
+                    label,
+                    style: selected
+                        ? context.labelStyle.copyWith(color: stateColor)
+                        : context.mediumLabelStyle.copyWith(color: stateColor),
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
       ),
     );

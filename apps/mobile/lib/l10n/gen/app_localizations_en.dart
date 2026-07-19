@@ -8595,6 +8595,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get depositRateNegative => 'Rate cannot be negative';
 
   @override
+  String get depositDetailsTitle => 'Dates & valuation';
+
+  @override
+  String get depositDetailsTermSummary => 'Maturity, renewal & current value';
+
+  @override
+  String get depositDetailsDemandSummary => 'Value date & current value';
+
+  @override
   String get depositValueDateLabel => 'Value date';
 
   @override
