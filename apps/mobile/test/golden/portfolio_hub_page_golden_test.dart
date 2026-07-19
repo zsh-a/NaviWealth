@@ -1,4 +1,6 @@
 import 'package:decimal/decimal.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
@@ -29,6 +31,21 @@ import '_golden_setup.dart';
 final _now = DateTime.utc(2026, 5, 17);
 
 Decimal _d(String value) => Decimal.parse(value);
+
+void _expectTextFits(WidgetTester tester, String value) {
+  final finder = find.text(value);
+  final text = tester.widget<Text>(finder);
+  final painter = TextPainter(
+    text: TextSpan(text: text.data, style: text.style),
+    textDirection: TextDirection.ltr,
+    maxLines: 1,
+  )..layout();
+  expect(
+    painter.width,
+    lessThanOrEqualTo(tester.getSize(finder).width + 0.5),
+    reason: 'Expected "$value" to fit without horizontal truncation.',
+  );
+}
 
 SyncMeta _meta() => SyncMeta(
   ownerUserId: 'u',
@@ -265,6 +282,25 @@ final _corporateActions = [
   ),
 ];
 
+List<Override> _portfolioOverrides(SharedPreferences prefs) => [
+  sharedPreferencesProvider.overrideWithValue(prefs),
+  allAssetsStreamProvider.overrideWith((_) => Stream.value(_assets)),
+  accountsStreamProvider.overrideWith((_) => Stream.value(_accounts)),
+  holdingsSnapshotProvider.overrideWith((_) async => _holdings),
+  holdingServiceProvider.overrideWith(
+    (_) async => _GoldenHoldingService(_lots),
+  ),
+  portfolioReturnServiceProvider.overrideWith(
+    (_) async => const _GoldenReturnService(),
+  ),
+  realizedPnlProvider.overrideWith((_) async => _realizedPnl),
+  dividendForecast12mProvider.overrideWith((_) async => _dividendForecast),
+  dividendCenterSnapshotProvider.overrideWith((_) async => _dividendCenter),
+  dividendForecastDeclaredActionsProvider.overrideWith(
+    (_) => _corporateActions,
+  ),
+];
+
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
@@ -274,29 +310,25 @@ void main() {
       tester,
       name: 'portfolio_hub_page',
       variant: variant,
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-        allAssetsStreamProvider.overrideWith((_) => Stream.value(_assets)),
-        accountsStreamProvider.overrideWith((_) => Stream.value(_accounts)),
-        holdingsSnapshotProvider.overrideWith((_) async => _holdings),
-        holdingServiceProvider.overrideWith(
-          (_) async => _GoldenHoldingService(_lots),
-        ),
-        portfolioReturnServiceProvider.overrideWith(
-          (_) async => const _GoldenReturnService(),
-        ),
-        realizedPnlProvider.overrideWith((_) async => _realizedPnl),
-        dividendForecast12mProvider.overrideWith(
-          (_) async => _dividendForecast,
-        ),
-        dividendCenterSnapshotProvider.overrideWith(
-          (_) async => _dividendCenter,
-        ),
-        dividendForecastDeclaredActionsProvider.overrideWith(
-          (_) => _corporateActions,
-        ),
-      ],
+      overrides: _portfolioOverrides(prefs),
       child: const PortfolioHubPage(),
     );
+    final marketValue = tester.widget<Text>(find.text('¥9,020.00'));
+    expect(marketValue.style?.color, isNotNull);
+    _expectTextFits(tester, '¥7,100.00');
+    _expectTextFits(tester, '+¥1,920.00');
+  });
+
+  testVisualGolden('portfolio_hub_page — wide', (tester) async {
+    final prefs = await SharedPreferences.getInstance();
+    await pumpAndSnapshotResponsive(
+      tester,
+      name: 'portfolio_hub_page_wide',
+      profile: ResponsiveGoldenProfile.wide,
+      overrides: _portfolioOverrides(prefs),
+      child: const PortfolioHubPage(),
+    );
+    _expectTextFits(tester, '¥7,100.00');
+    _expectTextFits(tester, '+¥1,920.00');
   });
 }

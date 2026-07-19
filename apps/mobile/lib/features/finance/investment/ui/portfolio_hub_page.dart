@@ -170,7 +170,8 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
                         for (var i = 0; i < previewHoldings.length; i++) ...[
                           _HoldingRow(holding: previewHoldings[i]),
                           if (i != previewHoldings.length - 1 ||
-                              (overflowHoldings.isNotEmpty && _showAllPositions))
+                              (overflowHoldings.isNotEmpty &&
+                                  _showAllPositions))
                             const AppGroupedDivider(
                               indent: AppSpacing.s12,
                               endIndent: AppSpacing.s12,
@@ -182,9 +183,11 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
                             alignment: Alignment.topCenter,
                             child: Column(
                               children: [
-                                for (var i = 0;
-                                    i < overflowHoldings.length;
-                                    i++) ...[
+                                for (
+                                  var i = 0;
+                                  i < overflowHoldings.length;
+                                  i++
+                                ) ...[
                                   _HoldingRow(holding: overflowHoldings[i]),
                                   if (i != overflowHoldings.length - 1)
                                     const AppGroupedDivider(
@@ -335,41 +338,70 @@ class _PortfolioSummary extends StatelessWidget {
                   amount: data.marketValueInBase.toDouble(),
                   currencyCode: data.baseCurrency,
                   style: TypographyTokens.displaySmall,
+                  color: context.theme.colors.foreground,
                 ),
               ),
               DeltaChip(value: pnlPercent, fractionDigits: 2),
             ],
           ),
           const SizedBox(height: AppSpacing.s14),
-          Row(
-            children: [
-              Expanded(
-                child: _SummaryMetric.money(
-                  label: l10n.portfolioHubCostBasisLabel,
-                  amount: data.costBasisInBase.toDouble(),
-                  currency: data.baseCurrency,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: _SummaryMetric.money(
-                  label: l10n.portfolioHubAbsoluteReturnLabel,
-                  amount: data.unrealizedPnlInBase.toDouble(),
-                  currency: data.baseCurrency,
-                  showSign: true,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: _SummaryMetric(
-                  label: l10n.portfolioHubYtdXirrLabel,
-                  value: xirr == null ? '—' : _formatRatio(context, xirr),
-                ),
-              ),
-            ],
-          ),
+          _PortfolioSummaryMetrics(data: data, xirr: xirr),
         ],
       ),
+    );
+  }
+}
+
+class _PortfolioSummaryMetrics extends StatelessWidget {
+  const _PortfolioSummaryMetrics({required this.data, required this.xirr});
+
+  final PortfolioHubState data;
+  final double? xirr;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final metrics = <Widget>[
+      _SummaryMetric.money(
+        label: l10n.portfolioHubCostBasisLabel,
+        amount: data.costBasisInBase.toDouble(),
+        currency: data.baseCurrency,
+      ),
+      _SummaryMetric.money(
+        label: l10n.portfolioHubAbsoluteReturnLabel,
+        amount: data.unrealizedPnlInBase.toDouble(),
+        currency: data.baseCurrency,
+        showSign: true,
+      ),
+      _SummaryMetric(
+        label: l10n.portfolioHubYtdXirrLabel,
+        value: xirr == null ? '—' : _formatRatio(context, xirr!),
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (Breakpoints.isMobile(constraints.maxWidth)) {
+          final itemWidth = (constraints.maxWidth - AppSpacing.s12) / 2;
+          return Wrap(
+            spacing: AppSpacing.s12,
+            runSpacing: AppSpacing.s14,
+            children: [
+              for (final metric in metrics)
+                SizedBox(width: itemWidth, child: metric),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: metrics[0]),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(child: metrics[1]),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(child: metrics[2]),
+          ],
+        );
+      },
     );
   }
 }
