@@ -4,11 +4,15 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../accounts/domain/account_semantics.dart';
+import '../../data/repositories/providers.dart';
 import '../../shared/ui/forms/forms.dart';
 import '../data/providers.dart';
 import 'liability_l10n.dart';
@@ -62,6 +66,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
   bool _saving = false;
   bool _detailsExpanded = false;
   Object? _loadError;
+  String? _accountId;
 
   @override
   void initState() {
@@ -107,7 +112,9 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
         return;
       }
       _name.text = liability.name;
+      _currency.text = liability.currency;
       _note.text = liability.note ?? '';
+      _accountId = liability.accountId;
       _bindDirtyControllers(includeScheduleFields: false);
       dirty.markPristine();
       setState(() {
@@ -152,6 +159,12 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final loadError = _loadError;
+    final accountsAsync = ref.watch(accountsStreamProvider);
+    final eligibleAccounts = _eligiblePayerAccounts(
+      accountsAsync.value ?? const <Account>[],
+    );
+    final canSave =
+        !_saving && accountsAsync.hasValue && eligibleAccounts.isNotEmpty;
     return guardedScope(
       child: AppFormPageScaffold(
         title: Text(
@@ -180,20 +193,26 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                 child: AppFormScaffoldBody(
                   action: SizedBox(
                     width: double.infinity,
-                    child: FButton(
-                      variant: FButtonVariant.primary,
-                      onPress: _saving ? null : _save,
-                      child: Text(l10n.liabilitySaveAction),
+                    child: AppBusyButton(
+                      label: l10n.liabilitySaveAction,
+                      busyLabel: l10n.commonSaving,
+                      busy: _saving,
+                      onPress: canSave ? _save : null,
                     ),
                   ),
-                  children: _isEdit ? _editFields(l10n) : _createFields(l10n),
+                  children: _isEdit
+                      ? _editFields(l10n, accountsAsync)
+                      : _createFields(l10n, accountsAsync),
                 ),
               ),
       ),
     );
   }
 
-  List<Widget> _editFields(AppLocalizations l10n) {
+  List<Widget> _editFields(
+    AppLocalizations l10n,
+    AsyncValue<List<Account>> accountsAsync,
+  ) {
     return [
       AppStatusBanner(
         kind: AppStatusKind.info,
@@ -212,6 +231,8 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
         onSubmit: (_) => _noteFocus.requestFocus(),
       ),
       const SizedBox(height: AppSpacing.s12),
+      _payerAccountField(l10n, accountsAsync),
+      const SizedBox(height: AppSpacing.s12),
       FTextFormField(
         control: FTextFieldControl.managed(controller: _note),
         label: Text(l10n.liabilityFieldNote),
@@ -224,7 +245,10 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
     ];
   }
 
-  List<Widget> _createFields(AppLocalizations l10n) {
+  List<Widget> _createFields(
+    AppLocalizations l10n,
+    AsyncValue<List<Account>> accountsAsync,
+  ) {
     return [
       FSelect<LiabilityType>(
         key: const Key('liability-type-field'),
@@ -285,15 +309,30 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
         control: FTextFieldControl.managed(controller: _currency),
         label: RequiredLabel(l10n.liabilityFieldCurrency),
         focusNode: _currencyFocus,
-        textInputAction: _isCreditCard
-            ? TextInputAction.done
-            : TextInputAction.next,
+        textInputAction: TextInputAction.next,
         textCapitalization: TextCapitalization.characters,
-        validator: (v) => (v == null || v.trim().length < 3)
-            ? l10n.liabilityValidationRequired
-            : null,
-        onSubmit: (_) => _isCreditCard ? _save() : _termFocus.requestFocus(),
+        validator: (v) {
+          if (v == null || v.trim().length < 3) {
+            return l10n.liabilityValidationRequired;
+          }
+          final selectedAccount = accountsAsync.value
+              ?.where((account) => account.id == _accountId)
+              .firstOrNull;
+          if (selectedAccount != null &&
+              selectedAccount.currency.toUpperCase() !=
+                  v.trim().toUpperCase()) {
+            return l10n.liabilityValidationAccountCurrency(
+              selectedAccount.currency,
+            );
+          }
+          return null;
+        },
+        onSubmit: (_) => _isCreditCard
+            ? _detailsFocus.requestFocus()
+            : _termFocus.requestFocus(),
       ),
+      const SizedBox(height: AppSpacing.s12),
+      _payerAccountField(l10n, accountsAsync),
       if (!_isCreditCard) ...[
         const SizedBox(height: AppSpacing.s12),
         FTextFormField(
@@ -442,6 +481,74 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
     ];
   }
 
+  List<Account> _eligiblePayerAccounts(List<Account> accounts) {
+    final custody = accounts
+        .where((account) => isCustodyAccountCategory(account.type))
+        .toList(growable: false);
+    if (!_isEdit) return custody;
+    final currency = _currency.text.trim().toUpperCase();
+    return custody
+        .where((account) => account.currency.toUpperCase() == currency)
+        .toList(growable: false);
+  }
+
+  Widget _payerAccountField(
+    AppLocalizations l10n,
+    AsyncValue<List<Account>> accountsAsync,
+  ) {
+    return accountsAsync.when(
+      loading: () => const SkeletonCard(
+        padding: EdgeInsets.all(AppSpacing.s12),
+        child: SkeletonBox(height: 48),
+      ),
+      error: (error, stackTrace) => AppStatusBanner(
+        kind: AppStatusKind.error,
+        message: l10n.commonLoadFailed,
+        details: userSafeErrorMessage(context, error, stackTrace: stackTrace),
+        action: AppQuietButton(
+          label: l10n.commonRetry,
+          onPress: () => ref.invalidate(accountsStreamProvider),
+        ),
+      ),
+      data: (accounts) {
+        final eligible = _eligiblePayerAccounts(accounts);
+        if (eligible.isEmpty) {
+          return AppStatusBanner(
+            kind: AppStatusKind.warning,
+            message: l10n.liabilityPayerAccountEmpty,
+            action: AppQuietButton(
+              label: l10n.accountsCreateAction,
+              onPress: () => context.push(FinanceRoutes.wealthAccountNew),
+            ),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AccountPicker(
+              key: const Key('liability-payer-account-field'),
+              accounts: eligible,
+              value: _accountId,
+              label: l10n.liabilityFieldPayerAccount,
+              onChanged: (value) => setState(() {
+                _accountId = value;
+                final account = eligible
+                    .where((candidate) => candidate.id == value)
+                    .firstOrNull;
+                if (!_isEdit && account != null) {
+                  _currency.text = account.currency;
+                }
+                dirty.markDirty();
+              }),
+            ),
+            const SizedBox(height: AppSpacing.s6),
+            Text(l10n.liabilityPayerAccountHint, style: context.captionStyle),
+          ],
+        );
+      },
+    );
+  }
+
   String? Function(String?) _validatePositive(AppLocalizations l10n) {
     return (String? v) {
       if (v == null || v.trim().isEmpty) {
@@ -467,6 +574,14 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
   }
 
   Future<void> _save() async {
+    if (_accountId == null) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).liabilityPayerAccountRequired,
+      );
+      return;
+    }
     if (!_formKey.currentState!.validate()) {
       if (!_detailsAreValid && !_detailsExpanded) {
         setState(() => _detailsExpanded = true);
@@ -490,6 +605,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
           await repo.updateMetadata(
             id: liabilityId,
             name: _name.text.trim(),
+            accountId: _accountId,
             note: note.isEmpty ? null : note,
           );
         },
@@ -538,6 +654,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
           currency: currency,
           paymentMethod: method,
           rateType: rateType,
+          accountId: _accountId,
           startDate: startDate,
           termMonths: termMonths,
           statementDay: statementDay,

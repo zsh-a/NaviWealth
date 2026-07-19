@@ -1971,6 +1971,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get liabilityFieldCurrency => 'Currency';
 
   @override
+  String get liabilityFieldPayerAccount => 'Payer account';
+
+  @override
+  String get liabilityPayerAccountHint =>
+      'Scheduled repayments will be recorded against this account.';
+
+  @override
+  String get liabilityPayerAccountEmpty =>
+      'No eligible payment account is available. Create a cash or bank account first.';
+
+  @override
+  String get liabilityPayerAccountRequired =>
+      'Choose a payer account before saving.';
+
+  @override
   String get liabilityFieldStatementDay => 'Statement day';
 
   @override
@@ -1993,7 +2008,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liabilityEditMetadataOnlyHint =>
-      'Only the name and note can be edited here. Principal, rate and term stay locked because they drive the repayment schedule.';
+      'Name, payer account and note can be edited here. Principal, rate and term stay locked because they drive the repayment schedule.';
 
   @override
   String get liabilitySaveAction => 'Save';
@@ -2006,6 +2021,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liabilityValidationDayOfMonth => 'Must be 1–31';
+
+  @override
+  String liabilityValidationAccountCurrency(String currency) {
+    return 'Use the payer account currency: $currency';
+  }
 
   @override
   String get liabilitySummaryRemaining => 'Remaining principal';

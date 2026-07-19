@@ -3500,6 +3500,30 @@ abstract class AppLocalizations {
   /// **'Currency'**
   String get liabilityFieldCurrency;
 
+  /// Account used to fund liability repayments
+  ///
+  /// In en, this message translates to:
+  /// **'Payer account'**
+  String get liabilityFieldPayerAccount;
+
+  /// Helper below the liability payer account picker
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled repayments will be recorded against this account.'**
+  String get liabilityPayerAccountHint;
+
+  /// Liability form notice when no custody account can fund repayments
+  ///
+  /// In en, this message translates to:
+  /// **'No eligible payment account is available. Create a cash or bank account first.'**
+  String get liabilityPayerAccountEmpty;
+
+  /// Liability save guard when no payer account is selected
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a payer account before saving.'**
+  String get liabilityPayerAccountRequired;
+
   /// No description provided for @liabilityFieldStatementDay.
   ///
   /// In en, this message translates to:
@@ -3545,7 +3569,7 @@ abstract class AppLocalizations {
   /// Info banner explaining liability edit mode limitations
   ///
   /// In en, this message translates to:
-  /// **'Only the name and note can be edited here. Principal, rate and term stay locked because they drive the repayment schedule.'**
+  /// **'Name, payer account and note can be edited here. Principal, rate and term stay locked because they drive the repayment schedule.'**
   String get liabilityEditMetadataOnlyHint;
 
   /// No description provided for @liabilitySaveAction.
@@ -3571,6 +3595,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Must be 1–31'**
   String get liabilityValidationDayOfMonth;
+
+  /// Validation shown when liability and payer account currencies differ
+  ///
+  /// In en, this message translates to:
+  /// **'Use the payer account currency: {currency}'**
+  String liabilityValidationAccountCurrency(String currency);
 
   /// No description provided for @liabilitySummaryRemaining.
   ///

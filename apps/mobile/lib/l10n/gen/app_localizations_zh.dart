@@ -1905,6 +1905,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get liabilityFieldCurrency => '币种';
 
   @override
+  String get liabilityFieldPayerAccount => '还款账户';
+
+  @override
+  String get liabilityPayerAccountHint => '计划还款将记入此账户。';
+
+  @override
+  String get liabilityPayerAccountEmpty => '暂无可用还款账户，请先新建现金或银行账户。';
+
+  @override
+  String get liabilityPayerAccountRequired => '保存前请选择还款账户。';
+
+  @override
   String get liabilityFieldStatementDay => '账单日';
 
   @override
@@ -1927,7 +1939,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get liabilityEditMetadataOnlyHint =>
-      '此处只能编辑名称和备注。本金、利率和期限会驱动还款计划，因此保持锁定。';
+      '此处可编辑名称、还款账户和备注。本金、利率和期限会驱动还款计划，因此保持锁定。';
 
   @override
   String get liabilitySaveAction => '保存';
@@ -1940,6 +1952,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get liabilityValidationDayOfMonth => '必须为 1–31';
+
+  @override
+  String liabilityValidationAccountCurrency(String currency) {
+    return '请使用还款账户币种：$currency';
+  }
 
   @override
   String get liabilitySummaryRemaining => '剩余本金';

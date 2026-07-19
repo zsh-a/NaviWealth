@@ -122,10 +122,12 @@ void main() {
       final updated = await repo.updateMetadata(
         id: l.id,
         name: 'Primary home',
+        accountId: 'acc-2',
         note: 'Refinance review in Q4',
       );
 
       expect(updated.name, 'Primary home');
+      expect(updated.accountId, 'acc-2');
       expect(updated.note, 'Refinance review in Q4');
       expect(await repo.scheduleFor(l.id), before);
       expect(outbox.queued, hasLength(1));

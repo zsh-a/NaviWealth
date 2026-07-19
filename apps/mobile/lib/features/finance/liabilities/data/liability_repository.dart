@@ -179,6 +179,7 @@ class LiabilityRepository {
   Future<Liability> updateMetadata({
     required String id,
     required String name,
+    required String? accountId,
     String? note,
   }) async {
     final stamp = await _stamper.stamp();
@@ -188,6 +189,7 @@ class LiabilityRepository {
         )..where((t) => t.id.equals(id) & t.deletedAt.isNull())).write(
           LiabilitiesCompanion(
             name: Value(name),
+            accountId: Value(accountId),
             note: Value(note),
             updatedAt: Value(stamp.now),
             updatedByDevice: Value(stamp.deviceId),
