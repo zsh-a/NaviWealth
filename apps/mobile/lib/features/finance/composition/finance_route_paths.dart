@@ -59,6 +59,9 @@ abstract final class FinanceRoutes {
   static String wealthAccountEdit(String id) =>
       '/wealth/accounts/${Uri.encodeComponent(id)}/edit';
 
+  static String transferFromAccount(String id) =>
+      '$transfer?from=${Uri.encodeQueryComponent(id)}';
+
   static String expense(String id) =>
       '/activity/expenses/${Uri.encodeComponent(id)}';
 

@@ -201,7 +201,8 @@ class _BalanceCard extends ConsumerWidget {
     );
     Widget transferButton() => FButton(
       variant: FButtonVariant.primary,
-      onPress: () => context.push(FinanceRoutes.transfer),
+      onPress: () =>
+          context.push(FinanceRoutes.transferFromAccount(account.id)),
       prefix: const Icon(FLucideIcons.arrowLeftRight, size: AppIconSizes.sm),
       child: Text(l10n.accountDetailTransferAction),
     );

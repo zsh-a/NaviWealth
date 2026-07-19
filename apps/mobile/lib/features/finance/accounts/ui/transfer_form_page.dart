@@ -63,6 +63,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
   late DateTime _date;
   bool _busy = false;
   bool _detailsExpanded = false;
+  bool _routeDefaultsHydrated = false;
 
   /// Tracks whether the user has typed into the to-amount field. Until
   /// they do, we keep [_toAmountController] in lock-step with
@@ -107,22 +108,26 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
-    // `?convert=1` query (set by the global action panel's Convert
-    // entry) tells us the user wants to exchange currencies inside one
-    // account. We surface a banner above the form and pre-select the
-    // same account on both sides so they only need to pick currencies.
-    final convertMode =
-        GoRouter.of(
-          context,
-        ).routeInformationProvider.value.uri.queryParameters['convert'] ==
-        '1';
+    final queryParameters = GoRouter.of(
+      context,
+    ).routeInformationProvider.value.uri.queryParameters;
+    // Accounts are single-currency ledger containers. Convert mode therefore
+    // guides the user toward two accounts with different currencies rather
+    // than asking them to select one account twice.
+    final convertMode = queryParameters['convert'] == '1';
+    final requestedFromAccountId = queryParameters['from'];
     return guardedScope(
       child: AppFormPageScaffold(
         title: Text(convertMode ? l10n.superFabConvert : l10n.transferTitle),
         confirmLeave: handleBackIntent,
         child: accountsAsync.whenOrLoading(
           context: context,
-          data: (accounts) => _buildForm(context, accounts, convertMode),
+          data: (accounts) => _buildForm(
+            context,
+            accounts,
+            convertMode,
+            requestedFromAccountId,
+          ),
           error: (_, _) => Center(
             child: AppEmptyState.error(
               title: l10n.commonLoadFailed,
@@ -139,6 +144,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     BuildContext context,
     List<Account> accounts,
     bool convertMode,
+    String? requestedFromAccountId,
   ) {
     final l10n = AppLocalizations.of(context);
     // Pre-compute the asset+liability subset once so the picker /
@@ -152,6 +158,19 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     ];
     final accountsById = <String, Account>{for (final a in accounts) a.id: a};
 
+    // Preserve task context when transfer is launched from an account detail.
+    // Route-derived defaults are not user edits and therefore do not dirty the
+    // form or trigger a discard prompt.
+    if (!_routeDefaultsHydrated &&
+        (requestedFromAccountId == null || transferable.isNotEmpty)) {
+      _routeDefaultsHydrated = true;
+      if (_fromAccountId == null &&
+          requestedFromAccountId != null &&
+          transferable.any((account) => account.id == requestedFromAccountId)) {
+        _fromAccountId = requestedFromAccountId;
+      }
+    }
+
     final fromAccount = _fromAccountId == null
         ? null
         : accountsById[_fromAccountId!];
@@ -163,6 +182,11 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         fromCurrency != null &&
         toCurrency != null &&
         fromCurrency != toCurrency;
+    final destinationAccounts = convertMode && fromCurrency != null
+        ? transferable
+              .where((account) => account.currency != fromCurrency)
+              .toList(growable: false)
+        : transferable;
 
     final amount = readAmount(_amountController);
 
@@ -190,23 +214,14 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
       toAmount: toAmount,
     );
 
-    // Same-account is allowed when the two currencies differ — that's
-    // a "Convert" (e.g. exchanging USD → HKD inside one IBKR
-    // container). Same-account same-currency is still meaningless and
-    // blocked. Cross-account same- or cross-currency is the classic
-    // transfer.
-    final isSameAccountConvert =
-        _fromAccountId != null &&
-        _toAccountId != null &&
-        _fromAccountId == _toAccountId &&
-        isCrossCurrency;
     final isCrossAccount =
         _fromAccountId != null &&
         _toAccountId != null &&
         _fromAccountId != _toAccountId;
     final canSubmit =
         !_busy &&
-        (isCrossAccount || isSameAccountConvert) &&
+        isCrossAccount &&
+        (!convertMode || isCrossCurrency) &&
         amount != null &&
         amount > Decimal.zero &&
         (!isCrossCurrency || (toAmount != null && toAmount > Decimal.zero));
@@ -221,7 +236,9 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
           child: FButton(
             variant: FButtonVariant.primary,
             onPress: onSubmit,
-            child: Text(l10n.transferSubmitAction),
+            child: Text(
+              convertMode ? l10n.superFabConvert : l10n.transferSubmitAction,
+            ),
           ),
         ),
         children: [
@@ -263,6 +280,11 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
             onChanged: (v) {
               setState(() {
                 _fromAccountId = v;
+                if (convertMode &&
+                    accountsById[_toAccountId]?.currency ==
+                        accountsById[v]?.currency) {
+                  _toAccountId = null;
+                }
                 // Picking a new account potentially flips the
                 // currency relationship; reset the autofill
                 // suppressor so the next paint takes the FX
@@ -279,9 +301,27 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                 ? l10n.transferValidationRequired
                 : null,
           ),
-          const SizedBox(height: AppSpacing.s12),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+            child: Align(
+              alignment: AlignmentDirectional.center,
+              child: FButton(
+                key: const Key('transfer-swap-accounts'),
+                variant: FButtonVariant.ghost,
+                size: FButtonSizeVariant.sm,
+                onPress: _fromAccountId == null && _toAccountId == null
+                    ? null
+                    : () => _swapAccounts(accountsById),
+                prefix: const Icon(
+                  FLucideIcons.arrowUpDown,
+                  size: AppIconSizes.sm,
+                ),
+                child: Text(l10n.transferSwapAccountsAction),
+              ),
+            ),
+          ),
           AccountTreePicker(
-            accounts: transferable,
+            accounts: destinationAccounts,
             value: _toAccountId,
             onChanged: (v) {
               setState(() {
@@ -306,6 +346,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
           ),
           const SizedBox(height: AppSpacing.s12),
           AmountField(
+            key: const Key('transfer-amount-field'),
             label: fromCurrency == null
                 ? l10n.transferAmountLabel
                 : l10n.transferAmountWithCurrencyLabel(fromCurrency),
@@ -327,6 +368,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
           if (isCrossCurrency) ...[
             const SizedBox(height: AppSpacing.s12),
             AmountField(
+              key: const Key('transfer-to-amount-field'),
               label: l10n.transferToAmountLabel(toCurrency),
               controller: _toAmountController,
               currencyCode: toCurrency,
@@ -597,7 +639,14 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
       failureMessage: (e) => switch (e) {
         JournalEntryUnbalancedException(:final message) =>
           l10n.transferRejectedError(message),
-        _ => l10n.transferFailedError('$e'),
+        _ => l10n.transferFailedError(
+          userSafeErrorMessage(
+            context,
+            e,
+            operation: 'transfer submission',
+            logError: false,
+          ),
+        ),
       },
       successMessage: l10n.commonSaved,
       undo: FormUndoPresentation<JournalMutationReceipt>(
@@ -614,5 +663,29 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
 
   void _setBusy(bool value) {
     if (mounted && _busy != value) setState(() => _busy = value);
+  }
+
+  void _swapAccounts(Map<String, Account> byId) {
+    final previousFromId = _fromAccountId;
+    final previousToId = _toAccountId;
+    final previousFrom = byId[previousFromId];
+    final previousTo = byId[previousToId];
+    final wasCrossCurrency =
+        previousFrom != null &&
+        previousTo != null &&
+        previousFrom.currency != previousTo.currency;
+    final previousAmount = _amountController.text;
+    final previousToAmount = _toAmountController.text;
+
+    setState(() {
+      _fromAccountId = previousToId;
+      _toAccountId = previousFromId;
+      if (wasCrossCurrency) {
+        _amountController.text = previousToAmount;
+        _toAmountController.text = previousAmount;
+      }
+      dirty.markDirty();
+    });
+    _refreshToAmountAutofill(byId);
   }
 }

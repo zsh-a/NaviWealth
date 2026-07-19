@@ -1611,7 +1611,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transferConvertModeBanner =>
-      'Converting inside a single account — pick the same account twice and choose two different currencies.';
+      'Choose two accounts with different currencies, then confirm the amount sent and received.';
 
   @override
   String get homeAppBarTitle => 'Overview';
@@ -8161,6 +8161,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transferToLabel => 'To account';
+
+  @override
+  String get transferSwapAccountsAction => 'Swap accounts';
 
   @override
   String get transferValidationRequired => 'Required';

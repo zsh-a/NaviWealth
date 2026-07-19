@@ -1562,7 +1562,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get superFabLiability => '负债';
 
   @override
-  String get transferConvertModeBanner => '在同一账户内换汇 — 两侧请选同一账户并选择不同币种。';
+  String get transferConvertModeBanner => '请选择两个不同币种的账户，并确认转出与转入金额。';
 
   @override
   String get homeAppBarTitle => '总览';
@@ -7766,6 +7766,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get transferToLabel => '转入账户';
+
+  @override
+  String get transferSwapAccountsAction => '交换账户';
 
   @override
   String get transferValidationRequired => '必填';

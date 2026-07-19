@@ -474,7 +474,7 @@
   "superFabConvert": "换汇",
   "superFabConvertSubtitle": "在同一账户内兑换币种",
   "superFabLiability": "负债",
-  "transferConvertModeBanner": "在同一账户内换汇 — 两侧请选同一账户并选择不同币种。",
+  "transferConvertModeBanner": "请选择两个不同币种的账户，并确认转出与转入金额。",
 
   "homeAppBarTitle": "总览",
   "homeAiAssistantTooltip": "AI 助手",
@@ -2413,6 +2413,7 @@
   "transferLoadError": "加载账户失败：{error}",
   "transferFromLabel": "转出账户",
   "transferToLabel": "转入账户",
+  "transferSwapAccountsAction": "交换账户",
   "transferValidationRequired": "必填",
   "transferValidationDifferentAccount": "请选择不同账户",
   "transferAmountLabel": "金额",

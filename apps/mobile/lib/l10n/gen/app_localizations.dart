@@ -2867,7 +2867,7 @@ abstract class AppLocalizations {
   /// Hint shown at the top of the Transfer form when the user enters via the Convert action
   ///
   /// In en, this message translates to:
-  /// **'Converting inside a single account — pick the same account twice and choose two different currencies.'**
+  /// **'Choose two accounts with different currencies, then confirm the amount sent and received.'**
   String get transferConvertModeBanner;
 
   /// No description provided for @homeAppBarTitle.
@@ -13826,6 +13826,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'To account'**
   String get transferToLabel;
+
+  /// Action that reverses the source and destination accounts on the transfer form
+  ///
+  /// In en, this message translates to:
+  /// **'Swap accounts'**
+  String get transferSwapAccountsAction;
 
   /// Transfer form: empty field validator
   ///

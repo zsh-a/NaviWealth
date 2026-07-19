@@ -1005,7 +1005,7 @@
   "superFabConvertSubtitle": "Exchange currency inside one account",
   "@superFabConvertSubtitle": { "description": "Affordance under Convert in the global action panel" },
   "superFabLiability": "Liability",
-  "transferConvertModeBanner": "Converting inside a single account — pick the same account twice and choose two different currencies.",
+  "transferConvertModeBanner": "Choose two accounts with different currencies, then confirm the amount sent and received.",
   "@transferConvertModeBanner": { "description": "Hint shown at the top of the Transfer form when the user enters via the Convert action" },
 
   "homeAppBarTitle": "Overview",
@@ -4400,6 +4400,8 @@
   "transferFromLabel": "From account",
   "@transferFromLabel": { "description": "Transfer form: source account picker label" },
   "transferToLabel": "To account",
+  "transferSwapAccountsAction": "Swap accounts",
+  "@transferSwapAccountsAction": { "description": "Action that reverses the source and destination accounts on the transfer form" },
   "@transferToLabel": { "description": "Transfer form: destination account picker label" },
   "transferValidationRequired": "Required",
   "@transferValidationRequired": { "description": "Transfer form: empty field validator" },

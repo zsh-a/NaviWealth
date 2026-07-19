@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
+import 'package:naviwealth/core/forms/amount_field.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
@@ -103,7 +104,17 @@ Widget _wrap(
   _Harness h, {
   required List<Account> accounts,
   List<FxRate> fxRates = const <FxRate>[],
+  String? fromAccountId,
+  bool convertMode = false,
 }) {
+  final query = <String, String>{
+    'from': ?fromAccountId,
+    if (convertMode) 'convert': '1',
+  };
+  final initialLocation = Uri(
+    path: '/transfer',
+    queryParameters: query.isEmpty ? null : query,
+  ).toString();
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(h.prefs),
@@ -126,7 +137,7 @@ Widget _wrap(
       // cross-currency submit test that inspects DB state after the
       // commit-first pop.
       routerConfig: GoRouter(
-        initialLocation: '/transfer',
+        initialLocation: initialLocation,
         routes: [
           GoRoute(
             path: '/transfer',
@@ -178,6 +189,10 @@ void _expectSubmitWiring(WidgetTester tester, {required bool enabled}) {
   }
 }
 
+Finder get _amountField => find.byKey(const Key('transfer-amount-field'));
+
+Finder get _toAmountField => find.byKey(const Key('transfer-to-amount-field'));
+
 void main() {
   late _Harness h;
 
@@ -209,6 +224,147 @@ void main() {
 
     // Submit button is rendered but disabled (no accounts picked yet).
     _expectSubmitWiring(tester, enabled: false);
+  });
+
+  testWidgets('account-detail route preselects source and supports swapping', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(360, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _wrap(
+        h,
+        fromAccountId: 'a-bank-a',
+        accounts: [
+          _account(id: 'a-bank-a', name: 'Bank A', category: AccountSide.asset),
+          _account(id: 'a-bank-b', name: 'Bank B', category: AccountSide.asset),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    var pickers = tester.widgetList<AccountTreePicker>(
+      find.byType(AccountTreePicker),
+    );
+    expect(pickers.first.value, 'a-bank-a');
+    expect(pickers.last.value, isNull);
+    expect(_amountField, findsOneWidget);
+    expect(tester.widget<AmountField>(_amountField).label, 'Amount (CNY)');
+
+    await tester.tap(find.byKey(const Key('transfer-swap-accounts')));
+    await tester.pumpAndSettle();
+    pickers = tester.widgetList<AccountTreePicker>(
+      find.byType(AccountTreePicker),
+    );
+    expect(pickers.first.value, isNull);
+    expect(pickers.last.value, 'a-bank-a');
+
+    await tester.tap(find.byKey(const Key('transfer-swap-accounts')));
+    await tester.pumpAndSettle();
+
+    await _selectAccount(tester, pickerIndex: 1, accountName: 'Bank B');
+    await tester.enterText(_amountField, '250');
+    await tester.tap(find.byKey(const Key('transfer-swap-accounts')));
+    await tester.pumpAndSettle();
+
+    pickers = tester.widgetList<AccountTreePicker>(
+      find.byType(AccountTreePicker),
+    );
+    expect(pickers.first.value, 'a-bank-b');
+    expect(pickers.last.value, 'a-bank-a');
+    expect(find.text('-¥250'), findsOneWidget);
+    expect(find.text('+¥250'), findsOneWidget);
+    _expectSubmitWiring(tester, enabled: true);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('convert mode offers only destinations in another currency', (
+    tester,
+  ) async {
+    await _enlarge(tester);
+    await tester.pumpWidget(
+      _wrap(
+        h,
+        convertMode: true,
+        accounts: [
+          _account(
+            id: 'a-usd',
+            name: 'USD Bank',
+            category: AccountSide.asset,
+            currency: 'USD',
+          ),
+          _account(
+            id: 'a-usd-2',
+            name: 'Other USD Bank',
+            category: AccountSide.asset,
+            currency: 'USD',
+          ),
+          _account(
+            id: 'a-cny',
+            name: 'CNY Bank',
+            category: AccountSide.asset,
+            currency: 'CNY',
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Choose two accounts with different currencies, then confirm the '
+        'amount sent and received.',
+      ),
+      findsOneWidget,
+    );
+    await _selectAccount(tester, pickerIndex: 0, accountName: 'USD Bank');
+
+    final destination = tester.widget<AccountTreePicker>(
+      find.byType(AccountTreePicker).at(1),
+    );
+    expect(destination.accounts.map((account) => account.id), ['a-cny']);
+    expect(find.widgetWithText(FButton, 'Convert'), findsOneWidget);
+
+    await _selectAccount(tester, pickerIndex: 1, accountName: 'CNY Bank');
+    expect(tester.widget<AmountField>(_amountField).label, 'Amount (USD)');
+    expect(tester.widget<AmountField>(_toAmountField).label, 'To amount (CNY)');
+    await tester.enterText(_amountField, '100');
+    await tester.enterText(_toAmountField, '710');
+    await tester.pumpAndSettle();
+    _expectSubmitWiring(tester, enabled: true);
+
+    await tester.tap(find.byKey(const Key('transfer-swap-accounts')));
+    await tester.pumpAndSettle();
+
+    final swapped = tester.widgetList<AccountTreePicker>(
+      find.byType(AccountTreePicker),
+    );
+    expect(swapped.first.value, 'a-cny');
+    expect(swapped.last.value, 'a-usd');
+    expect(
+      tester
+          .widget<EditableText>(
+            find.descendant(
+              of: _amountField,
+              matching: find.byType(EditableText),
+            ),
+          )
+          .controller
+          .text,
+      '710',
+    );
+    expect(
+      tester
+          .widget<EditableText>(
+            find.descendant(
+              of: _toAmountField,
+              matching: find.byType(EditableText),
+            ),
+          )
+          .controller
+          .text,
+      '100',
+    );
   });
 
   testWidgets('keeps optional date and note behind an accessible disclosure', (
@@ -279,10 +435,7 @@ void main() {
 
     // The amount field labels include the from-account currency once
     // the from picker is filled.
-    await tester.enterText(
-      find.widgetWithText(FTextFormField, 'Amount (CNY)'),
-      '1000',
-    );
+    await tester.enterText(_amountField, '1000');
     await tester.pumpAndSettle();
 
     // PostingsPreview now shows the leg amounts.
@@ -316,10 +469,7 @@ void main() {
     await _selectAccount(tester, pickerIndex: 0, accountName: 'Only Bank');
     await _selectAccount(tester, pickerIndex: 1, accountName: 'Only Bank');
 
-    await tester.enterText(
-      find.widgetWithText(FTextFormField, 'Amount (CNY)'),
-      '500',
-    );
+    await tester.enterText(_amountField, '500');
     await tester.pumpAndSettle();
 
     // Preview should not render with same account on both ends.
@@ -362,24 +512,15 @@ void main() {
 
     // The To-amount field appears once both accounts disagree on
     // currency. Its label includes the destination currency.
-    expect(
-      find.widgetWithText(FTextFormField, 'To amount (CNY)'),
-      findsOneWidget,
-    );
+    expect(_toAmountField, findsOneWidget);
 
     // No FX rate on file → helper prompts the user to enter the
     // converted amount manually.
     expect(find.textContaining('No FX rate on file'), findsOneWidget);
 
     // Enter both sides of the exchange.
-    await tester.enterText(
-      find.widgetWithText(FTextFormField, 'Amount (USD)'),
-      '1000',
-    );
-    await tester.enterText(
-      find.widgetWithText(FTextFormField, 'To amount (CNY)'),
-      '7100',
-    );
+    await tester.enterText(_amountField, '1000');
+    await tester.enterText(_toAmountField, '7100');
     await tester.pumpAndSettle();
 
     // Rate label surfaces underneath the to-amount input.
@@ -429,14 +570,8 @@ void main() {
       await _selectAccount(tester, pickerIndex: 0, accountName: 'USD Bank');
       await _selectAccount(tester, pickerIndex: 1, accountName: 'CNY Bank');
 
-      await tester.enterText(
-        find.widgetWithText(FTextFormField, 'Amount (USD)'),
-        '1000',
-      );
-      await tester.enterText(
-        find.widgetWithText(FTextFormField, 'To amount (CNY)'),
-        '7100',
-      );
+      await tester.enterText(_amountField, '1000');
+      await tester.enterText(_toAmountField, '7100');
       await tester.pumpAndSettle();
 
       await tester.tap(find.widgetWithText(FButton, 'Transfer'));
@@ -490,10 +625,7 @@ void main() {
 
     await _selectAccount(tester, pickerIndex: 0, accountName: 'Bank A');
     await _selectAccount(tester, pickerIndex: 1, accountName: 'Bank B');
-    await tester.enterText(
-      find.widgetWithText(FTextFormField, 'Amount (CNY)'),
-      '100',
-    );
+    await tester.enterText(_amountField, '100');
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FButton, 'Transfer'));
     await tester.pumpAndSettle();
