@@ -28,3 +28,7 @@ apps/mobile/apps/
 .codegraph
 
 .cache
+
+# Local financial source documents (use redacted fixtures under test/).
+/微信支付账单流水文件*.xlsx
+/20??年??月信用卡账单.pdf

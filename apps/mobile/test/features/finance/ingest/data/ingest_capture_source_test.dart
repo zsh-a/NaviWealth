@@ -39,6 +39,32 @@ void main() {
       expect(_success(outcome).kind, IngestSourceKind.statementPdf);
     });
 
+    test('recognises XLSX by extension and standard MIME', () async {
+      for (final file in <_FakeCaptureFile>[
+        _FakeCaptureFile(
+          name: 'statement.xlsx',
+          lengths: [1, 1],
+          chunks: [_oneByte],
+        ),
+        _FakeCaptureFile(
+          name: 'shared-statement',
+          mimeType:
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          lengths: [1, 1],
+          chunks: [_oneByte],
+        ),
+      ]) {
+        final outcome = await readIngestCaptureFile(file);
+
+        expect(
+          _failureCode(outcome),
+          IngestCaptureFailureCode.unreadable,
+          reason: file.name,
+        );
+        expect(file.openCalls, 1, reason: file.name);
+      }
+    });
+
     test(
       'only trusted image lanes may default an unknown file to JPEG',
       () async {
@@ -87,6 +113,7 @@ void main() {
     test('rejects the first byte beyond each lane budget', () async {
       for (final entry in <(String, int)>[
         ('statement.csv', IngestCaptureLimits.statementTextBytes),
+        ('statement.xlsx', IngestCaptureLimits.statementWorkbookBytes),
         ('receipt.jpg', IngestCaptureLimits.receiptImageBytes),
         ('statement.pdf', IngestCaptureLimits.statementPdfBytes),
       ]) {

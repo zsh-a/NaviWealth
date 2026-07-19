@@ -165,7 +165,7 @@ surface evolves.
 `test/golden/` uses Flutter's native `matchesGoldenFile` matcher through the
 repository's deterministic harness. Comparison remains Linux-pinned (other
 hosts still pump the surfaces; CI `golden-regression` is the source of truth).
-17 golden test files currently produce 61 PNG baselines; page
+17 golden test files currently produce 68 PNG baselines; page
 surfaces primarily run dark + colorblind variants, while AI primitive
 goldens use component-scoped light surfaces. Expand to every Task's
 primary surface and add responsive breakpoints (phone/tablet/web) ahead
@@ -243,8 +243,8 @@ Weekly ─ native ASR pinned model/WAV exact-transcript smoke
 
 **Zero-failure unit/widget gate.** `mobile.yml` distributes
 `flutter test --coverage --reporter=expanded --exclude-tags=golden` across four
-deterministic shards with bounded concurrency. There is no known-failing
-allowlist: any non-golden test failure fails CI. Each shard always uploads its
+deterministic shards with bounded concurrency. There is no known-failing allowlist:
+any non-golden test failure fails CI. Each shard always uploads its
 machine-readable JSON event stream for seven days, so a timeout or runner
 failure retains the last completed test and error events instead of leaving
 only an incomplete console log.

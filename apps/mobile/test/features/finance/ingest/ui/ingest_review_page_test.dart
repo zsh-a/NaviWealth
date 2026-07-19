@@ -256,6 +256,12 @@ Future<void> _tapCaptureOption(
   } else {
     await tester.pump(const Duration(milliseconds: 500));
   }
+  await _flushTooltipDelay(tester);
+}
+
+Future<void> _flushTooltipDelay(WidgetTester tester) async {
+  await tester.pump(const Duration(milliseconds: 500));
+  await tester.pumpAndSettle();
 }
 
 Future<void> _settleUntil(WidgetTester tester, Finder finder) async {
@@ -651,7 +657,7 @@ void main() {
           .hasFocus,
       isTrue,
     );
-    expect(find.textContaining('source'), findsNothing);
+    expect(find.text('Couldn’t read that source. Try again.'), findsNothing);
   });
 
   testWidgets('cold-start shared failures drain once after the page mounts', (
@@ -754,6 +760,7 @@ void main() {
 
     captureSource.result.complete(const IngestCaptureCancelled());
     await tester.pumpAndSettle();
+    await _flushTooltipDelay(tester);
   });
 
   testWidgets('a rejected drop does not block the next valid file', (

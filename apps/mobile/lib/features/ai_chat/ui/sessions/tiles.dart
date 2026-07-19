@@ -81,12 +81,11 @@ class _SessionTile extends StatelessWidget {
                           title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: context.mediumLabelStyle.copyWith(
-                            color: colors.foreground,
-                            fontWeight: selected
-                                ? FontWeight.w600
-                                : FontWeight.w500,
-                          ),
+                          style:
+                              (selected
+                                      ? context.labelStyle
+                                      : context.mediumLabelStyle)
+                                  .copyWith(color: colors.foreground),
                         ),
                       ),
                       const SizedBox(width: AppSpacing.s8),
@@ -117,9 +116,7 @@ class _SessionTile extends StatelessWidget {
               title: l10n.aiChatSessionActionsTitle,
               actions: <AppAdaptiveAction>[
                 AppAdaptiveAction(
-                  icon: session.pinned
-                      ? FLucideIcons.pinOff
-                      : FLucideIcons.pin,
+                  icon: session.pinned ? FLucideIcons.pinOff : FLucideIcons.pin,
                   title: session.pinned
                       ? l10n.aiChatSessionUnpinAction
                       : l10n.aiChatSessionPinAction,

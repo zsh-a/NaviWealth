@@ -19,7 +19,9 @@ class _HeroCard extends StatelessWidget {
     final palette = _palette(context, event.status);
     final syncing = event.status == SyncStatus.syncing;
     final busyNow = busy || syncing;
-    final animateBusy = busyNow && !MediaQuery.disableAnimationsOf(context);
+    final animateBusy =
+        busyNow &&
+        AppMotionPolicy.isEnabled(context, role: AppMotionRole.status);
 
     return SoftCard.flat(
       padding: const EdgeInsets.fromLTRB(

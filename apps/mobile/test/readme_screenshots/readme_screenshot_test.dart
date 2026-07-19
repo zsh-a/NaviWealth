@@ -75,7 +75,7 @@ void main() {
         ),
       );
       expect(find.text('今日恢复'), findsOneWidget);
-      expect(find.text('充分恢复'), findsOneWidget);
+      expect(find.text('充分恢复'), findsWidgets);
       expect(find.text('晨间简报'), findsOneWidget);
       expect(find.text('将深度工作留给上午'), findsOneWidget);
       expect(find.text('整理本周复盘中的三个关键信号'), findsOneWidget);

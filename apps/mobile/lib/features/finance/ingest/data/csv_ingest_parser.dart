@@ -300,16 +300,16 @@ IngestParseIssueCode? _unsupportedDirectionIssue({
   final normalizedDescription = description.toLowerCase();
   final isRefund =
       normalizedDescription.contains('退款') ||
-      normalizedDescription.contains('refund');
+      RegExp(r'\brefund\b').hasMatch(normalizedDescription);
   final isTransfer =
       normalizedDescription.contains('转账') ||
-      normalizedDescription.contains('transfer');
-  final isUnsupportedIncome = isRefund || isTransfer;
+      RegExp(r'\btransfer\b').hasMatch(normalizedDescription);
+  if (isRefund || isTransfer) {
+    return IngestParseIssueCode.unsupportedDirection;
+  }
   if (dir != null && dir.isNotEmpty) {
     if (dir.contains('收入') || dir == '收') {
-      return isUnsupportedIncome
-          ? IngestParseIssueCode.unsupportedDirection
-          : null;
+      return null;
     }
     if (dir.contains('不计') || dir.contains('其他') || dir.contains('退款')) {
       return IngestParseIssueCode.unsupportedDirection;
@@ -318,17 +318,13 @@ IngestParseIssueCode? _unsupportedDirectionIssue({
   if ((expenseAmount == null || expenseAmount == 0) &&
       incomeAmount != null &&
       incomeAmount != 0) {
-    return isUnsupportedIncome
-        ? IngestParseIssueCode.unsupportedDirection
-        : null;
+    return null;
   }
   if (amount != null &&
       amount > 0 &&
       incomeAmount != null &&
       incomeAmount.abs() == amount) {
-    return isUnsupportedIncome
-        ? IngestParseIssueCode.unsupportedDirection
-        : null;
+    return null;
   }
   return null;
 }
@@ -388,7 +384,9 @@ String _incomeCategoryHint(String description) {
   if (normalized.contains('工资') || normalized.contains('salary')) {
     return 'salary';
   }
-  if (normalized.contains('利息') || normalized.contains('interest')) {
+  if (normalized.contains('利息') ||
+      normalized.contains('结息') ||
+      normalized.contains('interest')) {
     return 'interest';
   }
   if (normalized.contains('股息') ||

@@ -150,6 +150,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(thirdActionSelected, isTrue);
       expect(find.text('Third action'), findsNothing);
+      await _flushTooltipDelay(tester);
     });
 
     testWidgets('uses an anchored overflow menu on desktop platforms', (
@@ -205,6 +206,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(thirdActionSelected, isTrue);
       expect(find.text('Third action'), findsNothing);
+      await _flushTooltipDelay(tester);
     });
   });
 
@@ -250,6 +252,11 @@ void main() {
           'and tab padding stay centralized in core/shell.',
     );
   });
+}
+
+Future<void> _flushTooltipDelay(WidgetTester tester) async {
+  await tester.pump(const Duration(milliseconds: 500));
+  await tester.pumpAndSettle();
 }
 
 Widget _leading(BuildContext context, WidgetRef ref) {

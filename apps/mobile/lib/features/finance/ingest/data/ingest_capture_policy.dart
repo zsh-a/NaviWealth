@@ -4,16 +4,24 @@ const int _bytesPerMebibyte = 1024 * 1024;
 
 abstract final class IngestCaptureLimits {
   static const int statementTextBytes = 4 * _bytesPerMebibyte;
+  static const int statementWorkbookBytes = 8 * _bytesPerMebibyte;
   static const int receiptImageBytes = 8 * _bytesPerMebibyte;
   static const int statementPdfBytes = 12 * _bytesPerMebibyte;
   static const int textCodeUnits = 4_000_000;
 }
 
-enum IngestCaptureKind { statementText, receiptImage, statementPdf }
+enum IngestCaptureKind {
+  statementText,
+  statementWorkbook,
+  receiptImage,
+  statementPdf,
+}
 
 extension IngestCaptureKindPolicy on IngestCaptureKind {
   int get maxBytes => switch (this) {
     IngestCaptureKind.statementText => IngestCaptureLimits.statementTextBytes,
+    IngestCaptureKind.statementWorkbook =>
+      IngestCaptureLimits.statementWorkbookBytes,
     IngestCaptureKind.receiptImage => IngestCaptureLimits.receiptImageBytes,
     IngestCaptureKind.statementPdf => IngestCaptureLimits.statementPdfBytes,
   };

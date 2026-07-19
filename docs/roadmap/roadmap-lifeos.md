@@ -43,18 +43,21 @@ Current evidence:
 
 - Provider detection exists for Alipay, WeChat Pay, bank, broker, and generic
   statements.
-- The checked-in representative corpus contains an Alipay export with an
-  auto-discovered, privacy-safe row-level expectation manifest. WeChat Pay and
-  bank coverage is still synthetic and must not be described as verified
-  production-format support.
+- The checked-in representative corpus contains privacy-safe Alipay, measured
+  WeChat Pay XLSX, and measured CMB credit-card PDF-layout fixtures. Their
+  auto-discovered manifests pin every accepted and rejected row without
+  retaining user data.
+- WeChat XLSX capture stays on the local deterministic path. CMB statement
+  text has a dedicated parser; binary PDF capture retains the existing
+  provider-Vision boundary.
 - Confirmation requires a selected statement account and batch confirmation
   excludes duplicate and likely-duplicate drafts. Unsupported trade principal
   and transfer/refund rows remain closed before draft creation.
 
 Exit evidence:
 
-- Add redacted representative WeChat Pay and bank debit/credit fixtures only
-  after real samples or confirmed user demand are available.
+- Add a redacted representative bank debit fixture only after a real sample or
+  confirmed user demand is available.
 - Each representative fixture pins provider detection, accepted/rejected row
   counts, direction, amount, status filtering, and privacy-safe diagnostics.
 - Dedup behavior is covered for account, expense, trade, and transfer import

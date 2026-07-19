@@ -208,7 +208,7 @@ class _NetWorthSparklineState extends State<_NetWorthSparkline> {
           ),
           const SizedBox(height: AppSpacing.s12),
           SizedBox(
-            height: 112,
+            height: AppChartHeights.compact,
             child: NwLineChart(
               series: [
                 ChartSeries(
@@ -380,8 +380,8 @@ class ToolMiniSpark extends StatelessWidget {
     if (values.length < 2) return const SizedBox.shrink();
     final color = context.theme.colors.primary;
     return SizedBox(
-      width: 40,
-      height: 16,
+      width: AppSpacing.s40,
+      height: AppSpacing.s16,
       child: CustomPaint(
         painter: _MiniSparkPainter(values: values, color: color),
       ),
@@ -418,7 +418,7 @@ class _MiniSparkPainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.25
+      ..strokeWidth = AppStroke.thin
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
     canvas.drawPath(path, paint);

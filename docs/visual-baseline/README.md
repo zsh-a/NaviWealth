@@ -48,7 +48,7 @@ screenshot PR when the canonical Linux-rendered assets change.
 | AI visual primitives / renderers | `apps/mobile/test/golden/ai_surfaces_golden_test.dart` | component-scoped light surfaces |
 | Task flows (Ingest, forms, Undo, Rebalance) | `apps/mobile/test/golden/task_flow_responsive_golden_test.dart` | dark responsive N / W / T matrix |
 
-17 test files produce **61 PNG baselines** under
+17 test files produce **68 PNG baselines** under
 `apps/mobile/test/golden/goldens/`: the 47-PNG page/component matrix (including
 the compact action sheet) plus a 14-PNG dark responsive task-flow matrix. Light-mode page variants were
 dropped — see *Variant choice* below — but AI primitive/component goldens keep

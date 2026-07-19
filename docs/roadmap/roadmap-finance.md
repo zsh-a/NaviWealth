@@ -2,7 +2,7 @@
 
 Status: active FinanceOS sequencing SSOT.
 
-Last reviewed: 2026-07-18.
+Last reviewed: 2026-07-19.
 
 FinanceOS is the always-on seed domain. This document contains only
 Finance-specific product sequencing. Cross-domain shell, Memory Runtime,
@@ -32,10 +32,14 @@ Current evidence:
 
 - `statement_ingest_parser.dart` detects Alipay, WeChat Pay, bank, broker, and
   generic formats.
-- A privacy-safe representative Alipay file is checked in with an
-  auto-discovered expectation manifest that pins every accepted and rejected
-  row. WeChat Pay and bank parser tests use synthetic inputs and do not
-  establish production-format support.
+- Privacy-safe representative Alipay, WeChat Pay, and CMB credit-card files
+  are checked in with auto-discovered expectation manifests that pin every
+  accepted and rejected row. The WeChat fixture preserves the structure and
+  row semantics of a measured XLSX export; the CMB fixture preserves the text
+  layout and transaction mix of a measured PDF statement.
+- XLSX capture is decoded locally into the deterministic CSV lane. CMB
+  statement text uses a dedicated row parser; binary PDF capture continues to
+  use the existing provider-Vision lane.
 - Confirmation requires a selected statement account; duplicate and
   likely-duplicate drafts are excluded from batch confirmation. Trade
   principal and transfer/refund inputs remain rejected before draft creation
@@ -43,10 +47,8 @@ Current evidence:
 
 Exit evidence:
 
-- Add a redacted representative WeChat Pay fixture after a real sample or
-  confirmed demand is available.
-- Add representative bank debit and credit fixtures after real samples or
-  confirmed demand are available.
+- Add a representative bank debit fixture after a real sample or confirmed
+  demand is available.
 - Pin provider, accepted/rejected counts, status handling, amount direction,
   currency, description/payee normalization, and raw-text-free diagnostics for
   every representative file.

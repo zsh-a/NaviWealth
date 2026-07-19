@@ -34,7 +34,6 @@ class _PanelShell extends StatelessWidget {
                     l10n.aiChatSessionsHeader,
                     style: context.rowTitleStyle.copyWith(
                       color: colors.foreground,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),

@@ -220,6 +220,10 @@ _CaptureDescriptor? _descriptorForExtension(String extension) =>
         IngestCaptureKind.statementText,
         'text/plain',
       ),
+      'xlsx' => const _CaptureDescriptor(
+        IngestCaptureKind.statementWorkbook,
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      ),
       'pdf' => const _CaptureDescriptor(
         IngestCaptureKind.statementPdf,
         'application/pdf',
@@ -256,6 +260,11 @@ _CaptureDescriptor? _descriptorForMime(String? mimeType) => switch (mimeType) {
     IngestCaptureKind.statementPdf,
     'application/pdf',
   ),
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' =>
+    const _CaptureDescriptor(
+      IngestCaptureKind.statementWorkbook,
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ),
   'image/jpeg' || 'image/jpg' => const _CaptureDescriptor(
     IngestCaptureKind.receiptImage,
     'image/jpeg',

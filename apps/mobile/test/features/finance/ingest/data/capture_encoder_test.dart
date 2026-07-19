@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:archive/archive.dart';
 import 'package:charset/charset.dart' as charset;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/ingest/data/capture_encoder.dart';
@@ -9,6 +10,50 @@ import 'package:naviwealth/features/finance/ingest/data/statement_ingest_parser.
 import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
 
 Uint8List _bytes(String value) => Uint8List.fromList(utf8.encode(value));
+
+Uint8List _xlsxBytes() {
+  const strings = <String>[
+    '微信支付账单明细',
+    '交易时间',
+    '交易类型',
+    '交易对方',
+    '商品',
+    '收/支',
+    '金额(元)',
+    '支付方式',
+    '当前状态',
+    '示例餐厅',
+    '午餐',
+    '支出',
+    '31.50',
+    '零钱',
+    '支付成功',
+    '商户消费',
+    '2026-07-16 12:00:00',
+  ];
+  final shared =
+      '<sst xmlns="http://schemas.openxmlformats.org/'
+      'spreadsheetml/2006/main">${strings.map((value) => '<si><t>$value</t></si>').join()}</sst>';
+  const sheet =
+      '<worksheet xmlns="http://schemas.openxmlformats.org/'
+      'spreadsheetml/2006/main"><sheetData>'
+      '<row r="1"><c r="A1" t="s"><v>0</v></c></row>'
+      '<row r="16">'
+      '<c r="A16" t="s"><v>1</v></c><c r="B16" t="s"><v>2</v></c>'
+      '<c r="C16" t="s"><v>3</v></c><c r="D16" t="s"><v>4</v></c>'
+      '<c r="E16" t="s"><v>5</v></c><c r="F16" t="s"><v>6</v></c>'
+      '<c r="G16" t="s"><v>7</v></c><c r="H16" t="s"><v>8</v></c>'
+      '</row><row r="17">'
+      '<c r="A17" t="s"><v>16</v></c><c r="B17" t="s"><v>15</v></c>'
+      '<c r="C17" t="s"><v>9</v></c><c r="D17" t="s"><v>10</v></c>'
+      '<c r="E17" t="s"><v>11</v></c><c r="F17" t="s"><v>12</v></c>'
+      '<c r="G17" t="s"><v>13</v></c><c r="H17" t="s"><v>14</v></c>'
+      '</row></sheetData></worksheet>';
+  final archive = Archive()
+    ..addFile(ArchiveFile.string('xl/sharedStrings.xml', shared))
+    ..addFile(ArchiveFile.string('xl/worksheets/sheet1.xml', sheet));
+  return ZipEncoder().encodeBytes(archive);
+}
 
 IngestSource _source(IngestCaptureOutcome outcome) => switch (outcome) {
   IngestCaptureSuccess(:final source) => source,
@@ -57,6 +102,40 @@ void main() {
       expect(rows, hasLength(1));
       expect(rows.single.amountMinor, -3150);
       expect(rows.single.categoryHint, 'dining');
+    });
+
+    test('decodes an XLSX statement into deterministic CSV', () {
+      final source = _source(
+        encodeIngestCapture(
+          kind: IngestCaptureKind.statementWorkbook,
+          fileName: '微信支付账单.xlsx',
+          bytes: _xlsxBytes(),
+        ),
+      );
+
+      expect(source.kind, IngestSourceKind.csv);
+      expect(source.payload, contains('微信支付账单明细'));
+      expect(
+        detectStatementProvider(source.payload),
+        StatementProvider.wechatPay,
+      );
+      final rows = parseStatementLedger(source.payload);
+      expect(rows, hasLength(1));
+      expect(rows.single.description, contains('示例餐厅'));
+      expect(rows.single.amountMinor, -3150);
+    });
+
+    test('rejects malformed XLSX bytes as unreadable', () {
+      final outcome = encodeIngestCapture(
+        kind: IngestCaptureKind.statementWorkbook,
+        fileName: 'broken.xlsx',
+        bytes: _bytes('not a zip'),
+      );
+
+      expect(
+        (outcome as IngestCaptureFailure).code,
+        IngestCaptureFailureCode.unreadable,
+      );
     });
 
     test('encodes PDF and image bytes only after the boundary', () {

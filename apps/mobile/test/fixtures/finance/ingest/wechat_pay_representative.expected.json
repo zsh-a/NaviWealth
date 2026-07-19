@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "fixture": "wechat_pay_representative.csv",
+  "defaultCurrency": "CNY",
+  "privacy": {
+    "containsUserData": false,
+    "diagnosticFields": ["lineNumber", "code"]
+  },
+  "expected": {
+    "provider": "wechatPay",
+    "candidateRowCount": 22,
+    "acceptedRowCount": 13,
+    "skippedRowCount": 9,
+    "diagnosticsComplete": true,
+    "accountsForEveryCandidate": true,
+    "rows": [
+      {"occurredAt":"2026-07-18T00:00:00.000Z","description":"示例平台 · 活动奖励 · 其他 · 零钱","amountMinor":888,"currency":"CNY","kind":"income","categoryHint":"other"},
+      {"occurredAt":"2026-07-17T00:00:00.000Z","description":"示例平台 · 账户结息 · 其他 · 零钱","amountMinor":120,"currency":"CNY","kind":"income","categoryHint":"interest"},
+      {"occurredAt":"2026-07-16T00:00:00.000Z","description":"示例餐厅01 · 午餐 · 商户消费 · 零钱","amountMinor":-3150,"currency":"CNY","kind":"expense","categoryHint":null},
+      {"occurredAt":"2026-07-15T00:00:00.000Z","description":"示例超市02 · 日用品 · 商户消费 · 银行卡","amountMinor":-2880,"currency":"CNY","kind":"expense","categoryHint":null},
+      {"occurredAt":"2026-07-14T00:00:00.000Z","description":"示例商户03 · 交通 · 商户消费 · 零钱","amountMinor":-1200,"currency":"CNY","kind":"expense","categoryHint":null},
+      {"occurredAt":"2026-07-13T00:00:00.000Z","description":"示例商户04 · 早餐 · 商户消费 · 零钱","amountMinor":-990,"currency":"CNY","kind":"expense","categoryHint":null},
+      {"occurredAt":"2026-07-12T00:00:00.000Z","description":"示例商户05 · 书籍 · 商户消费 · 银行卡","amountMinor":-4500,"currency":"CNY","kind":"expense","categoryHint":null},
+      {"occurredAt":"2026-07-11T00:00:00.000Z","description":"示例商户06 · 饮品 · 商户消费 · 零钱","amountMinor":-1600,"currency":"CNY","kind":"expense","categoryHint":null},
+      {"occurredAt":"2026-07-10T00:00:00.000Z","description":"示例商户07 · 药品 · 商户消费 · 银行卡","amountMinor":-2250,"currency":"CNY","kind":"expense","categoryHint":null},
+      {"occurredAt":"2026-07-09T00:00:00.000Z","description":"示例商户08 · 水果 · 商户消费 · 零钱","amountMinor":-3660,"currency":"CNY","kind":"expense","categoryHint":null},
+      {"occurredAt":"2026-07-08T00:00:00.000Z","description":"示例商户09 · 停车 · 商户消费 · 零钱","amountMinor":-1000,"currency":"CNY","kind":"expense","categoryHint":null},
+      {"occurredAt":"2026-07-07T00:00:00.000Z","description":"示例商户10 · 电影票 · 商户消费 · 银行卡","amountMinor":-5000,"currency":"CNY","kind":"expense","categoryHint":null},
+      {"occurredAt":"2026-07-06T00:00:00.000Z","description":"示例群组 · 聚餐收款 · 群收款 · 零钱","amountMinor":-6600,"currency":"CNY","kind":"expense","categoryHint":null}
+    ],
+    "issues": [
+      {"lineNumber":18,"code":"unsupportedDirection"},
+      {"lineNumber":19,"code":"unsupportedDirection"},
+      {"lineNumber":20,"code":"unsupportedDirection"},
+      {"lineNumber":21,"code":"unsupportedDirection"},
+      {"lineNumber":22,"code":"unsupportedDirection"},
+      {"lineNumber":23,"code":"unsupportedDirection"},
+      {"lineNumber":24,"code":"unsupportedDirection"},
+      {"lineNumber":25,"code":"unsupportedDirection"},
+      {"lineNumber":26,"code":"ignoredStatus"}
+    ]
+  }
+}

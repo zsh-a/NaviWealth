@@ -12,11 +12,13 @@ import 'package:charset/charset.dart' as charset;
 
 import '../domain/ingest_models.dart';
 import 'ingest_capture_policy.dart';
+import 'xlsx_statement_decoder.dart';
 
 /// Extensions accepted by the file picker / drop target.
 const List<String> kIngestCaptureExtensions = <String>[
   'csv',
   'txt',
+  'xlsx',
   'pdf',
   'jpg',
   'jpeg',
@@ -53,6 +55,10 @@ IngestCaptureOutcome encodeIngestCapture({
   try {
     return switch (kind) {
       IngestCaptureKind.statementText => _encodeStatementText(bytes, label),
+      IngestCaptureKind.statementWorkbook => _encodeStatementWorkbook(
+        bytes,
+        label,
+      ),
       IngestCaptureKind.receiptImage => IngestCaptureSuccess(
         IngestSource(
           kind: IngestSourceKind.receiptImage,
@@ -76,6 +82,27 @@ IngestCaptureOutcome encodeIngestCapture({
       fileName: label,
     );
   }
+}
+
+IngestCaptureOutcome _encodeStatementWorkbook(Uint8List bytes, String label) {
+  final text = decodeXlsxStatement(bytes);
+  if (text.length > IngestCaptureLimits.textCodeUnits) {
+    return IngestCaptureFailure(
+      IngestCaptureFailureCode.textTooLong,
+      fileName: label,
+      observedBytes: text.length,
+      maxBytes: IngestCaptureLimits.textCodeUnits,
+    );
+  }
+  if (text.trim().isEmpty) {
+    return IngestCaptureFailure(
+      IngestCaptureFailureCode.empty,
+      fileName: label,
+    );
+  }
+  return IngestCaptureSuccess(
+    IngestSource(kind: IngestSourceKind.csv, payload: text, originLabel: label),
+  );
 }
 
 /// Bound direct text lanes (paste and shared text) before trimming or keeping a

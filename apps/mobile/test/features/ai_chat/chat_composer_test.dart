@@ -5,8 +5,16 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/ai_chat/ui/chat_composer.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  late SharedPreferences preferences;
+
+  setUp(() async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    preferences = await SharedPreferences.getInstance();
+  });
+
   testWidgets('idle composer uses localized copy and sends non-empty text', (
     tester,
   ) async {
@@ -15,6 +23,7 @@ void main() {
 
     await _pumpComposer(
       tester,
+      preferences: preferences,
       locale: const Locale('en'),
       isStreaming: false,
       onSend: sent.add,
@@ -48,6 +57,7 @@ void main() {
 
     await _pumpComposer(
       tester,
+      preferences: preferences,
       locale: const Locale('zh'),
       isStreaming: true,
       initialText: 'ignored draft',
@@ -70,6 +80,7 @@ void main() {
 
 Future<void> _pumpComposer(
   WidgetTester tester, {
+  required SharedPreferences preferences,
   required Locale locale,
   required bool isStreaming,
   required ValueChanged<String> onSend,
@@ -78,6 +89,7 @@ Future<void> _pumpComposer(
 }) {
   return tester.pumpWidget(
     ProviderScope(
+      overrides: [sharedPreferencesProvider.overrideWithValue(preferences)],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),

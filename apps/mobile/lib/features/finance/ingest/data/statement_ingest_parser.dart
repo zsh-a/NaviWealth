@@ -10,6 +10,7 @@ import '../domain/ingest_models.dart';
 import '../domain/ingest_parse_diagnostics.dart';
 import 'bank_ingest_parser.dart';
 import 'broker_ingest_parser.dart';
+import 'cmb_credit_card_ingest_parser.dart';
 import 'csv_ingest_parser.dart';
 
 enum StatementProvider { auto, generic, alipay, wechatPay, bank, broker }
@@ -27,6 +28,9 @@ StatementProvider detectStatementProvider(String raw) {
   if (compact.contains('微信支付账单明细') ||
       compact.contains('交易时间,交易类型,交易对方,商品,收/支')) {
     return StatementProvider.wechatPay;
+  }
+  if (compact.contains('招商银行信用卡对账单') && compact.contains('交易明细')) {
+    return StatementProvider.bank;
   }
   if (compact.contains('借方金额') ||
       compact.contains('贷方金额') ||
@@ -96,9 +100,15 @@ StatementParseReport parseStatementLedgerReport(
       raw,
       defaultCurrency: defaultCurrency,
     ),
-    StatementProvider.bank => _legacyReport(
-      parseBankCashLedger(raw, defaultCurrency: defaultCurrency),
-    ),
+    StatementProvider.bank =>
+      isCmbCreditCardStatement(raw)
+          ? parseCmbCreditCardLedgerReport(
+              raw,
+              defaultCurrency: defaultCurrency,
+            )
+          : _legacyReport(
+              parseBankCashLedger(raw, defaultCurrency: defaultCurrency),
+            ),
     StatementProvider.broker => _legacyReport(
       parseBrokerCashLedger(
         raw,

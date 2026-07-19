@@ -207,9 +207,11 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
               action: FButton(
                 variant: FButtonVariant.outline,
                 onPress: () => setState(() => _showArchived = true),
-                child: Text(l10n.aiChatSessionsShowArchived(
-                  sessions.where((e) => e.archived).length,
-                )),
+                child: Text(
+                  l10n.aiChatSessionsShowArchived(
+                    sessions.where((e) => e.archived).length,
+                  ),
+                ),
               ),
             );
           }
@@ -238,7 +240,6 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
                       group.label,
                       style: context.microLabelStyle.copyWith(
                         color: context.theme.colors.mutedForeground,
-                        letterSpacing: 0.3,
                       ),
                     ),
                   ),
