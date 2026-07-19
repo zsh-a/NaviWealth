@@ -11,6 +11,10 @@
 #                A single weight is enough; the rest of the type ramp uses
 #                Inter.
 #
+# Matching .ttf files are emitted for Flutter's native golden-test renderer,
+# which cannot decode the web-only WOFF2 assets. They are build artifacts and
+# are not declared in pubspec.yaml, so production bundles keep using WOFF2.
+#
 # All subsets are limited to Latin + numbers + currency / arrow / box-
 # drawing punctuation — Chinese glyphs are still served by AppCnSans
 # (tool/build-cn-fonts.sh). Combined budget: ≤ 200 KB.
@@ -99,8 +103,6 @@ fetch_pinned "$OUTFIT_URL" "$OUTFIT_FONT" "$OUTFIT_SHA256"
 LATIN_UNICODES="U+0020-007E,U+00A0-00FF,U+0100-017F,U+02B9-02FF,U+2000-206F,U+2070-209F,U+20A0-20CF,U+2190-21FF,U+2200-22FF,U+25A0-25FF"
 
 common_args=(
-  --flavor=woff2
-  --with-zopfli
   --layout-features='*'
   --glyph-names
   --no-hinting
@@ -132,6 +134,14 @@ instance_and_subset() {
   "$PYFTSUBSET" "$tmp" \
     --unicodes="$LATIN_UNICODES" \
     --output-file="$out" \
+    --flavor=woff2 \
+    --with-zopfli \
+    "${common_args[@]}"
+  local test_out="${out%.woff2}.ttf"
+  echo "subsetting $label for native goldens → $test_out"
+  "$PYFTSUBSET" "$tmp" \
+    --unicodes="$LATIN_UNICODES" \
+    --output-file="$test_out" \
     "${common_args[@]}"
   rm -f "$tmp"
 }

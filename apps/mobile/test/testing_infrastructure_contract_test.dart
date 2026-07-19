@@ -372,9 +372,9 @@ void main() {
       final text = setup.readAsStringSync();
       expect(text, contains('loadGoldenFonts'));
       expect(text, contains('_verifyGoldenFontAssets'));
-      expect(text, contains('inter-regular.woff2'));
-      expect(text, contains('outfit-bold.woff2'));
-      expect(text, contains('app-cn-base.woff2'));
+      expect(text, contains('inter-regular.ttf'));
+      expect(text, contains('outfit-bold.ttf'));
+      expect(text, contains('app-cn-base.ttf'));
       expect(
         text,
         isNot(matches(RegExp(r'\bawait\s+tester\.pumpAndSettle\('))),

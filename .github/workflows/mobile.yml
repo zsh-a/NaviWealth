@@ -66,7 +66,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: mobile-font-assets
-          path: apps/mobile/assets/fonts/*.woff2
+          path: |
+            apps/mobile/assets/fonts/*.woff2
+            apps/mobile/assets/fonts/*.ttf
           if-no-files-found: error
           retention-days: 1
 

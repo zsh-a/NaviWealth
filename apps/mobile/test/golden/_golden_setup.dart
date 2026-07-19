@@ -66,13 +66,13 @@ extension GoldenThemeData on GoldenTheme {
 bool _fontsLoaded = false;
 
 const List<String> _goldenFontAssets = <String>[
-  'assets/fonts/inter-regular.woff2',
-  'assets/fonts/inter-medium.woff2',
-  'assets/fonts/inter-semibold.woff2',
-  'assets/fonts/inter-bold.woff2',
-  'assets/fonts/outfit-bold.woff2',
-  'assets/fonts/app-cn-base.woff2',
-  'assets/fonts/app-cn-ext.woff2',
+  'assets/fonts/inter-regular.ttf',
+  'assets/fonts/inter-medium.ttf',
+  'assets/fonts/inter-semibold.ttf',
+  'assets/fonts/inter-bold.ttf',
+  'assets/fonts/outfit-bold.ttf',
+  'assets/fonts/app-cn-base.ttf',
+  'assets/fonts/app-cn-ext.ttf',
 ];
 
 void _verifyGoldenFontAssets() {
@@ -95,10 +95,10 @@ void _verifyGoldenFontAssets() {
 
 /// Load every font declared in `pubspec.yaml` (Inter, Outfit, AppCnSans).
 ///
-/// On CI these .woff2 files are regenerated before the golden job starts. The
+/// On CI these .ttf files are regenerated before the golden job starts. The
 /// assets are gitignored build artifacts, so fail early if a checkout only has
-/// empty placeholder files; otherwise Flutter can silently fall back to its
-/// built-in test font and make the PNG baseline meaningless.
+/// empty placeholder files. Production uses WOFF2; Linux golden tests need TTF
+/// because the native Flutter renderer cannot decode webfont containers.
 Future<void> loadGoldenFonts() async {
   if (_fontsLoaded) return;
   _verifyGoldenFontAssets();
@@ -108,6 +108,23 @@ Future<void> loadGoldenFonts() async {
 
 Future<void> _loadAppFonts() async {
   TestWidgetsFlutterBinding.ensureInitialized();
+  await _loadFontFamily('Inter', _goldenFontAssets.sublist(0, 4));
+  await _loadFontFamily('Outfit', <String>[_goldenFontAssets[4]]);
+  await _loadFontFamily('AppCnSans', _goldenFontAssets.sublist(5));
+  await _loadBundledNonAppFonts();
+}
+
+Future<void> _loadFontFamily(String family, List<String> paths) async {
+  final loader = FontLoader(family);
+  for (final path in paths) {
+    final bytes = File(path).readAsBytesSync();
+    loader.addFont(Future<ByteData>.value(ByteData.sublistView(bytes)));
+  }
+  await loader.load();
+}
+
+Future<void> _loadBundledNonAppFonts() async {
+  const appFamilies = <String>{'Inter', 'Outfit', 'AppCnSans'};
   final manifest = await rootBundle.loadStructuredData<Iterable<dynamic>>(
     'FontManifest.json',
     (text) async => jsonDecode(text) as Iterable<dynamic>,
@@ -115,7 +132,9 @@ Future<void> _loadAppFonts() async {
   for (final rawFont in manifest) {
     final font = rawFont as Map<String, dynamic>;
     final family = font['family'] as String?;
-    if (family == null || family.isEmpty) continue;
+    if (family == null || family.isEmpty || appFamilies.contains(family)) {
+      continue;
+    }
     final loader = FontLoader(family);
     final assets = font['fonts'] as List<dynamic>? ?? const <dynamic>[];
     for (final rawAsset in assets) {
