@@ -522,6 +522,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Generates a journal entry on each occurrence';
 
   @override
+  String get recurringFormDetailsTitle => 'More options';
+
+  @override
+  String get recurringFormDetailsSummary => 'Interval, end date & note';
+
+  @override
+  String get recurringFormDetailsConfigured => 'Custom options configured';
+
+  @override
   String get recurringFormSave => 'Save';
 
   @override

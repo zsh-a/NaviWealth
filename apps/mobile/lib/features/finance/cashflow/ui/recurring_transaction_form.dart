@@ -57,6 +57,7 @@ class _RecurringTransactionSheetState
   final _noteCtrl = TextEditingController();
   final _intervalCtrl = TextEditingController(text: '1');
   final _byMonthDayCtrl = TextEditingController();
+  final _detailsFocus = FocusNode(debugLabel: 'recurring-details');
 
   _RecurringKind _kind = _RecurringKind.income;
   String? _currency;
@@ -65,6 +66,7 @@ class _RecurringTransactionSheetState
   late DateTime _start;
   RecurrenceFrequency _freq = RecurrenceFrequency.monthly;
   DateTime? _until;
+  bool _detailsExpanded = false;
   bool _saving = false;
 
   @override
@@ -132,6 +134,7 @@ class _RecurringTransactionSheetState
     _noteCtrl.dispose();
     _intervalCtrl.dispose();
     _byMonthDayCtrl.dispose();
+    _detailsFocus.dispose();
     super.dispose();
   }
 
@@ -197,7 +200,7 @@ class _RecurringTransactionSheetState
             const SizedBox(height: AppSpacing.s12),
             FTextFormField(
               control: FTextFieldControl.managed(controller: _amountCtrl),
-              label: Text(l10n.recurringFieldAmount),
+              label: RequiredLabel(l10n.recurringFieldAmount),
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
@@ -245,8 +248,6 @@ class _RecurringTransactionSheetState
               }),
             ),
             const SizedBox(height: AppSpacing.s12),
-            NoteField(controller: _noteCtrl, label: l10n.recurringFieldNote),
-            const SizedBox(height: AppSpacing.s12),
             DateField(
               label: l10n.recurringFieldStart,
               initialValue: _start,
@@ -276,51 +277,118 @@ class _RecurringTransactionSheetState
               }),
             ),
             const SizedBox(height: AppSpacing.s12),
-            FTextFormField(
-              control: FTextFieldControl.managed(controller: _intervalCtrl),
-              label: Text(l10n.recurringFieldInterval),
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              validator: (value) {
-                final n = int.tryParse((value ?? '').trim());
-                if (n == null || n <= 0) {
-                  return l10n.recurringValidationInterval;
-                }
-                return null;
-              },
-            ),
-            if (isMonthly) ...[
-              const SizedBox(height: AppSpacing.s12),
-              FTextFormField(
-                control: FTextFieldControl.managed(controller: _byMonthDayCtrl),
-                label: Text(l10n.recurringFieldByMonthDay),
-                description: Text(l10n.recurringFieldByMonthDayHelper),
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                validator: (value) {
-                  final text = (value ?? '').trim();
-                  if (text.isEmpty) return null;
-                  final d = int.tryParse(text);
-                  if (d == null || d < 1 || d > 31) {
-                    return l10n.recurringValidationByMonthDay;
-                  }
-                  return null;
-                },
-              ),
-            ],
-            const SizedBox(height: AppSpacing.s12),
-            DateField(
-              label: l10n.recurringFieldUntil,
-              initialValue: _until,
-              helperText: l10n.recurringFieldUntilHelper,
-              onChanged: (v) => setState(() {
-                _until = v?.toUtc();
-                widget.dirty.markDirty();
-              }),
-            ),
+            _buildDetailsDisclosure(l10n, isMonthly: isMonthly),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDetailsDisclosure(
+    AppLocalizations l10n, {
+    required bool isMonthly,
+  }) {
+    final configured =
+        _noteCtrl.text.trim().isNotEmpty ||
+        _intervalCtrl.text.trim() != '1' ||
+        _byMonthDayCtrl.text.trim().isNotEmpty ||
+        _until != null;
+    return FAccordion(
+      control: FAccordionControl.lifted(
+        expanded: (_) => _detailsExpanded,
+        onChange: (_, expanded) => setState(() => _detailsExpanded = expanded),
+      ),
+      children: [
+        FAccordionItem(
+          key: const Key('recurring-details-disclosure'),
+          focusNode: _detailsFocus,
+          title: Semantics(
+            key: const Key('recurring-details-toggle-label'),
+            expanded: _detailsExpanded,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.recurringFormDetailsTitle),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  configured
+                      ? l10n.recurringFormDetailsConfigured
+                      : l10n.recurringFormDetailsSummary,
+                  style: context.captionStyle,
+                ),
+              ],
+            ),
+          ),
+          child: Offstage(
+            key: const Key('recurring-details-fields'),
+            offstage: !_detailsExpanded,
+            child: ExcludeFocus(
+              excluding: !_detailsExpanded,
+              child: ExcludeSemantics(
+                excluding: !_detailsExpanded,
+                child: Column(
+                  children: [
+                    FTextFormField(
+                      key: const Key('recurring-interval-field'),
+                      control: FTextFieldControl.managed(
+                        controller: _intervalCtrl,
+                      ),
+                      label: RequiredLabel(l10n.recurringFieldInterval),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      validator: (value) {
+                        final n = int.tryParse((value ?? '').trim());
+                        if (n == null || n <= 0) {
+                          return l10n.recurringValidationInterval;
+                        }
+                        return null;
+                      },
+                    ),
+                    if (isMonthly) ...[
+                      const SizedBox(height: AppSpacing.s12),
+                      FTextFormField(
+                        control: FTextFieldControl.managed(
+                          controller: _byMonthDayCtrl,
+                        ),
+                        label: Text(l10n.recurringFieldByMonthDay),
+                        description: Text(l10n.recurringFieldByMonthDayHelper),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        validator: (value) {
+                          final text = (value ?? '').trim();
+                          if (text.isEmpty) return null;
+                          final d = int.tryParse(text);
+                          if (d == null || d < 1 || d > 31) {
+                            return l10n.recurringValidationByMonthDay;
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: AppSpacing.s12),
+                    DateField(
+                      label: l10n.recurringFieldUntil,
+                      initialValue: _until,
+                      helperText: l10n.recurringFieldUntilHelper,
+                      onChanged: (v) => setState(() {
+                        _until = v?.toUtc();
+                        widget.dirty.markDirty();
+                      }),
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    NoteField(
+                      controller: _noteCtrl,
+                      label: l10n.recurringFieldNote,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -353,7 +421,12 @@ class _RecurringTransactionSheetState
 
   Future<void> _submit() async {
     final l10n = AppLocalizations.of(context);
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      if (!_detailsAreValid && !_detailsExpanded) {
+        setState(() => _detailsExpanded = true);
+      }
+      return;
+    }
     if (_cashAccountId == null || _counterAccountId == null) {
       AppMessenger.show(
         context,
@@ -438,6 +511,7 @@ class _RecurringTransactionSheetState
     final rule = const RecurrenceEngine().parse(rrule);
     final nextDueAt = const RecurrenceEngine().firstOnOrAfter(rule, start);
     if (rule.until case final until? when nextDueAt.isAfter(until)) {
+      if (!_detailsExpanded) setState(() => _detailsExpanded = true);
       AppMessenger.show(
         context,
         ToastKind.error,
@@ -480,6 +554,19 @@ class _RecurringTransactionSheetState
 
   void _setSaving(bool value) {
     if (mounted && _saving != value) setState(() => _saving = value);
+  }
+
+  bool get _detailsAreValid {
+    final interval = int.tryParse(_intervalCtrl.text.trim());
+    if (interval == null || interval <= 0) return false;
+    final text = _byMonthDayCtrl.text.trim();
+    if (text.isEmpty ||
+        (_freq != RecurrenceFrequency.monthly &&
+            _freq != RecurrenceFrequency.yearly)) {
+      return true;
+    }
+    final day = int.tryParse(text);
+    return day != null && day >= 1 && day <= 31;
   }
 }
 

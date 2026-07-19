@@ -992,6 +992,24 @@ abstract class AppLocalizations {
   /// **'Generates a journal entry on each occurrence'**
   String get recurringFormSubtitle;
 
+  /// Recurring form disclosure title for optional schedule and note fields
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get recurringFormDetailsTitle;
+
+  /// Recurring form disclosure summary when optional fields use defaults
+  ///
+  /// In en, this message translates to:
+  /// **'Interval, end date & note'**
+  String get recurringFormDetailsSummary;
+
+  /// Recurring form disclosure summary when optional fields have values
+  ///
+  /// In en, this message translates to:
+  /// **'Custom options configured'**
+  String get recurringFormDetailsConfigured;
+
   /// Recurring form submit label
   ///
   /// In en, this message translates to:

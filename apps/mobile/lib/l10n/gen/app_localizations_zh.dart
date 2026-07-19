@@ -498,6 +498,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recurringFormSubtitle => '每次到期生成一笔记账分录';
 
   @override
+  String get recurringFormDetailsTitle => '更多选项';
+
+  @override
+  String get recurringFormDetailsSummary => '间隔、结束日期与备注';
+
+  @override
+  String get recurringFormDetailsConfigured => '已设置自定义选项';
+
+  @override
   String get recurringFormSave => '保存';
 
   @override
