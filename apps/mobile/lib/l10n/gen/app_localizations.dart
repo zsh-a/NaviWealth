@@ -2183,13 +2183,13 @@ abstract class AppLocalizations {
   /// Subtitle under the FinanceOS Today greeting
   ///
   /// In en, this message translates to:
-  /// **'Your financial brief for today'**
+  /// **'Today\'s financial overview'**
   String get homeTodayBriefSubtitle;
 
   /// Subtitle under the Life hub greeting
   ///
   /// In en, this message translates to:
-  /// **'Signals across your workspaces'**
+  /// **'See what needs your attention today'**
   String get lifeBriefSubtitle;
 
   /// Hero card eyebrow on the Life hub
@@ -2201,79 +2201,79 @@ abstract class AppLocalizations {
   /// Life hero metric label when high-priority signals exist
   ///
   /// In en, this message translates to:
-  /// **'Need attention'**
+  /// **'To do'**
   String get lifeHeroMetricAttention;
 
   /// Life hero metric label when only normal signals exist
   ///
   /// In en, this message translates to:
-  /// **'Signals'**
+  /// **'New updates'**
   String get lifeHeroMetricSignals;
 
   /// Life hero metric label when calm
   ///
   /// In en, this message translates to:
-  /// **'Clear'**
+  /// **'Today'**
   String get lifeHeroMetricClear;
 
   /// Life hero when no signals
   ///
   /// In en, this message translates to:
-  /// **'All clear across domains'**
+  /// **'Nothing needs your attention today'**
   String get lifeHeroHeadlineCalm;
 
-  /// Life hero when normal signals exist
+  /// Life hero when normal updates exist
   ///
   /// In en, this message translates to:
-  /// **'{count} signals to review'**
-  String lifeHeroHeadlineSignals(int count);
+  /// **'New updates across your domains'**
+  String get lifeHeroHeadlineSignals;
 
-  /// Life hero when high-priority signals exist
+  /// Life hero when high-priority updates exist
   ///
   /// In en, this message translates to:
-  /// **'{count} need attention'**
-  String lifeHeroHeadlineAttention(int count);
+  /// **'Some items need priority attention'**
+  String get lifeHeroHeadlineAttention;
 
   /// Life hero supporting line
   ///
   /// In en, this message translates to:
-  /// **'{count} workspaces · signals only, not a second ledger'**
+  /// **'Important changes across {count} active domains'**
   String lifeHeroBody(int count);
 
   /// Collapsed sticky residual when high-priority signals exist
   ///
   /// In en, this message translates to:
-  /// **'{count} attention'**
+  /// **'{count} to do'**
   String lifeStickyAttention(int count);
 
   /// Collapsed sticky residual for normal signals
   ///
   /// In en, this message translates to:
-  /// **'{count} signals'**
+  /// **'{count} new updates'**
   String lifeStickySignals(int count);
 
   /// Collapsed sticky residual when calm
   ///
   /// In en, this message translates to:
-  /// **'All clear'**
+  /// **'Nothing to do'**
   String get lifeStickyCalm;
 
   /// Section title for domain workspace chips
   ///
   /// In en, this message translates to:
-  /// **'Workspaces'**
+  /// **'Domains'**
   String get lifeWorkbenchTitle;
 
   /// Cross-domain signal list title
   ///
   /// In en, this message translates to:
-  /// **'Attention'**
+  /// **'Latest updates'**
   String get lifeTimelineTitle;
 
   /// High-priority signal group title on Life hub
   ///
   /// In en, this message translates to:
-  /// **'Priority'**
+  /// **'Priority attention'**
   String get lifeTimelinePriorityTitle;
 
   /// Empty attention list title
@@ -2285,7 +2285,7 @@ abstract class AppLocalizations {
   /// Empty state for the life signal list
   ///
   /// In en, this message translates to:
-  /// **'No cross-domain signals. Open a workspace when you need to dig in.'**
+  /// **'Nothing needs your attention. You can still open a domain to view its details.'**
   String get lifeTimelineEmpty;
 
   /// Expand collapsed attention list
@@ -2327,19 +2327,19 @@ abstract class AppLocalizations {
   /// Desktop dock / spatial nav label for Life hub
   ///
   /// In en, this message translates to:
-  /// **'Life'**
+  /// **'Overview'**
   String get lifeNavLabel;
 
   /// Life signal: finance day summary title
   ///
   /// In en, this message translates to:
-  /// **'Today · {count} entries'**
+  /// **'{count} finance entries today'**
   String lifeSignalFinanceDayTitle(String count);
 
   /// Life signal: finance day summary subtitle
   ///
   /// In en, this message translates to:
-  /// **'{expense} expenses · {income} income · open ledger'**
+  /// **'{expense} expenses · {income} income'**
   String lifeSignalFinanceDaySubtitle(String expense, String income);
 
   /// Life signal title when current-month spending is nearing the budget limit
@@ -2357,19 +2357,19 @@ abstract class AppLocalizations {
   /// Life signal subtitle for current-month budget pressure
   ///
   /// In en, this message translates to:
-  /// **'{periodMonth} spending posture · open budget'**
+  /// **'{periodMonth} budget usage'**
   String lifeSignalFinanceBudgetSubtitle(String periodMonth);
 
   /// Life signal: strained recovery title
   ///
   /// In en, this message translates to:
-  /// **'Recovery needs care'**
+  /// **'Recovery needs attention'**
   String get lifeSignalRecoveryTitle;
 
   /// Life signal: recovery subtitle
   ///
   /// In en, this message translates to:
-  /// **'Open Health brief'**
+  /// **'Your recovery status has a change worth reviewing'**
   String get lifeSignalRecoverySubtitle;
 
   /// Life signal: blocked execution title
@@ -2381,7 +2381,7 @@ abstract class AppLocalizations {
   /// Life signal: blocked execution subtitle
   ///
   /// In en, this message translates to:
-  /// **'Open Execution today'**
+  /// **'Some actions have not made progress'**
   String get lifeSignalExecBlockedSubtitle;
 
   /// Life signal: due execution title
@@ -2393,7 +2393,7 @@ abstract class AppLocalizations {
   /// Life signal: due execution subtitle
   ///
   /// In en, this message translates to:
-  /// **'Open Execution today'**
+  /// **'These actions are planned for today'**
   String get lifeSignalExecDueSubtitle;
 
   /// Life signal: knowledge inbox title
@@ -2405,31 +2405,31 @@ abstract class AppLocalizations {
   /// Life signal: knowledge subtitle
   ///
   /// In en, this message translates to:
-  /// **'Review or capture in Knowledge'**
+  /// **'Notes are waiting to be organized or reviewed'**
   String get lifeSignalKnowledgeSubtitle;
 
   /// Life signal: agent result fallback title
   ///
   /// In en, this message translates to:
-  /// **'Agent insight ready'**
+  /// **'New financial insight'**
   String get lifeSignalAgentTitle;
 
   /// Life signal: agent result subtitle
   ///
   /// In en, this message translates to:
-  /// **'Open Finance brief'**
+  /// **'Your financial brief has a new analysis'**
   String get lifeSignalAgentSubtitle;
 
   /// Title of the Life signal evidence sheet
   ///
   /// In en, this message translates to:
-  /// **'Signal details'**
+  /// **'Update details'**
   String get lifeSignalDetailTitle;
 
   /// Evidence section in the Life signal sheet
   ///
   /// In en, this message translates to:
-  /// **'Local evidence'**
+  /// **'Why this appeared'**
   String get lifeSignalEvidenceTitle;
 
   /// Recovery evidence shown before creating an action
@@ -2471,7 +2471,7 @@ abstract class AppLocalizations {
   /// Success message after applying a Life-to-Execution proposal
   ///
   /// In en, this message translates to:
-  /// **'Action created with its source evidence attached.'**
+  /// **'Action created with its source information attached.'**
   String get lifeSignalActionCreated;
 
   /// Failure message for a Life-to-Execution proposal
@@ -2501,13 +2501,13 @@ abstract class AppLocalizations {
   /// Suggested action title for a Finance day signal
   ///
   /// In en, this message translates to:
-  /// **'Review finance activity today'**
+  /// **'View today\'s finance activity'**
   String get lifeSignalActionReviewFinance;
 
   /// Suggested action title for a Finance budget pressure signal
   ///
   /// In en, this message translates to:
-  /// **'Review this month\'s budget'**
+  /// **'View this month\'s budget'**
   String get lifeSignalActionReviewBudget;
 
   /// Suggested action title for a strained recovery signal
@@ -2525,7 +2525,7 @@ abstract class AppLocalizations {
   /// Suggested action title for a Finance agent signal
   ///
   /// In en, this message translates to:
-  /// **'Review the latest Finance insight'**
+  /// **'View the latest financial insight'**
   String get lifeSignalActionReviewAgent;
 
   /// Action note preserving the source signal evidence
@@ -2537,31 +2537,31 @@ abstract class AppLocalizations {
   /// Home FinanceOS agent result panel loading title
   ///
   /// In en, this message translates to:
-  /// **'Checking agent results'**
+  /// **'Loading financial insights'**
   String get financeAgentResultsLoading;
 
   /// Home FinanceOS agent result panel loading body
   ///
   /// In en, this message translates to:
-  /// **'Recent FinanceOS reviews are loading.'**
+  /// **'Recent financial reviews are loading.'**
   String get financeAgentResultsLoadingBody;
 
   /// Home FinanceOS agent result panel empty title
   ///
   /// In en, this message translates to:
-  /// **'No agent results yet'**
+  /// **'No financial insights yet'**
   String get financeAgentResultsEmptyTitle;
 
   /// Home FinanceOS agent result panel empty body
   ///
   /// In en, this message translates to:
-  /// **'Scheduled reviews appear here when they have something to show.'**
+  /// **'New planning review results will appear here.'**
   String get financeAgentResultsEmptyBody;
 
   /// Home FinanceOS agent result panel error title
   ///
   /// In en, this message translates to:
-  /// **'Agent results could not load'**
+  /// **'Financial insights could not load'**
   String get financeAgentResultsErrorTitle;
 
   /// Home FinanceOS agent result panel error body
@@ -2891,7 +2891,7 @@ abstract class AppLocalizations {
   /// Home quick action label that opens the activity ingest flow.
   ///
   /// In en, this message translates to:
-  /// **'Import'**
+  /// **'Import statements'**
   String get homeQuickImport;
 
   /// Tooltip for the Finance home privacy button when tapping will hide exact monetary amounts.
@@ -2909,7 +2909,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeNetWorthSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Base currency {currency} · shown once data is connected'**
+  /// **'Add an account or import data to see net worth in {currency}'**
   String homeNetWorthSubtitle(String currency);
 
   /// Home cashflow card title: trailing twelve month passive income
@@ -3905,7 +3905,7 @@ abstract class AppLocalizations {
   /// No description provided for @physicalAssetDeleteConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'Valuation history will be tombstoned but recoverable on devices that have already synced.'**
+  /// **'Valuation history will be marked as deleted. Devices that synced previously may still retain a recoverable copy.'**
   String get physicalAssetDeleteConfirmBody;
 
   /// No description provided for @physicalAssetDetailValuationTitle.
@@ -4505,13 +4505,13 @@ abstract class AppLocalizations {
   /// Shown when the natural-language parser can't resolve a query locally
   ///
   /// In en, this message translates to:
-  /// **'Can\'t answer this here. Continue in AI history for a full chat.'**
+  /// **'Can\'t answer this here. Continue in the AI assistant for a full conversation.'**
   String get askAiResultNoLocalMatch;
 
   /// Link below the no-local-match notice that opens /settings/ai-history with the query prefilled
   ///
   /// In en, this message translates to:
-  /// **'Continue in AI history →'**
+  /// **'Continue in AI assistant'**
   String get askAiResultContinueInChat;
 
   /// §5.10.6 guardrail copy shown when the user types a write-shaped natural language query
@@ -6501,7 +6501,7 @@ abstract class AppLocalizations {
   /// No description provided for @fireOsReviewSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Deterministic monthly / quarterly / annual snapshots; the AI explains them, never invents them.'**
+  /// **'Review monthly, quarterly, and annual snapshots. Metrics are calculated by rules; AI only explains the results.'**
   String get fireOsReviewSubtitle;
 
   /// No description provided for @fireOsReviewKindMonthly.
@@ -8415,13 +8415,13 @@ abstract class AppLocalizations {
   /// No description provided for @aiChatEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Your Life OS assistant'**
+  /// **'Your LifeOS assistant'**
   String get aiChatEmptyTitle;
 
   /// No description provided for @aiChatEmptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Ask across finance, knowledge, health, and plans. Answers are grounded in local data and enabled domain tools; when key fields are missing, the assistant asks before assuming.'**
+  /// **'Ask about finance, knowledge, health, and plans together. Answers prioritize on-device data and enabled features; when information is missing, the assistant asks before assuming.'**
   String get aiChatEmptyBody;
 
   /// No description provided for @aiChatEmptySuggestion1.
@@ -9705,7 +9705,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiChatToolShowRawJson.
   ///
   /// In en, this message translates to:
-  /// **'View raw JSON'**
+  /// **'View raw data'**
   String get aiChatToolShowRawJson;
 
   /// No description provided for @aiChatToolShowCompactView.
@@ -11103,7 +11103,7 @@ abstract class AppLocalizations {
   /// No description provided for @dataManagementResetDeviceConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'Local source data, derived caches, memories, and agent history for this OS will be removed. Cloud data may download again on the next sync.'**
+  /// **'Data and history for this domain will be removed from this device. If cloud sync is enabled, cloud data may download again on the next sync.'**
   String get dataManagementResetDeviceConfirmBody;
 
   /// No description provided for @dataManagementResetEverywhereConfirmTitle.
@@ -11115,7 +11115,7 @@ abstract class AppLocalizations {
   /// No description provided for @dataManagementResetEverywhereConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'This permanently deletes this OS from the server and every device. Offline devices cannot restore the old generation.'**
+  /// **'This permanently deletes this domain\'s data from the cloud and every connected device. Offline devices cannot restore it when they reconnect. This action cannot be undone.'**
   String get dataManagementResetEverywhereConfirmBody;
 
   /// No description provided for @dataManagementResetSuccess.
@@ -11265,7 +11265,7 @@ abstract class AppLocalizations {
   /// Settings section header for LifeOS domain opt-in management
   ///
   /// In en, this message translates to:
-  /// **'LifeOS Domains'**
+  /// **'Domains'**
   String get settingsDomainsSection;
 
   /// Settings tile and page title for LifeOS domain management
@@ -11277,7 +11277,7 @@ abstract class AppLocalizations {
   /// Settings tile subtitle for LifeOS domain management
   ///
   /// In en, this message translates to:
-  /// **'FinanceOS / HealthOS / KnowledgeOS / ExecutionOS toggles'**
+  /// **'Manage FinanceOS, HealthOS, KnowledgeOS, and ExecutionOS'**
   String get settingsDomainsSubtitle;
 
   /// Subtitle for the always-on FinanceOS card in domain settings
@@ -11623,25 +11623,25 @@ abstract class AppLocalizations {
   /// Title for the LLM settings card that checks the FRB-backed agent runtime path
   ///
   /// In en, this message translates to:
-  /// **'Agent runtime'**
+  /// **'AI service check'**
   String get aiLlmRuntimeCheckTitle;
 
   /// Description for the FRB-backed runtime check when an active LLM profile is available
   ///
   /// In en, this message translates to:
-  /// **'Runs a short active-profile turn through FRB, then completes a native runtime step.'**
+  /// **'Send a test request with the current model configuration to check whether the AI service is available.'**
   String get aiLlmRuntimeCheckReady;
 
   /// Runtime check unavailable message shown when no usable active LLM profile exists
   ///
   /// In en, this message translates to:
-  /// **'Save and activate a provider profile before checking the agent runtime.'**
+  /// **'Save and activate a model provider before checking the AI service.'**
   String get aiLlmRuntimeCheckNoProfile;
 
   /// Button label that starts an FRB-backed agent runtime check
   ///
   /// In en, this message translates to:
-  /// **'Check runtime'**
+  /// **'Start check'**
   String get aiLlmRuntimeCheckAction;
 
   /// Button label while the FRB-backed agent runtime check is running
@@ -11653,25 +11653,25 @@ abstract class AppLocalizations {
   /// Short prompt sent through the active LLM profile for the agent runtime check
   ///
   /// In en, this message translates to:
-  /// **'Reply with one short sentence confirming the NaviWealth agent runtime is reachable.'**
+  /// **'Reply with one short sentence confirming NaviWealth can reach the current AI service.'**
   String get aiLlmRuntimeCheckPrompt;
 
   /// Toast shown after the FRB-backed agent runtime check completes.
   ///
   /// In en, this message translates to:
-  /// **'Agent runtime step finished: {status}'**
+  /// **'AI service check completed: {status}'**
   String aiLlmRuntimeCheckSucceeded(String status);
 
   /// Status text and toast shown when the FRB-backed agent runtime check fails.
   ///
   /// In en, this message translates to:
-  /// **'Agent runtime check failed: {error}'**
+  /// **'AI service check failed: {error}'**
   String aiLlmRuntimeCheckFailed(String error);
 
   /// Inline status shown after the FRB-backed native runtime step completes.
   ///
   /// In en, this message translates to:
-  /// **'Native step: {status}'**
+  /// **'On-device check: {status}'**
   String aiLlmRuntimeCheckStatus(String status);
 
   /// Button label that opens an agent result detail sheet.
@@ -12169,7 +12169,7 @@ abstract class AppLocalizations {
   /// Confirm dialog body before applying a ready proposal returned by the FRB-backed runtime check.
   ///
   /// In en, this message translates to:
-  /// **'{summary}\n\nThis writes through the same local proposal applier used by AI chat.'**
+  /// **'{summary}\n\nConfirm to save this change in the same way as the AI assistant.'**
   String aiLlmRuntimeProposalConfirmBody(String summary);
 
   /// Toast shown after a ready proposal returned by the FRB-backed runtime check is applied.
@@ -12385,7 +12385,7 @@ abstract class AppLocalizations {
   /// Settings tile subtitle for the AI privacy page
   ///
   /// In en, this message translates to:
-  /// **'Pick what the AI can send to the cloud'**
+  /// **'Control what is sent to your model provider'**
   String get settingsAiPrivacySubtitle;
 
   /// Title of the AI privacy page
@@ -12397,7 +12397,7 @@ abstract class AppLocalizations {
   /// Intro copy on the AI privacy page
   ///
   /// In en, this message translates to:
-  /// **'Choose how much detail the AI can see when it leaves the device. You can change this at any time.'**
+  /// **'Choose how much data can be sent when you use a cloud model. You can change this at any time.'**
   String get aiPrivacyIntro;
 
   /// Radio label: amounts can go to the cloud
@@ -12755,7 +12755,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAiModelsOrtMissing.
   ///
   /// In en, this message translates to:
-  /// **'Missing: ONNX Runtime dylib'**
+  /// **'ONNX Runtime library missing'**
   String get settingsAiModelsOrtMissing;
 
   /// No description provided for @settingsAiModelsNativeLibLabel.
@@ -12881,13 +12881,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAiModelsActiveRuntimeNative.
   ///
   /// In en, this message translates to:
-  /// **'Native'**
+  /// **'On-device'**
   String get settingsAiModelsActiveRuntimeNative;
 
   /// No description provided for @settingsAiModelsActiveRuntimeStub.
   ///
   /// In en, this message translates to:
-  /// **'Stub'**
+  /// **'Simulation'**
   String get settingsAiModelsActiveRuntimeStub;
 
   /// No description provided for @settingsAiModelsActiveRuntimeUnknown.
@@ -12899,7 +12899,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAiModelsFingerprintLabel.
   ///
   /// In en, this message translates to:
-  /// **'fingerprint'**
+  /// **'Model fingerprint'**
   String get settingsAiModelsFingerprintLabel;
 
   /// No description provided for @settingsAiModelsDimensionLabel.
@@ -16211,7 +16211,7 @@ abstract class AppLocalizations {
   /// Settings tile and page title for on-device LLM credentials
   ///
   /// In en, this message translates to:
-  /// **'On-device AI · Bring your own key'**
+  /// **'AI services · Bring your own API key'**
   String get settingsAiLlmTitle;
 
   /// Settings tile subtitle for on-device LLM credentials
@@ -16259,7 +16259,7 @@ abstract class AppLocalizations {
   /// Empty state on the LLM credentials page
   ///
   /// In en, this message translates to:
-  /// **'No providers yet. Add an API key to run AI through a local direct connection.'**
+  /// **'No model providers configured. Add an API key to connect directly from this device.'**
   String get aiLlmEmpty;
 
   /// Button and editor title for adding an LLM provider
@@ -16343,7 +16343,7 @@ abstract class AppLocalizations {
   /// Intro copy on the LLM credentials page
   ///
   /// In en, this message translates to:
-  /// **'Use your own LLM API key so AI runs through a local direct connection to the provider. You can save multiple providers and switch anytime. Keys stay in this device\'s secure storage (Keychain/Keystore); they are not uploaded, synced, or backed up. Your provider account owns cost and rate limits.'**
+  /// **'Use your own LLM API key to connect directly from this device to a model provider. You can save multiple providers and switch at any time. API keys stay in this device\'s secure storage (Keychain/Keystore) and are never uploaded, synced, or backed up. Costs and rate limits belong to your provider account.'**
   String get aiLlmIntro;
 
   /// Unsupported-platform card title on the LLM credentials page
@@ -16355,7 +16355,7 @@ abstract class AppLocalizations {
   /// Unsupported-platform card body on the LLM credentials page
   ///
   /// In en, this message translates to:
-  /// **'Bring-your-own-key on-device AI works on native platforms (iOS / Android / macOS / Windows / Linux) with system secure storage. Web does not run the local AI runtime yet.'**
+  /// **'Bring-your-own-key AI services are available on iOS, Android, macOS, Windows, and Linux and require system secure storage. Web is not supported yet.'**
   String get aiLlmUnsupportedBody;
 
   /// Status line when an LLM provider is active
@@ -16781,13 +16781,13 @@ abstract class AppLocalizations {
   /// Long-form OCC ODD acknowledgement body
   ///
   /// In en, this message translates to:
-  /// **'Selling cash-secured puts and covered calls have defined and undefined risks. Sell-puts can require you to buy 100 shares at strike if assigned; covered calls cap upside above strike. Income Planner only screens opportunities that match your stated risk preferences — it does not predict prices and does not place orders. By continuing you acknowledge you have read OCC Characteristics and Risks of Standardized Options.'**
+  /// **'Selling cash-secured puts and covered calls can result in losses. If assigned, a cash-secured put may require you to buy 100 shares at the strike price; a covered call limits potential gains above the strike price. Income Planner only screens opportunities that match your risk preferences. It does not predict prices or place orders. Read OCC Characteristics and Risks of Standardized Options before using this feature.'**
   String get incomePlannerOccBody;
 
   /// OCC disclosure accept action
   ///
   /// In en, this message translates to:
-  /// **'I have read and accept'**
+  /// **'I understand the risks · Continue'**
   String get incomePlannerOccAccept;
 
   /// OCC disclosure dismiss action
@@ -18626,7 +18626,7 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeCaptureSavedClassifyingTitle.
   ///
   /// In en, this message translates to:
-  /// **'Saved - AI is thinking'**
+  /// **'Saved · AI is analyzing'**
   String get knowledgeCaptureSavedClassifyingTitle;
 
   /// No description provided for @knowledgeCaptureSavedPreviewTitle.
@@ -18650,7 +18650,7 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeCaptureClassifyingSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'The Note is saved. AI is checking whether it should become a Routine, Decision, or another knowledge object.'**
+  /// **'The note is saved. AI is checking whether it should become a routine, decision, or another type of knowledge.'**
   String get knowledgeCaptureClassifyingSubtitle;
 
   /// No description provided for @knowledgeCaptureSuggestionSubtitle.

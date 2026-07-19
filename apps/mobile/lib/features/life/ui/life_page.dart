@@ -208,14 +208,16 @@ class _LifeHero extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: AppSpacing.s12),
-          Text(
-            '${summary.primaryMetric}',
-            style: TypographyTokens.displayLarge.copyWith(
-              color: metricColor,
-              height: 1,
+          if (!summary.isCalm) ...[
+            const SizedBox(width: AppSpacing.s12),
+            Text(
+              '${summary.primaryMetric}',
+              style: TypographyTokens.displayLarge.copyWith(
+                color: metricColor,
+                height: 1,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

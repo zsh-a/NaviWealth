@@ -324,7 +324,7 @@ void main() {
     );
 
     expect(find.text('Add account'), findsOneWidget);
-    expect(find.text('Import'), findsOneWidget);
+    expect(find.text('Import statements'), findsOneWidget);
   });
 
   runResponsiveGolden(
@@ -341,7 +341,7 @@ void main() {
       );
 
       expect(find.text('Add account'), findsOneWidget);
-      expect(find.text('Import'), findsOneWidget);
+      expect(find.text('Import statements'), findsOneWidget);
     },
   );
 

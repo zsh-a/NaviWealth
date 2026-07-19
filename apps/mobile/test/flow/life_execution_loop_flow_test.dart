@@ -36,8 +36,8 @@ void main() {
       );
 
       final life = LifePageObject(tester);
-      life.expectSignal('Recovery needs care');
-      await life.openSignal('Recovery needs care');
+      life.expectSignal('Recovery needs attention');
+      await life.openSignal('Recovery needs attention');
       life.expectEvidence('Recovery score: 42');
       await life.createAction('Protect recovery today');
       await life.openExecution();
@@ -92,18 +92,18 @@ void main() {
       life.expectSignal('Monthly budget exceeded');
       await life.openSignal('Monthly budget exceeded');
       life.expectEvidence(
-        '${_periodMonth(DateTime.now())} spending posture · open budget',
+        '${_periodMonth(DateTime.now())} budget usage',
       );
-      await life.createAction("Review this month's budget");
+      await life.createAction("View this month's budget");
       await life.openExecution();
 
       final execution = ExecutionTodayPageObject(tester);
-      execution.expectAction("Review this month's budget");
-      await execution.completeAction("Review this month's budget");
+      execution.expectAction("View this month's budget");
+      await execution.completeAction("View this month's budget");
 
       await AppShell(tester).openTab('Review');
       final review = ExecutionReviewPageObject(tester);
-      review.expectCompletedAction("Review this month's budget");
+      review.expectCompletedAction("View this month's budget");
       review.expectOutcome('Finance: signal still detected');
 
       budgetSignal = BudgetSignal.comfortable;

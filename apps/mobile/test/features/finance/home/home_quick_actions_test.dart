@@ -34,7 +34,7 @@ void main() {
     expect(find.text('Record entry'), findsOneWidget);
     expect(find.text('Transfer'), findsOneWidget);
     expect(find.text('Add account'), findsNothing);
-    expect(find.text('Import'), findsNothing);
+    expect(find.text('Import statements'), findsNothing);
     expect(find.byIcon(FLucideIcons.chevronRight), findsNWidgets(2));
     expect(tester.takeException(), isNull);
   });
@@ -92,7 +92,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Add account'), findsOneWidget);
-    expect(find.text('Import'), findsOneWidget);
+    expect(find.text('Import statements'), findsOneWidget);
     expect(find.text('Record entry'), findsNothing);
     expect(tester.takeException(), isNull);
   });

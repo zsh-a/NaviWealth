@@ -121,7 +121,7 @@ void main() {
     );
     // Result-first surface: no domain chrome ("FinanceOS") on the home card.
     expect(find.textContaining('FinanceOS'), findsNothing);
-    expect(find.text('No agent results yet'), findsNothing);
+    expect(find.text('No financial insights yet'), findsNothing);
   });
 
   testWidgets('renders an intentional loading state', (tester) async {
@@ -141,7 +141,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Checking agent results'), findsOneWidget);
+    expect(find.text('Loading financial insights'), findsOneWidget);
     expect(find.byType(FCircularProgress), findsOneWidget);
   });
 
@@ -158,11 +158,9 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('No agent results yet'), findsOneWidget);
+    expect(find.text('No financial insights yet'), findsOneWidget);
     expect(
-      find.text(
-        'Scheduled reviews appear here when they have something to show.',
-      ),
+      find.text('New planning review results will appear here.'),
       findsOneWidget,
     );
   });
@@ -186,7 +184,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Checking agent results'), findsNothing);
+    expect(find.text('Loading financial insights'), findsNothing);
     expect(find.byType(AgentResultPanelStateCard), findsNothing);
 
     pending.complete(agent_providers.AgentResultBundle.empty);
@@ -200,7 +198,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('No agent results yet'), findsNothing);
+    expect(find.text('No financial insights yet'), findsNothing);
     expect(find.byType(AgentResultPanelStateCard), findsNothing);
 
     await tester.pumpWidget(
@@ -213,7 +211,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Agent results could not load'), findsNothing);
+    expect(find.text('Financial insights could not load'), findsNothing);
     expect(find.byType(AgentResultPanelStateCard), findsNothing);
   });
 

@@ -29,10 +29,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Agent runtime'), findsOneWidget);
+    expect(find.text('AI service check'), findsOneWidget);
     expect(
       find.text(
-        'Save and activate a provider profile before checking the agent runtime.',
+        'Save and activate a model provider before checking the AI service.',
       ),
       findsOneWidget,
     );
@@ -61,13 +61,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Check runtime'));
-    await tester.tap(find.text('Check runtime'));
+    await tester.ensureVisible(find.text('Start check'));
+    await tester.tap(find.text('Start check'));
     await tester.pumpAndSettle();
 
     expect(native.llmRequests, hasLength(1));
     expect(native.startRequests.single.agentId, 'settings_llm_runtime_check');
-    expect(find.text('Native step: completed'), findsOneWidget);
+    expect(find.text('On-device check: completed'), findsOneWidget);
     expect(find.text('runtime reachable'), findsOneWidget);
   });
 
@@ -105,8 +105,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Check runtime'));
-    await tester.tap(find.text('Check runtime'));
+    await tester.ensureVisible(find.text('Start check'));
+    await tester.tap(find.text('Start check'));
     await tester.pumpAndSettle();
 
     expect(find.text('Record runtime proposal'), findsOneWidget);

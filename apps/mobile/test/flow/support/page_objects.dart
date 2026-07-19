@@ -561,7 +561,7 @@ class LifePageObject {
   }
 
   void expectEvidence(String value) {
-    expect(find.text('Local evidence'), findsOneWidget);
+    expect(find.text('Why this appeared'), findsOneWidget);
     expect(find.text(value), findsWidgets);
   }
 

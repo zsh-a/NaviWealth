@@ -1159,68 +1159,64 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeGreetingNight => '夜深了';
 
   @override
-  String get homeTodayBriefSubtitle => '这是你今天的财务简报';
+  String get homeTodayBriefSubtitle => '今日财务概览';
 
   @override
-  String get lifeBriefSubtitle => '跨域信号与工作区入口';
+  String get lifeBriefSubtitle => '集中查看今天值得关注的动态';
 
   @override
   String get lifeStageTitle => 'LifeOS';
 
   @override
-  String get lifeHeroMetricAttention => '需关注';
+  String get lifeHeroMetricAttention => '待处理';
 
   @override
-  String get lifeHeroMetricSignals => '信号';
+  String get lifeHeroMetricSignals => '新动态';
 
   @override
-  String get lifeHeroMetricClear => '平稳';
+  String get lifeHeroMetricClear => '今日状态';
 
   @override
-  String get lifeHeroHeadlineCalm => '各域状态平稳';
+  String get lifeHeroHeadlineCalm => '今天暂无待处理事项';
 
   @override
-  String lifeHeroHeadlineSignals(int count) {
-    return '$count 条信号待看';
-  }
+  String get lifeHeroHeadlineSignals => '今天有新的跨领域动态';
 
   @override
-  String lifeHeroHeadlineAttention(int count) {
-    return '$count 条需要关注';
-  }
+  String get lifeHeroHeadlineAttention => '有事项需要优先处理';
 
   @override
   String lifeHeroBody(int count) {
-    return '$count 个工作区 · 只汇总信号，不是第二本流水';
+    return '汇总 $count 个功能领域的重要变化';
   }
 
   @override
   String lifeStickyAttention(int count) {
-    return '$count 需关注';
+    return '$count 项待处理';
   }
 
   @override
   String lifeStickySignals(int count) {
-    return '$count 信号';
+    return '$count 条新动态';
   }
 
   @override
-  String get lifeStickyCalm => '各域平稳';
+  String get lifeStickyCalm => '暂无待处理事项';
 
   @override
-  String get lifeWorkbenchTitle => '工作区';
+  String get lifeWorkbenchTitle => '功能领域';
 
   @override
-  String get lifeTimelineTitle => '关注';
+  String get lifeTimelineTitle => '最新动态';
 
   @override
-  String get lifeTimelinePriorityTitle => '优先';
+  String get lifeTimelinePriorityTitle => '优先处理';
 
   @override
   String get lifeTimelineEmptyTitle => '今天很安静';
 
   @override
-  String get lifeTimelineEmpty => '暂无跨域信号。需要时再进工作区深挖。';
+  String get lifeTimelineEmpty => '暂无需要处理的动态。你仍可以进入各功能领域查看详情。';
 
   @override
   String lifeTimelineShowMore(int count) {
@@ -1243,16 +1239,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeDomainExecution => '执行';
 
   @override
-  String get lifeNavLabel => 'Life';
+  String get lifeNavLabel => '总览';
 
   @override
   String lifeSignalFinanceDayTitle(String count) {
-    return '今日 · $count 笔';
+    return '今日收支 $count 笔';
   }
 
   @override
   String lifeSignalFinanceDaySubtitle(String expense, String income) {
-    return '支出 $expense · 收入 $income · 打开流水';
+    return '支出 $expense · 收入 $income';
   }
 
   @override
@@ -1263,14 +1259,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String lifeSignalFinanceBudgetSubtitle(String periodMonth) {
-    return '$periodMonth 支出状态 · 打开预算';
+    return '$periodMonth 预算使用情况';
   }
 
   @override
-  String get lifeSignalRecoveryTitle => '恢复需要关照';
+  String get lifeSignalRecoveryTitle => '恢复状态需要关注';
 
   @override
-  String get lifeSignalRecoverySubtitle => '打开健康简报';
+  String get lifeSignalRecoverySubtitle => '恢复状态出现需要关注的变化';
 
   @override
   String lifeSignalExecBlockedTitle(String count) {
@@ -1278,7 +1274,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get lifeSignalExecBlockedSubtitle => '打开执行今日';
+  String get lifeSignalExecBlockedSubtitle => '部分行动尚未取得进展';
 
   @override
   String lifeSignalExecDueTitle(String count) {
@@ -1286,7 +1282,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get lifeSignalExecDueSubtitle => '打开执行今日';
+  String get lifeSignalExecDueSubtitle => '这些行动计划今天完成';
 
   @override
   String lifeSignalKnowledgeTitle(String count) {
@@ -1294,19 +1290,19 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get lifeSignalKnowledgeSubtitle => '在知识域复盘或捕获';
+  String get lifeSignalKnowledgeSubtitle => '有笔记等待整理或复盘';
 
   @override
-  String get lifeSignalAgentTitle => '有新的 Agent 洞察';
+  String get lifeSignalAgentTitle => '有新的财务洞察';
 
   @override
-  String get lifeSignalAgentSubtitle => '打开财务简报';
+  String get lifeSignalAgentSubtitle => '财务简报已生成最新分析';
 
   @override
-  String get lifeSignalDetailTitle => '信号详情';
+  String get lifeSignalDetailTitle => '动态详情';
 
   @override
-  String get lifeSignalEvidenceTitle => '本地证据';
+  String get lifeSignalEvidenceTitle => '判断依据';
 
   @override
   String lifeSignalRecoveryScoreEvidence(String score) {
@@ -1331,7 +1327,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get lifeSignalActionCreated => '行动已创建，并保留了来源证据。';
+  String get lifeSignalActionCreated => '行动已创建，并保留来源信息。';
 
   @override
   String lifeSignalActionFailed(String error) {
@@ -1352,10 +1348,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeSignalOpenExecution => '打开执行域';
 
   @override
-  String get lifeSignalActionReviewFinance => '复核今日财务流水';
+  String get lifeSignalActionReviewFinance => '查看今日财务记录';
 
   @override
-  String get lifeSignalActionReviewBudget => '复核本月预算';
+  String get lifeSignalActionReviewBudget => '查看本月预算';
 
   @override
   String get lifeSignalActionProtectRecovery => '今天优先保护恢复';
@@ -1364,7 +1360,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeSignalActionReviewKnowledge => '整理知识收件箱';
 
   @override
-  String get lifeSignalActionReviewAgent => '复核最新财务洞察';
+  String get lifeSignalActionReviewAgent => '查看最新财务洞察';
 
   @override
   String lifeSignalActionNote(String source, String detail) {
@@ -1372,19 +1368,19 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get financeAgentResultsLoading => '正在检查 agent 结果';
+  String get financeAgentResultsLoading => '正在加载财务洞察';
 
   @override
-  String get financeAgentResultsLoadingBody => '正在加载近期 FinanceOS 复盘。';
+  String get financeAgentResultsLoadingBody => '正在加载近期财务复盘。';
 
   @override
-  String get financeAgentResultsEmptyTitle => '暂无 agent 结果';
+  String get financeAgentResultsEmptyTitle => '暂无财务洞察';
 
   @override
-  String get financeAgentResultsEmptyBody => '计划复盘有可展示结果时会出现在这里。';
+  String get financeAgentResultsEmptyBody => '有新的计划复盘结果时，会显示在这里。';
 
   @override
-  String get financeAgentResultsErrorTitle => '无法加载 agent 结果';
+  String get financeAgentResultsErrorTitle => '无法加载财务洞察';
 
   @override
   String financeAgentResultsErrorBody(String error) {
@@ -1574,7 +1570,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeQuickRecordEntry => '记一笔';
 
   @override
-  String get homeQuickImport => '导入';
+  String get homeQuickImport => '导入账单';
 
   @override
   String get financePrivacyHideAmountsTooltip => '隐藏金额';
@@ -1584,7 +1580,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String homeNetWorthSubtitle(String currency) {
-    return '基础货币 $currency · 等数据接入后展示';
+    return '添加账户或导入数据后，将以 $currency 显示净资产';
   }
 
   @override
@@ -1647,13 +1643,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get assetsAddCashTitle => '现金 / 多币种余额';
+  String get assetsAddCashTitle => '现金与多币种余额';
 
   @override
   String get assetsAddCashSubtitle => '登记银行活期或现金账户中的可用余额';
 
   @override
-  String get assetsAddDepositTitle => '存款（定期 / 活期）';
+  String get assetsAddDepositTitle => '存款（定期或活期）';
 
   @override
   String get assetsAddDepositSubtitle => '记录利率、起息日、到期日';
@@ -1736,10 +1732,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get corpActionTypeCashDividend => '现金分红';
 
   @override
-  String get corpActionTypeStockDividend => '送股 / 红股';
+  String get corpActionTypeStockDividend => '送股或红股';
 
   @override
-  String get corpActionTypeSplit => '拆股 / 合股';
+  String get corpActionTypeSplit => '拆股或合股';
 
   @override
   String get corpActionTypeRightsIssue => '配股';
@@ -2033,7 +2029,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get liabilityNotFound => '未找到该负债';
 
   @override
-  String get liabilityRevolvingNoSchedule => '信用卡 / 循环授信无固定还款计划表。';
+  String get liabilityRevolvingNoSchedule => '信用卡和循环授信没有固定还款计划。';
 
   @override
   String get physicalAssetsSectionTitle => '房产与车辆';
@@ -2117,7 +2113,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get physicalAssetDeleteConfirmTitle => '确认删除该资产？';
 
   @override
-  String get physicalAssetDeleteConfirmBody => '估值历史将被标记删除,但已同步过的设备仍可追溯。';
+  String get physicalAssetDeleteConfirmBody =>
+      '估值历史将标记为已删除；此前已完成同步的设备仍可能保留可恢复的记录。';
 
   @override
   String get physicalAssetDetailValuationTitle => '当前估值';
@@ -2400,7 +2397,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shortcutDismissOverlay => '关闭当前弹窗';
 
   @override
-  String get shortcutToggleSidebar => '收起 / 展开侧边栏';
+  String get shortcutToggleSidebar => '收起或展开侧边栏';
 
   @override
   String shortcutSwitchTab(int position, String label) {
@@ -2442,13 +2439,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiResultLocalBadge => '本地处理';
 
   @override
-  String get askAiResultNoLocalMatch => '命令栏暂无法本地解析这个问题。可去 AI 历史里继续追问。';
+  String get askAiResultNoLocalMatch => '命令栏暂时无法回答这个问题。你可以在 AI 助手中继续询问。';
 
   @override
-  String get askAiResultContinueInChat => '去 AI 历史继续追问 →';
+  String get askAiResultContinueInChat => '在 AI 助手中继续';
 
   @override
-  String get askAiResultIrreversibleBlocked => '命令栏不执行转账 / 下单 / 删除账户。请到对应页面操作。';
+  String get askAiResultIrreversibleBlocked => '命令栏不执行转账、下单或删除账户等操作。请前往对应页面完成。';
 
   @override
   String askAiResultError(String error) {
@@ -2508,7 +2505,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commandPaletteAiHistory => 'AI 历史会话';
 
   @override
-  String get commandPaletteToggleTheme => '切换主题（亮色 / 暗色）';
+  String get commandPaletteToggleTheme => '切换主题（亮色或暗色）';
 
   @override
   String get commandPaletteToggleColorMode => '切换涨跌颜色模式';
@@ -2878,7 +2875,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get analyticsEquityTitle => '股票透视';
 
   @override
-  String get analyticsEquitySubtitle => '按行业、地域或市值切片查看股票 / ETF 持仓。';
+  String get analyticsEquitySubtitle => '按行业、地区或市值查看股票和 ETF 持仓。';
 
   @override
   String get analyticsDimensionSector => '行业';
@@ -3234,7 +3231,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String fireOsHeroWithdrawalRateValue(String rate, String swr) {
-    return '$rate% / 安全提取率 $swr%';
+    return '$rate% · 安全提取率 $swr%';
   }
 
   @override
@@ -3245,7 +3242,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String fireOsHeroCashBucketValue(String months, int target) {
-    return '$months 个月 / 目标 $target 个月';
+    return '$months 个月 · 目标 $target 个月';
   }
 
   @override
@@ -3291,20 +3288,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fireOsActionConfigurePlanTitle => '配置你的 FIRE 计划';
 
   @override
-  String get fireOsActionConfigurePlanDetail => '填写目标净值、月度支出与结余,系统才能判断安全度。';
+  String get fireOsActionConfigurePlanDetail => '填写目标净值、月度支出与结余后，系统才能判断安全程度。';
 
   @override
   String get fireOsActionHoldSteadyTitle => '状态健康——继续保持';
 
   @override
-  String get fireOsActionHoldSteadyDetail => '提取率低于 SWR,现金桶充足。';
+  String get fireOsActionHoldSteadyDetail => '当前提取率低于安全提取率，现金储备充足。';
 
   @override
   String get fireOsActionTopUpCashBucketTitle => '补足现金桶';
 
   @override
   String fireOsActionTopUpCashBucketDetail(String amount, int months) {
-    return '需再增加 $amount,达到 $months 个月覆盖。';
+    return '还需增加 $amount，才能覆盖 $months 个月的支出。';
   }
 
   @override
@@ -3323,7 +3320,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fireOsActionDelayDiscretionaryTitle => '推迟非必要支出';
 
   @override
-  String get fireOsActionDelayDiscretionaryDetail => '暂缓旅行、升级或大额采购,待提取率回落后再恢复。';
+  String get fireOsActionDelayDiscretionaryDetail => '暂缓旅行、升级或大额采购，待提取率回落后再恢复。';
 
   @override
   String get fireOsActionRebalanceTitle => '再平衡至目标权重';
@@ -3335,7 +3332,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fireOsActionBuildRiskReserveTitle => '建立风险储备';
 
   @override
-  String get fireOsActionBuildRiskReserveDetail => '净资产为负或单薄——先备好应急 / 医疗资金。';
+  String get fireOsActionBuildRiskReserveDetail => '净资产为负或安全垫较薄，请先准备应急和医疗资金。';
 
   @override
   String get fireOsActionRunReviewTitle => '打开最新复盘';
@@ -3394,7 +3391,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fireOsBucketsTitle => '桶视图';
 
   @override
-  String get fireOsBucketsSubtitle => '把每项资产解释为现金 / 防御 / 增长 / 风险储备 / 梦想之一。';
+  String get fireOsBucketsSubtitle => '将资产归入现金、防御、增长、风险储备或梦想目标。';
 
   @override
   String get fireOsBucketRoleCash => '现金桶';
@@ -3467,14 +3464,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fireOsUnmappedTitle => '未分配资产';
 
   @override
-  String get fireOsUnmappedSubtitle => '这些资产暂未归入任何桶。若需纳入计划,请配置桶规则。';
+  String get fireOsUnmappedSubtitle => '这些资产尚未归入任何类别。如需纳入计划，请配置分类规则。';
 
   @override
   String get fireOsSimulationsTitle => '情景模拟';
 
   @override
   String get fireOsSimulationsSubtitle =>
-      '点击一个预设,看计划变动后提取率 / 现金桶覆盖 / 安全等级如何移动;不会写入任何更改。';
+      '选择一个预设，查看计划变化对提取率、现金储备覆盖和安全等级的影响。模拟不会修改计划。';
 
   @override
   String get fireOsSimulationsBaselineLabel => '基线';
@@ -3581,7 +3578,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fireOsReviewTitle => '周期复盘';
 
   @override
-  String get fireOsReviewSubtitle => '确定性的月度 / 季度 / 年度快照,AI 负责解读,不负责编造。';
+  String get fireOsReviewSubtitle => '按月、季度和年度生成复盘快照。指标由规则计算，AI 仅用于解读结果。';
 
   @override
   String get fireOsReviewKindMonthly => '月度';
@@ -3611,7 +3608,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get fireOsReviewDiffWrUnavailable => '提取率两端有无穷值,无法计算差值';
+  String get fireOsReviewDiffWrUnavailable => '提取率包含无穷值，无法计算差值';
 
   @override
   String fireOsReviewDiffNetWorth(String sign, String amount) {
@@ -3619,7 +3616,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get fireOsReviewDiffNetWorthCurrencyChanged => '净资产币种已变,跳过差值。';
+  String get fireOsReviewDiffNetWorthCurrencyChanged => '净资产币种已更改，无法比较差值。';
 
   @override
   String fireOsReviewDiffSafetyChanged(String from, String to) {
@@ -4089,7 +4086,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsRiskRegionLabel => '地域上限';
 
   @override
-  String get settingsRiskRegionSubtitle => '单一市场 / 地域占比超过此值时预警。';
+  String get settingsRiskRegionSubtitle => '单一市场或地区的占比超过此值时发出提醒。';
 
   @override
   String get settingsRiskCurrencyLabel => '币种上限';
@@ -4194,7 +4191,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsStressTestLumpSumLabel => '一次性大额支出';
 
   @override
-  String get settingsStressTestLumpSumSubtitle => '医疗 / 家庭支援等突发开销（基础币种）';
+  String get settingsStressTestLumpSumSubtitle => '医疗、家庭支援等突发开销（基础币种）';
 
   @override
   String get settingsStressTestLumpSumHint => '0 表示不测试此项';
@@ -4663,11 +4660,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiToolRefundLinksEmpty => '尚未检测到退款配对';
 
   @override
-  String get aiChatEmptyTitle => '你的 Life OS 助手';
+  String get aiChatEmptyTitle => '你的 LifeOS 助手';
 
   @override
   String get aiChatEmptyBody =>
-      '可以把财务、知识、健康和计划放在一起问。回答会优先基于本地数据与已启用的 domain 工具，缺少关键字段时会先向你确认。';
+      '你可以一起询问财务、知识、健康和计划。回答会优先参考本机数据和已启用的功能；信息不足时，助手会先向你确认。';
 
   @override
   String get aiChatEmptySuggestion1 => '我现在最需要关注什么？';
@@ -5435,7 +5432,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatToolEvidenceLabel => '依据';
 
   @override
-  String get aiChatToolShowRawJson => '查看 raw JSON';
+  String get aiChatToolShowRawJson => '查看原始数据';
 
   @override
   String get aiChatToolShowCompactView => '返回精简视图';
@@ -5774,7 +5771,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountCategoryAssetHint => '不动产、车辆、收藏品';
 
   @override
-  String get accountCategoryLiabilityHint => '信用 / 贷款之外的其他负债';
+  String get accountCategoryLiabilityHint => '信用卡和贷款以外的其他负债';
 
   @override
   String get accountSideAsset => '资产';
@@ -5836,10 +5833,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountFormInstitutionLabel => '机构';
 
   @override
-  String get accountFormInstitutionHelper => '银行 / 券商 / 平台名称（可选）';
+  String get accountFormInstitutionHelper => '银行、券商或平台名称（可选）';
 
   @override
-  String get accountFormAccountNumberLabel => '账号 / 末位号（可选）';
+  String get accountFormAccountNumberLabel => '账号或末位号（可选）';
 
   @override
   String get accountFormArchivedTitle => '归档';
@@ -5868,7 +5865,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get cashFormNeedAccountHint => '请先创建一个银行 / 现金账户。';
+  String get cashFormNeedAccountHint => '请先创建一个银行或现金账户。';
 
   @override
   String get cashFormCreateAccountAction => '新建账户';
@@ -6196,7 +6193,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dataManagementResetDeviceConfirmBody =>
-      '将移除本 OS 的本地主数据、派生缓存、Memory 和 Agent 历史。开启云同步时，数据可能在下次同步后重新下载。';
+      '将删除本机上该领域的数据和历史记录。若已开启云同步，云端数据可能在下次同步时重新下载。';
 
   @override
   String dataManagementResetEverywhereConfirmTitle(String domain) {
@@ -6205,7 +6202,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dataManagementResetEverywhereConfirmBody =>
-      '将从服务器和所有设备永久删除本 OS。离线设备重新上线后也无法恢复旧 generation。';
+      '将从云端和所有已连接设备永久删除该领域的数据。离线设备重新联网后也无法恢复。此操作不可撤销。';
 
   @override
   String dataManagementResetSuccess(int count) {
@@ -6293,18 +6290,18 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get settingsDomainsSection => 'LifeOS 域';
+  String get settingsDomainsSection => '功能领域';
 
   @override
-  String get settingsDomainsTitle => '域管理';
+  String get settingsDomainsTitle => '功能领域';
 
   @override
   String get settingsDomainsSubtitle =>
-      'FinanceOS / HealthOS / KnowledgeOS / ExecutionOS 开关';
+      '管理 FinanceOS、HealthOS、KnowledgeOS 和 ExecutionOS';
 
   @override
   String get settingsDomainsFinanceSubtitle =>
-      '常驻财务域：货币、汇率、风险偏好、资产配置与 FIRE 规划假设';
+      '始终启用的财务功能：货币、汇率、风险偏好、资产配置和 FIRE 规划';
 
   @override
   String get settingsDomainsFinanceAlwaysOnBadge => '常开';
@@ -6519,39 +6516,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAiModelsSubtitle => '下载与管理本地 AI 和语音模型';
 
   @override
-  String get aiLlmRuntimeCheckTitle => 'Agent Runtime';
+  String get aiLlmRuntimeCheckTitle => 'AI 服务检查';
 
   @override
-  String get aiLlmRuntimeCheckReady =>
-      '通过 FRB 运行一次短的 active profile 回合，然后完成 native runtime step。';
+  String get aiLlmRuntimeCheckReady => '使用当前模型配置发送一条测试请求，检查 AI 服务是否可用。';
 
   @override
-  String get aiLlmRuntimeCheckNoProfile =>
-      '请先保存并启用一个 provider profile，再检查 agent runtime。';
+  String get aiLlmRuntimeCheckNoProfile => '请先保存并启用一个模型服务商配置，再检查 AI 服务。';
 
   @override
-  String get aiLlmRuntimeCheckAction => '检查 runtime';
+  String get aiLlmRuntimeCheckAction => '开始检查';
 
   @override
   String get aiLlmRuntimeCheckRunning => '检查中…';
 
   @override
-  String get aiLlmRuntimeCheckPrompt =>
-      '请用一句简短的话确认 NaviWealth agent runtime 可以访问。';
+  String get aiLlmRuntimeCheckPrompt => '请用一句简短的话确认 NaviWealth 可以访问当前 AI 服务。';
 
   @override
   String aiLlmRuntimeCheckSucceeded(String status) {
-    return 'Agent runtime step 已完成：$status';
+    return 'AI 服务检查完成：$status';
   }
 
   @override
   String aiLlmRuntimeCheckFailed(String error) {
-    return 'Agent runtime 检查失败：$error';
+    return 'AI 服务检查失败：$error';
   }
 
   @override
   String aiLlmRuntimeCheckStatus(String status) {
-    return 'Native step：$status';
+    return '本机检查：$status';
   }
 
   @override
@@ -6825,7 +6819,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String aiLlmRuntimeProposalConfirmBody(String summary) {
-    return '$summary\n\n这会通过 AI Chat 相同的本地 proposal applier 写入。';
+    return '$summary\n\n确认后，将使用与 AI 助手相同的方式保存这项更改。';
   }
 
   @override
@@ -6868,7 +6862,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsNotificationsMasterSubtitle => '控制本地 Agent 通知和后台提醒任务。';
 
   @override
-  String get settingsNotificationsHealthBriefingTitle => 'Morning Briefing';
+  String get settingsNotificationsHealthBriefingTitle => '晨间简报';
 
   @override
   String settingsNotificationsHealthBriefingSubtitle(String hour) {
@@ -6945,13 +6939,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAiPrivacyTitle => 'AI 隐私';
 
   @override
-  String get settingsAiPrivacySubtitle => '选择 AI 可以上传到云端的数据范围';
+  String get settingsAiPrivacySubtitle => '控制发送给模型服务商的数据范围';
 
   @override
   String get aiPrivacyTitle => 'AI 隐私';
 
   @override
-  String get aiPrivacyIntro => '选择 AI 离开本机时可以看到多少细节。可以随时更改。';
+  String get aiPrivacyIntro => '选择使用云端模型时可以发送多少数据。你可以随时更改。';
 
   @override
   String get aiPrivacyModeAmountsAllowedLabel => '金额可上行';
@@ -6973,10 +6967,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiPrivacyModeAmountsLocalDescription => '只把意图和分类名上传，云端只能给定性建议。';
 
   @override
-  String get aiPrivacyMaskAccountsLabel => '脱敏账户 / 机构名';
+  String get aiPrivacyMaskAccountsLabel => '隐藏账户和机构名称';
 
   @override
-  String get aiPrivacyMaskAccountsDescription => '把银行 / 券商等名字替换成匿名 ID 后再上传。';
+  String get aiPrivacyMaskAccountsDescription => '发送前，将银行、券商等机构名称替换为匿名标识。';
 
   @override
   String get aiPrivacyOnboardingTitle => '选择你的 AI 隐私偏好';
@@ -7055,17 +7049,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsPerfRasterP95 => '栅格 p95';
 
   @override
-  String get settingsDomainsHealthEnabledSubtitle => 'AI 工具与 Memory 索引已启用';
+  String get settingsDomainsHealthEnabledSubtitle => 'AI 工具和本地记忆索引已启用';
 
   @override
-  String get settingsDomainsHealthDisabledSubtitle => '打开后启用 AI 工具与 Memory 索引';
+  String get settingsDomainsHealthDisabledSubtitle => '启用 AI 工具和本地记忆索引';
 
   @override
   String get settingsDomainsHealthTodaySubtitle => '查看今日恢复、指标与早间简报';
 
   @override
   String get settingsDomainsKnowledgeEnabledSubtitle =>
-      'Inbox、Library、Review、AI 工具与 Memory 索引已启用';
+      '收件箱、资料库、复盘、AI 工具和本地记忆索引已启用';
 
   @override
   String get settingsDomainsKnowledgeDisabledSubtitle => '个人决策与认知演化记忆库';
@@ -7074,22 +7068,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDomainsKnowledgeInboxSubtitle => '捕获笔记、写决策、查看资料库与复盘';
 
   @override
-  String get settingsDomainsKnowledgeLibrarySubtitle =>
-      '浏览 Decision、Assumption、Routine、Concept 与 Note';
+  String get settingsDomainsKnowledgeLibrarySubtitle => '浏览决策、假设、例行事项、概念和笔记';
 
   @override
-  String get settingsDomainsKnowledgeReviewSubtitle =>
-      '复盘到期 Decision、过期 Assumption 与到期 Routine';
+  String get settingsDomainsKnowledgeReviewSubtitle => '复盘到期决策、过期假设和到期例行事项';
 
   @override
-  String get settingsDomainsKnowledgeMemoryTitle => 'KnowledgeOS Memory';
+  String get settingsDomainsKnowledgeMemoryTitle => 'KnowledgeOS 本地记忆';
 
   @override
   String get settingsDomainsKnowledgeMemorySubtitle => '管理用于召回、查重与语义搜索的本地模型';
 
   @override
-  String get settingsDomainsHealthPermissionDenied =>
-      '权限被拒绝 — 在系统 Health 设置里再试';
+  String get settingsDomainsHealthPermissionDenied => '权限被拒绝，请前往系统健康设置后重试';
 
   @override
   String get settingsDomainsHealthSyncRunning => '正在拉取…';
@@ -7106,17 +7097,17 @@ class AppLocalizationsZh extends AppLocalizations {
     int unchanged,
     int total,
   ) {
-    return '上次同步：$upserted 新写入 / $unchanged 未变 · 拉取 $total 项';
+    return '上次同步：新增或更新 $upserted 项 · 无变化 $unchanged 项 · 共拉取 $total 项';
   }
 
   @override
   String get settingsDomainsHealthSyncTitle => '同步健康数据';
 
   @override
-  String get settingsDomainsBriefingTimeHelp => 'Morning Briefing 时间';
+  String get settingsDomainsBriefingTimeHelp => '晨间简报时间';
 
   @override
-  String get settingsDomainsBriefingTimeTitle => 'Briefing 时间';
+  String get settingsDomainsBriefingTimeTitle => '简报时间';
 
   @override
   String settingsDomainsBriefingTimeSubtitle(String hour) {
@@ -7144,7 +7135,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAiModelsModelMissing => '缺失：EmbeddingGemma model dir';
 
   @override
-  String get settingsAiModelsOrtMissing => '缺失：ONNX Runtime dylib';
+  String get settingsAiModelsOrtMissing => '缺少 ONNX Runtime 动态库';
 
   @override
   String get settingsAiModelsNativeLibLabel => 'native lib';
@@ -7214,16 +7205,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get settingsAiModelsActiveRuntimeNative => 'Native';
+  String get settingsAiModelsActiveRuntimeNative => '本机运行';
 
   @override
-  String get settingsAiModelsActiveRuntimeStub => 'Stub';
+  String get settingsAiModelsActiveRuntimeStub => '模拟运行';
 
   @override
   String get settingsAiModelsActiveRuntimeUnknown => '不可用';
 
   @override
-  String get settingsAiModelsFingerprintLabel => 'fingerprint';
+  String get settingsAiModelsFingerprintLabel => '模型指纹';
 
   @override
   String get settingsAiModelsDimensionLabel => '维度';
@@ -7430,7 +7421,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String knowledgeAgentContradictionInvalidatedAssumption(Object assumptionId) {
-    return '这个 Decision 仍引用 assumption $assumptionId，但该假设当前不在 active 集合（可能已 falsified / retired）。';
+    return '该决策仍引用假设 $assumptionId，但这项假设已被证伪或停用。';
   }
 
   @override
@@ -8304,7 +8295,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wealthProductDeleteTooltip => '删除';
 
   @override
-  String get wealthProductNoAccountHint => '请先创建银行 / 券商账户。';
+  String get wealthProductNoAccountHint => '请先创建银行或券商账户。';
 
   @override
   String get wealthProductCreateAccountAction => '新建账户';
@@ -8401,7 +8392,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get manualSecuritySheetDescription =>
-      '本地保存。点击「从网络导入」可选择性地用 Yahoo / CoinGecko 元数据补全字段。';
+      '数据保存在本机。点击“从网络导入”，可选择使用 Yahoo 或 CoinGecko 的数据补全字段。';
 
   @override
   String get manualSecurityCodeLabel => '代码';
@@ -8950,7 +8941,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ingestPasteHint =>
-      '粘贴支付宝 / 微信 / 银行 CSV 账单文本\n例如：2026-05-10,星巴克,-38.00,CNY';
+      '粘贴支付宝、微信或银行 CSV 账单文本\n例如：2026-05-10,星巴克,-38.00,CNY';
 
   @override
   String get ingestPasteRequired => '请先粘贴账单文本再解析。';
@@ -9075,7 +9066,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ingestEmptyBody =>
-      '可定期导入支付宝、微信或银行 CSV / 文本账单，\n重叠账期会先标记重复，再由你确认入账。';
+      '可定期导入支付宝、微信或银行的 CSV 和文本账单。\n系统会先标记重叠账期中的重复记录，再由你确认入账。';
 
   @override
   String get ingestPasteAction => '粘贴文本';
@@ -9096,10 +9087,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAiTransparencySubtitle => '查看最近 AI 调用的详细轨迹';
 
   @override
-  String get settingsAiLlmTitle => '端侧 AI · 自带 Key';
+  String get settingsAiLlmTitle => 'AI 服务 · 自带 API Key';
 
   @override
-  String get settingsAiLlmSubtitle => '管理多个 Provider Key，一键切换本机直连';
+  String get settingsAiLlmSubtitle => '管理多个模型服务商，并切换本机直连配置';
 
   @override
   String get aiLlmMissingApiKey => '请先填入 API Key';
@@ -9114,7 +9105,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiLlmRemoved => '已从设备移除';
 
   @override
-  String get aiLlmDeleteTitle => '删除 Provider？';
+  String get aiLlmDeleteTitle => '删除模型服务商？';
 
   @override
   String aiLlmDeleteBody(String name) {
@@ -9122,13 +9113,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get aiLlmEmpty => '还没有 Provider。添加一个 API Key 即可让 AI 在本机直连运行。';
+  String get aiLlmEmpty => '尚未配置模型服务商。添加 API Key 后，即可由本机直接连接并使用 AI 服务。';
 
   @override
-  String get aiLlmAddProvider => '添加 Provider';
+  String get aiLlmAddProvider => '添加模型服务商';
 
   @override
-  String get aiLlmEditProvider => '编辑 Provider';
+  String get aiLlmEditProvider => '编辑模型服务商';
 
   @override
   String get aiLlmActiveTag => '使用中';
@@ -9140,7 +9131,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiLlmNameLabel => '名称（可选）';
 
   @override
-  String get aiLlmNameHint => 'Anthropic 官方 / 公司网关 …';
+  String get aiLlmNameHint => '例如 Anthropic 官方或公司网关';
 
   @override
   String get aiLlmProviderLabel => '提供商';
@@ -9149,7 +9140,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiLlmStoredKeyHint => '已配置 · 留空则保持不变';
 
   @override
-  String get aiLlmBaseUrlLabel => '自定义 Base URL（可选）';
+  String get aiLlmBaseUrlLabel => '自定义服务地址（Base URL，可选）';
 
   @override
   String get aiLlmModelLabel => '模型（可选，留空用默认）';
@@ -9165,14 +9156,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiLlmIntro =>
-      '使用你自己的 LLM API Key，让 AI 在本机直连提供商运行。可保存多个 Provider 并随时切换。Key 仅存于本设备安全存储（Keychain/Keystore），不会上传、不进云同步、不进备份。费用与限流由你的提供商账户承担。';
+      '使用你自己的 LLM API Key，由本机直接连接模型服务商。你可以保存多个服务商配置并随时切换。API Key 仅保存在本设备的安全存储中，不会上传、同步或备份。费用和调用限制由你的模型服务商账户承担。';
 
   @override
-  String get aiLlmUnsupportedTitle => '当前平台不支持端侧直连';
+  String get aiLlmUnsupportedTitle => '当前平台不支持 AI 服务直连';
 
   @override
   String get aiLlmUnsupportedBody =>
-      '自带 Key 的端侧 AI 在原生平台（iOS / Android / macOS / Windows / Linux）可用（需要系统级安全存储）。Web 暂不运行本地 AI runtime。';
+      '自带 API Key 的 AI 服务可在 iOS、Android、macOS、Windows 和 Linux 上使用，并需要系统级安全存储。Web 端暂不支持。';
 
   @override
   String aiLlmStatusActive(String name) {
@@ -9180,13 +9171,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get aiLlmStatusSavedNoActive => '已保存 Provider，但未选择可用项';
+  String get aiLlmStatusSavedNoActive => '已保存模型服务商，但尚未选择使用项';
 
   @override
   String get aiLlmStatusReadFailed => '读取安全存储失败';
 
   @override
-  String get aiLlmStatusNotConfigured => '未配置 · 当前无可用端侧 AI';
+  String get aiLlmStatusNotConfigured => '未配置 · 当前无可用 AI 服务';
 
   @override
   String aiLlmAnthropicProtocol(String provider) {
@@ -9396,7 +9387,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerTitle => '期权现金流';
 
   @override
-  String get incomePlannerAccountsEntrySubtitle => '扫描卖看跌 / 备兑看涨 现金流机会';
+  String get incomePlannerAccountsEntrySubtitle => '扫描卖出看跌和备兑看涨的现金流机会';
 
   @override
   String get commandKeywordOptionsCn => '期权';
@@ -9418,10 +9409,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get incomePlannerOccBody =>
-      '卖出现金担保看跌(sell put)与备兑看涨(covered call)同时存在已知与未知风险。被行权时,卖看跌可能要求你以 strike 价买入 100 股;备兑看涨会让你失去 strike 以上的全部上涨。Income Planner 只筛选符合你已声明风险偏好的机会 —— 不预测价格,也不下达任何订单。继续即表示你已阅读 OCC《Characteristics and Risks of Standardized Options》。';
+      '卖出现金担保看跌期权和备兑看涨期权均可能造成损失。若被行权，现金担保看跌期权可能要求你按行权价买入 100 股；备兑看涨期权会限制行权价以上的潜在收益。期权收入规划仅筛选符合你风险偏好的机会，不预测价格，也不会代你下单。请在使用前阅读 OCC《标准化期权的特征与风险》。';
 
   @override
-  String get incomePlannerOccAccept => '我已阅读并接受';
+  String get incomePlannerOccAccept => '我已了解风险，继续';
 
   @override
   String get incomePlannerOccCancel => '暂不';
@@ -9433,8 +9424,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerStartTitle => '设置你的策略偏好';
 
   @override
-  String get incomePlannerStartBody =>
-      '告诉 Income Planner 你愿意采用的策略与风险水平,然后批准你愿意持有或卖出的标的。';
+  String get incomePlannerStartBody => '设置你愿意采用的策略和风险水平，然后选择可持有或卖出的标的。';
 
   @override
   String get incomePlannerStartCta => '配置偏好';
@@ -9510,7 +9500,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerProfileMaxCapitalPerTrade => '单笔最大资金占用';
 
   @override
-  String get incomePlannerProfilePercentHelper => '输入百分数,例如 12 表示 12%。';
+  String get incomePlannerProfilePercentHelper => '输入百分数，例如输入 12 表示 12%。';
 
   @override
   String get incomePlannerProfileValidationNumber => '请输入有效数字。';
@@ -9579,7 +9569,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get incomePlannerRefreshUniverseEmpty =>
-      '没有可扫描的标的。请至少添加一个启用 put/call 的已批准标的,或确认 covered call 标的持仓 ≥ 100 股。';
+      '没有可扫描的标的。请至少添加一个允许卖出看跌或看涨期权的标的，或确认备兑看涨标的的持仓不少于 100 股。';
 
   @override
   String get incomePlannerLastScanLabel => '上次扫描';
@@ -10257,7 +10247,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthPlanTrackMore => '连续记录几天后再判断趋势。';
 
   @override
-  String get healthPlanEnableHint => '请在 设置 → Domains 中启用 HealthOS，才能查看恢复建议。';
+  String get healthPlanEnableHint => '请在“设置 → 功能领域”中启用 HealthOS，才能查看恢复建议。';
 
   @override
   String get healthPlanDisclaimerTitle => '仅供健康参考';
@@ -10397,7 +10387,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeCaptureBodyHint => '\"港卡每 6 个月做一次活跃交易，否则会休眠\"';
 
   @override
-  String get knowledgeCaptureSavedClassifyingTitle => '已保存 · AI 思考中';
+  String get knowledgeCaptureSavedClassifyingTitle => '已保存 · AI 正在分析';
 
   @override
   String get knowledgeCaptureSavedPreviewTitle => '已保存的捕获';
@@ -10411,7 +10401,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeCaptureClassifyingSubtitle =>
-      'Note 已经落库，AI 正在判断是否适合升级为 Routine / Decision 等知识对象。';
+      '笔记已保存。AI 正在判断是否适合整理为例行事项、决策或其他知识内容。';
 
   @override
   String get knowledgeCaptureSuggestionSubtitle => '应用前先确认 AI 抽取的类型和字段。';
@@ -10478,7 +10468,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String knowledgeCaptureNotePolishOnly(Object reason) {
-    return 'AI 判定 kind = note，只润色不升级。原因：$reason';
+    return 'AI 判断这是一条笔记，将仅优化文字而不转换类型。原因：$reason';
   }
 
   @override
@@ -10554,7 +10544,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get knowledgeAiPromptHint => '记点什么 / 问点什么…';
+  String get knowledgeAiPromptHint => '记录想法或提出问题…';
 
   @override
   String get knowledgeAiDedupeAction => '查重';
@@ -10914,7 +10904,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeNewChooserSubtitle => '选择要创建的结构化知识对象。快速 Note 走收件箱捕获。';
 
   @override
-  String get knowledgeNewDecisionHint => '主路径：question / options / rationale';
+  String get knowledgeNewDecisionHint => '主要内容：问题、选项和理由';
 
   @override
   String get knowledgeNewPrincipleHint => '世界观原语，例如 \"edge-first\"';
@@ -10926,7 +10916,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeDecisionWriterTitle => '新建 Decision';
 
   @override
-  String get knowledgeDecisionWriterSubtitle => '决策即记忆：问题 / 选项 / 理由 / 复盘';
+  String get knowledgeDecisionWriterSubtitle => '记录决策的问题、选项、理由和复盘';
 
   @override
   String get knowledgeDecisionAddOption => '添加选项';
@@ -10980,7 +10970,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeDecisionNoReferenceCandidates =>
-      '还没声明 Principle / Assumption — Decision 可以先存，之后回来挂引用。';
+      '尚未声明原则或假设。你可以先保存决策，之后再添加引用。';
 
   @override
   String get knowledgeDecisionRationaleLabel => '理由（Markdown）';
@@ -10989,7 +10979,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeDecisionRationaleHint => '为什么选这个选项 — 限制条件、当时的判断';
 
   @override
-  String get knowledgeDecisionExpectedOutcomeHint => '如何判断成功 — 用什么指标 / 信号';
+  String get knowledgeDecisionExpectedOutcomeHint => '如何判断成功，例如使用哪些指标或信号';
 
   @override
   String get knowledgeDecisionReviewDateTitle => '复盘日期';
@@ -11035,7 +11025,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeDecisionLifecycleTitle => '更新 Decision';
 
   @override
-  String get knowledgeDecisionLifecycleSubtitle => '状态 / 实际结果 / 认知演化链';
+  String get knowledgeDecisionLifecycleSubtitle => '状态、实际结果和认知变化';
 
   @override
   String get knowledgeDecisionActualOutcomeLabel => '实际结果（Markdown，可选）';
@@ -11143,7 +11133,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeRoutineWriterSubtitle => '定期提醒，AI 会在临近 next_due_at 时主动提示';
 
   @override
-  String get knowledgeRoutineStatementHint => '\"港卡做一次活跃交易\" / \"每月对账\"';
+  String get knowledgeRoutineStatementHint => '例如“港卡做一次活跃交易”或“每月对账”';
 
   @override
   String get knowledgeWriterStatementLabel => '陈述';
@@ -11359,7 +11349,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthGarminErrorGeneric => 'Garmin 同步失败，请重试。';
 
   @override
-  String get settingsDomainsExecutionEnabledSubtitle => 'Today、承诺、进展与个人 todo';
+  String get settingsDomainsExecutionEnabledSubtitle => '今日行动、承诺、进展和个人待办事项';
 
   @override
   String get settingsDomainsExecutionDisabledSubtitle => '把决策与计划转成可追踪的行动';
@@ -11960,7 +11950,7 @@ class AppLocalizationsZh extends AppLocalizations {
     Object targetCashBucketMonths,
     Object withdrawalRate,
   ) {
-    return '提取率 $withdrawalRate vs 安全提取率 $safeRate，现金桶 $cashBucketMonths / $targetCashBucketMonths 个月。';
+    return '提取率 $withdrawalRate，安全提取率 $safeRate；现金储备可覆盖 $cashBucketMonths 个月，目标为 $targetCashBucketMonths 个月。';
   }
 
   @override
@@ -12296,7 +12286,7 @@ class AppLocalizationsZh extends AppLocalizations {
     Object low,
     Object moderate,
   ) {
-    return '$low 低 / $moderate 中 / $elevated 高';
+    return '低风险 $low · 中风险 $moderate · 高风险 $elevated';
   }
 
   @override

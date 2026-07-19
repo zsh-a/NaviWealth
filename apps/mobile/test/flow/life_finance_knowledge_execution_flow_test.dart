@@ -31,9 +31,9 @@ void main() {
             (_) => Stream<ActivityFeedPage>.value(_financeFeed()),
           ),
         ],
-        signalTitle: 'Today · 3 entries',
-        evidence: '2 expenses · 1 income · open ledger',
-        actionTitle: 'Review finance activity today',
+        signalTitle: '3 finance entries today',
+        evidence: '2 expenses · 1 income',
+        actionTitle: "View today's finance activity",
         outcome: 'Finance: signal still detected',
       );
     },
@@ -55,7 +55,7 @@ void main() {
           ),
         ],
         signalTitle: '4 notes in inbox',
-        evidence: 'Review or capture in Knowledge',
+        evidence: 'Notes are waiting to be organized or reviewed',
         actionTitle: 'Review the Knowledge inbox',
         outcome: 'Knowledge: signal still detected',
       );

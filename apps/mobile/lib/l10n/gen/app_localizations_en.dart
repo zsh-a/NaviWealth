@@ -1195,69 +1195,65 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeGreetingNight => 'Good night';
 
   @override
-  String get homeTodayBriefSubtitle => 'Your financial brief for today';
+  String get homeTodayBriefSubtitle => 'Today\'s financial overview';
 
   @override
-  String get lifeBriefSubtitle => 'Signals across your workspaces';
+  String get lifeBriefSubtitle => 'See what needs your attention today';
 
   @override
   String get lifeStageTitle => 'LifeOS';
 
   @override
-  String get lifeHeroMetricAttention => 'Need attention';
+  String get lifeHeroMetricAttention => 'To do';
 
   @override
-  String get lifeHeroMetricSignals => 'Signals';
+  String get lifeHeroMetricSignals => 'New updates';
 
   @override
-  String get lifeHeroMetricClear => 'Clear';
+  String get lifeHeroMetricClear => 'Today';
 
   @override
-  String get lifeHeroHeadlineCalm => 'All clear across domains';
+  String get lifeHeroHeadlineCalm => 'Nothing needs your attention today';
 
   @override
-  String lifeHeroHeadlineSignals(int count) {
-    return '$count signals to review';
-  }
+  String get lifeHeroHeadlineSignals => 'New updates across your domains';
 
   @override
-  String lifeHeroHeadlineAttention(int count) {
-    return '$count need attention';
-  }
+  String get lifeHeroHeadlineAttention => 'Some items need priority attention';
 
   @override
   String lifeHeroBody(int count) {
-    return '$count workspaces · signals only, not a second ledger';
+    return 'Important changes across $count active domains';
   }
 
   @override
   String lifeStickyAttention(int count) {
-    return '$count attention';
+    return '$count to do';
   }
 
   @override
   String lifeStickySignals(int count) {
-    return '$count signals';
+    return '$count new updates';
   }
 
   @override
-  String get lifeStickyCalm => 'All clear';
+  String get lifeStickyCalm => 'Nothing to do';
 
   @override
-  String get lifeWorkbenchTitle => 'Workspaces';
+  String get lifeWorkbenchTitle => 'Domains';
 
   @override
-  String get lifeTimelineTitle => 'Attention';
+  String get lifeTimelineTitle => 'Latest updates';
 
   @override
-  String get lifeTimelinePriorityTitle => 'Priority';
+  String get lifeTimelinePriorityTitle => 'Priority attention';
 
   @override
   String get lifeTimelineEmptyTitle => 'Quiet day';
 
   @override
   String get lifeTimelineEmpty =>
-      'No cross-domain signals. Open a workspace when you need to dig in.';
+      'Nothing needs your attention. You can still open a domain to view its details.';
 
   @override
   String lifeTimelineShowMore(int count) {
@@ -1280,16 +1276,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lifeDomainExecution => 'Execution';
 
   @override
-  String get lifeNavLabel => 'Life';
+  String get lifeNavLabel => 'Overview';
 
   @override
   String lifeSignalFinanceDayTitle(String count) {
-    return 'Today · $count entries';
+    return '$count finance entries today';
   }
 
   @override
   String lifeSignalFinanceDaySubtitle(String expense, String income) {
-    return '$expense expenses · $income income · open ledger';
+    return '$expense expenses · $income income';
   }
 
   @override
@@ -1301,14 +1297,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String lifeSignalFinanceBudgetSubtitle(String periodMonth) {
-    return '$periodMonth spending posture · open budget';
+    return '$periodMonth budget usage';
   }
 
   @override
-  String get lifeSignalRecoveryTitle => 'Recovery needs care';
+  String get lifeSignalRecoveryTitle => 'Recovery needs attention';
 
   @override
-  String get lifeSignalRecoverySubtitle => 'Open Health brief';
+  String get lifeSignalRecoverySubtitle =>
+      'Your recovery status has a change worth reviewing';
 
   @override
   String lifeSignalExecBlockedTitle(String count) {
@@ -1316,7 +1313,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get lifeSignalExecBlockedSubtitle => 'Open Execution today';
+  String get lifeSignalExecBlockedSubtitle =>
+      'Some actions have not made progress';
 
   @override
   String lifeSignalExecDueTitle(String count) {
@@ -1324,7 +1322,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get lifeSignalExecDueSubtitle => 'Open Execution today';
+  String get lifeSignalExecDueSubtitle => 'These actions are planned for today';
 
   @override
   String lifeSignalKnowledgeTitle(String count) {
@@ -1332,19 +1330,21 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get lifeSignalKnowledgeSubtitle => 'Review or capture in Knowledge';
+  String get lifeSignalKnowledgeSubtitle =>
+      'Notes are waiting to be organized or reviewed';
 
   @override
-  String get lifeSignalAgentTitle => 'Agent insight ready';
+  String get lifeSignalAgentTitle => 'New financial insight';
 
   @override
-  String get lifeSignalAgentSubtitle => 'Open Finance brief';
+  String get lifeSignalAgentSubtitle =>
+      'Your financial brief has a new analysis';
 
   @override
-  String get lifeSignalDetailTitle => 'Signal details';
+  String get lifeSignalDetailTitle => 'Update details';
 
   @override
-  String get lifeSignalEvidenceTitle => 'Local evidence';
+  String get lifeSignalEvidenceTitle => 'Why this appeared';
 
   @override
   String lifeSignalRecoveryScoreEvidence(String score) {
@@ -1370,7 +1370,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lifeSignalActionCreated =>
-      'Action created with its source evidence attached.';
+      'Action created with its source information attached.';
 
   @override
   String lifeSignalActionFailed(String error) {
@@ -1391,10 +1391,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lifeSignalOpenExecution => 'Open Execution';
 
   @override
-  String get lifeSignalActionReviewFinance => 'Review finance activity today';
+  String get lifeSignalActionReviewFinance => 'View today\'s finance activity';
 
   @override
-  String get lifeSignalActionReviewBudget => 'Review this month\'s budget';
+  String get lifeSignalActionReviewBudget => 'View this month\'s budget';
 
   @override
   String get lifeSignalActionProtectRecovery => 'Protect recovery today';
@@ -1403,7 +1403,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lifeSignalActionReviewKnowledge => 'Review the Knowledge inbox';
 
   @override
-  String get lifeSignalActionReviewAgent => 'Review the latest Finance insight';
+  String get lifeSignalActionReviewAgent => 'View the latest financial insight';
 
   @override
   String lifeSignalActionNote(String source, String detail) {
@@ -1411,21 +1411,22 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get financeAgentResultsLoading => 'Checking agent results';
+  String get financeAgentResultsLoading => 'Loading financial insights';
 
   @override
   String get financeAgentResultsLoadingBody =>
-      'Recent FinanceOS reviews are loading.';
+      'Recent financial reviews are loading.';
 
   @override
-  String get financeAgentResultsEmptyTitle => 'No agent results yet';
+  String get financeAgentResultsEmptyTitle => 'No financial insights yet';
 
   @override
   String get financeAgentResultsEmptyBody =>
-      'Scheduled reviews appear here when they have something to show.';
+      'New planning review results will appear here.';
 
   @override
-  String get financeAgentResultsErrorTitle => 'Agent results could not load';
+  String get financeAgentResultsErrorTitle =>
+      'Financial insights could not load';
 
   @override
   String financeAgentResultsErrorBody(String error) {
@@ -1622,7 +1623,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeQuickRecordEntry => 'Record entry';
 
   @override
-  String get homeQuickImport => 'Import';
+  String get homeQuickImport => 'Import statements';
 
   @override
   String get financePrivacyHideAmountsTooltip => 'Hide amounts';
@@ -1632,7 +1633,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String homeNetWorthSubtitle(String currency) {
-    return 'Base currency $currency · shown once data is connected';
+    return 'Add an account or import data to see net worth in $currency';
   }
 
   @override
@@ -2194,7 +2195,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get physicalAssetDeleteConfirmBody =>
-      'Valuation history will be tombstoned but recoverable on devices that have already synced.';
+      'Valuation history will be marked as deleted. Devices that synced previously may still retain a recoverable copy.';
 
   @override
   String get physicalAssetDetailValuationTitle => 'Current valuation';
@@ -2529,10 +2530,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get askAiResultNoLocalMatch =>
-      'Can\'t answer this here. Continue in AI history for a full chat.';
+      'Can\'t answer this here. Continue in the AI assistant for a full conversation.';
 
   @override
-  String get askAiResultContinueInChat => 'Continue in AI history →';
+  String get askAiResultContinueInChat => 'Continue in AI assistant';
 
   @override
   String get askAiResultIrreversibleBlocked =>
@@ -3733,7 +3734,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fireOsReviewSubtitle =>
-      'Deterministic monthly / quarterly / annual snapshots; the AI explains them, never invents them.';
+      'Review monthly, quarterly, and annual snapshots. Metrics are calculated by rules; AI only explains the results.';
 
   @override
   String get fireOsReviewKindMonthly => 'Monthly';
@@ -4918,11 +4919,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiToolRefundLinksEmpty => 'No refund matches detected yet';
 
   @override
-  String get aiChatEmptyTitle => 'Your Life OS assistant';
+  String get aiChatEmptyTitle => 'Your LifeOS assistant';
 
   @override
   String get aiChatEmptyBody =>
-      'Ask across finance, knowledge, health, and plans. Answers are grounded in local data and enabled domain tools; when key fields are missing, the assistant asks before assuming.';
+      'Ask about finance, knowledge, health, and plans together. Answers prioritize on-device data and enabled features; when information is missing, the assistant asks before assuming.';
 
   @override
   String get aiChatEmptySuggestion1 => 'What needs my attention right now?';
@@ -5734,7 +5735,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatToolEvidenceLabel => 'Evidence';
 
   @override
-  String get aiChatToolShowRawJson => 'View raw JSON';
+  String get aiChatToolShowRawJson => 'View raw data';
 
   @override
   String get aiChatToolShowCompactView => 'Back to compact view';
@@ -6523,7 +6524,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dataManagementResetDeviceConfirmBody =>
-      'Local source data, derived caches, memories, and agent history for this OS will be removed. Cloud data may download again on the next sync.';
+      'Data and history for this domain will be removed from this device. If cloud sync is enabled, cloud data may download again on the next sync.';
 
   @override
   String dataManagementResetEverywhereConfirmTitle(String domain) {
@@ -6532,7 +6533,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dataManagementResetEverywhereConfirmBody =>
-      'This permanently deletes this OS from the server and every device. Offline devices cannot restore the old generation.';
+      'This permanently deletes this domain\'s data from the cloud and every connected device. Offline devices cannot restore it when they reconnect. This action cannot be undone.';
 
   @override
   String dataManagementResetSuccess(int count) {
@@ -6625,14 +6626,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsDomainsSection => 'LifeOS Domains';
+  String get settingsDomainsSection => 'Domains';
 
   @override
   String get settingsDomainsTitle => 'Domain management';
 
   @override
   String get settingsDomainsSubtitle =>
-      'FinanceOS / HealthOS / KnowledgeOS / ExecutionOS toggles';
+      'Manage FinanceOS, HealthOS, KnowledgeOS, and ExecutionOS';
 
   @override
   String get settingsDomainsFinanceSubtitle =>
@@ -6857,39 +6858,39 @@ class AppLocalizationsEn extends AppLocalizations {
       'Download and manage local AI and speech models';
 
   @override
-  String get aiLlmRuntimeCheckTitle => 'Agent runtime';
+  String get aiLlmRuntimeCheckTitle => 'AI service check';
 
   @override
   String get aiLlmRuntimeCheckReady =>
-      'Runs a short active-profile turn through FRB, then completes a native runtime step.';
+      'Send a test request with the current model configuration to check whether the AI service is available.';
 
   @override
   String get aiLlmRuntimeCheckNoProfile =>
-      'Save and activate a provider profile before checking the agent runtime.';
+      'Save and activate a model provider before checking the AI service.';
 
   @override
-  String get aiLlmRuntimeCheckAction => 'Check runtime';
+  String get aiLlmRuntimeCheckAction => 'Start check';
 
   @override
   String get aiLlmRuntimeCheckRunning => 'Checking…';
 
   @override
   String get aiLlmRuntimeCheckPrompt =>
-      'Reply with one short sentence confirming the NaviWealth agent runtime is reachable.';
+      'Reply with one short sentence confirming NaviWealth can reach the current AI service.';
 
   @override
   String aiLlmRuntimeCheckSucceeded(String status) {
-    return 'Agent runtime step finished: $status';
+    return 'AI service check completed: $status';
   }
 
   @override
   String aiLlmRuntimeCheckFailed(String error) {
-    return 'Agent runtime check failed: $error';
+    return 'AI service check failed: $error';
   }
 
   @override
   String aiLlmRuntimeCheckStatus(String status) {
-    return 'Native step: $status';
+    return 'On-device check: $status';
   }
 
   @override
@@ -7179,7 +7180,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String aiLlmRuntimeProposalConfirmBody(String summary) {
-    return '$summary\n\nThis writes through the same local proposal applier used by AI chat.';
+    return '$summary\n\nConfirm to save this change in the same way as the AI assistant.';
   }
 
   @override
@@ -7311,14 +7312,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAiPrivacySubtitle =>
-      'Pick what the AI can send to the cloud';
+      'Control what is sent to your model provider';
 
   @override
   String get aiPrivacyTitle => 'AI privacy';
 
   @override
   String get aiPrivacyIntro =>
-      'Choose how much detail the AI can see when it leaves the device. You can change this at any time.';
+      'Choose how much data can be sent when you use a cloud model. You can change this at any time.';
 
   @override
   String get aiPrivacyModeAmountsAllowedLabel => 'Amounts allowed';
@@ -7526,7 +7527,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Missing: EmbeddingGemma model dir';
 
   @override
-  String get settingsAiModelsOrtMissing => 'Missing: ONNX Runtime dylib';
+  String get settingsAiModelsOrtMissing => 'ONNX Runtime library missing';
 
   @override
   String get settingsAiModelsNativeLibLabel => 'native lib';
@@ -7598,16 +7599,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsAiModelsActiveRuntimeNative => 'Native';
+  String get settingsAiModelsActiveRuntimeNative => 'On-device';
 
   @override
-  String get settingsAiModelsActiveRuntimeStub => 'Stub';
+  String get settingsAiModelsActiveRuntimeStub => 'Simulation';
 
   @override
   String get settingsAiModelsActiveRuntimeUnknown => 'Unavailable';
 
   @override
-  String get settingsAiModelsFingerprintLabel => 'fingerprint';
+  String get settingsAiModelsFingerprintLabel => 'Model fingerprint';
 
   @override
   String get settingsAiModelsDimensionLabel => 'dimension';
@@ -9571,7 +9572,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'View detailed traces from recent AI calls';
 
   @override
-  String get settingsAiLlmTitle => 'On-device AI · Bring your own key';
+  String get settingsAiLlmTitle => 'AI services · Bring your own API key';
 
   @override
   String get settingsAiLlmSubtitle =>
@@ -9599,7 +9600,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiLlmEmpty =>
-      'No providers yet. Add an API key to run AI through a local direct connection.';
+      'No model providers configured. Add an API key to connect directly from this device.';
 
   @override
   String get aiLlmAddProvider => 'Add provider';
@@ -9642,7 +9643,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiLlmIntro =>
-      'Use your own LLM API key so AI runs through a local direct connection to the provider. You can save multiple providers and switch anytime. Keys stay in this device\'s secure storage (Keychain/Keystore); they are not uploaded, synced, or backed up. Your provider account owns cost and rate limits.';
+      'Use your own LLM API key to connect directly from this device to a model provider. You can save multiple providers and switch at any time. API keys stay in this device\'s secure storage (Keychain/Keystore) and are never uploaded, synced, or backed up. Costs and rate limits belong to your provider account.';
 
   @override
   String get aiLlmUnsupportedTitle =>
@@ -9650,7 +9651,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiLlmUnsupportedBody =>
-      'Bring-your-own-key on-device AI works on native platforms (iOS / Android / macOS / Windows / Linux) with system secure storage. Web does not run the local AI runtime yet.';
+      'Bring-your-own-key AI services are available on iOS, Android, macOS, Windows, and Linux and require system secure storage. Web is not supported yet.';
 
   @override
   String aiLlmStatusActive(String name) {
@@ -9905,10 +9906,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get incomePlannerOccBody =>
-      'Selling cash-secured puts and covered calls have defined and undefined risks. Sell-puts can require you to buy 100 shares at strike if assigned; covered calls cap upside above strike. Income Planner only screens opportunities that match your stated risk preferences — it does not predict prices and does not place orders. By continuing you acknowledge you have read OCC Characteristics and Risks of Standardized Options.';
+      'Selling cash-secured puts and covered calls can result in losses. If assigned, a cash-secured put may require you to buy 100 shares at the strike price; a covered call limits potential gains above the strike price. Income Planner only screens opportunities that match your risk preferences. It does not predict prices or place orders. Read OCC Characteristics and Risks of Standardized Options before using this feature.';
 
   @override
-  String get incomePlannerOccAccept => 'I have read and accept';
+  String get incomePlannerOccAccept => 'I understand the risks · Continue';
 
   @override
   String get incomePlannerOccCancel => 'Not now';
@@ -10918,7 +10919,7 @@ class AppLocalizationsEn extends AppLocalizations {
       '\"Make one bank-card activity transaction every 6 months, otherwise it may become dormant\"';
 
   @override
-  String get knowledgeCaptureSavedClassifyingTitle => 'Saved - AI is thinking';
+  String get knowledgeCaptureSavedClassifyingTitle => 'Saved · AI is analyzing';
 
   @override
   String get knowledgeCaptureSavedPreviewTitle => 'Saved capture';
@@ -10932,7 +10933,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeCaptureClassifyingSubtitle =>
-      'The Note is saved. AI is checking whether it should become a Routine, Decision, or another knowledge object.';
+      'The note is saved. AI is checking whether it should become a routine, decision, or another type of knowledge.';
 
   @override
   String get knowledgeCaptureSuggestionSubtitle =>

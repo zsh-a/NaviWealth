@@ -85,10 +85,10 @@ extension LifeEventL10n on LifeEvent {
 extension LifeHeroSummaryL10n on LifeHeroSummary {
   String localizedHeadline(AppLocalizations l10n) {
     if (highPriorityCount > 0) {
-      return l10n.lifeHeroHeadlineAttention(highPriorityCount);
+      return l10n.lifeHeroHeadlineAttention;
     }
     if (signalCount > 0) {
-      return l10n.lifeHeroHeadlineSignals(signalCount);
+      return l10n.lifeHeroHeadlineSignals;
     }
     return l10n.lifeHeroHeadlineCalm;
   }
