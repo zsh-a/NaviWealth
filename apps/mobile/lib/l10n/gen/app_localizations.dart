@@ -890,18 +890,6 @@ abstract class AppLocalizations {
   /// **'Remove this rule permanently'**
   String get recurringActionDeleteHint;
 
-  /// Disable confirm title
-  ///
-  /// In en, this message translates to:
-  /// **'Disable rule?'**
-  String get recurringDisableTitle;
-
-  /// Disable confirm body
-  ///
-  /// In en, this message translates to:
-  /// **'It will stop creating new entries. You can recreate it later.'**
-  String get recurringDisableBody;
-
   /// Delete confirm title
   ///
   /// In en, this message translates to:
@@ -911,7 +899,7 @@ abstract class AppLocalizations {
   /// Delete confirm body
   ///
   /// In en, this message translates to:
-  /// **'This recurring rule will be removed. This cannot be undone.'**
+  /// **'This recurring rule will be removed. You can undo it from the confirmation message.'**
   String get recurringDeleteBody;
 
   /// Toast after disabling a rule

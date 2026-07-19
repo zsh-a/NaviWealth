@@ -456,18 +456,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recurringActionDeleteHint => 'Remove this rule permanently';
 
   @override
-  String get recurringDisableTitle => 'Disable rule?';
-
-  @override
-  String get recurringDisableBody =>
-      'It will stop creating new entries. You can recreate it later.';
-
-  @override
   String get recurringDeleteTitle => 'Delete rule?';
 
   @override
   String get recurringDeleteBody =>
-      'This recurring rule will be removed. This cannot be undone.';
+      'This recurring rule will be removed. You can undo it from the confirmation message.';
 
   @override
   String get recurringDisabled => 'Rule disabled';

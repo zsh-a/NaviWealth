@@ -148,6 +148,26 @@ void main() {
 
     expect(rules.map((rule) => rule.id), ['rt-active', 'rt-paused']);
   });
+
+  test('restore reverses a soft delete and queues the restored row', () async {
+    await recurringRepo.create(
+      id: 'rt-restorable',
+      templateJournalBuildJson: _templateJson(),
+      rrule: 'FREQ=MONTHLY',
+      nextDueAt: DateTime.utc(2026, 2, 1),
+    );
+    outbox.clearQueued();
+
+    await recurringRepo.softDelete('rt-restorable');
+    expect(await recurringRepo.getById('rt-restorable'), isNull);
+
+    await recurringRepo.restore('rt-restorable');
+
+    expect(await recurringRepo.getById('rt-restorable'), isNotNull);
+    expect(outbox.queued, hasLength(2));
+    expect(outbox.queued.last.table, 'recurring_transactions');
+    expect(outbox.queued.last.rowId, 'rt-restorable');
+  });
 }
 
 DateTime _utcDay(DateTime value) {

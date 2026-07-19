@@ -435,16 +435,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recurringActionDeleteHint => '永久删除该规则';
 
   @override
-  String get recurringDisableTitle => '停用规则？';
-
-  @override
-  String get recurringDisableBody => '将停止生成新记录，之后可重新创建。';
-
-  @override
   String get recurringDeleteTitle => '删除规则？';
 
   @override
-  String get recurringDeleteBody => '该周期规则将被删除，此操作不可撤销。';
+  String get recurringDeleteBody => '该周期规则将被删除，删除后可在提示中撤销。';
 
   @override
   String get recurringDisabled => '规则已停用';

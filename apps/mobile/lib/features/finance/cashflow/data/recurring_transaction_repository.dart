@@ -172,6 +172,29 @@ class RecurringTransactionRepository {
     });
   }
 
+  /// Restores a previously soft-deleted rule and publishes the reversal to
+  /// sync just like any other local mutation.
+  Future<void> restore(String id) async {
+    final stamp = await _stamper.stamp();
+    await _db.transaction(() async {
+      final restored =
+          await (_db.update(
+            _db.recurringTransactions,
+          )..where((t) => t.id.equals(id) & t.deletedAt.isNotNull())).write(
+            RecurringTransactionsCompanion(
+              updatedAt: Value(stamp.now),
+              updatedByDevice: Value(stamp.deviceId),
+              hlc: Value(stamp.hlc),
+              deletedAt: const Value(null),
+            ),
+          );
+      if (restored == 0) {
+        throw StateError('Unknown deleted recurring transaction id=$id');
+      }
+      await _outbox.enqueue(table: tableName, rowId: id);
+    });
+  }
+
   RecurringTransaction _rowToDomain(RecurringTransactionRow row) {
     return RecurringTransaction(
       id: row.id,

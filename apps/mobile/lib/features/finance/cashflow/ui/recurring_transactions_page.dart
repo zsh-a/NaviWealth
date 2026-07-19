@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -314,23 +316,50 @@ Future<void> _disableRule(
   RecurringTransaction rule,
 ) async {
   final l10n = AppLocalizations.of(context);
-  final ok = await showConfirmDialog(
-    context: context,
-    title: Text(l10n.recurringDisableTitle),
-    body: Text(l10n.recurringDisableBody),
-    confirmLabel: l10n.recurringActionDisable,
-    cancelLabel: l10n.commonCancel,
-  );
-  if (ok != true) return;
+  final feedbackContext = Navigator.of(context).context;
   try {
     final repo = await ref.read(recurringTransactionRepositoryProvider.future);
     await repo.update(rule.id, enabled: false);
     if (context.mounted) {
-      AppMessenger.show(context, ToastKind.success, l10n.recurringDisabled);
+      AppMessenger.show(
+        context,
+        ToastKind.success,
+        l10n.recurringDisabled,
+        duration: const Duration(seconds: 6),
+        actionLabel: l10n.commonUndo,
+        onAction: () => unawaited(
+          _restoreRuleEnabled(
+            feedbackContext,
+            repo,
+            rule.id,
+            l10n,
+            enabled: true,
+          ),
+        ),
+      );
     }
   } catch (_) {
     if (context.mounted) {
       AppMessenger.show(context, ToastKind.error, l10n.recurringActionFailed);
+    }
+  }
+}
+
+Future<void> _restoreRuleEnabled(
+  BuildContext context,
+  RecurringTransactionRepository repo,
+  String id,
+  AppLocalizations l10n, {
+  required bool enabled,
+}) async {
+  try {
+    await repo.update(id, enabled: enabled);
+    if (context.mounted) {
+      AppMessenger.show(context, ToastKind.success, l10n.commonUndoSucceeded);
+    }
+  } catch (_) {
+    if (context.mounted) {
+      AppMessenger.show(context, ToastKind.error, l10n.commonUndoFailed);
     }
   }
 }
@@ -369,6 +398,7 @@ Future<void> _deleteRule(
   RecurringTransaction rule,
 ) async {
   final l10n = AppLocalizations.of(context);
+  final feedbackContext = Navigator.of(context).context;
   final ok = await showConfirmDialog(
     context: context,
     title: Text(l10n.recurringDeleteTitle),
@@ -382,11 +412,38 @@ Future<void> _deleteRule(
     final repo = await ref.read(recurringTransactionRepositoryProvider.future);
     await repo.softDelete(rule.id);
     if (context.mounted) {
-      AppMessenger.show(context, ToastKind.success, l10n.recurringDeleted);
+      AppMessenger.show(
+        context,
+        ToastKind.success,
+        l10n.recurringDeleted,
+        duration: const Duration(seconds: 6),
+        actionLabel: l10n.commonUndo,
+        onAction: () => unawaited(
+          _restoreDeletedRule(feedbackContext, repo, rule.id, l10n),
+        ),
+      );
     }
   } catch (_) {
     if (context.mounted) {
       AppMessenger.show(context, ToastKind.error, l10n.recurringActionFailed);
+    }
+  }
+}
+
+Future<void> _restoreDeletedRule(
+  BuildContext context,
+  RecurringTransactionRepository repo,
+  String id,
+  AppLocalizations l10n,
+) async {
+  try {
+    await repo.restore(id);
+    if (context.mounted) {
+      AppMessenger.show(context, ToastKind.success, l10n.commonUndoSucceeded);
+    }
+  } catch (_) {
+    if (context.mounted) {
+      AppMessenger.show(context, ToastKind.error, l10n.commonUndoFailed);
     }
   }
 }
