@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/domain_composition.dart';
+import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/app/shell/app_dock_shell.dart';
+import 'package:naviwealth/core/ai/composition/ai_context.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
@@ -101,6 +103,15 @@ void main() {
     // environment falls back to the first supported locale (en).
     expect(find.byType(LifePage), findsOneWidget);
     expect(find.byType(AppDockShell), findsOneWidget);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(AppDockShell)),
+    );
+    expect(container.read(aiContextProvider).path, AppRoutes.life);
+
+    // Dispose provider-owned Drift streams while the fake async clock is still
+    // active, then flush their zero-duration cleanup timers.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
   });
 }
 

@@ -46,6 +46,7 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
   late final ShareIntentService _shareIntentService;
   GoRouter? _router;
   String _location = '';
+  bool _routeSyncScheduled = false;
 
   @override
   void initState() {
@@ -65,7 +66,7 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
       _router?.routerDelegate.removeListener(_onRouteChanged);
       _router = router;
       _router!.routerDelegate.addListener(_onRouteChanged);
-      _syncRoute(router);
+      _scheduleRouteSync();
     }
   }
 
@@ -77,9 +78,19 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
   }
 
   void _onRouteChanged() {
-    final router = _router;
-    if (router == null || !mounted) return;
-    _syncRoute(router);
+    if (_router == null || !mounted) return;
+    _scheduleRouteSync();
+  }
+
+  void _scheduleRouteSync() {
+    if (_routeSyncScheduled) return;
+    _routeSyncScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _routeSyncScheduled = false;
+      final router = _router;
+      if (router == null || !mounted) return;
+      _syncRoute(router);
+    });
   }
 
   void _syncRoute(GoRouter router) {

@@ -17,6 +17,7 @@ import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/app/routing/router.dart';
 import 'package:naviwealth/app/shell/shell_chrome.dart';
+import 'package:naviwealth/core/ai/composition/ai_context.dart';
 import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
@@ -89,6 +90,9 @@ Future<ProviderContainer> _pumpAt(
 
 String _currentPath(ProviderContainer container) =>
     container.read(appRouterProvider).routeInformationProvider.value.uri.path;
+
+String _currentAiContextPath(ProviderContainer container) =>
+    container.read(aiContextProvider).path;
 
 void main() {
   setUp(() {
@@ -203,6 +207,7 @@ void main() {
           ],
         );
         expect(_currentPath(container), AppRoutes.healthToday);
+        expect(_currentAiContextPath(container), AppRoutes.healthToday);
         expect(find.byType(HealthTodayPage), findsOneWidget);
         expect(
           find.descendant(
@@ -249,6 +254,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1));
       await tester.pump(const Duration(milliseconds: 400));
       expect(_currentPath(container), AppRoutes.healthToday);
+      expect(_currentAiContextPath(container), AppRoutes.healthToday);
       expect(find.byType(HealthTodayPage), findsOneWidget);
     });
   });
