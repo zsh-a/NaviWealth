@@ -21,7 +21,11 @@ class _DashboardBodyContent extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final useCockpit = width >= Breakpoints.contentTwoColumn;
+        // The wide cockpit assumes there is meaningful primary content to
+        // balance its secondary rail. During first use that column is empty,
+        // so keep the onboarding journey in a focused single-column flow.
+        final useCockpit =
+            width >= Breakpoints.contentTwoColumn && !snapshot.isEmpty;
         final basePadding = Breakpoints.isMobile(width)
             ? const EdgeInsets.symmetric(
                 horizontal: AppSpacing.s16,
@@ -126,6 +130,9 @@ class _DashboardBodyContent extends ConsumerWidget {
                 )
               : BriefScaffold(
                   padding: padding,
+                  maxContentWidth: snapshot.isEmpty
+                      ? AdaptiveMaxWidth.narrow
+                      : null,
                   onRefresh: onRefresh,
                   greeting: const HomeGreetingHeader(),
                   stage: _NetWorthHeader(snapshot: snapshot),

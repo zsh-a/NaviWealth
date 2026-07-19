@@ -1,9 +1,12 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/features/finance/activity/data/activity_feed_provider.dart';
+import 'package:naviwealth/features/finance/activity/data/activity_feed_query.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
@@ -107,53 +110,85 @@ ProjectedDividend _homeDividendForecast() {
   );
 }
 
+List<Override> _homeOverrides(SharedPreferences prefs) => [
+  sharedPreferencesProvider.overrideWithValue(prefs),
+  cashFlowNowProvider.overrideWithValue(_goldenNow),
+  dashboardSnapshotProvider.overrideWith(
+    (_) async => DashboardSnapshot.empty(asOf: _goldenNow, baseCurrency: 'CNY'),
+  ),
+  activityFeedProvider.overrideWith(
+    (_) => Stream.value(
+      const ActivityFeedPage(
+        entries: [],
+        totalCount: 0,
+        hasMore: false,
+        isFiltered: false,
+        accountsById: {},
+      ),
+    ),
+  ),
+  recurringMaterialiseDueProvider.overrideWith((ref, now) async => 0),
+  manualAssetsStreamProvider.overrideWith(
+    (_) => Stream.value([_cash('cash-1'), _cash('cash-2')]),
+  ),
+  dashboardManualAssetValuationsProvider.overrideWith(
+    (_) => const AsyncValue.data(<ManualAssetValuation>[]),
+  ),
+  physicalAssetsListProvider.overrideWith(
+    (_) => Stream.value(const <PhysicalAsset>[]),
+  ),
+  liabilitiesStreamProvider.overrideWith((_) => Stream.value(const [])),
+  fxRatesStreamProvider.overrideWith(
+    (_) => Stream<List<FxRate>>.value(const []),
+  ),
+  allAssetsStreamProvider.overrideWith((_) => Stream.value(const <Asset>[])),
+  holdingsSnapshotProvider.overrideWith(
+    (_) async => const <String, HoldingSnapshot>{},
+  ),
+  cashFlowSummaryProvider.overrideWith(
+    (ref, request) async => _homeCashFlowSummary(request.period),
+  ),
+  dividendForecast12mProvider.overrideWith(
+    (ref) async => _homeDividendForecast(),
+  ),
+];
+
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  // Asset-only dashboard: net-worth hero + allocation pie + trend strip,
-  // no liabilities. Liabilities trigger `liabilitySummaryProvider`, which
-  // chains down to `liabilityRepositoryProvider → appDatabaseProvider →
-  // syncEngineProvider`; mocking that whole stack just to get a debt slice
-  // on the pie buys nothing visually that the asset slice doesn't already
-  // exercise. If we want the "with debt" surface, add a separate variant
-  // wired against an in-memory Drift database (see asset_detail_page_test).
+  // Lock the actual first-use dashboard rather than the transient loading
+  // skeleton. The direct snapshot override keeps the target state
+  // deterministic while the supporting providers below populate the
+  // secondary home modules.
   runAllVariants('home_page', (tester, variant) async {
     final prefs = await SharedPreferences.getInstance();
     await pumpAndSnapshotMobile(
       tester,
       name: 'home_page',
       variant: variant,
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-        cashFlowNowProvider.overrideWithValue(_goldenNow),
-        recurringMaterialiseDueProvider.overrideWith((ref, now) async => 0),
-        manualAssetsStreamProvider.overrideWith(
-          (_) => Stream.value([_cash('cash-1'), _cash('cash-2')]),
-        ),
-        dashboardManualAssetValuationsProvider.overrideWith(
-          (_) => const AsyncValue.data(<ManualAssetValuation>[]),
-        ),
-        physicalAssetsListProvider.overrideWith(
-          (_) => Stream.value(const <PhysicalAsset>[]),
-        ),
-        liabilitiesStreamProvider.overrideWith((_) => Stream.value(const [])),
-        fxRatesStreamProvider.overrideWith(
-          (_) => Stream<List<FxRate>>.value(const []),
-        ),
-        allAssetsStreamProvider.overrideWith(
-          (_) => Stream.value(const <Asset>[]),
-        ),
-        holdingsSnapshotProvider.overrideWith(
-          (_) async => const <String, HoldingSnapshot>{},
-        ),
-        cashFlowSummaryProvider.overrideWith(
-          (ref, request) async => _homeCashFlowSummary(request.period),
-        ),
-        dividendForecast12mProvider.overrideWith(
-          (ref) async => _homeDividendForecast(),
-        ),
-      ],
+      overrides: _homeOverrides(prefs),
       child: const HomePage(),
     );
+
+    expect(find.text('Add account'), findsOneWidget);
+    expect(find.text('Import'), findsOneWidget);
   });
+
+  runResponsiveGolden(
+    'home_page onboarding — wide',
+    profile: ResponsiveGoldenProfile.wide,
+    body: (tester, profile) async {
+      final prefs = await SharedPreferences.getInstance();
+      await pumpAndSnapshotResponsive(
+        tester,
+        name: 'home_page_onboarding_wide',
+        profile: profile,
+        overrides: _homeOverrides(prefs),
+        child: const HomePage(),
+      );
+
+      expect(find.text('Add account'), findsOneWidget);
+      expect(find.text('Import'), findsOneWidget);
+    },
+  );
 }

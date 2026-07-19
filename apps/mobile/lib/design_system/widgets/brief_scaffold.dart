@@ -31,6 +31,7 @@ class BriefScaffold extends StatelessWidget {
     this.onRefresh,
     this.stickyBuilder,
     this.stickyPadding,
+    this.maxContentWidth,
   });
 
   /// Top identity row (greeting + chrome).
@@ -61,6 +62,10 @@ class BriefScaffold extends StatelessWidget {
   /// Inset for [stickyBuilder] overlay. Defaults to horizontal content pad.
   final EdgeInsetsGeometry? stickyPadding;
 
+  /// Optionally centers the brief in a narrower reading column on wide
+  /// canvases. Mobile layouts remain governed by [padding].
+  final double? maxContentWidth;
+
   @override
   Widget build(BuildContext context) {
     final contentPadding =
@@ -86,17 +91,34 @@ class BriefScaffold extends StatelessWidget {
       ],
     ];
 
+    final contentChildren = stagger
+        ? <Widget>[
+            StaggeredColumn(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: columnChildren,
+            ),
+          ]
+        : columnChildren;
+    var listChildren = contentChildren;
+    if (maxContentWidth case final width?) {
+      listChildren = [
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: width),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: contentChildren,
+            ),
+          ),
+        ),
+      ];
+    }
+
     Widget body = ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: contentPadding,
-      children: stagger
-          ? [
-              StaggeredColumn(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: columnChildren,
-              ),
-            ]
-          : columnChildren,
+      children: listChildren,
     );
 
     if (onRefresh != null) {
