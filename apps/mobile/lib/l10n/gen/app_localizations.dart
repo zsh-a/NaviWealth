@@ -10755,8 +10755,20 @@ abstract class AppLocalizations {
   /// Confirm dialog body when deleting a journal entry
   ///
   /// In en, this message translates to:
-  /// **'This removes the journal entry from your ledger. This cannot be undone from this screen.'**
+  /// **'This removes the journal entry and its postings from your ledger. You can undo it from the confirmation message.'**
   String get activityEntryDeleteBody;
+
+  /// Toast shown after deleting a journal entry
+  ///
+  /// In en, this message translates to:
+  /// **'Entry deleted'**
+  String get activityEntryDeleted;
+
+  /// Toast shown when deleting a journal entry fails
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete this entry. Try again.'**
+  String get activityEntryDeleteFailed;
 
   /// Accounts page app bar: transfer action tooltip
   ///

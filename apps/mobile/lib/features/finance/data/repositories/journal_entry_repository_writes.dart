@@ -489,4 +489,65 @@ mixin JournalEntryRepositoryWriteMixin {
       }
     });
   }
+
+  /// Restores a journal entry and only the postings tombstoned by the same
+  /// cascade delete. Postings removed by an earlier edit stay deleted.
+  Future<void> restoreSoftDeleted(String id) async {
+    final stamp = await _stamper.stamp();
+    await _db.transaction(() async {
+      final row =
+          await (_db.select(_db.journalEntries)
+                ..where((t) => t.id.equals(id))
+                ..where((t) => t.deletedAt.isNotNull()))
+              .getSingleOrNull();
+      final deletedAt = row?.deletedAt;
+      if (row == null || deletedAt == null) {
+        throw StateError('Unknown deleted journal entry id=$id');
+      }
+
+      final deletedPostingRows =
+          await (_db.select(_db.postings)
+                ..where((t) => t.journalEntryId.equals(id))
+                ..where((t) => t.deletedAt.isNotNull()))
+              .get();
+      final postingRows = deletedPostingRows
+          .where(
+            (posting) =>
+                posting.deletedAt == deletedAt && posting.hlc == row.hlc,
+          )
+          .toList(growable: false);
+      final restoredEntry = JournalEntriesCompanion(
+        updatedAt: Value(stamp.now),
+        updatedByDevice: Value(stamp.deviceId),
+        hlc: Value(stamp.hlc),
+        deletedAt: const Value(null),
+      );
+      await (_db.update(
+        _db.journalEntries,
+      )..where((t) => t.id.equals(id))).write(restoredEntry);
+      await _outbox.enqueue(
+        table: JournalEntryRepository._journalTable,
+        rowId: id,
+      );
+
+      final restoredPosting = PostingsCompanion(
+        updatedAt: Value(stamp.now),
+        updatedByDevice: Value(stamp.deviceId),
+        hlc: Value(stamp.hlc),
+        deletedAt: const Value(null),
+      );
+      if (postingRows.isNotEmpty) {
+        await (_db.update(_db.postings)..where(
+              (t) => t.id.isIn(postingRows.map((posting) => posting.id)),
+            ))
+            .write(restoredPosting);
+      }
+      for (final posting in postingRows) {
+        await _outbox.enqueue(
+          table: JournalEntryRepository._postingsTable,
+          rowId: posting.id,
+        );
+      }
+    });
+  }
 }

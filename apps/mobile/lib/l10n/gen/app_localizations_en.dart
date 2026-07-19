@@ -6298,7 +6298,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activityEntryDeleteBody =>
-      'This removes the journal entry from your ledger. This cannot be undone from this screen.';
+      'This removes the journal entry and its postings from your ledger. You can undo it from the confirmation message.';
+
+  @override
+  String get activityEntryDeleted => 'Entry deleted';
+
+  @override
+  String get activityEntryDeleteFailed =>
+      'Couldn\'t delete this entry. Try again.';
 
   @override
   String get accountsTransferAction => 'Transfer';

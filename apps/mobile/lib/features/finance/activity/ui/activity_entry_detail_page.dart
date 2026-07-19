@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,7 +38,7 @@ part 'activity_entry_detail_ledger.dart';
 ///  2. Local insight block for deterministic transaction patterns
 ///  3. Posting breakdown (debits / credits in the existing widget)
 ///  4. Edit (expense) + delete
-class ActivityEntryDetailPage extends ConsumerWidget {
+class ActivityEntryDetailPage extends ConsumerStatefulWidget {
   const ActivityEntryDetailPage({
     super.key,
     required this.entry,
@@ -47,23 +49,32 @@ class ActivityEntryDetailPage extends ConsumerWidget {
   final Map<String, Account> accountsById;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ActivityEntryDetailPage> createState() =>
+      _ActivityEntryDetailPageState();
+}
+
+class _ActivityEntryDetailPageState
+    extends ConsumerState<ActivityEntryDetailPage> {
+  bool _deleting = false;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final aiInsight = ref
         .watch(
           aiExplainEntryProvider(
             ActivityEntryInsightRequest(
-              entry: entry,
-              accountsById: accountsById,
+              entry: widget.entry,
+              accountsById: widget.accountsById,
               locale: Localizations.localeOf(context),
             ),
           ),
         )
         .value;
     final classification = classifyEntryKind(
-      postings: entry.postings,
-      resolveCategory: (id) => accountsById[id]?.category,
+      postings: widget.entry.postings,
+      resolveCategory: (id) => widget.accountsById[id]?.category,
     );
     return ObjectDetailScaffold(
       title: l10n.activityEntryDetailTitle,
@@ -71,11 +82,19 @@ class ActivityEntryDetailPage extends ConsumerWidget {
         if (classification.kind == EntryKind.expense)
           FHeaderAction(
             icon: const Icon(FLucideIcons.pencil),
-            onPress: () => context.go(FinanceRoutes.expense(entry.entry.id)),
+            onPress: _deleting
+                ? null
+                : () =>
+                      context.go(FinanceRoutes.expense(widget.entry.entry.id)),
           ),
         FHeaderAction(
-          icon: const Icon(FLucideIcons.trash2),
-          onPress: () => _confirmDelete(context, ref, entry.entry.id),
+          icon: _deleting
+              ? const SizedBox.square(
+                  dimension: AppIconSizes.md,
+                  child: FCircularProgress(size: .xs),
+                )
+              : const Icon(FLucideIcons.trash2),
+          onPress: _deleting ? null : _deleteEntry,
         ),
       ],
       childPad: false,
@@ -91,13 +110,13 @@ class ActivityEntryDetailPage extends ConsumerWidget {
             alignment: Alignment.centerLeft,
             child: AiTouchMark(
               entityType: 'journal_entries',
-              entityId: entry.entry.id,
+              entityId: widget.entry.entry.id,
             ),
           ),
           const SizedBox(height: AppSpacing.s8),
           _HeroAmountCard(
-            entry: entry,
-            accountsById: accountsById,
+            entry: widget.entry,
+            accountsById: widget.accountsById,
             formatters: formatters,
           ),
           if (aiInsight != null) ...[
@@ -106,23 +125,27 @@ class ActivityEntryDetailPage extends ConsumerWidget {
           ],
           const SizedBox(height: AppSpacing.s12),
           _LedgerBreakdownCard(
-            postings: entry.postings,
-            accountsById: accountsById,
+            postings: widget.entry.postings,
+            accountsById: widget.accountsById,
             formatters: formatters,
           ),
         ],
       ),
     );
   }
+
+  Future<void> _deleteEntry() async {
+    final confirmed = await _confirmDelete(context);
+    if (confirmed != true || !mounted) return;
+    setState(() => _deleting = true);
+    await _deleteActivityEntry(context, ref, widget.entry.entry.id);
+    if (mounted) setState(() => _deleting = false);
+  }
 }
 
-Future<void> _confirmDelete(
-  BuildContext context,
-  WidgetRef ref,
-  String entryId,
-) async {
+Future<bool?> _confirmDelete(BuildContext context) {
   final l10n = AppLocalizations.of(context);
-  final confirmed = await showConfirmDialog(
+  return showConfirmDialog(
     context: context,
     title: Text(l10n.activityEntryDeleteTitle),
     body: Text(l10n.activityEntryDeleteBody),
@@ -130,7 +153,16 @@ Future<void> _confirmDelete(
     confirmLabel: l10n.commonDelete,
     destructive: true,
   );
-  if (confirmed != true) return;
+}
+
+Future<void> _deleteActivityEntry(
+  BuildContext context,
+  WidgetRef ref,
+  String entryId,
+) async {
+  final l10n = AppLocalizations.of(context);
+  final feedbackContext = Navigator.of(context).context;
+  AppMessenger.cacheOverlay(feedbackContext);
   try {
     final repo = await ref.read(journalEntryRepositoryProvider.future);
     await repo.softDelete(entryId);
@@ -141,10 +173,42 @@ Future<void> _confirmDelete(
       } else {
         context.go(FinanceRoutes.activity);
       }
+      AppMessenger.show(
+        feedbackContext,
+        ToastKind.success,
+        l10n.activityEntryDeleted,
+        duration: const Duration(seconds: 6),
+        actionLabel: l10n.commonUndo,
+        onAction: () => unawaited(
+          _restoreDeletedEntry(feedbackContext, repo, entryId, l10n),
+        ),
+      );
     }
   } catch (_) {
     if (context.mounted) {
-      // Soft-fail: keep the user on the detail page with no crash.
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.activityEntryDeleteFailed,
+      );
+    }
+  }
+}
+
+Future<void> _restoreDeletedEntry(
+  BuildContext context,
+  JournalEntryRepository repo,
+  String entryId,
+  AppLocalizations l10n,
+) async {
+  try {
+    await repo.restoreSoftDeleted(entryId);
+    if (context.mounted) {
+      AppMessenger.show(context, ToastKind.success, l10n.commonUndoSucceeded);
+    }
+  } catch (_) {
+    if (context.mounted) {
+      AppMessenger.show(context, ToastKind.error, l10n.commonUndoFailed);
     }
   }
 }

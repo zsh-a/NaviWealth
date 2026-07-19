@@ -1896,7 +1896,9 @@
     "placeholders": { "query": { "type": "String" } }
   },
   "activityEntryDeleteTitle": "删除这笔流水？",
-  "activityEntryDeleteBody": "将从账本中移除该日记账分录。此操作无法在此页撤销。",
+  "activityEntryDeleteBody": "将从账本中移除该日记账分录及其明细，删除后可在提示中撤销。",
+  "activityEntryDeleted": "已删除流水",
+  "activityEntryDeleteFailed": "删除流水失败，请重试。",
   "accountsTransferAction": "转账",
   "accountsJournalAction": "日记账",
   "expenseReportTitle": "支出报表",

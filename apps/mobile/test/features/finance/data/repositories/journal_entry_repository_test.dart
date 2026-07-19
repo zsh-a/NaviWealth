@@ -187,6 +187,70 @@ void main() {
     },
   );
 
+  test(
+    'restoreSoftDeleted restores only postings from the delete cascade',
+    () async {
+      final created = await repo.create(
+        entry: JournalEntryDraft(
+          date: DateTime.utc(2026, 1, 15),
+          narration: 'Original',
+        ),
+        postings: [
+          PostingDraft(
+            id: 'posting-original-a',
+            accountId: 'a',
+            units: Decimal.parse('-50'),
+            unit: 'USD',
+          ),
+          PostingDraft(
+            id: 'posting-original-b',
+            accountId: 'b',
+            units: Decimal.parse('50'),
+            unit: 'USD',
+          ),
+        ],
+      );
+      await repo.replacePostings(
+        id: created.entry.id,
+        entry: JournalEntryDraft(
+          date: DateTime.utc(2026, 1, 16),
+          narration: 'Updated',
+        ),
+        postings: [
+          PostingDraft(
+            id: 'posting-current-a',
+            accountId: 'a',
+            units: Decimal.parse('-75'),
+            unit: 'USD',
+          ),
+          PostingDraft(
+            id: 'posting-current-b',
+            accountId: 'b',
+            units: Decimal.parse('75'),
+            unit: 'USD',
+          ),
+        ],
+      );
+      await repo.softDelete(created.entry.id);
+      outbox.clearQueued();
+
+      await repo.restoreSoftDeleted(created.entry.id);
+
+      final restored = await repo.getById(created.entry.id);
+      expect(restored, isNotNull);
+      expect(restored!.entry.narration, 'Updated');
+      expect(restored.postings.map((posting) => posting.id).toSet(), {
+        'posting-current-a',
+        'posting-current-b',
+      });
+      expect(outbox.queued, hasLength(3));
+      expect(outbox.queued.map((item) => item.table).toSet(), {
+        'journal_entries',
+        'postings',
+      });
+    },
+  );
+
   group('journal mutation receipts', () {
     test('Undo create tombstones the entry and every posting', () async {
       final receipt = await repo.createWithReceipt(

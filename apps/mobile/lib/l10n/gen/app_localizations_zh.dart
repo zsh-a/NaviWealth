@@ -5979,7 +5979,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityEntryDeleteTitle => '删除这笔流水？';
 
   @override
-  String get activityEntryDeleteBody => '将从账本中移除该日记账分录。此操作无法在此页撤销。';
+  String get activityEntryDeleteBody => '将从账本中移除该日记账分录及其明细，删除后可在提示中撤销。';
+
+  @override
+  String get activityEntryDeleted => '已删除流水';
+
+  @override
+  String get activityEntryDeleteFailed => '删除流水失败，请重试。';
 
   @override
   String get accountsTransferAction => '转账';
