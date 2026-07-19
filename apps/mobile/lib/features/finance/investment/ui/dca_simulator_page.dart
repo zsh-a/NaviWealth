@@ -54,7 +54,8 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
     return AppPageScaffold(
       title: l10n.dcaSimulatorTitle,
       actions: [
-        FHeaderAction(
+        AppHeaderAction(
+          semanticsLabel: l10n.commonRefresh,
           icon: const Icon(FLucideIcons.refreshCw),
           onPress: () => ref.read(dcaSimulationProvider.notifier).refresh(),
         ),

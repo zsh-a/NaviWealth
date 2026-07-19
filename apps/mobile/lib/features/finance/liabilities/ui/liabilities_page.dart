@@ -74,11 +74,8 @@ class LiabilitiesPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.liabilitiesAppBarTitle,
       actions: [
-        FHeaderAction(
-          icon: FTooltip(
-            tipBuilder: (_, _) => Text(l10n.liabilitiesAddAction),
-            child: const Icon(FLucideIcons.plus),
-          ),
+        AppHeaderAction(
+          icon: const Icon(FLucideIcons.plus),
           semanticsLabel: l10n.liabilitiesAddAction,
           onPress: () => context.push(FinanceRoutes.wealthLiabilityNew),
         ),

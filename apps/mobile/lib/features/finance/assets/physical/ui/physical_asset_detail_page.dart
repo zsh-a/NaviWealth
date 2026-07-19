@@ -31,7 +31,8 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
         assetAsync.maybeWhen(
           data: (a) => a == null
               ? const SizedBox.shrink()
-              : FHeaderAction(
+              : AppHeaderAction(
+                  semanticsLabel: l10n.physicalAssetDeleteAction,
                   icon: const Icon(FLucideIcons.trash2),
                   onPress: () => _confirmDelete(context, ref, a.id),
                 ),

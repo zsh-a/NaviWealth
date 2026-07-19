@@ -54,7 +54,8 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
     return AppPageScaffold(
       title: l10n.portfolioHubTitle,
       actions: [
-        FHeaderAction(
+        AppHeaderAction(
+          semanticsLabel: l10n.tradeEntryAppBarTitle,
           icon: const Icon(FLucideIcons.plus),
           onPress: () => context.push(FinanceRoutes.tradeEntry),
         ),

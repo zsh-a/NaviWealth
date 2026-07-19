@@ -58,12 +58,12 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
     return AppPageScaffold(
       title: l10n.watchlistTitle,
       actions: [
-        FHeaderAction(
+        AppHeaderAction(
           icon: const Icon(FLucideIcons.refreshCw),
-          semanticsLabel: l10n.commonRetry,
+          semanticsLabel: l10n.commonRefresh,
           onPress: () => ref.invalidate(watchlistQuoteSnapshotsProvider),
         ),
-        FHeaderAction(
+        AppHeaderAction(
           icon: const Icon(FLucideIcons.plus),
           semanticsLabel: l10n.watchlistAddAction,
           onPress: () => showWatchlistItemSheet(context: context),

@@ -22,7 +22,8 @@ class FirePage extends ConsumerWidget {
       childPad: false,
       actions: [
         if (configured)
-          FHeaderAction(
+          AppHeaderAction(
+            semanticsLabel: l10n.fireEditGoal,
             icon: const Icon(FLucideIcons.pencil, size: AppIconSizes.md),
             onPress: () => showFireGoalSheet(context),
           ),

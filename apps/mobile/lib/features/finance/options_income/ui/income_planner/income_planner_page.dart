@@ -43,8 +43,9 @@ class IncomePlannerPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final profileAsync = ref.watch(optionsStrategyProfileProvider);
     final acked = profileAsync.value?.hasAcknowledgedRiskDisclosure ?? false;
-    final FHeaderAction? settingsAction = acked
-        ? FHeaderAction(
+    final AppHeaderAction? settingsAction = acked
+        ? AppHeaderAction(
+            semanticsLabel: l10n.incomePlannerPreferencesAction,
             icon: const Icon(FLucideIcons.slidersHorizontal),
             onPress: () => showStrategyProfileSheet(context),
           )

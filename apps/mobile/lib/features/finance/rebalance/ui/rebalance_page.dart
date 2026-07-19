@@ -31,7 +31,8 @@ class RebalancePage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.rebalanceTitle,
       actions: [
-        FHeaderAction(
+        AppHeaderAction(
+          semanticsLabel: l10n.rebalanceSettingsTooltip,
           icon: const Icon(FLucideIcons.slidersHorizontal),
           onPress: () => _openSettings(context, ref),
         ),

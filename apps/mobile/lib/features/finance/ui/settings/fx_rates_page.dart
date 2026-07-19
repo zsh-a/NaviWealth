@@ -27,7 +27,8 @@ class FxRatesPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.fxRatesAppBarTitle,
       actions: [
-        FHeaderAction(
+        AppHeaderAction(
+          semanticsLabel: l10n.commonRefresh,
           icon: const Icon(FLucideIcons.refreshCw),
           onPress: () => _refresh(context, ref),
         ),
