@@ -19,7 +19,8 @@ import 'app_interaction.dart';
 /// Layout: when each segment can be at least [minSegmentWidth] wide the
 /// buttons split the row equally (labels ellipsize within their slot —
 /// the scroll fallback keeps intrinsic-width labels legible on narrow screens).
-/// Below that the row falls back to a horizontally scrollable strip.
+/// The minimum grows with the active text scale; below that effective width
+/// the row falls back to a horizontally scrollable strip.
 class SegmentedRow<T> extends StatelessWidget {
   const SegmentedRow({
     super.key,
@@ -54,13 +55,24 @@ class SegmentedRow<T> extends StatelessWidget {
         final n = options.length;
         const gap = AppSpacing.s4;
         final maxW = constraints.maxWidth;
+        final textScale = MediaQuery.textScalerOf(context).scale(1);
+        final effectiveMinSegmentWidth =
+            minSegmentWidth * (textScale < 1 ? 1 : textScale);
         final fits =
-            maxW.isFinite && (maxW - gap * (n - 1)) / n >= minSegmentWidth;
+            maxW.isFinite &&
+            (maxW - gap * (n - 1)) / n >= effectiveMinSegmentWidth;
 
         final children = <Widget>[];
         for (var i = 0; i < n; i++) {
           if (i > 0) children.add(const SizedBox(width: gap));
-          children.add(_segment(context, options[i], expand: fits));
+          children.add(
+            _segment(
+              context,
+              options[i],
+              expand: fits,
+              minWidth: effectiveMinSegmentWidth,
+            ),
+          );
         }
 
         final row = Row(
@@ -97,7 +109,12 @@ class SegmentedRow<T> extends StatelessWidget {
     );
   }
 
-  Widget _segment(BuildContext context, T option, {required bool expand}) {
+  Widget _segment(
+    BuildContext context,
+    T option, {
+    required bool expand,
+    required double minWidth,
+  }) {
     final colors = context.theme.colors;
     final icon = iconOf?.call(option);
     final selected = option == value;
@@ -164,7 +181,7 @@ class SegmentedRow<T> extends StatelessWidget {
     return expand
         ? Expanded(child: segment)
         : ConstrainedBox(
-            constraints: BoxConstraints(minWidth: minSegmentWidth),
+            constraints: BoxConstraints(minWidth: minWidth),
             child: segment,
           );
   }

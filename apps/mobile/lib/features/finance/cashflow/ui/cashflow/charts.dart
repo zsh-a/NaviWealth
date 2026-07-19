@@ -20,9 +20,10 @@ class _ChartsPanelState extends State<_ChartsPanel> {
     final l10n = AppLocalizations.of(context);
     final semantic = SemanticColors.of(context);
     final locale = Localizations.localeOf(context).toString();
-    final compactAxisLabels = Breakpoints.isMobile(
-      MediaQuery.sizeOf(context).width,
-    );
+    final media = MediaQuery.of(context);
+    final compactLabels =
+        Breakpoints.isMobile(media.size.width) ||
+        media.textScaler.scale(1) > 1.3;
     final axis = ValueAxis.currency(
       currencyCode: widget.model.baseCurrency,
       showGrid: true,
@@ -39,8 +40,15 @@ class _ChartsPanelState extends State<_ChartsPanel> {
             minSegmentWidth: 96,
             labelOf: (mode) => switch (mode) {
               _CashFlowTrendMode.incomeExpense =>
-                l10n.cashFlowIncomeExpenseTitle,
+                compactLabels
+                    ? '${l10n.cashFlowKpiInflow} / ${l10n.cashFlowKpiOutflow}'
+                    : l10n.cashFlowIncomeExpenseTitle,
               _CashFlowTrendMode.net => l10n.cashFlowKpiNet,
+            },
+            semanticLabelOf: (mode) => switch (mode) {
+              _CashFlowTrendMode.incomeExpense =>
+                l10n.cashFlowIncomeExpenseTitle,
+              _CashFlowTrendMode.net => l10n.cashFlowNetTrendTitle,
             },
             onChanged: (mode) => setState(() => _mode = mode),
           ),
@@ -58,7 +66,7 @@ class _ChartsPanelState extends State<_ChartsPanel> {
                           (period) => CategoryDatum(
                             label: _cashFlowAxisLabel(
                               period.label,
-                              compact: compactAxisLabels,
+                              compact: compactLabels,
                             ),
                             tooltipLabel: period.label,
                             value: period.inflow.toDouble(),
@@ -74,7 +82,7 @@ class _ChartsPanelState extends State<_ChartsPanel> {
                           (period) => CategoryDatum(
                             label: _cashFlowAxisLabel(
                               period.label,
-                              compact: compactAxisLabels,
+                              compact: compactLabels,
                             ),
                             tooltipLabel: period.label,
                             value: period.outflow.toDouble(),
@@ -154,6 +162,10 @@ class _CategoryPanelState extends State<_CategoryPanel> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final media = MediaQuery.of(context);
+    final compactLabels =
+        Breakpoints.isMobile(media.size.width) ||
+        media.textScaler.scale(1) > 1.3;
     final categories = widget.model.categories
         .where((category) {
           return switch (_mode) {
@@ -185,6 +197,16 @@ class _CategoryPanelState extends State<_CategoryPanel> {
             value: _mode,
             minSegmentWidth: 96,
             labelOf: (mode) => switch (mode) {
+              _CashFlowCategoryMode.expenses =>
+                compactLabels
+                    ? l10n.cashFlowKpiOutflow
+                    : l10n.cashFlowCategoryExpenses,
+              _CashFlowCategoryMode.income =>
+                compactLabels
+                    ? l10n.cashFlowKpiInflow
+                    : l10n.cashFlowCategoryIncome,
+            },
+            semanticLabelOf: (mode) => switch (mode) {
               _CashFlowCategoryMode.expenses => l10n.cashFlowCategoryExpenses,
               _CashFlowCategoryMode.income => l10n.cashFlowCategoryIncome,
             },

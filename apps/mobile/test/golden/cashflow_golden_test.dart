@@ -259,13 +259,17 @@ void main() {
       overrides: _cashflowOverrides(prefs),
       child: const CashFlowPage(),
     );
-    final inflowTop = tester.getTopLeft(find.text('Inflow')).dy;
-    final outflowTop = tester.getTopLeft(find.text('Outflow')).dy;
+    final inflowTop = tester.getTopLeft(find.text('Inflow').first).dy;
+    final outflowTop = tester.getTopLeft(find.text('Outflow').first).dy;
     final netTop = tester.getTopLeft(find.text('Net').first).dy;
     expect(outflowTop, closeTo(inflowTop, 0.5));
     expect(netTop, greaterThan(inflowTop));
     expect(find.text('25-06'), findsNothing);
     expect(find.text('06'), findsOneWidget);
+    expect(find.text('Inflow / Outflow'), findsOneWidget);
+    expect(find.text('Income vs expense'), findsNothing);
+    expect(find.text('Expense categories'), findsNothing);
+    expect(find.bySemanticsLabel('Expense categories'), findsOneWidget);
   });
 
   testVisualGolden('cashflow_page — wide', (tester) async {
@@ -284,6 +288,22 @@ void main() {
       closeTo(inflowTop, 0.5),
     );
     expect(find.text('25-06'), findsOneWidget);
+    expect(find.text('Income vs expense'), findsOneWidget);
+    expect(find.text('Expense categories'), findsOneWidget);
+  });
+
+  testVisualGolden('cashflow_page — text scale', (tester) async {
+    final prefs = await SharedPreferences.getInstance();
+    await pumpAndSnapshotResponsive(
+      tester,
+      name: 'cashflow_page_text_scale',
+      profile: ResponsiveGoldenProfile.textScale,
+      overrides: _cashflowOverrides(prefs),
+      child: const CashFlowPage(),
+    );
+    expect(find.text('Inflow / Outflow'), findsOneWidget);
+    expect(find.text('Expense categories'), findsNothing);
+    expect(find.bySemanticsLabel('Expense categories'), findsOneWidget);
   });
 
   runAllVariants('dividend_center', (tester, variant) async {

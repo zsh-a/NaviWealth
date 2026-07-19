@@ -8,15 +8,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 
-Widget _wrap(Widget child, {double width = 400}) {
+Widget _wrap(Widget child, {double width = 400, double textScale = 1}) {
   return MaterialApp(
     theme: AppTheme.light(),
-    home: FTheme(
-      data: FThemes.slate.light.desktop,
-      child: FScaffold(
-        childPad: false,
-        child: Center(
-          child: SizedBox(width: width, child: child),
+    home: MediaQuery(
+      data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+      child: FTheme(
+        data: FThemes.slate.light.desktop,
+        child: FScaffold(
+          childPad: false,
+          child: Center(
+            child: SizedBox(width: width, child: child),
+          ),
         ),
       ),
     ),
@@ -83,6 +86,25 @@ void main() {
     );
     expect(tester.takeException(), isNull);
     expect(find.byType(SingleChildScrollView), findsOneWidget);
+  });
+
+  testWidgets('large text switches equal segments to horizontal scroll', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        SegmentedRow<int>(
+          options: const [0, 1, 2],
+          value: 0,
+          labelOf: (i) => 'Option $i',
+          onChanged: (_) {},
+        ),
+        textScale: 2,
+      ),
+    );
+
+    expect(find.byType(SingleChildScrollView), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('separates compact labels from full selected semantics', (
