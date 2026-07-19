@@ -24,8 +24,8 @@ class FireUnconfiguredBody extends StatelessWidget {
       iconSize: 64,
       title: l10n.fireEmptyTitle,
       message: l10n.fireEmptyHint,
-      action: FButton(
-        variant: FButtonVariant.primary,
+      action: AppActionButton(
+        mainAxisSize: MainAxisSize.min,
         onPress: () => showFireGoalSheet(context),
         prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
         child: Text(l10n.fireEmptySetGoalCta),
@@ -59,9 +59,7 @@ class FireConfiguredBody extends ConsumerWidget {
       builder: (context, constraints) {
         final isWide = !Breakpoints.isMobile(constraints.maxWidth);
         return ListView(
-          padding: EdgeInsets.all(
-            isWide ? AppSpacing.s24 : AppSpacing.s16,
-          ),
+          padding: EdgeInsets.all(isWide ? AppSpacing.s24 : AppSpacing.s16),
           children: [
             if (isWide)
               ResponsiveTwoColumn(left: primary, right: depth)

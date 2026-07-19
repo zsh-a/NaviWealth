@@ -1,9 +1,14 @@
+import 'package:decimal/decimal.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_calculator.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_goal.dart';
 import 'package:naviwealth/features/finance/fire/ui/fire_page.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
@@ -11,6 +16,13 @@ import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '_golden_setup.dart';
+
+final _unconfiguredView = const FireCalculator().buildView(
+  goal: FireGoal.unset(),
+  currentNetWorth: Decimal.zero,
+  baseCurrency: 'CNY',
+  start: DateTime.utc(2026, 5, 6),
+);
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -26,6 +38,9 @@ void main() {
       variant: variant,
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        fireDashboardViewProvider.overrideWith(
+          (_) => AsyncValue.data(_unconfiguredView),
+        ),
         manualAssetsStreamProvider.overrideWith(
           (_) => Stream.value(const <Asset>[]),
         ),
@@ -41,5 +56,7 @@ void main() {
       ],
       child: const FirePage(),
     );
+    expect(find.text('Set your FIRE goal'), findsOneWidget);
+    expect(find.text('Set goal'), findsOneWidget);
   });
 }
