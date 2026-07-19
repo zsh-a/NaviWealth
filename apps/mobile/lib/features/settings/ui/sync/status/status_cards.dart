@@ -4,11 +4,13 @@ class _HeroCard extends StatelessWidget {
   const _HeroCard({
     required this.event,
     required this.now,
+    required this.busy,
     required this.onSyncNow,
   });
 
   final SyncStatusEvent event;
   final DateTime now;
+  final bool busy;
   final VoidCallback? onSyncNow;
 
   @override
@@ -16,6 +18,8 @@ class _HeroCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final palette = _palette(context, event.status);
     final syncing = event.status == SyncStatus.syncing;
+    final busyNow = busy || syncing;
+    final animateBusy = busyNow && !MediaQuery.disableAnimationsOf(context);
 
     return SoftCard.flat(
       padding: const EdgeInsets.fromLTRB(
@@ -44,11 +48,20 @@ class _HeroCard extends StatelessWidget {
               ],
             ),
           ),
-          if (onSyncNow != null && !syncing) ...[
+          if (onSyncNow != null) ...[
             const SizedBox(width: AppSpacing.s8),
-            FButton(
+            AppActionButton(
               variant: FButtonVariant.ghost,
-              onPress: onSyncNow,
+              mainAxisSize: MainAxisSize.min,
+              prefix: animateBusy
+                  ? const SizedBox.square(
+                      dimension: AppIconSizes.h18,
+                      child: FCircularProgress(
+                        size: FCircularProgressSizeVariant.xs,
+                      ),
+                    )
+                  : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.h18),
+              onPress: busyNow ? null : onSyncNow,
               child: Text(l10n.syncStatusActionSyncNow),
             ),
           ],

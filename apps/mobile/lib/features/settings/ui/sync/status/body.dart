@@ -4,11 +4,13 @@ class _Body extends ConsumerWidget {
   const _Body({
     required this.event,
     required this.now,
+    required this.busy,
     required this.onSyncNow,
   });
 
   final SyncStatusEvent event;
   final DateTime? now;
+  final bool busy;
   final VoidCallback? onSyncNow;
 
   @override
@@ -34,6 +36,7 @@ class _Body extends ConsumerWidget {
         _HeroCard(
           event: event,
           now: relativeNow,
+          busy: busy || event.status == SyncStatus.syncing,
           onSyncNow: session == null ? null : onSyncNow,
         ),
         const SizedBox(height: AppSpacing.s12),

@@ -112,6 +112,7 @@ void main() {
 
   Widget wrap({
     bool disableAnimations = false,
+    bool authenticated = true,
     SyncStabilityReport? stabilityReport,
   }) {
     return ProviderScope(
@@ -123,12 +124,14 @@ void main() {
         activeDomainPacksProvider.overrideWithValue([_financeDiagnosticsPack]),
         syncStatusBusProvider.overrideWithValue(bus),
         authSessionProvider.overrideWith(
-          (_) => AuthSession(
-            accessToken: 'token',
-            expiresAt: DateTime.utc(2099),
-            userId: 'user-1',
-            deviceId: _deviceId,
-          ),
+          (_) => authenticated
+              ? AuthSession(
+                  accessToken: 'token',
+                  expiresAt: DateTime.utc(2099),
+                  userId: 'user-1',
+                  deviceId: _deviceId,
+                )
+              : null,
         ),
         appConfigProvider.overrideWithValue(
           const AppConfig(
@@ -164,6 +167,7 @@ void main() {
     WidgetTester tester,
     Size size, {
     bool disableAnimations = false,
+    bool authenticated = true,
     SyncStabilityReport? stabilityReport,
   }) async {
     await tester.binding.setSurfaceSize(size);
@@ -172,6 +176,7 @@ void main() {
     await tester.pumpWidget(
       wrap(
         disableAnimations: disableAnimations,
+        authenticated: authenticated,
         stabilityReport: stabilityReport,
       ),
     );
@@ -199,6 +204,9 @@ void main() {
     await pumpPage(tester, const Size(900, 1600));
 
     expect(find.text('Sync Status'), findsOneWidget);
+    expect(find.text('Sync now'), findsOneWidget);
+    expect(find.byType(AppHeaderAction), findsNothing);
+    expect(find.byType(AppActionButton), findsOneWidget);
     expect(find.text('Offline'), findsOneWidget);
     expect(find.text('network down'), findsOneWidget);
     expect(find.text('Conflict diagnostics'), findsOneWidget);
@@ -299,6 +307,14 @@ void main() {
     );
   });
 
+  testWidgets('hides manual sync while signed out', (tester) async {
+    await pumpPage(tester, const Size(900, 1400), authenticated: false);
+
+    expect(find.text('Sync now'), findsNothing);
+    expect(find.byType(AppHeaderAction), findsNothing);
+    expect(find.byType(AppActionButton), findsNothing);
+  });
+
   testWidgets('stacks stat tiles on compact width', (tester) async {
     await pumpPage(tester, const Size(320, 1400));
 
@@ -335,6 +351,12 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
 
     expect(find.text('Syncing…'), findsOneWidget);
+    expect(find.text('Sync now'), findsOneWidget);
+    expect(
+      tester.widget<AppActionButton>(find.byType(AppActionButton)).onPress,
+      isNull,
+    );
+    expect(find.byType(FCircularProgress), findsNothing);
     expect(tester.binding.hasScheduledFrame, isFalse);
   });
 }

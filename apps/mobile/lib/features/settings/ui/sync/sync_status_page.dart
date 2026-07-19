@@ -41,20 +41,6 @@ class _SyncStatusPageState extends ConsumerState<SyncStatusPage> {
     final eventAsync = ref.watch(syncStatusEventStreamProvider);
     return AppPageScaffold(
       title: l10n.syncStatusTitle,
-      actions: [
-        AppHeaderAction(
-          icon: _syncing
-              ? const SizedBox.square(
-                  dimension: AppIconSizes.h18,
-                  child: FCircularProgress(
-                    size: FCircularProgressSizeVariant.xs,
-                  ),
-                )
-              : const Icon(FLucideIcons.refreshCw),
-          semanticsLabel: l10n.syncStatusActionSyncNow,
-          onPress: _syncing ? null : _triggerSyncNow,
-        ),
-      ],
       childPad: false,
       child: eventAsync.when(
         loading: () =>
@@ -68,7 +54,8 @@ class _SyncStatusPageState extends ConsumerState<SyncStatusPage> {
         data: (event) => _Body(
           event: event,
           now: widget.now,
-          onSyncNow: _syncing ? null : _triggerSyncNow,
+          busy: _syncing,
+          onSyncNow: _triggerSyncNow,
         ),
       ),
     );
