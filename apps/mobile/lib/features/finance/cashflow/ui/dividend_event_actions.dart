@@ -8,6 +8,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/activity/ui/activity_entry_detail_page.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -95,6 +96,8 @@ Future<void> _deleteDividendEntry(
   DividendCenterEvent event,
 ) async {
   final l10n = AppLocalizations.of(context);
+  final feedbackContext = Navigator.of(context).context;
+  AppMessenger.cacheOverlay(feedbackContext);
   final confirmed = await showConfirmDialog(
     context: context,
     title: Text(l10n.dividendEventDeleteTitle),
@@ -107,8 +110,22 @@ Future<void> _deleteDividendEntry(
   try {
     final repo = await ref.read(journalEntryRepositoryProvider.future);
     await repo.softDelete(event.event.journalEntryId);
-    if (context.mounted) {
-      AppMessenger.show(context, ToastKind.success, l10n.dividendEventDeleted);
+    if (feedbackContext.mounted) {
+      AppMessenger.show(
+        feedbackContext,
+        ToastKind.success,
+        l10n.dividendEventDeleted,
+        duration: const Duration(seconds: 6),
+        actionLabel: l10n.commonUndo,
+        onAction: () => unawaited(
+          _restoreDividendEntry(
+            feedbackContext,
+            repo,
+            event.event.journalEntryId,
+            l10n,
+          ),
+        ),
+      );
     }
   } catch (_) {
     if (context.mounted) {
@@ -117,6 +134,24 @@ Future<void> _deleteDividendEntry(
         ToastKind.error,
         l10n.dividendEventDeleteFailed,
       );
+    }
+  }
+}
+
+Future<void> _restoreDividendEntry(
+  BuildContext context,
+  JournalEntryRepository repo,
+  String entryId,
+  AppLocalizations l10n,
+) async {
+  try {
+    await repo.restoreSoftDeleted(entryId);
+    if (context.mounted) {
+      AppMessenger.show(context, ToastKind.success, l10n.commonUndoSucceeded);
+    }
+  } catch (_) {
+    if (context.mounted) {
+      AppMessenger.show(context, ToastKind.error, l10n.commonUndoFailed);
     }
   }
 }

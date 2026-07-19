@@ -716,7 +716,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String dividendEventDeleteBody(String asset) {
-    return '确定删除 $asset 的股息记录？此操作不可撤销。';
+    return '确定删除 $asset 的股息记录？删除后可在提示中撤销。';
   }
 
   @override

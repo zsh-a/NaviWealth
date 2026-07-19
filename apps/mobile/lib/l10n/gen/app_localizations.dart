@@ -1409,7 +1409,7 @@ abstract class AppLocalizations {
   /// Confirm dialog body for deleting a dividend entry
   ///
   /// In en, this message translates to:
-  /// **'Delete the dividend for {asset}? This cannot be undone.'**
+  /// **'Delete the dividend for {asset}? You can undo it from the confirmation message.'**
   String dividendEventDeleteBody(String asset);
 
   /// Toast after a dividend entry is deleted

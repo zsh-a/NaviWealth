@@ -744,7 +744,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String dividendEventDeleteBody(String asset) {
-    return 'Delete the dividend for $asset? This cannot be undone.';
+    return 'Delete the dividend for $asset? You can undo it from the confirmation message.';
   }
 
   @override

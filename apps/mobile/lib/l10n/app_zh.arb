@@ -231,7 +231,7 @@
   "dividendEventEditHint": "通过公司行动表单修正记录",
   "dividendEventDeleteHint": "删除这条股息记录",
   "dividendEventDeleteTitle": "删除股息？",
-  "dividendEventDeleteBody": "确定删除 {asset} 的股息记录？此操作不可撤销。",
+  "dividendEventDeleteBody": "确定删除 {asset} 的股息记录？删除后可在提示中撤销。",
   "dividendEventDeleted": "股息已删除",
   "dividendEventDeleteFailed": "无法删除该股息",
   "dividendEventOpenFailed": "无法打开该记录",

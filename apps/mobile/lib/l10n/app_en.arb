@@ -489,7 +489,7 @@
   "@dividendEventDeleteHint": { "description": "Subtitle for the delete action" },
   "dividendEventDeleteTitle": "Delete dividend?",
   "@dividendEventDeleteTitle": { "description": "Confirm dialog title for deleting a dividend entry" },
-  "dividendEventDeleteBody": "Delete the dividend for {asset}? This cannot be undone.",
+  "dividendEventDeleteBody": "Delete the dividend for {asset}? You can undo it from the confirmation message.",
   "@dividendEventDeleteBody": {
     "description": "Confirm dialog body for deleting a dividend entry",
     "placeholders": { "asset": { "type": "String" } }
