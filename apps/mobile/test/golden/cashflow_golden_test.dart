@@ -240,6 +240,13 @@ List<Override> _commonOverrides(SharedPreferences prefs) {
   ];
 }
 
+List<Override> _cashflowOverrides(SharedPreferences prefs) => [
+  ..._commonOverrides(prefs),
+  cashFlowSummaryProvider.overrideWith(
+    (ref, request) async => _cashFlowSummary(request.period),
+  ),
+];
+
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
@@ -249,14 +256,34 @@ void main() {
       tester,
       name: 'cashflow_page',
       variant: variant,
-      overrides: [
-        ..._commonOverrides(prefs),
-        cashFlowSummaryProvider.overrideWith(
-          (ref, request) async => _cashFlowSummary(request.period),
-        ),
-      ],
+      overrides: _cashflowOverrides(prefs),
       child: const CashFlowPage(),
     );
+    final inflowTop = tester.getTopLeft(find.text('Inflow')).dy;
+    final outflowTop = tester.getTopLeft(find.text('Outflow')).dy;
+    final netTop = tester.getTopLeft(find.text('Net').first).dy;
+    expect(outflowTop, closeTo(inflowTop, 0.5));
+    expect(netTop, greaterThan(inflowTop));
+    expect(find.text('25-06'), findsNothing);
+    expect(find.text('06'), findsOneWidget);
+  });
+
+  testVisualGolden('cashflow_page — wide', (tester) async {
+    final prefs = await SharedPreferences.getInstance();
+    await pumpAndSnapshotResponsive(
+      tester,
+      name: 'cashflow_page_wide',
+      profile: ResponsiveGoldenProfile.wide,
+      overrides: _cashflowOverrides(prefs),
+      child: const CashFlowPage(),
+    );
+    final inflowTop = tester.getTopLeft(find.text('Inflow')).dy;
+    expect(tester.getTopLeft(find.text('Outflow')).dy, closeTo(inflowTop, 0.5));
+    expect(
+      tester.getTopLeft(find.text('Net').first).dy,
+      closeTo(inflowTop, 0.5),
+    );
+    expect(find.text('25-06'), findsOneWidget);
   });
 
   runAllVariants('dividend_center', (tester, variant) async {

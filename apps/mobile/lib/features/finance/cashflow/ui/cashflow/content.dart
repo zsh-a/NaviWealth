@@ -234,6 +234,26 @@ class _KpiGrid extends StatelessWidget {
             ),
           );
         }
+        final textScale = MediaQuery.textScalerOf(context).scale(1);
+        if (constraints.maxWidth >= 320 && textScale <= 1.3) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: tiles[0]),
+                    const SizedBox(width: AppSpacing.s12),
+                    Expanded(child: tiles[1]),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              tiles[2],
+            ],
+          );
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -274,22 +294,23 @@ class _KpiTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(label, style: context.mutedLabelStyle),
+          Row(
+            children: [
+              Expanded(child: Text(label, style: context.mutedLabelStyle)),
+              const SizedBox(width: AppSpacing.s4),
+              Icon(
+                FLucideIcons.chevronRight,
+                size: AppIconSizes.sm,
+                color: context.theme.colors.mutedForeground,
+              ),
+            ],
+          ),
           const SizedBox(height: AppSpacing.s8),
           _DualMoneyText(
             money: money,
             formatter: formatter,
             signed: signed,
             style: TypographyTokens.numericTitleStrong.copyWith(color: tint),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: Icon(
-              FLucideIcons.chevronRight,
-              size: AppIconSizes.sm,
-              color: context.theme.colors.mutedForeground,
-            ),
           ),
         ],
       ),

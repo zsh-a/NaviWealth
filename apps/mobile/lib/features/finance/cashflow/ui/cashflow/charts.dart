@@ -20,6 +20,9 @@ class _ChartsPanelState extends State<_ChartsPanel> {
     final l10n = AppLocalizations.of(context);
     final semantic = SemanticColors.of(context);
     final locale = Localizations.localeOf(context).toString();
+    final compactAxisLabels = Breakpoints.isMobile(
+      MediaQuery.sizeOf(context).width,
+    );
     final axis = ValueAxis.currency(
       currencyCode: widget.model.baseCurrency,
       showGrid: true,
@@ -53,7 +56,11 @@ class _ChartsPanelState extends State<_ChartsPanel> {
                     data: widget.model.periods
                         .map(
                           (period) => CategoryDatum(
-                            label: period.label,
+                            label: _cashFlowAxisLabel(
+                              period.label,
+                              compact: compactAxisLabels,
+                            ),
+                            tooltipLabel: period.label,
                             value: period.inflow.toDouble(),
                             colorOverride: semantic.success,
                           ),
@@ -65,7 +72,11 @@ class _ChartsPanelState extends State<_ChartsPanel> {
                     data: widget.model.periods
                         .map(
                           (period) => CategoryDatum(
-                            label: period.label,
+                            label: _cashFlowAxisLabel(
+                              period.label,
+                              compact: compactAxisLabels,
+                            ),
+                            tooltipLabel: period.label,
                             value: period.outflow.toDouble(),
                             colorOverride: semantic.danger,
                           ),
@@ -108,6 +119,16 @@ class _ChartsPanelState extends State<_ChartsPanel> {
       ),
     );
   }
+}
+
+String _cashFlowAxisLabel(String label, {required bool compact}) {
+  if (!compact) return label;
+  final separator = label.contains('-') ? '-' : ' ';
+  if (label.contains(separator)) return label.split(separator).last;
+  if (label.length == 4 && int.tryParse(label) != null) {
+    return label.substring(2);
+  }
+  return label;
 }
 
 enum _CashFlowCategoryMode { expenses, income }

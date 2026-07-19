@@ -249,7 +249,8 @@ class NwBarChart extends StatelessWidget {
           if (ci >= source.data.length) return null;
           final datum = source.data[ci];
           return BarTooltipItem(
-            '${source.name}\n${datum.label} · ${yAxis.formatValue(datum.value)}',
+            '${source.name}\n${datum.tooltipLabel ?? datum.label} · '
+            '${yAxis.formatValue(datum.value)}',
             TypographyTokens.numericCaption.copyWith(
               color: palette.tooltipForeground,
             ),

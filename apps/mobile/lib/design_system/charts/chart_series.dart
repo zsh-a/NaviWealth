@@ -56,12 +56,14 @@ class CategoryDatum {
   const CategoryDatum({
     required this.label,
     required this.value,
+    this.tooltipLabel,
     this.colorOverride,
     this.meta,
   });
 
   final String label;
   final double value;
+  final String? tooltipLabel;
   final Color? colorOverride;
   final Object? meta;
 }
