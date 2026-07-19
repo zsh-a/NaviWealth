@@ -23,5 +23,6 @@ void main() {
       overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
       child: const AiChatPage(),
     );
+    expect(find.text('Sign in'), findsOneWidget);
   });
 }

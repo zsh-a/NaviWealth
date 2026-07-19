@@ -1,11 +1,13 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/composition/ai_context.dart';
 
 import '../../../core/ai/composition/ai_context_summary.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/shell/auth_route_paths.dart';
 import '../../../core/shell/master_detail_layout.dart';
 import '../../../core/shell/selection_query.dart';
 import '../../../core/shell/settings_route_paths.dart';
@@ -217,10 +219,8 @@ class _ChatPane extends ConsumerWidget {
                 duration: AppMotionPolicy.duration(context, Motion.medium),
                 switchInCurve: Motion.standardDecelerate,
                 switchOutCurve: Motion.standardAccelerate,
-                transitionBuilder: (child, anim) => FadeTransition(
-                  opacity: anim,
-                  child: child,
-                ),
+                transitionBuilder: (child, anim) =>
+                    FadeTransition(opacity: anim, child: child),
                 child: KeyedSubtree(
                   key: ValueKey(sessionId),
                   child: ChatConversationView(
@@ -495,9 +495,17 @@ class _LoginRequired extends StatelessWidget {
             const SizedBox(height: AppSpacing.s12),
             Text(
               l10n.aiChatLoginRequired,
+              textAlign: TextAlign.center,
               style: context.theme.typography.body.md.copyWith(
                 color: context.theme.colors.foreground,
               ),
+            ),
+            const SizedBox(height: AppSpacing.s20),
+            AppActionButton(
+              mainAxisSize: MainAxisSize.min,
+              onPress: () => context.go(AuthRoutes.login),
+              prefix: const Icon(FLucideIcons.logIn, size: AppIconSizes.xs),
+              child: Text(l10n.authLoginSubmit),
             ),
           ],
         ),
