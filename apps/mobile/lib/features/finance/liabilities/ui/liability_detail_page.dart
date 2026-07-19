@@ -28,11 +28,8 @@ class LiabilityDetailPage extends ConsumerWidget {
       title: summaryAsync.value?.liability.name ?? l10n.liabilitiesAppBarTitle,
       actions: [
         if (summaryAsync.value case final summary?)
-          FHeaderAction(
-            icon: FTooltip(
-              tipBuilder: (_, _) => Text(l10n.liabilityEditAction),
-              child: const Icon(FLucideIcons.pencil),
-            ),
+          AppHeaderAction(
+            icon: const Icon(FLucideIcons.pencil),
             semanticsLabel: l10n.liabilityEditAction,
             onPress: () => context.push(
               FinanceRoutes.wealthLiabilityEdit(summary.liability.id),
@@ -240,66 +237,147 @@ class _SummaryRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: context.bodyCaptionStyle),
-          Text(value, style: context.theme.typography.body.sm),
-        ],
-      ),
-    );
-  }
-}
-
-class _AmortizationTable extends ConsumerWidget {
-  const _AmortizationTable({required this.liability, required this.schedule});
-
-  final Liability liability;
-  final List<AmortizationEntry> schedule;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final formatters = context.formatters(ref);
-    return SoftCard.raised(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header row
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: _AmortizationHeaderRow(l10n: l10n),
+          Expanded(
+            flex: 2,
+            child: Text(label, style: context.bodyCaptionStyle),
           ),
-          const FDivider(),
-          // Lazy body — only visible rows are built.
+          const SizedBox(width: AppSpacing.s12),
           Flexible(
-            child: ListView.builder(
-              itemExtent: 44,
-              itemCount: schedule.length,
-              itemBuilder: (context, i) {
-                final row = schedule[i];
-                return _AmortizationDataRow(
-                  row: row,
-                  currency: liability.currency,
-                  formatters: formatters,
-                  l10n: l10n,
-                  onMarkPaid: () =>
-                      _confirmMarkPaid(context, ref, row, liability),
-                );
-              },
+            flex: 3,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(value, style: context.theme.typography.body.sm),
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Future<void> _confirmMarkPaid(
-    BuildContext context,
-    WidgetRef ref,
-    AmortizationEntry row,
-    Liability liability,
-  ) async {
+class _AmortizationTable extends ConsumerStatefulWidget {
+  const _AmortizationTable({required this.liability, required this.schedule});
+
+  final Liability liability;
+  final List<AmortizationEntry> schedule;
+
+  @override
+  ConsumerState<_AmortizationTable> createState() => _AmortizationTableState();
+}
+
+class _AmortizationTableState extends ConsumerState<_AmortizationTable> {
+  static const _compactPreviewCount = 6;
+
+  bool _showAll = false;
+  int? _pendingPeriod;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) =>
+          Breakpoints.isMobile(constraints.maxWidth)
+          ? _buildCompact(context)
+          : _buildTable(context, constraints.maxWidth),
+    );
+  }
+
+  Widget _buildCompact(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final formatters = context.formatters(ref);
+    final visibleSchedule = _showAll
+        ? widget.schedule
+        : widget.schedule.take(_compactPreviewCount).toList(growable: false);
+    final hiddenCount = widget.schedule.length - visibleSchedule.length;
+    return Column(
+      children: [
+        SoftCard.raised(
+          key: const Key('liability-schedule-compact'),
+          child: Column(
+            children: [
+              for (var i = 0; i < visibleSchedule.length; i++) ...[
+                _CompactAmortizationRow(
+                  row: visibleSchedule[i],
+                  currency: widget.liability.currency,
+                  formatters: formatters,
+                  l10n: l10n,
+                  busy: _pendingPeriod == visibleSchedule[i].periodIndex,
+                  onMarkPaid: _pendingPeriod == null
+                      ? () => _confirmMarkPaid(visibleSchedule[i])
+                      : null,
+                ),
+                if (i != visibleSchedule.length - 1)
+                  const AppGroupedDivider(
+                    indent: AppSpacing.s12,
+                    endIndent: AppSpacing.s12,
+                  ),
+              ],
+            ],
+          ),
+        ),
+        if (widget.schedule.length > _compactPreviewCount) ...[
+          const SizedBox(height: AppSpacing.s8),
+          AppRevealControl(
+            expanded: _showAll,
+            collapsedLabel: l10n.commonRevealMore(hiddenCount),
+            expandedLabel: l10n.commonRevealLess,
+            onToggle: () => setState(() => _showAll = !_showAll),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildTable(BuildContext context, double availableWidth) {
+    final l10n = AppLocalizations.of(context);
+    final formatters = context.formatters(ref);
+    final tableWidth = availableWidth < 720 ? 720.0 : availableWidth;
+    final tableHeight = (widget.schedule.length * 44 + 49)
+        .clamp(137, 489)
+        .toDouble();
+    return SoftCard.raised(
+      key: const Key('liability-schedule-table'),
+      child: SizedBox(
+        height: tableHeight,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            width: tableWidth,
+            child: Column(
+              children: [
+                _AmortizationHeaderRow(l10n: l10n),
+                const FDivider(),
+                Expanded(
+                  child: ListView.builder(
+                    itemExtent: 44,
+                    itemCount: widget.schedule.length,
+                    itemBuilder: (context, i) {
+                      final row = widget.schedule[i];
+                      return _AmortizationDataRow(
+                        row: row,
+                        currency: widget.liability.currency,
+                        formatters: formatters,
+                        l10n: l10n,
+                        busy: _pendingPeriod == row.periodIndex,
+                        onMarkPaid: _pendingPeriod == null
+                            ? () => _confirmMarkPaid(row)
+                            : null,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmMarkPaid(AmortizationEntry row) async {
+    final l10n = AppLocalizations.of(context);
+    final liability = widget.liability;
     if (liability.accountId == null) {
       AppMessenger.show(
         context,
@@ -321,10 +399,127 @@ class _AmortizationTable extends ConsumerWidget {
       confirmLabel: l10n.commonConfirm,
     );
     if (confirmed != true || !context.mounted) return;
-    final repo = await ref.read(liabilityRepositoryProvider.future);
-    await repo.registerPayment(
-      liabilityId: liability.id,
-      periodIndex: row.periodIndex,
+    setState(() => _pendingPeriod = row.periodIndex);
+    try {
+      final repo = await ref.read(liabilityRepositoryProvider.future);
+      await repo.registerPayment(
+        liabilityId: liability.id,
+        periodIndex: row.periodIndex,
+      );
+      if (!mounted) return;
+      AppMessenger.show(context, ToastKind.success, l10n.commonSaved);
+    } catch (error, stackTrace) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        userSafeErrorMessage(context, error, stackTrace: stackTrace),
+      );
+    } finally {
+      if (mounted) setState(() => _pendingPeriod = null);
+    }
+  }
+}
+
+class _CompactAmortizationRow extends StatelessWidget {
+  const _CompactAmortizationRow({
+    required this.row,
+    required this.currency,
+    required this.formatters,
+    required this.l10n,
+    required this.busy,
+    required this.onMarkPaid,
+  });
+
+  final AmortizationEntry row;
+  final String currency;
+  final AppFormatters formatters;
+  final AppLocalizations l10n;
+  final bool busy;
+  final VoidCallback? onMarkPaid;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '#${row.periodIndex} · ${formatters.date(row.dueDate)}',
+                  style: context.theme.typography.body.sm,
+                ),
+              ),
+              if (row.paidAt != null)
+                FBadge(child: Text(l10n.liabilityScheduleStatusPaid)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s10),
+          Row(
+            children: [
+              Expanded(
+                child: _CompactScheduleMetric(
+                  label: l10n.liabilityScheduleColPrincipal,
+                  value: formatters.currency(
+                    row.principalPayment,
+                    code: currency,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: _CompactScheduleMetric(
+                  label: l10n.liabilityScheduleColInterest,
+                  value: formatters.currency(
+                    row.interestPayment,
+                    code: currency,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          _SummaryRow(
+            label: l10n.liabilityScheduleColRemaining,
+            value: formatters.currency(row.remainingBalance, code: currency),
+          ),
+          if (row.paidAt == null) ...[
+            const SizedBox(height: AppSpacing.s8),
+            AppQuietButton(
+              label: l10n.liabilityScheduleMarkPaid,
+              busy: busy,
+              expanded: true,
+              onPress: onMarkPaid,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactScheduleMetric extends StatelessWidget {
+  const _CompactScheduleMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: context.bodyCaptionStyle),
+        const SizedBox(height: AppSpacing.s2),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(value, style: context.theme.typography.body.sm),
+        ),
+      ],
     );
   }
 }
@@ -389,6 +584,7 @@ class _AmortizationDataRow extends StatelessWidget {
     required this.currency,
     required this.formatters,
     required this.l10n,
+    required this.busy,
     required this.onMarkPaid,
   });
 
@@ -396,7 +592,8 @@ class _AmortizationDataRow extends StatelessWidget {
   final String currency;
   final AppFormatters formatters;
   final AppLocalizations l10n;
-  final VoidCallback onMarkPaid;
+  final bool busy;
+  final VoidCallback? onMarkPaid;
 
   @override
   Widget build(BuildContext context) {
@@ -445,10 +642,11 @@ class _AmortizationDataRow extends StatelessWidget {
             width: actionColumnWidth,
             child: row.paidAt != null
                 ? FBadge(child: Text(l10n.liabilityScheduleStatusPaid))
-                : FButton(
+                : AppBusyButton(
+                    label: l10n.liabilityScheduleMarkPaid,
+                    busy: busy,
                     variant: FButtonVariant.ghost,
                     onPress: onMarkPaid,
-                    child: Text(l10n.liabilityScheduleMarkPaid),
                   ),
           ),
         ],
