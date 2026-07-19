@@ -10182,6 +10182,12 @@ abstract class AppLocalizations {
   /// **'Transfer'**
   String get accountDetailTransferAction;
 
+  /// Action shown on a cash account detail reached from a cash asset
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust balance'**
+  String get accountDetailAdjustBalanceAction;
+
   /// No description provided for @accountDetailRecentActivityTitle.
   ///
   /// In en, this message translates to:

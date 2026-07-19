@@ -20,9 +20,18 @@ import 'account_labels.dart';
 /// Read-first account surface. Mutating account metadata is deliberately a
 /// secondary action so tapping a row never drops the user into a form.
 class AccountDetailPage extends ConsumerWidget {
-  const AccountDetailPage({super.key, required this.accountId});
+  const AccountDetailPage({
+    super.key,
+    required this.accountId,
+    this.cashAssetId,
+  });
 
   final String accountId;
+
+  /// When this account page is reached through a cash asset, expose the
+  /// balance editor alongside transfer. Account metadata editing remains a
+  /// separate header action.
+  final String? cashAssetId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -64,6 +73,7 @@ class AccountDetailPage extends ConsumerWidget {
           return _AccountDetailBody(
             account: account,
             accounts: accounts,
+            cashAssetId: cashAssetId,
             balances:
                 balancesAsync.value?[account.id] ??
                 AccountBalances.empty(account.id),
@@ -79,12 +89,14 @@ class _AccountDetailBody extends ConsumerWidget {
   const _AccountDetailBody({
     required this.account,
     required this.accounts,
+    required this.cashAssetId,
     required this.balances,
     required this.activity,
   });
 
   final Account account;
   final List<Account> accounts;
+  final String? cashAssetId;
   final AccountBalances balances;
   final List<JournalEntryWithPostings> activity;
 
@@ -108,7 +120,11 @@ class _AccountDetailBody extends ConsumerWidget {
         AppSpacing.s32 + MediaQuery.paddingOf(context).bottom,
       ),
       children: [
-        _BalanceCard(account: account, balances: balances),
+        _BalanceCard(
+          account: account,
+          balances: balances,
+          cashAssetId: cashAssetId,
+        ),
         const SizedBox(height: AppSpacing.s12),
         _FactsCard(account: account),
         const SizedBox(height: AppSpacing.s20),
@@ -162,15 +178,33 @@ class _AccountDetailBody extends ConsumerWidget {
 }
 
 class _BalanceCard extends ConsumerWidget {
-  const _BalanceCard({required this.account, required this.balances});
+  const _BalanceCard({
+    required this.account,
+    required this.balances,
+    required this.cashAssetId,
+  });
 
   final Account account;
   final AccountBalances balances;
+  final String? cashAssetId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
+    Widget adjustBalanceButton() => FButton(
+      key: const Key('account-adjust-cash-balance'),
+      variant: FButtonVariant.secondary,
+      onPress: () => context.push(FinanceRoutes.wealthAssetEdit(cashAssetId!)),
+      prefix: const Icon(FLucideIcons.pencil, size: AppIconSizes.sm),
+      child: Text(l10n.accountDetailAdjustBalanceAction),
+    );
+    Widget transferButton() => FButton(
+      variant: FButtonVariant.primary,
+      onPress: () => context.push(FinanceRoutes.transfer),
+      prefix: const Icon(FLucideIcons.arrowLeftRight, size: AppIconSizes.sm),
+      child: Text(l10n.accountDetailTransferAction),
+    );
     return SoftCard.raised(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s20),
@@ -201,17 +235,32 @@ class _BalanceCard extends ConsumerWidget {
                   ),
                 ),
             const SizedBox(height: AppSpacing.s16),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: FButton(
-                variant: FButtonVariant.primary,
-                onPress: () => context.push(FinanceRoutes.transfer),
-                prefix: const Icon(
-                  FLucideIcons.arrowLeftRight,
-                  size: AppIconSizes.sm,
-                ),
-                child: Text(l10n.accountDetailTransferAction),
-              ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                if (cashAssetId == null) {
+                  return Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: transferButton(),
+                  );
+                }
+                if (constraints.maxWidth < 520) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      adjustBalanceButton(),
+                      const SizedBox(height: AppSpacing.s8),
+                      transferButton(),
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: adjustBalanceButton()),
+                    const SizedBox(width: AppSpacing.s10),
+                    Expanded(child: transferButton()),
+                  ],
+                );
+              },
             ),
           ],
         ),

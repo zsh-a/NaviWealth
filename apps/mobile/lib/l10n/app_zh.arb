@@ -1785,6 +1785,7 @@
   "accountDetailNotFound": "未找到账户",
   "accountDetailBalanceTitle": "可用余额",
   "accountDetailTransferAction": "转账",
+  "accountDetailAdjustBalanceAction": "调整余额",
   "accountDetailRecentActivityTitle": "最近活动",
   "accountDetailNoActivity": "该账户暂无活动记录。",
   "accountDetailTypeLabel": "账户类型",

@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -15,7 +16,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../../accounts/ui/account_detail_page.dart';
 import 'asset_type_labels.dart';
 
-class ManualAssetDetailPage extends ConsumerWidget {
+class ManualAssetDetailPage extends ConsumerStatefulWidget {
   const ManualAssetDetailPage({
     super.key,
     required this.asset,
@@ -26,10 +27,41 @@ class ManualAssetDetailPage extends ConsumerWidget {
   final ManualAssetRepository repository;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ManualAssetDetailPage> createState() =>
+      _ManualAssetDetailPageState();
+}
+
+class _ManualAssetDetailPageState extends ConsumerState<ManualAssetDetailPage> {
+  late Future<Decimal?> _valuationFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _reloadValuation();
+  }
+
+  @override
+  void didUpdateWidget(covariant ManualAssetDetailPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.asset.id != widget.asset.id ||
+        oldWidget.repository != widget.repository) {
+      _reloadValuation();
+    }
+  }
+
+  void _reloadValuation() {
+    _valuationFuture = widget.repository.latestValuation(widget.asset.id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final asset = widget.asset;
     final metadata = ManualAssetMetadata.decode(asset.metadataJson);
     if (metadata is CashMetadata) {
-      return AccountDetailPage(accountId: metadata.accountId);
+      return AccountDetailPage(
+        accountId: metadata.accountId,
+        cashAssetId: asset.id,
+      );
     }
 
     final l10n = AppLocalizations.of(context);
@@ -52,10 +84,22 @@ class ManualAssetDetailPage extends ConsumerWidget {
       ],
       childPad: false,
       child: FutureBuilder(
-        future: repository.latestValuation(asset.id),
+        future: _valuationFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const AssetDetailSkeleton();
+          }
+          if (snapshot.hasError) {
+            return AppEmptyState.error(
+              title: l10n.commonLoadFailed,
+              message: userSafeErrorMessage(
+                context,
+                snapshot.error!,
+                stackTrace: snapshot.stackTrace,
+              ),
+              retryLabel: l10n.commonRetry,
+              onRetry: () => setState(_reloadValuation),
+            );
           }
           return ListView(
             padding: const EdgeInsets.all(AppSpacing.s16),
@@ -87,6 +131,19 @@ class ManualAssetDetailPage extends ConsumerWidget {
                       Text(
                         manualAssetTypeLabel(l10n, asset.type),
                         style: context.bodyCaptionStyle,
+                      ),
+                      const SizedBox(height: AppSpacing.s16),
+                      FButton(
+                        key: const Key('manual-asset-edit-primary'),
+                        variant: FButtonVariant.primary,
+                        onPress: () => context.push(
+                          FinanceRoutes.wealthAssetEdit(asset.id),
+                        ),
+                        prefix: const Icon(
+                          FLucideIcons.pencil,
+                          size: AppIconSizes.sm,
+                        ),
+                        child: Text(l10n.manualAssetDetailEditAction),
                       ),
                     ],
                   ),
