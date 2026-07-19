@@ -29,11 +29,13 @@ import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
 import '../../../core/format/formatters.dart';
 import '../../../core/shell/shell_chrome.dart';
+import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as health_agent_providers;
 import '../agents/recovery_alert_agent.dart' show kRecoveryAlertAgentId;
 import '../agents/weekly_summary_agent.dart' show kWeeklySummaryAgentId;
+import '../composition/health_route_paths.dart';
 import '../data/health_metric_source.dart';
 import '../data/health_sync_service.dart';
 import '../data/providers.dart' as health_data;
@@ -85,35 +87,40 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
           },
         ),
       ],
-      child: BriefScaffold(
-        padding: shellTabContentPadding(context),
-        onRefresh: () async {
-          ref.invalidate(healthTodaySnapshotProvider);
-          ref.invalidate(health_agent_providers.latestMorningBriefingProvider);
-          ref.invalidate(
-            health_agent_providers.latestMorningBriefingArtifactProvider,
-          );
-          ref.invalidate(
-            health_agent_providers.latestRecoveryAlertArtifactProvider,
-          );
-          ref.invalidate(health_agent_providers.latestRecoveryAlertRunProvider);
-          ref.invalidate(
-            health_agent_providers.latestHealthReviewAgentResultsProvider,
-          );
-          await ref.read(healthTodaySnapshotProvider.future);
-        },
-        greeting: const SizedBox.shrink(),
-        // Hero = recovery verdict + same-day actions (ex-Plan).
-        stage: const FadeSlideIn(child: _RecoveryHero()),
-        stickyBuilder: (context, progress) =>
-            _HealthRecoveryStickyBar(progress: progress),
-        modules: const [
-          // Signal first: alerts only when real; briefing promoted.
-          _RecoveryAlertPanel(),
-          _BriefingPanel(),
-          _MetricGrid(),
-        ],
-        secondary: const [_SourcesSection(), _WeeklySummaryPanel()],
+      child: ShellTabPause(
+        routePath: HealthRoutes.today,
+        child: BriefScaffold(
+          padding: shellTabContentPadding(context),
+          onRefresh: () async {
+            ref.invalidate(healthTodaySnapshotProvider);
+            ref.invalidate(health_agent_providers.latestMorningBriefingProvider);
+            ref.invalidate(
+              health_agent_providers.latestMorningBriefingArtifactProvider,
+            );
+            ref.invalidate(
+              health_agent_providers.latestRecoveryAlertArtifactProvider,
+            );
+            ref.invalidate(
+              health_agent_providers.latestRecoveryAlertRunProvider,
+            );
+            ref.invalidate(
+              health_agent_providers.latestHealthReviewAgentResultsProvider,
+            );
+            await ref.read(healthTodaySnapshotProvider.future);
+          },
+          greeting: const SizedBox.shrink(),
+          // Hero = recovery verdict + same-day actions (ex-Plan).
+          stage: const FadeSlideIn(child: _RecoveryHero()),
+          stickyBuilder: (context, progress) =>
+              _HealthRecoveryStickyBar(progress: progress),
+          modules: const [
+            // Signal first: alerts only when real; briefing promoted.
+            _RecoveryAlertPanel(),
+            _BriefingPanel(),
+            _MetricGrid(),
+          ],
+          secondary: const [_SourcesSection(), _WeeklySummaryPanel()],
+        ),
       ),
     );
   }

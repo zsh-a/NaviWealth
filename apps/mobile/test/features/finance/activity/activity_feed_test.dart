@@ -9,6 +9,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_feed_provider.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_feed_query.dart';
 import 'package:naviwealth/features/finance/activity/ui/activity_feed.dart';
+import 'package:naviwealth/features/finance/activity/ui/activity_feed_row.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
@@ -186,7 +187,9 @@ void main() {
     // Subtitle prefers payee · category/account.
     expect(find.textContaining('Blue Bottle'), findsOneWidget);
     expect(find.text('-¥32'), findsOneWidget);
-    expect(find.byType(AppGroupedSurface), findsOneWidget);
+    // Day rows are virtualized with DecoratedBox chrome (not one
+    // AppGroupedSurface wrapping the whole day).
+    expect(find.byType(ActivityFeedEntryRow), findsOneWidget);
   });
 
   testWidgets('trade row shows a currency-rounded cash headline', (

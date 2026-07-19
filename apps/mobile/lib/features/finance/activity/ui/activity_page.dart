@@ -6,6 +6,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
+import 'package:naviwealth/core/shell/shell_visibility.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
@@ -90,15 +91,19 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
           order: 50,
         ),
       ],
-      child: const AdaptiveContentFrame(
-        maxWidth: AdaptiveMaxWidth.dashboard,
-        expandSinglePrimary: true,
-        padding: EdgeInsets.zero,
-        primary: Column(
-          children: [
-            _ActivityFilterBar(),
-            Expanded(child: ActivityFeed()),
-          ],
+      child: const ShellTabPause(
+        routePath: FinanceRoutes.activity,
+        placeholder: ActivityFeedSkeleton(),
+        child: AdaptiveContentFrame(
+          maxWidth: AdaptiveMaxWidth.dashboard,
+          expandSinglePrimary: true,
+          padding: EdgeInsets.zero,
+          primary: Column(
+            children: [
+              _ActivityFilterBar(),
+              Expanded(child: ActivityFeed()),
+            ],
+          ),
         ),
       ),
     );

@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/shell/shell_chrome.dart';
+import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/execution_route_paths.dart';
@@ -49,18 +50,21 @@ class ExecutionCommitmentsPage extends ConsumerWidget {
           order: 20,
         ),
       ],
-      child: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(executionProjectsProvider);
-          ref.invalidate(executionClosedProjectsProvider);
-          ref.invalidate(executionOpenActionsProvider);
-          ref.invalidate(executionCommitmentsProvider);
-          ref.invalidate(executionClosedCommitmentsProvider);
-          ref.invalidate(executionRecentProgressProvider);
-          ref.invalidate(executionActionRelationsProvider);
-          await ref.read(executionOpenActionsProvider.future);
-        },
-        child: _CommitmentsBody(),
+      child: ShellTabPause(
+        routePath: ExecutionRoutes.commitments,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(executionProjectsProvider);
+            ref.invalidate(executionClosedProjectsProvider);
+            ref.invalidate(executionOpenActionsProvider);
+            ref.invalidate(executionCommitmentsProvider);
+            ref.invalidate(executionClosedCommitmentsProvider);
+            ref.invalidate(executionRecentProgressProvider);
+            ref.invalidate(executionActionRelationsProvider);
+            await ref.read(executionOpenActionsProvider.future);
+          },
+          child: _CommitmentsBody(),
+        ),
       ),
     );
   }

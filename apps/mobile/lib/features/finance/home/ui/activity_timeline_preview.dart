@@ -21,13 +21,13 @@ class ActivityTimelinePreview extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final formatter = context.formatters(ref);
-    final feedAsync = ref.watch(activityFeedProvider);
+    final feedAsync = ref.watch(activityFeedPreviewProvider);
     return feedAsync.when(
       loading: () =>
           const _ActivityPreviewSection(child: _ActivityPreviewSkeleton()),
       error: (e, _) => _ActivityPreviewSection(
         child: _ActivityPreviewError(
-          onRetry: () => ref.invalidate(activityFeedProvider),
+          onRetry: () => ref.invalidate(activityFeedPreviewProvider),
         ),
       ),
       data: (page) {

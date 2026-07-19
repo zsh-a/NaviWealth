@@ -8,6 +8,7 @@ import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_projection.dart';
 
 import '../../../core/shell/shell_chrome.dart';
+import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/finance_route_paths.dart';
@@ -25,28 +26,33 @@ class PlanHubPage extends ConsumerWidget {
     return ShellTabScaffold(
       title: l10n.planHubTitle,
       childPad: false,
-      child: AdaptiveContentFrame(
-        maxWidth: AdaptiveMaxWidth.dashboard,
-        expandSinglePrimary: true,
-        primary: RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(fireDashboardViewProvider);
-          },
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.s16,
-              AppSpacing.s8,
-              AppSpacing.s16,
-              kTabBarOffset + MediaQuery.paddingOf(context).bottom,
+      child: ShellTabPause(
+        routePath: FinanceRoutes.plan,
+        placeholder: const SizedBox.expand(),
+        child: AdaptiveContentFrame(
+          maxWidth: AdaptiveMaxWidth.dashboard,
+          expandSinglePrimary: true,
+          // ListView owns content + shell bottom inset; avoid double padding
+          // from AdaptiveContentFrame's default MediaQuery bottom pad.
+          padding: EdgeInsets.zero,
+          primary: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(fireDashboardViewProvider);
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: shellTabContentPadding(
+                context,
+                top: AppSpacing.s8,
+              ),
+              children: const [
+                _FireSummaryCard(),
+                SizedBox(height: AppSpacing.s20),
+                _PlanNextSteps(),
+                SizedBox(height: AppSpacing.s16),
+                _PlanMoreTools(),
+              ],
             ),
-            children: const [
-              _FireSummaryCard(),
-              SizedBox(height: AppSpacing.s20),
-              _PlanNextSteps(),
-              SizedBox(height: AppSpacing.s16),
-              _PlanMoreTools(),
-            ],
           ),
         ),
       ),

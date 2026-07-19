@@ -87,49 +87,70 @@ class _DashboardBodyContent extends ConsumerWidget {
                         0,
                       ),
                       stickyBuilder: stickyNetWorth,
-                      body: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: EdgeInsets.zero,
-                        children: [
-                          AdaptiveContentFrame(
+                      // Dual-column: primary and secondary scroll independently
+                      // so the right rail stays usable on tall dashboards.
+                      body: Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
                             maxWidth: AdaptiveMaxWidth.dashboard,
-                            layout: AdaptiveFrameLayout.cockpit,
-                            padding: padding.copyWith(top: 0),
-                            header: Column(
+                          ),
+                          child: Padding(
+                            padding: padding.copyWith(top: AppSpacing.s0),
+                            child: Row(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                const HomeGreetingHeader(),
-                                _NetWorthHeader(snapshot: snapshot),
-                                const SizedBox(height: AppPageRhythm.module),
-                                HomeQuickActions(
-                                  mode: snapshot.isEmpty
-                                      ? HomeQuickActionMode.onboarding
-                                      : HomeQuickActionMode.active,
+                                Expanded(
+                                  child: ListView(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
+                                    padding: EdgeInsets.zero,
+                                    children: [
+                                      const HomeGreetingHeader(),
+                                      _NetWorthHeader(snapshot: snapshot),
+                                      const SizedBox(
+                                        height: AppPageRhythm.module,
+                                      ),
+                                      HomeQuickActions(
+                                        mode: snapshot.isEmpty
+                                            ? HomeQuickActionMode.onboarding
+                                            : HomeQuickActionMode.active,
+                                      ),
+                                      const SizedBox(
+                                        height: AppPageRhythm.section,
+                                      ),
+                                      const FinancialInboxCard(),
+                                      const SizedBox(
+                                        height: AppPageRhythm.section,
+                                      ),
+                                      const FinanceAgentResultsPanel(
+                                        showPlaceholderStates: false,
+                                      ),
+                                      const SizedBox(
+                                        height: AppPageRhythm.section,
+                                      ),
+                                      const ActivityTimelinePreview(),
+                                    ],
+                                  ),
                                 ),
-                              ],
-                            ),
-                            primary: const Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                FinancialInboxCard(),
-                                SizedBox(height: AppPageRhythm.section),
-                                FinanceAgentResultsPanel(
-                                  showPlaceholderStates: false,
+                                const SizedBox(width: AppSpacing.s24),
+                                SizedBox(
+                                  width: kAdaptiveRightRailWidth,
+                                  child: ListView(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
+                                    padding: EdgeInsets.zero,
+                                    children: const [
+                                      MoneyRunwayCard(),
+                                      SizedBox(height: AppPageRhythm.section),
+                                      CashflowCalendarCard(),
+                                    ],
+                                  ),
                                 ),
-                                SizedBox(height: AppPageRhythm.section),
-                                ActivityTimelinePreview(),
-                              ],
-                            ),
-                            secondary: const Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                MoneyRunwayCard(),
-                                SizedBox(height: AppPageRhythm.section),
-                                CashflowCalendarCard(),
                               ],
                             ),
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),

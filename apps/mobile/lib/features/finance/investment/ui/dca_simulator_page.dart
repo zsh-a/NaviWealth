@@ -62,15 +62,15 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
       ],
       childPad: false,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(
-          Breakpoints.isMobile(MediaQuery.sizeOf(context).width)
+        padding: shellTabContentPadding(
+          context,
+          left: Breakpoints.isMobile(MediaQuery.sizeOf(context).width)
               ? AppSpacing.s16
               : AppSpacing.s24,
-          AppSpacing.s8,
-          Breakpoints.isMobile(MediaQuery.sizeOf(context).width)
+          top: AppSpacing.s8,
+          right: Breakpoints.isMobile(MediaQuery.sizeOf(context).width)
               ? AppSpacing.s16
               : AppSpacing.s24,
-          kTabBarOffset + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
           _DcaControls(

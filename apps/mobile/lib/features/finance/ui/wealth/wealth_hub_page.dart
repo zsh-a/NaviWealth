@@ -7,6 +7,7 @@ import 'package:naviwealth/features/finance/application/read_models/dashboard_pr
 
 import '../../../../core/format/providers.dart';
 import '../../../../core/shell/shell_chrome.dart';
+import '../../../../core/shell/shell_visibility.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../composition/finance_route_paths.dart';
@@ -26,7 +27,6 @@ class WealthHubPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final snapshotAsync = ref.watch(dashboardSnapshotProvider);
 
     return ShellTabScaffold(
       title: l10n.wealthHubTitle,
@@ -38,28 +38,43 @@ class WealthHubPage extends ConsumerWidget {
           onPress: () => showWealthActionPanel(context),
         ),
       ],
-      child: snapshotAsync.when(
-        loading: () => const PageSkeletonShell<Object>(
-          isLoading: true,
-          skeleton: WealthHubSkeleton(),
-          child: SizedBox.shrink(),
+      child: const ShellTabPause(
+        routePath: FinanceRoutes.wealth,
+        placeholder: WealthHubSkeleton(),
+        child: _WealthLiveBody(),
+      ),
+    );
+  }
+}
+
+class _WealthLiveBody extends ConsumerWidget {
+  const _WealthLiveBody();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final snapshotAsync = ref.watch(dashboardSnapshotProvider);
+    return snapshotAsync.when(
+      loading: () => const PageSkeletonShell<Object>(
+        isLoading: true,
+        skeleton: WealthHubSkeleton(),
+        child: SizedBox.shrink(),
+      ),
+      error: (_, _) => Center(
+        child: AppEmptyState.error(
+          title: l10n.commonLoadFailed,
+          retryLabel: l10n.commonRetry,
+          onRetry: () => ref.invalidate(dashboardSnapshotProvider),
         ),
-        error: (_, _) => Center(
-          child: AppEmptyState.error(
-            title: l10n.commonLoadFailed,
-            retryLabel: l10n.commonRetry,
-            onRetry: () => ref.invalidate(dashboardSnapshotProvider),
-          ),
-        ),
-        data: (snapshot) => PageSkeletonShell<Object>(
-          isLoading: false,
-          skeleton: const WealthHubSkeleton(),
-          child: _WealthHubBody(
-            baseCurrency: snapshot.baseCurrency,
-            netWorth: snapshot.netWorth.amount,
-            totalAssets: snapshot.totalAssets.amount,
-            totalLiabilities: snapshot.totalLiabilities.amount,
-          ),
+      ),
+      data: (snapshot) => PageSkeletonShell<Object>(
+        isLoading: false,
+        skeleton: const WealthHubSkeleton(),
+        child: _WealthHubBody(
+          baseCurrency: snapshot.baseCurrency,
+          netWorth: snapshot.netWorth.amount,
+          totalAssets: snapshot.totalAssets.amount,
+          totalLiabilities: snapshot.totalLiabilities.amount,
         ),
       ),
     );
@@ -125,11 +140,11 @@ class _WealthHubBody extends ConsumerWidget {
           ),
           body: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(
-              hPad,
-              AppSpacing.s8,
-              hPad,
-              kTabBarOffset + MediaQuery.paddingOf(context).bottom,
+            padding: shellTabContentPadding(
+              context,
+              left: hPad,
+              top: AppSpacing.s8,
+              right: hPad,
             ),
             children: [
               AppCollapsingStage(

@@ -1,11 +1,150 @@
 part of 'portfolio_hub_page.dart';
 
-final portfolioHubProvider =
-    AsyncNotifierProvider<PortfolioHubNotifier, PortfolioHubState>(
-      PortfolioHubNotifier.new,
+/// Positions / allocation / summary — the always-visible hub surface.
+final portfolioHubCoreProvider =
+    AsyncNotifierProvider<PortfolioHubCoreNotifier, PortfolioHubState>(
+      PortfolioHubCoreNotifier.new,
     );
 
-class PortfolioHubNotifier
+/// Realized PnL / dividends / corporate actions — only watched on Insights.
+final portfolioHubInsightsProvider =
+    AsyncNotifierProvider<
+      PortfolioHubInsightsNotifier,
+      PortfolioHubInsightsState
+    >(PortfolioHubInsightsNotifier.new);
+
+/// Page-level alias so existing tests and call sites keep a single entrypoint.
+final portfolioHubProvider = portfolioHubCoreProvider;
+
+/// Test/legacy alias for the core notifier type.
+typedef PortfolioHubNotifier = PortfolioHubCoreNotifier;
+
+/// Summary strip only — [select] so holdings-list churn does not rebuild
+/// the hero metrics when the numeric totals are unchanged.
+final portfolioHubSummarySliceProvider =
+    Provider<AsyncValue<PortfolioHubSummarySlice>>((ref) {
+      return ref.watch(
+        portfolioHubCoreProvider.select((async) {
+          return async.whenData(PortfolioHubSummarySlice.fromState);
+        }),
+      );
+    });
+
+/// Holdings + lots slice for positions / allocation.
+final portfolioHubHoldingsSliceProvider =
+    Provider<AsyncValue<PortfolioHubHoldingsSlice>>((ref) {
+      return ref.watch(
+        portfolioHubCoreProvider.select((async) {
+          return async.whenData(PortfolioHubHoldingsSlice.fromState);
+        }),
+      );
+    });
+
+/// Numeric hero metrics for the portfolio summary card.
+class PortfolioHubSummarySlice {
+  const PortfolioHubSummarySlice({
+    required this.baseCurrency,
+    required this.marketValueInBase,
+    required this.costBasisInBase,
+    required this.unrealizedPnlInBase,
+    required this.xirrRatio,
+  });
+
+  factory PortfolioHubSummarySlice.fromState(PortfolioHubState state) {
+    return PortfolioHubSummarySlice(
+      baseCurrency: state.baseCurrency,
+      marketValueInBase: state.marketValueInBase,
+      costBasisInBase: state.costBasisInBase,
+      unrealizedPnlInBase: state.unrealizedPnlInBase,
+      xirrRatio: state.xirrRatio,
+    );
+  }
+
+  final String baseCurrency;
+  final Decimal marketValueInBase;
+  final Decimal costBasisInBase;
+  final Decimal unrealizedPnlInBase;
+  final double? xirrRatio;
+
+  @override
+  bool operator ==(Object other) =>
+      other is PortfolioHubSummarySlice &&
+      other.baseCurrency == baseCurrency &&
+      other.marketValueInBase == marketValueInBase &&
+      other.costBasisInBase == costBasisInBase &&
+      other.unrealizedPnlInBase == unrealizedPnlInBase &&
+      other.xirrRatio == xirrRatio;
+
+  @override
+  int get hashCode => Object.hash(
+    baseCurrency,
+    marketValueInBase,
+    costBasisInBase,
+    unrealizedPnlInBase,
+    xirrRatio,
+  );
+}
+
+/// Positions / allocation inputs without summary-only noise.
+class PortfolioHubHoldingsSlice {
+  const PortfolioHubHoldingsSlice({
+    required this.holdings,
+    required this.lots,
+    required this.accountById,
+    required this.baseCurrency,
+    required this.marketValueInBase,
+  });
+
+  factory PortfolioHubHoldingsSlice.fromState(PortfolioHubState state) {
+    return PortfolioHubHoldingsSlice(
+      holdings: state.holdings,
+      lots: state.lots,
+      accountById: state.accountById,
+      baseCurrency: state.baseCurrency,
+      marketValueInBase: state.marketValueInBase,
+    );
+  }
+
+  final List<PortfolioHoldingRow> holdings;
+  final List<Lot> lots;
+  final Map<String, Account> accountById;
+  final String baseCurrency;
+  final Decimal marketValueInBase;
+
+  /// Reuse grouping logic via a thin adapter state.
+  PortfolioHubState asGroupingState(PortfolioReturnResult ytdReturn) {
+    return PortfolioHubState(
+      holdings: holdings,
+      lots: lots,
+      accountById: accountById,
+      baseCurrency: baseCurrency,
+      marketValueInBase: marketValueInBase,
+      costBasisInBase: Decimal.zero,
+      unrealizedPnlInBase: Decimal.zero,
+      ytdReturn: ytdReturn,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is PortfolioHubHoldingsSlice &&
+      identical(other.holdings, holdings) &&
+      identical(other.lots, lots) &&
+      identical(other.accountById, accountById) &&
+      other.baseCurrency == baseCurrency &&
+      other.marketValueInBase == marketValueInBase;
+
+  @override
+  int get hashCode => Object.hash(
+    identityHashCode(holdings),
+    identityHashCode(lots),
+    identityHashCode(accountById),
+    baseCurrency,
+    marketValueInBase,
+  );
+}
+
+class PortfolioHubCoreNotifier
     extends ConventionalAsyncNotifier<PortfolioHubState> {
   @override
   Future<PortfolioHubState> fetch() async {
@@ -13,13 +152,8 @@ class PortfolioHubNotifier
     final today = DateTime.utc(now.year, now.month, now.day);
     final yearStart = DateTime.utc(today.year, 1, 1);
 
-    // Subscribe to the complete graph before the first async gap. Several of
-    // these auto-disposed providers share upstream Drift streams (holdings,
-    // dividend center, and dividend forecast). Adding the subscriptions one
-    // at a time after each await lets a dependency emission restart this
-    // build while later subscriptions are still missing. Those providers are
-    // then disposed and remounted, whose initial stream values restart the
-    // cycle and make the page alternate between loading and data forever.
+    // Subscribe to the complete holdings graph before the first async gap
+    // so concurrent upstream emissions cannot partially rebuild this tree.
     final holdingsFuture = ref.watch(holdingsSnapshotProvider.future);
     final assetsFuture = ref.watch(allAssetsStreamProvider.future);
     final accountsFuture = ref.watch(accountsStreamProvider.future);
@@ -28,14 +162,6 @@ class PortfolioHubNotifier
     final returnServiceFuture = ref.watch(
       portfolioReturnServiceProvider.future,
     );
-    final realizedFuture = ref.watch(realizedPnlProvider.future);
-    final dividendForecastFuture = ref.watch(
-      dividendForecast12mProvider.future,
-    );
-    final dividendCenterFuture = ref.watch(
-      dividendCenterSnapshotProvider.future,
-    );
-    final corporateActions = ref.watch(dividendForecastDeclaredActionsProvider);
 
     final holdings = await holdingsFuture;
     final assets = await assetsFuture;
@@ -44,9 +170,6 @@ class PortfolioHubNotifier
     final returnService = await returnServiceFuture;
     final lots = await holdingService.lotsAt(now);
     final returns = await returnService.compute(from: yearStart, to: today);
-    final realized = await realizedFuture;
-    final dividendForecast = await dividendForecastFuture;
-    final dividendCenter = await dividendCenterFuture;
 
     final assetById = {for (final asset in assets) asset.id: asset};
     final accountById = {for (final account in accounts) account.id: account};
@@ -70,12 +193,48 @@ class PortfolioHubNotifier
       costBasisInBase: costBasis,
       unrealizedPnlInBase: unrealizedPnl,
       ytdReturn: returns,
+    );
+  }
+}
+
+class PortfolioHubInsightsNotifier
+    extends ConventionalAsyncNotifier<PortfolioHubInsightsState> {
+  @override
+  Future<PortfolioHubInsightsState> fetch() async {
+    // Subscribe before the first await (same partial-rebuild guard as core).
+    final realizedFuture = ref.watch(realizedPnlProvider.future);
+    final dividendForecastFuture = ref.watch(
+      dividendForecast12mProvider.future,
+    );
+    final dividendCenterFuture = ref.watch(
+      dividendCenterSnapshotProvider.future,
+    );
+    final corporateActions = ref.watch(dividendForecastDeclaredActionsProvider);
+
+    final realized = await realizedFuture;
+    final dividendForecast = await dividendForecastFuture;
+    final dividendCenter = await dividendCenterFuture;
+    return PortfolioHubInsightsState(
       realizedPnl: realized,
       dividendForecast: dividendForecast,
       dividendEvents: dividendCenter.events,
       corporateActions: corporateActions,
     );
   }
+}
+
+class PortfolioHubInsightsState {
+  const PortfolioHubInsightsState({
+    required this.realizedPnl,
+    required this.dividendForecast,
+    required this.dividendEvents,
+    required this.corporateActions,
+  });
+
+  final List<RealizedPnL> realizedPnl;
+  final ProjectedDividend dividendForecast;
+  final List<DividendCenterEvent> dividendEvents;
+  final List<CorporateAction> corporateActions;
 }
 
 class PortfolioHubState {
@@ -88,10 +247,6 @@ class PortfolioHubState {
     required this.costBasisInBase,
     required this.unrealizedPnlInBase,
     required this.ytdReturn,
-    required this.realizedPnl,
-    required this.dividendForecast,
-    required this.dividendEvents,
-    required this.corporateActions,
   });
 
   final List<PortfolioHoldingRow> holdings;
@@ -102,10 +257,6 @@ class PortfolioHubState {
   final Decimal costBasisInBase;
   final Decimal unrealizedPnlInBase;
   final PortfolioReturnResult ytdReturn;
-  final List<RealizedPnL> realizedPnl;
-  final ProjectedDividend dividendForecast;
-  final List<DividendCenterEvent> dividendEvents;
-  final List<CorporateAction> corporateActions;
 
   double? get xirrRatio => ytdReturn.displayReturn;
 

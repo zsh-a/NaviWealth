@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/shell/shell_chrome.dart';
+import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/execution_route_paths.dart';
@@ -30,7 +31,10 @@ class ExecutionTodayPage extends ConsumerWidget {
           onPress: () => showExecutionActionSheet(context: context),
         ),
       ],
-      child: _TodayList(),
+      child: ShellTabPause(
+        routePath: ExecutionRoutes.today,
+        child: _TodayList(),
+      ),
     );
   }
 }

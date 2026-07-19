@@ -44,6 +44,8 @@ class AppDockShell extends ConsumerStatefulWidget {
 
 class _AppDockShellState extends ConsumerState<AppDockShell> {
   late final ShareIntentService _shareIntentService;
+  GoRouter? _router;
+  String _location = '';
 
   @override
   void initState() {
@@ -56,9 +58,46 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final router = GoRouter.of(context);
+    if (!identical(router, _router)) {
+      _router?.routerDelegate.removeListener(_onRouteChanged);
+      _router = router;
+      _router!.routerDelegate.addListener(_onRouteChanged);
+      _syncRoute(router);
+    }
+  }
+
+  @override
   void dispose() {
+    _router?.routerDelegate.removeListener(_onRouteChanged);
     _shareIntentService.stop();
     super.dispose();
+  }
+
+  void _onRouteChanged() {
+    final router = _router;
+    if (router == null || !mounted) return;
+    _syncRoute(router);
+  }
+
+  void _syncRoute(GoRouter router) {
+    final location = router.routeInformationProvider.value.uri.path;
+    final nextDomain = domainForRoute(
+      ref.read(domainPackRegistryProvider),
+      location,
+    );
+    final current = ref.read(aiContextProvider);
+    if (current.path != location || current.domain != nextDomain) {
+      ref.read(aiContextProvider.notifier).state = AiContext(
+        path: location,
+        domain: nextDomain,
+      );
+    }
+    if (_location != location) {
+      setState(() => _location = location);
+    }
   }
 
   /// Root back-button strategy. Defers steps 1–3 ("pop a pushed page /
@@ -76,22 +115,9 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
 
   @override
   Widget build(BuildContext context) {
-    final location = GoRouter.of(
-      context,
-    ).routeInformationProvider.value.uri.path;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final current = ref.read(aiContextProvider);
-      final nextDomain = domainForRoute(
-        ref.read(domainPackRegistryProvider),
-        location,
-      );
-      if (current.path != location || current.domain != nextDomain) {
-        ref.read(aiContextProvider.notifier).state = AiContext(
-          path: location,
-          domain: nextDomain,
-        );
-      }
-    });
+    final location = _location.isEmpty
+        ? GoRouter.of(context).routeInformationProvider.value.uri.path
+        : _location;
 
     final showDock = ref.watch(domainDockVisibleProvider);
     final specs = ref.watch(activeDomainShellsProvider);

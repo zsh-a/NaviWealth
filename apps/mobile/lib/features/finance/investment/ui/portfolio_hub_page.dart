@@ -49,7 +49,7 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ref.watch(portfolioHubProvider);
+    final state = ref.watch(portfolioHubCoreProvider);
 
     return AppPageScaffold(
       title: l10n.portfolioHubTitle,
@@ -70,7 +70,10 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
             AppAdaptiveAction(
               icon: FLucideIcons.refreshCw,
               title: l10n.commonRefresh,
-              onPress: () => ref.read(portfolioHubProvider.notifier).refresh(),
+              onPress: () {
+                ref.read(portfolioHubCoreProvider.notifier).refresh();
+                ref.read(portfolioHubInsightsProvider.notifier).refresh();
+              },
             ),
           ],
           triggerBuilder: (context, openMenu, focusNode) => AppHeaderAction(
@@ -93,7 +96,10 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
             operation: 'load portfolio hub',
           ),
           retryLabel: l10n.commonRetry,
-          onRetry: () => ref.read(portfolioHubProvider.notifier).refresh(),
+          onRetry: () {
+            ref.read(portfolioHubCoreProvider.notifier).refresh();
+            ref.read(portfolioHubInsightsProvider.notifier).refresh();
+          },
         ),
         data: (data) => _PortfolioHubBody(
           data: data,
@@ -141,118 +147,162 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
         ? holdings.skip(previewCount).toList(growable: false)
         : const <PortfolioHoldingRow>[];
 
+    final visibleHoldings = _showAllPositions
+        ? holdings
+        : previewHoldings;
+    final showReveal = overflowHoldings.isNotEmpty;
+
     return AdaptiveContentFrame(
       maxWidth: AdaptiveMaxWidth.page,
       expandSinglePrimary: true,
-      primary: ListView(
+      padding: shellTabContentPadding(
+        context,
+        left: AppSpacing.s16,
+        top: AppSpacing.s0,
+        right: AppSpacing.s16,
+        bottom: AppSpacing.s16,
+      ),
+      primary: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.only(bottom: kTabBarOffset),
-        children: [
-          _PortfolioSummary(data: data),
-          const SizedBox(height: AppSpacing.s16),
-          _PortfolioSectionSegment(
-            value: widget.section,
-            onChanged: widget.onSectionChanged,
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          switch (widget.section) {
-            _PortfolioSection.positions => Column(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _PortfolioSectionTitle(title: l10n.portfolioHubPositionsTitle),
-                if (holdings.isEmpty)
-                  _EmptyState(message: l10n.portfolioHubEmpty)
-                else ...[
-                  AppGroupedSurface(
-                    padding: EdgeInsets.zero,
-                    child: Column(
-                      children: [
-                        for (var i = 0; i < previewHoldings.length; i++) ...[
-                          _HoldingRow(holding: previewHoldings[i]),
-                          if (i != previewHoldings.length - 1 ||
-                              (overflowHoldings.isNotEmpty &&
-                                  _showAllPositions))
-                            const AppGroupedDivider(
-                              indent: AppSpacing.s12,
-                              endIndent: AppSpacing.s12,
-                            ),
-                        ],
-                        if (overflowHoldings.isNotEmpty)
-                          AnimatedSizeFade(
-                            visible: _showAllPositions,
-                            alignment: Alignment.topCenter,
-                            child: Column(
-                              children: [
-                                for (
-                                  var i = 0;
-                                  i < overflowHoldings.length;
-                                  i++
-                                ) ...[
-                                  _HoldingRow(holding: overflowHoldings[i]),
-                                  if (i != overflowHoldings.length - 1)
-                                    const AppGroupedDivider(
-                                      indent: AppSpacing.s12,
-                                      endIndent: AppSpacing.s12,
-                                    ),
-                                ],
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  if (overflowHoldings.isNotEmpty) ...[
-                    const SizedBox(height: AppSpacing.s8),
-                    AppRevealControl(
-                      expanded: _showAllPositions,
-                      collapsedLabel: l10n.commonRevealMore(
-                        overflowHoldings.length,
+                _PortfolioSummary(data: data),
+                const SizedBox(height: AppSpacing.s16),
+                _PortfolioSectionSegment(
+                  value: widget.section,
+                  onChanged: widget.onSectionChanged,
+                ),
+                const SizedBox(height: AppSpacing.s16),
+              ],
+            ),
+          ),
+          ...switch (widget.section) {
+            _PortfolioSection.positions => [
+              _positionsSliver(
+                l10n: l10n,
+                holdings: visibleHoldings,
+                empty: holdings.isEmpty,
+                showReveal: showReveal,
+                overflowCount: overflowHoldings.length,
+              ),
+            ],
+            _PortfolioSection.allocation => [
+              _allocationSliver(l10n: l10n, groups: groups),
+            ],
+            _PortfolioSection.insights => [
+              SliverToBoxAdapter(
+                child: _EngineExposureSection(baseCurrency: data.baseCurrency),
+              ),
+            ],
+          },
+        ],
+      ),
+    );
+  }
+
+  Widget _positionsSliver({
+    required AppLocalizations l10n,
+    required List<PortfolioHoldingRow> holdings,
+    required bool empty,
+    required bool showReveal,
+    required int overflowCount,
+  }) {
+    if (empty) {
+      return SliverToBoxAdapter(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _PortfolioSectionTitle(title: l10n.portfolioHubPositionsTitle),
+            _EmptyState(message: l10n.portfolioHubEmpty),
+          ],
+        ),
+      );
+    }
+
+    // Visual chrome matches [AppGroupedSurface] via DecoratedSliver so rows
+    // stay virtualized inside one continuous group surface.
+    final themeColors = context.theme.colors;
+    final surfaceColor = themeColors.brightness == Brightness.dark
+        ? themeColors.card.withValues(alpha: AppOpacity.muted)
+        : ColorPalette.surfaceRaised;
+
+    return SliverMainAxisGroup(
+      slivers: [
+        SliverToBoxAdapter(
+          child: _PortfolioSectionTitle(title: l10n.portfolioHubPositionsTitle),
+        ),
+        DecoratedSliver(
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          sliver: SliverList.separated(
+            itemCount: holdings.length,
+            separatorBuilder: (_, _) => const AppGroupedDivider(
+              indent: AppSpacing.s12,
+              endIndent: AppSpacing.s12,
+            ),
+            itemBuilder: (context, index) =>
+                _HoldingRow(holding: holdings[index]),
+          ),
+        ),
+        if (showReveal)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s8),
+              child: AppRevealControl(
+                expanded: _showAllPositions,
+                collapsedLabel: l10n.commonRevealMore(overflowCount),
+                expandedLabel: l10n.commonRevealLess,
+                onToggle: () =>
+                    setState(() => _showAllPositions = !_showAllPositions),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _allocationSliver({
+    required AppLocalizations l10n,
+    required List<PortfolioGroupRow> groups,
+  }) {
+    return SliverToBoxAdapter(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PortfolioHubViewSegment(
+            value: widget.view,
+            onChanged: widget.onViewChanged,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          if (groups.isEmpty)
+            _EmptyState(message: l10n.portfolioHubEmpty)
+          else
+            AppGroupedSurface(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  for (var i = 0; i < groups.length; i++) ...[
+                    _GroupRow(
+                      group: groups[i],
+                      onPressed: () => _showPortfolioGroupDetail(
+                        context: context,
+                        group: groups[i],
                       ),
-                      expandedLabel: l10n.commonRevealLess,
-                      onToggle: () => setState(
-                        () => _showAllPositions = !_showAllPositions,
-                      ),
                     ),
+                    if (i != groups.length - 1)
+                      const AppGroupedDivider(
+                        indent: AppSpacing.s12,
+                        endIndent: AppSpacing.s12,
+                      ),
                   ],
                 ],
-              ],
+              ),
             ),
-            _PortfolioSection.allocation => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                PortfolioHubViewSegment(
-                  value: widget.view,
-                  onChanged: widget.onViewChanged,
-                ),
-                const SizedBox(height: AppSpacing.s12),
-                if (groups.isEmpty)
-                  _EmptyState(message: l10n.portfolioHubEmpty)
-                else
-                  AppGroupedSurface(
-                    padding: EdgeInsets.zero,
-                    child: Column(
-                      children: [
-                        for (var i = 0; i < groups.length; i++) ...[
-                          _GroupRow(
-                            group: groups[i],
-                            onPressed: () => _showPortfolioGroupDetail(
-                              context: context,
-                              group: groups[i],
-                            ),
-                          ),
-                          if (i != groups.length - 1)
-                            const AppGroupedDivider(
-                              indent: AppSpacing.s12,
-                              endIndent: AppSpacing.s12,
-                            ),
-                        ],
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-            _PortfolioSection.insights => _EngineExposureSection(data: data),
-          },
         ],
       ),
     );
@@ -315,11 +365,24 @@ class _PortfolioSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return _PortfolioSummaryCard(
+      slice: PortfolioHubSummarySlice.fromState(data),
+    );
+  }
+}
+
+class _PortfolioSummaryCard extends StatelessWidget {
+  const _PortfolioSummaryCard({required this.slice});
+
+  final PortfolioHubSummarySlice slice;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final xirr = data.xirrRatio;
-    final pnlPercent = data.costBasisInBase.sign <= 0
+    final xirr = slice.xirrRatio;
+    final pnlPercent = slice.costBasisInBase.sign <= 0
         ? null
-        : (data.unrealizedPnlInBase / data.costBasisInBase).toDouble() * 100;
+        : (slice.unrealizedPnlInBase / slice.costBasisInBase).toDouble() * 100;
     return SoftCard.hero(
       padding: AppPageRhythm.heroPadding,
       child: Column(
@@ -335,8 +398,8 @@ class _PortfolioSummary extends StatelessWidget {
             children: [
               Expanded(
                 child: AnimatedMoneyText(
-                  amount: data.marketValueInBase.toDouble(),
-                  currencyCode: data.baseCurrency,
+                  amount: slice.marketValueInBase.toDouble(),
+                  currencyCode: slice.baseCurrency,
                   style: TypographyTokens.displaySmall,
                   color: context.theme.colors.foreground,
                 ),
@@ -345,7 +408,7 @@ class _PortfolioSummary extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.s14),
-          _PortfolioSummaryMetrics(data: data, xirr: xirr),
+          _PortfolioSummaryMetrics(slice: slice, xirr: xirr),
         ],
       ),
     );
@@ -353,9 +416,9 @@ class _PortfolioSummary extends StatelessWidget {
 }
 
 class _PortfolioSummaryMetrics extends StatelessWidget {
-  const _PortfolioSummaryMetrics({required this.data, required this.xirr});
+  const _PortfolioSummaryMetrics({required this.slice, required this.xirr});
 
-  final PortfolioHubState data;
+  final PortfolioHubSummarySlice slice;
   final double? xirr;
 
   @override
@@ -364,13 +427,13 @@ class _PortfolioSummaryMetrics extends StatelessWidget {
     final metrics = <Widget>[
       _SummaryMetric.money(
         label: l10n.portfolioHubCostBasisLabel,
-        amount: data.costBasisInBase.toDouble(),
-        currency: data.baseCurrency,
+        amount: slice.costBasisInBase.toDouble(),
+        currency: slice.baseCurrency,
       ),
       _SummaryMetric.money(
         label: l10n.portfolioHubAbsoluteReturnLabel,
-        amount: data.unrealizedPnlInBase.toDouble(),
-        currency: data.baseCurrency,
+        amount: slice.unrealizedPnlInBase.toDouble(),
+        currency: slice.baseCurrency,
         showSign: true,
       ),
       _SummaryMetric(

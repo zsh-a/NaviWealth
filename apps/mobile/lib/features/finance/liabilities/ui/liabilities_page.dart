@@ -8,6 +8,7 @@ import 'package:naviwealth/features/finance/domain/models/liability.dart';
 
 import '../../../../core/format/formatters.dart';
 import '../../../../core/format/providers.dart';
+import '../../../../core/shell/shell_chrome.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
@@ -34,12 +35,7 @@ class LiabilitiesPage extends ConsumerWidget {
           return _LiabilitiesEmptyState(l10n: l10n);
         }
         return ListView(
-          padding: const EdgeInsets.all(AppSpacing.s16).copyWith(
-            bottom:
-                const EdgeInsets.all(AppSpacing.s16).bottom +
-                64 +
-                MediaQuery.paddingOf(context).bottom,
-          ),
+          padding: shellTabContentPadding(context),
           children: [
             AppGroupedSurface(
               padding: EdgeInsets.zero,

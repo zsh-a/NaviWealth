@@ -8,6 +8,7 @@ import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/lifeos/action_outcome.dart';
 import '../../../core/shell/shell_chrome.dart';
+import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as execution_agent_providers;
@@ -36,20 +37,23 @@ class ExecutionReviewPage extends ConsumerWidget {
           onPress: () => showExecutionProgressSheet(context: context),
         ),
       ],
-      child: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(
-            execution_agent_providers.latestExecutionReviewResultsProvider,
-          );
-          ref.invalidate(executionRecentProgressProvider);
-          ref.invalidate(executionClosedActionsProvider);
-          ref.invalidate(executionReviewRelationsProvider);
-          await Future.wait([
-            ref.read(executionRecentProgressProvider.future),
-            ref.read(executionClosedActionsProvider.future),
-          ]);
-        },
-        child: _ReviewBody(),
+      child: ShellTabPause(
+        routePath: ExecutionRoutes.review,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(
+              execution_agent_providers.latestExecutionReviewResultsProvider,
+            );
+            ref.invalidate(executionRecentProgressProvider);
+            ref.invalidate(executionClosedActionsProvider);
+            ref.invalidate(executionReviewRelationsProvider);
+            await Future.wait([
+              ref.read(executionRecentProgressProvider.future),
+              ref.read(executionClosedActionsProvider.future),
+            ]);
+          },
+          child: _ReviewBody(),
+        ),
       ),
     );
   }

@@ -9,6 +9,7 @@ import 'package:naviwealth/core/ai/agents/ui/agent_result_card.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/core/product/product_metrics.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
+import 'package:naviwealth/core/shell/shell_visibility.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/activation/ui/finance_activation_card.dart';
 import 'package:naviwealth/features/finance/agents/providers.dart'
@@ -42,7 +43,6 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final snapshotAsync = ref.watch(dashboardSnapshotProvider);
     return ShellCanvasScaffold(
       // The home cockpit owns its hero greeting; we drop the static
       // "Overview" page title in favour of a personalized status line
@@ -50,24 +50,40 @@ class HomePage extends ConsumerWidget {
       // this headerless tab root inside the shared shell contract while
       // [ShellActionRow] injects the compact global chrome from the hero.
       childPad: false,
-      child: PageSkeletonShell<DashboardSnapshot>(
-        skeleton: const HomeSkeleton(),
-        isLoading: snapshotAsync.isLoading && !snapshotAsync.hasValue,
-        child: SafeArea(
-          bottom: false,
-          child: snapshotAsync.when(
-            loading: () => const HomeSkeleton(),
-            error: (e, st) => _ErrorBody(error: e),
-            data: (snapshot) => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                CurrencyMismatchNotice(
-                  mismatches: snapshot.currencyMismatches,
-                  baseCurrency: snapshot.baseCurrency,
-                ),
-                Expanded(child: _DashboardBody(snapshot: snapshot)),
-              ],
-            ),
+      // Unmount live dashboard watches while another finance tab is
+      // visible so holdings / agent / activity streams can pause.
+      child: const ShellTabPause(
+        routePath: FinanceRoutes.home,
+        placeholder: HomeSkeleton(),
+        child: _HomeLiveBody(),
+      ),
+    );
+  }
+}
+
+class _HomeLiveBody extends ConsumerWidget {
+  const _HomeLiveBody();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final snapshotAsync = ref.watch(dashboardSnapshotProvider);
+    return PageSkeletonShell<DashboardSnapshot>(
+      skeleton: const HomeSkeleton(),
+      isLoading: snapshotAsync.isLoading && !snapshotAsync.hasValue,
+      child: SafeArea(
+        bottom: false,
+        child: snapshotAsync.when(
+          loading: () => const HomeSkeleton(),
+          error: (e, st) => _ErrorBody(error: e),
+          data: (snapshot) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              CurrencyMismatchNotice(
+                mismatches: snapshot.currencyMismatches,
+                baseCurrency: snapshot.baseCurrency,
+              ),
+              Expanded(child: _DashboardBody(snapshot: snapshot)),
+            ],
           ),
         ),
       ),

@@ -17,6 +17,28 @@ final activityFeedProvider = StreamProvider.autoDispose<ActivityFeedPage>((
   ref,
 ) {
   final query = ref.watch(activityFeedQueryProvider);
+  return _watchActivityFeedPage(ref, query);
+});
+
+/// Lightweight unfiltered feed for Home's recent-activity strip.
+///
+/// Independent of [activityFeedQueryProvider] so filter / load-more on the
+/// Activity tab cannot rebuild the Finance Today surface, and the page size
+/// stays tiny (home only renders ~5 rows).
+final activityFeedPreviewProvider =
+    StreamProvider.autoDispose<ActivityFeedPage>((ref) {
+      return _watchActivityFeedPage(
+        ref,
+        const ActivityFeedQuery(pageSize: kActivityFeedPreviewPageSize),
+      );
+    });
+
+const int kActivityFeedPreviewPageSize = 8;
+
+Stream<ActivityFeedPage> _watchActivityFeedPage(
+  Ref ref,
+  ActivityFeedQuery query,
+) {
   final accountsAsync = ref.watch(allAccountsStreamProvider);
 
   if (accountsAsync.hasError) {
@@ -64,7 +86,7 @@ final activityFeedProvider = StreamProvider.autoDispose<ActivityFeedPage>((
           accountsById: accountsById,
         );
       });
-});
+}
 
 class ActivityFeedQueryController extends StateNotifier<ActivityFeedQuery> {
   ActivityFeedQueryController() : super(const ActivityFeedQuery());

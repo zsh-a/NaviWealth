@@ -1,83 +1,104 @@
 part of 'portfolio_hub_page.dart';
 
 class _EngineExposureSection extends ConsumerWidget {
-  const _EngineExposureSection({required this.data});
+  const _EngineExposureSection({required this.baseCurrency});
 
-  final PortfolioHubState data;
+  final String baseCurrency;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final cards = [
-      _RealizedPnlCard(data: data),
-      _DividendForecastCard(
-        forecast: data.dividendForecast,
-        baseCurrency: data.baseCurrency,
+    final insightsAsync = ref.watch(portfolioHubInsightsProvider);
+    return insightsAsync.when(
+      skipLoadingOnReload: true,
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.s24),
+        child: Center(child: FCircularProgress()),
       ),
-      _EventTimelineCard(
-        dividendEvents: data.dividendEvents,
-        corporateActions: data.corporateActions,
-      ),
-    ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.portfolioHubEnginesTitle,
-          style: context.theme.typography.body.lg,
+      error: (error, stackTrace) => AppEmptyState.error(
+        title: userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'load portfolio insights',
         ),
-        const SizedBox(height: AppSpacing.s10),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            if (constraints.maxWidth >= 860) {
-              return IntrinsicHeight(
-                child: Row(
+        retryLabel: l10n.commonRetry,
+        onRetry: () => ref.read(portfolioHubInsightsProvider.notifier).refresh(),
+      ),
+      data: (insights) {
+        final cards = [
+          _RealizedPnlCard(insights: insights, baseCurrency: baseCurrency),
+          _DividendForecastCard(
+            forecast: insights.dividendForecast,
+            baseCurrency: baseCurrency,
+          ),
+          _EventTimelineCard(
+            dividendEvents: insights.dividendEvents,
+            corporateActions: insights.corporateActions,
+          ),
+        ];
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.portfolioHubEnginesTitle,
+              style: context.theme.typography.body.lg,
+            ),
+            const SizedBox(height: AppSpacing.s10),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth >= 860) {
+                  return IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (var i = 0; i < cards.length; i++) ...[
+                          if (i != 0) const SizedBox(width: AppSpacing.s12),
+                          Expanded(child: cards[i]),
+                        ],
+                      ],
+                    ),
+                  );
+                }
+                return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     for (var i = 0; i < cards.length; i++) ...[
-                      if (i != 0) const SizedBox(width: AppSpacing.s12),
-                      Expanded(child: cards[i]),
+                      if (i != 0) const SizedBox(height: AppSpacing.s10),
+                      cards[i],
                     ],
                   ],
-                ),
-              );
-            }
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (var i = 0; i < cards.length; i++) ...[
-                  if (i != 0) const SizedBox(height: AppSpacing.s10),
-                  cards[i],
-                ],
-              ],
-            );
-          },
-        ),
-      ],
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
 class _RealizedPnlCard extends ConsumerWidget {
-  const _RealizedPnlCard({required this.data});
+  const _RealizedPnlCard({required this.insights, required this.baseCurrency});
 
-  final PortfolioHubState data;
+  final PortfolioHubInsightsState insights;
+  final String baseCurrency;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
-    final rows = data.realizedPnl.take(3).toList();
-    final total = _sum(data.realizedPnl.map((row) => row.gain));
+    final rows = insights.realizedPnl.take(3).toList();
+    final total = _sum(insights.realizedPnl.map((row) => row.gain));
     return _EngineCard(
       title: l10n.portfolioHubRealizedPnlTitle,
-      trailing: l10n.portfolioHubRealizedPnlCount(data.realizedPnl.length),
+      trailing: l10n.portfolioHubRealizedPnlCount(insights.realizedPnl.length),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AnimatedMoneyText(
             amount: total.toDouble(),
-            currencyCode: data.baseCurrency,
+            currencyCode: baseCurrency,
             showSign: true,
             style: context.strongTitleStyle,
           ),

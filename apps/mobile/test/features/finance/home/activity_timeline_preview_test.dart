@@ -128,7 +128,7 @@ Widget _wrapStream({
   GoRouter? router,
 }) {
   return ProviderScope(
-    overrides: [activityFeedProvider.overrideWith((ref) => stream)],
+    overrides: [activityFeedPreviewProvider.overrideWith((ref) => stream)],
     child: MaterialApp.router(
       routerConfig: router ?? _router(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,

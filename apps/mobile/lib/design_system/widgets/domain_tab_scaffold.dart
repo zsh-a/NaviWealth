@@ -1,4 +1,3 @@
-import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -84,28 +83,60 @@ class DomainTabScaffold extends StatefulWidget {
 }
 
 class _DomainTabScaffoldState extends State<DomainTabScaffold> {
-  bool _headerVisible = true;
+  /// Local-only so body rebuilds are not forced when the header collapses.
+  final ValueNotifier<bool> _headerVisible = ValueNotifier(true);
 
-  bool _onScroll(UserScrollNotification notification) {
+  /// Accumulated pixels in the current drag direction before flip.
+  double _directionDelta = 0;
+
+  /// Ignore tiny direction noise / fling bounce under this threshold.
+  static const double _collapseThresholdPx = 12;
+
+  @override
+  void dispose() {
+    _headerVisible.dispose();
+    super.dispose();
+  }
+
+  bool _onScroll(ScrollNotification notification) {
     if (!widget.collapseOnScroll) return false;
     if (notification.metrics.axis != Axis.vertical) return false;
 
     // Content too short to scroll — keep the header pinned so it can't get
     // stuck collapsed on a page that never scrolls back up.
     if (notification.metrics.maxScrollExtent <= 0) {
-      if (!_headerVisible) setState(() => _headerVisible = true);
+      _setHeaderVisible(true);
+      _directionDelta = 0;
       return false;
     }
 
-    switch (notification.direction) {
-      case ScrollDirection.reverse:
-        if (_headerVisible) setState(() => _headerVisible = false);
-      case ScrollDirection.forward:
-        if (!_headerVisible) setState(() => _headerVisible = true);
-      case ScrollDirection.idle:
-        break;
+    // At the absolute top, always restore the full header.
+    if (notification.metrics.pixels <= 0) {
+      _setHeaderVisible(true);
+      _directionDelta = 0;
+      return false;
+    }
+
+    if (notification is ScrollUpdateNotification) {
+      final delta = notification.scrollDelta;
+      if (delta == null || delta == 0) return false;
+      // Same sign as current accumulation → keep stacking; reverse → reset.
+      if (_directionDelta == 0 || delta.sign == _directionDelta.sign) {
+        _directionDelta += delta;
+      } else {
+        _directionDelta = delta;
+      }
+      if (_directionDelta.abs() < _collapseThresholdPx) return false;
+      // Positive delta = finger up / content moving up → hide header.
+      _setHeaderVisible(_directionDelta < 0);
+      _directionDelta = 0;
     }
     return false;
+  }
+
+  void _setHeaderVisible(bool visible) {
+    if (_headerVisible.value == visible) return;
+    _headerVisible.value = visible;
   }
 
   @override
@@ -114,24 +145,32 @@ class _DomainTabScaffoldState extends State<DomainTabScaffold> {
     final prefixes = widget.leading == null
         ? const <Widget>[]
         : <Widget>[widget.leading!];
-    final header = AnimatedSize(
-      duration: AppMotionPolicy.duration(context, Motion.medium),
-      curve: Motion.standard,
-      alignment: Alignment.topCenter,
-      child: _headerVisible
-          ? FHeader.nested(
-              prefixes: prefixes,
-              title: _DomainHeaderTitle(widget.title),
-              suffixes: widget.actions,
-            )
-          // Keep shell controls reachable while the title collapses away.
-          // Pages with no controls still collapse to zero height.
-          : hasControls
-          ? _CompactHeaderControls(prefixes: prefixes, actions: widget.actions)
-          : const SizedBox(width: double.infinity),
+    final header = ValueListenableBuilder<bool>(
+      valueListenable: _headerVisible,
+      builder: (context, headerVisible, _) {
+        return AnimatedSize(
+          duration: AppMotionPolicy.duration(context, Motion.medium),
+          curve: Motion.standard,
+          alignment: Alignment.topCenter,
+          child: headerVisible
+              ? FHeader.nested(
+                  prefixes: prefixes,
+                  title: _DomainHeaderTitle(widget.title),
+                  suffixes: widget.actions,
+                )
+              // Keep shell controls reachable while the title collapses away.
+              // Pages with no controls still collapse to zero height.
+              : hasControls
+              ? _CompactHeaderControls(
+                  prefixes: prefixes,
+                  actions: widget.actions,
+                )
+              : const SizedBox(width: double.infinity),
+        );
+      },
     );
 
-    return NotificationListener<UserScrollNotification>(
+    return NotificationListener<ScrollNotification>(
       onNotification: _onScroll,
       child: FScaffold(
         header: header,

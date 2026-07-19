@@ -194,7 +194,13 @@ class _WatchlistBody extends StatelessWidget {
       expandSinglePrimary: true,
       primary: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.only(bottom: kTabBarOffset),
+        padding: shellTabContentPadding(
+          context,
+          left: AppSpacing.s0,
+          top: AppSpacing.s0,
+          right: AppSpacing.s0,
+          bottom: AppSpacing.s16,
+        ),
         children: [
           if (items.isEmpty)
             _WatchlistEmpty(onAdd: onAdd)

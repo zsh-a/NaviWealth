@@ -16,6 +16,7 @@ import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/shell/shell_chrome.dart';
+import '../../../core/shell/shell_visibility.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
@@ -23,6 +24,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../agents/assumption_agent.dart';
 import '../agents/providers.dart' as knowledge_agent_providers;
 import '../agents/routine_due_agent.dart';
+import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_ai_suggestions_card.dart';
@@ -118,7 +120,9 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
     final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
       title: l10n.knowledgeReviewTitle,
-      child: Stack(
+      child: ShellTabPause(
+        routePath: KnowledgeRoutes.review,
+        child: Stack(
         children: [
           Positioned.fill(
             child: NotificationListener<ScrollUpdateNotification>(
@@ -155,6 +159,7 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
             ),
           ),
         ],
+        ),
       ),
     );
   }

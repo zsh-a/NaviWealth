@@ -14,6 +14,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/shell/shell_chrome.dart';
+import '../../../core/shell/shell_visibility.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
@@ -136,7 +137,9 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage>
     final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
       title: l10n.knowledgeLibraryTitle,
-      child: Stack(
+      child: ShellTabPause(
+        routePath: KnowledgeRoutes.library,
+        child: Stack(
         children: [
           Positioned.fill(
             child: NotificationListener<ScrollUpdateNotification>(
@@ -217,6 +220,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage>
             ),
           ),
         ],
+        ),
       ),
     );
   }

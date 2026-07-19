@@ -15,6 +15,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
 import '../../../core/shell/shell_chrome.dart';
+import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/health_route_paths.dart';
@@ -118,7 +119,9 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
     );
     return ShellTabScaffold(
       title: l10n.healthTrendTitle,
-      child: ListView(
+      child: ShellTabPause(
+        routePath: HealthRoutes.trend,
+        child: ListView(
         padding: shellTabContentPadding(context),
         children: [
           LayoutBuilder(
@@ -166,6 +169,7 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
             const SizedBox(height: AppSpacing.s16),
           ],
         ],
+        ),
       ),
     );
   }

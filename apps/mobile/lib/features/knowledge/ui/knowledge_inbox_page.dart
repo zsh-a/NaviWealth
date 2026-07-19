@@ -12,6 +12,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/shell/shell_chrome.dart';
+import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/knowledge_route_paths.dart';
@@ -36,7 +37,10 @@ class KnowledgeInboxPage extends ConsumerWidget {
           onPress: () => showKnowledgeCaptureSheet(context, ref),
         ),
       ],
-      child: const _InboxBody(),
+      child: const ShellTabPause(
+        routePath: KnowledgeRoutes.inbox,
+        child: _InboxBody(),
+      ),
     );
   }
 }

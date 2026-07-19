@@ -175,9 +175,13 @@ void main() {
     await tester.pumpWidget(_wrapRouter(_view(FireGoal.unset())));
     await tester.pump();
 
+    await tester.ensureVisible(find.text(l10n.planStrategyToolsSectionTitle));
+    await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.planStrategyToolsSectionTitle));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text(l10n.planDcaSectionTitle));
+    await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.planDcaSectionTitle));
     await tester.pumpAndSettle();
     expect(find.text('dca-route'), findsOneWidget);

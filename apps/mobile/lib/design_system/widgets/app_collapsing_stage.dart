@@ -1,4 +1,4 @@
-import 'dart:ui' as ui show ImageFilter, lerpDouble;
+import 'dart:ui' as ui show lerpDouble;
 
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
@@ -55,10 +55,13 @@ class AppCollapsingStage extends StatelessWidget {
         );
         final scale = ui.lerpDouble(1, minScale, t)!;
         final opacity = ui.lerpDouble(1, minOpacity, t)!;
+        // Avoid FilterQuality.medium — it forces extra texture sampling
+        // every scroll frame for a subtle visual polish that is not worth
+        // the raster cost on chart-heavy dashboards.
         return Transform.scale(
           scale: scale,
           alignment: Alignment.topCenter,
-          filterQuality: FilterQuality.medium,
+          filterQuality: FilterQuality.low,
           child: Opacity(opacity: opacity, child: child),
         );
       },
@@ -111,8 +114,9 @@ class _AppCollapsingScrollHostState extends State<AppCollapsingScrollHost> {
   double _progress = 0;
 
   bool _onScroll(ScrollNotification notification) {
-    // depth == 0 → metrics belong to the host's direct scrollable child.
-    if (notification.depth != 0) return false;
+    // depth 0 = direct scrollable body; depth 1 = cockpit dual-column
+    // ListViews nested one level under a Row/Column host body.
+    if (notification.depth > 1) return false;
     if (notification.metrics.axis != Axis.vertical) return false;
     final next = appScrollCollapseProgress(
       pixels: notification.metrics.pixels,
@@ -214,8 +218,9 @@ class AppCollapsedSummaryBar extends StatelessWidget {
   }
 }
 
-/// Frosted sticky residual surface — same family as [FloatingGlassNavBar],
-/// but rectangular (lg radius) so it sits under a collapsing tab header.
+/// Sticky residual surface — same family as [FloatingGlassNavBar]:
+/// tonal fill + hairline border, no live [BackdropFilter]. Live blur was
+/// resampling the scrolling page every frame and was a major raster cost.
 class _StickyGlassChrome extends StatelessWidget {
   const _StickyGlassChrome({required this.child, required this.padding});
 
@@ -235,23 +240,12 @@ class _StickyGlassChrome extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
+        color: glassColor,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: borderColor, width: AppStroke.hairline),
         boxShadow: AppShadow.elevation2,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(
-            sigmaX: AppBlur.sticky,
-            sigmaY: AppBlur.sticky,
-          ),
-          child: ColoredBox(
-            color: glassColor,
-            child: Padding(padding: padding, child: child),
-          ),
-        ),
-      ),
+      child: Padding(padding: padding, child: child),
     );
   }
 }

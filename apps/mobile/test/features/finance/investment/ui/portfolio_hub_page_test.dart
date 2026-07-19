@@ -9,7 +9,6 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
-import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/features/finance/investment/domain/fx_pnl/fx_pnl_breakdown.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/domain/reporting/holding_report.dart';
@@ -155,15 +154,6 @@ void main() {
         cashFlows: const [],
         solution: const XirrConverged(rate: 0.12, iterations: 3),
       ),
-      realizedPnl: const [],
-      dividendForecast: ProjectedDividend.empty(
-        assetId: 'portfolio',
-        currency: 'USD',
-        strategy: 'composite',
-        confidence: DividendForecastConfidence.low,
-      ),
-      dividendEvents: const [],
-      corporateActions: const [],
     );
     await tester.pumpWidget(
       ProviderScope(
@@ -187,7 +177,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(AdaptiveContentFrame), findsOneWidget);
-    expect(find.byType(AppGroupedSurface), findsOneWidget);
+    // Positions use a virtualized DecoratedSliver group surface.
+    expect(find.byType(DecoratedSliver), findsOneWidget);
     expect(find.text('Broker A'), findsNothing);
     expect(find.text('us:AAPL'), findsWidgets);
     expect(find.text('Cost basis'), findsOneWidget);
@@ -279,15 +270,6 @@ void main() {
         cashFlows: const [],
         solution: const XirrConverged(rate: 0.12, iterations: 3),
       ),
-      realizedPnl: const [],
-      dividendForecast: ProjectedDividend.empty(
-        assetId: 'portfolio',
-        currency: 'USD',
-        strategy: 'composite',
-        confidence: DividendForecastConfidence.low,
-      ),
-      dividendEvents: const [],
-      corporateActions: const [],
     );
 
     final accountGroups = state.groupsFor(PortfolioHubView.account, l10n);

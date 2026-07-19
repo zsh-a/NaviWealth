@@ -126,8 +126,8 @@ void main() {
         .map((o) => o.opacity)
         .reduce((a, b) => a > b ? a : b);
     expect(shown, 1);
-    // Glass chrome is always present for sticky residuals.
-    expect(find.byType(BackdropFilter), findsOneWidget);
+    // Tonal glass chrome (no live BackdropFilter — matches FloatingGlassNav).
+    expect(find.byType(DecoratedBox), findsWidgets);
   });
 
   test('appScrollCollapseProgress clamps into 0–1', () {

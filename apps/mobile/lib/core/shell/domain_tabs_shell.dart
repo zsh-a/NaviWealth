@@ -9,6 +9,7 @@ import '../ai/write/persistent_undo_banner.dart';
 import 'desktop_sidebar.dart';
 import 'domain_shell.dart';
 import 'domain_switcher.dart';
+import 'shell_visibility.dart';
 
 const double _kMobileDockHorizontalPadding = AppSpacing.s16;
 const double _kMobileDockTopPadding = AppSpacing.s4;
@@ -52,6 +53,21 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell> {
   Widget build(BuildContext context) {
     final tabs = widget.spec.tabs;
     final index = widget.shell.currentIndex;
+    // Publish the active tab root so offstage branches can pause streams.
+    // Guarded write avoids rebuild loops when the path is unchanged.
+    final activePath = (index >= 0 && index < tabs.length)
+        ? tabs[index].routePath
+        : '';
+    final currentPublished = ref.read(activeShellTabPathProvider);
+    if (currentPublished != activePath) {
+      // Schedule after this frame so we don't mutate providers mid-build.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (ref.read(activeShellTabPathProvider) != activePath) {
+          ref.read(activeShellTabPathProvider.notifier).state = activePath;
+        }
+      });
+    }
     // Branch roots are already retained by StatefulShellRoute.indexedStack.
     // Present the selected branch directly: animating the entire navigation
     // shell forces full-screen opacity/transform compositing on every tab
@@ -151,13 +167,19 @@ class _MobileLayout extends ConsumerWidget {
         // sheet only needs to hide the floating dock; changing MediaQuery
         // padding here would relayout the entire page during the sheet's
         // entrance animation (particularly expensive for chart dashboards).
-        final dockHeight = onTabRoot ? _dockTotalHeight(safeAreaBottom) : 0.0;
+        //
+        // Tab roots get the full floating dock height (nav + safe area).
+        // Pushed pages keep the device safe-area bottom so content does not
+        // sit under the home indicator, without reserving dock space.
+        final bottomInset = onTabRoot
+            ? _dockTotalHeight(safeAreaBottom)
+            : safeAreaBottom;
         final content = Positioned.fill(
           child: MediaQuery(
             data: MediaQuery.of(context).copyWith(
               padding: MediaQuery.of(
                 context,
-              ).padding.copyWith(bottom: dockHeight),
+              ).padding.copyWith(bottom: bottomInset),
             ),
             child: child,
           ),

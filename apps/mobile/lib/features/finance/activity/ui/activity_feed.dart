@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 
 import '../../../../core/format/formatters.dart';
@@ -127,8 +128,13 @@ class _FeedListState extends ConsumerState<_FeedList> {
     if (!widget.hasMore || _loadingMore) return;
     setState(() => _loadingMore = true);
     ref.read(activityFeedQueryProvider.notifier).loadMore();
-    // Allow the stream to settle before accepting another page request.
-    await Future<void>.delayed(const Duration(milliseconds: 400));
+    // Wait for the enlarged page snapshot (or failure) instead of a fixed
+    // delay so load-more cannot re-fire mid-fetch or unlock too early.
+    try {
+      await ref.read(activityFeedProvider.future);
+    } catch (_) {
+      // Error surface lives on the parent when(); keep the footer idle.
+    }
     if (mounted) setState(() => _loadingMore = false);
   }
 
@@ -146,73 +152,151 @@ class _FeedListState extends ConsumerState<_FeedList> {
 
   @override
   Widget build(BuildContext context) {
-    final groups = widget.groups;
-    // +1 summary, +N days, +1 footer
+    final items = _flattenFeedItems(widget.groups);
     return NotificationListener<ScrollNotification>(
       onNotification: _onScroll,
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSpacing.s16).copyWith(
-          bottom:
-              const EdgeInsets.all(AppSpacing.s16).bottom +
-              kTabBarOffset +
-              MediaQuery.paddingOf(context).bottom,
-        ),
-        itemCount: groups.length + 2,
+        padding: shellTabContentPadding(context),
+        itemCount: items.length,
         itemBuilder: (context, index) {
-          if (index == 0) {
-            return Padding(
+          final item = items[index];
+          return switch (item) {
+            _FeedSummaryItem() => Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.s12),
               child: _PageSummaryStrip(
                 totals: widget.pageTotals,
                 formatter: widget.formatter,
                 l10n: widget.l10n,
               ),
-            );
-          }
-          if (index == groups.length + 1) {
-            return _FeedFooter(
+            ),
+            _FeedDayHeaderItem(:final section) => Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+              child: _DaySectionHeader(
+                section: section,
+                formatter: widget.formatter,
+                l10n: widget.l10n,
+              ),
+            ),
+            _FeedEntryItem(
+              :final entry,
+              :final isFirstInDay,
+              :final isLastInDay,
+            ) =>
+              _VirtualizedDayEntry(
+                entry: entry,
+                isFirstInDay: isFirstInDay,
+                isLastInDay: isLastInDay,
+                accountsById: widget.accountsById,
+                formatter: widget.formatter,
+              ),
+            _FeedFooterItem() => _FeedFooter(
               canLoadMore: widget.hasMore,
               loading: _loadingMore,
               l10n: widget.l10n,
               onLoadMore: _tryLoadMore,
-            );
-          }
-          final section = groups[index - 1];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.s12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _DaySectionHeader(
-                  section: section,
-                  formatter: widget.formatter,
-                  l10n: widget.l10n,
-                ),
-                AppGroupedSurface(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      for (
-                        var row = 0;
-                        row < section.entries.length;
-                        row++
-                      ) ...[
-                        ActivityFeedEntryRow(
-                          entry: section.entries[row],
-                          accountsById: widget.accountsById,
-                          formatter: widget.formatter,
-                        ),
-                        if (row != section.entries.length - 1)
-                          const AppGroupedDivider(indent: AppSpacing.s56),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
             ),
-          );
+          };
         },
+      ),
+    );
+  }
+}
+
+/// Flatten day groups so every journal row is a top-level list item.
+/// Nested Columns under each day forced full-day rebuilds and lost
+/// virtualization for dense trading days.
+List<_FeedItem> _flattenFeedItems(List<ActivityDaySection> groups) {
+  final items = <_FeedItem>[const _FeedSummaryItem()];
+  for (final section in groups) {
+    items.add(_FeedDayHeaderItem(section));
+    final entries = section.entries;
+    for (var i = 0; i < entries.length; i++) {
+      items.add(
+        _FeedEntryItem(
+          entry: entries[i],
+          isFirstInDay: i == 0,
+          isLastInDay: i == entries.length - 1,
+        ),
+      );
+    }
+  }
+  items.add(const _FeedFooterItem());
+  return items;
+}
+
+sealed class _FeedItem {
+  const _FeedItem();
+}
+
+class _FeedSummaryItem extends _FeedItem {
+  const _FeedSummaryItem();
+}
+
+class _FeedDayHeaderItem extends _FeedItem {
+  const _FeedDayHeaderItem(this.section);
+  final ActivityDaySection section;
+}
+
+class _FeedEntryItem extends _FeedItem {
+  const _FeedEntryItem({
+    required this.entry,
+    required this.isFirstInDay,
+    required this.isLastInDay,
+  });
+
+  final JournalEntryWithPostings entry;
+  final bool isFirstInDay;
+  final bool isLastInDay;
+}
+
+class _FeedFooterItem extends _FeedItem {
+  const _FeedFooterItem();
+}
+
+/// One entry row with grouped-surface chrome that stitches adjacent rows
+/// of the same day into a continuous card without building the whole day.
+class _VirtualizedDayEntry extends StatelessWidget {
+  const _VirtualizedDayEntry({
+    required this.entry,
+    required this.isFirstInDay,
+    required this.isLastInDay,
+    required this.accountsById,
+    required this.formatter,
+  });
+
+  final JournalEntryWithPostings entry;
+  final bool isFirstInDay;
+  final bool isLastInDay;
+  final Map<String, Account> accountsById;
+  final AppFormatters formatter;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final surface = colors.brightness == Brightness.dark
+        ? colors.card.withValues(alpha: AppOpacity.muted)
+        : ColorPalette.surfaceRaised;
+    final radius = BorderRadius.vertical(
+      top: isFirstInDay ? const Radius.circular(AppRadius.lg) : Radius.zero,
+      bottom: isLastInDay ? const Radius.circular(AppRadius.lg) : Radius.zero,
+    );
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLastInDay ? AppSpacing.s12 : 0),
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: surface, borderRadius: radius),
+        child: Column(
+          children: [
+            ActivityFeedEntryRow(
+              entry: entry,
+              accountsById: accountsById,
+              formatter: formatter,
+            ),
+            if (!isLastInDay)
+              const AppGroupedDivider(indent: AppSpacing.s56),
+          ],
+        ),
       ),
     );
   }

@@ -54,15 +54,10 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
   final Set<String> _renderedMessageIds = <String>{};
   bool _renderedInitialSnapshot = false;
 
-  /// Whether the viewport is currently anchored at (or within
-  /// [_bottomThreshold] of) the bottom of the list. We only follow new
-  /// snapshots when this is true — once the user scrolls up to read
-  /// history we stop pulling them back, and the floating jump-to-latest
-  /// button below lets them re-anchor on demand.
-  bool _atBottom = true;
+  /// Local notifiers avoid rebuilding the message list on every scroll.
+  final ValueNotifier<bool> _atBottom = ValueNotifier(true);
+  final ValueNotifier<int> _unseenCount = ValueNotifier(0);
 
-  /// Messages arrived while the user was reading history.
-  int _unseenCount = 0;
   int _lastMessageCount = 0;
 
   /// Pixels from the bottom that still count as "at the bottom". Wide
@@ -79,6 +74,8 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
   void dispose() {
     _scroll.removeListener(_onScroll);
     _scroll.dispose();
+    _atBottom.dispose();
+    _unseenCount.dispose();
     super.dispose();
   }
 
@@ -88,17 +85,15 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
     if (!pos.hasContentDimensions) return;
     final distance = pos.maxScrollExtent - pos.pixels;
     final next = distance <= _bottomThreshold;
-    if (next != _atBottom) {
-      setState(() {
-        _atBottom = next;
-        if (next) _unseenCount = 0;
-      });
+    if (next != _atBottom.value) {
+      _atBottom.value = next;
+      if (next) _unseenCount.value = 0;
     }
   }
 
   void _scrollToBottom({bool animated = true}) {
     if (!_scroll.hasClients) return;
-    setState(() => _unseenCount = 0);
+    _unseenCount.value = 0;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scroll.hasClients) return;
       final target = _scroll.position.maxScrollExtent;
@@ -121,82 +116,87 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
 
   @override
   Widget build(BuildContext context) {
-    final messagesAsync = ref.watch(
-      chatMessagesStreamProvider(widget.sessionId),
+    final structureAsync = ref.watch(
+      chatTimelineStructureProvider(widget.sessionId),
     );
 
     // Follow new snapshots to the bottom — but only when the user is
-    // still anchored there. Reading history without being yanked back
-    // mid-scroll is the whole point of the at-bottom gate.
+    // still anchored there. Structure changes (append/status) fire this;
+    // pure token deltas do not, because the structure fingerprint omits
+    // content. Token follow uses the at-bottom gate + listen on the full
+    // stream without rebuilding the list host.
     ref.listen(chatMessagesStreamProvider(widget.sessionId), (_, next) {
       next.whenData((messages) {
         final grew = messages.length > _lastMessageCount;
         _lastMessageCount = messages.length;
-        if (_atBottom) {
+        if (_atBottom.value) {
           _scrollToBottom();
         } else if (grew) {
-          setState(() => _unseenCount += 1);
+          _unseenCount.value += 1;
         }
       });
     });
 
-    return messagesAsync.when(
+    return structureAsync.when(
       loading: () =>
           widget.loadingBuilder?.call(context) ??
           const Center(child: FCircularProgress()),
       error: (e, _) => Center(child: Text(userSafeErrorMessage(context, e))),
-      data: (messages) {
-        if (messages.isEmpty) {
+      data: (slots) {
+        if (slots.isEmpty) {
           _renderedInitialSnapshot = true;
           _lastMessageCount = 0;
           return widget.emptyBuilder?.call(context) ?? const SizedBox.shrink();
         }
-        _lastMessageCount = messages.length;
-        // Locate the trailing assistant and user messages once per
-        // build — bubbles use these to gate the "regenerate" (assistant)
-        // and "edit & resend" (user) affordances to the most recent
-        // turn only. Editing mid-thread would silently overwrite all
-        // follow-ups, which is almost never what users want.
-        var lastAssistantIdx = -1;
-        var lastUserIdx = -1;
-        for (var i = messages.length - 1; i >= 0; i--) {
-          if (lastAssistantIdx < 0 && messages[i].role == ChatRole.assistant) {
-            lastAssistantIdx = i;
+        _lastMessageCount = slots.length;
+
+        var lastAssistantId = '';
+        var lastUserId = '';
+        for (var i = slots.length - 1; i >= 0; i--) {
+          if (lastAssistantId.isEmpty && slots[i].role == ChatRole.assistant) {
+            lastAssistantId = slots[i].id;
           }
-          if (lastUserIdx < 0 && messages[i].role == ChatRole.user) {
-            lastUserIdx = i;
+          if (lastUserId.isEmpty && slots[i].role == ChatRole.user) {
+            lastUserId = slots[i].id;
           }
-          if (lastAssistantIdx >= 0 && lastUserIdx >= 0) break;
+          if (lastAssistantId.isNotEmpty && lastUserId.isNotEmpty) break;
         }
+
         final animateMessageIds = _renderedInitialSnapshot
             ? <String>{
-                for (final message in messages)
-                  if (!_renderedMessageIds.contains(message.id)) message.id,
+                for (final slot in slots)
+                  if (!_renderedMessageIds.contains(slot.id)) slot.id,
               }
             : const <String>{};
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _renderedInitialSnapshot = true;
-          _renderedMessageIds.addAll(messages.map((message) => message.id));
+          _renderedMessageIds.addAll(slots.map((slot) => slot.id));
         });
 
-        final items = _buildTimelineItems(messages);
+        final items = _buildTimelineItems(slots);
         return Stack(
           children: [
             ListView.builder(
               controller: _scroll,
               padding: widget.padding,
               itemCount: items.length,
+              addAutomaticKeepAlives: false,
               itemBuilder: (_, i) {
                 final item = items[i];
                 return switch (item) {
                   _DateHeaderItem(:final label) => _DateSeparator(label: label),
-                  _MessageItem(:final index) => MessageBubble(
-                    sessionId: widget.sessionId,
-                    message: messages[index],
-                    onDecisionSelect: widget.onDecisionSelect,
-                    isLastAssistant: index == lastAssistantIdx,
-                    isLastUser: index == lastUserIdx,
-                    animateIn: animateMessageIds.contains(messages[index].id),
+                  _MessageItem(:final slot) => RepaintBoundary(
+                    child: _BoundMessageBubble(
+                      key: ValueKey(slot.id),
+                      sessionId: widget.sessionId,
+                      messageId: slot.id,
+                      onDecisionSelect: widget.onDecisionSelect,
+                      isLastAssistant: slot.id == lastAssistantId,
+                      isLastUser: slot.id == lastUserId,
+                      animateIn:
+                          animateMessageIds.contains(slot.id) &&
+                          slot.id == slots.last.id,
+                    ),
                   ),
                 };
               },
@@ -204,8 +204,8 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
             Positioned(
               right: AppSpacing.s16,
               bottom: AppSpacing.s16,
-              child: _JumpToBottomButton(
-                visible: !_atBottom,
+              child: _JumpToBottomOverlay(
+                atBottom: _atBottom,
                 unseenCount: _unseenCount,
                 onPressed: () => _scrollToBottom(),
               ),
@@ -216,22 +216,22 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
     );
   }
 
-  List<_TimelineItem> _buildTimelineItems(List<ChatMessage> messages) {
+  List<_TimelineItem> _buildTimelineItems(List<ChatTimelineSlot> slots) {
     final l10n = AppLocalizations.of(context);
     final now = DateTime.now();
     final items = <_TimelineItem>[];
     DateTime? lastDay;
-    for (var i = 0; i < messages.length; i++) {
+    for (final slot in slots) {
       final day = DateTime(
-        messages[i].createdAt.toLocal().year,
-        messages[i].createdAt.toLocal().month,
-        messages[i].createdAt.toLocal().day,
+        slot.createdAt.toLocal().year,
+        slot.createdAt.toLocal().month,
+        slot.createdAt.toLocal().day,
       );
       if (lastDay == null || day != lastDay) {
         items.add(_DateHeaderItem(_dateLabel(l10n, day, now)));
         lastDay = day;
       }
-      items.add(_MessageItem(i));
+      items.add(_MessageItem(slot));
     }
     return items;
   }
@@ -246,6 +246,43 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
   }
 }
 
+/// Watches only its own message version so streaming tokens rebuild this
+/// bubble and not every settled row in the list.
+class _BoundMessageBubble extends ConsumerWidget {
+  const _BoundMessageBubble({
+    super.key,
+    required this.sessionId,
+    required this.messageId,
+    required this.isLastAssistant,
+    required this.isLastUser,
+    required this.animateIn,
+    this.onDecisionSelect,
+  });
+
+  final String sessionId;
+  final String messageId;
+  final bool isLastAssistant;
+  final bool isLastUser;
+  final bool animateIn;
+  final void Function(DecisionSelectionRequest selection)? onDecisionSelect;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final message = ref.watch(
+      chatMessageByIdProvider((sessionId: sessionId, messageId: messageId)),
+    );
+    if (message == null) return const SizedBox.shrink();
+    return MessageBubble(
+      sessionId: sessionId,
+      message: message,
+      onDecisionSelect: onDecisionSelect,
+      isLastAssistant: isLastAssistant,
+      isLastUser: isLastUser,
+      animateIn: animateIn,
+    );
+  }
+}
+
 sealed class _TimelineItem {
   const _TimelineItem();
 }
@@ -256,8 +293,8 @@ class _DateHeaderItem extends _TimelineItem {
 }
 
 class _MessageItem extends _TimelineItem {
-  const _MessageItem(this.index);
-  final int index;
+  const _MessageItem(this.slot);
+  final ChatTimelineSlot slot;
 }
 
 class _DateSeparator extends StatelessWidget {
@@ -296,6 +333,38 @@ class _DateSeparator extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Isolates jump-button rebuilds from the message list host.
+class _JumpToBottomOverlay extends StatelessWidget {
+  const _JumpToBottomOverlay({
+    required this.atBottom,
+    required this.unseenCount,
+    required this.onPressed,
+  });
+
+  final ValueNotifier<bool> atBottom;
+  final ValueNotifier<int> unseenCount;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: atBottom,
+      builder: (context, isAtBottom, _) {
+        return ValueListenableBuilder<int>(
+          valueListenable: unseenCount,
+          builder: (context, count, _) {
+            return _JumpToBottomButton(
+              visible: !isAtBottom,
+              unseenCount: count,
+              onPressed: onPressed,
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -359,9 +428,8 @@ class _JumpToBottomChip extends StatelessWidget {
             vertical: AppSpacing.s8,
           ),
           decoration: BoxDecoration(
+            color: colors.primary,
             borderRadius: BorderRadius.circular(AppRadius.full),
-            color: colors.background,
-            border: Border.all(color: colors.border),
             boxShadow: AppShadow.elevation2,
           ),
           child: Row(
@@ -370,26 +438,15 @@ class _JumpToBottomChip extends StatelessWidget {
               Icon(
                 FLucideIcons.arrowDown,
                 size: AppIconSizes.sm,
-                color: colors.foreground,
+                color: colors.primaryForeground,
               ),
               const SizedBox(width: AppSpacing.s6),
               Text(
                 label,
                 style: context.captionLabelStyle.copyWith(
-                  color: colors.foreground,
+                  color: colors.primaryForeground,
                 ),
               ),
-              if (unseenCount > 0) ...[
-                const SizedBox(width: AppSpacing.s6),
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: colors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ],
             ],
           ),
         ),
