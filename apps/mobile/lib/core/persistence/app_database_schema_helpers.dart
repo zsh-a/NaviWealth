@@ -1,5 +1,17 @@
 part of 'app_database.dart';
 
+Future<void> _createFinancePlanningIndexes(AppDatabase db) async {
+  for (final statement in financePlanningIndexStmts) {
+    await db.customStatement(statement);
+  }
+}
+
+Future<void> _createRunwayForecastSnapshots(AppDatabase db) async {
+  for (final statement in runwayForecastDdl) {
+    await db.customStatement(statement);
+  }
+}
+
 Future<void> _addColumnIfMissing(
   AppDatabase db, {
   required String table,

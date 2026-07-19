@@ -18,6 +18,7 @@ abstract final class FinanceRoutes {
   static const journalEntries = '/activity/journal';
   static const activityIngest = '/activity/ingest';
   static const activityInbox = '/activity/inbox';
+  static const activityMonthlyClose = '/activity/monthly-close';
 
   static const wealthAccounts = '/wealth/accounts';
   static const wealthAccountNew = '/wealth/accounts/new';
@@ -127,4 +128,5 @@ abstract final class FinanceRouteNames {
   static const journalEntries = 'journal-entries';
   static const activityIngest = 'activity-ingest';
   static const activityInbox = 'activity-inbox';
+  static const activityMonthlyClose = 'activity-monthly-close';
 }

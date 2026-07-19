@@ -4,6 +4,9 @@ final class FinancialDecision {
   const FinancialDecision({
     required this.id,
     required this.template,
+    required this.selectedVariant,
+    required this.calculatorVersion,
+    required this.baseline,
     required this.assumptions,
     required this.selectedOutcome,
     required this.decidedAt,
@@ -14,6 +17,9 @@ final class FinancialDecision {
 
   final String id;
   final LifeEventTemplate template;
+  final LifeEventVariant selectedVariant;
+  final int calculatorVersion;
+  final LifeEventBaseline baseline;
   final LifeEventAssumptions assumptions;
   final LifeEventOutcome selectedOutcome;
   final DateTime decidedAt;
@@ -24,6 +30,9 @@ final class FinancialDecision {
   Map<String, Object?> toJson() => {
     'id': id,
     'template': template.name,
+    'selectedVariant': selectedVariant.name,
+    'calculatorVersion': calculatorVersion,
+    'baseline': baseline.toJson(),
     'assumptions': assumptions.toJson(),
     'selectedOutcome': selectedOutcome.toJson(),
     'decidedAt': decidedAt.toUtc().toIso8601String(),
@@ -36,6 +45,13 @@ final class FinancialDecision {
       FinancialDecision(
         id: json['id']! as String,
         template: LifeEventTemplate.values.byName(json['template']! as String),
+        selectedVariant: LifeEventVariant.values.byName(
+          json['selectedVariant']! as String,
+        ),
+        calculatorVersion: json['calculatorVersion']! as int,
+        baseline: LifeEventBaseline.fromJson(
+          Map<String, Object?>.from(json['baseline']! as Map),
+        ),
         assumptions: LifeEventAssumptions.fromJson(
           Map<String, Object?>.from(json['assumptions']! as Map),
         ),

@@ -11,11 +11,31 @@ import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 
+import '../../../../core/auth/current_user.dart';
+import '../../../../core/persistence/providers.dart';
 import '../domain/money_runway.dart';
+import 'runway_forecast_repository.dart';
 
 final moneyRunwayNowProvider = Provider<DateTime>(
   (ref) => DateTime.now().toUtc(),
 );
+
+final runwayForecastRepositoryProvider =
+    FutureProvider<RunwayForecastRepository>((ref) async {
+      final ownerUserId = ref.watch(activeUserIdProvider) ?? kLocalOnlyUserId;
+      return RunwayForecastRepository(
+        db: await ref.watch(appDatabaseProvider.future),
+        ownerUserId: ownerUserId,
+      );
+    });
+
+final runwayForecastQualityProvider =
+    FutureProvider.autoDispose<RunwayForecastQuality>((ref) async {
+      final repository = await ref.watch(
+        runwayForecastRepositoryProvider.future,
+      );
+      return repository.quality();
+    });
 
 final moneyRunwayProvider = Provider<AsyncValue<MoneyRunwaySnapshot>>((ref) {
   final dashboard = ref.watch(dashboardSnapshotProvider);
@@ -138,9 +158,19 @@ final moneyRunwayProvider = Provider<AsyncValue<MoneyRunwaySnapshot>>((ref) {
     final reserveTarget =
         configuredMonthlyExpense * Decimal.fromInt(reserveMonths);
     final startingBalance = computeLiquidAssets(snapshot).amount;
-    final confidence = missingCurrencies.isNotEmpty || observedDays < 30
+    final completeness =
+        ((observedDays / 60).clamp(0, 1) * 0.5 +
+                (flows.isEmpty ? 0 : 0.25) +
+                (missingCurrencies.isEmpty ? 0.25 : 0))
+            .clamp(0.0, 1.0);
+    final forecastError = ref
+        .watch(runwayForecastQualityProvider)
+        .value
+        ?.meanRelativeError;
+    final confidence =
+        completeness < 0.5 || (forecastError != null && forecastError > 0.25)
         ? MoneyRunwayConfidence.low
-        : flows.isEmpty
+        : completeness < 0.8 || (forecastError != null && forecastError > 0.10)
         ? MoneyRunwayConfidence.medium
         : MoneyRunwayConfidence.high;
 
@@ -154,6 +184,8 @@ final moneyRunwayProvider = Provider<AsyncValue<MoneyRunwaySnapshot>>((ref) {
         estimatedDailyVariableOutflow: variableDaily,
         scheduledFlows: flows,
         confidence: confidence,
+        dataCompleteness: completeness,
+        historicalForecastError: forecastError,
         missingCurrencies: missingCurrencies,
         hasData: !snapshot.isEmpty || events.requireValue.events.isNotEmpty,
       ),

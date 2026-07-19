@@ -1,9 +1,13 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/core/ai/composition/ask_ai.dart';
 import 'package:naviwealth/core/format/providers.dart';
+import 'package:naviwealth/core/lifeos/action_dispatcher.dart';
+import 'package:naviwealth/core/product/product_metrics.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -16,6 +20,15 @@ class MoneyRunwayPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    ref.listen(moneyRunwayProvider, (_, next) {
+      final snapshot = next.value;
+      if (snapshot == null || !snapshot.hasData) return;
+      unawaited(
+        ref
+            .read(runwayForecastRepositoryProvider.future)
+            .then((repository) => repository.recordAndEvaluate(snapshot)),
+      );
+    });
     final runway = ref.watch(moneyRunwayProvider);
     return AppPageScaffold(
       title: l10n.moneyRunwayTitle,
@@ -108,18 +121,8 @@ class _RunwayContent extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.s12),
                 FButton(
                   variant: FButtonVariant.outline,
-                  onPress: () => askAi(
-                    context,
-                    ref,
-                    intent: 'propose_execution_action',
-                    objectLabel: l10n.moneyRunwayTitle,
-                    attrs: {
-                      'confirmed_financial_risk': snapshot.toEvidenceJson(),
-                      'requested_proposal_kind': 'execution_action',
-                      'instruction':
-                          'Propose one concrete mitigative action grounded only in this runway evidence. Require confirmation before applying.',
-                    },
-                  ),
+                  onPress: () =>
+                      _createRunwayAction(context, ref, l10n, snapshot),
                   child: Text(l10n.moneyRunwayCreateAction),
                 ),
               ],
@@ -196,6 +199,17 @@ class _RunwayContent extends ConsumerWidget {
                         snapshot.emergencyCoverageMonths!.toStringAsFixed(1),
                       ),
               ),
+              _ValueRow(
+                label: l10n.moneyRunwayCompleteness,
+                value:
+                    '${(snapshot.dataCompleteness * 100).toStringAsFixed(0)}%',
+              ),
+              if (snapshot.historicalForecastError != null)
+                _ValueRow(
+                  label: l10n.moneyRunwayHistoricalError,
+                  value:
+                      '${(snapshot.historicalForecastError! * 100).toStringAsFixed(1)}%',
+                ),
             ],
           ),
         ),
@@ -319,3 +333,53 @@ String _confidenceLabel(
   MoneyRunwayConfidence.medium => l10n.moneyRunwayConfidenceMedium,
   MoneyRunwayConfidence.high => l10n.moneyRunwayConfidenceHigh,
 };
+
+Future<void> _createRunwayAction(
+  BuildContext context,
+  WidgetRef ref,
+  AppLocalizations l10n,
+  MoneyRunwaySnapshot snapshot,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(l10n.moneyRunwayActionConfirmTitle),
+      content: Text(l10n.moneyRunwayActionConfirmBody),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: Text(l10n.commonCancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          child: Text(l10n.commonConfirm),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+  final dispatch = ref.read(lifeActionDispatcherProvider);
+  final id = await dispatch(
+    LifeActionDraft(
+      title: l10n.moneyRunwayActionTitle,
+      note: jsonEncode(snapshot.toEvidenceJson()),
+      sourceDomain: 'finance',
+      sourceRowFamily: 'money_runway',
+      sourceRowId: 'current',
+      priority: snapshot.status == MoneyRunwayStatus.shortfall
+          ? 'high'
+          : 'normal',
+      dueAt: snapshot.firstShortfallDate,
+    ),
+  );
+  if (context.mounted && id != null) {
+    unawaited(
+      ref
+          .read(productMetricsProvider.notifier)
+          .record(ProductFunnelEvent.executionActionCreated, success: true),
+    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.moneyRunwayActionCreated)));
+  }
+}

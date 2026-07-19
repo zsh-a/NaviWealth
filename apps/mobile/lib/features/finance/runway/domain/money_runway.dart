@@ -46,6 +46,8 @@ class MoneyRunwaySnapshot {
     required this.points,
     required this.status,
     required this.confidence,
+    required this.dataCompleteness,
+    required this.historicalForecastError,
     required this.missingCurrencies,
     required this.hasData,
   });
@@ -60,6 +62,8 @@ class MoneyRunwaySnapshot {
   final List<MoneyRunwayPoint> points;
   final MoneyRunwayStatus status;
   final MoneyRunwayConfidence confidence;
+  final double dataCompleteness;
+  final double? historicalForecastError;
   final Set<String> missingCurrencies;
   final bool hasData;
 
@@ -105,6 +109,8 @@ class MoneyRunwaySnapshot {
     'first_shortfall_date': firstShortfallDate?.toIso8601String(),
     'status': status.name,
     'confidence': confidence.name,
+    'data_completeness': dataCompleteness,
+    'historical_forecast_error': historicalForecastError,
     'scheduled_flow_count': scheduledFlows.length,
     'missing_currencies': missingCurrencies.toList()..sort(),
   };
@@ -119,6 +125,8 @@ MoneyRunwaySnapshot buildMoneyRunway({
   required Decimal estimatedDailyVariableOutflow,
   required Iterable<RunwayScheduledFlow> scheduledFlows,
   required MoneyRunwayConfidence confidence,
+  double dataCompleteness = 0,
+  double? historicalForecastError,
   Set<String> missingCurrencies = const <String>{},
   int horizonDays = 90,
   bool hasData = true,
@@ -177,6 +185,8 @@ MoneyRunwaySnapshot buildMoneyRunway({
     points: List<MoneyRunwayPoint>.unmodifiable(points),
     status: status,
     confidence: confidence,
+    dataCompleteness: dataCompleteness,
+    historicalForecastError: historicalForecastError,
     missingCurrencies: Set<String>.unmodifiable(missingCurrencies),
     hasData: hasData,
   );

@@ -15,7 +15,7 @@ class FinancialInboxCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final count = ref.watch(financialInboxProvider).length;
+    final count = ref.watch(financialInboxProvider).value?.length ?? 0;
     return SoftCard.raised(
       borderless: true,
       onPress: () {

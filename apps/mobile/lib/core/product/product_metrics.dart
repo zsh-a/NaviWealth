@@ -6,11 +6,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../design_system/preferences/theme_preferences.dart';
 
 enum ProductFunnelEvent {
+  activationStarted,
+  importReviewCompleted,
   financialInboxOpened,
+  financialInboxCleared,
   moneyRunwayOpened,
+  executionActionCreated,
   lifeEventCompared,
   financialDecisionSaved,
   financialDecisionReviewed,
+  monthlyCloseCompleted,
 }
 
 final productMetricsProvider =
@@ -25,7 +30,7 @@ class ProductMetricsController extends StateNotifier<bool> {
     : super(_preferences.getBool(_enabledKey) ?? false);
 
   static const _enabledKey = 'naviwealth.product_metrics.enabled';
-  static const _countsKey = 'naviwealth.product_metrics.counts';
+  static const _aggregatesKey = 'naviwealth.product_metrics.aggregates.v2';
   final SharedPreferences _preferences;
 
   Future<void> setEnabled(bool value) async {
@@ -33,13 +38,41 @@ class ProductMetricsController extends StateNotifier<bool> {
     await _preferences.setBool(_enabledKey, value);
   }
 
-  Future<void> record(ProductFunnelEvent event) async {
+  Future<void> record(
+    ProductFunnelEvent event, {
+    Duration? duration,
+    bool? success,
+  }) async {
     if (!state) return;
-    final raw = _preferences.getString(_countsKey);
-    final counts = raw == null
+    final raw = _preferences.getString(_aggregatesKey);
+    final aggregates = raw == null
         ? <String, Object?>{}
         : Map<String, Object?>.from(jsonDecode(raw) as Map);
-    counts[event.name] = ((counts[event.name] as num?)?.toInt() ?? 0) + 1;
-    await _preferences.setString(_countsKey, jsonEncode(counts));
+    final aggregate = Map<String, Object?>.from(
+      aggregates[event.name] as Map? ?? const <String, Object?>{},
+    );
+    aggregate['count'] = ((aggregate['count'] as num?)?.toInt() ?? 0) + 1;
+    if (duration != null) {
+      aggregate['duration_ms_total'] =
+          ((aggregate['duration_ms_total'] as num?)?.toInt() ?? 0) +
+          duration.inMilliseconds;
+    }
+    if (success != null) {
+      aggregate[success ? 'success_count' : 'failure_count'] =
+          ((aggregate[success ? 'success_count' : 'failure_count'] as num?)
+                  ?.toInt() ??
+              0) +
+          1;
+    }
+    aggregates[event.name] = aggregate;
+    await _preferences.setString(_aggregatesKey, jsonEncode(aggregates));
+  }
+
+  Map<String, Object?> exportAggregates() {
+    if (!state) return const <String, Object?>{};
+    final raw = _preferences.getString(_aggregatesKey);
+    return raw == null
+        ? const <String, Object?>{}
+        : Map<String, Object?>.from(jsonDecode(raw) as Map);
   }
 }

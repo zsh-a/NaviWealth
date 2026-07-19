@@ -20,8 +20,42 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 43', () {
-      expect(db.schemaVersion, 43);
+    test('is 44', () {
+      expect(db.schemaVersion, 44);
+    });
+  });
+
+  group('Finance planning tables exist', () {
+    for (final table in const [
+      'financial_decisions',
+      'financial_signals',
+      'financial_monthly_closes',
+    ]) {
+      test('$table has sync columns', () async {
+        final result = await db.customSelect('PRAGMA table_info($table)').get();
+        final columns = result.map((row) => row.read<String>('name')).toSet();
+        expect(
+          columns,
+          containsAll(['id', 'owner_user_id', 'hlc', 'deleted_at']),
+        );
+      });
+    }
+
+    test('runway forecast snapshots stay local-only', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(runway_forecast_snapshots)')
+          .get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll([
+          'predicted_balance',
+          'actual_balance',
+          'data_completeness',
+          'evaluated_at',
+        ]),
+      );
+      expect(columns, isNot(contains('hlc')));
     });
   });
 

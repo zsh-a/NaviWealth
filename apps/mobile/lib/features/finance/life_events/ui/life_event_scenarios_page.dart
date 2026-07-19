@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -7,6 +9,8 @@ import '../../../../core/format/providers.dart';
 import '../../../../core/product/product_metrics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../fire/data/fire_providers.dart';
+import '../../fire/domain/fire_projection.dart';
 import '../data/financial_decision_providers.dart';
 import '../domain/financial_decision.dart';
 import '../domain/life_event_scenario.dart';
@@ -18,7 +22,9 @@ class LifeEventScenariosPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final baseline = ref.watch(lifeEventBaselineProvider);
-    final decisions = ref.watch(financialDecisionsProvider);
+    final decisions =
+        ref.watch(financialDecisionsProvider).value ??
+        const <FinancialDecision>[];
     return AppPageScaffold(
       title: l10n.lifeEventScenariosTitle,
       childPad: false,
@@ -61,58 +67,142 @@ class LifeEventScenariosPage extends ConsumerWidget {
   }
 }
 
-class _ScenarioCard extends ConsumerWidget {
+class _ScenarioCard extends ConsumerStatefulWidget {
   const _ScenarioCard({required this.template, required this.baseline});
 
   final LifeEventTemplate template;
   final LifeEventBaseline baseline;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ScenarioCard> createState() => _ScenarioCardState();
+}
+
+class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
+  LifeEventAssumptions? _editedAssumptions;
+  LifeEventVariant _selectedVariant = LifeEventVariant.baseline;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final formatter = context.formatters(ref);
     const engine = LifeEventScenarioEngine();
-    final assumptions = engine.preset(template, baseline);
-    final outcome = engine.simulate(baseline, assumptions);
+    final baseAssumptions =
+        _editedAssumptions ?? engine.preset(widget.template, widget.baseline);
+    final assumptions = engine.variant(baseAssumptions, _selectedVariant);
+    final outcome = engine.simulate(widget.baseline, assumptions);
+    final exactFireDelay = _exactFireDelayMonths(
+      ref,
+      widget.baseline,
+      assumptions,
+      engine,
+    );
+    final groundedOutcome = exactFireDelay == null
+        ? outcome
+        : outcome.withFireDelay(exactFireDelay);
     return SoftCard.raised(
       borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_templateLabel(l10n, template), style: context.rowTitleStyle),
+          Text(
+            _templateLabel(l10n, widget.template),
+            style: context.rowTitleStyle,
+          ),
           const SizedBox(height: AppSpacing.s6),
           Text(
-            _assumptionCopy(l10n, template, assumptions.durationMonths),
+            _assumptionCopy(
+              l10n,
+              widget.template,
+              baseAssumptions.durationMonths,
+            ),
             style: context.captionStyle,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          Row(
+            children: [
+              for (final variant in LifeEventVariant.values) ...[
+                if (variant != LifeEventVariant.optimistic)
+                  const SizedBox(width: AppSpacing.s6),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedVariant = variant),
+                    child: SoftCard.flat(
+                      padding: const EdgeInsets.all(AppSpacing.s8),
+                      child: Column(
+                        children: [
+                          Text(
+                            _variantLabel(l10n, variant),
+                            style: context.captionStyle.copyWith(
+                              color: variant == _selectedVariant
+                                  ? context.theme.colors.primary
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.s4),
+                          Text(
+                            formatter.compactCurrency(
+                              engine
+                                  .simulate(
+                                    widget.baseline,
+                                    engine.variant(baseAssumptions, variant),
+                                  )
+                                  .liquidAfter90Days,
+                              code: widget.baseline.currency,
+                            ),
+                            style: TypographyTokens.numericCaptionStrong,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: AppSpacing.s12),
           _MetricRow(
             label: l10n.lifeEventAfter90Days,
             value: formatter.currency(
               outcome.liquidAfter90Days,
-              code: baseline.currency,
+              code: widget.baseline.currency,
             ),
           ),
           _MetricRow(
             label: l10n.lifeEventAfter12Months,
             value: formatter.currency(
               outcome.liquidAfter12Months,
-              code: baseline.currency,
+              code: widget.baseline.currency,
             ),
           ),
           _MetricRow(
             label: l10n.lifeEventMonthlySurplus,
             value: formatter.currency(
               outcome.monthlySurplus,
-              code: baseline.currency,
+              code: widget.baseline.currency,
             ),
           ),
-          if (outcome.estimatedFireDelayMonths != null)
+          if (exactFireDelay != null)
             _MetricRow(
               label: l10n.lifeEventFireImpact,
-              value: l10n.lifeEventFireDelay(outcome.estimatedFireDelayMonths!),
+              value: exactFireDelay <= 0
+                  ? l10n.lifeEventFireNoDelay
+                  : l10n.lifeEventFireDelay(exactFireDelay),
             ),
+          FButton(
+            variant: FButtonVariant.ghost,
+            onPress: () async {
+              final edited = await _editAssumptions(
+                context,
+                l10n,
+                baseAssumptions,
+              );
+              if (edited != null && mounted) {
+                setState(() => _editedAssumptions = edited);
+              }
+            },
+            child: Text(l10n.lifeEventEditAssumptions),
+          ),
           const SizedBox(height: AppSpacing.s10),
           Row(
             children: [
@@ -123,11 +213,12 @@ class _ScenarioCard extends ConsumerWidget {
                     context,
                     ref,
                     intent: 'explain_financial_life_event',
-                    objectLabel: _templateLabel(l10n, template),
+                    objectLabel: _templateLabel(l10n, widget.template),
                     attrs: {
-                      'template': template.name,
+                      'template': widget.template.name,
                       'assumptions': assumptions.toJson(),
-                      'deterministic_outcome': outcome.toJson(),
+                      'deterministic_outcome': groundedOutcome.toJson(),
+                      'fire_delay_months': exactFireDelay,
                       'instruction':
                           'Explain only from these deterministic results and ask about missing assumptions.',
                     },
@@ -142,14 +233,17 @@ class _ScenarioCard extends ConsumerWidget {
                     await ref
                         .read(productMetricsProvider.notifier)
                         .record(ProductFunnelEvent.lifeEventCompared);
-                    await ref
-                        .read(financialDecisionsProvider.notifier)
-                        .save(
-                          template: template,
-                          assumptions: assumptions,
-                          outcome: outcome,
-                          now: DateTime.now(),
-                        );
+                    final repository = await ref.read(
+                      financialDecisionRepositoryProvider.future,
+                    );
+                    await repository.create(
+                      template: widget.template,
+                      selectedVariant: _selectedVariant,
+                      baseline: widget.baseline,
+                      assumptions: assumptions,
+                      outcome: groundedOutcome,
+                      now: DateTime.now(),
+                    );
                     await ref
                         .read(productMetricsProvider.notifier)
                         .record(ProductFunnelEvent.financialDecisionSaved);
@@ -229,18 +323,19 @@ class _DecisionRow extends ConsumerWidget {
               const SizedBox(height: AppSpacing.s8),
               FButton(
                 variant: FButtonVariant.ghost,
-                onPress: () {
+                onPress: () async {
                   final actual = const LifeEventScenarioEngine().observe(
                     baseline,
                   );
-                  ref
-                      .read(financialDecisionsProvider.notifier)
-                      .review(
-                        id: decision.id,
-                        actualOutcome: actual,
-                        now: DateTime.now(),
-                      );
-                  ref
+                  final repository = await ref.read(
+                    financialDecisionRepositoryProvider.future,
+                  );
+                  await repository.review(
+                    id: decision.id,
+                    actualOutcome: actual,
+                    now: DateTime.now(),
+                  );
+                  await ref
                       .read(productMetricsProvider.notifier)
                       .record(ProductFunnelEvent.financialDecisionReviewed);
                 },
@@ -279,6 +374,13 @@ String _templateLabel(AppLocalizations l10n, LifeEventTemplate template) =>
       LifeEventTemplate.homePurchase => l10n.lifeEventHomePurchase,
     };
 
+String _variantLabel(AppLocalizations l10n, LifeEventVariant variant) =>
+    switch (variant) {
+      LifeEventVariant.optimistic => l10n.lifeEventOptimistic,
+      LifeEventVariant.baseline => l10n.lifeEventBaseline,
+      LifeEventVariant.conservative => l10n.lifeEventConservative,
+    };
+
 String _assumptionCopy(
   AppLocalizations l10n,
   LifeEventTemplate template,
@@ -288,3 +390,134 @@ String _assumptionCopy(
   LifeEventTemplate.careerBreak => l10n.lifeEventCareerBreakAssumption(months),
   LifeEventTemplate.homePurchase => l10n.lifeEventHomePurchaseAssumption,
 };
+
+Future<LifeEventAssumptions?> _editAssumptions(
+  BuildContext context,
+  AppLocalizations l10n,
+  LifeEventAssumptions current,
+) async {
+  final upfront = TextEditingController(text: current.upfrontCost.toString());
+  final income = TextEditingController(
+    text: current.monthlyIncomeDelta.toString(),
+  );
+  final outflow = TextEditingController(
+    text: current.monthlyOutflowDelta.toString(),
+  );
+  final duration = TextEditingController(
+    text: current.durationMonths.toString(),
+  );
+  final result = await showDialog<LifeEventAssumptions>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(l10n.lifeEventEditAssumptions),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: upfront,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: InputDecoration(labelText: l10n.lifeEventUpfrontCost),
+            ),
+            TextField(
+              controller: income,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+                signed: true,
+              ),
+              decoration: InputDecoration(labelText: l10n.lifeEventIncomeDelta),
+            ),
+            TextField(
+              controller: outflow,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+                signed: true,
+              ),
+              decoration: InputDecoration(
+                labelText: l10n.lifeEventOutflowDelta,
+              ),
+            ),
+            TextField(
+              controller: duration,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: l10n.lifeEventDurationMonths,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: Text(l10n.commonCancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            final parsedUpfront = Decimal.tryParse(upfront.text.trim());
+            final parsedIncome = Decimal.tryParse(income.text.trim());
+            final parsedOutflow = Decimal.tryParse(outflow.text.trim());
+            final parsedDuration = int.tryParse(duration.text.trim());
+            if (parsedUpfront == null ||
+                parsedIncome == null ||
+                parsedOutflow == null ||
+                parsedDuration == null ||
+                parsedDuration < 1) {
+              return;
+            }
+            Navigator.of(dialogContext).pop(
+              LifeEventAssumptions(
+                upfrontCost: parsedUpfront,
+                monthlyIncomeDelta: parsedIncome,
+                monthlyOutflowDelta: parsedOutflow,
+                durationMonths: parsedDuration,
+              ),
+            );
+          },
+          child: Text(l10n.commonSave),
+        ),
+      ],
+    ),
+  );
+  upfront.dispose();
+  income.dispose();
+  outflow.dispose();
+  duration.dispose();
+  return result;
+}
+
+int? _exactFireDelayMonths(
+  WidgetRef ref,
+  LifeEventBaseline baseline,
+  LifeEventAssumptions assumptions,
+  LifeEventScenarioEngine engine,
+) {
+  final view = ref.watch(fireDashboardViewProvider).value;
+  if (view == null || view.goal.targetAmount <= Decimal.zero) return null;
+  final base = view.scenarios
+      .where((scenario) => scenario.tier == FireScenarioTier.neutral)
+      .firstOrNull;
+  if (base?.monthsToTarget == null) return null;
+  final duration = assumptions.durationMonths;
+  final normalAtEnd =
+      baseline.liquidBalance +
+      (baseline.monthlyIncome - baseline.monthlyOutflow) *
+          Decimal.fromInt(duration);
+  final eventAtEnd = engine.balanceAfterMonths(baseline, assumptions, duration);
+  final adjusted = ref
+      .watch(fireCalculatorProvider)
+      .buildView(
+        goal: view.goal,
+        currentNetWorth: view.currentNetWorth + eventAtEnd - normalAtEnd,
+        baseCurrency: view.baseCurrency,
+        start: view.start.add(Duration(days: duration * 30)),
+      );
+  final scenario = adjusted.scenarios
+      .where((item) => item.tier == FireScenarioTier.neutral)
+      .firstOrNull;
+  final adjustedMonths = scenario?.monthsToTarget;
+  if (adjustedMonths == null) return null;
+  return duration + adjustedMonths - base!.monthsToTarget!;
+}

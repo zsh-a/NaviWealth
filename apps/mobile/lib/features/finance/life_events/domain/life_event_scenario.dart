@@ -2,6 +2,8 @@ import 'package:decimal/decimal.dart';
 
 enum LifeEventTemplate { largePurchase, careerBreak, homePurchase }
 
+enum LifeEventVariant { optimistic, baseline, conservative }
+
 final class LifeEventBaseline {
   const LifeEventBaseline({
     required this.liquidBalance,
@@ -16,6 +18,23 @@ final class LifeEventBaseline {
   final Decimal monthlyOutflow;
   final String currency;
   final int? fireMonthsToTarget;
+
+  Map<String, Object?> toJson() => {
+    'liquidBalance': liquidBalance.toString(),
+    'monthlyIncome': monthlyIncome.toString(),
+    'monthlyOutflow': monthlyOutflow.toString(),
+    'currency': currency,
+    'fireMonthsToTarget': fireMonthsToTarget,
+  };
+
+  factory LifeEventBaseline.fromJson(Map<String, Object?> json) =>
+      LifeEventBaseline(
+        liquidBalance: Decimal.parse(json['liquidBalance']! as String),
+        monthlyIncome: Decimal.parse(json['monthlyIncome']! as String),
+        monthlyOutflow: Decimal.parse(json['monthlyOutflow']! as String),
+        currency: json['currency']! as String,
+        fireMonthsToTarget: (json['fireMonthsToTarget'] as num?)?.toInt(),
+      );
 }
 
 final class LifeEventAssumptions {
@@ -63,6 +82,14 @@ final class LifeEventOutcome {
   final double? coverageMonths;
   final int? estimatedFireDelayMonths;
 
+  LifeEventOutcome withFireDelay(int? months) => LifeEventOutcome(
+    liquidAfter90Days: liquidAfter90Days,
+    liquidAfter12Months: liquidAfter12Months,
+    monthlySurplus: monthlySurplus,
+    coverageMonths: coverageMonths,
+    estimatedFireDelayMonths: months,
+  );
+
   Map<String, Object?> toJson() => {
     'liquidAfter90Days': liquidAfter90Days.toString(),
     'liquidAfter12Months': liquidAfter12Months.toString(),
@@ -87,6 +114,8 @@ final class LifeEventOutcome {
 final class LifeEventScenarioEngine {
   const LifeEventScenarioEngine();
 
+  static const calculatorVersion = 1;
+
   LifeEventOutcome simulate(
     LifeEventBaseline baseline,
     LifeEventAssumptions assumptions,
@@ -96,25 +125,15 @@ final class LifeEventScenarioEngine {
         assumptions.monthlyIncomeDelta -
         baseline.monthlyOutflow -
         assumptions.monthlyOutflowDelta;
-    Decimal atMonth(int month) {
-      final affectedMonths = month.clamp(0, assumptions.durationMonths);
-      final normalMonths = month - affectedMonths;
-      final normalSurplus = baseline.monthlyIncome - baseline.monthlyOutflow;
-      return baseline.liquidBalance -
-          assumptions.upfrontCost +
-          monthlySurplus * Decimal.fromInt(affectedMonths) +
-          normalSurplus * Decimal.fromInt(normalMonths);
-    }
-
     final outflow = baseline.monthlyOutflow + assumptions.monthlyOutflowDelta;
     final baselineSurplus = baseline.monthlyIncome - baseline.monthlyOutflow;
     final twelveMonthLoss =
         baseline.liquidBalance +
         baselineSurplus * Decimal.fromInt(12) -
-        atMonth(12);
+        balanceAfterMonths(baseline, assumptions, 12);
     return LifeEventOutcome(
-      liquidAfter90Days: atMonth(3),
-      liquidAfter12Months: atMonth(12),
+      liquidAfter90Days: balanceAfterMonths(baseline, assumptions, 3),
+      liquidAfter12Months: balanceAfterMonths(baseline, assumptions, 12),
       monthlySurplus: monthlySurplus,
       coverageMonths: outflow <= Decimal.zero
           ? null
@@ -127,6 +146,25 @@ final class LifeEventScenarioEngine {
           ? null
           : (twelveMonthLoss.toDouble() / baselineSurplus.toDouble()).ceil(),
     );
+  }
+
+  Decimal balanceAfterMonths(
+    LifeEventBaseline baseline,
+    LifeEventAssumptions assumptions,
+    int month,
+  ) {
+    final affectedMonths = month.clamp(0, assumptions.durationMonths);
+    final normalMonths = month - affectedMonths;
+    final affectedSurplus =
+        baseline.monthlyIncome +
+        assumptions.monthlyIncomeDelta -
+        baseline.monthlyOutflow -
+        assumptions.monthlyOutflowDelta;
+    final normalSurplus = baseline.monthlyIncome - baseline.monthlyOutflow;
+    return baseline.liquidBalance -
+        assumptions.upfrontCost +
+        affectedSurplus * Decimal.fromInt(affectedMonths) +
+        normalSurplus * Decimal.fromInt(normalMonths);
   }
 
   /// Captures the currently observed baseline for a later comparison. This
@@ -168,4 +206,27 @@ final class LifeEventScenarioEngine {
       durationMonths: 12,
     ),
   };
+
+  LifeEventAssumptions variant(
+    LifeEventAssumptions baseline,
+    LifeEventVariant variant,
+  ) {
+    final factor = switch (variant) {
+      LifeEventVariant.optimistic => Decimal.parse('0.8'),
+      LifeEventVariant.baseline => Decimal.one,
+      LifeEventVariant.conservative => Decimal.parse('1.2'),
+    };
+    return LifeEventAssumptions(
+      upfrontCost: baseline.upfrontCost * factor,
+      monthlyIncomeDelta: baseline.monthlyIncomeDelta * factor,
+      monthlyOutflowDelta: baseline.monthlyOutflowDelta * factor,
+      durationMonths: switch (variant) {
+        LifeEventVariant.optimistic =>
+          (baseline.durationMonths * 0.8).round().clamp(1, 1200),
+        LifeEventVariant.baseline => baseline.durationMonths,
+        LifeEventVariant.conservative =>
+          (baseline.durationMonths * 1.2).round().clamp(1, 1200),
+      },
+    );
+  }
 }

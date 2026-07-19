@@ -483,3 +483,31 @@ const List<String> knowledgeInboxTriageDdl = [
   createKnowledgeInboxTriage,
   createKnowledgeInboxTriageOwnerTriagedIndex,
 ];
+
+// ----------------------------------------------------------------------
+// Money Runway forecast evaluation (derived, local-only)
+// ----------------------------------------------------------------------
+const List<String> runwayForecastDdl = [
+  '''
+CREATE TABLE IF NOT EXISTS runway_forecast_snapshots (
+  id TEXT PRIMARY KEY,
+  owner_user_id TEXT NOT NULL,
+  as_of_day TEXT NOT NULL,
+  target_at INTEGER NOT NULL,
+  horizon_days INTEGER NOT NULL,
+  currency TEXT NOT NULL,
+  starting_balance TEXT NOT NULL,
+  predicted_balance TEXT NOT NULL,
+  actual_balance TEXT,
+  absolute_error TEXT,
+  data_completeness REAL NOT NULL,
+  evidence_json TEXT NOT NULL,
+  evaluated_at INTEGER,
+  UNIQUE(owner_user_id, as_of_day, horizon_days)
+)
+''',
+  '''
+CREATE INDEX IF NOT EXISTS idx_runway_forecast_due
+ON runway_forecast_snapshots(owner_user_id, evaluated_at, target_at)
+''',
+];

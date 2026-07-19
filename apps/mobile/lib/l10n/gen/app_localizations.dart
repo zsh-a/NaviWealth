@@ -22764,6 +22764,78 @@ abstract class AppLocalizations {
   /// **'Financial inbox'**
   String get financialInboxTitle;
 
+  /// No description provided for @monthlyCloseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly close'**
+  String get monthlyCloseTitle;
+
+  /// No description provided for @monthlyClosePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Close {period}'**
+  String monthlyClosePeriod(String period);
+
+  /// No description provided for @monthlyCloseIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete each evidence check before closing the month.'**
+  String get monthlyCloseIntro;
+
+  /// No description provided for @monthlyCloseImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Review imported transactions'**
+  String get monthlyCloseImport;
+
+  /// No description provided for @monthlyCloseInbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the Financial Inbox'**
+  String get monthlyCloseInbox;
+
+  /// No description provided for @monthlyCloseAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconcile account balances'**
+  String get monthlyCloseAccounts;
+
+  /// No description provided for @monthlyCloseRunway.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the next 90 days'**
+  String get monthlyCloseRunway;
+
+  /// No description provided for @monthlyCloseActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Review follow-up actions'**
+  String get monthlyCloseActions;
+
+  /// No description provided for @monthlyCloseMarkDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get monthlyCloseMarkDone;
+
+  /// No description provided for @monthlyCloseUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get monthlyCloseUndo;
+
+  /// No description provided for @monthlyCloseComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Close month'**
+  String get monthlyCloseComplete;
+
+  /// No description provided for @monthlyCloseCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Month closed'**
+  String get monthlyCloseCompleted;
+
   /// No description provided for @financialInboxCount.
   ///
   /// In en, this message translates to:
@@ -22781,6 +22853,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New imports and confirmed money risks will appear here.'**
   String get financialInboxEmptyBody;
+
+  /// No description provided for @financialInboxResolve.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve'**
+  String get financialInboxResolve;
+
+  /// No description provided for @financialInboxSnooze.
+  ///
+  /// In en, this message translates to:
+  /// **'7 days'**
+  String get financialInboxSnooze;
 
   /// No description provided for @financialInboxImportTitle.
   ///
@@ -22841,6 +22925,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Compare deterministic outcomes before making a choice. Assumptions, your selection, and the later review stay together.'**
   String get lifeEventScenariosIntro;
+
+  /// No description provided for @lifeEventOptimistic.
+  ///
+  /// In en, this message translates to:
+  /// **'Optimistic'**
+  String get lifeEventOptimistic;
+
+  /// No description provided for @lifeEventBaseline.
+  ///
+  /// In en, this message translates to:
+  /// **'Baseline'**
+  String get lifeEventBaseline;
+
+  /// No description provided for @lifeEventConservative.
+  ///
+  /// In en, this message translates to:
+  /// **'Conservative'**
+  String get lifeEventConservative;
 
   /// No description provided for @lifeEventScenariosEmptyTitle.
   ///
@@ -22908,6 +23010,36 @@ abstract class AppLocalizations {
   /// **'Monthly surplus during event'**
   String get lifeEventMonthlySurplus;
 
+  /// No description provided for @lifeEventEditAssumptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit assumptions'**
+  String get lifeEventEditAssumptions;
+
+  /// No description provided for @lifeEventUpfrontCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Upfront cost'**
+  String get lifeEventUpfrontCost;
+
+  /// No description provided for @lifeEventIncomeDelta.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly income change'**
+  String get lifeEventIncomeDelta;
+
+  /// No description provided for @lifeEventOutflowDelta.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly outflow change'**
+  String get lifeEventOutflowDelta;
+
+  /// No description provided for @lifeEventDurationMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration in months'**
+  String get lifeEventDurationMonths;
+
   /// No description provided for @lifeEventFireImpact.
   ///
   /// In en, this message translates to:
@@ -22919,6 +23051,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'About {months} months later'**
   String lifeEventFireDelay(int months);
+
+  /// No description provided for @lifeEventFireNoDelay.
+  ///
+  /// In en, this message translates to:
+  /// **'No material delay'**
+  String get lifeEventFireNoDelay;
 
   /// No description provided for @lifeEventAskAi.
   ///
@@ -22979,6 +23117,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Turn risk into an action'**
   String get moneyRunwayCreateAction;
+
+  /// No description provided for @moneyRunwayActionConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an Execution action?'**
+  String get moneyRunwayActionConfirmTitle;
+
+  /// No description provided for @moneyRunwayActionConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The current runway evidence will be attached. Nothing is created until you confirm.'**
+  String get moneyRunwayActionConfirmBody;
+
+  /// No description provided for @moneyRunwayActionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve short-term money runway'**
+  String get moneyRunwayActionTitle;
+
+  /// No description provided for @moneyRunwayActionCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution action created'**
+  String get moneyRunwayActionCreated;
 
   /// No description provided for @moneyRunwayTitle.
   ///
@@ -23105,6 +23267,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Emergency coverage'**
   String get moneyRunwayCoverage;
+
+  /// No description provided for @moneyRunwayCompleteness.
+  ///
+  /// In en, this message translates to:
+  /// **'Data completeness'**
+  String get moneyRunwayCompleteness;
+
+  /// No description provided for @moneyRunwayHistoricalError.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent forecast error'**
+  String get moneyRunwayHistoricalError;
 
   /// No description provided for @moneyRunwayCoverageMonths.
   ///

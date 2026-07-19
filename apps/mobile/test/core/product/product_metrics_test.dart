@@ -11,13 +11,30 @@ void main() {
     final controller = ProductMetricsController(preferences);
 
     await controller.record(ProductFunnelEvent.moneyRunwayOpened);
-    expect(preferences.getString('naviwealth.product_metrics.counts'), isNull);
+    expect(
+      preferences.getString('naviwealth.product_metrics.aggregates.v2'),
+      isNull,
+    );
 
     await controller.setEnabled(true);
-    await controller.record(ProductFunnelEvent.moneyRunwayOpened);
-    final counts =
-        jsonDecode(preferences.getString('naviwealth.product_metrics.counts')!)
+    await controller.record(
+      ProductFunnelEvent.moneyRunwayOpened,
+      duration: const Duration(seconds: 2),
+      success: true,
+    );
+    final aggregates =
+        jsonDecode(
+              preferences.getString(
+                'naviwealth.product_metrics.aggregates.v2',
+              )!,
+            )
             as Map<String, Object?>;
-    expect(counts, {'moneyRunwayOpened': 1});
+    expect(aggregates, {
+      'moneyRunwayOpened': {
+        'count': 1,
+        'duration_ms_total': 2000,
+        'success_count': 1,
+      },
+    });
   });
 }

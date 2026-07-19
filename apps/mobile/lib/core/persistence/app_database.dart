@@ -88,6 +88,9 @@ final class AppDatabaseTransactionScope {
     Categories,
     Budgets,
     Goals,
+    FinancialDecisions,
+    FinancialSignals,
+    FinancialMonthlyCloses,
     Devices,
     OpLogs,
     MarketQuotes,
@@ -139,7 +142,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 43;
+  int get schemaVersion => 44;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -166,6 +169,8 @@ class AppDatabase extends _$AppDatabase {
       await _createDataMaintenanceRuns(this);
       await _createAgentPreferences(this);
       await _createRebalanceExecutionTables(this);
+      await _createFinancePlanningIndexes(this);
+      await _createRunwayForecastSnapshots(this);
     },
     onUpgrade: (m, from, to) async {
       // v1 → v2: capture the AI stream's `stop_reason` on chat messages
@@ -693,6 +698,13 @@ class AppDatabase extends _$AppDatabase {
           column: 'archived',
           definition: 'INTEGER NOT NULL DEFAULT 0',
         );
+      }
+      if (from < 44) {
+        await m.createTable(financialDecisions);
+        await m.createTable(financialSignals);
+        await m.createTable(financialMonthlyCloses);
+        await _createFinancePlanningIndexes(this);
+        await _createRunwayForecastSnapshots(this);
       }
     },
     beforeOpen: (details) async {

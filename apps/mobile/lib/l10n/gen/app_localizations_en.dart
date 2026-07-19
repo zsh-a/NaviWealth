@@ -13439,6 +13439,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get financialInboxTitle => 'Financial inbox';
 
   @override
+  String get monthlyCloseTitle => 'Monthly close';
+
+  @override
+  String monthlyClosePeriod(String period) {
+    return 'Close $period';
+  }
+
+  @override
+  String get monthlyCloseIntro =>
+      'Complete each evidence check before closing the month.';
+
+  @override
+  String get monthlyCloseImport => 'Review imported transactions';
+
+  @override
+  String get monthlyCloseInbox => 'Clear the Financial Inbox';
+
+  @override
+  String get monthlyCloseAccounts => 'Reconcile account balances';
+
+  @override
+  String get monthlyCloseRunway => 'Review the next 90 days';
+
+  @override
+  String get monthlyCloseActions => 'Review follow-up actions';
+
+  @override
+  String get monthlyCloseMarkDone => 'Done';
+
+  @override
+  String get monthlyCloseUndo => 'Undo';
+
+  @override
+  String get monthlyCloseComplete => 'Close month';
+
+  @override
+  String get monthlyCloseCompleted => 'Month closed';
+
+  @override
   String financialInboxCount(int count) {
     return '$count items need attention';
   }
@@ -13449,6 +13488,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get financialInboxEmptyBody =>
       'New imports and confirmed money risks will appear here.';
+
+  @override
+  String get financialInboxResolve => 'Resolve';
+
+  @override
+  String get financialInboxSnooze => '7 days';
 
   @override
   String financialInboxImportTitle(int count) {
@@ -13490,6 +13535,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Compare deterministic outcomes before making a choice. Assumptions, your selection, and the later review stay together.';
 
   @override
+  String get lifeEventOptimistic => 'Optimistic';
+
+  @override
+  String get lifeEventBaseline => 'Baseline';
+
+  @override
+  String get lifeEventConservative => 'Conservative';
+
+  @override
   String get lifeEventScenariosEmptyTitle =>
       'Add your financial baseline first';
 
@@ -13529,12 +13583,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lifeEventMonthlySurplus => 'Monthly surplus during event';
 
   @override
+  String get lifeEventEditAssumptions => 'Edit assumptions';
+
+  @override
+  String get lifeEventUpfrontCost => 'Upfront cost';
+
+  @override
+  String get lifeEventIncomeDelta => 'Monthly income change';
+
+  @override
+  String get lifeEventOutflowDelta => 'Monthly outflow change';
+
+  @override
+  String get lifeEventDurationMonths => 'Duration in months';
+
+  @override
   String get lifeEventFireImpact => 'Estimated FIRE impact';
 
   @override
   String lifeEventFireDelay(int months) {
     return 'About $months months later';
   }
+
+  @override
+  String get lifeEventFireNoDelay => 'No material delay';
 
   @override
   String get lifeEventAskAi => 'Ask AI';
@@ -13569,6 +13641,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moneyRunwayCreateAction => 'Turn risk into an action';
+
+  @override
+  String get moneyRunwayActionConfirmTitle => 'Create an Execution action?';
+
+  @override
+  String get moneyRunwayActionConfirmBody =>
+      'The current runway evidence will be attached. Nothing is created until you confirm.';
+
+  @override
+  String get moneyRunwayActionTitle => 'Improve short-term money runway';
+
+  @override
+  String get moneyRunwayActionCreated => 'Execution action created';
 
   @override
   String get moneyRunwayTitle => 'Money runway';
@@ -13641,6 +13726,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moneyRunwayCoverage => 'Emergency coverage';
+
+  @override
+  String get moneyRunwayCompleteness => 'Data completeness';
+
+  @override
+  String get moneyRunwayHistoricalError => 'Recent forecast error';
 
   @override
   String moneyRunwayCoverageMonths(Object months) {

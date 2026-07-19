@@ -63,6 +63,7 @@ import '../activity/ui/activity_entry_detail_page.dart';
 import '../activity/ui/activity_page.dart';
 import '../inbox/ui/financial_inbox_page.dart';
 import '../ingest/ui/ingest_review_page.dart';
+import '../monthly_close/ui/monthly_close_page.dart';
 import '../rebalance/ui/rebalance_execution_workspace_page.dart'
     deferred as rebalance_execution_lib;
 import '../rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
@@ -103,6 +104,11 @@ StatefulShellRoute financeShellRoute() {
                 path: 'inbox',
                 name: FinanceRouteNames.activityInbox,
                 builder: (context, state) => const FinancialInboxPage(),
+              ),
+              GoRoute(
+                path: 'monthly-close',
+                name: FinanceRouteNames.activityMonthlyClose,
+                builder: (context, state) => const MonthlyClosePage(),
               ),
               GoRoute(
                 path: 'expenses',

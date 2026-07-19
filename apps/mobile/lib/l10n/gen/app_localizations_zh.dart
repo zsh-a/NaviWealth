@@ -12807,6 +12807,44 @@ class AppLocalizationsZh extends AppLocalizations {
   String get financialInboxTitle => '财务收件箱';
 
   @override
+  String get monthlyCloseTitle => '月度关账';
+
+  @override
+  String monthlyClosePeriod(String period) {
+    return '关账 $period';
+  }
+
+  @override
+  String get monthlyCloseIntro => '完成所有依据核对后再关闭本月。';
+
+  @override
+  String get monthlyCloseImport => '复核导入交易';
+
+  @override
+  String get monthlyCloseInbox => '清空财务收件箱';
+
+  @override
+  String get monthlyCloseAccounts => '核对账户余额';
+
+  @override
+  String get monthlyCloseRunway => '检查未来 90 天';
+
+  @override
+  String get monthlyCloseActions => '检查后续行动';
+
+  @override
+  String get monthlyCloseMarkDone => '完成';
+
+  @override
+  String get monthlyCloseUndo => '撤销';
+
+  @override
+  String get monthlyCloseComplete => '关闭本月';
+
+  @override
+  String get monthlyCloseCompleted => '本月已关闭';
+
+  @override
   String financialInboxCount(int count) {
     return '有 $count 项需要处理';
   }
@@ -12816,6 +12854,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get financialInboxEmptyBody => '新的导入记录和已确认的资金风险会出现在这里。';
+
+  @override
+  String get financialInboxResolve => '解决';
+
+  @override
+  String get financialInboxSnooze => '稍后 7 天';
 
   @override
   String financialInboxImportTitle(int count) {
@@ -12853,6 +12897,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeEventScenariosIntro => '做决定前先比较确定性计算结果；假设、选择和后续复盘会保存在一起。';
 
   @override
+  String get lifeEventOptimistic => '乐观';
+
+  @override
+  String get lifeEventBaseline => '基准';
+
+  @override
+  String get lifeEventConservative => '保守';
+
+  @override
   String get lifeEventScenariosEmptyTitle => '请先建立财务基线';
 
   @override
@@ -12888,12 +12941,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeEventMonthlySurplus => '事件期间月结余';
 
   @override
+  String get lifeEventEditAssumptions => '编辑假设';
+
+  @override
+  String get lifeEventUpfrontCost => '一次性成本';
+
+  @override
+  String get lifeEventIncomeDelta => '月收入变化';
+
+  @override
+  String get lifeEventOutflowDelta => '月支出变化';
+
+  @override
+  String get lifeEventDurationMonths => '持续月数';
+
+  @override
   String get lifeEventFireImpact => '预计 FIRE 影响';
 
   @override
   String lifeEventFireDelay(int months) {
     return '约推迟 $months 个月';
   }
+
+  @override
+  String get lifeEventFireNoDelay => '无明显推迟';
 
   @override
   String get lifeEventAskAi => '问 AI';
@@ -12928,6 +12999,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get moneyRunwayCreateAction => '将风险转为行动';
+
+  @override
+  String get moneyRunwayActionConfirmTitle => '创建 Execution 行动？';
+
+  @override
+  String get moneyRunwayActionConfirmBody => '当前资金续航依据会附在行动中，确认前不会创建任何内容。';
+
+  @override
+  String get moneyRunwayActionTitle => '改善近期资金续航';
+
+  @override
+  String get moneyRunwayActionCreated => '已创建 Execution 行动';
 
   @override
   String get moneyRunwayTitle => '资金续航';
@@ -12995,6 +13078,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get moneyRunwayCoverage => '应急覆盖';
+
+  @override
+  String get moneyRunwayCompleteness => '数据完整度';
+
+  @override
+  String get moneyRunwayHistoricalError => '近期预测误差';
 
   @override
   String moneyRunwayCoverageMonths(Object months) {

@@ -17654,6 +17654,2712 @@ class GoalsCompanion extends UpdateCompanion<GoalRow> {
   }
 }
 
+class $FinancialDecisionsTable extends FinancialDecisions
+    with TableInfo<$FinancialDecisionsTable, FinancialDecisionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FinancialDecisionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($FinancialDecisionsTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _templateMeta = const VerificationMeta(
+    'template',
+  );
+  @override
+  late final GeneratedColumn<String> template = GeneratedColumn<String>(
+    'template',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _selectedVariantMeta = const VerificationMeta(
+    'selectedVariant',
+  );
+  @override
+  late final GeneratedColumn<String> selectedVariant = GeneratedColumn<String>(
+    'selected_variant',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _calculatorVersionMeta = const VerificationMeta(
+    'calculatorVersion',
+  );
+  @override
+  late final GeneratedColumn<int> calculatorVersion = GeneratedColumn<int>(
+    'calculator_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _baselineJsonMeta = const VerificationMeta(
+    'baselineJson',
+  );
+  @override
+  late final GeneratedColumn<String> baselineJson = GeneratedColumn<String>(
+    'baseline_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _assumptionsJsonMeta = const VerificationMeta(
+    'assumptionsJson',
+  );
+  @override
+  late final GeneratedColumn<String> assumptionsJson = GeneratedColumn<String>(
+    'assumptions_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _selectedOutcomeJsonMeta =
+      const VerificationMeta('selectedOutcomeJson');
+  @override
+  late final GeneratedColumn<String> selectedOutcomeJson =
+      GeneratedColumn<String>(
+        'selected_outcome_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _decidedAtMeta = const VerificationMeta(
+    'decidedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> decidedAt = GeneratedColumn<DateTime>(
+    'decided_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _reviewDateMeta = const VerificationMeta(
+    'reviewDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> reviewDate = GeneratedColumn<DateTime>(
+    'review_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _actualOutcomeJsonMeta = const VerificationMeta(
+    'actualOutcomeJson',
+  );
+  @override
+  late final GeneratedColumn<String> actualOutcomeJson =
+      GeneratedColumn<String>(
+        'actual_outcome_json',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _reviewedAtMeta = const VerificationMeta(
+    'reviewedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> reviewedAt = GeneratedColumn<DateTime>(
+    'reviewed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('active'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    template,
+    selectedVariant,
+    calculatorVersion,
+    baselineJson,
+    assumptionsJson,
+    selectedOutcomeJson,
+    decidedAt,
+    reviewDate,
+    actualOutcomeJson,
+    reviewedAt,
+    status,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'financial_decisions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FinancialDecisionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('template')) {
+      context.handle(
+        _templateMeta,
+        template.isAcceptableOrUnknown(data['template']!, _templateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_templateMeta);
+    }
+    if (data.containsKey('selected_variant')) {
+      context.handle(
+        _selectedVariantMeta,
+        selectedVariant.isAcceptableOrUnknown(
+          data['selected_variant']!,
+          _selectedVariantMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_selectedVariantMeta);
+    }
+    if (data.containsKey('calculator_version')) {
+      context.handle(
+        _calculatorVersionMeta,
+        calculatorVersion.isAcceptableOrUnknown(
+          data['calculator_version']!,
+          _calculatorVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_calculatorVersionMeta);
+    }
+    if (data.containsKey('baseline_json')) {
+      context.handle(
+        _baselineJsonMeta,
+        baselineJson.isAcceptableOrUnknown(
+          data['baseline_json']!,
+          _baselineJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_baselineJsonMeta);
+    }
+    if (data.containsKey('assumptions_json')) {
+      context.handle(
+        _assumptionsJsonMeta,
+        assumptionsJson.isAcceptableOrUnknown(
+          data['assumptions_json']!,
+          _assumptionsJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_assumptionsJsonMeta);
+    }
+    if (data.containsKey('selected_outcome_json')) {
+      context.handle(
+        _selectedOutcomeJsonMeta,
+        selectedOutcomeJson.isAcceptableOrUnknown(
+          data['selected_outcome_json']!,
+          _selectedOutcomeJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_selectedOutcomeJsonMeta);
+    }
+    if (data.containsKey('decided_at')) {
+      context.handle(
+        _decidedAtMeta,
+        decidedAt.isAcceptableOrUnknown(data['decided_at']!, _decidedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_decidedAtMeta);
+    }
+    if (data.containsKey('review_date')) {
+      context.handle(
+        _reviewDateMeta,
+        reviewDate.isAcceptableOrUnknown(data['review_date']!, _reviewDateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_reviewDateMeta);
+    }
+    if (data.containsKey('actual_outcome_json')) {
+      context.handle(
+        _actualOutcomeJsonMeta,
+        actualOutcomeJson.isAcceptableOrUnknown(
+          data['actual_outcome_json']!,
+          _actualOutcomeJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('reviewed_at')) {
+      context.handle(
+        _reviewedAtMeta,
+        reviewedAt.isAcceptableOrUnknown(data['reviewed_at']!, _reviewedAtMeta),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FinancialDecisionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FinancialDecisionRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $FinancialDecisionsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      template: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}template'],
+      )!,
+      selectedVariant: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}selected_variant'],
+      )!,
+      calculatorVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}calculator_version'],
+      )!,
+      baselineJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}baseline_json'],
+      )!,
+      assumptionsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}assumptions_json'],
+      )!,
+      selectedOutcomeJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}selected_outcome_json'],
+      )!,
+      decidedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}decided_at'],
+      )!,
+      reviewDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}review_date'],
+      )!,
+      actualOutcomeJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}actual_outcome_json'],
+      ),
+      reviewedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}reviewed_at'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+    );
+  }
+
+  @override
+  $FinancialDecisionsTable createAlias(String alias) {
+    return $FinancialDecisionsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+}
+
+class FinancialDecisionRow extends DataClass
+    implements Insertable<FinancialDecisionRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String template;
+  final String selectedVariant;
+  final int calculatorVersion;
+  final String baselineJson;
+  final String assumptionsJson;
+  final String selectedOutcomeJson;
+  final DateTime decidedAt;
+  final DateTime reviewDate;
+  final String? actualOutcomeJson;
+  final DateTime? reviewedAt;
+  final String status;
+  const FinancialDecisionRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.template,
+    required this.selectedVariant,
+    required this.calculatorVersion,
+    required this.baselineJson,
+    required this.assumptionsJson,
+    required this.selectedOutcomeJson,
+    required this.decidedAt,
+    required this.reviewDate,
+    this.actualOutcomeJson,
+    this.reviewedAt,
+    required this.status,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $FinancialDecisionsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['template'] = Variable<String>(template);
+    map['selected_variant'] = Variable<String>(selectedVariant);
+    map['calculator_version'] = Variable<int>(calculatorVersion);
+    map['baseline_json'] = Variable<String>(baselineJson);
+    map['assumptions_json'] = Variable<String>(assumptionsJson);
+    map['selected_outcome_json'] = Variable<String>(selectedOutcomeJson);
+    map['decided_at'] = Variable<DateTime>(decidedAt);
+    map['review_date'] = Variable<DateTime>(reviewDate);
+    if (!nullToAbsent || actualOutcomeJson != null) {
+      map['actual_outcome_json'] = Variable<String>(actualOutcomeJson);
+    }
+    if (!nullToAbsent || reviewedAt != null) {
+      map['reviewed_at'] = Variable<DateTime>(reviewedAt);
+    }
+    map['status'] = Variable<String>(status);
+    return map;
+  }
+
+  FinancialDecisionsCompanion toCompanion(bool nullToAbsent) {
+    return FinancialDecisionsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      template: Value(template),
+      selectedVariant: Value(selectedVariant),
+      calculatorVersion: Value(calculatorVersion),
+      baselineJson: Value(baselineJson),
+      assumptionsJson: Value(assumptionsJson),
+      selectedOutcomeJson: Value(selectedOutcomeJson),
+      decidedAt: Value(decidedAt),
+      reviewDate: Value(reviewDate),
+      actualOutcomeJson: actualOutcomeJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(actualOutcomeJson),
+      reviewedAt: reviewedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reviewedAt),
+      status: Value(status),
+    );
+  }
+
+  factory FinancialDecisionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FinancialDecisionRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      template: serializer.fromJson<String>(json['template']),
+      selectedVariant: serializer.fromJson<String>(json['selectedVariant']),
+      calculatorVersion: serializer.fromJson<int>(json['calculatorVersion']),
+      baselineJson: serializer.fromJson<String>(json['baselineJson']),
+      assumptionsJson: serializer.fromJson<String>(json['assumptionsJson']),
+      selectedOutcomeJson: serializer.fromJson<String>(
+        json['selectedOutcomeJson'],
+      ),
+      decidedAt: serializer.fromJson<DateTime>(json['decidedAt']),
+      reviewDate: serializer.fromJson<DateTime>(json['reviewDate']),
+      actualOutcomeJson: serializer.fromJson<String?>(
+        json['actualOutcomeJson'],
+      ),
+      reviewedAt: serializer.fromJson<DateTime?>(json['reviewedAt']),
+      status: serializer.fromJson<String>(json['status']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'template': serializer.toJson<String>(template),
+      'selectedVariant': serializer.toJson<String>(selectedVariant),
+      'calculatorVersion': serializer.toJson<int>(calculatorVersion),
+      'baselineJson': serializer.toJson<String>(baselineJson),
+      'assumptionsJson': serializer.toJson<String>(assumptionsJson),
+      'selectedOutcomeJson': serializer.toJson<String>(selectedOutcomeJson),
+      'decidedAt': serializer.toJson<DateTime>(decidedAt),
+      'reviewDate': serializer.toJson<DateTime>(reviewDate),
+      'actualOutcomeJson': serializer.toJson<String?>(actualOutcomeJson),
+      'reviewedAt': serializer.toJson<DateTime?>(reviewedAt),
+      'status': serializer.toJson<String>(status),
+    };
+  }
+
+  FinancialDecisionRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? template,
+    String? selectedVariant,
+    int? calculatorVersion,
+    String? baselineJson,
+    String? assumptionsJson,
+    String? selectedOutcomeJson,
+    DateTime? decidedAt,
+    DateTime? reviewDate,
+    Value<String?> actualOutcomeJson = const Value.absent(),
+    Value<DateTime?> reviewedAt = const Value.absent(),
+    String? status,
+  }) => FinancialDecisionRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    template: template ?? this.template,
+    selectedVariant: selectedVariant ?? this.selectedVariant,
+    calculatorVersion: calculatorVersion ?? this.calculatorVersion,
+    baselineJson: baselineJson ?? this.baselineJson,
+    assumptionsJson: assumptionsJson ?? this.assumptionsJson,
+    selectedOutcomeJson: selectedOutcomeJson ?? this.selectedOutcomeJson,
+    decidedAt: decidedAt ?? this.decidedAt,
+    reviewDate: reviewDate ?? this.reviewDate,
+    actualOutcomeJson: actualOutcomeJson.present
+        ? actualOutcomeJson.value
+        : this.actualOutcomeJson,
+    reviewedAt: reviewedAt.present ? reviewedAt.value : this.reviewedAt,
+    status: status ?? this.status,
+  );
+  FinancialDecisionRow copyWithCompanion(FinancialDecisionsCompanion data) {
+    return FinancialDecisionRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      template: data.template.present ? data.template.value : this.template,
+      selectedVariant: data.selectedVariant.present
+          ? data.selectedVariant.value
+          : this.selectedVariant,
+      calculatorVersion: data.calculatorVersion.present
+          ? data.calculatorVersion.value
+          : this.calculatorVersion,
+      baselineJson: data.baselineJson.present
+          ? data.baselineJson.value
+          : this.baselineJson,
+      assumptionsJson: data.assumptionsJson.present
+          ? data.assumptionsJson.value
+          : this.assumptionsJson,
+      selectedOutcomeJson: data.selectedOutcomeJson.present
+          ? data.selectedOutcomeJson.value
+          : this.selectedOutcomeJson,
+      decidedAt: data.decidedAt.present ? data.decidedAt.value : this.decidedAt,
+      reviewDate: data.reviewDate.present
+          ? data.reviewDate.value
+          : this.reviewDate,
+      actualOutcomeJson: data.actualOutcomeJson.present
+          ? data.actualOutcomeJson.value
+          : this.actualOutcomeJson,
+      reviewedAt: data.reviewedAt.present
+          ? data.reviewedAt.value
+          : this.reviewedAt,
+      status: data.status.present ? data.status.value : this.status,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FinancialDecisionRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('template: $template, ')
+          ..write('selectedVariant: $selectedVariant, ')
+          ..write('calculatorVersion: $calculatorVersion, ')
+          ..write('baselineJson: $baselineJson, ')
+          ..write('assumptionsJson: $assumptionsJson, ')
+          ..write('selectedOutcomeJson: $selectedOutcomeJson, ')
+          ..write('decidedAt: $decidedAt, ')
+          ..write('reviewDate: $reviewDate, ')
+          ..write('actualOutcomeJson: $actualOutcomeJson, ')
+          ..write('reviewedAt: $reviewedAt, ')
+          ..write('status: $status')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    template,
+    selectedVariant,
+    calculatorVersion,
+    baselineJson,
+    assumptionsJson,
+    selectedOutcomeJson,
+    decidedAt,
+    reviewDate,
+    actualOutcomeJson,
+    reviewedAt,
+    status,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FinancialDecisionRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.template == this.template &&
+          other.selectedVariant == this.selectedVariant &&
+          other.calculatorVersion == this.calculatorVersion &&
+          other.baselineJson == this.baselineJson &&
+          other.assumptionsJson == this.assumptionsJson &&
+          other.selectedOutcomeJson == this.selectedOutcomeJson &&
+          other.decidedAt == this.decidedAt &&
+          other.reviewDate == this.reviewDate &&
+          other.actualOutcomeJson == this.actualOutcomeJson &&
+          other.reviewedAt == this.reviewedAt &&
+          other.status == this.status);
+}
+
+class FinancialDecisionsCompanion
+    extends UpdateCompanion<FinancialDecisionRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> template;
+  final Value<String> selectedVariant;
+  final Value<int> calculatorVersion;
+  final Value<String> baselineJson;
+  final Value<String> assumptionsJson;
+  final Value<String> selectedOutcomeJson;
+  final Value<DateTime> decidedAt;
+  final Value<DateTime> reviewDate;
+  final Value<String?> actualOutcomeJson;
+  final Value<DateTime?> reviewedAt;
+  final Value<String> status;
+  final Value<int> rowid;
+  const FinancialDecisionsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.template = const Value.absent(),
+    this.selectedVariant = const Value.absent(),
+    this.calculatorVersion = const Value.absent(),
+    this.baselineJson = const Value.absent(),
+    this.assumptionsJson = const Value.absent(),
+    this.selectedOutcomeJson = const Value.absent(),
+    this.decidedAt = const Value.absent(),
+    this.reviewDate = const Value.absent(),
+    this.actualOutcomeJson = const Value.absent(),
+    this.reviewedAt = const Value.absent(),
+    this.status = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  FinancialDecisionsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String template,
+    required String selectedVariant,
+    required int calculatorVersion,
+    required String baselineJson,
+    required String assumptionsJson,
+    required String selectedOutcomeJson,
+    required DateTime decidedAt,
+    required DateTime reviewDate,
+    this.actualOutcomeJson = const Value.absent(),
+    this.reviewedAt = const Value.absent(),
+    this.status = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       template = Value(template),
+       selectedVariant = Value(selectedVariant),
+       calculatorVersion = Value(calculatorVersion),
+       baselineJson = Value(baselineJson),
+       assumptionsJson = Value(assumptionsJson),
+       selectedOutcomeJson = Value(selectedOutcomeJson),
+       decidedAt = Value(decidedAt),
+       reviewDate = Value(reviewDate);
+  static Insertable<FinancialDecisionRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? template,
+    Expression<String>? selectedVariant,
+    Expression<int>? calculatorVersion,
+    Expression<String>? baselineJson,
+    Expression<String>? assumptionsJson,
+    Expression<String>? selectedOutcomeJson,
+    Expression<DateTime>? decidedAt,
+    Expression<DateTime>? reviewDate,
+    Expression<String>? actualOutcomeJson,
+    Expression<DateTime>? reviewedAt,
+    Expression<String>? status,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (template != null) 'template': template,
+      if (selectedVariant != null) 'selected_variant': selectedVariant,
+      if (calculatorVersion != null) 'calculator_version': calculatorVersion,
+      if (baselineJson != null) 'baseline_json': baselineJson,
+      if (assumptionsJson != null) 'assumptions_json': assumptionsJson,
+      if (selectedOutcomeJson != null)
+        'selected_outcome_json': selectedOutcomeJson,
+      if (decidedAt != null) 'decided_at': decidedAt,
+      if (reviewDate != null) 'review_date': reviewDate,
+      if (actualOutcomeJson != null) 'actual_outcome_json': actualOutcomeJson,
+      if (reviewedAt != null) 'reviewed_at': reviewedAt,
+      if (status != null) 'status': status,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  FinancialDecisionsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? template,
+    Value<String>? selectedVariant,
+    Value<int>? calculatorVersion,
+    Value<String>? baselineJson,
+    Value<String>? assumptionsJson,
+    Value<String>? selectedOutcomeJson,
+    Value<DateTime>? decidedAt,
+    Value<DateTime>? reviewDate,
+    Value<String?>? actualOutcomeJson,
+    Value<DateTime?>? reviewedAt,
+    Value<String>? status,
+    Value<int>? rowid,
+  }) {
+    return FinancialDecisionsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      template: template ?? this.template,
+      selectedVariant: selectedVariant ?? this.selectedVariant,
+      calculatorVersion: calculatorVersion ?? this.calculatorVersion,
+      baselineJson: baselineJson ?? this.baselineJson,
+      assumptionsJson: assumptionsJson ?? this.assumptionsJson,
+      selectedOutcomeJson: selectedOutcomeJson ?? this.selectedOutcomeJson,
+      decidedAt: decidedAt ?? this.decidedAt,
+      reviewDate: reviewDate ?? this.reviewDate,
+      actualOutcomeJson: actualOutcomeJson ?? this.actualOutcomeJson,
+      reviewedAt: reviewedAt ?? this.reviewedAt,
+      status: status ?? this.status,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $FinancialDecisionsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (template.present) {
+      map['template'] = Variable<String>(template.value);
+    }
+    if (selectedVariant.present) {
+      map['selected_variant'] = Variable<String>(selectedVariant.value);
+    }
+    if (calculatorVersion.present) {
+      map['calculator_version'] = Variable<int>(calculatorVersion.value);
+    }
+    if (baselineJson.present) {
+      map['baseline_json'] = Variable<String>(baselineJson.value);
+    }
+    if (assumptionsJson.present) {
+      map['assumptions_json'] = Variable<String>(assumptionsJson.value);
+    }
+    if (selectedOutcomeJson.present) {
+      map['selected_outcome_json'] = Variable<String>(
+        selectedOutcomeJson.value,
+      );
+    }
+    if (decidedAt.present) {
+      map['decided_at'] = Variable<DateTime>(decidedAt.value);
+    }
+    if (reviewDate.present) {
+      map['review_date'] = Variable<DateTime>(reviewDate.value);
+    }
+    if (actualOutcomeJson.present) {
+      map['actual_outcome_json'] = Variable<String>(actualOutcomeJson.value);
+    }
+    if (reviewedAt.present) {
+      map['reviewed_at'] = Variable<DateTime>(reviewedAt.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FinancialDecisionsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('template: $template, ')
+          ..write('selectedVariant: $selectedVariant, ')
+          ..write('calculatorVersion: $calculatorVersion, ')
+          ..write('baselineJson: $baselineJson, ')
+          ..write('assumptionsJson: $assumptionsJson, ')
+          ..write('selectedOutcomeJson: $selectedOutcomeJson, ')
+          ..write('decidedAt: $decidedAt, ')
+          ..write('reviewDate: $reviewDate, ')
+          ..write('actualOutcomeJson: $actualOutcomeJson, ')
+          ..write('reviewedAt: $reviewedAt, ')
+          ..write('status: $status, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $FinancialSignalsTable extends FinancialSignals
+    with TableInfo<$FinancialSignalsTable, FinancialSignalRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FinancialSignalsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($FinancialSignalsTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceKeyMeta = const VerificationMeta(
+    'sourceKey',
+  );
+  @override
+  late final GeneratedColumn<String> sourceKey = GeneratedColumn<String>(
+    'source_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fingerprintMeta = const VerificationMeta(
+    'fingerprint',
+  );
+  @override
+  late final GeneratedColumn<String> fingerprint = GeneratedColumn<String>(
+    'fingerprint',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _priorityMeta = const VerificationMeta(
+    'priority',
+  );
+  @override
+  late final GeneratedColumn<String> priority = GeneratedColumn<String>(
+    'priority',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('open'),
+  );
+  static const VerificationMeta _evidenceJsonMeta = const VerificationMeta(
+    'evidenceJson',
+  );
+  @override
+  late final GeneratedColumn<String> evidenceJson = GeneratedColumn<String>(
+    'evidence_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
+  static const VerificationMeta _routeMeta = const VerificationMeta('route');
+  @override
+  late final GeneratedColumn<String> route = GeneratedColumn<String>(
+    'route',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _firstDetectedAtMeta = const VerificationMeta(
+    'firstDetectedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> firstDetectedAt =
+      GeneratedColumn<DateTime>(
+        'first_detected_at',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _lastDetectedAtMeta = const VerificationMeta(
+    'lastDetectedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastDetectedAt =
+      GeneratedColumn<DateTime>(
+        'last_detected_at',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _snoozedUntilMeta = const VerificationMeta(
+    'snoozedUntil',
+  );
+  @override
+  late final GeneratedColumn<DateTime> snoozedUntil = GeneratedColumn<DateTime>(
+    'snoozed_until',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _resolvedAtMeta = const VerificationMeta(
+    'resolvedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> resolvedAt = GeneratedColumn<DateTime>(
+    'resolved_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    kind,
+    sourceKey,
+    fingerprint,
+    priority,
+    status,
+    evidenceJson,
+    route,
+    firstDetectedAt,
+    lastDetectedAt,
+    snoozedUntil,
+    resolvedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'financial_signals';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FinancialSignalRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('source_key')) {
+      context.handle(
+        _sourceKeyMeta,
+        sourceKey.isAcceptableOrUnknown(data['source_key']!, _sourceKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceKeyMeta);
+    }
+    if (data.containsKey('fingerprint')) {
+      context.handle(
+        _fingerprintMeta,
+        fingerprint.isAcceptableOrUnknown(
+          data['fingerprint']!,
+          _fingerprintMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_fingerprintMeta);
+    }
+    if (data.containsKey('priority')) {
+      context.handle(
+        _priorityMeta,
+        priority.isAcceptableOrUnknown(data['priority']!, _priorityMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_priorityMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('evidence_json')) {
+      context.handle(
+        _evidenceJsonMeta,
+        evidenceJson.isAcceptableOrUnknown(
+          data['evidence_json']!,
+          _evidenceJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('route')) {
+      context.handle(
+        _routeMeta,
+        route.isAcceptableOrUnknown(data['route']!, _routeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_routeMeta);
+    }
+    if (data.containsKey('first_detected_at')) {
+      context.handle(
+        _firstDetectedAtMeta,
+        firstDetectedAt.isAcceptableOrUnknown(
+          data['first_detected_at']!,
+          _firstDetectedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_firstDetectedAtMeta);
+    }
+    if (data.containsKey('last_detected_at')) {
+      context.handle(
+        _lastDetectedAtMeta,
+        lastDetectedAt.isAcceptableOrUnknown(
+          data['last_detected_at']!,
+          _lastDetectedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_lastDetectedAtMeta);
+    }
+    if (data.containsKey('snoozed_until')) {
+      context.handle(
+        _snoozedUntilMeta,
+        snoozedUntil.isAcceptableOrUnknown(
+          data['snoozed_until']!,
+          _snoozedUntilMeta,
+        ),
+      );
+    }
+    if (data.containsKey('resolved_at')) {
+      context.handle(
+        _resolvedAtMeta,
+        resolvedAt.isAcceptableOrUnknown(data['resolved_at']!, _resolvedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FinancialSignalRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FinancialSignalRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $FinancialSignalsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      sourceKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_key'],
+      )!,
+      fingerprint: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}fingerprint'],
+      )!,
+      priority: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}priority'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      evidenceJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}evidence_json'],
+      )!,
+      route: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}route'],
+      )!,
+      firstDetectedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}first_detected_at'],
+      )!,
+      lastDetectedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_detected_at'],
+      )!,
+      snoozedUntil: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}snoozed_until'],
+      ),
+      resolvedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}resolved_at'],
+      ),
+    );
+  }
+
+  @override
+  $FinancialSignalsTable createAlias(String alias) {
+    return $FinancialSignalsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+}
+
+class FinancialSignalRow extends DataClass
+    implements Insertable<FinancialSignalRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String kind;
+  final String sourceKey;
+  final String fingerprint;
+  final String priority;
+  final String status;
+  final String evidenceJson;
+  final String route;
+  final DateTime firstDetectedAt;
+  final DateTime lastDetectedAt;
+  final DateTime? snoozedUntil;
+  final DateTime? resolvedAt;
+  const FinancialSignalRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.kind,
+    required this.sourceKey,
+    required this.fingerprint,
+    required this.priority,
+    required this.status,
+    required this.evidenceJson,
+    required this.route,
+    required this.firstDetectedAt,
+    required this.lastDetectedAt,
+    this.snoozedUntil,
+    this.resolvedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $FinancialSignalsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['kind'] = Variable<String>(kind);
+    map['source_key'] = Variable<String>(sourceKey);
+    map['fingerprint'] = Variable<String>(fingerprint);
+    map['priority'] = Variable<String>(priority);
+    map['status'] = Variable<String>(status);
+    map['evidence_json'] = Variable<String>(evidenceJson);
+    map['route'] = Variable<String>(route);
+    map['first_detected_at'] = Variable<DateTime>(firstDetectedAt);
+    map['last_detected_at'] = Variable<DateTime>(lastDetectedAt);
+    if (!nullToAbsent || snoozedUntil != null) {
+      map['snoozed_until'] = Variable<DateTime>(snoozedUntil);
+    }
+    if (!nullToAbsent || resolvedAt != null) {
+      map['resolved_at'] = Variable<DateTime>(resolvedAt);
+    }
+    return map;
+  }
+
+  FinancialSignalsCompanion toCompanion(bool nullToAbsent) {
+    return FinancialSignalsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      kind: Value(kind),
+      sourceKey: Value(sourceKey),
+      fingerprint: Value(fingerprint),
+      priority: Value(priority),
+      status: Value(status),
+      evidenceJson: Value(evidenceJson),
+      route: Value(route),
+      firstDetectedAt: Value(firstDetectedAt),
+      lastDetectedAt: Value(lastDetectedAt),
+      snoozedUntil: snoozedUntil == null && nullToAbsent
+          ? const Value.absent()
+          : Value(snoozedUntil),
+      resolvedAt: resolvedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resolvedAt),
+    );
+  }
+
+  factory FinancialSignalRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FinancialSignalRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      kind: serializer.fromJson<String>(json['kind']),
+      sourceKey: serializer.fromJson<String>(json['sourceKey']),
+      fingerprint: serializer.fromJson<String>(json['fingerprint']),
+      priority: serializer.fromJson<String>(json['priority']),
+      status: serializer.fromJson<String>(json['status']),
+      evidenceJson: serializer.fromJson<String>(json['evidenceJson']),
+      route: serializer.fromJson<String>(json['route']),
+      firstDetectedAt: serializer.fromJson<DateTime>(json['firstDetectedAt']),
+      lastDetectedAt: serializer.fromJson<DateTime>(json['lastDetectedAt']),
+      snoozedUntil: serializer.fromJson<DateTime?>(json['snoozedUntil']),
+      resolvedAt: serializer.fromJson<DateTime?>(json['resolvedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'kind': serializer.toJson<String>(kind),
+      'sourceKey': serializer.toJson<String>(sourceKey),
+      'fingerprint': serializer.toJson<String>(fingerprint),
+      'priority': serializer.toJson<String>(priority),
+      'status': serializer.toJson<String>(status),
+      'evidenceJson': serializer.toJson<String>(evidenceJson),
+      'route': serializer.toJson<String>(route),
+      'firstDetectedAt': serializer.toJson<DateTime>(firstDetectedAt),
+      'lastDetectedAt': serializer.toJson<DateTime>(lastDetectedAt),
+      'snoozedUntil': serializer.toJson<DateTime?>(snoozedUntil),
+      'resolvedAt': serializer.toJson<DateTime?>(resolvedAt),
+    };
+  }
+
+  FinancialSignalRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? kind,
+    String? sourceKey,
+    String? fingerprint,
+    String? priority,
+    String? status,
+    String? evidenceJson,
+    String? route,
+    DateTime? firstDetectedAt,
+    DateTime? lastDetectedAt,
+    Value<DateTime?> snoozedUntil = const Value.absent(),
+    Value<DateTime?> resolvedAt = const Value.absent(),
+  }) => FinancialSignalRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    kind: kind ?? this.kind,
+    sourceKey: sourceKey ?? this.sourceKey,
+    fingerprint: fingerprint ?? this.fingerprint,
+    priority: priority ?? this.priority,
+    status: status ?? this.status,
+    evidenceJson: evidenceJson ?? this.evidenceJson,
+    route: route ?? this.route,
+    firstDetectedAt: firstDetectedAt ?? this.firstDetectedAt,
+    lastDetectedAt: lastDetectedAt ?? this.lastDetectedAt,
+    snoozedUntil: snoozedUntil.present ? snoozedUntil.value : this.snoozedUntil,
+    resolvedAt: resolvedAt.present ? resolvedAt.value : this.resolvedAt,
+  );
+  FinancialSignalRow copyWithCompanion(FinancialSignalsCompanion data) {
+    return FinancialSignalRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      sourceKey: data.sourceKey.present ? data.sourceKey.value : this.sourceKey,
+      fingerprint: data.fingerprint.present
+          ? data.fingerprint.value
+          : this.fingerprint,
+      priority: data.priority.present ? data.priority.value : this.priority,
+      status: data.status.present ? data.status.value : this.status,
+      evidenceJson: data.evidenceJson.present
+          ? data.evidenceJson.value
+          : this.evidenceJson,
+      route: data.route.present ? data.route.value : this.route,
+      firstDetectedAt: data.firstDetectedAt.present
+          ? data.firstDetectedAt.value
+          : this.firstDetectedAt,
+      lastDetectedAt: data.lastDetectedAt.present
+          ? data.lastDetectedAt.value
+          : this.lastDetectedAt,
+      snoozedUntil: data.snoozedUntil.present
+          ? data.snoozedUntil.value
+          : this.snoozedUntil,
+      resolvedAt: data.resolvedAt.present
+          ? data.resolvedAt.value
+          : this.resolvedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FinancialSignalRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('fingerprint: $fingerprint, ')
+          ..write('priority: $priority, ')
+          ..write('status: $status, ')
+          ..write('evidenceJson: $evidenceJson, ')
+          ..write('route: $route, ')
+          ..write('firstDetectedAt: $firstDetectedAt, ')
+          ..write('lastDetectedAt: $lastDetectedAt, ')
+          ..write('snoozedUntil: $snoozedUntil, ')
+          ..write('resolvedAt: $resolvedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    kind,
+    sourceKey,
+    fingerprint,
+    priority,
+    status,
+    evidenceJson,
+    route,
+    firstDetectedAt,
+    lastDetectedAt,
+    snoozedUntil,
+    resolvedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FinancialSignalRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.kind == this.kind &&
+          other.sourceKey == this.sourceKey &&
+          other.fingerprint == this.fingerprint &&
+          other.priority == this.priority &&
+          other.status == this.status &&
+          other.evidenceJson == this.evidenceJson &&
+          other.route == this.route &&
+          other.firstDetectedAt == this.firstDetectedAt &&
+          other.lastDetectedAt == this.lastDetectedAt &&
+          other.snoozedUntil == this.snoozedUntil &&
+          other.resolvedAt == this.resolvedAt);
+}
+
+class FinancialSignalsCompanion extends UpdateCompanion<FinancialSignalRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> kind;
+  final Value<String> sourceKey;
+  final Value<String> fingerprint;
+  final Value<String> priority;
+  final Value<String> status;
+  final Value<String> evidenceJson;
+  final Value<String> route;
+  final Value<DateTime> firstDetectedAt;
+  final Value<DateTime> lastDetectedAt;
+  final Value<DateTime?> snoozedUntil;
+  final Value<DateTime?> resolvedAt;
+  final Value<int> rowid;
+  const FinancialSignalsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.sourceKey = const Value.absent(),
+    this.fingerprint = const Value.absent(),
+    this.priority = const Value.absent(),
+    this.status = const Value.absent(),
+    this.evidenceJson = const Value.absent(),
+    this.route = const Value.absent(),
+    this.firstDetectedAt = const Value.absent(),
+    this.lastDetectedAt = const Value.absent(),
+    this.snoozedUntil = const Value.absent(),
+    this.resolvedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  FinancialSignalsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String kind,
+    required String sourceKey,
+    required String fingerprint,
+    required String priority,
+    this.status = const Value.absent(),
+    this.evidenceJson = const Value.absent(),
+    required String route,
+    required DateTime firstDetectedAt,
+    required DateTime lastDetectedAt,
+    this.snoozedUntil = const Value.absent(),
+    this.resolvedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       kind = Value(kind),
+       sourceKey = Value(sourceKey),
+       fingerprint = Value(fingerprint),
+       priority = Value(priority),
+       route = Value(route),
+       firstDetectedAt = Value(firstDetectedAt),
+       lastDetectedAt = Value(lastDetectedAt);
+  static Insertable<FinancialSignalRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? kind,
+    Expression<String>? sourceKey,
+    Expression<String>? fingerprint,
+    Expression<String>? priority,
+    Expression<String>? status,
+    Expression<String>? evidenceJson,
+    Expression<String>? route,
+    Expression<DateTime>? firstDetectedAt,
+    Expression<DateTime>? lastDetectedAt,
+    Expression<DateTime>? snoozedUntil,
+    Expression<DateTime>? resolvedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (kind != null) 'kind': kind,
+      if (sourceKey != null) 'source_key': sourceKey,
+      if (fingerprint != null) 'fingerprint': fingerprint,
+      if (priority != null) 'priority': priority,
+      if (status != null) 'status': status,
+      if (evidenceJson != null) 'evidence_json': evidenceJson,
+      if (route != null) 'route': route,
+      if (firstDetectedAt != null) 'first_detected_at': firstDetectedAt,
+      if (lastDetectedAt != null) 'last_detected_at': lastDetectedAt,
+      if (snoozedUntil != null) 'snoozed_until': snoozedUntil,
+      if (resolvedAt != null) 'resolved_at': resolvedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  FinancialSignalsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? kind,
+    Value<String>? sourceKey,
+    Value<String>? fingerprint,
+    Value<String>? priority,
+    Value<String>? status,
+    Value<String>? evidenceJson,
+    Value<String>? route,
+    Value<DateTime>? firstDetectedAt,
+    Value<DateTime>? lastDetectedAt,
+    Value<DateTime?>? snoozedUntil,
+    Value<DateTime?>? resolvedAt,
+    Value<int>? rowid,
+  }) {
+    return FinancialSignalsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      kind: kind ?? this.kind,
+      sourceKey: sourceKey ?? this.sourceKey,
+      fingerprint: fingerprint ?? this.fingerprint,
+      priority: priority ?? this.priority,
+      status: status ?? this.status,
+      evidenceJson: evidenceJson ?? this.evidenceJson,
+      route: route ?? this.route,
+      firstDetectedAt: firstDetectedAt ?? this.firstDetectedAt,
+      lastDetectedAt: lastDetectedAt ?? this.lastDetectedAt,
+      snoozedUntil: snoozedUntil ?? this.snoozedUntil,
+      resolvedAt: resolvedAt ?? this.resolvedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $FinancialSignalsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (sourceKey.present) {
+      map['source_key'] = Variable<String>(sourceKey.value);
+    }
+    if (fingerprint.present) {
+      map['fingerprint'] = Variable<String>(fingerprint.value);
+    }
+    if (priority.present) {
+      map['priority'] = Variable<String>(priority.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (evidenceJson.present) {
+      map['evidence_json'] = Variable<String>(evidenceJson.value);
+    }
+    if (route.present) {
+      map['route'] = Variable<String>(route.value);
+    }
+    if (firstDetectedAt.present) {
+      map['first_detected_at'] = Variable<DateTime>(firstDetectedAt.value);
+    }
+    if (lastDetectedAt.present) {
+      map['last_detected_at'] = Variable<DateTime>(lastDetectedAt.value);
+    }
+    if (snoozedUntil.present) {
+      map['snoozed_until'] = Variable<DateTime>(snoozedUntil.value);
+    }
+    if (resolvedAt.present) {
+      map['resolved_at'] = Variable<DateTime>(resolvedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FinancialSignalsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('fingerprint: $fingerprint, ')
+          ..write('priority: $priority, ')
+          ..write('status: $status, ')
+          ..write('evidenceJson: $evidenceJson, ')
+          ..write('route: $route, ')
+          ..write('firstDetectedAt: $firstDetectedAt, ')
+          ..write('lastDetectedAt: $lastDetectedAt, ')
+          ..write('snoozedUntil: $snoozedUntil, ')
+          ..write('resolvedAt: $resolvedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $FinancialMonthlyClosesTable extends FinancialMonthlyCloses
+    with TableInfo<$FinancialMonthlyClosesTable, FinancialMonthlyCloseRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FinancialMonthlyClosesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($FinancialMonthlyClosesTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _periodMonthMeta = const VerificationMeta(
+    'periodMonth',
+  );
+  @override
+  late final GeneratedColumn<String> periodMonth = GeneratedColumn<String>(
+    'period_month',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _completedStepsJsonMeta =
+      const VerificationMeta('completedStepsJson');
+  @override
+  late final GeneratedColumn<String> completedStepsJson =
+      GeneratedColumn<String>(
+        'completed_steps_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('[]'),
+      );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('open'),
+  );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
+    'started_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _closedAtMeta = const VerificationMeta(
+    'closedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> closedAt = GeneratedColumn<DateTime>(
+    'closed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    periodMonth,
+    completedStepsJson,
+    status,
+    startedAt,
+    closedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'financial_monthly_closes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FinancialMonthlyCloseRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('period_month')) {
+      context.handle(
+        _periodMonthMeta,
+        periodMonth.isAcceptableOrUnknown(
+          data['period_month']!,
+          _periodMonthMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_periodMonthMeta);
+    }
+    if (data.containsKey('completed_steps_json')) {
+      context.handle(
+        _completedStepsJsonMeta,
+        completedStepsJson.isAcceptableOrUnknown(
+          data['completed_steps_json']!,
+          _completedStepsJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startedAtMeta);
+    }
+    if (data.containsKey('closed_at')) {
+      context.handle(
+        _closedAtMeta,
+        closedAt.isAcceptableOrUnknown(data['closed_at']!, _closedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FinancialMonthlyCloseRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FinancialMonthlyCloseRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $FinancialMonthlyClosesTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      periodMonth: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}period_month'],
+      )!,
+      completedStepsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}completed_steps_json'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}started_at'],
+      )!,
+      closedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}closed_at'],
+      ),
+    );
+  }
+
+  @override
+  $FinancialMonthlyClosesTable createAlias(String alias) {
+    return $FinancialMonthlyClosesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+}
+
+class FinancialMonthlyCloseRow extends DataClass
+    implements Insertable<FinancialMonthlyCloseRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String periodMonth;
+  final String completedStepsJson;
+  final String status;
+  final DateTime startedAt;
+  final DateTime? closedAt;
+  const FinancialMonthlyCloseRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.periodMonth,
+    required this.completedStepsJson,
+    required this.status,
+    required this.startedAt,
+    this.closedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $FinancialMonthlyClosesTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['period_month'] = Variable<String>(periodMonth);
+    map['completed_steps_json'] = Variable<String>(completedStepsJson);
+    map['status'] = Variable<String>(status);
+    map['started_at'] = Variable<DateTime>(startedAt);
+    if (!nullToAbsent || closedAt != null) {
+      map['closed_at'] = Variable<DateTime>(closedAt);
+    }
+    return map;
+  }
+
+  FinancialMonthlyClosesCompanion toCompanion(bool nullToAbsent) {
+    return FinancialMonthlyClosesCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      periodMonth: Value(periodMonth),
+      completedStepsJson: Value(completedStepsJson),
+      status: Value(status),
+      startedAt: Value(startedAt),
+      closedAt: closedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(closedAt),
+    );
+  }
+
+  factory FinancialMonthlyCloseRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FinancialMonthlyCloseRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      periodMonth: serializer.fromJson<String>(json['periodMonth']),
+      completedStepsJson: serializer.fromJson<String>(
+        json['completedStepsJson'],
+      ),
+      status: serializer.fromJson<String>(json['status']),
+      startedAt: serializer.fromJson<DateTime>(json['startedAt']),
+      closedAt: serializer.fromJson<DateTime?>(json['closedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'periodMonth': serializer.toJson<String>(periodMonth),
+      'completedStepsJson': serializer.toJson<String>(completedStepsJson),
+      'status': serializer.toJson<String>(status),
+      'startedAt': serializer.toJson<DateTime>(startedAt),
+      'closedAt': serializer.toJson<DateTime?>(closedAt),
+    };
+  }
+
+  FinancialMonthlyCloseRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? periodMonth,
+    String? completedStepsJson,
+    String? status,
+    DateTime? startedAt,
+    Value<DateTime?> closedAt = const Value.absent(),
+  }) => FinancialMonthlyCloseRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    periodMonth: periodMonth ?? this.periodMonth,
+    completedStepsJson: completedStepsJson ?? this.completedStepsJson,
+    status: status ?? this.status,
+    startedAt: startedAt ?? this.startedAt,
+    closedAt: closedAt.present ? closedAt.value : this.closedAt,
+  );
+  FinancialMonthlyCloseRow copyWithCompanion(
+    FinancialMonthlyClosesCompanion data,
+  ) {
+    return FinancialMonthlyCloseRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      periodMonth: data.periodMonth.present
+          ? data.periodMonth.value
+          : this.periodMonth,
+      completedStepsJson: data.completedStepsJson.present
+          ? data.completedStepsJson.value
+          : this.completedStepsJson,
+      status: data.status.present ? data.status.value : this.status,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      closedAt: data.closedAt.present ? data.closedAt.value : this.closedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FinancialMonthlyCloseRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('periodMonth: $periodMonth, ')
+          ..write('completedStepsJson: $completedStepsJson, ')
+          ..write('status: $status, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('closedAt: $closedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    periodMonth,
+    completedStepsJson,
+    status,
+    startedAt,
+    closedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FinancialMonthlyCloseRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.periodMonth == this.periodMonth &&
+          other.completedStepsJson == this.completedStepsJson &&
+          other.status == this.status &&
+          other.startedAt == this.startedAt &&
+          other.closedAt == this.closedAt);
+}
+
+class FinancialMonthlyClosesCompanion
+    extends UpdateCompanion<FinancialMonthlyCloseRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> periodMonth;
+  final Value<String> completedStepsJson;
+  final Value<String> status;
+  final Value<DateTime> startedAt;
+  final Value<DateTime?> closedAt;
+  final Value<int> rowid;
+  const FinancialMonthlyClosesCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.periodMonth = const Value.absent(),
+    this.completedStepsJson = const Value.absent(),
+    this.status = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.closedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  FinancialMonthlyClosesCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String periodMonth,
+    this.completedStepsJson = const Value.absent(),
+    this.status = const Value.absent(),
+    required DateTime startedAt,
+    this.closedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       periodMonth = Value(periodMonth),
+       startedAt = Value(startedAt);
+  static Insertable<FinancialMonthlyCloseRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? periodMonth,
+    Expression<String>? completedStepsJson,
+    Expression<String>? status,
+    Expression<DateTime>? startedAt,
+    Expression<DateTime>? closedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (periodMonth != null) 'period_month': periodMonth,
+      if (completedStepsJson != null)
+        'completed_steps_json': completedStepsJson,
+      if (status != null) 'status': status,
+      if (startedAt != null) 'started_at': startedAt,
+      if (closedAt != null) 'closed_at': closedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  FinancialMonthlyClosesCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? periodMonth,
+    Value<String>? completedStepsJson,
+    Value<String>? status,
+    Value<DateTime>? startedAt,
+    Value<DateTime?>? closedAt,
+    Value<int>? rowid,
+  }) {
+    return FinancialMonthlyClosesCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      periodMonth: periodMonth ?? this.periodMonth,
+      completedStepsJson: completedStepsJson ?? this.completedStepsJson,
+      status: status ?? this.status,
+      startedAt: startedAt ?? this.startedAt,
+      closedAt: closedAt ?? this.closedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $FinancialMonthlyClosesTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (periodMonth.present) {
+      map['period_month'] = Variable<String>(periodMonth.value);
+    }
+    if (completedStepsJson.present) {
+      map['completed_steps_json'] = Variable<String>(completedStepsJson.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<DateTime>(startedAt.value);
+    }
+    if (closedAt.present) {
+      map['closed_at'] = Variable<DateTime>(closedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FinancialMonthlyClosesCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('periodMonth: $periodMonth, ')
+          ..write('completedStepsJson: $completedStepsJson, ')
+          ..write('status: $status, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('closedAt: $closedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $DevicesTable extends Devices with TableInfo<$DevicesTable, DeviceRow> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -32402,6 +35108,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CategoriesTable categories = $CategoriesTable(this);
   late final $BudgetsTable budgets = $BudgetsTable(this);
   late final $GoalsTable goals = $GoalsTable(this);
+  late final $FinancialDecisionsTable financialDecisions =
+      $FinancialDecisionsTable(this);
+  late final $FinancialSignalsTable financialSignals = $FinancialSignalsTable(
+    this,
+  );
+  late final $FinancialMonthlyClosesTable financialMonthlyCloses =
+      $FinancialMonthlyClosesTable(this);
   late final $DevicesTable devices = $DevicesTable(this);
   late final $OpLogsTable opLogs = $OpLogsTable(this);
   late final $MarketQuotesTable marketQuotes = $MarketQuotesTable(this);
@@ -32463,6 +35176,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     categories,
     budgets,
     goals,
+    financialDecisions,
+    financialSignals,
+    financialMonthlyCloses,
     devices,
     opLogs,
     marketQuotes,
@@ -40596,6 +43312,1265 @@ typedef $$GoalsTableProcessedTableManager =
       GoalRow,
       PrefetchHooks Function()
     >;
+typedef $$FinancialDecisionsTableCreateCompanionBuilder =
+    FinancialDecisionsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String template,
+      required String selectedVariant,
+      required int calculatorVersion,
+      required String baselineJson,
+      required String assumptionsJson,
+      required String selectedOutcomeJson,
+      required DateTime decidedAt,
+      required DateTime reviewDate,
+      Value<String?> actualOutcomeJson,
+      Value<DateTime?> reviewedAt,
+      Value<String> status,
+      Value<int> rowid,
+    });
+typedef $$FinancialDecisionsTableUpdateCompanionBuilder =
+    FinancialDecisionsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> template,
+      Value<String> selectedVariant,
+      Value<int> calculatorVersion,
+      Value<String> baselineJson,
+      Value<String> assumptionsJson,
+      Value<String> selectedOutcomeJson,
+      Value<DateTime> decidedAt,
+      Value<DateTime> reviewDate,
+      Value<String?> actualOutcomeJson,
+      Value<DateTime?> reviewedAt,
+      Value<String> status,
+      Value<int> rowid,
+    });
+
+class $$FinancialDecisionsTableFilterComposer
+    extends Composer<_$AppDatabase, $FinancialDecisionsTable> {
+  $$FinancialDecisionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get template => $composableBuilder(
+    column: $table.template,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get selectedVariant => $composableBuilder(
+    column: $table.selectedVariant,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get calculatorVersion => $composableBuilder(
+    column: $table.calculatorVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get baselineJson => $composableBuilder(
+    column: $table.baselineJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get assumptionsJson => $composableBuilder(
+    column: $table.assumptionsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get selectedOutcomeJson => $composableBuilder(
+    column: $table.selectedOutcomeJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get decidedAt => $composableBuilder(
+    column: $table.decidedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get reviewDate => $composableBuilder(
+    column: $table.reviewDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get actualOutcomeJson => $composableBuilder(
+    column: $table.actualOutcomeJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get reviewedAt => $composableBuilder(
+    column: $table.reviewedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FinancialDecisionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $FinancialDecisionsTable> {
+  $$FinancialDecisionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get template => $composableBuilder(
+    column: $table.template,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get selectedVariant => $composableBuilder(
+    column: $table.selectedVariant,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get calculatorVersion => $composableBuilder(
+    column: $table.calculatorVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get baselineJson => $composableBuilder(
+    column: $table.baselineJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get assumptionsJson => $composableBuilder(
+    column: $table.assumptionsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get selectedOutcomeJson => $composableBuilder(
+    column: $table.selectedOutcomeJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get decidedAt => $composableBuilder(
+    column: $table.decidedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get reviewDate => $composableBuilder(
+    column: $table.reviewDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get actualOutcomeJson => $composableBuilder(
+    column: $table.actualOutcomeJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get reviewedAt => $composableBuilder(
+    column: $table.reviewedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FinancialDecisionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FinancialDecisionsTable> {
+  $$FinancialDecisionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get template =>
+      $composableBuilder(column: $table.template, builder: (column) => column);
+
+  GeneratedColumn<String> get selectedVariant => $composableBuilder(
+    column: $table.selectedVariant,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get calculatorVersion => $composableBuilder(
+    column: $table.calculatorVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get baselineJson => $composableBuilder(
+    column: $table.baselineJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get assumptionsJson => $composableBuilder(
+    column: $table.assumptionsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get selectedOutcomeJson => $composableBuilder(
+    column: $table.selectedOutcomeJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get decidedAt =>
+      $composableBuilder(column: $table.decidedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get reviewDate => $composableBuilder(
+    column: $table.reviewDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get actualOutcomeJson => $composableBuilder(
+    column: $table.actualOutcomeJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get reviewedAt => $composableBuilder(
+    column: $table.reviewedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+}
+
+class $$FinancialDecisionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FinancialDecisionsTable,
+          FinancialDecisionRow,
+          $$FinancialDecisionsTableFilterComposer,
+          $$FinancialDecisionsTableOrderingComposer,
+          $$FinancialDecisionsTableAnnotationComposer,
+          $$FinancialDecisionsTableCreateCompanionBuilder,
+          $$FinancialDecisionsTableUpdateCompanionBuilder,
+          (
+            FinancialDecisionRow,
+            BaseReferences<
+              _$AppDatabase,
+              $FinancialDecisionsTable,
+              FinancialDecisionRow
+            >,
+          ),
+          FinancialDecisionRow,
+          PrefetchHooks Function()
+        > {
+  $$FinancialDecisionsTableTableManager(
+    _$AppDatabase db,
+    $FinancialDecisionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FinancialDecisionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FinancialDecisionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FinancialDecisionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> template = const Value.absent(),
+                Value<String> selectedVariant = const Value.absent(),
+                Value<int> calculatorVersion = const Value.absent(),
+                Value<String> baselineJson = const Value.absent(),
+                Value<String> assumptionsJson = const Value.absent(),
+                Value<String> selectedOutcomeJson = const Value.absent(),
+                Value<DateTime> decidedAt = const Value.absent(),
+                Value<DateTime> reviewDate = const Value.absent(),
+                Value<String?> actualOutcomeJson = const Value.absent(),
+                Value<DateTime?> reviewedAt = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FinancialDecisionsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                template: template,
+                selectedVariant: selectedVariant,
+                calculatorVersion: calculatorVersion,
+                baselineJson: baselineJson,
+                assumptionsJson: assumptionsJson,
+                selectedOutcomeJson: selectedOutcomeJson,
+                decidedAt: decidedAt,
+                reviewDate: reviewDate,
+                actualOutcomeJson: actualOutcomeJson,
+                reviewedAt: reviewedAt,
+                status: status,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String template,
+                required String selectedVariant,
+                required int calculatorVersion,
+                required String baselineJson,
+                required String assumptionsJson,
+                required String selectedOutcomeJson,
+                required DateTime decidedAt,
+                required DateTime reviewDate,
+                Value<String?> actualOutcomeJson = const Value.absent(),
+                Value<DateTime?> reviewedAt = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FinancialDecisionsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                template: template,
+                selectedVariant: selectedVariant,
+                calculatorVersion: calculatorVersion,
+                baselineJson: baselineJson,
+                assumptionsJson: assumptionsJson,
+                selectedOutcomeJson: selectedOutcomeJson,
+                decidedAt: decidedAt,
+                reviewDate: reviewDate,
+                actualOutcomeJson: actualOutcomeJson,
+                reviewedAt: reviewedAt,
+                status: status,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FinancialDecisionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FinancialDecisionsTable,
+      FinancialDecisionRow,
+      $$FinancialDecisionsTableFilterComposer,
+      $$FinancialDecisionsTableOrderingComposer,
+      $$FinancialDecisionsTableAnnotationComposer,
+      $$FinancialDecisionsTableCreateCompanionBuilder,
+      $$FinancialDecisionsTableUpdateCompanionBuilder,
+      (
+        FinancialDecisionRow,
+        BaseReferences<
+          _$AppDatabase,
+          $FinancialDecisionsTable,
+          FinancialDecisionRow
+        >,
+      ),
+      FinancialDecisionRow,
+      PrefetchHooks Function()
+    >;
+typedef $$FinancialSignalsTableCreateCompanionBuilder =
+    FinancialSignalsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String kind,
+      required String sourceKey,
+      required String fingerprint,
+      required String priority,
+      Value<String> status,
+      Value<String> evidenceJson,
+      required String route,
+      required DateTime firstDetectedAt,
+      required DateTime lastDetectedAt,
+      Value<DateTime?> snoozedUntil,
+      Value<DateTime?> resolvedAt,
+      Value<int> rowid,
+    });
+typedef $$FinancialSignalsTableUpdateCompanionBuilder =
+    FinancialSignalsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> kind,
+      Value<String> sourceKey,
+      Value<String> fingerprint,
+      Value<String> priority,
+      Value<String> status,
+      Value<String> evidenceJson,
+      Value<String> route,
+      Value<DateTime> firstDetectedAt,
+      Value<DateTime> lastDetectedAt,
+      Value<DateTime?> snoozedUntil,
+      Value<DateTime?> resolvedAt,
+      Value<int> rowid,
+    });
+
+class $$FinancialSignalsTableFilterComposer
+    extends Composer<_$AppDatabase, $FinancialSignalsTable> {
+  $$FinancialSignalsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get priority => $composableBuilder(
+    column: $table.priority,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get evidenceJson => $composableBuilder(
+    column: $table.evidenceJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get route => $composableBuilder(
+    column: $table.route,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get firstDetectedAt => $composableBuilder(
+    column: $table.firstDetectedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastDetectedAt => $composableBuilder(
+    column: $table.lastDetectedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get snoozedUntil => $composableBuilder(
+    column: $table.snoozedUntil,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get resolvedAt => $composableBuilder(
+    column: $table.resolvedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FinancialSignalsTableOrderingComposer
+    extends Composer<_$AppDatabase, $FinancialSignalsTable> {
+  $$FinancialSignalsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get priority => $composableBuilder(
+    column: $table.priority,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get evidenceJson => $composableBuilder(
+    column: $table.evidenceJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get route => $composableBuilder(
+    column: $table.route,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get firstDetectedAt => $composableBuilder(
+    column: $table.firstDetectedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastDetectedAt => $composableBuilder(
+    column: $table.lastDetectedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get snoozedUntil => $composableBuilder(
+    column: $table.snoozedUntil,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get resolvedAt => $composableBuilder(
+    column: $table.resolvedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FinancialSignalsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FinancialSignalsTable> {
+  $$FinancialSignalsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceKey =>
+      $composableBuilder(column: $table.sourceKey, builder: (column) => column);
+
+  GeneratedColumn<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get priority =>
+      $composableBuilder(column: $table.priority, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get evidenceJson => $composableBuilder(
+    column: $table.evidenceJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get route =>
+      $composableBuilder(column: $table.route, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get firstDetectedAt => $composableBuilder(
+    column: $table.firstDetectedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastDetectedAt => $composableBuilder(
+    column: $table.lastDetectedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get snoozedUntil => $composableBuilder(
+    column: $table.snoozedUntil,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get resolvedAt => $composableBuilder(
+    column: $table.resolvedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$FinancialSignalsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FinancialSignalsTable,
+          FinancialSignalRow,
+          $$FinancialSignalsTableFilterComposer,
+          $$FinancialSignalsTableOrderingComposer,
+          $$FinancialSignalsTableAnnotationComposer,
+          $$FinancialSignalsTableCreateCompanionBuilder,
+          $$FinancialSignalsTableUpdateCompanionBuilder,
+          (
+            FinancialSignalRow,
+            BaseReferences<
+              _$AppDatabase,
+              $FinancialSignalsTable,
+              FinancialSignalRow
+            >,
+          ),
+          FinancialSignalRow,
+          PrefetchHooks Function()
+        > {
+  $$FinancialSignalsTableTableManager(
+    _$AppDatabase db,
+    $FinancialSignalsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FinancialSignalsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FinancialSignalsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FinancialSignalsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String> sourceKey = const Value.absent(),
+                Value<String> fingerprint = const Value.absent(),
+                Value<String> priority = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String> evidenceJson = const Value.absent(),
+                Value<String> route = const Value.absent(),
+                Value<DateTime> firstDetectedAt = const Value.absent(),
+                Value<DateTime> lastDetectedAt = const Value.absent(),
+                Value<DateTime?> snoozedUntil = const Value.absent(),
+                Value<DateTime?> resolvedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FinancialSignalsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                kind: kind,
+                sourceKey: sourceKey,
+                fingerprint: fingerprint,
+                priority: priority,
+                status: status,
+                evidenceJson: evidenceJson,
+                route: route,
+                firstDetectedAt: firstDetectedAt,
+                lastDetectedAt: lastDetectedAt,
+                snoozedUntil: snoozedUntil,
+                resolvedAt: resolvedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String kind,
+                required String sourceKey,
+                required String fingerprint,
+                required String priority,
+                Value<String> status = const Value.absent(),
+                Value<String> evidenceJson = const Value.absent(),
+                required String route,
+                required DateTime firstDetectedAt,
+                required DateTime lastDetectedAt,
+                Value<DateTime?> snoozedUntil = const Value.absent(),
+                Value<DateTime?> resolvedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FinancialSignalsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                kind: kind,
+                sourceKey: sourceKey,
+                fingerprint: fingerprint,
+                priority: priority,
+                status: status,
+                evidenceJson: evidenceJson,
+                route: route,
+                firstDetectedAt: firstDetectedAt,
+                lastDetectedAt: lastDetectedAt,
+                snoozedUntil: snoozedUntil,
+                resolvedAt: resolvedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FinancialSignalsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FinancialSignalsTable,
+      FinancialSignalRow,
+      $$FinancialSignalsTableFilterComposer,
+      $$FinancialSignalsTableOrderingComposer,
+      $$FinancialSignalsTableAnnotationComposer,
+      $$FinancialSignalsTableCreateCompanionBuilder,
+      $$FinancialSignalsTableUpdateCompanionBuilder,
+      (
+        FinancialSignalRow,
+        BaseReferences<
+          _$AppDatabase,
+          $FinancialSignalsTable,
+          FinancialSignalRow
+        >,
+      ),
+      FinancialSignalRow,
+      PrefetchHooks Function()
+    >;
+typedef $$FinancialMonthlyClosesTableCreateCompanionBuilder =
+    FinancialMonthlyClosesCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String periodMonth,
+      Value<String> completedStepsJson,
+      Value<String> status,
+      required DateTime startedAt,
+      Value<DateTime?> closedAt,
+      Value<int> rowid,
+    });
+typedef $$FinancialMonthlyClosesTableUpdateCompanionBuilder =
+    FinancialMonthlyClosesCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> periodMonth,
+      Value<String> completedStepsJson,
+      Value<String> status,
+      Value<DateTime> startedAt,
+      Value<DateTime?> closedAt,
+      Value<int> rowid,
+    });
+
+class $$FinancialMonthlyClosesTableFilterComposer
+    extends Composer<_$AppDatabase, $FinancialMonthlyClosesTable> {
+  $$FinancialMonthlyClosesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get periodMonth => $composableBuilder(
+    column: $table.periodMonth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get completedStepsJson => $composableBuilder(
+    column: $table.completedStepsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get closedAt => $composableBuilder(
+    column: $table.closedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FinancialMonthlyClosesTableOrderingComposer
+    extends Composer<_$AppDatabase, $FinancialMonthlyClosesTable> {
+  $$FinancialMonthlyClosesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get periodMonth => $composableBuilder(
+    column: $table.periodMonth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get completedStepsJson => $composableBuilder(
+    column: $table.completedStepsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get closedAt => $composableBuilder(
+    column: $table.closedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FinancialMonthlyClosesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FinancialMonthlyClosesTable> {
+  $$FinancialMonthlyClosesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get periodMonth => $composableBuilder(
+    column: $table.periodMonth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get completedStepsJson => $composableBuilder(
+    column: $table.completedStepsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get closedAt =>
+      $composableBuilder(column: $table.closedAt, builder: (column) => column);
+}
+
+class $$FinancialMonthlyClosesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FinancialMonthlyClosesTable,
+          FinancialMonthlyCloseRow,
+          $$FinancialMonthlyClosesTableFilterComposer,
+          $$FinancialMonthlyClosesTableOrderingComposer,
+          $$FinancialMonthlyClosesTableAnnotationComposer,
+          $$FinancialMonthlyClosesTableCreateCompanionBuilder,
+          $$FinancialMonthlyClosesTableUpdateCompanionBuilder,
+          (
+            FinancialMonthlyCloseRow,
+            BaseReferences<
+              _$AppDatabase,
+              $FinancialMonthlyClosesTable,
+              FinancialMonthlyCloseRow
+            >,
+          ),
+          FinancialMonthlyCloseRow,
+          PrefetchHooks Function()
+        > {
+  $$FinancialMonthlyClosesTableTableManager(
+    _$AppDatabase db,
+    $FinancialMonthlyClosesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FinancialMonthlyClosesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$FinancialMonthlyClosesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$FinancialMonthlyClosesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> periodMonth = const Value.absent(),
+                Value<String> completedStepsJson = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<DateTime> startedAt = const Value.absent(),
+                Value<DateTime?> closedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FinancialMonthlyClosesCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                periodMonth: periodMonth,
+                completedStepsJson: completedStepsJson,
+                status: status,
+                startedAt: startedAt,
+                closedAt: closedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String periodMonth,
+                Value<String> completedStepsJson = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                required DateTime startedAt,
+                Value<DateTime?> closedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FinancialMonthlyClosesCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                periodMonth: periodMonth,
+                completedStepsJson: completedStepsJson,
+                status: status,
+                startedAt: startedAt,
+                closedAt: closedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FinancialMonthlyClosesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FinancialMonthlyClosesTable,
+      FinancialMonthlyCloseRow,
+      $$FinancialMonthlyClosesTableFilterComposer,
+      $$FinancialMonthlyClosesTableOrderingComposer,
+      $$FinancialMonthlyClosesTableAnnotationComposer,
+      $$FinancialMonthlyClosesTableCreateCompanionBuilder,
+      $$FinancialMonthlyClosesTableUpdateCompanionBuilder,
+      (
+        FinancialMonthlyCloseRow,
+        BaseReferences<
+          _$AppDatabase,
+          $FinancialMonthlyClosesTable,
+          FinancialMonthlyCloseRow
+        >,
+      ),
+      FinancialMonthlyCloseRow,
+      PrefetchHooks Function()
+    >;
 typedef $$DevicesTableCreateCompanionBuilder =
     DevicesCompanion Function({
       required String ownerUserId,
@@ -47613,6 +51588,15 @@ class $AppDatabaseManager {
       $$BudgetsTableTableManager(_db, _db.budgets);
   $$GoalsTableTableManager get goals =>
       $$GoalsTableTableManager(_db, _db.goals);
+  $$FinancialDecisionsTableTableManager get financialDecisions =>
+      $$FinancialDecisionsTableTableManager(_db, _db.financialDecisions);
+  $$FinancialSignalsTableTableManager get financialSignals =>
+      $$FinancialSignalsTableTableManager(_db, _db.financialSignals);
+  $$FinancialMonthlyClosesTableTableManager get financialMonthlyCloses =>
+      $$FinancialMonthlyClosesTableTableManager(
+        _db,
+        _db.financialMonthlyCloses,
+      );
   $$DevicesTableTableManager get devices =>
       $$DevicesTableTableManager(_db, _db.devices);
   $$OpLogsTableTableManager get opLogs =>

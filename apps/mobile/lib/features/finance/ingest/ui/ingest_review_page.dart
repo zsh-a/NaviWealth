@@ -20,6 +20,7 @@ import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 import '../../../../core/ai/visual/visual.dart';
+import '../../../../core/product/product_metrics.dart';
 import '../../../../core/shell/master_detail_layout.dart';
 import '../../../../core/shortcuts/keyboard_platform.dart';
 import '../../../../core/shortcuts/master_detail_shortcuts.dart';
@@ -766,6 +767,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         return;
       }
       final confirmed = await svc.confirm(draft, fromAccountId: accountId);
+      await ref
+          .read(productMetricsProvider.notifier)
+          .record(ProductFunnelEvent.importReviewCompleted, success: true);
       if (mounted) {
         AppMessenger.show(
           context,
@@ -888,6 +892,11 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
           );
         },
       );
+      if (result.confirmed.isNotEmpty) {
+        await ref
+            .read(productMetricsProvider.notifier)
+            .record(ProductFunnelEvent.importReviewCompleted, success: true);
+      }
       if (mounted) {
         final confirmedIds = result.confirmed
             .map((item) => item.draft.draftId)

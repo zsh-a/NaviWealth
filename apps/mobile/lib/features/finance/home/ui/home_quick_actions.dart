@@ -42,29 +42,44 @@ class _ActiveQuickActions extends StatelessWidget {
           label: l10n.superFabTransfer,
           onPress: () => context.push(FinanceRoutes.transfer),
         ),
+        _HomeQuickActionData(
+          icon: FLucideIcons.listChecks,
+          label: l10n.monthlyCloseTitle,
+          onPress: () => context.push(FinanceRoutes.activityMonthlyClose),
+        ),
       ],
     );
   }
 }
 
-class _OnboardingQuickActions extends StatelessWidget {
+class _OnboardingQuickActions extends ConsumerWidget {
   const _OnboardingQuickActions({required this.l10n});
 
   final AppLocalizations l10n;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return _AdaptiveQuickActions(
       actions: [
         _HomeQuickActionData(
           icon: FLucideIcons.walletCards,
           label: l10n.homeQuickAddAccount,
-          onPress: () => context.push(FinanceRoutes.wealthAccountNew),
+          onPress: () {
+            ref
+                .read(productMetricsProvider.notifier)
+                .record(ProductFunnelEvent.activationStarted);
+            context.push(FinanceRoutes.wealthAccountNew);
+          },
         ),
         _HomeQuickActionData(
           icon: FLucideIcons.upload,
           label: l10n.homeQuickImport,
-          onPress: () => context.push(FinanceRoutes.activityIngest),
+          onPress: () {
+            ref
+                .read(productMetricsProvider.notifier)
+                .record(ProductFunnelEvent.activationStarted);
+            context.push(FinanceRoutes.activityIngest);
+          },
         ),
       ],
     );

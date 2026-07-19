@@ -31,15 +31,20 @@ import '../core/ai/write/persisted_undo_dispatcher.dart';
 import '../core/auth/domain_scope.dart';
 import '../core/auth/providers.dart' as auth_providers;
 import '../core/command_palette/command_palette_entry.dart';
+import '../core/lifeos/action_dispatcher.dart';
 import '../core/lifeos/action_outcome.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/shell/domain_shell.dart';
 import '../core/shell/domain_tabs_shell.dart';
 import '../core/shell/entity_route_resolver.dart';
+import '../core/sync/mutation_context.dart';
+import '../core/sync/sync_meta.dart';
 import '../design_system/preferences/theme_preferences.dart';
 import '../features/ai_chat/composition/ai_chat_surface.dart';
 import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
 import '../features/execution/composition/execution_route_paths.dart';
+import '../features/execution/data/providers.dart';
+import '../features/execution/domain/execution_models.dart';
 import '../features/finance/composition/finance_route_paths.dart';
 import '../features/health/composition/health_route_paths.dart';
 import '../features/knowledge/composition/knowledge_route_paths.dart';
@@ -61,6 +66,10 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
     ),
     domainPackRegistryProvider.overrideWith((ref) => resolvedPacks),
     actionOutcomeSummariesProvider.overrideWith(watchLifeActionOutcomes),
+    lifeActionDispatcherProvider.overrideWith((ref) {
+      return (draft) => _dispatchLifeAction(ref, draft);
+    }),
+    lifeActionReviewRouteProvider.overrideWith((ref) => ExecutionRoutes.review),
     deviceToolsProvider.overrideWith(
       (ref) => domainDeviceTools(ref.watch(activeDomainPacksProvider)),
     ),
@@ -111,6 +120,35 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
     }),
     ...domainProviderOverrides(resolvedPacks),
   ];
+}
+
+Future<String> _dispatchLifeAction(Ref ref, LifeActionDraft draft) async {
+  final repository = await ref.read(executionRepositoryProvider.future);
+  final stamp = await (await ref.read(mutationStamperProvider.future)).stamp();
+  final id = kExecutionUuid.v4();
+  await repository.upsertAction(
+    ExecutionAction(
+      id: id,
+      title: draft.title,
+      note: draft.note,
+      priority: ExecutionPriority.parse(draft.priority),
+      dueAt: draft.dueAt,
+      source: ExecutionSourceRef(
+        domain: draft.sourceDomain,
+        rowFamily: draft.sourceRowFamily,
+        rowId: draft.sourceRowId,
+        labelSnapshot: draft.title,
+      ),
+      createdAt: stamp.now,
+      sync: SyncMeta(
+        ownerUserId: stamp.ownerUserId,
+        updatedAt: stamp.now,
+        updatedByDevice: stamp.deviceId,
+        hlc: stamp.hlc,
+      ),
+    ),
+  );
+  return id;
 }
 
 String? appEntityRouteResolver(EntityRouteRef ref) {

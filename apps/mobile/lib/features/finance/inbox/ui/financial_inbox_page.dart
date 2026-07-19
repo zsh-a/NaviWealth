@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/product/product_metrics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../data/financial_inbox_providers.dart';
@@ -18,30 +19,39 @@ class FinancialInboxPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.financialInboxTitle,
       childPad: false,
-      child: items.isEmpty
-          ? AppEmptyState(
-              icon: FLucideIcons.circleCheckBig,
-              title: l10n.financialInboxEmptyTitle,
-              message: l10n.financialInboxEmptyBody,
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.all(AppSpacing.s16),
-              itemCount: items.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(height: AppSpacing.s10),
-              itemBuilder: (context, index) => _InboxRow(item: items[index]),
-            ),
+      child: items.when(
+        loading: () => const Center(child: FCircularProgress()),
+        error: (error, _) => AppEmptyState.error(
+          title: l10n.commonLoadFailed,
+          message: '$error',
+          retryLabel: l10n.commonRetry,
+          onRetry: () => ref.invalidate(financialInboxProvider),
+        ),
+        data: (rows) => rows.isEmpty
+            ? AppEmptyState(
+                icon: FLucideIcons.circleCheckBig,
+                title: l10n.financialInboxEmptyTitle,
+                message: l10n.financialInboxEmptyBody,
+              )
+            : ListView.separated(
+                padding: const EdgeInsets.all(AppSpacing.s16),
+                itemCount: rows.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: AppSpacing.s10),
+                itemBuilder: (context, index) => _InboxRow(item: rows[index]),
+              ),
+      ),
     );
   }
 }
 
-class _InboxRow extends StatelessWidget {
+class _InboxRow extends ConsumerWidget {
   const _InboxRow({required this.item});
 
   final FinancialInboxItem item;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final (icon, title, body) = switch (item.kind) {
       FinancialInboxKind.importReview => (
@@ -78,7 +88,48 @@ class _InboxRow extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(FLucideIcons.chevronRight, size: AppIconSizes.sm),
+          Column(
+            children: [
+              FButton(
+                variant: FButtonVariant.ghost,
+                onPress: () async {
+                  final repository = await ref.read(
+                    financialSignalRepositoryProvider.future,
+                  );
+                  await repository.resolve(item.id, now: DateTime.now());
+                  final remaining = await repository.listVisible(
+                    now: DateTime.now(),
+                  );
+                  if (remaining.isEmpty) {
+                    await ref
+                        .read(productMetricsProvider.notifier)
+                        .record(
+                          ProductFunnelEvent.financialInboxCleared,
+                          success: true,
+                        );
+                  }
+                  ref.invalidate(financialInboxProvider);
+                },
+                child: Text(l10n.financialInboxResolve),
+              ),
+              FButton(
+                variant: FButtonVariant.ghost,
+                onPress: () async {
+                  final now = DateTime.now();
+                  final repository = await ref.read(
+                    financialSignalRepositoryProvider.future,
+                  );
+                  await repository.snooze(
+                    item.id,
+                    until: now.add(const Duration(days: 7)),
+                    now: now,
+                  );
+                  ref.invalidate(financialInboxProvider);
+                },
+                child: Text(l10n.financialInboxSnooze),
+              ),
+            ],
+          ),
         ],
       ),
     );
