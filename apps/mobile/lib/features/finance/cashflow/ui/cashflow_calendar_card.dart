@@ -173,6 +173,8 @@ class _CashflowBalanceBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
+      key: const ValueKey('cashflow-balance-bar'),
+      width: double.infinity,
       height: AppSpacing.s12,
       child: CustomPaint(
         painter: _CashflowBalancePainter(

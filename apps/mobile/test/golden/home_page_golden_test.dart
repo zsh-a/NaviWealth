@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
@@ -15,11 +16,15 @@ import 'package:naviwealth/features/finance/cashflow/data/dividend_forecast_prov
 import 'package:naviwealth/features/finance/cashflow/data/recurring_transaction_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_kind.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/journal_entry.dart';
+import 'package:naviwealth/features/finance/domain/models/posting.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/home/ui/home_page.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
@@ -110,21 +115,169 @@ ProjectedDividend _homeDividendForecast() {
   );
 }
 
-List<Override> _homeOverrides(SharedPreferences prefs) => [
+CategoryItem _categoryItem({
+  required String id,
+  required String name,
+  required String amount,
+}) => CategoryItem(
+  id: id,
+  name: name,
+  subtitle: null,
+  valueInBase: Money(_d(amount), 'CNY'),
+  nativeAmount: _d(amount),
+  nativeCurrency: 'CNY',
+);
+
+DashboardSnapshot _establishedSnapshot() => DashboardSnapshot(
+  asOf: _goldenNow,
+  baseCurrency: 'CNY',
+  allocations: [
+    CategoryAllocation(
+      category: AssetCategory.stock,
+      totalInBase: Money(_d('620000'), 'CNY'),
+      items: [
+        _categoryItem(id: 'stock-1', name: 'Core portfolio', amount: '620000'),
+      ],
+    ),
+    CategoryAllocation(
+      category: AssetCategory.cash,
+      totalInBase: Money(_d('180000'), 'CNY'),
+      items: [
+        _categoryItem(id: 'cash-1', name: 'Emergency fund', amount: '180000'),
+      ],
+    ),
+    CategoryAllocation(
+      category: AssetCategory.liability,
+      totalInBase: Money(_d('100000'), 'CNY'),
+      items: [_categoryItem(id: 'loan-1', name: 'Home loan', amount: '100000')],
+    ),
+  ],
+  totalAssets: Money(_d('800000'), 'CNY'),
+  totalLiabilities: Money(_d('100000'), 'CNY'),
+  netWorth: Money(_d('700000'), 'CNY'),
+);
+
+Account _activityAccount({
+  required String id,
+  required String name,
+  required AccountSide side,
+}) => Account(
+  id: id,
+  type: AccountCategory.bank,
+  name: name,
+  currency: 'CNY',
+  category: side,
+  sync: _meta(),
+);
+
+JournalEntryWithPostings _activityEntry({
+  required String id,
+  required String narration,
+  required String amount,
+  required int day,
+}) => JournalEntryWithPostings(
+  entry: JournalEntry(
+    id: id,
+    date: DateTime.utc(2026, 5, day, 10),
+    narration: narration,
+    sync: _meta(),
+  ),
+  postings: [
+    Posting(
+      id: '$id-expense',
+      journalEntryId: id,
+      position: 0,
+      accountId: 'expenses:daily',
+      units: _d(amount),
+      unit: 'CNY',
+      sync: _meta(),
+    ),
+    Posting(
+      id: '$id-bank',
+      journalEntryId: id,
+      position: 1,
+      accountId: 'assets:bank',
+      units: -_d(amount),
+      unit: 'CNY',
+      sync: _meta(),
+    ),
+  ],
+);
+
+ActivityFeedPage _establishedActivityFeed() {
+  final accounts = [
+    _activityAccount(
+      id: 'assets:bank',
+      name: 'Daily account',
+      side: AccountSide.asset,
+    ),
+    _activityAccount(
+      id: 'expenses:daily',
+      name: 'Daily spending',
+      side: AccountSide.expense,
+    ),
+  ];
+  final entries = [
+    _activityEntry(
+      id: 'entry-3',
+      narration: 'Weekly groceries',
+      amount: '386',
+      day: 17,
+    ),
+    _activityEntry(
+      id: 'entry-2',
+      narration: 'Family dinner',
+      amount: '268',
+      day: 16,
+    ),
+    _activityEntry(
+      id: 'entry-1',
+      narration: 'Morning coffee',
+      amount: '32',
+      day: 15,
+    ),
+  ];
+  return ActivityFeedPage(
+    entries: entries,
+    totalCount: entries.length,
+    hasMore: false,
+    isFiltered: false,
+    accountsById: {for (final account in accounts) account.id: account},
+  );
+}
+
+DashboardHeaderMetrics _headerMetrics() => DashboardHeaderMetrics(
+  baseCurrency: 'CNY',
+  dailyChange: Money(_d('1280'), 'CNY'),
+  monthlyChange: Money(_d('16800'), 'CNY'),
+  monthlyChangePct: 0.0246,
+  ytdChange: Money(_d('58800'), 'CNY'),
+  ytdChangePct: 0.0917,
+);
+
+List<Override> _homeOverrides(
+  SharedPreferences prefs, {
+  DashboardSnapshot? snapshot,
+  ActivityFeedPage? activityFeed,
+}) => [
   sharedPreferencesProvider.overrideWithValue(prefs),
   cashFlowNowProvider.overrideWithValue(_goldenNow),
   dashboardSnapshotProvider.overrideWith(
-    (_) async => DashboardSnapshot.empty(asOf: _goldenNow, baseCurrency: 'CNY'),
+    (_) async =>
+        snapshot ??
+        DashboardSnapshot.empty(asOf: _goldenNow, baseCurrency: 'CNY'),
   ),
+  dashboardHeaderMetricsProvider.overrideWith((_) async => _headerMetrics()),
   activityFeedProvider.overrideWith(
     (_) => Stream.value(
-      const ActivityFeedPage(
-        entries: [],
-        totalCount: 0,
-        hasMore: false,
-        isFiltered: false,
-        accountsById: {},
-      ),
+      activityFeed ??
+          const ActivityFeedPage(
+            entries: [],
+            totalCount: 0,
+            hasMore: false,
+            isFiltered: false,
+            accountsById: {},
+          ),
     ),
   ),
   recurringMaterialiseDueProvider.overrideWith((ref, now) async => 0),
@@ -191,4 +344,41 @@ void main() {
       expect(find.text('Import'), findsOneWidget);
     },
   );
+
+  for (final profile in [
+    ResponsiveGoldenProfile.narrow,
+    ResponsiveGoldenProfile.wide,
+  ]) {
+    final suffix = profile == ResponsiveGoldenProfile.narrow
+        ? 'narrow'
+        : 'wide';
+    runResponsiveGolden(
+      'home_page established — $suffix',
+      profile: profile,
+      body: (tester, profile) async {
+        final prefs = await SharedPreferences.getInstance();
+        await pumpAndSnapshotResponsive(
+          tester,
+          name: 'home_page_established_$suffix',
+          profile: profile,
+          overrides: _homeOverrides(
+            prefs,
+            snapshot: _establishedSnapshot(),
+            activityFeed: _establishedActivityFeed(),
+          ),
+          child: const HomePage(),
+        );
+
+        expect(find.text('Record entry'), findsOneWidget);
+        expect(find.text('Transfer'), findsOneWidget);
+        expect(find.text('Weekly groceries'), findsOneWidget);
+        expect(
+          tester
+              .getSize(find.byKey(const ValueKey('cashflow-balance-bar')))
+              .width,
+          greaterThan(200),
+        );
+      },
+    );
+  }
 }
