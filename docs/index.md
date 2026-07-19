@@ -26,7 +26,8 @@ This documentation uses a docs-as-code structure:
 | Work on sync | [Sync v3 Protocol](sync/sync-v3.md), [Protocol Test Catalogue](sync/sync-protocol-tests.md) |
 | Add business diagnostics | [Structured Logging](development/logging.md) |
 | Run or test locally | [Local Development](development/local-development.md), [Testing Strategy](development/testing-strategy.md) |
-| Plan product work | [LifeOS Roadmap](roadmap/roadmap-lifeos.md), [FinanceOS Roadmap](roadmap/roadmap-finance.md) |
+| Validate product direction | [Product Direction And Demand Validation](roadmap/product-direction-and-demand-validation.md) |
+| Plan committed product work | [LifeOS Roadmap](roadmap/roadmap-lifeos.md), [FinanceOS Roadmap](roadmap/roadmap-finance.md) |
 
 ## Active Domain Sources
 

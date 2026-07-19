@@ -52,5 +52,6 @@ nav:
   - Operations:
       - Branch Protection: operations/branch-protection.md
   - Roadmap:
+      - Product Direction And Demand Validation: roadmap/product-direction-and-demand-validation.md
       - LifeOS Roadmap: roadmap/roadmap-lifeos.md
       - FinanceOS Roadmap: roadmap/roadmap-finance.md
