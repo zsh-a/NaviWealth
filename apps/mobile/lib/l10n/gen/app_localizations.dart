@@ -23519,6 +23519,228 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Excluded because FX rates are missing: {currencies}'**
   String moneyRunwayMissingFx(Object currencies);
+
+  /// No description provided for @financeActivationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your first useful result'**
+  String get financeActivationTitle;
+
+  /// No description provided for @financeActivationProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{completed}/{total}'**
+  String financeActivationProgress(int completed, int total);
+
+  /// No description provided for @financeActivationImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with real activity'**
+  String get financeActivationImportTitle;
+
+  /// No description provided for @financeActivationImportBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Import a statement so the result is grounded in your own data.'**
+  String get financeActivationImportBody;
+
+  /// No description provided for @financeActivationImportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Import statement'**
+  String get financeActivationImportAction;
+
+  /// No description provided for @financeActivationReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review only the exceptions'**
+  String get financeActivationReviewTitle;
+
+  /// No description provided for @financeActivationReviewBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items still need confirmation or recovery.'**
+  String financeActivationReviewBody(int count);
+
+  /// No description provided for @financeActivationReviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue review'**
+  String get financeActivationReviewAction;
+
+  /// No description provided for @financeActivationRunwayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the next 90 days'**
+  String get financeActivationRunwayTitle;
+
+  /// No description provided for @financeActivationRunwayBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your reviewed entries are ready. Verify the resulting cash runway and its missing data.'**
+  String get financeActivationRunwayBody;
+
+  /// No description provided for @financeActivationRunwayAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review runway'**
+  String get financeActivationRunwayAction;
+
+  /// No description provided for @financialInboxEvidenceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence'**
+  String get financialInboxEvidenceTitle;
+
+  /// No description provided for @financialInboxFirstDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'First detected'**
+  String get financialInboxFirstDetected;
+
+  /// No description provided for @financialInboxLastChecked.
+  ///
+  /// In en, this message translates to:
+  /// **'Last checked'**
+  String get financialInboxLastChecked;
+
+  /// No description provided for @financialInboxLinkedAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked action'**
+  String get financialInboxLinkedAction;
+
+  /// No description provided for @financialInboxFixSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix the source'**
+  String get financialInboxFixSource;
+
+  /// No description provided for @financialInboxCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create action'**
+  String get financialInboxCreateAction;
+
+  /// No description provided for @financialInboxViewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'View action'**
+  String get financialInboxViewAction;
+
+  /// No description provided for @financialInboxActionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable ExecutionOS to create an action.'**
+  String get financialInboxActionUnavailable;
+
+  /// No description provided for @financialInboxEvidencePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get financialInboxEvidencePeriod;
+
+  /// No description provided for @financialInboxEvidenceMismatchCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance differences'**
+  String get financialInboxEvidenceMismatchCount;
+
+  /// No description provided for @financialInboxEvidenceChangeRatio.
+  ///
+  /// In en, this message translates to:
+  /// **'Change ratio'**
+  String get financialInboxEvidenceChangeRatio;
+
+  /// No description provided for @financialInboxEvidenceChangeCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes'**
+  String get financialInboxEvidenceChangeCount;
+
+  /// No description provided for @financialInboxEvidenceStaleCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Stale values'**
+  String get financialInboxEvidenceStaleCount;
+
+  /// No description provided for @financialInboxEvidenceReviewDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Review date'**
+  String get financialInboxEvidenceReviewDate;
+
+  /// No description provided for @financialInboxEvidenceCurrencies.
+  ///
+  /// In en, this message translates to:
+  /// **'Currencies'**
+  String get financialInboxEvidenceCurrencies;
+
+  /// No description provided for @financialInboxEvidenceCompleteness.
+  ///
+  /// In en, this message translates to:
+  /// **'Data completeness'**
+  String get financialInboxEvidenceCompleteness;
+
+  /// No description provided for @financialInboxActionTodo.
+  ///
+  /// In en, this message translates to:
+  /// **'To do'**
+  String get financialInboxActionTodo;
+
+  /// No description provided for @financialInboxActionDoing.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get financialInboxActionDoing;
+
+  /// No description provided for @financialInboxActionBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked'**
+  String get financialInboxActionBlocked;
+
+  /// No description provided for @financialInboxActionDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed — signal rechecked'**
+  String get financialInboxActionDone;
+
+  /// No description provided for @financialInboxActionDropped.
+  ///
+  /// In en, this message translates to:
+  /// **'Dropped'**
+  String get financialInboxActionDropped;
+
+  /// No description provided for @financialInboxActionUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get financialInboxActionUnknown;
+
+  /// No description provided for @monthlyCloseCoverageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account coverage'**
+  String get monthlyCloseCoverageTitle;
+
+  /// No description provided for @monthlyCloseCoverageValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{accepted}/{total}'**
+  String monthlyCloseCoverageValue(int accepted, int total);
+
+  /// No description provided for @monthlyCloseSincePrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Since the previous close: {newCount} new signals, {clearedCount} cleared.'**
+  String monthlyCloseSincePrevious(int newCount, int clearedCount);
+
+  /// No description provided for @monthlyClosePreviousDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous close took {minutes} minutes.'**
+  String monthlyClosePreviousDuration(int minutes);
 }
 
 class _AppLocalizationsDelegate

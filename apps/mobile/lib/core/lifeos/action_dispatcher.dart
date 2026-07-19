@@ -22,6 +22,11 @@ final class LifeActionDraft {
 
 typedef LifeActionDispatcher = Future<String?> Function(LifeActionDraft draft);
 
+enum LifeActionState { todo, doing, blocked, done, dropped }
+
+typedef LifeActionStateReader =
+    Future<LifeActionState?> Function(String actionId);
+
 /// App-composition seam for creating an Execution action without making a
 /// source domain import ExecutionOS.
 final lifeActionDispatcherProvider = Provider<LifeActionDispatcher>(
@@ -30,6 +35,16 @@ final lifeActionDispatcherProvider = Provider<LifeActionDispatcher>(
 );
 
 final lifeActionReviewRouteProvider = Provider<String?>((ref) => null);
+
+final lifeActionStateReaderProvider = Provider<LifeActionStateReader>(
+  (ref) =>
+      (actionId) async => null,
+);
+
+final lifeActionStateProvider = FutureProvider.autoDispose
+    .family<LifeActionState?, String>((ref, actionId) {
+      return ref.watch(lifeActionStateReaderProvider)(actionId);
+    });
 
 /// Domain-neutral read seam used by review workflows. `null` means the
 /// Execution domain is inactive, not that loading failed.

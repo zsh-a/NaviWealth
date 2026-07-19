@@ -39,6 +39,59 @@ class MonthlyCloseRepository {
     );
   }
 
+  Stream<MonthlyClose?> watchPreviousClosed(String periodMonth) async* {
+    final owner = await _stamper.currentUserId();
+    final query = _db.select(_db.financialMonthlyCloses)
+      ..where(
+        (table) =>
+            table.ownerUserId.equals(owner) &
+            table.periodMonth.isSmallerThanValue(periodMonth) &
+            table.closedAt.isNotNull() &
+            table.deletedAt.isNull(),
+      )
+      ..orderBy([
+        (table) => OrderingTerm(
+          expression: table.periodMonth,
+          mode: OrderingMode.desc,
+        ),
+      ])
+      ..limit(1);
+    yield* query.watchSingleOrNull().map(
+      (row) => row == null ? null : _fromRow(row),
+    );
+  }
+
+  Future<MonthlyClose> begin({
+    required String periodMonth,
+    required MonthlyCloseEvidence evidence,
+    required Map<String, Object?> snapshot,
+    required DateTime now,
+  }) async {
+    final stamp = await _stamper.stamp();
+    final current = await _find(periodMonth, stamp.ownerUserId);
+    if (current != null) return current;
+    final id = _uuid.v4();
+    await _db.transaction(() async {
+      await _db
+          .into(_db.financialMonthlyCloses)
+          .insert(
+            FinancialMonthlyClosesCompanion.insert(
+              id: id,
+              periodMonth: periodMonth,
+              evidenceJson: Value(jsonEncode(evidence.toJson())),
+              snapshotJson: Value(jsonEncode(snapshot)),
+              startedAt: now,
+              ownerUserId: stamp.ownerUserId,
+              updatedAt: stamp.now,
+              updatedByDevice: stamp.deviceId,
+              hlc: stamp.hlc,
+            ),
+          );
+      await _outbox.enqueue(table: _tableName, rowId: id);
+    });
+    return (await _find(periodMonth, stamp.ownerUserId))!;
+  }
+
   Future<MonthlyClose> close({
     required String periodMonth,
     required MonthlyCloseEvidence evidence,

@@ -26,6 +26,7 @@ import '../../../../core/shortcuts/keyboard_platform.dart';
 import '../../../../core/shortcuts/master_detail_shortcuts.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../activation/data/finance_activation_store.dart';
 import '../../shared/ui/forms/forms.dart';
 import '../data/capture_encoder.dart';
 import '../data/ingest_capture_feedback.dart';
@@ -642,6 +643,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       final service = await ref.read(ingestConfirmServiceProvider.future);
       if (service == null) return;
       final result = await service.finalizeSelected(items);
+      if (result.succeeded.isNotEmpty) {
+        await ref.read(financeImportConfirmedProvider.notifier).markConfirmed();
+      }
       if (!mounted) return;
       setState(() {
         final succeeded = result.succeeded
@@ -893,6 +897,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         },
       );
       if (result.confirmed.isNotEmpty) {
+        await ref.read(financeImportConfirmedProvider.notifier).markConfirmed();
         await ref
             .read(productMetricsProvider.notifier)
             .record(ProductFunnelEvent.importReviewCompleted, success: true);
@@ -1253,6 +1258,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         return;
       }
       await service.finalizeApplied(item);
+      await ref.read(financeImportConfirmedProvider.notifier).markConfirmed();
       if (mounted) {
         setState(() => _pendingFinalize.remove(item.draft.draftId));
         AppMessenger.show(

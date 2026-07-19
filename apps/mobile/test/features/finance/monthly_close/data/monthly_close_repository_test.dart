@@ -61,6 +61,71 @@ void main() {
     expect(closed.status, 'overridden');
     expect(closed.overrideReason, 'Statement pending');
   });
+
+  test(
+    'begin makes close duration resumable and exposes previous close',
+    () async {
+      final evidence = _evidence(MonthlyCloseStepState.verified);
+      final startedAt = DateTime.utc(2026, 7, 1, 10);
+      final started = await repository.begin(
+        periodMonth: '2026-07',
+        evidence: evidence,
+        snapshot: const <String, Object?>{},
+        now: startedAt,
+      );
+      final repeated = await repository.begin(
+        periodMonth: '2026-07',
+        evidence: evidence,
+        snapshot: const <String, Object?>{},
+        now: startedAt.add(const Duration(hours: 1)),
+      );
+
+      expect(repeated.id, started.id);
+      expect(repeated.startedAt.isAtSameMomentAs(startedAt), isTrue);
+      await repository.close(
+        periodMonth: '2026-07',
+        evidence: evidence,
+        snapshot: const <String, Object?>{'close_duration_ms': 600000},
+        now: startedAt.add(const Duration(minutes: 10)),
+      );
+      final previous = await repository.watchPreviousClosed('2026-08').first;
+      expect(previous?.periodMonth, '2026-07');
+      expect(previous?.snapshot['close_duration_ms'], 600000);
+      expect(await outbox.depth(), 2);
+    },
+  );
+
+  test('comparison reports only signal changes since previous close', () {
+    final previous = MonthlyClose(
+      id: 'close-1',
+      periodMonth: '2026-06',
+      evidence: _evidence(MonthlyCloseStepState.verified),
+      snapshot: const <String, Object?>{
+        'active_signal_keys': ['old', 'shared'],
+        'close_duration_ms': 120000,
+      },
+      status: 'closed',
+      startedAt: DateTime.utc(2026, 6, 30),
+      closedAt: DateTime.utc(2026, 6, 30, 0, 2),
+    );
+    final current = MonthlyCloseEvidence(
+      states: <MonthlyCloseStep, MonthlyCloseStepState>{
+        for (final step in MonthlyCloseStep.values)
+          step: MonthlyCloseStepState.verified,
+      },
+      details: const <String, Object?>{
+        'active_signal_keys': ['shared', 'new'],
+      },
+    );
+
+    final comparison = compareMonthlyCloseEvidence(
+      current: current,
+      previous: previous,
+    );
+    expect(comparison.newSignalKeys, {'new'});
+    expect(comparison.clearedSignalKeys, {'old'});
+    expect(comparison.previousDuration, const Duration(minutes: 2));
+  });
 }
 
 MonthlyCloseEvidence _evidence(MonthlyCloseStepState state) =>

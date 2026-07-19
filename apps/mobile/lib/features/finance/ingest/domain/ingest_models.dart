@@ -241,3 +241,21 @@ class IngestResult {
       total + skippedCount == parseCandidateRowCount;
   bool get isRejected => rejectedReason != null;
 }
+
+/// Owner-scoped lifecycle totals used by activation and repeat-cycle UX.
+/// Counts contain no transaction values or labels.
+final class IngestDraftProgress {
+  const IngestDraftProgress({
+    required this.pending,
+    required this.confirmed,
+    required this.dismissed,
+  });
+
+  const IngestDraftProgress.empty() : pending = 0, confirmed = 0, dismissed = 0;
+
+  final int pending;
+  final int confirmed;
+  final int dismissed;
+
+  int get reviewed => confirmed + dismissed;
+}

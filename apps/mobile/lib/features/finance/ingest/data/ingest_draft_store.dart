@@ -162,6 +162,34 @@ class IngestDraftStore implements IngestDraftBatchLifecycleStore {
     return rows.first.read<int>('n');
   }
 
+  Future<IngestDraftProgress> readProgress() async {
+    final rows = await _db
+        .customSelect(
+          'SELECT status, COUNT(*) AS n FROM ingest_drafts '
+          'WHERE owner_user_id = ?1 GROUP BY status',
+          variables: [Variable.withString(_owner)],
+        )
+        .get();
+    final counts = <DraftStatus, int>{
+      for (final row in rows)
+        DraftStatusX.parse(row.read<String>('status')): row.read<int>('n'),
+    };
+    return IngestDraftProgress(
+      pending:
+          (counts[DraftStatus.pending] ?? 0) +
+          (counts[DraftStatus.confirming] ?? 0),
+      confirmed: counts[DraftStatus.confirmed] ?? 0,
+      dismissed: counts[DraftStatus.dismissed] ?? 0,
+    );
+  }
+
+  Stream<IngestDraftProgress> watchProgress() async* {
+    yield await readProgress();
+    await for (final _ in _changes.stream) {
+      yield await readProgress();
+    }
+  }
+
   @override
   Future<IngestLifecycleMutationResult> transition(
     IngestLifecycleTransition transition,

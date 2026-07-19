@@ -13222,4 +13222,125 @@ class AppLocalizationsZh extends AppLocalizations {
   String moneyRunwayMissingFx(Object currencies) {
     return '因缺少汇率而未计入：$currencies';
   }
+
+  @override
+  String get financeActivationTitle => '获得第一个有效结果';
+
+  @override
+  String financeActivationProgress(int completed, int total) {
+    return '$completed/$total';
+  }
+
+  @override
+  String get financeActivationImportTitle => '从真实流水开始';
+
+  @override
+  String get financeActivationImportBody => '导入一份账单，让结果建立在你自己的数据上。';
+
+  @override
+  String get financeActivationImportAction => '导入账单';
+
+  @override
+  String get financeActivationReviewTitle => '只处理例外项';
+
+  @override
+  String financeActivationReviewBody(int count) {
+    return '还有 $count 项需要确认或恢复。';
+  }
+
+  @override
+  String get financeActivationReviewAction => '继续复核';
+
+  @override
+  String get financeActivationRunwayTitle => '检查未来 90 天';
+
+  @override
+  String get financeActivationRunwayBody => '流水已完成复核，请确认资金续航结果及其缺失数据。';
+
+  @override
+  String get financeActivationRunwayAction => '查看资金续航';
+
+  @override
+  String get financialInboxEvidenceTitle => '判断依据';
+
+  @override
+  String get financialInboxFirstDetected => '首次发现';
+
+  @override
+  String get financialInboxLastChecked => '最近检查';
+
+  @override
+  String get financialInboxLinkedAction => '关联行动';
+
+  @override
+  String get financialInboxFixSource => '修复来源数据';
+
+  @override
+  String get financialInboxCreateAction => '创建行动';
+
+  @override
+  String get financialInboxViewAction => '查看行动';
+
+  @override
+  String get financialInboxActionUnavailable => '启用 ExecutionOS 后才能创建行动。';
+
+  @override
+  String get financialInboxEvidencePeriod => '期间';
+
+  @override
+  String get financialInboxEvidenceMismatchCount => '余额差异';
+
+  @override
+  String get financialInboxEvidenceChangeRatio => '变化比例';
+
+  @override
+  String get financialInboxEvidenceChangeCount => '变化数量';
+
+  @override
+  String get financialInboxEvidenceStaleCount => '过期估值';
+
+  @override
+  String get financialInboxEvidenceReviewDate => '复盘日期';
+
+  @override
+  String get financialInboxEvidenceCurrencies => '币种';
+
+  @override
+  String get financialInboxEvidenceCompleteness => '数据完整度';
+
+  @override
+  String get financialInboxActionTodo => '待处理';
+
+  @override
+  String get financialInboxActionDoing => '进行中';
+
+  @override
+  String get financialInboxActionBlocked => '受阻';
+
+  @override
+  String get financialInboxActionDone => '已完成，信号已重新检查';
+
+  @override
+  String get financialInboxActionDropped => '已放弃';
+
+  @override
+  String get financialInboxActionUnknown => '不可用';
+
+  @override
+  String get monthlyCloseCoverageTitle => '账户覆盖率';
+
+  @override
+  String monthlyCloseCoverageValue(int accepted, int total) {
+    return '$accepted/$total';
+  }
+
+  @override
+  String monthlyCloseSincePrevious(int newCount, int clearedCount) {
+    return '相比上次关账：新增 $newCount 个信号，清除 $clearedCount 个。';
+  }
+
+  @override
+  String monthlyClosePreviousDuration(int minutes) {
+    return '上次关账耗时 $minutes 分钟。';
+  }
 }

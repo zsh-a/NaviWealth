@@ -10,6 +10,7 @@ import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/core/product/product_metrics.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/activation/ui/finance_activation_card.dart';
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';

@@ -27,10 +27,14 @@ import 'package:naviwealth/features/finance/domain/models/journal_entry.dart';
 import 'package:naviwealth/features/finance/domain/models/posting.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/home/ui/home_page.dart';
+import 'package:naviwealth/features/finance/ingest/data/providers.dart';
+import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
+import 'package:naviwealth/features/finance/runway/data/money_runway_providers.dart';
+import 'package:naviwealth/features/finance/runway/domain/money_runway.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '_golden_setup.dart';
@@ -261,6 +265,25 @@ List<Override> _homeOverrides(
   ActivityFeedPage? activityFeed,
 }) => [
   sharedPreferencesProvider.overrideWithValue(prefs),
+  ingestDraftProgressProvider.overrideWith(
+    (_) => Stream.value(const IngestDraftProgress.empty()),
+  ),
+  moneyRunwayProvider.overrideWith(
+    (_) => AsyncValue.data(
+      buildMoneyRunway(
+        asOf: _goldenNow,
+        currency: 'CNY',
+        startingBalance: _d('180000'),
+        reserveTarget: _d('57600'),
+        averageMonthlyExpense: _d('19200'),
+        estimatedDailyVariableOutflow: _d('640'),
+        scheduledFlows: const <RunwayScheduledFlow>[],
+        confidence: MoneyRunwayConfidence.medium,
+        dataCompleteness: 0.75,
+        hasData: snapshot != null,
+      ),
+    ),
+  ),
   cashFlowNowProvider.overrideWithValue(_goldenNow),
   dashboardSnapshotProvider.overrideWith(
     (_) async =>

@@ -66,3 +66,41 @@ final class MonthlyClose {
 
   bool get isClosed => closedAt != null;
 }
+
+final class MonthlyCloseComparison {
+  const MonthlyCloseComparison({
+    required this.newSignalKeys,
+    required this.clearedSignalKeys,
+    required this.previousDuration,
+  });
+
+  final Set<String> newSignalKeys;
+  final Set<String> clearedSignalKeys;
+  final Duration? previousDuration;
+
+  bool get hasPrevious =>
+      previousDuration != null ||
+      newSignalKeys.isNotEmpty ||
+      clearedSignalKeys.isNotEmpty;
+}
+
+MonthlyCloseComparison compareMonthlyCloseEvidence({
+  required MonthlyCloseEvidence current,
+  required MonthlyClose? previous,
+}) {
+  final currentSignals = _stringSet(current.details['active_signal_keys']);
+  final previousSignals = _stringSet(previous?.snapshot['active_signal_keys']);
+  final durationMs = (previous?.snapshot['close_duration_ms'] as num?)?.toInt();
+  return MonthlyCloseComparison(
+    newSignalKeys: currentSignals.difference(previousSignals),
+    clearedSignalKeys: previousSignals.difference(currentSignals),
+    previousDuration: durationMs == null
+        ? null
+        : Duration(milliseconds: durationMs),
+  );
+}
+
+Set<String> _stringSet(Object? value) => switch (value) {
+  Iterable<Object?> values => values.whereType<String>().toSet(),
+  _ => <String>{},
+};

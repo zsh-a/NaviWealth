@@ -138,7 +138,13 @@ Finance business data.
 - Evidence-driven Financial Inbox and Monthly Close: account statement
   reconciliation, explicit difference overrides, durable close snapshots, and
   signals for import, runway, FX, balance, anomaly, subscription, valuation,
-  and due decision review.
+  and due decision review. Inbox items expose evidence and detection history,
+  route to source repair, and retain linked Execution action state. Monthly
+  Close resumes an open period and compares coverage, signal changes, and
+  completion time with the previous close.
+- Resumable Finance activation from first import through review clearance to a
+  trustworthy Money Runway result, with an owner-scoped device milestone and
+  opt-in first-useful-result timing.
 - Thirty-/ninety-day Money Runway with spendable-cash policy, scheduled
   liability payments, deterministic stress scenarios, daily forecast
   sampling from the Runway workspace, and observed forecast error.

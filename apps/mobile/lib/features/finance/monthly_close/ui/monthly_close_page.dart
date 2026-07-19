@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,16 +15,60 @@ import '../data/monthly_close_providers.dart';
 import '../domain/account_reconciliation.dart';
 import '../domain/monthly_close.dart';
 
-class MonthlyClosePage extends ConsumerWidget {
+class MonthlyClosePage extends ConsumerStatefulWidget {
   const MonthlyClosePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MonthlyClosePage> createState() => _MonthlyClosePageState();
+}
+
+class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
+  String? _beginRequestedFor;
+
+  void _ensureSessionStarted({
+    required String period,
+    required MonthlyClose? close,
+    required MonthlyCloseEvidence? evidence,
+  }) {
+    if (close != null || evidence == null || _beginRequestedFor == period) {
+      return;
+    }
+    _beginRequestedFor = period;
+    unawaited(_beginSession(period: period, evidence: evidence));
+  }
+
+  Future<void> _beginSession({
+    required String period,
+    required MonthlyCloseEvidence evidence,
+  }) async {
+    try {
+      final repository = await ref.read(monthlyCloseRepositoryProvider.future);
+      await repository.begin(
+        periodMonth: period,
+        evidence: evidence,
+        snapshot: evidence.details,
+        now: DateTime.now(),
+      );
+    } catch (_) {
+      if (mounted && _beginRequestedFor == period) {
+        setState(() => _beginRequestedFor = null);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final period = ref.watch(currentClosePeriodProvider);
     final closeAsync = ref.watch(currentMonthlyCloseProvider);
     final evidenceAsync = ref.watch(monthlyCloseEvidenceProvider);
     final targetsAsync = ref.watch(reconciliationTargetsProvider);
+    final comparison = ref.watch(monthlyCloseComparisonProvider).value;
+    _ensureSessionStarted(
+      period: period,
+      close: closeAsync.value,
+      evidence: evidenceAsync.value,
+    );
     return AppPageScaffold(
       title: l10n.monthlyCloseTitle,
       childPad: false,
@@ -45,6 +91,8 @@ class MonthlyClosePage extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSpacing.s4),
                 Text(l10n.monthlyCloseIntro, style: context.captionStyle),
+                const SizedBox(height: AppSpacing.s16),
+                _CloseProgress(evidence: evidence, comparison: comparison),
                 const SizedBox(height: AppSpacing.s16),
                 for (final step in MonthlyCloseStep.values) ...[
                   _CloseStepRow(step: step, state: evidence.states[step]!),
@@ -75,6 +123,7 @@ class MonthlyClosePage extends ConsumerWidget {
                     ref,
                     evidence: evidence,
                     period: period,
+                    startedAt: close?.startedAt,
                   ),
                   child: Text(
                     evidence.isVerified
@@ -95,6 +144,7 @@ class MonthlyClosePage extends ConsumerWidget {
     WidgetRef ref, {
     required MonthlyCloseEvidence evidence,
     required String period,
+    required DateTime? startedAt,
   }) async {
     final l10n = AppLocalizations.of(context);
     String? reason;
@@ -107,6 +157,9 @@ class MonthlyClosePage extends ConsumerWidget {
       if (reason == null) return;
     }
     final now = DateTime.now();
+    final duration = startedAt == null
+        ? Duration.zero
+        : now.difference(startedAt);
     final repository = await ref.read(monthlyCloseRepositoryProvider.future);
     await repository.close(
       periodMonth: period,
@@ -114,13 +167,76 @@ class MonthlyClosePage extends ConsumerWidget {
       snapshot: <String, Object?>{
         ...evidence.details,
         'closed_at': now.toUtc().toIso8601String(),
+        'close_duration_ms': duration.inMilliseconds,
       },
       overrideReason: reason,
       now: now,
     );
     await ref
         .read(productMetricsProvider.notifier)
-        .record(ProductFunnelEvent.monthlyCloseCompleted, success: true);
+        .record(
+          ProductFunnelEvent.monthlyCloseCompleted,
+          duration: duration,
+          success: true,
+        );
+  }
+}
+
+class _CloseProgress extends StatelessWidget {
+  const _CloseProgress({required this.evidence, required this.comparison});
+
+  final MonthlyCloseEvidence evidence;
+  final MonthlyCloseComparison? comparison;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final total =
+        (evidence.details['reconciliation_target_count'] as num?)?.toInt() ?? 0;
+    final accepted =
+        (evidence.details['reconciliation_accepted_count'] as num?)?.toInt() ??
+        0;
+    return SoftCard.flat(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.monthlyCloseCoverageTitle,
+                  style: context.labelStyle,
+                ),
+              ),
+              Text(
+                l10n.monthlyCloseCoverageValue(accepted, total),
+                style: TypographyTokens.numericBodyStrong,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          LinearProgressIndicator(value: total == 0 ? 0 : accepted / total),
+          if (comparison?.hasPrevious == true) ...[
+            const SizedBox(height: AppSpacing.s10),
+            Text(
+              l10n.monthlyCloseSincePrevious(
+                comparison!.newSignalKeys.length,
+                comparison!.clearedSignalKeys.length,
+              ),
+              style: context.captionStyle,
+            ),
+            if (comparison!.previousDuration != null)
+              Text(
+                l10n.monthlyClosePreviousDuration(
+                  comparison!.previousDuration!.inMinutes,
+                ),
+                style: context.captionStyle,
+              ),
+          ],
+        ],
+      ),
+    );
   }
 }
 

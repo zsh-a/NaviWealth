@@ -13885,4 +13885,128 @@ class AppLocalizationsEn extends AppLocalizations {
   String moneyRunwayMissingFx(Object currencies) {
     return 'Excluded because FX rates are missing: $currencies';
   }
+
+  @override
+  String get financeActivationTitle => 'Your first useful result';
+
+  @override
+  String financeActivationProgress(int completed, int total) {
+    return '$completed/$total';
+  }
+
+  @override
+  String get financeActivationImportTitle => 'Start with real activity';
+
+  @override
+  String get financeActivationImportBody =>
+      'Import a statement so the result is grounded in your own data.';
+
+  @override
+  String get financeActivationImportAction => 'Import statement';
+
+  @override
+  String get financeActivationReviewTitle => 'Review only the exceptions';
+
+  @override
+  String financeActivationReviewBody(int count) {
+    return '$count items still need confirmation or recovery.';
+  }
+
+  @override
+  String get financeActivationReviewAction => 'Continue review';
+
+  @override
+  String get financeActivationRunwayTitle => 'Check the next 90 days';
+
+  @override
+  String get financeActivationRunwayBody =>
+      'Your reviewed entries are ready. Verify the resulting cash runway and its missing data.';
+
+  @override
+  String get financeActivationRunwayAction => 'Review runway';
+
+  @override
+  String get financialInboxEvidenceTitle => 'Evidence';
+
+  @override
+  String get financialInboxFirstDetected => 'First detected';
+
+  @override
+  String get financialInboxLastChecked => 'Last checked';
+
+  @override
+  String get financialInboxLinkedAction => 'Linked action';
+
+  @override
+  String get financialInboxFixSource => 'Fix the source';
+
+  @override
+  String get financialInboxCreateAction => 'Create action';
+
+  @override
+  String get financialInboxViewAction => 'View action';
+
+  @override
+  String get financialInboxActionUnavailable =>
+      'Enable ExecutionOS to create an action.';
+
+  @override
+  String get financialInboxEvidencePeriod => 'Period';
+
+  @override
+  String get financialInboxEvidenceMismatchCount => 'Balance differences';
+
+  @override
+  String get financialInboxEvidenceChangeRatio => 'Change ratio';
+
+  @override
+  String get financialInboxEvidenceChangeCount => 'Changes';
+
+  @override
+  String get financialInboxEvidenceStaleCount => 'Stale values';
+
+  @override
+  String get financialInboxEvidenceReviewDate => 'Review date';
+
+  @override
+  String get financialInboxEvidenceCurrencies => 'Currencies';
+
+  @override
+  String get financialInboxEvidenceCompleteness => 'Data completeness';
+
+  @override
+  String get financialInboxActionTodo => 'To do';
+
+  @override
+  String get financialInboxActionDoing => 'In progress';
+
+  @override
+  String get financialInboxActionBlocked => 'Blocked';
+
+  @override
+  String get financialInboxActionDone => 'Completed — signal rechecked';
+
+  @override
+  String get financialInboxActionDropped => 'Dropped';
+
+  @override
+  String get financialInboxActionUnknown => 'Unavailable';
+
+  @override
+  String get monthlyCloseCoverageTitle => 'Account coverage';
+
+  @override
+  String monthlyCloseCoverageValue(int accepted, int total) {
+    return '$accepted/$total';
+  }
+
+  @override
+  String monthlyCloseSincePrevious(int newCount, int clearedCount) {
+    return 'Since the previous close: $newCount new signals, $clearedCount cleared.';
+  }
+
+  @override
+  String monthlyClosePreviousDuration(int minutes) {
+    return 'Previous close took $minutes minutes.';
+  }
 }

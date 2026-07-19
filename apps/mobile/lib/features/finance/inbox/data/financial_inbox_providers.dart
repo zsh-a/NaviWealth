@@ -236,7 +236,7 @@ final financialInboxProvider =
       if (candidates.hasError) {
         Error.throwWithStackTrace(candidates.error!, candidates.stackTrace!);
       }
-      return repository.reconcile(
+      return repository.detectAll(
         candidates.requireValue,
         now: ref.watch(financialInboxNowProvider),
       );

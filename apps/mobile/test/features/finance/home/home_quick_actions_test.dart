@@ -33,9 +33,10 @@ void main() {
 
     expect(find.text('Record entry'), findsOneWidget);
     expect(find.text('Transfer'), findsOneWidget);
+    expect(find.text('Monthly close'), findsOneWidget);
     expect(find.text('Add account'), findsNothing);
     expect(find.text('Import statements'), findsNothing);
-    expect(find.byIcon(FLucideIcons.chevronRight), findsNWidgets(2));
+    expect(find.byIcon(FLucideIcons.chevronRight), findsNWidgets(3));
     expect(tester.takeException(), isNull);
   });
 
@@ -66,6 +67,7 @@ void main() {
 
     expect(find.text('Record entry'), findsOneWidget);
     expect(find.text('Transfer'), findsOneWidget);
+    expect(find.text('Monthly close'), findsOneWidget);
     expect(find.byIcon(FLucideIcons.chevronRight), findsNothing);
     expect(tester.takeException(), isNull);
   });

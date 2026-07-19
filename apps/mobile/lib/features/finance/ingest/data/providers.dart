@@ -66,6 +66,16 @@ final pendingIngestReviewItemsProvider =
       yield* store.watchPendingReviewItems();
     });
 
+final ingestDraftProgressProvider =
+    StreamProvider.autoDispose<IngestDraftProgress>((ref) async* {
+      final store = ref.watch(ingestDraftStoreProvider);
+      if (store == null) {
+        yield const IngestDraftProgress.empty();
+        return;
+      }
+      yield* store.watchProgress();
+    });
+
 final ingestPipelineProvider = Provider<IngestPipeline>(
   (ref) => IngestPipeline(),
 );

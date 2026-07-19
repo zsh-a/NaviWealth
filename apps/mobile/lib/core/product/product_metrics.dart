@@ -7,6 +7,7 @@ import '../../design_system/preferences/theme_preferences.dart';
 
 enum ProductFunnelEvent {
   activationStarted,
+  firstUsefulResultCompleted,
   importReviewCompleted,
   financialInboxOpened,
   financialInboxCleared,
@@ -30,15 +31,20 @@ class ProductMetricsController extends StateNotifier<bool> {
     this._preferences, {
     DateTime Function() clock = DateTime.now,
   }) : _clock = clock,
+       _firstUsefulResultRecorded =
+           _preferences.getBool(_firstUsefulResultRecordedKey) ?? false,
        super(_preferences.getBool(_enabledKey) ?? false);
 
   static const _enabledKey = 'naviwealth.product_metrics.enabled';
-  static const _aggregatesKey = 'naviwealth.product_metrics.aggregates.v3';
+  static const _aggregatesKey = 'naviwealth.product_metrics.aggregates.v4';
   static const _activationStartedAtKey =
       'naviwealth.product_metrics.activation_started_at';
+  static const _firstUsefulResultRecordedKey =
+      'naviwealth.product_metrics.first_useful_result_recorded';
   static const _retainedDays = 90;
   final SharedPreferences _preferences;
   final DateTime Function() _clock;
+  bool _firstUsefulResultRecorded;
 
   Future<void> setEnabled(bool value) async {
     state = value;
@@ -51,6 +57,14 @@ class ProductMetricsController extends StateNotifier<bool> {
     bool? success,
   }) async {
     if (!state) return;
+    if (event == ProductFunnelEvent.firstUsefulResultCompleted &&
+        _firstUsefulResultRecorded) {
+      return;
+    }
+    if (event == ProductFunnelEvent.firstUsefulResultCompleted &&
+        success == true) {
+      _firstUsefulResultRecorded = true;
+    }
     final occurredAt = _clock();
     if (event == ProductFunnelEvent.activationStarted &&
         !_preferences.containsKey(_activationStartedAtKey)) {
@@ -60,7 +74,8 @@ class ProductMetricsController extends StateNotifier<bool> {
       );
     }
     var measuredDuration = duration;
-    if (event == ProductFunnelEvent.importReviewCompleted && success == true) {
+    if (event == ProductFunnelEvent.firstUsefulResultCompleted &&
+        success == true) {
       final activationStartedAt = _preferences.getInt(_activationStartedAtKey);
       if (activationStartedAt != null) {
         measuredDuration = occurredAt.toUtc().difference(
@@ -90,11 +105,15 @@ class ProductMetricsController extends StateNotifier<bool> {
     await _preferences.setString(
       _aggregatesKey,
       jsonEncode(<String, Object?>{
-        'schema_version': 3,
+        'schema_version': 4,
         'totals': totals,
         'days': days,
       }),
     );
+    if (event == ProductFunnelEvent.firstUsefulResultCompleted &&
+        success == true) {
+      await _preferences.setBool(_firstUsefulResultRecordedKey, true);
+    }
   }
 
   Map<String, Object?> exportAggregates() {
@@ -105,6 +124,10 @@ class ProductMetricsController extends StateNotifier<bool> {
       ...report,
       'derived': <String, Object?>{
         'active_day_count': days.length,
+        'first_useful_result_day_count': _daysWith(
+          days,
+          ProductFunnelEvent.firstUsefulResultCompleted,
+        ),
         'import_cycle_day_count': _daysWith(
           days,
           ProductFunnelEvent.importReviewCompleted,
@@ -125,7 +148,7 @@ class ProductMetricsController extends StateNotifier<bool> {
     final raw = _preferences.getString(_aggregatesKey);
     if (raw == null) {
       return <String, Object?>{
-        'schema_version': 3,
+        'schema_version': 4,
         'totals': <String, Object?>{},
         'days': <String, Object?>{},
       };

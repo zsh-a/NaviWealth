@@ -39,6 +39,10 @@ final class FinancialInboxItem {
     required this.priority,
     required this.count,
     required this.route,
+    required this.evidence,
+    required this.firstDetectedAt,
+    required this.lastDetectedAt,
+    this.actionId,
   });
 
   final String id;
@@ -47,4 +51,8 @@ final class FinancialInboxItem {
   final FinancialInboxPriority priority;
   final int count;
   final String route;
+  final Map<String, Object?> evidence;
+  final DateTime firstDetectedAt;
+  final DateTime lastDetectedAt;
+  final String? actionId;
 }

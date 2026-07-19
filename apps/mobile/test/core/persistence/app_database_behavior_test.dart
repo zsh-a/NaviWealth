@@ -1279,7 +1279,7 @@ void main() {
         .get();
     expect(tables, hasLength(1));
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 43);
+    expect(version.read<int>('user_version'), db.schemaVersion);
   });
 
   test('migrates v41 by creating chat runtime snapshots', () async {
@@ -1310,7 +1310,7 @@ void main() {
         .get();
     expect(tables, hasLength(1));
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 43);
+    expect(version.read<int>('user_version'), db.schemaVersion);
   });
 
   test('migrates v23 options journal rows through v26 additions', () async {
@@ -1846,7 +1846,7 @@ void main() {
       expect(row.readNullable<String>('operation_token'), equals(null));
       expect(row.read<int>('invocation_started'), 0);
       final version = await db.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 43);
+      expect(version.read<int>('user_version'), db.schemaVersion);
     },
   );
 }

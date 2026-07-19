@@ -70,6 +70,26 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
       return (draft) => _dispatchLifeAction(ref, draft);
     }),
     lifeActionReviewRouteProvider.overrideWith((ref) => ExecutionRoutes.review),
+    lifeActionStateReaderProvider.overrideWith((ref) {
+      return (actionId) async {
+        final repository = await ref.read(executionRepositoryProvider.future);
+        final owner = await (await ref.read(
+          mutationStamperProvider.future,
+        )).currentUserId();
+        final action = await repository.findAction(
+          ownerUserId: owner,
+          id: actionId,
+        );
+        if (action == null) return null;
+        return switch (action.status) {
+          ExecutionActionStatus.todo => LifeActionState.todo,
+          ExecutionActionStatus.doing => LifeActionState.doing,
+          ExecutionActionStatus.blocked => LifeActionState.blocked,
+          ExecutionActionStatus.done => LifeActionState.done,
+          ExecutionActionStatus.dropped => LifeActionState.dropped,
+        };
+      };
+    }),
     lifeOpenActionCountProvider.overrideWith((ref) {
       final executionActive = ref
           .watch(activeDomainPacksProvider)

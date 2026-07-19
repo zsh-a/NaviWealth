@@ -39,6 +39,19 @@ class FinancialSignalRepository {
     return listVisible(now: now);
   }
 
+  /// Upserts a partial detector without resolving signals owned by detectors
+  /// that did not run. The lightweight Life hub uses this for import state;
+  /// only the full Inbox scan is authoritative enough to call [reconcile].
+  Future<List<FinancialInboxItem>> detectAll(
+    List<FinancialSignalCandidate> candidates, {
+    required DateTime now,
+  }) async {
+    for (final candidate in candidates) {
+      await _detect(candidate, now: now);
+    }
+    return listVisible(now: now);
+  }
+
   Future<void> _resolveMissing(
     Set<String> activeSourceKeys, {
     required DateTime now,
@@ -97,6 +110,30 @@ class FinancialSignalRepository {
     snoozedUntil: until,
   );
 
+  Future<void> linkAction(
+    String id, {
+    required String actionId,
+    required DateTime now,
+  }) async {
+    final stamp = await _stamper.stamp();
+    await _db.transaction(() async {
+      await (_db.update(_db.financialSignals)..where(
+            (table) =>
+                table.id.equals(id) &
+                table.ownerUserId.equals(stamp.ownerUserId),
+          ))
+          .write(
+            FinancialSignalsCompanion(
+              actionId: Value(actionId),
+              updatedAt: Value(stamp.now),
+              updatedByDevice: Value(stamp.deviceId),
+              hlc: Value(stamp.hlc),
+            ),
+          );
+      await _outbox.enqueue(table: _tableName, rowId: id);
+    });
+  }
+
   Future<void> _detect(
     FinancialSignalCandidate candidate, {
     required DateTime now,
@@ -134,6 +171,7 @@ class FinancialSignalRepository {
       status: const Value('open'),
       snoozedUntil: const Value(null),
       resolvedAt: const Value(null),
+      actionId: Value(existing?.actionId),
     );
     await _db.transaction(() async {
       await _db.into(_db.financialSignals).insertOnConflictUpdate(companion);
@@ -174,13 +212,18 @@ class FinancialSignalRepository {
     final evidence = Map<String, Object?>.from(
       jsonDecode(row.evidenceJson) as Map,
     );
+    final count = (evidence.remove('count') as num?)?.toInt() ?? 1;
     return FinancialInboxItem(
       id: row.id,
       sourceKey: row.sourceKey,
       kind: FinancialInboxKind.values.byName(row.kind),
       priority: FinancialInboxPriority.values.byName(row.priority),
-      count: (evidence['count'] as num?)?.toInt() ?? 1,
+      count: count,
       route: row.route,
+      evidence: Map.unmodifiable(evidence),
+      firstDetectedAt: row.firstDetectedAt,
+      lastDetectedAt: row.lastDetectedAt,
+      actionId: row.actionId,
     );
   }
 }

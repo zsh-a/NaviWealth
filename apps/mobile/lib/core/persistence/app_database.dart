@@ -143,7 +143,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 45;
+  int get schemaVersion => 46;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -704,7 +704,6 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(financialDecisions);
         await m.createTable(financialSignals);
         await m.createTable(financialMonthlyCloses);
-        await _createFinancePlanningIndexes(this);
         await _createRunwayForecastSnapshots(this);
       }
       if (from < 45) {
@@ -721,6 +720,14 @@ class AppDatabase extends _$AppDatabase {
           definition: 'TEXT',
         );
         await _createFinancePlanningIndexes(this);
+      }
+      if (from < 46) {
+        await _addColumnIfMissing(
+          this,
+          table: 'financial_signals',
+          column: 'action_id',
+          definition: 'TEXT',
+        );
       }
     },
     beforeOpen: (details) async {

@@ -319,14 +319,24 @@ financial and health evidence.
 The first two phases now have an executable validation baseline. This is
 implementation evidence, not demand evidence:
 
+- Finance activation is a resumable first-task path: import data, clear the
+  review queue, then inspect the first Money Runway result. The confirmed
+  import milestone is device-local and owner-scoped, so draft retention and
+  app restarts do not reset progress. Opt-in metrics measure completion of the
+  full first-useful-result path rather than treating import review as success.
 - Financial Inbox persists stable signals and now composes import review,
   runway risk, missing FX, balance mismatch, expense anomaly, subscription
   change, stale valuation, and due decision-review facts. Incomplete provider
-  loading never resolves an existing signal.
+  loading never resolves an existing signal. Each item exposes its evidence
+  and detection window, links back to the source repair route, and can create
+  a source-preserving Execution action whose lifecycle remains visible from
+  the signal.
 - Monthly Close is evidence-driven. Account statement balances are compared
   with the exact period-end ledger sum; balanced, mismatched, and explicitly
   overridden facts are synced. A close stores its evidence and aggregate
-  snapshot instead of manual checklist state.
+  snapshot instead of manual checklist state. Open close sessions resume
+  after navigation or restart, account coverage is explicit, and subsequent
+  closes compare new and cleared signals plus the previous completion time.
 - Money Runway excludes brokerage value from default spendable cash, includes
   unpaid amortization rows, deduplicates matching scheduled outflows, runs
   purchase/income-delay/income-reduction stress cases, and records daily
@@ -339,9 +349,10 @@ implementation evidence, not demand evidence:
   counters. Settings can explicitly copy the privacy-safe aggregate report;
   no financial values, labels, routes, or row identifiers are included.
 
-The next product step is therefore the six-week task study below. More signal
-types, scenario templates, or domains should be driven by observed failures in
-that study rather than feature-count goals.
+The next product step is therefore the six-week task study below. The current
+activation, Inbox, and repeated-close paths are the instrumentation surface
+for that study; more signal types, scenario templates, or domains should be
+driven by observed failures rather than feature-count goals.
 
 ### Phase 1: Activation And Repeated Close
 

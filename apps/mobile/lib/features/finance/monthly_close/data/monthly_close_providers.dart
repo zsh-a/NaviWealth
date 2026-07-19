@@ -121,6 +121,16 @@ final monthlyCloseEvidenceProvider =
             'runway_confidence': runway.confidence.name,
             'runway_data_completeness': runway.dataCompleteness,
             'open_action_count': openActionCount,
+            'active_signal_keys': inbox
+                .map((item) => item.sourceKey)
+                .toList(growable: false),
+            'reconciliation_exception_keys': targets
+                .where(
+                  (target) =>
+                      target.reconciliation != null && !target.isAccepted,
+                )
+                .map((target) => '${target.accountId}:${target.unit}')
+                .toList(growable: false),
           },
         ),
       );
@@ -132,3 +142,27 @@ final currentMonthlyCloseProvider = StreamProvider.autoDispose<MonthlyClose?>((
   final repository = await ref.watch(monthlyCloseRepositoryProvider.future);
   yield* repository.watch(ref.watch(currentClosePeriodProvider));
 });
+
+final previousMonthlyCloseProvider = StreamProvider.autoDispose<MonthlyClose?>((
+  ref,
+) async* {
+  final repository = await ref.watch(monthlyCloseRepositoryProvider.future);
+  yield* repository.watchPreviousClosed(ref.watch(currentClosePeriodProvider));
+});
+
+final monthlyCloseComparisonProvider =
+    Provider.autoDispose<AsyncValue<MonthlyCloseComparison>>((ref) {
+      final evidence = ref.watch(monthlyCloseEvidenceProvider);
+      final previous = ref.watch(previousMonthlyCloseProvider);
+      if (evidence.isLoading || previous.isLoading) {
+        return const AsyncValue.loading();
+      }
+      final error = evidence.error ?? previous.error;
+      if (error != null) return AsyncValue.error(error, StackTrace.current);
+      return AsyncValue.data(
+        compareMonthlyCloseEvidence(
+          current: evidence.requireValue,
+          previous: previous.value,
+        ),
+      );
+    });

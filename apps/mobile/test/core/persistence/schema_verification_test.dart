@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 45', () {
-      expect(db.schemaVersion, 45);
+    test('is 46', () {
+      expect(db.schemaVersion, 46);
     });
   });
 
@@ -57,6 +57,14 @@ void main() {
         ]),
       );
       expect(columns, isNot(contains('hlc')));
+    });
+
+    test('financial signals can link an Execution action', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(financial_signals)')
+          .get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(columns, contains('action_id'));
     });
   });
 

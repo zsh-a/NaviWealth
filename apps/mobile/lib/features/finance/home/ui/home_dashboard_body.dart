@@ -144,6 +144,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                   stage: _NetWorthHeader(snapshot: snapshot),
                   stickyBuilder: stickyNetWorth,
                   modules: [
+                    const FinanceActivationCard(),
                     HomeQuickActions(
                       mode: snapshot.isEmpty
                           ? HomeQuickActionMode.onboarding
