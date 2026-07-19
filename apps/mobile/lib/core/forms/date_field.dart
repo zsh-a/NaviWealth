@@ -189,68 +189,86 @@ class _DateTimeField extends StatelessWidget {
     final dateValue = value == null ? null : _calendarDay(value!);
     final timeValue = value == null ? null : FTime.fromDateTime(value!);
     final description = helperText == null ? null : Text(helperText!);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 3,
-          child: FDateField.calendar(
-            selectionControl: FDateSelectionControl.managedSingle(
-              initial: dateValue,
-              onChange: (date) {
-                if (date == null) {
-                  onChanged(null);
-                  return;
-                }
-                onChanged(_combine(date, timeValue ?? FTime.now()));
-              },
-            ),
-            label: RequiredLabel(label, required: required),
-            description: description,
-            enabled: enabled,
-            calendar: FDateFieldGridCalendarProperties(
-              control: FGridCalendarControl(
-                start: _calendarDay(firstDate),
-                end: _calendarDay(lastDate),
-                today: _calendarDay(DateTime.now()),
-              ),
-            ),
-            clearable: !required,
-            format: (context, value, format) => formatDate(value),
-            validator: (date) {
-              if (required && date == null) {
-                return l10n.formDateFieldRequired;
-              }
-              return null;
-            },
+    final dateField = KeyedSubtree(
+      key: const Key('date-time-field-date'),
+      child: FDateField.calendar(
+        selectionControl: FDateSelectionControl.managedSingle(
+          initial: dateValue,
+          onChange: (date) {
+            if (date == null) {
+              onChanged(null);
+              return;
+            }
+            onChanged(_combine(date, timeValue ?? FTime.now()));
+          },
+        ),
+        label: RequiredLabel(label, required: required),
+        description: description,
+        enabled: enabled,
+        calendar: FDateFieldGridCalendarProperties(
+          control: FGridCalendarControl(
+            start: _calendarDay(firstDate),
+            end: _calendarDay(lastDate),
+            today: _calendarDay(DateTime.now()),
           ),
         ),
-        const SizedBox(width: AppSpacing.s12),
-        Expanded(
-          flex: 2,
-          child: FTimeField.picker(
-            control: FTimeFieldControl.lifted(
-              time: timeValue,
-              onChange: (FTime? time) {
-                if (time == null) {
-                  onChanged(null);
-                  return;
-                }
-                onChanged(
-                  _combine(dateValue ?? _calendarDay(DateTime.now()), time),
-                );
-              },
-            ),
-            label: Text(l10n.formDateFieldTimeLabel),
-            enabled: enabled,
-            hour24: true,
-            clearable: !required,
-            forceErrorText: required && timeValue == null
-                ? l10n.formDateFieldRequired
-                : null,
-          ),
+        clearable: !required,
+        format: (context, value, format) => formatDate(value),
+        validator: (date) {
+          if (required && date == null) {
+            return l10n.formDateFieldRequired;
+          }
+          return null;
+        },
+      ),
+    );
+    final timeField = KeyedSubtree(
+      key: const Key('date-time-field-time'),
+      child: FTimeField.picker(
+        control: FTimeFieldControl.lifted(
+          time: timeValue,
+          onChange: (FTime? time) {
+            if (time == null) {
+              onChanged(null);
+              return;
+            }
+            onChanged(
+              _combine(dateValue ?? _calendarDay(DateTime.now()), time),
+            );
+          },
         ),
-      ],
+        label: Text(l10n.formDateFieldTimeLabel),
+        enabled: enabled,
+        hour24: true,
+        clearable: !required,
+        forceErrorText: required && timeValue == null
+            ? l10n.formDateFieldRequired
+            : null,
+      ),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scaledBodySize = MediaQuery.textScalerOf(context).scale(16);
+        final stackFields = scaledBodySize >= 24 || constraints.maxWidth < 320;
+        if (stackFields) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              dateField,
+              const SizedBox(height: AppSpacing.s12),
+              timeField,
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(flex: 3, child: dateField),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(flex: 2, child: timeField),
+          ],
+        );
+      },
     );
   }
 
