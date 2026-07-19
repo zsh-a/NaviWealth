@@ -2076,14 +2076,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get liabilityScheduleMarkPaid => 'Mark paid';
 
   @override
-  String liabilityScheduleMarkPaidConfirmTitle(int period) {
-    return 'Mark period $period paid?';
+  String liabilityPaymentSheetTitle(int period) {
+    return 'Record period $period payment';
   }
 
   @override
-  String liabilityScheduleMarkPaidConfirmBody(String amount) {
-    return 'This records a $amount liability-payment transaction dated today.';
+  String liabilityPaymentSheetAmount(String amount) {
+    return 'Payment amount · $amount';
   }
+
+  @override
+  String get liabilityPaymentSheetDate => 'Payment date';
+
+  @override
+  String get liabilityPaymentSheetDateHint =>
+      'Choose the date the money left the payer account.';
+
+  @override
+  String get liabilityPaymentSheetSubmit => 'Record payment';
 
   @override
   String get liabilityScheduleMarkPaidNoAccount =>

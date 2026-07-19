@@ -99,6 +99,96 @@ Future<Widget> _wrapDetailPage() async {
 }
 
 void main() {
+  testWidgets('records the selected payment date instead of repository clock', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(360, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final outbox = InMemoryOutboxStore();
+    final stamper = makeStubStamper();
+    final journalRepo = JournalEntryRepository(
+      db: db,
+      outbox: outbox,
+      stamper: stamper,
+      fxRateSource: const _IdentityFx(),
+      baseCurrency: 'CNY',
+    );
+    final repo = LiabilityRepository(
+      db: db,
+      outbox: outbox,
+      stamper: stamper,
+      journalEntryRepo: journalRepo,
+      clock: () => DateTime.utc(2000, 1, 1),
+    );
+    final liability = await repo.create(
+      type: LiabilityType.mortgage,
+      name: 'Home loan',
+      principal: _d('800000'),
+      interestRate: _d('0.04'),
+      currency: 'CNY',
+      termMonths: 8,
+      startDate: DateTime.utc(2026, 1, 1),
+      accountId: 'payer-account',
+    );
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
+    final today = DateTime.now();
+    final selectedDate = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).subtract(const Duration(days: 3));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          liabilityRepositoryProvider.overrideWith((_) async => repo),
+        ],
+        child: MaterialApp(
+          locale: const Locale('en', 'US'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) => AppMessenger.init(
+            child: FTheme(data: FThemes.slate.light.desktop, child: child!),
+          ),
+          home: LiabilityDetailPage(id: liability.id),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final markPaid = find.text('Mark paid').first;
+    await tester.ensureVisible(markPaid);
+    await tester.pumpAndSettle();
+    await tester.tap(markPaid);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Record period 1 payment'), findsOneWidget);
+    final paymentDateField = find.descendant(
+      of: find.byKey(const Key('liability-payment-date')),
+      matching: find.byWidgetPredicate((widget) => widget is FDateField),
+    );
+    expect(paymentDateField, findsOneWidget);
+    expect(find.textContaining('Payment amount ·'), findsOneWidget);
+    final dateControl =
+        tester.widget<FDateField>(paymentDateField).selectionControl
+            as FDateSelectionManagedControl<DateTime?>;
+    dateControl.onChange?.call(selectedDate);
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('liability-payment-submit')));
+    await tester.pumpAndSettle();
+
+    final paidAt = (await repo.scheduleFor(liability.id)).first.paidAt;
+    expect(paidAt, isNotNull);
+    expect(DateUtils.isSameDay(paidAt, selectedDate), isTrue);
+    expect(paidAt?.year, isNot(2000));
+    expect(find.text('Saved'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'undoing a paid period restores it and removes its ledger entry',
     (tester) async {

@@ -1236,14 +1236,22 @@
   "liabilityScheduleStatusPaid": "Paid",
   "liabilityScheduleStatusDue": "Pending",
   "liabilityScheduleMarkPaid": "Mark paid",
-  "liabilityScheduleMarkPaidConfirmTitle": "Mark period {period} paid?",
-  "@liabilityScheduleMarkPaidConfirmTitle": {
+  "liabilityPaymentSheetTitle": "Record period {period} payment",
+  "@liabilityPaymentSheetTitle": {
+    "description": "Title of the liability payment date sheet",
     "placeholders": { "period": { "type": "int", "example": "1" } }
   },
-  "liabilityScheduleMarkPaidConfirmBody": "This records a {amount} liability-payment transaction dated today.",
-  "@liabilityScheduleMarkPaidConfirmBody": {
+  "liabilityPaymentSheetAmount": "Payment amount · {amount}",
+  "@liabilityPaymentSheetAmount": {
+    "description": "Read-only payment amount summary in the liability payment sheet",
     "placeholders": { "amount": { "type": "String", "example": "¥6,123.45" } }
   },
+  "liabilityPaymentSheetDate": "Payment date",
+  "@liabilityPaymentSheetDate": { "description": "Date field label in the liability payment sheet" },
+  "liabilityPaymentSheetDateHint": "Choose the date the money left the payer account.",
+  "@liabilityPaymentSheetDateHint": { "description": "Helper below the liability payment date field" },
+  "liabilityPaymentSheetSubmit": "Record payment",
+  "@liabilityPaymentSheetSubmit": { "description": "Submit action in the liability payment sheet" },
   "liabilityScheduleMarkPaidNoAccount": "Assign a payer account before marking periods paid.",
   "liabilityScheduleUndoConfirmTitle": "Undo payment for period {period}?",
   "@liabilityScheduleUndoConfirmTitle": {

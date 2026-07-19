@@ -13,6 +13,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/liability_summary.dart';
 import 'liability_l10n.dart';
+import 'liability_payment_sheet.dart';
 
 class LiabilityDetailPage extends ConsumerWidget {
   const LiabilityDetailPage({super.key, required this.id});
@@ -399,20 +400,19 @@ class _AmortizationTableState extends ConsumerState<_AmortizationTable> {
       row.principalPayment + row.interestPayment,
       code: liability.currency,
     );
-    final confirmed = await showConfirmDialog(
-      context: context,
-      title: Text(l10n.liabilityScheduleMarkPaidConfirmTitle(row.periodIndex)),
-      body: Text(l10n.liabilityScheduleMarkPaidConfirmBody(amount)),
-      cancelLabel: l10n.commonCancel,
-      confirmLabel: l10n.commonConfirm,
+    final paymentDate = await LiabilityPaymentSheet.show(
+      context,
+      periodIndex: row.periodIndex,
+      amount: amount,
     );
-    if (confirmed != true || !context.mounted) return;
+    if (paymentDate == null || !context.mounted) return;
     setState(() => _pendingPeriod = row.periodIndex);
     try {
       final repo = await ref.read(liabilityRepositoryProvider.future);
       await repo.registerPayment(
         liabilityId: liability.id,
         periodIndex: row.periodIndex,
+        paidAt: paymentDate,
       );
       if (!mounted) return;
       AppMessenger.show(context, ToastKind.success, l10n.commonSaved);

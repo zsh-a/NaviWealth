@@ -2006,14 +2006,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get liabilityScheduleMarkPaid => '标记已还';
 
   @override
-  String liabilityScheduleMarkPaidConfirmTitle(int period) {
-    return '标记第 $period 期已还？';
+  String liabilityPaymentSheetTitle(int period) {
+    return '记录第 $period 期还款';
   }
 
   @override
-  String liabilityScheduleMarkPaidConfirmBody(String amount) {
-    return '这将记录一笔 $amount 的还款交易，日期为今天。';
+  String liabilityPaymentSheetAmount(String amount) {
+    return '还款金额 · $amount';
   }
+
+  @override
+  String get liabilityPaymentSheetDate => '还款日期';
+
+  @override
+  String get liabilityPaymentSheetDateHint => '请选择资金从还款账户扣除的实际日期。';
+
+  @override
+  String get liabilityPaymentSheetSubmit => '记录还款';
 
   @override
   String get liabilityScheduleMarkPaidNoAccount => '标记还款前请先指定还款账户。';

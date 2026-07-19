@@ -3692,17 +3692,35 @@ abstract class AppLocalizations {
   /// **'Mark paid'**
   String get liabilityScheduleMarkPaid;
 
-  /// No description provided for @liabilityScheduleMarkPaidConfirmTitle.
+  /// Title of the liability payment date sheet
   ///
   /// In en, this message translates to:
-  /// **'Mark period {period} paid?'**
-  String liabilityScheduleMarkPaidConfirmTitle(int period);
+  /// **'Record period {period} payment'**
+  String liabilityPaymentSheetTitle(int period);
 
-  /// No description provided for @liabilityScheduleMarkPaidConfirmBody.
+  /// Read-only payment amount summary in the liability payment sheet
   ///
   /// In en, this message translates to:
-  /// **'This records a {amount} liability-payment transaction dated today.'**
-  String liabilityScheduleMarkPaidConfirmBody(String amount);
+  /// **'Payment amount · {amount}'**
+  String liabilityPaymentSheetAmount(String amount);
+
+  /// Date field label in the liability payment sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Payment date'**
+  String get liabilityPaymentSheetDate;
+
+  /// Helper below the liability payment date field
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the date the money left the payer account.'**
+  String get liabilityPaymentSheetDateHint;
+
+  /// Submit action in the liability payment sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Record payment'**
+  String get liabilityPaymentSheetSubmit;
 
   /// No description provided for @liabilityScheduleMarkPaidNoAccount.
   ///
