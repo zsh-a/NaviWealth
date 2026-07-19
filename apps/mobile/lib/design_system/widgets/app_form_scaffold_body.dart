@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
+import 'adaptive_content_frame.dart';
 
 /// Full-screen form body with a scrollable field area and a pinned action bar.
 ///
@@ -26,6 +27,7 @@ class AppFormScaffoldBody extends StatelessWidget {
     this.controller,
     this.physics,
     this.onSubmit,
+    this.maxContentWidth = AdaptiveMaxWidth.narrow,
   });
 
   final List<Widget> children;
@@ -33,6 +35,7 @@ class AppFormScaffoldBody extends StatelessWidget {
   final EdgeInsets padding;
   final ScrollController? controller;
   final ScrollPhysics? physics;
+  final double maxContentWidth;
 
   /// Enables the standard keyboard form-submit shortcuts. Keep this null when
   /// the primary action is disabled so modified Enter keeps propagating.
@@ -40,67 +43,88 @@ class AppFormScaffoldBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
-
-    final body = FocusTraversalGroup(
-      policy: WidgetOrderTraversalPolicy(),
-      child: AnimatedPadding(
-        duration: AppMotionPolicy.duration(context, Motion.ambient),
-        curve: Motion.standardDecelerate,
-        padding: EdgeInsets.only(bottom: keyboardInset),
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                controller: controller,
-                physics: physics,
-                padding: padding,
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: children,
-                ),
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+        final constrainWideContent =
+            constraints.maxWidth > maxContentWidth + padding.horizontal;
+        Widget formContent = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: children,
+        );
+        if (constrainWideContent) {
+          formContent = Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxContentWidth),
+              child: formContent,
             ),
-            AppFormActionBar(child: action),
-          ],
-        ),
-      ),
-    );
+          );
+        }
 
-    final submit = onSubmit;
-    return Focus(
-      canRequestFocus: false,
-      skipTraversal: true,
-      descendantsAreFocusable: true,
-      child: CallbackShortcuts(
-        bindings: submit == null
-            ? const <ShortcutActivator, VoidCallback>{}
-            : <ShortcutActivator, VoidCallback>{
-                const SingleActivator(
-                  LogicalKeyboardKey.enter,
-                  meta: true,
-                  includeRepeats: false,
-                ): submit,
-                const SingleActivator(
-                  LogicalKeyboardKey.enter,
-                  control: true,
-                  includeRepeats: false,
-                ): submit,
-                const SingleActivator(
-                  LogicalKeyboardKey.numpadEnter,
-                  meta: true,
-                  includeRepeats: false,
-                ): submit,
-                const SingleActivator(
-                  LogicalKeyboardKey.numpadEnter,
-                  control: true,
-                  includeRepeats: false,
-                ): submit,
-              },
-        child: body,
-      ),
+        final body = FocusTraversalGroup(
+          policy: WidgetOrderTraversalPolicy(),
+          child: AnimatedPadding(
+            duration: AppMotionPolicy.duration(context, Motion.ambient),
+            curve: Motion.standardDecelerate,
+            padding: EdgeInsets.only(bottom: keyboardInset),
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: controller,
+                    physics: physics,
+                    padding: padding,
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    child: formContent,
+                  ),
+                ),
+                AppFormActionBar(
+                  maxContentWidth: constrainWideContent
+                      ? maxContentWidth
+                      : null,
+                  child: action,
+                ),
+              ],
+            ),
+          ),
+        );
+
+        final submit = onSubmit;
+        return Focus(
+          canRequestFocus: false,
+          skipTraversal: true,
+          descendantsAreFocusable: true,
+          child: CallbackShortcuts(
+            bindings: submit == null
+                ? const <ShortcutActivator, VoidCallback>{}
+                : <ShortcutActivator, VoidCallback>{
+                    const SingleActivator(
+                      LogicalKeyboardKey.enter,
+                      meta: true,
+                      includeRepeats: false,
+                    ): submit,
+                    const SingleActivator(
+                      LogicalKeyboardKey.enter,
+                      control: true,
+                      includeRepeats: false,
+                    ): submit,
+                    const SingleActivator(
+                      LogicalKeyboardKey.numpadEnter,
+                      meta: true,
+                      includeRepeats: false,
+                    ): submit,
+                    const SingleActivator(
+                      LogicalKeyboardKey.numpadEnter,
+                      control: true,
+                      includeRepeats: false,
+                    ): submit,
+                  },
+            child: body,
+          ),
+        );
+      },
     );
   }
 }
@@ -117,10 +141,12 @@ class AppFormActionBar extends StatelessWidget {
       AppSpacing.s16,
       AppSpacing.s12,
     ),
+    this.maxContentWidth,
   });
 
   final Widget child;
   final EdgeInsets padding;
+  final double? maxContentWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -132,6 +158,13 @@ class AppFormActionBar extends StatelessWidget {
     final hairline = colors.foreground.withValues(
       alpha: isDark ? AppOpacity.light : AppOpacity.subtle,
     );
+    final contentWidth = maxContentWidth;
+    final content = contentWidth == null
+        ? child
+        : Align(
+            alignment: Alignment.topCenter,
+            child: SizedBox(width: contentWidth, child: child),
+          );
     return ClipRect(
       child: BackdropFilter(
         filter: ui.ImageFilter.blur(
@@ -143,7 +176,7 @@ class AppFormActionBar extends StatelessWidget {
             color: surface,
             border: Border(top: BorderSide(color: hairline)),
           ),
-          child: SafeArea(top: false, minimum: padding, child: child),
+          child: SafeArea(top: false, minimum: padding, child: content),
         ),
       ),
     );

@@ -229,6 +229,12 @@ void main() {
     ),
   );
   runResponsiveGolden(
+    'task flow transfer — narrow',
+    profile: ResponsiveGoldenProfile.narrow,
+    body: (tester, profile) =>
+        pumpTransfer(tester, profile, 'task_flow_transfer_n'),
+  );
+  runResponsiveGolden(
     'task flow transfer — wide',
     profile: ResponsiveGoldenProfile.wide,
     body: (tester, profile) =>

@@ -67,6 +67,40 @@ void main() {
     );
   });
 
+  testWidgets('centers wide forms and actions in a readable column', (
+    tester,
+  ) async {
+    const size = Size(1280, 900);
+    await tester.binding.setSurfaceSize(size);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      _wrap(
+        keyboardInset: 0,
+        const AppFormScaffoldBody(
+          action: SizedBox(
+            key: Key('wide-form-action'),
+            width: double.infinity,
+            height: 48,
+          ),
+          children: [
+            SizedBox(
+              key: Key('wide-form-field'),
+              width: double.infinity,
+              height: 48,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    for (final key in ['wide-form-field', 'wide-form-action']) {
+      final finder = find.byKey(Key(key));
+      expect(tester.getSize(finder).width, AdaptiveMaxWidth.narrow);
+      expect(tester.getCenter(finder).dx, size.width / 2);
+    }
+  });
+
   testWidgets('Meta/Ctrl Enter and numpad Enter invoke submit', (tester) async {
     var submissions = 0;
     await tester.pumpWidget(
