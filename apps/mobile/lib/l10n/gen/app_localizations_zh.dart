@@ -8273,6 +8273,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wealthProductInvalidFormat => '格式不正确';
 
   @override
+  String get wealthProductDetailsTitle => '产品详情';
+
+  @override
+  String get wealthProductDetailsSummary => '发行机构、日期与当前价值';
+
+  @override
   String get wealthProductValueDateLabel => '起息日';
 
   @override

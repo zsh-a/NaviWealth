@@ -14715,6 +14715,18 @@ abstract class AppLocalizations {
   /// **'Invalid format'**
   String get wealthProductInvalidFormat;
 
+  /// Wealth product form: optional details disclosure title
+  ///
+  /// In en, this message translates to:
+  /// **'Product details'**
+  String get wealthProductDetailsTitle;
+
+  /// Wealth product form: optional details disclosure summary
+  ///
+  /// In en, this message translates to:
+  /// **'Issuer, dates & current value'**
+  String get wealthProductDetailsSummary;
+
   /// Wealth product form: value date field label
   ///
   /// In en, this message translates to:

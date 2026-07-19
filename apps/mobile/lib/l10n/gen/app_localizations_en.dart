@@ -8679,6 +8679,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wealthProductInvalidFormat => 'Invalid format';
 
   @override
+  String get wealthProductDetailsTitle => 'Product details';
+
+  @override
+  String get wealthProductDetailsSummary => 'Issuer, dates & current value';
+
+  @override
   String get wealthProductValueDateLabel => 'Value date';
 
   @override

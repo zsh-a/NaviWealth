@@ -2570,6 +2570,8 @@
   "wealthProductExpectedReturnHelper": "例如：4.5 表示 4.5%",
   "wealthProductExpectedReturnRequired": "请输入预期年化",
   "wealthProductInvalidFormat": "格式不正确",
+  "wealthProductDetailsTitle": "产品详情",
+  "wealthProductDetailsSummary": "发行机构、日期与当前价值",
   "wealthProductValueDateLabel": "起息日",
   "wealthProductMaturityDateLabel": "到期日（可选）",
   "wealthProductValuationLabel": "当前估值（手动维护）",

@@ -45,18 +45,21 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
   final _issuerController = TextEditingController();
   final _productCodeController = TextEditingController();
 
-  // Focus chain: name → issuer → productCode → principal → return → valuation.
+  // Core focus chain: name → principal → return. Optional details continue
+  // issuer → product code → valuation; date pickers interrupt it naturally.
   final _nameFocus = FocusNode();
   final _issuerFocus = FocusNode();
   final _productCodeFocus = FocusNode();
   final _principalFocus = FocusNode();
   final _returnFocus = FocusNode();
   final _valuationFocus = FocusNode();
+  final _detailsFocus = FocusNode(debugLabel: 'wealth-product-details');
 
   String? _accountId;
   String? _currency = 'CNY';
   DateTime? _startDate;
   DateTime? _maturityDate;
+  bool _detailsExpanded = false;
   bool _busy = false;
   Asset? _initial;
   bool _hydratedFromList = false;
@@ -108,13 +111,26 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
       _maturityDate = meta.maturityDate;
       _issuerController.text = meta.issuer ?? '';
       _productCodeController.text = meta.productCode ?? '';
+      _detailsExpanded =
+          meta.startDate != null ||
+          meta.maturityDate != null ||
+          (meta.issuer?.trim().isNotEmpty ?? false) ||
+          (meta.productCode?.trim().isNotEmpty ?? false);
     });
     // Hydrating an existing record is not a user edit.
     dirty.snapshotBaseline();
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      if (!_detailsAreValid && !_detailsExpanded) {
+        setState(() => _detailsExpanded = true);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _detailsFocus.requestFocus();
+        });
+      }
+      return;
+    }
     final l10n = AppLocalizations.of(context);
     final accountId = _accountId;
     final currency = _currency;
@@ -251,7 +267,15 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
     _principalFocus.dispose();
     _returnFocus.dispose();
     _valuationFocus.dispose();
+    _detailsFocus.dispose();
     super.dispose();
+  }
+
+  bool get _detailsAreValid {
+    final valuationText = _valuationController.text.trim();
+    if (valuationText.isEmpty) return true;
+    final valuation = Decimal.tryParse(valuationText);
+    return valuation != null && valuation >= Decimal.zero;
   }
 
   @override
@@ -327,6 +351,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: AppFormScaffoldBody(
+        onSubmit: _busy ? null : _save,
         action: SizedBox(
           width: double.infinity,
           child: AppBusyButton(
@@ -358,31 +383,14 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
           ),
           const SizedBox(height: AppSpacing.s12),
           FTextFormField(
+            key: const Key('wealth-product-name-field'),
             control: FTextFieldControl.managed(controller: _nameController),
-            label: Text(l10n.wealthProductNameLabel),
+            label: RequiredLabel(l10n.wealthProductNameLabel),
             focusNode: _nameFocus,
             textInputAction: TextInputAction.next,
             validator: (v) => (v == null || v.trim().isEmpty)
                 ? l10n.wealthProductNameRequired
                 : null,
-            onSubmit: (_) => _issuerFocus.requestFocus(),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          FTextFormField(
-            control: FTextFieldControl.managed(controller: _issuerController),
-            label: Text(l10n.wealthProductIssuerLabel),
-            focusNode: _issuerFocus,
-            textInputAction: TextInputAction.next,
-            onSubmit: (_) => _productCodeFocus.requestFocus(),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          FTextFormField(
-            control: FTextFieldControl.managed(
-              controller: _productCodeController,
-            ),
-            label: Text(l10n.wealthProductCodeLabel),
-            focusNode: _productCodeFocus,
-            textInputAction: TextInputAction.next,
             onSubmit: (_) => _principalFocus.requestFocus(),
           ),
           const SizedBox(height: AppSpacing.s12),
@@ -395,6 +403,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
           ),
           const SizedBox(height: AppSpacing.s12),
           AmountField(
+            key: const Key('wealth-product-principal-field'),
             label: l10n.wealthProductAmountLabel,
             controller: _principalController,
             currencyCode: _currency,
@@ -403,10 +412,11 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
           ),
           const SizedBox(height: AppSpacing.s12),
           FTextFormField(
+            key: const Key('wealth-product-return-field'),
             control: FTextFieldControl.managed(
               controller: _expectedReturnPctController,
             ),
-            label: Text(l10n.wealthProductExpectedReturnLabel),
+            label: RequiredLabel(l10n.wealthProductExpectedReturnLabel),
             description: Text(l10n.wealthProductExpectedReturnHelper),
             focusNode: _returnFocus,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -420,36 +430,113 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
               if (parsed == null) return l10n.wealthProductInvalidFormat;
               return null;
             },
-            onSubmit: (_) => _valuationFocus.requestFocus(),
+            onSubmit: (_) {
+              _returnFocus.unfocus();
+              if (!_detailsExpanded) {
+                setState(() => _detailsExpanded = true);
+              }
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _detailsFocus.requestFocus();
+              });
+            },
           ),
           const SizedBox(height: AppSpacing.s12),
-          DateField(
-            label: l10n.wealthProductValueDateLabel,
-            initialValue: _startDate,
-            onChanged: (d) => setState(() {
-              _startDate = d;
-              dirty.markDirty();
-            }),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          DateField(
-            label: l10n.wealthProductMaturityDateLabel,
-            initialValue: _maturityDate,
-            onChanged: (d) => setState(() {
-              _maturityDate = d;
-              dirty.markDirty();
-            }),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          AmountField(
-            label: l10n.wealthProductValuationLabel,
-            controller: _valuationController,
-            currencyCode: _currency,
-            required: false,
-            helperText: l10n.wealthProductValuationHelper,
-            focusNode: _valuationFocus,
-            textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => _busy ? null : _save(),
+          FAccordion(
+            control: FAccordionControl.lifted(
+              expanded: (_) => _detailsExpanded,
+              onChange: (_, expanded) =>
+                  setState(() => _detailsExpanded = expanded),
+            ),
+            children: [
+              FAccordionItem(
+                key: const Key('wealth-product-details-disclosure'),
+                focusNode: _detailsFocus,
+                title: Semantics(
+                  key: const Key('wealth-product-details-toggle-label'),
+                  expanded: _detailsExpanded,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l10n.wealthProductDetailsTitle),
+                      const SizedBox(height: AppSpacing.s2),
+                      Text(
+                        l10n.wealthProductDetailsSummary,
+                        style: context.captionStyle,
+                      ),
+                    ],
+                  ),
+                ),
+                child: Offstage(
+                  key: const Key('wealth-product-details-fields'),
+                  offstage: !_detailsExpanded,
+                  child: ExcludeFocus(
+                    excluding: !_detailsExpanded,
+                    child: ExcludeSemantics(
+                      excluding: !_detailsExpanded,
+                      child: Column(
+                        children: [
+                          FTextFormField(
+                            key: const Key('wealth-product-issuer-field'),
+                            control: FTextFieldControl.managed(
+                              controller: _issuerController,
+                            ),
+                            label: Text(l10n.wealthProductIssuerLabel),
+                            focusNode: _issuerFocus,
+                            textInputAction: TextInputAction.next,
+                            onSubmit: (_) => _productCodeFocus.requestFocus(),
+                          ),
+                          const SizedBox(height: AppSpacing.s12),
+                          FTextFormField(
+                            key: const Key('wealth-product-code-field'),
+                            control: FTextFieldControl.managed(
+                              controller: _productCodeController,
+                            ),
+                            label: Text(l10n.wealthProductCodeLabel),
+                            focusNode: _productCodeFocus,
+                            textInputAction: TextInputAction.next,
+                            onSubmit: (_) => _valuationFocus.requestFocus(),
+                          ),
+                          const SizedBox(height: AppSpacing.s12),
+                          DateField(
+                            key: const Key('wealth-product-value-date-field'),
+                            label: l10n.wealthProductValueDateLabel,
+                            initialValue: _startDate,
+                            onChanged: (d) => setState(() {
+                              _startDate = d;
+                              dirty.markDirty();
+                            }),
+                          ),
+                          const SizedBox(height: AppSpacing.s12),
+                          DateField(
+                            key: const Key(
+                              'wealth-product-maturity-date-field',
+                            ),
+                            label: l10n.wealthProductMaturityDateLabel,
+                            initialValue: _maturityDate,
+                            onChanged: (d) => setState(() {
+                              _maturityDate = d;
+                              dirty.markDirty();
+                            }),
+                          ),
+                          const SizedBox(height: AppSpacing.s12),
+                          AmountField(
+                            key: const Key('wealth-product-valuation-field'),
+                            label: l10n.wealthProductValuationLabel,
+                            controller: _valuationController,
+                            currencyCode: _currency,
+                            required: false,
+                            helperText: l10n.wealthProductValuationHelper,
+                            focusNode: _valuationFocus,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) => _busy ? null : _save(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
