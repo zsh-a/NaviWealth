@@ -63,11 +63,13 @@ class DevicesPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.authDevicesTitle,
       actions: [
-        FHeaderAction(
+        AppHeaderAction(
+          semanticsLabel: l10n.commonRefresh,
           icon: const Icon(FLucideIcons.refreshCw),
           onPress: () => ref.invalidate(devicesProvider),
         ),
-        FHeaderAction(
+        AppHeaderAction(
+          semanticsLabel: l10n.authLogoutCurrentTooltip,
           icon: const Icon(FLucideIcons.logOut),
           onPress: () => _confirmLogoutCurrent(context, ref),
         ),

@@ -7010,6 +7010,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsLogsCopiedToast => '日志已复制';
 
   @override
+  String get settingsLogsCopyAction => '复制全部日志';
+
+  @override
+  String get settingsLogsShareAction => '分享全部日志';
+
+  @override
   String get settingsLogsClearTitle => '清空日志？';
 
   @override

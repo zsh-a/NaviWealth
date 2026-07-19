@@ -150,11 +150,13 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
         return AppPageScaffold(
           title: _titleForActive(userId, activeId, l10n),
           actions: [
-            FHeaderAction(
+            AppHeaderAction(
+              semanticsLabel: l10n.aiChatHistoryTooltip,
               icon: const Icon(FLucideIcons.history),
               onPress: () => _openSessionsSheet(userId, activeId),
             ),
-            FHeaderAction(
+            AppHeaderAction(
+              semanticsLabel: l10n.aiChatNewSessionTooltip,
               icon: const Icon(FLucideIcons.plus),
               onPress: () => _newSession(userId),
             ),

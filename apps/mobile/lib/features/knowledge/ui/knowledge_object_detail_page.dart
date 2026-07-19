@@ -224,7 +224,8 @@ class _KnowledgeObjectDetailPageState
       title: _title(context),
       actions: [
         if (_canEdit)
-          FHeaderAction(
+          AppHeaderAction(
+            semanticsLabel: AppLocalizations.of(context).knowledgeMarkdownEdit,
             icon: const Icon(FLucideIcons.pencil),
             onPress: () => _editObject(context),
           ),

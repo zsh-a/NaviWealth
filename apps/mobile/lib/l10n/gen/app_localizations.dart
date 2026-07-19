@@ -12508,6 +12508,18 @@ abstract class AppLocalizations {
   /// **'Logs copied'**
   String get settingsLogsCopiedToast;
 
+  /// Header action that copies all diagnostic logs
+  ///
+  /// In en, this message translates to:
+  /// **'Copy all logs'**
+  String get settingsLogsCopyAction;
+
+  /// Header action that shares all diagnostic logs
+  ///
+  /// In en, this message translates to:
+  /// **'Share all logs'**
+  String get settingsLogsShareAction;
+
   /// Confirmation title before clearing diagnostic logs
   ///
   /// In en, this message translates to:

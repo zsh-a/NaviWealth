@@ -7380,6 +7380,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLogsCopiedToast => 'Logs copied';
 
   @override
+  String get settingsLogsCopyAction => 'Copy all logs';
+
+  @override
+  String get settingsLogsShareAction => 'Share all logs';
+
+  @override
   String get settingsLogsClearTitle => 'Clear logs?';
 
   @override

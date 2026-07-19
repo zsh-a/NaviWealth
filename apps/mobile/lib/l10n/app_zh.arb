@@ -2191,6 +2191,8 @@
   "settingsLogsTitle": "应用日志",
   "settingsLogsSubtitle": "查看实时诊断日志",
   "settingsLogsCopiedToast": "日志已复制",
+  "settingsLogsCopyAction": "复制全部日志",
+  "settingsLogsShareAction": "分享全部日志",
   "settingsLogsClearTitle": "清空日志？",
   "settingsLogsClearBody": "这会从当前设备移除内存中的诊断日志历史。",
   "settingsLogsClearAction": "清空日志",

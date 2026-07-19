@@ -131,7 +131,8 @@ class _BodyState extends ConsumerState<_Body> {
       title: AppLocalizations.of(context).knowledgeDecisionDetailTitle,
       actions: [
         if (d != null)
-          FHeaderAction(
+          AppHeaderAction(
+            semanticsLabel: AppLocalizations.of(context).knowledgeMarkdownEdit,
             icon: const Icon(FLucideIcons.pencil),
             onPress: () => _openEditor(d),
           ),

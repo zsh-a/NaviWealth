@@ -85,15 +85,18 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
     return AppPageScaffold(
       title: l10n.settingsLogsTitle,
       actions: [
-        FHeaderAction(
+        AppHeaderAction(
+          semanticsLabel: l10n.settingsLogsCopyAction,
           icon: const Icon(FLucideIcons.copy),
           onPress: () => _copyAll(context, talker),
         ),
-        FHeaderAction(
+        AppHeaderAction(
+          semanticsLabel: l10n.settingsLogsShareAction,
           icon: const Icon(FLucideIcons.share2),
           onPress: () => _shareAll(talker),
         ),
-        FHeaderAction(
+        AppHeaderAction(
+          semanticsLabel: l10n.settingsLogsClearAction,
           icon: const Icon(FLucideIcons.trash2),
           onPress: () => _clearAll(context, talker),
         ),

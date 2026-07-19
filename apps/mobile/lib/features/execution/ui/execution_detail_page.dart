@@ -28,7 +28,7 @@ class ExecutionActionDetailPage extends ConsumerWidget {
     return ObjectDetailScaffold(
       title: l10n.executionActionField,
       actions: [
-        FHeaderAction(
+        AppHeaderAction(
           icon: const Icon(FLucideIcons.messageSquareText),
           semanticsLabel: l10n.executionCreateProgressTitle,
           onPress: () {
@@ -36,7 +36,7 @@ class ExecutionActionDetailPage extends ConsumerWidget {
           },
         ),
         if (currentAction != null)
-          FHeaderAction(
+          AppHeaderAction(
             icon: const Icon(FLucideIcons.pencil),
             semanticsLabel: l10n.executionEditActionTitle,
             onPress: () => showExecutionActionSheet(
@@ -85,7 +85,7 @@ class ExecutionCommitmentDetailPage extends ConsumerWidget {
     return ObjectDetailScaffold(
       title: l10n.executionCommitmentField,
       actions: [
-        FHeaderAction(
+        AppHeaderAction(
           icon: const Icon(FLucideIcons.messageSquareText),
           semanticsLabel: l10n.executionCreateProgressTitle,
           onPress: () {
@@ -97,7 +97,7 @@ class ExecutionCommitmentDetailPage extends ConsumerWidget {
           },
         ),
         if (currentCommitment != null)
-          FHeaderAction(
+          AppHeaderAction(
             icon: const Icon(FLucideIcons.pencil),
             semanticsLabel: l10n.executionEditCommitmentTitle,
             onPress: () => showExecutionCommitmentSheet(

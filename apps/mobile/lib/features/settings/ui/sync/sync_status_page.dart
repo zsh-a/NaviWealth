@@ -42,7 +42,7 @@ class _SyncStatusPageState extends ConsumerState<SyncStatusPage> {
     return AppPageScaffold(
       title: l10n.syncStatusTitle,
       actions: [
-        FHeaderAction(
+        AppHeaderAction(
           icon: _syncing
               ? const SizedBox.square(
                   dimension: AppIconSizes.h18,
