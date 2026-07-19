@@ -277,7 +277,8 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
         confirmLeave: handleBackIntent,
         actions: [
           if (widget.isEdit)
-            FHeaderAction(
+            AppHeaderAction(
+              semanticsLabel: l10n.depositDeleteTooltip,
               icon: const Icon(FLucideIcons.trash2),
               onPress: _busy ? null : _delete,
             ),

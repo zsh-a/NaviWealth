@@ -163,7 +163,8 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
             child: Text(asset.name ?? asset.symbol),
           ),
           actions: [
-            FHeaderAction(
+            AppHeaderAction(
+              semanticsLabel: l10n.assetDetailSyncMetadataTooltip,
               icon: _syncing
                   ? const SizedBox(
                       width: AppIconSizes.h18,

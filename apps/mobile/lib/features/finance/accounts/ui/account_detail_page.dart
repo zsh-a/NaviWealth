@@ -47,11 +47,8 @@ class AccountDetailPage extends ConsumerWidget {
       title: account?.name ?? l10n.navAccounts,
       actions: [
         if (account != null)
-          FHeaderAction(
-            icon: FTooltip(
-              tipBuilder: (_, _) => Text(l10n.accountDetailEditAction),
-              child: const Icon(FLucideIcons.pencil),
-            ),
+          AppHeaderAction(
+            icon: const Icon(FLucideIcons.pencil),
             semanticsLabel: l10n.accountDetailEditAction,
             onPress: () =>
                 context.push(FinanceRoutes.wealthAccountEdit(account.id)),

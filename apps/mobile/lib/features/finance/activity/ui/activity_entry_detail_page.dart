@@ -80,14 +80,16 @@ class _ActivityEntryDetailPageState
       title: l10n.activityEntryDetailTitle,
       actions: [
         if (classification.kind == EntryKind.expense)
-          FHeaderAction(
+          AppHeaderAction(
+            semanticsLabel: l10n.expenseFormEditTitle,
             icon: const Icon(FLucideIcons.pencil),
             onPress: _deleting
                 ? null
                 : () =>
                       context.go(FinanceRoutes.expense(widget.entry.entry.id)),
           ),
-        FHeaderAction(
+        AppHeaderAction(
+          semanticsLabel: l10n.commonDelete,
           icon: _deleting
               ? const SizedBox.square(
                   dimension: AppIconSizes.md,

@@ -39,7 +39,8 @@ class _RecurringTransactionsPageState
     return AppPageScaffold(
       title: l10n.recurringListTitle,
       actions: [
-        FHeaderAction(
+        AppHeaderAction(
+          semanticsLabel: l10n.recurringEmptyCta,
           icon: const Icon(FLucideIcons.plus),
           onPress: () => showRecurringTransactionForm(context, ref),
         ),

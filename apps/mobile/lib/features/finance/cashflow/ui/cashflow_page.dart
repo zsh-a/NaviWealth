@@ -86,11 +86,8 @@ class _CashFlowPageState extends ConsumerState<CashFlowPage> {
     return AppPageScaffold(
       title: l10n.cashFlowTitle,
       actions: [
-        FHeaderAction(
-          icon: FTooltip(
-            tipBuilder: (_, _) => Text(l10n.navActivity),
-            child: const Icon(FLucideIcons.list),
-          ),
+        AppHeaderAction(
+          icon: const Icon(FLucideIcons.list),
           semanticsLabel: l10n.navActivity,
           onPress: () => context.go(FinanceRoutes.activity),
         ),

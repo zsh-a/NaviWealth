@@ -207,7 +207,8 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
         confirmLeave: handleBackIntent,
         actions: [
           if (widget.isEdit)
-            FHeaderAction(
+            AppHeaderAction(
+              semanticsLabel: l10n.cashFormDeleteTooltip,
               icon: const Icon(FLucideIcons.trash2),
               onPress: _busy ? null : _delete,
             ),

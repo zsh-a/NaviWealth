@@ -292,7 +292,8 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
         confirmLeave: handleBackIntent,
         actions: [
           if (widget.isEdit)
-            FHeaderAction(
+            AppHeaderAction(
+              semanticsLabel: l10n.wealthProductDeleteTooltip,
               icon: const Icon(FLucideIcons.trash2),
               onPress: _busy ? null : _delete,
             ),

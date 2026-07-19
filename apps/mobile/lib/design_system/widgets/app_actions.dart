@@ -97,31 +97,34 @@ class AppHeaderAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final targetSize = appActionTargetSize(context);
-    return Semantics(
-      container: true,
-      button: true,
-      enabled: onPress != null,
-      label: semanticsLabel,
-      onTap: onPress,
-      excludeSemantics: true,
-      child: _ManagedActionFocus(
+    return FTooltip(
+      tipBuilder: (_, _) => Text(semanticsLabel),
+      child: Semantics(
+        container: true,
+        button: true,
         enabled: onPress != null,
-        focusNode: focusNode,
-        builder: (focusNode) => FHeaderAction(
-          style: const FHeaderActionStyleDelta.delta(
-            padding: EdgeInsetsGeometryDelta.value(EdgeInsets.zero),
-          ),
-          semanticsLabel: semanticsLabel,
-          icon: SizedBox.square(
-            dimension: targetSize,
-            child: Center(child: ExcludeSemantics(child: icon)),
-          ),
-          autofocus: autofocus,
+        label: semanticsLabel,
+        onTap: onPress,
+        excludeSemantics: true,
+        child: _ManagedActionFocus(
+          enabled: onPress != null,
           focusNode: focusNode,
-          onFocusChange: onFocusChange,
-          onPress: onPress,
-          shortcuts: appActionActivationShortcuts,
-          actions: _disabledActivationActions(onPress),
+          builder: (focusNode) => FHeaderAction(
+            style: const FHeaderActionStyleDelta.delta(
+              padding: EdgeInsetsGeometryDelta.value(EdgeInsets.zero),
+            ),
+            semanticsLabel: semanticsLabel,
+            icon: SizedBox.square(
+              dimension: targetSize,
+              child: Center(child: ExcludeSemantics(child: icon)),
+            ),
+            autofocus: autofocus,
+            focusNode: focusNode,
+            onFocusChange: onFocusChange,
+            onPress: onPress,
+            shortcuts: appActionActivationShortcuts,
+            actions: _disabledActivationActions(onPress),
+          ),
         ),
       ),
     );

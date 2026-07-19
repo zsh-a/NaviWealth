@@ -131,11 +131,8 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
     return AppPageScaffold(
       title: l10n.navAccounts,
       actions: [
-        FHeaderAction(
-          icon: FTooltip(
-            tipBuilder: (_, _) => Text(l10n.accountsCreateAction),
-            child: const Icon(FLucideIcons.plus),
-          ),
+        AppHeaderAction(
+          icon: const Icon(FLucideIcons.plus),
           semanticsLabel: l10n.accountsCreateAction,
           onPress: () => context.push(FinanceRoutes.wealthAccountNew),
         ),

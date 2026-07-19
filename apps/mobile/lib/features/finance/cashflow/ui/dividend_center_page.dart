@@ -30,11 +30,8 @@ class DividendCenterPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.dividendCenterTitle,
       actions: [
-        FHeaderAction(
-          icon: FTooltip(
-            tipBuilder: (_, _) => Text(l10n.dividendCenterRecordAction),
-            child: const Icon(FLucideIcons.plus),
-          ),
+        AppHeaderAction(
+          icon: const Icon(FLucideIcons.plus),
           semanticsLabel: l10n.dividendCenterRecordAction,
           onPress: () => context.push(FinanceRoutes.wealthCorporateAction),
         ),

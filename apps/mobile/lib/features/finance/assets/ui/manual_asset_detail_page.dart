@@ -73,11 +73,8 @@ class _ManualAssetDetailPageState extends ConsumerState<ManualAssetDetailPage> {
     return ObjectDetailScaffold(
       title: asset.name ?? asset.symbol,
       actions: [
-        FHeaderAction(
-          icon: FTooltip(
-            tipBuilder: (_, _) => Text(l10n.manualAssetDetailEditAction),
-            child: const Icon(FLucideIcons.pencil),
-          ),
+        AppHeaderAction(
+          icon: const Icon(FLucideIcons.pencil),
           semanticsLabel: l10n.manualAssetDetailEditAction,
           onPress: () => context.push(FinanceRoutes.wealthAssetEdit(asset.id)),
         ),

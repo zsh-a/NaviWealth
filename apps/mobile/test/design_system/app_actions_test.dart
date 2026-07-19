@@ -101,6 +101,31 @@ void main() {
     semantics.dispose();
   });
 
+  testWidgets('header action owns its contextual tooltip', (tester) async {
+    await tester.pumpWidget(
+      _themed(
+        touch: false,
+        child: const FHeader(
+          suffixes: [
+            AppHeaderAction(
+              semanticsLabel: 'Refresh data',
+              icon: Icon(FLucideIcons.refreshCw),
+              onPress: null,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    expect(
+      find.descendant(
+        of: find.byType(AppHeaderAction),
+        matching: find.byType(FTooltip),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('text action exposes one natural-label button', (tester) async {
     var taps = 0;
     final semantics = tester.ensureSemantics();
@@ -215,6 +240,8 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
       await tester.pump();
       expect(nextFocus.hasFocus, isTrue);
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
       semantics.dispose();
     },
   );

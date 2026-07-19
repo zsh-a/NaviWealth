@@ -384,7 +384,8 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
         confirmLeave: handleBackIntent,
         actions: [
           if (widget.isEdit)
-            FHeaderAction(
+            AppHeaderAction(
+              semanticsLabel: l10n.expenseFormDeleteTooltip,
               icon: const Icon(FLucideIcons.trash2),
               onPress: _busy ? null : _delete,
             ),
