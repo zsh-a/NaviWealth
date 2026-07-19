@@ -2082,12 +2082,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String liabilityScheduleMarkPaidConfirmBody(String amount) {
-    return 'This records a $amount liability-payment transaction dated today and cannot be undone from this screen.';
+    return 'This records a $amount liability-payment transaction dated today.';
   }
 
   @override
   String get liabilityScheduleMarkPaidNoAccount =>
       'Assign a payer account before marking periods paid.';
+
+  @override
+  String liabilityScheduleUndoConfirmTitle(int period) {
+    return 'Undo payment for period $period?';
+  }
+
+  @override
+  String get liabilityScheduleUndoConfirmBody =>
+      'This removes the linked ledger transaction and returns the period to pending.';
 
   @override
   String get liabilityNotFound => 'Liability not found';

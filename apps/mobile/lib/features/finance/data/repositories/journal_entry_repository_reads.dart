@@ -39,6 +39,22 @@ mixin JournalEntryRepositoryReadMixin {
     );
   }
 
+  /// Finds active journal entries carrying an exact domain tag.
+  ///
+  /// Tag JSON is decoded through [_journalToDomain] before matching so ids
+  /// containing SQL wildcard or JSON punctuation cannot produce a partial
+  /// match. This path is used by infrequent recovery actions, where a safe
+  /// full scan is preferable to a fuzzy `LIKE` lookup.
+  Future<List<JournalEntry>> findByTag(String tagId) async {
+    final rows = await (_db.select(
+      _db.journalEntries,
+    )..where((t) => t.deletedAt.isNull())).get();
+    return rows
+        .map(_journalToDomain)
+        .where((entry) => entry.tagIds.contains(tagId))
+        .toList(growable: false);
+  }
+
   /// Live stream of every non-deleted [Posting] for a single account,
   /// joined to its JE so callers can sort by trade date without a
   /// follow-up read. Drives the account-detail timeline / balance

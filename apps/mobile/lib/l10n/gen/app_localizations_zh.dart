@@ -2012,11 +2012,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String liabilityScheduleMarkPaidConfirmBody(String amount) {
-    return '这将记录一笔 $amount 的还款交易（日期为今天），且无法从本页撤销。';
+    return '这将记录一笔 $amount 的还款交易，日期为今天。';
   }
 
   @override
   String get liabilityScheduleMarkPaidNoAccount => '标记还款前请先指定还款账户。';
+
+  @override
+  String liabilityScheduleUndoConfirmTitle(int period) {
+    return '撤销第 $period 期还款？';
+  }
+
+  @override
+  String get liabilityScheduleUndoConfirmBody => '这将移除关联的账本交易，并把该期恢复为待还状态。';
 
   @override
   String get liabilityNotFound => '未找到该负债';

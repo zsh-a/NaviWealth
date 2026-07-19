@@ -3701,7 +3701,7 @@ abstract class AppLocalizations {
   /// No description provided for @liabilityScheduleMarkPaidConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'This records a {amount} liability-payment transaction dated today and cannot be undone from this screen.'**
+  /// **'This records a {amount} liability-payment transaction dated today.'**
   String liabilityScheduleMarkPaidConfirmBody(String amount);
 
   /// No description provided for @liabilityScheduleMarkPaidNoAccount.
@@ -3709,6 +3709,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Assign a payer account before marking periods paid.'**
   String get liabilityScheduleMarkPaidNoAccount;
+
+  /// Confirmation title before reopening a paid liability period
+  ///
+  /// In en, this message translates to:
+  /// **'Undo payment for period {period}?'**
+  String liabilityScheduleUndoConfirmTitle(int period);
+
+  /// Confirmation body before undoing a liability payment
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the linked ledger transaction and returns the period to pending.'**
+  String get liabilityScheduleUndoConfirmBody;
 
   /// No description provided for @liabilityNotFound.
   ///

@@ -617,8 +617,10 @@
   "liabilityScheduleStatusDue": "未还",
   "liabilityScheduleMarkPaid": "标记已还",
   "liabilityScheduleMarkPaidConfirmTitle": "标记第 {period} 期已还？",
-  "liabilityScheduleMarkPaidConfirmBody": "这将记录一笔 {amount} 的还款交易（日期为今天），且无法从本页撤销。",
+  "liabilityScheduleMarkPaidConfirmBody": "这将记录一笔 {amount} 的还款交易，日期为今天。",
   "liabilityScheduleMarkPaidNoAccount": "标记还款前请先指定还款账户。",
+  "liabilityScheduleUndoConfirmTitle": "撤销第 {period} 期还款？",
+  "liabilityScheduleUndoConfirmBody": "这将移除关联的账本交易，并把该期恢复为待还状态。",
   "liabilityNotFound": "未找到该负债",
   "liabilityRevolvingNoSchedule": "信用卡 / 循环授信无固定还款计划表。",
 

@@ -306,6 +306,11 @@ class _AmortizationTableState extends ConsumerState<_AmortizationTable> {
                   onMarkPaid: _pendingPeriod == null
                       ? () => _confirmMarkPaid(visibleSchedule[i])
                       : null,
+                  onUndo:
+                      _pendingPeriod == null &&
+                          visibleSchedule[i].paidAt != null
+                      ? () => _confirmUndoPayment(visibleSchedule[i])
+                      : null,
                 ),
                 if (i != visibleSchedule.length - 1)
                   const AppGroupedDivider(
@@ -363,6 +368,9 @@ class _AmortizationTableState extends ConsumerState<_AmortizationTable> {
                         onMarkPaid: _pendingPeriod == null
                             ? () => _confirmMarkPaid(row)
                             : null,
+                        onUndo: _pendingPeriod == null && row.paidAt != null
+                            ? () => _confirmUndoPayment(row)
+                            : null,
                       );
                     },
                   ),
@@ -419,6 +427,38 @@ class _AmortizationTableState extends ConsumerState<_AmortizationTable> {
       if (mounted) setState(() => _pendingPeriod = null);
     }
   }
+
+  Future<void> _confirmUndoPayment(AmortizationEntry row) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: Text(l10n.liabilityScheduleUndoConfirmTitle(row.periodIndex)),
+      body: Text(l10n.liabilityScheduleUndoConfirmBody),
+      cancelLabel: l10n.commonCancel,
+      confirmLabel: l10n.commonUndo,
+      destructive: true,
+    );
+    if (confirmed != true || !context.mounted) return;
+    setState(() => _pendingPeriod = row.periodIndex);
+    try {
+      final repo = await ref.read(liabilityRepositoryProvider.future);
+      await repo.undoPayment(
+        liabilityId: widget.liability.id,
+        periodIndex: row.periodIndex,
+      );
+      if (!mounted) return;
+      AppMessenger.show(context, ToastKind.success, l10n.commonUndoSucceeded);
+    } catch (error, stackTrace) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        userSafeErrorMessage(context, error, stackTrace: stackTrace),
+      );
+    } finally {
+      if (mounted) setState(() => _pendingPeriod = null);
+    }
+  }
 }
 
 class _CompactAmortizationRow extends StatelessWidget {
@@ -429,6 +469,7 @@ class _CompactAmortizationRow extends StatelessWidget {
     required this.l10n,
     required this.busy,
     required this.onMarkPaid,
+    required this.onUndo,
   });
 
   final AmortizationEntry row;
@@ -437,6 +478,7 @@ class _CompactAmortizationRow extends StatelessWidget {
   final AppLocalizations l10n;
   final bool busy;
   final VoidCallback? onMarkPaid;
+  final VoidCallback? onUndo;
 
   @override
   Widget build(BuildContext context) {
@@ -493,6 +535,15 @@ class _CompactAmortizationRow extends StatelessWidget {
               busy: busy,
               expanded: true,
               onPress: onMarkPaid,
+            ),
+          ] else ...[
+            const SizedBox(height: AppSpacing.s8),
+            AppQuietButton(
+              label: l10n.commonUndo,
+              busy: busy,
+              expanded: true,
+              tone: AppQuietButtonTone.danger,
+              onPress: onUndo,
             ),
           ],
         ],
@@ -586,6 +637,7 @@ class _AmortizationDataRow extends StatelessWidget {
     required this.l10n,
     required this.busy,
     required this.onMarkPaid,
+    required this.onUndo,
   });
 
   final AmortizationEntry row;
@@ -594,6 +646,7 @@ class _AmortizationDataRow extends StatelessWidget {
   final AppLocalizations l10n;
   final bool busy;
   final VoidCallback? onMarkPaid;
+  final VoidCallback? onUndo;
 
   @override
   Widget build(BuildContext context) {
@@ -641,7 +694,20 @@ class _AmortizationDataRow extends StatelessWidget {
           SizedBox(
             width: actionColumnWidth,
             child: row.paidAt != null
-                ? FBadge(child: Text(l10n.liabilityScheduleStatusPaid))
+                ? Row(
+                    children: [
+                      FBadge(child: Text(l10n.liabilityScheduleStatusPaid)),
+                      const SizedBox(width: AppSpacing.s4),
+                      Expanded(
+                        child: AppQuietButton(
+                          label: l10n.commonUndo,
+                          busy: busy,
+                          tone: AppQuietButtonTone.danger,
+                          onPress: onUndo,
+                        ),
+                      ),
+                    ],
+                  )
                 : AppBusyButton(
                     label: l10n.liabilityScheduleMarkPaid,
                     busy: busy,

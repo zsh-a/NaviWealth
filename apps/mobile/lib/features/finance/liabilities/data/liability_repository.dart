@@ -279,6 +279,7 @@ class LiabilityRepository {
         principal: entry.principalPayment,
         interest: entry.interestPayment,
         currency: liability.currency,
+        amortizationEntryId: entry.id,
         narration: 'Liability ${liability.name} · period $periodIndex',
       );
       final stored = await _journalEntryRepo.create(
@@ -289,6 +290,60 @@ class LiabilityRepository {
     });
 
     return journalEntryId!;
+  }
+
+  /// Reopen a paid schedule period and tombstone its exact ledger entry.
+  ///
+  /// New payments carry an `amort:<schedule-row-id>` tag. Matching that exact
+  /// tag avoids deleting a similarly named manual transaction. Legacy paid
+  /// rows without the tag fail closed and remain paid for manual review.
+  Future<String> undoPayment({
+    required String liabilityId,
+    required int periodIndex,
+  }) async {
+    final entry =
+        await (_db.select(_db.amortizationEntries)..where(
+              (t) =>
+                  t.liabilityId.equals(liabilityId) &
+                  t.periodIndex.equals(periodIndex) &
+                  t.deletedAt.isNull(),
+            ))
+            .getSingleOrNull();
+    if (entry == null) {
+      throw StateError(
+        'Amortization period $periodIndex not found for $liabilityId',
+      );
+    }
+    if (entry.paidAt == null) {
+      throw StateError(
+        'Period $periodIndex of $liabilityId is not marked paid',
+      );
+    }
+
+    final matches = await _journalEntryRepo.findByTag('amort:${entry.id}');
+    if (matches.length != 1) {
+      throw StateError(
+        'Expected one active journal entry for amortization row ${entry.id}; '
+        'found ${matches.length}',
+      );
+    }
+    final journalEntryId = matches.single.id;
+    final stamp = await _stamper.stamp();
+    await _db.transaction(() async {
+      await _journalEntryRepo.softDelete(journalEntryId);
+      await (_db.update(
+        _db.amortizationEntries,
+      )..where((t) => t.id.equals(entry.id))).write(
+        AmortizationEntriesCompanion(
+          paidAt: const Value(null),
+          updatedAt: Value(stamp.now),
+          updatedByDevice: Value(stamp.deviceId),
+          hlc: Value(stamp.hlc),
+        ),
+      );
+      await _outbox.enqueue(table: _amortTable, rowId: entry.id);
+    });
+    return journalEntryId;
   }
 
   // ---------- Internals ----------

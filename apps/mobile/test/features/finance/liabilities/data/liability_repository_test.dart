@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
@@ -161,6 +162,14 @@ void main() {
     final schedule = await repo.scheduleFor(l.id);
     expect(schedule.first.paidAt, isNotNull);
     expect(schedule[1].paidAt, isNull);
+    final journalEntry = await JournalEntryRepository(
+      db: db,
+      outbox: outbox,
+      stamper: makeStubStamper(),
+      fxRateSource: const _IdentityFx(),
+      baseCurrency: 'CNY',
+    ).getById(journalEntryId);
+    expect(journalEntry?.entry.tagIds, contains('amort:${schedule.first.id}'));
 
     final batch = outbox.queued;
     expect(batch, hasLength(5));
@@ -171,6 +180,81 @@ void main() {
     final postingOps = batch.where((o) => o.table == 'postings');
     expect(postingOps, hasLength(3));
   });
+
+  test(
+    'undoPayment reopens the period and tombstones its exact journal entry',
+    () async {
+      final l = await repo.create(
+        type: LiabilityType.mortgage,
+        name: 'Home',
+        principal: d('120000'),
+        interestRate: d('0.05'),
+        currency: 'CNY',
+        paymentMethod: RepaymentMethod.equalPrincipal,
+        termMonths: 12,
+        startDate: DateTime.utc(2026, 1, 1),
+        accountId: 'acc-1',
+      );
+      final journalEntryId = await repo.registerPayment(
+        liabilityId: l.id,
+        periodIndex: 1,
+      );
+      outbox.clearQueued();
+
+      final removedId = await repo.undoPayment(
+        liabilityId: l.id,
+        periodIndex: 1,
+      );
+
+      expect(removedId, journalEntryId);
+      expect((await repo.scheduleFor(l.id)).first.paidAt, isNull);
+      final journalRepo = JournalEntryRepository(
+        db: db,
+        outbox: outbox,
+        stamper: makeStubStamper(),
+        fxRateSource: const _IdentityFx(),
+        baseCurrency: 'CNY',
+      );
+      expect(await journalRepo.getById(journalEntryId), isNull);
+      expect(
+        outbox.queued.where((op) => op.table == 'amortization_entries'),
+        hasLength(1),
+      );
+      expect(
+        outbox.queued.where((op) => op.table == 'journal_entries'),
+        hasLength(1),
+      );
+      expect(outbox.queued.where((op) => op.table == 'postings'), hasLength(3));
+    },
+  );
+
+  test(
+    'undoPayment leaves legacy paid rows untouched when no link exists',
+    () async {
+      final l = await repo.create(
+        type: LiabilityType.mortgage,
+        name: 'Legacy home loan',
+        principal: d('120000'),
+        interestRate: d('0.05'),
+        currency: 'CNY',
+        termMonths: 12,
+        startDate: DateTime.utc(2026, 1, 1),
+        accountId: 'acc-1',
+      );
+      final first = (await repo.scheduleFor(l.id)).first;
+      await (db.update(
+        db.amortizationEntries,
+      )..where((row) => row.id.equals(first.id))).write(
+        AmortizationEntriesCompanion(paidAt: Value(DateTime.utc(2025, 12, 1))),
+      );
+
+      await expectLater(
+        repo.undoPayment(liabilityId: l.id, periodIndex: 1),
+        throwsA(isA<StateError>()),
+      );
+      expect((await repo.scheduleFor(l.id)).first.paidAt, isNotNull);
+    },
+  );
 
   test('registerPayment refuses to mark a period twice', () async {
     final l = await repo.create(

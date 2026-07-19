@@ -1240,11 +1240,18 @@
   "@liabilityScheduleMarkPaidConfirmTitle": {
     "placeholders": { "period": { "type": "int", "example": "1" } }
   },
-  "liabilityScheduleMarkPaidConfirmBody": "This records a {amount} liability-payment transaction dated today and cannot be undone from this screen.",
+  "liabilityScheduleMarkPaidConfirmBody": "This records a {amount} liability-payment transaction dated today.",
   "@liabilityScheduleMarkPaidConfirmBody": {
     "placeholders": { "amount": { "type": "String", "example": "¥6,123.45" } }
   },
   "liabilityScheduleMarkPaidNoAccount": "Assign a payer account before marking periods paid.",
+  "liabilityScheduleUndoConfirmTitle": "Undo payment for period {period}?",
+  "@liabilityScheduleUndoConfirmTitle": {
+    "description": "Confirmation title before reopening a paid liability period",
+    "placeholders": { "period": { "type": "int", "example": "1" } }
+  },
+  "liabilityScheduleUndoConfirmBody": "This removes the linked ledger transaction and returns the period to pending.",
+  "@liabilityScheduleUndoConfirmBody": { "description": "Confirmation body before undoing a liability payment" },
   "liabilityNotFound": "Liability not found",
   "liabilityRevolvingNoSchedule": "Credit-card / revolving lines have no fixed amortization schedule.",
 
