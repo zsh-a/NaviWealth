@@ -8,6 +8,7 @@ import '../../../../core/auth/providers.dart' as auth_providers;
 import '../../../../core/config/app_version.dart';
 import '../../../../core/haptics/haptics.dart';
 import '../../../../core/logging/crash_reporting_preference.dart';
+import '../../../../core/product/product_metrics.dart';
 import '../../../../core/security/biometric_auth_service.dart';
 import '../../../../core/security/biometric_lock_preferences.dart';
 import '../../../../core/shell/auth_route_paths.dart';
@@ -131,6 +132,8 @@ class SettingsOverview extends ConsumerWidget {
           const _BiometricUnlockRow(),
           const AppGradientDivider(),
           const _CrashReportingRow(),
+          const AppGradientDivider(),
+          const _ProductMetricsRow(),
         ],
       ),
     );

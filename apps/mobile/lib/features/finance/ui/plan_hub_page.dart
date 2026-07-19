@@ -221,6 +221,16 @@ class _PlanNextSteps extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final steps = <_PlanTileSpec>[
       _PlanTileSpec(
+        icon: FLucideIcons.calendarRange,
+        title: l10n.moneyRunwayTitle,
+        path: FinanceRoutes.planRunway,
+      ),
+      _PlanTileSpec(
+        icon: FLucideIcons.waypoints,
+        title: l10n.lifeEventScenariosTitle,
+        path: FinanceRoutes.planLifeEvents,
+      ),
+      _PlanTileSpec(
         icon: FLucideIcons.scale,
         title: l10n.planRebalanceSectionTitle,
         path: FinanceRoutes.planRebalance,

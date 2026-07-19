@@ -176,6 +176,24 @@ class _CrashReportingRow extends ConsumerWidget {
   }
 }
 
+class _ProductMetricsRow extends ConsumerWidget {
+  const _ProductMetricsRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final enabled = ref.watch(productMetricsProvider);
+    return InlineSwitchRow(
+      icon: FLucideIcons.chartNoAxesColumnIncreasing,
+      label: l10n.settingsProductMetricsTitle,
+      subtitle: l10n.settingsProductMetricsSubtitle,
+      value: enabled,
+      onChanged: (next) =>
+          ref.read(productMetricsProvider.notifier).setEnabled(next),
+    );
+  }
+}
+
 class _BiometricUnlockRow extends ConsumerStatefulWidget {
   const _BiometricUnlockRow();
 

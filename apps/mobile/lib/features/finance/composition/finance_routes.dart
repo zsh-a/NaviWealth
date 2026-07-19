@@ -41,11 +41,13 @@ import 'package:naviwealth/features/finance/liabilities/ui/liabilities_page.dart
 import 'package:naviwealth/features/finance/liabilities/ui/liability_detail_page.dart'
     deferred as liability_detail_lib;
 import 'package:naviwealth/features/finance/liabilities/ui/liability_form_page.dart';
+import 'package:naviwealth/features/finance/life_events/ui/life_event_scenarios_page.dart';
 import 'package:naviwealth/features/finance/options_income/ui/income_planner/income_planner_page.dart'
     deferred as income_planner_lib;
 import 'package:naviwealth/features/finance/options_income/ui/options_trade_stats_page.dart'
     deferred as options_stats_lib;
 import 'package:naviwealth/features/finance/options_income/ui/wheel_lifecycle_page.dart';
+import 'package:naviwealth/features/finance/runway/ui/money_runway_page.dart';
 
 import '../../../core/shell/deferred_route.dart';
 import '../../../core/shell/domain_tabs_shell.dart';
@@ -59,6 +61,7 @@ import '../accounts/ui/journal_entry_list_page.dart';
 import '../accounts/ui/transfer_form_page.dart';
 import '../activity/ui/activity_entry_detail_page.dart';
 import '../activity/ui/activity_page.dart';
+import '../inbox/ui/financial_inbox_page.dart';
 import '../ingest/ui/ingest_review_page.dart';
 import '../rebalance/ui/rebalance_execution_workspace_page.dart'
     deferred as rebalance_execution_lib;
@@ -96,6 +99,11 @@ StatefulShellRoute financeShellRoute() {
             name: FinanceRouteNames.activity,
             builder: (context, state) => const ActivityPage(),
             routes: [
+              GoRoute(
+                path: 'inbox',
+                name: FinanceRouteNames.activityInbox,
+                builder: (context, state) => const FinancialInboxPage(),
+              ),
               GoRoute(
                 path: 'expenses',
                 name: FinanceRouteNames.expenses,
@@ -408,6 +416,16 @@ StatefulShellRoute financeShellRoute() {
                   load: dca_simulator_lib.loadLibrary,
                   builder: (_) => dca_simulator_lib.DcaSimulatorPage(),
                 ),
+              ),
+              GoRoute(
+                path: 'runway',
+                name: FinanceRouteNames.planRunway,
+                builder: (context, state) => const MoneyRunwayPage(),
+              ),
+              GoRoute(
+                path: 'life-events',
+                name: FinanceRouteNames.planLifeEvents,
+                builder: (context, state) => const LifeEventScenariosPage(),
               ),
               GoRoute(
                 path: 'budget',

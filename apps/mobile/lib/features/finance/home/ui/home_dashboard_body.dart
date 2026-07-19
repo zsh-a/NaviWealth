@@ -111,6 +111,8 @@ class _DashboardBodyContent extends ConsumerWidget {
                             primary: const Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
+                                FinancialInboxCard(),
+                                SizedBox(height: AppPageRhythm.section),
                                 FinanceAgentResultsPanel(
                                   showPlaceholderStates: false,
                                 ),
@@ -120,7 +122,11 @@ class _DashboardBodyContent extends ConsumerWidget {
                             ),
                             secondary: const Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [CashflowCalendarCard()],
+                              children: [
+                                MoneyRunwayCard(),
+                                SizedBox(height: AppPageRhythm.section),
+                                CashflowCalendarCard(),
+                              ],
                             ),
                           ),
                         ],
@@ -143,6 +149,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                           ? HomeQuickActionMode.onboarding
                           : HomeQuickActionMode.active,
                     ),
+                    const FinancialInboxCard(),
                     const FinanceAgentResultsPanel(
                       showPlaceholderStates: false,
                     ),
@@ -150,7 +157,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                   ],
                   // Cash-flow detail lives on its own page; Activity is
                   // the daily signal on Today.
-                  secondary: const [CashflowCalendarCard()],
+                  secondary: const [MoneyRunwayCard(), CashflowCalendarCard()],
                 ),
         );
       },

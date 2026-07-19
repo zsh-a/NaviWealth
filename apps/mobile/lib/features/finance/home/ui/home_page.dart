@@ -14,6 +14,8 @@ import 'package:naviwealth/features/finance/agents/providers.dart'
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/cashflow_calendar_card.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/finance/inbox/ui/financial_inbox_card.dart';
+import 'package:naviwealth/features/finance/runway/ui/money_runway_card.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../domain/dashboard_models.dart';

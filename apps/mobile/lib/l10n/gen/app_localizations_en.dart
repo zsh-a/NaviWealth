@@ -13434,4 +13434,228 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get databaseRecoveryResetFailed =>
       'Local data could not be reset. Nothing else was changed.';
+
+  @override
+  String get financialInboxTitle => 'Financial inbox';
+
+  @override
+  String financialInboxCount(int count) {
+    return '$count items need attention';
+  }
+
+  @override
+  String get financialInboxEmptyTitle => 'You\'re all caught up';
+
+  @override
+  String get financialInboxEmptyBody =>
+      'New imports and confirmed money risks will appear here.';
+
+  @override
+  String financialInboxImportTitle(int count) {
+    return 'Review $count imported items';
+  }
+
+  @override
+  String get financialInboxImportBody =>
+      'Confirm the records before they enter your ledger.';
+
+  @override
+  String get financialInboxRunwayTitle => 'Review your money runway';
+
+  @override
+  String get financialInboxRunwayBody =>
+      'A projected balance is below your safety reserve.';
+
+  @override
+  String financialInboxFxTitle(int count) {
+    return 'Add $count missing exchange rates';
+  }
+
+  @override
+  String get financialInboxFxBody =>
+      'Missing rates reduce forecast confidence.';
+
+  @override
+  String get settingsProductMetricsTitle => 'Local product metrics';
+
+  @override
+  String get settingsProductMetricsSubtitle =>
+      'Opt in to device-only funnel counters. No financial values or identifiers are recorded or uploaded.';
+
+  @override
+  String get lifeEventScenariosTitle => 'Life-event scenarios';
+
+  @override
+  String get lifeEventScenariosIntro =>
+      'Compare deterministic outcomes before making a choice. Assumptions, your selection, and the later review stay together.';
+
+  @override
+  String get lifeEventScenariosEmptyTitle =>
+      'Add your financial baseline first';
+
+  @override
+  String get lifeEventScenariosEmptyBody =>
+      'Add accounts and spending history so scenarios can use your real liquid balance and monthly outflow.';
+
+  @override
+  String get lifeEventLargePurchase => 'Large purchase';
+
+  @override
+  String get lifeEventCareerBreak => 'Career break';
+
+  @override
+  String get lifeEventHomePurchase => 'Home purchase';
+
+  @override
+  String get lifeEventLargePurchaseAssumption =>
+      'Preset: one-time cost equal to 20% of current liquid funds.';
+
+  @override
+  String lifeEventCareerBreakAssumption(int months) {
+    return 'Preset: no income for $months months.';
+  }
+
+  @override
+  String get lifeEventHomePurchaseAssumption =>
+      'Preset: 30% of liquid funds upfront and 10% higher monthly outflow for one year.';
+
+  @override
+  String get lifeEventAfter90Days => 'Liquid funds after 90 days';
+
+  @override
+  String get lifeEventAfter12Months => 'Liquid funds after 12 months';
+
+  @override
+  String get lifeEventMonthlySurplus => 'Monthly surplus during event';
+
+  @override
+  String get lifeEventFireImpact => 'Estimated FIRE impact';
+
+  @override
+  String lifeEventFireDelay(int months) {
+    return 'About $months months later';
+  }
+
+  @override
+  String get lifeEventAskAi => 'Ask AI';
+
+  @override
+  String get lifeEventChooseScenario => 'Choose';
+
+  @override
+  String get lifeEventDecisionSaved => 'Decision and assumptions saved';
+
+  @override
+  String get lifeEventDecisionHistory => 'Decisions to review';
+
+  @override
+  String get lifeEventPendingReview => 'Pending review';
+
+  @override
+  String get lifeEventReviewed => 'Reviewed';
+
+  @override
+  String lifeEventReviewOn(String date) {
+    return 'Review on $date';
+  }
+
+  @override
+  String get lifeEventCaptureActual => 'Capture current outcome';
+
+  @override
+  String lifeEventObservedDifference(String amount) {
+    return 'Observed 90-day balance difference: $amount. This is a comparison, not a causal claim.';
+  }
+
+  @override
+  String get moneyRunwayCreateAction => 'Turn risk into an action';
+
+  @override
+  String get moneyRunwayTitle => 'Money runway';
+
+  @override
+  String get moneyRunwayNinetyDayBalance => 'Expected balance in 90 days';
+
+  @override
+  String get moneyRunwayEmptyTitle => 'Build your first runway';
+
+  @override
+  String get moneyRunwayEmptyBody =>
+      'Import a statement or add an account to see the next 90 days.';
+
+  @override
+  String get moneyRunwayHorizonsTitle => 'Forward balance';
+
+  @override
+  String moneyRunwayDays(Object days) {
+    return '$days days';
+  }
+
+  @override
+  String get moneyRunwayStatusHealthy => 'On track';
+
+  @override
+  String get moneyRunwayStatusHealthyBody =>
+      'Expected cash stays above your reserve target.';
+
+  @override
+  String get moneyRunwayStatusWatch => 'Watch';
+
+  @override
+  String get moneyRunwayStatusWatchBody =>
+      'Expected cash remains positive but falls below your reserve target.';
+
+  @override
+  String get moneyRunwayStatusShortfall => 'Shortfall';
+
+  @override
+  String get moneyRunwayStatusShortfallBody =>
+      'Expected cash falls below zero within this window.';
+
+  @override
+  String moneyRunwayConfidence(Object confidence) {
+    return 'Confidence: $confidence';
+  }
+
+  @override
+  String get moneyRunwayConfidenceLow => 'low';
+
+  @override
+  String get moneyRunwayConfidenceMedium => 'medium';
+
+  @override
+  String get moneyRunwayConfidenceHigh => 'high';
+
+  @override
+  String get moneyRunwayAssumptionsTitle => 'Assumptions';
+
+  @override
+  String get moneyRunwayStartingCash => 'Liquid balance';
+
+  @override
+  String get moneyRunwayReserveTarget => 'Reserve target';
+
+  @override
+  String get moneyRunwayVariableEstimate =>
+      'Estimated variable spending / month';
+
+  @override
+  String get moneyRunwayCoverage => 'Emergency coverage';
+
+  @override
+  String moneyRunwayCoverageMonths(Object months) {
+    return '$months months';
+  }
+
+  @override
+  String get moneyRunwayScheduledTitle => 'Known upcoming flows';
+
+  @override
+  String get moneyRunwayScheduledEmpty =>
+      'No recurring income or bills are configured.';
+
+  @override
+  String moneyRunwayMissingFx(Object currencies) {
+    return 'Excluded because FX rates are missing: $currencies';
+  }
 }

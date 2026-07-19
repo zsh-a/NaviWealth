@@ -22757,6 +22757,378 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Local data could not be reset. Nothing else was changed.'**
   String get databaseRecoveryResetFailed;
+
+  /// No description provided for @financialInboxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial inbox'**
+  String get financialInboxTitle;
+
+  /// No description provided for @financialInboxCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items need attention'**
+  String financialInboxCount(int count);
+
+  /// No description provided for @financialInboxEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all caught up'**
+  String get financialInboxEmptyTitle;
+
+  /// No description provided for @financialInboxEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'New imports and confirmed money risks will appear here.'**
+  String get financialInboxEmptyBody;
+
+  /// No description provided for @financialInboxImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review {count} imported items'**
+  String financialInboxImportTitle(int count);
+
+  /// No description provided for @financialInboxImportBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the records before they enter your ledger.'**
+  String get financialInboxImportBody;
+
+  /// No description provided for @financialInboxRunwayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review your money runway'**
+  String get financialInboxRunwayTitle;
+
+  /// No description provided for @financialInboxRunwayBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A projected balance is below your safety reserve.'**
+  String get financialInboxRunwayBody;
+
+  /// No description provided for @financialInboxFxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {count} missing exchange rates'**
+  String financialInboxFxTitle(int count);
+
+  /// No description provided for @financialInboxFxBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing rates reduce forecast confidence.'**
+  String get financialInboxFxBody;
+
+  /// No description provided for @settingsProductMetricsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Local product metrics'**
+  String get settingsProductMetricsTitle;
+
+  /// No description provided for @settingsProductMetricsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Opt in to device-only funnel counters. No financial values or identifiers are recorded or uploaded.'**
+  String get settingsProductMetricsSubtitle;
+
+  /// No description provided for @lifeEventScenariosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Life-event scenarios'**
+  String get lifeEventScenariosTitle;
+
+  /// No description provided for @lifeEventScenariosIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare deterministic outcomes before making a choice. Assumptions, your selection, and the later review stay together.'**
+  String get lifeEventScenariosIntro;
+
+  /// No description provided for @lifeEventScenariosEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your financial baseline first'**
+  String get lifeEventScenariosEmptyTitle;
+
+  /// No description provided for @lifeEventScenariosEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add accounts and spending history so scenarios can use your real liquid balance and monthly outflow.'**
+  String get lifeEventScenariosEmptyBody;
+
+  /// No description provided for @lifeEventLargePurchase.
+  ///
+  /// In en, this message translates to:
+  /// **'Large purchase'**
+  String get lifeEventLargePurchase;
+
+  /// No description provided for @lifeEventCareerBreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Career break'**
+  String get lifeEventCareerBreak;
+
+  /// No description provided for @lifeEventHomePurchase.
+  ///
+  /// In en, this message translates to:
+  /// **'Home purchase'**
+  String get lifeEventHomePurchase;
+
+  /// No description provided for @lifeEventLargePurchaseAssumption.
+  ///
+  /// In en, this message translates to:
+  /// **'Preset: one-time cost equal to 20% of current liquid funds.'**
+  String get lifeEventLargePurchaseAssumption;
+
+  /// No description provided for @lifeEventCareerBreakAssumption.
+  ///
+  /// In en, this message translates to:
+  /// **'Preset: no income for {months} months.'**
+  String lifeEventCareerBreakAssumption(int months);
+
+  /// No description provided for @lifeEventHomePurchaseAssumption.
+  ///
+  /// In en, this message translates to:
+  /// **'Preset: 30% of liquid funds upfront and 10% higher monthly outflow for one year.'**
+  String get lifeEventHomePurchaseAssumption;
+
+  /// No description provided for @lifeEventAfter90Days.
+  ///
+  /// In en, this message translates to:
+  /// **'Liquid funds after 90 days'**
+  String get lifeEventAfter90Days;
+
+  /// No description provided for @lifeEventAfter12Months.
+  ///
+  /// In en, this message translates to:
+  /// **'Liquid funds after 12 months'**
+  String get lifeEventAfter12Months;
+
+  /// No description provided for @lifeEventMonthlySurplus.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly surplus during event'**
+  String get lifeEventMonthlySurplus;
+
+  /// No description provided for @lifeEventFireImpact.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated FIRE impact'**
+  String get lifeEventFireImpact;
+
+  /// No description provided for @lifeEventFireDelay.
+  ///
+  /// In en, this message translates to:
+  /// **'About {months} months later'**
+  String lifeEventFireDelay(int months);
+
+  /// No description provided for @lifeEventAskAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI'**
+  String get lifeEventAskAi;
+
+  /// No description provided for @lifeEventChooseScenario.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose'**
+  String get lifeEventChooseScenario;
+
+  /// No description provided for @lifeEventDecisionSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Decision and assumptions saved'**
+  String get lifeEventDecisionSaved;
+
+  /// No description provided for @lifeEventDecisionHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Decisions to review'**
+  String get lifeEventDecisionHistory;
+
+  /// No description provided for @lifeEventPendingReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending review'**
+  String get lifeEventPendingReview;
+
+  /// No description provided for @lifeEventReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewed'**
+  String get lifeEventReviewed;
+
+  /// No description provided for @lifeEventReviewOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Review on {date}'**
+  String lifeEventReviewOn(String date);
+
+  /// No description provided for @lifeEventCaptureActual.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture current outcome'**
+  String get lifeEventCaptureActual;
+
+  /// No description provided for @lifeEventObservedDifference.
+  ///
+  /// In en, this message translates to:
+  /// **'Observed 90-day balance difference: {amount}. This is a comparison, not a causal claim.'**
+  String lifeEventObservedDifference(String amount);
+
+  /// No description provided for @moneyRunwayCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn risk into an action'**
+  String get moneyRunwayCreateAction;
+
+  /// No description provided for @moneyRunwayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Money runway'**
+  String get moneyRunwayTitle;
+
+  /// No description provided for @moneyRunwayNinetyDayBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected balance in 90 days'**
+  String get moneyRunwayNinetyDayBalance;
+
+  /// No description provided for @moneyRunwayEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Build your first runway'**
+  String get moneyRunwayEmptyTitle;
+
+  /// No description provided for @moneyRunwayEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Import a statement or add an account to see the next 90 days.'**
+  String get moneyRunwayEmptyBody;
+
+  /// No description provided for @moneyRunwayHorizonsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward balance'**
+  String get moneyRunwayHorizonsTitle;
+
+  /// No description provided for @moneyRunwayDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days'**
+  String moneyRunwayDays(Object days);
+
+  /// No description provided for @moneyRunwayStatusHealthy.
+  ///
+  /// In en, this message translates to:
+  /// **'On track'**
+  String get moneyRunwayStatusHealthy;
+
+  /// No description provided for @moneyRunwayStatusHealthyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected cash stays above your reserve target.'**
+  String get moneyRunwayStatusHealthyBody;
+
+  /// No description provided for @moneyRunwayStatusWatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch'**
+  String get moneyRunwayStatusWatch;
+
+  /// No description provided for @moneyRunwayStatusWatchBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected cash remains positive but falls below your reserve target.'**
+  String get moneyRunwayStatusWatchBody;
+
+  /// No description provided for @moneyRunwayStatusShortfall.
+  ///
+  /// In en, this message translates to:
+  /// **'Shortfall'**
+  String get moneyRunwayStatusShortfall;
+
+  /// No description provided for @moneyRunwayStatusShortfallBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected cash falls below zero within this window.'**
+  String get moneyRunwayStatusShortfallBody;
+
+  /// No description provided for @moneyRunwayConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Confidence: {confidence}'**
+  String moneyRunwayConfidence(Object confidence);
+
+  /// No description provided for @moneyRunwayConfidenceLow.
+  ///
+  /// In en, this message translates to:
+  /// **'low'**
+  String get moneyRunwayConfidenceLow;
+
+  /// No description provided for @moneyRunwayConfidenceMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'medium'**
+  String get moneyRunwayConfidenceMedium;
+
+  /// No description provided for @moneyRunwayConfidenceHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'high'**
+  String get moneyRunwayConfidenceHigh;
+
+  /// No description provided for @moneyRunwayAssumptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assumptions'**
+  String get moneyRunwayAssumptionsTitle;
+
+  /// No description provided for @moneyRunwayStartingCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Liquid balance'**
+  String get moneyRunwayStartingCash;
+
+  /// No description provided for @moneyRunwayReserveTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Reserve target'**
+  String get moneyRunwayReserveTarget;
+
+  /// No description provided for @moneyRunwayVariableEstimate.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated variable spending / month'**
+  String get moneyRunwayVariableEstimate;
+
+  /// No description provided for @moneyRunwayCoverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency coverage'**
+  String get moneyRunwayCoverage;
+
+  /// No description provided for @moneyRunwayCoverageMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'{months} months'**
+  String moneyRunwayCoverageMonths(Object months);
+
+  /// No description provided for @moneyRunwayScheduledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Known upcoming flows'**
+  String get moneyRunwayScheduledTitle;
+
+  /// No description provided for @moneyRunwayScheduledEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No recurring income or bills are configured.'**
+  String get moneyRunwayScheduledEmpty;
+
+  /// No description provided for @moneyRunwayMissingFx.
+  ///
+  /// In en, this message translates to:
+  /// **'Excluded because FX rates are missing: {currencies}'**
+  String moneyRunwayMissingFx(Object currencies);
 }
 
 class _AppLocalizationsDelegate

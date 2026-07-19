@@ -12802,4 +12802,213 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get databaseRecoveryResetFailed => '无法重置本地数据，其他内容未被更改。';
+
+  @override
+  String get financialInboxTitle => '财务收件箱';
+
+  @override
+  String financialInboxCount(int count) {
+    return '有 $count 项需要处理';
+  }
+
+  @override
+  String get financialInboxEmptyTitle => '已全部处理';
+
+  @override
+  String get financialInboxEmptyBody => '新的导入记录和已确认的资金风险会出现在这里。';
+
+  @override
+  String financialInboxImportTitle(int count) {
+    return '复核 $count 条导入记录';
+  }
+
+  @override
+  String get financialInboxImportBody => '确认后再写入正式账本。';
+
+  @override
+  String get financialInboxRunwayTitle => '检查资金续航';
+
+  @override
+  String get financialInboxRunwayBody => '预测余额低于你的安全储备。';
+
+  @override
+  String financialInboxFxTitle(int count) {
+    return '补充 $count 个缺失汇率';
+  }
+
+  @override
+  String get financialInboxFxBody => '缺失汇率会降低预测可信度。';
+
+  @override
+  String get settingsProductMetricsTitle => '本地产品指标';
+
+  @override
+  String get settingsProductMetricsSubtitle =>
+      '自愿开启仅存于设备的漏斗计数；不记录或上传财务数值与身份标识。';
+
+  @override
+  String get lifeEventScenariosTitle => '人生事件推演';
+
+  @override
+  String get lifeEventScenariosIntro => '做决定前先比较确定性计算结果；假设、选择和后续复盘会保存在一起。';
+
+  @override
+  String get lifeEventScenariosEmptyTitle => '请先建立财务基线';
+
+  @override
+  String get lifeEventScenariosEmptyBody => '添加账户和支出记录后，推演会使用你的真实流动资金和月支出。';
+
+  @override
+  String get lifeEventLargePurchase => '大额消费';
+
+  @override
+  String get lifeEventCareerBreak => '职业空档';
+
+  @override
+  String get lifeEventHomePurchase => '购房';
+
+  @override
+  String get lifeEventLargePurchaseAssumption => '预设：一次性支出当前流动资金的 20%。';
+
+  @override
+  String lifeEventCareerBreakAssumption(int months) {
+    return '预设：$months 个月无收入。';
+  }
+
+  @override
+  String get lifeEventHomePurchaseAssumption => '预设：首付为流动资金的 30%，一年内月支出增加 10%。';
+
+  @override
+  String get lifeEventAfter90Days => '90 天后流动资金';
+
+  @override
+  String get lifeEventAfter12Months => '12 个月后流动资金';
+
+  @override
+  String get lifeEventMonthlySurplus => '事件期间月结余';
+
+  @override
+  String get lifeEventFireImpact => '预计 FIRE 影响';
+
+  @override
+  String lifeEventFireDelay(int months) {
+    return '约推迟 $months 个月';
+  }
+
+  @override
+  String get lifeEventAskAi => '问 AI';
+
+  @override
+  String get lifeEventChooseScenario => '选择';
+
+  @override
+  String get lifeEventDecisionSaved => '已保存决策和假设';
+
+  @override
+  String get lifeEventDecisionHistory => '待复盘决策';
+
+  @override
+  String get lifeEventPendingReview => '待复盘';
+
+  @override
+  String get lifeEventReviewed => '已复盘';
+
+  @override
+  String lifeEventReviewOn(String date) {
+    return '计划于 $date 复盘';
+  }
+
+  @override
+  String get lifeEventCaptureActual => '记录当前结果';
+
+  @override
+  String lifeEventObservedDifference(String amount) {
+    return '观察到的 90 天余额差异：$amount。这只是对比，不代表因果关系。';
+  }
+
+  @override
+  String get moneyRunwayCreateAction => '将风险转为行动';
+
+  @override
+  String get moneyRunwayTitle => '资金续航';
+
+  @override
+  String get moneyRunwayNinetyDayBalance => '90 天后预计余额';
+
+  @override
+  String get moneyRunwayEmptyTitle => '建立第一份资金续航';
+
+  @override
+  String get moneyRunwayEmptyBody => '导入账单或添加账户，即可查看未来 90 天。';
+
+  @override
+  String get moneyRunwayHorizonsTitle => '未来余额';
+
+  @override
+  String moneyRunwayDays(Object days) {
+    return '$days 天';
+  }
+
+  @override
+  String get moneyRunwayStatusHealthy => '稳健';
+
+  @override
+  String get moneyRunwayStatusHealthyBody => '预计现金始终高于你的储备目标。';
+
+  @override
+  String get moneyRunwayStatusWatch => '需关注';
+
+  @override
+  String get moneyRunwayStatusWatchBody => '预计现金仍为正，但会低于储备目标。';
+
+  @override
+  String get moneyRunwayStatusShortfall => '存在缺口';
+
+  @override
+  String get moneyRunwayStatusShortfallBody => '预计现金会在当前窗口内降至零以下。';
+
+  @override
+  String moneyRunwayConfidence(Object confidence) {
+    return '可信度：$confidence';
+  }
+
+  @override
+  String get moneyRunwayConfidenceLow => '低';
+
+  @override
+  String get moneyRunwayConfidenceMedium => '中';
+
+  @override
+  String get moneyRunwayConfidenceHigh => '高';
+
+  @override
+  String get moneyRunwayAssumptionsTitle => '计算假设';
+
+  @override
+  String get moneyRunwayStartingCash => '流动资金';
+
+  @override
+  String get moneyRunwayReserveTarget => '储备目标';
+
+  @override
+  String get moneyRunwayVariableEstimate => '每月可变支出估计';
+
+  @override
+  String get moneyRunwayCoverage => '应急覆盖';
+
+  @override
+  String moneyRunwayCoverageMonths(Object months) {
+    return '$months 个月';
+  }
+
+  @override
+  String get moneyRunwayScheduledTitle => '已知未来收支';
+
+  @override
+  String get moneyRunwayScheduledEmpty => '尚未配置周期收入或账单。';
+
+  @override
+  String moneyRunwayMissingFx(Object currencies) {
+    return '因缺少汇率而未计入：$currencies';
+  }
 }

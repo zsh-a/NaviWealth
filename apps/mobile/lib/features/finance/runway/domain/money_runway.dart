@@ -1,0 +1,188 @@
+import 'package:decimal/decimal.dart';
+import 'package:flutter/foundation.dart';
+
+enum MoneyRunwayStatus { healthy, watch, shortfall }
+
+enum MoneyRunwayConfidence { low, medium, high }
+
+@immutable
+class RunwayScheduledFlow {
+  const RunwayScheduledFlow({
+    required this.id,
+    required this.date,
+    required this.amount,
+    required this.label,
+  });
+
+  final String id;
+  final DateTime date;
+  final Decimal amount;
+  final String label;
+}
+
+@immutable
+class MoneyRunwayPoint {
+  const MoneyRunwayPoint({
+    required this.date,
+    required this.knownBalance,
+    required this.expectedBalance,
+  });
+
+  final DateTime date;
+  final Decimal knownBalance;
+  final Decimal expectedBalance;
+}
+
+@immutable
+class MoneyRunwaySnapshot {
+  const MoneyRunwaySnapshot({
+    required this.asOf,
+    required this.currency,
+    required this.startingBalance,
+    required this.reserveTarget,
+    required this.averageMonthlyExpense,
+    required this.estimatedDailyVariableOutflow,
+    required this.scheduledFlows,
+    required this.points,
+    required this.status,
+    required this.confidence,
+    required this.missingCurrencies,
+    required this.hasData,
+  });
+
+  final DateTime asOf;
+  final String currency;
+  final Decimal startingBalance;
+  final Decimal reserveTarget;
+  final Decimal averageMonthlyExpense;
+  final Decimal estimatedDailyVariableOutflow;
+  final List<RunwayScheduledFlow> scheduledFlows;
+  final List<MoneyRunwayPoint> points;
+  final MoneyRunwayStatus status;
+  final MoneyRunwayConfidence confidence;
+  final Set<String> missingCurrencies;
+  final bool hasData;
+
+  Decimal balanceAt(int days, {bool includeEstimates = true}) {
+    if (points.isEmpty) return startingBalance;
+    final index = days.clamp(0, points.length - 1);
+    final point = points[index];
+    return includeEstimates ? point.expectedBalance : point.knownBalance;
+  }
+
+  DateTime? get firstShortfallDate {
+    for (final point in points) {
+      if (point.expectedBalance < Decimal.zero) return point.date;
+    }
+    return null;
+  }
+
+  Decimal get minimumExpectedBalance {
+    var minimum = startingBalance;
+    for (final point in points) {
+      if (point.expectedBalance < minimum) minimum = point.expectedBalance;
+    }
+    return minimum;
+  }
+
+  double? get emergencyCoverageMonths {
+    if (averageMonthlyExpense <= Decimal.zero) return null;
+    return (startingBalance / averageMonthlyExpense).toDouble();
+  }
+
+  Map<String, Object?> toEvidenceJson() => <String, Object?>{
+    'as_of': asOf.toIso8601String(),
+    'currency': currency,
+    'starting_balance': startingBalance.toString(),
+    'reserve_target': reserveTarget.toString(),
+    'average_monthly_expense': averageMonthlyExpense.toString(),
+    'estimated_daily_variable_outflow': estimatedDailyVariableOutflow
+        .toString(),
+    'balance_30d': balanceAt(30).toString(),
+    'balance_60d': balanceAt(60).toString(),
+    'balance_90d': balanceAt(90).toString(),
+    'minimum_expected_balance': minimumExpectedBalance.toString(),
+    'first_shortfall_date': firstShortfallDate?.toIso8601String(),
+    'status': status.name,
+    'confidence': confidence.name,
+    'scheduled_flow_count': scheduledFlows.length,
+    'missing_currencies': missingCurrencies.toList()..sort(),
+  };
+}
+
+MoneyRunwaySnapshot buildMoneyRunway({
+  required DateTime asOf,
+  required String currency,
+  required Decimal startingBalance,
+  required Decimal reserveTarget,
+  required Decimal averageMonthlyExpense,
+  required Decimal estimatedDailyVariableOutflow,
+  required Iterable<RunwayScheduledFlow> scheduledFlows,
+  required MoneyRunwayConfidence confidence,
+  Set<String> missingCurrencies = const <String>{},
+  int horizonDays = 90,
+  bool hasData = true,
+}) {
+  final start = _day(asOf);
+  final flows = scheduledFlows.toList(growable: false)
+    ..sort((a, b) => a.date.compareTo(b.date));
+  final flowsByDay = <DateTime, Decimal>{};
+  for (final flow in flows) {
+    final day = _day(flow.date);
+    if (day.isBefore(start) ||
+        day.isAfter(start.add(Duration(days: horizonDays)))) {
+      continue;
+    }
+    flowsByDay[day] = (flowsByDay[day] ?? Decimal.zero) + flow.amount;
+  }
+
+  var known = startingBalance;
+  var expected = startingBalance;
+  final points = <MoneyRunwayPoint>[];
+  for (var offset = 0; offset <= horizonDays; offset++) {
+    final date = start.add(Duration(days: offset));
+    final flow = flowsByDay[date] ?? Decimal.zero;
+    known += flow;
+    expected += flow;
+    if (offset > 0) expected -= estimatedDailyVariableOutflow;
+    points.add(
+      MoneyRunwayPoint(
+        date: date,
+        knownBalance: known,
+        expectedBalance: expected,
+      ),
+    );
+  }
+
+  var minimum = startingBalance;
+  for (final point in points) {
+    if (point.expectedBalance < minimum) minimum = point.expectedBalance;
+  }
+  final status = !hasData
+      ? MoneyRunwayStatus.watch
+      : minimum < Decimal.zero
+      ? MoneyRunwayStatus.shortfall
+      : minimum < reserveTarget
+      ? MoneyRunwayStatus.watch
+      : MoneyRunwayStatus.healthy;
+
+  return MoneyRunwaySnapshot(
+    asOf: start,
+    currency: currency,
+    startingBalance: startingBalance,
+    reserveTarget: reserveTarget,
+    averageMonthlyExpense: averageMonthlyExpense,
+    estimatedDailyVariableOutflow: estimatedDailyVariableOutflow,
+    scheduledFlows: List<RunwayScheduledFlow>.unmodifiable(flows),
+    points: List<MoneyRunwayPoint>.unmodifiable(points),
+    status: status,
+    confidence: confidence,
+    missingCurrencies: Set<String>.unmodifiable(missingCurrencies),
+    hasData: hasData,
+  );
+}
+
+DateTime _day(DateTime value) {
+  final utc = value.toUtc();
+  return DateTime.utc(utc.year, utc.month, utc.day);
+}

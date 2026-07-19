@@ -17,6 +17,7 @@ abstract final class FinanceRoutes {
   static const transfer = '/activity/transfer';
   static const journalEntries = '/activity/journal';
   static const activityIngest = '/activity/ingest';
+  static const activityInbox = '/activity/inbox';
 
   static const wealthAccounts = '/wealth/accounts';
   static const wealthAccountNew = '/wealth/accounts/new';
@@ -36,6 +37,8 @@ abstract final class FinanceRoutes {
   static const planIncomeStats = '/plan/income/stats';
   static const planDca = '/plan/dca';
   static const planBudget = '/plan/budget';
+  static const planRunway = '/plan/runway';
+  static const planLifeEvents = '/plan/life-events';
   static const planWheel = '/plan/wheel';
 
   static String wealthAsset(String id) =>
@@ -106,6 +109,8 @@ abstract final class FinanceRouteNames {
   static const planIncomeStats = 'plan-income-stats';
   static const planDca = 'plan-dca';
   static const planBudget = 'plan-budget';
+  static const planRunway = 'plan-runway';
+  static const planLifeEvents = 'plan-life-events';
   static const planWheel = 'plan-wheel';
 
   static const activity = 'activity';
@@ -121,4 +126,5 @@ abstract final class FinanceRouteNames {
   static const transfer = 'transfer';
   static const journalEntries = 'journal-entries';
   static const activityIngest = 'activity-ingest';
+  static const activityInbox = 'activity-inbox';
 }

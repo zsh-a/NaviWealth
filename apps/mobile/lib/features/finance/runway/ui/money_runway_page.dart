@@ -1,0 +1,321 @@
+import 'package:decimal/decimal.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
+import 'package:naviwealth/core/ai/composition/ask_ai.dart';
+import 'package:naviwealth/core/format/providers.dart';
+import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
+import '../data/money_runway_providers.dart';
+import '../domain/money_runway.dart';
+
+class MoneyRunwayPage extends ConsumerWidget {
+  const MoneyRunwayPage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final runway = ref.watch(moneyRunwayProvider);
+    return AppPageScaffold(
+      title: l10n.moneyRunwayTitle,
+      childPad: false,
+      child: runway.when(
+        loading: () => const Center(child: FCircularProgress()),
+        error: (error, _) => AppEmptyState.error(
+          title: l10n.commonLoadFailed,
+          message: '$error',
+          retryLabel: l10n.commonRetry,
+          onRetry: () => ref.invalidate(moneyRunwayProvider),
+        ),
+        data: (snapshot) => _RunwayContent(snapshot: snapshot),
+      ),
+    );
+  }
+}
+
+class _RunwayContent extends ConsumerWidget {
+  const _RunwayContent({required this.snapshot});
+
+  final MoneyRunwaySnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final formatters = context.formatters(ref);
+    if (!snapshot.hasData) {
+      return AppEmptyState(
+        icon: FLucideIcons.calendarRange,
+        title: l10n.moneyRunwayEmptyTitle,
+        message: l10n.moneyRunwayEmptyBody,
+      );
+    }
+    final status = _statusCopy(l10n, snapshot.status);
+    final statusColor = switch (snapshot.status) {
+      MoneyRunwayStatus.healthy => SemanticColors.of(context).success,
+      MoneyRunwayStatus.watch => SemanticColors.of(context).warning,
+      MoneyRunwayStatus.shortfall => context.theme.colors.destructive,
+    };
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s12,
+        AppSpacing.s16,
+        AppSpacing.s32 + MediaQuery.paddingOf(context).bottom,
+      ),
+      children: [
+        SoftCard.hero(
+          padding: AppPageRhythm.heroPadding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.moneyRunwayNinetyDayBalance,
+                      style: context.mutedLabelStyle,
+                    ),
+                  ),
+                  AppBadge(
+                    label: status.$1,
+                    size: AppBadgeSize.compact,
+                    foregroundColor: statusColor,
+                    containerColor: statusColor.withValues(
+                      alpha: AppOpacity.subtle,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s10),
+              Text(
+                formatters.currency(
+                  snapshot.balanceAt(90),
+                  code: snapshot.currency,
+                ),
+                style: TypographyTokens.displayLarge,
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              Text(status.$2, style: context.bodyCaptionStyle),
+              const SizedBox(height: AppSpacing.s12),
+              Text(
+                l10n.moneyRunwayConfidence(
+                  _confidenceLabel(l10n, snapshot.confidence),
+                ),
+                style: context.captionStyle,
+              ),
+              if (snapshot.status != MoneyRunwayStatus.healthy) ...[
+                const SizedBox(height: AppSpacing.s12),
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => askAi(
+                    context,
+                    ref,
+                    intent: 'propose_execution_action',
+                    objectLabel: l10n.moneyRunwayTitle,
+                    attrs: {
+                      'confirmed_financial_risk': snapshot.toEvidenceJson(),
+                      'requested_proposal_kind': 'execution_action',
+                      'instruction':
+                          'Propose one concrete mitigative action grounded only in this runway evidence. Require confirmation before applying.',
+                    },
+                  ),
+                  child: Text(l10n.moneyRunwayCreateAction),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s16),
+        Text(l10n.moneyRunwayHorizonsTitle, style: context.mutedLabelStyle),
+        const SizedBox(height: AppSpacing.s8),
+        Row(
+          children: [
+            for (final days in const [30, 60, 90]) ...[
+              if (days != 30) const SizedBox(width: AppSpacing.s8),
+              Expanded(
+                child: SoftCard.flat(
+                  padding: const EdgeInsets.all(AppSpacing.s12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.moneyRunwayDays(days),
+                        style: context.captionStyle,
+                      ),
+                      const SizedBox(height: AppSpacing.s6),
+                      Text(
+                        formatters.compactCurrency(
+                          snapshot.balanceAt(days),
+                          code: snapshot.currency,
+                        ),
+                        style: TypographyTokens.numericTitleStrong,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s16),
+        SoftCard.raised(
+          borderless: true,
+          padding: const EdgeInsets.all(AppSpacing.s14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.moneyRunwayAssumptionsTitle, style: context.labelStyle),
+              const SizedBox(height: AppSpacing.s10),
+              _ValueRow(
+                label: l10n.moneyRunwayStartingCash,
+                value: formatters.currency(
+                  snapshot.startingBalance,
+                  code: snapshot.currency,
+                ),
+              ),
+              _ValueRow(
+                label: l10n.moneyRunwayReserveTarget,
+                value: formatters.currency(
+                  snapshot.reserveTarget,
+                  code: snapshot.currency,
+                ),
+              ),
+              _ValueRow(
+                label: l10n.moneyRunwayVariableEstimate,
+                value: formatters.currency(
+                  snapshot.estimatedDailyVariableOutflow * Decimal.fromInt(30),
+                  code: snapshot.currency,
+                ),
+              ),
+              _ValueRow(
+                label: l10n.moneyRunwayCoverage,
+                value: snapshot.emergencyCoverageMonths == null
+                    ? l10n.commonNotAvailable
+                    : l10n.moneyRunwayCoverageMonths(
+                        snapshot.emergencyCoverageMonths!.toStringAsFixed(1),
+                      ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s16),
+        Text(l10n.moneyRunwayScheduledTitle, style: context.mutedLabelStyle),
+        const SizedBox(height: AppSpacing.s8),
+        if (snapshot.scheduledFlows.isEmpty)
+          SoftCard.flat(
+            padding: const EdgeInsets.all(AppSpacing.s14),
+            child: Text(
+              l10n.moneyRunwayScheduledEmpty,
+              style: context.captionStyle,
+            ),
+          )
+        else
+          SoftCard.flat(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                for (var i = 0; i < snapshot.scheduledFlows.length; i++) ...[
+                  _ScheduledFlowRow(flow: snapshot.scheduledFlows[i]),
+                  if (i < snapshot.scheduledFlows.length - 1)
+                    const Divider(height: 1),
+                ],
+              ],
+            ),
+          ),
+        if (snapshot.missingCurrencies.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s12),
+          Text(
+            l10n.moneyRunwayMissingFx(
+              (snapshot.missingCurrencies.toList()..sort()).join(', '),
+            ),
+            style: context.captionStyle.copyWith(
+              color: SemanticColors.of(context).warning,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ScheduledFlowRow extends ConsumerWidget {
+  const _ScheduledFlowRow({required this.flow});
+
+  final RunwayScheduledFlow flow;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final formatter = context.formatters(ref);
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s14,
+        vertical: AppSpacing.s12,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(flow.label, style: context.labelStyle),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  formatter.date(flow.date.toLocal()),
+                  style: context.captionStyle,
+                ),
+              ],
+            ),
+          ),
+          Text(
+            formatter.currency(flow.amount),
+            style: TypographyTokens.numericBodyStrong,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ValueRow extends StatelessWidget {
+  const _ValueRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+    child: Row(
+      children: [
+        Expanded(child: Text(label, style: context.captionStyle)),
+        Text(value, style: context.labelStyle),
+      ],
+    ),
+  );
+}
+
+(String, String) _statusCopy(AppLocalizations l10n, MoneyRunwayStatus status) =>
+    switch (status) {
+      MoneyRunwayStatus.healthy => (
+        l10n.moneyRunwayStatusHealthy,
+        l10n.moneyRunwayStatusHealthyBody,
+      ),
+      MoneyRunwayStatus.watch => (
+        l10n.moneyRunwayStatusWatch,
+        l10n.moneyRunwayStatusWatchBody,
+      ),
+      MoneyRunwayStatus.shortfall => (
+        l10n.moneyRunwayStatusShortfall,
+        l10n.moneyRunwayStatusShortfallBody,
+      ),
+    };
+
+String _confidenceLabel(
+  AppLocalizations l10n,
+  MoneyRunwayConfidence confidence,
+) => switch (confidence) {
+  MoneyRunwayConfidence.low => l10n.moneyRunwayConfidenceLow,
+  MoneyRunwayConfidence.medium => l10n.moneyRunwayConfidenceMedium,
+  MoneyRunwayConfidence.high => l10n.moneyRunwayConfidenceHigh,
+};
