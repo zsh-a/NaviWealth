@@ -47,13 +47,71 @@ class _ControlledOutbox implements OutboxStore {
 
 Finder _field(String label) {
   final field = find.ancestor(
-    of: find.text(label),
+    of: find.text('$label *', findRichText: true),
     matching: find.byType(FTextFormField),
   );
   return find.descendant(of: field, matching: find.byType(EditableText));
 }
 
+Future<Widget> _wrapCreatePage() async {
+  SharedPreferences.setMockInitialValues(<String, Object>{});
+  final prefs = await SharedPreferences.getInstance();
+  return ProviderScope(
+    overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    child: MaterialApp(
+      locale: const Locale('en', 'US'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) => AppMessenger.init(
+        child: FTheme(data: FThemes.slate.light.desktop, child: child!),
+      ),
+      home: const LiabilityFormPage(),
+    ),
+  );
+}
+
 void main() {
+  testWidgets('schedule details expose state and reveal hidden day errors', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(await _wrapCreatePage());
+    await tester.pumpAndSettle();
+
+    final toggle = find.byKey(const Key('liability-details-toggle-label'));
+    final details = find.byKey(const Key('liability-details-fields'));
+    expect(tester.widget<Semantics>(toggle).properties.expanded, isFalse);
+    expect(tester.widget<Offstage>(details).offstage, isTrue);
+    expect(find.text('Rate type, start date & repayment'), findsOneWidget);
+    expect(find.text('Name *', findRichText: true), findsOneWidget);
+
+    await tester.tap(find.text('Mortgage'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Credit card').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Billing dates & note'), findsOneWidget);
+
+    await tester.tap(find.text('Schedule details'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<Semantics>(toggle).properties.expanded, isTrue);
+    expect(tester.widget<Offstage>(details).offstage, isFalse);
+    await tester.enterText(
+      find.byKey(const Key('liability-statement-day-field')),
+      '32',
+    );
+
+    await tester.tap(find.text('Schedule details'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<Semantics>(toggle).properties.expanded, isFalse);
+    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<Semantics>(toggle).properties.expanded, isTrue);
+    expect(find.text('Must be 1–31'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'failed create remains editable and retries after pending write unlocks',
     (tester) async {

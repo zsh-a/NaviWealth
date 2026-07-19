@@ -1917,6 +1917,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get liabilityDetailsTitle => '还款计划详情';
 
   @override
+  String get liabilityDetailsLoanSummary => '利率类型、起还日与还款方式';
+
+  @override
+  String get liabilityDetailsCardSummary => '账单日期与备注';
+
+  @override
   String get liabilityEditAction => '编辑负债';
 
   @override

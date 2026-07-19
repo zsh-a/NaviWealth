@@ -588,6 +588,8 @@
   "liabilityFieldPaymentDueDay": "还款日",
   "liabilityFieldNote": "备注",
   "liabilityDetailsTitle": "还款计划详情",
+  "liabilityDetailsLoanSummary": "利率类型、起还日与还款方式",
+  "liabilityDetailsCardSummary": "账单日期与备注",
   "liabilityEditAction": "编辑负债",
   "liabilityEditMetadataOnlyHint": "此处只能编辑名称和备注。本金、利率和期限会驱动还款计划，因此保持锁定。",
   "liabilitySaveAction": "保存",

@@ -1983,6 +1983,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get liabilityDetailsTitle => 'Schedule details';
 
   @override
+  String get liabilityDetailsLoanSummary => 'Rate type, start date & repayment';
+
+  @override
+  String get liabilityDetailsCardSummary => 'Billing dates & note';
+
+  @override
   String get liabilityEditAction => 'Edit liability';
 
   @override

@@ -3524,6 +3524,18 @@ abstract class AppLocalizations {
   /// **'Schedule details'**
   String get liabilityDetailsTitle;
 
+  /// Collapsed liability schedule summary for loans
+  ///
+  /// In en, this message translates to:
+  /// **'Rate type, start date & repayment'**
+  String get liabilityDetailsLoanSummary;
+
+  /// Collapsed liability schedule summary for credit cards
+  ///
+  /// In en, this message translates to:
+  /// **'Billing dates & note'**
+  String get liabilityDetailsCardSummary;
+
   /// Button/title for editing liability metadata
   ///
   /// In en, this message translates to:
