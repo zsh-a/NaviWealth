@@ -3788,6 +3788,24 @@ abstract class AppLocalizations {
   /// **'Note'**
   String get physicalAssetFieldNote;
 
+  /// No description provided for @physicalAssetDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset details'**
+  String get physicalAssetDetailsTitle;
+
+  /// No description provided for @physicalAssetVehicleDetailsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Valuation & depreciation'**
+  String get physicalAssetVehicleDetailsSummary;
+
+  /// No description provided for @physicalAssetRealEstateDetailsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Address, valuation & linked loan'**
+  String get physicalAssetRealEstateDetailsSummary;
+
   /// No description provided for @physicalAssetCreateSubmit.
   ///
   /// In en, this message translates to:

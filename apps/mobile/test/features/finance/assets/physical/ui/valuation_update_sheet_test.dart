@@ -38,9 +38,9 @@ class _ControlledOutbox implements OutboxStore {
   }
 }
 
-Finder _field(String label) {
+Finder _field(String label, {bool required = false}) {
   final field = find.ancestor(
-    of: find.text(label),
+    of: find.text(required ? '$label *' : label, findRichText: required),
     matching: find.byType(FTextFormField),
   );
   return find.descendant(of: field, matching: find.byType(EditableText));
@@ -104,7 +104,8 @@ void main() {
       await tester.tap(find.text('Open valuation'));
       await tester.pumpAndSettle();
 
-      await tester.enterText(_field('New valuation'), '25000');
+      expect(find.text('New valuation *', findRichText: true), findsOneWidget);
+      await tester.enterText(_field('New valuation', required: true), '25000');
       await tester.tap(find.widgetWithText(FButton, 'Save valuation'));
       await tester.pump();
 

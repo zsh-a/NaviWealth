@@ -2127,6 +2127,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get physicalAssetFieldNote => 'Note';
 
   @override
+  String get physicalAssetDetailsTitle => 'Asset details';
+
+  @override
+  String get physicalAssetVehicleDetailsSummary => 'Valuation & depreciation';
+
+  @override
+  String get physicalAssetRealEstateDetailsSummary =>
+      'Address, valuation & linked loan';
+
+  @override
   String get physicalAssetCreateSubmit => 'Save';
 
   @override

@@ -39,6 +39,8 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _amountCtrl;
   final TextEditingController _noteCtrl = TextEditingController();
+  final FocusNode _amountFocus = FocusNode();
+  final FocusNode _noteFocus = FocusNode();
   late DateTime _asOf;
   bool _saving = false;
 
@@ -58,6 +60,8 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
   void dispose() {
     _amountCtrl.dispose();
     _noteCtrl.dispose();
+    _amountFocus.dispose();
+    _noteFocus.dispose();
     super.dispose();
   }
 
@@ -74,16 +78,20 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
       ),
       child: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             FTextFormField(
+              key: const Key('valuation-update-amount-field'),
               control: FTextFieldControl.managed(controller: _amountCtrl),
-              label: Text(l10n.physicalAssetUpdateValuationAmount),
+              label: RequiredLabel(l10n.physicalAssetUpdateValuationAmount),
+              focusNode: _amountFocus,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
+              textInputAction: TextInputAction.next,
               validator: (v) {
                 if (v == null || v.trim().isEmpty) {
                   return l10n.physicalAssetValidationRequired;
@@ -94,6 +102,7 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
                 }
                 return null;
               },
+              onSubmit: (_) => _noteFocus.requestFocus(),
             ),
             const SizedBox(height: AppSpacing.s12),
             DateField(
@@ -113,8 +122,12 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
             ),
             const SizedBox(height: AppSpacing.s12),
             FTextFormField(
+              key: const Key('valuation-update-note-field'),
               control: FTextFieldControl.managed(controller: _noteCtrl),
               label: Text(l10n.physicalAssetFieldNote),
+              focusNode: _noteFocus,
+              textInputAction: TextInputAction.done,
+              onSubmit: (_) => _saving ? null : _submit(),
               maxLines: 3,
               minLines: 1,
             ),

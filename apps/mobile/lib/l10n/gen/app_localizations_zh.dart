@@ -2056,6 +2056,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get physicalAssetFieldNote => '备注';
 
   @override
+  String get physicalAssetDetailsTitle => '资产详情';
+
+  @override
+  String get physicalAssetVehicleDetailsSummary => '估值与折旧设置';
+
+  @override
+  String get physicalAssetRealEstateDetailsSummary => '地址、估值与关联贷款';
+
+  @override
   String get physicalAssetCreateSubmit => '保存';
 
   @override
