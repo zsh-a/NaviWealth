@@ -16556,6 +16556,12 @@ abstract class AppLocalizations {
   /// **'Add symbol'**
   String get watchlistAddAction;
 
+  /// Title and accessible label for one watchlist row's action menu
+  ///
+  /// In en, this message translates to:
+  /// **'Actions for {symbol}'**
+  String watchlistRowActionsTitle(String symbol);
+
   /// Watchlist add sheet title
   ///
   /// In en, this message translates to:

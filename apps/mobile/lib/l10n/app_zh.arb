@@ -2887,6 +2887,7 @@
   "watchlistTitle": "自选清单",
   "watchlistAccountsEntrySubtitle": "跟踪标的并设置本地价格告警",
   "watchlistAddAction": "添加标的",
+  "watchlistRowActionsTitle": "{symbol} 操作",
   "watchlistAddTitle": "添加到自选",
   "watchlistEditAlertTitle": "{symbol} 告警",
   "watchlistEmptyTitle": "暂无自选标的",

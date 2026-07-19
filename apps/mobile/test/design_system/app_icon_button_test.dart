@@ -1,18 +1,48 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 
+Widget wrap(Widget child) {
+  return MaterialApp(
+    theme: AppTheme.light(),
+    home: FTheme(
+      data: FThemes.slate.light.desktop,
+      child: Scaffold(body: Center(child: child)),
+    ),
+  );
+}
+
 void main() {
-  Widget wrap(Widget child) {
-    return MaterialApp(
-      theme: AppTheme.light(),
-      home: FTheme(
-        data: FThemes.slate.light.desktop,
-        child: Scaffold(body: Center(child: child)),
+  testWidgets('exposes one named button with semantic activation', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    var presses = 0;
+    await tester.pumpWidget(
+      wrap(
+        AppIconButton(
+          icon: FLucideIcons.settings,
+          tooltip: 'Open settings',
+          onPress: () => presses += 1,
+        ),
       ),
     );
-  }
+
+    final action = find.semantics.byLabel('Open settings');
+    final data = action.evaluate().single.getSemanticsData();
+    expect(data.flagsCollection.isButton, isTrue);
+    expect(data.flagsCollection.isEnabled, ui.Tristate.isTrue);
+    expect(data.hasAction(SemanticsAction.tap), isTrue);
+
+    tester.semantics.tap(action);
+    await tester.pump();
+    expect(presses, 1);
+    semantics.dispose();
+  });
 
   testWidgets('softPrimary paints a circular primary-tint surface', (
     tester,

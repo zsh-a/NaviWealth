@@ -9294,6 +9294,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistAddAction => '添加标的';
 
   @override
+  String watchlistRowActionsTitle(String symbol) {
+    return '$symbol 操作';
+  }
+
+  @override
   String get watchlistAddTitle => '添加到自选';
 
   @override

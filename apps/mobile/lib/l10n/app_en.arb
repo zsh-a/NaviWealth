@@ -5518,6 +5518,11 @@
   "@watchlistAccountsEntrySubtitle": { "description": "Accounts hub entry subtitle for watchlist" },
   "watchlistAddAction": "Add symbol",
   "@watchlistAddAction": { "description": "Add a symbol to the watchlist" },
+  "watchlistRowActionsTitle": "Actions for {symbol}",
+  "@watchlistRowActionsTitle": {
+    "description": "Title and accessible label for one watchlist row's action menu",
+    "placeholders": { "symbol": { "type": "String" } }
+  },
   "watchlistAddTitle": "Add to watchlist",
   "@watchlistAddTitle": { "description": "Watchlist add sheet title" },
   "watchlistEditAlertTitle": "Alerts for {symbol}",

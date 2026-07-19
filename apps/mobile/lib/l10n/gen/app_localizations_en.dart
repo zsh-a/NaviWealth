@@ -9778,6 +9778,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistAddAction => 'Add symbol';
 
   @override
+  String watchlistRowActionsTitle(String symbol) {
+    return 'Actions for $symbol';
+  }
+
+  @override
   String get watchlistAddTitle => 'Add to watchlist';
 
   @override

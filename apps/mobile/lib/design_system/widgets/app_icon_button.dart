@@ -174,8 +174,12 @@ class AppIconButton extends StatelessWidget {
         };
 
     Widget button = Semantics(
+      container: true,
       label: tooltip,
       button: true,
+      enabled: !busy && onPress != null,
+      onTap: busy ? null : onPress,
+      excludeSemantics: true,
       child: FTappable(
         onPress: busy ? null : onPress,
         child: Container(

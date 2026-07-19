@@ -263,6 +263,7 @@ class _WatchlistRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final quote = snapshot?.quote;
+    final actionsTitle = l10n.watchlistRowActionsTitle(item.displaySymbol);
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
@@ -316,6 +317,34 @@ class _WatchlistRow extends StatelessWidget {
                   currencyCode: quote.currency,
                   style: context.theme.typography.body.lg,
                 ),
+              const SizedBox(width: AppSpacing.s4),
+              AppAdaptiveActionMenu(
+                title: actionsTitle,
+                actions: <AppAdaptiveAction>[
+                  AppAdaptiveAction(
+                    icon: FLucideIcons.bell,
+                    title: l10n.watchlistEditAlertsAction,
+                    onPress: onEdit,
+                  ),
+                  AppAdaptiveAction(
+                    icon: FLucideIcons.trash2,
+                    title: l10n.watchlistRemoveAction,
+                    destructive: true,
+                    onPress: onRemove,
+                  ),
+                ],
+                triggerBuilder: (context, openMenu, focusNode) => Focus(
+                  focusNode: focusNode,
+                  child: AppIconButton(
+                    icon: FLucideIcons.ellipsisVertical,
+                    tooltip: actionsTitle,
+                    onPress: openMenu,
+                    size: appActionTargetSize(context),
+                    iconSize: AppIconSizes.sm,
+                    surface: AppIconButtonSurface.softMuted,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.s10),
@@ -336,23 +365,6 @@ class _WatchlistRow extends StatelessWidget {
                     item.alertRules.below.toString(),
                   ),
                 ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              FButton(
-                variant: FButtonVariant.ghost,
-                onPress: onEdit,
-                child: Text(l10n.watchlistEditAlertsAction),
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              FButton(
-                variant: FButtonVariant.destructive,
-                onPress: onRemove,
-                child: Text(l10n.watchlistRemoveAction),
-              ),
             ],
           ),
         ],
