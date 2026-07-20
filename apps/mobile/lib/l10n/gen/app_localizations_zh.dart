@@ -624,10 +624,42 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dividendCenterMetricTtm => '近 12 个月';
 
   @override
+  String get dividendCenterMetricTtmNet => '近 12 月税后';
+
+  @override
+  String dividendCenterMetricTtmNetCaption(String ratio) {
+    return '预扣税后保留 $ratio';
+  }
+
+  @override
   String get dividendCenterMetricYoy => '同比同期';
 
   @override
   String get dividendCenterMetricWithholding => '预扣税';
+
+  @override
+  String get dividendCenterPolicyTitle => '分红政策关注';
+
+  @override
+  String dividendCenterPolicyBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '有 $count 只持仓的滚动分红较前一年下滑',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dividendCenterPolicySeverityWarning => '预警';
+
+  @override
+  String get dividendCenterPolicySeverityCritical => '严重';
+
+  @override
+  String dividendCenterPolicyDropLine(String percent) {
+    return '下滑 $percent%';
+  }
 
   @override
   String get dividendCenterHoldingRanking => '持仓排行';
@@ -654,6 +686,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dividendCenterRankingYieldOnCost => '成本收益率';
+
+  @override
+  String get dividendCenterRankingNetYieldOnCost => '税后成本收益率';
 
   @override
   String get dividendCenterRankingWithholding => '税额';

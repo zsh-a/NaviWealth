@@ -25,17 +25,22 @@ class _KpiGrid extends ConsumerWidget {
         ),
       ),
       _MetricCard(
+        label: l10n.dividendCenterMetricTtmNet,
+        value: formatters.currency(
+          snapshot.ttmNet,
+          code: snapshot.baseCurrency,
+        ),
+        caption: snapshot.ttmNetRetentionRatio == null
+            ? null
+            : l10n.dividendCenterMetricTtmNetCaption(
+                formatters.percent(snapshot.ttmNetRetentionRatio!),
+              ),
+      ),
+      _MetricCard(
         label: l10n.dividendCenterMetricYoy,
         value: snapshot.yearOverYearRatio == null
             ? l10n.commonNotAvailable
             : formatters.signedPercent(snapshot.yearOverYearRatio!),
-      ),
-      _MetricCard(
-        label: l10n.dividendCenterMetricWithholding,
-        value: formatters.currency(
-          snapshot.ttmWithholding,
-          code: snapshot.baseCurrency,
-        ),
       ),
     ];
     Widget rowOf(List<Widget> children) => IntrinsicHeight(
@@ -68,10 +73,11 @@ class _KpiGrid extends ConsumerWidget {
 }
 
 class _MetricCard extends StatelessWidget {
-  const _MetricCard({required this.label, required this.value});
+  const _MetricCard({required this.label, required this.value, this.caption});
 
   final String label;
   final String value;
+  final String? caption;
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +99,15 @@ class _MetricCard extends StatelessWidget {
             alignment: AlignmentDirectional.centerStart,
             child: Text(value, style: TypographyTokens.numericTitle),
           ),
+          if (caption != null) ...[
+            const SizedBox(height: AppSpacing.s4),
+            Text(
+              caption!,
+              style: context.captionStyle.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
+            ),
+          ],
         ],
       ),
     );

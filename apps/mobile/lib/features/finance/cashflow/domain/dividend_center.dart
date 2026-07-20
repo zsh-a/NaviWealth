@@ -41,6 +41,7 @@ class DividendHoldingRank {
     required this.withholdingInBase,
     required this.portfolioShare,
     required this.yieldOnCost,
+    this.netYieldOnCost,
   });
 
   final String assetId;
@@ -48,7 +49,17 @@ class DividendHoldingRank {
   final Decimal ttmGrossInBase;
   final Decimal withholdingInBase;
   final double portfolioShare;
+
+  /// Gross TTM dividends / cost basis (pre-withholding).
   final double? yieldOnCost;
+
+  /// Net TTM dividends (gross − withholding) / cost basis.
+  final double? netYieldOnCost;
+
+  Decimal get ttmNetInBase {
+    final net = ttmGrossInBase - withholdingInBase;
+    return net < Decimal.zero ? Decimal.zero : net;
+  }
 }
 
 @immutable
@@ -104,6 +115,20 @@ class DividendCenterSnapshot {
   }
 
   bool get isEmpty => events.isEmpty;
+
+  /// Trailing twelve-month dividends after recorded withholding tax.
+  Decimal get ttmNet {
+    final net = ttmGross - ttmWithholding;
+    return net < Decimal.zero ? Decimal.zero : net;
+  }
+
+  /// Share of TTM gross retained after withholding; null when gross is zero.
+  double? get ttmNetRetentionRatio {
+    if (ttmGross == Decimal.zero) return null;
+    return (ttmNet / ttmGross)
+        .toDecimal(scaleOnInfinitePrecision: 8)
+        .toDouble();
+  }
 }
 
 DividendCenterSnapshot buildDividendCenterSnapshot({
@@ -202,6 +227,13 @@ List<DividendHoldingRank> _buildRanking({
         : (acc.gross / costBasis)
               .toDecimal(scaleOnInfinitePrecision: 8)
               .toDouble();
+    final net = acc.gross - acc.withholding;
+    final safeNet = net < Decimal.zero ? Decimal.zero : net;
+    final netYieldOnCost = costBasis == null || costBasis <= Decimal.zero
+        ? null
+        : (safeNet / costBasis)
+              .toDecimal(scaleOnInfinitePrecision: 8)
+              .toDouble();
     final share = ttmGross == Decimal.zero
         ? 0.0
         : (acc.gross / ttmGross)
@@ -214,6 +246,7 @@ List<DividendHoldingRank> _buildRanking({
       withholdingInBase: acc.withholding,
       portfolioShare: share,
       yieldOnCost: yieldOnCost,
+      netYieldOnCost: netYieldOnCost,
     );
   }).toList()..sort((a, b) => b.ttmGrossInBase.compareTo(a.ttmGrossInBase));
   return rows;

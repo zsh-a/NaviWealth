@@ -6,12 +6,15 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart'
+    show holdingsSnapshotProvider;
 import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/dividend_center_providers.dart';
 import '../data/dividend_forecast_providers.dart';
 import '../domain/dividend_center.dart';
+import '../domain/dividend_policy_monitor.dart';
 import 'dividend_event_actions.dart';
 
 part 'dividend_center_common.dart';
@@ -19,6 +22,8 @@ part 'dividend_center_forecast.dart';
 part 'dividend_center_kpis.dart';
 part 'dividend_center_ranking.dart';
 part 'dividend_center_timeline.dart';
+
+const _dividendPolicyMonitor = DividendPolicyMonitor();
 
 class DividendCenterPage extends ConsumerWidget {
   const DividendCenterPage({super.key});
@@ -59,13 +64,24 @@ class DividendCenterPage extends ConsumerWidget {
   }
 }
 
-class _DividendCenterBody extends StatelessWidget {
+class _DividendCenterBody extends ConsumerWidget {
   const _DividendCenterBody({required this.snapshot});
 
   final DividendCenterSnapshot snapshot;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final holdingsAsync = ref.watch(holdingsSnapshotProvider);
+    final heldIds = holdingsAsync.asData?.value.keys.toSet();
+    final deteriorations = heldIds == null
+        ? const <DividendDeterioration>[]
+        : _dividendPolicyMonitor.detect(
+            events: snapshot.events,
+            now: ref.watch(dividendCenterNowProvider),
+            heldAssetIds: heldIds,
+          );
+
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         AppSpacing.s16,
@@ -82,12 +98,15 @@ class _DividendCenterBody extends StatelessWidget {
             if (snapshot.fxExclusions.isNotEmpty) ...[
               AppStatusBanner(
                 kind: AppStatusKind.warning,
-                message: AppLocalizations.of(context)
-                    .dividendCenterFxIncomplete(
-                      snapshot.fxExclusions.length,
-                      snapshot.missingFxCurrencies.join(', '),
-                    ),
+                message: l10n.dividendCenterFxIncomplete(
+                  snapshot.fxExclusions.length,
+                  snapshot.missingFxCurrencies.join(', '),
+                ),
               ),
+              const SizedBox(height: AppSpacing.s16),
+            ],
+            if (deteriorations.isNotEmpty) ...[
+              _DividendPolicySection(rows: deteriorations),
               const SizedBox(height: AppSpacing.s16),
             ],
             if (snapshot.isEmpty) ...[

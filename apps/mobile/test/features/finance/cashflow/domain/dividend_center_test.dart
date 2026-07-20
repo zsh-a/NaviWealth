@@ -44,10 +44,14 @@ void main() {
     expect(snapshot.ttmGross, Decimal.fromInt(1000));
     expect(snapshot.yearToDateGross, Decimal.fromInt(1000));
     expect(snapshot.ttmWithholding, Decimal.fromInt(100));
+    expect(snapshot.ttmNet, Decimal.fromInt(900));
+    expect(snapshot.ttmNetRetentionRatio, closeTo(0.9, 1e-9));
     expect(snapshot.ranking.first.assetId, 'us:AAPL');
     expect(snapshot.ranking.first.ttmGrossInBase, Decimal.fromInt(600));
+    expect(snapshot.ranking.first.ttmNetInBase, Decimal.fromInt(540));
     expect(snapshot.ranking.first.portfolioShare, 0.6);
     expect(snapshot.ranking.first.yieldOnCost, 0.06);
+    expect(snapshot.ranking.first.netYieldOnCost, closeTo(0.054, 1e-9));
   });
 
   test('base-currency recomputation can change the holding ranking', () {

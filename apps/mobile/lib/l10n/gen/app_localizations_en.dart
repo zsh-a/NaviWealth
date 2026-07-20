@@ -649,10 +649,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dividendCenterMetricTtm => 'Trailing 12 months';
 
   @override
+  String get dividendCenterMetricTtmNet => 'TTM after tax';
+
+  @override
+  String dividendCenterMetricTtmNetCaption(String ratio) {
+    return 'Kept $ratio after withholding';
+  }
+
+  @override
   String get dividendCenterMetricYoy => 'YoY same period';
 
   @override
   String get dividendCenterMetricWithholding => 'Withholding tax';
+
+  @override
+  String get dividendCenterPolicyTitle => 'Dividend policy watch';
+
+  @override
+  String dividendCenterPolicyBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count holdings\' trailing dividends fell vs the prior year',
+      one: '1 holding\'s trailing dividends fell vs the prior year',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dividendCenterPolicySeverityWarning => 'Warning';
+
+  @override
+  String get dividendCenterPolicySeverityCritical => 'Critical';
+
+  @override
+  String dividendCenterPolicyDropLine(String percent) {
+    return 'Down $percent%';
+  }
 
   @override
   String get dividendCenterHoldingRanking => 'Holding ranking';
@@ -679,6 +712,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dividendCenterRankingYieldOnCost => 'Yield on cost';
+
+  @override
+  String get dividendCenterRankingNetYieldOnCost => 'Net yield on cost';
 
   @override
   String get dividendCenterRankingWithholding => 'Tax';

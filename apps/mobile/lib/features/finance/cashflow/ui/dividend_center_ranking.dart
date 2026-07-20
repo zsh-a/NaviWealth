@@ -33,19 +33,19 @@ class _RankingSection extends ConsumerWidget {
                       compact: compact,
                       name: row.assetLabel,
                       amount: formatters.currency(
-                        row.ttmGrossInBase,
+                        row.ttmNetInBase,
                         code: snapshot.baseCurrency,
                       ),
                       share: formatters.percent(row.portfolioShare),
-                      yieldOnCost: row.yieldOnCost == null
+                      yieldOnCost: row.netYieldOnCost == null
                           ? l10n.commonNotAvailable
-                          : formatters.percent(row.yieldOnCost!),
+                          : formatters.percent(row.netYieldOnCost!),
                       withholding: formatters.currency(
                         row.withholdingInBase,
                         code: snapshot.baseCurrency,
                       ),
                       shareLabel: l10n.dividendCenterRankingShare,
-                      yieldLabel: l10n.dividendCenterRankingYieldOnCost,
+                      yieldLabel: l10n.dividendCenterRankingNetYieldOnCost,
                       withholdingLabel: l10n.dividendCenterRankingWithholding,
                       onPress: row.assetId == 'unattributed'
                           ? null
