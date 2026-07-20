@@ -27,14 +27,17 @@ class DividendDeterioration {
   final DividendDeteriorationSeverity severity;
 }
 
-/// Deterministic dividend-policy guardrail over [DividendCenterEvent] history.
+/// Deterministic recorded-dividend-income guardrail over
+/// [DividendCenterEvent] history.
 ///
 /// Compares trailing twelve months (TTM) cash dividends to the previous TTM
 /// window for each asset. Only currently held assets (when [heldAssetIds] is
 /// provided) are evaluated, so sold names do not keep firing inbox signals.
 ///
-/// This is intentionally not a multi-year replacement engine — only a
-/// present/absent deterioration signal for Financial Inbox.
+/// Because the ledger amount can also change with position size and FX, this
+/// is intentionally an income-deterioration signal rather than a claim that
+/// the issuer changed its per-share dividend policy. The resilience report
+/// performs the evidence-bounded attribution when enough source data exists.
 class DividendPolicyMonitor {
   const DividendPolicyMonitor({
     this.warningDropRatio = 0.20,
@@ -54,12 +57,8 @@ class DividendPolicyMonitor {
     Set<String>? heldAssetIds,
   }) {
     final nowUtc = now.toUtc();
-    final ttmStart = DateTime.utc(nowUtc.year - 1, nowUtc.month, nowUtc.day);
-    final priorTtmStart = DateTime.utc(
-      nowUtc.year - 2,
-      nowUtc.month,
-      nowUtc.day,
-    );
+    final ttmStart = _sameCalendarDay(nowUtc, nowUtc.year - 1);
+    final priorTtmStart = _sameCalendarDay(nowUtc, nowUtc.year - 2);
 
     final byAsset = <String, _AssetWindows>{};
     for (final event in events) {
@@ -114,6 +113,12 @@ class DividendPolicyMonitor {
     });
     return List.unmodifiable(results);
   }
+}
+
+DateTime _sameCalendarDay(DateTime value, int year) {
+  final lastDay = DateTime.utc(year, value.month + 1, 0).day;
+  final day = value.day > lastDay ? lastDay : value.day;
+  return DateTime.utc(year, value.month, day);
 }
 
 class _AssetWindows {

@@ -4,7 +4,7 @@ import '../../composition/finance_route_paths.dart';
 import '../../rebalance/domain/rebalance_models.dart';
 import 'financial_inbox.dart';
 
-/// Pure mappers: concentration / rebalance / dividend policy → inbox candidates.
+/// Pure mappers: concentration / rebalance / dividend income → inbox candidates.
 ///
 /// Kept free of Riverpod so unit tests can assert sourceKey stability, priority,
 /// route, and presence/absence without a full provider graph.
