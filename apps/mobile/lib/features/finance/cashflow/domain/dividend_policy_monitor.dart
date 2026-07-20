@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 
 import 'dividend_center.dart';
+import 'dividend_comparison_window.dart';
 
 /// How severely cash dividends have deteriorated for one held asset.
 enum DividendDeteriorationSeverity { warning, critical }
@@ -56,9 +57,7 @@ class DividendPolicyMonitor {
     required DateTime now,
     Set<String>? heldAssetIds,
   }) {
-    final nowUtc = now.toUtc();
-    final ttmStart = _sameCalendarDay(nowUtc, nowUtc.year - 1);
-    final priorTtmStart = _sameCalendarDay(nowUtc, nowUtc.year - 2);
+    final window = DividendComparisonWindow.trailing(now);
 
     final byAsset = <String, _AssetWindows>{};
     for (final event in events) {
@@ -74,9 +73,9 @@ class DividendPolicyMonitor {
       );
       // Prefer the latest known label.
       acc.assetLabel = event.assetLabel;
-      if (!date.isBefore(ttmStart) && !date.isAfter(nowUtc)) {
+      if (window.containsCurrent(date)) {
         acc.ttm += event.grossInBase;
-      } else if (!date.isBefore(priorTtmStart) && date.isBefore(ttmStart)) {
+      } else if (window.containsPrior(date)) {
         acc.priorTtm += event.grossInBase;
       }
     }
@@ -113,12 +112,6 @@ class DividendPolicyMonitor {
     });
     return List.unmodifiable(results);
   }
-}
-
-DateTime _sameCalendarDay(DateTime value, int year) {
-  final lastDay = DateTime.utc(year, value.month + 1, 0).day;
-  final day = value.day > lastDay ? lastDay : value.day;
-  return DateTime.utc(year, value.month, day);
 }
 
 class _AssetWindows {

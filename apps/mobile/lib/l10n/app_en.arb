@@ -441,8 +441,10 @@
   "dividendResilienceConfidenceMedium": "Medium",
   "dividendResilienceConfidenceLow": "Low",
   "dividendResilienceNoCoverage": "No recorded history available.",
-  "dividendResilienceCoverage": "{start}–{end} · {months} observed months · {emptyMonths} months with no recorded dividend",
-  "@dividendResilienceCoverage": { "placeholders": { "start": { "type": "String" }, "end": { "type": "String" }, "months": { "type": "int" }, "emptyMonths": { "type": "int" } } },
+  "dividendResilienceCoverage": "{start}–{end} · {months} observed months · {recordedMonths} payout months recorded",
+  "@dividendResilienceCoverage": { "placeholders": { "start": { "type": "String" }, "end": { "type": "String" }, "months": { "type": "int" }, "recordedMonths": { "type": "int" } } },
+  "dividendResilienceCadenceCoverage": "Cadence check: {expected} expected payments · {missing} possibly missing · {irregular} irregular assets",
+  "@dividendResilienceCadenceCoverage": { "placeholders": { "expected": { "type": "int" }, "missing": { "type": "int" }, "irregular": { "type": "int" } } },
   "dividendResilienceNetSeries": "After tax",
   "dividendResilienceChartLabel": "Rolling twelve-month gross and after-tax dividend income",
   "dividendResilienceIncomeCagr": "After-tax income CAGR",
@@ -464,6 +466,8 @@
   "dividendResilienceDriverCombined": "Holding and per-share effects are combined",
   "dividendResilienceMethodology": "Based on your recorded ledger, not a backtest. {matchedPercent}% of attributed entries have per-share evidence; {excludedCount} entries were excluded for missing FX.",
   "@dividendResilienceMethodology": { "placeholders": { "matchedPercent": { "type": "int" }, "excludedCount": { "type": "int" } } },
+  "financialInboxEvidencePrimaryDriver": "Primary change driver",
+  "financialInboxEvidenceUnitDividend": "Per-share evidence available",
   "dividendCenterHoldingRanking": "Holding ranking",
   "@dividendCenterHoldingRanking": { "description": "Dividend center section title for ranked holdings" },
   "dividendCenterHistoryTimeline": "History timeline",
@@ -490,6 +494,13 @@
   "dividendCenterForecastTitle": "Next 12 months",
   "@dividendCenterForecastTitle": { "description": "Dividend center forecast placeholder title" },
   "dividendCenterForecastUnavailable": "Not enough history or declared payments to forecast yet.",
+  "dividendCenterForecastHistoricalError": "90-day historical error {error} across {count} reviews",
+  "@dividendCenterForecastHistoricalError": {
+    "placeholders": {
+      "error": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
   "dividendCenterForecastFxIncomplete": "Missing {currencies} rates",
   "@dividendCenterForecastFxIncomplete": {
     "description": "Dividend forecast warning for declared payments excluded due to missing FX",
@@ -7067,6 +7078,9 @@
   "moneyRunwayCoverageMonths": "{months} months",
   "moneyRunwayScheduledTitle": "Known upcoming flows",
   "moneyRunwayScheduledEmpty": "No recurring income or bills are configured.",
+  "moneyRunwayDeclaredDividend": "Declared after-tax dividend",
+  "moneyRunwayEstimatedDividend": "Estimated after-tax dividend",
+  "moneyRunwayEstimatedFlow": "estimate",
   "moneyRunwayMissingFx": "Excluded because FX rates are missing: {currencies}",
   "financeActivationTitle": "Your first useful result",
   "financeActivationProgress": "{completed}/{total}",

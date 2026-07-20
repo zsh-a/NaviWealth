@@ -53,7 +53,9 @@ void main() {
     expect(report.largestSourceShare, closeTo(0.75, 0.01));
     expect(report.sourceConcentration, closeTo(0.625, 0.02));
     expect(report.observedMonthCount, 37);
-    expect(report.monthsWithoutRecordedDividends, 1);
+    expect(report.recordedMonthCount, 36);
+    expect(report.expectedPaymentCount, 72);
+    expect(report.missingExpectedPaymentCount, 0);
     expect(report.confidence, DividendResilienceConfidence.medium);
   });
 
@@ -194,6 +196,240 @@ void main() {
     expect(report.unitDividendMatchRatio, 1);
     expect(report.confidence, DividendResilienceConfidence.high);
   });
+
+  test('quarterly cadence does not treat normal empty months as missing', () {
+    final events = <DividendCenterEvent>[];
+    for (var quarter = 0; quarter < 8; quarter++) {
+      events.add(
+        _event(
+          id: 'q-$quarter',
+          date: DateTime.utc(2024, 1 + quarter * 3, 15),
+          assetId: 'a',
+          label: 'Alpha',
+          grossOriginal: 100,
+          netOriginal: 90,
+          baseRate: 1,
+        ),
+      );
+    }
+
+    final report = service.analyze(
+      events: events,
+      now: DateTime.utc(2026, 1, 20),
+    );
+
+    expect(report.recordedMonthCount, 8);
+    expect(report.expectedPaymentCount, 8);
+    expect(report.missingExpectedPaymentCount, 0);
+    expect(report.irregularAssetCount, 0);
+  });
+
+  test('quarterly cadence reports a genuinely missed payment', () {
+    final events = <DividendCenterEvent>[];
+    for (final month in [1, 4, 7, 10, 13, 19, 22]) {
+      events.add(
+        _event(
+          id: 'q-$month',
+          date: DateTime.utc(2024, month, 15),
+          assetId: 'a',
+          label: 'Alpha',
+          grossOriginal: 100,
+          netOriginal: 90,
+          baseRate: 1,
+        ),
+      );
+    }
+
+    final report = service.analyze(
+      events: events,
+      now: DateTime.utc(2026, 1, 20),
+    );
+
+    expect(report.expectedPaymentCount, 8);
+    expect(report.missingExpectedPaymentCount, 1);
+    expect(report.irregularAssetCount, 0);
+  });
+
+  test('rejects currency-mismatched per-share evidence', () {
+    final prior = _event(
+      id: 'prior',
+      date: DateTime.utc(2024, 6, 15),
+      assetId: 'a',
+      label: 'Alpha',
+      grossOriginal: 100,
+      netOriginal: 90,
+      baseRate: 1,
+    );
+    final current = _event(
+      id: 'current',
+      date: DateTime.utc(2025, 6, 15),
+      assetId: 'a',
+      label: 'Alpha',
+      grossOriginal: 150,
+      netOriginal: 135,
+      baseRate: 1,
+    );
+
+    final report = service.analyze(
+      events: [prior, current],
+      now: DateTime.utc(2026, 1, 20),
+      corporateActions: [
+        _action(id: 'prior', date: prior.event.date, dps: 1),
+        _action(
+          id: 'current',
+          date: current.event.date,
+          dps: 1,
+          currency: 'EUR',
+        ),
+      ],
+    );
+
+    expect(report.attributions.single.matchedUnitDividend, isFalse);
+    expect(
+      report.attributions.single.primaryDriver,
+      DividendChangeDriver.localCombined,
+    );
+    expect(report.unitDividendMatchRatio, 0.5);
+  });
+
+  test('rejects duplicate payout evidence for the same transaction', () {
+    final prior = _event(
+      id: 'prior',
+      date: DateTime.utc(2024, 6, 15),
+      assetId: 'a',
+      label: 'Alpha',
+      grossOriginal: 100,
+      netOriginal: 90,
+      baseRate: 1,
+    );
+    final current = _event(
+      id: 'current',
+      date: DateTime.utc(2025, 6, 15),
+      assetId: 'a',
+      label: 'Alpha',
+      grossOriginal: 150,
+      netOriginal: 135,
+      baseRate: 1,
+    );
+    final duplicate = _action(id: 'current', date: current.event.date, dps: 1);
+
+    final report = service.analyze(
+      events: [prior, current],
+      now: DateTime.utc(2026, 1, 20),
+      corporateActions: [
+        _action(id: 'prior', date: prior.event.date, dps: 1),
+        duplicate,
+        CashDividendAction(
+          id: 'duplicate-row',
+          assetId: duplicate.assetId,
+          effectiveDate: duplicate.effectiveDate,
+          transactionId: duplicate.transactionId,
+          accountId: duplicate.accountId,
+          currency: duplicate.currency,
+          amountPerShare: duplicate.amountPerShare,
+          withholdingTax: duplicate.withholdingTax,
+        ),
+      ],
+    );
+
+    expect(report.attributions.single.matchedUnitDividend, isFalse);
+    expect(report.unitDividendMatchRatio, 0.5);
+  });
+
+  test('normalizes historical DPS for splits before attributing change', () {
+    final prior = _event(
+      id: 'prior',
+      date: DateTime.utc(2024, 6, 15),
+      assetId: 'a',
+      label: 'Alpha',
+      grossOriginal: 100,
+      netOriginal: 90,
+      baseRate: 1,
+    );
+    final current = _event(
+      id: 'current',
+      date: DateTime.utc(2025, 6, 15),
+      assetId: 'a',
+      label: 'Alpha',
+      grossOriginal: 120,
+      netOriginal: 108,
+      baseRate: 1,
+    );
+
+    final report = service.analyze(
+      events: [prior, current],
+      now: DateTime.utc(2026, 1, 20),
+      corporateActions: [
+        _action(id: 'prior', date: prior.event.date, dps: 1),
+        _actionWithDps(
+          id: 'current',
+          date: current.event.date,
+          dps: Decimal.parse('0.5'),
+        ),
+        SplitAction(
+          id: 'split',
+          assetId: 'a',
+          effectiveDate: DateTime.utc(2025, 1, 2),
+          ratio: Decimal.fromInt(2),
+        ),
+      ],
+    );
+    final row = report.attributions.single;
+
+    expect(row.matchedUnitDividend, isTrue);
+    expect(row.unitDividendImpact.abs(), lessThan(Decimal.parse('0.0001')));
+    expect(row.holdingQuantityImpact, Decimal.fromInt(20));
+    expect(row.primaryDriver, DividendChangeDriver.holdingQuantity);
+  });
+
+  test('normalizes historical DPS for stock dividends', () {
+    final prior = _event(
+      id: 'prior',
+      date: DateTime.utc(2024, 6, 15),
+      assetId: 'a',
+      label: 'Alpha',
+      grossOriginal: 100,
+      netOriginal: 90,
+      baseRate: 1,
+    );
+    final current = _event(
+      id: 'current',
+      date: DateTime.utc(2025, 6, 15),
+      assetId: 'a',
+      label: 'Alpha',
+      grossOriginal: 110,
+      netOriginal: 99,
+      baseRate: 1,
+    );
+
+    final report = service.analyze(
+      events: [prior, current],
+      now: DateTime.utc(2026, 1, 20),
+      corporateActions: [
+        _action(id: 'prior', date: prior.event.date, dps: 1),
+        _actionWithDps(
+          id: 'current',
+          date: current.event.date,
+          dps: Decimal.parse('0.9090909090909091'),
+        ),
+        StockDividendAction(
+          id: 'stock-dividend',
+          assetId: 'a',
+          effectiveDate: DateTime.utc(2025, 1, 2),
+          bonusRatio: Decimal.parse('0.1'),
+        ),
+      ],
+    );
+    final row = report.attributions.single;
+
+    expect(row.matchedUnitDividend, isTrue);
+    expect(row.unitDividendImpact.abs(), lessThan(Decimal.parse('0.0001')));
+    expect(
+      (row.holdingQuantityImpact - Decimal.fromInt(10)).abs(),
+      lessThan(Decimal.parse('0.0001')),
+    );
+    expect(row.primaryDriver, DividendChangeDriver.holdingQuantity);
+  });
 }
 
 DividendCenterEvent _event({
@@ -230,6 +466,22 @@ CashDividendAction _action({
   required String id,
   required DateTime date,
   required int dps,
+  String currency = 'USD',
+}) => CashDividendAction(
+  id: id,
+  assetId: 'a',
+  effectiveDate: date,
+  transactionId: id,
+  accountId: 'cash',
+  currency: currency,
+  amountPerShare: Decimal.fromInt(dps),
+  withholdingTax: Decimal.zero,
+);
+
+CashDividendAction _actionWithDps({
+  required String id,
+  required DateTime date,
+  required Decimal dps,
 }) => CashDividendAction(
   id: id,
   assetId: 'a',
@@ -237,6 +489,6 @@ CashDividendAction _action({
   transactionId: id,
   accountId: 'cash',
   currency: 'USD',
-  amountPerShare: Decimal.fromInt(dps),
+  amountPerShare: dps,
   withholdingTax: Decimal.zero,
 );

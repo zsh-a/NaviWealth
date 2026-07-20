@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 47', () {
-      expect(db.schemaVersion, 47);
+    test('is 48', () {
+      expect(db.schemaVersion, 48);
     });
   });
 
@@ -53,6 +53,25 @@ void main() {
           'predicted_balance',
           'actual_balance',
           'data_completeness',
+          'evaluated_at',
+        ]),
+      );
+      expect(columns, isNot(contains('hlc')));
+    });
+
+    test('dividend forecast snapshots stay local-only', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(dividend_forecast_snapshots)')
+          .get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll([
+          'window_start',
+          'target_at',
+          'predicted_net',
+          'actual_net',
+          'strategy',
           'evaluated_at',
         ]),
       );

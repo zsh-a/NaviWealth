@@ -5,10 +5,20 @@ import 'package:flutter/foundation.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/corporate_actions.dart';
 
 import 'dividend_center.dart';
+import 'dividend_comparison_window.dart';
 
 enum DividendResilienceConfidence { low, medium, high }
 
 enum DividendChangeDriver { holdingQuantity, unitDividend, fx, localCombined }
+
+enum DividendCadence {
+  monthly,
+  quarterly,
+  semiAnnual,
+  annual,
+  irregular,
+  unknown,
+}
 
 @immutable
 class RollingDividendPoint {
@@ -88,7 +98,10 @@ class DividendResilienceReport {
     required this.periodStart,
     required this.periodEnd,
     required this.observedMonthCount,
-    required this.monthsWithoutRecordedDividends,
+    required this.recordedMonthCount,
+    required this.expectedPaymentCount,
+    required this.missingExpectedPaymentCount,
+    required this.irregularAssetCount,
     required this.rolling,
     required this.netIncomeCagr,
     required this.maxDrawdown,
@@ -105,7 +118,10 @@ class DividendResilienceReport {
   final DateTime? periodStart;
   final DateTime periodEnd;
   final int observedMonthCount;
-  final int monthsWithoutRecordedDividends;
+  final int recordedMonthCount;
+  final int expectedPaymentCount;
+  final int missingExpectedPaymentCount;
+  final int irregularAssetCount;
   final List<RollingDividendPoint> rolling;
   final double? netIncomeCagr;
   final DividendIncomeDrawdown? maxDrawdown;
@@ -144,11 +160,7 @@ class DividendResilienceService {
             .where((event) => !event.event.date.toUtc().isAfter(nowUtc))
             .toList()
           ..sort((a, b) => a.event.date.compareTo(b.event.date));
-    final actions = <String, CorporateAction>{
-      for (final action in corporateActions)
-        if (action is CashDividendAction || action is DripAction)
-          _actionKey(action.assetId, _transactionId(action)): action,
-    };
+    final actionEvidence = _DividendActionEvidence(corporateActions);
 
     final earliest = rows.isEmpty ? null : rows.first.event.date.toUtc();
     final periodStart = earliest == null ? null : _month(earliest);
@@ -159,34 +171,40 @@ class DividendResilienceService {
     final activeMonths = {
       for (final row in rows) _month(row.event.date.toUtc()),
     };
-    final missingMonths = math.max(0, observedMonths - activeMonths.length);
+    final cadenceCoverage = _cadenceCoverage(rows, now: nowUtc);
     final rolling = _rolling(rows, periodStart: periodStart, now: nowUtc);
     final full = rolling.where((point) => point.hasFullWindow).toList();
-    final latestWindowEnd = _month(nowUtc);
-    final latestWindowStart = _addMonths(latestWindowEnd, -12);
-    final latestRows = _inWindow(rows, latestWindowStart, latestWindowEnd);
+    final comparison = DividendComparisonWindow.completedMonths(nowUtc);
+    final latestRows = rows
+        .where((row) => comparison.containsCurrent(row.event.date))
+        .toList(growable: false);
     final concentration = _concentration(latestRows);
     final retention = _retention(latestRows);
     final attributions = _attribute(
       rows,
-      actions: actions,
-      currentStart: latestWindowStart,
-      currentEnd: latestWindowEnd,
+      evidence: actionEvidence,
+      window: comparison,
     );
-    final matchRatio = _unitDividendMatchRatio(rows, actions);
+    final matchRatio = _unitDividendMatchRatio(rows, actionEvidence);
     final confidence = _confidence(
       observedMonths: observedMonths,
       excludedEventCount: excludedEventCount,
       attributedRows: rows.where((row) => row.assetId != 'unattributed').length,
       totalRows: rows.length,
       unitDividendMatchRatio: matchRatio,
+      expectedPaymentCount: cadenceCoverage.expected,
+      missingExpectedPaymentCount: cadenceCoverage.missing,
+      irregularAssetCount: cadenceCoverage.irregularAssets,
     );
 
     return DividendResilienceReport(
       periodStart: periodStart,
       periodEnd: periodEnd,
       observedMonthCount: observedMonths,
-      monthsWithoutRecordedDividends: missingMonths,
+      recordedMonthCount: activeMonths.length,
+      expectedPaymentCount: cadenceCoverage.expected,
+      missingExpectedPaymentCount: cadenceCoverage.missing,
+      irregularAssetCount: cadenceCoverage.irregularAssets,
       rolling: List.unmodifiable(rolling),
       netIncomeCagr: _cagr(full),
       maxDrawdown: _drawdown(full),
@@ -326,13 +344,15 @@ double? _retention(List<DividendCenterEvent> rows) {
 
 List<DividendChangeAttribution> _attribute(
   List<DividendCenterEvent> rows, {
-  required Map<String, CorporateAction> actions,
-  required DateTime currentStart,
-  required DateTime currentEnd,
+  required _DividendActionEvidence evidence,
+  required DividendComparisonWindow window,
 }) {
-  final priorStart = _addMonths(currentStart, -12);
-  final current = _groupByAsset(_inWindow(rows, currentStart, currentEnd));
-  final prior = _groupByAsset(_inWindow(rows, priorStart, currentStart));
+  final current = _groupByAsset(
+    rows.where((row) => window.containsCurrent(row.event.date)).toList(),
+  );
+  final prior = _groupByAsset(
+    rows.where((row) => window.containsPrior(row.event.date)).toList(),
+  );
   final ids = {...current.keys, ...prior.keys};
   final result = <DividendChangeAttribution>[];
   for (final id in ids) {
@@ -360,8 +380,16 @@ List<DividendChangeAttribution> _attribute(
       );
       fxImpact = currentOriginal * (currentRate - priorRate);
       localImpact = (currentOriginal - priorOriginal) * priorRate;
-      final currentDps = _totalDps(currentRows, actions);
-      final priorDps = _totalDps(priorRows, actions);
+      final currentDps = _totalDps(
+        currentRows,
+        evidence,
+        normalizedAt: window.endExclusive,
+      );
+      final priorDps = _totalDps(
+        priorRows,
+        evidence,
+        normalizedAt: window.endExclusive,
+      );
       matched =
           currentDps != null &&
           priorDps != null &&
@@ -407,33 +435,50 @@ List<DividendChangeAttribution> _attribute(
 
 Decimal? _totalDps(
   List<DividendCenterEvent> rows,
-  Map<String, CorporateAction> actions,
-) {
+  _DividendActionEvidence evidence, {
+  required DateTime normalizedAt,
+}) {
   var total = Decimal.zero;
   for (final row in rows) {
-    final action = actions[_actionKey(row.assetId, row.event.journalEntryId)];
+    final action = evidence.uniquePayout(row.assetId, row.event.journalEntryId);
     final dps = switch (action) {
-      CashDividendAction value => value.amountPerShare,
-      DripAction value => value.amountPerShare,
+      CashDividendAction value
+          when _sameCurrency(value.currency, row.event.currency) =>
+        value.amountPerShare,
+      DripAction value when _sameCurrency(value.currency, row.event.currency) =>
+        value.amountPerShare,
       _ => null,
     };
     if (dps == null || dps <= Decimal.zero) return null;
-    total += dps;
+    final quantityFactor = evidence.quantityFactor(
+      row.assetId,
+      after: row.event.date,
+      through: normalizedAt,
+    );
+    if (quantityFactor == null || quantityFactor <= Decimal.zero) return null;
+    total += (dps / quantityFactor).toDecimal(scaleOnInfinitePrecision: 16);
   }
   return total;
 }
 
 double _unitDividendMatchRatio(
   List<DividendCenterEvent> rows,
-  Map<String, CorporateAction> actions,
+  _DividendActionEvidence evidence,
 ) {
   final attributable = rows
       .where((row) => row.assetId != 'unattributed')
       .toList();
   if (attributable.isEmpty) return 0;
   final matches = attributable.where((row) {
-    final action = actions[_actionKey(row.assetId, row.event.journalEntryId)];
-    return action is CashDividendAction || action is DripAction;
+    final action = evidence.uniquePayout(row.assetId, row.event.journalEntryId);
+    return switch (action) {
+      CashDividendAction value => _sameCurrency(
+        value.currency,
+        row.event.currency,
+      ),
+      DripAction value => _sameCurrency(value.currency, row.event.currency),
+      _ => false,
+    };
   }).length;
   return matches / attributable.length;
 }
@@ -444,17 +489,28 @@ DividendResilienceConfidence _confidence({
   required int attributedRows,
   required int totalRows,
   required double unitDividendMatchRatio,
+  required int expectedPaymentCount,
+  required int missingExpectedPaymentCount,
+  required int irregularAssetCount,
 }) {
   final attributionRatio = totalRows == 0 ? 0.0 : attributedRows / totalRows;
   final sourceTotal = totalRows + excludedEventCount;
   final includedRatio = sourceTotal == 0 ? 0.0 : totalRows / sourceTotal;
+  final cadenceCoverage = expectedPaymentCount == 0
+      ? 0.0
+      : 1 - (missingExpectedPaymentCount / expectedPaymentCount);
   if (observedMonths >= 24 &&
       excludedEventCount == 0 &&
       attributionRatio >= 0.9 &&
-      unitDividendMatchRatio >= 0.75) {
+      unitDividendMatchRatio >= 0.75 &&
+      cadenceCoverage >= 0.9 &&
+      irregularAssetCount == 0) {
     return DividendResilienceConfidence.high;
   }
-  if (observedMonths >= 12 && attributionRatio >= 0.6 && includedRatio >= 0.8) {
+  if (observedMonths >= 12 &&
+      attributionRatio >= 0.6 &&
+      includedRatio >= 0.8 &&
+      (expectedPaymentCount == 0 || cadenceCoverage >= 0.6)) {
     return DividendResilienceConfidence.medium;
   }
   return DividendResilienceConfidence.low;
@@ -502,6 +558,144 @@ bool _singleCurrency(List<DividendCenterEvent> rows) {
   }
   return currencies.length <= 1;
 }
+
+bool _sameCurrency(String a, String b) =>
+    a.trim().toUpperCase() == b.trim().toUpperCase();
+
+class _DividendActionEvidence {
+  _DividendActionEvidence(Iterable<CorporateAction> actions) {
+    for (final action in actions) {
+      switch (action) {
+        case CashDividendAction() || DripAction():
+          _payouts
+              .putIfAbsent(
+                _actionKey(action.assetId, _transactionId(action)),
+                () => <CorporateAction>[],
+              )
+              .add(action);
+        case SplitAction() || StockDividendAction():
+          _quantityActions
+              .putIfAbsent(action.assetId, () => <CorporateAction>[])
+              .add(action);
+        default:
+          break;
+      }
+    }
+    for (final rows in _quantityActions.values) {
+      rows.sort((a, b) => a.effectiveDate.compareTo(b.effectiveDate));
+    }
+  }
+
+  final Map<String, List<CorporateAction>> _payouts = {};
+  final Map<String, List<CorporateAction>> _quantityActions = {};
+
+  CorporateAction? uniquePayout(String assetId, String transactionId) {
+    final rows = _payouts[_actionKey(assetId, transactionId)];
+    return rows?.length == 1 ? rows!.single : null;
+  }
+
+  Decimal? quantityFactor(
+    String assetId, {
+    required DateTime after,
+    required DateTime through,
+  }) {
+    var factor = Decimal.one;
+    for (final action
+        in _quantityActions[assetId] ?? const <CorporateAction>[]) {
+      final date = action.effectiveDate.toUtc();
+      if (!date.isAfter(after.toUtc()) || !date.isBefore(through.toUtc())) {
+        continue;
+      }
+      final ratio = switch (action) {
+        SplitAction value => value.ratio,
+        StockDividendAction value => Decimal.one + value.bonusRatio,
+        _ => Decimal.one,
+      };
+      if (ratio <= Decimal.zero) return null;
+      factor *= ratio;
+    }
+    return factor;
+  }
+}
+
+({int expected, int missing, int irregularAssets}) _cadenceCoverage(
+  List<DividendCenterEvent> rows, {
+  required DateTime now,
+}) {
+  final byAsset = _groupByAsset(rows);
+  var expected = 0;
+  var missing = 0;
+  var irregularAssets = 0;
+  final end = _month(now);
+  for (final assetRows in byAsset.values) {
+    final months =
+        assetRows.map((row) => _month(row.event.date.toUtc())).toSet().toList()
+          ..sort();
+    final cadence = _inferCadence(months);
+    final interval = _cadenceMonths(cadence);
+    if (cadence == DividendCadence.irregular) {
+      irregularAssets++;
+      continue;
+    }
+    if (interval == null || months.isEmpty) continue;
+    final tolerance = switch (cadence) {
+      DividendCadence.monthly => 0,
+      DividendCadence.quarterly || DividendCadence.semiAnnual => 1,
+      DividendCadence.annual => 2,
+      _ => 0,
+    };
+    for (
+      var due = months.first;
+      due.isBefore(end);
+      due = _addMonths(due, interval)
+    ) {
+      expected++;
+      final matched = months.any(
+        (actual) => _monthDistance(due, actual).abs() <= tolerance,
+      );
+      if (!matched) missing++;
+    }
+  }
+  return (
+    expected: expected,
+    missing: missing,
+    irregularAssets: irregularAssets,
+  );
+}
+
+DividendCadence _inferCadence(List<DateTime> months) {
+  if (months.length < 3) return DividendCadence.unknown;
+  final gaps = <int>[];
+  for (var i = 1; i < months.length; i++) {
+    final gap = _monthDistance(months[i - 1], months[i]);
+    if (gap > 0) gaps.add(gap);
+  }
+  if (gaps.length < 2) return DividendCadence.unknown;
+  final sorted = [...gaps]..sort();
+  final median = sorted[sorted.length ~/ 2];
+  final cadence = switch (median) {
+    <= 2 => DividendCadence.monthly,
+    <= 5 => DividendCadence.quarterly,
+    <= 8 => DividendCadence.semiAnnual,
+    <= 15 => DividendCadence.annual,
+    _ => DividendCadence.irregular,
+  };
+  final interval = _cadenceMonths(cadence);
+  if (interval == null) return cadence;
+  final tolerance = math.max(1, (interval * 0.4).round());
+  final outliers = gaps
+      .where((gap) => (gap - interval).abs() > tolerance)
+      .length;
+  return outliers > gaps.length / 3 ? DividendCadence.irregular : cadence;
+}
+
+int? _cadenceMonths(DividendCadence cadence) => switch (cadence) {
+  DividendCadence.monthly => 1,
+  DividendCadence.quarterly => 3,
+  DividendCadence.semiAnnual => 6,
+  DividendCadence.annual => 12,
+  DividendCadence.irregular || DividendCadence.unknown => null,
+};
 
 String _transactionId(CorporateAction action) => switch (action) {
   CashDividendAction value => value.transactionId,

@@ -4,10 +4,12 @@ class _DividendResilienceSection extends ConsumerWidget {
   const _DividendResilienceSection({
     required this.report,
     required this.currency,
+    this.focusAssetId,
   });
 
   final DividendResilienceReport report;
   final String currency;
+  final String? focusAssetId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,7 +29,7 @@ class _DividendResilienceSection extends ConsumerWidget {
             formatters.date(start),
             formatters.date(report.periodEnd),
             report.observedMonthCount,
-            report.monthsWithoutRecordedDividends,
+            report.recordedMonthCount,
           );
     return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
@@ -40,6 +42,15 @@ class _DividendResilienceSection extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.s6),
           Text(coverage, style: context.captionStyle),
+          const SizedBox(height: AppSpacing.s2),
+          Text(
+            l10n.dividendResilienceCadenceCoverage(
+              report.expectedPaymentCount,
+              report.missingExpectedPaymentCount,
+              report.irregularAssetCount,
+            ),
+            style: context.captionStyle,
+          ),
           if (report.rolling.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.s16),
             SizedBox(
@@ -126,7 +137,11 @@ class _DividendResilienceSection extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.s10),
             for (final row in report.attributions.take(4))
-              _AttributionRow(row: row, currency: currency),
+              _AttributionRow(
+                row: row,
+                currency: currency,
+                focused: row.assetId == focusAssetId,
+              ),
           ],
           const SizedBox(height: AppSpacing.s14),
           AppStatusBanner(
@@ -185,10 +200,15 @@ class _ResilienceMetric extends StatelessWidget {
 }
 
 class _AttributionRow extends ConsumerWidget {
-  const _AttributionRow({required this.row, required this.currency});
+  const _AttributionRow({
+    required this.row,
+    required this.currency,
+    required this.focused,
+  });
 
   final DividendChangeAttribution row;
   final String currency;
+  final bool focused;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -220,23 +240,36 @@ class _AttributionRow extends ConsumerWidget {
             impact(row.localCombinedImpact),
             impact(row.fxImpact),
           );
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(row.assetLabel, style: context.labelStyle),
-                Text(driver, style: context.captionStyle),
-                Text(detail, style: context.captionStyle),
-              ],
+    return InkWell(
+      key: ValueKey('dividend-attribution-${row.assetId}'),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      onTap: () => context.push(FinanceRoutes.wealthAsset(row.assetId)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+        decoration: focused
+            ? BoxDecoration(
+                color: context.theme.colors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              )
+            : null,
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(row.assetLabel, style: context.labelStyle),
+                  Text(driver, style: context.captionStyle),
+                  Text(detail, style: context.captionStyle),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          Text(signed, style: TypographyTokens.numericBodyStrong),
-        ],
+            const SizedBox(width: AppSpacing.s8),
+            Text(signed, style: TypographyTokens.numericBodyStrong),
+            const SizedBox(width: AppSpacing.s4),
+            const Icon(FLucideIcons.chevronRight, size: AppIconSizes.sm),
+          ],
+        ),
       ),
     );
   }

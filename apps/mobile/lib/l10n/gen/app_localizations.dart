@@ -1337,12 +1337,22 @@ abstract class AppLocalizations {
   /// No description provided for @dividendResilienceCoverage.
   ///
   /// In en, this message translates to:
-  /// **'{start}–{end} · {months} observed months · {emptyMonths} months with no recorded dividend'**
+  /// **'{start}–{end} · {months} observed months · {recordedMonths} payout months recorded'**
   String dividendResilienceCoverage(
     String start,
     String end,
     int months,
-    int emptyMonths,
+    int recordedMonths,
+  );
+
+  /// No description provided for @dividendResilienceCadenceCoverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Cadence check: {expected} expected payments · {missing} possibly missing · {irregular} irregular assets'**
+  String dividendResilienceCadenceCoverage(
+    int expected,
+    int missing,
+    int irregular,
   );
 
   /// No description provided for @dividendResilienceNetSeries.
@@ -1451,6 +1461,18 @@ abstract class AppLocalizations {
   /// **'Based on your recorded ledger, not a backtest. {matchedPercent}% of attributed entries have per-share evidence; {excludedCount} entries were excluded for missing FX.'**
   String dividendResilienceMethodology(int matchedPercent, int excludedCount);
 
+  /// No description provided for @financialInboxEvidencePrimaryDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary change driver'**
+  String get financialInboxEvidencePrimaryDriver;
+
+  /// No description provided for @financialInboxEvidenceUnitDividend.
+  ///
+  /// In en, this message translates to:
+  /// **'Per-share evidence available'**
+  String get financialInboxEvidenceUnitDividend;
+
   /// Dividend center section title for ranked holdings
   ///
   /// In en, this message translates to:
@@ -1522,6 +1544,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not enough history or declared payments to forecast yet.'**
   String get dividendCenterForecastUnavailable;
+
+  /// No description provided for @dividendCenterForecastHistoricalError.
+  ///
+  /// In en, this message translates to:
+  /// **'90-day historical error {error} across {count} reviews'**
+  String dividendCenterForecastHistoricalError(String error, int count);
 
   /// Dividend forecast warning for declared payments excluded due to missing FX
   ///
@@ -23888,6 +23916,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No recurring income or bills are configured.'**
   String get moneyRunwayScheduledEmpty;
+
+  /// No description provided for @moneyRunwayDeclaredDividend.
+  ///
+  /// In en, this message translates to:
+  /// **'Declared after-tax dividend'**
+  String get moneyRunwayDeclaredDividend;
+
+  /// No description provided for @moneyRunwayEstimatedDividend.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated after-tax dividend'**
+  String get moneyRunwayEstimatedDividend;
+
+  /// No description provided for @moneyRunwayEstimatedFlow.
+  ///
+  /// In en, this message translates to:
+  /// **'estimate'**
+  String get moneyRunwayEstimatedFlow;
 
   /// No description provided for @moneyRunwayMissingFx.
   ///

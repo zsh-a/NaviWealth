@@ -1,5 +1,6 @@
 import '../../analytics/domain/concentration_risk.dart';
 import '../../cashflow/domain/dividend_policy_monitor.dart';
+import '../../cashflow/domain/dividend_resilience.dart';
 import '../../composition/finance_route_paths.dart';
 import '../../rebalance/domain/rebalance_models.dart';
 import 'financial_inbox.dart';
@@ -95,9 +96,15 @@ class PortfolioGuardrailCandidates {
   List<FinancialSignalCandidate> fromDividendDeteriorations(
     Iterable<DividendDeterioration> rows, {
     String route = FinanceRoutes.cashflowDividends,
+    Map<String, DividendChangeAttribution> attributions = const {},
   }) {
     final items = <FinancialSignalCandidate>[];
     for (final row in rows) {
+      final attribution = attributions[row.assetId];
+      final deepLink = Uri(
+        path: route,
+        queryParameters: <String, String>{'assetId': row.assetId},
+      ).toString();
       items.add(
         FinancialSignalCandidate(
           sourceKey: dividendDeteriorationSourceKey(row.assetId),
@@ -106,7 +113,7 @@ class PortfolioGuardrailCandidates {
               ? FinancialInboxPriority.important
               : FinancialInboxPriority.attention,
           count: 1,
-          route: route,
+          route: deepLink,
           evidence: <String, Object?>{
             'asset_id': row.assetId,
             'label': row.assetLabel,
@@ -114,6 +121,10 @@ class PortfolioGuardrailCandidates {
             'prior_ttm_gross': row.priorTtmGrossInBase.toString(),
             'drop_ratio': row.dropRatio,
             'severity': row.severity.name,
+            if (attribution != null) ...{
+              'primary_driver': attribution.primaryDriver.name,
+              'unit_dividend_evidence': attribution.matchedUnitDividend,
+            },
           },
         ),
       );

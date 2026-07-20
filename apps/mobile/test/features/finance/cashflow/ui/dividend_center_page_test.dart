@@ -7,6 +7,7 @@ import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/cashflow/data/dividend_center_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/dividend_forecast_providers.dart';
+import 'package:naviwealth/features/finance/cashflow/data/dividend_forecast_repository.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_event.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_kind.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/dividend_center.dart';
@@ -147,13 +148,19 @@ void main() {
               confidence: DividendForecastConfidence.low,
             ),
           ),
+          dividendForecastQualityProvider.overrideWith(
+            (_) async => const DividendForecastQuality(
+              evaluatedCount: 3,
+              meanRelativeError: 0.2,
+            ),
+          ),
         ],
         child: MaterialApp(
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en', 'US'),
-          home: const DividendCenterPage(),
+          home: const DividendCenterPage(focusAssetId: 'us:AAPL'),
         ),
       ),
     );
@@ -164,7 +171,12 @@ void main() {
     expect(find.text('Historical dividend resilience'), findsOneWidget);
     expect(find.textContaining('confidence'), findsWidgets);
     expect(find.textContaining('not a backtest'), findsOneWidget);
+    expect(find.textContaining('90-day historical error'), findsOneWidget);
     expect(find.text('AAPL'), findsWidgets);
+    final focusedAttribution = tester.widget<InkWell>(
+      find.byKey(const ValueKey('dividend-attribution-us:AAPL')),
+    );
+    expect((focusedAttribution.child! as Container).decoration, isNotNull);
     // Compact ranking embeds the yield label in a multi-metric detail line.
     expect(find.textContaining('Net yield on cost'), findsOneWidget);
   });

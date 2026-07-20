@@ -686,9 +686,18 @@ class AppLocalizationsZh extends AppLocalizations {
     String start,
     String end,
     int months,
-    int emptyMonths,
+    int recordedMonths,
   ) {
-    return '$start–$end · 覆盖 $months 个月 · $emptyMonths 个月无股息记录';
+    return '$start–$end · 覆盖 $months 个月 · 已记录 $recordedMonths 个派息月';
+  }
+
+  @override
+  String dividendResilienceCadenceCoverage(
+    int expected,
+    int missing,
+    int irregular,
+  ) {
+    return '节奏检查：预计 $expected 次 · 疑似缺失 $missing 次 · $irregular 个不规则资产';
   }
 
   @override
@@ -755,6 +764,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get financialInboxEvidencePrimaryDriver => '主要变化来源';
+
+  @override
+  String get financialInboxEvidenceUnitDividend => '具有每股分红证据';
+
+  @override
   String get dividendCenterHoldingRanking => '持仓排行';
 
   @override
@@ -791,6 +806,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dividendCenterForecastUnavailable => '历史记录或已宣告派息不足，暂无法预测。';
+
+  @override
+  String dividendCenterForecastHistoricalError(String error, int count) {
+    return '90 天历史误差 $error，基于 $count 次评估';
+  }
 
   @override
   String dividendCenterForecastFxIncomplete(String currencies) {
@@ -13447,6 +13467,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get moneyRunwayScheduledEmpty => '尚未配置周期收入或账单。';
+
+  @override
+  String get moneyRunwayDeclaredDividend => '已宣告税后股息';
+
+  @override
+  String get moneyRunwayEstimatedDividend => '推算税后股息';
+
+  @override
+  String get moneyRunwayEstimatedFlow => '估算';
 
   @override
   String moneyRunwayMissingFx(Object currencies) {

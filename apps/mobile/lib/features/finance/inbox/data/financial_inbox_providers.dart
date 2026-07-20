@@ -10,7 +10,9 @@ import '../../ai_tools/local_skills/local_skills.dart';
 import '../../analytics/data/providers.dart';
 import '../../application/read_models/dashboard_providers.dart';
 import '../../cashflow/data/dividend_center_providers.dart';
+import '../../cashflow/data/dividend_forecast_providers.dart';
 import '../../cashflow/domain/dividend_policy_monitor.dart';
+import '../../cashflow/domain/dividend_resilience.dart';
 import '../../composition/finance_route_paths.dart';
 import '../../data/repositories/journal_entry_providers.dart';
 import '../../expense/data/expense_anomaly_insight_provider.dart';
@@ -85,6 +87,9 @@ final financialSignalScanCandidatesProvider =
       final concentrationAsync = ref.watch(concentrationAlertsProvider);
       final dividendCenterAsync = ref.watch(dividendCenterSnapshotProvider);
       final holdingsAsync = ref.watch(holdingsSnapshotProvider);
+      final declaredDividendActions = ref.watch(
+        dividendForecastDeclaredActionsProvider,
+      );
       final sources = <AsyncValue<Object?>>[
         pendingAsync,
         runwayAsync,
@@ -263,8 +268,20 @@ final financialSignalScanCandidatesProvider =
         now: now.toUtc(),
         heldAssetIds: heldAssetIds,
       );
+      final resilience = const DividendResilienceService().analyze(
+        events: dividendCenterAsync.requireValue.events,
+        now: now.toUtc(),
+        corporateActions: declaredDividendActions,
+        excludedEventCount:
+            dividendCenterAsync.requireValue.fxExclusions.length,
+      );
       items.addAll(
-        _portfolioGuardrails.fromDividendDeteriorations(deteriorations),
+        _portfolioGuardrails.fromDividendDeteriorations(
+          deteriorations,
+          attributions: {
+            for (final row in resilience.attributions) row.assetId: row,
+          },
+        ),
       );
 
       return AsyncValue.data(List.unmodifiable(items));

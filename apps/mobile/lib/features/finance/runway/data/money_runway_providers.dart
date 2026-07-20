@@ -2,9 +2,11 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
+import 'package:naviwealth/features/finance/cashflow/data/dividend_forecast_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/recurring_transaction_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/recurring_transaction_repository.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_kind.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/dividend_cash_projection.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
@@ -45,6 +47,8 @@ final moneyRunwayProvider = Provider<AsyncValue<MoneyRunwaySnapshot>>((ref) {
   final accounts = ref.watch(allAccountsStreamProvider);
   final liabilities = ref.watch(liabilitiesStreamProvider);
   final schedules = ref.watch(allLiabilitySchedulesProvider);
+  final dividendCash = ref.watch(dividendCashProjection90dProvider);
+  final dividendForecastQuality = ref.watch(dividendForecastQualityProvider);
 
   if (dashboard.isLoading ||
       recurring.isLoading ||
@@ -191,6 +195,23 @@ final moneyRunwayProvider = Provider<AsyncValue<MoneyRunwaySnapshot>>((ref) {
         );
       }
     }
+    final dividendRows = dividendCash.value ?? const <DividendCashProjection>[];
+    for (var index = 0; index < dividendRows.length; index++) {
+      final projection = dividendRows[index];
+      if (projection.netAmount <= Decimal.zero) continue;
+      flows.add(
+        RunwayScheduledFlow(
+          id: 'dividend:${projection.date.toUtc().toIso8601String()}:$index',
+          date: projection.date,
+          amount: projection.netAmount,
+          label: 'Dividend',
+          certainty: projection.certainty == DividendCashCertainty.declared
+              ? RunwayFlowCertainty.known
+              : RunwayFlowCertainty.estimated,
+          kind: RunwayFlowKind.dividend,
+        ),
+      );
+    }
 
     final history = events.requireValue.events
         .where((event) {
@@ -250,12 +271,24 @@ final moneyRunwayProvider = Provider<AsyncValue<MoneyRunwaySnapshot>>((ref) {
         .watch(runwayForecastQualityProvider)
         .value
         ?.meanRelativeError;
-    final confidence =
+    final calculatedConfidence =
         completeness < 0.5 || (forecastError != null && forecastError > 0.25)
         ? MoneyRunwayConfidence.low
         : completeness < 0.8 || (forecastError != null && forecastError > 0.10)
         ? MoneyRunwayConfidence.medium
         : MoneyRunwayConfidence.high;
+    final hasEstimatedDividend = flows.any(
+      (flow) =>
+          flow.kind == RunwayFlowKind.dividend &&
+          flow.certainty == RunwayFlowCertainty.estimated,
+    );
+    final dividendForecastError =
+        dividendForecastQuality.value?.meanRelativeError;
+    final confidence = calibrateMoneyRunwayConfidence(
+      calculated: calculatedConfidence,
+      hasEstimatedDividend: hasEstimatedDividend,
+      dividendForecastError: dividendForecastError,
+    );
 
     return AsyncValue<MoneyRunwaySnapshot>.data(
       buildMoneyRunway(

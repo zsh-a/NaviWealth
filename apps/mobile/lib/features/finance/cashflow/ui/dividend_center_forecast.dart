@@ -8,6 +8,7 @@ class _ForecastCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final forecast = ref.watch(dividendForecast12mProvider);
+    final quality = ref.watch(dividendForecastQualityProvider).value;
     return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
@@ -31,6 +32,11 @@ class _ForecastCard extends ConsumerWidget {
                 if (projection.excludedDeclaredCurrencies.isNotEmpty) {
                   subtitle =
                       '$subtitle · ${l10n.dividendCenterForecastFxIncomplete(projection.excludedDeclaredCurrencies.join(', '))}';
+                }
+                final historicalError = quality?.meanRelativeError;
+                if (historicalError != null) {
+                  subtitle =
+                      '$subtitle · ${l10n.dividendCenterForecastHistoricalError(formatters.percent(historicalError), quality!.evaluatedCount)}';
                 }
                 return _ForecastText(
                   title: l10n.dividendCenterForecastTitle,
