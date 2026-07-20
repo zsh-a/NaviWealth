@@ -98,6 +98,16 @@ class _InboxRow extends ConsumerWidget {
         l10n.financialInboxDecisionTitle,
         l10n.financialInboxDecisionBody,
       ),
+      FinancialInboxKind.concentrationRisk => (
+        FLucideIcons.chartPie,
+        l10n.financialInboxConcentrationTitle(item.count),
+        l10n.financialInboxConcentrationBody,
+      ),
+      FinancialInboxKind.rebalanceDrift => (
+        FLucideIcons.slidersHorizontal,
+        l10n.financialInboxRebalanceTitle(item.count),
+        l10n.financialInboxRebalanceBody,
+      ),
     };
     return SoftCard.raised(
       borderless: true,
@@ -391,6 +401,13 @@ String _evidenceLabel(AppLocalizations l10n, String key) => switch (key) {
   'review_date' => l10n.financialInboxEvidenceReviewDate,
   'currencies' => l10n.financialInboxEvidenceCurrencies,
   'data_completeness' => l10n.financialInboxEvidenceCompleteness,
+  'dimension' => l10n.financialInboxEvidenceDimension,
+  'label' => l10n.financialInboxEvidenceLabel,
+  'weight' => l10n.financialInboxEvidenceWeight,
+  'threshold' => l10n.financialInboxEvidenceThreshold,
+  'severity' => l10n.financialInboxEvidenceSeverity,
+  'breach_count' => l10n.financialInboxEvidenceBreachCount,
+  'max_abs_deviation' => l10n.financialInboxEvidenceMaxDeviation,
   _ => key.replaceAll('_', ' '),
 };
 

@@ -7,6 +7,7 @@ import '../../../../core/sync/mutation_context.dart';
 import '../../../../core/sync/outbox_provider.dart';
 import '../../ai_tools/expense_to_transaction_input.dart';
 import '../../ai_tools/local_skills/local_skills.dart';
+import '../../analytics/data/providers.dart';
 import '../../application/read_models/dashboard_providers.dart';
 import '../../composition/finance_route_paths.dart';
 import '../../data/repositories/journal_entry_providers.dart';
@@ -15,10 +16,14 @@ import '../../ingest/data/providers.dart';
 import '../../life_events/data/financial_decision_providers.dart';
 import '../../monthly_close/data/account_reconciliation_providers.dart';
 import '../../monthly_close/domain/account_reconciliation.dart';
+import '../../rebalance/data/rebalance_providers.dart';
 import '../../runway/data/money_runway_providers.dart';
 import '../../runway/domain/money_runway.dart';
 import '../domain/financial_inbox.dart';
+import '../domain/portfolio_guardrail_candidates.dart';
 import 'financial_signal_repository.dart';
+
+const _portfolioGuardrails = PortfolioGuardrailCandidates();
 
 final financialInboxNowProvider = Provider<DateTime>((ref) => DateTime.now());
 
@@ -73,6 +78,7 @@ final financialSignalScanCandidatesProvider =
       final expensesAsync = ref.watch(journalExpensesStreamProvider);
       final dashboardAsync = ref.watch(dashboardSnapshotProvider);
       final decisionsAsync = ref.watch(financialDecisionsProvider);
+      final concentrationAsync = ref.watch(concentrationAlertsProvider);
       final sources = <AsyncValue<Object?>>[
         pendingAsync,
         runwayAsync,
@@ -80,6 +86,7 @@ final financialSignalScanCandidatesProvider =
         expensesAsync,
         dashboardAsync,
         decisionsAsync,
+        concentrationAsync,
       ];
       if (sources.any((source) => source.isLoading)) {
         return const AsyncValue.loading();
@@ -228,6 +235,20 @@ final financialSignalScanCandidatesProvider =
           ),
         );
       }
+
+      items.addAll(
+        _portfolioGuardrails.fromConcentrationAlerts(
+          concentrationAsync.requireValue,
+        ),
+      );
+      // rebalancePlanProvider is sync and may be null while dashboard loads
+      // (already gated above via dashboardAsync).
+      items.addAll(
+        _portfolioGuardrails.fromRebalancePlan(
+          ref.watch(rebalancePlanProvider),
+        ),
+      );
+
       return AsyncValue.data(List.unmodifiable(items));
     });
 

@@ -7,6 +7,12 @@ enum FinancialInboxKind {
   subscriptionChange,
   staleValuation,
   decisionReview,
+
+  /// Single-asset or sector/region/currency weight exceeds user thresholds.
+  concentrationRisk,
+
+  /// Asset-level (or residual category) target drift exceeds rebalance warning.
+  rebalanceDrift,
 }
 
 enum FinancialInboxPriority { attention, important }

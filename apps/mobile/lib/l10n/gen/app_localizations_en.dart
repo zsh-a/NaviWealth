@@ -13629,6 +13629,45 @@ class AppLocalizationsEn extends AppLocalizations {
       'The scheduled outcome review is now due.';
 
   @override
+  String financialInboxConcentrationTitle(int count) {
+    return 'Review $count concentration risks';
+  }
+
+  @override
+  String get financialInboxConcentrationBody =>
+      'A holding or sector exceeds your configured concentration thresholds.';
+
+  @override
+  String financialInboxRebalanceTitle(int count) {
+    return 'Rebalance $count allocation drifts';
+  }
+
+  @override
+  String get financialInboxRebalanceBody =>
+      'Asset-level target weights have drifted past your rebalance warning threshold.';
+
+  @override
+  String get financialInboxEvidenceDimension => 'Dimension';
+
+  @override
+  String get financialInboxEvidenceLabel => 'Label';
+
+  @override
+  String get financialInboxEvidenceWeight => 'Weight';
+
+  @override
+  String get financialInboxEvidenceThreshold => 'Threshold';
+
+  @override
+  String get financialInboxEvidenceSeverity => 'Severity';
+
+  @override
+  String get financialInboxEvidenceBreachCount => 'Breaches';
+
+  @override
+  String get financialInboxEvidenceMaxDeviation => 'Max deviation';
+
+  @override
   String get settingsProductMetricsTitle => 'Local product metrics';
 
   @override

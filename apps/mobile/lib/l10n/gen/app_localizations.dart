@@ -23076,6 +23076,72 @@ abstract class AppLocalizations {
   /// **'The scheduled outcome review is now due.'**
   String get financialInboxDecisionBody;
 
+  /// No description provided for @financialInboxConcentrationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review {count} concentration risks'**
+  String financialInboxConcentrationTitle(int count);
+
+  /// No description provided for @financialInboxConcentrationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A holding or sector exceeds your configured concentration thresholds.'**
+  String get financialInboxConcentrationBody;
+
+  /// No description provided for @financialInboxRebalanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance {count} allocation drifts'**
+  String financialInboxRebalanceTitle(int count);
+
+  /// No description provided for @financialInboxRebalanceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset-level target weights have drifted past your rebalance warning threshold.'**
+  String get financialInboxRebalanceBody;
+
+  /// No description provided for @financialInboxEvidenceDimension.
+  ///
+  /// In en, this message translates to:
+  /// **'Dimension'**
+  String get financialInboxEvidenceDimension;
+
+  /// No description provided for @financialInboxEvidenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Label'**
+  String get financialInboxEvidenceLabel;
+
+  /// No description provided for @financialInboxEvidenceWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get financialInboxEvidenceWeight;
+
+  /// No description provided for @financialInboxEvidenceThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Threshold'**
+  String get financialInboxEvidenceThreshold;
+
+  /// No description provided for @financialInboxEvidenceSeverity.
+  ///
+  /// In en, this message translates to:
+  /// **'Severity'**
+  String get financialInboxEvidenceSeverity;
+
+  /// No description provided for @financialInboxEvidenceBreachCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Breaches'**
+  String get financialInboxEvidenceBreachCount;
+
+  /// No description provided for @financialInboxEvidenceMaxDeviation.
+  ///
+  /// In en, this message translates to:
+  /// **'Max deviation'**
+  String get financialInboxEvidenceMaxDeviation;
+
   /// No description provided for @settingsProductMetricsTitle.
   ///
   /// In en, this message translates to:
