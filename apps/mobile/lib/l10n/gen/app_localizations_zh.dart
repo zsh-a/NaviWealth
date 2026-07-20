@@ -12983,6 +12983,43 @@ class AppLocalizationsZh extends AppLocalizations {
   String get financialInboxDecisionBody => '该决策已经到达计划复盘日期。';
 
   @override
+  String financialInboxConcentrationTitle(int count) {
+    return '复核 $count 项集中度风险';
+  }
+
+  @override
+  String get financialInboxConcentrationBody => '单只持仓或行业权重超过你设定的集中度阈值。';
+
+  @override
+  String financialInboxRebalanceTitle(int count) {
+    return '再平衡 $count 项配置偏离';
+  }
+
+  @override
+  String get financialInboxRebalanceBody => '单票目标权重偏离已超过再平衡预警阈值。';
+
+  @override
+  String get financialInboxEvidenceDimension => '维度';
+
+  @override
+  String get financialInboxEvidenceLabel => '名称';
+
+  @override
+  String get financialInboxEvidenceWeight => '权重';
+
+  @override
+  String get financialInboxEvidenceThreshold => '阈值';
+
+  @override
+  String get financialInboxEvidenceSeverity => '严重程度';
+
+  @override
+  String get financialInboxEvidenceBreachCount => '偏离项数';
+
+  @override
+  String get financialInboxEvidenceMaxDeviation => '最大偏离';
+
+  @override
   String get settingsProductMetricsTitle => '本地产品指标';
 
   @override
