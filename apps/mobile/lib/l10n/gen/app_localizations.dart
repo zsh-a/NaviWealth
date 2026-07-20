@@ -1790,6 +1790,66 @@ abstract class AppLocalizations {
   /// **'Insights'**
   String get portfolioHubSectionInsights;
 
+  /// No description provided for @portfolioHubConcentrationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Concentration risk'**
+  String get portfolioHubConcentrationTitle;
+
+  /// No description provided for @portfolioHubConcentrationSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 position exceeds your thresholds} other{{count} positions exceed your thresholds}}'**
+  String portfolioHubConcentrationSummary(int count);
+
+  /// No description provided for @portfolioHubConcentrationDimensionAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset'**
+  String get portfolioHubConcentrationDimensionAsset;
+
+  /// No description provided for @portfolioHubConcentrationDimensionSector.
+  ///
+  /// In en, this message translates to:
+  /// **'Sector'**
+  String get portfolioHubConcentrationDimensionSector;
+
+  /// No description provided for @portfolioHubConcentrationDimensionRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Region'**
+  String get portfolioHubConcentrationDimensionRegion;
+
+  /// No description provided for @portfolioHubConcentrationDimensionCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get portfolioHubConcentrationDimensionCurrency;
+
+  /// No description provided for @portfolioHubConcentrationSeverityWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get portfolioHubConcentrationSeverityWarning;
+
+  /// No description provided for @portfolioHubConcentrationSeverityCritical.
+  ///
+  /// In en, this message translates to:
+  /// **'Critical'**
+  String get portfolioHubConcentrationSeverityCritical;
+
+  /// No description provided for @portfolioHubConcentrationWeightLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{weight}% · cap {threshold}%'**
+  String portfolioHubConcentrationWeightLine(String weight, String threshold);
+
+  /// No description provided for @portfolioHubConcentrationRebalanceCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Review rebalance plan'**
+  String get portfolioHubConcentrationRebalanceCta;
+
   /// No description provided for @portfolioHubRealizedPnlTitle.
   ///
   /// In en, this message translates to:

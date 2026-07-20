@@ -12,6 +12,8 @@ import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/analytics/data/providers.dart';
+import 'package:naviwealth/features/finance/analytics/domain/concentration_risk.dart';
 import 'package:naviwealth/features/finance/cashflow/data/dividend_center_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/dividend_forecast_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/dividend_center.dart';
@@ -147,9 +149,7 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
         ? holdings.skip(previewCount).toList(growable: false)
         : const <PortfolioHoldingRow>[];
 
-    final visibleHoldings = _showAllPositions
-        ? holdings
-        : previewHoldings;
+    final visibleHoldings = _showAllPositions ? holdings : previewHoldings;
     final showReveal = overflowHoldings.isNotEmpty;
 
     return AdaptiveContentFrame(
@@ -274,6 +274,7 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const _ConcentrationRiskSection(),
           PortfolioHubViewSegment(
             value: widget.view,
             onChanged: widget.onViewChanged,

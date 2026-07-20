@@ -1,5 +1,121 @@
 part of 'portfolio_hub_page.dart';
 
+/// Surfaces user-threshold concentration breaches on the Allocation tab so
+/// Financial Inbox deep links to `/wealth/portfolio` land on a real review UI.
+class _ConcentrationRiskSection extends ConsumerWidget {
+  const _ConcentrationRiskSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final async = ref.watch(concentrationAlertsProvider);
+    return async.when(
+      skipLoadingOnReload: true,
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (alerts) {
+        if (alerts.isEmpty) return const SizedBox.shrink();
+        final criticalCount = alerts
+            .where((a) => a.severity == RiskSeverity.critical)
+            .length;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.s16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _PortfolioSectionTitle(
+                title: l10n.portfolioHubConcentrationTitle,
+              ),
+              SoftCard.raised(
+                borderless: true,
+                padding: const EdgeInsets.all(AppSpacing.s12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          FLucideIcons.chartPie,
+                          size: AppIconSizes.h18,
+                          color: criticalCount > 0
+                              ? context.theme.colors.destructive
+                              : context.theme.colors.primary,
+                        ),
+                        const SizedBox(width: AppSpacing.s8),
+                        Expanded(
+                          child: Text(
+                            l10n.portfolioHubConcentrationSummary(
+                              alerts.length,
+                            ),
+                            style: context.labelStyle,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.s10),
+                    for (var i = 0; i < alerts.length; i++) ...[
+                      if (i != 0) const SizedBox(height: AppSpacing.s8),
+                      _ConcentrationAlertRow(alert: alerts[i]),
+                    ],
+                    const SizedBox(height: AppSpacing.s12),
+                    FButton(
+                      variant: FButtonVariant.secondary,
+                      onPress: () => context.push(FinanceRoutes.planRebalance),
+                      child: Text(l10n.portfolioHubConcentrationRebalanceCta),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ConcentrationAlertRow extends StatelessWidget {
+  const _ConcentrationAlertRow({required this.alert});
+
+  final ConcentrationAlert alert;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final weightPct = (alert.weight * 100).toStringAsFixed(1);
+    final thresholdPct = (alert.threshold * 100).toStringAsFixed(0);
+    final dimension = switch (alert.dimension) {
+      RiskDimension.asset => l10n.portfolioHubConcentrationDimensionAsset,
+      RiskDimension.sector => l10n.portfolioHubConcentrationDimensionSector,
+      RiskDimension.region => l10n.portfolioHubConcentrationDimensionRegion,
+      RiskDimension.currency => l10n.portfolioHubConcentrationDimensionCurrency,
+    };
+    final severity = alert.severity == RiskSeverity.critical
+        ? l10n.portfolioHubConcentrationSeverityCritical
+        : l10n.portfolioHubConcentrationSeverityWarning;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(alert.label, style: context.labelStyle),
+              const SizedBox(height: AppSpacing.s2),
+              Text('$dimension · $severity', style: context.captionStyle),
+            ],
+          ),
+        ),
+        Text(
+          l10n.portfolioHubConcentrationWeightLine(weightPct, thresholdPct),
+          style: context.captionLabelStyle,
+          textAlign: TextAlign.end,
+        ),
+      ],
+    );
+  }
+}
+
 class PortfolioHubViewSegment extends StatelessWidget {
   const PortfolioHubViewSegment({
     super.key,
