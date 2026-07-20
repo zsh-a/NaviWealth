@@ -1244,6 +1244,18 @@ abstract class AppLocalizations {
   /// **'Trailing 12 months'**
   String get dividendCenterMetricTtm;
 
+  /// Dividend center KPI label: trailing twelve month net dividends after withholding
+  ///
+  /// In en, this message translates to:
+  /// **'TTM after tax'**
+  String get dividendCenterMetricTtmNet;
+
+  /// No description provided for @dividendCenterMetricTtmNetCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Kept {ratio} after withholding'**
+  String dividendCenterMetricTtmNetCaption(String ratio);
+
   /// Dividend center KPI label: year-over-year comparison for the same period
   ///
   /// In en, this message translates to:
@@ -1255,6 +1267,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Withholding tax'**
   String get dividendCenterMetricWithholding;
+
+  /// No description provided for @dividendCenterPolicyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend policy watch'**
+  String get dividendCenterPolicyTitle;
+
+  /// No description provided for @dividendCenterPolicyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 holding\'s trailing dividends fell vs the prior year} other{{count} holdings\' trailing dividends fell vs the prior year}}'**
+  String dividendCenterPolicyBody(int count);
+
+  /// No description provided for @dividendCenterPolicySeverityWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get dividendCenterPolicySeverityWarning;
+
+  /// No description provided for @dividendCenterPolicySeverityCritical.
+  ///
+  /// In en, this message translates to:
+  /// **'Critical'**
+  String get dividendCenterPolicySeverityCritical;
+
+  /// No description provided for @dividendCenterPolicyDropLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Down {percent}%'**
+  String dividendCenterPolicyDropLine(String percent);
 
   /// Dividend center section title for ranked holdings
   ///
@@ -1303,6 +1345,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Yield on cost'**
   String get dividendCenterRankingYieldOnCost;
+
+  /// Dividend ranking net (after withholding) yield on cost label
+  ///
+  /// In en, this message translates to:
+  /// **'Net yield on cost'**
+  String get dividendCenterRankingNetYieldOnCost;
 
   /// Dividend ranking withholding label
   ///
