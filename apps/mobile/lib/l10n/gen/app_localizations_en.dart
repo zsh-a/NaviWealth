@@ -13687,6 +13687,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Asset-level target weights have drifted past your rebalance warning threshold.';
 
   @override
+  String financialInboxDividendTitle(int count) {
+    return 'Review $count dividend declines';
+  }
+
+  @override
+  String get financialInboxDividendBody =>
+      'Trailing dividends for a holding fell materially versus the prior year.';
+
+  @override
   String get financialInboxEvidenceDimension => 'Dimension';
 
   @override
@@ -13706,6 +13715,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get financialInboxEvidenceMaxDeviation => 'Max deviation';
+
+  @override
+  String get financialInboxEvidenceDropRatio => 'Drop ratio';
+
+  @override
+  String get financialInboxEvidenceTtmGross => 'TTM gross';
+
+  @override
+  String get financialInboxEvidencePriorTtmGross => 'Prior TTM gross';
+
+  @override
+  String get financialInboxEvidenceAssetId => 'Asset';
 
   @override
   String get settingsProductMetricsTitle => 'Local product metrics';

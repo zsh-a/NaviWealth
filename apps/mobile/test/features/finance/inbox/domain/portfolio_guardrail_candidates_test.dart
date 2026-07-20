@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/analytics/domain/concentration_risk.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/dividend_policy_monitor.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
@@ -225,6 +226,51 @@ void main() {
       expect(signal.priority, FinancialInboxPriority.important);
       expect(signal.sourceKey, 'rebalance-drift');
       expect(signal.route, FinanceRoutes.planRebalance);
+    });
+  });
+
+  group('fromDividendDeteriorations', () {
+    test('maps critical and warning rows to stable dividend candidates', () {
+      final rows = [
+        DividendDeterioration(
+          assetId: 'us:AAPL',
+          assetLabel: 'AAPL',
+          ttmGrossInBase: Decimal.zero,
+          priorTtmGrossInBase: Decimal.fromInt(200),
+          dropRatio: 1.0,
+          severity: DividendDeteriorationSeverity.critical,
+        ),
+        DividendDeterioration(
+          assetId: 'cn:600900',
+          assetLabel: 'Yangtze Power',
+          ttmGrossInBase: Decimal.fromInt(75),
+          priorTtmGrossInBase: Decimal.fromInt(100),
+          dropRatio: 0.25,
+          severity: DividendDeteriorationSeverity.warning,
+        ),
+      ];
+
+      final candidates = mapper.fromDividendDeteriorations(rows);
+      expect(candidates, hasLength(2));
+
+      final critical = candidates.firstWhere(
+        (c) => c.sourceKey == 'dividend-deterioration:us:AAPL',
+      );
+      expect(critical.kind, FinancialInboxKind.dividendDeterioration);
+      expect(critical.priority, FinancialInboxPriority.important);
+      expect(critical.route, FinanceRoutes.cashflowDividends);
+      expect(critical.evidence['label'], 'AAPL');
+      expect(critical.evidence['drop_ratio'], 1.0);
+
+      final warning = candidates.firstWhere(
+        (c) => c.sourceKey == 'dividend-deterioration:cn:600900',
+      );
+      expect(warning.priority, FinancialInboxPriority.attention);
+      expect(warning.route, FinanceRoutes.cashflowDividends);
+    });
+
+    test('returns empty when no deteriorations', () {
+      expect(mapper.fromDividendDeteriorations(const []), isEmpty);
     });
   });
 

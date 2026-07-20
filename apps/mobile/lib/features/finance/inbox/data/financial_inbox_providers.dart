@@ -9,10 +9,13 @@ import '../../ai_tools/expense_to_transaction_input.dart';
 import '../../ai_tools/local_skills/local_skills.dart';
 import '../../analytics/data/providers.dart';
 import '../../application/read_models/dashboard_providers.dart';
+import '../../cashflow/data/dividend_center_providers.dart';
+import '../../cashflow/domain/dividend_policy_monitor.dart';
 import '../../composition/finance_route_paths.dart';
 import '../../data/repositories/journal_entry_providers.dart';
 import '../../expense/data/expense_anomaly_insight_provider.dart';
 import '../../ingest/data/providers.dart';
+import '../../investment/data/providers.dart' show holdingsSnapshotProvider;
 import '../../life_events/data/financial_decision_providers.dart';
 import '../../monthly_close/data/account_reconciliation_providers.dart';
 import '../../monthly_close/domain/account_reconciliation.dart';
@@ -24,6 +27,7 @@ import '../domain/portfolio_guardrail_candidates.dart';
 import 'financial_signal_repository.dart';
 
 const _portfolioGuardrails = PortfolioGuardrailCandidates();
+const _dividendPolicyMonitor = DividendPolicyMonitor();
 
 final financialInboxNowProvider = Provider<DateTime>((ref) => DateTime.now());
 
@@ -79,6 +83,8 @@ final financialSignalScanCandidatesProvider =
       final dashboardAsync = ref.watch(dashboardSnapshotProvider);
       final decisionsAsync = ref.watch(financialDecisionsProvider);
       final concentrationAsync = ref.watch(concentrationAlertsProvider);
+      final dividendCenterAsync = ref.watch(dividendCenterSnapshotProvider);
+      final holdingsAsync = ref.watch(holdingsSnapshotProvider);
       final sources = <AsyncValue<Object?>>[
         pendingAsync,
         runwayAsync,
@@ -87,6 +93,8 @@ final financialSignalScanCandidatesProvider =
         dashboardAsync,
         decisionsAsync,
         concentrationAsync,
+        dividendCenterAsync,
+        holdingsAsync,
       ];
       if (sources.any((source) => source.isLoading)) {
         return const AsyncValue.loading();
@@ -247,6 +255,16 @@ final financialSignalScanCandidatesProvider =
         _portfolioGuardrails.fromRebalancePlan(
           ref.watch(rebalancePlanProvider),
         ),
+      );
+
+      final heldAssetIds = holdingsAsync.requireValue.keys.toSet();
+      final deteriorations = _dividendPolicyMonitor.detect(
+        events: dividendCenterAsync.requireValue.events,
+        now: now.toUtc(),
+        heldAssetIds: heldAssetIds,
+      );
+      items.addAll(
+        _portfolioGuardrails.fromDividendDeteriorations(deteriorations),
       );
 
       return AsyncValue.data(List.unmodifiable(items));

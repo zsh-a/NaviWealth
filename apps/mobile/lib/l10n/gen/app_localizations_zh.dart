@@ -13038,6 +13038,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get financialInboxRebalanceBody => '单票目标权重偏离已超过再平衡预警阈值。';
 
   @override
+  String financialInboxDividendTitle(int count) {
+    return '复核 $count 项分红下滑';
+  }
+
+  @override
+  String get financialInboxDividendBody => '持仓的滚动分红较前一年明显下降。';
+
+  @override
   String get financialInboxEvidenceDimension => '维度';
 
   @override
@@ -13057,6 +13065,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get financialInboxEvidenceMaxDeviation => '最大偏离';
+
+  @override
+  String get financialInboxEvidenceDropRatio => '下滑比例';
+
+  @override
+  String get financialInboxEvidenceTtmGross => '近12月毛分红';
+
+  @override
+  String get financialInboxEvidencePriorTtmGross => '前12月毛分红';
+
+  @override
+  String get financialInboxEvidenceAssetId => '资产';
 
   @override
   String get settingsProductMetricsTitle => '本地产品指标';

@@ -1,9 +1,10 @@
 import '../../analytics/domain/concentration_risk.dart';
+import '../../cashflow/domain/dividend_policy_monitor.dart';
 import '../../composition/finance_route_paths.dart';
 import '../../rebalance/domain/rebalance_models.dart';
 import 'financial_inbox.dart';
 
-/// Pure mappers: concentration / rebalance drift → durable inbox candidates.
+/// Pure mappers: concentration / rebalance / dividend policy → inbox candidates.
 ///
 /// Kept free of Riverpod so unit tests can assert sourceKey stability, priority,
 /// route, and presence/absence without a full provider graph.
@@ -90,11 +91,44 @@ class PortfolioGuardrailCandidates {
     ]);
   }
 
+  /// One signal per held asset with TTM dividend deterioration.
+  List<FinancialSignalCandidate> fromDividendDeteriorations(
+    Iterable<DividendDeterioration> rows, {
+    String route = FinanceRoutes.cashflowDividends,
+  }) {
+    final items = <FinancialSignalCandidate>[];
+    for (final row in rows) {
+      items.add(
+        FinancialSignalCandidate(
+          sourceKey: dividendDeteriorationSourceKey(row.assetId),
+          kind: FinancialInboxKind.dividendDeterioration,
+          priority: row.severity == DividendDeteriorationSeverity.critical
+              ? FinancialInboxPriority.important
+              : FinancialInboxPriority.attention,
+          count: 1,
+          route: route,
+          evidence: <String, Object?>{
+            'asset_id': row.assetId,
+            'label': row.assetLabel,
+            'ttm_gross': row.ttmGrossInBase.toString(),
+            'prior_ttm_gross': row.priorTtmGrossInBase.toString(),
+            'drop_ratio': row.dropRatio,
+            'severity': row.severity.name,
+          },
+        ),
+      );
+    }
+    return List.unmodifiable(items);
+  }
+
   /// Stable per logical breach family: `concentration:<dimension>:<label>`.
   static String concentrationSourceKey(RiskDimension dimension, String label) {
     final slug = label.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '-');
     return 'concentration:${dimension.name}:$slug';
   }
+
+  static String dividendDeteriorationSourceKey(String assetId) =>
+      'dividend-deterioration:$assetId';
 
   static const rebalanceDriftSourceKey = 'rebalance-drift';
 }

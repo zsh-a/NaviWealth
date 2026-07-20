@@ -13,6 +13,9 @@ enum FinancialInboxKind {
 
   /// Asset-level (or residual category) target drift exceeds rebalance warning.
   rebalanceDrift,
+
+  /// Held asset TTM dividends fell materially vs the prior TTM window.
+  dividendDeterioration,
 }
 
 enum FinancialInboxPriority { attention, important }

@@ -108,6 +108,11 @@ class _InboxRow extends ConsumerWidget {
         l10n.financialInboxRebalanceTitle(item.count),
         l10n.financialInboxRebalanceBody,
       ),
+      FinancialInboxKind.dividendDeterioration => (
+        FLucideIcons.trendingDown,
+        l10n.financialInboxDividendTitle(item.count),
+        l10n.financialInboxDividendBody,
+      ),
     };
     return SoftCard.raised(
       borderless: true,
@@ -408,6 +413,10 @@ String _evidenceLabel(AppLocalizations l10n, String key) => switch (key) {
   'severity' => l10n.financialInboxEvidenceSeverity,
   'breach_count' => l10n.financialInboxEvidenceBreachCount,
   'max_abs_deviation' => l10n.financialInboxEvidenceMaxDeviation,
+  'drop_ratio' => l10n.financialInboxEvidenceDropRatio,
+  'ttm_gross' => l10n.financialInboxEvidenceTtmGross,
+  'prior_ttm_gross' => l10n.financialInboxEvidencePriorTtmGross,
+  'asset_id' => l10n.financialInboxEvidenceAssetId,
   _ => key.replaceAll('_', ' '),
 };
 
