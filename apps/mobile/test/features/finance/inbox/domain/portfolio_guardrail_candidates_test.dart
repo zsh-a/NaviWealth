@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/analytics/domain/concentration_risk.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/dividend_policy_monitor.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/dividend_resilience.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
@@ -250,7 +251,22 @@ void main() {
         ),
       ];
 
-      final candidates = mapper.fromDividendDeteriorations(rows);
+      final candidates = mapper.fromDividendDeteriorations(
+        rows,
+        attributions: {
+          'us:AAPL': DividendChangeAttribution(
+            assetId: 'us:AAPL',
+            assetLabel: 'AAPL',
+            currentGross: Decimal.zero,
+            priorGross: Decimal.fromInt(100),
+            holdingQuantityImpact: Decimal.zero,
+            unitDividendImpact: Decimal.fromInt(-100),
+            fxImpact: Decimal.zero,
+            localCombinedImpact: Decimal.zero,
+            matchedUnitDividend: true,
+          ),
+        },
+      );
       expect(candidates, hasLength(2));
 
       final critical = candidates.firstWhere(
@@ -258,15 +274,23 @@ void main() {
       );
       expect(critical.kind, FinancialInboxKind.dividendDeterioration);
       expect(critical.priority, FinancialInboxPriority.important);
-      expect(critical.route, FinanceRoutes.cashflowDividends);
+      expect(
+        critical.route,
+        '${FinanceRoutes.cashflowDividends}?assetId=us%3AAAPL',
+      );
       expect(critical.evidence['label'], 'AAPL');
       expect(critical.evidence['drop_ratio'], 1.0);
+      expect(critical.evidence['primary_driver'], 'unitDividend');
+      expect(critical.evidence['unit_dividend_evidence'], isTrue);
 
       final warning = candidates.firstWhere(
         (c) => c.sourceKey == 'dividend-deterioration:cn:600900',
       );
       expect(warning.priority, FinancialInboxPriority.attention);
-      expect(warning.route, FinanceRoutes.cashflowDividends);
+      expect(
+        warning.route,
+        '${FinanceRoutes.cashflowDividends}?assetId=cn%3A600900',
+      );
     });
 
     test('returns empty when no deteriorations', () {

@@ -487,7 +487,7 @@ const List<String> knowledgeInboxTriageDdl = [
 // ----------------------------------------------------------------------
 // Money Runway forecast evaluation (derived, local-only)
 // ----------------------------------------------------------------------
-const List<String> runwayForecastDdl = [
+const List<String> forecastEvaluationDdl = [
   '''
 CREATE TABLE IF NOT EXISTS runway_forecast_snapshots (
   id TEXT PRIMARY KEY,
@@ -509,5 +509,28 @@ CREATE TABLE IF NOT EXISTS runway_forecast_snapshots (
   '''
 CREATE INDEX IF NOT EXISTS idx_runway_forecast_due
 ON runway_forecast_snapshots(owner_user_id, evaluated_at, target_at)
+''',
+  '''
+CREATE TABLE IF NOT EXISTS dividend_forecast_snapshots (
+  id TEXT PRIMARY KEY,
+  owner_user_id TEXT NOT NULL,
+  as_of_day TEXT NOT NULL,
+  window_start INTEGER NOT NULL,
+  target_at INTEGER NOT NULL,
+  horizon_days INTEGER NOT NULL,
+  currency TEXT NOT NULL,
+  predicted_net TEXT NOT NULL,
+  actual_net TEXT,
+  absolute_error TEXT,
+  strategy TEXT NOT NULL,
+  confidence TEXT NOT NULL,
+  evidence_json TEXT NOT NULL,
+  evaluated_at INTEGER,
+  UNIQUE(owner_user_id, as_of_day, horizon_days)
+)
+''',
+  '''
+CREATE INDEX IF NOT EXISTS idx_dividend_forecast_due
+ON dividend_forecast_snapshots(owner_user_id, evaluated_at, target_at)
 ''',
 ];

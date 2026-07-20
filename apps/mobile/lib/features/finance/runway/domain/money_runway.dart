@@ -7,6 +7,24 @@ enum MoneyRunwayConfidence { low, medium, high }
 
 enum MoneyRunwayScenarioKind { largePurchase, delayedIncome, reducedIncome }
 
+enum RunwayFlowCertainty { known, estimated }
+
+enum RunwayFlowKind { recurring, liability, dividend }
+
+MoneyRunwayConfidence calibrateMoneyRunwayConfidence({
+  required MoneyRunwayConfidence calculated,
+  required bool hasEstimatedDividend,
+  double? dividendForecastError,
+}) {
+  if (!hasEstimatedDividend) return calculated;
+  if (dividendForecastError != null && dividendForecastError > 0.25) {
+    return MoneyRunwayConfidence.low;
+  }
+  return calculated == MoneyRunwayConfidence.high
+      ? MoneyRunwayConfidence.medium
+      : calculated;
+}
+
 @immutable
 class MoneyRunwayScenario {
   MoneyRunwayScenario.largePurchase(this.amount)
@@ -42,12 +60,16 @@ class RunwayScheduledFlow {
     required this.date,
     required this.amount,
     required this.label,
+    this.certainty = RunwayFlowCertainty.known,
+    this.kind = RunwayFlowKind.recurring,
   });
 
   final String id;
   final DateTime date;
   final Decimal amount;
   final String label;
+  final RunwayFlowCertainty certainty;
+  final RunwayFlowKind kind;
 }
 
 @immutable
@@ -142,6 +164,9 @@ class MoneyRunwaySnapshot {
     'data_completeness': dataCompleteness,
     'historical_forecast_error': historicalForecastError,
     'scheduled_flow_count': scheduledFlows.length,
+    'estimated_flow_count': scheduledFlows
+        .where((flow) => flow.certainty == RunwayFlowCertainty.estimated)
+        .length,
     'missing_currencies': missingCurrencies.toList()..sort(),
   };
 }
@@ -165,6 +190,7 @@ MoneyRunwaySnapshot buildMoneyRunway({
   final flows = scheduledFlows.toList(growable: false)
     ..sort((a, b) => a.date.compareTo(b.date));
   final flowsByDay = <DateTime, Decimal>{};
+  final knownFlowsByDay = <DateTime, Decimal>{};
   for (final flow in flows) {
     final day = _day(flow.date);
     if (day.isBefore(start) ||
@@ -172,6 +198,10 @@ MoneyRunwaySnapshot buildMoneyRunway({
       continue;
     }
     flowsByDay[day] = (flowsByDay[day] ?? Decimal.zero) + flow.amount;
+    if (flow.certainty == RunwayFlowCertainty.known) {
+      knownFlowsByDay[day] =
+          (knownFlowsByDay[day] ?? Decimal.zero) + flow.amount;
+    }
   }
 
   var known = startingBalance;
@@ -179,9 +209,10 @@ MoneyRunwaySnapshot buildMoneyRunway({
   final points = <MoneyRunwayPoint>[];
   for (var offset = 0; offset <= horizonDays; offset++) {
     final date = start.add(Duration(days: offset));
-    final flow = flowsByDay[date] ?? Decimal.zero;
-    known += flow;
-    expected += flow;
+    final expectedFlow = flowsByDay[date] ?? Decimal.zero;
+    final knownFlow = knownFlowsByDay[date] ?? Decimal.zero;
+    known += knownFlow;
+    expected += expectedFlow;
     if (offset > 0) expected -= estimatedDailyVariableOutflow;
     points.add(
       MoneyRunwayPoint(
@@ -243,6 +274,8 @@ MoneyRunwaySnapshot applyMoneyRunwayScenario(
               date: shifted,
               amount: flow.amount,
               label: flow.label,
+              certainty: flow.certainty,
+              kind: flow.kind,
             ),
           );
         }
@@ -258,6 +291,8 @@ MoneyRunwaySnapshot applyMoneyRunwayScenario(
                 ? flow.amount * (Decimal.one - scenario.reduction)
                 : flow.amount,
             label: flow.label,
+            certainty: flow.certainty,
+            kind: flow.kind,
           ),
         );
     }

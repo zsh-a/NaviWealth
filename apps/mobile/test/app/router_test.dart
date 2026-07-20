@@ -475,6 +475,21 @@ void main() {
       await _drainTimers(tester);
     });
 
+    testWidgets('Dividend Center restores the focused asset query', (
+      tester,
+    ) async {
+      await _pumpAt(
+        tester,
+        initialLocation: '${AppRoutes.cashflowDividends}?assetId=us%3AAAPL',
+      );
+
+      final page = tester.widget<DividendCenterPage>(
+        find.byType(DividendCenterPage),
+      );
+      expect(page.focusAssetId, 'us:AAPL');
+      await _drainTimers(tester);
+    });
+
     testWidgets('/activity/entry/:id resolves without route extra', (
       tester,
     ) async {

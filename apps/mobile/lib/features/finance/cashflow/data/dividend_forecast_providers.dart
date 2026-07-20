@@ -1,15 +1,35 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/cash_dividend.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/corporate_actions.dart';
+import '../domain/dividend_cash_projection.dart';
 import '../domain/dividend_center.dart';
 import 'cash_flow_providers.dart';
 import 'dividend_center_providers.dart';
+import 'dividend_forecast_repository.dart';
+
+final dividendForecastRepositoryProvider =
+    FutureProvider<DividendForecastRepository>((ref) async {
+      final ownerUserId = ref.watch(activeUserIdProvider) ?? kLocalOnlyUserId;
+      return DividendForecastRepository(
+        db: await ref.watch(appDatabaseProvider.future),
+        ownerUserId: ownerUserId,
+      );
+    });
+
+final dividendForecastQualityProvider =
+    FutureProvider.autoDispose<DividendForecastQuality>((ref) async {
+      final repository = await ref.watch(
+        dividendForecastRepositoryProvider.future,
+      );
+      return repository.quality();
+    });
 
 final dividendForecastDeclaredActionsProvider =
     Provider.autoDispose<List<CorporateAction>>((ref) {
@@ -41,6 +61,28 @@ final dividendForecast12mProvider =
       );
       return projection.withExcludedDeclaredCurrencies(
         normalized.excludedCurrencies,
+      );
+    });
+
+final dividendCashProjection90dProvider =
+    FutureProvider.autoDispose<List<DividendCashProjection>>((ref) async {
+      final now = ref.watch(dividendCenterNowProvider).toUtc();
+      final center = await ref.watch(dividendCenterSnapshotProvider.future);
+      final holdings = await ref.watch(holdingsSnapshotProvider.future);
+      final forecast = await ref.watch(dividendForecast12mProvider.future);
+      final converter = ref.watch(cashFlowCurrencyConverterProvider);
+      final normalized = normalizeDeclaredDividendActions(
+        actions: ref.watch(dividendForecastDeclaredActionsProvider),
+        baseCurrency: center.baseCurrency,
+        converter: converter,
+      );
+      return buildDividendCashProjections(
+        forecast: forecast,
+        declaredActions: normalized.actions,
+        holdings: holdings.values,
+        from: now,
+        to: now.add(const Duration(days: 90)),
+        observedNetRetentionRatio: center.ttmNetRetentionRatio,
       );
     });
 

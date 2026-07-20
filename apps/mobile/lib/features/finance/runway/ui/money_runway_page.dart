@@ -322,7 +322,13 @@ class _ScheduledFlowRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final formatter = context.formatters(ref);
+    final label = flow.kind == RunwayFlowKind.dividend
+        ? flow.certainty == RunwayFlowCertainty.known
+              ? l10n.moneyRunwayDeclaredDividend
+              : l10n.moneyRunwayEstimatedDividend
+        : flow.label;
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s14,
@@ -334,10 +340,12 @@ class _ScheduledFlowRow extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(flow.label, style: context.labelStyle),
+                Text(label, style: context.labelStyle),
                 const SizedBox(height: AppSpacing.s2),
                 Text(
-                  formatter.date(flow.date.toLocal()),
+                  flow.certainty == RunwayFlowCertainty.estimated
+                      ? '${formatter.date(flow.date.toLocal())} · ${l10n.moneyRunwayEstimatedFlow}'
+                      : formatter.date(flow.date.toLocal()),
                   style: context.captionStyle,
                 ),
               ],

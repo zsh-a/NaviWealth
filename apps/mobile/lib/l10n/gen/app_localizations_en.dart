@@ -712,9 +712,18 @@ class AppLocalizationsEn extends AppLocalizations {
     String start,
     String end,
     int months,
-    int emptyMonths,
+    int recordedMonths,
   ) {
-    return '$start–$end · $months observed months · $emptyMonths months with no recorded dividend';
+    return '$start–$end · $months observed months · $recordedMonths payout months recorded';
+  }
+
+  @override
+  String dividendResilienceCadenceCoverage(
+    int expected,
+    int missing,
+    int irregular,
+  ) {
+    return 'Cadence check: $expected expected payments · $missing possibly missing · $irregular irregular assets';
   }
 
   @override
@@ -786,6 +795,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get financialInboxEvidencePrimaryDriver => 'Primary change driver';
+
+  @override
+  String get financialInboxEvidenceUnitDividend =>
+      'Per-share evidence available';
+
+  @override
   String get dividendCenterHoldingRanking => 'Holding ranking';
 
   @override
@@ -823,6 +839,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get dividendCenterForecastUnavailable =>
       'Not enough history or declared payments to forecast yet.';
+
+  @override
+  String dividendCenterForecastHistoricalError(String error, int count) {
+    return '90-day historical error $error across $count reviews';
+  }
 
   @override
   String dividendCenterForecastFxIncomplete(String currencies) {
@@ -14120,6 +14141,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get moneyRunwayScheduledEmpty =>
       'No recurring income or bills are configured.';
+
+  @override
+  String get moneyRunwayDeclaredDividend => 'Declared after-tax dividend';
+
+  @override
+  String get moneyRunwayEstimatedDividend => 'Estimated after-tax dividend';
+
+  @override
+  String get moneyRunwayEstimatedFlow => 'estimate';
 
   @override
   String moneyRunwayMissingFx(Object currencies) {

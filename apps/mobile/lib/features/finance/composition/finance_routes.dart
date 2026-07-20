@@ -280,7 +280,9 @@ StatefulShellRoute financeShellRoute() {
                   GoRoute(
                     path: 'dividends',
                     name: FinanceRouteNames.cashflowDividends,
-                    builder: (context, state) => const DividendCenterPage(),
+                    builder: (context, state) => DividendCenterPage(
+                      focusAssetId: state.uri.queryParameters['assetId'],
+                    ),
                   ),
                 ],
               ),

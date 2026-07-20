@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,11 +30,32 @@ part 'dividend_center_timeline.dart';
 const _dividendIncomeMonitor = DividendPolicyMonitor();
 
 class DividendCenterPage extends ConsumerWidget {
-  const DividendCenterPage({super.key});
+  const DividendCenterPage({super.key, this.focusAssetId});
+
+  final String? focusAssetId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    ref.listen(dividendCashProjection90dProvider, (_, next) {
+      final projections = next.asData?.value;
+      final center = ref.read(dividendCenterSnapshotProvider).asData?.value;
+      final forecast = ref.read(dividendForecast12mProvider).asData?.value;
+      if (projections == null || center == null || forecast == null) return;
+      unawaited(() async {
+        final repository = await ref.read(
+          dividendForecastRepositoryProvider.future,
+        );
+        await repository.recordAndEvaluate(
+          asOf: ref.read(dividendCenterNowProvider),
+          currency: center.baseCurrency,
+          projections: projections,
+          actualEvents: center.events,
+          strategy: forecast.strategy,
+          confidence: forecast.confidence,
+        );
+      }());
+    });
     final snapshot = ref.watch(dividendCenterSnapshotProvider);
     return AppPageScaffold(
       title: l10n.dividendCenterTitle,
@@ -59,7 +82,8 @@ class DividendCenterPage extends ConsumerWidget {
             retryLabel: l10n.commonRetry,
             onRetry: () => ref.invalidate(dividendCenterSnapshotProvider),
           ),
-          data: (data) => _DividendCenterBody(snapshot: data),
+          data: (data) =>
+              _DividendCenterBody(snapshot: data, focusAssetId: focusAssetId),
         ),
       ),
     );
@@ -67,9 +91,10 @@ class DividendCenterPage extends ConsumerWidget {
 }
 
 class _DividendCenterBody extends ConsumerWidget {
-  const _DividendCenterBody({required this.snapshot});
+  const _DividendCenterBody({required this.snapshot, this.focusAssetId});
 
   final DividendCenterSnapshot snapshot;
+  final String? focusAssetId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -114,7 +139,10 @@ class _DividendCenterBody extends ConsumerWidget {
               const SizedBox(height: AppSpacing.s16),
             ],
             if (deteriorations.isNotEmpty) ...[
-              _DividendPolicySection(rows: deteriorations),
+              _DividendPolicySection(
+                rows: deteriorations,
+                focusAssetId: focusAssetId,
+              ),
               const SizedBox(height: AppSpacing.s16),
             ],
             if (snapshot.isEmpty) ...[
@@ -127,6 +155,7 @@ class _DividendCenterBody extends ConsumerWidget {
               _DividendResilienceSection(
                 report: resilience,
                 currency: snapshot.baseCurrency,
+                focusAssetId: focusAssetId,
               ),
               const SizedBox(height: AppSpacing.s16),
               const _ForecastCard(),

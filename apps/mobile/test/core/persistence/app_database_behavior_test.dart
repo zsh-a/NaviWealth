@@ -1849,4 +1849,33 @@ void main() {
       expect(version.read<int>('user_version'), db.schemaVersion);
     },
   );
+
+  test('v47 upgrade creates local dividend forecast snapshots', () async {
+    final dir = await Directory.systemTemp.createTemp(
+      'naviwealth-dividend-forecast-migration-',
+    );
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/naviwealth.db');
+    final legacy = sqlite3.open(file.path);
+    try {
+      legacy.execute('PRAGMA user_version = 47');
+    } finally {
+      legacy.close();
+    }
+
+    final db = AppDatabase(
+      DatabaseConnection(NativeDatabase(file, logStatements: false)),
+    );
+    addTearDown(db.close);
+
+    final columns = await db
+        .customSelect('PRAGMA table_info(dividend_forecast_snapshots)')
+        .get();
+    expect(
+      columns.map((row) => row.read<String>('name')),
+      contains('predicted_net'),
+    );
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.read<int>('user_version'), 48);
+  });
 }

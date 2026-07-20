@@ -143,7 +143,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 47;
+  int get schemaVersion => 48;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -171,7 +171,7 @@ class AppDatabase extends _$AppDatabase {
       await _createAgentPreferences(this);
       await _createRebalanceExecutionTables(this);
       await _createFinancePlanningIndexes(this);
-      await _createRunwayForecastSnapshots(this);
+      await _createForecastSnapshots(this);
     },
     onUpgrade: (m, from, to) async {
       // v1 → v2: capture the AI stream's `stop_reason` on chat messages
@@ -704,7 +704,7 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(financialDecisions);
         await m.createTable(financialSignals);
         await m.createTable(financialMonthlyCloses);
-        await _createRunwayForecastSnapshots(this);
+        await _createForecastSnapshots(this);
       }
       if (from < 45) {
         // Financial Close 2.0 intentionally replaces the manual checklist
@@ -748,6 +748,9 @@ class AppDatabase extends _$AppDatabase {
           column: 'action_completed_at',
           definition: 'INTEGER',
         );
+      }
+      if (from < 48) {
+        await _createForecastSnapshots(this);
       }
     },
     beforeOpen: (details) async {

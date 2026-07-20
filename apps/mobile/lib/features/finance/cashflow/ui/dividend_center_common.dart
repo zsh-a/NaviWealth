@@ -3,9 +3,10 @@ part of 'dividend_center_page.dart';
 /// Surfaces TTM dividend declines that also feed Financial Inbox, so the
 /// `/wealth/portfolio/dividends` deep link lands on a real review surface.
 class _DividendPolicySection extends StatelessWidget {
-  const _DividendPolicySection({required this.rows});
+  const _DividendPolicySection({required this.rows, this.focusAssetId});
 
   final List<DividendDeterioration> rows;
+  final String? focusAssetId;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +46,10 @@ class _DividendPolicySection extends StatelessWidget {
           const SizedBox(height: AppSpacing.s12),
           for (var i = 0; i < rows.length; i++) ...[
             if (i != 0) const SizedBox(height: AppSpacing.s8),
-            _DividendPolicyRow(row: rows[i]),
+            _DividendPolicyRow(
+              row: rows[i],
+              focused: rows[i].assetId == focusAssetId,
+            ),
           ],
         ],
       ),
@@ -54,9 +58,10 @@ class _DividendPolicySection extends StatelessWidget {
 }
 
 class _DividendPolicyRow extends StatelessWidget {
-  const _DividendPolicyRow({required this.row});
+  const _DividendPolicyRow({required this.row, required this.focused});
 
   final DividendDeterioration row;
+  final bool focused;
 
   @override
   Widget build(BuildContext context) {
@@ -65,24 +70,34 @@ class _DividendPolicyRow extends StatelessWidget {
     final severity = row.severity == DividendDeteriorationSeverity.critical
         ? l10n.dividendCenterPolicySeverityCritical
         : l10n.dividendCenterPolicySeverityWarning;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(row.assetLabel, style: context.labelStyle),
-              const SizedBox(height: AppSpacing.s2),
-              Text(severity, style: context.captionStyle),
-            ],
+    return Container(
+      key: ValueKey('dividend-review-${row.assetId}'),
+      padding: const EdgeInsets.all(AppSpacing.s6),
+      decoration: focused
+          ? BoxDecoration(
+              color: context.theme.colors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            )
+          : null,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(row.assetLabel, style: context.labelStyle),
+                const SizedBox(height: AppSpacing.s2),
+                Text(severity, style: context.captionStyle),
+              ],
+            ),
           ),
-        ),
-        Text(
-          l10n.dividendCenterPolicyDropLine(dropPct),
-          style: context.captionLabelStyle,
-        ),
-      ],
+          Text(
+            l10n.dividendCenterPolicyDropLine(dropPct),
+            style: context.captionLabelStyle,
+          ),
+        ],
+      ),
     );
   }
 }

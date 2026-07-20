@@ -417,6 +417,8 @@ String _evidenceLabel(AppLocalizations l10n, String key) => switch (key) {
   'ttm_gross' => l10n.financialInboxEvidenceTtmGross,
   'prior_ttm_gross' => l10n.financialInboxEvidencePriorTtmGross,
   'asset_id' => l10n.financialInboxEvidenceAssetId,
+  'primary_driver' => l10n.financialInboxEvidencePrimaryDriver,
+  'unit_dividend_evidence' => l10n.financialInboxEvidenceUnitDividend,
   _ => key.replaceAll('_', ' '),
 };
 

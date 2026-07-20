@@ -6,8 +6,8 @@ Future<void> _createFinancePlanningIndexes(AppDatabase db) async {
   }
 }
 
-Future<void> _createRunwayForecastSnapshots(AppDatabase db) async {
-  for (final statement in runwayForecastDdl) {
+Future<void> _createForecastSnapshots(AppDatabase db) async {
+  for (final statement in forecastEvaluationDdl) {
     await db.customStatement(statement);
   }
 }
