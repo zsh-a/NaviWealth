@@ -948,6 +948,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioHubSectionInsights => 'Insights';
 
   @override
+  String get portfolioHubConcentrationTitle => 'Concentration risk';
+
+  @override
+  String portfolioHubConcentrationSummary(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count positions exceed your thresholds',
+      one: '1 position exceeds your thresholds',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubConcentrationDimensionAsset => 'Asset';
+
+  @override
+  String get portfolioHubConcentrationDimensionSector => 'Sector';
+
+  @override
+  String get portfolioHubConcentrationDimensionRegion => 'Region';
+
+  @override
+  String get portfolioHubConcentrationDimensionCurrency => 'Currency';
+
+  @override
+  String get portfolioHubConcentrationSeverityWarning => 'Warning';
+
+  @override
+  String get portfolioHubConcentrationSeverityCritical => 'Critical';
+
+  @override
+  String portfolioHubConcentrationWeightLine(String weight, String threshold) {
+    return '$weight% · cap $threshold%';
+  }
+
+  @override
+  String get portfolioHubConcentrationRebalanceCta => 'Review rebalance plan';
+
+  @override
   String get portfolioHubRealizedPnlTitle => 'Realized P/L';
 
   @override

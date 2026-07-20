@@ -6,6 +6,8 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/analytics/data/providers.dart';
+import 'package:naviwealth/features/finance/analytics/domain/concentration_risk.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
@@ -186,6 +188,8 @@ void main() {
     await tester.tap(find.text('Allocation'));
     await tester.pumpAndSettle();
     expect(find.text('Broker A'), findsOneWidget);
+    // No concentration breaches → review surface stays hidden.
+    expect(find.text('Concentration risk'), findsNothing);
 
     await tester.tap(find.text('Class'));
     await tester.pumpAndSettle();
@@ -199,6 +203,98 @@ void main() {
     );
     expect(find.text('Market value'), findsWidgets);
     expect(find.text('Unrealized P&L'), findsOneWidget);
+  });
+
+  testWidgets('allocation tab shows concentration breaches from provider', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final state = PortfolioHubState(
+      holdings: [
+        _holding(
+          assetId: 'us:AAPL',
+          type: AssetType.stock,
+          currency: 'USD',
+          marketValue: '100',
+          costBasis: '80',
+        ),
+      ],
+      lots: [
+        _lot(
+          id: 'aapl-1',
+          accountId: 'broker-a',
+          assetId: 'us:AAPL',
+          quantity: '10',
+          costPerUnit: '8',
+        ),
+      ],
+      accountById: {
+        'broker-a': Account(
+          id: 'broker-a',
+          type: AccountCategory.broker,
+          name: 'Broker A',
+          currency: 'USD',
+          sync: _meta(),
+        ),
+      },
+      baseCurrency: 'USD',
+      marketValueInBase: _d('100'),
+      costBasisInBase: _d('80'),
+      unrealizedPnlInBase: _d('20'),
+      ytdReturn: PortfolioReturnResult(
+        from: DateTime.utc(2026),
+        to: DateTime.utc(2026, 5, 17),
+        baseCurrency: 'USD',
+        cashFlows: const [],
+        solution: const XirrConverged(rate: 0.12, iterations: 3),
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          portfolioHubProvider.overrideWith(
+            () => _StaticPortfolioHubNotifier(state),
+          ),
+          concentrationAlertsProvider.overrideWith(
+            (ref) async => [
+              ConcentrationAlert(
+                dimension: RiskDimension.asset,
+                severity: RiskSeverity.critical,
+                label: 'AAPL',
+                weight: 0.42,
+                threshold: 0.20,
+                valueInBase: _d('42'),
+                assetIds: const ['us:AAPL'],
+              ),
+            ],
+          ),
+        ],
+        child: FTheme(
+          data: FThemes.slate.light.desktop,
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en', 'US'),
+            home: const PortfolioHubPage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Allocation'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Concentration risk'), findsOneWidget);
+    expect(find.text('AAPL'), findsOneWidget);
+    expect(find.textContaining('42.0%'), findsOneWidget);
+    expect(find.text('Review rebalance plan'), findsOneWidget);
   });
 
   test('aggregates holdings by account, currency, and asset class', () {

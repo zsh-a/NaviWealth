@@ -295,6 +295,23 @@
   "portfolioHubSectionPositions": "持仓",
   "portfolioHubSectionAllocation": "分布",
   "portfolioHubSectionInsights": "洞察",
+  "portfolioHubConcentrationTitle": "集中度风险",
+  "portfolioHubConcentrationSummary": "{count, plural, other{有 {count} 项超过你设定的阈值}}",
+  "@portfolioHubConcentrationSummary": { "placeholders": { "count": { "type": "int" } } },
+  "portfolioHubConcentrationDimensionAsset": "单标的",
+  "portfolioHubConcentrationDimensionSector": "行业",
+  "portfolioHubConcentrationDimensionRegion": "地区",
+  "portfolioHubConcentrationDimensionCurrency": "币种",
+  "portfolioHubConcentrationSeverityWarning": "预警",
+  "portfolioHubConcentrationSeverityCritical": "严重",
+  "portfolioHubConcentrationWeightLine": "{weight}% · 上限 {threshold}%",
+  "@portfolioHubConcentrationWeightLine": {
+    "placeholders": {
+      "weight": { "type": "String" },
+      "threshold": { "type": "String" }
+    }
+  },
+  "portfolioHubConcentrationRebalanceCta": "查看再平衡计划",
   "portfolioHubRealizedPnlTitle": "已实现盈亏",
   "portfolioHubRealizedPnlCount": "{count, plural, other{{count} 个批次}}",
   "portfolioHubRealizedPnlEmpty": "暂无已平仓批次。",

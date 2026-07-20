@@ -919,6 +919,45 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioHubSectionInsights => '洞察';
 
   @override
+  String get portfolioHubConcentrationTitle => '集中度风险';
+
+  @override
+  String portfolioHubConcentrationSummary(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '有 $count 项超过你设定的阈值',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubConcentrationDimensionAsset => '单标的';
+
+  @override
+  String get portfolioHubConcentrationDimensionSector => '行业';
+
+  @override
+  String get portfolioHubConcentrationDimensionRegion => '地区';
+
+  @override
+  String get portfolioHubConcentrationDimensionCurrency => '币种';
+
+  @override
+  String get portfolioHubConcentrationSeverityWarning => '预警';
+
+  @override
+  String get portfolioHubConcentrationSeverityCritical => '严重';
+
+  @override
+  String portfolioHubConcentrationWeightLine(String weight, String threshold) {
+    return '$weight% · 上限 $threshold%';
+  }
+
+  @override
+  String get portfolioHubConcentrationRebalanceCta => '查看再平衡计划';
+
+  @override
   String get portfolioHubRealizedPnlTitle => '已实现盈亏';
 
   @override

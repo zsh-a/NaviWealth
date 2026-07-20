@@ -620,6 +620,23 @@
   "portfolioHubSectionPositions": "Positions",
   "portfolioHubSectionAllocation": "Allocation",
   "portfolioHubSectionInsights": "Insights",
+  "portfolioHubConcentrationTitle": "Concentration risk",
+  "portfolioHubConcentrationSummary": "{count, plural, =1{1 position exceeds your thresholds} other{{count} positions exceed your thresholds}}",
+  "@portfolioHubConcentrationSummary": { "placeholders": { "count": { "type": "int" } } },
+  "portfolioHubConcentrationDimensionAsset": "Asset",
+  "portfolioHubConcentrationDimensionSector": "Sector",
+  "portfolioHubConcentrationDimensionRegion": "Region",
+  "portfolioHubConcentrationDimensionCurrency": "Currency",
+  "portfolioHubConcentrationSeverityWarning": "Warning",
+  "portfolioHubConcentrationSeverityCritical": "Critical",
+  "portfolioHubConcentrationWeightLine": "{weight}% · cap {threshold}%",
+  "@portfolioHubConcentrationWeightLine": {
+    "placeholders": {
+      "weight": { "type": "String" },
+      "threshold": { "type": "String" }
+    }
+  },
+  "portfolioHubConcentrationRebalanceCta": "Review rebalance plan",
   "portfolioHubRealizedPnlTitle": "Realized P/L",
   "portfolioHubRealizedPnlCount": "{count, plural, =1{1 lot} other{{count} lots}}",
   "@portfolioHubRealizedPnlCount": { "placeholders": { "count": { "type": "int" } } },
