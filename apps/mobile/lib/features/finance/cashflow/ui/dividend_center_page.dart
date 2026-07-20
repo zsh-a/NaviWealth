@@ -15,15 +15,17 @@ import '../data/dividend_center_providers.dart';
 import '../data/dividend_forecast_providers.dart';
 import '../domain/dividend_center.dart';
 import '../domain/dividend_policy_monitor.dart';
+import '../domain/dividend_resilience.dart';
 import 'dividend_event_actions.dart';
 
 part 'dividend_center_common.dart';
 part 'dividend_center_forecast.dart';
 part 'dividend_center_kpis.dart';
 part 'dividend_center_ranking.dart';
+part 'dividend_center_resilience.dart';
 part 'dividend_center_timeline.dart';
 
-const _dividendPolicyMonitor = DividendPolicyMonitor();
+const _dividendIncomeMonitor = DividendPolicyMonitor();
 
 class DividendCenterPage extends ConsumerWidget {
   const DividendCenterPage({super.key});
@@ -76,11 +78,17 @@ class _DividendCenterBody extends ConsumerWidget {
     final heldIds = holdingsAsync.asData?.value.keys.toSet();
     final deteriorations = heldIds == null
         ? const <DividendDeterioration>[]
-        : _dividendPolicyMonitor.detect(
+        : _dividendIncomeMonitor.detect(
             events: snapshot.events,
             now: ref.watch(dividendCenterNowProvider),
             heldAssetIds: heldIds,
           );
+    final resilience = const DividendResilienceService().analyze(
+      events: snapshot.events,
+      now: ref.watch(dividendCenterNowProvider),
+      corporateActions: ref.watch(dividendForecastDeclaredActionsProvider),
+      excludedEventCount: snapshot.fxExclusions.length,
+    );
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
@@ -115,6 +123,11 @@ class _DividendCenterBody extends ConsumerWidget {
               const _EmptyDividendState(),
             ] else ...[
               _KpiGrid(snapshot: snapshot),
+              const SizedBox(height: AppSpacing.s16),
+              _DividendResilienceSection(
+                report: resilience,
+                currency: snapshot.baseCurrency,
+              ),
               const SizedBox(height: AppSpacing.s16),
               const _ForecastCard(),
               const SizedBox(height: AppSpacing.s16),

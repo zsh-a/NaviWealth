@@ -638,14 +638,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dividendCenterMetricWithholding => '预扣税';
 
   @override
-  String get dividendCenterPolicyTitle => '分红政策关注';
+  String get dividendCenterPolicyTitle => '股息收入关注';
 
   @override
   String dividendCenterPolicyBody(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '有 $count 只持仓的滚动分红较前一年下滑',
+      other: '有 $count 只持仓的已记录股息现金较前一年下滑',
     );
     return '$_temp0';
   }
@@ -659,6 +659,99 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String dividendCenterPolicyDropLine(String percent) {
     return '下滑 $percent%';
+  }
+
+  @override
+  String get dividendResilienceTitle => '历史股息韧性';
+
+  @override
+  String dividendResilienceConfidence(String confidence) {
+    return '$confidence置信度';
+  }
+
+  @override
+  String get dividendResilienceConfidenceHigh => '高';
+
+  @override
+  String get dividendResilienceConfidenceMedium => '中';
+
+  @override
+  String get dividendResilienceConfidenceLow => '低';
+
+  @override
+  String get dividendResilienceNoCoverage => '暂无可用的已记录历史。';
+
+  @override
+  String dividendResilienceCoverage(
+    String start,
+    String end,
+    int months,
+    int emptyMonths,
+  ) {
+    return '$start–$end · 覆盖 $months 个月 · $emptyMonths 个月无股息记录';
+  }
+
+  @override
+  String get dividendResilienceNetSeries => '税后';
+
+  @override
+  String get dividendResilienceChartLabel => '滚动十二个月税前与税后股息收入';
+
+  @override
+  String get dividendResilienceIncomeCagr => '税后收入复合增速';
+
+  @override
+  String get dividendResilienceMaxDrawdown => '最大收入跌幅';
+
+  @override
+  String get dividendResilienceLargestSource => '最大收入来源';
+
+  @override
+  String get dividendResilienceRetention => '税后留存率';
+
+  @override
+  String get dividendResilienceNotRecovered => '尚未恢复';
+
+  @override
+  String dividendResilienceRecoveredIn(int months) {
+    return '$months 个月后恢复';
+  }
+
+  @override
+  String get dividendResilienceAttributionTitle => '较前 12 个月的变化来源';
+
+  @override
+  String get dividendResilienceAttributionHint => '仅在账本包含足够的每股分红和汇率证据时拆分影响。';
+
+  @override
+  String dividendResilienceAttributionSplit(
+    String holding,
+    String unit,
+    String fx,
+  ) {
+    return '持仓 $holding · 每股 $unit · 汇率 $fx';
+  }
+
+  @override
+  String dividendResilienceAttributionCombined(String local, String fx) {
+    return '持仓/每股 $local · 汇率 $fx';
+  }
+
+  @override
+  String get dividendResilienceDriverHolding => '主要来源：持仓数量';
+
+  @override
+  String get dividendResilienceDriverUnitDividend => '主要来源：每股分红';
+
+  @override
+  String get dividendResilienceDriverFx => '主要来源：汇率';
+
+  @override
+  String get dividendResilienceDriverCombined => '持仓与每股分红影响未拆分';
+
+  @override
+  String dividendResilienceMethodology(int matchedPercent, int excludedCount) {
+    return '基于你的已记录账本，不是组合回测。$matchedPercent% 的已归属记录具有每股分红证据；另有 $excludedCount 笔因缺少汇率未计入。';
   }
 
   @override

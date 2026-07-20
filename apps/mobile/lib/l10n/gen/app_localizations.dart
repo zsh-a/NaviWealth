@@ -1271,13 +1271,13 @@ abstract class AppLocalizations {
   /// No description provided for @dividendCenterPolicyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Dividend policy watch'**
+  /// **'Dividend income watch'**
   String get dividendCenterPolicyTitle;
 
   /// No description provided for @dividendCenterPolicyBody.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 holding\'s trailing dividends fell vs the prior year} other{{count} holdings\' trailing dividends fell vs the prior year}}'**
+  /// **'{count, plural, =1{1 holding\'s recorded dividend cash fell vs the prior year} other{{count} holdings\' recorded dividend cash fell vs the prior year}}'**
   String dividendCenterPolicyBody(int count);
 
   /// No description provided for @dividendCenterPolicySeverityWarning.
@@ -1297,6 +1297,159 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Down {percent}%'**
   String dividendCenterPolicyDropLine(String percent);
+
+  /// No description provided for @dividendResilienceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Historical dividend resilience'**
+  String get dividendResilienceTitle;
+
+  /// No description provided for @dividendResilienceConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'{confidence} confidence'**
+  String dividendResilienceConfidence(String confidence);
+
+  /// No description provided for @dividendResilienceConfidenceHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get dividendResilienceConfidenceHigh;
+
+  /// No description provided for @dividendResilienceConfidenceMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get dividendResilienceConfidenceMedium;
+
+  /// No description provided for @dividendResilienceConfidenceLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get dividendResilienceConfidenceLow;
+
+  /// No description provided for @dividendResilienceNoCoverage.
+  ///
+  /// In en, this message translates to:
+  /// **'No recorded history available.'**
+  String get dividendResilienceNoCoverage;
+
+  /// No description provided for @dividendResilienceCoverage.
+  ///
+  /// In en, this message translates to:
+  /// **'{start}–{end} · {months} observed months · {emptyMonths} months with no recorded dividend'**
+  String dividendResilienceCoverage(
+    String start,
+    String end,
+    int months,
+    int emptyMonths,
+  );
+
+  /// No description provided for @dividendResilienceNetSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'After tax'**
+  String get dividendResilienceNetSeries;
+
+  /// No description provided for @dividendResilienceChartLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rolling twelve-month gross and after-tax dividend income'**
+  String get dividendResilienceChartLabel;
+
+  /// No description provided for @dividendResilienceIncomeCagr.
+  ///
+  /// In en, this message translates to:
+  /// **'After-tax income CAGR'**
+  String get dividendResilienceIncomeCagr;
+
+  /// No description provided for @dividendResilienceMaxDrawdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Max income decline'**
+  String get dividendResilienceMaxDrawdown;
+
+  /// No description provided for @dividendResilienceLargestSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Largest income source'**
+  String get dividendResilienceLargestSource;
+
+  /// No description provided for @dividendResilienceRetention.
+  ///
+  /// In en, this message translates to:
+  /// **'After-tax retention'**
+  String get dividendResilienceRetention;
+
+  /// No description provided for @dividendResilienceNotRecovered.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet recovered'**
+  String get dividendResilienceNotRecovered;
+
+  /// No description provided for @dividendResilienceRecoveredIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovered in {months} months'**
+  String dividendResilienceRecoveredIn(int months);
+
+  /// No description provided for @dividendResilienceAttributionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What changed vs the prior 12 months'**
+  String get dividendResilienceAttributionTitle;
+
+  /// No description provided for @dividendResilienceAttributionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded cash is separated only where the ledger has enough per-share and FX evidence.'**
+  String get dividendResilienceAttributionHint;
+
+  /// No description provided for @dividendResilienceAttributionSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Holding {holding} · per share {unit} · FX {fx}'**
+  String dividendResilienceAttributionSplit(
+    String holding,
+    String unit,
+    String fx,
+  );
+
+  /// No description provided for @dividendResilienceAttributionCombined.
+  ///
+  /// In en, this message translates to:
+  /// **'Holding/per-share {local} · FX {fx}'**
+  String dividendResilienceAttributionCombined(String local, String fx);
+
+  /// No description provided for @dividendResilienceDriverHolding.
+  ///
+  /// In en, this message translates to:
+  /// **'Main driver: holding quantity'**
+  String get dividendResilienceDriverHolding;
+
+  /// No description provided for @dividendResilienceDriverUnitDividend.
+  ///
+  /// In en, this message translates to:
+  /// **'Main driver: dividend per share'**
+  String get dividendResilienceDriverUnitDividend;
+
+  /// No description provided for @dividendResilienceDriverFx.
+  ///
+  /// In en, this message translates to:
+  /// **'Main driver: exchange rate'**
+  String get dividendResilienceDriverFx;
+
+  /// No description provided for @dividendResilienceDriverCombined.
+  ///
+  /// In en, this message translates to:
+  /// **'Holding and per-share effects are combined'**
+  String get dividendResilienceDriverCombined;
+
+  /// No description provided for @dividendResilienceMethodology.
+  ///
+  /// In en, this message translates to:
+  /// **'Based on your recorded ledger, not a backtest. {matchedPercent}% of attributed entries have per-share evidence; {excludedCount} entries were excluded for missing FX.'**
+  String dividendResilienceMethodology(int matchedPercent, int excludedCount);
 
   /// Dividend center section title for ranked holdings
   ///

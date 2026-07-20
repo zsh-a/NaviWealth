@@ -120,6 +120,32 @@ void main() {
 
     expect(monitor.detect(events: events, now: now), isEmpty);
   });
+
+  test('clamps leap-day comparison windows to February month end', () {
+    final rows = monitor.detect(
+      events: [
+        _div(
+          assetId: 'us:AAPL',
+          label: 'AAPL',
+          date: DateTime.utc(2022, 2, 28),
+          gross: '100',
+        ),
+        _div(
+          assetId: 'us:AAPL',
+          label: 'AAPL',
+          date: DateTime.utc(2023, 2, 28),
+          gross: '50',
+        ),
+      ],
+      now: DateTime.utc(2024, 2, 29),
+      heldAssetIds: {'us:AAPL'},
+    );
+
+    expect(rows, hasLength(1));
+    expect(rows.single.priorTtmGrossInBase, Decimal.fromInt(100));
+    expect(rows.single.ttmGrossInBase, Decimal.fromInt(50));
+    expect(rows.single.severity, DividendDeteriorationSeverity.critical);
+  });
 }
 
 DividendCenterEvent _div({

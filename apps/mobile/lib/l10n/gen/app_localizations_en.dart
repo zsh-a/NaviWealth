@@ -663,15 +663,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dividendCenterMetricWithholding => 'Withholding tax';
 
   @override
-  String get dividendCenterPolicyTitle => 'Dividend policy watch';
+  String get dividendCenterPolicyTitle => 'Dividend income watch';
 
   @override
   String dividendCenterPolicyBody(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count holdings\' trailing dividends fell vs the prior year',
-      one: '1 holding\'s trailing dividends fell vs the prior year',
+      other: '$count holdings\' recorded dividend cash fell vs the prior year',
+      one: '1 holding\'s recorded dividend cash fell vs the prior year',
     );
     return '$_temp0';
   }
@@ -685,6 +685,104 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String dividendCenterPolicyDropLine(String percent) {
     return 'Down $percent%';
+  }
+
+  @override
+  String get dividendResilienceTitle => 'Historical dividend resilience';
+
+  @override
+  String dividendResilienceConfidence(String confidence) {
+    return '$confidence confidence';
+  }
+
+  @override
+  String get dividendResilienceConfidenceHigh => 'High';
+
+  @override
+  String get dividendResilienceConfidenceMedium => 'Medium';
+
+  @override
+  String get dividendResilienceConfidenceLow => 'Low';
+
+  @override
+  String get dividendResilienceNoCoverage => 'No recorded history available.';
+
+  @override
+  String dividendResilienceCoverage(
+    String start,
+    String end,
+    int months,
+    int emptyMonths,
+  ) {
+    return '$start–$end · $months observed months · $emptyMonths months with no recorded dividend';
+  }
+
+  @override
+  String get dividendResilienceNetSeries => 'After tax';
+
+  @override
+  String get dividendResilienceChartLabel =>
+      'Rolling twelve-month gross and after-tax dividend income';
+
+  @override
+  String get dividendResilienceIncomeCagr => 'After-tax income CAGR';
+
+  @override
+  String get dividendResilienceMaxDrawdown => 'Max income decline';
+
+  @override
+  String get dividendResilienceLargestSource => 'Largest income source';
+
+  @override
+  String get dividendResilienceRetention => 'After-tax retention';
+
+  @override
+  String get dividendResilienceNotRecovered => 'Not yet recovered';
+
+  @override
+  String dividendResilienceRecoveredIn(int months) {
+    return 'Recovered in $months months';
+  }
+
+  @override
+  String get dividendResilienceAttributionTitle =>
+      'What changed vs the prior 12 months';
+
+  @override
+  String get dividendResilienceAttributionHint =>
+      'Recorded cash is separated only where the ledger has enough per-share and FX evidence.';
+
+  @override
+  String dividendResilienceAttributionSplit(
+    String holding,
+    String unit,
+    String fx,
+  ) {
+    return 'Holding $holding · per share $unit · FX $fx';
+  }
+
+  @override
+  String dividendResilienceAttributionCombined(String local, String fx) {
+    return 'Holding/per-share $local · FX $fx';
+  }
+
+  @override
+  String get dividendResilienceDriverHolding => 'Main driver: holding quantity';
+
+  @override
+  String get dividendResilienceDriverUnitDividend =>
+      'Main driver: dividend per share';
+
+  @override
+  String get dividendResilienceDriverFx => 'Main driver: exchange rate';
+
+  @override
+  String get dividendResilienceDriverCombined =>
+      'Holding and per-share effects are combined';
+
+  @override
+  String dividendResilienceMethodology(int matchedPercent, int excludedCount) {
+    return 'Based on your recorded ledger, not a backtest. $matchedPercent% of attributed entries have per-share evidence; $excludedCount entries were excluded for missing FX.';
   }
 
   @override

@@ -70,7 +70,7 @@ void main() {
     expect(find.text('Corporate action target'), findsOneWidget);
   });
 
-  testWidgets('shows TTM after tax KPI and policy watch for declines', (
+  testWidgets('shows after-tax KPI, income watch and resilience review', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(430, 1600);
@@ -160,7 +160,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('TTM after tax'), findsOneWidget);
-    expect(find.text('Dividend policy watch'), findsOneWidget);
+    expect(find.text('Dividend income watch'), findsOneWidget);
+    expect(find.text('Historical dividend resilience'), findsOneWidget);
+    expect(find.textContaining('confidence'), findsWidgets);
+    expect(find.textContaining('not a backtest'), findsOneWidget);
     expect(find.text('AAPL'), findsWidgets);
     // Compact ranking embeds the yield label in a multi-metric detail line.
     expect(find.textContaining('Net yield on cost'), findsOneWidget);
