@@ -132,7 +132,7 @@ jobs:
           sed -i -E "s/^version: .*/version: ${SEMVER}+${BUILD}/" pubspec.yaml
           grep '^version:' pubspec.yaml
       - run: flutter pub get
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Refresh securities catalog from upstream feeds
