@@ -23160,6 +23160,18 @@ abstract class AppLocalizations {
   /// **'Asset-level target weights have drifted past your rebalance warning threshold.'**
   String get financialInboxRebalanceBody;
 
+  /// No description provided for @financialInboxDividendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review {count} dividend declines'**
+  String financialInboxDividendTitle(int count);
+
+  /// No description provided for @financialInboxDividendBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Trailing dividends for a holding fell materially versus the prior year.'**
+  String get financialInboxDividendBody;
+
   /// No description provided for @financialInboxEvidenceDimension.
   ///
   /// In en, this message translates to:
@@ -23201,6 +23213,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Max deviation'**
   String get financialInboxEvidenceMaxDeviation;
+
+  /// No description provided for @financialInboxEvidenceDropRatio.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop ratio'**
+  String get financialInboxEvidenceDropRatio;
+
+  /// No description provided for @financialInboxEvidenceTtmGross.
+  ///
+  /// In en, this message translates to:
+  /// **'TTM gross'**
+  String get financialInboxEvidenceTtmGross;
+
+  /// No description provided for @financialInboxEvidencePriorTtmGross.
+  ///
+  /// In en, this message translates to:
+  /// **'Prior TTM gross'**
+  String get financialInboxEvidencePriorTtmGross;
+
+  /// No description provided for @financialInboxEvidenceAssetId.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset'**
+  String get financialInboxEvidenceAssetId;
 
   /// No description provided for @settingsProductMetricsTitle.
   ///

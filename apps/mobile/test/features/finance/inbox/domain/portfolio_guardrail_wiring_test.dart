@@ -21,48 +21,63 @@ void main() {
     '$repoRoot/apps/mobile/lib/features/finance/inbox/domain/portfolio_guardrail_candidates.dart',
   );
 
-  test('scan provider wires concentration alerts and rebalance plan', () {
-    final source = scanProvider.readAsStringSync();
-    expect(source, contains('concentrationAlertsProvider'));
-    expect(source, contains('rebalancePlanProvider'));
-    expect(source, contains('fromConcentrationAlerts'));
-    expect(source, contains('fromRebalancePlan'));
-    expect(source, contains('PortfolioGuardrailCandidates'));
-  });
+  test(
+    'scan provider wires concentration, rebalance, and dividend monitors',
+    () {
+      final source = scanProvider.readAsStringSync();
+      expect(source, contains('concentrationAlertsProvider'));
+      expect(source, contains('rebalancePlanProvider'));
+      expect(source, contains('dividendCenterSnapshotProvider'));
+      expect(source, contains('fromConcentrationAlerts'));
+      expect(source, contains('fromRebalancePlan'));
+      expect(source, contains('fromDividendDeteriorations'));
+      expect(source, contains('DividendPolicyMonitor'));
+      expect(source, contains('PortfolioGuardrailCandidates'));
+    },
+  );
 
-  test('inbox page presents both new kinds', () {
+  test('inbox page presents concentration, rebalance, and dividend kinds', () {
     final source = inboxPage.readAsStringSync();
     expect(source, contains('FinancialInboxKind.concentrationRisk'));
     expect(source, contains('FinancialInboxKind.rebalanceDrift'));
+    expect(source, contains('FinancialInboxKind.dividendDeterioration'));
     expect(source, contains('financialInboxConcentrationTitle'));
     expect(source, contains('financialInboxRebalanceTitle'));
+    expect(source, contains('financialInboxDividendTitle'));
   });
 
-  test('mapper routes use portfolio analytics and rebalance plan surfaces', () {
+  test('mapper routes use portfolio, rebalance, and dividend surfaces', () {
     final source = mapper.readAsStringSync();
     expect(source, contains('FinanceRoutes.wealthPortfolio'));
     expect(source, contains('FinanceRoutes.planRebalance'));
-    expect(source, contains("sourceKey: rebalanceDriftSourceKey"));
+    expect(source, contains('FinanceRoutes.cashflowDividends'));
+    expect(source, contains('sourceKey: rebalanceDriftSourceKey'));
     expect(source, contains('concentration:'));
+    expect(source, contains('dividend-deterioration:'));
   });
 
-  test(
-    'enum includes concentration and rebalance kinds for byName persistence',
-    () {
-      expect(
-        FinancialInboxKind.values.map((k) => k.name),
-        containsAll(['concentrationRisk', 'rebalanceDrift']),
-      );
-      expect(
-        FinancialInboxKind.values.byName('concentrationRisk'),
-        FinancialInboxKind.concentrationRisk,
-      );
-      expect(
-        FinancialInboxKind.values.byName('rebalanceDrift'),
-        FinancialInboxKind.rebalanceDrift,
-      );
-    },
-  );
+  test('enum includes guardrail kinds for byName persistence', () {
+    expect(
+      FinancialInboxKind.values.map((k) => k.name),
+      containsAll([
+        'concentrationRisk',
+        'rebalanceDrift',
+        'dividendDeterioration',
+      ]),
+    );
+    expect(
+      FinancialInboxKind.values.byName('concentrationRisk'),
+      FinancialInboxKind.concentrationRisk,
+    );
+    expect(
+      FinancialInboxKind.values.byName('rebalanceDrift'),
+      FinancialInboxKind.rebalanceDrift,
+    );
+    expect(
+      FinancialInboxKind.values.byName('dividendDeterioration'),
+      FinancialInboxKind.dividendDeterioration,
+    );
+  });
 
   test(
     'no curated model portfolio defaults in rebalance or inbox product code',
@@ -73,6 +88,7 @@ void main() {
         '$repoRoot/apps/mobile/lib/features/finance/rebalance',
         '$repoRoot/apps/mobile/lib/features/finance/inbox',
         '$repoRoot/apps/mobile/lib/features/finance/analytics',
+        '$repoRoot/apps/mobile/lib/features/finance/cashflow/domain/dividend_policy_monitor.dart',
       ];
       final forbidden = [
         '中国移动',
@@ -93,8 +109,18 @@ void main() {
       ];
       final offenders = <String>[];
       for (final root in paths) {
+        final entity = FileSystemEntity.typeSync(root);
+        if (entity == FileSystemEntityType.notFound) continue;
+        if (entity == FileSystemEntityType.file) {
+          final text = File(root).readAsStringSync();
+          for (final token in forbidden) {
+            if (text.contains(token)) {
+              offenders.add('$root: $token');
+            }
+          }
+          continue;
+        }
         final dir = Directory(root);
-        if (!dir.existsSync()) continue;
         for (final file in dir.listSync(recursive: true)) {
           if (file is! File || !file.path.endsWith('.dart')) continue;
           final text = file.readAsStringSync();
