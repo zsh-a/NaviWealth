@@ -24217,6 +24217,24 @@ abstract class AppLocalizations {
   /// **'Change ratio'**
   String get financialInboxEvidenceChangeRatio;
 
+  /// No description provided for @financialInboxEvidenceExpenseCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses this month'**
+  String get financialInboxEvidenceExpenseCount;
+
+  /// No description provided for @financialInboxExpenseDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense details'**
+  String get financialInboxExpenseDetailsTitle;
+
+  /// No description provided for @financialInboxExpenseUntitled.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get financialInboxExpenseUntitled;
+
   /// No description provided for @financialInboxEvidenceChangeCount.
   ///
   /// In en, this message translates to:

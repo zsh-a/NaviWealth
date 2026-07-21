@@ -14,6 +14,7 @@ import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/rebalance/data/rebalance_providers.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/allocation_schemes.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/rebalance_models.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/persistence/test_database.dart';
 import '../../../../core/sync/_outbox_test_ext.dart';
@@ -99,6 +100,47 @@ void main() {
         jsonDecode(saved.targetAllocationJson!) as Map<String, dynamic>,
       );
       expect(decoded.weights, target.weights);
+    });
+
+    test('persists target allocation for a virtual portfolio', () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final preferences = await SharedPreferences.getInstance();
+      final db = makeTestDatabase();
+      final repository = InvestmentPortfolioRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+      const storageKey = 'test.target-allocation.all';
+      const target = TargetAllocation(
+        weights: {
+          AssetCategory.stock: 0.5,
+          AssetCategory.etf: 0.2,
+          AssetCategory.bondsAndFunds: 0.2,
+          AssetCategory.cash: 0.1,
+        },
+      );
+      final firstController = TargetAllocationController(
+        scheme: AllocationSchemePreset.balanced,
+        portfolio: null,
+        repository: Future.value(repository),
+        preferences: preferences,
+        virtualStorageKey: storageKey,
+      );
+
+      await firstController.update(target);
+      firstController.dispose();
+
+      final restartedController = TargetAllocationController(
+        scheme: AllocationSchemePreset.custom,
+        portfolio: null,
+        repository: Future.value(repository),
+        preferences: preferences,
+        virtualStorageKey: storageKey,
+      );
+      addTearDown(restartedController.dispose);
+      expect(restartedController.state.weights, target.weights);
     });
   });
 

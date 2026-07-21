@@ -176,39 +176,74 @@ RiskAppetite appetiteForScheme(AllocationSchemePreset preset) =>
 
 /// Target allocation for the currently selected logical portfolio.
 ///
-/// The virtual all-holdings and unassigned views use the risk preset as an
-/// ephemeral target. Persisted targets live on `investment_portfolios`, so
-/// switching portfolios also switches the rebalance policy.
+/// Persisted targets live on `investment_portfolios` for real portfolios.
+/// The virtual all-holdings and unassigned views have no database row, so
+/// their targets use user-scoped preferences instead.
 final targetAllocationProvider =
     StateNotifierProvider<TargetAllocationController, TargetAllocation>((ref) {
       final scheme = ref.read(selectedSchemeProvider);
+      final selectedId = ref.watch(
+        effectiveSelectedInvestmentPortfolioIdProvider,
+      );
       final portfolio = ref.watch(selectedInvestmentPortfolioProvider).value;
+      final ownerUserId = ref.watch(activeUserIdProvider);
       return TargetAllocationController(
         scheme: scheme,
         portfolio: portfolio,
         repository: ref.watch(investmentPortfolioRepositoryProvider.future),
+        preferences: ref.watch(sharedPreferencesProvider),
+        virtualStorageKey: _virtualTargetAllocationStorageKey(
+          ownerUserId: ownerUserId,
+          selectedPortfolioId: selectedId,
+        ),
       );
     });
+
+String? _virtualTargetAllocationStorageKey({
+  required String? ownerUserId,
+  required String? selectedPortfolioId,
+}) {
+  final scope = switch (selectedPortfolioId) {
+    null => 'all',
+    kUnassignedInvestmentPortfolioId => 'unassigned',
+    _ => null,
+  };
+  if (scope == null) return null;
+  return 'naviwealth.rebalance.target_allocation.'
+      '${ownerUserId ?? 'local'}.$scope';
+}
 
 class TargetAllocationController extends StateNotifier<TargetAllocation> {
   TargetAllocationController({
     required AllocationSchemePreset scheme,
     required InvestmentPortfolio? portfolio,
     required Future<InvestmentPortfolioRepository> repository,
+    SharedPreferences? preferences,
+    String? virtualStorageKey,
   }) : _scheme = scheme,
        _portfolio = portfolio,
        _repository = repository,
-       super(_load(portfolio, scheme));
+       _preferences = preferences,
+       _virtualStorageKey = virtualStorageKey,
+       super(_load(portfolio, scheme, preferences, virtualStorageKey));
 
   final AllocationSchemePreset _scheme;
   InvestmentPortfolio? _portfolio;
   final Future<InvestmentPortfolioRepository> _repository;
+  final SharedPreferences? _preferences;
+  final String? _virtualStorageKey;
 
   static TargetAllocation _load(
     InvestmentPortfolio? portfolio,
     AllocationSchemePreset scheme,
+    SharedPreferences? preferences,
+    String? virtualStorageKey,
   ) {
-    final raw = portfolio?.targetAllocationJson;
+    final raw =
+        portfolio?.targetAllocationJson ??
+        (virtualStorageKey == null
+            ? null
+            : preferences?.getString(virtualStorageKey));
     if (raw != null) {
       try {
         final map = jsonDecode(raw) as Map<String, dynamic>;
@@ -234,7 +269,17 @@ class TargetAllocationController extends StateNotifier<TargetAllocation> {
 
   Future<void> _persist(TargetAllocation allocation) async {
     final portfolio = _portfolio;
-    if (portfolio == null) return;
+    if (portfolio == null) {
+      final preferences = _preferences;
+      final storageKey = _virtualStorageKey;
+      if (preferences != null && storageKey != null) {
+        await preferences.setString(
+          storageKey,
+          jsonEncode(allocation.toJson()),
+        );
+      }
+      return;
+    }
     final updated = portfolio.copyWith(
       targetAllocationJson: jsonEncode(allocation.toJson()),
     );

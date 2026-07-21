@@ -10,6 +10,7 @@ import '../../../../core/lifeos/action_dispatcher.dart';
 import '../../../../core/product/product_metrics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../composition/finance_route_paths.dart';
 import '../data/financial_inbox_providers.dart';
 import '../domain/financial_inbox.dart';
 
@@ -181,6 +182,9 @@ class _InboxDetail extends ConsumerWidget {
         : ref.watch(lifeActionStateProvider(item.actionId!));
     final canCreateAction =
         item.actionId == null || actionState.value == LifeActionState.dropped;
+    final anomalyExpenses = item.kind == FinancialInboxKind.expenseAnomaly
+        ? _anomalyExpenses(item.evidence['expenses'])
+        : const <_AnomalyExpense>[];
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -212,11 +216,55 @@ class _InboxDetail extends ConsumerWidget {
           label: l10n.financialInboxLastChecked,
           value: _dateTime(item.lastDetectedAt),
         ),
-        for (final evidence in item.evidence.entries)
+        for (final evidence in item.evidence.entries.where(
+          (entry) => entry.key != 'expenses',
+        ))
           _EvidenceRow(
             label: _evidenceLabel(l10n, evidence.key),
             value: _evidenceValue(evidence.value),
           ),
+        if (anomalyExpenses.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s16),
+          AppSheetSectionLabel(l10n.financialInboxExpenseDetailsTitle),
+          for (final expense in anomalyExpenses) ...[
+            SoftCard.raised(
+              borderless: true,
+              onPress: () {
+                final router = GoRouter.of(context);
+                Navigator.of(context).pop();
+                router.push(FinanceRoutes.expense(expense.id));
+              },
+              padding: const EdgeInsets.all(AppSpacing.s12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          expense.note ?? l10n.financialInboxExpenseUntitled,
+                          style: context.labelStyle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: AppSpacing.s4),
+                        Text(expense.date, style: context.captionStyle),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s12),
+                  Text(
+                    '${expense.currency} ${expense.amount}',
+                    style: context.labelStyle,
+                  ),
+                  const SizedBox(width: AppSpacing.s6),
+                  const Icon(FLucideIcons.chevronRight, size: AppIconSizes.sm),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s8),
+          ],
+        ],
         if (item.actionId != null) ...[
           const SizedBox(height: AppSpacing.s12),
           _EvidenceRow(
@@ -401,6 +449,7 @@ String _evidenceLabel(AppLocalizations l10n, String key) => switch (key) {
   'period' => l10n.financialInboxEvidencePeriod,
   'mismatch_count' => l10n.financialInboxEvidenceMismatchCount,
   'delta_ratio' || 'max_delta_ratio' => l10n.financialInboxEvidenceChangeRatio,
+  'expense_count' => l10n.financialInboxEvidenceExpenseCount,
   'change_count' => l10n.financialInboxEvidenceChangeCount,
   'stale_count' => l10n.financialInboxEvidenceStaleCount,
   'review_date' => l10n.financialInboxEvidenceReviewDate,
@@ -421,6 +470,50 @@ String _evidenceLabel(AppLocalizations l10n, String key) => switch (key) {
   'unit_dividend_evidence' => l10n.financialInboxEvidenceUnitDividend,
   _ => key.replaceAll('_', ' '),
 };
+
+final class _AnomalyExpense {
+  const _AnomalyExpense({
+    required this.id,
+    required this.date,
+    required this.amount,
+    required this.currency,
+    this.note,
+  });
+
+  final String id;
+  final String date;
+  final String amount;
+  final String currency;
+  final String? note;
+}
+
+List<_AnomalyExpense> _anomalyExpenses(Object? value) {
+  if (value is! List) return const <_AnomalyExpense>[];
+  return value
+      .whereType<Map<Object?, Object?>>()
+      .map((raw) {
+        final id = raw['id'];
+        final date = raw['date'];
+        final amount = raw['amount'];
+        final currency = raw['currency'];
+        if (id is! String ||
+            date is! String ||
+            amount is! String ||
+            currency is! String) {
+          return null;
+        }
+        final parsedDate = DateTime.tryParse(date);
+        return _AnomalyExpense(
+          id: id,
+          date: parsedDate == null ? date : _dateTime(parsedDate),
+          amount: amount,
+          currency: currency,
+          note: raw['note'] is String ? raw['note'] as String : null,
+        );
+      })
+      .whereType<_AnomalyExpense>()
+      .toList(growable: false);
+}
 
 String _actionStateLabel(AppLocalizations l10n, LifeActionState? state) =>
     switch (state) {

@@ -13633,6 +13633,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get financialInboxEvidenceChangeRatio => '变化比例';
 
   @override
+  String get financialInboxEvidenceExpenseCount => '本月支出笔数';
+
+  @override
+  String get financialInboxExpenseDetailsTitle => '具体支出';
+
+  @override
+  String get financialInboxExpenseUntitled => '支出';
+
+  @override
   String get financialInboxEvidenceChangeCount => '变化数量';
 
   @override

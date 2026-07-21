@@ -14316,6 +14316,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get financialInboxEvidenceChangeRatio => 'Change ratio';
 
   @override
+  String get financialInboxEvidenceExpenseCount => 'Expenses this month';
+
+  @override
+  String get financialInboxExpenseDetailsTitle => 'Expense details';
+
+  @override
+  String get financialInboxExpenseUntitled => 'Expense';
+
+  @override
   String get financialInboxEvidenceChangeCount => 'Changes';
 
   @override

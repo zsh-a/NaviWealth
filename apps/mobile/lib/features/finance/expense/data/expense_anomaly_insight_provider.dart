@@ -11,11 +11,18 @@ import 'package:naviwealth/features/finance/domain/models/expense.dart';
 const double kExpenseAnomalyThreshold = 0.25;
 
 class ExpenseAnomalySummary {
-  const ExpenseAnomalySummary({required this.deltaRatio});
+  const ExpenseAnomalySummary({
+    required this.deltaRatio,
+    this.currentMonthExpenses = const <Expense>[],
+  });
 
   /// Projected current-month spend vs. the previous 3-month average.
   /// Positive means the current month is projected higher.
   final double deltaRatio;
+
+  /// Expenses included in the current-month side of the anomaly calculation,
+  /// ordered from the largest base-currency contribution to the smallest.
+  final List<Expense> currentMonthExpenses;
 }
 
 ExpenseAnomalySummary? summarizeExpenseAnomaly({
@@ -33,6 +40,7 @@ ExpenseAnomalySummary? summarizeExpenseAnomaly({
   if (progress <= 0) return null;
 
   var current = Decimal.zero;
+  final currentExpenses = <(Expense, Decimal)>[];
   final previous = <String, Decimal>{};
   for (var i = 1; i <= 3; i++) {
     final m = DateTime.utc(monthStart.year, monthStart.month - i);
@@ -50,6 +58,7 @@ ExpenseAnomalySummary? summarizeExpenseAnomaly({
 
     if (!date.isBefore(monthStart) && date.isBefore(nextMonth)) {
       current += amount;
+      currentExpenses.add((expense, amount));
       continue;
     }
     final key = _monthKey(DateTime.utc(date.year, date.month));
@@ -67,7 +76,13 @@ ExpenseAnomalySummary? summarizeExpenseAnomaly({
   final delta = (projected - previousAverage) / previousAverage;
   final ratio = delta.toDouble();
   if (ratio.abs() < threshold) return null;
-  return ExpenseAnomalySummary(deltaRatio: ratio);
+  currentExpenses.sort((a, b) => b.$2.compareTo(a.$2));
+  return ExpenseAnomalySummary(
+    deltaRatio: ratio,
+    currentMonthExpenses: List<Expense>.unmodifiable(
+      currentExpenses.map((row) => row.$1),
+    ),
+  );
 }
 
 Decimal? _convertExpense(

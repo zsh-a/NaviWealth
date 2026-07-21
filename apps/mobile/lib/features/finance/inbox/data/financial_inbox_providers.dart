@@ -188,6 +188,18 @@ final financialSignalScanCandidatesProvider =
             evidence: <String, Object?>{
               'period': _periodKey(now),
               'delta_ratio': anomaly.deltaRatio,
+              'expense_count': anomaly.currentMonthExpenses.length,
+              'expenses': [
+                for (final expense in anomaly.currentMonthExpenses.take(20))
+                  <String, Object?>{
+                    'id': expense.id,
+                    'date': expense.tradeDate.toUtc().toIso8601String(),
+                    'amount': expense.amount.toString(),
+                    'currency': expense.currency,
+                    if (expense.note?.trim().isNotEmpty ?? false)
+                      'note': expense.note!.trim(),
+                  },
+              ],
             },
           ),
         );
