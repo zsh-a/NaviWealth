@@ -5,8 +5,8 @@
 /// `_NewNoteSheet`. Default Auto mode lands as a `KnowledgeNote` first —
 /// zero-latency, never blocks on AI. Users can also pick a concrete
 /// target kind up front: Routine writes a structured row immediately;
-/// Decision / Principle / Assumption / Concept / Experiment land as
-/// candidate-tagged Notes for the typed writers. In Auto mode, after save,
+/// Decision / Principle / Assumption / Concept / Experiment are promoted to
+/// first-class typed objects. In Auto mode, after save,
 /// the sheet awaits a single LLM round-trip via [captureClassifierProvider]
 /// (LLM when a device profile is configured, deterministic heuristic
 /// otherwise). When the classifier returns a non-Note kind the sheet swaps
@@ -16,10 +16,8 @@
 ///   * `routine` → writes a [KnowledgeRoutine] + soft-deletes the
 ///     temp Note. RoutineDueAgent picks it up from the next tick.
 ///   * other kinds (decision / principle / assumption / concept /
-///     experiment) → tags the Note with `kind:<x>_candidate` and a
-///     possibly-extracted `scope:<...>` tag, same shape as
-///     `queue_inbox_classification` produces. The Library typed
-///     writers can later promote from the tagged Note.
+///     experiment) → atomically writes the typed object and records the
+///     source relationship on the Note.
 /// - ✗ keeps the Note unchanged. Sheet closes.
 library;
 
@@ -32,6 +30,7 @@ import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../application/knowledge_promotion_service.dart';
 import '../data/capture_classifier.dart';
 import '../data/capture_kind.dart';
 import '../data/providers.dart';
@@ -229,27 +228,12 @@ class _KnowledgeCaptureSheetState
       case CaptureKind.assumption:
       case CaptureKind.concept:
       case CaptureKind.experiment:
-        final candidateStamp = await stamper.stamp();
-        final tags = note.tags.toSet()
-          ..add('kind:${kind.wire}_candidate')
-          ..add('source:manual_capture');
-        await repo.upsertNote(
-          KnowledgeNote(
-            id: note.id,
-            title: note.title,
-            bodyMd: note.bodyMd,
-            sourceUrl: note.sourceUrl,
-            tags: tags.toList(growable: false),
-            projectTag: note.projectTag,
-            createdAt: note.createdAt,
-            sync: SyncMeta(
-              ownerUserId: candidateStamp.ownerUserId,
-              updatedAt: candidateStamp.now,
-              updatedByDevice: candidateStamp.deviceId,
-              hlc: candidateStamp.hlc,
-            ),
-          ),
+        final promotion = KnowledgePromotionService(
+          repository: repo,
+          ownerUserId: note.sync.ownerUserId,
+          stamp: () async => _syncMetaFromStamp(await stamper.stamp()),
         );
+        await promotion.promoteCapture(note: note, kind: kind);
       case CaptureKind.note:
         break;
     }
@@ -320,32 +304,27 @@ class _KnowledgeCaptureSheetState
         case CaptureKind.assumption:
         case CaptureKind.concept:
         case CaptureKind.experiment:
-          // Tag-only promotion: gain `kind:<x>_candidate` + optional
-          // `scope:<...>` tags. If the LLM produced polished text we
-          // write it in the same stamp — applying polish and category
-          // tag is one logical "I accept the AI's read".
-          final stamp = await stamper.stamp();
-          final tagSet = note.tags.toSet();
-          tagSet.add('kind:${suggestion.kind.wire}_candidate');
-          if (suggestion.scope != null) {
-            tagSet.add('scope:${suggestion.scope}');
-          }
-          await repo.upsertNote(
-            KnowledgeNote(
-              id: note.id,
-              title: resolvedTitle,
-              bodyMd: resolvedBody,
-              sourceUrl: note.sourceUrl,
-              tags: tagSet.toList(growable: false),
-              projectTag: note.projectTag,
-              createdAt: note.createdAt,
-              sync: SyncMeta(
-                ownerUserId: stamp.ownerUserId,
-                updatedAt: stamp.now,
-                updatedByDevice: stamp.deviceId,
-                hlc: stamp.hlc,
-              ),
-            ),
+          final polishStamp = await stamper.stamp();
+          final polishedNote = KnowledgeNote(
+            id: note.id,
+            title: resolvedTitle,
+            bodyMd: resolvedBody,
+            sourceUrl: note.sourceUrl,
+            tags: note.tags,
+            projectTag: note.projectTag,
+            createdAt: note.createdAt,
+            sync: _syncMetaFromStamp(polishStamp),
+          );
+          await repo.upsertNote(polishedNote);
+          final promotion = KnowledgePromotionService(
+            repository: repo,
+            ownerUserId: note.sync.ownerUserId,
+            stamp: () async => _syncMetaFromStamp(await stamper.stamp()),
+          );
+          await promotion.promoteCapture(
+            note: polishedNote,
+            kind: suggestion.kind,
+            scope: suggestion.scope,
           );
         case CaptureKind.note:
           // Polish-only path: classifier said "note" but produced a
@@ -501,3 +480,10 @@ class _KnowledgeCaptureSheetState
     );
   }
 }
+
+SyncMeta _syncMetaFromStamp(MutationStamp stamp) => SyncMeta(
+  ownerUserId: stamp.ownerUserId,
+  updatedAt: stamp.now,
+  updatedByDevice: stamp.deviceId,
+  hlc: stamp.hlc,
+);

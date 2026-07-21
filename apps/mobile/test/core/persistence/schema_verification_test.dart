@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 49', () {
-      expect(db.schemaVersion, 49);
+    test('is 50', () {
+      expect(db.schemaVersion, 50);
     });
   });
 
@@ -247,6 +247,21 @@ void main() {
         );
       });
     }
+
+    test('promoted notes retain typed-object provenance', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(knowledge_notes)')
+          .get();
+      final columns = result.map((r) => r.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll(<String>[
+          'promoted_to_kind',
+          'promoted_to_id',
+          'promoted_at',
+        ]),
+      );
+    });
 
     test('financial close tables use evidence-driven columns', () async {
       final closeColumns =

@@ -27953,6 +27953,39 @@ class $KnowledgeNotesTable extends KnowledgeNotes
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _promotedToKindMeta = const VerificationMeta(
+    'promotedToKind',
+  );
+  @override
+  late final GeneratedColumn<String> promotedToKind = GeneratedColumn<String>(
+    'promoted_to_kind',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _promotedToIdMeta = const VerificationMeta(
+    'promotedToId',
+  );
+  @override
+  late final GeneratedColumn<String> promotedToId = GeneratedColumn<String>(
+    'promoted_to_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _promotedAtMeta = const VerificationMeta(
+    'promotedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> promotedAt = GeneratedColumn<DateTime>(
+    'promoted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _mergedIntoIdMeta = const VerificationMeta(
     'mergedIntoId',
   );
@@ -27978,6 +28011,9 @@ class $KnowledgeNotesTable extends KnowledgeNotes
     tagsJson,
     projectTag,
     createdAt,
+    promotedToKind,
+    promotedToId,
+    promotedAt,
     mergedIntoId,
   ];
   @override
@@ -28075,6 +28111,30 @@ class $KnowledgeNotesTable extends KnowledgeNotes
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('promoted_to_kind')) {
+      context.handle(
+        _promotedToKindMeta,
+        promotedToKind.isAcceptableOrUnknown(
+          data['promoted_to_kind']!,
+          _promotedToKindMeta,
+        ),
+      );
+    }
+    if (data.containsKey('promoted_to_id')) {
+      context.handle(
+        _promotedToIdMeta,
+        promotedToId.isAcceptableOrUnknown(
+          data['promoted_to_id']!,
+          _promotedToIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('promoted_at')) {
+      context.handle(
+        _promotedAtMeta,
+        promotedAt.isAcceptableOrUnknown(data['promoted_at']!, _promotedAtMeta),
+      );
+    }
     if (data.containsKey('merged_into_id')) {
       context.handle(
         _mergedIntoIdMeta,
@@ -28143,6 +28203,18 @@ class $KnowledgeNotesTable extends KnowledgeNotes
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      promotedToKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}promoted_to_kind'],
+      ),
+      promotedToId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}promoted_to_id'],
+      ),
+      promotedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}promoted_at'],
+      ),
       mergedIntoId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}merged_into_id'],
@@ -28189,6 +28261,12 @@ class KnowledgeNoteRow extends DataClass
   final String? projectTag;
   final DateTime createdAt;
 
+  /// A promoted Note remains the immutable source record for the typed object
+  /// created from it, but no longer appears in the regular Notes library.
+  final String? promotedToKind;
+  final String? promotedToId;
+  final DateTime? promotedAt;
+
   /// Dedupe pointer (`docs/domains/knowledgeos-domain.md` §15.3). When this note
   /// is merged into another note via `propose_merge`, it is soft-deleted
   /// (`deletedAt` set) AND stamped with the surviving note's id here, so
@@ -28208,6 +28286,9 @@ class KnowledgeNoteRow extends DataClass
     required this.tagsJson,
     this.projectTag,
     required this.createdAt,
+    this.promotedToKind,
+    this.promotedToId,
+    this.promotedAt,
     this.mergedIntoId,
   });
   @override
@@ -28235,6 +28316,15 @@ class KnowledgeNoteRow extends DataClass
       map['project_tag'] = Variable<String>(projectTag);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || promotedToKind != null) {
+      map['promoted_to_kind'] = Variable<String>(promotedToKind);
+    }
+    if (!nullToAbsent || promotedToId != null) {
+      map['promoted_to_id'] = Variable<String>(promotedToId);
+    }
+    if (!nullToAbsent || promotedAt != null) {
+      map['promoted_at'] = Variable<DateTime>(promotedAt);
+    }
     if (!nullToAbsent || mergedIntoId != null) {
       map['merged_into_id'] = Variable<String>(mergedIntoId);
     }
@@ -28261,6 +28351,15 @@ class KnowledgeNoteRow extends DataClass
           ? const Value.absent()
           : Value(projectTag),
       createdAt: Value(createdAt),
+      promotedToKind: promotedToKind == null && nullToAbsent
+          ? const Value.absent()
+          : Value(promotedToKind),
+      promotedToId: promotedToId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(promotedToId),
+      promotedAt: promotedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(promotedAt),
       mergedIntoId: mergedIntoId == null && nullToAbsent
           ? const Value.absent()
           : Value(mergedIntoId),
@@ -28285,6 +28384,9 @@ class KnowledgeNoteRow extends DataClass
       tagsJson: serializer.fromJson<String>(json['tagsJson']),
       projectTag: serializer.fromJson<String?>(json['projectTag']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      promotedToKind: serializer.fromJson<String?>(json['promotedToKind']),
+      promotedToId: serializer.fromJson<String?>(json['promotedToId']),
+      promotedAt: serializer.fromJson<DateTime?>(json['promotedAt']),
       mergedIntoId: serializer.fromJson<String?>(json['mergedIntoId']),
     );
   }
@@ -28304,6 +28406,9 @@ class KnowledgeNoteRow extends DataClass
       'tagsJson': serializer.toJson<String>(tagsJson),
       'projectTag': serializer.toJson<String?>(projectTag),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'promotedToKind': serializer.toJson<String?>(promotedToKind),
+      'promotedToId': serializer.toJson<String?>(promotedToId),
+      'promotedAt': serializer.toJson<DateTime?>(promotedAt),
       'mergedIntoId': serializer.toJson<String?>(mergedIntoId),
     };
   }
@@ -28321,6 +28426,9 @@ class KnowledgeNoteRow extends DataClass
     String? tagsJson,
     Value<String?> projectTag = const Value.absent(),
     DateTime? createdAt,
+    Value<String?> promotedToKind = const Value.absent(),
+    Value<String?> promotedToId = const Value.absent(),
+    Value<DateTime?> promotedAt = const Value.absent(),
     Value<String?> mergedIntoId = const Value.absent(),
   }) => KnowledgeNoteRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
@@ -28335,6 +28443,11 @@ class KnowledgeNoteRow extends DataClass
     tagsJson: tagsJson ?? this.tagsJson,
     projectTag: projectTag.present ? projectTag.value : this.projectTag,
     createdAt: createdAt ?? this.createdAt,
+    promotedToKind: promotedToKind.present
+        ? promotedToKind.value
+        : this.promotedToKind,
+    promotedToId: promotedToId.present ? promotedToId.value : this.promotedToId,
+    promotedAt: promotedAt.present ? promotedAt.value : this.promotedAt,
     mergedIntoId: mergedIntoId.present ? mergedIntoId.value : this.mergedIntoId,
   );
   KnowledgeNoteRow copyWithCompanion(KnowledgeNotesCompanion data) {
@@ -28357,6 +28470,15 @@ class KnowledgeNoteRow extends DataClass
           ? data.projectTag.value
           : this.projectTag,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      promotedToKind: data.promotedToKind.present
+          ? data.promotedToKind.value
+          : this.promotedToKind,
+      promotedToId: data.promotedToId.present
+          ? data.promotedToId.value
+          : this.promotedToId,
+      promotedAt: data.promotedAt.present
+          ? data.promotedAt.value
+          : this.promotedAt,
       mergedIntoId: data.mergedIntoId.present
           ? data.mergedIntoId.value
           : this.mergedIntoId,
@@ -28378,6 +28500,9 @@ class KnowledgeNoteRow extends DataClass
           ..write('tagsJson: $tagsJson, ')
           ..write('projectTag: $projectTag, ')
           ..write('createdAt: $createdAt, ')
+          ..write('promotedToKind: $promotedToKind, ')
+          ..write('promotedToId: $promotedToId, ')
+          ..write('promotedAt: $promotedAt, ')
           ..write('mergedIntoId: $mergedIntoId')
           ..write(')'))
         .toString();
@@ -28397,6 +28522,9 @@ class KnowledgeNoteRow extends DataClass
     tagsJson,
     projectTag,
     createdAt,
+    promotedToKind,
+    promotedToId,
+    promotedAt,
     mergedIntoId,
   );
   @override
@@ -28415,6 +28543,9 @@ class KnowledgeNoteRow extends DataClass
           other.tagsJson == this.tagsJson &&
           other.projectTag == this.projectTag &&
           other.createdAt == this.createdAt &&
+          other.promotedToKind == this.promotedToKind &&
+          other.promotedToId == this.promotedToId &&
+          other.promotedAt == this.promotedAt &&
           other.mergedIntoId == this.mergedIntoId);
 }
 
@@ -28431,6 +28562,9 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
   final Value<String> tagsJson;
   final Value<String?> projectTag;
   final Value<DateTime> createdAt;
+  final Value<String?> promotedToKind;
+  final Value<String?> promotedToId;
+  final Value<DateTime?> promotedAt;
   final Value<String?> mergedIntoId;
   final Value<int> rowid;
   const KnowledgeNotesCompanion({
@@ -28446,6 +28580,9 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
     this.tagsJson = const Value.absent(),
     this.projectTag = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.promotedToKind = const Value.absent(),
+    this.promotedToId = const Value.absent(),
+    this.promotedAt = const Value.absent(),
     this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -28462,6 +28599,9 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
     this.tagsJson = const Value.absent(),
     this.projectTag = const Value.absent(),
     required DateTime createdAt,
+    this.promotedToKind = const Value.absent(),
+    this.promotedToId = const Value.absent(),
+    this.promotedAt = const Value.absent(),
     this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
@@ -28485,6 +28625,9 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
     Expression<String>? tagsJson,
     Expression<String>? projectTag,
     Expression<DateTime>? createdAt,
+    Expression<String>? promotedToKind,
+    Expression<String>? promotedToId,
+    Expression<DateTime>? promotedAt,
     Expression<String>? mergedIntoId,
     Expression<int>? rowid,
   }) {
@@ -28501,6 +28644,9 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
       if (tagsJson != null) 'tags_json': tagsJson,
       if (projectTag != null) 'project_tag': projectTag,
       if (createdAt != null) 'created_at': createdAt,
+      if (promotedToKind != null) 'promoted_to_kind': promotedToKind,
+      if (promotedToId != null) 'promoted_to_id': promotedToId,
+      if (promotedAt != null) 'promoted_at': promotedAt,
       if (mergedIntoId != null) 'merged_into_id': mergedIntoId,
       if (rowid != null) 'rowid': rowid,
     });
@@ -28519,6 +28665,9 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
     Value<String>? tagsJson,
     Value<String?>? projectTag,
     Value<DateTime>? createdAt,
+    Value<String?>? promotedToKind,
+    Value<String?>? promotedToId,
+    Value<DateTime?>? promotedAt,
     Value<String?>? mergedIntoId,
     Value<int>? rowid,
   }) {
@@ -28535,6 +28684,9 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
       tagsJson: tagsJson ?? this.tagsJson,
       projectTag: projectTag ?? this.projectTag,
       createdAt: createdAt ?? this.createdAt,
+      promotedToKind: promotedToKind ?? this.promotedToKind,
+      promotedToId: promotedToId ?? this.promotedToId,
+      promotedAt: promotedAt ?? this.promotedAt,
       mergedIntoId: mergedIntoId ?? this.mergedIntoId,
       rowid: rowid ?? this.rowid,
     );
@@ -28581,6 +28733,15 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (promotedToKind.present) {
+      map['promoted_to_kind'] = Variable<String>(promotedToKind.value);
+    }
+    if (promotedToId.present) {
+      map['promoted_to_id'] = Variable<String>(promotedToId.value);
+    }
+    if (promotedAt.present) {
+      map['promoted_at'] = Variable<DateTime>(promotedAt.value);
+    }
     if (mergedIntoId.present) {
       map['merged_into_id'] = Variable<String>(mergedIntoId.value);
     }
@@ -28605,6 +28766,9 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
           ..write('tagsJson: $tagsJson, ')
           ..write('projectTag: $projectTag, ')
           ..write('createdAt: $createdAt, ')
+          ..write('promotedToKind: $promotedToKind, ')
+          ..write('promotedToId: $promotedToId, ')
+          ..write('promotedAt: $promotedAt, ')
           ..write('mergedIntoId: $mergedIntoId, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -50962,6 +51126,9 @@ typedef $$KnowledgeNotesTableCreateCompanionBuilder =
       Value<String> tagsJson,
       Value<String?> projectTag,
       required DateTime createdAt,
+      Value<String?> promotedToKind,
+      Value<String?> promotedToId,
+      Value<DateTime?> promotedAt,
       Value<String?> mergedIntoId,
       Value<int> rowid,
     });
@@ -50979,6 +51146,9 @@ typedef $$KnowledgeNotesTableUpdateCompanionBuilder =
       Value<String> tagsJson,
       Value<String?> projectTag,
       Value<DateTime> createdAt,
+      Value<String?> promotedToKind,
+      Value<String?> promotedToId,
+      Value<DateTime?> promotedAt,
       Value<String?> mergedIntoId,
       Value<int> rowid,
     });
@@ -51050,6 +51220,21 @@ class $$KnowledgeNotesTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get promotedToKind => $composableBuilder(
+    column: $table.promotedToKind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get promotedToId => $composableBuilder(
+    column: $table.promotedToId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get promotedAt => $composableBuilder(
+    column: $table.promotedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -51128,6 +51313,21 @@ class $$KnowledgeNotesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get promotedToKind => $composableBuilder(
+    column: $table.promotedToKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get promotedToId => $composableBuilder(
+    column: $table.promotedToId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get promotedAt => $composableBuilder(
+    column: $table.promotedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get mergedIntoId => $composableBuilder(
     column: $table.mergedIntoId,
     builder: (column) => ColumnOrderings(column),
@@ -51185,6 +51385,21 @@ class $$KnowledgeNotesTableAnnotationComposer
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
+  GeneratedColumn<String> get promotedToKind => $composableBuilder(
+    column: $table.promotedToKind,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get promotedToId => $composableBuilder(
+    column: $table.promotedToId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get promotedAt => $composableBuilder(
+    column: $table.promotedAt,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get mergedIntoId => $composableBuilder(
     column: $table.mergedIntoId,
     builder: (column) => column,
@@ -51240,6 +51455,9 @@ class $$KnowledgeNotesTableTableManager
                 Value<String> tagsJson = const Value.absent(),
                 Value<String?> projectTag = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> promotedToKind = const Value.absent(),
+                Value<String?> promotedToId = const Value.absent(),
+                Value<DateTime?> promotedAt = const Value.absent(),
                 Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnowledgeNotesCompanion(
@@ -51255,6 +51473,9 @@ class $$KnowledgeNotesTableTableManager
                 tagsJson: tagsJson,
                 projectTag: projectTag,
                 createdAt: createdAt,
+                promotedToKind: promotedToKind,
+                promotedToId: promotedToId,
+                promotedAt: promotedAt,
                 mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
@@ -51272,6 +51493,9 @@ class $$KnowledgeNotesTableTableManager
                 Value<String> tagsJson = const Value.absent(),
                 Value<String?> projectTag = const Value.absent(),
                 required DateTime createdAt,
+                Value<String?> promotedToKind = const Value.absent(),
+                Value<String?> promotedToId = const Value.absent(),
+                Value<DateTime?> promotedAt = const Value.absent(),
                 Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnowledgeNotesCompanion.insert(
@@ -51287,6 +51511,9 @@ class $$KnowledgeNotesTableTableManager
                 tagsJson: tagsJson,
                 projectTag: projectTag,
                 createdAt: createdAt,
+                promotedToKind: promotedToKind,
+                promotedToId: promotedToId,
+                promotedAt: promotedAt,
                 mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),

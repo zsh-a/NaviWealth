@@ -32,6 +32,9 @@ Future<KnowledgeNote> _mergeKnowledgeNotes(
     tags: mergedTags.toList(growable: false),
     projectTag: primary.projectTag,
     createdAt: primary.createdAt,
+    promotedToKind: primary.promotedToKind,
+    promotedToId: primary.promotedToId,
+    promotedAt: primary.promotedAt,
     sync: survivorMeta,
   );
 
@@ -49,6 +52,9 @@ Future<KnowledgeNote> _mergeKnowledgeNotes(
           tags: d.tags,
           projectTag: d.projectTag,
           createdAt: d.createdAt,
+          promotedToKind: d.promotedToKind,
+          promotedToId: d.promotedToId,
+          promotedAt: d.promotedAt,
           mergedIntoId: primary.id,
           sync: meta.copyWith(deletedAt: meta.updatedAt),
         ),

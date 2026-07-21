@@ -16,15 +16,20 @@
 /// Knowledge-local review workflow, not chat proposal cards.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/knowledge_inbox_proposal_applier.dart';
+import '../composition/knowledge_route_paths.dart';
 import '../data/inbox_triage_repository.dart';
+import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_widgets.dart';
@@ -224,7 +229,10 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
       final applier = await ref.read(
         knowledgeInboxProposalApplierProvider.future,
       );
-      await applier.accept(note: widget.note, proposal: widget.proposal);
+      final promoted = await applier.accept(
+        note: widget.note,
+        proposal: widget.proposal,
+      );
       final triage = await ref.read(inboxTriageRepositoryProvider.future);
       await triage.resolve(
         noteId: widget.note.id,
@@ -238,6 +246,12 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
           ToastKind.success,
           AppLocalizations.of(context).knowledgeAiSuggestionAppliedToast,
         );
+        if (promoted != null) {
+          final route = promoted.kind == KnowledgeEntryKind.decision
+              ? KnowledgeRoutes.decision(promoted.id)
+              : KnowledgeRoutes.object(promoted.kind.name, promoted.id);
+          unawaited(context.push<Object?>(route));
+        }
       }
     } catch (error) {
       if (mounted) {

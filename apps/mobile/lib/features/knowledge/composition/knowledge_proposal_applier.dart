@@ -16,6 +16,7 @@ import '../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
 import '../application/knowledge_concept_proposal_applier.dart';
 import '../application/knowledge_merge_proposal_applier.dart';
+import '../application/knowledge_promotion_service.dart';
 import '../application/knowledge_proposal_undo.dart';
 import '../application/knowledge_routine_proposal_applier.dart';
 import '../data/capture_kind.dart';
@@ -66,7 +67,12 @@ class KnowledgeProposalApplier implements ProposalApplier {
              now: now,
            ),
        undoRunner =
-           undoRunner ?? KnowledgeProposalUndoRunner(repo: repo, stamp: stamp);
+           undoRunner ?? KnowledgeProposalUndoRunner(repo: repo, stamp: stamp),
+       promotionService = KnowledgePromotionService(
+         repository: repo,
+         ownerUserId: ownerUserId,
+         stamp: stamp,
+       );
 
   final KnowledgeRepository repo;
   final String ownerUserId;
@@ -78,6 +84,7 @@ class KnowledgeProposalApplier implements ProposalApplier {
   final KnowledgeConceptProposalApplier conceptApplier;
   final KnowledgeMergeProposalApplier mergeApplier;
   final KnowledgeProposalUndoRunner undoRunner;
+  final KnowledgePromotionService promotionService;
   final DateTime Function() _now;
 
   @override
@@ -130,6 +137,11 @@ class KnowledgeProposalApplier implements ProposalApplier {
     if (noteId != null && existing == null) {
       throw ProposalApplyException('note $noteId 不存在');
     }
+    if (existing?.isPromoted ?? false) {
+      throw ProposalApplyException(
+        'note $noteId 已升级为 ${existing!.promotedToKind}',
+      );
+    }
 
     if (detected == CaptureKind.routine) {
       final state = await routineApplier.applyRoutine(plan);
@@ -160,19 +172,12 @@ class KnowledgeProposalApplier implements ProposalApplier {
     }
 
     final meta = await stamp();
-    final tags = <String>{...?existing?.tags};
-    if (detected != CaptureKind.note) {
-      tags.add('kind:${detected.wire}_candidate');
-      final scope = plan.get('scope');
-      if (scope != null) tags.add('scope:$scope');
-    }
-
     final note = KnowledgeNote(
       id: existing?.id ?? kKnowledgeUuid.v4(),
       title: _captureTitle(plan, existing),
       bodyMd: _captureBody(plan, existing),
       sourceUrl: existing?.sourceUrl,
-      tags: tags.toList(growable: false),
+      tags: existing?.tags ?? const <String>[],
       projectTag: existing?.projectTag,
       createdAt: existing?.createdAt ?? meta.updatedAt,
       mergedIntoId: existing?.mergedIntoId,
@@ -180,7 +185,31 @@ class KnowledgeProposalApplier implements ProposalApplier {
     );
     await repo.upsertNote(note);
 
-    final action = detected == CaptureKind.note ? '已更新 Note' : '已标记候选';
+    if (detected != CaptureKind.note) {
+      final promoted = await promotionService.promoteCapture(
+        note: note,
+        kind: detected,
+        scope: plan.get('scope'),
+      );
+      return ProposalApplyState(
+        status: ProposalApplyStatus.applied,
+        appliedEntityId: promoted.id,
+        appliedTable: promoted.kind.tableName,
+        appliedAt: _now(),
+        undoData: knowledgeProposalUndoData(
+          delete: <Map<String, Object?>>[
+            knowledgeProposalDeleteRow(promoted.kind.tableName, promoted.id),
+            if (existing == null)
+              knowledgeProposalDeleteRow('knowledge_notes', note.id),
+          ],
+          restore: existing == null
+              ? const <Map<String, Object?>>[]
+              : <Map<String, Object?>>[snapshotKnowledgeNote(existing)],
+        ),
+        shortLabel: '已升级为 ${detected.wire}：${_short(note.title)}',
+      );
+    }
+
     return ProposalApplyState(
       status: ProposalApplyStatus.applied,
       appliedEntityId: note.id,
@@ -194,7 +223,7 @@ class KnowledgeProposalApplier implements ProposalApplier {
               restore: [snapshotKnowledgeNote(existing)],
             ),
       shortLabel:
-          '$action：${_short(note.title.isEmpty ? note.bodyMd : note.title)}',
+          '已更新 Note：${_short(note.title.isEmpty ? note.bodyMd : note.title)}',
     );
   }
 }

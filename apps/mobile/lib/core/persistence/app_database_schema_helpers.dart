@@ -19,6 +19,9 @@ Future<void> _addColumnIfMissing(
   required String definition,
 }) async {
   final columns = await db.customSelect('PRAGMA table_info($table)').get();
+  // Some focused migration tests intentionally construct only the table under
+  // test. A missing unrelated table has nothing to migrate here.
+  if (columns.isEmpty) return;
   final exists = columns.any((row) => row.read<String>('name') == column);
   if (exists) return;
   await db.customStatement('ALTER TABLE $table ADD COLUMN $column $definition');

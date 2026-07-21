@@ -145,7 +145,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 49;
+  int get schemaVersion => 50;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -765,6 +765,26 @@ class AppDatabase extends _$AppDatabase {
           'CREATE INDEX IF NOT EXISTS idx_portfolio_lot_memberships_owner_portfolio '
           'ON portfolio_lot_memberships(owner_user_id, portfolio_id) '
           'WHERE deleted_at IS NULL',
+        );
+      }
+      if (from < 50) {
+        await _addColumnIfMissing(
+          this,
+          table: 'knowledge_notes',
+          column: 'promoted_to_kind',
+          definition: 'TEXT',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'knowledge_notes',
+          column: 'promoted_to_id',
+          definition: 'TEXT',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'knowledge_notes',
+          column: 'promoted_at',
+          definition: 'INTEGER',
         );
       }
     },

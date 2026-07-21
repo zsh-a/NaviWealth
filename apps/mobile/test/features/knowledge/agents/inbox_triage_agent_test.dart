@@ -100,7 +100,7 @@ void main() {
       final bridge = _FakeLlmBridge(
         responseText: '''
 {
-  "classification": {"kind":"decision_candidate","confidence":0.82,
+  "classification": {"kind":"decision","confidence":0.82,
                      "reason_zh":"在权衡两个方案"},
   "tags": {"tags":["fire","options"],"confidence":0.75,"reason_zh":"含期权/FIRE"},
   "link_to_decision": {"decision_ids":["dec1"],"confidence":0.7,
@@ -122,7 +122,7 @@ void main() {
       final byKind = {for (final p in out) p.kind: p};
       expect(
         byKind[InboxProposalKind.classification]!.payload['kind'],
-        'decision_candidate',
+        'decision',
       );
       expect(
         byKind[InboxProposalKind.linkToDecision]!
@@ -142,14 +142,14 @@ void main() {
 
       expect(bridge.calls, 1);
       expect(out.single.kind, InboxProposalKind.classification);
-      expect(out.single.payload['kind'], 'concept_candidate');
+      expect(out.single.payload['kind'], 'concept');
     });
 
     test('drops low-confidence proposals without heuristic noise', () async {
       final bridge = _FakeLlmBridge(
         responseText: '''
 {
-  "classification": {"kind":"concept_candidate","confidence":0.4,"reason_zh":"勉强"},
+  "classification": {"kind":"concept","confidence":0.4,"reason_zh":"勉强"},
   "tags": {"tags":["fire"],"confidence":0.55,"reason_zh":"勉强"},
   "link_to_decision": null
 }''',
@@ -255,7 +255,7 @@ void main() {
               summaryZh: '看起来像在权衡某个选项 — 建议升级为 Decision draft',
               payload: const <String, Object?>{
                 'note_id': 'n1',
-                'kind': 'decision_candidate',
+                'kind': 'decision',
                 'confidence': 0.9,
                 'reason': 'x',
               },
@@ -273,7 +273,7 @@ void main() {
       expect(rec, isNotNull);
       expect(rec!.proposals, hasLength(1));
       expect(rec.proposals.single.kind, InboxProposalKind.classification);
-      expect(rec.proposals.single.payload['kind'], 'decision_candidate');
+      expect(rec.proposals.single.payload['kind'], 'decision');
 
       final artifactStore = await c.read(
         agent_providers.agentArtifactStoreProvider.future,
@@ -318,7 +318,7 @@ void main() {
               summaryZh: '看起来像在权衡某个选项 — 建议升级为 Decision draft',
               payload: const <String, Object?>{
                 'note_id': 'n-trace',
-                'kind': 'decision_candidate',
+                'kind': 'decision',
                 'confidence': 0.9,
                 'reason': 'x',
               },
@@ -427,10 +427,7 @@ void main() {
         heuristicRec.proposals.single.payload['kind'],
         fallbackRec.proposals.single.payload['kind'],
       );
-      expect(
-        heuristicRec.proposals.single.payload['kind'],
-        'concept_candidate',
-      );
+      expect(heuristicRec.proposals.single.payload['kind'], 'concept');
     });
 
     test('honours kInboxTriageMaxNotesPerRun', () async {

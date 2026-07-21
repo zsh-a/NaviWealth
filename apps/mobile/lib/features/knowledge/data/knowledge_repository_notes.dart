@@ -17,6 +17,7 @@ mixin KnowledgeNotesRepositoryMixin {
     final q = _db.select(_db.knowledgeNotes)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
+      ..where((t) => t.promotedToId.isNull())
       ..orderBy([
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
@@ -32,6 +33,7 @@ mixin KnowledgeNotesRepositoryMixin {
     final q = _db.select(_db.knowledgeNotes)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
+      ..where((t) => t.promotedToId.isNull())
       ..orderBy([
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])

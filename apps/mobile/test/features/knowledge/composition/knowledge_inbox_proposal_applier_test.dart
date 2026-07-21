@@ -49,49 +49,85 @@ void main() {
     ),
   );
 
-  test('accept applies classification, tags, and decision links', () async {
+  test('classification promotes Note to a first-class Decision', () async {
+    await repo.upsertNote(note());
+    final proposal = InboxProposal(
+      kind: InboxProposalKind.classification,
+      summaryZh: 'classification',
+      payload: const {'kind': 'decision'},
+      status: InboxProposalStatus.pending,
+    );
+
+    final first = await applier.accept(note: note(), proposal: proposal);
+    final second = await applier.accept(note: note(), proposal: proposal);
+
+    expect(first!.kind, KnowledgeEntryKind.decision);
+    expect(second!.id, first.id);
+    final decision = await repo.findDecision(ownerUserId: _owner, id: first.id);
+    expect(decision, isNotNull);
+    expect(decision!.question, 'Choose a database');
+    expect(decision.status, DecisionStatus.draft);
+    expect(decision.rationaleMd, 'Compare the options.');
+    final source = await repo.findNote(ownerUserId: _owner, id: 'n1');
+    expect(source!.promotedToKind, KnowledgeEntryKind.decision.name);
+    expect(source.promotedToId, first.id);
+    expect(await repo.listNotes(ownerUserId: _owner), isEmpty);
+  });
+
+  test('classification promotes Note to a first-class Concept', () async {
     await repo.upsertNote(note());
 
-    for (final proposal in <InboxProposal>[
-      InboxProposal(
+    final result = await applier.accept(
+      note: note(),
+      proposal: InboxProposal(
         kind: InboxProposalKind.classification,
         summaryZh: 'classification',
-        payload: const {'kind': 'decision_candidate'},
+        payload: const {'kind': 'concept'},
         status: InboxProposalStatus.pending,
       ),
-      InboxProposal(
-        kind: InboxProposalKind.tags,
-        summaryZh: 'tags',
-        payload: const {
-          'tags': ['Flutter', 'architecture'],
-          'project_tag': 'mobile',
-        },
-        status: InboxProposalStatus.pending,
-      ),
-      InboxProposal(
-        kind: InboxProposalKind.linkToDecision,
-        summaryZh: 'link',
-        payload: const {
-          'related_decision_ids': ['d1'],
-        },
-        status: InboxProposalStatus.pending,
-      ),
-    ]) {
-      await applier.accept(note: note(), proposal: proposal);
-    }
-
-    final updated = await repo.findNote(ownerUserId: _owner, id: 'n1');
-    expect(
-      updated!.tags,
-      containsAll(<String>[
-        'architecture',
-        'kind:decision_candidate',
-        'flutter',
-        'decision:d1',
-      ]),
     );
-    expect(updated.projectTag, 'mobile');
+
+    final concept = await repo.findConcept(ownerUserId: _owner, id: result!.id);
+    expect(concept!.name, 'Choose a database');
+    expect(concept.summaryMd, 'Compare the options.');
   });
+
+  test(
+    'accept applies tags and decision links without changing kind',
+    () async {
+      await repo.upsertNote(note());
+
+      for (final proposal in <InboxProposal>[
+        InboxProposal(
+          kind: InboxProposalKind.tags,
+          summaryZh: 'tags',
+          payload: const {
+            'tags': ['Flutter', 'architecture'],
+            'project_tag': 'mobile',
+          },
+          status: InboxProposalStatus.pending,
+        ),
+        InboxProposal(
+          kind: InboxProposalKind.linkToDecision,
+          summaryZh: 'link',
+          payload: const {
+            'related_decision_ids': ['d1'],
+          },
+          status: InboxProposalStatus.pending,
+        ),
+      ]) {
+        await applier.accept(note: note(), proposal: proposal);
+      }
+
+      final updated = await repo.findNote(ownerUserId: _owner, id: 'n1');
+      expect(
+        updated!.tags,
+        containsAll(<String>['architecture', 'flutter', 'decision:d1']),
+      );
+      expect(updated.projectTag, 'mobile');
+      expect(updated.isPromoted, isFalse);
+    },
+  );
 
   test('invalid payload fails instead of pretending it was applied', () async {
     await repo.upsertNote(note());

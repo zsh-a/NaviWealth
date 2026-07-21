@@ -110,7 +110,7 @@ void main() {
       },
     );
 
-    test('capture_upgrade (concept) tags an existing note candidate', () async {
+    test('capture_upgrade (concept) promotes an existing note', () async {
       await repo.upsertNote(note('n1', 'Edge-first', const ['ops']));
 
       final state = await applier.apply(
@@ -126,20 +126,28 @@ void main() {
 
       expect(state.status, ProposalApplyStatus.applied);
       expect(state.appliedAt, DateTime.utc(2026, 1, 2));
-      expect(state.appliedTable, 'knowledge_notes');
+      expect(state.appliedTable, 'knowledge_concepts');
 
-      final updated = await repo.findNote(ownerUserId: _owner, id: 'n1');
-      expect(updated!.tags.toSet(), {
-        'ops',
-        'kind:concept_candidate',
-        'scope:architecture',
-      });
-      expect(updated.bodyMd, 'Edge-first 是默认先部署到边缘节点的策略。');
+      final concept = await repo.findConcept(
+        ownerUserId: _owner,
+        id: state.appliedEntityId!,
+      );
+      expect(concept!.name, 'Edge-first');
+      expect(concept.summaryMd, 'Edge-first 是默认先部署到边缘节点的策略。');
+      final promotedSource = await repo.findNote(ownerUserId: _owner, id: 'n1');
+      expect(promotedSource!.promotedToKind, 'concept');
+      expect(await repo.listNotes(ownerUserId: _owner), isEmpty);
 
       await applier.undo(state);
       final restored = await repo.findNote(ownerUserId: _owner, id: 'n1');
       expect(restored!.tags, ['ops']);
       expect(restored.bodyMd, '');
+      expect(restored.isPromoted, isFalse);
+      final deletedConcept = await repo.findConcept(
+        ownerUserId: _owner,
+        id: state.appliedEntityId!,
+      );
+      expect(deletedConcept!.sync.deletedAt, isNotNull);
     });
 
     test('knowledge_merge (note) merges and tombstones', () async {
@@ -341,7 +349,7 @@ void main() {
           'statement': '安全边际',
         }),
       );
-      expect(captureState.appliedTable, 'knowledge_notes');
+      expect(captureState.appliedTable, 'knowledge_concepts');
       expect(finance.applied, isEmpty);
 
       await composite.apply(plan('trade', const {}));

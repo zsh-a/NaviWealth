@@ -29,6 +29,7 @@ part 'knowledge_repository_merge_notes.dart';
 part 'knowledge_repository_merge_principles.dart';
 part 'knowledge_repository_notes.dart';
 part 'knowledge_repository_principles.dart';
+part 'knowledge_repository_promotions.dart';
 part 'knowledge_repository_routines.dart';
 
 const String _knowledgeNotesTable = 'knowledge_notes';
@@ -77,6 +78,7 @@ class KnowledgeRepository
         KnowledgeConceptsRepositoryMixin,
         KnowledgeExperimentsRepositoryMixin,
         KnowledgeRoutinesRepositoryMixin,
+        KnowledgePromotionsRepositoryMixin,
         KnowledgeRepositoryMerge {
   KnowledgeRepository({required AppDatabase db, required OutboxStore outbox})
     : _db = db,

@@ -104,6 +104,9 @@ class KnowledgeNote {
     required this.tags,
     this.projectTag,
     required this.createdAt,
+    this.promotedToKind,
+    this.promotedToId,
+    this.promotedAt,
     this.mergedIntoId,
     required this.sync,
   });
@@ -115,6 +118,11 @@ class KnowledgeNote {
   final List<String> tags;
   final String? projectTag;
   final DateTime createdAt;
+  final String? promotedToKind;
+  final String? promotedToId;
+  final DateTime? promotedAt;
+
+  bool get isPromoted => promotedToKind != null && promotedToId != null;
 
   /// Non-null only on a note that was merged into another (`§15.3`).
   /// Live notes are always null here. See [KnowledgeRepository.mergeNotes].

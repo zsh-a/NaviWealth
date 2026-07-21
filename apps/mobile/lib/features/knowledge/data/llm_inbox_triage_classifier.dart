@@ -38,8 +38,8 @@ const String _kInboxTriageSystemPrompt =
     '\n'
     '1. classification — 这条 note 该归为哪一类:\n'
     '   - note: 普通笔记(默认,没有明显结构 → 不要给 classification 建议)\n'
-    '   - decision_candidate: 在权衡某个选项的决策(含 "应该 / vs / 对比 / 选项")\n'
-    '   - concept_candidate: 短小的概念定义\n'
+    '   - decision: 在权衡某个选项的决策(含 "应该 / vs / 对比 / 选项")\n'
+    '   - concept: 短小的概念定义\n'
     '2. tags — 适合这条 note 的 1..4 个小写短 tag(例如 fire / options / health)。'
     '若 note 已有 tag 或想不出合适的就留空。\n'
     '3. link_to_decision — 这条 note 与候选列表里哪些 Decision 相关(用它们的 id)。'
@@ -50,7 +50,7 @@ const String _kInboxTriageSystemPrompt =
     '\n'
     '仅输出一个 JSON 对象,**不要任何额外文字 / Markdown / 代码栅栏**。schema:\n'
     '{\n'
-    '  "classification": {"kind": "decision_candidate|concept_candidate", '
+    '  "classification": {"kind": "decision|concept", '
     '"confidence": 数字, "reason_zh": "一句中文"} 或 null,\n'
     '  "tags": {"tags": ["..."], "confidence": 数字, "reason_zh": "一句中文"} 或 null,\n'
     '  "link_to_decision": {"decision_ids": ["..."], "confidence": 数字, '
@@ -235,7 +235,7 @@ InboxProposal? _parseClassification(KnowledgeNote note, Object? raw) {
   if (raw is! Map) return null;
   final m = raw.map((k, v) => MapEntry(k.toString(), v));
   final kind = (m['kind'] as String?)?.trim() ?? '';
-  if (kind != 'decision_candidate' && kind != 'concept_candidate') {
+  if (kind != 'decision' && kind != 'concept') {
     return null;
   }
   final confidence = _coerceDouble(m['confidence']) ?? 0.0;
@@ -243,7 +243,7 @@ InboxProposal? _parseClassification(KnowledgeNote note, Object? raw) {
   final reason = (m['reason_zh'] as String?)?.trim();
   if (reason == null || reason.isEmpty) return null;
 
-  final label = kind == 'decision_candidate'
+  final label = kind == 'decision'
       ? '看起来像在权衡某个选项 — 建议升级为 Decision draft'
       : '短小定义型笔记 — 建议提取为 Concept';
   return InboxProposal(

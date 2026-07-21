@@ -220,10 +220,15 @@ User saves Note
   -> propose classification, tags, and decision links
   -> proposals stored in knowledge_inbox_triage
   -> Review tab shows accept/dismiss cards
-  -> accepted cards call repositories through KnowledgeProposalApplier
+  -> accepted classification atomically creates the typed object
+     and records promoted_to_kind / promoted_to_id on the source Note
+  -> promoted source Notes remain provenance but leave normal Note queries
 ```
 
-This preserves zero-latency capture and makes AI suggestions reviewable.
+Classification is a domain transition, not a `kind:*` tag. Typed Library
+segments must always be backed by their corresponding `knowledge_*` table.
+Deterministic promotion ids make repeated acceptance idempotent. This preserves
+zero-latency capture and makes AI suggestions reviewable.
 
 ## Decision Lifecycle
 

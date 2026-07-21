@@ -26,6 +26,12 @@ class KnowledgeNotes extends Table with SyncableTable {
   TextColumn get projectTag => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
 
+  /// A promoted Note remains the immutable source record for the typed object
+  /// created from it, but no longer appears in the regular Notes library.
+  TextColumn get promotedToKind => text().nullable()();
+  TextColumn get promotedToId => text().nullable()();
+  DateTimeColumn get promotedAt => dateTime().nullable()();
+
   /// Dedupe pointer (`docs/domains/knowledgeos-domain.md` §15.3). When this note
   /// is merged into another note via `propose_merge`, it is soft-deleted
   /// (`deletedAt` set) AND stamped with the surviving note's id here, so

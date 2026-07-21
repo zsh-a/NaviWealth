@@ -113,6 +113,9 @@ Map<String, Object?> snapshotKnowledgeNote(KnowledgeNote note) =>
       'tags': note.tags,
       'project_tag': note.projectTag,
       'created_at': note.createdAt.toUtc().toIso8601String(),
+      'promoted_to_kind': note.promotedToKind,
+      'promoted_to_id': note.promotedToId,
+      'promoted_at': note.promotedAt?.toUtc().toIso8601String(),
       'merged_into_id': note.mergedIntoId,
     };
 
@@ -209,6 +212,9 @@ KnowledgeNote knowledgeNoteFromSnapshot(
   tags: _stringList(s['tags']),
   projectTag: s['project_tag'] as String?,
   createdAt: _date(s['created_at']),
+  promotedToKind: s['promoted_to_kind'] as String?,
+  promotedToId: s['promoted_to_id'] as String?,
+  promotedAt: _dateOrNull(s['promoted_at']),
   mergedIntoId: s['merged_into_id'] as String?,
   sync: sync,
 );

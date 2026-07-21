@@ -12,11 +12,7 @@ import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import '../data/inbox_triage_repository.dart';
 import '_inbox_triage_support.dart';
 
-const Set<String> _kClassifications = <String>{
-  'note',
-  'decision_candidate',
-  'concept_candidate',
-};
+const Set<String> _kClassifications = <String>{'decision', 'concept'};
 
 class QueueInboxClassificationTool implements DeviceTool {
   const QueueInboxClassificationTool();
@@ -26,10 +22,10 @@ class QueueInboxClassificationTool implements DeviceTool {
 
   @override
   String get description =>
-      '建议某条 Inbox Note 该归为哪一类(note / decision_candidate / concept_candidate)。'
+      '建议将某条 Inbox Note 升级为哪类一等对象(decision / concept)。'
       '**不会**直接改 note.body_md(§4 反目标 + §7 InboxTriageAgent 工程约束)— 返回 proposal envelope,'
       '同时写入 knowledge_inbox_triage 让 Review tab "AI 建议" 卡片可见。'
-      '用户在 Review tab ✓ 时才落地(挂 kind:* tag);✗ 时下次 InboxTriageAgent 不再为该 note 重提此 kind。';
+      '用户在 Review tab ✓ 时才创建对应的一等 Knowledge 对象;✗ 时下次 InboxTriageAgent 不再为该 note 重提此 kind。';
 
   @override
   Map<String, Object?> get inputSchema => <String, Object?>{
@@ -62,9 +58,7 @@ class QueueInboxClassificationTool implements DeviceTool {
     final confidence = (input['confidence'] as num?)?.toDouble() ?? 0.6;
 
     if (!_kClassifications.contains(kind) || reason.isEmpty) {
-      return badRequest(
-        'kind 必须是 note / decision_candidate / concept_candidate; reason 必填。',
-      );
+      return badRequest('kind 必须是 decision / concept; reason 必填。');
     }
 
     final loaded = await loadOwnedNote(ctx, noteId);

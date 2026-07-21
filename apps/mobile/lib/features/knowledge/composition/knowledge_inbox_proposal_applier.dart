@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 
+import '../application/knowledge_promotion_service.dart';
 import '../data/inbox_triage_repository.dart';
 import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
@@ -20,13 +21,18 @@ class KnowledgeInboxProposalApplier {
     required this.repo,
     required this.ownerUserId,
     required this.stamp,
-  });
+  }) : promotionService = KnowledgePromotionService(
+         repository: repo,
+         ownerUserId: ownerUserId,
+         stamp: stamp,
+       );
 
   final KnowledgeRepository repo;
   final String ownerUserId;
   final Future<SyncMeta> Function() stamp;
+  final KnowledgePromotionService promotionService;
 
-  Future<void> accept({
+  Future<KnowledgePromotionResult?> accept({
     required KnowledgeNote note,
     required InboxProposal proposal,
   }) async {
@@ -44,7 +50,10 @@ class KnowledgeInboxProposalApplier {
         if (kind == null || kind.trim().isEmpty) {
           throw StateError('classification proposal is missing kind');
         }
-        tagSet.add('kind:${kind.trim()}');
+        return promotionService.promoteClassification(
+          note: current,
+          classification: kind.trim(),
+        );
       case InboxProposalKind.tags:
         final raw = proposal.payload['tags'];
         var hasTag = false;
@@ -90,10 +99,14 @@ class KnowledgeInboxProposalApplier {
       tags: tagSet.toList(growable: false),
       projectTag: projectTag,
       createdAt: current.createdAt,
+      promotedToKind: current.promotedToKind,
+      promotedToId: current.promotedToId,
+      promotedAt: current.promotedAt,
       mergedIntoId: current.mergedIntoId,
       sync: meta,
     );
     await repo.upsertNote(updated);
+    return null;
   }
 }
 

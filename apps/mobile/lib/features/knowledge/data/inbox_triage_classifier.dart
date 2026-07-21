@@ -91,21 +91,21 @@ class HeuristicInboxTriageClassifier implements InboxTriageClassifier {
         summaryZh: '看起来像在权衡某个选项 — 建议升级为 Decision draft',
         payload: <String, Object?>{
           'note_id': note.id,
-          'kind': 'decision_candidate',
+          'kind': 'decision',
           'confidence': 0.6,
           'reason': '正文较长且包含 "对比 / 选项 / 应该 / ?" 类语言',
         },
         status: InboxProposalStatus.pending,
       );
     }
-    // Single capitalised noun phrase / short body → concept_candidate.
+    // Single capitalised noun phrase / short body → Concept.
     if (body.length < 120 && title.isNotEmpty && !hasQuestion) {
       return InboxProposal(
         kind: InboxProposalKind.classification,
         summaryZh: '短小定义型笔记 — 建议提取为 Concept',
         payload: <String, Object?>{
           'note_id': note.id,
-          'kind': 'concept_candidate',
+          'kind': 'concept',
           'confidence': 0.5,
           'reason': '标题明确且正文短(< 120 字符),适合作 Concept primitive',
         },
