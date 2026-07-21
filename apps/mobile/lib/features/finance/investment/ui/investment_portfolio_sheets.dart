@@ -87,14 +87,23 @@ class _InvestmentPortfolioManager extends ConsumerWidget {
               child: Column(
                 children: [
                   for (var index = 0; index < items.length; index++) ...[
-                    ListTile(
-                      leading: Icon(_strategyIcon(items[index].strategy)),
+                    FTile(
+                      prefix: Icon(
+                        _strategyIcon(items[index].strategy),
+                        color: context.theme.colors.mutedForeground,
+                      ),
                       title: Text(items[index].name),
                       subtitle: Text(
                         _strategyLabel(l10n, items[index].strategy),
                       ),
-                      trailing: const Icon(FLucideIcons.chevronRight),
-                      onTap: () => showInvestmentPortfolioFormSheet(
+                      suffix: Icon(
+                        FLucideIcons.chevronRight,
+                        size: AppIconSizes.sm,
+                        color: context.theme.colors.mutedForeground.withValues(
+                          alpha: AppOpacity.disabled,
+                        ),
+                      ),
+                      onPress: () => showInvestmentPortfolioFormSheet(
                         context,
                         existing: items[index],
                       ),

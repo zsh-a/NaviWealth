@@ -191,10 +191,11 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         ),
       ),
       if (_latestQualityReport != null)
-        IconButton(
+        AppIconButton(
           tooltip: l10n.ingestCopyDiagnostics,
-          onPressed: _copyLatestQualityReport,
-          icon: const Icon(FLucideIcons.clipboardCopy, size: AppIconSizes.sm),
+          onPress: _copyLatestQualityReport,
+          icon: FLucideIcons.clipboardCopy,
+          iconSize: AppIconSizes.sm,
         ),
     ],
   );

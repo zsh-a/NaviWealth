@@ -240,10 +240,9 @@ class _AttributionRow extends ConsumerWidget {
             impact(row.localCombinedImpact),
             impact(row.fxImpact),
           );
-    return InkWell(
+    return FTappable(
       key: ValueKey('dividend-attribution-${row.assetId}'),
-      borderRadius: BorderRadius.circular(AppRadius.sm),
-      onTap: () => context.push(FinanceRoutes.wealthAsset(row.assetId)),
+      onPress: () => context.push(FinanceRoutes.wealthAsset(row.assetId)),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
         decoration: focused

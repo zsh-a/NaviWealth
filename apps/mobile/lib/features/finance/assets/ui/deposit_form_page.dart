@@ -597,37 +597,31 @@ class _DepositKindChip extends StatelessWidget {
       selected: selected,
       label: label,
       child: ExcludeSemantics(
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s12,
-                vertical: AppSpacing.s8,
-              ),
-              decoration: selected
-                  ? BoxDecoration(
-                      color: colors.primary.withValues(
-                        alpha: AppOpacity.medium,
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    )
-                  : null,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: AppIconSizes.h18, color: stateColor),
-                  const SizedBox(width: AppSpacing.s4),
-                  Text(
-                    label,
-                    style: selected
-                        ? context.labelStyle.copyWith(color: stateColor)
-                        : context.mediumLabelStyle.copyWith(color: stateColor),
-                  ),
-                ],
-              ),
+        child: FTappable(
+          onPress: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s12,
+              vertical: AppSpacing.s8,
+            ),
+            decoration: selected
+                ? BoxDecoration(
+                    color: colors.primary.withValues(alpha: AppOpacity.medium),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  )
+                : null,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: AppIconSizes.h18, color: stateColor),
+                const SizedBox(width: AppSpacing.s4),
+                Text(
+                  label,
+                  style: selected
+                      ? context.labelStyle.copyWith(color: stateColor)
+                      : context.mediumLabelStyle.copyWith(color: stateColor),
+                ),
+              ],
             ),
           ),
         ),

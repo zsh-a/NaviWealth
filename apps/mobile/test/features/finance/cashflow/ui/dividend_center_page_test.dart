@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -173,7 +174,7 @@ void main() {
     expect(find.textContaining('not a backtest'), findsOneWidget);
     expect(find.textContaining('90-day historical error'), findsOneWidget);
     expect(find.text('AAPL'), findsWidgets);
-    final focusedAttribution = tester.widget<InkWell>(
+    final focusedAttribution = tester.widget<FTappable>(
       find.byKey(const ValueKey('dividend-attribution-us:AAPL')),
     );
     expect((focusedAttribution.child! as Container).decoration, isNotNull);
