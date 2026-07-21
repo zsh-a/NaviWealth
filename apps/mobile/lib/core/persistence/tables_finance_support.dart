@@ -169,3 +169,39 @@ class Goals extends Table with SyncableTable {
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
+
+/// A user-defined logical investment sleeve. Portfolios classify capital by
+/// purpose without changing the accounting account or the underlying ledger.
+@DataClassName('InvestmentPortfolioRow')
+class InvestmentPortfolios extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get strategy => text()();
+  TextColumn get baseCurrency => text().withLength(min: 3, max: 8).nullable()();
+  TextColumn get goalId => text().nullable()();
+  TextColumn get targetAllocationJson => text().nullable()();
+  TextColumn get targetAnnualIncome =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get color => text().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+  BoolColumn get archived => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Assigns one derived investment lot to exactly one logical portfolio.
+///
+/// The row id is the lot id, so moving a lot between portfolios updates the
+/// same synced row and concurrent devices converge through the normal LWW
+/// protocol. Lots without an active row remain in the virtual "Unassigned"
+/// portfolio.
+@DataClassName('PortfolioLotMembershipRow')
+class PortfolioLotMemberships extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get portfolioId => text()();
+  DateTimeColumn get assignedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}

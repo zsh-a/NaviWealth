@@ -20,9 +20,25 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 48', () {
-      expect(db.schemaVersion, 48);
+    test('is 49', () {
+      expect(db.schemaVersion, 49);
     });
+  });
+
+  group('Investment portfolio tables exist', () {
+    for (final table in const [
+      'investment_portfolios',
+      'portfolio_lot_memberships',
+    ]) {
+      test('$table has sync columns', () async {
+        final result = await db.customSelect('PRAGMA table_info($table)').get();
+        final columns = result.map((row) => row.read<String>('name')).toSet();
+        expect(
+          columns,
+          containsAll(['id', 'owner_user_id', 'hlc', 'deleted_at']),
+        );
+      });
+    }
   });
 
   group('Finance planning tables exist', () {

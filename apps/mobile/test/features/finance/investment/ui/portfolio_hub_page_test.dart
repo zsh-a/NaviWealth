@@ -179,6 +179,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(AdaptiveContentFrame), findsOneWidget);
+    expect(find.text('All holdings'), findsOneWidget);
     // Positions use a virtualized DecoratedSliver group surface.
     expect(find.byType(DecoratedSliver), findsOneWidget);
     expect(find.text('Broker A'), findsNothing);

@@ -990,6 +990,92 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioHubTitle => 'Portfolio';
 
   @override
+  String get portfolioAllHoldings => 'All holdings';
+
+  @override
+  String get portfolioUnassigned => 'Unassigned';
+
+  @override
+  String get portfolioManageTitle => 'Manage portfolios';
+
+  @override
+  String get portfolioCreateTitle => 'New portfolio';
+
+  @override
+  String get portfolioEditTitle => 'Edit portfolio';
+
+  @override
+  String get portfolioNameLabel => 'Portfolio name';
+
+  @override
+  String get portfolioNameRequired => 'Enter a portfolio name.';
+
+  @override
+  String get portfolioStrategyLabel => 'Strategy';
+
+  @override
+  String get portfolioStrategyIncome => 'Dividend income';
+
+  @override
+  String get portfolioStrategyGrowth => 'Growth';
+
+  @override
+  String get portfolioStrategyPreservation => 'Capital preservation';
+
+  @override
+  String get portfolioStrategyGoalLinked => 'Goal linked';
+
+  @override
+  String get portfolioStrategyCustom => 'Custom';
+
+  @override
+  String get portfolioAnnualIncomeTargetLabel =>
+      'Annual income target (optional)';
+
+  @override
+  String get portfolioNoPortfolios =>
+      'Create a portfolio to classify holdings by purpose.';
+
+  @override
+  String get portfolioAssignLotsTitle => 'Assign lots';
+
+  @override
+  String get portfolioAssignLotsSubtitle =>
+      'Each purchase lot belongs to at most one portfolio.';
+
+  @override
+  String get portfolioAssignmentSaved => 'Portfolio assignments saved.';
+
+  @override
+  String get portfolioSaveFailed => 'Couldn\'t save the portfolio. Try again.';
+
+  @override
+  String get portfolioDeleteFailed =>
+      'Couldn\'t delete the portfolio. Try again.';
+
+  @override
+  String get portfolioDeleteAction => 'Delete portfolio';
+
+  @override
+  String get portfolioDeleteConfirmation =>
+      'Lots in this portfolio will become unassigned. The accounting ledger will not change.';
+
+  @override
+  String portfolioLotsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lots',
+      one: '1 lot',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioScopedReturnUnavailable =>
+      'Portfolio return starts after assignment history is recorded.';
+
+  @override
   String get portfolioHubAccountsEntrySubtitle =>
       'Holdings, returns, and allocation views';
 

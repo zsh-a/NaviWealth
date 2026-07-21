@@ -1815,6 +1815,150 @@ abstract class AppLocalizations {
   /// **'Portfolio'**
   String get portfolioHubTitle;
 
+  /// No description provided for @portfolioAllHoldings.
+  ///
+  /// In en, this message translates to:
+  /// **'All holdings'**
+  String get portfolioAllHoldings;
+
+  /// No description provided for @portfolioUnassigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Unassigned'**
+  String get portfolioUnassigned;
+
+  /// No description provided for @portfolioManageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage portfolios'**
+  String get portfolioManageTitle;
+
+  /// No description provided for @portfolioCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New portfolio'**
+  String get portfolioCreateTitle;
+
+  /// No description provided for @portfolioEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit portfolio'**
+  String get portfolioEditTitle;
+
+  /// No description provided for @portfolioNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio name'**
+  String get portfolioNameLabel;
+
+  /// No description provided for @portfolioNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a portfolio name.'**
+  String get portfolioNameRequired;
+
+  /// No description provided for @portfolioStrategyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Strategy'**
+  String get portfolioStrategyLabel;
+
+  /// No description provided for @portfolioStrategyIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend income'**
+  String get portfolioStrategyIncome;
+
+  /// No description provided for @portfolioStrategyGrowth.
+  ///
+  /// In en, this message translates to:
+  /// **'Growth'**
+  String get portfolioStrategyGrowth;
+
+  /// No description provided for @portfolioStrategyPreservation.
+  ///
+  /// In en, this message translates to:
+  /// **'Capital preservation'**
+  String get portfolioStrategyPreservation;
+
+  /// No description provided for @portfolioStrategyGoalLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal linked'**
+  String get portfolioStrategyGoalLinked;
+
+  /// No description provided for @portfolioStrategyCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get portfolioStrategyCustom;
+
+  /// No description provided for @portfolioAnnualIncomeTargetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual income target (optional)'**
+  String get portfolioAnnualIncomeTargetLabel;
+
+  /// No description provided for @portfolioNoPortfolios.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a portfolio to classify holdings by purpose.'**
+  String get portfolioNoPortfolios;
+
+  /// No description provided for @portfolioAssignLotsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign lots'**
+  String get portfolioAssignLotsTitle;
+
+  /// No description provided for @portfolioAssignLotsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Each purchase lot belongs to at most one portfolio.'**
+  String get portfolioAssignLotsSubtitle;
+
+  /// No description provided for @portfolioAssignmentSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio assignments saved.'**
+  String get portfolioAssignmentSaved;
+
+  /// No description provided for @portfolioSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the portfolio. Try again.'**
+  String get portfolioSaveFailed;
+
+  /// No description provided for @portfolioDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete the portfolio. Try again.'**
+  String get portfolioDeleteFailed;
+
+  /// No description provided for @portfolioDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete portfolio'**
+  String get portfolioDeleteAction;
+
+  /// No description provided for @portfolioDeleteConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Lots in this portfolio will become unassigned. The accounting ledger will not change.'**
+  String get portfolioDeleteConfirmation;
+
+  /// No description provided for @portfolioLotsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 lot} other{{count} lots}}'**
+  String portfolioLotsCount(int count);
+
+  /// No description provided for @portfolioScopedReturnUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio return starts after assignment history is recorded.'**
+  String get portfolioScopedReturnUnavailable;
+
   /// Accounts hub link subtitle for the investment portfolio hub
   ///
   /// In en, this message translates to:

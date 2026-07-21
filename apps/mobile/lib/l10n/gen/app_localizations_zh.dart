@@ -955,6 +955,86 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioHubTitle => '投资组合';
 
   @override
+  String get portfolioAllHoldings => '全部持仓';
+
+  @override
+  String get portfolioUnassigned => '未分类';
+
+  @override
+  String get portfolioManageTitle => '管理组合';
+
+  @override
+  String get portfolioCreateTitle => '新建组合';
+
+  @override
+  String get portfolioEditTitle => '编辑组合';
+
+  @override
+  String get portfolioNameLabel => '组合名称';
+
+  @override
+  String get portfolioNameRequired => '请输入组合名称。';
+
+  @override
+  String get portfolioStrategyLabel => '策略';
+
+  @override
+  String get portfolioStrategyIncome => '股息收入';
+
+  @override
+  String get portfolioStrategyGrowth => '成长';
+
+  @override
+  String get portfolioStrategyPreservation => '资本保全';
+
+  @override
+  String get portfolioStrategyGoalLinked => '关联目标';
+
+  @override
+  String get portfolioStrategyCustom => '自定义';
+
+  @override
+  String get portfolioAnnualIncomeTargetLabel => '年度收入目标（可选）';
+
+  @override
+  String get portfolioNoPortfolios => '创建组合，按投资目的分类持仓。';
+
+  @override
+  String get portfolioAssignLotsTitle => '分配批次';
+
+  @override
+  String get portfolioAssignLotsSubtitle => '每个买入批次最多归属一个组合。';
+
+  @override
+  String get portfolioAssignmentSaved => '组合归属已保存。';
+
+  @override
+  String get portfolioSaveFailed => '组合保存失败，请重试。';
+
+  @override
+  String get portfolioDeleteFailed => '组合删除失败，请重试。';
+
+  @override
+  String get portfolioDeleteAction => '删除组合';
+
+  @override
+  String get portfolioDeleteConfirmation => '该组合中的批次将变为未分类，会计账本不会改变。';
+
+  @override
+  String portfolioLotsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个批次',
+      one: '1 个批次',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioScopedReturnUnavailable => '记录组合归属历史后才能计算组合收益率。';
+
+  @override
   String get portfolioHubAccountsEntrySubtitle => '持仓、收益与分布视角';
 
   @override

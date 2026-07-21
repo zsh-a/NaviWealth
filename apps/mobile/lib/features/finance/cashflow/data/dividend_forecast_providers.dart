@@ -4,6 +4,7 @@ import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
+import 'package:naviwealth/features/finance/investment/data/investment_portfolio_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/cash_dividend.dart';
@@ -40,12 +41,12 @@ final dividendForecastDeclaredActionsProvider =
 final dividendForecast12mProvider =
     FutureProvider.autoDispose<ProjectedDividend>((ref) async {
       final centerFuture = ref.watch(dividendCenterSnapshotProvider.future);
-      final holdingsFuture = ref.watch(holdingsSnapshotProvider.future);
+      final holdingsFuture = ref.watch(scopedPortfolioHoldingsProvider.future);
       final now = ref.watch(dividendCenterNowProvider);
       final declared = ref.watch(dividendForecastDeclaredActionsProvider);
       final converter = ref.watch(cashFlowCurrencyConverterProvider);
       final center = await centerFuture;
-      final holdings = await holdingsFuture;
+      final holdings = (await holdingsFuture).snapshots;
       final history = _historyFromDividendCenter(center);
       final normalized = normalizeDeclaredDividendActions(
         actions: declared,
@@ -68,7 +69,9 @@ final dividendCashProjection90dProvider =
     FutureProvider.autoDispose<List<DividendCashProjection>>((ref) async {
       final now = ref.watch(dividendCenterNowProvider).toUtc();
       final center = await ref.watch(dividendCenterSnapshotProvider.future);
-      final holdings = await ref.watch(holdingsSnapshotProvider.future);
+      final holdings = (await ref.watch(
+        scopedPortfolioHoldingsProvider.future,
+      )).snapshots;
       final forecast = await ref.watch(dividendForecast12mProvider.future);
       final converter = ref.watch(cashFlowCurrencyConverterProvider);
       final normalized = normalizeDeclaredDividendActions(

@@ -122,6 +122,7 @@ class PortfolioHubHoldingsSlice {
       costBasisInBase: Decimal.zero,
       unrealizedPnlInBase: Decimal.zero,
       ytdReturn: ytdReturn,
+      portfolioScoped: false,
     );
   }
 
@@ -154,21 +155,25 @@ class PortfolioHubCoreNotifier
 
     // Subscribe to the complete holdings graph before the first async gap
     // so concurrent upstream emissions cannot partially rebuild this tree.
-    final holdingsFuture = ref.watch(holdingsSnapshotProvider.future);
+    final scopedHoldingsFuture = ref.watch(
+      scopedPortfolioHoldingsProvider.future,
+    );
     final assetsFuture = ref.watch(allAssetsStreamProvider.future);
     final accountsFuture = ref.watch(accountsStreamProvider.future);
     final baseCurrency = ref.watch(holdingBaseCurrencyProvider);
-    final holdingServiceFuture = ref.watch(holdingServiceProvider.future);
+    final selectedPortfolioId = ref.watch(
+      effectiveSelectedInvestmentPortfolioIdProvider,
+    );
     final returnServiceFuture = ref.watch(
       portfolioReturnServiceProvider.future,
     );
 
-    final holdings = await holdingsFuture;
+    final scopedHoldings = await scopedHoldingsFuture;
+    final holdings = scopedHoldings.snapshots;
     final assets = await assetsFuture;
     final accounts = await accountsFuture;
-    final holdingService = await holdingServiceFuture;
     final returnService = await returnServiceFuture;
-    final lots = await holdingService.lotsAt(now);
+    final lots = scopedHoldings.lots;
     final returns = await returnService.compute(from: yearStart, to: today);
 
     final assetById = {for (final asset in assets) asset.id: asset};
@@ -193,6 +198,7 @@ class PortfolioHubCoreNotifier
       costBasisInBase: costBasis,
       unrealizedPnlInBase: unrealizedPnl,
       ytdReturn: returns,
+      portfolioScoped: selectedPortfolioId != null,
     );
   }
 }
@@ -210,15 +216,45 @@ class PortfolioHubInsightsNotifier
       dividendCenterSnapshotProvider.future,
     );
     final corporateActions = ref.watch(dividendForecastDeclaredActionsProvider);
+    final membershipsFuture = ref.watch(portfolioLotMembershipsProvider.future);
+    final scopedHoldingsFuture = ref.watch(
+      scopedPortfolioHoldingsProvider.future,
+    );
+    final selectedPortfolioId = ref.watch(
+      effectiveSelectedInvestmentPortfolioIdProvider,
+    );
 
     final realized = await realizedFuture;
     final dividendForecast = await dividendForecastFuture;
     final dividendCenter = await dividendCenterFuture;
+    final memberships = await membershipsFuture;
+    final scopedHoldings = await scopedHoldingsFuture;
+    final scopedAssetIds = scopedHoldings.snapshots.keys.toSet();
+    final portfolioByLot = <String, String>{
+      for (final membership in memberships)
+        membership.lotId: membership.portfolioId,
+    };
+    bool includesLot(String lotId) {
+      if (selectedPortfolioId == null) return true;
+      final assigned = portfolioByLot[lotId];
+      return selectedPortfolioId == kUnassignedInvestmentPortfolioId
+          ? assigned == null
+          : assigned == selectedPortfolioId;
+    }
+
     return PortfolioHubInsightsState(
-      realizedPnl: realized,
+      realizedPnl: realized.where((item) => includesLot(item.lotId)).toList(),
       dividendForecast: dividendForecast,
-      dividendEvents: dividendCenter.events,
-      corporateActions: corporateActions,
+      dividendEvents: selectedPortfolioId == null
+          ? dividendCenter.events
+          : dividendCenter.events
+                .where((event) => scopedAssetIds.contains(event.assetId))
+                .toList(),
+      corporateActions: selectedPortfolioId == null
+          ? corporateActions
+          : corporateActions
+                .where((action) => scopedAssetIds.contains(action.assetId))
+                .toList(),
     );
   }
 }
@@ -247,6 +283,7 @@ class PortfolioHubState {
     required this.costBasisInBase,
     required this.unrealizedPnlInBase,
     required this.ytdReturn,
+    this.portfolioScoped = false,
   });
 
   final List<PortfolioHoldingRow> holdings;
@@ -257,8 +294,9 @@ class PortfolioHubState {
   final Decimal costBasisInBase;
   final Decimal unrealizedPnlInBase;
   final PortfolioReturnResult ytdReturn;
+  final bool portfolioScoped;
 
-  double? get xirrRatio => ytdReturn.displayReturn;
+  double? get xirrRatio => portfolioScoped ? null : ytdReturn.displayReturn;
 
   List<PortfolioGroupRow> groupsFor(
     PortfolioHubView view,

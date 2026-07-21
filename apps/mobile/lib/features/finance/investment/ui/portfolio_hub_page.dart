@@ -24,13 +24,16 @@ import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../data/investment_portfolio_providers.dart';
 import '../data/providers.dart';
 import '../domain/dividend_forecast.dart';
 import '../domain/models/corporate_actions.dart';
 import '../domain/models/holding_snapshot.dart';
+import '../domain/models/investment_portfolio.dart';
 import '../domain/models/lot.dart';
 import '../domain/models/realized_pnl.dart';
 import '../domain/returns/portfolio_return.dart';
+import 'investment_portfolio_sheets.dart';
 
 part 'portfolio_hub_engine_cards.dart';
 part 'portfolio_hub_group_detail.dart';
@@ -52,6 +55,11 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(portfolioHubCoreProvider);
+    final portfolios =
+        ref.watch(investmentPortfoliosProvider).value ?? const [];
+    final selectedPortfolioId = ref.watch(
+      effectiveSelectedInvestmentPortfolioIdProvider,
+    );
 
     return AppPageScaffold(
       title: l10n.portfolioHubTitle,
@@ -64,6 +72,16 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
         AppAdaptiveActionMenu(
           title: l10n.shellMoreActions,
           actions: [
+            AppAdaptiveAction(
+              icon: FLucideIcons.layers,
+              title: l10n.portfolioManageTitle,
+              onPress: () => showInvestmentPortfolioManager(context),
+            ),
+            AppAdaptiveAction(
+              icon: FLucideIcons.listChecks,
+              title: l10n.portfolioAssignLotsTitle,
+              onPress: () => showPortfolioLotAssignmentSheet(context),
+            ),
             AppAdaptiveAction(
               icon: FLucideIcons.bellRing,
               title: l10n.wealthWatchlistSectionTitle,
@@ -107,6 +125,11 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
           data: data,
           view: _view,
           section: _section,
+          portfolios: portfolios,
+          selectedPortfolioId: selectedPortfolioId,
+          onPortfolioChanged: (id) {
+            ref.read(selectedInvestmentPortfolioIdProvider.notifier).state = id;
+          },
           onViewChanged: (next) => setState(() => _view = next),
           onSectionChanged: (next) => setState(() => _section = next),
         ),
@@ -122,6 +145,9 @@ class _PortfolioHubBody extends StatefulWidget {
     required this.section,
     required this.onViewChanged,
     required this.onSectionChanged,
+    required this.portfolios,
+    required this.selectedPortfolioId,
+    required this.onPortfolioChanged,
   });
 
   final PortfolioHubState data;
@@ -129,6 +155,9 @@ class _PortfolioHubBody extends StatefulWidget {
   final _PortfolioSection section;
   final ValueChanged<PortfolioHubView> onViewChanged;
   final ValueChanged<_PortfolioSection> onSectionChanged;
+  final List<InvestmentPortfolio> portfolios;
+  final String? selectedPortfolioId;
+  final ValueChanged<String?> onPortfolioChanged;
 
   @override
   State<_PortfolioHubBody> createState() => _PortfolioHubBodyState();
@@ -169,6 +198,12 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                _PortfolioSelector(
+                  portfolios: widget.portfolios,
+                  value: widget.selectedPortfolioId,
+                  onChanged: widget.onPortfolioChanged,
+                ),
+                const SizedBox(height: AppSpacing.s12),
                 _PortfolioSummary(data: data),
                 const SizedBox(height: AppSpacing.s16),
                 _PortfolioSectionSegment(
@@ -306,6 +341,49 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _PortfolioSelector extends StatelessWidget {
+  const _PortfolioSelector({
+    required this.portfolios,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final List<InvestmentPortfolio> portfolios;
+  final String? value;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final labels = {
+      for (final portfolio in portfolios) portfolio.id: portfolio.name,
+      kUnassignedInvestmentPortfolioId: l10n.portfolioUnassigned,
+    };
+    return FSelect<String>.rich(
+      format: (id) => id.isEmpty
+          ? l10n.portfolioAllHoldings
+          : labels[id] ?? l10n.portfolioAllHoldings,
+      control: FSelectControl<String>.lifted(
+        value: value ?? '',
+        onChange: (id) {
+          Haptics.selection();
+          onChanged(id == null || id.isEmpty ? null : id);
+        },
+      ),
+      label: Text(l10n.portfolioHubTitle),
+      children: [
+        FSelectItem<String>(value: '', title: Text(l10n.portfolioAllHoldings)),
+        for (final portfolio in portfolios)
+          FSelectItem<String>(value: portfolio.id, title: Text(portfolio.name)),
+        FSelectItem<String>(
+          value: kUnassignedInvestmentPortfolioId,
+          title: Text(l10n.portfolioUnassigned),
+        ),
+      ],
     );
   }
 }

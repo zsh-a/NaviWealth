@@ -1850,7 +1850,7 @@ void main() {
     },
   );
 
-  test('v47 upgrade creates local dividend forecast snapshots', () async {
+  test('v47 upgrade creates dividend forecasts and portfolio tables', () async {
     final dir = await Directory.systemTemp.createTemp(
       'naviwealth-dividend-forecast-migration-',
     );
@@ -1875,7 +1875,13 @@ void main() {
       columns.map((row) => row.read<String>('name')),
       contains('predicted_net'),
     );
+    final tables = await db
+        .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
+        .get();
+    final tableNames = tables.map((row) => row.read<String>('name')).toSet();
+    expect(tableNames, contains('investment_portfolios'));
+    expect(tableNames, contains('portfolio_lot_memberships'));
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 48);
+    expect(version.read<int>('user_version'), db.schemaVersion);
   });
 }

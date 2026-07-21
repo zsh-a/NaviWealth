@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
@@ -7,10 +8,15 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
+import 'package:naviwealth/features/finance/investment/data/investment_portfolio_providers.dart';
+import 'package:naviwealth/features/finance/investment/data/investment_portfolio_repository.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/investment_portfolio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../design_system/preferences/theme_preferences.dart';
@@ -23,7 +29,6 @@ import '../domain/rebalance_execution.dart';
 import '../domain/rebalance_models.dart';
 import 'rebalance_execution_store.dart';
 
-const _kTargetAllocationKey = 'naviwealth.rebalance.target_allocation';
 const _kWarningThresholdKey = 'naviwealth.rebalance.warning_threshold';
 const _kCriticalThresholdKey = 'naviwealth.rebalance.critical_threshold';
 
@@ -169,27 +174,41 @@ RiskAppetite appetiteForScheme(AllocationSchemePreset preset) =>
       AllocationSchemePreset.custom => RiskAppetite.custom,
     };
 
-/// User's target allocation weights. When the scheme changes, this resets
-/// to the preset's default weights unless the user has customised it.
+/// Target allocation for the currently selected logical portfolio.
+///
+/// The virtual all-holdings and unassigned views use the risk preset as an
+/// ephemeral target. Persisted targets live on `investment_portfolios`, so
+/// switching portfolios also switches the rebalance policy.
 final targetAllocationProvider =
     StateNotifierProvider<TargetAllocationController, TargetAllocation>((ref) {
-      final prefs = ref.watch(sharedPreferencesProvider);
-      final scheme = ref.watch(selectedSchemeProvider);
-      return TargetAllocationController(prefs, scheme);
+      final scheme = ref.read(selectedSchemeProvider);
+      final portfolio = ref.watch(selectedInvestmentPortfolioProvider).value;
+      return TargetAllocationController(
+        scheme: scheme,
+        portfolio: portfolio,
+        repository: ref.watch(investmentPortfolioRepositoryProvider.future),
+      );
     });
 
 class TargetAllocationController extends StateNotifier<TargetAllocation> {
-  TargetAllocationController(this._prefs, this._scheme)
-    : super(_load(_prefs, _scheme));
+  TargetAllocationController({
+    required AllocationSchemePreset scheme,
+    required InvestmentPortfolio? portfolio,
+    required Future<InvestmentPortfolioRepository> repository,
+  }) : _scheme = scheme,
+       _portfolio = portfolio,
+       _repository = repository,
+       super(_load(portfolio, scheme));
 
-  final SharedPreferences _prefs;
   final AllocationSchemePreset _scheme;
+  InvestmentPortfolio? _portfolio;
+  final Future<InvestmentPortfolioRepository> _repository;
 
   static TargetAllocation _load(
-    SharedPreferences p,
+    InvestmentPortfolio? portfolio,
     AllocationSchemePreset scheme,
   ) {
-    final raw = p.getString(_kTargetAllocationKey);
+    final raw = portfolio?.targetAllocationJson;
     if (raw != null) {
       try {
         final map = jsonDecode(raw) as Map<String, dynamic>;
@@ -203,17 +222,23 @@ class TargetAllocationController extends StateNotifier<TargetAllocation> {
 
   Future<void> update(TargetAllocation allocation) async {
     state = allocation;
-    await _prefs.setString(
-      _kTargetAllocationKey,
-      jsonEncode(allocation.toJson()),
-    );
+    await _persist(allocation);
   }
 
   /// Reset to the current scheme's default weights.
   Future<void> resetToScheme() async {
     final preset = allocationScheme(_scheme);
     state = preset;
-    await _prefs.setString(_kTargetAllocationKey, jsonEncode(preset.toJson()));
+    await _persist(preset);
+  }
+
+  Future<void> _persist(TargetAllocation allocation) async {
+    final portfolio = _portfolio;
+    if (portfolio == null) return;
+    final updated = portfolio.copyWith(
+      targetAllocationJson: jsonEncode(allocation.toJson()),
+    );
+    _portfolio = await (await _repository).update(updated);
   }
 }
 
@@ -256,8 +281,73 @@ class ThresholdController extends StateNotifier<double> {
 
 /// The computed rebalance plan. Reactively recomputes when the dashboard
 /// snapshot or target allocation changes.
+final rebalancePortfolioSnapshotProvider =
+    FutureProvider.autoDispose<DashboardSnapshot>((ref) async {
+      final selectedId = ref.watch(
+        effectiveSelectedInvestmentPortfolioIdProvider,
+      );
+      if (selectedId == null) {
+        return ref.watch(dashboardSnapshotProvider.future);
+      }
+      final scopedFuture = ref.watch(scopedPortfolioHoldingsProvider.future);
+      final assetsFuture = ref.watch(allAssetsStreamProvider.future);
+      final dashboardFuture = ref.watch(dashboardSnapshotProvider.future);
+      final scoped = await scopedFuture;
+      final assets = await assetsFuture;
+      final dashboard = await dashboardFuture;
+      final assetById = {for (final asset in assets) asset.id: asset};
+      final itemsByCategory = <AssetCategory, List<CategoryItem>>{};
+      for (final holding in scoped.snapshots.values) {
+        final asset = assetById[holding.assetId];
+        if (asset == null) continue;
+        final category = categoryForAssetType(asset.type);
+        itemsByCategory
+            .putIfAbsent(category, () => <CategoryItem>[])
+            .add(
+              CategoryItem(
+                id: holding.assetId,
+                name: asset.name?.trim().isNotEmpty == true
+                    ? asset.name!.trim()
+                    : asset.symbol,
+                subtitle: asset.symbol,
+                valueInBase: Money(
+                  holding.marketValueInBase,
+                  dashboard.baseCurrency,
+                ),
+                nativeAmount: holding.marketValueInAssetCurrency,
+                nativeCurrency: holding.assetCurrency,
+              ),
+            );
+      }
+      final allocations = <CategoryAllocation>[];
+      var total = Decimal.zero;
+      for (final entry in itemsByCategory.entries) {
+        final categoryTotal = entry.value.fold<Decimal>(
+          Decimal.zero,
+          (sum, item) => sum + item.valueInBase.amount,
+        );
+        total += categoryTotal;
+        allocations.add(
+          CategoryAllocation(
+            category: entry.key,
+            totalInBase: Money(categoryTotal, dashboard.baseCurrency),
+            items: List.unmodifiable(entry.value),
+          ),
+        );
+      }
+      final totalMoney = Money(total, dashboard.baseCurrency);
+      return DashboardSnapshot(
+        asOf: DateTime.now().toUtc(),
+        baseCurrency: dashboard.baseCurrency,
+        allocations: List.unmodifiable(allocations),
+        totalAssets: totalMoney,
+        totalLiabilities: Money.zero(dashboard.baseCurrency),
+        netWorth: totalMoney,
+      );
+    });
+
 final rebalancePlanProvider = Provider<RebalancePlan?>((ref) {
-  final snapshotAsync = ref.watch(dashboardSnapshotProvider);
+  final snapshotAsync = ref.watch(rebalancePortfolioSnapshotProvider);
   final target = ref.watch(targetAllocationProvider);
   final engine = ref.watch(rebalanceEngineProvider);
 

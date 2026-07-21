@@ -88,6 +88,8 @@ final class AppDatabaseTransactionScope {
     Categories,
     Budgets,
     Goals,
+    InvestmentPortfolios,
+    PortfolioLotMemberships,
     FinancialDecisions,
     FinancialSignals,
     FinancialMonthlyCloses,
@@ -143,7 +145,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 48;
+  int get schemaVersion => 49;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -751,6 +753,19 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 48) {
         await _createForecastSnapshots(this);
+      }
+      if (from < 49) {
+        await m.createTable(investmentPortfolios);
+        await m.createTable(portfolioLotMemberships);
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_investment_portfolios_owner_hlc '
+          'ON investment_portfolios(owner_user_id, hlc)',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_portfolio_lot_memberships_owner_portfolio '
+          'ON portfolio_lot_memberships(owner_user_id, portfolio_id) '
+          'WHERE deleted_at IS NULL',
+        );
       }
     },
     beforeOpen: (details) async {

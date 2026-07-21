@@ -14,6 +14,7 @@ import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/investment/data/investment_portfolio_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/features/finance/investment/domain/holding_service.dart';
@@ -290,6 +291,8 @@ List<Override> _portfolioOverrides(SharedPreferences prefs) => [
   holdingServiceProvider.overrideWith(
     (_) async => _GoldenHoldingService(_lots),
   ),
+  investmentPortfoliosProvider.overrideWith((_) => Stream.value(const [])),
+  portfolioLotMembershipsProvider.overrideWith((_) => Stream.value(const [])),
   portfolioReturnServiceProvider.overrideWith(
     (_) async => const _GoldenReturnService(),
   ),
