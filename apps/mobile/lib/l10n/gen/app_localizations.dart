@@ -2847,6 +2847,24 @@ abstract class AppLocalizations {
   /// **'Your financial brief has a new analysis'**
   String get lifeSignalAgentSubtitle;
 
+  /// Fallback title for the route-backed Agent result detail
+  ///
+  /// In en, this message translates to:
+  /// **'Insight details'**
+  String get lifeAgentArtifactDetailTitle;
+
+  /// Title when a route-backed Agent result cannot be opened
+  ///
+  /// In en, this message translates to:
+  /// **'Insight unavailable'**
+  String get lifeAgentArtifactMissingTitle;
+
+  /// Explanation when a route-backed Agent result cannot be opened
+  ///
+  /// In en, this message translates to:
+  /// **'This result may have expired, been dismissed, or belong to a domain that is not active.'**
+  String get lifeAgentArtifactMissingBody;
+
   /// Title of the Life signal evidence sheet
   ///
   /// In en, this message translates to:
@@ -2870,6 +2888,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create action'**
   String get lifeSignalCreateAction;
+
+  /// Accessible label for a Life update's independent create-action control
+  ///
+  /// In en, this message translates to:
+  /// **'Create action for {update}'**
+  String lifeSignalCreateActionFor(String update);
 
   /// Open domain settings before converting a signal to an action
   ///

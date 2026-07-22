@@ -538,9 +538,9 @@ class LifePageObject {
 
   void expectSignal(String title) => expect(find.text(title), findsOneWidget);
 
-  Future<void> openSignal(String title) async {
-    expectSignal(title);
-    await tester.tap(find.text(title));
+  Future<void> openSignalAction({required String signalTitle}) async {
+    expectSignal(signalTitle);
+    await tester.tap(find.bySemanticsLabel('Create action for $signalTitle'));
     await settle(tester);
   }
 

@@ -1619,6 +1619,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your financial brief has a new analysis';
 
   @override
+  String get lifeAgentArtifactDetailTitle => 'Insight details';
+
+  @override
+  String get lifeAgentArtifactMissingTitle => 'Insight unavailable';
+
+  @override
+  String get lifeAgentArtifactMissingBody =>
+      'This result may have expired, been dismissed, or belong to a domain that is not active.';
+
+  @override
   String get lifeSignalDetailTitle => 'Update details';
 
   @override
@@ -1631,6 +1641,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lifeSignalCreateAction => 'Create action';
+
+  @override
+  String lifeSignalCreateActionFor(String update) {
+    return 'Create action for $update';
+  }
 
   @override
   String get lifeSignalEnableExecution => 'Enable ExecutionOS';

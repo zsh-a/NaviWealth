@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
@@ -19,6 +20,7 @@ import 'package:naviwealth/features/health/ui/health_today_providers.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_route_paths.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart'
     as knowledge_data;
+import 'package:naviwealth/features/life/composition/life_route_paths.dart';
 import 'package:naviwealth/features/life/domain/life_event.dart';
 
 const String kLifeHealthMetricSourceFamily = 'health:health_metrics';
@@ -186,22 +188,7 @@ final lifeSignalSnapshotProvider = Provider<LifeSignalSnapshot>((ref) {
     final artifacts = agentBundle?.artifacts;
     if (artifacts != null && artifacts.isNotEmpty) {
       final primary = artifacts.first;
-      final label = primary.title.trim();
-      events.add(
-        LifeEvent(
-          id: 'sig-agent-${primary.id}',
-          at: primary.createdAt,
-          domain: DomainScope.finance,
-          template: LifeEventTemplate.agentResult,
-          params: [label],
-          routePath: FinanceRoutes.home,
-          actionSuggestion: LifeActionSuggestion(
-            template: LifeActionTemplate.reviewAgentInsight,
-            sourceRowFamily: kLifeAgentArtifactSourceFamily,
-            sourceRowId: primary.id,
-          ),
-        ),
-      );
+      events.add(lifeEventForAgentArtifact(primary));
     }
   }
 
@@ -242,6 +229,33 @@ final lifeSignalSnapshotProvider = Provider<LifeSignalSnapshot>((ref) {
     evaluatedSourceFamilies: Set.unmodifiable(evaluatedSourceFamilies),
   );
 });
+
+/// Adapts a persisted Agent result to the Life hub without discarding its
+/// stable identity. The artifact detail route owns conclusion-level routing;
+/// the optional Execution action remains a separate interaction.
+LifeEvent lifeEventForAgentArtifact(AgentArtifact artifact) {
+  final domain = DomainScope.tryParse(artifact.domain);
+  if (domain == null) {
+    throw ArgumentError.value(
+      artifact.domain,
+      'artifact.domain',
+      'Agent artifact domain must be a registered DomainScope wire value',
+    );
+  }
+  return LifeEvent(
+    id: 'sig-agent-${artifact.id}',
+    at: artifact.createdAt,
+    domain: domain,
+    template: LifeEventTemplate.agentResult,
+    params: [artifact.title.trim()],
+    routePath: LifeRoutes.agentArtifact(artifact.id),
+    actionSuggestion: LifeActionSuggestion(
+      template: LifeActionTemplate.reviewAgentInsight,
+      sourceRowFamily: kLifeAgentArtifactSourceFamily,
+      sourceRowId: artifact.id,
+    ),
+  );
+}
 
 /// Signal-only Life feed candidates. Outcome evaluation consumes the snapshot
 /// above so loading/error absence can never masquerade as a cleared signal.

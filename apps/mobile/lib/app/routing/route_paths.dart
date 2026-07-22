@@ -50,6 +50,7 @@ abstract final class AppRoutes {
 
   // ── Life hub (cross-domain spatial layer) ───────────────────────────────
   static const life = LifeRoutes.home;
+  static String lifeAgentArtifact(String id) => LifeRoutes.agentArtifact(id);
 
   // ── Primary tabs ────────────────────────────────────────────────────────
   static const home = FinanceRoutes.home;

@@ -84,7 +84,7 @@ Future<void> _runLoop(
   );
 
   final life = LifePageObject(tester);
-  await life.openSignal(signalTitle);
+  await life.openSignalAction(signalTitle: signalTitle);
   life.expectEvidence(evidence);
   await life.createAction(actionTitle);
   final debugActions = await ExecutionRepository(

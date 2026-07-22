@@ -80,6 +80,7 @@ import 'package:naviwealth/features/finance/ui/settings/monthly_expense_settings
 import 'package:naviwealth/features/finance/ui/settings/risk_thresholds_page.dart';
 import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';
 import 'package:naviwealth/features/health/ui/health_trend_page.dart';
+import 'package:naviwealth/features/life/ui/life_agent_artifact_page.dart';
 import 'package:naviwealth/features/settings/ui/settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -320,6 +321,17 @@ void main() {
       await _pumpAt(tester);
       expect(find.byType(HomePage), findsOneWidget);
       expect(find.byType(FloatingGlassNavBar), findsOneWidget);
+    });
+
+    testWidgets('Life Agent result deep link resolves by artifact id', (
+      tester,
+    ) async {
+      final route = AppRoutes.lifeAgentArtifact('artifact/with spaces');
+      final container = await _pumpAt(tester, initialLocation: route);
+
+      expect(_currentPath(container), route);
+      expect(find.byType(RouteErrorPage), findsNothing);
+      expect(find.byType(LifeAgentArtifactPage), findsOneWidget);
     });
 
     testWidgets('web checklist primary deep links render canonical pages', (

@@ -1061,7 +1061,7 @@ Future<void> showAgentArtifactSheet({
       artifact: artifact,
       onVisibilityChanged: onVisibilityChanged,
     ),
-    footer: _AgentArtifactSheetFooter(artifact: artifact),
+    footer: AgentArtifactDetailFooter(artifact: artifact),
   );
 }
 
@@ -1175,18 +1175,18 @@ class _AgentArtifactDetailBodyState
   }
 }
 
-class _AgentArtifactSheetFooter extends ConsumerStatefulWidget {
-  const _AgentArtifactSheetFooter({required this.artifact});
+class AgentArtifactDetailFooter extends ConsumerStatefulWidget {
+  const AgentArtifactDetailFooter({super.key, required this.artifact});
 
   final AgentArtifact artifact;
 
   @override
-  ConsumerState<_AgentArtifactSheetFooter> createState() =>
-      _AgentArtifactSheetFooterState();
+  ConsumerState<AgentArtifactDetailFooter> createState() =>
+      _AgentArtifactDetailFooterState();
 }
 
-class _AgentArtifactSheetFooterState
-    extends ConsumerState<_AgentArtifactSheetFooter> {
+class _AgentArtifactDetailFooterState
+    extends ConsumerState<AgentArtifactDetailFooter> {
   bool _secondaryBusy = false;
   bool _primaryBusy = false;
 

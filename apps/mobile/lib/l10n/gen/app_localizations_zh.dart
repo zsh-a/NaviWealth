@@ -1563,6 +1563,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeSignalAgentSubtitle => '财务简报已生成最新分析';
 
   @override
+  String get lifeAgentArtifactDetailTitle => '洞察详情';
+
+  @override
+  String get lifeAgentArtifactMissingTitle => '洞察暂不可用';
+
+  @override
+  String get lifeAgentArtifactMissingBody => '这条结果可能已过期、已被隐藏，或来自当前未启用的功能领域。';
+
+  @override
   String get lifeSignalDetailTitle => '动态详情';
 
   @override
@@ -1575,6 +1584,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get lifeSignalCreateAction => '创建行动';
+
+  @override
+  String lifeSignalCreateActionFor(String update) {
+    return '为「$update」创建行动';
+  }
 
   @override
   String get lifeSignalEnableExecution => '启用 ExecutionOS';

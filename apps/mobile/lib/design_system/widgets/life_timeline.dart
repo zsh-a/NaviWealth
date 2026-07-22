@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
+import 'app_icon_button.dart';
 import 'app_icon_tile.dart';
 import 'app_interaction.dart';
 import 'soft_card.dart';
@@ -18,8 +19,13 @@ class LifeTimelineItem {
     required this.icon,
     required this.accent,
     this.onOpen,
+    this.onAction,
+    this.actionLabel,
     this.domainLabel,
-  });
+  }) : assert(
+         onAction == null || actionLabel != null,
+         'actionLabel is required when onAction is provided',
+       );
 
   final String id;
   final DateTime at;
@@ -28,6 +34,8 @@ class LifeTimelineItem {
   final IconData icon;
   final Color accent;
   final VoidCallback? onOpen;
+  final VoidCallback? onAction;
+  final String? actionLabel;
   final String? domainLabel;
 }
 
@@ -58,7 +66,9 @@ class LifeTimeline extends StatelessWidget {
           for (var i = 0; i < items.length; i++) ...[
             if (i > 0)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppPageRhythm.row),
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppPageRhythm.row,
+                ),
                 child: Row(
                   children: [
                     const SizedBox(width: AppSpacing.s14),
@@ -92,7 +102,7 @@ class _LifeTimelineRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final row = Row(
+    final content = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppIconTile(
@@ -153,16 +163,38 @@ class _LifeTimelineRow extends StatelessWidget {
       ],
     );
 
-    if (item.onOpen == null) return row;
-    return Semantics(
-      button: true,
-      child: FTappable(
-        onPress: AppInteraction.wrap(
-          item.onOpen,
-          intent: AppInteractionIntent.navigate,
+    final primary = item.onOpen == null
+        ? content
+        : Semantics(
+            button: true,
+            child: FTappable(
+              onPress: AppInteraction.wrap(
+                item.onOpen,
+                intent: AppInteractionIntent.navigate,
+              ),
+              child: content,
+            ),
+          );
+    final action = item.onAction;
+    if (action == null) return primary;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(child: primary),
+        const SizedBox(width: AppSpacing.s8),
+        AppIconButton(
+          icon: FLucideIcons.listTodo,
+          tooltip: item.actionLabel!,
+          onPress: AppInteraction.wrap(
+            action,
+            intent: AppInteractionIntent.reveal,
+          ),
+          size: 36,
+          iconSize: AppIconSizes.xs,
+          iconColor: colors.mutedForeground,
+          surface: AppIconButtonSurface.softMuted,
         ),
-        child: row,
-      ),
+      ],
     );
   }
 }

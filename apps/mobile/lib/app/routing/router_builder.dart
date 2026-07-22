@@ -16,6 +16,7 @@ import '../../features/auth/ui/devices_page.dart' deferred as devices_lib;
 import '../../features/auth/ui/login_page.dart';
 import '../../features/auth/ui/onboarding_page.dart';
 import '../../features/life/composition/life_route_paths.dart';
+import '../../features/life/ui/life_agent_artifact_page.dart';
 import '../../features/life/ui/life_page.dart';
 import '../../features/settings/ui/agents_settings_page.dart';
 import '../../features/settings/ui/ai/ai_llm_credentials_page.dart';
@@ -119,6 +120,15 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = LifeRoutes.home}) {
               path: LifeRoutes.home,
               name: LifeRouteNames.home,
               builder: (context, state) => const LifePage(),
+              routes: [
+                GoRoute(
+                  path: 'insights/:artifactId',
+                  name: LifeRouteNames.agentArtifact,
+                  builder: (context, state) => LifeAgentArtifactPage(
+                    artifactId: state.pathParameters['artifactId'] ?? '',
+                  ),
+                ),
+              ],
             ),
             ...shellRoutes,
           ],

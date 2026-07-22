@@ -37,7 +37,7 @@ void main() {
 
       final life = LifePageObject(tester);
       life.expectSignal('Recovery needs attention');
-      await life.openSignal('Recovery needs attention');
+      await life.openSignalAction(signalTitle: 'Recovery needs attention');
       life.expectEvidence('Recovery score: 42');
       await life.createAction('Protect recovery today');
       await life.openExecution();
@@ -90,10 +90,8 @@ void main() {
 
       final life = LifePageObject(tester);
       life.expectSignal('Monthly budget exceeded');
-      await life.openSignal('Monthly budget exceeded');
-      life.expectEvidence(
-        '${_periodMonth(DateTime.now())} budget usage',
-      );
+      await life.openSignalAction(signalTitle: 'Monthly budget exceeded');
+      life.expectEvidence('${_periodMonth(DateTime.now())} budget usage');
       await life.createAction("View this month's budget");
       await life.openExecution();
 

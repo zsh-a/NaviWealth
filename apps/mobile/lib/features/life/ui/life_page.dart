@@ -433,6 +433,8 @@ class _AttentionSectionState extends State<_AttentionSection> {
                   accent: widget.accentFor(e),
                   domainLabel: widget.domainLabel(e.domain),
                   onOpen: _onOpen(context, e),
+                  onAction: _onAction(context, e),
+                  actionLabel: _actionLabel(e),
                 ),
             ],
             timeLabel: widget.timeLabel,
@@ -460,6 +462,8 @@ class _AttentionSectionState extends State<_AttentionSection> {
                   accent: widget.accentFor(e),
                   domainLabel: widget.domainLabel(e.domain),
                   onOpen: _onOpen(context, e),
+                  onAction: _onAction(context, e),
+                  actionLabel: _actionLabel(e),
                 ),
             ],
             timeLabel: widget.timeLabel,
@@ -481,16 +485,25 @@ class _AttentionSectionState extends State<_AttentionSection> {
   }
 
   VoidCallback? _onOpen(BuildContext context, LifeEvent event) {
-    if (event.actionSuggestion != null) {
-      return () async {
-        await showLifeSignalSheet(
-          context: context,
-          event: event,
-          executionEnabled: widget.executionEnabled,
-        );
-      };
-    }
     final path = event.routePath;
     return path == null ? null : () => context.go(path);
+  }
+
+  VoidCallback? _onAction(BuildContext context, LifeEvent event) {
+    if (event.actionSuggestion == null) return null;
+    return () async {
+      await showLifeSignalSheet(
+        context: context,
+        event: event,
+        executionEnabled: widget.executionEnabled,
+      );
+    };
+  }
+
+  String? _actionLabel(LifeEvent event) {
+    if (event.actionSuggestion == null) return null;
+    return widget.l10n.lifeSignalCreateActionFor(
+      event.localizedTitle(widget.l10n),
+    );
   }
 }
