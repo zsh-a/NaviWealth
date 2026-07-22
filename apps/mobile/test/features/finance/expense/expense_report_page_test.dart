@@ -12,7 +12,7 @@ import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/expense.dart';
 import 'package:naviwealth/features/finance/expense/data/expense_report_providers.dart';
 import 'package:naviwealth/features/finance/expense/domain/expense_report_range.dart';
-import 'package:naviwealth/features/finance/expense/ui/expense_report_page.dart';
+import 'package:naviwealth/features/finance/expense/ui/spending_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -74,22 +74,20 @@ Future<ProviderScope> _wrap({
 }
 
 void main() {
-  testWidgets('expense report renders empty chart states with no data', (
+  testWidgets('spending renders empty chart states with no data', (
     tester,
   ) async {
-    final widget = await _wrap(child: const ExpenseReportPage());
+    final widget = await _wrap(child: const SpendingPage());
     await tester.pumpWidget(widget);
     await tester.pumpAndSettle();
-    expect(find.byType(ExpenseReportPage), findsOneWidget);
-    final l10n = AppLocalizations.of(
-      tester.element(find.byType(ExpenseReportPage)),
-    );
+    expect(find.byType(SpendingPage), findsOneWidget);
+    final l10n = AppLocalizations.of(tester.element(find.byType(SpendingPage)));
     expect(find.text(l10n.expenseReportTotalExpenses), findsOneWidget);
     // Pie + trend both fall back to empty chart states when there's no data.
     expect(find.byType(EmptyChartPlaceholder), findsAtLeastNWidgets(1));
   });
 
-  testWidgets('expense report renders pie + trend chart when data present', (
+  testWidgets('spending renders pie + trend chart when data present', (
     tester,
   ) async {
     final today = DateTime.now();
@@ -114,7 +112,7 @@ void main() {
     final accounts = [_account('dining', '餐饮'), _account('transport', '交通')];
 
     final widget = await _wrap(
-      child: const ExpenseReportPage(),
+      child: const SpendingPage(),
       expenses: expenses,
       accounts: accounts,
     );
@@ -131,7 +129,7 @@ void main() {
     // so we scope the drag to the outermost ListView.
     final reportList = find
         .descendant(
-          of: find.byType(ExpenseReportPage),
+          of: find.byType(SpendingPage),
           matching: find.byType(ListView),
         )
         .first;
@@ -150,7 +148,7 @@ void main() {
       child: Consumer(
         builder: (ctx, ref, _) {
           container = ProviderScope.containerOf(ctx, listen: false);
-          return const ExpenseReportPage();
+          return const SpendingPage();
         },
       ),
     );
@@ -163,9 +161,7 @@ void main() {
       ExpenseReportRangePreset.m3,
     );
 
-    final l10n = AppLocalizations.of(
-      tester.element(find.byType(ExpenseReportPage)),
-    );
+    final l10n = AppLocalizations.of(tester.element(find.byType(SpendingPage)));
     await tester.tap(find.text(l10n.expenseReportRangeThisMonth));
     await tester.pumpAndSettle();
     expect(

@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
-import 'package:naviwealth/features/finance/domain/models/expense.dart';
 
 import 'expense_report_range.dart';
 
@@ -29,21 +28,20 @@ class MonthlyExpenseBucket {
 
 /// Total spend rolled up into an expense account for the pie chart.
 ///
-/// [items] is every individual expense that fell into this account,
-/// kept around so the drill-down sheet can list them without re-querying.
-/// Sorted descending by [total] inside the report.
+/// [count] is retained for aggregate metrics. Transaction details are queried
+/// by Activity instead of being duplicated in this read model.
 @immutable
 class CategoryBreakdown {
   const CategoryBreakdown({
     required this.expenseAccountId,
     required this.total,
-    required this.items,
+    required this.count,
   });
 
   /// The expense account id from the `accounts` table.
   final String expenseAccountId;
   final Money total;
-  final List<Expense> items;
+  final int count;
 }
 
 /// Aggregated view backing the report page.

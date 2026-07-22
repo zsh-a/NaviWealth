@@ -20,8 +20,7 @@ import 'package:naviwealth/features/finance/cashflow/ui/cashflow_page.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/dividend_center_page.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/recurring_transactions_page.dart';
 import 'package:naviwealth/features/finance/expense/ui/expense_form_page.dart';
-import 'package:naviwealth/features/finance/expense/ui/expense_list_page.dart';
-import 'package:naviwealth/features/finance/expense/ui/expense_report_page.dart';
+import 'package:naviwealth/features/finance/expense/ui/spending_page.dart';
 import 'package:naviwealth/features/finance/fire/ui/fire_page.dart'
     deferred as fire_lib;
 import 'package:naviwealth/features/finance/home/ui/home_page.dart';
@@ -111,28 +110,21 @@ StatefulShellRoute financeShellRoute() {
                 builder: (context, state) => const MonthlyClosePage(),
               ),
               GoRoute(
-                path: 'expenses',
-                name: FinanceRouteNames.expenses,
-                builder: (context, state) => const ExpenseListPage(),
-                routes: [
-                  GoRoute(
-                    path: 'new',
-                    name: FinanceRouteNames.expenseNew,
-                    builder: (context, state) => const ExpenseFormPage(),
-                  ),
-                  GoRoute(
-                    path: 'report',
-                    name: FinanceRouteNames.expenseReport,
-                    builder: (context, state) => const ExpenseReportPage(),
-                  ),
-                  GoRoute(
-                    path: ':expenseId',
-                    name: FinanceRouteNames.expenseDetail,
-                    builder: (context, state) => ExpenseFormPage(
-                      expenseId: state.pathParameters['expenseId'],
-                    ),
-                  ),
-                ],
+                path: 'spending',
+                name: FinanceRouteNames.spending,
+                builder: (context, state) => const SpendingPage(),
+              ),
+              GoRoute(
+                path: 'expense/new',
+                name: FinanceRouteNames.expenseNew,
+                builder: (context, state) => const ExpenseFormPage(),
+              ),
+              GoRoute(
+                path: 'expense/:expenseId',
+                name: FinanceRouteNames.expenseDetail,
+                builder: (context, state) => ExpenseFormPage(
+                  expenseId: state.pathParameters['expenseId'],
+                ),
               ),
               GoRoute(
                 path: 'cashflow',

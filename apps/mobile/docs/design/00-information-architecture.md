@@ -16,7 +16,8 @@
 NaviWealth
 ├── /                       Today      今天要知道什么
 ├── /activity               Activity   发生了什么
-│   ├── /activity/expenses
+│   ├── /activity/spending          （消费聚合分析）
+│   ├── /activity/expense/:id       （支出录入 / 编辑）
 │   ├── /activity/trade
 │   ├── /activity/transfer
 │   ├── /activity/journal

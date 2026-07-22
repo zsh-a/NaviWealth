@@ -17,7 +17,7 @@ void main() {
       kind: FinancialInboxKind.expenseAnomaly,
       priority: FinancialInboxPriority.attention,
       count: 1,
-      route: '/activity/expenses/report',
+      route: '/activity/spending',
       evidence: const <String, Object?>{
         'period': '2026-07',
         'delta_ratio': 0.4,

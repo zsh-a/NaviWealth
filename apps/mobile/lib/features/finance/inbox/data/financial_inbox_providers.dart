@@ -184,7 +184,7 @@ final financialSignalScanCandidatesProvider =
                 ? FinancialInboxPriority.important
                 : FinancialInboxPriority.attention,
             count: 1,
-            route: FinanceRoutes.expenseReport,
+            route: FinanceRoutes.spending,
             evidence: <String, Object?>{
               'period': _periodKey(now),
               'delta_ratio': anomaly.deltaRatio,
@@ -216,7 +216,7 @@ final financialSignalScanCandidatesProvider =
             kind: FinancialInboxKind.subscriptionChange,
             priority: FinancialInboxPriority.attention,
             count: changes.length,
-            route: FinanceRoutes.expenseReport,
+            route: FinanceRoutes.spending,
             evidence: <String, Object?>{
               'period': _periodKey(now),
               'change_count': changes.length,

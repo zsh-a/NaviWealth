@@ -43,7 +43,7 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ShellCanvasScaffold(
+    return const ShellCanvasScaffold(
       // The home cockpit owns its hero greeting; we drop the static
       // "Overview" page title in favour of a personalized status line
       // rendered inside [HomeGreetingHeader]. ShellCanvasScaffold keeps
@@ -52,7 +52,7 @@ class HomePage extends ConsumerWidget {
       childPad: false,
       // Unmount live dashboard watches while another finance tab is
       // visible so holdings / agent / activity streams can pause.
-      child: const ShellTabPause(
+      child: ShellTabPause(
         routePath: FinanceRoutes.home,
         placeholder: HomeSkeleton(),
         child: _HomeLiveBody(),

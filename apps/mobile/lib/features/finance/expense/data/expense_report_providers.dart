@@ -14,7 +14,7 @@ import '../domain/expense_report_aggregator.dart';
 import '../domain/expense_report_range.dart';
 import '../domain/monthly_expense_derivation.dart';
 
-/// Currently selected range chip on the expense report page. Mirrors the
+/// Currently selected range chip on the spending analysis page. Mirrors the
 /// dashboard's chip-state pattern so a screen rebuild doesn't reset
 /// what the user picked.
 final expenseReportRangePresetProvider =
@@ -39,7 +39,7 @@ final expenseReportRangeProvider = Provider<ExpenseReportRange>((ref) {
   );
 });
 
-/// The expense report shares the dashboard's currency converter so users
+/// Spending analysis shares the dashboard's currency converter so users
 /// see the same FX behaviour across the app — including the "skip
 /// expenses without an FX rate" graceful degradation. When a dedicated
 /// expense-side converter ships we'll override this provider in the

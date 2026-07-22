@@ -37,7 +37,7 @@ Common deep links (sample — `route_paths.dart` is the full list):
 
 - `/wealth/assets/<id>`, `/wealth/physical/<id>`, `/wealth/liabilities/<id>` — detail pages
 - `/plan/{fire,rebalance}` — plan dashboards (formerly `/ai/insights/*`)
-- `/activity/expenses`, `/activity/expenses/<id>`, `/activity/trade`, `/activity/transfer`
+- `/activity/spending`, `/activity/expense/<id>`, `/activity/trade`, `/activity/transfer`
 - `/settings/{devices,fx-rates,backup,logs,sync,ai-history}`
 - `/login` (with optional `?redirect=`)
 
@@ -64,7 +64,7 @@ For each URL: paste into a fresh tab, press Enter, confirm the listed page rende
 - [ ] `/plan`
 - [ ] `/settings`
 - [ ] `/wealth/assets/<known-id>` — asset detail
-- [ ] `/activity/expenses` — expense list
+- [ ] `/activity/spending` — spending analysis
 - [ ] `/plan/fire` — FIRE plan dashboard
 - [ ] `/settings/ai-history` — read-only chat history
 - [ ] `/settings/devices`

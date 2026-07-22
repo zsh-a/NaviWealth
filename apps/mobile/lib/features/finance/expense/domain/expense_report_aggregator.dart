@@ -29,7 +29,7 @@ class ExpenseReportAggregator {
     final monthlyTotals = _seedMonthlyBuckets(range);
 
     final accountTotals = <String, Decimal>{};
-    final accountItems = <String, List<Expense>>{};
+    final accountCounts = <String, int>{};
 
     var grandTotal = Decimal.zero;
     var skippedFxCount = 0;
@@ -64,7 +64,7 @@ class ExpenseReportAggregator {
       final accountId = expense.expenseAccountId;
       accountTotals[accountId] =
           (accountTotals[accountId] ?? Decimal.zero) + delta;
-      accountItems.putIfAbsent(accountId, () => <Expense>[]).add(expense);
+      accountCounts.update(accountId, (count) => count + 1, ifAbsent: () => 1);
     }
 
     // Materialise the trend buckets in chronological order.
@@ -81,7 +81,7 @@ class ExpenseReportAggregator {
       return CategoryBreakdown(
         expenseAccountId: entry.key,
         total: Money(entry.value, baseCurrency),
-        items: accountItems[entry.key] ?? const <Expense>[],
+        count: accountCounts[entry.key] ?? 0,
       );
     }).toList()..sort((a, b) => b.total.amount.compareTo(a.total.amount));
 

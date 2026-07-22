@@ -85,9 +85,8 @@ abstract final class AppRoutes {
   static const settings = SettingsRoutes.root;
 
   // ── Activity sub-flows (things that happen) ────────────────────────────
-  static const activityExpenses = FinanceRoutes.activityExpenses;
   static const expenseNew = FinanceRoutes.expenseNew;
-  static const expenseReport = FinanceRoutes.expenseReport;
+  static const spending = FinanceRoutes.spending;
   static const cashflow = FinanceRoutes.cashflow;
   static const cashflowRecurring = FinanceRoutes.cashflowRecurring;
   static const cashflowDividends = FinanceRoutes.cashflowDividends;
@@ -254,9 +253,8 @@ abstract final class AppRouteNames {
   // ── Activity ────────────────────────────────────────────────────────────
   static const activity = FinanceRouteNames.activity;
   static const activityEntryDetail = FinanceRouteNames.activityEntryDetail;
-  static const expenses = FinanceRouteNames.expenses;
   static const expenseNew = FinanceRouteNames.expenseNew;
-  static const expenseReport = FinanceRouteNames.expenseReport;
+  static const spending = FinanceRouteNames.spending;
   static const cashflow = FinanceRouteNames.cashflow;
   static const cashflowRecurring = FinanceRouteNames.cashflowRecurring;
   static const expenseDetail = FinanceRouteNames.expenseDetail;

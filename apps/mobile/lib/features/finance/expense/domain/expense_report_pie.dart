@@ -32,12 +32,12 @@ List<CategoryBreakdown> collapseExpenseCategoriesForPie(
   for (var i = 1; i < tail.length; i++) {
     otherAmount += tail[i].total.amount;
   }
-  final mergedItems = [for (final bucket in tail) ...bucket.items];
+  final mergedCount = tail.fold<int>(0, (sum, bucket) => sum + bucket.count);
 
   final other = CategoryBreakdown(
     expenseAccountId: kExpenseReportPieOtherId,
     total: Money(otherAmount, tail.first.total.currency),
-    items: mergedItems,
+    count: mergedCount,
   );
 
   return [...head, other];
@@ -46,8 +46,8 @@ List<CategoryBreakdown> collapseExpenseCategoriesForPie(
 /// Pre-collapse tail rows for the synthetic [kExpenseReportPieOtherId]
 /// bucket, or `null` when [breakdown] is not the Other roll-up.
 ///
-/// Matches [collapseExpenseCategoriesForPie] so list / pie / drill-down
-/// always open the same set of underlying categories.
+/// Matches [collapseExpenseCategoriesForPie] so the Activity drill-down
+/// opens the same set of underlying categories.
 List<CategoryBreakdown>? expenseReportOtherSource({
   required List<CategoryBreakdown> byCategory,
   required CategoryBreakdown breakdown,

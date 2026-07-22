@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-/// Preset windows surfaced by the monthly expense report.
+/// Preset windows surfaced by spending analysis.
 ///
 /// `monthToDate` is the "本月" chip (1st of the current month → today).
 /// `m3` / `m6` are rolling windows ending today (used by both the report
@@ -65,6 +65,10 @@ class ExpenseReportRange {
 
   /// Exclusive upper bound: `tradeDate < to` is the inclusion test.
   final DateTime to;
+
+  /// Number of included UTC calendar days. Unlike a calendar-month count,
+  /// this remains meaningful for month-to-date and arbitrary custom ranges.
+  int get daySpan => to.difference(from).inDays;
 
   /// Number of distinct calendar months touched by the window. The pie
   /// chart and category list need this to print "近 N 月" headers without

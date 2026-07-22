@@ -79,16 +79,10 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
           order: 30,
         ),
         ShellHeaderActionSpec(
-          icon: FLucideIcons.receipt,
-          label: l10n.activityExpenseListLink,
-          onPress: () => context.push(FinanceRoutes.activityExpenses),
-          order: 40,
-        ),
-        ShellHeaderActionSpec(
           icon: FLucideIcons.pieChart,
-          label: l10n.activityExpenseReportLink,
-          onPress: () => context.push(FinanceRoutes.expenseReport),
-          order: 50,
+          label: l10n.spendingTitle,
+          onPress: () => context.push(FinanceRoutes.spending),
+          order: 40,
         ),
       ],
       child: const ShellTabPause(

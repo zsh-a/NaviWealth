@@ -21,7 +21,7 @@ void main() {
       expect(
         isShellTabPathActive(
           activeTabPath: '/activity',
-          routePath: '/activity/expenses',
+          routePath: '/activity/spending',
         ),
         isTrue,
       );

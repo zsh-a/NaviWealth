@@ -215,7 +215,7 @@ DateTime? _parseDate(String? value) {
   if (value == null || value.isEmpty) return null;
   final parsed = DateTime.tryParse(value);
   if (parsed == null) return null;
-  return DateTime(parsed.year, parsed.month, parsed.day);
+  return DateTime.utc(parsed.year, parsed.month, parsed.day);
 }
 
 String _dateOnly(DateTime value) {

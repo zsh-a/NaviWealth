@@ -57,7 +57,7 @@ import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/expense.dart';
 import 'package:naviwealth/features/finance/domain/models/liability.dart';
-import 'package:naviwealth/features/finance/expense/ui/expense_list_page.dart';
+import 'package:naviwealth/features/finance/expense/ui/spending_page.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_calculator.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_goal.dart';
@@ -344,7 +344,7 @@ void main() {
     testWidgets('web checklist secondary deep links resolve', (tester) async {
       final cases = <String, Type>{
         AppRoutes.wealthAsset('asset-1'): AssetDetailPage,
-        AppRoutes.activityExpenses: ExpenseListPage,
+        AppRoutes.spending: SpendingPage,
         AppRoutes.planFire: FirePage,
         AppRoutes.settingsAiHistory: AiChatPage,
         AppRoutes.settingsDevices: DevicesPage,

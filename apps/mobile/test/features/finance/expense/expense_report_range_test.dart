@@ -11,6 +11,7 @@ void main() {
       expect(range.from, DateTime.utc(2026, 4, 1));
       expect(range.to, DateTime.utc(2026, 4, 18));
       expect(range.monthSpan, 1);
+      expect(range.daySpan, 17);
     });
 
     test('m3 starts at the 1st of two months back', () {

@@ -139,10 +139,8 @@ String _cashFlowAxisLabel(String label, {required bool compact}) {
   return label;
 }
 
-enum _CashFlowCategoryMode { expenses, income }
-
-class _CategoryPanel extends StatefulWidget {
-  const _CategoryPanel({
+class _IncomeSourcesPanel extends StatelessWidget {
+  const _IncomeSourcesPanel({
     required this.model,
     required this.formatter,
     required this.onOpenCategory,
@@ -153,28 +151,9 @@ class _CategoryPanel extends StatefulWidget {
   final ValueChanged<_CategoryTotal> onOpenCategory;
 
   @override
-  State<_CategoryPanel> createState() => _CategoryPanelState();
-}
-
-class _CategoryPanelState extends State<_CategoryPanel> {
-  _CashFlowCategoryMode _mode = _CashFlowCategoryMode.expenses;
-
-  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final media = MediaQuery.of(context);
-    final compactLabels =
-        Breakpoints.isMobile(media.size.width) ||
-        media.textScaler.scale(1) > 1.3;
-    final categories = widget.model.categories
-        .where((category) {
-          return switch (_mode) {
-            _CashFlowCategoryMode.expenses =>
-              category.kind == CashFlowKind.expense,
-            _CashFlowCategoryMode.income => _isIncomeKind(category.kind),
-          };
-        })
-        .toList(growable: false);
+    final categories = model.categories;
     final total = categories.fold<Decimal>(
       Decimal.zero,
       (sum, category) => sum + category.amount,
@@ -192,25 +171,9 @@ class _CategoryPanelState extends State<_CategoryPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SegmentedRow<_CashFlowCategoryMode>(
-            options: _CashFlowCategoryMode.values,
-            value: _mode,
-            minSegmentWidth: 96,
-            labelOf: (mode) => switch (mode) {
-              _CashFlowCategoryMode.expenses =>
-                compactLabels
-                    ? l10n.cashFlowKpiOutflow
-                    : l10n.cashFlowCategoryExpenses,
-              _CashFlowCategoryMode.income =>
-                compactLabels
-                    ? l10n.cashFlowKpiInflow
-                    : l10n.cashFlowCategoryIncome,
-            },
-            semanticLabelOf: (mode) => switch (mode) {
-              _CashFlowCategoryMode.expenses => l10n.cashFlowCategoryExpenses,
-              _CashFlowCategoryMode.income => l10n.cashFlowCategoryIncome,
-            },
-            onChanged: (mode) => setState(() => _mode = mode),
+          Text(
+            l10n.cashFlowCategoryIncome,
+            style: context.theme.typography.body.md,
           ),
           const SizedBox(height: AppSpacing.s12),
           if (categories.isEmpty)
@@ -228,12 +191,11 @@ class _CategoryPanelState extends State<_CategoryPanel> {
           for (final category in categories)
             _CategoryRow(
               category: category,
-              formatter: widget.formatter,
+              formatter: formatter,
               total: total,
-              onPress: () => widget.onOpenCategory(category),
+              onPress: () => onOpenCategory(category),
             ),
-          if (_mode == _CashFlowCategoryMode.income &&
-              categories.any((c) => c.kind == CashFlowKind.dividend))
+          if (categories.any((c) => c.kind == CashFlowKind.dividend))
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.s12),
               child: FButton(

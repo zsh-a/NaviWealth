@@ -345,10 +345,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cashFlowKpiInflow => 'Inflow';
 
   @override
-  String get cashFlowKpiOutflow => 'Outflow';
+  String get cashFlowKpiOutflow => 'Cash spending';
 
   @override
-  String get cashFlowKpiNet => 'Net';
+  String get cashFlowKpiNet => 'Operating net';
 
   @override
   String get cashFlowIncomeExpenseTitle => 'Income vs expense';
@@ -358,9 +358,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cashFlowCategoryTitle => 'Category mix';
-
-  @override
-  String get cashFlowCategoryExpenses => 'Expense categories';
 
   @override
   String get cashFlowCategoryIncome => 'Income sources';
@@ -6596,9 +6593,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountsJournalAction => 'Journal';
 
   @override
-  String get expenseReportTitle => 'Expense Report';
-
-  @override
   String get planFireTitle => 'FIRE';
 
   @override
@@ -8605,12 +8599,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get expenseReportAppBarTitle => 'Expense Report';
-
-  @override
-  String expenseReportLoadError(String error) {
-    return 'Failed to load report: $error';
-  }
+  String get spendingTitle => 'Spending';
 
   @override
   String get expenseReportRangeThisMonth => 'This month';
@@ -8631,7 +8620,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseReportTotalExpenses => 'Total expenses';
 
   @override
-  String get expenseReportMonthlyAverage => 'Monthly avg';
+  String get expenseReportDailyAverage => 'Daily avg';
 
   @override
   String get expenseReportEntryCount => 'Entries';
@@ -8645,8 +8634,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String expenseReportBaseCurrency(String currency, int months) {
-    return 'Base currency $currency · monthly avg over $months months';
+  String expenseReportBaseCurrency(String currency, int days) {
+    return 'Base currency $currency · $days calendar days';
   }
 
   @override
@@ -8685,74 +8674,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expenseReportMonthlyTrendSemantic => 'Monthly expense trend';
-
-  @override
-  String get expenseReportCategoryDetail => 'Category detail';
-
-  @override
-  String expenseReportItemCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count entries',
-      one: '1 entry',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get expenseListSearchHint => 'Search by note';
-
-  @override
-  String get expenseListAllCategories => 'All categories';
-
-  @override
-  String get expenseListGroupMonth => 'Month';
-
-  @override
-  String get expenseListGroupWeek => 'Week';
-
-  @override
-  String expenseListTotal(String amount) {
-    return 'Total $amount';
-  }
-
-  @override
-  String get expenseListUncategorized => 'Uncategorized';
-
-  @override
-  String get expenseListEmptyFiltered => 'No matching expenses.';
-
-  @override
-  String get expenseListEmptyDefault =>
-      'No expenses yet. Tap the + button to start tracking.';
-
-  @override
-  String expenseListSelectedCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count transactions selected',
-      one: '1 transaction selected',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get expenseListClearSelection => 'Clear selection';
-
-  @override
-  String get expenseListExplainSelected => 'Explain selected';
-
-  @override
-  String expenseListMonthGroup(int year, int month) {
-    return '$year 年 $month 月';
-  }
-
-  @override
-  String expenseListWeekGroup(int year, int week) {
-    return '$year 年第 $week 周';
-  }
 
   @override
   String assetDetailLoadError(String error) {
@@ -12074,12 +11995,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get amountHidden => 'Amount hidden';
-
-  @override
-  String get activityExpenseListLink => 'Expenses';
-
-  @override
-  String get activityExpenseReportLink => 'Expense Report';
 
   @override
   String get tradeVerbBuy => 'Buy';

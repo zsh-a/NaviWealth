@@ -24,7 +24,7 @@ const String kSelectedQueryKey = 'selected';
 /// Logical parent of [location]: drop the last path segment, ignoring
 /// any query string. Primary-tab roots and Home collapse to `/`.
 ///
-///   /activity/expenses/new   -> /activity/expenses
+///   /activity/expense/new    -> /activity/expense
 ///   /accounts/list/abc123    -> /accounts/list
 ///   /accounts                -> /   (a primary tab root)
 ///   /                        -> /

@@ -7,7 +7,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 void main() {
   group('logicalParentOf', () {
     test('drops the last segment of a nested path', () {
-      expect(logicalParentOf('/activity/expenses/new'), '/activity/expenses');
+      expect(logicalParentOf('/activity/expense/new'), '/activity/expense');
       expect(logicalParentOf('/accounts/list/abc123'), '/accounts/list');
       expect(
         logicalParentOf('/accounts/liabilities/new'),

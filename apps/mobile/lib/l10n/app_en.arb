@@ -215,16 +215,15 @@
   "@cashFlowPeriodYear": { "description": "Cash-flow period selector: yearly" },
   "cashFlowKpiInflow": "Inflow",
   "@cashFlowKpiInflow": { "description": "Cash-flow KPI: incoming cash" },
-  "cashFlowKpiOutflow": "Outflow",
+  "cashFlowKpiOutflow": "Cash spending",
   "@cashFlowKpiOutflow": { "description": "Cash-flow KPI: outgoing cash" },
-  "cashFlowKpiNet": "Net",
+  "cashFlowKpiNet": "Operating net",
   "@cashFlowKpiNet": { "description": "Cash-flow KPI: net cash flow" },
   "cashFlowIncomeExpenseTitle": "Income vs expense",
   "@cashFlowIncomeExpenseTitle": { "description": "Cash-flow bar chart title" },
   "cashFlowNetTrendTitle": "Net cash-flow trend",
   "@cashFlowNetTrendTitle": { "description": "Cash-flow trend chart title" },
   "cashFlowCategoryTitle": "Category mix",
-  "cashFlowCategoryExpenses": "Expense categories",
   "cashFlowCategoryIncome": "Income sources",
   "@cashFlowCategoryTitle": { "description": "Cash-flow category pie chart title" },
   "cashFlowViewDividendCenter": "View dividend center",
@@ -3500,8 +3499,6 @@
   "@accountsTransferAction": { "description": "Accounts page app bar: transfer action tooltip" },
   "accountsJournalAction": "Journal",
   "@accountsJournalAction": { "description": "Accounts page app bar: journal action tooltip" },
-  "expenseReportTitle": "Expense Report",
-  "@expenseReportTitle": { "description": "Expense list page app bar: report action tooltip" },
   "planFireTitle": "FIRE",
   "@planFireTitle": { "description": "Plan page: FIRE card title" },
   "planFireSubtitle": "Financial independence calculator",
@@ -4625,13 +4622,8 @@
     "placeholders": { "count": { "type": "int" } }
   },
 
-  "expenseReportAppBarTitle": "Expense Report",
-  "@expenseReportAppBarTitle": { "description": "Expense report page: AppBar title" },
-  "expenseReportLoadError": "Failed to load report: {error}",
-  "@expenseReportLoadError": {
-    "description": "Expense report page: load error",
-    "placeholders": { "error": { "type": "String" } }
-  },
+  "spendingTitle": "Spending",
+  "@spendingTitle": { "description": "Spending analysis page title" },
   "expenseReportRangeThisMonth": "This month",
   "@expenseReportRangeThisMonth": { "description": "Expense report: range chip — this month" },
   "expenseReportRangeLast3Months": "Last 3 months",
@@ -4644,8 +4636,8 @@
   "@expenseReportRangeCustom": { "description": "Expense report: range chip — custom" },
   "expenseReportTotalExpenses": "Total expenses",
   "@expenseReportTotalExpenses": { "description": "Expense report: summary card heading" },
-  "expenseReportMonthlyAverage": "Monthly avg",
-  "@expenseReportMonthlyAverage": { "description": "Expense report: monthly average metric label" },
+  "expenseReportDailyAverage": "Daily avg",
+  "@expenseReportDailyAverage": { "description": "Spending analysis: daily average metric label" },
   "expenseReportEntryCount": "Entries",
   "@expenseReportEntryCount": { "description": "Expense report: entry count metric label" },
   "expenseReportCategoryCount": "Categories",
@@ -4655,12 +4647,12 @@
     "description": "Expense report: warning about skipped FX entries",
     "placeholders": { "count": { "type": "int" } }
   },
-  "expenseReportBaseCurrency": "Base currency {currency} · monthly avg over {months} months",
+  "expenseReportBaseCurrency": "Base currency {currency} · {days} calendar days",
   "@expenseReportBaseCurrency": {
     "description": "Expense report: info line about base currency",
     "placeholders": {
       "currency": { "type": "String" },
-      "months": { "type": "int" }
+      "days": { "type": "int" }
     }
   },
   "expenseReportCategoryShare": "Category share",
@@ -4689,59 +4681,6 @@
   "@expenseReportSeriesExpenses": { "description": "Expense report: chart series name" },
   "expenseReportMonthlyTrendSemantic": "Monthly expense trend",
   "@expenseReportMonthlyTrendSemantic": { "description": "Expense report: chart accessibility label" },
-  "expenseReportCategoryDetail": "Category detail",
-  "@expenseReportCategoryDetail": { "description": "Expense report: category detail section title" },
-  "expenseReportItemCount": "{count, plural, =1{1 entry} other{{count} entries}}",
-  "@expenseReportItemCount": {
-    "description": "Expense report: entry count per category",
-    "placeholders": { "count": { "type": "int" } }
-  },
-
-  "expenseListSearchHint": "Search by note",
-  "@expenseListSearchHint": { "description": "Expense list: search field hint" },
-  "expenseListAllCategories": "All categories",
-  "@expenseListAllCategories": { "description": "Expense list: filter chip — all categories" },
-  "expenseListGroupMonth": "Month",
-  "@expenseListGroupMonth": { "description": "Expense list: grouping chip — month" },
-  "expenseListGroupWeek": "Week",
-  "@expenseListGroupWeek": { "description": "Expense list: grouping chip — week" },
-  "expenseListTotal": "Total {amount}",
-  "@expenseListTotal": {
-    "description": "Expense list: group total label",
-    "placeholders": { "amount": { "type": "String" } }
-  },
-  "expenseListUncategorized": "Uncategorized",
-  "@expenseListUncategorized": { "description": "Expense list: fallback category name" },
-  "expenseListEmptyFiltered": "No matching expenses.",
-  "@expenseListEmptyFiltered": { "description": "Expense list: empty state when filtered" },
-  "expenseListEmptyDefault": "No expenses yet. Tap the + button to start tracking.",
-  "@expenseListEmptyDefault": { "description": "Expense list: empty state default" },
-  "expenseListSelectedCount": "{count, plural, one{1 transaction selected} other{{count} transactions selected}}",
-  "@expenseListSelectedCount": {
-    "description": "Expense list: selected transaction count in the selection toolbar",
-    "placeholders": { "count": { "type": "int" } }
-  },
-  "expenseListClearSelection": "Clear selection",
-  "@expenseListClearSelection": { "description": "Expense list: clear selected transactions button label" },
-  "expenseListExplainSelected": "Explain selected",
-  "@expenseListExplainSelected": { "description": "Expense list: ask AI to explain selected transactions action" },
-  "expenseListMonthGroup": "{year} 年 {month} 月",
-  "@expenseListMonthGroup": {
-    "description": "Expense list: month group header",
-    "placeholders": {
-      "year": { "type": "int" },
-      "month": { "type": "int" }
-    }
-  },
-  "expenseListWeekGroup": "{year} 年第 {week} 周",
-  "@expenseListWeekGroup": {
-    "description": "Expense list: week group header",
-    "placeholders": {
-      "year": { "type": "int" },
-      "week": { "type": "int" }
-    }
-  },
-
   "assetDetailLoadError": "Failed to load: {error}",
   "@assetDetailLoadError": {
     "description": "Asset detail page: generic load error",
@@ -6487,10 +6426,6 @@
   "knowledgeNotesHintBody": "The Notes segment is for browsing. Close this panel, switch to Inbox, and use the create action there.",
   "amountHidden": "Amount hidden",
   "@amountHidden": { "description": "Screen reader label when monetary amount is hidden by privacy mode" },
-  "activityExpenseListLink": "Expenses",
-  "@activityExpenseListLink": { "description": "Activity page quick link: navigate to expense list" },
-  "activityExpenseReportLink": "Expense Report",
-  "@activityExpenseReportLink": { "description": "Activity page quick link: navigate to expense report" },
   "tradeVerbBuy": "Buy",
   "@tradeVerbBuy": { "description": "Trade narration verb: buy" },
   "tradeVerbSell": "Sell",

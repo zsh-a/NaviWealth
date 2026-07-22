@@ -327,10 +327,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cashFlowKpiInflow => '流入';
 
   @override
-  String get cashFlowKpiOutflow => '流出';
+  String get cashFlowKpiOutflow => '现金支出';
 
   @override
-  String get cashFlowKpiNet => '净额';
+  String get cashFlowKpiNet => '经营净额';
 
   @override
   String get cashFlowIncomeExpenseTitle => '收入 vs 支出';
@@ -340,9 +340,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cashFlowCategoryTitle => '类目分布';
-
-  @override
-  String get cashFlowCategoryExpenses => '支出分类';
 
   @override
   String get cashFlowCategoryIncome => '收入来源';
@@ -6258,9 +6255,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountsJournalAction => '日记账';
 
   @override
-  String get expenseReportTitle => '支出报表';
-
-  @override
   String get planFireTitle => 'FIRE';
 
   @override
@@ -8178,12 +8172,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get expenseReportAppBarTitle => '支出报表';
-
-  @override
-  String expenseReportLoadError(String error) {
-    return '报表加载失败：$error';
-  }
+  String get spendingTitle => '支出分析';
 
   @override
   String get expenseReportRangeThisMonth => '本月';
@@ -8204,7 +8193,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get expenseReportTotalExpenses => '总支出';
 
   @override
-  String get expenseReportMonthlyAverage => '月均';
+  String get expenseReportDailyAverage => '日均';
 
   @override
   String get expenseReportEntryCount => '记账数';
@@ -8218,8 +8207,8 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String expenseReportBaseCurrency(String currency, int months) {
-    return '基础货币 $currency · 月均按 $months 个月折算';
+  String expenseReportBaseCurrency(String currency, int days) {
+    return '基础货币 $currency · 共 $days 个自然日';
   }
 
   @override
@@ -8257,71 +8246,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get expenseReportMonthlyTrendSemantic => '月度支出趋势';
-
-  @override
-  String get expenseReportCategoryDetail => '类目明细';
-
-  @override
-  String expenseReportItemCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count 笔',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get expenseListSearchHint => '按备注搜索';
-
-  @override
-  String get expenseListAllCategories => '全部类目';
-
-  @override
-  String get expenseListGroupMonth => '月';
-
-  @override
-  String get expenseListGroupWeek => '周';
-
-  @override
-  String expenseListTotal(String amount) {
-    return '合计 $amount';
-  }
-
-  @override
-  String get expenseListUncategorized => '未分类';
-
-  @override
-  String get expenseListEmptyFiltered => '没有匹配的支出。';
-
-  @override
-  String get expenseListEmptyDefault => '还没有记账。点底部加号按钮，开始追踪日常消费。';
-
-  @override
-  String expenseListSelectedCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '已选择 $count 笔交易',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get expenseListClearSelection => '清除选择';
-
-  @override
-  String get expenseListExplainSelected => '解读所选';
-
-  @override
-  String expenseListMonthGroup(int year, int month) {
-    return '$year 年 $month 月';
-  }
-
-  @override
-  String expenseListWeekGroup(int year, int week) {
-    return '$year 年第 $week 周';
-  }
 
   @override
   String assetDetailLoadError(String error) {
@@ -11483,12 +11407,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get amountHidden => '金额已隐藏';
-
-  @override
-  String get activityExpenseListLink => '支出';
-
-  @override
-  String get activityExpenseReportLink => '支出报表';
 
   @override
   String get tradeVerbBuy => '买入';

@@ -140,7 +140,7 @@ Future<Widget> _wrap({
             ),
           ),
           GoRoute(
-            path: AppRoutes.activityExpenses,
+            path: AppRoutes.activity,
             builder: (_, _) => const SizedBox(),
           ),
         ],

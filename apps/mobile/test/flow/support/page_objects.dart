@@ -8,6 +8,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/forms/amount_field.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/ai_chat/ui/chat_composer.dart';
 import 'package:naviwealth/features/finance/shared/ui/account_tree_picker.dart';
@@ -185,15 +186,8 @@ class ActivityPageObject {
     await settle(tester);
   }
 
-  Future<void> openExpenseList() async {
-    final moreActions = find.bySemanticsLabel('More actions');
-    expect(moreActions, findsOneWidget, reason: 'activity overflow missing');
-    await tester.tap(moreActions);
-    await settle(tester);
-    final action = find.text('Expenses');
-    expect(action, findsOneWidget, reason: 'expenses overflow action missing');
-    await tester.tap(action);
-    await settle(tester);
+  void expectExpenseVisible(String note) {
+    expect(find.textContaining(note), findsWidgets);
   }
 }
 
@@ -222,14 +216,15 @@ class ExpenseFormObject {
 
   void expectCreateMode() {
     expect(find.text('New expense'), findsWidgets);
-    expect(find.widgetWithText(FTextFormField, 'Amount'), findsOneWidget);
-    expect(find.text('Category'), findsWidgets);
-    expect(find.text('Account'), findsWidgets);
+    expect(find.byType(AmountField), findsOneWidget);
   }
 
   Future<void> enterAmount(String amount) async {
     await tester.enterText(
-      find.widgetWithText(FTextFormField, 'Amount'),
+      find.descendant(
+        of: find.byType(AmountField),
+        matching: find.byType(FTextFormField),
+      ),
       amount,
     );
     await settle(tester);
@@ -261,17 +256,6 @@ class ExpenseFormObject {
     await tester.tap(save);
     await settle(tester);
     await settle(tester);
-  }
-}
-
-/// Activity -> Expenses list.
-class ExpenseListPageObject {
-  ExpenseListPageObject(this.tester);
-
-  final WidgetTester tester;
-
-  void expectExpenseVisible(String note) {
-    expect(find.textContaining(note), findsWidgets);
   }
 }
 

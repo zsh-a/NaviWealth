@@ -1,7 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
-import 'package:naviwealth/features/finance/domain/models/expense.dart';
 import 'package:naviwealth/features/finance/expense/domain/expense_category_seed_colors.dart';
 import 'package:naviwealth/features/finance/expense/domain/expense_report.dart';
 import 'package:naviwealth/features/finance/expense/domain/expense_report_pie.dart';
@@ -52,7 +51,7 @@ void main() {
       return CategoryBreakdown(
         expenseAccountId: id,
         total: Money(Decimal.fromInt(amount), 'CNY'),
-        items: const <Expense>[],
+        count: 1,
       );
     }
 
@@ -74,6 +73,7 @@ void main() {
       expect(other.expenseAccountId, kExpenseReportPieOtherId);
       // amounts 93+92+91+90+89 = 455 for c7..c11
       expect(other.total.amount, Decimal.fromInt(93 + 92 + 91 + 90 + 89));
+      expect(other.count, 5);
     });
 
     test('Other total equals sum of collapsed tail', () {

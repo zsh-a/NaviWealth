@@ -689,13 +689,13 @@ abstract class AppLocalizations {
   /// Cash-flow KPI: outgoing cash
   ///
   /// In en, this message translates to:
-  /// **'Outflow'**
+  /// **'Cash spending'**
   String get cashFlowKpiOutflow;
 
   /// Cash-flow KPI: net cash flow
   ///
   /// In en, this message translates to:
-  /// **'Net'**
+  /// **'Operating net'**
   String get cashFlowKpiNet;
 
   /// Cash-flow bar chart title
@@ -715,12 +715,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Category mix'**
   String get cashFlowCategoryTitle;
-
-  /// No description provided for @cashFlowCategoryExpenses.
-  ///
-  /// In en, this message translates to:
-  /// **'Expense categories'**
-  String get cashFlowCategoryExpenses;
 
   /// No description provided for @cashFlowCategoryIncome.
   ///
@@ -11215,12 +11209,6 @@ abstract class AppLocalizations {
   /// **'Journal'**
   String get accountsJournalAction;
 
-  /// Expense list page app bar: report action tooltip
-  ///
-  /// In en, this message translates to:
-  /// **'Expense Report'**
-  String get expenseReportTitle;
-
   /// Plan page: FIRE card title
   ///
   /// In en, this message translates to:
@@ -14524,17 +14512,11 @@ abstract class AppLocalizations {
   /// **'{count} earlier messages were folded to stay within the context limit.'**
   String chatContextTruncated(int count);
 
-  /// Expense report page: AppBar title
+  /// Spending analysis page title
   ///
   /// In en, this message translates to:
-  /// **'Expense Report'**
-  String get expenseReportAppBarTitle;
-
-  /// Expense report page: load error
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to load report: {error}'**
-  String expenseReportLoadError(String error);
+  /// **'Spending'**
+  String get spendingTitle;
 
   /// Expense report: range chip — this month
   ///
@@ -14572,11 +14554,11 @@ abstract class AppLocalizations {
   /// **'Total expenses'**
   String get expenseReportTotalExpenses;
 
-  /// Expense report: monthly average metric label
+  /// Spending analysis: daily average metric label
   ///
   /// In en, this message translates to:
-  /// **'Monthly avg'**
-  String get expenseReportMonthlyAverage;
+  /// **'Daily avg'**
+  String get expenseReportDailyAverage;
 
   /// Expense report: entry count metric label
   ///
@@ -14599,8 +14581,8 @@ abstract class AppLocalizations {
   /// Expense report: info line about base currency
   ///
   /// In en, this message translates to:
-  /// **'Base currency {currency} · monthly avg over {months} months'**
-  String expenseReportBaseCurrency(String currency, int months);
+  /// **'Base currency {currency} · {days} calendar days'**
+  String expenseReportBaseCurrency(String currency, int days);
 
   /// Expense report: category pie chart section title
   ///
@@ -14655,96 +14637,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Monthly expense trend'**
   String get expenseReportMonthlyTrendSemantic;
-
-  /// Expense report: category detail section title
-  ///
-  /// In en, this message translates to:
-  /// **'Category detail'**
-  String get expenseReportCategoryDetail;
-
-  /// Expense report: entry count per category
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 entry} other{{count} entries}}'**
-  String expenseReportItemCount(int count);
-
-  /// Expense list: search field hint
-  ///
-  /// In en, this message translates to:
-  /// **'Search by note'**
-  String get expenseListSearchHint;
-
-  /// Expense list: filter chip — all categories
-  ///
-  /// In en, this message translates to:
-  /// **'All categories'**
-  String get expenseListAllCategories;
-
-  /// Expense list: grouping chip — month
-  ///
-  /// In en, this message translates to:
-  /// **'Month'**
-  String get expenseListGroupMonth;
-
-  /// Expense list: grouping chip — week
-  ///
-  /// In en, this message translates to:
-  /// **'Week'**
-  String get expenseListGroupWeek;
-
-  /// Expense list: group total label
-  ///
-  /// In en, this message translates to:
-  /// **'Total {amount}'**
-  String expenseListTotal(String amount);
-
-  /// Expense list: fallback category name
-  ///
-  /// In en, this message translates to:
-  /// **'Uncategorized'**
-  String get expenseListUncategorized;
-
-  /// Expense list: empty state when filtered
-  ///
-  /// In en, this message translates to:
-  /// **'No matching expenses.'**
-  String get expenseListEmptyFiltered;
-
-  /// Expense list: empty state default
-  ///
-  /// In en, this message translates to:
-  /// **'No expenses yet. Tap the + button to start tracking.'**
-  String get expenseListEmptyDefault;
-
-  /// Expense list: selected transaction count in the selection toolbar
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, one{1 transaction selected} other{{count} transactions selected}}'**
-  String expenseListSelectedCount(int count);
-
-  /// Expense list: clear selected transactions button label
-  ///
-  /// In en, this message translates to:
-  /// **'Clear selection'**
-  String get expenseListClearSelection;
-
-  /// Expense list: ask AI to explain selected transactions action
-  ///
-  /// In en, this message translates to:
-  /// **'Explain selected'**
-  String get expenseListExplainSelected;
-
-  /// Expense list: month group header
-  ///
-  /// In en, this message translates to:
-  /// **'{year} 年 {month} 月'**
-  String expenseListMonthGroup(int year, int month);
-
-  /// Expense list: week group header
-  ///
-  /// In en, this message translates to:
-  /// **'{year} 年第 {week} 周'**
-  String expenseListWeekGroup(int year, int week);
 
   /// Asset detail page: generic load error
   ///
@@ -20533,18 +20425,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Amount hidden'**
   String get amountHidden;
-
-  /// Activity page quick link: navigate to expense list
-  ///
-  /// In en, this message translates to:
-  /// **'Expenses'**
-  String get activityExpenseListLink;
-
-  /// Activity page quick link: navigate to expense report
-  ///
-  /// In en, this message translates to:
-  /// **'Expense Report'**
-  String get activityExpenseReportLink;
 
   /// Trade narration verb: buy
   ///

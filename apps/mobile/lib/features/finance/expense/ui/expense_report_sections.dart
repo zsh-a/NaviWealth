@@ -1,11 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
-import 'package:naviwealth/features/finance/domain/models/expense.dart';
 import 'package:naviwealth/features/finance/shared/l10n/account_l10n.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -13,10 +11,30 @@ import '../domain/expense_report.dart';
 import '../domain/expense_report_pie.dart';
 import 'expense_category_visuals.dart';
 
-part 'expense_report_category_list.dart';
-part 'expense_report_drill_down.dart';
 part 'expense_report_helpers.dart';
 part 'expense_report_pie.dart';
+
+void _openSpendingBreakdown(
+  BuildContext context, {
+  required ExpenseReport report,
+  required CategoryBreakdown breakdown,
+}) {
+  final source = expenseReportOtherSource(
+    byCategory: report.byCategory,
+    breakdown: breakdown,
+  );
+  final accountIds = source == null
+      ? <String>{breakdown.expenseAccountId}
+      : source.map((item) => item.expenseAccountId).toSet();
+  context.go(
+    FinanceRoutes.activityFeed(
+      from: report.range.from,
+      to: report.range.to,
+      kinds: const <String>['expense'],
+      accountIds: accountIds,
+    ),
+  );
+}
 
 class ExpenseCategoryPieCard extends StatelessWidget {
   const ExpenseCategoryPieCard({
@@ -159,65 +177,6 @@ class ExpenseTrendCard extends StatelessWidget {
                 );
               },
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ExpenseCategoryListCard extends StatelessWidget {
-  const ExpenseCategoryListCard({
-    super.key,
-    required this.report,
-    required this.categoryById,
-  });
-
-  final ExpenseReport report;
-  final Map<String, Account> categoryById;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    // Same Top-N + Other collapse as the pie so share, legend, and list
-    // describe one categorical view.
-    final categories = collapseExpenseCategoriesForPie(report.byCategory);
-    if (categories.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return SoftCard.flat(
-      borderless: true,
-      tinted: false,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s4,
-          vertical: AppSpacing.s8,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s12,
-                AppSpacing.s8,
-                AppSpacing.s12,
-                AppSpacing.s4,
-              ),
-              child: Text(
-                l10n.expenseReportCategoryDetail,
-                style: context.theme.typography.body.md,
-              ),
-            ),
-            for (final breakdown in categories)
-              _CategoryTile(
-                breakdown: breakdown,
-                categoryById: categoryById,
-                baseCurrency: report.baseCurrency,
-                otherSource: expenseReportOtherSource(
-                  byCategory: report.byCategory,
-                  breakdown: breakdown,
-                ),
-              ),
           ],
         ),
       ),

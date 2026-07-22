@@ -59,15 +59,16 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
       run: (BuildContext ctx) => ctx.go(FinanceRoutes.plan),
     ),
     CommandPaletteEntry(
-      id: 'nav.expenses',
-      label: l10n.navExpenses,
-      icon: FLucideIcons.receipt,
+      id: 'nav.spending',
+      label: l10n.spendingTitle,
+      icon: FLucideIcons.pieChart,
       keywords: const <String>[
-        FinanceRoutes.activityExpenses,
+        FinanceRoutes.spending,
+        'spending',
         'expenses',
-        '支出',
+        '支出分析',
       ],
-      run: (BuildContext ctx) => ctx.go(FinanceRoutes.activityExpenses),
+      run: (BuildContext ctx) => ctx.go(FinanceRoutes.spending),
     ),
     ...cashFlowCommandPaletteEntries(l10n),
     CommandPaletteEntry(

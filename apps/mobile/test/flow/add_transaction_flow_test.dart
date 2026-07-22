@@ -61,8 +61,7 @@ void main() {
       await form.enterNote('Flow coffee');
       await form.save();
 
-      await activity.openExpenseList();
-      ExpenseListPageObject(tester).expectExpenseVisible('Flow coffee');
+      activity.expectExpenseVisible('Flow coffee');
       await closeApp(tester);
     }, tags: 'flow');
   });

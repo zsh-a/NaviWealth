@@ -87,8 +87,8 @@ void main() {
 
     expect(decoded.accountIds, {'bank', 'cash'});
     expect(decoded.kinds, {ActivityKind.expense, ActivityKind.transfer});
-    expect(decoded.dateRange?.start, DateTime(2026, 5));
-    expect(decoded.dateRange?.end, DateTime(2026, 6));
+    expect(decoded.dateRange?.start, DateTime.utc(2026, 5));
+    expect(decoded.dateRange?.end, DateTime.utc(2026, 6));
   });
 }
 

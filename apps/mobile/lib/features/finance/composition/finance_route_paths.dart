@@ -7,9 +7,8 @@ abstract final class FinanceRoutes {
   static const wealth = '/wealth';
   static const plan = '/plan';
 
-  static const activityExpenses = '/activity/expenses';
-  static const expenseNew = '/activity/expenses/new';
-  static const expenseReport = '/activity/expenses/report';
+  static const spending = '/activity/spending';
+  static const expenseNew = '/activity/expense/new';
   static const cashflow = '/activity/cashflow';
   static const cashflowRecurring = '/activity/cashflow/recurring';
   static const cashflowDividends = '/wealth/portfolio/dividends';
@@ -67,7 +66,37 @@ abstract final class FinanceRoutes {
       '$transfer?from=${Uri.encodeQueryComponent(id)}';
 
   static String expense(String id) =>
-      '/activity/expenses/${Uri.encodeComponent(id)}';
+      '/activity/expense/${Uri.encodeComponent(id)}';
+
+  static String activityFeed({
+    DateTime? from,
+    DateTime? to,
+    Iterable<String> kinds = const <String>[],
+    Iterable<String> accountIds = const <String>[],
+    String? query,
+  }) {
+    String day(DateTime value) {
+      final utc = value.toUtc();
+      return '${utc.year.toString().padLeft(4, '0')}-'
+          '${utc.month.toString().padLeft(2, '0')}-'
+          '${utc.day.toString().padLeft(2, '0')}';
+    }
+
+    final sortedKinds = kinds.toList(growable: false)..sort();
+    final sortedAccounts = accountIds.toList(growable: false)..sort();
+    return Uri(
+      path: activity,
+      queryParameters: <String, String>{
+        if (from != null) 'from': day(from),
+        if (to != null) 'to': day(to),
+        if (sortedKinds.isNotEmpty) 'kinds': sortedKinds.join(','),
+        if (sortedAccounts.isNotEmpty) 'accounts': sortedAccounts.join(','),
+        if (query?.trim().isNotEmpty == true) 'q': query!.trim(),
+      },
+    ).toString();
+  }
+
+  static String get expenseActivity => activityFeed(kinds: const ['expense']);
 
   static String activityEntry(String id) =>
       '/activity/entry/${Uri.encodeComponent(id)}';
@@ -116,9 +145,8 @@ abstract final class FinanceRouteNames {
 
   static const activity = 'activity';
   static const activityEntryDetail = 'activity-entry-detail';
-  static const expenses = 'expenses';
+  static const spending = 'spending';
   static const expenseNew = 'expense-new';
-  static const expenseReport = 'expense-report';
   static const cashflow = 'cashflow';
   static const cashflowRecurring = 'cashflow-recurring';
   static const expenseDetail = 'expense-detail';

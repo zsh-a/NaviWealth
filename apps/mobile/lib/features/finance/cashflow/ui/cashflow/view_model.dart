@@ -8,7 +8,6 @@ class _CashFlowViewModel {
     required this.currentOutflow,
     required this.currentNet,
     required this.categories,
-    required this.categoryTotal,
   });
 
   final String baseCurrency;
@@ -17,7 +16,6 @@ class _CashFlowViewModel {
   final _MoneyBreakdown currentOutflow;
   final _MoneyBreakdown currentNet;
   final List<_CategoryTotal> categories;
-  final Decimal categoryTotal;
 
   factory _CashFlowViewModel.fromSummary(
     CashFlowSummary summary, {
@@ -47,10 +45,7 @@ class _CashFlowViewModel {
       }
       if (bucket.key == currentKey) {
         current.add(bucket);
-        if (!_isIncomeKind(bucket.kind) &&
-            bucket.kind != CashFlowKind.expense) {
-          continue;
-        }
+        if (!_isIncomeKind(bucket.kind)) continue;
         final magnitude = amount.abs();
         if (magnitude > Decimal.zero) {
           final key = bucket.categoryId ?? bucket.kind.name;
@@ -58,7 +53,6 @@ class _CashFlowViewModel {
             key,
             (value) => value..amount += magnitude,
             ifAbsent: () => _CategoryAcc(
-              key: key,
               accountId: bucket.categoryId,
               kind: bucket.kind,
               label: bucket.categoryLabel,
@@ -73,7 +67,6 @@ class _CashFlowViewModel {
         categoryAcc.values
             .map(
               (entry) => _CategoryTotal(
-                key: entry.key,
                 accountId: entry.accountId,
                 kind: entry.kind,
                 label: entry.label,
@@ -83,11 +76,6 @@ class _CashFlowViewModel {
             )
             .toList()
           ..sort((a, b) => b.amount.compareTo(a.amount));
-    final categoryTotal = categories.fold<Decimal>(
-      Decimal.zero,
-      (sum, category) => sum + category.amount,
-    );
-
     return _CashFlowViewModel(
       baseCurrency: summary.baseCurrency,
       periods: List.unmodifiable(byPeriod.values),
@@ -95,7 +83,6 @@ class _CashFlowViewModel {
       currentOutflow: current.outflow,
       currentNet: current.net,
       categories: List.unmodifiable(categories),
-      categoryTotal: categoryTotal,
     );
   }
 }
@@ -162,7 +149,6 @@ class _CurrentAcc {
 
 class _CategoryTotal {
   const _CategoryTotal({
-    required this.key,
     required this.accountId,
     required this.kind,
     required this.label,
@@ -170,7 +156,6 @@ class _CategoryTotal {
     required this.currency,
   });
 
-  final String key;
   final String? accountId;
   final CashFlowKind kind;
   final String? label;
@@ -180,14 +165,12 @@ class _CategoryTotal {
 
 class _CategoryAcc {
   _CategoryAcc({
-    required this.key,
     required this.accountId,
     required this.kind,
     required this.label,
     required this.amount,
   });
 
-  final String key;
   final String? accountId;
   final CashFlowKind kind;
   final String? label;

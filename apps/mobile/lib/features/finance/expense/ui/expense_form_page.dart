@@ -41,7 +41,7 @@ class ExpenseFormPage extends ConsumerStatefulWidget {
 class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     with FormSubmission<ExpenseFormPage>, FormDirtyGuard<ExpenseFormPage> {
   @override
-  String get leaveFallback => FinanceRoutes.activityExpenses;
+  String get leaveFallback => FinanceRoutes.expenseActivity;
 
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
@@ -163,7 +163,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       if (!mounted) return;
       final l10n = AppLocalizations.of(context);
       AppMessenger.show(context, ToastKind.error, l10n.expenseFormLoadError);
-      popOrGo(context, fallback: FinanceRoutes.activityExpenses);
+      popOrGo(context, fallback: FinanceRoutes.expenseActivity);
       return;
     }
     if (!mounted) return;
@@ -239,7 +239,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     await submitFormAndLeave<JournalMutationReceipt>(
       dirty: dirty,
       onBusyChanged: _setBusy,
-      leaveFallback: FinanceRoutes.activityExpenses,
+      leaveFallback: FinanceRoutes.expenseActivity,
       tag: 'expense',
       failureMessage: (_) => l10n.commonSaveFailed,
       successMessage: l10n.commonSaved,
@@ -299,7 +299,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     await submitFormAndLeave<JournalEntryRepository>(
       dirty: dirty,
       onBusyChanged: _setBusy,
-      leaveFallback: FinanceRoutes.activityExpenses,
+      leaveFallback: FinanceRoutes.expenseActivity,
       failureMessage: (_) => l10n.commonDeleteFailed,
       successMessage: l10n.commonDeleted,
       tag: 'expense-delete',

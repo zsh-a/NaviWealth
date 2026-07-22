@@ -311,7 +311,7 @@ void main() {
     // the back-stack invariant they share is already covered by these.)
     const cases = <String, String>{
       AppRoutes.planFire: AppRoutes.plan,
-      AppRoutes.expenseReport: AppRoutes.activityExpenses,
+      AppRoutes.spending: AppRoutes.activity,
       AppRoutes.wealthPortfolio: AppRoutes.wealth,
       AppRoutes.wealthWatchlist: AppRoutes.wealth,
     };

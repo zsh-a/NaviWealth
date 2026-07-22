@@ -4,9 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
-import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/expense_report_providers.dart';
@@ -14,22 +12,18 @@ import '../domain/expense_report.dart';
 import '../domain/expense_report_range.dart';
 import 'expense_report_sections.dart';
 
-class ExpenseReportBody extends ConsumerWidget {
-  const ExpenseReportBody({super.key, required this.report});
+class SpendingBody extends StatelessWidget {
+  const SpendingBody({
+    super.key,
+    required this.report,
+    required this.categoryById,
+  });
 
   final ExpenseReport report;
+  final Map<String, Account> categoryById;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final accountsAsync = ref.watch(allAccountsStreamProvider);
-    final allAccounts = accountsAsync.value ?? const <Account>[];
-    final expenseAccountById = {
-      for (final a in allAccounts.where(
-        (a) => a.category == AccountSide.expense,
-      ))
-        a.id: a,
-    };
-
+  Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s12,
@@ -42,17 +36,9 @@ class ExpenseReportBody extends ConsumerWidget {
         const SizedBox(height: AppSpacing.s12),
         _SummaryCard(report: report),
         const SizedBox(height: AppSpacing.s12),
-        ExpenseCategoryPieCard(
-          report: report,
-          categoryById: expenseAccountById,
-        ),
+        ExpenseCategoryPieCard(report: report, categoryById: categoryById),
         const SizedBox(height: AppSpacing.s12),
         ExpenseTrendCard(report: report),
-        const SizedBox(height: AppSpacing.s12),
-        ExpenseCategoryListCard(
-          report: report,
-          categoryById: expenseAccountById,
-        ),
       ],
     );
   }
@@ -248,11 +234,9 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
-    final monthSpan = report.range.monthSpan;
-    final divisor = Decimal.fromInt(monthSpan == 0 ? 1 : monthSpan);
-    final avgDecimal = (report.total.amount / divisor).toDecimal(
-      scaleOnInfinitePrecision: 2,
-    );
+    final daySpan = report.range.daySpan;
+    final avgDecimal = (report.total.amount / Decimal.fromInt(daySpan))
+        .toDecimal(scaleOnInfinitePrecision: 2);
     return SoftCard.flat(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s20),
@@ -278,7 +262,7 @@ class _SummaryCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _Metric(
-                    label: l10n.expenseReportMonthlyAverage,
+                    label: l10n.expenseReportDailyAverage,
                     value: formatter.compactCurrency(
                       avgDecimal,
                       code: report.baseCurrency,
@@ -289,7 +273,7 @@ class _SummaryCard extends StatelessWidget {
                   child: _Metric(
                     label: l10n.expenseReportEntryCount,
                     value: report.byCategory
-                        .fold<int>(0, (a, c) => a + c.items.length)
+                        .fold<int>(0, (a, c) => a + c.count)
                         .toString(),
                   ),
                 ),
@@ -312,7 +296,7 @@ class _SummaryCard extends StatelessWidget {
             ],
             const SizedBox(height: AppSpacing.s4),
             Text(
-              l10n.expenseReportBaseCurrency(report.baseCurrency, monthSpan),
+              l10n.expenseReportBaseCurrency(report.baseCurrency, daySpan),
               style: context.captionStyle,
             ),
           ],

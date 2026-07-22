@@ -71,7 +71,7 @@ void main() {
       expect(report.byCategory.length, 2);
       expect(report.byCategory.first.expenseAccountId, 'food');
       expect(report.byCategory.first.total.amount, Decimal.parse('200'));
-      expect(report.byCategory.first.items.length, 2);
+      expect(report.byCategory.first.count, 2);
       expect(report.byCategory[1].expenseAccountId, 'transport');
     });
 
@@ -251,7 +251,7 @@ void main() {
         ),
       );
       expect(report.total.amount, Decimal.parse('10'));
-      expect(report.byCategory.single.items.single.id, 'inside');
+      expect(report.byCategory.single.count, 1);
     });
 
     test('renders empty report when no expenses fall in range', () {

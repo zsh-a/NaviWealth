@@ -40,17 +40,10 @@ class _Pie extends StatelessWidget {
               drillDown: SliceDrillDown((slice) {
                 final breakdown = slice.meta;
                 if (breakdown is! CategoryBreakdown) return;
-                showAppFormSheet<void>(
-                  context: context,
-                  builder: (ctx) => _CategoryDrillDown(
-                    breakdown: breakdown,
-                    categoryById: categoryById,
-                    baseCurrency: report.baseCurrency,
-                    otherSource: expenseReportOtherSource(
-                      byCategory: report.byCategory,
-                      breakdown: breakdown,
-                    ),
-                  ),
+                _openSpendingBreakdown(
+                  context,
+                  report: report,
+                  breakdown: breakdown,
                 );
               }),
               semanticLabel: l10n.expenseReportCategoryShare,
@@ -89,17 +82,10 @@ class _PieLegend extends StatelessWidget {
             percent: total == 0
                 ? 0
                 : slice.breakdown.total.amount.toDouble() / total,
-            onTap: () => showAppFormSheet<void>(
-              context: context,
-              builder: (ctx) => _CategoryDrillDown(
-                breakdown: slice.breakdown,
-                categoryById: categoryById,
-                baseCurrency: report.baseCurrency,
-                otherSource: expenseReportOtherSource(
-                  byCategory: report.byCategory,
-                  breakdown: slice.breakdown,
-                ),
-              ),
+            onTap: () => _openSpendingBreakdown(
+              context,
+              report: report,
+              breakdown: slice.breakdown,
             ),
           ),
         if (slices.isEmpty)

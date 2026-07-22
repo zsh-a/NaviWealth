@@ -48,15 +48,12 @@ String cashFlowActivityRoute({
       DateTime.utc(date.year + 1),
     ),
   };
-  final query = ActivityFeedQuery(
-    dateRange: DateTimeRange(start: start, end: end),
+  return FinanceRoutes.activityFeed(
+    from: start,
+    to: end,
     accountIds: accountIds,
-    kinds: kinds,
+    kinds: kinds.map((kind) => kind.wire),
   );
-  return Uri(
-    path: FinanceRoutes.activity,
-    queryParameters: query.toQueryParameters(),
-  ).toString();
 }
 
 class _CashFlowPageState extends ConsumerState<CashFlowPage> {
@@ -94,6 +91,11 @@ class _CashFlowPageState extends ConsumerState<CashFlowPage> {
         AppAdaptiveActionMenu(
           title: l10n.shellMoreActions,
           actions: [
+            AppAdaptiveAction(
+              icon: FLucideIcons.chartPie,
+              title: l10n.spendingTitle,
+              onPress: () => context.go(FinanceRoutes.spending),
+            ),
             AppAdaptiveAction(
               icon: FLucideIcons.calendarClock,
               title: l10n.recurringListTitle,

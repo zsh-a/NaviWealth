@@ -94,7 +94,7 @@ class _CashFlowContent extends StatelessWidget {
           ],
         ),
         primary: _ChartsPanel(model: model, formatter: formatter),
-        secondary: _CategoryPanel(
+        secondary: _IncomeSourcesPanel(
           model: model,
           formatter: formatter,
           onOpenCategory: (category) => openActivity(
