@@ -102,31 +102,24 @@ AgentArtifact _artifact({
   );
 }
 
-Future<void> _openArtifactSheet(
+Future<void> _pumpArtifactDetail(
   WidgetTester tester, {
   AgentArtifact? artifact,
   List<Override> overrides = const <Override>[],
 }) async {
+  final resolvedArtifact = artifact ?? _artifact();
   await tester.pumpWidget(
-    _wrap(
-      Builder(
-        builder: (context) => FButton(
-          onPress: () => unawaited(
-            showAgentArtifactSheet(
-              context: context,
-              artifact: artifact ?? _artifact(),
-            ),
-          ),
-          child: const Text('Open artifact'),
-        ),
-      ),
-      overrides: overrides,
-    ),
+    _wrap(_artifactDetailContent(resolvedArtifact), overrides: overrides),
   );
-
-  await tester.tap(find.text('Open artifact'));
   await tester.pumpAndSettle();
 }
+
+Widget _artifactDetailContent(AgentArtifact artifact) => ListView(
+  children: [
+    AgentArtifactDetailBody(artifact: artifact),
+    AgentArtifactDetailFooter(artifact: artifact),
+  ],
+);
 
 void main() {
   testWidgets('renders artifact summary and preview insights', (tester) async {
@@ -358,7 +351,7 @@ void main() {
     expect(find.textContaining('trace-1'), findsNothing);
   });
 
-  testWidgets('artifact sheet constrains detail body on a compact viewport', (
+  testWidgets('artifact detail constrains body on a compact viewport', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 640);
@@ -366,10 +359,8 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await _openArtifactSheet(tester);
+    await _pumpArtifactDetail(tester);
 
-    expect(find.text('Morning Briefing'), findsOneWidget);
-    expect(find.text('Briefing'), findsOneWidget);
     expect(find.byType(AgentArtifactDetailBody), findsOneWidget);
     expect(
       find.text('Sleep debt is elevated; keep the first block light.'),
@@ -413,7 +404,7 @@ void main() {
   ) async {
     AiIntentInvocation? capturedInvocation;
     String? capturedObjectLabel;
-    await _openArtifactSheet(
+    await _pumpArtifactDetail(
       tester,
       overrides: [
         askAiSurfaceProvider.overrideWithValue((
@@ -444,7 +435,7 @@ void main() {
   ) async {
     final pending = Completer<void>();
     var calls = 0;
-    await _openArtifactSheet(
+    await _pumpArtifactDetail(
       tester,
       overrides: [
         askAiSurfaceProvider.overrideWithValue((
@@ -488,17 +479,7 @@ void main() {
             data: FThemes.slate.light.desktop,
             child: FScaffold(
               childPad: false,
-              child: Center(
-                child: FButton(
-                  onPress: () => unawaited(
-                    showAgentArtifactSheet(
-                      context: context,
-                      artifact: _artifact(),
-                    ),
-                  ),
-                  child: const Text('Open artifact'),
-                ),
-              ),
+              child: _artifactDetailContent(_artifact()),
             ),
           ),
         ),
@@ -526,7 +507,6 @@ void main() {
         ],
       ),
     );
-    await tester.tap(find.text('Open artifact'));
     await tester.pumpAndSettle();
     final evidenceSection = find.text('Evidence & method');
     await tester.ensureVisible(evidenceSection);
@@ -552,17 +532,7 @@ void main() {
             data: FThemes.slate.light.desktop,
             child: FScaffold(
               childPad: false,
-              child: Center(
-                child: FButton(
-                  onPress: () => unawaited(
-                    showAgentArtifactSheet(
-                      context: context,
-                      artifact: _artifact(),
-                    ),
-                  ),
-                  child: const Text('Open artifact'),
-                ),
-              ),
+              child: _artifactDetailContent(_artifact()),
             ),
           ),
         ),
@@ -578,7 +548,6 @@ void main() {
     addTearDown(router.dispose);
 
     await tester.pumpWidget(_wrapWithRouter(router));
-    await tester.tap(find.text('Open artifact'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Review plan'));
     await tester.pumpAndSettle();
@@ -591,7 +560,7 @@ void main() {
   ) async {
     AiIntentInvocation? capturedInvocation;
     String? capturedObjectLabel;
-    await _openArtifactSheet(
+    await _pumpArtifactDetail(
       tester,
       artifact: _artifact(
         actions: const [
@@ -644,17 +613,7 @@ void main() {
             data: FThemes.slate.light.desktop,
             child: FScaffold(
               childPad: false,
-              child: Center(
-                child: FButton(
-                  onPress: () => unawaited(
-                    showAgentArtifactSheet(
-                      context: context,
-                      artifact: _artifact(),
-                    ),
-                  ),
-                  child: const Text('Open artifact'),
-                ),
-              ),
+              child: _artifactDetailContent(_artifact()),
             ),
           ),
         ),
@@ -674,7 +633,6 @@ void main() {
 
     await tester.pumpWidget(_wrapWithRouter(router));
 
-    await tester.tap(find.text('Open artifact'));
     await tester.pumpAndSettle();
 
     final evidenceSection = find.text('Evidence & method');

@@ -7,20 +7,31 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/notifications/notification_payload_router.dart';
 import 'package:naviwealth/core/notifications/notification_service.dart';
 import 'package:naviwealth/core/notifications/providers.dart';
+import 'package:naviwealth/features/health/agents/health_notifications.dart';
+import 'package:naviwealth/features/knowledge/agents/knowledge_notifications.dart';
 
 void main() {
   test('notificationRouteFromPayload accepts only internal routes', () {
     expect(
-      notificationRouteFromPayload(
-        ' /knowledge/review?agent_artifact_id=artifact-1 ',
-      ),
-      '/knowledge/review?agent_artifact_id=artifact-1',
+      notificationRouteFromPayload(' /insights/artifact-1 '),
+      '/insights/artifact-1',
     );
-    expect(notificationRouteFromPayload('knowledge/review'), isNull);
+    expect(notificationRouteFromPayload('insights/artifact-1'), isNull);
     expect(notificationRouteFromPayload('https://example.com/path'), isNull);
     expect(notificationRouteFromPayload('//example.com/path'), isNull);
     expect(notificationRouteFromPayload(''), isNull);
     expect(notificationRouteFromPayload(null), isNull);
+  });
+
+  test('domain notification producers emit accepted internal routes', () {
+    final payloads = <String>[
+      HealthNotifications.payloadForArtifact('health:artifact-1'),
+      KnowledgeNotifications.payloadForArtifact('knowledge:artifact-1'),
+    ];
+
+    for (final payload in payloads) {
+      expect(notificationRouteFromPayload(payload), payload);
+    }
   });
 
   testWidgets('routes live notification payloads through GoRouter', (
@@ -34,7 +45,7 @@ void main() {
 
     expect(find.text('home'), findsOneWidget);
 
-    service.emit('/knowledge/review?agent_artifact_id=artifact-1');
+    service.emit('/insights/artifact-1');
     await tester.pumpAndSettle();
 
     expect(find.text('artifact-1'), findsOneWidget);
@@ -44,7 +55,7 @@ void main() {
     tester,
   ) async {
     final service = _FakeNotificationService(
-      launchPayload: '/knowledge/review?agent_artifact_id=launch-artifact',
+      launchPayload: '/insights/launch-artifact',
     );
     addTearDown(service.dispose);
     final router = _testRouter();
@@ -62,7 +73,7 @@ void main() {
 
     await tester.pumpWidget(_TestApp(router: router, service: service));
 
-    service.emit('https://example.com/knowledge/review');
+    service.emit('https://example.com/insights/artifact-1');
     await tester.pumpAndSettle();
 
     expect(find.text('home'), findsOneWidget);
@@ -74,9 +85,9 @@ GoRouter _testRouter() {
     routes: <RouteBase>[
       GoRoute(path: '/', builder: (context, state) => const Text('home')),
       GoRoute(
-        path: '/knowledge/review',
+        path: '/insights/:artifactId',
         builder: (context, state) =>
-            Text(state.uri.queryParameters['agent_artifact_id'] ?? 'missing'),
+            Text(state.pathParameters['artifactId'] ?? 'missing'),
       ),
     ],
   );

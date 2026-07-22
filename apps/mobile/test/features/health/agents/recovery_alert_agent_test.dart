@@ -253,10 +253,7 @@ void main() {
       );
       expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
       expect(notifier.showCount, 1);
-      expect(
-        notifier.lastPayload,
-        '/health?agent_artifact_id=recovery_alert%3A2026-06-29',
-      );
+      expect(notifier.lastPayload, '/insights/recovery_alert%3A2026-06-29');
     },
   );
 

@@ -12,8 +12,8 @@ class ExecutionCommitmentCard extends StatelessWidget {
     required this.onRecordProgress,
     this.openActionCount,
     this.blockedActionCount,
-    this.busy = false,
     this.onOpen,
+    this.busy = false,
     this.showActions = true,
   });
 
@@ -26,8 +26,8 @@ class ExecutionCommitmentCard extends StatelessWidget {
   final VoidCallback onRecordProgress;
   final int? openActionCount;
   final int? blockedActionCount;
-  final bool busy;
   final VoidCallback? onOpen;
+  final bool busy;
   final bool showActions;
 
   @override
@@ -183,6 +183,7 @@ class ExecutionProjectCard extends StatelessWidget {
     required this.onRecordProgress,
     this.openActionCount,
     this.blockedActionCount,
+    this.onOpen,
     this.busy = false,
     this.showActions = true,
   });
@@ -196,6 +197,7 @@ class ExecutionProjectCard extends StatelessWidget {
   final VoidCallback onRecordProgress;
   final int? openActionCount;
   final int? blockedActionCount;
+  final VoidCallback? onOpen;
   final bool busy;
   final bool showActions;
 
@@ -209,20 +211,30 @@ class ExecutionProjectCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppIconTile(
-            icon: FLucideIcons.folder,
-            color: colors.primary,
-            size: 34,
-            iconSize: AppIconSizes.sm,
-            backgroundOpacity: AppOpacity.whisper,
-            foregroundOpacity: 1,
-          ),
-          const SizedBox(width: AppSpacing.s12),
           Expanded(
-            child: _ProjectBody(
-              project: project,
-              openActionCount: openActionCount,
-              blockedActionCount: blockedActionCount,
+            child: _CardOpenRegion(
+              onOpen: onOpen,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppIconTile(
+                    icon: FLucideIcons.folder,
+                    color: colors.primary,
+                    size: 34,
+                    iconSize: AppIconSizes.sm,
+                    backgroundOpacity: AppOpacity.whisper,
+                    foregroundOpacity: 1,
+                  ),
+                  const SizedBox(width: AppSpacing.s12),
+                  Expanded(
+                    child: _ProjectBody(
+                      project: project,
+                      openActionCount: openActionCount,
+                      blockedActionCount: blockedActionCount,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           if (showActions) const SizedBox(width: AppSpacing.s8),

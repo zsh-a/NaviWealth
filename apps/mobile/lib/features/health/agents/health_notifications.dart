@@ -1,7 +1,5 @@
+import '../../../core/ai/agents/agent_artifact_routes.dart';
 import '../../../core/background/background_scheduler.dart';
-import '../composition/health_route_paths.dart';
-
-const String kHealthAgentArtifactQueryParam = 'agent_artifact_id';
 
 const kHealthBriefingNotificationChannel =
     kMorningBriefingWakeNotificationChannel;
@@ -16,20 +14,6 @@ abstract final class HealthNotifications {
   static int idForRecoveryAlert(DateTime localDay) =>
       0x8000000 + localDay.year * 10000 + localDay.month * 100 + localDay.day;
 
-  static String payloadForRecoveryAlert({required String artifactId}) {
-    return Uri(
-      path: HealthRoutes.today,
-      queryParameters: <String, String>{
-        kHealthAgentArtifactQueryParam: artifactId,
-      },
-    ).toString();
-  }
-
-  static String? recoveryArtifactIdFromPayload(String? payload) {
-    if (payload == null || payload.isEmpty) return null;
-    final uri = Uri.tryParse(payload);
-    if (uri == null || uri.path != HealthRoutes.today) return null;
-    final artifactId = uri.queryParameters[kHealthAgentArtifactQueryParam];
-    return artifactId == null || artifactId.isEmpty ? null : artifactId;
-  }
+  static String payloadForArtifact(String artifactId) =>
+      AgentArtifactRoutes.detail(artifactId);
 }

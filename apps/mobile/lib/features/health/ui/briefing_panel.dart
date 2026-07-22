@@ -128,12 +128,7 @@ class _BriefingArtifactCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     void openArtifact() {
-      showAgentArtifactSheet(
-        context: context,
-        artifact: artifact,
-        subtitle: l10n.healthBriefingUpdated(_ago(l10n, artifact.createdAt)),
-        onVisibilityChanged: onVisibilityChanged,
-      );
+      context.push(AgentArtifactRoutes.detail(artifact.id));
     }
 
     return AgentResultCard(

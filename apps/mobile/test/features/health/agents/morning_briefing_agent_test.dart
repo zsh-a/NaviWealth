@@ -373,6 +373,41 @@ void main() {
       expect(notifier.showCount, 0);
     },
   );
+
+  test('run notification deep-links to the persisted artifact', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final rt = _runtimeForDb(db, clock: () => now);
+    await rt.recordEvent(
+      _sleepEvent(id: 'h1', at: yesterdayEvening, seconds: 7.5 * 3600.0),
+    );
+    final store = SqliteAgentArtifactStore(db: db);
+    final container = ProviderContainer(
+      overrides: [
+        currentUserIdProvider.overrideWithValue(() async => 'u'),
+        memoryRuntimeProvider.overrideWith((ref) async => rt),
+        agent_providers.agentArtifactStoreProvider.overrideWith(
+          (ref) async => store,
+        ),
+        agent_providers.agentPreferenceStoreProvider.overrideWith(
+          (ref) async => InMemoryAgentPreferenceStore(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final notifier = _RecordingNotificationService();
+
+    final result = await MorningBriefingAgent(
+      notifier: notifier,
+    ).run(AgentContext(ref: container.read(_refProvider), now: now));
+
+    expect(result.status, AgentRunStatus.completed);
+    expect(notifier.showCount, 1);
+    expect(
+      notifier.lastPayload,
+      '/insights/${Uri.encodeComponent(result.artifactId!)}',
+    );
+  });
 }
 
 final _refProvider = Provider<Ref>((ref) => ref);
@@ -393,6 +428,7 @@ class _TraceBriefingSynthesizer implements BriefingSynthesizer {
 
 class _RecordingNotificationService implements NotificationService {
   int showCount = 0;
+  String? lastPayload;
 
   @override
   Stream<String> get payloads => const Stream<String>.empty();
@@ -421,5 +457,6 @@ class _RecordingNotificationService implements NotificationService {
     String? payload,
   }) async {
     showCount += 1;
+    lastPayload = payload;
   }
 }

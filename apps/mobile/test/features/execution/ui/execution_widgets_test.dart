@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/lifeos/action_outcome.dart';
@@ -7,6 +8,7 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/theme/app_theme.dart';
 import 'package:naviwealth/features/execution/data/providers.dart';
 import 'package:naviwealth/features/execution/domain/execution_models.dart';
+import 'package:naviwealth/features/execution/ui/execution_detail_page.dart';
 import 'package:naviwealth/features/execution/ui/execution_widgets.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -457,6 +459,7 @@ void main() {
     var resumed = false;
     var completed = false;
     var progressed = false;
+    var opened = false;
 
     await tester.pumpWidget(
       _wrap(
@@ -478,6 +481,7 @@ void main() {
           onResume: () => resumed = true,
           onComplete: () => completed = true,
           onRecordProgress: () => progressed = true,
+          onOpen: () => opened = true,
         ),
       ),
     );
@@ -487,6 +491,10 @@ void main() {
     expect(find.text('Quarter'), findsOneWidget);
     expect(find.text('Actions: 3'), findsOneWidget);
     expect(find.text('Blocked: 1'), findsOneWidget);
+
+    await tester.tap(find.text('Ship execution loop'));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(opened, isTrue);
 
     await tester.tap(find.byIcon(FLucideIcons.messageSquareText));
     await tester.pump(const Duration(milliseconds: 200));
@@ -512,6 +520,61 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 200));
+  });
+
+  testWidgets('project detail renders scoped actions and progress', (
+    tester,
+  ) async {
+    final project = ExecutionProject(
+      id: 'proj-detail',
+      title: 'Canonical project detail',
+      description: 'Project-owned execution context',
+      createdAt: DateTime.utc(2026, 6, 1),
+      sync: _sync(),
+    );
+    final action = _action(
+      id: 'action-detail',
+      title: 'Scoped project action',
+      projectId: project.id,
+    );
+    final progress = ExecutionProgressEntry(
+      id: 'progress-detail',
+      projectId: project.id,
+      kind: ExecutionProgressKind.checkin,
+      note: 'Scoped project progress',
+      createdAt: DateTime.utc(2026, 6, 2),
+      sync: _sync(),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          executionProjectDetailProvider(
+            project.id,
+          ).overrideWith((ref) => Stream.value(project)),
+          executionActionsForProjectProvider(
+            project.id,
+          ).overrideWith((ref) => Stream.value([action])),
+          executionProgressForProjectProvider(
+            project.id,
+          ).overrideWith((ref) => Stream.value([progress])),
+          executionActionRelationsProvider.overrideWith(
+            (ref) async => ExecutionRelations(
+              actions: {action.id: action},
+              projects: {project.id: project},
+              commitments: const {},
+            ),
+          ),
+        ],
+        child: _wrap(ExecutionProjectDetailPage(projectId: project.id)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Canonical project detail'), findsOneWidget);
+    expect(find.text('Scoped project action'), findsOneWidget);
+    expect(find.text('Scoped project progress'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('closed project card exposes resume without close actions', (

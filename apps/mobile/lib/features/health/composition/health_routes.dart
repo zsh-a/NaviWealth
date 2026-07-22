@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/shell/deferred_route.dart';
 import '../../../core/shell/domain_tabs_shell.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../agents/health_notifications.dart';
 import '../ui/health_today_page.dart' deferred as today_lib;
 import '../ui/health_trend_page.dart' deferred as trend_lib;
 import 'health_domain_shell.dart';
@@ -27,10 +26,7 @@ StatefulShellRoute healthShellRoute() {
             name: HealthRouteNames.today,
             builder: (context, state) => DeferredRoute(
               load: today_lib.loadLibrary,
-              builder: (_) => today_lib.HealthTodayPage(
-                initialAgentArtifactId:
-                    state.uri.queryParameters[kHealthAgentArtifactQueryParam],
-              ),
+              builder: (_) => today_lib.HealthTodayPage(),
             ),
             routes: [
               // Legacy Plan deep-link → Today (plan content lives on hero).

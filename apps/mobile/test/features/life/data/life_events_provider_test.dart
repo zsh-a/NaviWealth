@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
-import 'package:naviwealth/features/life/composition/life_route_paths.dart';
 import 'package:naviwealth/features/life/data/life_events_provider.dart';
 import 'package:naviwealth/features/life/domain/life_event.dart';
 
@@ -24,8 +24,8 @@ void main() {
     expect(event.domain, DomainScope.finance);
     expect(event.template, LifeEventTemplate.agentResult);
     expect(event.params, const ['Weekly conclusion']);
-    expect(event.routePath, LifeRoutes.agentArtifact(artifact.id));
-    expect(event.routePath, '/life/insights/artifact%2Fwith%20spaces');
+    expect(event.routePath, AgentArtifactRoutes.detail(artifact.id));
+    expect(event.routePath, '/insights/artifact%2Fwith%20spaces');
     expect(event.actionSuggestion?.sourceRowId, artifact.id);
     expect(
       event.actionSuggestion?.template,

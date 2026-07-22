@@ -253,14 +253,7 @@ class _RecoveryAlertPanel extends ConsumerWidget {
       summaryMaxLines: 5,
       onOpen: artifact == null
           ? null
-          : () => showAgentArtifactSheet(
-              context: context,
-              artifact: artifact,
-              subtitle: metaLabel,
-              onVisibilityChanged: () => ref.invalidate(
-                health_agent_providers.latestRecoveryAlertArtifactProvider,
-              ),
-            ),
+          : () => context.push(AgentArtifactRoutes.detail(artifact.id)),
       onRetry: () => _retryRecoveryAlert(ref),
     );
   }

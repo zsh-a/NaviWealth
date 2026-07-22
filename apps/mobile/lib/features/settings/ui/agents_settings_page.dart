@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_routes.dart';
 import '../../../core/ai/agents/agent_preference_store.dart';
 import '../../../core/ai/agents/agent_presentation.dart';
 import '../../../core/ai/agents/agent_quality_report.dart';
@@ -972,10 +973,8 @@ class _AgentSettingsDetailSheetState
             if (row.latestArtifact != null)
               AppQuietButton(
                 label: l10n.agentSettingsViewResult,
-                onPress: () => showAgentArtifactSheet(
-                  context: context,
-                  artifact: row.latestArtifact!,
-                  onVisibilityChanged: widget.onRowsChanged,
+                onPress: () => context.push(
+                  AgentArtifactRoutes.detail(row.latestArtifact!.id),
                 ),
                 prefix: const Icon(
                   FLucideIcons.externalLink,

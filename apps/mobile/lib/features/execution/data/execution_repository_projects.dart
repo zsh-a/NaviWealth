@@ -141,6 +141,20 @@ mixin ExecutionProjectRepositoryMixin {
     return row == null ? null : executionProjectFromRow(row);
   }
 
+  Stream<ExecutionProject?> watchProjectById({
+    required String ownerUserId,
+    required String id,
+  }) {
+    final q = _db.select(_db.executionProjects)
+      ..where((t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId))
+      ..limit(1);
+    return q.watchSingleOrNull().map(
+      (row) => row == null || row.deletedAt != null
+          ? null
+          : executionProjectFromRow(row),
+    );
+  }
+
   Future<List<ExecutionProject>> listProjectsByIds({
     required String ownerUserId,
     required Set<String> ids,

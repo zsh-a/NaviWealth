@@ -13,6 +13,7 @@ import 'execution_action_sheet.dart';
 import 'execution_commitment_sheet.dart';
 import 'execution_lifecycle_card_controller.dart';
 import 'execution_progress_sheet.dart';
+import 'execution_project_sheet.dart';
 import 'execution_widgets.dart';
 
 class ExecutionActionDetailPage extends ConsumerWidget {
@@ -127,6 +128,116 @@ class ExecutionCommitmentDetailPage extends ConsumerWidget {
           return _CommitmentDetailBody(commitment: commitment);
         },
       ),
+    );
+  }
+}
+
+class ExecutionProjectDetailPage extends ConsumerWidget {
+  const ExecutionProjectDetailPage({super.key, required this.projectId});
+
+  final String projectId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final projectAsync = ref.watch(executionProjectDetailProvider(projectId));
+    final currentProject = projectAsync.asData?.value;
+    return ObjectDetailScaffold(
+      title: l10n.executionProjectField,
+      actions: [
+        AppHeaderAction(
+          icon: const Icon(FLucideIcons.messageSquareText),
+          semanticsLabel: l10n.executionCreateProgressTitle,
+          onPress: () => showExecutionProgressSheet(
+            context: context,
+            projectId: currentProject?.id ?? projectId,
+          ),
+        ),
+        if (currentProject != null)
+          AppHeaderAction(
+            icon: const Icon(FLucideIcons.pencil),
+            semanticsLabel: l10n.executionEditProjectTitle,
+            onPress: () => showExecutionProjectSheet(
+              context: context,
+              project: currentProject,
+            ),
+          ),
+      ],
+      child: projectAsync.when(
+        loading: () => AppListPageSkeleton(
+          padding: _detailPadding(context),
+          itemCount: 3,
+          showControls: false,
+        ),
+        error: (error, _) => ExecutionStateView(
+          icon: FLucideIcons.circleX,
+          title: l10n.commonError,
+          message: userSafeErrorMessage(context, error),
+        ),
+        data: (project) {
+          if (project == null) {
+            return _DetailMissingState(
+              title: l10n.executionDetailMissingTitle,
+              message: l10n.executionDetailMissingBody,
+            );
+          }
+          return _ProjectDetailBody(project: project);
+        },
+      ),
+    );
+  }
+}
+
+class _ProjectDetailBody extends ConsumerWidget {
+  const _ProjectDetailBody({required this.project});
+
+  final ExecutionProject project;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final relations = ref.watch(executionActionRelationsProvider).value;
+    final actionsAsync = ref.watch(
+      executionActionsForProjectProvider(project.id),
+    );
+    final progressAsync = ref.watch(
+      executionProgressForProjectProvider(project.id),
+    );
+    final actions = actionsAsync.asData?.value ?? const <ExecutionAction>[];
+    return ListView(
+      padding: _detailPadding(context),
+      children: [
+        ExecutionProjectCardController(
+          project: project,
+          showActions: false,
+          openActionCount: actions.where((action) => action.isOpen).length,
+          blockedActionCount: actions
+              .where((action) => action.status == ExecutionActionStatus.blocked)
+              .length,
+          onCreateAction: () => showExecutionActionSheet(
+            context: context,
+            initialProjectId: project.id,
+          ),
+          onEdit: () =>
+              showExecutionProjectSheet(context: context, project: project),
+          onRecordProgress: () => showExecutionProgressSheet(
+            context: context,
+            projectId: project.id,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s20),
+        _RelatedActionsSection(
+          actionsAsync: actionsAsync,
+          relations: relations,
+        ),
+        const SizedBox(height: AppSpacing.s20),
+        _ProgressTimeline(
+          entries: progressAsync,
+          title: l10n.executionTimelineSection,
+          emptyMessage: l10n.executionReviewEmptyBody,
+          relationLabels: relations,
+        ),
+      ],
     );
   }
 }

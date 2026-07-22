@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/ai/agents/agent_artifact_routes.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/domain_pack.dart';
 import '../../core/logging/providers.dart';
@@ -16,7 +17,6 @@ import '../../features/auth/ui/devices_page.dart' deferred as devices_lib;
 import '../../features/auth/ui/login_page.dart';
 import '../../features/auth/ui/onboarding_page.dart';
 import '../../features/life/composition/life_route_paths.dart';
-import '../../features/life/ui/life_agent_artifact_page.dart';
 import '../../features/life/ui/life_page.dart';
 import '../../features/settings/ui/agents_settings_page.dart';
 import '../../features/settings/ui/ai/ai_llm_credentials_page.dart';
@@ -31,6 +31,7 @@ import '../../features/settings/ui/notification_settings_page.dart';
 import '../../features/settings/ui/perf_diagnostics_page.dart';
 import '../../features/settings/ui/settings_page.dart' deferred as settings_lib;
 import '../../features/settings/ui/sync/sync_status_page.dart';
+import '../agent_artifact_page.dart';
 import '../domain_packs.dart';
 import '../shell/app_dock_shell.dart';
 import 'route_analytics_observer.dart';
@@ -120,15 +121,13 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = LifeRoutes.home}) {
               path: LifeRoutes.home,
               name: LifeRouteNames.home,
               builder: (context, state) => const LifePage(),
-              routes: [
-                GoRoute(
-                  path: 'insights/:artifactId',
-                  name: LifeRouteNames.agentArtifact,
-                  builder: (context, state) => LifeAgentArtifactPage(
-                    artifactId: state.pathParameters['artifactId'] ?? '',
-                  ),
-                ),
-              ],
+            ),
+            GoRoute(
+              path: AgentArtifactRoutes.detailPath,
+              name: AgentArtifactRoutes.detailName,
+              builder: (context, state) => AgentArtifactPage(
+                artifactId: state.pathParameters['artifactId'] ?? '',
+              ),
             ),
             ...shellRoutes,
           ],

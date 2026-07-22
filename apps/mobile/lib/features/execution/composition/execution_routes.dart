@@ -42,6 +42,13 @@ StatefulShellRoute executionShellRoute() {
             builder: (context, state) => const ExecutionCommitmentsPage(),
             routes: [
               GoRoute(
+                path: 'projects/:id',
+                name: ExecutionRouteNames.projectDetail,
+                builder: (context, state) => ExecutionProjectDetailPage(
+                  projectId: state.pathParameters['id'] ?? '',
+                ),
+              ),
+              GoRoute(
                 path: ':id',
                 name: ExecutionRouteNames.commitmentDetail,
                 builder: (context, state) => ExecutionCommitmentDetailPage(

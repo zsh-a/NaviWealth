@@ -1044,27 +1044,6 @@ class AgentResultPanelStateCard extends StatelessWidget {
   }
 }
 
-Future<void> showAgentArtifactSheet({
-  required BuildContext context,
-  required AgentArtifact artifact,
-  String? subtitle,
-  FutureOr<void> Function()? onVisibilityChanged,
-}) {
-  return showAppSheet<void>(
-    context: context,
-    title: artifact.title,
-    subtitle:
-        subtitle ??
-        _artifactKindLabel(AppLocalizations.of(context), artifact.kind),
-    maxHeightFactor: 0.88,
-    builder: (_) => AgentArtifactDetailBody(
-      artifact: artifact,
-      onVisibilityChanged: onVisibilityChanged,
-    ),
-    footer: AgentArtifactDetailFooter(artifact: artifact),
-  );
-}
-
 class AgentArtifactDetailBody extends ConsumerStatefulWidget {
   const AgentArtifactDetailBody({
     super.key,

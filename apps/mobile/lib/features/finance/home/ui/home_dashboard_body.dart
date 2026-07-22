@@ -243,7 +243,8 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
       child: AgentResultsSection(
         bundle: bundle,
         metaLabelBuilder: (at) => _financeAgentMetaLabel(context, ref, at),
-        onOpen: (artifact) => _openFinanceAgentArtifact(context, ref, artifact),
+        onOpen: (artifact) =>
+            context.push(AgentArtifactRoutes.detail(artifact.id)),
         onRetry: (agentId) async {
           final controller = await ref.read(agentRunControllerProvider.future);
           await controller.runOnceById(agentId);
@@ -251,22 +252,6 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
             finance_agent_providers.latestFinanceAgentResultsProvider,
           );
         },
-      ),
-    );
-  }
-
-  void _openFinanceAgentArtifact(
-    BuildContext context,
-    WidgetRef ref,
-    AgentArtifact artifact,
-  ) {
-    final metaLabel = _financeAgentMetaLabel(context, ref, artifact.createdAt);
-    showAgentArtifactSheet(
-      context: context,
-      artifact: artifact,
-      subtitle: metaLabel,
-      onVisibilityChanged: () => ref.invalidate(
-        finance_agent_providers.latestFinanceAgentResultsProvider,
       ),
     );
   }

@@ -180,6 +180,7 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
                   context: context,
                   projectId: project.id,
                 ),
+                onOpen: () => context.push(ExecutionRoutes.project(project.id)),
               ),
               const SizedBox(height: AppSpacing.s8),
             ],

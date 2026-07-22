@@ -1619,13 +1619,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your financial brief has a new analysis';
 
   @override
-  String get lifeAgentArtifactDetailTitle => 'Insight details';
+  String get agentArtifactDetailTitle => 'Insight details';
 
   @override
-  String get lifeAgentArtifactMissingTitle => 'Insight unavailable';
+  String get agentArtifactMissingTitle => 'Insight unavailable';
 
   @override
-  String get lifeAgentArtifactMissingBody =>
+  String get agentArtifactMissingBody =>
       'This result may have expired, been dismissed, or belong to a domain that is not active.';
 
   @override

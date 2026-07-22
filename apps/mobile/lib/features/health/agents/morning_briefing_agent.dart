@@ -98,13 +98,17 @@ class MorningBriefingAgent implements Agent {
       l10n: agentL10n(ctx.ref),
     );
 
-    if (result.status == AgentRunStatus.completed && notifier != null) {
+    final artifactId = result.artifactId;
+    if (result.status == AgentRunStatus.completed &&
+        notifier != null &&
+        artifactId != null) {
       await _maybeNotify(
         ctx,
         ownerUserId,
         start.toLocal(),
         result.summary ?? '',
         agentL10n(ctx.ref),
+        artifactId: artifactId,
       );
     }
     return result;
@@ -363,8 +367,9 @@ class MorningBriefingAgent implements Agent {
     String ownerUserId,
     DateTime localDay,
     String summary,
-    AppLocalizations l10n,
-  ) async {
+    AppLocalizations l10n, {
+    required String artifactId,
+  }) async {
     final n = notifier!;
     try {
       final preferenceStore = await ctx.ref.read(
@@ -381,7 +386,7 @@ class MorningBriefingAgent implements Agent {
         id: HealthNotifications.idForBriefing(localDay),
         title: l10n.healthAgentMorningTitle,
         body: summary,
-        payload: 'morning_briefing',
+        payload: HealthNotifications.payloadForArtifact(artifactId),
         channel: kHealthBriefingNotificationChannel,
       );
     } on Object {

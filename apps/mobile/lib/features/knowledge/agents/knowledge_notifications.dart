@@ -1,7 +1,5 @@
+import '../../../core/ai/agents/agent_artifact_routes.dart';
 import '../../../core/notifications/notification_service.dart';
-import '../composition/knowledge_route_paths.dart';
-
-const String kKnowledgeAgentArtifactQueryParam = 'agent_artifact_id';
 
 const kKnowledgeReviewNotificationChannel = NotificationChannelSpec(
   id: 'lifeos.knowledge.review',
@@ -16,21 +14,6 @@ abstract final class KnowledgeNotifications {
   static int idForRoutineDigest(DateTime localDay) =>
       0x10000000 + localDay.year * 10000 + localDay.month * 100 + localDay.day;
 
-  static String payloadForRoutineDigest({required String artifactId}) {
-    return Uri(
-      path: KnowledgeRoutes.review,
-      queryParameters: <String, String>{
-        kKnowledgeAgentArtifactQueryParam: artifactId,
-      },
-    ).toString();
-  }
-
-  static String? routineArtifactIdFromPayload(String? payload) {
-    if (payload == null || payload.isEmpty) return null;
-    final uri = Uri.tryParse(payload);
-    if (uri == null || uri.path != KnowledgeRoutes.review) return null;
-    if (uri.hasScheme || uri.hasAuthority) return null;
-    final artifactId = uri.queryParameters[kKnowledgeAgentArtifactQueryParam];
-    return artifactId == null || artifactId.isEmpty ? null : artifactId;
-  }
+  static String payloadForArtifact(String artifactId) =>
+      AgentArtifactRoutes.detail(artifactId);
 }

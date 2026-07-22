@@ -83,21 +83,13 @@ class _WeeklySummaryArtifactCard extends StatelessWidget {
       layout: AgentResultCardLayout.summary,
       summaryMaxLines: 5,
       onRetry: onRetry,
-      onOpen: () => showAgentArtifactSheet(
-        context: context,
-        artifact: artifact,
-        subtitle: l10n.healthWeeklySummarySubtitle,
-        onVisibilityChanged: onVisibilityChanged,
-      ),
+      onOpen: () => context.push(AgentArtifactRoutes.detail(artifact.id)),
     );
   }
 }
 
 class _WeeklySummaryFallback extends ConsumerWidget {
-  const _WeeklySummaryFallback({
-    required this.async,
-    required this.runAsync,
-  });
+  const _WeeklySummaryFallback({required this.async, required this.runAsync});
 
   final AsyncValue<WeeklySummary?> async;
   final AsyncValue<AgentRunRecord?> runAsync;

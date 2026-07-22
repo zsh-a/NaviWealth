@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/ai/agents/agent_artifact_routes.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/domain_pack.dart';
 import '../../core/shell/auth_route_paths.dart';
@@ -50,7 +51,10 @@ abstract final class AppRoutes {
 
   // ── Life hub (cross-domain spatial layer) ───────────────────────────────
   static const life = LifeRoutes.home;
-  static String lifeAgentArtifact(String id) => LifeRoutes.agentArtifact(id);
+
+  // ── Cross-domain Agent result detail ───────────────────────────────────
+  static const agentArtifactDetail = AgentArtifactRoutes.detailPath;
+  static String agentArtifact(String id) => AgentArtifactRoutes.detail(id);
 
   // ── Primary tabs ────────────────────────────────────────────────────────
   static const home = FinanceRoutes.home;
@@ -81,6 +85,7 @@ abstract final class AppRoutes {
   static const executionReview = ExecutionRoutes.review;
   static const executionActionDetail = ExecutionRoutes.actionDetail;
   static const executionCommitmentDetail = ExecutionRoutes.commitmentDetail;
+  static const executionProjectDetail = ExecutionRoutes.projectDetail;
 
   // ── Global meta (not a tab) ────────────────────────────────────────────
   static const settings = SettingsRoutes.root;

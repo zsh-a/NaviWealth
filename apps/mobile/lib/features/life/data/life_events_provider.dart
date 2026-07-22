@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
@@ -20,7 +21,6 @@ import 'package:naviwealth/features/health/ui/health_today_providers.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_route_paths.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart'
     as knowledge_data;
-import 'package:naviwealth/features/life/composition/life_route_paths.dart';
 import 'package:naviwealth/features/life/domain/life_event.dart';
 
 const String kLifeHealthMetricSourceFamily = 'health:health_metrics';
@@ -248,7 +248,7 @@ LifeEvent lifeEventForAgentArtifact(AgentArtifact artifact) {
     domain: domain,
     template: LifeEventTemplate.agentResult,
     params: [artifact.title.trim()],
-    routePath: LifeRoutes.agentArtifact(artifact.id),
+    routePath: AgentArtifactRoutes.detail(artifact.id),
     actionSuggestion: LifeActionSuggestion(
       template: LifeActionTemplate.reviewAgentInsight,
       sourceRowFamily: kLifeAgentArtifactSourceFamily,

@@ -150,9 +150,7 @@ class RecoveryAlertAgent implements Agent {
               _round(alert.declinePct),
               alert.consecutiveDays,
             ),
-            payload: HealthNotifications.payloadForRecoveryAlert(
-              artifactId: artifactId,
-            ),
+            payload: HealthNotifications.payloadForArtifact(artifactId),
             channel: kHealthBriefingNotificationChannel,
           );
         }

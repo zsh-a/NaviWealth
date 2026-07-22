@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/app/agent_artifact_page.dart';
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
@@ -33,6 +34,8 @@ import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/ai_chat/ui/ai_chat_page.dart';
 import 'package:naviwealth/features/auth/ui/devices_page.dart';
+import 'package:naviwealth/features/execution/composition/execution_route_paths.dart';
+import 'package:naviwealth/features/execution/ui/execution_detail_page.dart';
 import 'package:naviwealth/features/finance/activity/ui/activity_entry_detail_page.dart';
 import 'package:naviwealth/features/finance/activity/ui/activity_page.dart';
 import 'package:naviwealth/features/finance/analytics/data/benchmark/benchmark_history_source.dart';
@@ -80,7 +83,6 @@ import 'package:naviwealth/features/finance/ui/settings/monthly_expense_settings
 import 'package:naviwealth/features/finance/ui/settings/risk_thresholds_page.dart';
 import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';
 import 'package:naviwealth/features/health/ui/health_trend_page.dart';
-import 'package:naviwealth/features/life/ui/life_agent_artifact_page.dart';
 import 'package:naviwealth/features/settings/ui/settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -326,12 +328,37 @@ void main() {
     testWidgets('Life Agent result deep link resolves by artifact id', (
       tester,
     ) async {
-      final route = AppRoutes.lifeAgentArtifact('artifact/with spaces');
+      final route = AppRoutes.agentArtifact('artifact/with spaces');
       final container = await _pumpAt(tester, initialLocation: route);
 
       expect(_currentPath(container), route);
       expect(find.byType(RouteErrorPage), findsNothing);
-      expect(find.byType(LifeAgentArtifactPage), findsOneWidget);
+      expect(find.byType(AgentArtifactPage), findsOneWidget);
+      expect(
+        tester
+            .widget<AgentArtifactPage>(find.byType(AgentArtifactPage))
+            .artifactId,
+        'artifact/with spaces',
+      );
+    });
+
+    testWidgets('Execution Project detail deep link resolves by project id', (
+      tester,
+    ) async {
+      final route = ExecutionRoutes.project('project/with spaces');
+      final container = await _pumpAt(tester, initialLocation: route);
+
+      expect(_currentPath(container), route);
+      expect(find.byType(RouteErrorPage), findsNothing);
+      expect(find.byType(ExecutionProjectDetailPage), findsOneWidget);
+      expect(
+        tester
+            .widget<ExecutionProjectDetailPage>(
+              find.byType(ExecutionProjectDetailPage),
+            )
+            .projectId,
+        'project/with spaces',
+      );
     });
 
     testWidgets('web checklist primary deep links render canonical pages', (

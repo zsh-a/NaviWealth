@@ -16,6 +16,7 @@ class ExecutionProjectCardController extends ConsumerStatefulWidget {
     required this.onRecordProgress,
     this.openActionCount,
     this.blockedActionCount,
+    this.onOpen,
     this.showActions = true,
   });
 
@@ -25,6 +26,7 @@ class ExecutionProjectCardController extends ConsumerStatefulWidget {
   final VoidCallback onRecordProgress;
   final int? openActionCount;
   final int? blockedActionCount;
+  final VoidCallback? onOpen;
   final bool showActions;
 
   @override
@@ -68,6 +70,7 @@ class _ExecutionProjectCardControllerState
       openActionCount: widget.openActionCount,
       blockedActionCount: widget.blockedActionCount,
       busy: _busy,
+      onOpen: widget.onOpen,
       showActions: widget.showActions,
       onCreateAction: _busy ? () {} : widget.onCreateAction,
       onEdit: _busy ? () {} : widget.onEdit,

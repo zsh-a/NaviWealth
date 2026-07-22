@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ai/agents/agent_artifact_routes.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/lifeos/action_outcome.dart';
@@ -203,14 +204,8 @@ class _ExecutionReviewAgentPanel extends ConsumerWidget {
       child: AgentResultsSection(
         bundle: bundle,
         metaLabelBuilder: (at) => _executionAgentMetaLabel(context, at),
-        onOpen: (artifact) => showAgentArtifactSheet(
-          context: context,
-          artifact: artifact,
-          subtitle: _executionAgentMetaLabel(context, artifact.createdAt),
-          onVisibilityChanged: () => ref.invalidate(
-            execution_agent_providers.latestExecutionReviewResultsProvider,
-          ),
-        ),
+        onOpen: (artifact) =>
+            context.push(AgentArtifactRoutes.detail(artifact.id)),
         onRetry: (_) => _retryExecutionReview(ref),
       ),
     );

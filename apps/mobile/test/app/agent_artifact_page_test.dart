@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/app/agent_artifact_page.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/life/ui/life_agent_artifact_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
@@ -33,11 +34,11 @@ void main() {
       createdAt: DateTime.utc(2026, 7, 22),
     );
     final router = GoRouter(
-      initialLocation: '/life/insights/$artifactId',
+      initialLocation: AgentArtifactRoutes.detail(artifactId),
       routes: [
         GoRoute(
-          path: '/life/insights/:artifactId',
-          builder: (_, state) => LifeAgentArtifactPage(
+          path: AgentArtifactRoutes.detailPath,
+          builder: (_, state) => AgentArtifactPage(
             artifactId: state.pathParameters['artifactId']!,
           ),
         ),
@@ -52,7 +53,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          lifeAgentArtifactProvider(
+          agentArtifactProvider(
             artifactId,
           ).overrideWith((ref) async => artifact),
         ],

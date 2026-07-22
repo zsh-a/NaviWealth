@@ -351,9 +351,7 @@ class RoutineDueAgent implements Agent {
         id: KnowledgeNotifications.idForRoutineDigest(localDay),
         title: l10n.knowledgeAgentRoutineTitle,
         body: summary,
-        payload: KnowledgeNotifications.payloadForRoutineDigest(
-          artifactId: artifactId,
-        ),
+        payload: KnowledgeNotifications.payloadForArtifact(artifactId),
         channel: kKnowledgeReviewNotificationChannel,
       );
     } on Object {

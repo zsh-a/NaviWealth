@@ -81,6 +81,13 @@ final executionProjectByIdProvider = FutureProvider.autoDispose
       return repository.findProject(ownerUserId: ownerUserId, id: id);
     });
 
+final executionProjectDetailProvider = StreamProvider.autoDispose
+    .family<ExecutionProject?, String>((ref, id) async* {
+      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
+      final repository = await ref.watch(executionRepositoryProvider.future);
+      yield* repository.watchProjectById(ownerUserId: ownerUserId, id: id);
+    });
+
 final executionCommitmentsProvider =
     StreamProvider.autoDispose<List<ExecutionCommitment>>((ref) async* {
       final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
@@ -119,6 +126,16 @@ final executionActionsForCommitmentProvider = StreamProvider.autoDispose
       );
     });
 
+final executionActionsForProjectProvider = StreamProvider.autoDispose
+    .family<List<ExecutionAction>, String>((ref, id) async* {
+      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
+      final repository = await ref.watch(executionRepositoryProvider.future);
+      yield* repository.watchActionsForProject(
+        ownerUserId: ownerUserId,
+        projectId: id,
+      );
+    });
+
 final executionRecentProgressProvider =
     StreamProvider.autoDispose<List<ExecutionProgressEntry>>((ref) async* {
       final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
@@ -143,6 +160,16 @@ final executionProgressForCommitmentProvider = StreamProvider.autoDispose
       yield* repository.watchProgressForCommitment(
         ownerUserId: ownerUserId,
         commitmentId: id,
+      );
+    });
+
+final executionProgressForProjectProvider = StreamProvider.autoDispose
+    .family<List<ExecutionProgressEntry>, String>((ref, id) async* {
+      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
+      final repository = await ref.watch(executionRepositoryProvider.future);
+      yield* repository.watchProgressForProject(
+        ownerUserId: ownerUserId,
+        projectId: id,
       );
     });
 

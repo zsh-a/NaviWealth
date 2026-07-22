@@ -95,6 +95,22 @@ mixin ExecutionProgressRepositoryMixin {
     return q.watch().map((rows) => rows.map(executionProgressFromRow).toList());
   }
 
+  Stream<List<ExecutionProgressEntry>> watchProgressForProject({
+    required String ownerUserId,
+    required String projectId,
+    int limit = 100,
+  }) {
+    final q = _db.select(_db.executionProgressEntries)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..where((t) => t.projectId.equals(projectId))
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    return q.watch().map((rows) => rows.map(executionProgressFromRow).toList());
+  }
+
   Future<List<ExecutionProgressEntry>> listRecentProgress({
     required String ownerUserId,
     int limit = 100,

@@ -62,42 +62,12 @@ void main() {
   });
 
   group('KnowledgeNotifications routine payloads', () {
-    test('round-trip artifact id to Knowledge Review route', () {
-      final payload = KnowledgeNotifications.payloadForRoutineDigest(
-        artifactId: 'knowledge_routine_due:2026-07-05',
-      );
-
-      expect(
-        payload,
-        '/knowledge/review?agent_artifact_id=knowledge_routine_due%3A2026-07-05',
-      );
-      expect(
-        KnowledgeNotifications.routineArtifactIdFromPayload(payload),
+    test('builds the canonical Agent artifact route', () {
+      final payload = KnowledgeNotifications.payloadForArtifact(
         'knowledge_routine_due:2026-07-05',
       );
-    });
 
-    test('rejects chat external and non-review routes', () {
-      expect(KnowledgeNotifications.routineArtifactIdFromPayload(null), isNull);
-      expect(KnowledgeNotifications.routineArtifactIdFromPayload(''), isNull);
-      expect(
-        KnowledgeNotifications.routineArtifactIdFromPayload(
-          '/ai?agent_artifact_id=knowledge_routine_due:2026-07-05',
-        ),
-        isNull,
-      );
-      expect(
-        KnowledgeNotifications.routineArtifactIdFromPayload(
-          '/knowledge/library?agent_artifact_id=knowledge_routine_due:2026-07-05',
-        ),
-        isNull,
-      );
-      expect(
-        KnowledgeNotifications.routineArtifactIdFromPayload(
-          'https://example.com/knowledge/review?agent_artifact_id=knowledge_routine_due:2026-07-05',
-        ),
-        isNull,
-      );
+      expect(payload, '/insights/knowledge_routine_due%3A2026-07-05');
     });
   });
 
@@ -366,7 +336,7 @@ void main() {
     expect(notifier.showCount, 1);
     expect(
       notifier.lastPayload,
-      '/knowledge/review?agent_artifact_id=knowledge_routine_due%3A2026-07-05',
+      '/insights/knowledge_routine_due%3A2026-07-05',
     );
   });
 }

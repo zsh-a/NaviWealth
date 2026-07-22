@@ -70,50 +70,19 @@ void main() {
   });
 
   test('knowledge routine notification payload deep-links to artifact', () {
-    final payload = KnowledgeNotifications.payloadForRoutineDigest(
-      artifactId: 'knowledge_routine_due:2026-07-05',
-    );
-
-    expect(
-      payload,
-      '/knowledge/review?agent_artifact_id=knowledge_routine_due%3A2026-07-05',
-    );
-    expect(
-      KnowledgeNotifications.routineArtifactIdFromPayload(payload),
+    final payload = KnowledgeNotifications.payloadForArtifact(
       'knowledge_routine_due:2026-07-05',
     );
-    expect(
-      KnowledgeNotifications.routineArtifactIdFromPayload(
-        '/knowledge/review?agent_artifact_id=',
-      ),
-      isNull,
-    );
-    expect(
-      KnowledgeNotifications.routineArtifactIdFromPayload('/knowledge'),
-      isNull,
-    );
+
+    expect(payload, '/insights/knowledge_routine_due%3A2026-07-05');
   });
 
   test('health recovery notification payload deep-links to artifact', () {
-    final payload = HealthNotifications.payloadForRecoveryAlert(
-      artifactId: 'recovery_alert:2026-07-05',
-    );
-
-    expect(payload, '/health?agent_artifact_id=recovery_alert%3A2026-07-05');
-    expect(
-      HealthNotifications.recoveryArtifactIdFromPayload(payload),
+    final payload = HealthNotifications.payloadForArtifact(
       'recovery_alert:2026-07-05',
     );
-    expect(
-      HealthNotifications.recoveryArtifactIdFromPayload(
-        '/health?agent_artifact_id=',
-      ),
-      isNull,
-    );
-    expect(
-      HealthNotifications.recoveryArtifactIdFromPayload('/health/trend'),
-      isNull,
-    );
+
+    expect(payload, '/insights/recovery_alert%3A2026-07-05');
   });
 
   test('notification ids stay within Android signed int range', () {

@@ -20,7 +20,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/agents/agent_artifact.dart';
-import '../../../core/ai/agents/agent_artifact_access.dart';
+import '../../../core/ai/agents/agent_artifact_routes.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/ui/agent_result_card.dart';
@@ -57,20 +57,15 @@ part 'recovery_hero.dart';
 part 'weekly_summary_panel.dart';
 
 class HealthTodayPage extends ConsumerStatefulWidget {
-  const HealthTodayPage({super.key, this.initialAgentArtifactId});
-
-  final String? initialAgentArtifactId;
+  const HealthTodayPage({super.key});
 
   @override
   ConsumerState<HealthTodayPage> createState() => _HealthTodayPageState();
 }
 
 class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
-  String? _openedInitialArtifactId;
-
   @override
   Widget build(BuildContext context) {
-    _maybeOpenInitialArtifactSheet();
     final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
       title: l10n.healthTodayTitle,
@@ -93,7 +88,9 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
           padding: shellTabContentPadding(context),
           onRefresh: () async {
             ref.invalidate(healthTodaySnapshotProvider);
-            ref.invalidate(health_agent_providers.latestMorningBriefingProvider);
+            ref.invalidate(
+              health_agent_providers.latestMorningBriefingProvider,
+            );
             ref.invalidate(
               health_agent_providers.latestMorningBriefingArtifactProvider,
             );
@@ -123,46 +120,6 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
         ),
       ),
     );
-  }
-
-  void _maybeOpenInitialArtifactSheet() {
-    final artifactId = widget.initialAgentArtifactId;
-    if (artifactId == null ||
-        artifactId.isEmpty ||
-        _openedInitialArtifactId == artifactId) {
-      return;
-    }
-    _openedInitialArtifactId = artifactId;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
-      final artifact = await readActiveAgentArtifactFromWidgetRef(
-        ref,
-        artifactId: artifactId,
-        expectedDomain: DomainScope.health.wire,
-      );
-      if (!mounted || artifact == null) return;
-      final l10n = AppLocalizations.of(context);
-      final metaLabel = l10n.healthBriefingUpdated(
-        _ago(l10n, artifact.createdAt),
-      );
-      await showAgentArtifactSheet(
-        context: context,
-        artifact: artifact,
-        subtitle: metaLabel,
-        onVisibilityChanged: () {
-          ref.invalidate(
-            health_agent_providers.latestMorningBriefingArtifactProvider,
-          );
-          ref.invalidate(
-            health_agent_providers.latestRecoveryAlertArtifactProvider,
-          );
-          ref.invalidate(health_agent_providers.latestRecoveryAlertRunProvider);
-          ref.invalidate(
-            health_agent_providers.latestHealthReviewAgentResultsProvider,
-          );
-        },
-      );
-    });
   }
 }
 

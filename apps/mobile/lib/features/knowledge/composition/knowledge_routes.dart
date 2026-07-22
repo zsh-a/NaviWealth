@@ -9,7 +9,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/shell/domain_tabs_shell.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../agents/knowledge_notifications.dart';
 import '../ui/knowledge_decision_detail_page.dart';
 import '../ui/knowledge_inbox_page.dart';
 import '../ui/knowledge_library_page.dart';
@@ -65,10 +64,7 @@ StatefulShellRoute knowledgeShellRoute() {
           GoRoute(
             path: KnowledgeRoutes.review,
             name: KnowledgeRouteNames.review,
-            builder: (context, state) => KnowledgeReviewPage(
-              initialAgentArtifactId:
-                  state.uri.queryParameters[kKnowledgeAgentArtifactQueryParam],
-            ),
+            builder: (context, state) => const KnowledgeReviewPage(),
           ),
         ],
       ),

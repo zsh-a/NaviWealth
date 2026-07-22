@@ -2851,19 +2851,19 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Insight details'**
-  String get lifeAgentArtifactDetailTitle;
+  String get agentArtifactDetailTitle;
 
   /// Title when a route-backed Agent result cannot be opened
   ///
   /// In en, this message translates to:
   /// **'Insight unavailable'**
-  String get lifeAgentArtifactMissingTitle;
+  String get agentArtifactMissingTitle;
 
   /// Explanation when a route-backed Agent result cannot be opened
   ///
   /// In en, this message translates to:
   /// **'This result may have expired, been dismissed, or belong to a domain that is not active.'**
-  String get lifeAgentArtifactMissingBody;
+  String get agentArtifactMissingBody;
 
   /// Title of the Life signal evidence sheet
   ///
