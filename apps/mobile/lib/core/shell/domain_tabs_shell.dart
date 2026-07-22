@@ -58,21 +58,14 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell> {
     final activePath = (index >= 0 && index < tabs.length)
         ? tabs[index].routePath
         : '';
-    final currentPublished = ref.read(activeShellTabPathProvider);
-    if (currentPublished != activePath) {
-      // Schedule after this frame so we don't mutate providers mid-build.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        if (ref.read(activeShellTabPathProvider) != activePath) {
-          ref.read(activeShellTabPathProvider.notifier).state = activePath;
-        }
-      });
-    }
     // Branch roots are already retained by StatefulShellRoute.indexedStack.
     // Present the selected branch directly: animating the entire navigation
     // shell forces full-screen opacity/transform compositing on every tab
     // change, which is especially expensive for chart and glass surfaces.
-    final shellChild = widget.shell;
+    final shellChild = ProviderScope(
+      overrides: [activeShellTabPathProvider.overrideWith((ref) => activePath)],
+      child: widget.shell,
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {

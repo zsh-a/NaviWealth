@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/shell/domain_shell.dart';
 import 'package:naviwealth/core/shell/domain_tabs_shell.dart';
+import 'package:naviwealth/core/shell/shell_visibility.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -39,14 +40,21 @@ GoRouter _router({Widget one = const Center(child: Text('one'))}) => GoRouter(
       branches: <StatefulShellBranch>[
         StatefulShellBranch(
           routes: <RouteBase>[
-            GoRoute(path: '/one', builder: (context, state) => one),
+            GoRoute(
+              path: '/one',
+              builder: (context, state) =>
+                  ShellTabPause(routePath: '/one', child: one),
+            ),
           ],
         ),
         StatefulShellBranch(
           routes: <RouteBase>[
             GoRoute(
               path: '/two',
-              builder: (context, state) => const Center(child: Text('two')),
+              builder: (context, state) => const ShellTabPause(
+                routePath: '/two',
+                child: Center(child: Text('two')),
+              ),
             ),
           ],
         ),

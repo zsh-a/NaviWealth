@@ -9,16 +9,18 @@ library;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 
 /// Route path of the currently visible domain-tab root (e.g. `/activity`).
 ///
 /// Empty string means "unknown / not under a domain shell" — treat as active
 /// so standalone routes and tests keep working without shell plumbing.
-final activeShellTabPathProvider = StateProvider<String>((ref) => '');
+final activeShellTabPathProvider = Provider<String>((ref) => '');
 
 /// Whether [routePath] is the active shell tab (or a nested route under it).
-final shellTabIsActiveProvider = Provider.family<bool, String>((ref, routePath) {
+final shellTabIsActiveProvider = Provider.family<bool, String>((
+  ref,
+  routePath,
+) {
   final active = ref.watch(activeShellTabPathProvider);
   return isShellTabPathActive(activeTabPath: active, routePath: routePath);
 });
@@ -30,8 +32,7 @@ bool isShellTabPathActive({
 }) {
   if (activeTabPath.isEmpty) return true;
   if (routePath.isEmpty) return true;
-  return routePath == activeTabPath ||
-      routePath.startsWith('$activeTabPath/');
+  return routePath == activeTabPath || routePath.startsWith('$activeTabPath/');
 }
 
 /// Unmounts [child] while its shell tab is offstage so Riverpod watches and
