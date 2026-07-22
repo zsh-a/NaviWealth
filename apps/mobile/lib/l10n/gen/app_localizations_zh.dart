@@ -116,6 +116,38 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planBudgetEmptyBody => '为任意类别设定月度上限，本页会显示实际花销与上限的对比。';
 
   @override
+  String get planBudgetEmptyCta => '设置第一笔预算';
+
+  @override
+  String get planBudgetAddAction => '新增预算';
+
+  @override
+  String get planBudgetCreateTitle => '新建预算';
+
+  @override
+  String get planBudgetCategoryLabel => '支出类别';
+
+  @override
+  String get planBudgetCategoryHelper => '选择需要按月跟踪支出上限的类别。';
+
+  @override
+  String get planBudgetCategoryRequired => '请选择支出类别。';
+
+  @override
+  String get planBudgetNoAvailableCategories => '本月所有支出类别都已设置预算。';
+
+  @override
+  String get planBudgetPreviousMonth => '上个月';
+
+  @override
+  String get planBudgetNextMonth => '下个月';
+
+  @override
+  String planBudgetPeriodCurrency(String month, String currency) {
+    return '$month · $currency';
+  }
+
+  @override
   String planBudgetMonthHeader(String month) {
     return '$month 预算';
   }
@@ -140,6 +172,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get planBudgetEditTitle => '编辑预算';
+
+  @override
+  String get planBudgetDeleteAction => '删除预算';
+
+  @override
+  String get planBudgetDeleteTitle => '删除这笔预算？';
+
+  @override
+  String get planBudgetDeleteBody => '这会移除所选月份的类别上限，不会影响已经记录的支出。';
 
   @override
   String planBudgetAmountLabel(String currency) {

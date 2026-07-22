@@ -120,6 +120,40 @@ class AppLocalizationsEn extends AppLocalizations {
       'Set a monthly cap for any category to track spending against it here.';
 
   @override
+  String get planBudgetEmptyCta => 'Set first budget';
+
+  @override
+  String get planBudgetAddAction => 'Add budget';
+
+  @override
+  String get planBudgetCreateTitle => 'New budget';
+
+  @override
+  String get planBudgetCategoryLabel => 'Expense category';
+
+  @override
+  String get planBudgetCategoryHelper =>
+      'Choose the category whose monthly spending this cap should track.';
+
+  @override
+  String get planBudgetCategoryRequired => 'Choose an expense category.';
+
+  @override
+  String get planBudgetNoAvailableCategories =>
+      'Every expense category already has a budget for this month.';
+
+  @override
+  String get planBudgetPreviousMonth => 'Previous month';
+
+  @override
+  String get planBudgetNextMonth => 'Next month';
+
+  @override
+  String planBudgetPeriodCurrency(String month, String currency) {
+    return '$month · $currency';
+  }
+
+  @override
   String planBudgetMonthHeader(String month) {
     return '$month budgets';
   }
@@ -144,6 +178,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planBudgetEditTitle => 'Edit budget';
+
+  @override
+  String get planBudgetDeleteAction => 'Delete budget';
+
+  @override
+  String get planBudgetDeleteTitle => 'Delete this budget?';
+
+  @override
+  String get planBudgetDeleteBody =>
+      'This removes the category cap for the selected month. Recorded expenses are not affected.';
 
   @override
   String planBudgetAmountLabel(String currency) {

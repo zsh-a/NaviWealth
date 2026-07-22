@@ -38,6 +38,19 @@
   "planBudgetTitle": "预算",
   "planBudgetEmptyTitle": "暂无预算",
   "planBudgetEmptyBody": "为任意类别设定月度上限，本页会显示实际花销与上限的对比。",
+  "planBudgetEmptyCta": "设置第一笔预算",
+  "planBudgetAddAction": "新增预算",
+  "planBudgetCreateTitle": "新建预算",
+  "planBudgetCategoryLabel": "支出类别",
+  "planBudgetCategoryHelper": "选择需要按月跟踪支出上限的类别。",
+  "planBudgetCategoryRequired": "请选择支出类别。",
+  "planBudgetNoAvailableCategories": "本月所有支出类别都已设置预算。",
+  "planBudgetPreviousMonth": "上个月",
+  "planBudgetNextMonth": "下个月",
+  "planBudgetPeriodCurrency": "{month} · {currency}",
+  "@planBudgetPeriodCurrency": {
+    "placeholders": { "month": { "type": "String" }, "currency": { "type": "String" } }
+  },
   "planBudgetMonthHeader": "{month} 预算",
   "@planBudgetMonthHeader": {
     "placeholders": { "month": { "type": "String" } }
@@ -47,6 +60,9 @@
   "planBudgetRemaining": "剩余 {amount} {currency}",
   "planBudgetOverBy": "超出 {amount} {currency}",
   "planBudgetEditTitle": "编辑预算",
+  "planBudgetDeleteAction": "删除预算",
+  "planBudgetDeleteTitle": "删除这笔预算？",
+  "planBudgetDeleteBody": "这会移除所选月份的类别上限，不会影响已经记录的支出。",
   "planBudgetAmountLabel": "金额（{currency}）",
   "planBudgetNoteLabel": "备注",
   "planBudgetInvalidAmount": "请输入非负金额。",

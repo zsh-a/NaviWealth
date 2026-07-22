@@ -308,6 +308,66 @@ abstract class AppLocalizations {
   /// **'Set a monthly cap for any category to track spending against it here.'**
   String get planBudgetEmptyBody;
 
+  /// No description provided for @planBudgetEmptyCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Set first budget'**
+  String get planBudgetEmptyCta;
+
+  /// No description provided for @planBudgetAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add budget'**
+  String get planBudgetAddAction;
+
+  /// No description provided for @planBudgetCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New budget'**
+  String get planBudgetCreateTitle;
+
+  /// No description provided for @planBudgetCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense category'**
+  String get planBudgetCategoryLabel;
+
+  /// No description provided for @planBudgetCategoryHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the category whose monthly spending this cap should track.'**
+  String get planBudgetCategoryHelper;
+
+  /// No description provided for @planBudgetCategoryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an expense category.'**
+  String get planBudgetCategoryRequired;
+
+  /// No description provided for @planBudgetNoAvailableCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Every expense category already has a budget for this month.'**
+  String get planBudgetNoAvailableCategories;
+
+  /// No description provided for @planBudgetPreviousMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous month'**
+  String get planBudgetPreviousMonth;
+
+  /// No description provided for @planBudgetNextMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Next month'**
+  String get planBudgetNextMonth;
+
+  /// No description provided for @planBudgetPeriodCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} · {currency}'**
+  String planBudgetPeriodCurrency(String month, String currency);
+
   /// Header above the list of budgets for the active month
   ///
   /// In en, this message translates to:
@@ -343,6 +403,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit budget'**
   String get planBudgetEditTitle;
+
+  /// No description provided for @planBudgetDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete budget'**
+  String get planBudgetDeleteAction;
+
+  /// No description provided for @planBudgetDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this budget?'**
+  String get planBudgetDeleteTitle;
+
+  /// No description provided for @planBudgetDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the category cap for the selected month. Recorded expenses are not affected.'**
+  String get planBudgetDeleteBody;
 
   /// No description provided for @planBudgetAmountLabel.
   ///

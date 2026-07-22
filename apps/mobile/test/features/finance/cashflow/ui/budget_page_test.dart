@@ -5,13 +5,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/budget_summary.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/budget_page.dart';
+import 'package:naviwealth/features/finance/data/repositories/budget_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
+import '../../../../core/persistence/test_database.dart';
+import '../../data/repositories/_stub_stamper.dart';
 
 /// Build a [BudgetRow] without going through the live Drift database —
 /// the page only reads display fields, so a hand-rolled row exercises
@@ -40,6 +48,9 @@ Future<void> _pump(WidgetTester tester, List<BudgetRow> rows) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        allAccountsStreamProvider.overrideWith(
+          (ref) => Stream.value([_expenseAccount()]),
+        ),
         // Replace the family stream with a single-shot stream that emits
         // the canned rows once. No Drift, no DB, no animation never-end.
         budgetsForMonthProvider.overrideWith((ref, periodMonth) async* {
@@ -103,12 +114,127 @@ Future<void> _pump(WidgetTester tester, List<BudgetRow> rows) async {
   await tester.pump(const Duration(milliseconds: 50));
 }
 
+Future<void> _pumpLive(
+  WidgetTester tester, {
+  required BudgetRepository repository,
+}) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        budgetRepositoryProvider.overrideWith((ref) async => repository),
+        allAccountsStreamProvider.overrideWith(
+          (ref) => Stream.value([_expenseAccount()]),
+        ),
+        monthlyBudgetSummaryProvider.overrideWith((ref, periodMonth) {
+          return AsyncValue.data((
+            summary: MonthlyBudgetSummary(
+              periodMonth: periodMonth,
+              currency: 'CNY',
+              totalBudgeted: Money.zero('CNY'),
+              totalSpent: Money.zero('CNY'),
+              categories: const [],
+            ),
+            mismatchedCount: 0,
+          ));
+        }),
+      ],
+      child: MaterialApp(
+        theme: AppTheme.light(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('en', 'US'),
+        home: const PlanBudgetPage(),
+      ),
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 100));
+}
+
 void main() {
   testWidgets('renders empty state when no budgets exist', (tester) async {
     await _pump(tester, const []);
 
     expect(find.text('No budgets yet'), findsOneWidget);
+    expect(find.text('Set first budget'), findsOneWidget);
     expect(find.byIcon(FLucideIcons.piggyBank), findsWidgets);
+  });
+
+  testWidgets('switches the active budget month', (tester) async {
+    await _pump(tester, const []);
+    final now = DateTime.now();
+    final next = DateTime(now.year, now.month + 1);
+    final nextKey =
+        '${next.year}-${next.month.toString().padLeft(2, '0')} budgets';
+
+    await tester.tap(find.byTooltip('Next month'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.text(nextKey), findsOneWidget);
+  });
+
+  testWidgets('creates the first budget from the empty state', (tester) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final repository = BudgetRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+      stamper: makeStubStamper(),
+    );
+    await _pumpLive(tester, repository: repository);
+
+    await tester.tap(find.text('Set first budget'));
+    await tester.pumpAndSettle();
+    expect(find.text('New budget'), findsOneWidget);
+
+    await tester.tap(find.byType(FSelect<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Dining').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(FTextField).first, '1800');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    final stored = await repository.findForCategoryMonth(
+      categoryId: 'expense-dining',
+      periodMonth: _currentMonthKey(),
+    );
+    expect(stored?.amount, Decimal.parse('1800'));
+    expect(stored?.currency, 'CNY');
+    expect(find.text('Dining'), findsOneWidget);
+  });
+
+  testWidgets('deletes an existing budget from its edit sheet', (tester) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final repository = BudgetRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+      stamper: makeStubStamper(),
+    );
+    await repository.create(
+      categoryId: 'expense-dining',
+      periodMonth: _currentMonthKey(),
+      amount: Decimal.parse('1200'),
+      currency: 'CNY',
+    );
+    await _pumpLive(tester, repository: repository);
+
+    await tester.tap(find.text('Dining'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(FLucideIcons.trash2));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete this budget?'), findsOneWidget);
+    await tester.tap(find.text('Delete').last);
+    await tester.pumpAndSettle();
+
+    final stored = await repository.findForCategoryMonth(
+      categoryId: 'expense-dining',
+      periodMonth: _currentMonthKey(),
+    );
+    expect(stored, isNull);
+    expect(find.text('No budgets yet'), findsOneWidget);
   });
 
   testWidgets('renders budgets for the current UTC month + total roll-up', (
@@ -154,6 +280,20 @@ void main() {
 }
 
 String _currentMonthKey() {
-  final now = DateTime.now().toUtc();
+  final now = DateTime.now();
   return '${now.year}-${now.month.toString().padLeft(2, '0')}';
 }
+
+Account _expenseAccount() => Account(
+  id: 'expense-dining',
+  type: AccountCategory.asset,
+  name: 'Dining',
+  currency: 'CNY',
+  category: AccountSide.expense,
+  sync: SyncMeta(
+    ownerUserId: 'u',
+    updatedAt: DateTime.utc(2026, 5, 24),
+    updatedByDevice: 'd',
+    hlc: const Hlc(wallMillis: 1, counter: 0, nodeId: 'd'),
+  ),
+);
