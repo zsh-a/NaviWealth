@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/format/formatters.dart';
@@ -12,6 +12,8 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../application/dca_simulation_service.dart';
 import '../application/dca_trade_entry_prefills.dart';
+import '../data/dca_plan_providers.dart';
+import '../domain/dca/dca_plan.dart';
 import '../domain/dca/dca_simulator.dart';
 import 'trade_entry_form_page.dart';
 
@@ -51,6 +53,7 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(dcaSimulationProvider);
+    final plans = ref.watch(dcaPlansProvider);
     return AppPageScaffold(
       title: l10n.dcaSimulatorTitle,
       actions: [
@@ -73,6 +76,13 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
               : AppSpacing.s24,
         ),
         children: [
+          _DcaPlansSection(
+            plans: plans,
+            onExecute: _executePlan,
+            onToggle: _togglePlan,
+            onDelete: _deletePlan,
+          ),
+          const SizedBox(height: AppSpacing.s16),
           _DcaControls(
             formKey: _formKey,
             symbols: _symbols,
@@ -93,7 +103,7 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
             error: (error, _) =>
                 _ErrorState(message: userSafeErrorMessage(context, error)),
             data: (data) =>
-                _DcaResults(state: data, onDraft: () => _draftTrades(data)),
+                _DcaResults(state: data, onDraft: () => _savePlan(data)),
           ),
         ],
       ),
@@ -113,27 +123,126 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
     await ref.read(dcaSimulationProvider.notifier).run(request);
   }
 
-  Future<void> _draftTrades(DcaSimulationState state) async {
-    final l10n = AppLocalizations.of(context);
-    final symbols = state.request.symbols;
-    if (symbols.isEmpty) return;
-    final weight = (Decimal.one / Decimal.fromInt(symbols.length)).toDecimal(
-      scaleOnInfinitePrecision: 16,
-    );
-    final prefills = buildDcaTradeEntryPrefills(
-      request: DcaSimulationRequestContract(
-        allocations: [
-          for (final symbol in symbols)
-            DcaAllocation(symbol: symbol, weight: weight),
-        ],
+  Future<void> _savePlan(DcaSimulationState state) async {
+    final allocations = _parseAllocations(_symbols.text);
+    if (allocations.isEmpty) return;
+    final now = DateTime.now().toUtc();
+    try {
+      final repository = await ref.read(dcaPlanRepositoryProvider.future);
+      await repository.create(
+        allocations: allocations,
         amountPerContribution: state.request.amountPerContribution,
         currency: state.request.currency,
+        market: state.request.market,
+        frequency: state.request.frequency,
+        nextDueAt: now,
+        endAt: DateTime.utc(now.year + state.request.years, now.month, now.day),
+      );
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          AppLocalizations.of(context).dcaPlanSaved,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).commonSaveFailed,
+        );
+      }
+    }
+  }
+
+  Future<void> _executePlan(DcaPlan plan) async {
+    final completed = await _openContribution(
+      allocations: plan.allocations,
+      amountPerContribution: plan.amountPerContribution,
+      currency: plan.currency,
+      market: plan.market,
+    );
+    if (!completed || !mounted) return;
+    try {
+      final repository = await ref.read(dcaPlanRepositoryProvider.future);
+      await repository.markExecuted(plan, DateTime.now().toUtc());
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).commonSaveFailed,
+        );
+      }
+    }
+  }
+
+  Future<void> _togglePlan(DcaPlan plan) async {
+    try {
+      final repository = await ref.read(dcaPlanRepositoryProvider.future);
+      await repository.setEnabled(plan, !plan.enabled);
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).commonSaveFailed,
+        );
+      }
+    }
+  }
+
+  Future<void> _deletePlan(DcaPlan plan) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.dcaPlanDeleteTitle),
+        content: Text(l10n.dcaPlanDeleteBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.commonDelete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      final repository = await ref.read(dcaPlanRepositoryProvider.future);
+      await repository.remove(plan);
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(context, ToastKind.error, l10n.commonDeleteFailed);
+      }
+    }
+  }
+
+  Future<bool> _openContribution({
+    required List<DcaAllocation> allocations,
+    required Decimal amountPerContribution,
+    required String currency,
+    required AssetMarket market,
+  }) async {
+    final l10n = AppLocalizations.of(context);
+    if (allocations.isEmpty) return false;
+    final prefills = buildDcaTradeEntryPrefills(
+      request: DcaSimulationRequestContract(
+        allocations: allocations,
+        amountPerContribution: amountPerContribution,
+        currency: currency,
       ),
       tradeDate: DateTime.now(),
+      market: market,
       noteBuilder: (allocation) => l10n.dcaSimulatorDraftNote(
         allocation.symbol,
-        (state.request.amountPerContribution * allocation.weight).toString(),
-        state.request.currency,
+        (amountPerContribution * allocation.weight).toString(),
+        currency,
       ),
     );
     for (final prefill in prefills) {
@@ -143,8 +252,133 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
           pageBuilder: (_, _, _) => TradeEntryFormPage(prefill: prefill),
         ),
       );
-      if (!mounted || recorded != true) return;
+      if (!mounted || recorded != true) return false;
     }
+    return true;
+  }
+}
+
+class _DcaPlansSection extends StatelessWidget {
+  const _DcaPlansSection({
+    required this.plans,
+    required this.onExecute,
+    required this.onToggle,
+    required this.onDelete,
+  });
+
+  final AsyncValue<List<DcaPlan>> plans;
+  final ValueChanged<DcaPlan> onExecute;
+  final ValueChanged<DcaPlan> onToggle;
+  final ValueChanged<DcaPlan> onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return plans.when(
+      loading: () => const SkeletonBox(height: 88, radius: AppRadius.lg),
+      error: (error, _) =>
+          AppEmptyState.error(title: userSafeErrorMessage(context, error)),
+      data: (rows) {
+        if (rows.isEmpty) {
+          return SoftCard.flat(
+            padding: const EdgeInsets.all(AppSpacing.s14),
+            child: Text(l10n.dcaPlanEmpty, style: context.captionStyle),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.dcaPlanSectionTitle, style: context.mutedLabelStyle),
+            const SizedBox(height: AppSpacing.s8),
+            for (final plan in rows)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+                child: _DcaPlanCard(
+                  plan: plan,
+                  onExecute: () => onExecute(plan),
+                  onToggle: () => onToggle(plan),
+                  onDelete: () => onDelete(plan),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _DcaPlanCard extends StatelessWidget {
+  const _DcaPlanCard({
+    required this.plan,
+    required this.onExecute,
+    required this.onToggle,
+    required this.onDelete,
+  });
+
+  final DcaPlan plan;
+  final VoidCallback onExecute;
+  final VoidCallback onToggle;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final symbols = plan.allocations.map((item) => item.symbol).join(' · ');
+    final due = MaterialLocalizations.of(
+      context,
+    ).formatShortDate(plan.nextDueAt.toLocal());
+    return SoftCard.raised(
+      padding: const EdgeInsets.all(AppSpacing.s14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text(symbols, style: context.labelStyle)),
+              AppBadge(
+                label: plan.enabled ? l10n.dcaPlanActive : l10n.dcaPlanPaused,
+                size: AppBadgeSize.compact,
+                tone: plan.enabled
+                    ? AppBadgeTone.success
+                    : AppBadgeTone.neutral,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            l10n.dcaPlanNextDue(
+              due,
+              plan.amountPerContribution.toString(),
+              plan.currency,
+            ),
+            style: context.captionStyle,
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          Wrap(
+            spacing: AppSpacing.s8,
+            runSpacing: AppSpacing.s8,
+            children: [
+              FButton(
+                onPress: plan.enabled ? onExecute : null,
+                child: Text(l10n.dcaPlanExecuteNow),
+              ),
+              FButton(
+                variant: FButtonVariant.outline,
+                onPress: onToggle,
+                child: Text(
+                  plan.enabled ? l10n.dcaPlanPause : l10n.dcaPlanResume,
+                ),
+              ),
+              FButton(
+                variant: FButtonVariant.ghost,
+                onPress: onDelete,
+                child: Text(l10n.commonDelete),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -587,6 +821,42 @@ class _ErrorState extends StatelessWidget {
 }
 
 List<String> _parseSymbols(String raw) => [
-  for (final token in raw.split(RegExp(r'[,，\\s]+')))
-    if (token.trim().isNotEmpty) token.trim().toUpperCase(),
+  for (final allocation in _parseAllocations(raw)) allocation.symbol,
 ];
+
+List<DcaAllocation> _parseAllocations(String raw) {
+  final tokens = raw
+      .split(RegExp(r'[,，\s]+'))
+      .map((token) => token.trim())
+      .where((token) => token.isNotEmpty)
+      .toList(growable: false);
+  if (tokens.isEmpty) return const [];
+  final weighted = <({String symbol, Decimal? weight})>[];
+  for (final token in tokens) {
+    final parts = token.split(':');
+    final symbol = parts.first.trim().toUpperCase();
+    if (symbol.isEmpty) continue;
+    var weight = parts.length == 1 ? null : Decimal.tryParse(parts.last.trim());
+    if (weight != null && weight > Decimal.one) {
+      weight = (weight / Decimal.fromInt(100)).toDecimal(
+        scaleOnInfinitePrecision: 16,
+      );
+    }
+    if (weight != null && weight <= Decimal.zero) return const [];
+    weighted.add((symbol: symbol, weight: weight));
+  }
+  if (weighted.isEmpty) return const [];
+  final fallback = (Decimal.one / Decimal.fromInt(weighted.length)).toDecimal(
+    scaleOnInfinitePrecision: 16,
+  );
+  final rawWeights = [for (final item in weighted) item.weight ?? fallback];
+  final total = rawWeights.fold(Decimal.zero, (sum, weight) => sum + weight);
+  if (total <= Decimal.zero) return const [];
+  return [
+    for (var i = 0; i < weighted.length; i++)
+      DcaAllocation(
+        symbol: weighted[i].symbol,
+        weight: (rawWeights[i] / total).toDecimal(scaleOnInfinitePrecision: 16),
+      ),
+  ];
+}

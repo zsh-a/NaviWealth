@@ -8,6 +8,7 @@ import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/budget_signal.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/budget_spend_mapper.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/budget_summary.dart';
+import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart' as dom;
 import 'package:naviwealth/features/finance/domain/models/account.dart';
@@ -212,9 +213,7 @@ final monthlyBudgetSummaryProvider = Provider.autoDispose
       }
 
       final rows = budgetsAsync.requireValue;
-      final targetCurrency = rows.isEmpty
-          ? 'CNY'
-          : rows.first.currency.toUpperCase();
+      final targetCurrency = ref.watch(baseCurrencyProvider).toUpperCase();
       final converter = FxRateCurrencyConverter(
         InMemoryFxRateLookup(ratesAsync.value ?? const <dom.FxRate>[]),
       );

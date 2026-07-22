@@ -142,6 +142,17 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       _feeController.text = prefill.fee?.toString() ?? '0';
       _taxController.text = prefill.tax?.toString() ?? '0';
       _noteController.text = prefill.note ?? '';
+      if (prefill.symbol case final symbol?) {
+        _selected = LocalSecurityChoice(
+          symbol: symbol,
+          market: prefill.market ?? inferAssetMarket(symbol),
+          type: prefill.market == AssetMarket.crypto
+              ? AssetType.crypto
+              : AssetType.stock,
+          currency: prefill.currency,
+          fromCatalog: false,
+        );
+      }
     }
     if (widget.assetId != null) unawaited(_hydrateInitialAsset());
     // `_feeController`/`_taxController` carry a "0" seed — bind here so

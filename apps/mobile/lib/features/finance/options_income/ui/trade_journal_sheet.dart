@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:decimal/decimal.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -125,11 +125,22 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
   }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context);
     final symbol = _symbolCtl.text.trim().toUpperCase();
     final optionSymbol = _optionSymbolCtl.text.trim();
-    if (symbol.isEmpty || optionSymbol.isEmpty) return;
+    if (symbol.isEmpty || optionSymbol.isEmpty) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.incomePlannerSymbolRequired,
+      );
+      return;
+    }
     final credit = Decimal.tryParse(_creditCtl.text.trim());
-    if (credit == null) return;
+    if (credit == null || credit < Decimal.zero) {
+      AppMessenger.show(context, ToastKind.error, l10n.formAmountFieldInvalid);
+      return;
+    }
     final debit = _debitCtl.text.trim().isEmpty
         ? null
         : Decimal.tryParse(_debitCtl.text.trim());
@@ -137,17 +148,21 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
         ? null
         : Decimal.tryParse(_strikeCtl.text.trim());
     final contractSize = int.tryParse(_contractSizeCtl.text.trim()) ?? 100;
+    if (_status == TradeJournalStatus.closed && debit == null) {
+      AppMessenger.show(context, ToastKind.error, l10n.formAmountFieldInvalid);
+      return;
+    }
     setState(() => _busy = true);
     try {
       final repo = await ref.read(tradeJournalRepositoryProvider.future);
       final ledger = await ref.read(optionsJournalLedgerServiceProvider.future);
       final market = widget.prefilled?.contract.market.wire;
       TradeJournalEntry saved;
+      final realized = (debit == null) ? null : credit - debit;
+      final closedAt = _status == TradeJournalStatus.open
+          ? null
+          : (_loaded?.closedAt ?? DateTime.now().toUtc());
       if (_loaded != null) {
-        final realized = (debit == null) ? null : credit - debit;
-        final closedAt = _status == TradeJournalStatus.open
-            ? null
-            : DateTime.now().toUtc();
         saved = await repo.update(
           _loaded!.copyWith(
             strategy: _strategy,
@@ -176,6 +191,9 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
           entryCredit: credit,
           currency: _currency,
           status: _status,
+          closedAt: closedAt,
+          exitDebit: debit,
+          realizedPnl: realized,
           notes: _notesCtl.text.trim().isEmpty ? null : _notesCtl.text.trim(),
           brokerageAccountId: _brokerageAccountId,
           cashAccountId: _cashAccountId,
@@ -195,6 +213,48 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
       );
       await ledger.mirror(saved);
       if (mounted) unawaited(Navigator.of(context).maybePop());
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _delete() async {
+    final existing = _loaded;
+    if (existing == null) return;
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.incomePlannerJournalDeleteTitle),
+        content: Text(l10n.incomePlannerJournalDeleteBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.commonDelete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      final repo = await ref.read(tradeJournalRepositoryProvider.future);
+      final ledger = await ref.read(optionsJournalLedgerServiceProvider.future);
+      await ledger.removeMirrors(existing.id);
+      await repo.remove(existing);
+      if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(context, ToastKind.error, l10n.commonDeleteFailed);
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -312,6 +372,14 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
           maxLines: 3,
         ),
         const SizedBox(height: AppSpacing.s12),
+        if (_loaded != null) ...[
+          FButton(
+            variant: FButtonVariant.destructive,
+            onPress: _busy ? null : _delete,
+            child: Text(l10n.commonDelete),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+        ],
       ],
     );
   }

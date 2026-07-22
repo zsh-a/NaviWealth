@@ -53,6 +53,9 @@ void main() {
     );
     expect(await outbox.depth(), 1);
 
+    await repository.linkAction(id: created.id, actionId: 'action-1');
+    expect((await repository.watchAll().first).single.actionId, 'action-1');
+
     await repository.review(
       id: created.id,
       actualOutcome: engine.observe(baseline),
@@ -67,6 +70,10 @@ void main() {
     expect(restored.single.actualOutcome, isNotNull);
     expect(restored.single.reviewEvidence?.dataCompleteness, 0.8);
     expect(restored.single.reviewedAt?.toUtc(), DateTime.utc(2026, 10, 17));
-    expect(await outbox.depth(), 2);
+    expect(await outbox.depth(), 3);
+
+    await repository.remove(created.id);
+    expect(await repository.watchAll().first, isEmpty);
+    expect(await outbox.depth(), 4);
   });
 }

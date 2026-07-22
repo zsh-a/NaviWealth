@@ -28,6 +28,7 @@ class PlanBudgetPage extends ConsumerStatefulWidget {
 
 class _PlanBudgetPageState extends ConsumerState<PlanBudgetPage> {
   late DateTime _month;
+  bool _copying = false;
 
   @override
   void initState() {
@@ -41,6 +42,10 @@ class _PlanBudgetPageState extends ConsumerState<PlanBudgetPage> {
     final l10n = AppLocalizations.of(context);
     final monthKey = _monthKey(_month);
     final budgetsAsync = ref.watch(budgetsForMonthProvider(monthKey));
+    final previousMonthKey = _monthKey(DateTime(_month.year, _month.month - 1));
+    final previousRowsAsync = ref.watch(
+      budgetsForMonthProvider(previousMonthKey),
+    );
     final summaryAsync = ref.watch(monthlyBudgetSummaryProvider(monthKey));
     final accountsAsync = ref.watch(allAccountsStreamProvider);
     final accounts = accountsAsync.value ?? const <Account>[];
@@ -61,6 +66,20 @@ class _PlanBudgetPageState extends ConsumerState<PlanBudgetPage> {
     return AppPageScaffold(
       title: l10n.planBudgetTitle,
       actions: [
+        AppHeaderAction(
+          semanticsLabel: l10n.planBudgetCopyPreviousAction,
+          icon: const Icon(FLucideIcons.copy),
+          onPress:
+              !_copying &&
+                  previousRowsAsync.hasValue &&
+                  previousRowsAsync.requireValue.isNotEmpty
+              ? () => _copyPreviousMonth(
+                  previousRowsAsync.requireValue,
+                  rows,
+                  monthKey,
+                )
+              : null,
+        ),
         AppHeaderAction(
           semanticsLabel: l10n.planBudgetAddAction,
           icon: const Icon(FLucideIcons.plus),
@@ -92,6 +111,7 @@ class _PlanBudgetPageState extends ConsumerState<PlanBudgetPage> {
           summary: summaryAsync.hasValue
               ? summaryAsync.requireValue.summary
               : null,
+          mismatchedCount: summaryAsync.value?.mismatchedCount ?? 0,
           onPreviousMonth: () => _shiftMonth(-1),
           onNextMonth: () => _shiftMonth(1),
           onCreate: openCreate,
@@ -105,6 +125,45 @@ class _PlanBudgetPageState extends ConsumerState<PlanBudgetPage> {
       _month = DateTime(_month.year, _month.month + delta);
     });
   }
+
+  Future<void> _copyPreviousMonth(
+    List<BudgetRow> previousRows,
+    List<BudgetRow> currentRows,
+    String targetMonth,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final existing = {for (final row in currentRows) row.categoryId};
+    final candidates = previousRows
+        .where((row) => !existing.contains(row.categoryId))
+        .toList(growable: false);
+    if (candidates.isEmpty) return;
+    setState(() => _copying = true);
+    try {
+      final repository = await ref.read(budgetRepositoryProvider.future);
+      for (final row in candidates) {
+        await repository.create(
+          categoryId: row.categoryId,
+          periodMonth: targetMonth,
+          amount: row.amount,
+          currency: row.currency,
+          note: row.note,
+        );
+      }
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          l10n.planBudgetCopied(candidates.length),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
+      }
+    } finally {
+      if (mounted) setState(() => _copying = false);
+    }
+  }
 }
 
 class _BudgetBody extends ConsumerWidget {
@@ -115,6 +174,7 @@ class _BudgetBody extends ConsumerWidget {
     required this.accountsLoading,
     required this.accountsError,
     required this.summary,
+    required this.mismatchedCount,
     required this.onPreviousMonth,
     required this.onNextMonth,
     required this.onCreate,
@@ -126,6 +186,7 @@ class _BudgetBody extends ConsumerWidget {
   final bool accountsLoading;
   final Object? accountsError;
   final MonthlyBudgetSummary? summary;
+  final int mismatchedCount;
   final VoidCallback onPreviousMonth;
   final VoidCallback onNextMonth;
   final VoidCallback onCreate;
@@ -175,6 +236,18 @@ class _BudgetBody extends ConsumerWidget {
                     AppSpacing.s24,
                   ),
                   children: [
+                    if (mismatchedCount > 0) ...[
+                      SoftCard.flat(
+                        padding: const EdgeInsets.all(AppSpacing.s12),
+                        child: Text(
+                          l10n.planBudgetCurrencyMismatch(mismatchedCount),
+                          style: context.captionStyle.copyWith(
+                            color: SemanticColors.of(context).warning,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.s12),
+                    ],
                     _MonthHeaderCard(
                       monthKey: monthKey,
                       totalsByCurrency: totalsByCurrency,
@@ -550,9 +623,9 @@ class _BudgetFormSheetState extends State<_BudgetFormSheet> {
           : l10n.planBudgetPeriodCurrency(widget.monthKey, widget.currency),
       actions: [
         if (_editing)
-          AppHeaderAction(
-            semanticsLabel: l10n.planBudgetDeleteAction,
-            icon: const Icon(FLucideIcons.trash2),
+          AppIconButton(
+            tooltip: l10n.planBudgetDeleteAction,
+            icon: FLucideIcons.trash2,
             onPress: _saving ? null : _delete,
           ),
       ],

@@ -5,10 +5,13 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/core/lifeos/action_dispatcher.dart';
 import 'package:naviwealth/core/product/product_metrics.dart';
+import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/money_runway_providers.dart';
@@ -61,6 +64,22 @@ class _RunwayContent extends ConsumerWidget {
         icon: FLucideIcons.calendarRange,
         title: l10n.moneyRunwayEmptyTitle,
         message: l10n.moneyRunwayEmptyBody,
+        action: Wrap(
+          spacing: AppSpacing.s8,
+          runSpacing: AppSpacing.s8,
+          alignment: WrapAlignment.center,
+          children: [
+            FButton(
+              onPress: () => context.push(FinanceRoutes.wealthNewCash),
+              child: Text(l10n.assetsAddCashTitle),
+            ),
+            FButton(
+              variant: FButtonVariant.outline,
+              onPress: () => context.push(FinanceRoutes.cashflowRecurring),
+              child: Text(l10n.recurringListTitle),
+            ),
+          ],
+        ),
       );
     }
     final status = _statusCopy(l10n, snapshot.status);
@@ -221,9 +240,20 @@ class _RunwayContent extends ConsumerWidget {
         if (snapshot.scheduledFlows.isEmpty)
           SoftCard.flat(
             padding: const EdgeInsets.all(AppSpacing.s14),
-            child: Text(
-              l10n.moneyRunwayScheduledEmpty,
-              style: context.captionStyle,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.moneyRunwayScheduledEmpty,
+                  style: context.captionStyle,
+                ),
+                const SizedBox(height: AppSpacing.s8),
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => context.push(FinanceRoutes.cashflowRecurring),
+                  child: Text(l10n.recurringListTitle),
+                ),
+              ],
             ),
           )
         else
@@ -249,40 +279,54 @@ class _RunwayContent extends ConsumerWidget {
               color: SemanticColors.of(context).warning,
             ),
           ),
+          FButton(
+            variant: FButtonVariant.ghost,
+            onPress: () => context.push(SettingsRoutes.fxRates),
+            child: Text(l10n.settingsFxRatesTitle),
+          ),
         ],
       ],
     );
   }
 }
 
-class _ScenarioSection extends ConsumerWidget {
+class _ScenarioSection extends ConsumerStatefulWidget {
   const _ScenarioSection({required this.snapshot});
 
   final MoneyRunwaySnapshot snapshot;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ScenarioSection> createState() => _ScenarioSectionState();
+}
+
+class _ScenarioSectionState extends ConsumerState<_ScenarioSection> {
+  MoneyRunwaySnapshot? _customResult;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final formatter = context.formatters(ref);
     final scenarios = <(String, MoneyRunwaySnapshot)>[
       (
         l10n.moneyRunwayScenarioPurchase,
         applyMoneyRunwayScenario(
-          snapshot,
-          MoneyRunwayScenario.largePurchase(snapshot.averageMonthlyExpense),
+          widget.snapshot,
+          MoneyRunwayScenario.largePurchase(
+            widget.snapshot.averageMonthlyExpense,
+          ),
         ),
       ),
       (
         l10n.moneyRunwayScenarioDelayedIncome,
         applyMoneyRunwayScenario(
-          snapshot,
+          widget.snapshot,
           MoneyRunwayScenario.delayedIncome(14),
         ),
       ),
       (
         l10n.moneyRunwayScenarioReducedIncome,
         applyMoneyRunwayScenario(
-          snapshot,
+          widget.snapshot,
           MoneyRunwayScenario.reducedIncome(reduction: Decimal.parse('0.3')),
         ),
       ),
@@ -310,8 +354,208 @@ class _ScenarioSection extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.s8),
         ],
+        FButton(
+          variant: FButtonVariant.outline,
+          onPress: _configureCustomScenario,
+          child: Text(l10n.moneyRunwayCustomScenarioAction),
+        ),
+        if (_customResult case final result?) ...[
+          const SizedBox(height: AppSpacing.s8),
+          SoftCard.raised(
+            borderless: true,
+            padding: const EdgeInsets.all(AppSpacing.s12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.moneyRunwayCustomResult,
+                        style: context.labelStyle,
+                      ),
+                    ),
+                    Text(
+                      formatter.compactCurrency(
+                        result.minimumExpectedBalance,
+                        code: result.currency,
+                      ),
+                      style: TypographyTokens.numericBodyStrong,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.s4),
+                Text(
+                  _statusCopy(l10n, result.status).$2,
+                  style: context.captionStyle,
+                ),
+                const SizedBox(height: AppSpacing.s6),
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => setState(() => _customResult = null),
+                  child: Text(l10n.moneyRunwayCustomReset),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
+  }
+
+  Future<void> _configureCustomScenario() async {
+    final input = await _showCustomScenarioDialog(context, widget.snapshot);
+    if (input == null || !mounted) return;
+    var result = widget.snapshot;
+    if (input.purchaseAmount > Decimal.zero) {
+      result = applyMoneyRunwayScenario(
+        result,
+        MoneyRunwayScenario.largePurchase(input.purchaseAmount),
+      );
+    }
+    if (input.incomeDelayDays > 0) {
+      result = applyMoneyRunwayScenario(
+        result,
+        MoneyRunwayScenario.delayedIncome(input.incomeDelayDays),
+      );
+    }
+    if (input.incomeReduction > Decimal.zero) {
+      result = applyMoneyRunwayScenario(
+        result,
+        MoneyRunwayScenario.reducedIncome(
+          reduction: input.incomeReduction,
+          durationDays: input.reductionDurationDays,
+        ),
+      );
+    }
+    setState(() => _customResult = result);
+  }
+}
+
+final class _CustomRunwayScenario {
+  const _CustomRunwayScenario({
+    required this.purchaseAmount,
+    required this.incomeDelayDays,
+    required this.incomeReduction,
+    required this.reductionDurationDays,
+  });
+
+  final Decimal purchaseAmount;
+  final int incomeDelayDays;
+  final Decimal incomeReduction;
+  final int reductionDurationDays;
+}
+
+Future<_CustomRunwayScenario?> _showCustomScenarioDialog(
+  BuildContext context,
+  MoneyRunwaySnapshot snapshot,
+) async {
+  final l10n = AppLocalizations.of(context);
+  final purchase = TextEditingController(
+    text: snapshot.averageMonthlyExpense.toString(),
+  );
+  final delay = TextEditingController(text: '14');
+  final reduction = TextEditingController(text: '30');
+  final duration = TextEditingController(text: '90');
+  String? error;
+  try {
+    return await showDialog<_CustomRunwayScenario>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(l10n.moneyRunwayCustomScenarioTitle),
+          content: SizedBox(
+            width: 420,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FTextField(
+                    control: FTextFieldControl.managed(controller: purchase),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    label: Text(
+                      l10n.moneyRunwayCustomPurchase(snapshot.currency),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s10),
+                  FTextField(
+                    control: FTextFieldControl.managed(controller: delay),
+                    keyboardType: TextInputType.number,
+                    label: Text(l10n.moneyRunwayCustomDelayDays),
+                  ),
+                  const SizedBox(height: AppSpacing.s10),
+                  FTextField(
+                    control: FTextFieldControl.managed(controller: reduction),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    label: Text(l10n.moneyRunwayCustomReductionPercent),
+                  ),
+                  const SizedBox(height: AppSpacing.s10),
+                  FTextField(
+                    control: FTextFieldControl.managed(controller: duration),
+                    keyboardType: TextInputType.number,
+                    label: Text(l10n.moneyRunwayCustomDurationDays),
+                  ),
+                  if (error != null) ...[
+                    const SizedBox(height: AppSpacing.s10),
+                    AppStatusBanner(kind: AppStatusKind.error, message: error!),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(l10n.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () {
+                final purchaseAmount = Decimal.tryParse(purchase.text.trim());
+                final delayDays = int.tryParse(delay.text.trim());
+                final reductionPercent = Decimal.tryParse(
+                  reduction.text.trim(),
+                );
+                final durationDays = int.tryParse(duration.text.trim());
+                if (purchaseAmount == null ||
+                    purchaseAmount < Decimal.zero ||
+                    delayDays == null ||
+                    delayDays < 0 ||
+                    reductionPercent == null ||
+                    reductionPercent < Decimal.zero ||
+                    reductionPercent > Decimal.fromInt(100) ||
+                    durationDays == null ||
+                    durationDays <= 0 ||
+                    (purchaseAmount == Decimal.zero &&
+                        delayDays == 0 &&
+                        reductionPercent == Decimal.zero)) {
+                  setDialogState(() => error = l10n.moneyRunwayCustomInvalid);
+                  return;
+                }
+                Navigator.of(dialogContext).pop(
+                  _CustomRunwayScenario(
+                    purchaseAmount: purchaseAmount,
+                    incomeDelayDays: delayDays,
+                    incomeReduction: (reductionPercent / Decimal.fromInt(100))
+                        .toDecimal(scaleOnInfinitePrecision: 4),
+                    reductionDurationDays: durationDays,
+                  ),
+                );
+              },
+              child: Text(l10n.moneyRunwayCustomRun),
+            ),
+          ],
+        ),
+      ),
+    );
+  } finally {
+    purchase.dispose();
+    delay.dispose();
+    reduction.dispose();
+    duration.dispose();
   }
 }
 
@@ -451,5 +695,9 @@ Future<void> _createRunwayAction(
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(l10n.moneyRunwayActionCreated)));
+    final routeBuilder = ref.read(lifeActionRouteBuilderProvider);
+    if (routeBuilder != null && context.mounted) {
+      await context.push<void>(routeBuilder(id));
+    }
   }
 }

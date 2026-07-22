@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/design_system/theme/app_theme.dart';
 import 'package:naviwealth/features/finance/accounts/data/account_balances_provider.dart';
+import 'package:naviwealth/features/finance/application/planning_hub_status.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
@@ -20,6 +21,9 @@ void main() {
         overrides: [
           fireDashboardViewProvider.overrideWith(
             (_) => const AsyncValue.loading(),
+          ),
+          planningHubStatusProvider.overrideWith(
+            (_) => const PlanningHubStatus.loading(),
           ),
         ],
         child: const PlanHubPage(),

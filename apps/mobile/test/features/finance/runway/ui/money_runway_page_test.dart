@@ -72,5 +72,14 @@ void main() {
     expect(find.text('Declared after-tax dividend'), findsOneWidget);
     expect(find.text('Estimated after-tax dividend'), findsOneWidget);
     expect(find.textContaining('estimate'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Custom stress test'));
+    await tester.tap(find.text('Custom stress test'));
+    await tester.pumpAndSettle();
+    expect(find.text('Custom runway scenario'), findsOneWidget);
+
+    await tester.tap(find.text('Run scenario'));
+    await tester.pumpAndSettle();
+    expect(find.text('Custom minimum balance'), findsOneWidget);
   });
 }

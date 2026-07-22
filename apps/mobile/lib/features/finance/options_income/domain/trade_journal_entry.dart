@@ -3,6 +3,8 @@ import 'package:decimal/decimal.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'options_strategy_profile.dart';
 
+const Object _unsetTradeJournalField = Object();
+
 /// One row of the user's options trade journal.
 ///
 /// Created from a successful sell, mutated when the position closes (or is
@@ -64,18 +66,18 @@ class TradeJournalEntry {
     String? symbol,
     String? optionSymbol,
     DateTime? openedAt,
-    DateTime? closedAt,
+    Object? closedAt = _unsetTradeJournalField,
     Decimal? entryCredit,
-    Decimal? exitDebit,
-    Decimal? realizedPnl,
+    Object? exitDebit = _unsetTradeJournalField,
+    Object? realizedPnl = _unsetTradeJournalField,
     String? currency,
     TradeJournalStatus? status,
-    String? notes,
-    String? brokerageAccountId,
-    String? cashAccountId,
-    String? underlyingMarket,
-    Decimal? strikePrice,
-    int? contractSize,
+    Object? notes = _unsetTradeJournalField,
+    Object? brokerageAccountId = _unsetTradeJournalField,
+    Object? cashAccountId = _unsetTradeJournalField,
+    Object? underlyingMarket = _unsetTradeJournalField,
+    Object? strikePrice = _unsetTradeJournalField,
+    Object? contractSize = _unsetTradeJournalField,
     SyncMeta? sync,
   }) {
     return TradeJournalEntry(
@@ -84,18 +86,36 @@ class TradeJournalEntry {
       symbol: symbol ?? this.symbol,
       optionSymbol: optionSymbol ?? this.optionSymbol,
       openedAt: openedAt ?? this.openedAt,
-      closedAt: closedAt ?? this.closedAt,
+      closedAt: identical(closedAt, _unsetTradeJournalField)
+          ? this.closedAt
+          : closedAt as DateTime?,
       entryCredit: entryCredit ?? this.entryCredit,
-      exitDebit: exitDebit ?? this.exitDebit,
-      realizedPnl: realizedPnl ?? this.realizedPnl,
+      exitDebit: identical(exitDebit, _unsetTradeJournalField)
+          ? this.exitDebit
+          : exitDebit as Decimal?,
+      realizedPnl: identical(realizedPnl, _unsetTradeJournalField)
+          ? this.realizedPnl
+          : realizedPnl as Decimal?,
       currency: currency ?? this.currency,
       status: status ?? this.status,
-      notes: notes ?? this.notes,
-      brokerageAccountId: brokerageAccountId ?? this.brokerageAccountId,
-      cashAccountId: cashAccountId ?? this.cashAccountId,
-      underlyingMarket: underlyingMarket ?? this.underlyingMarket,
-      strikePrice: strikePrice ?? this.strikePrice,
-      contractSize: contractSize ?? this.contractSize,
+      notes: identical(notes, _unsetTradeJournalField)
+          ? this.notes
+          : notes as String?,
+      brokerageAccountId: identical(brokerageAccountId, _unsetTradeJournalField)
+          ? this.brokerageAccountId
+          : brokerageAccountId as String?,
+      cashAccountId: identical(cashAccountId, _unsetTradeJournalField)
+          ? this.cashAccountId
+          : cashAccountId as String?,
+      underlyingMarket: identical(underlyingMarket, _unsetTradeJournalField)
+          ? this.underlyingMarket
+          : underlyingMarket as String?,
+      strikePrice: identical(strikePrice, _unsetTradeJournalField)
+          ? this.strikePrice
+          : strikePrice as Decimal?,
+      contractSize: identical(contractSize, _unsetTradeJournalField)
+          ? this.contractSize
+          : contractSize as int?,
       sync: sync ?? this.sync,
     );
   }

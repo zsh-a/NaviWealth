@@ -19313,6 +19313,17 @@ class $FinancialDecisionsTable extends FinancialDecisions
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _actionIdMeta = const VerificationMeta(
+    'actionId',
+  );
+  @override
+  late final GeneratedColumn<String> actionId = GeneratedColumn<String>(
+    'action_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
@@ -19342,6 +19353,7 @@ class $FinancialDecisionsTable extends FinancialDecisions
     actualOutcomeJson,
     reviewEvidenceJson,
     reviewedAt,
+    actionId,
     status,
   ];
   @override
@@ -19500,6 +19512,12 @@ class $FinancialDecisionsTable extends FinancialDecisions
         reviewedAt.isAcceptableOrUnknown(data['reviewed_at']!, _reviewedAtMeta),
       );
     }
+    if (data.containsKey('action_id')) {
+      context.handle(
+        _actionIdMeta,
+        actionId.isAcceptableOrUnknown(data['action_id']!, _actionIdMeta),
+      );
+    }
     if (data.containsKey('status')) {
       context.handle(
         _statusMeta,
@@ -19585,6 +19603,10 @@ class $FinancialDecisionsTable extends FinancialDecisions
         DriftSqlType.dateTime,
         data['${effectivePrefix}reviewed_at'],
       ),
+      actionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}action_id'],
+      ),
       status: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}status'],
@@ -19635,6 +19657,7 @@ class FinancialDecisionRow extends DataClass
   final String? actualOutcomeJson;
   final String? reviewEvidenceJson;
   final DateTime? reviewedAt;
+  final String? actionId;
   final String status;
   const FinancialDecisionRow({
     required this.ownerUserId,
@@ -19654,6 +19677,7 @@ class FinancialDecisionRow extends DataClass
     this.actualOutcomeJson,
     this.reviewEvidenceJson,
     this.reviewedAt,
+    this.actionId,
     required this.status,
   });
   @override
@@ -19688,6 +19712,9 @@ class FinancialDecisionRow extends DataClass
     if (!nullToAbsent || reviewedAt != null) {
       map['reviewed_at'] = Variable<DateTime>(reviewedAt);
     }
+    if (!nullToAbsent || actionId != null) {
+      map['action_id'] = Variable<String>(actionId);
+    }
     map['status'] = Variable<String>(status);
     return map;
   }
@@ -19719,6 +19746,9 @@ class FinancialDecisionRow extends DataClass
       reviewedAt: reviewedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(reviewedAt),
+      actionId: actionId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(actionId),
       status: Value(status),
     );
   }
@@ -19752,6 +19782,7 @@ class FinancialDecisionRow extends DataClass
         json['reviewEvidenceJson'],
       ),
       reviewedAt: serializer.fromJson<DateTime?>(json['reviewedAt']),
+      actionId: serializer.fromJson<String?>(json['actionId']),
       status: serializer.fromJson<String>(json['status']),
     );
   }
@@ -19776,6 +19807,7 @@ class FinancialDecisionRow extends DataClass
       'actualOutcomeJson': serializer.toJson<String?>(actualOutcomeJson),
       'reviewEvidenceJson': serializer.toJson<String?>(reviewEvidenceJson),
       'reviewedAt': serializer.toJson<DateTime?>(reviewedAt),
+      'actionId': serializer.toJson<String?>(actionId),
       'status': serializer.toJson<String>(status),
     };
   }
@@ -19798,6 +19830,7 @@ class FinancialDecisionRow extends DataClass
     Value<String?> actualOutcomeJson = const Value.absent(),
     Value<String?> reviewEvidenceJson = const Value.absent(),
     Value<DateTime?> reviewedAt = const Value.absent(),
+    Value<String?> actionId = const Value.absent(),
     String? status,
   }) => FinancialDecisionRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
@@ -19821,6 +19854,7 @@ class FinancialDecisionRow extends DataClass
         ? reviewEvidenceJson.value
         : this.reviewEvidenceJson,
     reviewedAt: reviewedAt.present ? reviewedAt.value : this.reviewedAt,
+    actionId: actionId.present ? actionId.value : this.actionId,
     status: status ?? this.status,
   );
   FinancialDecisionRow copyWithCompanion(FinancialDecisionsCompanion data) {
@@ -19864,6 +19898,7 @@ class FinancialDecisionRow extends DataClass
       reviewedAt: data.reviewedAt.present
           ? data.reviewedAt.value
           : this.reviewedAt,
+      actionId: data.actionId.present ? data.actionId.value : this.actionId,
       status: data.status.present ? data.status.value : this.status,
     );
   }
@@ -19888,6 +19923,7 @@ class FinancialDecisionRow extends DataClass
           ..write('actualOutcomeJson: $actualOutcomeJson, ')
           ..write('reviewEvidenceJson: $reviewEvidenceJson, ')
           ..write('reviewedAt: $reviewedAt, ')
+          ..write('actionId: $actionId, ')
           ..write('status: $status')
           ..write(')'))
         .toString();
@@ -19912,6 +19948,7 @@ class FinancialDecisionRow extends DataClass
     actualOutcomeJson,
     reviewEvidenceJson,
     reviewedAt,
+    actionId,
     status,
   );
   @override
@@ -19935,6 +19972,7 @@ class FinancialDecisionRow extends DataClass
           other.actualOutcomeJson == this.actualOutcomeJson &&
           other.reviewEvidenceJson == this.reviewEvidenceJson &&
           other.reviewedAt == this.reviewedAt &&
+          other.actionId == this.actionId &&
           other.status == this.status);
 }
 
@@ -19957,6 +19995,7 @@ class FinancialDecisionsCompanion
   final Value<String?> actualOutcomeJson;
   final Value<String?> reviewEvidenceJson;
   final Value<DateTime?> reviewedAt;
+  final Value<String?> actionId;
   final Value<String> status;
   final Value<int> rowid;
   const FinancialDecisionsCompanion({
@@ -19977,6 +20016,7 @@ class FinancialDecisionsCompanion
     this.actualOutcomeJson = const Value.absent(),
     this.reviewEvidenceJson = const Value.absent(),
     this.reviewedAt = const Value.absent(),
+    this.actionId = const Value.absent(),
     this.status = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -19998,6 +20038,7 @@ class FinancialDecisionsCompanion
     this.actualOutcomeJson = const Value.absent(),
     this.reviewEvidenceJson = const Value.absent(),
     this.reviewedAt = const Value.absent(),
+    this.actionId = const Value.absent(),
     this.status = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
@@ -20031,6 +20072,7 @@ class FinancialDecisionsCompanion
     Expression<String>? actualOutcomeJson,
     Expression<String>? reviewEvidenceJson,
     Expression<DateTime>? reviewedAt,
+    Expression<String>? actionId,
     Expression<String>? status,
     Expression<int>? rowid,
   }) {
@@ -20054,6 +20096,7 @@ class FinancialDecisionsCompanion
       if (reviewEvidenceJson != null)
         'review_evidence_json': reviewEvidenceJson,
       if (reviewedAt != null) 'reviewed_at': reviewedAt,
+      if (actionId != null) 'action_id': actionId,
       if (status != null) 'status': status,
       if (rowid != null) 'rowid': rowid,
     });
@@ -20077,6 +20120,7 @@ class FinancialDecisionsCompanion
     Value<String?>? actualOutcomeJson,
     Value<String?>? reviewEvidenceJson,
     Value<DateTime?>? reviewedAt,
+    Value<String?>? actionId,
     Value<String>? status,
     Value<int>? rowid,
   }) {
@@ -20098,6 +20142,7 @@ class FinancialDecisionsCompanion
       actualOutcomeJson: actualOutcomeJson ?? this.actualOutcomeJson,
       reviewEvidenceJson: reviewEvidenceJson ?? this.reviewEvidenceJson,
       reviewedAt: reviewedAt ?? this.reviewedAt,
+      actionId: actionId ?? this.actionId,
       status: status ?? this.status,
       rowid: rowid ?? this.rowid,
     );
@@ -20161,6 +20206,9 @@ class FinancialDecisionsCompanion
     if (reviewedAt.present) {
       map['reviewed_at'] = Variable<DateTime>(reviewedAt.value);
     }
+    if (actionId.present) {
+      map['action_id'] = Variable<String>(actionId.value);
+    }
     if (status.present) {
       map['status'] = Variable<String>(status.value);
     }
@@ -20190,7 +20238,954 @@ class FinancialDecisionsCompanion
           ..write('actualOutcomeJson: $actualOutcomeJson, ')
           ..write('reviewEvidenceJson: $reviewEvidenceJson, ')
           ..write('reviewedAt: $reviewedAt, ')
+          ..write('actionId: $actionId, ')
           ..write('status: $status, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DcaPlansTable extends DcaPlans
+    with TableInfo<$DcaPlansTable, DcaPlanRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DcaPlansTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($DcaPlansTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _allocationsJsonMeta = const VerificationMeta(
+    'allocationsJson',
+  );
+  @override
+  late final GeneratedColumn<String> allocationsJson = GeneratedColumn<String>(
+    'allocations_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String>
+  amountPerContribution = GeneratedColumn<String>(
+    'amount_per_contribution',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  ).withConverter<Decimal>($DcaPlansTable.$converteramountPerContribution);
+  static const VerificationMeta _currencyMeta = const VerificationMeta(
+    'currency',
+  );
+  @override
+  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
+    'currency',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _marketMeta = const VerificationMeta('market');
+  @override
+  late final GeneratedColumn<String> market = GeneratedColumn<String>(
+    'market',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _frequencyMeta = const VerificationMeta(
+    'frequency',
+  );
+  @override
+  late final GeneratedColumn<String> frequency = GeneratedColumn<String>(
+    'frequency',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nextDueAtMeta = const VerificationMeta(
+    'nextDueAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> nextDueAt = GeneratedColumn<DateTime>(
+    'next_due_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endAtMeta = const VerificationMeta('endAt');
+  @override
+  late final GeneratedColumn<DateTime> endAt = GeneratedColumn<DateTime>(
+    'end_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastExecutedAtMeta = const VerificationMeta(
+    'lastExecutedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastExecutedAt =
+      GeneratedColumn<DateTime>(
+        'last_executed_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    allocationsJson,
+    amountPerContribution,
+    currency,
+    market,
+    frequency,
+    nextDueAt,
+    endAt,
+    lastExecutedAt,
+    enabled,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'dca_plans';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DcaPlanRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('allocations_json')) {
+      context.handle(
+        _allocationsJsonMeta,
+        allocationsJson.isAcceptableOrUnknown(
+          data['allocations_json']!,
+          _allocationsJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_allocationsJsonMeta);
+    }
+    if (data.containsKey('currency')) {
+      context.handle(
+        _currencyMeta,
+        currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_currencyMeta);
+    }
+    if (data.containsKey('market')) {
+      context.handle(
+        _marketMeta,
+        market.isAcceptableOrUnknown(data['market']!, _marketMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_marketMeta);
+    }
+    if (data.containsKey('frequency')) {
+      context.handle(
+        _frequencyMeta,
+        frequency.isAcceptableOrUnknown(data['frequency']!, _frequencyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_frequencyMeta);
+    }
+    if (data.containsKey('next_due_at')) {
+      context.handle(
+        _nextDueAtMeta,
+        nextDueAt.isAcceptableOrUnknown(data['next_due_at']!, _nextDueAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nextDueAtMeta);
+    }
+    if (data.containsKey('end_at')) {
+      context.handle(
+        _endAtMeta,
+        endAt.isAcceptableOrUnknown(data['end_at']!, _endAtMeta),
+      );
+    }
+    if (data.containsKey('last_executed_at')) {
+      context.handle(
+        _lastExecutedAtMeta,
+        lastExecutedAt.isAcceptableOrUnknown(
+          data['last_executed_at']!,
+          _lastExecutedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DcaPlanRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DcaPlanRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $DcaPlansTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      allocationsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}allocations_json'],
+      )!,
+      amountPerContribution: $DcaPlansTable.$converteramountPerContribution
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}amount_per_contribution'],
+            )!,
+          ),
+      currency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency'],
+      )!,
+      market: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}market'],
+      )!,
+      frequency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}frequency'],
+      )!,
+      nextDueAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}next_due_at'],
+      )!,
+      endAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}end_at'],
+      ),
+      lastExecutedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_executed_at'],
+      ),
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DcaPlansTable createAlias(String alias) {
+    return $DcaPlansTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+  static TypeConverter<Decimal, String> $converteramountPerContribution =
+      const DecimalConverter();
+}
+
+class DcaPlanRow extends DataClass implements Insertable<DcaPlanRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String allocationsJson;
+  final Decimal amountPerContribution;
+  final String currency;
+  final String market;
+  final String frequency;
+  final DateTime nextDueAt;
+  final DateTime? endAt;
+  final DateTime? lastExecutedAt;
+  final bool enabled;
+  final DateTime createdAt;
+  const DcaPlanRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.allocationsJson,
+    required this.amountPerContribution,
+    required this.currency,
+    required this.market,
+    required this.frequency,
+    required this.nextDueAt,
+    this.endAt,
+    this.lastExecutedAt,
+    required this.enabled,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>($DcaPlansTable.$converterhlc.toSql(hlc));
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['allocations_json'] = Variable<String>(allocationsJson);
+    {
+      map['amount_per_contribution'] = Variable<String>(
+        $DcaPlansTable.$converteramountPerContribution.toSql(
+          amountPerContribution,
+        ),
+      );
+    }
+    map['currency'] = Variable<String>(currency);
+    map['market'] = Variable<String>(market);
+    map['frequency'] = Variable<String>(frequency);
+    map['next_due_at'] = Variable<DateTime>(nextDueAt);
+    if (!nullToAbsent || endAt != null) {
+      map['end_at'] = Variable<DateTime>(endAt);
+    }
+    if (!nullToAbsent || lastExecutedAt != null) {
+      map['last_executed_at'] = Variable<DateTime>(lastExecutedAt);
+    }
+    map['enabled'] = Variable<bool>(enabled);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  DcaPlansCompanion toCompanion(bool nullToAbsent) {
+    return DcaPlansCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      allocationsJson: Value(allocationsJson),
+      amountPerContribution: Value(amountPerContribution),
+      currency: Value(currency),
+      market: Value(market),
+      frequency: Value(frequency),
+      nextDueAt: Value(nextDueAt),
+      endAt: endAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endAt),
+      lastExecutedAt: lastExecutedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastExecutedAt),
+      enabled: Value(enabled),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory DcaPlanRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DcaPlanRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      allocationsJson: serializer.fromJson<String>(json['allocationsJson']),
+      amountPerContribution: serializer.fromJson<Decimal>(
+        json['amountPerContribution'],
+      ),
+      currency: serializer.fromJson<String>(json['currency']),
+      market: serializer.fromJson<String>(json['market']),
+      frequency: serializer.fromJson<String>(json['frequency']),
+      nextDueAt: serializer.fromJson<DateTime>(json['nextDueAt']),
+      endAt: serializer.fromJson<DateTime?>(json['endAt']),
+      lastExecutedAt: serializer.fromJson<DateTime?>(json['lastExecutedAt']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'allocationsJson': serializer.toJson<String>(allocationsJson),
+      'amountPerContribution': serializer.toJson<Decimal>(
+        amountPerContribution,
+      ),
+      'currency': serializer.toJson<String>(currency),
+      'market': serializer.toJson<String>(market),
+      'frequency': serializer.toJson<String>(frequency),
+      'nextDueAt': serializer.toJson<DateTime>(nextDueAt),
+      'endAt': serializer.toJson<DateTime?>(endAt),
+      'lastExecutedAt': serializer.toJson<DateTime?>(lastExecutedAt),
+      'enabled': serializer.toJson<bool>(enabled),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  DcaPlanRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? allocationsJson,
+    Decimal? amountPerContribution,
+    String? currency,
+    String? market,
+    String? frequency,
+    DateTime? nextDueAt,
+    Value<DateTime?> endAt = const Value.absent(),
+    Value<DateTime?> lastExecutedAt = const Value.absent(),
+    bool? enabled,
+    DateTime? createdAt,
+  }) => DcaPlanRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    allocationsJson: allocationsJson ?? this.allocationsJson,
+    amountPerContribution: amountPerContribution ?? this.amountPerContribution,
+    currency: currency ?? this.currency,
+    market: market ?? this.market,
+    frequency: frequency ?? this.frequency,
+    nextDueAt: nextDueAt ?? this.nextDueAt,
+    endAt: endAt.present ? endAt.value : this.endAt,
+    lastExecutedAt: lastExecutedAt.present
+        ? lastExecutedAt.value
+        : this.lastExecutedAt,
+    enabled: enabled ?? this.enabled,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  DcaPlanRow copyWithCompanion(DcaPlansCompanion data) {
+    return DcaPlanRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      allocationsJson: data.allocationsJson.present
+          ? data.allocationsJson.value
+          : this.allocationsJson,
+      amountPerContribution: data.amountPerContribution.present
+          ? data.amountPerContribution.value
+          : this.amountPerContribution,
+      currency: data.currency.present ? data.currency.value : this.currency,
+      market: data.market.present ? data.market.value : this.market,
+      frequency: data.frequency.present ? data.frequency.value : this.frequency,
+      nextDueAt: data.nextDueAt.present ? data.nextDueAt.value : this.nextDueAt,
+      endAt: data.endAt.present ? data.endAt.value : this.endAt,
+      lastExecutedAt: data.lastExecutedAt.present
+          ? data.lastExecutedAt.value
+          : this.lastExecutedAt,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DcaPlanRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('allocationsJson: $allocationsJson, ')
+          ..write('amountPerContribution: $amountPerContribution, ')
+          ..write('currency: $currency, ')
+          ..write('market: $market, ')
+          ..write('frequency: $frequency, ')
+          ..write('nextDueAt: $nextDueAt, ')
+          ..write('endAt: $endAt, ')
+          ..write('lastExecutedAt: $lastExecutedAt, ')
+          ..write('enabled: $enabled, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    allocationsJson,
+    amountPerContribution,
+    currency,
+    market,
+    frequency,
+    nextDueAt,
+    endAt,
+    lastExecutedAt,
+    enabled,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DcaPlanRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.allocationsJson == this.allocationsJson &&
+          other.amountPerContribution == this.amountPerContribution &&
+          other.currency == this.currency &&
+          other.market == this.market &&
+          other.frequency == this.frequency &&
+          other.nextDueAt == this.nextDueAt &&
+          other.endAt == this.endAt &&
+          other.lastExecutedAt == this.lastExecutedAt &&
+          other.enabled == this.enabled &&
+          other.createdAt == this.createdAt);
+}
+
+class DcaPlansCompanion extends UpdateCompanion<DcaPlanRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> allocationsJson;
+  final Value<Decimal> amountPerContribution;
+  final Value<String> currency;
+  final Value<String> market;
+  final Value<String> frequency;
+  final Value<DateTime> nextDueAt;
+  final Value<DateTime?> endAt;
+  final Value<DateTime?> lastExecutedAt;
+  final Value<bool> enabled;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const DcaPlansCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.allocationsJson = const Value.absent(),
+    this.amountPerContribution = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.market = const Value.absent(),
+    this.frequency = const Value.absent(),
+    this.nextDueAt = const Value.absent(),
+    this.endAt = const Value.absent(),
+    this.lastExecutedAt = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DcaPlansCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String allocationsJson,
+    required Decimal amountPerContribution,
+    required String currency,
+    required String market,
+    required String frequency,
+    required DateTime nextDueAt,
+    this.endAt = const Value.absent(),
+    this.lastExecutedAt = const Value.absent(),
+    this.enabled = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       allocationsJson = Value(allocationsJson),
+       amountPerContribution = Value(amountPerContribution),
+       currency = Value(currency),
+       market = Value(market),
+       frequency = Value(frequency),
+       nextDueAt = Value(nextDueAt),
+       createdAt = Value(createdAt);
+  static Insertable<DcaPlanRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? allocationsJson,
+    Expression<String>? amountPerContribution,
+    Expression<String>? currency,
+    Expression<String>? market,
+    Expression<String>? frequency,
+    Expression<DateTime>? nextDueAt,
+    Expression<DateTime>? endAt,
+    Expression<DateTime>? lastExecutedAt,
+    Expression<bool>? enabled,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (allocationsJson != null) 'allocations_json': allocationsJson,
+      if (amountPerContribution != null)
+        'amount_per_contribution': amountPerContribution,
+      if (currency != null) 'currency': currency,
+      if (market != null) 'market': market,
+      if (frequency != null) 'frequency': frequency,
+      if (nextDueAt != null) 'next_due_at': nextDueAt,
+      if (endAt != null) 'end_at': endAt,
+      if (lastExecutedAt != null) 'last_executed_at': lastExecutedAt,
+      if (enabled != null) 'enabled': enabled,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DcaPlansCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? allocationsJson,
+    Value<Decimal>? amountPerContribution,
+    Value<String>? currency,
+    Value<String>? market,
+    Value<String>? frequency,
+    Value<DateTime>? nextDueAt,
+    Value<DateTime?>? endAt,
+    Value<DateTime?>? lastExecutedAt,
+    Value<bool>? enabled,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return DcaPlansCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      allocationsJson: allocationsJson ?? this.allocationsJson,
+      amountPerContribution:
+          amountPerContribution ?? this.amountPerContribution,
+      currency: currency ?? this.currency,
+      market: market ?? this.market,
+      frequency: frequency ?? this.frequency,
+      nextDueAt: nextDueAt ?? this.nextDueAt,
+      endAt: endAt ?? this.endAt,
+      lastExecutedAt: lastExecutedAt ?? this.lastExecutedAt,
+      enabled: enabled ?? this.enabled,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $DcaPlansTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (allocationsJson.present) {
+      map['allocations_json'] = Variable<String>(allocationsJson.value);
+    }
+    if (amountPerContribution.present) {
+      map['amount_per_contribution'] = Variable<String>(
+        $DcaPlansTable.$converteramountPerContribution.toSql(
+          amountPerContribution.value,
+        ),
+      );
+    }
+    if (currency.present) {
+      map['currency'] = Variable<String>(currency.value);
+    }
+    if (market.present) {
+      map['market'] = Variable<String>(market.value);
+    }
+    if (frequency.present) {
+      map['frequency'] = Variable<String>(frequency.value);
+    }
+    if (nextDueAt.present) {
+      map['next_due_at'] = Variable<DateTime>(nextDueAt.value);
+    }
+    if (endAt.present) {
+      map['end_at'] = Variable<DateTime>(endAt.value);
+    }
+    if (lastExecutedAt.present) {
+      map['last_executed_at'] = Variable<DateTime>(lastExecutedAt.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DcaPlansCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('allocationsJson: $allocationsJson, ')
+          ..write('amountPerContribution: $amountPerContribution, ')
+          ..write('currency: $currency, ')
+          ..write('market: $market, ')
+          ..write('frequency: $frequency, ')
+          ..write('nextDueAt: $nextDueAt, ')
+          ..write('endAt: $endAt, ')
+          ..write('lastExecutedAt: $lastExecutedAt, ')
+          ..write('enabled: $enabled, ')
+          ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -38768,6 +39763,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $PortfolioLotMembershipsTable(this);
   late final $FinancialDecisionsTable financialDecisions =
       $FinancialDecisionsTable(this);
+  late final $DcaPlansTable dcaPlans = $DcaPlansTable(this);
   late final $FinancialSignalsTable financialSignals = $FinancialSignalsTable(
     this,
   );
@@ -38841,6 +39837,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     investmentPortfolios,
     portfolioLotMemberships,
     financialDecisions,
+    dcaPlans,
     financialSignals,
     financialMonthlyCloses,
     financialReconciliations,
@@ -47701,6 +48698,7 @@ typedef $$FinancialDecisionsTableCreateCompanionBuilder =
       Value<String?> actualOutcomeJson,
       Value<String?> reviewEvidenceJson,
       Value<DateTime?> reviewedAt,
+      Value<String?> actionId,
       Value<String> status,
       Value<int> rowid,
     });
@@ -47723,6 +48721,7 @@ typedef $$FinancialDecisionsTableUpdateCompanionBuilder =
       Value<String?> actualOutcomeJson,
       Value<String?> reviewEvidenceJson,
       Value<DateTime?> reviewedAt,
+      Value<String?> actionId,
       Value<String> status,
       Value<int> rowid,
     });
@@ -47819,6 +48818,11 @@ class $$FinancialDecisionsTableFilterComposer
 
   ColumnFilters<DateTime> get reviewedAt => $composableBuilder(
     column: $table.reviewedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get actionId => $composableBuilder(
+    column: $table.actionId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -47922,6 +48926,11 @@ class $$FinancialDecisionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get actionId => $composableBuilder(
+    column: $table.actionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get status => $composableBuilder(
     column: $table.status,
     builder: (column) => ColumnOrderings(column),
@@ -48010,6 +49019,9 @@ class $$FinancialDecisionsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get actionId =>
+      $composableBuilder(column: $table.actionId, builder: (column) => column);
+
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
 }
@@ -48071,6 +49083,7 @@ class $$FinancialDecisionsTableTableManager
                 Value<String?> actualOutcomeJson = const Value.absent(),
                 Value<String?> reviewEvidenceJson = const Value.absent(),
                 Value<DateTime?> reviewedAt = const Value.absent(),
+                Value<String?> actionId = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => FinancialDecisionsCompanion(
@@ -48091,6 +49104,7 @@ class $$FinancialDecisionsTableTableManager
                 actualOutcomeJson: actualOutcomeJson,
                 reviewEvidenceJson: reviewEvidenceJson,
                 reviewedAt: reviewedAt,
+                actionId: actionId,
                 status: status,
                 rowid: rowid,
               ),
@@ -48113,6 +49127,7 @@ class $$FinancialDecisionsTableTableManager
                 Value<String?> actualOutcomeJson = const Value.absent(),
                 Value<String?> reviewEvidenceJson = const Value.absent(),
                 Value<DateTime?> reviewedAt = const Value.absent(),
+                Value<String?> actionId = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => FinancialDecisionsCompanion.insert(
@@ -48133,6 +49148,7 @@ class $$FinancialDecisionsTableTableManager
                 actualOutcomeJson: actualOutcomeJson,
                 reviewEvidenceJson: reviewEvidenceJson,
                 reviewedAt: reviewedAt,
+                actionId: actionId,
                 status: status,
                 rowid: rowid,
               ),
@@ -48163,6 +49179,425 @@ typedef $$FinancialDecisionsTableProcessedTableManager =
         >,
       ),
       FinancialDecisionRow,
+      PrefetchHooks Function()
+    >;
+typedef $$DcaPlansTableCreateCompanionBuilder =
+    DcaPlansCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String allocationsJson,
+      required Decimal amountPerContribution,
+      required String currency,
+      required String market,
+      required String frequency,
+      required DateTime nextDueAt,
+      Value<DateTime?> endAt,
+      Value<DateTime?> lastExecutedAt,
+      Value<bool> enabled,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$DcaPlansTableUpdateCompanionBuilder =
+    DcaPlansCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> allocationsJson,
+      Value<Decimal> amountPerContribution,
+      Value<String> currency,
+      Value<String> market,
+      Value<String> frequency,
+      Value<DateTime> nextDueAt,
+      Value<DateTime?> endAt,
+      Value<DateTime?> lastExecutedAt,
+      Value<bool> enabled,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$DcaPlansTableFilterComposer
+    extends Composer<_$AppDatabase, $DcaPlansTable> {
+  $$DcaPlansTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get allocationsJson => $composableBuilder(
+    column: $table.allocationsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String>
+  get amountPerContribution => $composableBuilder(
+    column: $table.amountPerContribution,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get frequency => $composableBuilder(
+    column: $table.frequency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get nextDueAt => $composableBuilder(
+    column: $table.nextDueAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get endAt => $composableBuilder(
+    column: $table.endAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastExecutedAt => $composableBuilder(
+    column: $table.lastExecutedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DcaPlansTableOrderingComposer
+    extends Composer<_$AppDatabase, $DcaPlansTable> {
+  $$DcaPlansTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get allocationsJson => $composableBuilder(
+    column: $table.allocationsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get amountPerContribution => $composableBuilder(
+    column: $table.amountPerContribution,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get frequency => $composableBuilder(
+    column: $table.frequency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get nextDueAt => $composableBuilder(
+    column: $table.nextDueAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get endAt => $composableBuilder(
+    column: $table.endAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastExecutedAt => $composableBuilder(
+    column: $table.lastExecutedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DcaPlansTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DcaPlansTable> {
+  $$DcaPlansTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get allocationsJson => $composableBuilder(
+    column: $table.allocationsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get amountPerContribution =>
+      $composableBuilder(
+        column: $table.amountPerContribution,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<String> get currency =>
+      $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumn<String> get market =>
+      $composableBuilder(column: $table.market, builder: (column) => column);
+
+  GeneratedColumn<String> get frequency =>
+      $composableBuilder(column: $table.frequency, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get nextDueAt =>
+      $composableBuilder(column: $table.nextDueAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get endAt =>
+      $composableBuilder(column: $table.endAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastExecutedAt => $composableBuilder(
+    column: $table.lastExecutedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$DcaPlansTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DcaPlansTable,
+          DcaPlanRow,
+          $$DcaPlansTableFilterComposer,
+          $$DcaPlansTableOrderingComposer,
+          $$DcaPlansTableAnnotationComposer,
+          $$DcaPlansTableCreateCompanionBuilder,
+          $$DcaPlansTableUpdateCompanionBuilder,
+          (
+            DcaPlanRow,
+            BaseReferences<_$AppDatabase, $DcaPlansTable, DcaPlanRow>,
+          ),
+          DcaPlanRow,
+          PrefetchHooks Function()
+        > {
+  $$DcaPlansTableTableManager(_$AppDatabase db, $DcaPlansTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DcaPlansTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DcaPlansTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DcaPlansTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> allocationsJson = const Value.absent(),
+                Value<Decimal> amountPerContribution = const Value.absent(),
+                Value<String> currency = const Value.absent(),
+                Value<String> market = const Value.absent(),
+                Value<String> frequency = const Value.absent(),
+                Value<DateTime> nextDueAt = const Value.absent(),
+                Value<DateTime?> endAt = const Value.absent(),
+                Value<DateTime?> lastExecutedAt = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DcaPlansCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                allocationsJson: allocationsJson,
+                amountPerContribution: amountPerContribution,
+                currency: currency,
+                market: market,
+                frequency: frequency,
+                nextDueAt: nextDueAt,
+                endAt: endAt,
+                lastExecutedAt: lastExecutedAt,
+                enabled: enabled,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String allocationsJson,
+                required Decimal amountPerContribution,
+                required String currency,
+                required String market,
+                required String frequency,
+                required DateTime nextDueAt,
+                Value<DateTime?> endAt = const Value.absent(),
+                Value<DateTime?> lastExecutedAt = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => DcaPlansCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                allocationsJson: allocationsJson,
+                amountPerContribution: amountPerContribution,
+                currency: currency,
+                market: market,
+                frequency: frequency,
+                nextDueAt: nextDueAt,
+                endAt: endAt,
+                lastExecutedAt: lastExecutedAt,
+                enabled: enabled,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DcaPlansTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DcaPlansTable,
+      DcaPlanRow,
+      $$DcaPlansTableFilterComposer,
+      $$DcaPlansTableOrderingComposer,
+      $$DcaPlansTableAnnotationComposer,
+      $$DcaPlansTableCreateCompanionBuilder,
+      $$DcaPlansTableUpdateCompanionBuilder,
+      (DcaPlanRow, BaseReferences<_$AppDatabase, $DcaPlansTable, DcaPlanRow>),
+      DcaPlanRow,
       PrefetchHooks Function()
     >;
 typedef $$FinancialSignalsTableCreateCompanionBuilder =
@@ -56956,6 +58391,8 @@ class $AppDatabaseManager {
       );
   $$FinancialDecisionsTableTableManager get financialDecisions =>
       $$FinancialDecisionsTableTableManager(_db, _db.financialDecisions);
+  $$DcaPlansTableTableManager get dcaPlans =>
+      $$DcaPlansTableTableManager(_db, _db.dcaPlans);
   $$FinancialSignalsTableTableManager get financialSignals =>
       $$FinancialSignalsTableTableManager(_db, _db.financialSignals);
   $$FinancialMonthlyClosesTableTableManager get financialMonthlyCloses =>

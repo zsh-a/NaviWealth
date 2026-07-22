@@ -1,18 +1,22 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/composition/ask_ai.dart';
 import 'package:naviwealth/core/ai/intent/ai_intent_invocation.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/format/providers.dart';
+import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/fire_providers.dart';
 import '../domain/fire_action.dart';
 import '../domain/fire_projection.dart';
 import '../domain/fire_state.dart';
+import 'fire_goal_form.dart';
 import 'fire_status_colors.dart';
 
 /// Single visual anchor for the FIRE page: ETA, progress, and key rates.
@@ -149,7 +153,9 @@ class _HeroBody extends ConsumerWidget {
                 value: state.withdrawalRate.isFinite
                     ? l10n.fireOsHeroWithdrawalRateValue(
                         (state.withdrawalRate * 100).toStringAsFixed(2),
-                        (state.plan.safeWithdrawalRate * 100).toStringAsFixed(1),
+                        (state.plan.safeWithdrawalRate * 100).toStringAsFixed(
+                          1,
+                        ),
                       )
                     : l10n.fireOsHeroWithdrawalRateInfinite,
               ),
@@ -186,6 +192,10 @@ class _HeroBody extends ConsumerWidget {
               action: state.suggestedActions.first,
               formatters: formatters,
               l10n: l10n,
+              onPress: _fireActionCallback(
+                context,
+                state.suggestedActions.first,
+              ),
             ),
           ],
           if (onExplain != null) ...[
@@ -208,6 +218,26 @@ class _HeroBody extends ConsumerWidget {
     );
   }
 
+  VoidCallback? _fireActionCallback(BuildContext context, FireAction action) {
+    return switch (action.kind) {
+      FireActionKind.configurePlan => () => showFireGoalSheet(context),
+      FireActionKind.holdSteady => null,
+      FireActionKind.topUpCashBucket || FireActionKind.buildRiskReserve =>
+        () => context.push(FinanceRoutes.wealthNewCash),
+      FireActionKind.reduceSpending || FireActionKind.delayDiscretionary =>
+        () => context.push(FinanceRoutes.planBudget),
+      FireActionKind.rebalance => () => context.push(
+        FinanceRoutes.planRebalance,
+      ),
+      FireActionKind.runReview => () => context.push(
+        FinanceRoutes.activityMonthlyClose,
+      ),
+      FireActionKind.fixCurrencyGap => () => context.push(
+        SettingsRoutes.fxRates,
+      ),
+    };
+  }
+
   static String _etaHeadline(AppLocalizations l10n, int? months) {
     if (months == null) return l10n.fireOsHeroEtaUnreachable;
     if (months == 0) return l10n.fireOsHeroEtaReached;
@@ -224,11 +254,13 @@ class _NextAction extends StatelessWidget {
     required this.action,
     required this.formatters,
     required this.l10n,
+    required this.onPress,
   });
 
   final FireAction action;
   final AppFormatters formatters;
   final AppLocalizations l10n;
+  final VoidCallback? onPress;
 
   @override
   Widget build(BuildContext context) {
@@ -238,7 +270,7 @@ class _NextAction extends StatelessWidget {
     );
     final title = fireActionTitle(l10n, action);
     final detail = fireActionDetail(l10n, action, formatters);
-    return Row(
+    final content = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
@@ -268,7 +300,15 @@ class _NextAction extends StatelessWidget {
             ],
           ),
         ),
+        if (onPress != null)
+          const Icon(FLucideIcons.chevronRight, size: AppIconSizes.sm),
       ],
+    );
+    if (onPress == null) return content;
+    return FButton(
+      variant: FButtonVariant.ghost,
+      onPress: onPress,
+      child: content,
     );
   }
 }

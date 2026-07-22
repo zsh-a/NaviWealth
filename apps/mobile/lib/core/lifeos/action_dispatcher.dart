@@ -36,6 +36,11 @@ final lifeActionDispatcherProvider = Provider<LifeActionDispatcher>(
 
 final lifeActionReviewRouteProvider = Provider<String?>((ref) => null);
 
+/// App-composition seam for opening a concrete Execution action without
+/// making the source domain depend on ExecutionOS route contracts.
+final lifeActionRouteBuilderProvider =
+    Provider<String Function(String actionId)?>((ref) => null);
+
 final lifeActionStateReaderProvider = Provider<LifeActionStateReader>(
   (ref) =>
       (actionId) async => null,

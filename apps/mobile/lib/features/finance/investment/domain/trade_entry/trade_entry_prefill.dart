@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 import 'trade_draft.dart';
 
@@ -17,6 +18,8 @@ class TradeEntryPrefill {
     this.fee,
     this.tax,
     this.note,
+    this.symbol,
+    this.market,
   });
 
   final TradeType type;
@@ -27,4 +30,6 @@ class TradeEntryPrefill {
   final Decimal? fee;
   final Decimal? tax;
   final String? note;
+  final String? symbol;
+  final AssetMarket? market;
 }

@@ -3,6 +3,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/ai/composition/ask_ai.dart';
 import '../../../../core/format/providers.dart';
@@ -10,6 +11,7 @@ import '../../../../core/lifeos/action_dispatcher.dart';
 import '../../../../core/product/product_metrics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../composition/finance_route_paths.dart';
 import '../../fire/data/fire_providers.dart';
 import '../../fire/domain/fire_projection.dart';
 import '../../runway/data/money_runway_providers.dart';
@@ -35,6 +37,10 @@ class LifeEventScenariosPage extends ConsumerWidget {
               icon: FLucideIcons.waypoints,
               title: l10n.lifeEventScenariosEmptyTitle,
               message: l10n.lifeEventScenariosEmptyBody,
+              action: FButton(
+                onPress: () => context.push(FinanceRoutes.planRunway),
+                child: Text(l10n.moneyRunwayTitle),
+              ),
             )
           : ListView(
               padding: EdgeInsets.fromLTRB(
@@ -82,6 +88,7 @@ class _ScenarioCard extends ConsumerStatefulWidget {
 class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
   LifeEventAssumptions? _editedAssumptions;
   LifeEventVariant _selectedVariant = LifeEventVariant.baseline;
+  bool _saving = false;
 
   @override
   Widget build(BuildContext context) {
@@ -231,42 +238,68 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
               const SizedBox(width: AppSpacing.s8),
               Expanded(
                 child: FButton(
-                  onPress: () async {
-                    await ref
-                        .read(productMetricsProvider.notifier)
-                        .record(ProductFunnelEvent.lifeEventCompared);
-                    final repository = await ref.read(
-                      financialDecisionRepositoryProvider.future,
-                    );
-                    final decision = await repository.create(
-                      template: widget.template,
-                      selectedVariant: _selectedVariant,
-                      baseline: widget.baseline,
-                      assumptions: assumptions,
-                      outcome: groundedOutcome,
-                      now: DateTime.now(),
-                    );
-                    await ref.read(lifeActionDispatcherProvider)(
-                      LifeActionDraft(
-                        title: l10n.lifeEventReviewActionTitle(
-                          _templateLabel(l10n, widget.template),
-                        ),
-                        note: l10n.lifeEventReviewActionBody,
-                        sourceDomain: 'finance',
-                        sourceRowFamily: 'financial_decisions',
-                        sourceRowId: decision.id,
-                        dueAt: decision.reviewDate,
-                      ),
-                    );
-                    await ref
-                        .read(productMetricsProvider.notifier)
-                        .record(ProductFunnelEvent.financialDecisionSaved);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.lifeEventDecisionSaved)),
-                      );
-                    }
-                  },
+                  onPress: _saving
+                      ? null
+                      : () async {
+                          setState(() => _saving = true);
+                          try {
+                            await ref
+                                .read(productMetricsProvider.notifier)
+                                .record(ProductFunnelEvent.lifeEventCompared);
+                            final repository = await ref.read(
+                              financialDecisionRepositoryProvider.future,
+                            );
+                            final decision = await repository.create(
+                              template: widget.template,
+                              selectedVariant: _selectedVariant,
+                              baseline: widget.baseline,
+                              assumptions: assumptions,
+                              outcome: groundedOutcome,
+                              now: DateTime.now(),
+                            );
+                            final actionId =
+                                await ref.read(lifeActionDispatcherProvider)(
+                                  LifeActionDraft(
+                                    title: l10n.lifeEventReviewActionTitle(
+                                      _templateLabel(l10n, widget.template),
+                                    ),
+                                    note: l10n.lifeEventReviewActionBody,
+                                    sourceDomain: 'finance',
+                                    sourceRowFamily: 'financial_decisions',
+                                    sourceRowId: decision.id,
+                                    dueAt: decision.reviewDate,
+                                  ),
+                                );
+                            if (actionId != null) {
+                              await repository.linkAction(
+                                id: decision.id,
+                                actionId: actionId,
+                              );
+                            }
+                            await ref
+                                .read(productMetricsProvider.notifier)
+                                .record(
+                                  ProductFunnelEvent.financialDecisionSaved,
+                                );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(l10n.lifeEventDecisionSaved),
+                                ),
+                              );
+                            }
+                          } catch (_) {
+                            if (context.mounted) {
+                              AppMessenger.show(
+                                context,
+                                ToastKind.error,
+                                l10n.commonSaveFailed,
+                              );
+                            }
+                          } finally {
+                            if (mounted) setState(() => _saving = false);
+                          }
+                        },
                   child: Text(l10n.lifeEventChooseScenario),
                 ),
               ),
@@ -370,10 +403,59 @@ class _DecisionRow extends ConsumerWidget {
                             .record(
                               ProductFunnelEvent.financialDecisionReviewed,
                             );
+                        if (context.mounted) {
+                          AppMessenger.show(
+                            context,
+                            ToastKind.success,
+                            l10n.lifeEventReviewed,
+                          );
+                        }
                       },
                 child: Text(l10n.lifeEventCaptureActual),
               ),
             ],
+            const SizedBox(height: AppSpacing.s8),
+            Wrap(
+              spacing: AppSpacing.s8,
+              runSpacing: AppSpacing.s8,
+              children: [
+                if (decision.actionId case final actionId?)
+                  FButton(
+                    variant: FButtonVariant.outline,
+                    onPress: () {
+                      final routeBuilder = ref.read(
+                        lifeActionRouteBuilderProvider,
+                      );
+                      if (routeBuilder != null) {
+                        context.push(routeBuilder(actionId));
+                      }
+                    },
+                    child: Text(l10n.lifeEventOpenAction),
+                  ),
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => context.push(FinanceRoutes.planBudget),
+                  child: Text(l10n.lifeEventAdjustPlan),
+                ),
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: () async {
+                    final repository = await ref.read(
+                      financialDecisionRepositoryProvider.future,
+                    );
+                    await repository.remove(decision.id);
+                    if (context.mounted) {
+                      AppMessenger.show(
+                        context,
+                        ToastKind.success,
+                        l10n.commonDeleted,
+                      );
+                    }
+                  },
+                  child: Text(l10n.commonDelete),
+                ),
+              ],
+            ),
           ],
         ),
       ),

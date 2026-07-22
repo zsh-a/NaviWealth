@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 import '../domain/dca/dca_simulator.dart';
 import '../domain/trade_entry/trade_draft.dart';
@@ -9,6 +10,7 @@ typedef DcaTradeNoteBuilder = String Function(DcaAllocation allocation);
 List<TradeEntryPrefill> buildDcaTradeEntryPrefills({
   required DcaSimulationRequestContract request,
   required DateTime tradeDate,
+  required AssetMarket market,
   required DcaTradeNoteBuilder noteBuilder,
 }) {
   return [
@@ -22,6 +24,8 @@ List<TradeEntryPrefill> buildDcaTradeEntryPrefills({
         fee: null,
         tax: null,
         note: noteBuilder(allocation),
+        symbol: allocation.symbol,
+        market: market,
       ),
   ];
 }

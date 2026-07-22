@@ -104,6 +104,49 @@ class FinancialDecisionRepository {
     });
   }
 
+  Future<void> linkAction({
+    required String id,
+    required String actionId,
+  }) async {
+    final stamp = await _stamper.stamp();
+    await _db.transaction(() async {
+      await (_db.update(_db.financialDecisions)..where(
+            (table) =>
+                table.id.equals(id) &
+                table.ownerUserId.equals(stamp.ownerUserId),
+          ))
+          .write(
+            FinancialDecisionsCompanion(
+              actionId: Value(actionId),
+              updatedAt: Value(stamp.now),
+              updatedByDevice: Value(stamp.deviceId),
+              hlc: Value(stamp.hlc),
+            ),
+          );
+      await _outbox.enqueue(table: _tableName, rowId: id);
+    });
+  }
+
+  Future<void> remove(String id) async {
+    final stamp = await _stamper.stamp();
+    await _db.transaction(() async {
+      await (_db.update(_db.financialDecisions)..where(
+            (table) =>
+                table.id.equals(id) &
+                table.ownerUserId.equals(stamp.ownerUserId),
+          ))
+          .write(
+            FinancialDecisionsCompanion(
+              deletedAt: Value(stamp.now),
+              updatedAt: Value(stamp.now),
+              updatedByDevice: Value(stamp.deviceId),
+              hlc: Value(stamp.hlc),
+            ),
+          );
+      await _outbox.enqueue(table: _tableName, rowId: id);
+    });
+  }
+
   Future<FinancialDecision?> _find(String id) async {
     final owner = await _stamper.currentUserId();
     final row =
@@ -145,5 +188,6 @@ class FinancialDecisionRepository {
             ),
           ),
     reviewedAt: row.reviewedAt,
+    actionId: row.actionId,
   );
 }

@@ -67,6 +67,7 @@ kSyncTableRegistrations = <SyncTableRegistration>[
   ),
   SyncTableRegistration('tags', domainPrefix: kFinanceDomainPrefix),
   SyncTableRegistration('budgets', domainPrefix: kFinanceDomainPrefix),
+  SyncTableRegistration('dca_plans', domainPrefix: kFinanceDomainPrefix),
   SyncTableRegistration('goals', domainPrefix: kFinanceDomainPrefix),
   SyncTableRegistration(
     'investment_portfolios',

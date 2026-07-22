@@ -16,7 +16,9 @@ import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/shared/ui/account_tree_picker.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/persistence/test_database.dart';
 import '../../data/repositories/_stub_stamper.dart';
@@ -45,9 +47,12 @@ BudgetRow _row({
 );
 
 Future<void> _pump(WidgetTester tester, List<BudgetRow> rows) async {
+  SharedPreferences.setMockInitialValues({});
+  final preferences = await SharedPreferences.getInstance();
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(preferences),
         allAccountsStreamProvider.overrideWith(
           (ref) => Stream.value([_expenseAccount()]),
         ),
@@ -118,9 +123,12 @@ Future<void> _pumpLive(
   WidgetTester tester, {
   required BudgetRepository repository,
 }) async {
+  SharedPreferences.setMockInitialValues({});
+  final preferences = await SharedPreferences.getInstance();
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(preferences),
         budgetRepositoryProvider.overrideWith((ref) async => repository),
         allAccountsStreamProvider.overrideWith(
           (ref) => Stream.value([_expenseAccount()]),
@@ -167,9 +175,8 @@ void main() {
     final nextKey =
         '${next.year}-${next.month.toString().padLeft(2, '0')} budgets';
 
-    await tester.tap(find.byTooltip('Next month'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(find.byIcon(FLucideIcons.chevronRight));
+    await tester.pumpAndSettle();
 
     expect(find.text(nextKey), findsOneWidget);
   });
@@ -188,11 +195,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('New budget'), findsOneWidget);
 
-    await tester.tap(find.byType(FSelect<String>));
+    await tester.tap(find.byType(AccountTreePicker));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Dining').last);
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(FTextField).first, '1800');
+    await tester.enterText(
+      find.widgetWithText(FTextField, 'Amount (CNY)'),
+      '1800',
+    );
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
@@ -203,6 +213,8 @@ void main() {
     expect(stored?.amount, Decimal.parse('1800'));
     expect(stored?.currency, 'CNY');
     expect(find.text('Dining'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 100));
   });
 
   testWidgets('deletes an existing budget from its edit sheet', (tester) async {
@@ -235,6 +247,41 @@ void main() {
     );
     expect(stored, isNull);
     expect(find.text('No budgets yet'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 100));
+  });
+
+  testWidgets('copies missing budgets from the previous month', (tester) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final repository = BudgetRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+      stamper: makeStubStamper(),
+    );
+    final now = DateTime.now();
+    final previous = DateTime(now.year, now.month - 1);
+    final previousKey =
+        '${previous.year}-${previous.month.toString().padLeft(2, '0')}';
+    await repository.create(
+      categoryId: 'expense-dining',
+      periodMonth: previousKey,
+      amount: Decimal.parse('1600'),
+      currency: 'CNY',
+    );
+    await _pumpLive(tester, repository: repository);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await tester.tap(find.byIcon(FLucideIcons.copy));
+    await tester.pumpAndSettle();
+
+    final copied = await repository.findForCategoryMonth(
+      categoryId: 'expense-dining',
+      periodMonth: _currentMonthKey(),
+    );
+    expect(copied?.amount, Decimal.parse('1600'));
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 100));
   });
 
   testWidgets('renders budgets for the current UTC month + total roll-up', (

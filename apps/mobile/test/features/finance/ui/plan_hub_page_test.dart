@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/application/planning_hub_status.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_calculator.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_goal.dart';
@@ -14,26 +15,35 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap(FireDashboardView view) => _wrapAsync(AsyncValue.data(view));
 
-Widget _wrapAsync(AsyncValue<FireDashboardView> view, {double textScale = 1}) =>
-    ProviderScope(
-      overrides: [fireDashboardViewProvider.overrideWith((ref) => view)],
-      child: MaterialApp(
-        theme: AppTheme.light(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(textScale)),
-          child: child!,
-        ),
-        home: const PlanHubPage(),
-      ),
-    );
+Widget _wrapAsync(
+  AsyncValue<FireDashboardView> view, {
+  double textScale = 1,
+  PlanningHubStatus status = const PlanningHubStatus.loading(),
+}) => ProviderScope(
+  overrides: [
+    fireDashboardViewProvider.overrideWith((ref) => view),
+    planningHubStatusProvider.overrideWith((ref) => status),
+  ],
+  child: MaterialApp(
+    theme: AppTheme.light(),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    builder: (context, child) => MediaQuery(
+      data: MediaQuery.of(
+        context,
+      ).copyWith(textScaler: TextScaler.linear(textScale)),
+      child: child!,
+    ),
+    home: const PlanHubPage(),
+  ),
+);
 
 Widget _wrapRouter(FireDashboardView view) => ProviderScope(
   overrides: [
     fireDashboardViewProvider.overrideWith((ref) => AsyncValue.data(view)),
+    planningHubStatusProvider.overrideWith(
+      (ref) => const PlanningHubStatus.loading(),
+    ),
   ],
   child: MaterialApp.router(
     theme: AppTheme.light(),
@@ -143,6 +153,43 @@ void main() {
     expect(find.text(l10n.planFireSectionTitle), findsWidgets);
     expect(find.text('${l10n.planHeroProgressLabel} 25%'), findsOneWidget);
     expect(find.text(l10n.planHeroSeePlan), findsOneWidget);
+  });
+
+  testWidgets('surfaces live planning status on workflow tiles', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrapAsync(
+        AsyncValue.data(_view(FireGoal.unset())),
+        status: PlanningHubStatus(
+          runway: PlanningRunwayStatus.healthy,
+          pendingLifeEventReviews: 2,
+          rebalance: PlanningRebalanceStatus.attention,
+          rebalanceDriftPct: 0.075,
+          budgetCount: 3,
+          dcaPlanCount: 1,
+          dcaNextDueAt: DateTime.now().add(const Duration(days: 5)),
+          dcaDue: false,
+          wheelCycleCount: 2,
+          wheelOpenPositionCount: 1,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('On track'), findsOneWidget);
+    expect(find.text('2 reviews due'), findsOneWidget);
+    expect(find.text('7.5% drift'), findsOneWidget);
+    expect(find.text('3 category caps'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Strategies'),
+      160,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Strategies'));
+    await tester.pumpAndSettle();
+    expect(find.text('1 open position'), findsOneWidget);
   });
 
   testWidgets('plan hub stays bounded on a narrow scaled viewport', (

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/investment/application/dca_trade_entry_prefills.dart';
 import 'package:naviwealth/features/finance/investment/domain/dca/dca_simulator.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 void main() {
   test('builds buy prefills for the next DCA basket allocation', () {
@@ -17,6 +18,7 @@ void main() {
         currency: 'USD',
       ),
       tradeDate: tradeDate,
+      market: AssetMarket.usStock,
       noteBuilder: (allocation) => 'DCA ${allocation.symbol}',
     );
 
@@ -27,5 +29,7 @@ void main() {
     expect(prefills.first.currency, 'USD');
     expect(prefills.first.tradeDate, tradeDate);
     expect(prefills.first.note, 'DCA VOO');
+    expect(prefills.first.symbol, 'VOO');
+    expect(prefills.first.market, AssetMarket.usStock);
   });
 }

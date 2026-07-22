@@ -128,7 +128,10 @@ class _EmptyState extends ConsumerWidget {
       title: l10n.rebalanceEmptyTitle,
       message: l10n.rebalanceEmptyHint,
       action: active == null
-          ? null
+          ? FButton(
+              onPress: () => context.push(FinanceRoutes.wealthPortfolio),
+              child: Text(l10n.portfolioHubTitle),
+            )
           : FButton(
               onPress: () =>
                   _openExecution(context: context, ref: ref, active: active),

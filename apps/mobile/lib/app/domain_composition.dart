@@ -96,6 +96,10 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
       return (draft) => _dispatchLifeAction(ref, draft);
     }),
     lifeActionReviewRouteProvider.overrideWith((ref) => ExecutionRoutes.review),
+    lifeActionRouteBuilderProvider.overrideWith(
+      (ref) =>
+          (actionId) => ExecutionRoutes.action(actionId),
+    ),
     lifeActionStateReaderProvider.overrideWith((ref) {
       return (actionId) async {
         final repository = await ref.read(executionRepositoryProvider.future);

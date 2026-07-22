@@ -14,6 +14,7 @@ final class FinancialDecision {
     this.actualOutcome,
     this.reviewEvidence,
     this.reviewedAt,
+    this.actionId,
   });
 
   final String id;
@@ -28,6 +29,7 @@ final class FinancialDecision {
   final LifeEventOutcome? actualOutcome;
   final FinancialDecisionReviewEvidence? reviewEvidence;
   final DateTime? reviewedAt;
+  final String? actionId;
 
   Map<String, Object?> toJson() => {
     'id': id,
@@ -42,6 +44,7 @@ final class FinancialDecision {
     'actualOutcome': actualOutcome?.toJson(),
     'reviewEvidence': reviewEvidence?.toJson(),
     'reviewedAt': reviewedAt?.toUtc().toIso8601String(),
+    'actionId': actionId,
   };
 
   factory FinancialDecision.fromJson(Map<String, Object?> json) =>
@@ -76,6 +79,7 @@ final class FinancialDecision {
         reviewedAt: json['reviewedAt'] == null
             ? null
             : DateTime.parse(json['reviewedAt']! as String),
+        actionId: json['actionId'] as String?,
       );
 }
 

@@ -110,6 +110,78 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planBudgetSectionSubtitle => 'Monthly category caps';
 
   @override
+  String get planStatusNeedsSetup => 'Needs setup';
+
+  @override
+  String get planStatusNoPendingReviews => 'No reviews due';
+
+  @override
+  String planStatusPendingReviews(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count reviews due',
+      one: '1 review due',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planStatusRebalanceBalanced => 'On target';
+
+  @override
+  String planStatusRebalanceAttention(String percent) {
+    return '$percent% drift';
+  }
+
+  @override
+  String get planStatusRebalanceActive => 'Execution in progress';
+
+  @override
+  String planStatusBudgetCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count category caps',
+      one: '1 category cap',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planStatusDcaDue => 'Contribution due';
+
+  @override
+  String planStatusDcaNext(String date) {
+    return 'Next $date';
+  }
+
+  @override
+  String get planStatusDcaPaused => 'All plans paused';
+
+  @override
+  String planStatusWheelOpen(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count open positions',
+      one: '1 open position',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planStatusWheelCycles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tracked cycles',
+      one: '1 tracked cycle',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get planBudgetTitle => 'Budget';
 
   @override
@@ -144,6 +216,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planBudgetPreviousMonth => 'Previous month';
+
+  @override
+  String get planBudgetCopyPreviousAction => 'Copy previous month';
+
+  @override
+  String planBudgetCopied(int count) {
+    return 'Copied $count budgets from the previous month';
+  }
+
+  @override
+  String planBudgetCurrencyMismatch(int count) {
+    return '$count budgets use another currency and are excluded from this summary.';
+  }
 
   @override
   String get planBudgetNextMonth => 'Next month';
@@ -220,6 +305,36 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get planWheelEmptyBody =>
       'Record a sell-put or covered-call trade and the cycle will surface here.';
+
+  @override
+  String get planWheelHistoryTitle => 'Cycle history';
+
+  @override
+  String get planWheelStageBetween => 'Between cycles';
+
+  @override
+  String get planWheelStageCashWaiting => 'Cash waiting';
+
+  @override
+  String get planWheelStageShortPut => 'Short put (open)';
+
+  @override
+  String get planWheelStagePutExpired => 'Put expired';
+
+  @override
+  String get planWheelStagePutAssigned => 'Put assigned';
+
+  @override
+  String get planWheelStageSharesHeld => 'Shares held';
+
+  @override
+  String get planWheelStageShortCall => 'Short call (open)';
+
+  @override
+  String get planWheelStageCallExpired => 'Call expired';
+
+  @override
+  String get planWheelStageCallCalled => 'Called away';
 
   @override
   String get investmentEventTimelineTitle => 'Upcoming events';
@@ -1371,7 +1486,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dcaSimulatorSymbolField => 'Symbol or basket';
 
   @override
-  String get dcaSimulatorSymbolHint => 'VOO or VOO, QQQ';
+  String get dcaSimulatorSymbolHint => 'VOO or VOO:60, QQQ:40';
 
   @override
   String get dcaSimulatorAmountField => 'Amount';
@@ -1419,7 +1534,44 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dcaSimulatorRunAction => 'Run simulation';
 
   @override
-  String get dcaSimulatorDraftAction => 'Draft next buys';
+  String get dcaSimulatorDraftAction => 'Save recurring plan';
+
+  @override
+  String get dcaPlanSectionTitle => 'Recurring plans';
+
+  @override
+  String get dcaPlanEmpty =>
+      'Run a simulation, then save it as a recurring plan.';
+
+  @override
+  String get dcaPlanSaved => 'Recurring investment plan saved';
+
+  @override
+  String get dcaPlanActive => 'Active';
+
+  @override
+  String get dcaPlanPaused => 'Paused';
+
+  @override
+  String dcaPlanNextDue(String date, String amount, String currency) {
+    return 'Next $date · $amount $currency';
+  }
+
+  @override
+  String get dcaPlanExecuteNow => 'Record contribution';
+
+  @override
+  String get dcaPlanPause => 'Pause';
+
+  @override
+  String get dcaPlanResume => 'Resume';
+
+  @override
+  String get dcaPlanDeleteTitle => 'Delete recurring plan?';
+
+  @override
+  String get dcaPlanDeleteBody =>
+      'This removes the schedule and its future reminders. Recorded trades are kept.';
 
   @override
   String get dcaSimulatorFreshnessLive => 'Live';
@@ -10443,6 +10595,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incomePlannerJournalEditTitle => 'Edit trade journal entry';
 
   @override
+  String get incomePlannerJournalDeleteTitle => 'Delete trade journal entry?';
+
+  @override
+  String get incomePlannerJournalDeleteBody =>
+      'This removes the entry from statistics, Wheel history, and its mirrored ledger postings.';
+
+  @override
   String get incomePlannerJournalCreditLabel => 'Credit received';
 
   @override
@@ -14048,6 +14207,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lifeEventChooseScenario => 'Choose';
 
   @override
+  String get lifeEventOpenAction => 'Open follow-up';
+
+  @override
+  String get lifeEventAdjustPlan => 'Adjust budget';
+
+  @override
   String get lifeEventDecisionSaved => 'Decision and assumptions saved';
 
   @override
@@ -14189,6 +14354,39 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get moneyRunwayScenarioReducedIncome =>
       'Reduce expected income by 30%';
+
+  @override
+  String get moneyRunwayCustomScenarioAction => 'Custom stress test';
+
+  @override
+  String get moneyRunwayCustomScenarioTitle => 'Custom runway scenario';
+
+  @override
+  String moneyRunwayCustomPurchase(String currency) {
+    return 'One-time expense ($currency)';
+  }
+
+  @override
+  String get moneyRunwayCustomDelayDays => 'Income delay (days)';
+
+  @override
+  String get moneyRunwayCustomReductionPercent => 'Income reduction (%)';
+
+  @override
+  String get moneyRunwayCustomDurationDays => 'Reduction duration (days)';
+
+  @override
+  String get moneyRunwayCustomInvalid =>
+      'Enter non-negative values, a reduction from 0 to 100%, and at least one stress factor.';
+
+  @override
+  String get moneyRunwayCustomRun => 'Run scenario';
+
+  @override
+  String get moneyRunwayCustomResult => 'Custom minimum balance';
+
+  @override
+  String get moneyRunwayCustomReset => 'Clear custom scenario';
 
   @override
   String moneyRunwayCoverageMonths(Object months) {

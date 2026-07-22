@@ -107,6 +107,74 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planBudgetSectionSubtitle => '按月按类别设定上限';
 
   @override
+  String get planStatusNeedsSetup => '待设置';
+
+  @override
+  String get planStatusNoPendingReviews => '暂无待复盘项';
+
+  @override
+  String planStatusPendingReviews(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 项待复盘',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planStatusRebalanceBalanced => '配置达标';
+
+  @override
+  String planStatusRebalanceAttention(String percent) {
+    return '偏离 $percent%';
+  }
+
+  @override
+  String get planStatusRebalanceActive => '执行中';
+
+  @override
+  String planStatusBudgetCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个类别上限',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planStatusDcaDue => '本期定投待执行';
+
+  @override
+  String planStatusDcaNext(String date) {
+    return '下次 $date';
+  }
+
+  @override
+  String get planStatusDcaPaused => '计划均已暂停';
+
+  @override
+  String planStatusWheelOpen(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个持仓中头寸',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planStatusWheelCycles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '跟踪 $count 个周期',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get planBudgetTitle => '预算';
 
   @override
@@ -138,6 +206,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get planBudgetPreviousMonth => '上个月';
+
+  @override
+  String get planBudgetCopyPreviousAction => '复制上月预算';
+
+  @override
+  String planBudgetCopied(int count) {
+    return '已从上月复制 $count 项预算';
+  }
+
+  @override
+  String planBudgetCurrencyMismatch(int count) {
+    return '有 $count 项预算使用其他币种，未计入当前汇总。';
+  }
 
   @override
   String get planBudgetNextMonth => '下个月';
@@ -212,6 +293,36 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get planWheelEmptyBody => '录入一次卖 put 或备兑 call 交易后，周期会显示在这里。';
+
+  @override
+  String get planWheelHistoryTitle => '周期记录';
+
+  @override
+  String get planWheelStageBetween => '周期间歇';
+
+  @override
+  String get planWheelStageCashWaiting => '现金待命';
+
+  @override
+  String get planWheelStageShortPut => '卖出 Put（持仓中）';
+
+  @override
+  String get planWheelStagePutExpired => 'Put 已到期';
+
+  @override
+  String get planWheelStagePutAssigned => 'Put 已行权';
+
+  @override
+  String get planWheelStageSharesHeld => '持有正股';
+
+  @override
+  String get planWheelStageShortCall => '备兑 Call（持仓中）';
+
+  @override
+  String get planWheelStageCallExpired => 'Call 已到期';
+
+  @override
+  String get planWheelStageCallCalled => '正股已被行权卖出';
 
   @override
   String get investmentEventTimelineTitle => '即将到来的事件';
@@ -1318,7 +1429,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dcaSimulatorSymbolField => '标的或篮子';
 
   @override
-  String get dcaSimulatorSymbolHint => 'VOO 或 VOO, QQQ';
+  String get dcaSimulatorSymbolHint => 'VOO 或 VOO:60, QQQ:40';
 
   @override
   String get dcaSimulatorAmountField => '金额';
@@ -1366,7 +1477,42 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dcaSimulatorRunAction => '运行模拟';
 
   @override
-  String get dcaSimulatorDraftAction => '生成下一笔买入草稿';
+  String get dcaSimulatorDraftAction => '保存周期计划';
+
+  @override
+  String get dcaPlanSectionTitle => '周期定投计划';
+
+  @override
+  String get dcaPlanEmpty => '完成一次模拟后，可将结果保存为周期定投计划。';
+
+  @override
+  String get dcaPlanSaved => '周期定投计划已保存';
+
+  @override
+  String get dcaPlanActive => '进行中';
+
+  @override
+  String get dcaPlanPaused => '已暂停';
+
+  @override
+  String dcaPlanNextDue(String date, String amount, String currency) {
+    return '下次 $date · $amount $currency';
+  }
+
+  @override
+  String get dcaPlanExecuteNow => '记录本期定投';
+
+  @override
+  String get dcaPlanPause => '暂停';
+
+  @override
+  String get dcaPlanResume => '恢复';
+
+  @override
+  String get dcaPlanDeleteTitle => '删除周期计划？';
+
+  @override
+  String get dcaPlanDeleteBody => '将删除后续计划与提醒，已记录的交易会保留。';
 
   @override
   String get dcaSimulatorFreshnessLive => '实时';
@@ -9920,6 +10066,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerJournalEditTitle => '编辑交易日记';
 
   @override
+  String get incomePlannerJournalDeleteTitle => '删除交易日记？';
+
+  @override
+  String get incomePlannerJournalDeleteBody => '该记录将从统计、Wheel 历史及对应账本镜像中移除。';
+
+  @override
   String get incomePlannerJournalCreditLabel => '收取权利金';
 
   @override
@@ -13378,6 +13530,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeEventChooseScenario => '选择';
 
   @override
+  String get lifeEventOpenAction => '打开后续行动';
+
+  @override
+  String get lifeEventAdjustPlan => '调整预算';
+
+  @override
   String get lifeEventDecisionSaved => '已保存决策和假设';
 
   @override
@@ -13509,6 +13667,38 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get moneyRunwayScenarioReducedIncome => '预计收入减少 30%';
+
+  @override
+  String get moneyRunwayCustomScenarioAction => '自定义压力测试';
+
+  @override
+  String get moneyRunwayCustomScenarioTitle => '自定义现金续航场景';
+
+  @override
+  String moneyRunwayCustomPurchase(String currency) {
+    return '一次性支出（$currency）';
+  }
+
+  @override
+  String get moneyRunwayCustomDelayDays => '收入延迟（天）';
+
+  @override
+  String get moneyRunwayCustomReductionPercent => '收入减少（%）';
+
+  @override
+  String get moneyRunwayCustomDurationDays => '减少持续时间（天）';
+
+  @override
+  String get moneyRunwayCustomInvalid => '请输入非负数、0 至 100% 的收入降幅，并至少设置一个压力因素。';
+
+  @override
+  String get moneyRunwayCustomRun => '运行场景';
+
+  @override
+  String get moneyRunwayCustomResult => '自定义场景最低余额';
+
+  @override
+  String get moneyRunwayCustomReset => '清除自定义场景';
 
   @override
   String moneyRunwayCoverageMonths(Object months) {

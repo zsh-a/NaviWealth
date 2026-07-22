@@ -5,7 +5,10 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
+import '../domain/trade_journal_entry.dart';
 import '../domain/wheel_lifecycle.dart';
+import 'income_planner_labels.dart';
+import 'trade_journal_sheet.dart';
 
 /// `/plan/wheel` — per-underlying Wheel cycle review
 /// (`docs/domains/options-income.md` §12 P4).
@@ -40,6 +43,10 @@ class WheelLifecyclePage extends ConsumerWidget {
                 icon: FLucideIcons.refreshCw,
                 title: l10n.planWheelEmptyTitle,
                 message: l10n.planWheelEmptyBody,
+                action: FButton(
+                  onPress: () => showTradeJournalSheet(context),
+                  child: Text(l10n.incomePlannerJournalAddCta),
+                ),
               ),
             );
           }
@@ -52,7 +59,10 @@ class WheelLifecyclePage extends ConsumerWidget {
             ),
             itemCount: cycles.length,
             separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
-            itemBuilder: (context, i) => _WheelTile(cycle: cycles[i]),
+            itemBuilder: (context, i) => _WheelTile(
+              cycle: cycles[i],
+              onPress: () => _showWheelCycleSheet(context, cycles[i]),
+            ),
           );
         },
       ),
@@ -61,15 +71,18 @@ class WheelLifecyclePage extends ConsumerWidget {
 }
 
 class _WheelTile extends StatelessWidget {
-  const _WheelTile({required this.cycle});
+  const _WheelTile({required this.cycle, required this.onPress});
 
   final WheelLifecycle cycle;
+  final VoidCallback onPress;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final stageLabel = _stageLabel(cycle.stage);
+    final l10n = AppLocalizations.of(context);
+    final stageLabel = _stageLabel(l10n, cycle.stage);
     return SoftCard.raised(
+      onPress: onPress,
       child: FTile(
         prefix: Container(
           width: 36,
@@ -97,6 +110,103 @@ class _WheelTile extends StatelessWidget {
   }
 }
 
+Future<void> _showWheelCycleSheet(
+  BuildContext pageContext,
+  WheelLifecycle cycle,
+) {
+  return showAppFormSheet<void>(
+    context: pageContext,
+    builder: (sheetContext) => _WheelCycleSheet(
+      pageContext: pageContext,
+      sheetContext: sheetContext,
+      cycle: cycle,
+    ),
+  );
+}
+
+class _WheelCycleSheet extends StatelessWidget {
+  const _WheelCycleSheet({
+    required this.pageContext,
+    required this.sheetContext,
+    required this.cycle,
+  });
+
+  final BuildContext pageContext;
+  final BuildContext sheetContext;
+  final WheelLifecycle cycle;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppSheet(
+      title: cycle.symbol,
+      subtitle: _stageLabel(l10n, cycle.stage),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l10n.planWheelHistoryTitle, style: context.mutedLabelStyle),
+          const SizedBox(height: AppSpacing.s8),
+          for (final entry in cycle.entries.reversed)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+              child: _WheelHistoryTile(
+                entry: entry,
+                onPress: () => _openJournal(entry.id),
+              ),
+            ),
+          const SizedBox(height: AppSpacing.s8),
+          FButton(
+            onPress: () => _openJournal(null),
+            child: Text(l10n.incomePlannerJournalAddCta),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openJournal(String? existingId) {
+    Navigator.of(sheetContext).pop();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!pageContext.mounted) return;
+      showTradeJournalSheet(pageContext, existingId: existingId);
+    });
+  }
+}
+
+class _WheelHistoryTile extends StatelessWidget {
+  const _WheelHistoryTile({required this.entry, required this.onPress});
+
+  final TradeJournalEntry entry;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SoftCard.flat(
+      onPress: onPress,
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(entry.optionSymbol, style: context.labelStyle),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  tradeJournalStatusLabel(l10n, entry.status),
+                  style: context.captionStyle,
+                ),
+              ],
+            ),
+          ),
+          const Icon(FLucideIcons.chevronRight, size: AppIconSizes.sm),
+        ],
+      ),
+    );
+  }
+}
+
 IconData _stageIcon(WheelStage stage) => switch (stage) {
   WheelStage.between => FLucideIcons.circle,
   WheelStage.cashWaiting => FLucideIcons.wallet,
@@ -112,14 +222,14 @@ IconData _stageIcon(WheelStage stage) => switch (stage) {
 /// Labels are pinned in code (not l10n) because the Wheel stages are a
 /// canonical strategy taxonomy — translating "short put" into a free
 /// rendering for each locale would lose the strategy semantics.
-String _stageLabel(WheelStage stage) => switch (stage) {
-  WheelStage.between => 'Between cycles',
-  WheelStage.cashWaiting => 'Cash waiting',
-  WheelStage.shortPut => 'Short put (open)',
-  WheelStage.putExpired => 'Put expired',
-  WheelStage.putAssigned => 'Put assigned',
-  WheelStage.sharesHeld => 'Shares held',
-  WheelStage.shortCall => 'Short call (open)',
-  WheelStage.callExpired => 'Call expired',
-  WheelStage.callCalled => 'Called away',
+String _stageLabel(AppLocalizations l10n, WheelStage stage) => switch (stage) {
+  WheelStage.between => l10n.planWheelStageBetween,
+  WheelStage.cashWaiting => l10n.planWheelStageCashWaiting,
+  WheelStage.shortPut => l10n.planWheelStageShortPut,
+  WheelStage.putExpired => l10n.planWheelStagePutExpired,
+  WheelStage.putAssigned => l10n.planWheelStagePutAssigned,
+  WheelStage.sharesHeld => l10n.planWheelStageSharesHeld,
+  WheelStage.shortCall => l10n.planWheelStageShortCall,
+  WheelStage.callExpired => l10n.planWheelStageCallExpired,
+  WheelStage.callCalled => l10n.planWheelStageCallCalled,
 };

@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/data/market/http/clock.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
+import 'package:naviwealth/features/finance/investment/data/dca_plan_providers.dart';
 import 'package:naviwealth/features/finance/investment/ui/dca_simulator_page.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
@@ -73,6 +74,7 @@ void main() {
       name: 'dca_simulator_page',
       variant: variant,
       overrides: [
+        dcaPlansProvider.overrideWith((ref) => Stream.value(const [])),
         clockProvider.overrideWithValue(const _FixedClock()),
         marketDataServiceProvider.overrideWith(
           (_) async => const _GoldenMarketDataService(),

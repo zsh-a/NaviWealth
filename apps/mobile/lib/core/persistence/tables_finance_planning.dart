@@ -17,7 +17,30 @@ class FinancialDecisions extends Table with SyncableTable {
   TextColumn get actualOutcomeJson => text().nullable()();
   TextColumn get reviewEvidenceJson => text().nullable()();
   DateTimeColumn get reviewedAt => dateTime().nullable()();
+  TextColumn get actionId => text().nullable()();
   TextColumn get status => text().withDefault(const Constant('active'))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// A durable, user-controlled periodic investment plan. Market simulation
+/// results remain derived/cache data; this row is the commitment that can be
+/// paused, resumed, executed, and synced across devices.
+@DataClassName('DcaPlanRow')
+class DcaPlans extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get allocationsJson => text()();
+  TextColumn get amountPerContribution =>
+      text().map(const DecimalConverter())();
+  TextColumn get currency => text()();
+  TextColumn get market => text()();
+  TextColumn get frequency => text()();
+  DateTimeColumn get nextDueAt => dateTime()();
+  DateTimeColumn get endAt => dateTime().nullable()();
+  DateTimeColumn get lastExecutedAt => dateTime().nullable()();
+  BoolColumn get enabled => boolean().withDefault(const Constant(true))();
+  DateTimeColumn get createdAt => dateTime()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -86,6 +109,11 @@ class FinancialReconciliations extends Table with SyncableTable {
 }
 
 const List<String> financePlanningIndexStmts = [
+  'CREATE INDEX IF NOT EXISTS idx_dca_plans_owner_due '
+      'ON dca_plans(owner_user_id, enabled, next_due_at) '
+      'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_dca_plans_owner_hlc '
+      'ON dca_plans(owner_user_id, hlc)',
   'CREATE INDEX IF NOT EXISTS idx_financial_decisions_owner_review '
       'ON financial_decisions(owner_user_id, status, review_date) '
       'WHERE deleted_at IS NULL',

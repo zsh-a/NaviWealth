@@ -91,6 +91,7 @@ final class AppDatabaseTransactionScope {
     InvestmentPortfolios,
     PortfolioLotMemberships,
     FinancialDecisions,
+    DcaPlans,
     FinancialSignals,
     FinancialMonthlyCloses,
     FinancialReconciliations,
@@ -146,7 +147,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 51;
+  int get schemaVersion => 52;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -795,6 +796,16 @@ class AppDatabase extends _$AppDatabase {
         )) {
           await customStatement(statement);
         }
+      }
+      if (from < 52) {
+        await m.createTable(dcaPlans);
+        await _addColumnIfMissing(
+          this,
+          table: 'financial_decisions',
+          column: 'action_id',
+          definition: 'TEXT',
+        );
+        await _createFinancePlanningIndexes(this);
       }
     },
     beforeOpen: (details) async {

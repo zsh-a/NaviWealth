@@ -290,6 +290,78 @@ abstract class AppLocalizations {
   /// **'Monthly category caps'**
   String get planBudgetSectionSubtitle;
 
+  /// No description provided for @planStatusNeedsSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs setup'**
+  String get planStatusNeedsSetup;
+
+  /// No description provided for @planStatusNoPendingReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'No reviews due'**
+  String get planStatusNoPendingReviews;
+
+  /// No description provided for @planStatusPendingReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 review due} other{{count} reviews due}}'**
+  String planStatusPendingReviews(int count);
+
+  /// No description provided for @planStatusRebalanceBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'On target'**
+  String get planStatusRebalanceBalanced;
+
+  /// No description provided for @planStatusRebalanceAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% drift'**
+  String planStatusRebalanceAttention(String percent);
+
+  /// No description provided for @planStatusRebalanceActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution in progress'**
+  String get planStatusRebalanceActive;
+
+  /// No description provided for @planStatusBudgetCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 category cap} other{{count} category caps}}'**
+  String planStatusBudgetCount(int count);
+
+  /// No description provided for @planStatusDcaDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Contribution due'**
+  String get planStatusDcaDue;
+
+  /// No description provided for @planStatusDcaNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next {date}'**
+  String planStatusDcaNext(String date);
+
+  /// No description provided for @planStatusDcaPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'All plans paused'**
+  String get planStatusDcaPaused;
+
+  /// No description provided for @planStatusWheelOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 open position} other{{count} open positions}}'**
+  String planStatusWheelOpen(int count);
+
+  /// No description provided for @planStatusWheelCycles.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 tracked cycle} other{{count} tracked cycles}}'**
+  String planStatusWheelCycles(int count);
+
   /// Title shown on the /plan/budget page header
   ///
   /// In en, this message translates to:
@@ -355,6 +427,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Previous month'**
   String get planBudgetPreviousMonth;
+
+  /// No description provided for @planBudgetCopyPreviousAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy previous month'**
+  String get planBudgetCopyPreviousAction;
+
+  /// No description provided for @planBudgetCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied {count} budgets from the previous month'**
+  String planBudgetCopied(int count);
+
+  /// No description provided for @planBudgetCurrencyMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} budgets use another currency and are excluded from this summary.'**
+  String planBudgetCurrencyMismatch(int count);
 
   /// No description provided for @planBudgetNextMonth.
   ///
@@ -475,6 +565,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Record a sell-put or covered-call trade and the cycle will surface here.'**
   String get planWheelEmptyBody;
+
+  /// No description provided for @planWheelHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycle history'**
+  String get planWheelHistoryTitle;
+
+  /// No description provided for @planWheelStageBetween.
+  ///
+  /// In en, this message translates to:
+  /// **'Between cycles'**
+  String get planWheelStageBetween;
+
+  /// No description provided for @planWheelStageCashWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash waiting'**
+  String get planWheelStageCashWaiting;
+
+  /// No description provided for @planWheelStageShortPut.
+  ///
+  /// In en, this message translates to:
+  /// **'Short put (open)'**
+  String get planWheelStageShortPut;
+
+  /// No description provided for @planWheelStagePutExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Put expired'**
+  String get planWheelStagePutExpired;
+
+  /// No description provided for @planWheelStagePutAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Put assigned'**
+  String get planWheelStagePutAssigned;
+
+  /// No description provided for @planWheelStageSharesHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'Shares held'**
+  String get planWheelStageSharesHeld;
+
+  /// No description provided for @planWheelStageShortCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Short call (open)'**
+  String get planWheelStageShortCall;
+
+  /// No description provided for @planWheelStageCallExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Call expired'**
+  String get planWheelStageCallExpired;
+
+  /// No description provided for @planWheelStageCallCalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Called away'**
+  String get planWheelStageCallCalled;
 
   /// Holding detail tab title for upcoming corporate actions
   ///
@@ -2412,7 +2562,7 @@ abstract class AppLocalizations {
   /// No description provided for @dcaSimulatorSymbolHint.
   ///
   /// In en, this message translates to:
-  /// **'VOO or VOO, QQQ'**
+  /// **'VOO or VOO:60, QQQ:40'**
   String get dcaSimulatorSymbolHint;
 
   /// No description provided for @dcaSimulatorAmountField.
@@ -2508,8 +2658,74 @@ abstract class AppLocalizations {
   /// No description provided for @dcaSimulatorDraftAction.
   ///
   /// In en, this message translates to:
-  /// **'Draft next buys'**
+  /// **'Save recurring plan'**
   String get dcaSimulatorDraftAction;
+
+  /// No description provided for @dcaPlanSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring plans'**
+  String get dcaPlanSectionTitle;
+
+  /// No description provided for @dcaPlanEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Run a simulation, then save it as a recurring plan.'**
+  String get dcaPlanEmpty;
+
+  /// No description provided for @dcaPlanSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring investment plan saved'**
+  String get dcaPlanSaved;
+
+  /// No description provided for @dcaPlanActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get dcaPlanActive;
+
+  /// No description provided for @dcaPlanPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get dcaPlanPaused;
+
+  /// No description provided for @dcaPlanNextDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Next {date} · {amount} {currency}'**
+  String dcaPlanNextDue(String date, String amount, String currency);
+
+  /// No description provided for @dcaPlanExecuteNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Record contribution'**
+  String get dcaPlanExecuteNow;
+
+  /// No description provided for @dcaPlanPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get dcaPlanPause;
+
+  /// No description provided for @dcaPlanResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get dcaPlanResume;
+
+  /// No description provided for @dcaPlanDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete recurring plan?'**
+  String get dcaPlanDeleteTitle;
+
+  /// No description provided for @dcaPlanDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the schedule and its future reminders. Recorded trades are kept.'**
+  String get dcaPlanDeleteBody;
 
   /// No description provided for @dcaSimulatorFreshnessLive.
   ///
@@ -17721,6 +17937,18 @@ abstract class AppLocalizations {
   /// **'Edit trade journal entry'**
   String get incomePlannerJournalEditTitle;
 
+  /// No description provided for @incomePlannerJournalDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete trade journal entry?'**
+  String get incomePlannerJournalDeleteTitle;
+
+  /// No description provided for @incomePlannerJournalDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the entry from statistics, Wheel history, and its mirrored ledger postings.'**
+  String get incomePlannerJournalDeleteBody;
+
   /// Journal sheet field label for entry premium
   ///
   /// In en, this message translates to:
@@ -23779,6 +24007,18 @@ abstract class AppLocalizations {
   /// **'Choose'**
   String get lifeEventChooseScenario;
 
+  /// No description provided for @lifeEventOpenAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open follow-up'**
+  String get lifeEventOpenAction;
+
+  /// No description provided for @lifeEventAdjustPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust budget'**
+  String get lifeEventAdjustPlan;
+
   /// No description provided for @lifeEventDecisionSaved.
   ///
   /// In en, this message translates to:
@@ -24024,6 +24264,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reduce expected income by 30%'**
   String get moneyRunwayScenarioReducedIncome;
+
+  /// No description provided for @moneyRunwayCustomScenarioAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom stress test'**
+  String get moneyRunwayCustomScenarioAction;
+
+  /// No description provided for @moneyRunwayCustomScenarioTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom runway scenario'**
+  String get moneyRunwayCustomScenarioTitle;
+
+  /// No description provided for @moneyRunwayCustomPurchase.
+  ///
+  /// In en, this message translates to:
+  /// **'One-time expense ({currency})'**
+  String moneyRunwayCustomPurchase(String currency);
+
+  /// No description provided for @moneyRunwayCustomDelayDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Income delay (days)'**
+  String get moneyRunwayCustomDelayDays;
+
+  /// No description provided for @moneyRunwayCustomReductionPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Income reduction (%)'**
+  String get moneyRunwayCustomReductionPercent;
+
+  /// No description provided for @moneyRunwayCustomDurationDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduction duration (days)'**
+  String get moneyRunwayCustomDurationDays;
+
+  /// No description provided for @moneyRunwayCustomInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter non-negative values, a reduction from 0 to 100%, and at least one stress factor.'**
+  String get moneyRunwayCustomInvalid;
+
+  /// No description provided for @moneyRunwayCustomRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Run scenario'**
+  String get moneyRunwayCustomRun;
+
+  /// No description provided for @moneyRunwayCustomResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom minimum balance'**
+  String get moneyRunwayCustomResult;
+
+  /// No description provided for @moneyRunwayCustomReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear custom scenario'**
+  String get moneyRunwayCustomReset;
 
   /// No description provided for @moneyRunwayCoverageMonths.
   ///

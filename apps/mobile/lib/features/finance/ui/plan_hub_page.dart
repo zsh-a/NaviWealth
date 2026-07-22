@@ -11,6 +11,7 @@ import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../application/planning_hub_status.dart';
 import '../composition/finance_route_paths.dart';
 
 /// Plan hub — one decision story (FIRE) plus a short list of next steps.
@@ -41,10 +42,7 @@ class PlanHubPage extends ConsumerWidget {
             },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: shellTabContentPadding(
-                context,
-                top: AppSpacing.s8,
-              ),
+              padding: shellTabContentPadding(context, top: AppSpacing.s8),
               children: const [
                 _FireSummaryCard(),
                 SizedBox(height: AppSpacing.s20),
@@ -219,31 +217,44 @@ class _FireSummaryCard extends ConsumerWidget {
 }
 
 /// High-frequency planning steps as a compact 2-up tile row.
-class _PlanNextSteps extends StatelessWidget {
+class _PlanNextSteps extends ConsumerWidget {
   const _PlanNextSteps();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final status = ref.watch(planningHubStatusProvider);
     final steps = <_PlanTileSpec>[
       _PlanTileSpec(
         icon: FLucideIcons.calendarRange,
         title: l10n.moneyRunwayTitle,
+        subtitle: _runwayStatusLabel(l10n, status.runway),
         path: FinanceRoutes.planRunway,
       ),
       _PlanTileSpec(
         icon: FLucideIcons.waypoints,
         title: l10n.lifeEventScenariosTitle,
+        subtitle: status.pendingLifeEventReviews == null
+            ? null
+            : status.pendingLifeEventReviews == 0
+            ? l10n.planStatusNoPendingReviews
+            : l10n.planStatusPendingReviews(status.pendingLifeEventReviews!),
         path: FinanceRoutes.planLifeEvents,
       ),
       _PlanTileSpec(
         icon: FLucideIcons.scale,
         title: l10n.planRebalanceSectionTitle,
+        subtitle: _rebalanceStatusLabel(l10n, status),
         path: FinanceRoutes.planRebalance,
       ),
       _PlanTileSpec(
         icon: FLucideIcons.piggyBank,
         title: l10n.planBudgetSectionTitle,
+        subtitle: status.budgetCount == null
+            ? null
+            : status.budgetCount == 0
+            ? l10n.planStatusNeedsSetup
+            : l10n.planStatusBudgetCount(status.budgetCount!),
         path: FinanceRoutes.planBudget,
       ),
     ];
@@ -258,23 +269,25 @@ class _PlanNextSteps extends StatelessWidget {
   }
 }
 
-class _PlanMoreTools extends StatefulWidget {
+class _PlanMoreTools extends ConsumerStatefulWidget {
   const _PlanMoreTools();
 
   @override
-  State<_PlanMoreTools> createState() => _PlanMoreToolsState();
+  ConsumerState<_PlanMoreTools> createState() => _PlanMoreToolsState();
 }
 
-class _PlanMoreToolsState extends State<_PlanMoreTools> {
+class _PlanMoreToolsState extends ConsumerState<_PlanMoreTools> {
   bool _open = false;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final status = ref.watch(planningHubStatusProvider);
     final tools = <_PlanTileSpec>[
       _PlanTileSpec(
         icon: FLucideIcons.calendarClock,
         title: l10n.planDcaSectionTitle,
+        subtitle: _dcaStatusLabel(context, l10n, status),
         path: FinanceRoutes.planDca,
       ),
       if (!kIsWeb)
@@ -286,6 +299,13 @@ class _PlanMoreToolsState extends State<_PlanMoreTools> {
       _PlanTileSpec(
         icon: FLucideIcons.refreshCw,
         title: l10n.planWheelSectionTitle,
+        subtitle: status.wheelCycleCount == null
+            ? null
+            : status.wheelCycleCount == 0
+            ? l10n.planStatusNeedsSetup
+            : status.wheelOpenPositionCount! > 0
+            ? l10n.planStatusWheelOpen(status.wheelOpenPositionCount!)
+            : l10n.planStatusWheelCycles(status.wheelCycleCount!),
         path: FinanceRoutes.planWheel,
       ),
     ];
@@ -366,11 +386,25 @@ class _PlanTile extends StatelessWidget {
           Icon(spec.icon, size: AppIconSizes.md, color: colors.primary),
           const SizedBox(width: AppSpacing.s10),
           Expanded(
-            child: Text(
-              spec.title,
-              style: context.labelStyle,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  spec.title,
+                  style: context.labelStyle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (spec.subtitle != null) ...[
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(
+                    spec.subtitle!,
+                    style: context.captionStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
             ),
           ),
         ],
@@ -384,9 +418,51 @@ class _PlanTileSpec {
     required this.icon,
     required this.title,
     required this.path,
+    this.subtitle,
   });
 
   final IconData icon;
   final String title;
   final String path;
+  final String? subtitle;
+}
+
+String? _runwayStatusLabel(
+  AppLocalizations l10n,
+  PlanningRunwayStatus? status,
+) => switch (status) {
+  null => null,
+  PlanningRunwayStatus.needsData => l10n.planStatusNeedsSetup,
+  PlanningRunwayStatus.healthy => l10n.moneyRunwayStatusHealthy,
+  PlanningRunwayStatus.watch => l10n.moneyRunwayStatusWatch,
+  PlanningRunwayStatus.shortfall => l10n.moneyRunwayStatusShortfall,
+};
+
+String? _rebalanceStatusLabel(
+  AppLocalizations l10n,
+  PlanningHubStatus status,
+) => switch (status.rebalance) {
+  null => null,
+  PlanningRebalanceStatus.needsData => l10n.planStatusNeedsSetup,
+  PlanningRebalanceStatus.balanced => l10n.planStatusRebalanceBalanced,
+  PlanningRebalanceStatus.attention => l10n.planStatusRebalanceAttention(
+    ((status.rebalanceDriftPct ?? 0) * 100).toStringAsFixed(1),
+  ),
+  PlanningRebalanceStatus.active => l10n.planStatusRebalanceActive,
+};
+
+String? _dcaStatusLabel(
+  BuildContext context,
+  AppLocalizations l10n,
+  PlanningHubStatus status,
+) {
+  if (status.dcaPlanCount == null) return null;
+  if (status.dcaPlanCount == 0) return l10n.planStatusNeedsSetup;
+  final nextDue = status.dcaNextDueAt;
+  if (nextDue == null) return l10n.planStatusDcaPaused;
+  if (status.dcaDue) return l10n.planStatusDcaDue;
+  final date = MaterialLocalizations.of(
+    context,
+  ).formatShortDate(nextDue.toLocal());
+  return l10n.planStatusDcaNext(date);
 }

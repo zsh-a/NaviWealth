@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 51', () {
-      expect(db.schemaVersion, 51);
+    test('is 52', () {
+      expect(db.schemaVersion, 52);
     });
   });
 
@@ -44,6 +44,7 @@ void main() {
   group('Finance planning tables exist', () {
     for (final table in const [
       'financial_decisions',
+      'dca_plans',
       'financial_signals',
       'financial_monthly_closes',
       'financial_reconciliations',
