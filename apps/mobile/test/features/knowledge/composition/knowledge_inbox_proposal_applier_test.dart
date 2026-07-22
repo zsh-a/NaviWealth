@@ -49,6 +49,22 @@ void main() {
     ),
   );
 
+  KnowledgeDecision decision(String id) => KnowledgeDecision(
+    id: id,
+    question: 'Existing decision',
+    options: <DecisionOption>[
+      DecisionOption(label: 'A'),
+      DecisionOption(label: 'B'),
+    ],
+    selectedLabel: 'A',
+    rationaleMd: '',
+    principleIds: const <String>[],
+    assumptionIds: const <String>[],
+    status: DecisionStatus.active,
+    decidedAt: created,
+    sync: note().sync,
+  );
+
   test('classification promotes Note to a first-class Decision', () async {
     await repo.upsertNote(note());
     final proposal = InboxProposal(
@@ -96,6 +112,7 @@ void main() {
     'accept applies tags and decision links without changing kind',
     () async {
       await repo.upsertNote(note());
+      await repo.upsertDecision(decision('d1'));
 
       for (final proposal in <InboxProposal>[
         InboxProposal(
@@ -120,14 +137,59 @@ void main() {
       }
 
       final updated = await repo.findNote(ownerUserId: _owner, id: 'n1');
-      expect(
-        updated!.tags,
-        containsAll(<String>['architecture', 'flutter', 'decision:d1']),
-      );
+      expect(updated!.tags, containsAll(<String>['architecture', 'flutter']));
+      expect(updated.tags, isNot(contains('decision:d1')));
       expect(updated.projectTag, 'mobile');
       expect(updated.isPromoted, isFalse);
+      final relations = await repo.listRelationsFrom(
+        ownerUserId: _owner,
+        fromKind: KnowledgeEntryKind.note.name,
+        fromId: 'n1',
+      );
+      expect(relations, hasLength(1));
+      expect(relations.single.toKind, KnowledgeEntryKind.decision.name);
+      expect(relations.single.toId, 'd1');
     },
   );
+
+  test('classification supersedes stale tag suggestions atomically', () async {
+    await repo.upsertNote(note());
+    final triage = InboxTriageRepository(db: db);
+    final classification = InboxProposal(
+      kind: InboxProposalKind.classification,
+      summaryZh: 'classification',
+      payload: const <String, Object?>{'kind': 'decision'},
+      status: InboxProposalStatus.pending,
+    );
+    await triage.upsert(
+      InboxTriageRecord(
+        noteId: 'n1',
+        ownerUserId: _owner,
+        lastTriagedAt: created,
+        proposals: <InboxProposal>[
+          classification,
+          InboxProposal(
+            kind: InboxProposalKind.tags,
+            summaryZh: 'tags',
+            payload: const <String, Object?>{
+              'tags': <String>['stale'],
+            },
+            status: InboxProposalStatus.pending,
+          ),
+        ],
+      ),
+    );
+
+    await applier.acceptAndResolve(
+      note: note(),
+      proposal: classification,
+      triage: triage,
+    );
+
+    final resolved = await triage.findForNote('n1');
+    expect(resolved!.proposals[0].status, InboxProposalStatus.accepted);
+    expect(resolved.proposals[1].status, InboxProposalStatus.superseded);
+  });
 
   test('invalid payload fails instead of pretending it was applied', () async {
     await repo.upsertNote(note());

@@ -229,15 +229,11 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
       final applier = await ref.read(
         knowledgeInboxProposalApplierProvider.future,
       );
-      final promoted = await applier.accept(
+      final triage = await ref.read(inboxTriageRepositoryProvider.future);
+      final promoted = await applier.acceptAndResolve(
         note: widget.note,
         proposal: widget.proposal,
-      );
-      final triage = await ref.read(inboxTriageRepositoryProvider.future);
-      await triage.resolve(
-        noteId: widget.note.id,
-        kind: widget.proposal.kind,
-        status: InboxProposalStatus.accepted,
+        triage: triage,
       );
       ref.read(aiSuggestionsRefreshProvider.notifier).state++;
       if (mounted) {

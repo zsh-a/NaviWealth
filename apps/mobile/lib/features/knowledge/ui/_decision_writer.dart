@@ -40,21 +40,55 @@ Future<void> showNewDecisionSheet(BuildContext context, WidgetRef _) {
   );
 }
 
+Future<bool?> showEditDecisionSheet(
+  BuildContext context,
+  WidgetRef _,
+  KnowledgeDecision decision,
+) {
+  return showAppFormSheet<bool>(
+    context: context,
+    builder: (_) => _DecisionWriter(initial: decision),
+  );
+}
+
 class _DecisionWriter extends ConsumerStatefulWidget {
-  const _DecisionWriter();
+  const _DecisionWriter({this.initial});
+
+  final KnowledgeDecision? initial;
   @override
   ConsumerState<_DecisionWriter> createState() => _DecisionWriterState();
 }
 
 class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
-  final _questionCtrl = TextEditingController();
-  final _rationaleCtrl = TextEditingController();
-  final _expectedCtrl = TextEditingController();
-  final List<_OptionDraft> _options = [_OptionDraft(), _OptionDraft()];
-  String? _selectedLabel;
-  final Set<String> _principleIds = <String>{};
-  final Set<String> _assumptionIds = <String>{};
-  DateTime? _reviewDate;
+  late final _questionCtrl = TextEditingController(
+    text: widget.initial?.question ?? '',
+  );
+  late final _rationaleCtrl = TextEditingController(
+    text: widget.initial?.rationaleMd ?? '',
+  );
+  late final _expectedCtrl = TextEditingController(
+    text: widget.initial?.expectedOutcome ?? '',
+  );
+  late final List<_OptionDraft> _options =
+      widget.initial?.options.isNotEmpty == true
+      ? <_OptionDraft>[
+          for (final option in widget.initial!.options)
+            _OptionDraft(
+              label: option.label,
+              rationale: option.rationale ?? '',
+            ),
+        ]
+      : <_OptionDraft>[_OptionDraft(), _OptionDraft()];
+  late String? _selectedLabel = widget.initial?.selectedLabel.isNotEmpty == true
+      ? widget.initial!.selectedLabel
+      : null;
+  late final Set<String> _principleIds = <String>{
+    ...?widget.initial?.principleIds,
+  };
+  late final Set<String> _assumptionIds = <String>{
+    ...?widget.initial?.assumptionIds,
+  };
+  late DateTime? _reviewDate = widget.initial?.reviewDate;
   bool _saving = false;
 
   @override
@@ -116,13 +150,14 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
       // (§3 + §9 context_snapshot_json). Non-blocking — null on any
       // failure / no events, the column stays NULL and the detail page
       // skips the section.
-      final snapper = ref.read(decisionContextSnapperProvider);
-      final snapshot = await snapper.snapshot(
-        ownerUserId: stamp.ownerUserId,
-        now: stamp.now,
-      );
+      final initial = widget.initial;
+      final snapshot =
+          initial?.contextSnapshot ??
+          await ref
+              .read(decisionContextSnapperProvider)
+              .snapshot(ownerUserId: stamp.ownerUserId, now: stamp.now);
       final decision = KnowledgeDecision(
-        id: kKnowledgeUuid.v4(),
+        id: initial?.id ?? kKnowledgeUuid.v4(),
         question: _questionCtrl.text.trim(),
         options: activeOptions,
         selectedLabel: selected,
@@ -133,9 +168,12 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
             ? null
             : _expectedCtrl.text.trim(),
         reviewDate: _reviewDate?.toUtc(),
-        status: DecisionStatus.active,
+        actualOutcomeMd: initial?.actualOutcomeMd,
+        status: initial?.status ?? DecisionStatus.active,
+        supersededByDecisionId: initial?.supersededByDecisionId,
         contextSnapshot: snapshot,
-        decidedAt: stamp.now,
+        decidedAt: initial?.decidedAt ?? stamp.now,
+        mergedIntoId: initial?.mergedIntoId,
         sync: SyncMeta(
           ownerUserId: stamp.ownerUserId,
           updatedAt: stamp.now,
@@ -144,7 +182,7 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
         ),
       );
       await repo.upsertDecision(decision);
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) Navigator.of(context).pop(initial == null ? null : true);
     } finally {
       if (mounted) setState(() => _saving = false);
     }

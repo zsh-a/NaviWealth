@@ -8,6 +8,7 @@
 /// [financeProposalApplierProvider] in `bootstrap.dart`.
 library;
 
+import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/features/finance/application/finance_core_proposal_applier.dart';
 import 'package:naviwealth/features/finance/application/finance_trade_proposal_applier.dart';
@@ -107,7 +108,19 @@ class FinanceProposalApplier implements ProposalApplier {
       case 'accounts':
         await accountRepo.softDelete(id);
       case 'assets':
-        await manualAssetRepo.softDelete(id, reason: 'undo');
+        final beforeValue = state.undoData?['before_value'] as String?;
+        if (beforeValue == null) {
+          throw ProposalApplyException('asset valuation has no undo snapshot');
+        }
+        await manualAssetRepo.recordValuationAdjust(
+          assetId: id,
+          newValuation: Decimal.parse(beforeValue),
+          reason: 'undo AI valuation update',
+        );
+      case 'fire_plans':
+        await fireApplier.undoPlanUpdate(state);
+      case 'options_strategy_profile':
+        await optionsApplier.undoProfileUpdate(state);
       case 'options_trade_journal':
         await optionsApplier.undoJournalEntry(id);
       default:
@@ -136,6 +149,7 @@ class FinanceProposalApplier implements ProposalApplier {
         'fire_plan_update' => await fireApplier.applyPlanUpdate(plan, at),
         'options_profile_update' => await optionsApplier.applyProfileUpdate(
           plan,
+          at,
         ),
         'options_journal_entry' => await optionsApplier.applyJournalEntry(
           plan,

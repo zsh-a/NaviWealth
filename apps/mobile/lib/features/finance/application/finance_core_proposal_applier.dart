@@ -195,6 +195,7 @@ class FinanceCoreProposalApplier {
         'Asset $assetId does not exist or is not a manual-valuation type',
       );
     }
+    final beforeValue = await manualAssetRepo.latestValuation(assetId);
     await manualAssetRepo.recordValuationAdjust(
       assetId: assetId,
       newValuation: newValue,
@@ -203,7 +204,10 @@ class FinanceCoreProposalApplier {
       status: ProposalApplyStatus.applied,
       appliedEntityId: assetId,
       appliedTable: 'assets',
-      appliedAt: at,
+      appliedAt: beforeValue == null ? null : at,
+      undoData: beforeValue == null
+          ? null
+          : <String, Object?>{'before_value': beforeValue.toString()},
       shortLabel: 'Updated ${plan.summaryZh}',
     );
   }

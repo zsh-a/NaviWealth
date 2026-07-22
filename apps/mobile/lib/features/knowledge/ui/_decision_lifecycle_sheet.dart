@@ -103,6 +103,15 @@ class _DecisionLifecycleSheetState
   // chain link dangles. Every other status saves freely.
   bool get _canSave {
     if (_saving) return false;
+    if (_status != DecisionStatus.draft) {
+      final labels = widget.decision.options
+          .map((option) => option.label.trim())
+          .where((label) => label.isNotEmpty)
+          .toSet();
+      if (labels.isEmpty || !labels.contains(widget.decision.selectedLabel)) {
+        return false;
+      }
+    }
     if (_status == DecisionStatus.superseded && _supersededBy == null) {
       return false;
     }

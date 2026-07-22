@@ -142,33 +142,47 @@ class KnowledgeProposalApplier implements ProposalApplier {
         'note $noteId 已升级为 ${existing!.promotedToKind}',
       );
     }
+    final sourceRelations = existing == null
+        ? const <KnowledgeRelation>[]
+        : await repo.listRelationsFrom(
+            ownerUserId: ownerUserId,
+            fromKind: KnowledgeEntryKind.note.name,
+            fromId: existing.id,
+          );
 
     if (detected == CaptureKind.routine) {
-      final state = await routineApplier.applyRoutine(plan);
-      if (existing != null) {
-        final meta = await stamp();
-        await repo.upsertNote(
-          KnowledgeNote(
-            id: existing.id,
-            title: existing.title,
-            bodyMd: existing.bodyMd,
-            sourceUrl: existing.sourceUrl,
-            tags: existing.tags,
-            projectTag: existing.projectTag,
-            createdAt: existing.createdAt,
-            mergedIntoId: existing.mergedIntoId,
-            sync: meta.copyWith(deletedAt: meta.updatedAt),
-          ),
+      if (existing == null) return routineApplier.applyRoutine(plan);
+      final intervalDays = plan.num_('interval_days')?.toInt() ?? 0;
+      final statement = plan.get('statement');
+      if (statement == null || intervalDays <= 0) {
+        throw ProposalApplyException(
+          'capture_upgrade routine 缺少 statement / interval_days',
         );
       }
-      return existing == null
-          ? state
-          : state.copyWith(
-              undoData: mergeKnowledgeProposalUndoData(
-                state.undoData,
-                restore: [snapshotKnowledgeNote(existing)],
-              ),
-            );
+      final promoted = await promotionService.promoteToRoutine(
+        existing,
+        intervalDays: intervalDays,
+        statement: statement,
+        scope: plan.get('scope') ?? '*',
+        nextDueAt: DateTime.tryParse(plan.get('next_due_at') ?? '')?.toUtc(),
+      );
+      return ProposalApplyState(
+        status: ProposalApplyStatus.applied,
+        appliedEntityId: promoted.id,
+        appliedTable: promoted.kind.tableName,
+        appliedAt: _now(),
+        undoData: knowledgeProposalUndoData(
+          delete: [
+            knowledgeProposalDeleteRow(promoted.kind.tableName, promoted.id),
+            ..._redirectedRelationDeletes(sourceRelations, promoted),
+          ],
+          restore: [
+            snapshotKnowledgeNote(existing),
+            ...sourceRelations.map(snapshotKnowledgeRelation),
+          ],
+        ),
+        shortLabel: '已升级为 routine：${_short(statement)}',
+      );
     }
 
     final meta = await stamp();
@@ -199,12 +213,16 @@ class KnowledgeProposalApplier implements ProposalApplier {
         undoData: knowledgeProposalUndoData(
           delete: <Map<String, Object?>>[
             knowledgeProposalDeleteRow(promoted.kind.tableName, promoted.id),
+            ..._redirectedRelationDeletes(sourceRelations, promoted),
             if (existing == null)
               knowledgeProposalDeleteRow('knowledge_notes', note.id),
           ],
           restore: existing == null
               ? const <Map<String, Object?>>[]
-              : <Map<String, Object?>>[snapshotKnowledgeNote(existing)],
+              : <Map<String, Object?>>[
+                  snapshotKnowledgeNote(existing),
+                  ...sourceRelations.map(snapshotKnowledgeRelation),
+                ],
         ),
         shortLabel: '已升级为 ${detected.wire}：${_short(note.title)}',
       );
@@ -224,6 +242,27 @@ class KnowledgeProposalApplier implements ProposalApplier {
             ),
       shortLabel:
           '已更新 Note：${_short(note.title.isEmpty ? note.bodyMd : note.title)}',
+    );
+  }
+}
+
+Iterable<Map<String, Object?>> _redirectedRelationDeletes(
+  List<KnowledgeRelation> relations,
+  KnowledgePromotionResult promoted,
+) sync* {
+  for (final relation in relations) {
+    if (relation.toKind == promoted.kind.name && relation.toId == promoted.id) {
+      continue;
+    }
+    yield knowledgeProposalDeleteRow(
+      'knowledge_relations',
+      knowledgeRelationId(
+        fromKind: promoted.kind.name,
+        fromId: promoted.id,
+        relation: relation.relation,
+        toKind: relation.toKind,
+        toId: relation.toId,
+      ),
     );
   }
 }

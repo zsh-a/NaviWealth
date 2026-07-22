@@ -13,6 +13,7 @@ import 'package:naviwealth/features/finance/data/repositories/price_repository.d
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/invariants.dart';
 import 'package:naviwealth/features/finance/fire/application/fire_proposal_applier.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_plan.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_plan.dart';
@@ -101,6 +102,7 @@ void main() {
         planWriter: (after) async {
           firePlanAfter = after;
         },
+        planReader: FirePlan.unset,
       ),
       currentUserId: () async => 'u-test',
     );
@@ -246,6 +248,13 @@ void main() {
       await manualAssetRepo.cashBalanceFromPostings(asset.id),
       Decimal.parse('250'),
     );
+
+    await applier.undo(state);
+    expect(await manualAssetRepo.findById(asset.id), isNotNull);
+    expect(
+      await manualAssetRepo.cashBalanceFromPostings(asset.id),
+      Decimal.parse('100'),
+    );
   });
 
   test(
@@ -317,6 +326,9 @@ void main() {
     );
     expect(firePlanState.appliedTable, 'fire_plans');
     expect(firePlanAfter, containsPair('target_net_worth', '1000000'));
+
+    await applier.undo(firePlanState);
+    expect(firePlanAfter, containsPair('target_net_worth', '0'));
   });
 
   test('options_profile_update updates Income Planner profile', () async {
@@ -339,7 +351,7 @@ void main() {
 
     expect(state.status, ProposalApplyStatus.applied);
     expect(state.appliedTable, 'options_strategy_profile');
-    expect(state.appliedAt, isNull);
+    expect(state.appliedAt, isNotNull);
 
     final saved = await profileRepo.get('u-test');
     expect(saved!.mode, OptionsStrategyMode.aggressive);
@@ -348,6 +360,15 @@ void main() {
     expect(saved.minAnnualizedYield, Decimal.parse('0.18'));
     expect(saved.avoidEarnings, isFalse);
     expect(saved.onlyOnApprovedUnderlyings, isFalse);
+
+    await applier.undo(state);
+    final restored = await profileRepo.get('u-test');
+    expect(restored!.mode, OptionsStrategyMode.balanced);
+    expect(restored.minDte, 21);
+    expect(restored.maxDte, 45);
+    expect(restored.minAnnualizedYield, Decimal.parse('0.12'));
+    expect(restored.avoidEarnings, isTrue);
+    expect(restored.onlyOnApprovedUnderlyings, isTrue);
   });
 
   test('options_journal_entry creates journal row and can undo it', () async {

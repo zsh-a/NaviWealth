@@ -156,6 +156,10 @@ kSyncTableRegistrations = <SyncTableRegistration>[
     domainPrefix: kKnowledgeDomainPrefix,
   ),
   SyncTableRegistration(
+    'knowledge_relations',
+    domainPrefix: kKnowledgeDomainPrefix,
+  ),
+  SyncTableRegistration(
     'execution_projects',
     domainPrefix: kExecutionDomainPrefix,
   ),

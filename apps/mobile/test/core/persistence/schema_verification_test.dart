@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 50', () {
-      expect(db.schemaVersion, 50);
+    test('is 51', () {
+      expect(db.schemaVersion, 51);
     });
   });
 
@@ -236,6 +236,7 @@ void main() {
       'knowledge_concepts',
       'knowledge_experiments',
       'knowledge_routines',
+      'knowledge_relations',
     ]) {
       test('$table has sync columns', () async {
         final result = await db.customSelect('PRAGMA table_info($table)').get();
@@ -259,6 +260,23 @@ void main() {
           'promoted_to_kind',
           'promoted_to_id',
           'promoted_at',
+        ]),
+      );
+    });
+
+    test('knowledge relations persist typed endpoints', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(knowledge_relations)')
+          .get();
+      final columns = result.map((r) => r.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll(<String>[
+          'from_kind',
+          'from_id',
+          'relation',
+          'to_kind',
+          'to_id',
         ]),
       );
     });

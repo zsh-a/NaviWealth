@@ -44,7 +44,8 @@ enum InboxProposalKind {
 enum InboxProposalStatus {
   pending,
   accepted,
-  dismissed;
+  dismissed,
+  superseded;
 
   String get wire => name;
 
@@ -257,6 +258,36 @@ class InboxTriageRepository {
         .map(
           (p) =>
               p.kind == kind ? p.copyWith(status: status, resolvedAt: now) : p,
+        )
+        .toList(growable: false);
+    await upsert(
+      InboxTriageRecord(
+        noteId: existing.noteId,
+        ownerUserId: existing.ownerUserId,
+        lastTriagedAt: existing.lastTriagedAt,
+        proposals: updated,
+      ),
+    );
+  }
+
+  Future<void> supersedePending({
+    required String noteId,
+    required Set<InboxProposalKind> kinds,
+    DateTime? at,
+  }) async {
+    final existing = await findForNote(noteId);
+    if (existing == null || kinds.isEmpty) return;
+    final now = (at ?? DateTime.now().toUtc()).toUtc();
+    final updated = existing.proposals
+        .map(
+          (proposal) =>
+              proposal.status == InboxProposalStatus.pending &&
+                  kinds.contains(proposal.kind)
+              ? proposal.copyWith(
+                  status: InboxProposalStatus.superseded,
+                  resolvedAt: now,
+                )
+              : proposal,
         )
         .toList(growable: false);
     await upsert(

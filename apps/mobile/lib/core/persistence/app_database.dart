@@ -112,6 +112,7 @@ final class AppDatabaseTransactionScope {
     KnowledgeConcepts,
     KnowledgeExperiments,
     KnowledgeRoutines,
+    KnowledgeRelations,
     // ExecutionOS Action Kernel: projects, personal todos, commitments,
     // progress.
     ExecutionProjects,
@@ -145,7 +146,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 50;
+  int get schemaVersion => 51;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -786,6 +787,14 @@ class AppDatabase extends _$AppDatabase {
           column: 'promoted_at',
           definition: 'INTEGER',
         );
+      }
+      if (from < 51) {
+        await m.createTable(knowledgeRelations);
+        for (final statement in knowledgeIndexStmts.where(
+          (statement) => statement.contains('knowledge_relations'),
+        )) {
+          await customStatement(statement);
+        }
       }
     },
     beforeOpen: (details) async {

@@ -15,6 +15,10 @@ class KnowledgeProposalUndoRunner {
       final id = row['id'] as String?;
       if (table == null || id == null) continue;
       final meta = await stamp();
+      if (table == 'knowledge_relations') {
+        await repo.deleteRelation(id: id, sync: meta);
+        continue;
+      }
       await repo.deleteEntry(
         kind: knowledgeEntryKindForTable(table),
         id: id,
@@ -56,6 +60,10 @@ class KnowledgeProposalUndoRunner {
         );
       case 'knowledge_routines':
         await repo.upsertRoutine(knowledgeRoutineFromSnapshot(snapshot, meta));
+      case 'knowledge_relations':
+        await repo.upsertRelation(
+          knowledgeRelationFromSnapshot(snapshot, meta),
+        );
       default:
         throw ProposalApplyException('unknown knowledge undo table: $table');
     }
@@ -188,6 +196,17 @@ Map<String, Object?> snapshotKnowledgeExperiment(KnowledgeExperiment e) =>
       'merged_into_id': e.mergedIntoId,
     };
 
+Map<String, Object?> snapshotKnowledgeRelation(KnowledgeRelation relation) =>
+    <String, Object?>{
+      ..._snapshotBase('knowledge_relations', relation.id, relation.sync),
+      'from_kind': relation.fromKind,
+      'from_id': relation.fromId,
+      'relation': relation.relation.wire,
+      'to_kind': relation.toKind,
+      'to_id': relation.toId,
+      'created_at': relation.createdAt.toUtc().toIso8601String(),
+    };
+
 Map<String, Object?> _snapshotBase(String table, String id, SyncMeta sync) =>
     <String, Object?>{
       'table': table,
@@ -317,6 +336,20 @@ KnowledgeRoutine knowledgeRoutineFromSnapshot(
   nextDueAt: _date(s['next_due_at']),
   scope: _string(s, 'scope'),
   status: RoutineStatus.parse(_string(s, 'status')),
+  createdAt: _date(s['created_at']),
+  sync: sync,
+);
+
+KnowledgeRelation knowledgeRelationFromSnapshot(
+  Map<String, Object?> s,
+  SyncMeta sync,
+) => KnowledgeRelation(
+  id: _string(s, 'id'),
+  fromKind: _string(s, 'from_kind'),
+  fromId: _string(s, 'from_id'),
+  relation: KnowledgeRelationType.parse(_string(s, 'relation')),
+  toKind: _string(s, 'to_kind'),
+  toId: _string(s, 'to_id'),
   createdAt: _date(s['created_at']),
   sync: sync,
 );

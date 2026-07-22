@@ -60,6 +60,7 @@ void main() {
       CaptureKind.assumption: KnowledgeEntryKind.assumption,
       CaptureKind.concept: KnowledgeEntryKind.concept,
       CaptureKind.experiment: KnowledgeEntryKind.experiment,
+      CaptureKind.routine: KnowledgeEntryKind.routine,
     };
 
     for (final entry in cases.entries) {
@@ -95,6 +96,51 @@ void main() {
     expect(second.id, first.id);
     expect(() => service.promoteToConcept(source), throwsStateError);
   });
+
+  test(
+    'promotion redirects existing Note relations to the typed object',
+    () async {
+      final source = note('linked');
+      await repository.upsertNote(source);
+      final relationSync = await service.stamp();
+      await repository.upsertRelation(
+        KnowledgeRelation(
+          id: knowledgeRelationId(
+            fromKind: KnowledgeEntryKind.note.name,
+            fromId: source.id,
+            relation: KnowledgeRelationType.relatedTo,
+            toKind: KnowledgeEntryKind.decision.name,
+            toId: 'decision-1',
+          ),
+          fromKind: KnowledgeEntryKind.note.name,
+          fromId: source.id,
+          relation: KnowledgeRelationType.relatedTo,
+          toKind: KnowledgeEntryKind.decision.name,
+          toId: 'decision-1',
+          createdAt: relationSync.updatedAt,
+          sync: relationSync,
+        ),
+      );
+
+      final promoted = await service.promoteToConcept(source);
+
+      expect(
+        await repository.listRelationsFrom(
+          ownerUserId: owner,
+          fromKind: KnowledgeEntryKind.note.name,
+          fromId: source.id,
+        ),
+        isEmpty,
+      );
+      final redirected = await repository.listRelationsFrom(
+        ownerUserId: owner,
+        fromKind: KnowledgeEntryKind.concept.name,
+        fromId: promoted.id,
+      );
+      expect(redirected, hasLength(1));
+      expect(redirected.single.toId, 'decision-1');
+    },
+  );
 }
 
 Future<void> _expectTypedObject(
@@ -115,7 +161,9 @@ Future<void> _expectTypedObject(
     KnowledgeEntryKind.experiment =>
       await repository.findExperiment(ownerUserId: owner, id: result.id) !=
           null,
-    KnowledgeEntryKind.note || KnowledgeEntryKind.routine => false,
+    KnowledgeEntryKind.routine =>
+      await repository.findRoutine(ownerUserId: owner, id: result.id) != null,
+    KnowledgeEntryKind.note => false,
   };
   expect(exists, isTrue);
 }

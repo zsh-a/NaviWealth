@@ -3,8 +3,7 @@
 ///
 /// Suggests existing Decision(s) that the inbox Note should be linked
 /// to (e.g. "this looks like supporting evidence for your covered-call
-/// decision"). The Review tab accept path applies the link as a tag
-/// of the form `decision:<id>` so we don't need a new schema column.
+/// decision"). The Review tab accept path writes typed relationship rows.
 library;
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
@@ -25,7 +24,7 @@ class QueueLinkToDecisionTool implements DeviceTool {
       '把某条 Inbox Note 关联到一条或多条已有 Decision。'
       '**不会**直接写关联(§4 反目标 + §7 InboxTriageAgent 工程约束)— 返回 proposal envelope 并写入 '
       'knowledge_inbox_triage 给 Review tab "AI 建议" 卡片渲染。'
-      '用户 ✓ 时在 note.tags 中添加 "decision:<id>" 标签(轻量软链,不改 schema);✗ 时下次不再为该 note 提议关联。';
+      '用户 ✓ 时写入可查询、可同步的 Knowledge 关系;✗ 时下次不再为该 note 提议关联。';
 
   @override
   Map<String, Object?> get inputSchema => <String, Object?>{

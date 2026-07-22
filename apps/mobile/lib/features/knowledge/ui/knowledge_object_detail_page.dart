@@ -69,6 +69,7 @@ class _KnowledgeObjectDetailPageState
   KnowledgeAssumption? _targetAssumption;
   List<KnowledgeNote> _evidenceNotes = const <KnowledgeNote>[];
   List<KnowledgeDecision> _referencingDecisions = const <KnowledgeDecision>[];
+  List<KnowledgeDecision> _linkedDecisions = const <KnowledgeDecision>[];
   List<KnowledgeExperiment> _targetingExperiments =
       const <KnowledgeExperiment>[];
   bool _loading = true;
@@ -96,6 +97,12 @@ class _KnowledgeObjectDetailPageState
       final ownerUserId = await ref.read(knowledgeOwnerUserIdProvider.future);
       final obj = await _fetch(repo, ownerUserId, kind, widget.id);
       final related = await _fetchRelated(repo, obj);
+      final linkedDecisions = await _fetchLinkedDecisions(
+        repo,
+        ownerUserId,
+        kind,
+        widget.id,
+      );
       if (mounted) {
         setState(() {
           _object = obj;
@@ -103,6 +110,12 @@ class _KnowledgeObjectDetailPageState
           _targetAssumption = related.targetAssumption;
           _evidenceNotes = related.evidenceNotes;
           _referencingDecisions = related.referencingDecisions;
+          final referencedIds = related.referencingDecisions
+              .map((decision) => decision.id)
+              .toSet();
+          _linkedDecisions = linkedDecisions
+              .where((decision) => !referencedIds.contains(decision.id))
+              .toList(growable: false);
           _targetingExperiments = related.targetingExperiments;
           _loading = false;
         });
@@ -115,6 +128,29 @@ class _KnowledgeObjectDetailPageState
         });
       }
     }
+  }
+
+  Future<List<KnowledgeDecision>> _fetchLinkedDecisions(
+    KnowledgeRepository repo,
+    String ownerUserId,
+    KnowledgeObjectKind kind,
+    String id,
+  ) async {
+    final relations = await repo.listRelationsFrom(
+      ownerUserId: ownerUserId,
+      fromKind: kind.name,
+      fromId: id,
+    );
+    final decisions = <KnowledgeDecision>[];
+    for (final relation in relations) {
+      if (relation.toKind != KnowledgeEntryKind.decision.name) continue;
+      final decision = await repo.findDecision(
+        ownerUserId: ownerUserId,
+        id: relation.toId,
+      );
+      if (decision != null) decisions.add(decision);
+    }
+    return decisions;
   }
 
   Future<Object?> _fetch(
@@ -326,9 +362,16 @@ class _KnowledgeObjectDetailPageState
       final KnowledgeRoutine r => _routineSections(context, r),
       _ => const <Widget>[],
     };
+    final allSections = <Widget>[...children];
+    if (_linkedDecisions.isNotEmpty) {
+      allSections.addAll(<Widget>[
+        const SizedBox(height: AppSpacing.s12),
+        _DecisionLinksSection(decisions: _linkedDecisions),
+      ]);
+    }
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s16),
-      children: children,
+      children: allSections,
     );
   }
 }

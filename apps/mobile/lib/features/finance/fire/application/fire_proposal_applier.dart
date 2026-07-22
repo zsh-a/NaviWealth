@@ -9,9 +9,13 @@ import 'package:naviwealth/features/finance/fire/domain/fire_plan.dart';
 
 /// FIRE proposal writer owned by the FIRE slice.
 class FireProposalApplier {
-  const FireProposalApplier({required this.planWriter});
+  const FireProposalApplier({
+    required this.planWriter,
+    required this.planReader,
+  });
 
   final Future<void> Function(Map<String, Object?> after) planWriter;
+  final FirePlan Function() planReader;
 
   Future<ProposalApplyState> applyPlanUpdate(
     ReadyProposalPlan plan,
@@ -23,22 +27,43 @@ class FireProposalApplier {
         'fire_plan_update payload missing `after` field',
       );
     }
+    final before = _firePlanPayload(planReader());
     await planWriter(Map<String, Object?>.from(after));
     return ProposalApplyState(
       status: ProposalApplyStatus.applied,
       appliedEntityId: 'default',
       appliedTable: 'fire_plans',
       appliedAt: at,
+      undoData: <String, Object?>{'before': before},
       shortLabel: 'Updated ${plan.summaryZh}',
     );
+  }
+
+  Future<void> undoPlanUpdate(ProposalApplyState state) async {
+    final before = state.undoData?['before'];
+    if (before is! Map) {
+      throw ProposalApplyException('FIRE plan undo snapshot is missing');
+    }
+    await planWriter(Map<String, Object?>.from(before));
   }
 }
 
 final fireProposalApplierProvider = Provider<FireProposalApplier>((ref) {
   return FireProposalApplier(
     planWriter: (after) => _applyFirePlanUpdateProposal(ref: ref, after: after),
+    planReader: () => ref.read(firePlanProvider),
   );
 });
+
+Map<String, Object?> _firePlanPayload(FirePlan plan) => <String, Object?>{
+  'target_net_worth': plan.targetNetWorth.toString(),
+  'monthly_expenses': plan.monthlyExpenses.toString(),
+  'monthly_surplus': plan.monthlySurplus.toString(),
+  'inflation_rate': plan.inflationRate,
+  'safe_withdrawal_rate': plan.safeWithdrawalRate,
+  'target_cash_bucket_months': plan.targetCashBucketMonths,
+  'lifestyle_mode': plan.lifestyleMode.name,
+};
 
 Future<void> _applyFirePlanUpdateProposal({
   required Ref ref,

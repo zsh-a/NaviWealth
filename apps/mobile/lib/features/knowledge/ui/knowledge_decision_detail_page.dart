@@ -16,9 +16,11 @@ import 'package:go_router/go_router.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/knowledge_route_paths.dart';
+import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_decision_lifecycle_sheet.dart';
+import '_decision_writer.dart';
 import '_widgets.dart';
 
 class KnowledgeDecisionDetailPage extends ConsumerWidget {
@@ -44,6 +46,7 @@ class _BodyState extends ConsumerState<_Body> {
   List<KnowledgeDecision> _chain = const <KnowledgeDecision>[];
   List<KnowledgePrinciple> _principles = const <KnowledgePrinciple>[];
   List<KnowledgeAssumption> _assumptions = const <KnowledgeAssumption>[];
+  List<KnowledgeDecision> _linkedDecisions = const <KnowledgeDecision>[];
   bool _loading = true;
 
   @override
@@ -99,6 +102,23 @@ class _BodyState extends ConsumerState<_Body> {
         final a = await repo.findAssumption(ownerUserId: ownerUserId, id: id);
         if (a != null) assumptions.add(a);
       }
+      final linkedDecisions = <KnowledgeDecision>[];
+      final relations = await repo.listRelationsFrom(
+        ownerUserId: ownerUserId,
+        fromKind: KnowledgeEntryKind.decision.name,
+        fromId: d.id,
+      );
+      for (final relation in relations) {
+        if (relation.toKind != KnowledgeEntryKind.decision.name ||
+            relation.toId == d.id) {
+          continue;
+        }
+        final linked = await repo.findDecision(
+          ownerUserId: ownerUserId,
+          id: relation.toId,
+        );
+        if (linked != null) linkedDecisions.add(linked);
+      }
 
       if (mounted) {
         setState(() {
@@ -106,6 +126,7 @@ class _BodyState extends ConsumerState<_Body> {
           _chain = chain;
           _principles = principles;
           _assumptions = assumptions;
+          _linkedDecisions = linkedDecisions;
           _loading = false;
         });
       }
@@ -120,6 +141,11 @@ class _BodyState extends ConsumerState<_Body> {
   }
 
   Future<void> _openEditor(KnowledgeDecision d) async {
+    final saved = await showEditDecisionSheet(context, ref, d);
+    if (saved == true) await _load();
+  }
+
+  Future<void> _openLifecycle(KnowledgeDecision d) async {
     final saved = await showDecisionLifecycleSheet(context, ref, d);
     if (saved == true) await _load();
   }
@@ -135,6 +161,14 @@ class _BodyState extends ConsumerState<_Body> {
             semanticsLabel: AppLocalizations.of(context).knowledgeMarkdownEdit,
             icon: const Icon(FLucideIcons.pencil),
             onPress: () => _openEditor(d),
+          ),
+        if (d != null)
+          AppHeaderAction(
+            semanticsLabel: AppLocalizations.of(
+              context,
+            ).knowledgeDecisionLifecycleTitle,
+            icon: const Icon(FLucideIcons.gitBranch),
+            onPress: () => _openLifecycle(d),
           ),
       ],
       child: _buildBody(context, d),
@@ -284,6 +318,25 @@ class _BodyState extends ConsumerState<_Body> {
                   onPress: () => context.pushNamed(
                     KnowledgeRouteNames.objectDetail,
                     pathParameters: {'kind': 'assumption', 'id': a.id},
+                  ),
+                ),
+            ],
+          ),
+        ],
+        if (_linkedDecisions.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeSection.group(
+            title: l10n.knowledgeDetailDecisionsTitle,
+            children: [
+              for (final linked in _linkedDecisions)
+                _RelatedKnowledgeLink(
+                  label: linked.question,
+                  status: linked.status.wire,
+                  icon: FLucideIcons.gitBranch,
+                  iconColor: colors.primary,
+                  onPress: () => context.pushNamed(
+                    KnowledgeRouteNames.decisionDetail,
+                    pathParameters: {'id': linked.id},
                   ),
                 ),
             ],

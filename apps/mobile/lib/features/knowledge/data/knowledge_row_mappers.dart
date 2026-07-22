@@ -303,3 +303,37 @@ SyncMeta _syncFromRow({
   hlc: hlc,
   deletedAt: deletedAt,
 );
+
+KnowledgeRelationsCompanion knowledgeRelationCompanion(KnowledgeRelation r) =>
+    KnowledgeRelationsCompanion.insert(
+      id: r.id,
+      fromKind: r.fromKind,
+      fromId: r.fromId,
+      relation: r.relation.wire,
+      toKind: r.toKind,
+      toId: r.toId,
+      createdAt: r.createdAt,
+      ownerUserId: r.sync.ownerUserId,
+      updatedAt: r.sync.updatedAt,
+      updatedByDevice: r.sync.updatedByDevice,
+      hlc: r.sync.hlc,
+      deletedAt: Value(r.sync.deletedAt),
+    );
+
+KnowledgeRelation knowledgeRelationFromRow(KnowledgeRelationRow r) =>
+    KnowledgeRelation(
+      id: r.id,
+      fromKind: r.fromKind,
+      fromId: r.fromId,
+      relation: KnowledgeRelationType.parse(r.relation),
+      toKind: r.toKind,
+      toId: r.toId,
+      createdAt: r.createdAt,
+      sync: SyncMeta(
+        ownerUserId: r.ownerUserId,
+        updatedAt: r.updatedAt,
+        updatedByDevice: r.updatedByDevice,
+        hlc: r.hlc,
+        deletedAt: r.deletedAt,
+      ),
+    );

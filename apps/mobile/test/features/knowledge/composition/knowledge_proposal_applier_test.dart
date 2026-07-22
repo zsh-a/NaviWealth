@@ -71,7 +71,7 @@ void main() {
 
   group('KnowledgeProposalApplier', () {
     test(
-      'capture_upgrade (routine) creates routine and tombstones note',
+      'capture_upgrade (routine) atomically promotes the source note',
       () async {
         await repo.upsertNote(note('n1', '港卡活跃', const ['card']));
 
@@ -96,8 +96,11 @@ void main() {
         expect(routine, isNotNull);
         expect(routine!.statement, '港卡保持活跃');
 
-        final tempNote = await repo.findNote(ownerUserId: _owner, id: 'n1');
-        expect(tempNote!.sync.deletedAt, isNotNull);
+        final promotedNote = await repo.findNote(ownerUserId: _owner, id: 'n1');
+        expect(promotedNote!.sync.deletedAt, isNull);
+        expect(promotedNote.promotedToKind, KnowledgeEntryKind.routine.name);
+        expect(promotedNote.promotedToId, state.appliedEntityId);
+        expect(await repo.listNotes(ownerUserId: _owner), isEmpty);
 
         await applier.undo(state);
         final undoneRoutine = await repo.findRoutine(
@@ -107,11 +110,31 @@ void main() {
         expect(undoneRoutine!.sync.deletedAt, isNotNull);
         final restoredNote = await repo.findNote(ownerUserId: _owner, id: 'n1');
         expect(restoredNote!.sync.deletedAt, isNull);
+        expect(restoredNote.isPromoted, isFalse);
       },
     );
 
     test('capture_upgrade (concept) promotes an existing note', () async {
       await repo.upsertNote(note('n1', 'Edge-first', const ['ops']));
+      final relationMeta = await stamp();
+      await repo.upsertRelation(
+        KnowledgeRelation(
+          id: knowledgeRelationId(
+            fromKind: KnowledgeEntryKind.note.name,
+            fromId: 'n1',
+            relation: KnowledgeRelationType.relatedTo,
+            toKind: KnowledgeEntryKind.decision.name,
+            toId: 'd1',
+          ),
+          fromKind: KnowledgeEntryKind.note.name,
+          fromId: 'n1',
+          relation: KnowledgeRelationType.relatedTo,
+          toKind: KnowledgeEntryKind.decision.name,
+          toId: 'd1',
+          createdAt: relationMeta.updatedAt,
+          sync: relationMeta,
+        ),
+      );
 
       final state = await applier.apply(
         plan('capture_upgrade', {
@@ -137,12 +160,36 @@ void main() {
       final promotedSource = await repo.findNote(ownerUserId: _owner, id: 'n1');
       expect(promotedSource!.promotedToKind, 'concept');
       expect(await repo.listNotes(ownerUserId: _owner), isEmpty);
+      expect(
+        await repo.listRelationsFrom(
+          ownerUserId: _owner,
+          fromKind: KnowledgeEntryKind.concept.name,
+          fromId: state.appliedEntityId!,
+        ),
+        hasLength(1),
+      );
 
       await applier.undo(state);
       final restored = await repo.findNote(ownerUserId: _owner, id: 'n1');
       expect(restored!.tags, ['ops']);
       expect(restored.bodyMd, '');
       expect(restored.isPromoted, isFalse);
+      expect(
+        await repo.listRelationsFrom(
+          ownerUserId: _owner,
+          fromKind: KnowledgeEntryKind.note.name,
+          fromId: 'n1',
+        ),
+        hasLength(1),
+      );
+      expect(
+        await repo.listRelationsFrom(
+          ownerUserId: _owner,
+          fromKind: KnowledgeEntryKind.concept.name,
+          fromId: state.appliedEntityId!,
+        ),
+        isEmpty,
+      );
       final deletedConcept = await repo.findConcept(
         ownerUserId: _owner,
         id: state.appliedEntityId!,

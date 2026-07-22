@@ -30,6 +30,7 @@ part 'knowledge_repository_merge_principles.dart';
 part 'knowledge_repository_notes.dart';
 part 'knowledge_repository_principles.dart';
 part 'knowledge_repository_promotions.dart';
+part 'knowledge_repository_relations.dart';
 part 'knowledge_repository_routines.dart';
 
 const String _knowledgeNotesTable = 'knowledge_notes';
@@ -39,6 +40,7 @@ const String _knowledgeDecisionsTable = 'knowledge_decisions';
 const String _knowledgeConceptsTable = 'knowledge_concepts';
 const String _knowledgeExperimentsTable = 'knowledge_experiments';
 const String _knowledgeRoutinesTable = 'knowledge_routines';
+const String _knowledgeRelationsTable = 'knowledge_relations';
 
 enum KnowledgeEntryKind {
   note('knowledge_notes'),
@@ -79,6 +81,7 @@ class KnowledgeRepository
         KnowledgeExperimentsRepositoryMixin,
         KnowledgeRoutinesRepositoryMixin,
         KnowledgePromotionsRepositoryMixin,
+        KnowledgeRelationsRepositoryMixin,
         KnowledgeRepositoryMerge {
   KnowledgeRepository({required AppDatabase db, required OutboxStore outbox})
     : _db = db,
@@ -88,6 +91,9 @@ class KnowledgeRepository
   final AppDatabase _db;
   @override
   final OutboxStore _outbox;
+
+  Future<T> transaction<T>(Future<T> Function() action) =>
+      _db.transaction(action);
 
   /// Shared write path for typed KnowledgeOS tables: open a
   /// transaction, upsert via `insertOrReplace`, then enqueue the

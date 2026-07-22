@@ -56,6 +56,7 @@ KnowledgeOS is active only when the user enables it in Settings.
 | Decision | Chosen option, rationale, assumptions, outcome, review lifecycle | `knowledge_decisions` |
 | Experiment | Hypothesis, method, metrics, result | `knowledge_experiments` |
 | Routine | Recurring personal reminder with next due date | `knowledge_routines` |
+| Relation | Typed, queryable edge between knowledge objects | `knowledge_relations` |
 
 Domain models:
 
@@ -82,6 +83,7 @@ Synced tables use `SyncableTable` and the `know:` row-family prefix:
 - `know:knowledge_concepts`
 - `know:knowledge_experiments`
 - `know:knowledge_routines`
+- `know:knowledge_relations`
 
 Local-only:
 
@@ -229,6 +231,11 @@ Classification is a domain transition, not a `kind:*` tag. Typed Library
 segments must always be backed by their corresponding `knowledge_*` table.
 Deterministic promotion ids make repeated acceptance idempotent. This preserves
 zero-latency capture and makes AI suggestions reviewable.
+
+Decision links are persisted as typed `knowledge_relations` rows, never as
+synthetic tags. When a Note is promoted, its outgoing relations move to the
+typed object in the same transaction; proposal undo restores both the source
+Note and its original relation endpoints.
 
 ## Decision Lifecycle
 

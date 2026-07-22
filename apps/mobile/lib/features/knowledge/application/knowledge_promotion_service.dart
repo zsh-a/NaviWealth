@@ -193,19 +193,62 @@ final class KnowledgePromotionService {
     );
   }
 
+  Future<KnowledgePromotionResult> promoteToRoutine(
+    KnowledgeNote note, {
+    required int intervalDays,
+    String? statement,
+    String scope = '*',
+    DateTime? nextDueAt,
+  }) async {
+    final existing = await _current(note);
+    final prior = _priorResult(existing, KnowledgeEntryKind.routine);
+    if (prior != null) return prior;
+    final targetSync = await stamp();
+    final noteSync = await stamp();
+    final normalizedInterval = intervalDays.clamp(1, 3650);
+    final routine = KnowledgeRoutine(
+      id: knowledgePromotionTargetId(KnowledgeEntryKind.routine, existing.id),
+      statement: statement?.trim().isNotEmpty == true
+          ? statement!.trim()
+          : _headline(existing),
+      intervalDays: normalizedInterval,
+      nextDueAt:
+          nextDueAt?.toUtc() ??
+          targetSync.updatedAt.add(Duration(days: normalizedInterval)),
+      scope: scope,
+      status: RoutineStatus.active,
+      createdAt: targetSync.updatedAt,
+      sync: targetSync,
+    );
+    final id = await repository.promoteNoteToRoutine(
+      source: existing,
+      routine: routine,
+      noteSync: noteSync,
+    );
+    return KnowledgePromotionResult(kind: KnowledgeEntryKind.routine, id: id);
+  }
+
   Future<KnowledgePromotionResult> promoteCapture({
     required KnowledgeNote note,
     required CaptureKind kind,
     String? scope,
+    int? intervalDays,
+    String? statement,
+    DateTime? nextDueAt,
   }) => switch (kind) {
     CaptureKind.decision => promoteToDecision(note),
     CaptureKind.principle => promoteToPrinciple(note, scope: scope ?? '*'),
     CaptureKind.assumption => promoteToAssumption(note, scope: scope ?? '*'),
     CaptureKind.concept => promoteToConcept(note),
     CaptureKind.experiment => promoteToExperiment(note),
-    CaptureKind.note || CaptureKind.routine => throw StateError(
-      '${kind.name} is not a typed Note promotion',
+    CaptureKind.routine => promoteToRoutine(
+      note,
+      intervalDays: intervalDays ?? 180,
+      statement: statement,
+      scope: scope ?? '*',
+      nextDueAt: nextDueAt,
     ),
+    CaptureKind.note => throw StateError('note is not a typed Note promotion'),
   };
 
   Future<KnowledgeNote> _current(KnowledgeNote note) async {

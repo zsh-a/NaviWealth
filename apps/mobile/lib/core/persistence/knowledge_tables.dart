@@ -188,6 +188,22 @@ class KnowledgeRoutines extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Typed cross-object relationship. Domain links must not be encoded as tags:
+/// relation rows are queryable, redirectable, and independently syncable.
+@DataClassName('KnowledgeRelationRow')
+class KnowledgeRelations extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get fromKind => text()();
+  TextColumn get fromId => text()();
+  TextColumn get relation => text()();
+  TextColumn get toKind => text()();
+  TextColumn get toId => text()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 /// Indexes & DDL companions for the KnowledgeOS tables. Mirrors the
 /// HealthOS pattern in `app_database.dart`.
 const List<String> knowledgeIndexStmts = [
@@ -225,5 +241,11 @@ const List<String> knowledgeIndexStmts = [
       'ON knowledge_routines(owner_user_id, hlc)',
   'CREATE INDEX IF NOT EXISTS idx_knowledge_routines_due '
       'ON knowledge_routines(owner_user_id, status, next_due_at) '
+      'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_knowledge_relations_from '
+      'ON knowledge_relations(owner_user_id, from_kind, from_id) '
+      'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_knowledge_relations_to '
+      'ON knowledge_relations(owner_user_id, to_kind, to_id) '
       'WHERE deleted_at IS NULL',
 ];

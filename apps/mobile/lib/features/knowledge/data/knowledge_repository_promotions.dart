@@ -78,6 +78,20 @@ mixin KnowledgePromotionsRepositoryMixin {
     noteSync: noteSync,
   );
 
+  Future<String> promoteNoteToRoutine({
+    required KnowledgeNote source,
+    required KnowledgeRoutine routine,
+    required SyncMeta noteSync,
+  }) => _promote(
+    source: source,
+    targetKind: KnowledgeEntryKind.routine,
+    targetId: routine.id,
+    targetTable: _db.knowledgeRoutines,
+    targetCompanion: knowledgeRoutineCompanion(routine),
+    targetTableName: _knowledgeRoutinesTable,
+    noteSync: noteSync,
+  );
+
   Future<String> _promote<R>({
     required KnowledgeNote source,
     required KnowledgeEntryKind targetKind,
@@ -111,6 +125,12 @@ mixin KnowledgePromotionsRepositoryMixin {
       await _db
           .into(targetTable)
           .insert(targetCompanion, mode: InsertMode.insertOrReplace);
+      await _redirectSourceRelations(
+        sourceId: current.id,
+        targetKind: targetKind,
+        targetId: targetId,
+        sync: noteSync,
+      );
       final promotedSource = KnowledgeNote(
         id: current.id,
         title: current.title,
@@ -135,5 +155,71 @@ mixin KnowledgePromotionsRepositoryMixin {
       await _outbox.enqueue(table: _knowledgeNotesTable, rowId: source.id);
       return targetId;
     });
+  }
+
+  Future<void> _redirectSourceRelations({
+    required String sourceId,
+    required KnowledgeEntryKind targetKind,
+    required String targetId,
+    required SyncMeta sync,
+  }) async {
+    final rows =
+        await (_db.select(_db.knowledgeRelations)..where(
+              (table) =>
+                  table.ownerUserId.equals(sync.ownerUserId) &
+                  table.fromKind.equals(KnowledgeEntryKind.note.name) &
+                  table.fromId.equals(sourceId) &
+                  table.deletedAt.isNull(),
+            ))
+            .get();
+    for (final row in rows) {
+      final old = knowledgeRelationFromRow(row);
+      final tombstone = KnowledgeRelation(
+        id: old.id,
+        fromKind: old.fromKind,
+        fromId: old.fromId,
+        relation: old.relation,
+        toKind: old.toKind,
+        toId: old.toId,
+        createdAt: old.createdAt,
+        sync: sync.copyWith(deletedAt: sync.updatedAt),
+      );
+      await _db
+          .into(_db.knowledgeRelations)
+          .insert(
+            knowledgeRelationCompanion(tombstone),
+            mode: InsertMode.insertOrReplace,
+          );
+      await _outbox.enqueue(table: _knowledgeRelationsTable, rowId: old.id);
+      if (old.toKind == targetKind.name && old.toId == targetId) {
+        continue;
+      }
+      final redirected = KnowledgeRelation(
+        id: knowledgeRelationId(
+          fromKind: targetKind.name,
+          fromId: targetId,
+          relation: old.relation,
+          toKind: old.toKind,
+          toId: old.toId,
+        ),
+        fromKind: targetKind.name,
+        fromId: targetId,
+        relation: old.relation,
+        toKind: old.toKind,
+        toId: old.toId,
+        createdAt: old.createdAt,
+        sync: sync,
+      );
+      await _db
+          .into(_db.knowledgeRelations)
+          .insert(
+            knowledgeRelationCompanion(redirected),
+            mode: InsertMode.insertOrReplace,
+          );
+      await _outbox.enqueue(
+        table: _knowledgeRelationsTable,
+        rowId: redirected.id,
+      );
+    }
   }
 }

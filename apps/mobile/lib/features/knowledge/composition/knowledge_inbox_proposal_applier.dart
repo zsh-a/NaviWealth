@@ -75,19 +75,49 @@ class KnowledgeInboxProposalApplier {
         }
       case InboxProposalKind.linkToDecision:
         final raw = proposal.payload['related_decision_ids'];
-        var hasDecision = false;
+        final decisionIds = <String>{};
         if (raw is List) {
           for (final id in raw.whereType<String>()) {
             final trimmed = id.trim();
             if (trimmed.isNotEmpty) {
-              tagSet.add('decision:$trimmed');
-              hasDecision = true;
+              decisionIds.add(trimmed);
             }
           }
         }
-        if (!hasDecision) {
+        if (decisionIds.isEmpty) {
           throw StateError('decision-link proposal has no decision ids');
         }
+        final fromKind = current.promotedToKind ?? KnowledgeEntryKind.note.name;
+        final fromId = current.promotedToId ?? current.id;
+        for (final decisionId in decisionIds) {
+          final target = await repo.findDecision(
+            ownerUserId: ownerUserId,
+            id: decisionId,
+          );
+          if (target == null) {
+            throw StateError('decision $decisionId no longer exists');
+          }
+          final meta = await stamp();
+          await repo.upsertRelation(
+            KnowledgeRelation(
+              id: knowledgeRelationId(
+                fromKind: fromKind,
+                fromId: fromId,
+                relation: KnowledgeRelationType.relatedTo,
+                toKind: KnowledgeEntryKind.decision.name,
+                toId: decisionId,
+              ),
+              fromKind: fromKind,
+              fromId: fromId,
+              relation: KnowledgeRelationType.relatedTo,
+              toKind: KnowledgeEntryKind.decision.name,
+              toId: decisionId,
+              createdAt: meta.updatedAt,
+              sync: meta,
+            ),
+          );
+        }
+        return null;
     }
 
     final meta = await stamp();
@@ -107,6 +137,28 @@ class KnowledgeInboxProposalApplier {
     );
     await repo.upsertNote(updated);
     return null;
+  }
+
+  Future<KnowledgePromotionResult?> acceptAndResolve({
+    required KnowledgeNote note,
+    required InboxProposal proposal,
+    required InboxTriageRepository triage,
+  }) {
+    return repo.transaction(() async {
+      final result = await accept(note: note, proposal: proposal);
+      await triage.resolve(
+        noteId: note.id,
+        kind: proposal.kind,
+        status: InboxProposalStatus.accepted,
+      );
+      if (result != null) {
+        await triage.supersedePending(
+          noteId: note.id,
+          kinds: const <InboxProposalKind>{InboxProposalKind.tags},
+        );
+      }
+      return result;
+    });
   }
 }
 

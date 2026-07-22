@@ -355,6 +355,39 @@ class KnowledgeRoutine {
   bool isDue(DateTime now) => !nextDueAt.toUtc().isAfter(now.toUtc());
 }
 
+enum KnowledgeRelationType {
+  relatedTo;
+
+  String get wire => 'related_to';
+
+  static KnowledgeRelationType parse(String value) => switch (value) {
+    'related_to' => KnowledgeRelationType.relatedTo,
+    _ => KnowledgeRelationType.relatedTo,
+  };
+}
+
+class KnowledgeRelation {
+  const KnowledgeRelation({
+    required this.id,
+    required this.fromKind,
+    required this.fromId,
+    required this.relation,
+    required this.toKind,
+    required this.toId,
+    required this.createdAt,
+    required this.sync,
+  });
+
+  final String id;
+  final String fromKind;
+  final String fromId;
+  final KnowledgeRelationType relation;
+  final String toKind;
+  final String toId;
+  final DateTime createdAt;
+  final SyncMeta sync;
+}
+
 /// JSON helpers — every list/map column in §9 is stored as JSON text.
 List<String> decodeStringList(String s) {
   if (s.isEmpty) return const <String>[];

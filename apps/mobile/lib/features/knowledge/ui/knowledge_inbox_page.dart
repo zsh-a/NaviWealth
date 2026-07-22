@@ -242,7 +242,6 @@ class _NoteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
-    final candidateKind = _extractCandidateKind(note.tags);
     return KnowledgeSection.item(
       onPress: () => context.pushNamed(
         KnowledgeRouteNames.objectDetail,
@@ -265,10 +264,6 @@ class _NoteCard extends StatelessWidget {
               knowledgeDate(context, note.createdAt),
               style: context.captionStyle,
             ),
-            if (candidateKind != null) ...[
-              const SizedBox(width: AppSpacing.s8),
-              KnowledgeStatusLabel(label: candidateKind),
-            ],
             if (note.projectTag != null && note.projectTag!.isNotEmpty) ...[
               const SizedBox(width: AppSpacing.s8),
               Icon(
@@ -291,17 +286,4 @@ class _NoteCard extends StatelessWidget {
       ],
     );
   }
-}
-
-/// Extracts the AI-assigned candidate kind (e.g. "routine_candidate" → "routine")
-/// from the note's tags, or null if none.
-String? _extractCandidateKind(List<String> tags) {
-  const prefix = 'kind:';
-  const suffix = '_candidate';
-  for (final tag in tags) {
-    if (tag.startsWith(prefix) && tag.endsWith(suffix)) {
-      return tag.substring(prefix.length, tag.length - suffix.length);
-    }
-  }
-  return null;
 }

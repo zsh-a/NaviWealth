@@ -26,7 +26,10 @@ class OptionsProposalApplier {
   final OptionsJournalLedgerService? ledgerService;
   final Future<String> Function() currentUserId;
 
-  Future<ProposalApplyState> applyProfileUpdate(ReadyProposalPlan plan) async {
+  Future<ProposalApplyState> applyProfileUpdate(
+    ReadyProposalPlan plan,
+    DateTime at,
+  ) async {
     final after = plan.payload['after'];
     if (after is! Map) {
       throw ProposalApplyException(
@@ -38,36 +41,78 @@ class OptionsProposalApplier {
     if (current == null) {
       throw ProposalApplyException('Income Planner profile is not initialized');
     }
-    final updated = current.copyWith(
-      mode: _parseOptionsMode(after['mode']) ?? current.mode,
-      minDte: _optionalInt(after['min_dte']) ?? current.minDte,
-      maxDte: _optionalInt(after['max_dte']) ?? current.maxDte,
-      minAnnualizedYield:
-          _optionalDecimalRaw(after['min_annualized_yield']) ??
-          current.minAnnualizedYield,
-      minOpenInterest:
-          _optionalInt(after['min_open_interest']) ?? current.minOpenInterest,
-      minVolume: _optionalInt(after['min_volume']) ?? current.minVolume,
-      maxCapitalPerTradePct:
-          _optionalDecimalRaw(after['max_capital_per_trade_pct']) ??
-          current.maxCapitalPerTradePct,
-      avoidEarnings:
-          _optionalBool(after['avoid_earnings']) ?? current.avoidEarnings,
-      avoidMacroEvents:
-          _optionalBool(after['avoid_macro_events']) ??
-          current.avoidMacroEvents,
-      onlyOnApprovedUnderlyings:
-          _optionalBool(after['only_on_approved_underlyings']) ??
-          current.onlyOnApprovedUnderlyings,
+    final before = _profilePayload(current);
+    final updated = _profileWithPayload(
+      current,
+      Map<String, Object?>.from(after),
     );
     final saved = await profileRepo.upsert(updated);
     return ProposalApplyState(
       status: ProposalApplyStatus.applied,
       appliedEntityId: saved.sync.ownerUserId,
       appliedTable: 'options_strategy_profile',
+      appliedAt: at,
+      undoData: <String, Object?>{'before': before},
       shortLabel: 'Updated ${plan.summaryZh}',
     );
   }
+
+  Future<void> undoProfileUpdate(ProposalApplyState state) async {
+    final before = state.undoData?['before'];
+    if (before is! Map) {
+      throw ProposalApplyException('Income Planner undo snapshot is missing');
+    }
+    final ownerUserId = await currentUserId();
+    final current = await profileRepo.get(ownerUserId);
+    if (current == null) {
+      throw ProposalApplyException('Income Planner profile is not initialized');
+    }
+    await profileRepo.upsert(
+      _profileWithPayload(current, Map<String, Object?>.from(before)),
+    );
+  }
+
+  OptionsStrategyProfile _profileWithPayload(
+    OptionsStrategyProfile current,
+    Map<String, Object?> payload,
+  ) {
+    return current.copyWith(
+      mode: _parseOptionsMode(payload['mode']) ?? current.mode,
+      minDte: _optionalInt(payload['min_dte']) ?? current.minDte,
+      maxDte: _optionalInt(payload['max_dte']) ?? current.maxDte,
+      minAnnualizedYield:
+          _optionalDecimalRaw(payload['min_annualized_yield']) ??
+          current.minAnnualizedYield,
+      minOpenInterest:
+          _optionalInt(payload['min_open_interest']) ?? current.minOpenInterest,
+      minVolume: _optionalInt(payload['min_volume']) ?? current.minVolume,
+      maxCapitalPerTradePct:
+          _optionalDecimalRaw(payload['max_capital_per_trade_pct']) ??
+          current.maxCapitalPerTradePct,
+      avoidEarnings:
+          _optionalBool(payload['avoid_earnings']) ?? current.avoidEarnings,
+      avoidMacroEvents:
+          _optionalBool(payload['avoid_macro_events']) ??
+          current.avoidMacroEvents,
+      onlyOnApprovedUnderlyings:
+          _optionalBool(payload['only_on_approved_underlyings']) ??
+          current.onlyOnApprovedUnderlyings,
+    );
+  }
+
+  Map<String, Object?> _profilePayload(OptionsStrategyProfile profile) =>
+      <String, Object?>{
+        'mode': profile.mode.name,
+        'min_dte': profile.minDte,
+        'max_dte': profile.maxDte,
+        'min_annualized_yield': profile.minAnnualizedYield.toString(),
+        'min_open_interest': profile.minOpenInterest,
+        'min_volume': profile.minVolume,
+        'max_capital_per_trade_pct': profile.maxCapitalPerTradePct.toString(),
+        'avoid_earnings': profile.avoidEarnings,
+        'avoid_macro_events': profile.avoidMacroEvents,
+        'only_on_approved_underlyings': profile.onlyOnApprovedUnderlyings,
+      };
 
   Future<ProposalApplyState> applyJournalEntry(
     ReadyProposalPlan plan,

@@ -185,44 +185,6 @@ class _KnowledgeCaptureSheetState
         : knowledgeExcerpt(note.bodyMd, max: 60);
     switch (kind) {
       case CaptureKind.routine:
-        final stamp = await stamper.stamp();
-        const intervalDays = 180;
-        await repo.upsertRoutine(
-          KnowledgeRoutine(
-            id: kKnowledgeUuid.v4(),
-            statement: statement,
-            intervalDays: intervalDays,
-            nextDueAt: stamp.now.add(const Duration(days: intervalDays)),
-            scope: '*',
-            status: RoutineStatus.active,
-            createdAt: stamp.now,
-            sync: SyncMeta(
-              ownerUserId: stamp.ownerUserId,
-              updatedAt: stamp.now,
-              updatedByDevice: stamp.deviceId,
-              hlc: stamp.hlc,
-            ),
-          ),
-        );
-        final tomb = await stamper.stamp();
-        await repo.upsertNote(
-          KnowledgeNote(
-            id: note.id,
-            title: note.title,
-            bodyMd: note.bodyMd,
-            sourceUrl: note.sourceUrl,
-            tags: note.tags,
-            projectTag: note.projectTag,
-            createdAt: note.createdAt,
-            sync: SyncMeta(
-              ownerUserId: tomb.ownerUserId,
-              updatedAt: tomb.now,
-              updatedByDevice: tomb.deviceId,
-              hlc: tomb.hlc,
-              deletedAt: tomb.now,
-            ),
-          ),
-        );
       case CaptureKind.decision:
       case CaptureKind.principle:
       case CaptureKind.assumption:
@@ -233,7 +195,12 @@ class _KnowledgeCaptureSheetState
           ownerUserId: note.sync.ownerUserId,
           stamp: () async => _syncMetaFromStamp(await stamper.stamp()),
         );
-        await promotion.promoteCapture(note: note, kind: kind);
+        await promotion.promoteCapture(
+          note: note,
+          kind: kind,
+          intervalDays: kind == CaptureKind.routine ? 180 : null,
+          statement: statement,
+        );
       case CaptureKind.note:
         break;
     }
@@ -256,49 +223,6 @@ class _KnowledgeCaptureSheetState
 
       switch (suggestion.kind) {
         case CaptureKind.routine:
-          // Routine promotion: write the structured row, then
-          // soft-delete the temp Note. Polished title/body don't
-          // travel onto a Routine (its surface is `statement`), but
-          // we still tombstone with whatever the Note last held — the
-          // user may have already saved a polish via a separate accept.
-          final stamp = await stamper.stamp();
-          final intervalDays = suggestion.intervalDays ?? 180;
-          await repo.upsertRoutine(
-            KnowledgeRoutine(
-              id: kKnowledgeUuid.v4(),
-              statement: suggestion.statement ?? resolvedTitle,
-              intervalDays: intervalDays,
-              nextDueAt: stamp.now.add(Duration(days: intervalDays)),
-              scope: suggestion.scope ?? '*',
-              status: RoutineStatus.active,
-              createdAt: stamp.now,
-              sync: SyncMeta(
-                ownerUserId: stamp.ownerUserId,
-                updatedAt: stamp.now,
-                updatedByDevice: stamp.deviceId,
-                hlc: stamp.hlc,
-              ),
-            ),
-          );
-          final tomb = await stamper.stamp();
-          await repo.upsertNote(
-            KnowledgeNote(
-              id: note.id,
-              title: note.title,
-              bodyMd: note.bodyMd,
-              sourceUrl: note.sourceUrl,
-              tags: note.tags,
-              projectTag: note.projectTag,
-              createdAt: note.createdAt,
-              sync: SyncMeta(
-                ownerUserId: tomb.ownerUserId,
-                updatedAt: tomb.now,
-                updatedByDevice: tomb.deviceId,
-                hlc: tomb.hlc,
-                deletedAt: tomb.now,
-              ),
-            ),
-          );
         case CaptureKind.decision:
         case CaptureKind.principle:
         case CaptureKind.assumption:
@@ -325,6 +249,8 @@ class _KnowledgeCaptureSheetState
             note: polishedNote,
             kind: suggestion.kind,
             scope: suggestion.scope,
+            intervalDays: suggestion.intervalDays,
+            statement: suggestion.statement,
           );
         case CaptureKind.note:
           // Polish-only path: classifier said "note" but produced a
