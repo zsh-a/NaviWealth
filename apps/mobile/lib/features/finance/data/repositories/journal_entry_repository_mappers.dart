@@ -97,6 +97,7 @@ Posting _postingToDomain(PostingRow row) {
 Expense? _postingToExpense(
   JournalEntryRow jeRow,
   PostingRow postingRow,
+  String categoryId,
   List<PostingRow> siblingPostings,
 ) {
   final tagIds = (jsonDecode(jeRow.tagIdsJson) as List<dynamic>).cast<String>();
@@ -106,7 +107,7 @@ Expense? _postingToExpense(
   );
   return Expense(
     id: jeRow.id,
-    expenseAccountId: postingRow.accountId,
+    categoryId: categoryId,
     fromAccountId: counterPosting?.accountId,
     amount: postingRow.units.abs(),
     currency: postingRow.unit,

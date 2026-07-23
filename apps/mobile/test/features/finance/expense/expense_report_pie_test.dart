@@ -49,7 +49,7 @@ void main() {
   group('collapseExpenseCategoriesForPie', () {
     CategoryBreakdown bucket(String id, int amount) {
       return CategoryBreakdown(
-        expenseAccountId: id,
+        categoryId: id,
         total: Money(Decimal.fromInt(amount), 'CNY'),
         count: 1,
       );
@@ -59,18 +59,18 @@ void main() {
       final input = [bucket('a', 10), bucket('b', 5)];
       final out = collapseExpenseCategoriesForPie(input, maxSlices: 8);
       expect(out, hasLength(2));
-      expect(out.map((b) => b.expenseAccountId), ['a', 'b']);
+      expect(out.map((b) => b.categoryId), ['a', 'b']);
     });
 
     test('rolls tail into Other keeping top maxSlices-1', () {
       final input = [for (var i = 0; i < 12; i++) bucket('c$i', 100 - i)];
       final out = collapseExpenseCategoriesForPie(input, maxSlices: 8);
       expect(out, hasLength(8));
-      expect(out.take(7).map((b) => b.expenseAccountId).toList(), [
+      expect(out.take(7).map((b) => b.categoryId).toList(), [
         for (var i = 0; i < 7; i++) 'c$i',
       ]);
       final other = out.last;
-      expect(other.expenseAccountId, kExpenseReportPieOtherId);
+      expect(other.categoryId, kExpenseReportPieOtherId);
       // amounts 93+92+91+90+89 = 455 for c7..c11
       expect(other.total.amount, Decimal.fromInt(93 + 92 + 91 + 90 + 89));
       expect(other.count, 5);
@@ -86,9 +86,9 @@ void main() {
       ];
       final out = collapseExpenseCategoriesForPie(input, maxSlices: 3);
       expect(out, hasLength(3));
-      expect(out[0].expenseAccountId, 'a');
-      expect(out[1].expenseAccountId, 'b');
-      expect(out[2].expenseAccountId, kExpenseReportPieOtherId);
+      expect(out[0].categoryId, 'a');
+      expect(out[1].categoryId, 'b');
+      expect(out[2].categoryId, kExpenseReportPieOtherId);
       expect(out[2].total.amount, Decimal.fromInt(60));
     });
 
@@ -102,7 +102,7 @@ void main() {
         maxSlices: 8,
       );
       expect(source, isNotNull);
-      expect(source!.map((b) => b.expenseAccountId).toList(), [
+      expect(source!.map((b) => b.categoryId).toList(), [
         for (var i = 7; i < 10; i++) 'c$i',
       ]);
       expect(

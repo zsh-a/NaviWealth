@@ -14,9 +14,9 @@ import 'package:naviwealth/features/finance/cashflow/ui/budget_page.dart';
 import 'package:naviwealth/features/finance/data/repositories/budget_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
-import 'package:naviwealth/features/finance/domain/models/account.dart';
-import 'package:naviwealth/features/finance/domain/models/enums.dart';
-import 'package:naviwealth/features/finance/shared/ui/account_tree_picker.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_category_providers.dart';
+import 'package:naviwealth/features/finance/expense/domain/expense_category.dart';
+import 'package:naviwealth/features/finance/expense/ui/expense_category_picker.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -53,8 +53,8 @@ Future<void> _pump(WidgetTester tester, List<BudgetRow> rows) async {
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(preferences),
-        allAccountsStreamProvider.overrideWith(
-          (ref) => Stream.value([_expenseAccount()]),
+        allExpenseCategoriesProvider.overrideWith(
+          (ref) => Stream.value([_expenseCategory()]),
         ),
         // Replace the family stream with a single-shot stream that emits
         // the canned rows once. No Drift, no DB, no animation never-end.
@@ -130,8 +130,8 @@ Future<void> _pumpLive(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(preferences),
         budgetRepositoryProvider.overrideWith((ref) async => repository),
-        allAccountsStreamProvider.overrideWith(
-          (ref) => Stream.value([_expenseAccount()]),
+        allExpenseCategoriesProvider.overrideWith(
+          (ref) => Stream.value([_expenseCategory()]),
         ),
         monthlyBudgetSummaryProvider.overrideWith((ref, periodMonth) {
           return AsyncValue.data((
@@ -188,6 +188,7 @@ void main() {
       db: db,
       outbox: InMemoryOutboxStore(),
       stamper: makeStubStamper(),
+      ownerUserId: 'u-test',
     );
     await _pumpLive(tester, repository: repository);
 
@@ -195,7 +196,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('New budget'), findsOneWidget);
 
-    await tester.tap(find.byType(AccountTreePicker));
+    await tester.tap(find.byType(ExpenseCategoryPicker));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Dining').last);
     await tester.pumpAndSettle();
@@ -224,6 +225,7 @@ void main() {
       db: db,
       outbox: InMemoryOutboxStore(),
       stamper: makeStubStamper(),
+      ownerUserId: 'u-test',
     );
     await repository.create(
       categoryId: 'expense-dining',
@@ -258,6 +260,7 @@ void main() {
       db: db,
       outbox: InMemoryOutboxStore(),
       stamper: makeStubStamper(),
+      ownerUserId: 'u-test',
     );
     final now = DateTime.now();
     final previous = DateTime(now.year, now.month - 1);
@@ -331,12 +334,10 @@ String _currentMonthKey() {
   return '${now.year}-${now.month.toString().padLeft(2, '0')}';
 }
 
-Account _expenseAccount() => Account(
+ExpenseCategory _expenseCategory() => ExpenseCategory(
   id: 'expense-dining',
-  type: AccountCategory.asset,
   name: 'Dining',
-  currency: 'CNY',
-  category: AccountSide.expense,
+  ledgerAccountId: 'system-account:u-test:expense:dining',
   sync: SyncMeta(
     ownerUserId: 'u',
     updatedAt: DateTime.utc(2026, 5, 24),

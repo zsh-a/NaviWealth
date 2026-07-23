@@ -2,6 +2,17 @@ part of 'app_database.dart';
 
 Future<void> _createFinancePlanningIndexes(AppDatabase db) async {
   for (final statement in financePlanningIndexStmts) {
+    final tableMatch = RegExp(
+      r'\bON\s+([a-z_][a-z0-9_]*)',
+      caseSensitive: false,
+    ).firstMatch(statement);
+    final table = tableMatch?.group(1);
+    if (table != null &&
+        (await db.customSelect('PRAGMA table_info($table)').get()).isEmpty) {
+      // Focused migration fixtures may intentionally omit unrelated planning
+      // tables. Their indexes are created when those tables are introduced.
+      continue;
+    }
     await db.customStatement(statement);
   }
 }
@@ -141,6 +152,8 @@ Future<void> _createIndexes(AppDatabase db) async {
         'ON tag_links(owner_user_id, hlc)',
     'CREATE INDEX IF NOT EXISTS idx_categories_owner_hlc '
         'ON categories(owner_user_id, hlc)',
+    'CREATE INDEX IF NOT EXISTS idx_categories_owner_active '
+        'ON categories(owner_user_id, archived, sort_order)',
     'CREATE INDEX IF NOT EXISTS idx_goals_owner_hlc '
         'ON goals(owner_user_id, hlc)',
     'CREATE INDEX IF NOT EXISTS idx_budgets_owner_hlc '

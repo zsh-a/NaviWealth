@@ -21,7 +21,7 @@ Expense _expense({
   String currency = 'CNY',
 }) => Expense(
   id: id,
-  expenseAccountId: 'cat-1',
+  categoryId: 'cat-1',
   amount: amount,
   currency: currency,
   tradeDate: date,

@@ -24666,6 +24666,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{minutes} min'**
   String monthlyCloseHistoryDuration(int minutes);
+
+  /// No description provided for @expenseCategoriesManageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense categories'**
+  String get expenseCategoriesManageTitle;
+
+  /// No description provided for @expenseCategoriesAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add category'**
+  String get expenseCategoriesAdd;
+
+  /// No description provided for @expenseCategoriesEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit category'**
+  String get expenseCategoriesEdit;
+
+  /// No description provided for @expenseCategoriesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No expense categories'**
+  String get expenseCategoriesEmpty;
+
+  /// No description provided for @expenseCategoriesArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get expenseCategoriesArchived;
+
+  /// No description provided for @expenseCategoriesBuiltIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in'**
+  String get expenseCategoriesBuiltIn;
+
+  /// No description provided for @expenseCategoriesCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get expenseCategoriesCustom;
+
+  /// No description provided for @expenseCategoriesMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get expenseCategoriesMoveUp;
+
+  /// No description provided for @expenseCategoriesMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get expenseCategoriesMoveDown;
+
+  /// No description provided for @expenseCategoriesArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive category'**
+  String get expenseCategoriesArchive;
+
+  /// No description provided for @expenseCategoriesRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore category'**
+  String get expenseCategoriesRestore;
+
+  /// No description provided for @expenseCategoriesNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get expenseCategoriesNameLabel;
+
+  /// No description provided for @expenseCategoriesNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a category name'**
+  String get expenseCategoriesNameRequired;
+
+  /// No description provided for @expenseCategoriesParentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent category'**
+  String get expenseCategoriesParentLabel;
+
+  /// No description provided for @expenseCategoriesParentHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. Leave empty for a top-level category.'**
+  String get expenseCategoriesParentHelper;
+
+  /// No description provided for @expenseCategoriesMakeTopLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to top level'**
+  String get expenseCategoriesMakeTopLevel;
+
+  /// No description provided for @expenseCategoriesIconLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon token'**
+  String get expenseCategoriesIconLabel;
+
+  /// No description provided for @expenseCategoriesColorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Accent color'**
+  String get expenseCategoriesColorLabel;
+
+  /// No description provided for @expenseCategoriesColorHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a color used in lists and reports.'**
+  String get expenseCategoriesColorHelper;
 }
 
 class _AppLocalizationsDelegate

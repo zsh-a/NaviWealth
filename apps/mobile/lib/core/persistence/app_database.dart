@@ -147,7 +147,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 52;
+  int get schemaVersion => 53;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -361,7 +361,10 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(knowledgeConcepts);
         await m.createTable(knowledgeExperiments);
         for (final stmt in knowledgeIndexStmts) {
-          if (stmt.contains('knowledge_routines')) continue;
+          if (stmt.contains('knowledge_routines') ||
+              stmt.contains('knowledge_relations')) {
+            continue;
+          }
           await customStatement(stmt);
         }
       }
@@ -806,6 +809,23 @@ class AppDatabase extends _$AppDatabase {
           definition: 'TEXT',
         );
         await _createFinancePlanningIndexes(this);
+      }
+      // v52 -> v53: categories become the FinanceOS expense-category SSOT.
+      // This intentionally discards the retired account-id-backed budget
+      // representation. Fresh category rows are seeded after startup.
+      if (from < 53) {
+        await m.deleteTable('budgets');
+        await m.deleteTable('categories');
+        await m.createTable(categories);
+        await m.createTable(budgets);
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_budgets_category_period '
+          'ON budgets(category_id, period_month)',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_categories_owner_active '
+          'ON categories(owner_user_id, archived, sort_order)',
+        );
       }
     },
     beforeOpen: (details) async {

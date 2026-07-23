@@ -2,23 +2,25 @@ part of 'expense_report_sections.dart';
 
 String _categoryLabel(
   AppLocalizations l10n,
-  Account? account,
+  ExpenseCategory? category,
   String fallback,
 ) {
-  return account == null ? fallback : localizedAccountName(l10n, account);
+  return category == null
+      ? fallback
+      : localizedExpenseCategoryName(l10n, category);
 }
 
 String _breakdownLabel(
   AppLocalizations l10n,
   CategoryBreakdown breakdown,
-  Map<String, Account> categoryById,
+  Map<String, ExpenseCategory> categoryById,
 ) {
-  if (breakdown.expenseAccountId == kExpenseReportPieOtherId) {
+  if (breakdown.categoryId == kExpenseReportPieOtherId) {
     return l10n.expenseReportOtherCategories;
   }
   return _categoryLabel(
     l10n,
-    categoryById[breakdown.expenseAccountId],
+    categoryById[breakdown.categoryId],
     l10n.expenseReportUncategorized,
   );
 }

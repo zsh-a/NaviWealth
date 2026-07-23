@@ -82,7 +82,8 @@ final accountsStreamProvider = StreamProvider.autoDispose<List<Account>>((
 ) async* {
   await ref.watch(systemAccountsSeedProvider.future);
   final repo = await ref.watch(accountRepositoryProvider.future);
-  yield* repo.watchActive();
+  final ownerUserId = await ref.watch(currentUserIdProvider)();
+  yield* repo.watchActiveForOwner(ownerUserId);
 });
 
 /// Live stream of all active accounts **including** system accounts.
@@ -92,8 +93,9 @@ final allAccountsStreamProvider = StreamProvider.autoDispose<List<Account>>((
   ref,
 ) async* {
   await ref.watch(systemAccountsSeedProvider.future);
+  final ownerUserId = await ref.watch(currentUserIdProvider)();
   final repo = await ref.watch(accountRepositoryProvider.future);
-  yield* repo.watchActiveIncludingSystem();
+  yield* repo.watchActiveIncludingSystem(ownerUserId);
 });
 
 /// Live stream of all non-deleted manual-valuation assets (cash, deposits,
@@ -137,7 +139,13 @@ final budgetRepositoryProvider = FutureProvider<BudgetRepository>((ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
   final outbox = await ref.watch(outboxStoreProvider.future);
   final stamper = await ref.watch(mutationStamperProvider.future);
-  return BudgetRepository(db: db, outbox: outbox, stamper: stamper);
+  final ownerUserId = await ref.watch(currentUserIdProvider)();
+  return BudgetRepository(
+    db: db,
+    outbox: outbox,
+    stamper: stamper,
+    ownerUserId: ownerUserId,
+  );
 });
 
 /// Live stream of every non-deleted budget, ordered (periodMonth desc,

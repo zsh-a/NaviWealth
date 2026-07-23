@@ -6,7 +6,7 @@ import 'package:naviwealth/core/sync/op_outbox.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
-import 'package:naviwealth/features/finance/expense/domain/expense_category_seed_colors.dart';
+import 'package:naviwealth/features/finance/expense/domain/expense_category_presets.dart';
 import 'package:uuid/uuid.dart';
 
 import 'account_mutation_receipt.dart';
@@ -76,8 +76,9 @@ class AccountRepository {
 
   /// Like [watchActive] but includes system accounts. Used by the expense
   /// category picker which needs to display seeded system expense accounts.
-  Stream<List<Account>> watchActiveIncludingSystem() {
+  Stream<List<Account>> watchActiveIncludingSystem(String ownerUserId) {
     final query = _db.select(_db.accounts)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..where((t) => t.archived.equals(false))
       ..orderBy([(t) => OrderingTerm(expression: t.name)]);

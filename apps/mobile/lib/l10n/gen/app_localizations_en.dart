@@ -14586,4 +14586,63 @@ class AppLocalizationsEn extends AppLocalizations {
   String monthlyCloseHistoryDuration(int minutes) {
     return '$minutes min';
   }
+
+  @override
+  String get expenseCategoriesManageTitle => 'Expense categories';
+
+  @override
+  String get expenseCategoriesAdd => 'Add category';
+
+  @override
+  String get expenseCategoriesEdit => 'Edit category';
+
+  @override
+  String get expenseCategoriesEmpty => 'No expense categories';
+
+  @override
+  String get expenseCategoriesArchived => 'Archived';
+
+  @override
+  String get expenseCategoriesBuiltIn => 'Built-in';
+
+  @override
+  String get expenseCategoriesCustom => 'Custom';
+
+  @override
+  String get expenseCategoriesMoveUp => 'Move up';
+
+  @override
+  String get expenseCategoriesMoveDown => 'Move down';
+
+  @override
+  String get expenseCategoriesArchive => 'Archive category';
+
+  @override
+  String get expenseCategoriesRestore => 'Restore category';
+
+  @override
+  String get expenseCategoriesNameLabel => 'Name';
+
+  @override
+  String get expenseCategoriesNameRequired => 'Enter a category name';
+
+  @override
+  String get expenseCategoriesParentLabel => 'Parent category';
+
+  @override
+  String get expenseCategoriesParentHelper =>
+      'Optional. Leave empty for a top-level category.';
+
+  @override
+  String get expenseCategoriesMakeTopLevel => 'Move to top level';
+
+  @override
+  String get expenseCategoriesIconLabel => 'Icon token';
+
+  @override
+  String get expenseCategoriesColorLabel => 'Accent color';
+
+  @override
+  String get expenseCategoriesColorHelper =>
+      'Choose a color used in lists and reports.';
 }

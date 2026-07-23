@@ -3,12 +3,12 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
-import 'package:naviwealth/features/finance/domain/models/account.dart';
-import 'package:naviwealth/features/finance/shared/l10n/account_l10n.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../domain/expense_category.dart';
 import '../domain/expense_report.dart';
 import '../domain/expense_report_pie.dart';
+import 'expense_category_l10n.dart';
 import 'expense_category_visuals.dart';
 
 part 'expense_report_helpers.dart';
@@ -18,14 +18,19 @@ void _openSpendingBreakdown(
   BuildContext context, {
   required ExpenseReport report,
   required CategoryBreakdown breakdown,
+  required Map<String, ExpenseCategory> categoryById,
 }) {
   final source = expenseReportOtherSource(
     byCategory: report.byCategory,
     breakdown: breakdown,
   );
-  final accountIds = source == null
-      ? <String>{breakdown.expenseAccountId}
-      : source.map((item) => item.expenseAccountId).toSet();
+  final categoryIds = source == null
+      ? <String>{breakdown.categoryId}
+      : source.map((item) => item.categoryId).toSet();
+  final accountIds = categoryIds
+      .map((id) => categoryById[id]?.ledgerAccountId)
+      .whereType<String>()
+      .toSet();
   context.go(
     FinanceRoutes.activityFeed(
       from: report.range.from,
@@ -44,7 +49,7 @@ class ExpenseCategoryPieCard extends StatelessWidget {
   });
 
   final ExpenseReport report;
-  final Map<String, Account> categoryById;
+  final Map<String, ExpenseCategory> categoryById;
 
   @override
   Widget build(BuildContext context) {

@@ -13890,4 +13890,61 @@ class AppLocalizationsZh extends AppLocalizations {
   String monthlyCloseHistoryDuration(int minutes) {
     return '$minutes 分钟';
   }
+
+  @override
+  String get expenseCategoriesManageTitle => '支出类别';
+
+  @override
+  String get expenseCategoriesAdd => '新增类别';
+
+  @override
+  String get expenseCategoriesEdit => '编辑类别';
+
+  @override
+  String get expenseCategoriesEmpty => '暂无支出类别';
+
+  @override
+  String get expenseCategoriesArchived => '已归档';
+
+  @override
+  String get expenseCategoriesBuiltIn => '内置类别';
+
+  @override
+  String get expenseCategoriesCustom => '自定义类别';
+
+  @override
+  String get expenseCategoriesMoveUp => '上移';
+
+  @override
+  String get expenseCategoriesMoveDown => '下移';
+
+  @override
+  String get expenseCategoriesArchive => '归档类别';
+
+  @override
+  String get expenseCategoriesRestore => '恢复类别';
+
+  @override
+  String get expenseCategoriesNameLabel => '名称';
+
+  @override
+  String get expenseCategoriesNameRequired => '请输入类别名称';
+
+  @override
+  String get expenseCategoriesParentLabel => '上级类别';
+
+  @override
+  String get expenseCategoriesParentHelper => '可选；留空表示一级类别。';
+
+  @override
+  String get expenseCategoriesMakeTopLevel => '移为一级类别';
+
+  @override
+  String get expenseCategoriesIconLabel => '图标标识';
+
+  @override
+  String get expenseCategoriesColorLabel => '强调色';
+
+  @override
+  String get expenseCategoriesColorHelper => '选择用于列表与报表的类别颜色。';
 }

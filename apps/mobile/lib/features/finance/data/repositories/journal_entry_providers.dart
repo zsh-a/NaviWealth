@@ -87,6 +87,7 @@ final journalEntriesWithPostingsStreamProvider =
 final journalExpensesStreamProvider = StreamProvider.autoDispose<List<Expense>>(
   (ref) async* {
     final repo = await ref.watch(journalEntryRepositoryProvider.future);
-    yield* repo.watchExpenses();
+    final ownerUserId = await ref.watch(currentUserIdProvider)();
+    yield* repo.watchExpenses(ownerUserId);
   },
 );

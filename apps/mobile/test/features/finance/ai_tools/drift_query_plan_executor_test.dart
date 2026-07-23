@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart' show DateRange;
+import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/features/finance/ai_tools/drift_query_plan_executor.dart';
@@ -14,6 +15,7 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_repo
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/invariants.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_category_repository.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_trend_builder.dart';
 
 import '../../../core/persistence/test_database.dart';
@@ -38,6 +40,11 @@ void main() {
       baseCurrency: 'CNY',
     );
     await accountRepo.seedSystemAccounts();
+    await ExpenseCategoryRepository(
+      db: db,
+      outbox: outbox,
+      stamper: stamper,
+    ).seedDefaults('u-test');
     await accountRepo.create(
       type: AccountCategory.cash,
       name: 'Wallet',
@@ -56,12 +63,13 @@ void main() {
       date: DateTime.utc(2026, 4, 15),
       note: 'STARBUCKS',
     );
-    final expenses = await journalRepo.watchExpenses().first;
+    final expenses = await journalRepo.watchExpenses('u-test').first;
     expect(expenses, hasLength(1));
-    expect(expenses.single.expenseAccountId, contains('expense:coffee'));
+    expect(expenses.single.categoryId, endsWith(':coffee'));
 
     final container = ProviderContainer(
       overrides: [
+        currentUserIdProvider.overrideWithValue(() async => 'u-test'),
         journalEntryRepositoryProvider.overrideWith((_) async => journalRepo),
       ],
     );

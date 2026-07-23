@@ -33,13 +33,13 @@ class MonthlyExpenseBucket {
 @immutable
 class CategoryBreakdown {
   const CategoryBreakdown({
-    required this.expenseAccountId,
+    required this.categoryId,
     required this.total,
     required this.count,
   });
 
   /// The expense account id from the `accounts` table.
-  final String expenseAccountId;
+  final String categoryId;
   final Money total;
   final int count;
 }

@@ -331,7 +331,7 @@ void main() {
         var activeOwner = 'owner-a';
         final otherOwnerExpense = Expense(
           id: 'owner-b-expense',
-          expenseAccountId: 'expense:coffee',
+          categoryId: 'expense:coffee',
           amount: Decimal.parse('38'),
           currency: 'CNY',
           tradeDate: DateTime.utc(2026, 6, 18),
@@ -556,7 +556,8 @@ final class _StaticExpenseJournalRepository extends JournalEntryRepository {
   final List<Expense> expenses;
 
   @override
-  Stream<List<Expense>> watchExpenses() => Stream.value(expenses);
+  Stream<List<Expense>> watchExpenses(String ownerUserId) =>
+      Stream.value(expenses);
 }
 
 final class _InterleavingJournalRepository extends JournalEntryRepository {
@@ -571,7 +572,7 @@ final class _InterleavingJournalRepository extends JournalEntryRepository {
   final Future<void> Function() beforeEmit;
 
   @override
-  Stream<List<Expense>> watchExpenses() async* {
+  Stream<List<Expense>> watchExpenses(String ownerUserId) async* {
     await beforeEmit();
     yield const <Expense>[];
   }

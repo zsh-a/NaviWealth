@@ -37,6 +37,7 @@ abstract final class FinanceRoutes {
   static const planIncomeStats = '/plan/income/stats';
   static const planDca = '/plan/dca';
   static const planBudget = '/plan/budget';
+  static const planExpenseCategories = '/plan/expense-categories';
   static const planRunway = '/plan/runway';
   static const planLifeEvents = '/plan/life-events';
   static const planWheel = '/plan/wheel';
@@ -139,6 +140,7 @@ abstract final class FinanceRouteNames {
   static const planIncomeStats = 'plan-income-stats';
   static const planDca = 'plan-dca';
   static const planBudget = 'plan-budget';
+  static const planExpenseCategories = 'plan-expense-categories';
   static const planRunway = 'plan-runway';
   static const planLifeEvents = 'plan-life-events';
   static const planWheel = 'plan-wheel';

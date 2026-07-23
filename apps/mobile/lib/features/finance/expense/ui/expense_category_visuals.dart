@@ -1,14 +1,14 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/shared/ui/account_color.dart';
 
+import '../domain/expense_category.dart';
 import '../domain/expense_category_seed_colors.dart';
 import '../domain/expense_report.dart';
 import '../domain/expense_report_pie.dart';
 
-/// UI-side visual lookup for expense [Account]s.
+/// UI-side visual lookup for expense categories.
 ///
 /// The account row stores `icon` (a string token) and `color` (a hex
 /// string) so they ride through sync as plain text. This helper resolves
@@ -53,7 +53,7 @@ const Map<String, IconData> kExpenseCategoryIcons = <String, IconData>{
 /// Fallback glyph for unknown / missing icon tokens.
 const IconData kExpenseCategoryFallbackIcon = FLucideIcons.tag;
 
-extension ExpenseAccountVisuals on Account {
+extension ExpenseCategoryVisuals on ExpenseCategory {
   /// Icon resolved from [icon]. Falls back to a generic glyph so the
   /// picker never shows a missing-icon hole.
   IconData get iconData =>
@@ -70,12 +70,14 @@ extension ExpenseAccountVisuals on Account {
   /// Display accent for expense surfaces (list, picker, report).
   ///
   /// Resolution order (unified):
-  /// 1. system path from the account id → [kExpenseCategorySeedHexByPath]
+  /// 1. built-in category key → [kExpenseCategorySeedHexByPath]
   /// 2. persisted [color]
   /// 3. icon token → [kExpenseCategorySeedHexByIcon]
   /// 4. [ChartPalette.accentAt] for the series ordinal
   Color expenseAccentColor(BuildContext context, {int ordinal = 0}) {
-    final pathHex = expenseCategoryHexForAccountId(id);
+    final pathHex = systemKey == null
+        ? null
+        : kExpenseCategorySeedHexByPath[systemKey];
     if (pathHex != null) {
       final parsed = parseAccountColor(pathHex);
       if (parsed != null) return parsed;
@@ -117,20 +119,15 @@ String? expenseCategoryHexForAccountId(String accountId) {
 /// Colour for a report category row / pie slice.
 Color expenseReportSliceColor(
   BuildContext context, {
-  required String expenseAccountId,
-  Account? account,
+  required String categoryId,
+  ExpenseCategory? category,
   int ordinal = 0,
 }) {
-  if (expenseAccountId == kExpenseReportPieOtherId) {
+  if (categoryId == kExpenseReportPieOtherId) {
     return ExpenseCategoryColors.pieOther;
   }
-  if (account != null) {
-    return account.expenseAccentColor(context, ordinal: ordinal);
-  }
-  final pathHex = expenseCategoryHexForAccountId(expenseAccountId);
-  if (pathHex != null) {
-    final parsed = parseAccountColor(pathHex);
-    if (parsed != null) return parsed;
+  if (category != null) {
+    return category.expenseAccentColor(context, ordinal: ordinal);
   }
   return ChartPalette.of(context).accentAt(ordinal);
 }
@@ -147,7 +144,7 @@ typedef ExpenseReportPieSlice = ({
 List<ExpenseReportPieSlice> buildExpenseReportPieSlices(
   BuildContext context, {
   required ExpenseReport report,
-  required Map<String, Account> categoryById,
+  required Map<String, ExpenseCategory> categoryById,
   required String Function(CategoryBreakdown breakdown) labelOf,
 }) {
   final collapsed = collapseExpenseCategoriesForPie(report.byCategory);
@@ -157,8 +154,8 @@ List<ExpenseReportPieSlice> buildExpenseReportPieSlices(
         breakdown: collapsed[i],
         color: expenseReportSliceColor(
           context,
-          expenseAccountId: collapsed[i].expenseAccountId,
-          account: categoryById[collapsed[i].expenseAccountId],
+          categoryId: collapsed[i].categoryId,
+          category: categoryById[collapsed[i].categoryId],
           ordinal: i,
         ),
         labelKey: labelOf(collapsed[i]),

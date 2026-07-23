@@ -15646,12 +15646,63 @@ class $CategoriesTable extends Categories
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _nameOverrideMeta = const VerificationMeta(
+    'nameOverride',
+  );
+  @override
+  late final GeneratedColumn<String> nameOverride = GeneratedColumn<String>(
+    'name_override',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _systemKeyMeta = const VerificationMeta(
+    'systemKey',
+  );
+  @override
+  late final GeneratedColumn<String> systemKey = GeneratedColumn<String>(
+    'system_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _parentIdMeta = const VerificationMeta(
     'parentId',
   );
   @override
   late final GeneratedColumn<String> parentId = GeneratedColumn<String>(
     'parent_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _ledgerAccountIdMeta = const VerificationMeta(
+    'ledgerAccountId',
+  );
+  @override
+  late final GeneratedColumn<String> ledgerAccountId = GeneratedColumn<String>(
+    'ledger_account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _iconMeta = const VerificationMeta('icon');
+  @override
+  late final GeneratedColumn<String> icon = GeneratedColumn<String>(
+    'icon',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -15664,8 +15715,35 @@ class $CategoriesTable extends Categories
   late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
     'sort_order',
     aliasedName,
-    true,
+    false,
     type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _archivedMeta = const VerificationMeta(
+    'archived',
+  );
+  @override
+  late final GeneratedColumn<bool> archived = GeneratedColumn<bool>(
+    'archived',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("archived" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _mergedIntoIdMeta = const VerificationMeta(
+    'mergedIntoId',
+  );
+  @override
+  late final GeneratedColumn<String> mergedIntoId = GeneratedColumn<String>(
+    'merged_into_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
   @override
@@ -15677,8 +15755,15 @@ class $CategoriesTable extends Categories
     deletedAt,
     id,
     name,
+    nameOverride,
+    systemKey,
     parentId,
+    ledgerAccountId,
+    icon,
+    color,
     sortOrder,
+    archived,
+    mergedIntoId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -15741,16 +15826,69 @@ class $CategoriesTable extends Categories
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
+    if (data.containsKey('name_override')) {
+      context.handle(
+        _nameOverrideMeta,
+        nameOverride.isAcceptableOrUnknown(
+          data['name_override']!,
+          _nameOverrideMeta,
+        ),
+      );
+    }
+    if (data.containsKey('system_key')) {
+      context.handle(
+        _systemKeyMeta,
+        systemKey.isAcceptableOrUnknown(data['system_key']!, _systemKeyMeta),
+      );
+    }
     if (data.containsKey('parent_id')) {
       context.handle(
         _parentIdMeta,
         parentId.isAcceptableOrUnknown(data['parent_id']!, _parentIdMeta),
       );
     }
+    if (data.containsKey('ledger_account_id')) {
+      context.handle(
+        _ledgerAccountIdMeta,
+        ledgerAccountId.isAcceptableOrUnknown(
+          data['ledger_account_id']!,
+          _ledgerAccountIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ledgerAccountIdMeta);
+    }
+    if (data.containsKey('icon')) {
+      context.handle(
+        _iconMeta,
+        icon.isAcceptableOrUnknown(data['icon']!, _iconMeta),
+      );
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
     if (data.containsKey('sort_order')) {
       context.handle(
         _sortOrderMeta,
         sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    if (data.containsKey('archived')) {
+      context.handle(
+        _archivedMeta,
+        archived.isAcceptableOrUnknown(data['archived']!, _archivedMeta),
+      );
+    }
+    if (data.containsKey('merged_into_id')) {
+      context.handle(
+        _mergedIntoIdMeta,
+        mergedIntoId.isAcceptableOrUnknown(
+          data['merged_into_id']!,
+          _mergedIntoIdMeta,
+        ),
       );
     }
     return context;
@@ -15792,13 +15930,41 @@ class $CategoriesTable extends Categories
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
+      nameOverride: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name_override'],
+      ),
+      systemKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}system_key'],
+      ),
       parentId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}parent_id'],
       ),
+      ledgerAccountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ledger_account_id'],
+      )!,
+      icon: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}icon'],
+      ),
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      ),
       sortOrder: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}sort_order'],
+      )!,
+      archived: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}archived'],
+      )!,
+      mergedIntoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}merged_into_id'],
       ),
     );
   }
@@ -15835,8 +16001,15 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
   final DateTime? deletedAt;
   final String id;
   final String name;
+  final String? nameOverride;
+  final String? systemKey;
   final String? parentId;
-  final int? sortOrder;
+  final String ledgerAccountId;
+  final String? icon;
+  final String? color;
+  final int sortOrder;
+  final bool archived;
+  final String? mergedIntoId;
   const CategoryRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -15845,8 +16018,15 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
     this.deletedAt,
     required this.id,
     required this.name,
+    this.nameOverride,
+    this.systemKey,
     this.parentId,
-    this.sortOrder,
+    required this.ledgerAccountId,
+    this.icon,
+    this.color,
+    required this.sortOrder,
+    required this.archived,
+    this.mergedIntoId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -15862,11 +16042,26 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
     }
     map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
+    if (!nullToAbsent || nameOverride != null) {
+      map['name_override'] = Variable<String>(nameOverride);
+    }
+    if (!nullToAbsent || systemKey != null) {
+      map['system_key'] = Variable<String>(systemKey);
+    }
     if (!nullToAbsent || parentId != null) {
       map['parent_id'] = Variable<String>(parentId);
     }
-    if (!nullToAbsent || sortOrder != null) {
-      map['sort_order'] = Variable<int>(sortOrder);
+    map['ledger_account_id'] = Variable<String>(ledgerAccountId);
+    if (!nullToAbsent || icon != null) {
+      map['icon'] = Variable<String>(icon);
+    }
+    if (!nullToAbsent || color != null) {
+      map['color'] = Variable<String>(color);
+    }
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['archived'] = Variable<bool>(archived);
+    if (!nullToAbsent || mergedIntoId != null) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId);
     }
     return map;
   }
@@ -15882,12 +16077,25 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
           : Value(deletedAt),
       id: Value(id),
       name: Value(name),
+      nameOverride: nameOverride == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nameOverride),
+      systemKey: systemKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(systemKey),
       parentId: parentId == null && nullToAbsent
           ? const Value.absent()
           : Value(parentId),
-      sortOrder: sortOrder == null && nullToAbsent
+      ledgerAccountId: Value(ledgerAccountId),
+      icon: icon == null && nullToAbsent ? const Value.absent() : Value(icon),
+      color: color == null && nullToAbsent
           ? const Value.absent()
-          : Value(sortOrder),
+          : Value(color),
+      sortOrder: Value(sortOrder),
+      archived: Value(archived),
+      mergedIntoId: mergedIntoId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mergedIntoId),
     );
   }
 
@@ -15904,8 +16112,15 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
+      nameOverride: serializer.fromJson<String?>(json['nameOverride']),
+      systemKey: serializer.fromJson<String?>(json['systemKey']),
       parentId: serializer.fromJson<String?>(json['parentId']),
-      sortOrder: serializer.fromJson<int?>(json['sortOrder']),
+      ledgerAccountId: serializer.fromJson<String>(json['ledgerAccountId']),
+      icon: serializer.fromJson<String?>(json['icon']),
+      color: serializer.fromJson<String?>(json['color']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      archived: serializer.fromJson<bool>(json['archived']),
+      mergedIntoId: serializer.fromJson<String?>(json['mergedIntoId']),
     );
   }
   @override
@@ -15919,8 +16134,15 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
+      'nameOverride': serializer.toJson<String?>(nameOverride),
+      'systemKey': serializer.toJson<String?>(systemKey),
       'parentId': serializer.toJson<String?>(parentId),
-      'sortOrder': serializer.toJson<int?>(sortOrder),
+      'ledgerAccountId': serializer.toJson<String>(ledgerAccountId),
+      'icon': serializer.toJson<String?>(icon),
+      'color': serializer.toJson<String?>(color),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'archived': serializer.toJson<bool>(archived),
+      'mergedIntoId': serializer.toJson<String?>(mergedIntoId),
     };
   }
 
@@ -15932,8 +16154,15 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
     Value<DateTime?> deletedAt = const Value.absent(),
     String? id,
     String? name,
+    Value<String?> nameOverride = const Value.absent(),
+    Value<String?> systemKey = const Value.absent(),
     Value<String?> parentId = const Value.absent(),
-    Value<int?> sortOrder = const Value.absent(),
+    String? ledgerAccountId,
+    Value<String?> icon = const Value.absent(),
+    Value<String?> color = const Value.absent(),
+    int? sortOrder,
+    bool? archived,
+    Value<String?> mergedIntoId = const Value.absent(),
   }) => CategoryRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -15942,8 +16171,15 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     id: id ?? this.id,
     name: name ?? this.name,
+    nameOverride: nameOverride.present ? nameOverride.value : this.nameOverride,
+    systemKey: systemKey.present ? systemKey.value : this.systemKey,
     parentId: parentId.present ? parentId.value : this.parentId,
-    sortOrder: sortOrder.present ? sortOrder.value : this.sortOrder,
+    ledgerAccountId: ledgerAccountId ?? this.ledgerAccountId,
+    icon: icon.present ? icon.value : this.icon,
+    color: color.present ? color.value : this.color,
+    sortOrder: sortOrder ?? this.sortOrder,
+    archived: archived ?? this.archived,
+    mergedIntoId: mergedIntoId.present ? mergedIntoId.value : this.mergedIntoId,
   );
   CategoryRow copyWithCompanion(CategoriesCompanion data) {
     return CategoryRow(
@@ -15958,8 +16194,21 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
+      nameOverride: data.nameOverride.present
+          ? data.nameOverride.value
+          : this.nameOverride,
+      systemKey: data.systemKey.present ? data.systemKey.value : this.systemKey,
       parentId: data.parentId.present ? data.parentId.value : this.parentId,
+      ledgerAccountId: data.ledgerAccountId.present
+          ? data.ledgerAccountId.value
+          : this.ledgerAccountId,
+      icon: data.icon.present ? data.icon.value : this.icon,
+      color: data.color.present ? data.color.value : this.color,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      archived: data.archived.present ? data.archived.value : this.archived,
+      mergedIntoId: data.mergedIntoId.present
+          ? data.mergedIntoId.value
+          : this.mergedIntoId,
     );
   }
 
@@ -15973,8 +16222,15 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('nameOverride: $nameOverride, ')
+          ..write('systemKey: $systemKey, ')
           ..write('parentId: $parentId, ')
-          ..write('sortOrder: $sortOrder')
+          ..write('ledgerAccountId: $ledgerAccountId, ')
+          ..write('icon: $icon, ')
+          ..write('color: $color, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('archived: $archived, ')
+          ..write('mergedIntoId: $mergedIntoId')
           ..write(')'))
         .toString();
   }
@@ -15988,8 +16244,15 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
     deletedAt,
     id,
     name,
+    nameOverride,
+    systemKey,
     parentId,
+    ledgerAccountId,
+    icon,
+    color,
     sortOrder,
+    archived,
+    mergedIntoId,
   );
   @override
   bool operator ==(Object other) =>
@@ -16002,8 +16265,15 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
           other.deletedAt == this.deletedAt &&
           other.id == this.id &&
           other.name == this.name &&
+          other.nameOverride == this.nameOverride &&
+          other.systemKey == this.systemKey &&
           other.parentId == this.parentId &&
-          other.sortOrder == this.sortOrder);
+          other.ledgerAccountId == this.ledgerAccountId &&
+          other.icon == this.icon &&
+          other.color == this.color &&
+          other.sortOrder == this.sortOrder &&
+          other.archived == this.archived &&
+          other.mergedIntoId == this.mergedIntoId);
 }
 
 class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
@@ -16014,8 +16284,15 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
   final Value<DateTime?> deletedAt;
   final Value<String> id;
   final Value<String> name;
+  final Value<String?> nameOverride;
+  final Value<String?> systemKey;
   final Value<String?> parentId;
-  final Value<int?> sortOrder;
+  final Value<String> ledgerAccountId;
+  final Value<String?> icon;
+  final Value<String?> color;
+  final Value<int> sortOrder;
+  final Value<bool> archived;
+  final Value<String?> mergedIntoId;
   final Value<int> rowid;
   const CategoriesCompanion({
     this.ownerUserId = const Value.absent(),
@@ -16025,8 +16302,15 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
     this.deletedAt = const Value.absent(),
     this.id = const Value.absent(),
     this.name = const Value.absent(),
+    this.nameOverride = const Value.absent(),
+    this.systemKey = const Value.absent(),
     this.parentId = const Value.absent(),
+    this.ledgerAccountId = const Value.absent(),
+    this.icon = const Value.absent(),
+    this.color = const Value.absent(),
     this.sortOrder = const Value.absent(),
+    this.archived = const Value.absent(),
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CategoriesCompanion.insert({
@@ -16037,15 +16321,23 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
     this.deletedAt = const Value.absent(),
     required String id,
     required String name,
+    this.nameOverride = const Value.absent(),
+    this.systemKey = const Value.absent(),
     this.parentId = const Value.absent(),
+    required String ledgerAccountId,
+    this.icon = const Value.absent(),
+    this.color = const Value.absent(),
     this.sortOrder = const Value.absent(),
+    this.archived = const Value.absent(),
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
        updatedByDevice = Value(updatedByDevice),
        hlc = Value(hlc),
        id = Value(id),
-       name = Value(name);
+       name = Value(name),
+       ledgerAccountId = Value(ledgerAccountId);
   static Insertable<CategoryRow> custom({
     Expression<String>? ownerUserId,
     Expression<DateTime>? updatedAt,
@@ -16054,8 +16346,15 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
     Expression<DateTime>? deletedAt,
     Expression<String>? id,
     Expression<String>? name,
+    Expression<String>? nameOverride,
+    Expression<String>? systemKey,
     Expression<String>? parentId,
+    Expression<String>? ledgerAccountId,
+    Expression<String>? icon,
+    Expression<String>? color,
     Expression<int>? sortOrder,
+    Expression<bool>? archived,
+    Expression<String>? mergedIntoId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -16066,8 +16365,15 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (id != null) 'id': id,
       if (name != null) 'name': name,
+      if (nameOverride != null) 'name_override': nameOverride,
+      if (systemKey != null) 'system_key': systemKey,
       if (parentId != null) 'parent_id': parentId,
+      if (ledgerAccountId != null) 'ledger_account_id': ledgerAccountId,
+      if (icon != null) 'icon': icon,
+      if (color != null) 'color': color,
       if (sortOrder != null) 'sort_order': sortOrder,
+      if (archived != null) 'archived': archived,
+      if (mergedIntoId != null) 'merged_into_id': mergedIntoId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -16080,8 +16386,15 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
     Value<DateTime?>? deletedAt,
     Value<String>? id,
     Value<String>? name,
+    Value<String?>? nameOverride,
+    Value<String?>? systemKey,
     Value<String?>? parentId,
-    Value<int?>? sortOrder,
+    Value<String>? ledgerAccountId,
+    Value<String?>? icon,
+    Value<String?>? color,
+    Value<int>? sortOrder,
+    Value<bool>? archived,
+    Value<String?>? mergedIntoId,
     Value<int>? rowid,
   }) {
     return CategoriesCompanion(
@@ -16092,8 +16405,15 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
       deletedAt: deletedAt ?? this.deletedAt,
       id: id ?? this.id,
       name: name ?? this.name,
+      nameOverride: nameOverride ?? this.nameOverride,
+      systemKey: systemKey ?? this.systemKey,
       parentId: parentId ?? this.parentId,
+      ledgerAccountId: ledgerAccountId ?? this.ledgerAccountId,
+      icon: icon ?? this.icon,
+      color: color ?? this.color,
       sortOrder: sortOrder ?? this.sortOrder,
+      archived: archived ?? this.archived,
+      mergedIntoId: mergedIntoId ?? this.mergedIntoId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -16124,11 +16444,32 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
     if (name.present) {
       map['name'] = Variable<String>(name.value);
     }
+    if (nameOverride.present) {
+      map['name_override'] = Variable<String>(nameOverride.value);
+    }
+    if (systemKey.present) {
+      map['system_key'] = Variable<String>(systemKey.value);
+    }
     if (parentId.present) {
       map['parent_id'] = Variable<String>(parentId.value);
     }
+    if (ledgerAccountId.present) {
+      map['ledger_account_id'] = Variable<String>(ledgerAccountId.value);
+    }
+    if (icon.present) {
+      map['icon'] = Variable<String>(icon.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
     if (sortOrder.present) {
       map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (archived.present) {
+      map['archived'] = Variable<bool>(archived.value);
+    }
+    if (mergedIntoId.present) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -16146,8 +16487,15 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('nameOverride: $nameOverride, ')
+          ..write('systemKey: $systemKey, ')
           ..write('parentId: $parentId, ')
+          ..write('ledgerAccountId: $ledgerAccountId, ')
+          ..write('icon: $icon, ')
+          ..write('color: $color, ')
           ..write('sortOrder: $sortOrder, ')
+          ..write('archived: $archived, ')
+          ..write('mergedIntoId: $mergedIntoId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -47026,8 +47374,15 @@ typedef $$CategoriesTableCreateCompanionBuilder =
       Value<DateTime?> deletedAt,
       required String id,
       required String name,
+      Value<String?> nameOverride,
+      Value<String?> systemKey,
       Value<String?> parentId,
-      Value<int?> sortOrder,
+      required String ledgerAccountId,
+      Value<String?> icon,
+      Value<String?> color,
+      Value<int> sortOrder,
+      Value<bool> archived,
+      Value<String?> mergedIntoId,
       Value<int> rowid,
     });
 typedef $$CategoriesTableUpdateCompanionBuilder =
@@ -47039,8 +47394,15 @@ typedef $$CategoriesTableUpdateCompanionBuilder =
       Value<DateTime?> deletedAt,
       Value<String> id,
       Value<String> name,
+      Value<String?> nameOverride,
+      Value<String?> systemKey,
       Value<String?> parentId,
-      Value<int?> sortOrder,
+      Value<String> ledgerAccountId,
+      Value<String?> icon,
+      Value<String?> color,
+      Value<int> sortOrder,
+      Value<bool> archived,
+      Value<String?> mergedIntoId,
       Value<int> rowid,
     });
 
@@ -47089,13 +47451,48 @@ class $$CategoriesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get nameOverride => $composableBuilder(
+    column: $table.nameOverride,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get systemKey => $composableBuilder(
+    column: $table.systemKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get parentId => $composableBuilder(
     column: $table.parentId,
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get ledgerAccountId => $composableBuilder(
+    column: $table.ledgerAccountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get icon => $composableBuilder(
+    column: $table.icon,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<int> get sortOrder => $composableBuilder(
     column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get archived => $composableBuilder(
+    column: $table.archived,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -47144,13 +47541,48 @@ class $$CategoriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get nameOverride => $composableBuilder(
+    column: $table.nameOverride,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get systemKey => $composableBuilder(
+    column: $table.systemKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get parentId => $composableBuilder(
     column: $table.parentId,
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get ledgerAccountId => $composableBuilder(
+    column: $table.ledgerAccountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get icon => $composableBuilder(
+    column: $table.icon,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get sortOrder => $composableBuilder(
     column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get archived => $composableBuilder(
+    column: $table.archived,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -47189,11 +47621,38 @@ class $$CategoriesTableAnnotationComposer
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
 
+  GeneratedColumn<String> get nameOverride => $composableBuilder(
+    column: $table.nameOverride,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get systemKey =>
+      $composableBuilder(column: $table.systemKey, builder: (column) => column);
+
   GeneratedColumn<String> get parentId =>
       $composableBuilder(column: $table.parentId, builder: (column) => column);
 
+  GeneratedColumn<String> get ledgerAccountId => $composableBuilder(
+    column: $table.ledgerAccountId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get icon =>
+      $composableBuilder(column: $table.icon, builder: (column) => column);
+
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
   GeneratedColumn<int> get sortOrder =>
       $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<bool> get archived =>
+      $composableBuilder(column: $table.archived, builder: (column) => column);
+
+  GeneratedColumn<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => column,
+  );
 }
 
 class $$CategoriesTableTableManager
@@ -47234,8 +47693,15 @@ class $$CategoriesTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
+                Value<String?> nameOverride = const Value.absent(),
+                Value<String?> systemKey = const Value.absent(),
                 Value<String?> parentId = const Value.absent(),
-                Value<int?> sortOrder = const Value.absent(),
+                Value<String> ledgerAccountId = const Value.absent(),
+                Value<String?> icon = const Value.absent(),
+                Value<String?> color = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<bool> archived = const Value.absent(),
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CategoriesCompanion(
                 ownerUserId: ownerUserId,
@@ -47245,8 +47711,15 @@ class $$CategoriesTableTableManager
                 deletedAt: deletedAt,
                 id: id,
                 name: name,
+                nameOverride: nameOverride,
+                systemKey: systemKey,
                 parentId: parentId,
+                ledgerAccountId: ledgerAccountId,
+                icon: icon,
+                color: color,
                 sortOrder: sortOrder,
+                archived: archived,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -47258,8 +47731,15 @@ class $$CategoriesTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 required String id,
                 required String name,
+                Value<String?> nameOverride = const Value.absent(),
+                Value<String?> systemKey = const Value.absent(),
                 Value<String?> parentId = const Value.absent(),
-                Value<int?> sortOrder = const Value.absent(),
+                required String ledgerAccountId,
+                Value<String?> icon = const Value.absent(),
+                Value<String?> color = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<bool> archived = const Value.absent(),
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CategoriesCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -47269,8 +47749,15 @@ class $$CategoriesTableTableManager
                 deletedAt: deletedAt,
                 id: id,
                 name: name,
+                nameOverride: nameOverride,
+                systemKey: systemKey,
                 parentId: parentId,
+                ledgerAccountId: ledgerAccountId,
+                icon: icon,
+                color: color,
                 sortOrder: sortOrder,
+                archived: archived,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

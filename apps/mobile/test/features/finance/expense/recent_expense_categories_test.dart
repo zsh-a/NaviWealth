@@ -9,12 +9,12 @@ import 'package:naviwealth/features/finance/expense/data/recent_expense_categori
 
 Expense _expense({
   required String id,
-  required String expenseAccountId,
+  required String categoryId,
   required DateTime tradeDate,
 }) {
   return Expense(
     id: id,
-    expenseAccountId: expenseAccountId,
+    categoryId: categoryId,
     amount: Decimal.fromInt(10),
     currency: 'CNY',
     tradeDate: tradeDate,
@@ -48,17 +48,17 @@ void main() {
           (_) => Stream.value([
             _expense(
               id: '1',
-              expenseAccountId: 'food',
+              categoryId: 'food',
               tradeDate: now.subtract(const Duration(days: 1)),
             ),
             _expense(
               id: '2',
-              expenseAccountId: 'food',
+              categoryId: 'food',
               tradeDate: now.subtract(const Duration(days: 2)),
             ),
             _expense(
               id: '3',
-              expenseAccountId: 'transport',
+              categoryId: 'transport',
               tradeDate: now.subtract(const Duration(days: 3)),
             ),
           ]),
@@ -86,12 +86,12 @@ void main() {
             for (var i = 0; i < 6; i++)
               _expense(
                 id: 'old-$i',
-                expenseAccountId: 'transport',
+                categoryId: 'transport',
                 tradeDate: now.subtract(Duration(days: 90 + i)),
               ),
             _expense(
               id: 'new-1',
-              expenseAccountId: 'food',
+              categoryId: 'food',
               tradeDate: now.subtract(const Duration(days: 2)),
             ),
           ]),

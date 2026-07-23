@@ -12,6 +12,7 @@ import 'package:naviwealth/features/finance/data/repositories/manual_asset_repos
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/invariants.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_category_repository.dart';
 import 'package:naviwealth/features/finance/fire/application/fire_proposal_applier.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_plan.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
@@ -36,6 +37,7 @@ void main() {
   late AccountRepository accountRepo;
   late ManualAssetRepository manualAssetRepo;
   late LiabilityRepository liabilityRepo;
+  late ExpenseCategoryRepository expenseCategoryRepo;
   late OptionsStrategyProfileRepository profileRepo;
   late TradeJournalRepository journalRepo;
   late FinanceProposalApplier applier;
@@ -49,7 +51,7 @@ void main() {
         payload: payload,
       );
 
-  setUp(() {
+  setUp(() async {
     db = makeTestDatabase();
     outbox = InMemoryOutboxStore();
     final stamper = makeStubStamper();
@@ -62,6 +64,13 @@ void main() {
       baseCurrency: 'USD',
     );
     accountRepo = AccountRepository(db: db, outbox: outbox, stamper: stamper);
+    await accountRepo.seedSystemAccounts();
+    expenseCategoryRepo = ExpenseCategoryRepository(
+      db: db,
+      outbox: outbox,
+      stamper: stamper,
+    );
+    await expenseCategoryRepo.seedDefaults('u-test');
     manualAssetRepo = ManualAssetRepository(
       db: db,
       outbox: outbox,
@@ -93,6 +102,7 @@ void main() {
       accountRepo: accountRepo,
       manualAssetRepo: manualAssetRepo,
       liabilityRepo: liabilityRepo,
+      expenseCategoryRepo: expenseCategoryRepo,
       optionsApplier: OptionsProposalApplier(
         profileRepo: profileRepo,
         tradeJournalRepo: journalRepo,

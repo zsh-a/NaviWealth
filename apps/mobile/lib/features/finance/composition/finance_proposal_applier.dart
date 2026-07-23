@@ -18,6 +18,8 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_repo
 import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_category_providers.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_category_repository.dart';
 import 'package:naviwealth/features/finance/fire/application/fire_proposal_applier.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_service.dart';
@@ -53,6 +55,7 @@ class FinanceProposalApplier implements ProposalApplier {
     required this.accountRepo,
     required this.manualAssetRepo,
     required LiabilityRepository liabilityRepo,
+    required ExpenseCategoryRepository expenseCategoryRepo,
     required this.optionsApplier,
     required this.fireApplier,
     required this.currentUserId,
@@ -62,6 +65,7 @@ class FinanceProposalApplier implements ProposalApplier {
          accountRepo: accountRepo,
          manualAssetRepo: manualAssetRepo,
          liabilityRepo: liabilityRepo,
+         expenseCategoryRepo: expenseCategoryRepo,
          currentUserId: currentUserId,
        ),
        tradeApplier = FinanceTradeProposalApplier(
@@ -213,6 +217,10 @@ final financeProposalApplierProvider = FutureProvider<ProposalApplier>((
   final accountRepo = await ref.watch(accountRepositoryProvider.future);
   final manualAssetRepo = await ref.watch(manualAssetRepositoryProvider.future);
   final liabilityRepo = await ref.watch(liabilityRepositoryProvider.future);
+  await ref.watch(expenseCategoriesSeedProvider.future);
+  final expenseCategoryRepo = await ref.watch(
+    expenseCategoryRepositoryProvider.future,
+  );
   final optionsProfileRepo = await ref.watch(
     optionsStrategyProfileRepositoryProvider.future,
   );
@@ -232,6 +240,7 @@ final financeProposalApplierProvider = FutureProvider<ProposalApplier>((
     accountRepo: accountRepo,
     manualAssetRepo: manualAssetRepo,
     liabilityRepo: liabilityRepo,
+    expenseCategoryRepo: expenseCategoryRepo,
     optionsApplier: OptionsProposalApplier(
       profileRepo: optionsProfileRepo,
       tradeJournalRepo: tradeJournalRepo,

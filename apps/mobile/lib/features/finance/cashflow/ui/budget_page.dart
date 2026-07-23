@@ -2,15 +2,17 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
-import 'package:naviwealth/features/finance/domain/models/account.dart';
-import 'package:naviwealth/features/finance/domain/models/enums.dart';
-import 'package:naviwealth/features/finance/shared/l10n/account_l10n.dart';
-import 'package:naviwealth/features/finance/shared/ui/account_tree_picker.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_category_providers.dart';
+import 'package:naviwealth/features/finance/expense/domain/expense_category.dart';
+import 'package:naviwealth/features/finance/expense/ui/expense_category_l10n.dart';
+import 'package:naviwealth/features/finance/expense/ui/expense_category_picker.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../domain/budget_summary.dart';
@@ -47,8 +49,8 @@ class _PlanBudgetPageState extends ConsumerState<PlanBudgetPage> {
       budgetsForMonthProvider(previousMonthKey),
     );
     final summaryAsync = ref.watch(monthlyBudgetSummaryProvider(monthKey));
-    final accountsAsync = ref.watch(allAccountsStreamProvider);
-    final accounts = accountsAsync.value ?? const <Account>[];
+    final categoriesAsync = ref.watch(allExpenseCategoriesProvider);
+    final categories = categoriesAsync.value ?? const <ExpenseCategory>[];
     final rows = budgetsAsync.value ?? const <BudgetRow>[];
     final baseCurrency = ref.watch(baseCurrencyProvider);
 
@@ -58,7 +60,7 @@ class _PlanBudgetPageState extends ConsumerState<PlanBudgetPage> {
         ref,
         monthKey: monthKey,
         currency: baseCurrency,
-        accounts: accounts,
+        categories: categories,
         existingCategoryIds: {for (final row in rows) row.categoryId},
       );
     }
@@ -66,6 +68,11 @@ class _PlanBudgetPageState extends ConsumerState<PlanBudgetPage> {
     return AppPageScaffold(
       title: l10n.planBudgetTitle,
       actions: [
+        AppHeaderAction(
+          semanticsLabel: l10n.expenseCategoriesManageTitle,
+          icon: const Icon(FLucideIcons.tags),
+          onPress: () => context.push(FinanceRoutes.planExpenseCategories),
+        ),
         AppHeaderAction(
           semanticsLabel: l10n.planBudgetCopyPreviousAction,
           icon: const Icon(FLucideIcons.copy),
@@ -85,8 +92,8 @@ class _PlanBudgetPageState extends ConsumerState<PlanBudgetPage> {
           icon: const Icon(FLucideIcons.plus),
           onPress:
               budgetsAsync.hasValue &&
-                  accountsAsync.hasValue &&
-                  _availableBudgetCategories(accounts, {
+                  categoriesAsync.hasValue &&
+                  _availableBudgetCategories(categories, {
                     for (final row in rows) row.categoryId,
                   }).isNotEmpty
               ? openCreate
@@ -105,9 +112,10 @@ class _PlanBudgetPageState extends ConsumerState<PlanBudgetPage> {
         data: (rows) => _BudgetBody(
           monthKey: monthKey,
           rows: rows,
-          accounts: accounts,
-          accountsLoading: accountsAsync.isLoading && !accountsAsync.hasValue,
-          accountsError: accountsAsync.error,
+          categories: categories,
+          categoriesLoading:
+              categoriesAsync.isLoading && !categoriesAsync.hasValue,
+          categoriesError: categoriesAsync.error,
           summary: summaryAsync.hasValue
               ? summaryAsync.requireValue.summary
               : null,
@@ -170,9 +178,9 @@ class _BudgetBody extends ConsumerWidget {
   const _BudgetBody({
     required this.monthKey,
     required this.rows,
-    required this.accounts,
-    required this.accountsLoading,
-    required this.accountsError,
+    required this.categories,
+    required this.categoriesLoading,
+    required this.categoriesError,
     required this.summary,
     required this.mismatchedCount,
     required this.onPreviousMonth,
@@ -182,9 +190,9 @@ class _BudgetBody extends ConsumerWidget {
 
   final String monthKey;
   final List<BudgetRow> rows;
-  final List<Account> accounts;
-  final bool accountsLoading;
-  final Object? accountsError;
+  final List<ExpenseCategory> categories;
+  final bool categoriesLoading;
+  final Object? categoriesError;
   final MonthlyBudgetSummary? summary;
   final int mismatchedCount;
   final VoidCallback onPreviousMonth;
@@ -199,8 +207,8 @@ class _BudgetBody extends ConsumerWidget {
         item.categoryId: item,
     };
     final totalsByCurrency = _totalsByCurrency(rows);
-    final accountLabelById = _accountLabelById(context, accounts);
-    final selectableAccounts = _selectableExpenseAccounts(accounts);
+    final categoryLabelById = _categoryLabelById(context, categories);
+    final selectableCategories = _selectableExpenseCategories(categories);
 
     return Column(
       children: [
@@ -214,14 +222,14 @@ class _BudgetBody extends ConsumerWidget {
               ? AppEmptyState(
                   icon: FLucideIcons.piggyBank,
                   title: l10n.planBudgetEmptyTitle,
-                  message: accountsError == null
+                  message: categoriesError == null
                       ? l10n.planBudgetEmptyBody
                       : userSafeErrorMessage(
                           context,
-                          accountsError!,
+                          categoriesError!,
                           operation: 'load expense categories',
                         ),
-                  action: accountsLoading || selectableAccounts.isEmpty
+                  action: categoriesLoading || selectableCategories.isEmpty
                       ? null
                       : FButton(
                           onPress: onCreate,
@@ -259,14 +267,14 @@ class _BudgetBody extends ConsumerWidget {
                       _BudgetTile(
                         row: row,
                         categoryLabel:
-                            accountLabelById[row.categoryId] ?? row.categoryId,
+                            categoryLabelById[row.categoryId] ?? row.categoryId,
                         status: statusByCategory[row.categoryId],
                         onEdit: () => _showBudgetFormSheet(
                           context,
                           ref,
                           monthKey: monthKey,
                           currency: row.currency,
-                          accounts: accounts,
+                          categories: categories,
                           existingCategoryIds: {
                             for (final item in rows) item.categoryId,
                           },
@@ -537,7 +545,7 @@ Future<void> _showBudgetFormSheet(
   WidgetRef ref, {
   required String monthKey,
   required String currency,
-  required List<Account> accounts,
+  required List<ExpenseCategory> categories,
   required Set<String> existingCategoryIds,
   BudgetRow? row,
 }) async {
@@ -547,7 +555,7 @@ Future<void> _showBudgetFormSheet(
       ref: ref,
       monthKey: monthKey,
       currency: currency,
-      accounts: accounts,
+      categories: categories,
       existingCategoryIds: existingCategoryIds,
       row: row,
     ),
@@ -559,7 +567,7 @@ class _BudgetFormSheet extends StatefulWidget {
     required this.ref,
     required this.monthKey,
     required this.currency,
-    required this.accounts,
+    required this.categories,
     required this.existingCategoryIds,
     this.row,
   });
@@ -567,7 +575,7 @@ class _BudgetFormSheet extends StatefulWidget {
   final WidgetRef ref;
   final String monthKey;
   final String currency;
-  final List<Account> accounts;
+  final List<ExpenseCategory> categories;
   final Set<String> existingCategoryIds;
   final BudgetRow? row;
 
@@ -604,22 +612,22 @@ class _BudgetFormSheetState extends State<_BudgetFormSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final accountLabelById = _accountLabelById(context, widget.accounts);
-    final pickerAccounts = widget.accounts
+    final categoryLabelById = _categoryLabelById(context, widget.categories);
+    final pickerCategories = widget.categories
         .where(
-          (account) =>
-              !widget.existingCategoryIds.contains(account.id) ||
-              account.id == _categoryId,
+          (category) =>
+              !widget.existingCategoryIds.contains(category.id) ||
+              category.id == _categoryId,
         )
         .toList(growable: false);
     final hasAvailableCategory = _availableBudgetCategories(
-      widget.accounts,
+      widget.categories,
       widget.existingCategoryIds,
     ).isNotEmpty;
     return AppSheet(
       title: _editing ? l10n.planBudgetEditTitle : l10n.planBudgetCreateTitle,
       subtitle: _editing
-          ? accountLabelById[widget.row!.categoryId] ?? widget.row!.categoryId
+          ? categoryLabelById[widget.row!.categoryId] ?? widget.row!.categoryId
           : l10n.planBudgetPeriodCurrency(widget.monthKey, widget.currency),
       actions: [
         if (_editing)
@@ -640,14 +648,13 @@ class _BudgetFormSheetState extends State<_BudgetFormSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (!_editing && hasAvailableCategory) ...[
-            AccountTreePicker(
-              accounts: pickerAccounts,
+            ExpenseCategoryPicker(
+              categories: pickerCategories,
               value: _categoryId,
               onChanged: (value) => setState(() {
                 _categoryId = value;
                 _error = null;
               }),
-              category: AccountSide.expense,
               label: l10n.planBudgetCategoryLabel,
               helperText: l10n.planBudgetCategoryHelper,
               leafOnly: true,
@@ -762,44 +769,46 @@ class _BudgetFormSheetState extends State<_BudgetFormSheet> {
   }
 }
 
-Map<String, String> _accountLabelById(
+Map<String, String> _categoryLabelById(
   BuildContext context,
-  List<Account> accounts,
+  List<ExpenseCategory> categories,
 ) {
   final l10n = AppLocalizations.of(context);
-  final byId = <String, Account>{
-    for (final account in accounts) account.id: account,
+  final byId = <String, ExpenseCategory>{
+    for (final category in categories) category.id: category,
   };
   return {
-    for (final account in accounts)
-      account.id: localizedAccountPath(l10n, account, byId),
+    for (final category in categories)
+      category.id: localizedExpenseCategoryPath(l10n, category, byId),
   };
 }
 
-List<Account> _selectableExpenseAccounts(List<Account> accounts) {
-  final expenseAccounts = accounts
+List<ExpenseCategory> _selectableExpenseCategories(
+  List<ExpenseCategory> categories,
+) {
+  final activeCategories = categories
       .where(
-        (account) =>
-            account.category == AccountSide.expense &&
-            !account.archived &&
-            account.sync.deletedAt == null,
+        (category) =>
+            !category.archived &&
+            category.sync.deletedAt == null &&
+            !category.isMerged,
       )
       .toList(growable: false);
   final parentIds = <String>{
-    for (final account in expenseAccounts)
-      if (account.parentId != null) account.parentId!,
+    for (final category in activeCategories)
+      if (category.parentId != null) category.parentId!,
   };
-  return expenseAccounts
-      .where((account) => !parentIds.contains(account.id))
+  return activeCategories
+      .where((category) => !parentIds.contains(category.id))
       .toList(growable: false);
 }
 
-List<Account> _availableBudgetCategories(
-  List<Account> accounts,
+List<ExpenseCategory> _availableBudgetCategories(
+  List<ExpenseCategory> categories,
   Set<String> existingCategoryIds,
-) => _selectableExpenseAccounts(
-  accounts,
-).where((account) => !existingCategoryIds.contains(account.id)).toList();
+) => _selectableExpenseCategories(
+  categories,
+).where((category) => !existingCategoryIds.contains(category.id)).toList();
 
 Map<String, Decimal> _totalsByCurrency(List<BudgetRow> rows) {
   final totalsByCurrency = <String, Decimal>{};

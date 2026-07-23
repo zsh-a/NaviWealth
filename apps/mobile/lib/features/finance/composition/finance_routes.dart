@@ -19,6 +19,7 @@ import 'package:naviwealth/features/finance/cashflow/ui/budget_page.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/cashflow_page.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/dividend_center_page.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/recurring_transactions_page.dart';
+import 'package:naviwealth/features/finance/expense/ui/expense_categories_page.dart';
 import 'package:naviwealth/features/finance/expense/ui/expense_form_page.dart';
 import 'package:naviwealth/features/finance/expense/ui/spending_page.dart';
 import 'package:naviwealth/features/finance/fire/ui/fire_page.dart'
@@ -431,6 +432,11 @@ StatefulShellRoute financeShellRoute() {
                 path: 'budget',
                 name: FinanceRouteNames.planBudget,
                 builder: (context, state) => const PlanBudgetPage(),
+              ),
+              GoRoute(
+                path: 'expense-categories',
+                name: FinanceRouteNames.planExpenseCategories,
+                builder: (context, state) => const ExpenseCategoriesPage(),
               ),
               GoRoute(
                 path: 'wheel',

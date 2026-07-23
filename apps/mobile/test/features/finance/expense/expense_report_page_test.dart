@@ -7,10 +7,10 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
-import 'package:naviwealth/features/finance/domain/models/account.dart';
-import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/expense.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_category_providers.dart';
 import 'package:naviwealth/features/finance/expense/data/expense_report_providers.dart';
+import 'package:naviwealth/features/finance/expense/domain/expense_category.dart';
 import 'package:naviwealth/features/finance/expense/domain/expense_report_range.dart';
 import 'package:naviwealth/features/finance/expense/ui/spending_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -25,31 +25,29 @@ SyncMeta _meta() => SyncMeta(
 
 Expense _expense({
   required String id,
-  required String expenseAccountId,
+  required String categoryId,
   required Decimal amount,
   required DateTime date,
 }) => Expense(
   id: id,
-  expenseAccountId: expenseAccountId,
+  categoryId: categoryId,
   amount: amount,
   currency: 'CNY',
   tradeDate: date,
   sync: _meta(),
 );
 
-Account _account(String id, String name) => Account(
+ExpenseCategory _category(String id, String name) => ExpenseCategory(
   id: id,
-  type: AccountCategory.asset,
   name: name,
-  currency: 'CNY',
-  category: AccountSide.expense,
+  ledgerAccountId: 'ledger-$id',
   sync: _meta(),
 );
 
 Future<ProviderScope> _wrap({
   required Widget child,
   List<Expense> expenses = const [],
-  List<Account> accounts = const [],
+  List<ExpenseCategory> categories = const [],
 }) async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
   final prefs = await SharedPreferences.getInstance();
@@ -59,8 +57,9 @@ Future<ProviderScope> _wrap({
       journalExpensesStreamProvider.overrideWith(
         (ref) => Stream.value(expenses),
       ),
-      accountsStreamProvider.overrideWith((ref) => Stream.value(accounts)),
-      allAccountsStreamProvider.overrideWith((ref) => Stream.value(accounts)),
+      allExpenseCategoriesProvider.overrideWith(
+        (ref) => Stream.value(categories),
+      ),
       // FX rates stream — empty list is fine for single-currency tests.
       fxRatesStreamProvider.overrideWith((ref) => Stream.value(const [])),
     ],
@@ -97,24 +96,27 @@ void main() {
     final expenses = [
       _expense(
         id: 'e1',
-        expenseAccountId: 'dining',
+        categoryId: 'dining',
         amount: Decimal.parse('120'),
         date: inMonth,
       ),
       _expense(
         id: 'e2',
-        expenseAccountId: 'transport',
+        categoryId: 'transport',
         amount: Decimal.parse('40'),
         date: inMonth,
       ),
     ];
 
-    final accounts = [_account('dining', '餐饮'), _account('transport', '交通')];
+    final categories = [
+      _category('dining', '餐饮'),
+      _category('transport', '交通'),
+    ];
 
     final widget = await _wrap(
       child: const SpendingPage(),
       expenses: expenses,
-      accounts: accounts,
+      categories: categories,
     );
     await tester.pumpWidget(widget);
     await tester.pumpAndSettle();

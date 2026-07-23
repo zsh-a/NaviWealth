@@ -684,6 +684,19 @@ void main() {
         side: AccountSide.expense,
         type: AccountCategory.asset,
       );
+      await db
+          .into(db.categories)
+          .insert(
+            CategoriesCompanion.insert(
+              id: 'food-category',
+              name: 'Food',
+              ledgerAccountId: 'food',
+              ownerUserId: 'u-test',
+              updatedAt: DateTime.utc(2026),
+              updatedByDevice: 'dev-test',
+              hlc: const Hlc(wallMillis: 1, counter: 0, nodeId: 'dev-test'),
+            ),
+          );
       await repo.create(
         entry: JournalEntryDraft(
           id: 'je-expense',
@@ -693,10 +706,10 @@ void main() {
         postings: [cashLeg('food', '12.50'), cashLeg('cash', '-12.50')],
       );
 
-      final expenses = await repo.watchExpenses().first;
+      final expenses = await repo.watchExpenses('u-test').first;
 
       expect(expenses, hasLength(1));
-      expect(expenses.single.expenseAccountId, 'food');
+      expect(expenses.single.categoryId, 'food-category');
       expect(expenses.single.fromAccountId, 'cash');
       expect(expenses.single.amount, Decimal.parse('12.50'));
     });

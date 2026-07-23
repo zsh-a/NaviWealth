@@ -5,7 +5,9 @@
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/features/finance/data/repositories/budget_repository.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_category_repository.dart';
 
 import 'support/app_harness.dart';
 import 'support/page_objects.dart';
@@ -29,9 +31,14 @@ void main() {
         db: data.db,
         outbox: data.outbox,
         stamper: data.stamper,
+        ownerUserId: kLocalOnlyUserId,
+      );
+      final categoryId = ExpenseCategoryRepository.systemCategoryId(
+        kLocalOnlyUserId,
+        'dining',
       );
       final budget = await repo.create(
-        categoryId: 'system-account:u-test:expense:dining',
+        categoryId: categoryId,
         periodMonth: _currentMonthKey(),
         amount: Decimal.parse('1500'),
         currency: 'CNY',
@@ -47,9 +54,9 @@ void main() {
       await plan.openBudget();
 
       final page = BudgetPageObject(tester);
-      page.expectBudgetVisible('system-account:u-test:expense:dining');
+      page.expectBudgetVisible('Dining');
       await page.editBudget(
-        categoryId: 'system-account:u-test:expense:dining',
+        categoryId: categoryId,
         amount: '1800',
         note: 'Flow dining cap',
       );

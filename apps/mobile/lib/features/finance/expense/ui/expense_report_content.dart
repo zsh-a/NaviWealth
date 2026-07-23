@@ -4,10 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/expense_report_providers.dart';
+import '../domain/expense_category.dart';
 import '../domain/expense_report.dart';
 import '../domain/expense_report_range.dart';
 import 'expense_report_sections.dart';
@@ -20,7 +20,7 @@ class SpendingBody extends StatelessWidget {
   });
 
   final ExpenseReport report;
-  final Map<String, Account> categoryById;
+  final Map<String, ExpenseCategory> categoryById;
 
   @override
   Widget build(BuildContext context) {

@@ -8,7 +8,7 @@ class _Pie extends StatelessWidget {
   });
 
   final ExpenseReport report;
-  final Map<String, Account> categoryById;
+  final Map<String, ExpenseCategory> categoryById;
   final List<ExpenseReportPieSlice> slices;
 
   @override
@@ -44,6 +44,7 @@ class _Pie extends StatelessWidget {
                   context,
                   report: report,
                   breakdown: breakdown,
+                  categoryById: categoryById,
                 );
               }),
               semanticLabel: l10n.expenseReportCategoryShare,
@@ -63,7 +64,7 @@ class _PieLegend extends StatelessWidget {
   });
 
   final ExpenseReport report;
-  final Map<String, Account> categoryById;
+  final Map<String, ExpenseCategory> categoryById;
   final List<ExpenseReportPieSlice> slices;
 
   @override
@@ -86,6 +87,7 @@ class _PieLegend extends StatelessWidget {
               context,
               report: report,
               breakdown: slice.breakdown,
+              categoryById: categoryById,
             ),
           ),
         if (slices.isEmpty)

@@ -24,7 +24,7 @@ TransactionInput expenseToTransactionInput(Expense e) {
     amountMinor: '-$cents',
     currency: e.currency,
     occurredAt: e.tradeDate,
-    accountId: e.expenseAccountId,
-    categoryId: e.expenseAccountId,
+    accountId: e.fromAccountId,
+    categoryId: e.categoryId,
   );
 }

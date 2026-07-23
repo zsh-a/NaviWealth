@@ -15,7 +15,12 @@ void main() {
   setUp(() {
     db = makeTestDatabase();
     outbox = InMemoryOutboxStore();
-    repo = BudgetRepository(db: db, outbox: outbox, stamper: makeStubStamper());
+    repo = BudgetRepository(
+      db: db,
+      outbox: outbox,
+      stamper: makeStubStamper(),
+      ownerUserId: 'u-test',
+    );
   });
 
   tearDown(() => db.close());

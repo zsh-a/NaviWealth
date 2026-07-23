@@ -157,11 +157,9 @@ mixin JournalEntryRepositoryReadMixin {
   }
 
   /// Live stream of expense entries materialised from the
-  /// journal. Each row is a JE whose expense-leg posting sits on an
-  /// `accounts.category = 'expense'` account. The result is shaped as
-  /// [Expense] so existing report / list UI can consume it without
-  /// changing their domain model.
-  Stream<List<Expense>> watchExpenses() {
+  /// journal. Category identity comes from the first-class `categories`
+  /// table; the linked ledger account remains an internal posting detail.
+  Stream<List<Expense>> watchExpenses(String ownerUserId) {
     final query =
         _db.select(_db.journalEntries).join([
             innerJoin(
@@ -169,14 +167,16 @@ mixin JournalEntryRepositoryReadMixin {
               _db.postings.journalEntryId.equalsExp(_db.journalEntries.id),
             ),
             innerJoin(
-              _db.accounts,
-              _db.accounts.id.equalsExp(_db.postings.accountId),
+              _db.categories,
+              _db.categories.ledgerAccountId.equalsExp(_db.postings.accountId),
             ),
           ])
-          ..where(_db.accounts.category.equals(AccountSide.expense.name))
+          ..where(_db.journalEntries.ownerUserId.equals(ownerUserId))
+          ..where(_db.postings.ownerUserId.equals(ownerUserId))
+          ..where(_db.categories.ownerUserId.equals(ownerUserId))
           ..where(_db.journalEntries.deletedAt.isNull())
           ..where(_db.postings.deletedAt.isNull())
-          ..where(_db.accounts.deletedAt.isNull())
+          ..where(_db.categories.deletedAt.isNull())
           ..orderBy([
             OrderingTerm(
               expression: _db.journalEntries.date,
@@ -191,6 +191,7 @@ mixin JournalEntryRepositoryReadMixin {
       if (entryIds.isNotEmpty) {
         final postings =
             await (_db.select(_db.postings)
+                  ..where((t) => t.ownerUserId.equals(ownerUserId))
                   ..where((t) => t.deletedAt.isNull())
                   ..where((t) => t.journalEntryId.isIn(entryIds)))
                 .get();
@@ -204,9 +205,11 @@ mixin JournalEntryRepositoryReadMixin {
       for (final row in rows) {
         final jeRow = row.readTable(_db.journalEntries);
         final postingRow = row.readTable(_db.postings);
+        final categoryRow = row.readTable(_db.categories);
         final e = _postingToExpense(
           jeRow,
           postingRow,
+          categoryRow.id,
           postingsByEntryId[jeRow.id] ?? const <PostingRow>[],
         );
         if (e != null) out.add(e);

@@ -20,8 +20,10 @@ import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/invariants.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_category_providers.dart';
+import 'package:naviwealth/features/finance/expense/domain/expense_category.dart';
+import 'package:naviwealth/features/finance/expense/ui/expense_category_picker.dart';
 import 'package:naviwealth/features/finance/expense/ui/expense_form_page.dart';
-import 'package:naviwealth/features/finance/shared/ui/account_tree_picker.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -118,6 +120,21 @@ Future<Widget> _wrap({
       ),
       allAccountsStreamProvider.overrideWith(
         (_) => allAccountsStream ?? Stream.value(allAccounts),
+      ),
+      expenseCategoriesProvider.overrideWith(
+        (_) => Stream.value([
+          for (final account in allAccounts)
+            if (account.category == AccountSide.expense)
+              ExpenseCategory(
+                id: account.id,
+                name: account.name,
+                parentId: account.parentId,
+                ledgerAccountId: account.id,
+                icon: account.icon,
+                color: account.color,
+                sync: account.sync,
+              ),
+        ]),
       ),
     ],
     child: MaterialApp.router(
@@ -312,7 +329,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     final categoryBefore = tester
-        .widget<AccountTreePicker>(find.byType(AccountTreePicker))
+        .widget<ExpenseCategoryPicker>(find.byType(ExpenseCategoryPicker))
         .value;
 
     tester
@@ -326,7 +343,9 @@ void main() {
     );
     expect(find.byType(CurrencyPicker), findsNothing);
     expect(
-      tester.widget<AccountTreePicker>(find.byType(AccountTreePicker)).value,
+      tester
+          .widget<ExpenseCategoryPicker>(find.byType(ExpenseCategoryPicker))
+          .value,
       categoryBefore,
     );
   });

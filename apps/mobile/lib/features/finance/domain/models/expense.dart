@@ -19,7 +19,7 @@ part 'expense.freezed.dart';
 abstract class Expense with _$Expense {
   const factory Expense({
     required String id,
-    required String expenseAccountId,
+    required String categoryId,
     String? fromAccountId,
     required Decimal amount,
     required String currency,

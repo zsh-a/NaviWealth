@@ -22,7 +22,7 @@ Expense _expense({
   DateTime? date,
 }) => Expense(
   id: '$categoryId-$amount',
-  expenseAccountId: categoryId,
+  categoryId: categoryId,
   amount: Decimal.parse(amount),
   currency: currency,
   tradeDate: date ?? DateTime.utc(2026, 5, 10),

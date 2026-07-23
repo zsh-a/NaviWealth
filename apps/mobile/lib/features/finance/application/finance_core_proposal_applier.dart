@@ -8,6 +8,7 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_repo
 import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart'
     show AccountCategory;
+import 'package:naviwealth/features/finance/expense/data/expense_category_repository.dart';
 import 'package:naviwealth/features/finance/expense/domain/expense_category_taxonomy.dart';
 import 'package:naviwealth/features/finance/liabilities/data/liability_repository.dart';
 
@@ -17,6 +18,7 @@ class FinanceCoreProposalApplier {
     required this.accountRepo,
     required this.manualAssetRepo,
     required this.liabilityRepo,
+    required this.expenseCategoryRepo,
     required this.currentUserId,
   });
 
@@ -24,6 +26,7 @@ class FinanceCoreProposalApplier {
   final AccountRepository accountRepo;
   final ManualAssetRepository manualAssetRepo;
   final LiabilityRepository liabilityRepo;
+  final ExpenseCategoryRepository expenseCategoryRepo;
   final Future<String> Function() currentUserId;
 
   Future<ProposalApplyState> applyExpense(
@@ -40,14 +43,19 @@ class FinanceCoreProposalApplier {
       throw ProposalApplyException('Unknown expense category: $categorySlug');
     }
     final ownerUserId = await currentUserId();
-    final expenseAccountId = AccountRepository.systemAccountIdForPath(
-      'expense:$categorySlug',
-      ownerUserId: ownerUserId,
+    final category = await expenseCategoryRepo.findById(
+      ownerUserId,
+      ExpenseCategoryRepository.systemCategoryId(ownerUserId, categorySlug),
     );
+    if (category == null || category.archived || category.isMerged) {
+      throw ProposalApplyException(
+        'Expense category is unavailable: $categorySlug',
+      );
+    }
 
     final build = JournalEntryBuilders.expense(
       date: tradeDate,
-      expenseAccountId: expenseAccountId,
+      expenseAccountId: category.ledgerAccountId,
       fromAccountId: fromAccountId,
       amount: amount,
       currency: currency,

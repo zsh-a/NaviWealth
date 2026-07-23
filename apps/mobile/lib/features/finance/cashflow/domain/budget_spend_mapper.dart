@@ -27,7 +27,7 @@ Map<String, Money> buildBudgetSpendByCategoryId({
     );
     if (converted == null) continue;
     spendByCategory.update(
-      expense.expenseAccountId,
+      expense.categoryId,
       (current) => current + converted,
       ifAbsent: () => converted,
     );

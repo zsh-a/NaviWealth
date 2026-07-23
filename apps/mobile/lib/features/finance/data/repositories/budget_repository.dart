@@ -17,15 +17,18 @@ class BudgetRepository {
     required AppDatabase db,
     required OutboxStore outbox,
     required MutationStamper stamper,
+    required String ownerUserId,
     Uuid uuid = const Uuid(),
   }) : _db = db,
        _outbox = outbox,
        _stamper = stamper,
+       _ownerUserId = ownerUserId,
        _uuid = uuid;
 
   final AppDatabase _db;
   final OutboxStore _outbox;
   final MutationStamper _stamper;
+  final String _ownerUserId;
   final Uuid _uuid;
 
   static const String _tableName = 'budgets';
@@ -36,6 +39,7 @@ class BudgetRepository {
   /// categoryId asc) so the UI can group by month without re-sorting.
   Stream<List<BudgetRow>> watchAll() {
     final query = _db.select(_db.budgets)
+      ..where((t) => t.ownerUserId.equals(_ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([
         (t) => OrderingTerm(expression: t.periodMonth, mode: OrderingMode.desc),
@@ -48,6 +52,7 @@ class BudgetRepository {
   Stream<List<BudgetRow>> watchByMonth(String periodMonth) {
     _requireMonth(periodMonth);
     final query = _db.select(_db.budgets)
+      ..where((t) => t.ownerUserId.equals(_ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..where((t) => t.periodMonth.equals(periodMonth))
       ..orderBy([(t) => OrderingTerm(expression: t.categoryId)]);
@@ -60,6 +65,7 @@ class BudgetRepository {
   }) async {
     _requireMonth(periodMonth);
     return (_db.select(_db.budgets)
+          ..where((t) => t.ownerUserId.equals(_ownerUserId))
           ..where((t) => t.deletedAt.isNull())
           ..where((t) => t.categoryId.equals(categoryId))
           ..where((t) => t.periodMonth.equals(periodMonth)))
@@ -90,6 +96,9 @@ class BudgetRepository {
       );
     }
     final stamp = await _stamper.stamp();
+    if (stamp.ownerUserId != _ownerUserId) {
+      throw StateError('Budget owner mismatch.');
+    }
     final id = _uuid.v4();
     final companion = BudgetsCompanion.insert(
       id: id,
@@ -98,7 +107,7 @@ class BudgetRepository {
       amount: amount,
       currency: _normalizeCurrency(currency),
       note: Value(note),
-      ownerUserId: stamp.ownerUserId,
+      ownerUserId: _ownerUserId,
       updatedAt: stamp.now,
       updatedByDevice: stamp.deviceId,
       hlc: stamp.hlc,
@@ -152,6 +161,9 @@ class BudgetRepository {
   }) async {
     if (amount != null) _requireNonNegative(amount);
     final stamp = await _stamper.stamp();
+    if (stamp.ownerUserId != _ownerUserId) {
+      throw StateError('Budget owner mismatch.');
+    }
     var pending = BudgetsCompanion(
       updatedAt: Value(stamp.now),
       updatedByDevice: Value(stamp.deviceId),
@@ -167,9 +179,10 @@ class BudgetRepository {
       pending = pending.copyWith(note: Value(note));
     }
     await _db.transaction(() async {
-      await (_db.update(
-        _db.budgets,
-      )..where((t) => t.id.equals(id))).write(pending);
+      await (_db.update(_db.budgets)
+            ..where((t) => t.ownerUserId.equals(_ownerUserId))
+            ..where((t) => t.id.equals(id)))
+          .write(pending);
       await _outbox.enqueue(table: _tableName, rowId: id);
     });
     return (await _byId(id))!;
@@ -179,22 +192,30 @@ class BudgetRepository {
   /// the next sync push.
   Future<void> delete(String id) async {
     final stamp = await _stamper.stamp();
+    if (stamp.ownerUserId != _ownerUserId) {
+      throw StateError('Budget owner mismatch.');
+    }
     await _db.transaction(() async {
-      await (_db.update(_db.budgets)..where((t) => t.id.equals(id))).write(
-        BudgetsCompanion(
-          updatedAt: Value(stamp.now),
-          updatedByDevice: Value(stamp.deviceId),
-          hlc: Value(stamp.hlc),
-          deletedAt: Value(stamp.now),
-        ),
-      );
+      await (_db.update(_db.budgets)
+            ..where((t) => t.ownerUserId.equals(_ownerUserId))
+            ..where((t) => t.id.equals(id)))
+          .write(
+            BudgetsCompanion(
+              updatedAt: Value(stamp.now),
+              updatedByDevice: Value(stamp.deviceId),
+              hlc: Value(stamp.hlc),
+              deletedAt: Value(stamp.now),
+            ),
+          );
       await _outbox.enqueue(table: _tableName, rowId: id);
     });
   }
 
-  Future<BudgetRow?> _byId(String id) => (_db.select(
-    _db.budgets,
-  )..where((t) => t.id.equals(id))).getSingleOrNull();
+  Future<BudgetRow?> _byId(String id) =>
+      (_db.select(_db.budgets)
+            ..where((t) => t.ownerUserId.equals(_ownerUserId))
+            ..where((t) => t.id.equals(id)))
+          .getSingleOrNull();
 
   static final RegExp _monthPattern = RegExp(r'^\d{4}-(0[1-9]|1[0-2])$');
 

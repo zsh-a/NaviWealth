@@ -19,7 +19,7 @@ final mostUsedExpenseCategoryProvider = Provider<String?>((ref) {
       final freq = <String, int>{};
       for (final e in expenses) {
         if (e.tradeDate.isBefore(cutoff)) continue;
-        freq.update(e.expenseAccountId, (v) => v + 1, ifAbsent: () => 1);
+        freq.update(e.categoryId, (v) => v + 1, ifAbsent: () => 1);
       }
       if (freq.isEmpty) return null;
       String? topId;

@@ -321,7 +321,7 @@ class IngestController {
         .map((item) => item.draft)
         .toList(growable: false);
     final repository = await _ref.read(journalEntryRepositoryProvider.future);
-    final expenses = await repository.watchExpenses().first;
+    final expenses = await repository.watchExpenses(ownerUserId).first;
     final entries = await repository.watchAllWithPostings().first;
     final ledger = <TransactionInput>[
       ...expenses

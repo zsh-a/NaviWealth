@@ -107,8 +107,15 @@ class TagLinks extends Table with SyncableTable {
 class Categories extends Table with SyncableTable {
   TextColumn get id => text()();
   TextColumn get name => text()();
+  TextColumn get nameOverride => text().nullable()();
+  TextColumn get systemKey => text().nullable()();
   TextColumn get parentId => text().nullable()();
-  IntColumn get sortOrder => integer().nullable()();
+  TextColumn get ledgerAccountId => text()();
+  TextColumn get icon => text().nullable()();
+  TextColumn get color => text().nullable()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  BoolColumn get archived => boolean().withDefault(const Constant(false))();
+  TextColumn get mergedIntoId => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

@@ -6,6 +6,7 @@
 // as explicit review drafts instead of silently committing them.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/features/finance/cashflow/data/cash_flow_ledger_adapters.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_classifier.dart';
@@ -107,7 +108,7 @@ void main() {
 
         final expenses = (await tester.runAsync(
           () => journalRepo
-              .watchExpenses()
+              .watchExpenses(kLocalOnlyUserId)
               .firstWhere((rows) => rows.length == 2)
               .timeout(const Duration(seconds: 5)),
         ))!;
@@ -124,7 +125,7 @@ void main() {
         ))!;
         final accounts = (await tester.runAsync(
           () => accountRepo
-              .watchActiveIncludingSystem()
+              .watchActiveIncludingSystem(kLocalOnlyUserId)
               .firstWhere((rows) => rows.length >= 3)
               .timeout(const Duration(seconds: 5)),
         ))!;

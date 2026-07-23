@@ -61,7 +61,7 @@ class ExpenseReportAggregator {
       monthlyTotals[monthKey] =
           (monthlyTotals[monthKey] ?? Decimal.zero) + delta;
 
-      final accountId = expense.expenseAccountId;
+      final accountId = expense.categoryId;
       accountTotals[accountId] =
           (accountTotals[accountId] ?? Decimal.zero) + delta;
       accountCounts.update(accountId, (count) => count + 1, ifAbsent: () => 1);
@@ -79,7 +79,7 @@ class ExpenseReportAggregator {
 
     final breakdowns = accountTotals.entries.map((entry) {
       return CategoryBreakdown(
-        expenseAccountId: entry.key,
+        categoryId: entry.key,
         total: Money(entry.value, baseCurrency),
         count: accountCounts[entry.key] ?? 0,
       );

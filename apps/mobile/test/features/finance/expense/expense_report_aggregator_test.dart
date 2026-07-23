@@ -17,13 +17,13 @@ SyncMeta _meta() => SyncMeta(
 
 Expense _expense({
   required String id,
-  required String expenseAccountId,
+  required String categoryId,
   required Decimal amount,
   required DateTime date,
   String currency = 'CNY',
 }) => Expense(
   id: id,
-  expenseAccountId: expenseAccountId,
+  categoryId: categoryId,
   amount: amount,
   currency: currency,
   tradeDate: date,
@@ -39,19 +39,19 @@ void main() {
       final expenses = [
         _expense(
           id: 'e1',
-          expenseAccountId: 'food',
+          categoryId: 'food',
           amount: Decimal.parse('120'),
           date: DateTime.utc(2026, 4, 5),
         ),
         _expense(
           id: 'e2',
-          expenseAccountId: 'food',
+          categoryId: 'food',
           amount: Decimal.parse('80'),
           date: DateTime.utc(2026, 4, 10),
         ),
         _expense(
           id: 'e3',
-          expenseAccountId: 'transport',
+          categoryId: 'transport',
           amount: Decimal.parse('50'),
           date: DateTime.utc(2026, 4, 12),
         ),
@@ -69,29 +69,29 @@ void main() {
       );
       expect(report.total.amount, Decimal.parse('250'));
       expect(report.byCategory.length, 2);
-      expect(report.byCategory.first.expenseAccountId, 'food');
+      expect(report.byCategory.first.categoryId, 'food');
       expect(report.byCategory.first.total.amount, Decimal.parse('200'));
       expect(report.byCategory.first.count, 2);
-      expect(report.byCategory[1].expenseAccountId, 'transport');
+      expect(report.byCategory[1].categoryId, 'transport');
     });
 
     test('groups expenses by expense account id', () {
       final expenses = [
         _expense(
           id: 'e1',
-          expenseAccountId: 'acct-lunch',
+          categoryId: 'acct-lunch',
           amount: Decimal.parse('30'),
           date: DateTime.utc(2026, 4, 1),
         ),
         _expense(
           id: 'e2',
-          expenseAccountId: 'acct-dinner',
+          categoryId: 'acct-dinner',
           amount: Decimal.parse('70'),
           date: DateTime.utc(2026, 4, 2),
         ),
         _expense(
           id: 'e3',
-          expenseAccountId: 'acct-lunch',
+          categoryId: 'acct-lunch',
           amount: Decimal.parse('15'),
           date: DateTime.utc(2026, 4, 3),
         ),
@@ -109,9 +109,9 @@ void main() {
       );
       expect(report.byCategory.length, 2);
       // dinner (70) > lunch (45)
-      expect(report.byCategory.first.expenseAccountId, 'acct-dinner');
+      expect(report.byCategory.first.categoryId, 'acct-dinner');
       expect(report.byCategory.first.total.amount, Decimal.parse('70'));
-      expect(report.byCategory[1].expenseAccountId, 'acct-lunch');
+      expect(report.byCategory[1].categoryId, 'acct-lunch');
       expect(report.byCategory[1].total.amount, Decimal.parse('45'));
     });
 
@@ -119,13 +119,13 @@ void main() {
       final expenses = [
         _expense(
           id: 'e-jan',
-          expenseAccountId: 'food',
+          categoryId: 'food',
           amount: Decimal.parse('100'),
           date: DateTime.utc(2026, 2, 5),
         ),
         _expense(
           id: 'e-mar',
-          expenseAccountId: 'food',
+          categoryId: 'food',
           amount: Decimal.parse('200'),
           date: DateTime.utc(2026, 4, 10),
         ),
@@ -165,7 +165,7 @@ void main() {
       final expenses = [
         _expense(
           id: 'e1',
-          expenseAccountId: 'food',
+          categoryId: 'food',
           amount: Decimal.parse('10'),
           date: DateTime.utc(2026, 4, 12),
           currency: 'USD',
@@ -192,14 +192,14 @@ void main() {
       final expenses = [
         _expense(
           id: 'e1',
-          expenseAccountId: 'food',
+          categoryId: 'food',
           amount: Decimal.parse('1'),
           date: DateTime.utc(2026, 4, 5),
           currency: 'EUR',
         ),
         _expense(
           id: 'e2',
-          expenseAccountId: 'food',
+          categoryId: 'food',
           amount: Decimal.parse('20'),
           date: DateTime.utc(2026, 4, 6),
         ),
@@ -228,19 +228,19 @@ void main() {
         expenses: [
           _expense(
             id: 'before',
-            expenseAccountId: 'food',
+            categoryId: 'food',
             amount: Decimal.parse('999'),
             date: DateTime.utc(2025, 12, 1),
           ),
           _expense(
             id: 'inside',
-            expenseAccountId: 'food',
+            categoryId: 'food',
             amount: Decimal.parse('10'),
             date: DateTime.utc(2026, 4, 5),
           ),
           _expense(
             id: 'after',
-            expenseAccountId: 'food',
+            categoryId: 'food',
             amount: Decimal.parse('999'),
             date: DateTime.utc(2027, 1, 1),
           ),

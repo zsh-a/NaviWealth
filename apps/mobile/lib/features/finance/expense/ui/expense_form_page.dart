@@ -18,10 +18,13 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_prov
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
-import 'package:naviwealth/features/finance/domain/models/enums.dart';
-import 'package:naviwealth/features/finance/shared/ui/account_tree_picker.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
+import '../data/expense_category_providers.dart';
+import '../domain/expense_category.dart';
+import 'expense_category_l10n.dart';
+import 'expense_category_picker.dart';
 
 /// Quick-entry page for a single expense. Shared between create and
 /// edit flows — when [expenseId] is non-null we hydrate the form from
@@ -51,8 +54,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   final _noteFocus = FocusNode();
   final _advancedFocus = FocusNode(debugLabel: 'expense-advanced');
 
-  /// The expense account id (from the `accounts` table where category=expense).
-  String? _expenseAccountId;
+  String? _categoryId;
   String? _fromAccountId;
   String? _currency;
   late DateTime _date;
@@ -64,8 +66,8 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   bool _currencyExplicitlySelected = false;
   late final ProviderSubscription<AsyncValue<List<Account>>>
   _paymentAccountsSubscription;
-  late final ProviderSubscription<AsyncValue<List<Account>>>
-  _allAccountsSubscription;
+  late final ProviderSubscription<AsyncValue<List<ExpenseCategory>>>
+  _categoriesSubscription;
 
   @override
   void initState() {
@@ -78,7 +80,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     } else {
       final defaults = ref.read(formDefaultsProvider);
       _fromAccountId = defaults.expenseAccountId;
-      _expenseAccountId = defaults.expenseCategoryId;
+      _categoryId = defaults.expenseCategoryId;
       // Currency is derived from the first resolved payment account below.
       // A remembered currency must never outlive the account it belonged to.
     }
@@ -87,9 +89,9 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       _onPaymentAccounts,
       fireImmediately: true,
     );
-    _allAccountsSubscription = ref.listenManual(
-      allAccountsStreamProvider,
-      _onAllAccounts,
+    _categoriesSubscription = ref.listenManual(
+      expenseCategoriesProvider,
+      _onCategories,
       fireImmediately: true,
     );
   }
@@ -98,11 +100,17 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       .where((account) => isCustodyAccountCategory(account.type))
       .toList(growable: false);
 
-  List<Account> _expenseLeafAccounts(List<Account> accounts) => _leafAccounts(
-    accounts
-        .where((account) => account.category == AccountSide.expense)
-        .toList(growable: false),
-  );
+  List<ExpenseCategory> _expenseLeafCategories(
+    List<ExpenseCategory> categories,
+  ) {
+    final parentIds = <String>{
+      for (final category in categories)
+        if (category.parentId != null) category.parentId!,
+    };
+    return categories
+        .where((category) => !parentIds.contains(category.id))
+        .toList(growable: false);
+  }
 
   void _onPaymentAccounts(
     AsyncValue<List<Account>>? _,
@@ -134,22 +142,22 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     if (mounted) setState(() {});
   }
 
-  void _onAllAccounts(
-    AsyncValue<List<Account>>? _,
-    AsyncValue<List<Account>> next,
+  void _onCategories(
+    AsyncValue<List<ExpenseCategory>>? _,
+    AsyncValue<List<ExpenseCategory>> next,
   ) {
-    final accounts = next.value;
-    if (accounts == null || (widget.isEdit && _initial == null)) return;
-    _hydrateCategories(accounts);
+    final categories = next.value;
+    if (categories == null || (widget.isEdit && _initial == null)) return;
+    _hydrateCategories(categories);
   }
 
-  void _hydrateCategories(List<Account> accounts) {
+  void _hydrateCategories(List<ExpenseCategory> categories) {
     if (_categoriesHydrated) return;
     if (!widget.isEdit) {
-      final candidates = _expenseLeafAccounts(accounts);
+      final candidates = _expenseLeafCategories(categories);
       if (candidates.isEmpty) return;
-      if (!candidates.any((account) => account.id == _expenseAccountId)) {
-        _expenseAccountId = candidates.firstOrNull?.id;
+      if (!candidates.any((category) => category.id == _categoryId)) {
+        _categoryId = candidates.firstOrNull?.id;
       }
     }
     _categoriesHydrated = true;
@@ -180,11 +188,16 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
         fromAccountId = p.accountId;
       }
     }
+    final categories = await ref.read(expenseCategoriesProvider.future);
+    final category = categories
+        .where((item) => item.ledgerAccountId == expenseAccountId)
+        .firstOrNull;
+    if (!mounted) return;
     setState(() {
       _initial = existing;
       _amountController.text = amount.toString();
       _noteController.text = existing.entry.narration;
-      _expenseAccountId = expenseAccountId;
+      _categoryId = category?.id;
       _fromAccountId = fromAccountId;
       _currency = currency;
       _date = existing.entry.date;
@@ -192,7 +205,9 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       _advancedExpanded = existing.entry.narration.trim().isNotEmpty;
     });
     _hydratePaymentAccounts(ref.read(accountsStreamProvider).value ?? const []);
-    _hydrateCategories(ref.read(allAccountsStreamProvider).value ?? const []);
+    _hydrateCategories(
+      ref.read(expenseCategoriesProvider).value ?? const <ExpenseCategory>[],
+    );
     // Hydrating an existing record is not a user edit.
     dirty.snapshotBaseline();
   }
@@ -210,9 +225,9 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       return;
     }
     final fromAccountId = _fromAccountId;
-    final expenseAccountId = _expenseAccountId;
+    final categoryId = _categoryId;
     final currency = _currency;
-    if (expenseAccountId == null || fromAccountId == null || currency == null) {
+    if (categoryId == null || fromAccountId == null || currency == null) {
       AppMessenger.show(
         context,
         ToastKind.error,
@@ -231,7 +246,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
           .read(formDefaultsProvider.notifier)
           .rememberExpense(
             accountId: fromAccountId,
-            categoryId: expenseAccountId,
+            categoryId: categoryId,
             currency: currency,
           ),
     );
@@ -256,9 +271,16 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
           journalEntryRepositoryProvider.future,
         );
         repository = journalRepo;
+        final categories = await ref.read(expenseCategoriesProvider.future);
+        final category = categories
+            .where((item) => item.id == categoryId)
+            .firstOrNull;
+        if (category == null) {
+          throw StateError('Expense category is no longer available');
+        }
         final build = JournalEntryBuilders.expense(
           date: date,
-          expenseAccountId: expenseAccountId,
+          expenseAccountId: category.ledgerAccountId,
           fromAccountId: fromAccountId,
           amount: amount,
           currency: currency,
@@ -324,7 +346,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   @override
   void dispose() {
     _paymentAccountsSubscription.close();
-    _allAccountsSubscription.close();
+    _categoriesSubscription.close();
     _amountController.dispose();
     _noteController.dispose();
     _amountFocus.dispose();
@@ -343,16 +365,16 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     return l10n.expenseFormEditTitle;
   }
 
-  String _pageTitle(AppLocalizations l10n, List<Account>? allAccounts) {
+  String _pageTitle(AppLocalizations l10n, List<ExpenseCategory>? categories) {
     if (!widget.isEdit) return l10n.expenseFormCreateTitle;
     if (_initial == null) return l10n.expenseFormEditTitle;
     // Show "Edit · Category  ¥120" after the existing record is loaded.
     final parts = <String>[l10n.expenseFormEditTitle];
-    if (allAccounts != null && _expenseAccountId != null) {
-      final cat = allAccounts
-          .where((a) => a.id == _expenseAccountId)
+    if (categories != null && _categoryId != null) {
+      final cat = categories
+          .where((category) => category.id == _categoryId)
           .firstOrNull;
-      if (cat != null) parts.add(cat.name);
+      if (cat != null) parts.add(localizedExpenseCategoryName(l10n, cat));
     }
     final amountText = _amountController.text.trim();
     if (amountText.isNotEmpty) {
@@ -361,28 +383,25 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     return parts.join(' · ');
   }
 
-  List<Account> _leafAccounts(List<Account> accounts) {
-    final parentIds = {
-      for (final account in accounts)
-        if (account.parentId != null) account.parentId!,
-    };
-    return accounts
-        .where((account) => !parentIds.contains(account.id))
-        .toList(growable: false);
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final loadingExisting = widget.isEdit && _initial == null;
     final onSubmit = _busy ? null : _save;
-    final allAccountsAsync = ref.watch(allAccountsStreamProvider);
+    final categoriesAsync = ref.watch(expenseCategoriesProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return guardedScope(
       child: AppFormPageScaffold(
-        title: Text(_pageTitle(l10n, allAccountsAsync.value)),
+        title: Text(_pageTitle(l10n, categoriesAsync.value)),
         confirmLeave: handleBackIntent,
         actions: [
+          AppHeaderAction(
+            semanticsLabel: l10n.expenseCategoriesManageTitle,
+            icon: const Icon(FLucideIcons.tags),
+            onPress: _busy
+                ? null
+                : () => context.push(FinanceRoutes.planExpenseCategories),
+          ),
           if (widget.isEdit)
             AppHeaderAction(
               semanticsLabel: l10n.expenseFormDeleteTooltip,
@@ -444,15 +463,9 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                         onFieldSubmitted: (_) => _amountFocus.unfocus(),
                       ),
                       const SizedBox(height: AppSpacing.s8),
-                      allAccountsAsync.when(
-                        data: (allAccounts) {
-                          final expenseAccounts = allAccounts
-                              .where((a) => a.category == AccountSide.expense)
-                              .toList(growable: false);
-                          final selectableExpenseAccounts = _leafAccounts(
-                            expenseAccounts,
-                          );
-                          if (selectableExpenseAccounts.isEmpty) {
+                      categoriesAsync.when(
+                        data: (categories) {
+                          if (_expenseLeafCategories(categories).isEmpty) {
                             return Padding(
                               padding: const EdgeInsets.symmetric(
                                 vertical: AppSpacing.s12,
@@ -460,17 +473,16 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                               child: Text(l10n.expenseFormCategoriesLoading),
                             );
                           }
-                          return AccountTreePicker(
-                            accounts: expenseAccounts,
-                            value: _expenseAccountId,
+                          return ExpenseCategoryPicker(
+                            categories: categories,
+                            value: _categoryId,
                             onChanged: (id) {
                               if (id == null) return;
                               setState(() {
-                                _expenseAccountId = id;
+                                _categoryId = id;
                                 dirty.markDirty();
                               });
                             },
-                            category: AccountSide.expense,
                             label: l10n.expenseCategoryPickerLabelDefault,
                             leafOnly: true,
                             validator: (id) => id == null || id.isEmpty

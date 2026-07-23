@@ -35,7 +35,7 @@ List<CategoryBreakdown> collapseExpenseCategoriesForPie(
   final mergedCount = tail.fold<int>(0, (sum, bucket) => sum + bucket.count);
 
   final other = CategoryBreakdown(
-    expenseAccountId: kExpenseReportPieOtherId,
+    categoryId: kExpenseReportPieOtherId,
     total: Money(otherAmount, tail.first.total.currency),
     count: mergedCount,
   );
@@ -53,7 +53,7 @@ List<CategoryBreakdown>? expenseReportOtherSource({
   required CategoryBreakdown breakdown,
   int maxSlices = kExpenseReportPieMaxSlices,
 }) {
-  if (breakdown.expenseAccountId != kExpenseReportPieOtherId) return null;
+  if (breakdown.categoryId != kExpenseReportPieOtherId) return null;
   if (byCategory.length <= maxSlices) return null;
   return byCategory.skip(maxSlices - 1).toList(growable: false);
 }

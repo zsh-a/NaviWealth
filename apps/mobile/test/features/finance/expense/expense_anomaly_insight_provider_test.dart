@@ -8,7 +8,7 @@ import 'package:naviwealth/features/finance/expense/data/expense_anomaly_insight
 
 Expense _expense(String id, String amount, DateTime date) => Expense(
   id: id,
-  expenseAccountId: 'expense-account',
+  categoryId: 'expense-account',
   amount: Decimal.parse(amount),
   currency: 'CNY',
   tradeDate: date,
