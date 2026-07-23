@@ -117,9 +117,12 @@ class FrbChatRunner implements ChatAgent {
       for (final message in messages) message.toJson(),
     ];
     final tools = _toolsReader();
+    final contextBlocks = _contextBlocksFor(request);
     var roundsUsed = 0;
     Map<String, Object?>? chatState;
     var toolResults = const <Map<String, Object?>>[];
+    var interactionResponse = request.interactionResponse?.toJson();
+    Map<String, Object?>? suspendInteraction;
     AgentRuntimeChatSnapshotRecord? snapshotRecord;
     final snapshotStore = _snapshotStore;
     final turnId = request.turnId;
@@ -140,14 +143,22 @@ class FrbChatRunner implements ChatAgent {
           yield DoneEvent(stopReason: 'error', rounds: recovery.round);
           return;
         }
-        if (recovery.awaitingUser) {
-          yield DoneEvent(stopReason: 'end_turn', rounds: recovery.round);
-          return;
-        }
         chatState = recovery.chatState;
         toolResults = recovery.toolResults;
         roundsUsed = recovery.round;
+        if (recovery.awaitingUser && interactionResponse == null) {
+          yield DoneEvent(stopReason: 'end_turn', rounds: recovery.round);
+          return;
+        }
       }
+    }
+    if (interactionResponse != null && chatState == null) {
+      yield const ErrorEvent(
+        'FRB chat interaction response has no resumable snapshot',
+        code: 'frb_chat_interaction_snapshot_missing',
+      );
+      yield const DoneEvent(stopReason: 'error', rounds: 0);
+      return;
     }
     while (true) {
       final nextRound = roundsUsed + 1;
@@ -162,6 +173,8 @@ class FrbChatRunner implements ChatAgent {
         streamBridge.streamChatTurn(
           messages: initialMessages,
           tools: tools,
+          contextBlocks: [for (final block in contextBlocks) block.toJson()],
+          contextPolicy: request.contextPolicy?.toJson(),
           temperature: request.temperature,
           maxOutputTokens: request.maxOutputTokens,
           metadata: <String, Object?>{
@@ -187,10 +200,14 @@ class FrbChatRunner implements ChatAgent {
           mode: request.mode,
           chatState: chatState,
           toolResults: toolResults,
+          interactionResponse: interactionResponse,
+          suspendInteraction: suspendInteraction,
         ),
         cancelToken,
       );
       toolResults = const <Map<String, Object?>>[];
+      interactionResponse = null;
+      suspendInteraction = null;
       await for (final rawEvent in stream) {
         final event = FrbChatStreamEvent.parse(rawEvent);
         final eventRound = event.round;
@@ -337,6 +354,28 @@ class FrbChatRunner implements ChatAgent {
         requestedModel: model,
         status: AiSpanStatus.ok,
       );
+      if (state.status == 'requires_interaction') {
+        final pendingState = state.chatState;
+        if (pendingState == null) {
+          yield const ErrorEvent(
+            'FRB chat requires interaction but did not return chat_state',
+            code: 'frb_chat_interaction_state_missing',
+          );
+          yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
+          return;
+        }
+        if (snapshotStore != null && turnId != null && turnId.isNotEmpty) {
+          final snapshot =
+              state.chatSnapshot ??
+              _buildPendingInteractionSnapshot(state: pendingState);
+          snapshotRecord = await snapshotStore.save(
+            snapshot: snapshot,
+            expectedRevision: snapshotRecord?.revision,
+          );
+        }
+        yield DoneEvent(stopReason: 'end_turn', rounds: roundsUsed);
+        return;
+      }
       if (state.status != 'requires_tool_results') {
         final terminalState = state.chatState;
         if (snapshotStore != null &&
@@ -487,6 +526,9 @@ class FrbChatRunner implements ChatAgent {
         }
         if (call.name == kAskUserToolName && !outcome.result.isError) {
           awaitingUser = true;
+          suspendInteraction = _pendingInteractionFromToolResult(
+            outcome.result,
+          );
         }
       }
       if (readOnlyBatch.isNotEmpty) {
@@ -532,19 +574,68 @@ class FrbChatRunner implements ChatAgent {
         }
       }
       if (awaitingUser) {
-        yield DoneEvent(stopReason: 'end_turn', rounds: roundsUsed);
-        return;
+        if (suspendInteraction == null) {
+          yield DoneEvent(stopReason: 'end_turn', rounds: roundsUsed);
+          return;
+        }
+        toolResults = resultBlocks;
+        continue;
       }
       toolResults = resultBlocks;
     }
   }
 }
 
+List<AgentRuntimeContextBlock> _contextBlocksFor(
+  ChatAgentTurnRequest request,
+) => <AgentRuntimeContextBlock>[
+  ...request.contextBlocks,
+  if (request.contextPack case final pack?)
+    AgentRuntimeContextBlock(
+      id: 'naviwealth_context_pack',
+      kind: AgentRuntimeContextBlockKind.resource,
+      source: 'naviwealth.context_pack',
+      priority: 90,
+      content: pack.toJson(),
+      metadata: const <String, Object?>{
+        'authority': 'derived_local_state',
+        'trusted_as_instruction': false,
+      },
+    ),
+  if (request.portfolioSnapshot case final snapshot?)
+    AgentRuntimeContextBlock(
+      id: 'naviwealth_portfolio_snapshot',
+      kind: AgentRuntimeContextBlockKind.resource,
+      source: 'naviwealth.portfolio_snapshot',
+      priority: 75,
+      content: snapshot,
+      metadata: const <String, Object?>{
+        'authority': 'derived_local_state',
+        'trusted_as_instruction': false,
+      },
+    ),
+];
+
 Future<_ChatSnapshotRecovery> _recoverChatSnapshot({
   required AgentRuntimeChatSnapshotRecord record,
   required AgentRuntimeChatSnapshotStore store,
   required AgentRuntimeToolLineHandler? toolLineHandler,
 }) async {
+  if (record.status == 'requires_interaction') {
+    final state = chatSnapshotObject(
+      record.snapshot['state'],
+      'snapshot.state',
+    );
+    final round = state['round'] is int ? state['round']! as int : 0;
+    return _ChatSnapshotRecovery(
+      record: record,
+      chatState: state,
+      toolResults: const <Map<String, Object?>>[],
+      events: const <AiChatEvent>[],
+      round: round,
+      awaitingUser: true,
+    );
+  }
   var currentRecord = record;
   var snapshot = Map<String, Object?>.from(record.snapshot);
   final state = chatSnapshotObject(snapshot['state'], 'snapshot.state');
@@ -664,6 +755,18 @@ Future<_ChatSnapshotRecovery> _recoverChatSnapshot({
     round: round,
     awaitingUser: awaitingUser,
   );
+}
+
+Map<String, Object?> _buildPendingInteractionSnapshot({
+  required Map<String, Object?> state,
+}) {
+  return <String, Object?>{
+    'protocol_version': 'agent.v1',
+    'snapshot_version': kAgentRuntimeChatSnapshotVersion,
+    'status': 'requires_interaction',
+    'state': state,
+    'tool_dispatches': const <Object?>[],
+  };
 }
 
 Map<String, Object?> _buildPendingChatSnapshot({
@@ -800,6 +903,20 @@ Set<String> _readOnlyToolNames(List<Map<String, Object?>> tools) {
 
 bool _canParallelizeTool(AgentRuntimeToolCall call, Set<String> readOnlyTools) {
   return call.name != kAskUserToolName && readOnlyTools.contains(call.name);
+}
+
+Map<String, Object?>? _pendingInteractionFromToolResult(
+  AgentRuntimeToolResult result,
+) {
+  if (result.isError) return null;
+  final output = frbObjectOrNull(result.output);
+  final interaction = AiInteractionEnvelope.tryParse(output?['interaction']);
+  if (interaction == null ||
+      interaction.status != AiInteractionStatus.pending ||
+      interaction.resumeKind != AiInteractionResumeKind.chatTurn) {
+    return null;
+  }
+  return interaction.toJson();
 }
 
 ProgressEvent _toolProgress(AgentRuntimeToolCall call, DateTime startedAt) {

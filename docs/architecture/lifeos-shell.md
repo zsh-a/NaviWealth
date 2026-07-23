@@ -215,8 +215,44 @@ Rules:
 - Domain indexers live in domain `data/`.
 - Domain indexers are contributed through `DomainPack.memoryBootstrapBuilder`;
   the app bootstrap only loops active packs.
+- Every domain also declares `DomainPack.memorySourcePrefixes`. Interactive
+  Chat unions only active packs' prefixes and applies that hard allow-list to
+  both memory and recent-event retrieval; rows from disabled domains remain
+  local but cannot enter the AI context.
 - Memory embeddings are derived local data and can be rebuilt.
 - `build_context` is the preferred LLM retrieval tool for contextual answers; `query_memory` remains a flat fallback.
+- App-level retrieval emits untrusted `ContextBlock(kind=memory)` records.
+  Rust validates, hashes, budgets, snapshots, and renders them; memory text is
+  evidence and never instruction authority.
+- Long-chat transcript compaction is separate from Memory Runtime. The chat
+  feature stores a source-fingerprinted structured checkpoint locally and
+  emits it as untrusted `ContextBlock(kind=compaction_summary)`. It never
+  syncs or becomes durable user memory; editing/deleting summarized source
+  turns invalidates it.
+- Models stage durable memory changes through `propose_memory`; they never
+  write `memories` directly. Local-only `memory_candidates` become Memory only
+  after explicit user approval through the proposal seam.
+- Candidate apply supports create, supersede, forget, reject, retry, and undo.
+  Owner and target-memory isolation are revalidated at apply time. Confirmed
+  AI memory uses provenance `user_confirmed_ai`; terminal candidates are
+  pruned per owner after 90 days.
+
+## Human Interaction Contract
+
+The shell uses the provider-neutral `InteractionEnvelope` /
+`InteractionResponse` pair for `ask_user`, proposal approval, and typed
+confirmation. Domain payloads remain opaque; the shell/runtime own interaction
+identity, lifecycle, confirmation mode, expiry, subject, response schema, and
+resume routing.
+
+For ChatTurn, pending tools and a pending interaction are mutually exclusive.
+`ask_user` is first dispatched as a device tool, then its standard interaction
+is suspended into a local `requires_interaction` snapshot without another
+model request. A user response resumes the original turn id and becomes an
+`interaction_result` block. Missing or mismatched snapshots fail closed.
+Proposal approval uses the same response contract but resumes through the
+proposal-apply route. Legacy decision/apply fields remain during the
+compatibility migration.
 
 ## Data Management
 

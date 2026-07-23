@@ -34,6 +34,36 @@ void main() {
 
     expect(await container.read(probe.future), 1);
   });
+
+  test('lazy route forwards cancellation without eager construction', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    var reads = 0;
+    final recording = _RecordingCancellationApplier();
+    final probe = FutureProvider((ref) async {
+      final route = await buildProposalApplierRoute(
+        ref,
+        readApplier: (_) async {
+          reads += 1;
+          return recording;
+        },
+        kinds: const <String>{'memory_change'},
+        tablePrefixes: const <String>{'memories'},
+      );
+      expect(reads, 0);
+      const plan = ReadyProposalPlan(
+        proposalId: 'proposal-1',
+        kind: 'memory_change',
+        summaryZh: 'Memory',
+        payload: <String, Object?>{},
+      );
+      await (route.applier as ProposalCancellationHandler).cancel(plan);
+      return reads;
+    });
+
+    expect(await container.read(probe.future), 1);
+    expect(recording.cancelledProposalIds, ['proposal-1']);
+  });
 }
 
 final class _RecordingApplier implements ProposalApplier {
@@ -42,6 +72,24 @@ final class _RecordingApplier implements ProposalApplier {
   @override
   Future<ProposalApplyState> apply(ReadyProposalPlan plan) async {
     return const ProposalApplyState(status: ProposalApplyStatus.applied);
+  }
+
+  @override
+  Future<void> undo(ProposalApplyState state) async {}
+}
+
+final class _RecordingCancellationApplier
+    implements ProposalApplier, ProposalCancellationHandler {
+  final List<String> cancelledProposalIds = <String>[];
+
+  @override
+  Future<ProposalApplyState> apply(ReadyProposalPlan plan) async {
+    return const ProposalApplyState(status: ProposalApplyStatus.applied);
+  }
+
+  @override
+  Future<void> cancel(ReadyProposalPlan plan) async {
+    cancelledProposalIds.add(plan.proposalId);
   }
 
   @override

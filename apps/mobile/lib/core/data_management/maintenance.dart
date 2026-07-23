@@ -148,6 +148,17 @@ class DataMaintenanceService {
           column: 'timestamp',
           cutoff: started.subtract(const Duration(days: 180)),
         );
+        counts['memory_candidates'] = await _database.customUpdate(
+          'DELETE FROM memory_candidates WHERE owner_user_id = ? '
+          "AND status IN ('applied', 'rejected', 'undone') "
+          'AND updated_at <= ?',
+          variables: <Variable<Object>>[
+            Variable<Object>(_ownerUserId),
+            Variable<Object>(
+              started.subtract(const Duration(days: 90)).millisecondsSinceEpoch,
+            ),
+          ],
+        );
         counts['ingest_attachments'] = await _deleteIsoBefore(
           table: 'ingest_attachments',
           column: 'expires_at_iso',

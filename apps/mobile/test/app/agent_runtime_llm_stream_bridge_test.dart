@@ -53,6 +53,26 @@ void main() {
               'input_schema': <String, Object?>{'type': 'object'},
             },
           ],
+          contextBlocks: const <Map<String, Object?>>[
+            <String, Object?>{
+              'block_id': 'memory_1',
+              'kind': 'memory',
+              'source': 'test.memory',
+              'priority': 80,
+              'token_estimate': 0,
+              'content_hash': 'host:test',
+              'content': <String, Object?>{
+                'statement': 'User prefers concise answers',
+              },
+              'metadata': <String, Object?>{'trusted_as_instruction': false},
+            },
+          ],
+          contextPolicy: const <String, Object?>{
+            'max_input_tokens': 32000,
+            'reserve_output_tokens': 2048,
+            'preserve_recent_messages': 8,
+            'compact_when_over_budget': true,
+          },
           temperature: 0,
           maxOutputTokens: 64,
           metadata: const <String, Object?>{
@@ -89,6 +109,17 @@ void main() {
       <String, Object?>{'role': 'user', 'content': 'Hello'},
     ]);
     expect(request['tools'], hasLength(1));
+    expect(request['context_blocks'], hasLength(1));
+    final contextBlocks = request['context_blocks'] as List<Object?>;
+    final memoryBlock = contextBlocks.single as Map<String, Object?>;
+    expect(memoryBlock['kind'], 'memory');
+    expect(memoryBlock['source'], 'test.memory');
+    expect(request['context_policy'], <String, Object?>{
+      'max_input_tokens': 32000,
+      'reserve_output_tokens': 2048,
+      'preserve_recent_messages': 8,
+      'compact_when_over_budget': true,
+    });
     final metadata = request['metadata'] as Map<String, Object?>;
     expect(metadata['surface'], 'ai_chat');
     expect(metadata['profile_id'], 'profile_1');
@@ -183,6 +214,61 @@ void main() {
     expect(metadata['profile_id'], 'profile_2');
     expect(metadata['profile_name'], 'Claude');
     expect(metadata['api_key'], 'sk-ant');
+  });
+
+  test('forwards interaction response with resumable chat state', () async {
+    final requestJsons = <String>[];
+    final streamBridge = AgentRuntimeLlmStreamBridge(
+      llmBridge: AgentRuntimeLlmBridge(
+        bridge: FakeAgentRuntimeNativeBridge(),
+        profile: const LlmProfile(
+          id: 'profile_1',
+          name: 'Local',
+          provider: LlmProvider.anthropic,
+          apiKey: 'sk-ant',
+          model: 'claude-test',
+        ),
+      ),
+      initRuntime: ({String? libraryPath}) async {},
+      streamChatTurnJson: ({required String requestJson}) {
+        requestJsons.add(requestJson);
+        return Stream<String>.fromIterable(const <String>[
+          '{"kind":"done","metadata":{"stop_reason":"end_turn"}}',
+        ]);
+      },
+    );
+
+    await streamBridge
+        .streamChatTurn(
+          messages: const <Map<String, Object?>>[
+            <String, Object?>{'role': 'user', 'content': 'resume'},
+          ],
+          chatState: const <String, Object?>{
+            'protocol_version': 'agent.v1',
+            'pending_interaction': <String, Object?>{
+              'interaction_id': 'interaction_1',
+            },
+          },
+          interactionResponse: const <String, Object?>{
+            'protocol_version': 'agent.v1',
+            'interaction_id': 'interaction_1',
+            'action': 'submit',
+            'value': <String, Object?>{'option_id': 'safe'},
+            'responded_at': '2026-07-23T10:01:00Z',
+            'metadata': <String, Object?>{},
+          },
+        )
+        .toList();
+
+    final request = jsonDecode(requestJsons.single) as Map<String, Object?>;
+    final metadata = request['metadata'] as Map<String, Object?>;
+    expect(metadata['chat_state'], isA<Map<String, Object?>>());
+    expect(
+      (metadata['interaction_response']
+          as Map<String, Object?>)['interaction_id'],
+      'interaction_1',
+    );
+    expect(metadata, isNot(contains('tool_results')));
   });
 
   test('initializes the native runtime only once per stream bridge', () async {

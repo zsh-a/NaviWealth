@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_context_block.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_history_store.dart';
@@ -24,6 +25,10 @@ class _NoopApi implements AiChatApiClient {
     Map<String, Object?> metadata = const <String, Object?>{},
     Map<String, Object?>? portfolioSnapshot,
     ContextPack? contextPack,
+    List<AgentRuntimeContextBlock> contextBlocks =
+        const <AgentRuntimeContextBlock>[],
+    AgentRuntimeContextPolicy? contextPolicy,
+    AiInteractionResponse? interactionResponse,
     String? model,
     CancelToken? cancelToken,
   }) async* {
@@ -87,6 +92,13 @@ void main() {
           reply: '我选择「方案 A」。请在此方案下继续。',
           selectedAt: DateTime.utc(2026, 5, 1),
         ),
+        interactionResponse: AiInteractionResponse(
+          interactionId: 'interaction-1',
+          action: AiInteractionAction.approve,
+          value: const <String, Object?>{'proposal_id': 'proposal-1'},
+          confirmationText: '确认',
+          respondedAt: DateTime.utc(2026, 5, 1),
+        ),
         applyState: ProposalApplyState(
           status: ProposalApplyStatus.applied,
           appliedEntityId: 'je-1',
@@ -103,6 +115,11 @@ void main() {
       expect(decoded.single.applyState!.appliedEntityId, 'je-1');
       expect(decoded.single.decisionSelection?.optionId, 'a');
       expect(decoded.single.decisionSelection?.label, '方案 A');
+      expect(
+        decoded.single.interactionResponse?.action,
+        AiInteractionAction.approve,
+      );
+      expect(decoded.single.interactionResponse?.confirmationText, '确认');
     });
 
     test('decoder handles legacy payload without apply_state field', () {
@@ -168,12 +185,20 @@ void main() {
         newState: const ProposalApplyState(
           status: ProposalApplyStatus.cancelled,
         ),
+        interactionResponse: AiInteractionResponse(
+          interactionId: 'interaction-1',
+          action: AiInteractionAction.reject,
+          value: const <String, Object?>{'proposal_id': 'proposal-1'},
+          respondedAt: DateTime.utc(2026, 4, 30, 1),
+        ),
       );
 
       final messages = await store.listMessages(sessionId);
       final calls = messages.single.toolCalls;
       expect(calls[0].applyState?.status, ProposalApplyStatus.cancelled);
+      expect(calls[0].interactionResponse?.action, AiInteractionAction.reject);
       expect(calls[1].applyState, isNull);
+      expect(calls[1].interactionResponse, isNull);
     });
   });
 }

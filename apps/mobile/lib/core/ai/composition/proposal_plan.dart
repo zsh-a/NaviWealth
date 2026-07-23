@@ -31,6 +31,8 @@
 /// on.
 library;
 
+import '../contracts/interaction.dart';
+
 sealed class ProposalPlan {
   const ProposalPlan({required this.proposalId, required this.kind});
 
@@ -87,6 +89,7 @@ sealed class ProposalPlan {
           payload: payload.map((k, v) => MapEntry(k.toString(), v)),
           warnings: _stringList(m['warnings']),
           missing: _stringList(m['missing']),
+          interaction: AiInteractionEnvelope.tryParse(m['interaction']),
         );
       case 'needs_clarification':
         final reason = m['reason'];
@@ -138,6 +141,7 @@ final class ReadyProposalPlan extends ProposalPlan {
     required this.payload,
     this.warnings = const <String>[],
     this.missing = const <String>[],
+    this.interaction,
   });
 
   /// Side-effect scope that drives confirmation friction. Missing legacy
@@ -148,6 +152,7 @@ final class ReadyProposalPlan extends ProposalPlan {
   final Map<String, Object?> payload;
   final List<String> warnings;
   final List<String> missing;
+  final AiInteractionEnvelope? interaction;
 
   String? get(String key) {
     final v = payload[key];

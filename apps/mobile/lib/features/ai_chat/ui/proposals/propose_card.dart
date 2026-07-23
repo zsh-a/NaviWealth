@@ -10,6 +10,7 @@ import '../../../../core/ai/composition/proposal_applier.dart';
 import '../../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../../core/ai/composition/proposal_kind_registry.dart';
 import '../../../../core/ai/composition/proposal_plan.dart';
+import '../../../../core/ai/contracts/interaction.dart';
 import '../../../../core/ai/visual/visual.dart';
 import '../../../../core/ai/write/interaction_mode.dart';
 import '../../../../core/ai/write/providers.dart';
@@ -164,20 +165,29 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
     }
   }
 
-  Future<void> _persist(ProposalApplyState newState) async {
+  Future<void> _persist(
+    ProposalApplyState newState, {
+    AiInteractionResponse? interactionResponse,
+  }) async {
     final repo = await ref.read(chatRepositoryProvider.future);
-    await _persistWithRepo(repo, newState);
+    await _persistWithRepo(
+      repo,
+      newState,
+      interactionResponse: interactionResponse,
+    );
   }
 
   Future<void> _persistWithRepo(
     ChatRepository repo,
-    ProposalApplyState newState,
-  ) async {
+    ProposalApplyState newState, {
+    AiInteractionResponse? interactionResponse,
+  }) async {
     await repo.updateToolApplyState(
       sessionId: widget.sessionId,
       messageId: widget.message.id,
       toolInvocationId: widget.invocation.id,
       newState: newState,
+      interactionResponse: interactionResponse,
     );
   }
 
@@ -200,6 +210,9 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
     await _persistWithRepo(
       repo,
       _applyState.copyWith(status: ProposalApplyStatus.applying),
+      interactionResponse: _proposalInteractionResponse(
+        AiInteractionAction.approve,
+      ),
     );
     try {
       final applier = await ref.read(proposalApplierProvider.future);
@@ -317,7 +330,44 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
   }
 
   Future<void> _onCancel() async {
-    await _persist(_applyState.copyWith(status: ProposalApplyStatus.cancelled));
+    final plan = widget.plan;
+    if (plan is ReadyProposalPlan) {
+      try {
+        final applier = await ref.read(proposalApplierProvider.future);
+        if (applier is ProposalCancellationHandler) {
+          await (applier as ProposalCancellationHandler).cancel(plan);
+        }
+      } on Object {
+        // The chat decision remains authoritative. A failed best-effort
+        // staging cleanup must not prevent the user from rejecting a plan.
+      }
+    }
+    await _persist(
+      _applyState.copyWith(status: ProposalApplyStatus.cancelled),
+      interactionResponse: _proposalInteractionResponse(
+        AiInteractionAction.reject,
+      ),
+    );
+  }
+
+  AiInteractionResponse? _proposalInteractionResponse(
+    AiInteractionAction action,
+  ) {
+    final plan = widget.plan;
+    if (plan is! ReadyProposalPlan || plan.interaction == null) return null;
+    final interaction = plan.interaction!;
+    return AiInteractionResponse(
+      interactionId: interaction.interactionId,
+      action: action,
+      value: <String, Object?>{
+        'proposal_id': plan.proposalId,
+        'kind': plan.kind,
+      },
+      confirmationText: action == AiInteractionAction.approve
+          ? interaction.confirmation?.requiredText
+          : null,
+      respondedAt: DateTime.now().toUtc(),
+    );
   }
 
   Future<void> _onUndo() async {

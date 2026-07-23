@@ -63,6 +63,7 @@ final DomainPack kExecutionPack = DomainPack(
       placement: AgentResultPlacement.domainReview,
     ),
   ],
+  memorySourcePrefixes: const ['execution:', 'agent:execution_'],
   memoryBootstrapBuilder: _executionMemoryBootstrap,
   backgroundBootstrapBuilder: _executionBackgroundBootstrap,
   commandPaletteEntriesBuilder: executionCommandPaletteEntries,

@@ -156,19 +156,21 @@ void main() {
       );
 
       final before = await service.inspectSharedData();
-      expect(before.chatRows, 1);
+      expect(before.chatRows, 2);
       expect(before.aiRows, 1);
-      expect(before.memoryRows, 1);
+      expect(before.memoryRows, 2);
       expect(before.agentRows, 1);
-      expect(before.historyRows, 4);
+      expect(before.historyRows, 6);
       expect(before.databaseBytes, greaterThan(0));
 
-      expect(await service.clearSharedHistory(), 4);
+      expect(await service.clearSharedHistory(), 6);
       final after = await service.inspectSharedData();
       expect(after.historyRows, 0);
       expect(await _count(db, 'chat_sessions'), 1);
+      expect(await _count(db, 'conversation_checkpoints'), 1);
       expect(await _count(db, 'ai_traces'), 1);
       expect(await _count(db, 'memories'), 1);
+      expect(await _count(db, 'memory_candidates'), 1);
       expect(await _count(db, 'agent_runs'), 1);
 
       final compacted = await service.compactDatabase();
@@ -240,6 +242,25 @@ Future<void> _insertSharedHistory(
     <Object?>['chat-$suffix', owner, 'Chat', 1, 1],
   );
   await db.customStatement(
+    'INSERT INTO conversation_checkpoints ('
+    'session_id, owner_user_id, summary_through_message_id, '
+    'summary_through_created_at, source_fingerprint, checkpoint_version, '
+    'source_message_count, payload_json, created_at, updated_at'
+    ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    <Object?>[
+      'chat-$suffix',
+      owner,
+      'message-$suffix',
+      1,
+      'sha256:$suffix',
+      1,
+      1,
+      '{}',
+      1,
+      1,
+    ],
+  );
+  await db.customStatement(
     'INSERT INTO ai_traces '
     '(request_id, owner_user_id, started_at_iso, payload_json) '
     'VALUES (?, ?, ?, ?)',
@@ -261,6 +282,22 @@ Future<void> _insertSharedHistory(
       '[]',
       0.5,
       0.8,
+      1,
+      1,
+    ],
+  );
+  await db.customStatement(
+    'INSERT INTO memory_candidates ('
+    'id, proposal_id, owner_user_id, operation, status, payload_json, '
+    'created_at, updated_at'
+    ') VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    <Object?>[
+      'candidate-$suffix',
+      'proposal-$suffix',
+      owner,
+      'create',
+      'pending',
+      '{}',
       1,
       1,
     ],

@@ -7,15 +7,19 @@ import 'package:uuid/uuid.dart';
 import '../../../core/ai/composition/chat_trace_prep.dart';
 import '../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../core/ai/contracts/contracts.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_context_block.dart';
 import '../../../core/ai/runtime/device/device_user_profile_prompt.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../../core/auth/auth_session.dart';
 import '../../../core/auth/providers.dart';
 import '../domain/chat_models.dart';
 import '../domain/chat_turn_metadata.dart';
+import '../domain/conversation_checkpoint.dart';
 import 'ai_chat_api_client.dart';
+import 'chat_context_block_prep.dart';
 import 'chat_history_store.dart';
 import 'context_window.dart';
+import 'conversation_checkpoint_summarizer.dart';
 
 part 'chat_repository_message_mutations.dart';
 part 'chat_repository_send.dart';
@@ -48,6 +52,8 @@ class ChatRepository
     required AiChatApiClient api,
     required AuthSessionReader sessionReader,
     Future<Map<String, Object?>?> Function()? portfolioSnapshotReader,
+    ChatContextBlockPrep? contextBlockPrep,
+    ConversationCheckpointSummarizer? checkpointSummarizer,
     ChatTracePrep? tracePrep,
     AiTraceStore? traceStore,
     void Function(AiTrace finalized)? onTraceFinalized,
@@ -56,6 +62,10 @@ class ChatRepository
        _api = api,
        _sessionReader = sessionReader,
        _portfolioSnapshotReader = portfolioSnapshotReader,
+       _contextBlockPrep = contextBlockPrep,
+       _checkpointSummarizer =
+           checkpointSummarizer ??
+           const DeterministicConversationCheckpointSummarizer(),
        _tracePrep = tracePrep,
        _traceStore = traceStore,
        _onTraceFinalized = onTraceFinalized,
@@ -69,6 +79,10 @@ class ChatRepository
   final AuthSessionReader _sessionReader;
   @override
   final Future<Map<String, Object?>?> Function()? _portfolioSnapshotReader;
+  @override
+  final ChatContextBlockPrep? _contextBlockPrep;
+  @override
+  final ConversationCheckpointSummarizer _checkpointSummarizer;
   @override
   final ChatTracePrep? _tracePrep;
   @override

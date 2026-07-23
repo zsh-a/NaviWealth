@@ -105,6 +105,7 @@ final DomainPack kKnowledgePack = DomainPack(
       placement: AgentResultPlacement.domainReview,
     ),
   ],
+  memorySourcePrefixes: const ['know:', 'agent:knowledge_'],
   memoryBootstrapBuilder: _knowledgeMemoryBootstrap,
   backgroundBootstrapBuilder: _knowledgeBackgroundBootstrap,
   commandPaletteEntriesBuilder: knowledgeCommandPaletteEntries,

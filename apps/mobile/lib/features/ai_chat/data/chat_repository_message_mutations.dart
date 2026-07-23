@@ -14,6 +14,7 @@ mixin _ChatRepositoryMessageMutations {
     required String messageId,
     required String toolInvocationId,
     required ProposalApplyState? newState,
+    AiInteractionResponse? interactionResponse,
   }) async {
     final messages = await _store.listMessages(sessionId);
     final message = messages.firstWhere(
@@ -25,14 +26,18 @@ mixin _ChatRepositoryMessageMutations {
     final updatedToolCalls = <ToolInvocation>[
       for (final t in message.toolCalls)
         if (t.id == toolInvocationId)
-          t.copyWith(applyState: newState, clearApplyState: newState == null)
+          t.copyWith(
+            applyState: newState,
+            clearApplyState: newState == null,
+            interactionResponse: interactionResponse,
+          )
         else
           t,
     ];
     await _store.updateMessage(message.copyWith(toolCalls: updatedToolCalls));
   }
 
-  Future<void> recordDecisionSelection({
+  Future<AiInteractionResponse?> recordDecisionSelection({
     required String sessionId,
     required String messageId,
     required String toolInvocationId,
@@ -45,14 +50,40 @@ mixin _ChatRepositoryMessageMutations {
         'message $messageId not found in session $sessionId',
       ),
     );
+    AiInteractionResponse? interactionResponse;
     final updatedToolCalls = <ToolInvocation>[
       for (final t in message.toolCalls)
         if (t.id == toolInvocationId)
-          t.copyWith(decisionSelection: selection)
+          t.copyWith(
+            decisionSelection: selection,
+            interactionResponse: interactionResponse =
+                _decisionInteractionResponse(t, selection),
+          )
         else
           t,
     ];
     await _store.updateMessage(message.copyWith(toolCalls: updatedToolCalls));
+    return interactionResponse;
+  }
+
+  AiInteractionResponse? _decisionInteractionResponse(
+    ToolInvocation invocation,
+    DecisionSelection selection,
+  ) {
+    final output = invocation.output;
+    if (output is! Map) return null;
+    final interaction = AiInteractionEnvelope.tryParse(output['interaction']);
+    if (interaction == null) return null;
+    return AiInteractionResponse(
+      interactionId: interaction.interactionId,
+      action: AiInteractionAction.submit,
+      value: <String, Object?>{
+        'option_id': selection.optionId,
+        'label': selection.label,
+        'reply': selection.reply,
+      },
+      respondedAt: selection.selectedAt,
+    );
   }
 
   /// Discard the target user message AND every message that follows it

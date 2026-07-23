@@ -71,6 +71,41 @@ void main() {
       expect(out.map((e) => e.id), ['b']);
     });
 
+    test(
+      'recentEvents applies sourcePrefixes as a strict allow-list',
+      () async {
+        await store.writeEvent(_ev(id: 'finance'));
+        await store.writeEvent(_ev(id: 'health', source: 'health:sleep'));
+        final out = await store.recentEvents(
+          ownerUserId: 'u1',
+          sourcePrefixes: const {'health:'},
+        );
+        expect(out.map((event) => event.id), ['health']);
+
+        final denied = await store.recentEvents(
+          ownerUserId: 'u1',
+          sourcePrefixes: const <String>{},
+        );
+        expect(denied, isEmpty);
+
+        final blankDenied = await store.recentEvents(
+          ownerUserId: 'u1',
+          sourcePrefixes: const <String>{' ', '\t'},
+        );
+        expect(blankDenied, isEmpty);
+      },
+    );
+
+    test('sourcePrefixes escapes SQL wildcard characters', () async {
+      await store.writeEvent(_ev(id: 'literal', source: r'know_%:notes'));
+      await store.writeEvent(_ev(id: 'lookalike', source: 'knowXX:notes'));
+      final out = await store.recentEvents(
+        ownerUserId: 'u1',
+        sourcePrefixes: const {r'know_%:'},
+      );
+      expect(out.map((event) => event.id), ['literal']);
+    });
+
     test('recentEvents filters by type set', () async {
       await store.writeEvent(_ev(id: 'open', type: 'trade_opened'));
       await store.writeEvent(_ev(id: 'close', type: 'trade_closed'));

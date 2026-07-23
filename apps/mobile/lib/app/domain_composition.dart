@@ -20,10 +20,13 @@ import '../core/ai/composition/device_tools_provider.dart';
 import '../core/ai/composition/proposal_applier.dart';
 import '../core/ai/composition/proposal_apply_state.dart';
 import '../core/ai/composition/proposal_kind_registry.dart';
+import '../core/ai/composition/shell_proposal_kinds.dart';
 import '../core/ai/composition/system_prompt_blocks.dart';
 import '../core/ai/composition/tool_descriptor_lookup.dart';
 import '../core/ai/contracts/tool_descriptor.dart';
 import '../core/ai/intent/intent.dart';
+import '../core/ai/local/memory/memory_proposal_applier.dart';
+import '../core/ai/local/memory/providers.dart';
 import '../core/ai/runtime/device/tools/device_tool.dart';
 import '../core/ai/runtime/device/tools/device_tool_registry.dart'
     show kShellDeviceToolsCore, kShellToolDescriptors;
@@ -51,6 +54,7 @@ import '../features/health/composition/health_route_paths.dart';
 import '../features/knowledge/composition/knowledge_route_paths.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'domain_packs.dart';
+import 'domain_packs/proposal_applier_route.dart';
 import 'life_action_outcomes.dart';
 import 'share_intents/share_intent_navigation.dart';
 import 'shell/shell_chrome.dart';
@@ -306,7 +310,10 @@ Map<String, ToolDescriptor> domainToolDescriptors(List<DomainPack> packs) {
 }
 
 List<ProposalKindMeta> domainProposalKinds(List<DomainPack> packs) {
-  return [for (final p in packs) ...p.proposalKinds];
+  return <ProposalKindMeta>[
+    ...kShellProposalKinds,
+    for (final p in packs) ...p.proposalKinds,
+  ];
 }
 
 IntentCatalog domainIntentCatalog(List<DomainPack> packs) {
@@ -324,6 +331,21 @@ Future<List<ProposalApplierRoute>> domainProposalApplierRoutes(
   List<DomainPack> packs,
 ) async {
   final routes = <ProposalApplierRoute>[];
+  final ownerUserId = ref.read(auth_providers.authSessionProvider)?.userId;
+  if (ownerUserId != null && ownerUserId.isNotEmpty) {
+    routes.add(
+      await buildProposalApplierRoute(
+        ref,
+        readApplier: (ref) async => MemoryProposalApplier(
+          ownerUserId: ownerUserId,
+          runtime: await ref.read(memoryRuntimeProvider.future),
+          candidateStore: await ref.read(memoryCandidateStoreProvider.future),
+        ),
+        kinds: const <String>{kMemoryChangeProposalKind},
+        tablePrefixes: const <String>{kMemoryAppliedTable},
+      ),
+    );
+  }
   for (final p in packs) {
     final builder = p.proposalApplierRouteBuilder;
     if (builder != null) routes.add(await builder(ref));

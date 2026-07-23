@@ -3,6 +3,7 @@ import 'package:naviwealth/core/ai/progress/long_task_progress.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_history_store.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_events.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_models.dart';
+import 'package:naviwealth/features/ai_chat/domain/conversation_checkpoint.dart';
 
 import '../../core/persistence/test_database.dart';
 
@@ -241,5 +242,102 @@ void main() {
       expect(await store.findSession('s'), isNull);
       expect(await store.listMessages('s'), isEmpty);
     });
+
+    test(
+      'checkpoint round-trips and invalidates when summarized history changes',
+      () async {
+        await store.insertSession(
+          ChatSession(
+            id: 's',
+            ownerUserId: 'u',
+            title: 'checkpoint',
+            createdAt: DateTime.utc(2026, 7, 1),
+            updatedAt: DateTime.utc(2026, 7, 1),
+          ),
+        );
+        final summarized = ChatMessage(
+          id: 'm-1',
+          sessionId: 's',
+          ownerUserId: 'u',
+          role: ChatRole.user,
+          content: '目标是 2028 年前完成。',
+          status: ChatMessageStatus.complete,
+          createdAt: DateTime.utc(2026, 7, 1, 1),
+        );
+        final recent = ChatMessage(
+          id: 'm-2',
+          sessionId: 's',
+          ownerUserId: 'u',
+          role: ChatRole.assistant,
+          content: '继续讨论。',
+          status: ChatMessageStatus.complete,
+          createdAt: DateTime.utc(2026, 7, 1, 2),
+        );
+        await store.insertMessage(summarized);
+        await store.insertMessage(recent);
+        final checkpoint = ConversationCheckpoint(
+          sessionId: 's',
+          ownerUserId: 'u',
+          summaryThroughMessageId: summarized.id,
+          summaryThroughCreatedAt: summarized.createdAt,
+          sourceFingerprint: 'sha256:test',
+          sourceMessageCount: 1,
+          summary: const ConversationCheckpointSummary(
+            topic: '长期目标',
+            verifiedFacts: <String>['target_year: 2028'],
+          ),
+          createdAt: DateTime.utc(2026, 7, 1, 3),
+          updatedAt: DateTime.utc(2026, 7, 1, 3),
+        );
+        await store.upsertConversationCheckpoint(checkpoint);
+
+        var restored = await store.findConversationCheckpoint(
+          sessionId: 's',
+          ownerUserId: 'u',
+        );
+        expect(restored?.summary.topic, '长期目标');
+        expect(restored?.summary.verifiedFacts, ['target_year: 2028']);
+
+        // Mutating a newer turn does not affect the summarized source prefix.
+        await store.updateMessage(recent.copyWith(content: '继续深入讨论。'));
+        restored = await store.findConversationCheckpoint(
+          sessionId: 's',
+          ownerUserId: 'u',
+        );
+        expect(restored, isNotNull);
+
+        // Mutating a source turn invalidates the derived cache.
+        await store.updateMessage(
+          summarized.copyWith(content: '目标调整到 2029 年。'),
+        );
+        expect(
+          await store.findConversationCheckpoint(
+            sessionId: 's',
+            ownerUserId: 'u',
+          ),
+          isNull,
+        );
+
+        await store.upsertConversationCheckpoint(checkpoint);
+        await store.deleteMessage(summarized.id);
+        expect(
+          await store.findConversationCheckpoint(
+            sessionId: 's',
+            ownerUserId: 'u',
+          ),
+          isNull,
+        );
+
+        await store.upsertConversationCheckpoint(checkpoint);
+        await store.deleteSession('s');
+        expect(
+          await store.findConversationCheckpoint(
+            sessionId: 's',
+            ownerUserId: 'u',
+          ),
+          isNull,
+        );
+      },
+    );
   });
 }

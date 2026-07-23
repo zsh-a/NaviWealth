@@ -1313,6 +1313,120 @@ void main() {
     expect(version.read<int>('user_version'), db.schemaVersion);
   });
 
+  test('migrates v55 chat snapshots to support pending interactions', () async {
+    final dir = await Directory.systemTemp.createTemp(
+      'naviwealth_chat_interaction_migration_',
+    );
+    addTearDown(() async {
+      if (await dir.exists()) await dir.delete(recursive: true);
+    });
+    final file = File('${dir.path}/naviwealth.db');
+    final legacy = sqlite3.open(file.path);
+    try {
+      legacy
+        ..execute('''
+            CREATE TABLE agent_runtime_chat_snapshots (
+              owner_user_id    TEXT NOT NULL,
+              turn_id          TEXT NOT NULL,
+              snapshot_version INTEGER NOT NULL,
+              revision         INTEGER NOT NULL DEFAULT 0,
+              status           TEXT NOT NULL,
+              snapshot_json    TEXT NOT NULL,
+              created_at       INTEGER NOT NULL,
+              updated_at       INTEGER NOT NULL,
+              expires_at       INTEGER,
+              PRIMARY KEY (owner_user_id, turn_id),
+              CHECK (revision >= 0),
+              CHECK (status IN (
+                'ready_for_model',
+                'requires_tool_results',
+                'completed',
+                'cancelled',
+                'failed'
+              ))
+            )
+          ''')
+        ..execute('''
+            CREATE INDEX idx_agent_runtime_chat_snapshots_pending
+            ON agent_runtime_chat_snapshots(
+              owner_user_id,
+              status,
+              updated_at DESC
+            )
+          ''')
+        ..execute('''
+            INSERT INTO agent_runtime_chat_snapshots (
+              owner_user_id,
+              turn_id,
+              snapshot_version,
+              revision,
+              status,
+              snapshot_json,
+              created_at,
+              updated_at,
+              expires_at
+            ) VALUES (
+              'user-1',
+              'turn-existing',
+              1,
+              2,
+              'completed',
+              '{}',
+              1,
+              2,
+              NULL
+            )
+          ''')
+        ..execute('PRAGMA user_version = 55');
+    } finally {
+      legacy.close();
+    }
+
+    final db = AppDatabase(
+      DatabaseConnection(NativeDatabase(file, logStatements: false)),
+    );
+    addTearDown(db.close);
+
+    await db.customStatement('''
+        INSERT INTO agent_runtime_chat_snapshots (
+          owner_user_id,
+          turn_id,
+          snapshot_version,
+          revision,
+          status,
+          snapshot_json,
+          created_at,
+          updated_at,
+          expires_at
+        ) VALUES (
+          'user-1',
+          'turn-interaction',
+          1,
+          0,
+          'requires_interaction',
+          '{}',
+          3,
+          3,
+          NULL
+        )
+      ''');
+    final rows = await db
+        .customSelect(
+          'SELECT turn_id, status, revision '
+          'FROM agent_runtime_chat_snapshots ORDER BY turn_id',
+        )
+        .get();
+
+    expect(rows, hasLength(2));
+    expect(rows.first.read<String>('turn_id'), 'turn-existing');
+    expect(rows.first.read<String>('status'), 'completed');
+    expect(rows.first.read<int>('revision'), 2);
+    expect(rows.last.read<String>('turn_id'), 'turn-interaction');
+    expect(rows.last.read<String>('status'), 'requires_interaction');
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.read<int>('user_version'), 56);
+  });
+
   test('migrates v23 options journal rows through v26 additions', () async {
     final dir = await Directory.systemTemp.createTemp('naviwealth_migration_');
     addTearDown(() async {
@@ -1883,5 +1997,82 @@ void main() {
     expect(tableNames, contains('portfolio_lot_memberships'));
     final version = await db.customSelect('PRAGMA user_version').getSingle();
     expect(version.read<int>('user_version'), db.schemaVersion);
+  });
+
+  test('v53 upgrade creates local conversation checkpoints', () async {
+    final dir = await Directory.systemTemp.createTemp(
+      'naviwealth-conversation-checkpoint-migration-',
+    );
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/naviwealth.db');
+    final legacy = sqlite3.open(file.path);
+    try {
+      legacy
+        ..execute('''
+          CREATE TABLE chat_sessions (
+            id              TEXT PRIMARY KEY,
+            owner_user_id   TEXT NOT NULL,
+            title           TEXT NOT NULL,
+            model           TEXT,
+            created_at      INTEGER NOT NULL,
+            updated_at      INTEGER NOT NULL,
+            last_message_at INTEGER,
+            pinned          INTEGER NOT NULL DEFAULT 0,
+            archived        INTEGER NOT NULL DEFAULT 0
+          )
+        ''')
+        ..execute('PRAGMA user_version = 53');
+    } finally {
+      legacy.close();
+    }
+
+    final db = AppDatabase(
+      DatabaseConnection(NativeDatabase(file, logStatements: false)),
+    );
+    addTearDown(db.close);
+
+    final columns = await db
+        .customSelect('PRAGMA table_info(conversation_checkpoints)')
+        .get();
+    expect(
+      columns.map((row) => row.read<String>('name')),
+      containsAll([
+        'session_id',
+        'summary_through_message_id',
+        'source_fingerprint',
+        'payload_json',
+      ]),
+    );
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.read<int>('user_version'), 56);
+  });
+
+  test('v54 upgrade creates memory candidate staging', () async {
+    final dir = await Directory.systemTemp.createTemp(
+      'naviwealth-memory-candidate-migration-',
+    );
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/naviwealth.db');
+    final legacy = sqlite3.open(file.path);
+    try {
+      legacy.execute('PRAGMA user_version = 54');
+    } finally {
+      legacy.close();
+    }
+
+    final db = AppDatabase(
+      DatabaseConnection(NativeDatabase(file, logStatements: false)),
+    );
+    addTearDown(db.close);
+
+    final columns = await db
+        .customSelect('PRAGMA table_info(memory_candidates)')
+        .get();
+    expect(
+      columns.map((row) => row.read<String>('name')),
+      containsAll(['id', 'proposal_id', 'operation', 'status', 'payload_json']),
+    );
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.read<int>('user_version'), 56);
   });
 }

@@ -68,6 +68,18 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   }
 }
 
+Future<void> _createConversationCheckpoints(AppDatabase db) async {
+  for (final stmt in conversationCheckpointDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
+Future<void> _createMemoryCandidates(AppDatabase db) async {
+  for (final stmt in memoryCandidateDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
 Future<void> _createChatSessionsTable(AppDatabase db) async {
   await db.customStatement('''
 CREATE TABLE IF NOT EXISTS chat_sessions (
@@ -122,6 +134,52 @@ Future<void> _createAgentRuntimeChatSnapshots(AppDatabase db) async {
   for (final stmt in agentRuntimeChatSnapshotDdl) {
     await db.customStatement(stmt);
   }
+}
+
+Future<void> _upgradeAgentRuntimeChatSnapshotsForInteractions(
+  AppDatabase db,
+) async {
+  final columns = await db
+      .customSelect('PRAGMA table_info(agent_runtime_chat_snapshots)')
+      .get();
+  if (columns.isEmpty) {
+    await _createAgentRuntimeChatSnapshots(db);
+    return;
+  }
+
+  await db.customStatement(
+    'DROP INDEX IF EXISTS idx_agent_runtime_chat_snapshots_pending',
+  );
+  await db.customStatement(
+    'ALTER TABLE agent_runtime_chat_snapshots '
+    'RENAME TO agent_runtime_chat_snapshots_v55',
+  );
+  await _createAgentRuntimeChatSnapshots(db);
+  await db.customStatement('''
+    INSERT INTO agent_runtime_chat_snapshots (
+      owner_user_id,
+      turn_id,
+      snapshot_version,
+      revision,
+      status,
+      snapshot_json,
+      created_at,
+      updated_at,
+      expires_at
+    )
+    SELECT
+      owner_user_id,
+      turn_id,
+      snapshot_version,
+      revision,
+      status,
+      snapshot_json,
+      created_at,
+      updated_at,
+      expires_at
+    FROM agent_runtime_chat_snapshots_v55
+  ''');
+  await db.customStatement('DROP TABLE agent_runtime_chat_snapshots_v55');
 }
 
 Future<void> _createAgentArtifacts(AppDatabase db) async {

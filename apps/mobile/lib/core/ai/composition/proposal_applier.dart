@@ -37,6 +37,13 @@ abstract class ProposalApplier {
   Future<void> undo(ProposalApplyState state);
 }
 
+/// Optional lifecycle hook for staged resources created by a `propose_*`
+/// tool. Most domain proposals have nothing to clean up on cancel; memory
+/// candidates use this to persist an explicit rejection.
+abstract interface class ProposalCancellationHandler {
+  Future<void> cancel(ReadyProposalPlan plan);
+}
+
 class _NoopProposalApplier implements ProposalApplier {
   const _NoopProposalApplier();
 

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../../core/ai/composition/proposal_apply_state.dart';
+import '../../../core/ai/contracts/interaction.dart';
 import '../../../core/ai/progress/long_task_progress.dart';
 import 'chat_events.dart' show TokenUsage;
 
@@ -121,6 +122,7 @@ class ToolInvocation {
     this.output,
     this.status = ToolInvocationStatus.completed,
     this.decisionSelection,
+    this.interactionResponse,
     this.applyState,
     this.partialInputJson,
   });
@@ -131,6 +133,7 @@ class ToolInvocation {
   final Object? output;
   final ToolInvocationStatus status;
   final DecisionSelection? decisionSelection;
+  final AiInteractionResponse? interactionResponse;
   final String? partialInputJson;
 
   /// Apply state for `propose_*` tool calls. `null` for read-only
@@ -145,6 +148,7 @@ class ToolInvocation {
     Object? output,
     ToolInvocationStatus? status,
     DecisionSelection? decisionSelection,
+    AiInteractionResponse? interactionResponse,
     String? partialInputJson,
     ProposalApplyState? applyState,
     bool clearApplyState = false,
@@ -155,6 +159,7 @@ class ToolInvocation {
     output: output ?? this.output,
     status: status ?? this.status,
     decisionSelection: decisionSelection ?? this.decisionSelection,
+    interactionResponse: interactionResponse ?? this.interactionResponse,
     partialInputJson: partialInputJson ?? this.partialInputJson,
     applyState: clearApplyState ? null : (applyState ?? this.applyState),
   );
@@ -166,6 +171,8 @@ class ToolInvocation {
     'status': status.wire,
     if (decisionSelection != null)
       'decision_selection': decisionSelection!.toJson(),
+    if (interactionResponse != null)
+      'interaction_response': interactionResponse!.toJson(),
     if (partialInputJson != null) 'partial_input_json': partialInputJson,
     'output': output,
     if (applyState != null) 'apply_state': applyState!.toJson(),
@@ -184,6 +191,9 @@ class ToolInvocation {
             rawSelection.map((k, v) => MapEntry(k.toString(), v)),
           )
         : null;
+    final interactionResponse = AiInteractionResponse.tryParse(
+      json['interaction_response'],
+    );
     return ToolInvocation(
       id: (json['id'] ?? '') as String,
       name: (json['name'] ?? '') as String,
@@ -191,6 +201,7 @@ class ToolInvocation {
       output: json['output'],
       status: ToolInvocationStatusX.parse(json['status'] as String?),
       decisionSelection: selection,
+      interactionResponse: interactionResponse,
       partialInputJson: json['partial_input_json'] as String?,
       applyState: apply,
     );

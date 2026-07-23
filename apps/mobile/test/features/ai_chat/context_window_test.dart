@@ -62,6 +62,10 @@ void main() {
       expect(ctx.wire.last.content, 'final');
       expect(ctx.wire.length, 5); // 4 kept + 1 pending
       expect(ctx.droppedTurns, 2);
+      expect(ctx.droppedMessages.map((message) => message.content), [
+        '$big-1',
+        '$big-2',
+      ]);
       expect(ctx.wire.map((m) => m.content), [
         '$big-3',
         '$big-4',

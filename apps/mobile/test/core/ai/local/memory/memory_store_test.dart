@@ -237,6 +237,48 @@ void main() {
       final foreign = await store.queryMemories(ownerUserId: 'u2');
       expect(foreign, isEmpty);
     });
+
+    test('sourcePrefixes is an allow-list and empty means no access', () async {
+      await store.writeMemoryWithoutVector(
+        _mem(id: 'finance', source: 'options_trade_journal'),
+      );
+      await store.writeMemoryWithoutVector(
+        _mem(id: 'health', source: 'health:health_metrics'),
+      );
+
+      final financeOnly = await store.queryMemories(
+        ownerUserId: _kOwner,
+        sourcePrefixes: const {'options_'},
+      );
+      expect(financeOnly.map((candidate) => candidate.record.id), ['finance']);
+
+      final denied = await store.queryMemories(
+        ownerUserId: _kOwner,
+        sourcePrefixes: const <String>{},
+      );
+      expect(denied, isEmpty);
+
+      final blankDenied = await store.queryMemories(
+        ownerUserId: _kOwner,
+        sourcePrefixes: const <String>{' ', '\t'},
+      );
+      expect(blankDenied, isEmpty);
+    });
+
+    test('sourcePrefixes treats SQL wildcard characters literally', () async {
+      await store.writeMemoryWithoutVector(
+        _mem(id: 'literal', source: r'health_%:metrics'),
+      );
+      await store.writeMemoryWithoutVector(
+        _mem(id: 'wildcard-lookalike', source: 'healthXX:metrics'),
+      );
+
+      final hits = await store.queryMemories(
+        ownerUserId: _kOwner,
+        sourcePrefixes: const {r'health_%:'},
+      );
+      expect(hits.map((candidate) => candidate.record.id), ['literal']);
+    });
   });
 
   group('SqliteMemoryStore.dropOtherFingerprints', () {

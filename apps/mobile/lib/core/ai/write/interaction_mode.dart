@@ -15,6 +15,7 @@
 library;
 
 import '../composition/proposal_plan.dart';
+import '../contracts/interaction.dart';
 import '../contracts/proposal_envelope.dart';
 
 enum InteractionMode {
@@ -50,11 +51,20 @@ InteractionMode deriveInteractionMode(ProposalEnvelope p) {
 
 InteractionMode deriveInteractionModeForPlan(ProposalPlan plan) {
   return switch (plan) {
-    ReadyProposalPlan ready => _modeForEnvelopeKind(ready.envelopeKind),
+    ReadyProposalPlan ready =>
+      _modeForInteraction(ready.interaction?.mode) ??
+          _modeForEnvelopeKind(ready.envelopeKind),
     BatchProposalPlan batch => _deriveBatchPlanMode(batch),
     ClarificationProposalPlan _ => InteractionMode.confirmDiff,
   };
 }
+
+InteractionMode? _modeForInteraction(AiInteractionMode? mode) => switch (mode) {
+  AiInteractionMode.oneTap => InteractionMode.oneTap,
+  AiInteractionMode.confirmDiff => InteractionMode.confirmDiff,
+  AiInteractionMode.typed => InteractionMode.typed,
+  null => null,
+};
 
 InteractionMode _modeForEnvelopeKind(ProposalEnvelopeKind kind) {
   return switch (kind) {

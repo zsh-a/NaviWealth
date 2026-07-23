@@ -7,6 +7,7 @@ import '../../../core/ai/progress/long_task_progress.dart';
 import '../../../core/persistence/app_database.dart';
 import '../domain/chat_events.dart';
 import '../domain/chat_models.dart';
+import '../domain/conversation_checkpoint.dart';
 
 /// Persistence layer for chat sessions and messages.
 ///
@@ -210,6 +211,7 @@ class ChatHistoryStore {
     // only enabled on the *production* path (see beforeOpen). In tests
     // and on web (where SQLCipher isn't loaded) the cascade may not
     // fire, so do it explicitly here.
+    await deleteConversationCheckpoint(id);
     await _db.customStatement(
       'DELETE FROM chat_messages WHERE session_id = ?1',
       <Object?>[id],
@@ -233,6 +235,7 @@ class ChatHistoryStore {
     if (rows.isEmpty) return 0;
     for (final row in rows) {
       final id = row.read<String>('id');
+      await deleteConversationCheckpoint(id);
       await _db.customStatement(
         'DELETE FROM chat_messages WHERE session_id = ?1',
         <Object?>[id],
@@ -287,6 +290,7 @@ class ChatHistoryStore {
         msg.createdAt.millisecondsSinceEpoch,
       ],
     );
+    await _invalidateCheckpointAtOrAfterMessage(msg);
     _notify();
   }
 
@@ -310,6 +314,7 @@ class ChatHistoryStore {
         _encodeStopReason(msg.stopReason),
       ],
     );
+    await _invalidateCheckpointAtOrAfterMessage(msg);
     _notify();
   }
 
@@ -317,11 +322,140 @@ class ChatHistoryStore {
   /// discards the failed/unwanted assistant turn (and its paired user
   /// turn) before re-running the same prompt.
   Future<void> deleteMessage(String id) async {
+    final row = await _db
+        .customSelect(
+          'SELECT session_id, owner_user_id, role, content, status, created_at '
+          'FROM chat_messages WHERE id = ?1',
+          variables: [Variable<String>(id)],
+        )
+        .getSingleOrNull();
+    if (row != null) {
+      await _invalidateCheckpointAtOrAfterMessage(
+        ChatMessage(
+          id: id,
+          sessionId: row.read<String>('session_id'),
+          ownerUserId: row.read<String>('owner_user_id'),
+          role: ChatRoleX.parse(row.read<String>('role')),
+          content: row.read<String>('content'),
+          status: ChatMessageStatusX.parse(row.read<String>('status')),
+          createdAt: DateTime.fromMillisecondsSinceEpoch(
+            row.read<int>('created_at'),
+            isUtc: true,
+          ),
+        ),
+      );
+    }
     await _db.customStatement(
       'DELETE FROM chat_messages WHERE id = ?1',
       <Object?>[id],
     );
     _notify();
+  }
+
+  // ─── structured context checkpoints ───────────────────────────────
+
+  Future<ConversationCheckpoint?> findConversationCheckpoint({
+    required String sessionId,
+    required String ownerUserId,
+  }) async {
+    final row = await _db
+        .customSelect(
+          'SELECT * FROM conversation_checkpoints '
+          'WHERE session_id = ?1 AND owner_user_id = ?2',
+          variables: [
+            Variable<String>(sessionId),
+            Variable<String>(ownerUserId),
+          ],
+        )
+        .getSingleOrNull();
+    if (row == null) return null;
+    try {
+      final decoded = jsonDecode(row.read<String>('payload_json'));
+      if (decoded is! Map) return null;
+      return ConversationCheckpoint(
+        sessionId: row.read<String>('session_id'),
+        ownerUserId: row.read<String>('owner_user_id'),
+        summaryThroughMessageId: row.read<String>('summary_through_message_id'),
+        summaryThroughCreatedAt: DateTime.fromMillisecondsSinceEpoch(
+          row.read<int>('summary_through_created_at'),
+          isUtc: true,
+        ),
+        sourceFingerprint: row.read<String>('source_fingerprint'),
+        sourceMessageCount: row.read<int>('source_message_count'),
+        summary: ConversationCheckpointSummary.fromJson(
+          decoded.map((key, value) => MapEntry('$key', value)),
+        ),
+        createdAt: DateTime.fromMillisecondsSinceEpoch(
+          row.read<int>('created_at'),
+          isUtc: true,
+        ),
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(
+          row.read<int>('updated_at'),
+          isUtc: true,
+        ),
+        version: row.read<int>('checkpoint_version'),
+      );
+    } on Object {
+      // A malformed cache is ignored and rebuilt from the authoritative
+      // transcript on the next truncated turn.
+      return null;
+    }
+  }
+
+  Future<void> upsertConversationCheckpoint(
+    ConversationCheckpoint checkpoint,
+  ) async {
+    await _db.customStatement(
+      'INSERT INTO conversation_checkpoints ('
+      'session_id, owner_user_id, summary_through_message_id, '
+      'summary_through_created_at, source_fingerprint, checkpoint_version, '
+      'source_message_count, payload_json, created_at, updated_at'
+      ') VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) '
+      'ON CONFLICT(session_id) DO UPDATE SET '
+      'owner_user_id = excluded.owner_user_id, '
+      'summary_through_message_id = excluded.summary_through_message_id, '
+      'summary_through_created_at = excluded.summary_through_created_at, '
+      'source_fingerprint = excluded.source_fingerprint, '
+      'checkpoint_version = excluded.checkpoint_version, '
+      'source_message_count = excluded.source_message_count, '
+      'payload_json = excluded.payload_json, '
+      'updated_at = excluded.updated_at',
+      <Object?>[
+        checkpoint.sessionId,
+        checkpoint.ownerUserId,
+        checkpoint.summaryThroughMessageId,
+        checkpoint.summaryThroughCreatedAt.millisecondsSinceEpoch,
+        checkpoint.sourceFingerprint,
+        checkpoint.version,
+        checkpoint.sourceMessageCount,
+        jsonEncode(checkpoint.summary.toJson()),
+        checkpoint.createdAt.millisecondsSinceEpoch,
+        checkpoint.updatedAt.millisecondsSinceEpoch,
+      ],
+    );
+  }
+
+  Future<void> deleteConversationCheckpoint(String sessionId) async {
+    await _db.customStatement(
+      'DELETE FROM conversation_checkpoints WHERE session_id = ?1',
+      <Object?>[sessionId],
+    );
+  }
+
+  Future<void> _invalidateCheckpointAtOrAfterMessage(ChatMessage message) {
+    return _db.customStatement(
+      'DELETE FROM conversation_checkpoints '
+      'WHERE session_id = ?1 AND ('
+      'summary_through_created_at > ?2 OR '
+      '(summary_through_created_at = ?2 '
+      'AND summary_through_message_id >= ?3)'
+      ')',
+      <Object?>[
+        message.sessionId,
+        message.createdAt.millisecondsSinceEpoch,
+        message.id,
+      ],
+    );
   }
 
   static String? _encodeStopReason(ChatStopReason? reason) => switch (reason) {
@@ -401,7 +535,9 @@ class ChatHistoryStore {
       lastMessageAt: lastMs == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(lastMs, isUtc: true),
-      preview: preview == null || preview.trim().isEmpty ? null : preview.trim(),
+      preview: preview == null || preview.trim().isEmpty
+          ? null
+          : preview.trim(),
       messageCount: messageCount,
       pinned: (_tryReadInt(row, 'pinned') ?? 0) != 0,
       archived: (_tryReadInt(row, 'archived') ?? 0) != 0,

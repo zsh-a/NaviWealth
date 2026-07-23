@@ -3,10 +3,13 @@ use super::*;
 
 const CHAT_STATE_METADATA_KEY: &str = "chat_state";
 const CHAT_TOOL_RESULTS_METADATA_KEY: &str = "tool_results";
+const CHAT_INTERACTION_RESPONSE_METADATA_KEY: &str = "interaction_response";
+const CHAT_SUSPEND_INTERACTION_METADATA_KEY: &str = "suspend_interaction";
 const CHAT_STATUS_METADATA_KEY: &str = "status";
 const CHAT_TOOL_CALLS_METADATA_KEY: &str = "tool_calls";
 const CHAT_STATUS_COMPLETED: &str = "completed";
 const CHAT_STATUS_REQUIRES_TOOL_RESULTS: &str = "requires_tool_results";
+const CHAT_STATUS_REQUIRES_INTERACTION: &str = "requires_interaction";
 
 #[derive(Debug, Clone)]
 pub(super) struct ChatTurnEnvelope {
@@ -24,6 +27,43 @@ pub(super) async fn stream_chat_turn_response(
     state: ChatTurnState,
 ) -> Result<()> {
     let envelope = chat_turn_envelope_from_state(&state);
+    if state.pending_interaction.is_some() {
+        let started = chat_turn_started_event_without_llm(&envelope, &state)?;
+        let _ = sink.add(serde_json::to_string(&started)?);
+        let metadata =
+            round_finished_metadata(&state, CHAT_STATUS_REQUIRES_INTERACTION, None, None)?;
+        let mut round_finished = serde_json::to_value(ChatTurnEvent {
+            kind: ChatTurnEventKind::RoundFinished,
+            content: None,
+            response: None,
+            tool_call_id: None,
+            tool_name: None,
+            partial_input_json: None,
+            tool_input: None,
+            tool_output: None,
+            usage: None,
+            round: state.round,
+            metadata,
+        })?;
+        attach_chat_turn_envelope(&envelope, &mut round_finished);
+        let _ = sink.add(serde_json::to_string(&round_finished)?);
+        let mut done = serde_json::to_value(ChatTurnEvent {
+            kind: ChatTurnEventKind::Done,
+            content: None,
+            response: None,
+            tool_call_id: None,
+            tool_name: None,
+            partial_input_json: None,
+            tool_input: None,
+            tool_output: None,
+            usage: None,
+            round: state.round,
+            metadata: json!({"stop_reason": CHAT_STATUS_REQUIRES_INTERACTION}),
+        })?;
+        attach_chat_turn_envelope(&envelope, &mut done);
+        let _ = sink.add(serde_json::to_string(&done)?);
+        return Ok(());
+    }
     let round = chat_turn_next_round(&state);
     let request = chat_turn_llm_request(&state);
     let started = chat_turn_started_event(&envelope, &request)?;
@@ -190,13 +230,34 @@ pub(super) fn chat_turn_state_from_request(request: &ChatTurnRequest) -> Result<
             .cloned()
             .unwrap_or_else(|| json!([]));
         let tool_results: Vec<ChatToolResult> = serde_json::from_value(tool_results_value)?;
+        let interaction_response = request
+            .metadata
+            .get(CHAT_INTERACTION_RESPONSE_METADATA_KEY)
+            .cloned()
+            .map(serde_json::from_value)
+            .transpose()?;
         state.provider = request.provider.clone();
         state.model = request.model.clone();
         state.temperature = request.temperature;
         state.max_output_tokens = request.max_output_tokens;
         state.tools = request.tools.clone();
+        if !request.context_blocks.is_empty() {
+            state.context_blocks = request.context_blocks.clone();
+        }
+        state.context_policy = request.context_policy.clone();
         state.metadata = chat_request_runtime_metadata(&request.metadata);
-        chat_turn_apply_tool_results(state, tool_results).map_err(chat_error_to_anyhow)
+        let state = chat_turn_resume_state(state, tool_results, interaction_response)
+            .map_err(chat_error_to_anyhow)?;
+        if let Some(value) = request
+            .metadata
+            .get(CHAT_SUSPEND_INTERACTION_METADATA_KEY)
+            .cloned()
+        {
+            let interaction: InteractionEnvelope = serde_json::from_value(value)?;
+            chat_turn_suspend_for_interaction(state, interaction).map_err(chat_error_to_anyhow)
+        } else {
+            Ok(state)
+        }
     } else {
         chat_turn_initial_state(request).map_err(chat_error_to_anyhow)
     }
@@ -209,6 +270,8 @@ fn chat_request_runtime_metadata(metadata: &Value) -> Value {
     };
     object.remove(CHAT_STATE_METADATA_KEY);
     object.remove(CHAT_TOOL_RESULTS_METADATA_KEY);
+    object.remove(CHAT_INTERACTION_RESPONSE_METADATA_KEY);
+    object.remove(CHAT_SUSPEND_INTERACTION_METADATA_KEY);
     object.remove(CHAT_STATUS_METADATA_KEY);
     object.remove(CHAT_TOOL_CALLS_METADATA_KEY);
     Value::Object(object.clone())
@@ -353,6 +416,31 @@ fn chat_turn_started_event(envelope: &ChatTurnEnvelope, request: &LlmRequest) ->
         metadata: json!({
             "provider": request.provider.clone(),
             "model": request.model.clone(),
+        }),
+    })?;
+    attach_chat_turn_envelope(envelope, &mut value);
+    Ok(value)
+}
+
+fn chat_turn_started_event_without_llm(
+    envelope: &ChatTurnEnvelope,
+    state: &ChatTurnState,
+) -> Result<Value> {
+    let mut value = serde_json::to_value(ChatTurnEvent {
+        kind: ChatTurnEventKind::Started,
+        content: None,
+        response: None,
+        tool_call_id: None,
+        tool_name: None,
+        partial_input_json: None,
+        tool_input: None,
+        tool_output: None,
+        usage: None,
+        round: state.round,
+        metadata: json!({
+            "provider": state.provider,
+            "model": state.model,
+            "resumed_for_interaction": true,
         }),
     })?;
     attach_chat_turn_envelope(envelope, &mut value);

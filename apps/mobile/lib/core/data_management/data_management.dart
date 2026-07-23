@@ -160,13 +160,15 @@ class DataManagementService {
   Future<SharedDataSnapshot> inspectSharedData() async {
     final chatRows =
         await _countOwnerRows('chat_sessions') +
-        await _countOwnerRows('chat_messages');
+        await _countOwnerRows('chat_messages') +
+        await _countOwnerRows('conversation_checkpoints');
     final aiRows =
         await _countOwnerRows('ai_traces') +
         await _countOwnerRows('ai_undo_stack') +
         await _countOwnerRows('ai_touched_entities');
     final memoryRows =
         await _countOwnerRows('memories') +
+        await _countOwnerRows('memory_candidates') +
         await _countOwnerRows('events') +
         await _countOwnerRows('domain_event_log', ownerColumn: 'actor_user_id');
     final agentRows =
@@ -193,6 +195,7 @@ class DataManagementService {
     await _database.transaction(() async {
       await _database.customStatement('PRAGMA defer_foreign_keys = ON');
       for (final table in const <String>[
+        'conversation_checkpoints',
         'chat_messages',
         'chat_sessions',
         'ai_undo_stack',
@@ -201,6 +204,7 @@ class DataManagementService {
         'agent_runtime_checkpoints',
         'agent_artifacts',
         'agent_runs',
+        'memory_candidates',
         'memories',
         'events',
       ]) {

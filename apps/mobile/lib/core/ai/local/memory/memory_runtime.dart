@@ -114,6 +114,7 @@ class MemoryRuntime {
     Set<MemoryKind>? kinds,
     String? scope,
     String? source,
+    Set<String>? sourcePrefixes,
     DateTime? validAt,
     int topK = 10,
     Duration recencyHalfLife = const Duration(days: 30),
@@ -133,6 +134,7 @@ class MemoryRuntime {
       kinds: kinds,
       scope: scope,
       source: source,
+      sourcePrefixes: sourcePrefixes,
       queryVector: queryVec,
       fingerprint: fingerprint,
       validAt: validAt ?? now,
@@ -183,6 +185,7 @@ class MemoryRuntime {
   Future<List<EventRecord>> recentEvents({
     required String ownerUserId,
     String? source,
+    Set<String>? sourcePrefixes,
     Set<String>? typeFilter,
     Set<String>? entityFilter,
     Duration window = const Duration(days: 30),
@@ -190,6 +193,7 @@ class MemoryRuntime {
   }) => eventStore.recentEvents(
     ownerUserId: ownerUserId,
     source: source,
+    sourcePrefixes: sourcePrefixes,
     typeFilter: typeFilter,
     entityFilter: entityFilter,
     since: _clock().subtract(window),

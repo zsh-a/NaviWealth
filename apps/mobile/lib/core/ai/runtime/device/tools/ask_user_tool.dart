@@ -14,11 +14,15 @@
 /// the payload the UI ([DecisionRequest.tryParse]) renders.
 library;
 
+import 'package:uuid/uuid.dart';
+
+import '../../../contracts/interaction.dart';
 import '../../../contracts/tool_descriptor.dart' show kDomainShell;
 import 'device_tool.dart';
 
 /// Wire tool name — referenced by the runtime terminal-tool check.
 const String kAskUserToolName = 'ask_user';
+const Uuid _interactionUuid = Uuid();
 
 class AskUserTool implements DeviceTool {
   const AskUserTool();
@@ -108,17 +112,53 @@ class AskUserTool implements DeviceTool {
       return _bad('options 最多 4 个。');
     }
 
-    // Echo the normalised request — this is what the agent loop records as
-    // the tool result and what the Host renders as the decision card.
+    final allowCustom = input['allow_custom'] != false;
+    final interaction = AiInteractionEnvelope(
+      interactionId: 'interaction_${_interactionUuid.v4()}',
+      kind: AiInteractionKind.choice,
+      mode: AiInteractionMode.oneTap,
+      status: AiInteractionStatus.pending,
+      title: title,
+      prompt: (input['context'] as String?)?.trim() ?? '',
+      options: [
+        for (final option in options)
+          AiInteractionOption(
+            id: option['id']! as String,
+            label: option['label']! as String,
+            description: option['description']! as String,
+            metadata: <String, Object?>{
+              'pros': option['pros'],
+              'cons': option['cons'],
+              'recommended': option['recommended'],
+            },
+          ),
+      ],
+      responseSchema: const <String, Object?>{
+        'type': 'object',
+        'required': <String>['option_id'],
+        'properties': <String, Object?>{
+          'option_id': <String, Object?>{'type': 'string'},
+          'custom_text': <String, Object?>{'type': 'string'},
+        },
+      },
+      payload: <String, Object?>{'domain': kDomainShell},
+      metadata: <String, Object?>{'allow_custom': allowCustom},
+      resumeKind: AiInteractionResumeKind.chatTurn,
+      createdAt: DateTime.now().toUtc(),
+    );
+
+    // Keep the legacy fields during migration so existing decision cards
+    // render unchanged; `interaction` is the durable runtime contract.
     return <String, Object?>{
       'type': 'decision_request',
       'title': title,
       'context': (input['context'] as String?)?.trim() ?? '',
       'options': options,
-      'allow_custom': input['allow_custom'] != false,
+      'allow_custom': allowCustom,
       // The loop pauses here; the user's pick arrives as the next turn.
       'awaiting_user': true,
       'domain': kDomainShell,
+      'interaction': interaction.toJson(),
     };
   }
 

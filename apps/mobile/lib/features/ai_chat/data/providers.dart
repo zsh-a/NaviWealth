@@ -9,6 +9,7 @@ import '../../../core/auth/providers.dart';
 import '../../../core/persistence/providers.dart';
 import '../domain/chat_models.dart';
 import 'ai_chat_api_client.dart';
+import 'chat_context_block_prep.dart';
 import 'chat_history_store.dart';
 import 'chat_repository.dart';
 import 'runtime_routing_api_client.dart';
@@ -21,6 +22,13 @@ final chatAgentProvider = Provider<ChatAgent?>((ref) => null);
 final aiChatApiClientProvider = Provider<AiChatApiClient>((ref) {
   return RuntimeRoutingAiChatApiClient(agent: ref.watch(chatAgentProvider));
 });
+
+/// App-level per-turn context assembly. The feature default is intentionally
+/// absent so isolated tests and partial provider graphs do not pull domain
+/// memories without an explicit composition policy.
+final chatContextBlockPrepProvider = Provider<ChatContextBlockPrep?>(
+  (ref) => null,
+);
 
 /// Chat persistence is awaited once via [appDatabaseProvider]. We expose
 /// the store as an `AsyncValue` so consumers can react to first-time DB
@@ -39,11 +47,13 @@ final chatRepositoryProvider = FutureProvider<ChatRepository>((ref) async {
   final traceStore = ref.watch(aiTraceStoreProvider);
   final tracePrep = ref.watch(chatTracePrepProvider);
   final portfolioReader = ref.watch(portfolioSnapshotReaderProvider);
+  final contextBlockPrep = ref.watch(chatContextBlockPrepProvider);
   return ChatRepository(
     store: store,
     api: api,
     sessionReader: reader,
     portfolioSnapshotReader: portfolioReader,
+    contextBlockPrep: contextBlockPrep,
     tracePrep: tracePrep,
     traceStore: traceStore,
   );

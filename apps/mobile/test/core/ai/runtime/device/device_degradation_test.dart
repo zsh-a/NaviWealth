@@ -292,6 +292,7 @@ void main() {
         'propose_fire_plan_update',
         'propose_income',
         'propose_liability_payment',
+        'propose_memory',
         'propose_merge',
         'propose_options_journal_entry',
         'propose_options_profile_update',

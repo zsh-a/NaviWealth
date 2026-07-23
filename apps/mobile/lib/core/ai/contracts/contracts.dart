@@ -11,6 +11,8 @@ export 'chat_events.dart';
 export 'context_pack.dart';
 export 'evidence_anchor.dart';
 export 'intent.dart';
+export 'interaction.dart';
+export 'memory_candidate.dart';
 export 'privacy_budget.dart';
 export 'privacy_mode_provider.dart';
 export 'proposal_envelope.dart';

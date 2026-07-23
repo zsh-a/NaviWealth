@@ -75,6 +75,31 @@ void main() {
       );
     });
 
+    test('runtime interaction mode overrides legacy envelope kind', () {
+      final plan = ReadyProposalPlan(
+        proposalId: 'p',
+        kind: 'expense',
+        envelopeKind: ProposalEnvelopeKind.localProposal,
+        summaryZh: 's',
+        payload: const <String, Object?>{},
+        interaction: AiInteractionEnvelope(
+          interactionId: 'interaction:p',
+          kind: AiInteractionKind.approval,
+          mode: AiInteractionMode.typed,
+          status: AiInteractionStatus.pending,
+          title: 'Confirm',
+          confirmation: const AiInteractionConfirmation(
+            requiredText: 'APPROVE',
+          ),
+          responseSchema: const <String, Object?>{},
+          resumeKind: AiInteractionResumeKind.proposalApply,
+          createdAt: DateTime.utc(2026, 7, 23),
+        ),
+      );
+
+      expect(deriveInteractionModeForPlan(plan), InteractionMode.typed);
+    });
+
     test('BatchProposalPlan uses most conservative child mode', () {
       const batch = BatchProposalPlan(
         proposalId: 'batch',

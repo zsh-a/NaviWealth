@@ -9,6 +9,7 @@ library;
 import 'package:dio/dio.dart';
 
 import '../../../core/ai/contracts/contracts.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_context_block.dart';
 import '../../../core/ai/runtime/chat_agent.dart';
 import '../../../core/auth/auth_session.dart';
 
@@ -33,6 +34,10 @@ abstract class AiChatApiClient {
     Map<String, Object?> metadata = const <String, Object?>{},
     Map<String, Object?>? portfolioSnapshot,
     ContextPack? contextPack,
+    List<AgentRuntimeContextBlock> contextBlocks =
+        const <AgentRuntimeContextBlock>[],
+    AgentRuntimeContextPolicy? contextPolicy,
+    AiInteractionResponse? interactionResponse,
     String? model,
     CancelToken? cancelToken,
   });

@@ -70,6 +70,23 @@ void main() {
       expect(await store.loadResumable('turn-1'), isNull);
     },
   );
+
+  test('persists a resumable pending interaction snapshot', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = DriftAgentRuntimeChatSnapshotStore(
+      databaseReader: () async => db,
+      ownerUserIdReader: () async => 'user-1',
+    );
+
+    final created = await store.save(snapshot: _interactionSnapshot());
+
+    expect(created.status, 'requires_interaction');
+    expect(
+      (await store.loadResumable('turn-interaction'))?.status,
+      'requires_interaction',
+    );
+  });
 }
 
 Map<String, Object?> _snapshot({
@@ -114,5 +131,36 @@ Map<String, Object?> _snapshot({
               },
           },
         ],
+  };
+}
+
+Map<String, Object?> _interactionSnapshot() {
+  return <String, Object?>{
+    'protocol_version': 'agent.v1',
+    'snapshot_version': 1,
+    'status': 'requires_interaction',
+    'state': <String, Object?>{
+      'turn_id': 'turn-interaction',
+      'round': 1,
+      'pending_tool_calls': const <Object?>[],
+      'pending_interaction': <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'interaction_id': 'interaction-1',
+        'kind': 'choice',
+        'mode': 'one_tap',
+        'status': 'pending',
+        'title': 'Choose',
+        'options': const <Object?>[
+          <String, Object?>{'id': 'a', 'label': 'A'},
+          <String, Object?>{'id': 'b', 'label': 'B'},
+        ],
+        'response_schema': const <String, Object?>{},
+        'payload': const <String, Object?>{},
+        'metadata': const <String, Object?>{},
+        'resume': const <String, Object?>{'kind': 'chat_turn'},
+        'created_at': '2026-07-23T00:00:00Z',
+      },
+    },
+    'tool_dispatches': const <Object?>[],
   };
 }

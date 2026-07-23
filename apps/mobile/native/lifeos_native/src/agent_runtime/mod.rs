@@ -12,12 +12,13 @@ mod steps;
 
 use agent_chat::{
     ChatError, ChatToolCall, ChatToolResult, ChatTurnAdvance, ChatTurnEvent, ChatTurnEventKind,
-    ChatTurnRequest, ChatTurnState, chat_turn_apply_response, chat_turn_apply_tool_results,
-    chat_turn_initial_state, chat_turn_llm_request, chat_turn_next_round,
+    ChatTurnRequest, ChatTurnState, chat_turn_apply_response, chat_turn_initial_state,
+    chat_turn_llm_request, chat_turn_next_round, chat_turn_prepare_llm_request,
+    chat_turn_resume_state, chat_turn_suspend_for_interaction,
 };
 use agent_core::{
-    AgentRuntimeCatalog, AgentSpec, AgentTrace, ProposalKindSpec, RunRequest, ScheduleSpec,
-    ToolSpec, catalog_version, protocol_version,
+    AgentRuntimeCatalog, AgentSpec, AgentTrace, InteractionEnvelope, ProposalKindSpec, RunRequest,
+    ScheduleSpec, ToolSpec, catalog_version, protocol_version,
 };
 use agent_llm::{
     LlmEvent, LlmEventKind, LlmFinishReason, LlmProvider, LlmRequest, LlmResponse, MockLlmProvider,
@@ -142,8 +143,9 @@ pub async fn agent_runtime_stream_chat_turn(
 ) -> Result<()> {
     let mut request: ChatTurnRequest = serde_json::from_str(&request_json)?;
     contracts::normalize_chat_turn_request_contract(&mut request)?;
-    let state = chat::chat_turn_state_from_request(&request)?;
-    let llm_request = chat_turn_llm_request(&state);
+    let mut state = chat::chat_turn_state_from_request(&request)?;
+    let llm_request = chat_turn_prepare_llm_request(&mut state)
+        .map_err(|error| anyhow::anyhow!(error.record.message.clone()))?;
     let provider = profile_llm_provider(&llm_request)?;
     chat::stream_chat_turn_response(sink, provider, state).await
 }

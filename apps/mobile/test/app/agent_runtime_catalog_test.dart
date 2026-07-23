@@ -152,6 +152,7 @@ void main() {
     );
 
     expect(json['proposal_kinds'], [
+      <String, Object?>{'kind': 'memory_change', 'tool_name': 'propose_memory'},
       <String, Object?>{'kind': 'fake', 'tool_name': 'propose_fake'},
     ]);
     expect(json['prompt_blocks'], [

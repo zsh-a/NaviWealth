@@ -34,15 +34,37 @@ void main() {
       "'old', '{}', '[]')",
       <Object?>[oldMillis],
     );
+    await db.customStatement(
+      'INSERT INTO memory_candidates '
+      '(id, proposal_id, owner_user_id, operation, status, payload_json, '
+      'created_at, updated_at, decided_at) VALUES '
+      "('old-terminal', 'proposal-old', 'user-a', 'create', 'rejected', "
+      "'{}', ?, ?, ?), "
+      "('old-pending', 'proposal-pending', 'user-a', 'create', 'pending', "
+      "'{}', ?, ?, NULL), "
+      "('other-owner', 'proposal-other', 'user-b', 'create', 'rejected', "
+      "'{}', ?, ?, ?)",
+      <Object?>[
+        oldMillis,
+        oldMillis,
+        oldMillis,
+        oldMillis,
+        oldMillis,
+        oldMillis,
+        oldMillis,
+        oldMillis,
+      ],
+    );
 
     final service = DataMaintenanceService(database: db, ownerUserId: 'user-a');
     final run = await service.runRetention(now: now);
 
     expect(run.status, 'completed');
-    expect(run.rowsAffected, 3);
+    expect(run.rowsAffected, 4);
     expect(await _count(db, 'ai_traces'), 1);
     expect(await _count(db, 'ai_undo_stack'), 0);
     expect(await _count(db, 'events'), 0);
+    expect(await _ids(db, 'memory_candidates'), {'old-pending', 'other-owner'});
     expect((await service.latestRun())?.id, run.id);
     expect(await service.isDue(now.add(const Duration(hours: 23))), isFalse);
   });
@@ -63,4 +85,9 @@ Future<int> _count(AppDatabase db, String table) async {
       .customSelect('SELECT COUNT(*) AS c FROM $table')
       .getSingle();
   return row.read<int>('c');
+}
+
+Future<Set<String>> _ids(AppDatabase db, String table) async {
+  final rows = await db.customSelect('SELECT id FROM $table').get();
+  return {for (final row in rows) row.read<String>('id')};
 }

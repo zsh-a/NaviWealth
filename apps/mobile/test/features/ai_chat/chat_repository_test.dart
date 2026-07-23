@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/local/skills/skills.dart';
 import 'package:naviwealth/core/ai/progress/long_task_progress.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_context_block.dart';
 import 'package:naviwealth/core/ai/trace/trace.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
@@ -28,6 +29,8 @@ class _FakeApi implements AiChatApiClient {
   String? lastMode;
   Map<String, Object?>? lastMetadata;
   ContextPack? lastContextPack;
+  List<AgentRuntimeContextBlock>? lastContextBlocks;
+  AiInteractionResponse? lastInteractionResponse;
   Object? errorToThrow;
   Object? cancelBeforeThrow;
 
@@ -44,6 +47,10 @@ class _FakeApi implements AiChatApiClient {
     Map<String, Object?> metadata = const <String, Object?>{},
     Map<String, Object?>? portfolioSnapshot,
     ContextPack? contextPack,
+    List<AgentRuntimeContextBlock> contextBlocks =
+        const <AgentRuntimeContextBlock>[],
+    AgentRuntimeContextPolicy? contextPolicy,
+    AiInteractionResponse? interactionResponse,
     String? model,
     CancelToken? cancelToken,
   }) async* {
@@ -56,6 +63,8 @@ class _FakeApi implements AiChatApiClient {
     lastMode = mode;
     lastMetadata = metadata;
     lastContextPack = contextPack;
+    lastContextBlocks = contextBlocks;
+    lastInteractionResponse = interactionResponse;
     if (errorToThrow != null) {
       final reason = cancelBeforeThrow;
       if (reason != null) {
@@ -90,6 +99,10 @@ class _NoDoneApi implements AiChatApiClient {
     Map<String, Object?> metadata = const <String, Object?>{},
     Map<String, Object?>? portfolioSnapshot,
     ContextPack? contextPack,
+    List<AgentRuntimeContextBlock> contextBlocks =
+        const <AgentRuntimeContextBlock>[],
+    AgentRuntimeContextPolicy? contextPolicy,
+    AiInteractionResponse? interactionResponse,
     String? model,
     CancelToken? cancelToken,
   }) async* {
@@ -165,6 +178,56 @@ void main() {
       expect(api.lastMode, 'chat');
       expect(api.lastMetadata?['owner_user_id'], 'user-1');
       expect(api.lastMetadata?['assistant_message_id'], api.lastTurnId);
+    });
+
+    test('prepares and forwards host context blocks for every turn', () async {
+      api.script.add(const DoneEvent(stopReason: 'end_turn', rounds: 1));
+      repo = ChatRepository(
+        store: store,
+        api: api,
+        sessionReader: () => _fakeSession,
+        contextBlockPrep: (request) async {
+          expect(request.ownerUserId, 'user-1');
+          expect(request.userMessage, 'remember my preference');
+          return <AgentRuntimeContextBlock>[
+            AgentRuntimeContextBlock(
+              id: 'memory:preference',
+              kind: AgentRuntimeContextBlockKind.memory,
+              source: 'test',
+              content: const {'summary': 'local first'},
+            ),
+          ];
+        },
+      );
+
+      final outcome = await repo.sendMessage(
+        sessionId: await activeSessionId(),
+        ownerUserId: 'user-1',
+        content: 'remember my preference',
+      );
+
+      expect(outcome, SendOutcome.completed);
+      expect(api.lastContextBlocks, hasLength(1));
+      expect(api.lastContextBlocks!.single.id, 'memory:preference');
+    });
+
+    test('context preparation failure does not break chat', () async {
+      api.script.add(const DoneEvent(stopReason: 'end_turn', rounds: 1));
+      repo = ChatRepository(
+        store: store,
+        api: api,
+        sessionReader: () => _fakeSession,
+        contextBlockPrep: (_) async => throw StateError('index unavailable'),
+      );
+
+      final outcome = await repo.sendMessage(
+        sessionId: await activeSessionId(),
+        ownerUserId: 'user-1',
+        content: 'continue without memory',
+      );
+
+      expect(outcome, SendOutcome.completed);
+      expect(api.lastContextBlocks, isEmpty);
     });
 
     test('clears long-task progress when the turn completes', () async {
@@ -356,6 +419,33 @@ void main() {
                   <String, Object?>{'id': 'a', 'label': '方案 A'},
                   <String, Object?>{'id': 'b', 'label': '方案 B'},
                 ],
+                'interaction': <String, Object?>{
+                  'protocol_version': 'agent.v1',
+                  'interaction_id': 'interaction-decision-1',
+                  'kind': 'choice',
+                  'mode': 'one_tap',
+                  'status': 'pending',
+                  'title': '选择方案',
+                  'options': <Object?>[
+                    <String, Object?>{
+                      'id': 'a',
+                      'label': '方案 A',
+                      'description': '',
+                      'metadata': <String, Object?>{},
+                    },
+                    <String, Object?>{
+                      'id': 'b',
+                      'label': '方案 B',
+                      'description': '',
+                      'metadata': <String, Object?>{},
+                    },
+                  ],
+                  'response_schema': <String, Object?>{},
+                  'payload': <String, Object?>{},
+                  'metadata': <String, Object?>{},
+                  'resume': <String, Object?>{'kind': 'chat_turn'},
+                  'created_at': '2026-05-01T00:00:00Z',
+                },
               },
             ),
           ],
@@ -368,7 +458,7 @@ void main() {
           reply: '我选择「方案 A」。请在此方案下继续。',
           selectedAt: DateTime.utc(2026, 5, 1, 12),
         );
-        await repo.recordDecisionSelection(
+        final interactionResponse = await repo.recordDecisionSelection(
           sessionId: id,
           messageId: assistant.id,
           toolInvocationId: 'decision-1',
@@ -383,6 +473,7 @@ void main() {
             selection: selection,
             messageId: assistant.id,
             toolInvocationId: 'decision-1',
+            interactionResponse: interactionResponse,
           ),
         );
 
@@ -390,6 +481,24 @@ void main() {
           id,
         )).firstWhere((message) => message.id == assistant.id);
         expect(updated.toolCalls.single.decisionSelection?.optionId, 'a');
+        expect(
+          updated.toolCalls.single.interactionResponse?.interactionId,
+          'interaction-decision-1',
+        );
+        expect(
+          updated.toolCalls.single.interactionResponse?.action,
+          AiInteractionAction.submit,
+        );
+        expect(api.lastTurnId, assistant.id);
+        expect(
+          api.lastInteractionResponse?.interactionId,
+          'interaction-decision-1',
+        );
+        expect(api.lastInteractionResponse?.value, <String, Object?>{
+          'option_id': 'a',
+          'label': '方案 A',
+          'reply': '我选择「方案 A」。请在此方案下继续。',
+        });
         expect(api.lastMetadata?['decision_message_id'], assistant.id);
         expect(api.lastMetadata?['decision_tool_invocation_id'], 'decision-1');
         final metadataDecision = api.lastMetadata?['decision'] as Map;
@@ -667,6 +776,52 @@ void main() {
       // user / assistant pair plus the new prompt.
       expect(api.lastMessages!.map((m) => m.content), ['Q1', 'A1', 'Q2']);
     });
+
+    test(
+      'injects a structured checkpoint when older turns leave the window',
+      () async {
+        api.script.add(const DoneEvent(stopReason: 'end_turn', rounds: 1));
+        final id = await activeSessionId();
+        for (var i = 0; i < 6; i++) {
+          await store.insertMessage(
+            ChatMessage(
+              id: 'history-$i',
+              sessionId: id,
+              ownerUserId: 'user-1',
+              role: i.isEven ? ChatRole.user : ChatRole.assistant,
+              content: 'turn-$i ${'x' * 5000}',
+              status: ChatMessageStatus.complete,
+              createdAt: DateTime.utc(2026, 7, 1, 0, i),
+            ),
+          );
+        }
+
+        await repo.sendMessage(
+          sessionId: id,
+          ownerUserId: 'user-1',
+          content: '继续',
+        );
+
+        final block = api.lastContextBlocks!.singleWhere(
+          (item) => item.kind == AgentRuntimeContextBlockKind.compactionSummary,
+        );
+        expect(block.source, 'chat_history_checkpoint');
+        expect(block.metadata['trusted_as_instruction'], isFalse);
+        final content = block.content! as Map<String, Object?>;
+        expect(content['checkpoint_version'], 1);
+        expect(content['source_message_count'], 2);
+        expect(content['summary_through_message_id'], 'history-1');
+        expect(content['topic'], startsWith('turn-0'));
+        expect(api.lastMessages, hasLength(5));
+
+        final persisted = await store.findConversationCheckpoint(
+          sessionId: id,
+          ownerUserId: 'user-1',
+        );
+        expect(persisted?.summaryThroughMessageId, 'history-1');
+        expect(persisted?.sourceMessageCount, 2);
+      },
+    );
   });
 
   group('ChatRepository — Phase 2-A trace + context pack', () {

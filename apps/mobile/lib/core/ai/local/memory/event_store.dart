@@ -22,6 +22,7 @@ abstract class EventStore {
   Future<List<EventRecord>> recentEvents({
     required String ownerUserId,
     String? source,
+    Set<String>? sourcePrefixes,
     Set<String>? typeFilter,
     Set<String>? entityFilter,
     DateTime? since,
@@ -72,18 +73,34 @@ class SqliteEventStore implements EventStore {
   Future<List<EventRecord>> recentEvents({
     required String ownerUserId,
     String? source,
+    Set<String>? sourcePrefixes,
     Set<String>? typeFilter,
     Set<String>? entityFilter,
     DateTime? since,
     int limit = 50,
   }) async {
     if (limit <= 0) return const <EventRecord>[];
+    final normalizedSourcePrefixes = sourcePrefixes
+        ?.map((prefix) => prefix.trim())
+        .where((prefix) => prefix.isNotEmpty)
+        .toSet();
+    if (normalizedSourcePrefixes != null && normalizedSourcePrefixes.isEmpty) {
+      return const <EventRecord>[];
+    }
     final filters = <String>['owner_user_id = ?'];
     final vars = <Variable<Object>>[Variable.withString(ownerUserId)];
 
     if (source != null) {
       filters.add('source = ?');
       vars.add(Variable.withString(source));
+    }
+    if (normalizedSourcePrefixes != null) {
+      final prefixFilters = <String>[];
+      for (final prefix in normalizedSourcePrefixes) {
+        prefixFilters.add("source LIKE ? ESCAPE '\\'");
+        vars.add(Variable.withString('${_escapeLike(prefix)}%'));
+      }
+      filters.add('(${prefixFilters.join(' OR ')})');
     }
     if (typeFilter != null && typeFilter.isNotEmpty) {
       final placeholders = List<String>.filled(
@@ -136,6 +153,9 @@ class SqliteEventStore implements EventStore {
     return r.read<int>('n');
   }
 }
+
+String _escapeLike(String value) =>
+    value.replaceAll(r'\', r'\\').replaceAll('%', r'\%').replaceAll('_', r'\_');
 
 EventRecord _rowToEvent(QueryRow row) => EventRecord(
   id: row.read<String>('id'),

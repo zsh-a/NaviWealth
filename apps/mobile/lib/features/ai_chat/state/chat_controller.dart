@@ -92,7 +92,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
   }) async {
     if (state.isBusy) return;
     final repo = await ref.read(chatRepositoryProvider.future);
-    await repo.recordDecisionSelection(
+    final interactionResponse = await repo.recordDecisionSelection(
       sessionId: sessionId,
       messageId: messageId,
       toolInvocationId: toolInvocationId,
@@ -105,6 +105,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
         selection: selection,
         messageId: messageId,
         toolInvocationId: toolInvocationId,
+        interactionResponse: interactionResponse,
         invocationTrace: invocationTrace,
       ),
     );

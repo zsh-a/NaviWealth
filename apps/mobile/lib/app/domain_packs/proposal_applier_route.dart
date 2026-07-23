@@ -24,7 +24,8 @@ Future<ProposalApplierRoute> buildProposalApplierRoute(
 /// has selected this route by proposal kind or undo table. Without this, an
 /// Execution-only confirmation waits for every active Finance, Knowledge,
 /// and Execution repository graph to initialize.
-final class _LazyProposalApplier implements ProposalApplier {
+final class _LazyProposalApplier
+    implements ProposalApplier, ProposalCancellationHandler {
   _LazyProposalApplier(this._read);
 
   final Future<ProposalApplier> Function() _read;
@@ -40,5 +41,13 @@ final class _LazyProposalApplier implements ProposalApplier {
   @override
   Future<void> undo(ProposalApplyState state) async {
     return (await _resolve()).undo(state);
+  }
+
+  @override
+  Future<void> cancel(ReadyProposalPlan plan) async {
+    final applier = await _resolve();
+    if (applier is ProposalCancellationHandler) {
+      await (applier as ProposalCancellationHandler).cancel(plan);
+    }
   }
 }

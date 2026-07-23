@@ -3,6 +3,7 @@ library;
 import 'package:dio/dio.dart';
 
 import '../contracts/contracts.dart';
+import 'agent_runtime/agent_runtime_context_block.dart';
 
 class ChatAgentMessage {
   const ChatAgentMessage({required this.role, required this.content});
@@ -27,6 +28,9 @@ class ChatAgentTurnRequest {
     this.mode,
     this.portfolioSnapshot,
     this.contextPack,
+    this.contextBlocks = const <AgentRuntimeContextBlock>[],
+    this.contextPolicy,
+    this.interactionResponse,
     this.metadata = const <String, Object?>{},
     this.model,
     this.temperature,
@@ -43,6 +47,9 @@ class ChatAgentTurnRequest {
   final String? mode;
   final Map<String, Object?>? portfolioSnapshot;
   final ContextPack? contextPack;
+  final List<AgentRuntimeContextBlock> contextBlocks;
+  final AgentRuntimeContextPolicy? contextPolicy;
+  final AiInteractionResponse? interactionResponse;
   final Map<String, Object?> metadata;
   final String? model;
   final double? temperature;

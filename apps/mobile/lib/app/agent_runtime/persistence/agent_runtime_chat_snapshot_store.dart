@@ -166,6 +166,7 @@ AgentRuntimeChatSnapshotIdentity parseAgentRuntimeChatSnapshot(
       !const <String>{
         'ready_for_model',
         'requires_tool_results',
+        'requires_interaction',
         'completed',
         'cancelled',
         'failed',
@@ -191,6 +192,7 @@ AgentRuntimeChatSnapshotIdentity parseAgentRuntimeChatSnapshot(
     );
   }
   final pendingCalls = state['pending_tool_calls'];
+  final pendingInteraction = state['pending_interaction'];
   final pendingIds = <String>{};
   if (pendingCalls is List) {
     for (final value in pendingCalls) {
@@ -269,14 +271,41 @@ AgentRuntimeChatSnapshotIdentity parseAgentRuntimeChatSnapshot(
     }
   }
   if (status == 'requires_tool_results' &&
-      (pendingIds.isEmpty || !_sameStrings(pendingIds, dispatchIds))) {
+      (pendingInteraction != null ||
+          pendingIds.isEmpty ||
+          !_sameStrings(pendingIds, dispatchIds))) {
     throw const AgentRuntimeChatSnapshotException(
       AgentRuntimeChatSnapshotErrorCode.corrupt,
       'chat snapshot journal must match pending tool calls',
     );
   }
+  if (status == 'requires_interaction') {
+    final interaction = chatSnapshotObject(
+      pendingInteraction,
+      'snapshot.state.pending_interaction',
+    );
+    final resume = chatSnapshotObject(
+      interaction['resume'],
+      'snapshot.state.pending_interaction.resume',
+    );
+    final interactionId = interaction['interaction_id'];
+    if (interaction['protocol_version'] != 'agent.v1' ||
+        interactionId is! String ||
+        interactionId.isEmpty ||
+        interaction['status'] != 'pending' ||
+        resume['kind'] != 'chat_turn' ||
+        pendingIds.isNotEmpty ||
+        dispatchIds.isNotEmpty) {
+      throw const AgentRuntimeChatSnapshotException(
+        AgentRuntimeChatSnapshotErrorCode.corrupt,
+        'interaction snapshot must contain one pending chat interaction',
+      );
+    }
+  }
   if ((status == 'ready_for_model' || status == 'completed') &&
-      (pendingIds.isNotEmpty || dispatchIds.isNotEmpty)) {
+      (pendingInteraction != null ||
+          pendingIds.isNotEmpty ||
+          dispatchIds.isNotEmpty)) {
     throw const AgentRuntimeChatSnapshotException(
       AgentRuntimeChatSnapshotErrorCode.corrupt,
       'non-tool chat snapshot cannot retain a dispatch journal',

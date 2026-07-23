@@ -61,6 +61,8 @@ class AgentRuntimeLlmStreamBridge {
   Stream<Map<String, Object?>> streamChatTurn({
     required List<Map<String, Object?>> messages,
     List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    List<Map<String, Object?>> contextBlocks = const <Map<String, Object?>>[],
+    Map<String, Object?>? contextPolicy,
     double? temperature,
     int? maxOutputTokens,
     Map<String, Object?> metadata = const <String, Object?>{},
@@ -73,11 +75,15 @@ class AgentRuntimeLlmStreamBridge {
     int? maxToolRounds,
     Map<String, Object?>? chatState,
     List<Map<String, Object?>> toolResults = const <Map<String, Object?>>[],
+    Map<String, Object?>? interactionResponse,
+    Map<String, Object?>? suspendInteraction,
   }) async* {
     await _ensureInitialized();
     final request = _buildChatTurnRequest(
       messages: messages,
       tools: tools,
+      contextBlocks: contextBlocks,
+      contextPolicy: contextPolicy,
       temperature: temperature,
       maxOutputTokens: maxOutputTokens,
       metadata: metadata,
@@ -90,6 +96,8 @@ class AgentRuntimeLlmStreamBridge {
       maxToolRounds: maxToolRounds,
       chatState: chatState,
       toolResults: toolResults,
+      interactionResponse: interactionResponse,
+      suspendInteraction: suspendInteraction,
     );
     try {
       await for (final eventJson in _streamChatTurnJson(
@@ -115,6 +123,8 @@ class AgentRuntimeLlmStreamBridge {
   Map<String, Object?> _buildChatTurnRequest({
     required List<Map<String, Object?>> messages,
     required List<Map<String, Object?>> tools,
+    required List<Map<String, Object?>> contextBlocks,
+    required Map<String, Object?>? contextPolicy,
     required Map<String, Object?> metadata,
     required double? temperature,
     required int? maxOutputTokens,
@@ -127,11 +137,15 @@ class AgentRuntimeLlmStreamBridge {
     required int? maxToolRounds,
     required Map<String, Object?>? chatState,
     required List<Map<String, Object?>> toolResults,
+    required Map<String, Object?>? interactionResponse,
+    required Map<String, Object?>? suspendInteraction,
   }) {
     final runtimeMetadata = <String, Object?>{
       ...metadata,
       'chat_state': ?chatState,
       if (toolResults.isNotEmpty) 'tool_results': toolResults,
+      'interaction_response': ?interactionResponse,
+      'suspend_interaction': ?suspendInteraction,
     };
     final llmRequest = _llmBridge.buildRequest(
       messages: messages,
@@ -154,6 +168,8 @@ class AgentRuntimeLlmStreamBridge {
       'temperature': ?llmRequest['temperature'],
       'max_output_tokens': ?llmRequest['max_output_tokens'],
       'tools': llmRequest['tools'],
+      if (contextBlocks.isNotEmpty) 'context_blocks': contextBlocks,
+      'context_policy': ?contextPolicy,
       'metadata': llmRequest['metadata'],
       'max_tool_rounds': ?maxToolRounds,
     };

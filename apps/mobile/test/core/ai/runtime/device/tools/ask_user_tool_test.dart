@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/production_ai_catalog.dart';
+import 'package:naviwealth/core/ai/contracts/interaction.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
@@ -64,6 +65,14 @@ void main() {
       expect(first['recommended'], isTrue);
       // id falls back to label when omitted.
       expect((options[1] as Map)['id'], 'BLoC');
+      final interaction = AiInteractionEnvelope.tryParse(out['interaction']);
+      expect(interaction, isNotNull);
+      expect(interaction?.kind, AiInteractionKind.choice);
+      expect(interaction?.resumeKind, AiInteractionResumeKind.chatTurn);
+      expect(interaction?.options.map((option) => option.id), [
+        'riverpod',
+        'BLoC',
+      ]);
     });
 
     test('rejects fewer than 2 valid options', () async {

@@ -147,7 +147,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 53;
+  int get schemaVersion => 56;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -156,6 +156,8 @@ class AppDatabase extends _$AppDatabase {
       await _createIndexes(this);
       await _createSyncTables(this);
       await _createChatTables(this);
+      await _createConversationCheckpoints(this);
+      await _createMemoryCandidates(this);
       await _createSecuritiesCatalogFts(this);
       await _createSecuritiesCatalogIndexes(this);
       await _createDomainEventLog(this);
@@ -826,6 +828,22 @@ class AppDatabase extends _$AppDatabase {
           'CREATE INDEX IF NOT EXISTS idx_categories_owner_active '
           'ON categories(owner_user_id, archived, sort_order)',
         );
+      }
+      // v53 -> v54: local, structured checkpoints preserve the omitted
+      // prefix of long conversations without turning summaries into synced
+      // memory or polluting the persisted chat transcript.
+      if (from < 54) {
+        await _createConversationCheckpoints(this);
+      }
+      // v54 -> v55: models may stage a long-term-memory change, but only a
+      // user-confirmed candidate is allowed to materialize in `memories`.
+      if (from < 55) {
+        await _createMemoryCandidates(this);
+      }
+      // v55 -> v56: durable chat turns may pause on a provider-neutral
+      // interaction envelope without retaining pending tool dispatches.
+      if (from < 56) {
+        await _upgradeAgentRuntimeChatSnapshotsForInteractions(this);
       }
     },
     beforeOpen: (details) async {

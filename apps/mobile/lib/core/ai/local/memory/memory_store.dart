@@ -73,6 +73,7 @@ abstract class MemoryStore {
     Set<MemoryKind>? kinds,
     String? scope,
     String? source,
+    Set<String>? sourcePrefixes,
     List<double>? queryVector,
     String? fingerprint,
     DateTime? validAt,
@@ -207,12 +208,20 @@ class SqliteMemoryStore implements MemoryStore {
     Set<MemoryKind>? kinds,
     String? scope,
     String? source,
+    Set<String>? sourcePrefixes,
     List<double>? queryVector,
     String? fingerprint,
     DateTime? validAt,
     int limit = 50,
   }) async {
     if (limit <= 0) return const <MemoryCandidate>[];
+    final normalizedSourcePrefixes = sourcePrefixes
+        ?.map((prefix) => prefix.trim())
+        .where((prefix) => prefix.isNotEmpty)
+        .toSet();
+    if (normalizedSourcePrefixes != null && normalizedSourcePrefixes.isEmpty) {
+      return const <MemoryCandidate>[];
+    }
 
     final filters = <String>['m.owner_user_id = ?'];
     final vars = <Variable<Object>>[Variable.withString(ownerUserId)];
@@ -239,6 +248,14 @@ class SqliteMemoryStore implements MemoryStore {
     if (source != null) {
       filters.add('m.source = ?');
       vars.add(Variable.withString(source));
+    }
+    if (normalizedSourcePrefixes != null) {
+      final prefixFilters = <String>[];
+      for (final prefix in normalizedSourcePrefixes) {
+        prefixFilters.add("m.source LIKE ? ESCAPE '\\'");
+        vars.add(Variable.withString('${_escapeLike(prefix)}%'));
+      }
+      filters.add('(${prefixFilters.join(' OR ')})');
     }
     if (validAt != null) {
       final ms = validAt.toUtc().millisecondsSinceEpoch;
@@ -305,6 +322,9 @@ class SqliteMemoryStore implements MemoryStore {
     return r.read<int>('n');
   }
 }
+
+String _escapeLike(String value) =>
+    value.replaceAll(r'\', r'\\').replaceAll('%', r'\%').replaceAll('_', r'\_');
 
 MemoryRecord _rowToMemory(QueryRow row) => MemoryRecord(
   id: row.read<String>('id'),

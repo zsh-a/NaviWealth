@@ -33,7 +33,8 @@ class ProposalApplierRoute {
   final Set<String> tablePrefixes;
 }
 
-class CompositeProposalApplier implements ProposalApplier {
+class CompositeProposalApplier
+    implements ProposalApplier, ProposalCancellationHandler {
   CompositeProposalApplier({required this.routes});
 
   /// Domain routes tried in order on apply (first matching kind wins).
@@ -60,5 +61,17 @@ class CompositeProposalApplier implements ProposalApplier {
     throw ProposalApplyException(
       'no proposal applier registered for table: $table',
     );
+  }
+
+  @override
+  Future<void> cancel(ReadyProposalPlan plan) async {
+    for (final route in routes) {
+      if (!route.kinds.contains(plan.kind)) continue;
+      final applier = route.applier;
+      if (applier is ProposalCancellationHandler) {
+        await (applier as ProposalCancellationHandler).cancel(plan);
+      }
+      return;
+    }
   }
 }

@@ -33,6 +33,7 @@ crates/
   agent-store/      In-memory and file-backed run/state/proposal/session stores
   agent-llm/        Provider-neutral LLM DTOs, mock/OpenAI/Anthropic/Ollama providers
   agent-chat/       Shared ChatTurn request/event contract and provider/tool loop
+  agent-tools/      Reusable tool registry, policy, and tool-host helpers
   agent-cli/        Local developer surfaces and host adapters
 
 crates/agent-runtime/src/
@@ -68,7 +69,13 @@ crates/agent-llm/src/
   tests.rs          Provider request mapping and SSE stream tests
 
 crates/agent-chat/src/
-  lib.rs            ChatTurnRequest, ChatTurnEvent, ChatTurnRunner, tool-round loop
+  types.rs          ChatTurn request and resume contracts
+  state.rs          Persistable ChatTurnState
+  context.rs        ContextBlock validation, budgeting, rendering, snapshots
+  runner.rs         Provider/tool continuation loop
+  snapshot.rs       Chat snapshot helpers
+  events.rs         ChatTurn event contract
+  lib.rs            Public exports
 
 crates/agent-cli/src/
   main.rs           clap wiring and top-level command dispatch only
@@ -117,6 +124,7 @@ apps/mobile/lib/app/agent_runtime/
   bridges/agent_runtime_llm_bridge.dart        LlmProfile -> provider-neutral request
   bridges/agent_runtime_llm_stream_bridge.dart ChatTurn streaming bridge over FRB JSON
   chat/frb_chat_runner.dart                    ChatTurn event mapping and Flutter tool loop
+  context/app_chat_context_assembler.dart      Active-domain Memory -> ContextBlock
   trace/agent_runtime_trace_recorder.dart      FRB result -> local AiTraceStore adapter
 ```
 
@@ -135,6 +143,97 @@ apps/mobile/lib/app/agent_runtime/
 
 `AgentRunner` returns `RunOutcome`, not only `AgentRunResult`, because callers
 need both the final result and the captured `AgentTrace`.
+
+## Context Pipeline
+
+`agent-core::ContextBlock` is the provider-neutral context unit. A ChatTurn may
+carry runtime, agent, or command instructions plus untrusted memory, compaction
+summary, resource, and metadata blocks. The runtime:
+
+1. validates block ids and rejects duplicate host ids;
+2. recomputes token estimates and BLAKE3 content hashes instead of trusting
+   host-supplied values;
+3. separates instruction authority from untrusted evidence;
+4. selects blocks by priority within `ContextPolicy`, always preserving
+   instruction blocks and configured recent messages;
+5. records selected and omitted blocks in `ContextSnapshot`; and
+6. persists the snapshot in `ChatTurnState` so resume uses the same execution
+   context.
+
+Host context is rendered for the current turn but is not appended to the
+persistent transcript. This prevents retrieved memory and portfolio/resource
+snapshots from compounding across turns.
+
+Flutter owns retrieval policy. `ChatRepository` invokes the app-level
+`app_chat_context_assembler.dart`, which queries local Memory Runtime with the
+union of `memorySourcePrefixes` declared by active `DomainPack`s. Both memories
+and recent events use this hard allow-list. Each hit becomes an untrusted
+`memory` ContextBlock; Drift, embeddings, user/domain permissions, and
+repositories remain outside Rust.
+
+When the Flutter chat window omits older persisted turns, it also creates a
+local `conversation_checkpoints` row. The checkpoint stores a source
+fingerprint, summary-through message id/time, and structured payload containing
+topic, quoted tool evidence, decisions, rejected options, open loops, entities,
+time anchors, and a bounded turn digest. It is injected as an untrusted
+`compaction_summary` ContextBlock and never appended to the transcript.
+Mutating or deleting any summarized source turn invalidates the row. The
+current summarizer is deterministic and non-generative; the
+`ConversationCheckpointSummarizer` host seam permits a device-LLM summarizer
+later without moving provenance or persistence authority into the model.
+
+## Approved Long-Term Memory
+
+Models cannot write durable user memory directly. The shell tool
+`propose_memory` stages a local-only `memory_candidates` row and returns a
+`LocalProposal`. Only an explicit user approval may materialize the candidate
+in `memories`.
+
+The candidate lifecycle supports `create`, `supersede`, and `forget`, plus
+reject and undo. Candidate ownership, target-memory ownership, operation, and
+model-proposed identifiers are revalidated at apply time; a candidate cannot
+be confirmed twice or mutate another user's memory. Confirmed AI memory uses
+the fixed provenance `user_confirmed_ai` and confidence `0.95`. Cancelled
+proposals reject their candidate, failed applications remain retryable, and
+terminal candidates are pruned after 90 days per owner.
+
+This flow is separate from conversation checkpoints. Checkpoints preserve
+bounded conversational continuity; approved Memory represents a durable user
+fact or preference. Neither table syncs today.
+
+## Human Interaction and Durable Resume
+
+`agent-core::InteractionEnvelope` and `InteractionResponse` are the shared
+human-in-the-loop contract for chat questions and proposal approval:
+
+- kinds: `input`, `choice`, and `approval`;
+- confirmation modes: `one_tap`, `confirm_diff`, and `typed`;
+- lifecycle: `pending`, `resolved`, `rejected`, `cancelled`, or `expired`;
+- routing: stable interaction id, optional subject, response schema, expiry,
+  and a typed resume target; and
+- responses: `submit`, `approve`, `reject`, or `cancel`, with typed
+  confirmation text validated by the runtime.
+
+A `ChatTurnState` may have pending tool calls or one pending interaction, never
+both. `chat_turn_suspend_for_interaction` clears no tool state and fails if
+tools remain pending. `chat_turn_resume_state` accepts exactly one continuation
+input: tool results or an interaction response. Resolving an interaction adds
+a provider-neutral `interaction_result` user block before the next model
+round.
+
+`ask_user` first executes as a normal client tool. Its result carries the
+standard envelope, after which the host reapplies that tool result together
+with `suspend_interaction`. Rust returns `requires_interaction` without making
+another LLM request. Flutter persists that state in local-only
+`agent_runtime_chat_snapshots`; the row contains no tool dispatch journal.
+When the user responds, `ChatRepository` routes the response back to the
+original turn id, and Rust resumes the same ChatTurn. Missing or expired
+snapshots fail closed rather than silently starting a different execution.
+
+Proposal `readyPlan()` results expose the same approval envelope. Proposal
+approve/reject/cancel actions and `ask_user` selections persist the same
+`InteractionResponse` shape while retaining legacy `DecisionSelection` and
+`applyState` fields for compatibility.
 
 ## Interaction Entrypoints
 
@@ -181,6 +280,11 @@ TUI uses persistent natural input by default. Plain text runs the shared
 - All top-level runtime wire messages carry `protocol_version: "agent.v1"`.
 - Persistable embedded checkpoints carry `snapshot_version: 1`; hosts must
   round-trip the whole snapshot rather than reconstructing continuation state.
+- Pending tool calls and pending interactions are mutually exclusive in
+  ChatTurn state and snapshots. Hosts must resume with exactly one of
+  `tool_results` or `interaction_response`.
+- A `requires_interaction` snapshot contains one pending `chat_turn`
+  interaction, no pending tools, and no tool dispatch journal.
 - Flutter persists embedded snapshots in the local-only
   `agent_runtime_checkpoints` table. Each host effect moves through
   `awaiting_effect -> dispatching -> effect_recorded` before the next Rust
@@ -206,8 +310,6 @@ TUI uses persistent natural input by default. Plain text runs the shared
 
 These are the current implementation limits:
 
-- No standalone `agent-tools` crate exists yet. Tool traits live in
-  `agent-core`; CLI and Flutter host adapters own concrete tool hosts.
 - There is no standalone `bindings/dart` or `bindings/ts` SDK package yet.
 - Trace is event-first (`events`) and does not currently expose a separate
   `spans` array.
@@ -217,8 +319,9 @@ These are the current implementation limits:
   remain future work.
 - Snapshot cancellation is exposed through FRB and persists a Rust-produced
   terminal `cancelled` snapshot without consuming effect budget. General
-  external pause/resume and non-blocking live-run control are not fully
-  implemented. Flutter ChatTurn uses
+  arbitrary host pause and non-blocking live-run control are not fully
+  implemented. Human interaction pause/resume is implemented through
+  `InteractionEnvelope`; Flutter ChatTurn uses
   a Rust-owned pause/resume state (`chat_state` + `tool_results`) for device
   tool continuation; TUI natural input uses the shared `agent-chat` stream, but
   terminal redraw/cancel is still not a non-blocking live run loop.
@@ -233,5 +336,9 @@ These are the current implementation limits:
   continuation, and tool-round budget through the `chat_state` resume seam;
   `FrbChatRunner` only maps events and dispatches production Dart tools from
   DomainPack/Riverpod host code.
+- Flutter long-chat compaction now persists a structured deterministic
+  conversation checkpoint and Rust still provides its own final
+  priority-context/recent-message fallback. A richer device-LLM checkpoint
+  summarizer is not yet implemented.
 
 Use this document and current tests as authority.

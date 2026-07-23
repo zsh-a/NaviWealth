@@ -13,6 +13,12 @@
 ///   never product sync objects.
 /// - `agent_runtime_chat_snapshots` — versioned chat-turn state and tool
 ///   dispatch journals used to recover after Android process reclamation.
+/// - `conversation_checkpoints` — structured, source-fingerprinted summaries
+///   of the chat prefix omitted from the current model context. These are
+///   local caches, not durable user memory and never sync.
+/// - `memory_candidates` — AI-proposed long-term memory changes staged for
+///   explicit user review. Only an applied candidate may materialize a row in
+///   `memories`.
 /// - `options_opportunity_cache` — scoring engine output. Each device
 ///   computes its own opportunities from its own chain pull
 ///   (`docs/domains/options-income.md` §6.2).
@@ -50,6 +56,67 @@ CREATE INDEX IF NOT EXISTS idx_data_maintenance_runs_owner_started
 const List<String> dataMaintenanceRunDdl = <String>[
   createDataMaintenanceRuns,
   createDataMaintenanceRunsOwnerIndex,
+];
+
+// ----------------------------------------------------------------------
+// Conversation context checkpoints
+// ----------------------------------------------------------------------
+
+const String createConversationCheckpoints = '''
+CREATE TABLE IF NOT EXISTS conversation_checkpoints (
+  session_id                    TEXT PRIMARY KEY,
+  owner_user_id                 TEXT NOT NULL,
+  summary_through_message_id    TEXT NOT NULL,
+  summary_through_created_at    INTEGER NOT NULL,
+  source_fingerprint            TEXT NOT NULL,
+  checkpoint_version            INTEGER NOT NULL,
+  source_message_count          INTEGER NOT NULL,
+  payload_json                  TEXT NOT NULL,
+  created_at                    INTEGER NOT NULL,
+  updated_at                    INTEGER NOT NULL,
+  FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+)
+''';
+
+const String createConversationCheckpointsOwnerIndex = '''
+CREATE INDEX IF NOT EXISTS idx_conversation_checkpoints_owner_updated
+  ON conversation_checkpoints(owner_user_id, updated_at DESC)
+''';
+
+const List<String> conversationCheckpointDdl = <String>[
+  createConversationCheckpoints,
+  createConversationCheckpointsOwnerIndex,
+];
+
+const String createMemoryCandidates = '''
+CREATE TABLE IF NOT EXISTS memory_candidates (
+  id                 TEXT PRIMARY KEY,
+  proposal_id        TEXT NOT NULL UNIQUE,
+  owner_user_id      TEXT NOT NULL,
+  operation          TEXT NOT NULL CHECK (
+    operation IN ('create', 'supersede', 'forget')
+  ),
+  status             TEXT NOT NULL CHECK (
+    status IN ('pending', 'applying', 'applied', 'rejected', 'undone', 'failed')
+  ),
+  target_memory_id   TEXT,
+  applied_memory_id  TEXT,
+  payload_json       TEXT NOT NULL,
+  created_at         INTEGER NOT NULL,
+  updated_at         INTEGER NOT NULL,
+  decided_at         INTEGER,
+  error_message      TEXT
+)
+''';
+
+const String createMemoryCandidatesOwnerIndex = '''
+CREATE INDEX IF NOT EXISTS idx_memory_candidates_owner_status
+  ON memory_candidates(owner_user_id, status, updated_at DESC)
+''';
+
+const List<String> memoryCandidateDdl = <String>[
+  createMemoryCandidates,
+  createMemoryCandidatesOwnerIndex,
 ];
 
 // ----------------------------------------------------------------------
@@ -157,6 +224,7 @@ CREATE TABLE IF NOT EXISTS agent_runtime_chat_snapshots (
   CHECK (status IN (
     'ready_for_model',
     'requires_tool_results',
+    'requires_interaction',
     'completed',
     'cancelled',
     'failed'

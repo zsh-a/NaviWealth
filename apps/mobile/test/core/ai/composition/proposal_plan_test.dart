@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
+import 'package:naviwealth/core/ai/contracts/interaction.dart';
 
 void main() {
   group('ProposalPlan.tryParse', () {
@@ -111,6 +112,43 @@ void main() {
         (plan! as ReadyProposalPlan).envelopeKind,
         ProposalEnvelopeKind.externalSideEffect,
       );
+    });
+
+    test('parses a durable approval interaction', () {
+      final plan = ProposalPlan.tryParse(<String, Object?>{
+        'proposal_id': 'external-1',
+        'kind': 'broker_order',
+        'status': 'ready',
+        'envelope_kind': 'external_side_effect',
+        'summary_zh': 'Submit broker order',
+        'payload': <String, Object?>{},
+        'interaction': <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'interaction_id': 'interaction:external-1',
+          'kind': 'approval',
+          'mode': 'typed',
+          'status': 'pending',
+          'title': 'Submit broker order',
+          'confirmation': <String, Object?>{
+            'required_text': 'APPROVE',
+            'case_sensitive': true,
+          },
+          'response_schema': <String, Object?>{},
+          'payload': <String, Object?>{},
+          'metadata': <String, Object?>{},
+          'resume': <String, Object?>{
+            'kind': 'proposal_apply',
+            'token': 'external-1',
+          },
+          'created_at': '2026-07-23T00:00:00Z',
+        },
+      });
+
+      final interaction = (plan! as ReadyProposalPlan).interaction;
+      expect(interaction, isNotNull);
+      expect(interaction?.kind, AiInteractionKind.approval);
+      expect(interaction?.mode, AiInteractionMode.typed);
+      expect(interaction?.confirmation?.requiredText, 'APPROVE');
     });
 
     test('keeps unknown envelope kind conservative', () {

@@ -20,8 +20,60 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 53', () {
-      expect(db.schemaVersion, 53);
+    test('is 56', () {
+      expect(db.schemaVersion, 56);
+    });
+  });
+
+  group('Conversation context checkpoints', () {
+    test('stay local-only and preserve source provenance', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(conversation_checkpoints)')
+          .get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll([
+          'session_id',
+          'owner_user_id',
+          'summary_through_message_id',
+          'summary_through_created_at',
+          'source_fingerprint',
+          'checkpoint_version',
+          'source_message_count',
+          'payload_json',
+          'created_at',
+          'updated_at',
+        ]),
+      );
+      expect(columns, isNot(contains('hlc')));
+    });
+  });
+
+  group('Long-term memory candidates', () {
+    test('are local-only and lifecycle constrained', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(memory_candidates)')
+          .get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll([
+          'id',
+          'proposal_id',
+          'owner_user_id',
+          'operation',
+          'status',
+          'target_memory_id',
+          'applied_memory_id',
+          'payload_json',
+          'created_at',
+          'updated_at',
+          'decided_at',
+          'error_message',
+        ]),
+      );
+      expect(columns, isNot(contains('hlc')));
     });
   });
 

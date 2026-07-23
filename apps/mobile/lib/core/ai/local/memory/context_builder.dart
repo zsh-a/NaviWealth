@@ -31,6 +31,7 @@ class ContextBuilder {
   Future<ContextPackMemory> build({
     required String ownerUserId,
     required ContextIntent intent,
+    Set<String>? sourcePrefixes,
     int perSlotLimit = 6,
     Duration eventWindow = const Duration(days: 30),
   }) async {
@@ -46,6 +47,7 @@ class ContextBuilder {
             ownerUserId: ownerUserId,
             kinds: const {MemoryKind.semantic},
             scope: scope,
+            sourcePrefixes: sourcePrefixes,
             entityFilter: entities,
             topK: perSlotLimit,
           )
@@ -59,6 +61,7 @@ class ContextBuilder {
             ownerUserId: ownerUserId,
             kinds: const {MemoryKind.procedural},
             scope: scope,
+            sourcePrefixes: sourcePrefixes,
             entityFilter: entities,
             topK: perSlotLimit,
           )
@@ -74,6 +77,7 @@ class ContextBuilder {
             scope: scope,
             queryText: intent.freeText,
             entityFilter: entities,
+            sourcePrefixes: sourcePrefixes,
             topK: perSlotLimit,
           )
         : const <MemoryHit>[];
@@ -81,6 +85,7 @@ class ContextBuilder {
     // Recent events — time-window slice. Always pulled.
     final eventsAll = await runtime.recentEvents(
       ownerUserId: ownerUserId,
+      sourcePrefixes: sourcePrefixes,
       window: eventWindow,
       limit: perSlotLimit * 2,
     );

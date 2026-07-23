@@ -66,6 +66,12 @@ final DomainPack kHealthPack = DomainPack(
       placement: AgentResultPlacement.domainReview,
     ),
   ],
+  memorySourcePrefixes: const [
+    'health:',
+    kMorningBriefingMemorySource,
+    kRecoveryAlertMemorySource,
+    kWeeklySummaryMemorySource,
+  ],
   memoryBootstrapBuilder: _healthMemoryBootstrap,
   backgroundBootstrapBuilder: _healthBackgroundBootstrap,
   commandPaletteEntriesBuilder: healthCommandPaletteEntries,

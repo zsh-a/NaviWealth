@@ -277,7 +277,9 @@ class _TypedConfirmView extends StatefulWidget {
 
 class _TypedConfirmViewState extends State<_TypedConfirmView> {
   final _controller = TextEditingController();
-  static const _confirmToken = '确认';
+
+  String get _confirmToken =>
+      widget.plan.interaction?.confirmation?.requiredText ?? '确认';
 
   @override
   void initState() {

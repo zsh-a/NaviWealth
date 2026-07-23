@@ -3,7 +3,11 @@ import 'ai_chat_api_client.dart';
 
 /// Result of trimming a conversation to fit within the model's context.
 class ContextWindow {
-  const ContextWindow({required this.wire, required this.droppedTurns});
+  const ContextWindow({
+    required this.wire,
+    required this.droppedTurns,
+    this.droppedMessages = const <ChatMessage>[],
+  });
 
   /// Messages that should be sent to the chat runtime.
   final List<WireMessage> wire;
@@ -12,6 +16,11 @@ class ContextWindow {
   /// surfaces this to the user as "已折叠 N 条历史" so they know context
   /// was truncated.
   final int droppedTurns;
+
+  /// Authoritative persisted rows represented by [droppedTurns]. Callers may
+  /// summarize these into a source-fingerprinted context checkpoint; they
+  /// must never append that derived summary back into the transcript.
+  final List<ChatMessage> droppedMessages;
 }
 
 /// Conservative budget for the device runtime prompt. We keep the wire
@@ -39,24 +48,27 @@ ContextWindow buildContextWindow({
   int charBudget = kDefaultContextCharBudget,
   int minKept = kMinKeptTurns,
 }) {
-  final eligible = <WireMessage>[];
+  final eligible = <({ChatMessage source, WireMessage wire})>[];
   for (final m in history) {
     if (m.role != ChatRole.user && m.role != ChatRole.assistant) continue;
     if (m.status != ChatMessageStatus.complete) continue;
     final content = _historyContentForRuntime(m);
     if (content == null) continue;
-    eligible.add(WireMessage(role: m.role.wire, content: content));
+    eligible.add((
+      source: m,
+      wire: WireMessage(role: m.role.wire, content: content),
+    ));
   }
 
   final pendingWire = WireMessage(role: 'user', content: pending);
   // Walk from newest to oldest until we exceed the budget; then keep the
   // youngest [minKept] regardless. The pending message always ships.
   final reversed = eligible.reversed.toList(growable: false);
-  final kept = <WireMessage>[];
+  final kept = <({ChatMessage source, WireMessage wire})>[];
   var used = pending.length;
   var keptCount = 0;
   for (final msg in reversed) {
-    final cost = msg.content.length;
+    final cost = msg.wire.content.length;
     final overBudget = used + cost > charBudget;
     if (overBudget && keptCount >= minKept) break;
     kept.add(msg);
@@ -64,9 +76,19 @@ ContextWindow buildContextWindow({
     keptCount += 1;
   }
 
-  final wire = <WireMessage>[...kept.reversed, pendingWire];
+  final wire = <WireMessage>[
+    ...kept.reversed.map((item) => item.wire),
+    pendingWire,
+  ];
   final droppedTurns = eligible.length - keptCount;
-  return ContextWindow(wire: wire, droppedTurns: droppedTurns);
+  return ContextWindow(
+    wire: wire,
+    droppedTurns: droppedTurns,
+    droppedMessages: eligible
+        .take(droppedTurns)
+        .map((item) => item.source)
+        .toList(growable: false),
+  );
 }
 
 String? _historyContentForRuntime(ChatMessage message) {

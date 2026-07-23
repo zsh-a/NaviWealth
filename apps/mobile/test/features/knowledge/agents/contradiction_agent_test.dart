@@ -116,6 +116,7 @@ class _FakeRuntime implements MemoryRuntime {
     Set<MemoryKind>? kinds,
     String? scope,
     String? source,
+    Set<String>? sourcePrefixes,
     DateTime? validAt,
     int topK = 10,
     Duration recencyHalfLife = const Duration(days: 30),

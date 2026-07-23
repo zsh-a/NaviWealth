@@ -557,6 +557,242 @@ void main() {
     expect(done.rounds, 1);
   });
 
+  test(
+    'suspends ask_user as a durable pending interaction without another model response',
+    () async {
+      final interaction = <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'interaction_id': 'interaction-decision-1',
+        'kind': 'choice',
+        'mode': 'one_tap',
+        'status': 'pending',
+        'title': 'Pick one',
+        'prompt': 'Choose the option to continue.',
+        'options': const <Object?>[
+          <String, Object?>{
+            'id': 'a',
+            'label': 'A',
+            'description': '',
+            'metadata': <String, Object?>{},
+          },
+          <String, Object?>{
+            'id': 'b',
+            'label': 'B',
+            'description': '',
+            'metadata': <String, Object?>{},
+          },
+        ],
+        'response_schema': const <String, Object?>{},
+        'payload': const <String, Object?>{},
+        'metadata': const <String, Object?>{},
+        'resume': const <String, Object?>{'kind': 'chat_turn'},
+        'created_at': '2026-07-23T00:00:00.000Z',
+      };
+      final pendingState = <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'turn_id': 'turn-interaction',
+        'provider': 'mock',
+        'model': 'mock',
+        'messages': const <Object?>[],
+        'round': 1,
+        'pending_tool_calls': const <Object?>[],
+        'pending_interaction': interaction,
+      };
+      final streamBridge = _streamBridgeBatches(
+        _FakeLlmBridge(),
+        eventBatches: <List<String>>[
+          const <String>[
+            '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
+            '{"kind":"tool_call_start","tool_call_id":"decision_1","tool_name":"ask_user","metadata":{"stream":true}}',
+            '{"kind":"tool_call_end","tool_call_id":"decision_1","tool_name":"ask_user","tool_input":{"question":"Pick one","options":[{"id":"a","label":"A"},{"id":"b","label":"B"}]},"metadata":{"stream":true}}',
+            '{"kind":"round_finished","response":{"content":"","finish_reason":"tool_call"},"round":1,"metadata":{"status":"requires_tool_results","chat_state":{"protocol_version":"agent.v1","turn_id":"turn-interaction","provider":"mock","model":"mock","messages":[],"round":1,"pending_tool_calls":[{"id":"decision_1","name":"ask_user","input":{"question":"Pick one","options":[{"id":"a","label":"A"},{"id":"b","label":"B"}]}}]},"tool_calls":[{"id":"decision_1","name":"ask_user","input":{"question":"Pick one","options":[{"id":"a","label":"A"},{"id":"b","label":"B"}]}}]}}',
+          ],
+          <String>[
+            '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
+            jsonEncode(<String, Object?>{
+              'kind': 'round_finished',
+              'response': const <String, Object?>{
+                'content': '',
+                'finish_reason': 'stop',
+              },
+              'round': 1,
+              'metadata': <String, Object?>{
+                'status': 'requires_interaction',
+                'chat_state': pendingState,
+              },
+            }),
+            '{"kind":"done","round":1,"metadata":{"stop_reason":"end_turn"}}',
+          ],
+        ],
+      );
+      final store = InMemoryAgentRuntimeChatSnapshotStore();
+      final runner = FrbChatRunner(
+        streamBridge: streamBridge,
+        snapshotStore: store,
+        toolLineHandler: (line) async => jsonEncode(<String, Object?>{
+          'jsonrpc': '2.0',
+          'id': 'decision_1',
+          'result': <String, Object?>{
+            'type': 'decision_request',
+            'question': 'Pick one',
+            'options': const <Object?>[
+              <String, Object?>{'id': 'a', 'label': 'A'},
+              <String, Object?>{'id': 'b', 'label': 'B'},
+            ],
+            'interaction': interaction,
+          },
+        }),
+      );
+
+      final events = await runner
+          .runTurn(
+            const ChatAgentTurnRequest(
+              turnId: 'turn-interaction',
+              messages: <ChatAgentMessage>[
+                ChatAgentMessage(role: 'user', content: 'Need a decision'),
+              ],
+            ),
+          )
+          .toList();
+
+      expect(streamBridge.requests, hasLength(2));
+      final secondMetadata =
+          streamBridge.requests[1]['metadata'] as Map<String, Object?>;
+      expect(secondMetadata['tool_results'], hasLength(1));
+      expect(secondMetadata['suspend_interaction'], interaction);
+      expect(events.whereType<TextEvent>(), isEmpty);
+      expect(events.whereType<ToolResultEvent>().single.name, 'ask_user');
+      final snapshot = store.debugRecord('turn-interaction');
+      expect(snapshot?.status, 'requires_interaction');
+      final snapshotState =
+          snapshot?.snapshot['state'] as Map<String, Object?>?;
+      expect(snapshotState?['pending_tool_calls'], isEmpty);
+      expect(
+        (snapshotState?['pending_interaction'] as Map?)?['interaction_id'],
+        'interaction-decision-1',
+      );
+      final done = events.last as DoneEvent;
+      expect(done.stopReason, 'end_turn');
+    },
+  );
+
+  test('resumes a pending interaction through the original chat turn', () async {
+    final store = InMemoryAgentRuntimeChatSnapshotStore();
+    await store.save(
+      snapshot: <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'snapshot_version': 1,
+        'status': 'requires_interaction',
+        'state': <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'turn_id': 'turn-interaction-resume',
+          'provider': 'mock',
+          'model': 'mock',
+          'messages': const <Object?>[],
+          'round': 1,
+          'pending_tool_calls': const <Object?>[],
+          'pending_interaction': <String, Object?>{
+            'protocol_version': 'agent.v1',
+            'interaction_id': 'interaction-resume-1',
+            'kind': 'choice',
+            'mode': 'one_tap',
+            'status': 'pending',
+            'title': 'Pick one',
+            'options': const <Object?>[
+              <String, Object?>{'id': 'a', 'label': 'A'},
+              <String, Object?>{'id': 'b', 'label': 'B'},
+            ],
+            'response_schema': const <String, Object?>{},
+            'payload': const <String, Object?>{},
+            'metadata': const <String, Object?>{},
+            'resume': const <String, Object?>{'kind': 'chat_turn'},
+            'created_at': '2026-07-23T00:00:00Z',
+          },
+        },
+        'tool_dispatches': const <Object?>[],
+      },
+    );
+    final streamBridge = _streamBridge(
+      _FakeLlmBridge(),
+      events: const <String>[
+        '{"kind":"started","round":1,"metadata":{"provider":"mock","model":"mock"}}',
+        '{"kind":"delta","content":"Continuing with A","round":2,"metadata":{"stream":true}}',
+        '{"kind":"round_finished","response":{"content":"Continuing with A","finish_reason":"stop"},"round":2,"metadata":{"status":"completed","chat_state":{"protocol_version":"agent.v1","turn_id":"turn-interaction-resume","provider":"mock","model":"mock","messages":[],"round":2,"pending_tool_calls":[]}}}',
+        '{"kind":"done","round":2,"metadata":{"stop_reason":"end_turn"}}',
+      ],
+    );
+    final runner = FrbChatRunner(
+      streamBridge: streamBridge,
+      snapshotStore: store,
+    );
+
+    final events = await runner
+        .runTurn(
+          ChatAgentTurnRequest(
+            turnId: 'turn-interaction-resume',
+            messages: const <ChatAgentMessage>[
+              ChatAgentMessage(role: 'user', content: 'Choose A'),
+            ],
+            interactionResponse: AiInteractionResponse(
+              interactionId: 'interaction-resume-1',
+              action: AiInteractionAction.submit,
+              value: const <String, Object?>{'option_id': 'a'},
+              respondedAt: DateTime.utc(2026, 7, 23, 0, 1),
+            ),
+          ),
+        )
+        .toList();
+
+    expect(streamBridge.requests, hasLength(1));
+    final metadata =
+        streamBridge.requests.single['metadata'] as Map<String, Object?>;
+    expect(metadata['chat_state'], isA<Map<String, Object?>>());
+    expect(metadata, isNot(contains('tool_results')));
+    expect(
+      (metadata['interaction_response']
+          as Map<String, Object?>)['interaction_id'],
+      'interaction-resume-1',
+    );
+    expect(events.whereType<TextEvent>().single.text, 'Continuing with A');
+    expect((events.last as DoneEvent).stopReason, 'end_turn');
+    expect(await store.loadResumable('turn-interaction-resume'), isNull);
+  });
+
+  test('fails closed when an interaction response has no snapshot', () async {
+    final streamBridge = _streamBridge(
+      _FakeLlmBridge(),
+      events: const <String>[],
+    );
+    final runner = FrbChatRunner(
+      streamBridge: streamBridge,
+      snapshotStore: InMemoryAgentRuntimeChatSnapshotStore(),
+    );
+
+    final events = await runner
+        .runTurn(
+          ChatAgentTurnRequest(
+            turnId: 'turn-missing-interaction',
+            messages: const <ChatAgentMessage>[
+              ChatAgentMessage(role: 'user', content: 'Choose A'),
+            ],
+            interactionResponse: AiInteractionResponse(
+              interactionId: 'interaction-missing',
+              action: AiInteractionAction.submit,
+              value: const <String, Object?>{'option_id': 'a'},
+              respondedAt: DateTime.utc(2026, 7, 23, 0, 1),
+            ),
+          ),
+        )
+        .toList();
+
+    expect(streamBridge.requests, isEmpty);
+    expect(
+      events.whereType<ErrorEvent>().single.code,
+      'frb_chat_interaction_snapshot_missing',
+    );
+    expect((events.last as DoneEvent).stopReason, 'error');
+  });
+
   test('maps FRB native stream error events into chat errors', () async {
     final runner = FrbChatRunner(
       streamBridge: _streamBridge(

@@ -7,6 +7,8 @@ library;
 
 import 'package:uuid/uuid.dart';
 
+import '../contracts/interaction.dart';
+
 const _kUuid = Uuid();
 
 /// Default `note` carried on proposal envelopes: the UI must surface
@@ -22,22 +24,62 @@ Map<String, Object?> readyPlan({
   required String kind,
   required String summaryZh,
   required Map<String, Object?> payload,
+  String? proposalId,
   String envelopeKind = 'local_proposal',
   List<String> warnings = const [],
   List<String> missing = const [],
   String note = kProposalConfirmNote,
-}) => <String, Object?>{
-  'proposal_id': _kUuid.v4(),
-  'kind': kind,
-  'status': 'ready',
-  'envelope_kind': envelopeKind,
-  'summary_zh': summaryZh,
-  'payload': payload,
-  'warnings': warnings,
-  'missing': missing,
-  'candidates': null,
-  'note': note,
-};
+}) {
+  final resolvedProposalId = proposalId ?? _kUuid.v4();
+  final interactionMode = switch (envelopeKind) {
+    'local_immediate' => AiInteractionMode.oneTap,
+    'local_proposal' => AiInteractionMode.confirmDiff,
+    'external_side_effect' => AiInteractionMode.typed,
+    _ => AiInteractionMode.typed,
+  };
+  final interaction = AiInteractionEnvelope(
+    interactionId: 'interaction:$resolvedProposalId',
+    kind: AiInteractionKind.approval,
+    mode: interactionMode,
+    status: AiInteractionStatus.pending,
+    title: summaryZh,
+    prompt: note,
+    confirmation: interactionMode == AiInteractionMode.typed
+        ? const AiInteractionConfirmation(
+            requiredText: '确认',
+            caseSensitive: true,
+          )
+        : null,
+    subjectKind: 'proposal',
+    subjectId: resolvedProposalId,
+    responseSchema: const <String, Object?>{
+      'type': 'object',
+      'required': <String>['action'],
+      'properties': <String, Object?>{
+        'action': <String, Object?>{
+          'enum': <String>['approve', 'reject', 'cancel'],
+        },
+      },
+    },
+    metadata: <String, Object?>{'envelope_kind': envelopeKind},
+    resumeKind: AiInteractionResumeKind.proposalApply,
+    resumeToken: resolvedProposalId,
+    createdAt: DateTime.now().toUtc(),
+  );
+  return <String, Object?>{
+    'proposal_id': resolvedProposalId,
+    'kind': kind,
+    'status': 'ready',
+    'envelope_kind': envelopeKind,
+    'summary_zh': summaryZh,
+    'payload': payload,
+    'warnings': warnings,
+    'missing': missing,
+    'candidates': null,
+    'interaction': interaction.toJson(),
+    'note': note,
+  };
+}
 
 /// `status = needs_clarification` proposal envelope.
 Map<String, Object?> needsClarification({

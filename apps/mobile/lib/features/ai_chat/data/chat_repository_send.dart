@@ -5,6 +5,8 @@ mixin _ChatRepositorySend {
   AiChatApiClient get _api;
   AuthSessionReader get _sessionReader;
   Future<Map<String, Object?>?> Function()? get _portfolioSnapshotReader;
+  ChatContextBlockPrep? get _contextBlockPrep;
+  ConversationCheckpointSummarizer get _checkpointSummarizer;
   ChatTracePrep? get _tracePrep;
   AiTraceStore? get _traceStore;
   void Function(AiTrace finalized)? get _onTraceFinalized;
@@ -107,6 +109,54 @@ mixin _ChatRepositorySend {
       );
     }
     final portfolioSnapshot = await _portfolioSnapshotReader?.call();
+    var contextBlocks = const <AgentRuntimeContextBlock>[];
+    final contextBlockPrep = _contextBlockPrep;
+    if (contextBlockPrep != null) {
+      try {
+        contextBlocks = await contextBlockPrep(
+          ChatContextPrepRequest(
+            ownerUserId: ownerUserId,
+            sessionId: sessionId,
+            turnId: assistantId,
+            userMessage: content,
+            systemContext: systemContext,
+          ),
+        );
+      } catch (_) {
+        // Memory/context retrieval is best-effort. A local index or embedder
+        // failure must not prevent the user from completing a chat turn.
+      }
+    }
+    final checkpoint = await _prepareConversationCheckpoint(
+      ownerUserId: ownerUserId,
+      sessionId: sessionId,
+      droppedMessages: ctx.droppedMessages,
+    );
+    if (checkpoint != null) {
+      contextBlocks = List<AgentRuntimeContextBlock>.unmodifiable(
+        <AgentRuntimeContextBlock>[
+          ...contextBlocks,
+          AgentRuntimeContextBlock(
+            id:
+                'conversation-checkpoint:$sessionId:'
+                '${checkpoint.summaryThroughMessageId}',
+            kind: AgentRuntimeContextBlockKind.compactionSummary,
+            source: 'chat_history_checkpoint',
+            priority: 85,
+            content: checkpoint.toContextJson(),
+            metadata: <String, Object?>{
+              'authority': 'derived_local_transcript',
+              'scope': 'session',
+              'session_id': sessionId,
+              'summary_through_message_id': checkpoint.summaryThroughMessageId,
+              'source_fingerprint': checkpoint.sourceFingerprint,
+              'checkpoint_version': checkpoint.version,
+              'trusted_as_instruction': false,
+            },
+          ),
+        ],
+      );
+    }
 
     // Build the typed ContextPack + seed an AiTrace keyed by the assistant
     // message id. Failures here are absorbed: chat must never break because
@@ -152,7 +202,7 @@ mixin _ChatRepositorySend {
       final stream = _api.chat(
         session: session,
         messages: wireMessages,
-        turnId: assistantId,
+        turnId: turnMetadata.resumeTurnId ?? assistantId,
         sessionId: sessionId,
         threadId: sessionId,
         surface: 'ai_chat',
@@ -165,6 +215,8 @@ mixin _ChatRepositorySend {
         },
         portfolioSnapshot: portfolioSnapshot,
         contextPack: contextPack,
+        contextBlocks: contextBlocks,
+        interactionResponse: turnMetadata.interactionResponse,
         model: model,
         cancelToken: localCancel,
       );
@@ -406,6 +458,71 @@ mixin _ChatRepositorySend {
     }
 
     return outcome;
+  }
+
+  Future<ConversationCheckpoint?> _prepareConversationCheckpoint({
+    required String ownerUserId,
+    required String sessionId,
+    required List<ChatMessage> droppedMessages,
+  }) async {
+    if (droppedMessages.isEmpty) return null;
+
+    final through = droppedMessages.last;
+    final fingerprint = conversationCheckpointFingerprint(droppedMessages);
+    ConversationCheckpoint? existing;
+    try {
+      existing = await _store.findConversationCheckpoint(
+        sessionId: sessionId,
+        ownerUserId: ownerUserId,
+      );
+    } on Object {
+      // Persistence is a cache seam. Continue with a fresh in-memory summary.
+    }
+    if (existing != null &&
+        existing.version == kConversationCheckpointVersion &&
+        existing.summaryThroughMessageId == through.id &&
+        existing.sourceFingerprint == fingerprint &&
+        existing.sourceMessageCount == droppedMessages.length) {
+      return existing;
+    }
+
+    ConversationCheckpointSummary summary;
+    final request = ConversationCheckpointSummaryRequest(
+      sessionId: sessionId,
+      ownerUserId: ownerUserId,
+      messages: List<ChatMessage>.unmodifiable(droppedMessages),
+      previous: existing,
+    );
+    try {
+      summary = await _checkpointSummarizer.summarize(request);
+    } on Object {
+      try {
+        summary = await const DeterministicConversationCheckpointSummarizer()
+            .summarize(request);
+      } on Object {
+        return null;
+      }
+    }
+
+    final now = DateTime.now().toUtc();
+    final checkpoint = ConversationCheckpoint(
+      sessionId: sessionId,
+      ownerUserId: ownerUserId,
+      summaryThroughMessageId: through.id,
+      summaryThroughCreatedAt: through.createdAt,
+      sourceFingerprint: fingerprint,
+      sourceMessageCount: droppedMessages.length,
+      summary: summary,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+    );
+    try {
+      await _store.upsertConversationCheckpoint(checkpoint);
+    } on Object {
+      // The generated block remains valid for this turn even if the local
+      // cache cannot be persisted.
+    }
+    return checkpoint;
   }
 
   String _describeError(Object e) {

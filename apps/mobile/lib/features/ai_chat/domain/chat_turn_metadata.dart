@@ -1,14 +1,17 @@
+import '../../../core/ai/contracts/interaction.dart';
 import 'chat_models.dart';
 
 class ChatTurnMetadata {
   const ChatTurnMetadata({
     this.decision,
+    this.interactionResponse,
     this.invocationTrace,
     this.extra = const <String, Object?>{},
   });
 
   const ChatTurnMetadata.empty()
     : decision = null,
+      interactionResponse = null,
       invocationTrace = null,
       extra = const <String, Object?>{};
 
@@ -16,6 +19,7 @@ class ChatTurnMetadata {
     required DecisionSelection selection,
     required String messageId,
     required String toolInvocationId,
+    AiInteractionResponse? interactionResponse,
     Map<String, Object?>? invocationTrace,
     Map<String, Object?> extra = const <String, Object?>{},
   }) {
@@ -25,20 +29,27 @@ class ChatTurnMetadata {
         messageId: messageId,
         toolInvocationId: toolInvocationId,
       ),
+      interactionResponse: interactionResponse,
       invocationTrace: invocationTrace,
       extra: extra,
     );
   }
 
   final ChatDecisionMetadata? decision;
+  final AiInteractionResponse? interactionResponse;
   final Map<String, Object?>? invocationTrace;
   final Map<String, Object?> extra;
 
   bool get hasInvocationTrace => invocationTrace != null;
 
+  String? get resumeTurnId =>
+      interactionResponse == null ? null : decision?.messageId;
+
   Map<String, Object?> toAgentMetadata() => <String, Object?>{
     ...extra,
     if (decision case final decision?) ...decision.toAgentMetadata(),
+    if (interactionResponse case final response?)
+      'interaction_response': response.toJson(),
     'invocation': ?invocationTrace,
   };
 }

@@ -17,6 +17,7 @@ MemoryRecord _mem({
   required String id,
   required MemoryKind kind,
   String scope = 'options_trading',
+  String source = 'test',
   String title = '',
   String summary = '',
   Set<String> entities = const {},
@@ -27,7 +28,7 @@ MemoryRecord _mem({
   kind: kind,
   ownerUserId: _kOwner,
   scope: scope,
-  source: 'test',
+  source: source,
   title: title.isEmpty ? id : title,
   summary: summary.isEmpty ? 'summary $id' : summary,
   payload: const {},
@@ -194,6 +195,61 @@ void main() {
       expect(pack.userPreferences.map((m) => m.id), ['pref']);
       expect(pack.applicableRules, isEmpty);
       expect(pack.relatedDecisions, isEmpty);
+    });
+
+    test('sourcePrefixes filters both memories and recent events', () async {
+      final b = _builder();
+      final r = b.runtime;
+      await r.remember(
+        _mem(
+          id: 'finance-memory',
+          kind: MemoryKind.semantic,
+          scope: '*',
+          source: 'options_trade_journal',
+        ),
+      );
+      await r.remember(
+        _mem(
+          id: 'health-memory',
+          kind: MemoryKind.semantic,
+          scope: '*',
+          source: 'health:health_metrics',
+        ),
+      );
+      await r.recordEvent(
+        EventRecord(
+          id: 'finance-event',
+          type: 'trade_closed',
+          timestamp: DateTime.utc(2026, 5, 23),
+          source: 'options_trade_journal',
+          ownerUserId: _kOwner,
+          summary: 'finance',
+          payload: const {},
+          entities: const {},
+        ),
+      );
+      await r.recordEvent(
+        EventRecord(
+          id: 'health-event',
+          type: 'sleep_recorded',
+          timestamp: DateTime.utc(2026, 5, 23),
+          source: 'health:health_metrics',
+          ownerUserId: _kOwner,
+          summary: 'health',
+          payload: const {},
+          entities: const {},
+        ),
+      );
+
+      final pack = await b.build(
+        ownerUserId: _kOwner,
+        intent: const ContextIntent(scope: '*'),
+        sourcePrefixes: const {'options_'},
+      );
+      expect(pack.userPreferences.map((memory) => memory.id), [
+        'finance-memory',
+      ]);
+      expect(pack.recentEvents.map((event) => event.id), ['finance-event']);
     });
 
     test('perSlotLimit caps each slot', () async {
