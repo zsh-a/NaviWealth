@@ -100,7 +100,6 @@ void main() {
         filter: ExecutionTodayFilter.focus,
         todayActions: [today],
         openActions: open,
-        now: now,
       ),
       [today],
     );
@@ -109,7 +108,6 @@ void main() {
         filter: ExecutionTodayFilter.blocked,
         todayActions: [today],
         openActions: open,
-        now: now,
       ),
       [blocked],
     );
@@ -118,9 +116,16 @@ void main() {
         filter: ExecutionTodayFilter.open,
         todayActions: [today],
         openActions: open,
-        now: now,
       ),
       open,
+    );
+    expect(
+      filteredExecutionActions(
+        filter: ExecutionTodayFilter.backlog,
+        todayActions: [today],
+        openActions: open,
+      ),
+      [today, backlog],
     );
   });
 
@@ -272,17 +277,22 @@ void main() {
     var done = false;
     var dropped = false;
     var progressed = false;
+    var sourceOpened = false;
 
     await tester.pumpWidget(
       _wrap(
         ExecutionActionCard(
           action: _action(
             priority: ExecutionPriority.high,
+            dueAt: DateTime.utc(2026, 1, 1),
+            scheduledFor: DateTime.utc(2026, 6, 3),
             projectId: 'proj-1',
             commitmentId: 'commit-1',
+            source: const ExecutionSourceRef(labelSnapshot: 'Budget alert'),
           ),
           projectLabel: 'Execution polish',
           commitmentLabel: 'Weekly review',
+          onSourceOpen: () => sourceOpened = true,
           onEdit: () => edited = true,
           onStart: () => started = true,
           onBlock: () => blocked = true,
@@ -296,8 +306,15 @@ void main() {
 
     expect(find.text('Review budget delta'), findsOneWidget);
     expect(find.text('High'), findsOneWidget);
+    expect(find.textContaining('Overdue'), findsOneWidget);
+    expect(find.textContaining('Scheduled'), findsOneWidget);
     expect(find.text('Project: Execution polish'), findsOneWidget);
     expect(find.text('Commitment: Weekly review'), findsOneWidget);
+    expect(find.text('Budget alert'), findsOneWidget);
+
+    await tester.tap(find.text('Budget alert'));
+    await tester.pump();
+    expect(sourceOpened, isTrue);
 
     await tester.tap(find.byIcon(FLucideIcons.play));
     await tester.pump(const Duration(milliseconds: 200));
@@ -458,6 +475,7 @@ void main() {
     var paused = false;
     var resumed = false;
     var completed = false;
+    var archived = false;
     var progressed = false;
     var opened = false;
 
@@ -480,6 +498,7 @@ void main() {
           onPause: () => paused = true,
           onResume: () => resumed = true,
           onComplete: () => completed = true,
+          onArchive: () => archived = true,
           onRecordProgress: () => progressed = true,
           onOpen: () => opened = true,
         ),
@@ -510,12 +529,14 @@ void main() {
     await selectMoreAction('New Action');
     await selectMoreAction('Pause');
     await selectMoreAction('Complete');
+    await selectMoreAction('Archive');
 
     expect(created, isTrue);
     expect(edited, isTrue);
     expect(paused, isTrue);
     expect(resumed, isFalse);
     expect(completed, isTrue);
+    expect(archived, isTrue);
     expect(progressed, isTrue);
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -537,6 +558,13 @@ void main() {
       title: 'Scoped project action',
       projectId: project.id,
     );
+    final commitment = ExecutionCommitment(
+      id: 'commitment-detail',
+      title: 'Scoped project commitment',
+      projectId: project.id,
+      createdAt: DateTime.utc(2026, 6, 1),
+      sync: _sync(),
+    );
     final progress = ExecutionProgressEntry(
       id: 'progress-detail',
       projectId: project.id,
@@ -555,6 +583,9 @@ void main() {
           executionActionsForProjectProvider(
             project.id,
           ).overrideWith((ref) => Stream.value([action])),
+          executionCommitmentsForProjectProvider(
+            project.id,
+          ).overrideWith((ref) => Stream.value([commitment])),
           executionProgressForProjectProvider(
             project.id,
           ).overrideWith((ref) => Stream.value([progress])),
@@ -562,7 +593,7 @@ void main() {
             (ref) async => ExecutionRelations(
               actions: {action.id: action},
               projects: {project.id: project},
-              commitments: const {},
+              commitments: {commitment.id: commitment},
             ),
           ),
         ],
@@ -573,6 +604,7 @@ void main() {
 
     expect(find.text('Canonical project detail'), findsOneWidget);
     expect(find.text('Scoped project action'), findsOneWidget);
+    expect(find.text('Scoped project commitment'), findsOneWidget);
     expect(find.text('Scoped project progress'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -600,6 +632,7 @@ void main() {
           onPause: () => paused = true,
           onResume: () => resumed = true,
           onComplete: () => completed = true,
+          onArchive: () {},
           onRecordProgress: () {},
         ),
       ),
@@ -631,6 +664,7 @@ void main() {
     var paused = false;
     var resumed = false;
     var completed = false;
+    var archived = false;
     var progressed = false;
 
     await tester.pumpWidget(
@@ -653,6 +687,7 @@ void main() {
           onPause: () => paused = true,
           onResume: () => resumed = true,
           onComplete: () => completed = true,
+          onArchive: () => archived = true,
           onRecordProgress: () => progressed = true,
         ),
       ),
@@ -678,12 +713,14 @@ void main() {
     await selectMoreAction('New Progress');
     await selectMoreAction('New Action');
     await selectMoreAction('Complete');
+    await selectMoreAction('Archive');
 
     expect(created, isTrue);
     expect(edited, isTrue);
     expect(paused, isFalse);
     expect(resumed, isTrue);
     expect(completed, isTrue);
+    expect(archived, isTrue);
     expect(progressed, isTrue);
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -692,6 +729,8 @@ void main() {
 
   testWidgets('progress card renders relation context badges', (tester) async {
     var deleted = false;
+    var edited = false;
+    var openedAction = false;
 
     await tester.pumpWidget(
       _wrap(
@@ -709,7 +748,9 @@ void main() {
           actionLabel: 'Review budget delta',
           projectLabel: 'Execution polish',
           commitmentLabel: 'Weekly review',
+          onEdit: () => edited = true,
           onDelete: () => deleted = true,
+          onActionOpen: () => openedAction = true,
         ),
       ),
     );
@@ -720,8 +761,20 @@ void main() {
     expect(find.text('Project: Execution polish'), findsOneWidget);
     expect(find.text('Commitment: Weekly review'), findsOneWidget);
 
-    await tester.tap(find.byIcon(FLucideIcons.trash2));
-    await tester.pump(const Duration(milliseconds: 200));
+    await tester.tap(find.text('Action: Review budget delta'));
+    await tester.pump();
+    expect(openedAction, isTrue);
+
+    await tester.tap(find.byIcon(FLucideIcons.ellipsis));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit Progress'));
+    await tester.pumpAndSettle();
+    expect(edited, isTrue);
+
+    await tester.tap(find.byIcon(FLucideIcons.ellipsis));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
 
     expect(deleted, isTrue);
 
@@ -745,8 +798,10 @@ ExecutionAction _action({
   ExecutionActionStatus status = ExecutionActionStatus.todo,
   ExecutionPriority priority = ExecutionPriority.normal,
   DateTime? dueAt,
+  DateTime? scheduledFor,
   String? projectId,
   String? commitmentId,
+  ExecutionSourceRef source = const ExecutionSourceRef(),
 }) {
   return ExecutionAction(
     id: id,
@@ -754,8 +809,10 @@ ExecutionAction _action({
     status: status,
     priority: priority,
     dueAt: dueAt,
+    scheduledFor: scheduledFor,
     projectId: projectId,
     commitmentId: commitmentId,
+    source: source,
     createdAt: DateTime.utc(2026, 6, 1),
     sync: _sync(),
   );

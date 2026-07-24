@@ -7,20 +7,28 @@ class ExecutionProgressCard extends StatelessWidget {
     this.actionLabel,
     this.projectLabel,
     this.commitmentLabel,
+    this.onEdit,
     this.onDelete,
+    this.onActionOpen,
+    this.onProjectOpen,
+    this.onCommitmentOpen,
   });
 
   final ExecutionProgressEntry entry;
   final String? actionLabel;
   final String? projectLabel;
   final String? commitmentLabel;
+  final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onActionOpen;
+  final VoidCallback? onProjectOpen;
+  final VoidCallback? onCommitmentOpen;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final color = _progressColor(context, entry.kind);
-    final semantic = SemanticColors.of(context);
+    final colors = context.theme.colors;
     return SoftCard.flat(
       borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s12),
@@ -74,24 +82,24 @@ class ExecutionProgressCard extends StatelessWidget {
                     runSpacing: AppSpacing.s6,
                     children: [
                       if (actionLabel != null)
-                        AppBadge(
+                        _ProgressRelationBadge(
                           label: '${l10n.executionActionField}: $actionLabel',
-                          size: AppBadgeSize.compact,
                           icon: FLucideIcons.listTodo,
+                          onPress: onActionOpen,
                         ),
                       if (projectLabel != null)
-                        AppBadge(
+                        _ProgressRelationBadge(
                           label: '${l10n.executionProjectField}: $projectLabel',
-                          size: AppBadgeSize.compact,
                           icon: FLucideIcons.folder,
+                          onPress: onProjectOpen,
                         ),
                       if (commitmentLabel != null)
-                        AppBadge(
+                        _ProgressRelationBadge(
                           label:
                               '${l10n.executionCommitmentField}: '
                               '$commitmentLabel',
-                          size: AppBadgeSize.compact,
                           icon: FLucideIcons.target,
+                          onPress: onCommitmentOpen,
                         ),
                     ],
                   ),
@@ -99,19 +107,68 @@ class ExecutionProgressCard extends StatelessWidget {
               ],
             ),
           ),
-          if (onDelete != null) ...[
+          if (onEdit != null || onDelete != null) ...[
             const SizedBox(width: AppSpacing.s8),
-            AppIconButton(
-              icon: FLucideIcons.trash2,
-              tooltip: l10n.commonDelete,
-              onPress: onDelete,
-              size: 32,
-              iconSize: AppIconSizes.xs,
-              iconColor: semantic.danger,
+            AppAdaptiveActionMenu(
+              title: executionProgressKindLabel(l10n, entry.kind),
+              actions: [
+                if (onEdit != null)
+                  AppAdaptiveAction(
+                    icon: FLucideIcons.pencil,
+                    title: l10n.executionEditProgressTitle,
+                    onPress: onEdit!,
+                  ),
+                if (onDelete != null)
+                  AppAdaptiveAction(
+                    icon: FLucideIcons.trash2,
+                    title: l10n.commonDelete,
+                    destructive: true,
+                    onPress: onDelete!,
+                  ),
+              ],
+              triggerBuilder: (context, openMenu, focusNode) => Focus(
+                focusNode: focusNode,
+                child: AppIconButton(
+                  icon: FLucideIcons.ellipsis,
+                  tooltip: l10n.shellMoreActions,
+                  onPress: openMenu,
+                  size: 32,
+                  iconSize: AppIconSizes.xs,
+                  iconColor: colors.mutedForeground,
+                ),
+              ),
             ),
           ],
         ],
       ),
+    );
+  }
+}
+
+class _ProgressRelationBadge extends StatelessWidget {
+  const _ProgressRelationBadge({
+    required this.label,
+    required this.icon,
+    this.onPress,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback? onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final badge = AppBadge(
+      label: label,
+      size: AppBadgeSize.compact,
+      icon: icon,
+    );
+    final onPress = this.onPress;
+    if (onPress == null) return badge;
+    return Semantics(
+      button: true,
+      label: label,
+      child: FTappable(onPress: onPress, child: badge),
     );
   }
 }

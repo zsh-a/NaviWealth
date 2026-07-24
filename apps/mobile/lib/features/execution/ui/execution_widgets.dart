@@ -89,8 +89,8 @@ String executionProgressKindLabel(
   };
 }
 
-/// Today lens: focus (today's set), blocked, or all open work.
-enum ExecutionTodayFilter { focus, blocked, open }
+/// Today lens: focus, unscheduled backlog, blocked work, or all open work.
+enum ExecutionTodayFilter { focus, backlog, blocked, open }
 
 String executionTodayFilterLabel(
   AppLocalizations l10n,
@@ -98,6 +98,7 @@ String executionTodayFilterLabel(
 ) {
   return switch (filter) {
     ExecutionTodayFilter.focus => l10n.executionOverviewFocus,
+    ExecutionTodayFilter.backlog => l10n.executionOverviewBacklog,
     ExecutionTodayFilter.blocked => l10n.executionOverviewBlocked,
     ExecutionTodayFilter.open => l10n.executionOverviewOpen,
   };
@@ -106,6 +107,7 @@ String executionTodayFilterLabel(
 IconData executionTodayFilterIcon(ExecutionTodayFilter filter) {
   return switch (filter) {
     ExecutionTodayFilter.focus => FLucideIcons.sun,
+    ExecutionTodayFilter.backlog => FLucideIcons.archive,
     ExecutionTodayFilter.blocked => FLucideIcons.octagonAlert,
     ExecutionTodayFilter.open => FLucideIcons.inbox,
   };
@@ -115,13 +117,14 @@ List<ExecutionAction> filteredExecutionActions({
   required ExecutionTodayFilter filter,
   required List<ExecutionAction> todayActions,
   required List<ExecutionAction> openActions,
-  required DateTime now,
 }) {
   final open = openActions
       .where((action) => action.isOpen)
       .toList(growable: false);
   return switch (filter) {
     ExecutionTodayFilter.focus => todayActions,
+    ExecutionTodayFilter.backlog =>
+      open.where((action) => action.isBacklog).toList(growable: false),
     ExecutionTodayFilter.blocked =>
       open
           .where((action) => action.status == ExecutionActionStatus.blocked)

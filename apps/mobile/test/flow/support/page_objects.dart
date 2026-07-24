@@ -11,6 +11,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/forms/amount_field.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/ai_chat/ui/chat_composer.dart';
+import 'package:naviwealth/features/execution/ui/execution_review_page.dart';
 import 'package:naviwealth/features/finance/shared/ui/account_tree_picker.dart';
 
 import 'app_harness.dart';
@@ -591,13 +592,41 @@ class ExecutionReviewPageObject {
 
   final WidgetTester tester;
 
-  void expectCompletedAction(String title) {
+  Future<void> expectCompletedAction(String title) async {
+    final allHistory = find.text('All');
+    expect(allHistory, findsOneWidget, reason: 'review history filter missing');
+    await tester.tap(allHistory);
+    await settle(tester);
+
+    final completedAction = find.text(title);
+    await _scrollUntilMounted(completedAction);
     expect(find.text('Recent closed actions'), findsWidgets);
-    expect(find.text(title), findsOneWidget);
+    expect(completedAction, findsOneWidget);
   }
 
   void expectOutcome(String summary) {
     expect(find.text(summary), findsOneWidget);
+  }
+
+  Future<void> _scrollUntilMounted(Finder target) async {
+    if (target.evaluate().isNotEmpty) return;
+    final reviewList = find
+        .descendant(
+          of: find.byType(ExecutionReviewPage),
+          matching: find.byType(ListView),
+        )
+        .hitTestable();
+    final scrollable = find.descendant(
+      of: reviewList,
+      matching: find.byType(Scrollable),
+    );
+    final state = tester.state<ScrollableState>(scrollable);
+    for (var i = 1; i <= 12 && target.evaluate().isEmpty; i++) {
+      final step = 200.0 * i;
+      final max = state.position.maxScrollExtent;
+      state.position.jumpTo(step > max ? max : step);
+      await tester.pump();
+    }
   }
 }
 

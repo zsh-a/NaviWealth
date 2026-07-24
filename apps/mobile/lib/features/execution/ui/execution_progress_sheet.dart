@@ -14,6 +14,7 @@ import 'execution_widgets.dart';
 
 Future<bool?> showExecutionProgressSheet({
   required BuildContext context,
+  ExecutionProgressEntry? progress,
   ExecutionAction? action,
   String? projectId,
   String? commitmentId,
@@ -24,6 +25,7 @@ Future<bool?> showExecutionProgressSheet({
     dirtyGuard: dirty,
     builder: (_) => _ExecutionProgressForm(
       dirty: dirty,
+      progress: progress,
       action: action,
       projectId: projectId,
       commitmentId: commitmentId,
@@ -34,12 +36,14 @@ Future<bool?> showExecutionProgressSheet({
 class _ExecutionProgressForm extends ConsumerStatefulWidget {
   const _ExecutionProgressForm({
     required this.dirty,
+    required this.progress,
     required this.action,
     required this.projectId,
     required this.commitmentId,
   });
 
   final FormDirtyController dirty;
+  final ExecutionProgressEntry? progress;
   final ExecutionAction? action;
   final String? projectId;
   final String? commitmentId;
@@ -63,10 +67,16 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
   @override
   void initState() {
     super.initState();
-    _kind = ExecutionProgressKind.checkin;
-    _actionId = widget.action?.id;
-    _projectId = widget.action?.projectId ?? widget.projectId;
-    _commitmentId = widget.action?.commitmentId ?? widget.commitmentId;
+    final progress = widget.progress;
+    _note.text = progress?.note ?? '';
+    _kind = progress?.kind ?? ExecutionProgressKind.checkin;
+    _actionId = progress?.actionId ?? widget.action?.id;
+    _projectId =
+        progress?.projectId ?? widget.action?.projectId ?? widget.projectId;
+    _commitmentId =
+        progress?.commitmentId ??
+        widget.action?.commitmentId ??
+        widget.commitmentId;
     widget.dirty.bindTextControllers([_note]);
     _note.addListener(_onNoteChanged);
   }
@@ -102,13 +112,13 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
         final linkedAction = _linkedAction();
         await repo.recordProgress(
           ExecutionProgressEntry(
-            id: kExecutionUuid.v4(),
+            id: widget.progress?.id ?? kExecutionUuid.v4(),
             actionId: _actionId,
             projectId: _projectId,
             commitmentId: _commitmentId,
             kind: _kind,
             note: note,
-            createdAt: sync.updatedAt,
+            createdAt: widget.progress?.createdAt ?? sync.updatedAt,
             sync: sync,
           ),
           linkedAction: _syncActionStatus ? linkedAction : null,
@@ -166,6 +176,9 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
     final commitments =
         ref.watch(executionCommitmentsProvider).value ??
         const <ExecutionCommitment>[];
+    final selectedAction = _actionId == null || _actionId!.isEmpty
+        ? null
+        : ref.watch(executionActionByIdProvider(_actionId!)).value;
     final selectedProject = _projectId == null || _projectId!.isEmpty
         ? null
         : ref.watch(executionProjectByIdProvider(_projectId!)).value;
@@ -173,10 +186,11 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
         ? null
         : ref.watch(executionCommitmentByIdProvider(_commitmentId!)).value;
     final linkedStatus = _linkedActionStatus;
-    final canSyncActionStatus =
-        _actionId != null && _actionId!.isNotEmpty && linkedStatus != null;
+    final canSyncActionStatus = _linkedAction() != null && linkedStatus != null;
     return AppSheet(
-      title: l10n.executionCreateProgressTitle,
+      title: widget.progress == null
+          ? l10n.executionCreateProgressTitle
+          : l10n.executionEditProgressTitle,
       footer: ExecutionSheetFooter(
         submitLabel: l10n.commonSave,
         cancelLabel: l10n.commonCancel,
@@ -225,7 +239,9 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
             const SizedBox(height: AppSpacing.s12),
             FormPickerRow(
               label: l10n.executionActionField,
-              value: executionActionPickerLabel(l10n, actions, _actionId),
+              value:
+                  selectedAction?.title ??
+                  executionActionPickerLabel(l10n, actions, _actionId),
               leading: const Icon(FLucideIcons.listTodo),
               enabled: !_saving,
               onPress: () async {

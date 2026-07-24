@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
 import 'package:naviwealth/core/ai/agents/agent_intents.dart';
 import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
@@ -300,6 +301,30 @@ void main() {
       ExecutionRoutes.action('action-1'),
     );
     expect(
+      resolver(
+        const EntityRouteRef(
+          entityTable: 'execution_projects',
+          entityId: 'project-1',
+        ),
+      ),
+      ExecutionRoutes.project('project-1'),
+    );
+    expect(
+      resolver(
+        const EntityRouteRef(entityTable: 'budgets', entityId: 'month:2026-07'),
+      ),
+      FinanceRoutes.planBudget,
+    );
+    expect(
+      resolver(
+        const EntityRouteRef(
+          entityTable: 'agent_artifacts',
+          entityId: 'artifact-1',
+        ),
+      ),
+      AgentArtifactRoutes.detail('artifact-1'),
+    );
+    expect(
       resolver(const EntityRouteRef(entityTable: 'unknown', entityId: 'id-1')),
       isNull,
     );
@@ -488,6 +513,18 @@ void main() {
         DomainScope.knowledge,
         DomainScope.execution,
       ]);
+      expect(
+        kExecutionPack
+            .commandPaletteEntriesBuilder!(
+              lookupAppLocalizations(const Locale('en')),
+            )
+            .map((entry) => entry.id),
+        containsAll(<String>[
+          'create.execution.action',
+          'create.execution.project',
+          'create.execution.commitment',
+        ]),
+      );
       expect(
         c.read(agentRegistryProvider).map((agent) => agent.id),
         containsAll(<String>[

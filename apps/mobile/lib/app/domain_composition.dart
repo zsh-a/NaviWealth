@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 
 import '../core/ai/agents/agent.dart';
+import '../core/ai/agents/agent_artifact_routes.dart';
 import '../core/ai/agents/agent_presentation.dart';
 import '../core/ai/agents/agent_registry.dart';
 import '../core/ai/composition/ask_ai.dart';
@@ -224,6 +225,8 @@ String? appEntityRouteResolver(EntityRouteRef ref) {
       ref.entityId,
     ),
     EntityRouteTables.optionsTradeJournal => FinanceRoutes.planIncome,
+    'budgets' => FinanceRoutes.planBudget,
+    'agent_artifacts' => AgentArtifactRoutes.detail(ref.entityId),
     'health_metrics' => HealthRoutes.trend,
     'knowledge_notes' => KnowledgeRoutes.object('note', ref.entityId),
     'knowledge_decisions' => KnowledgeRoutes.decision(ref.entityId),
@@ -240,7 +243,8 @@ String? appEntityRouteResolver(EntityRouteRef ref) {
     'knowledge_routines' => KnowledgeRoutes.object('routine', ref.entityId),
     'execution_actions' => ExecutionRoutes.action(ref.entityId),
     'execution_commitments' => ExecutionRoutes.commitment(ref.entityId),
-    'execution_projects' || 'execution_progress' => ExecutionRoutes.review,
+    'execution_projects' => ExecutionRoutes.project(ref.entityId),
+    'execution_progress' => ExecutionRoutes.review,
     _ => null,
   };
 }

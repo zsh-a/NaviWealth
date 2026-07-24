@@ -136,6 +136,16 @@ final executionActionsForProjectProvider = StreamProvider.autoDispose
       );
     });
 
+final executionCommitmentsForProjectProvider = StreamProvider.autoDispose
+    .family<List<ExecutionCommitment>, String>((ref, id) async* {
+      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
+      final repository = await ref.watch(executionRepositoryProvider.future);
+      yield* repository.watchCommitmentsForProject(
+        ownerUserId: ownerUserId,
+        projectId: id,
+      );
+    });
+
 final executionRecentProgressProvider =
     StreamProvider.autoDispose<List<ExecutionProgressEntry>>((ref) async* {
       final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);

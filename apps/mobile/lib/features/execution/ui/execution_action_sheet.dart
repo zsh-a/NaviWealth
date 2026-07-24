@@ -56,7 +56,6 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _title = TextEditingController();
   final TextEditingController _note = TextEditingController();
-  late ExecutionActionStatus _status;
   late ExecutionPriority _priority;
   DateTime? _dueAt;
   DateTime? _scheduledFor;
@@ -70,7 +69,6 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
     final action = widget.action;
     _title.text = action?.title ?? '';
     _note.text = action?.note ?? '';
-    _status = action?.status ?? ExecutionActionStatus.todo;
     _priority = action?.priority ?? ExecutionPriority.normal;
     _dueAt = action?.dueAt;
     _scheduledFor = action?.scheduledFor;
@@ -150,7 +148,7 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
       id: existing?.id ?? kExecutionUuid.v4(),
       title: title,
       note: _note.text.trim(),
-      status: _status,
+      status: existing?.status ?? ExecutionActionStatus.todo,
       priority: _priority,
       dueAt: _dueAt,
       scheduledFor: _scheduledFor,
@@ -158,21 +156,9 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
       commitmentId: _commitmentId,
       source: existing?.source ?? const ExecutionSourceRef(),
       createdAt: existing?.createdAt ?? sync.updatedAt,
-      completedAt: _completedAt(sync),
+      completedAt: existing?.completedAt,
       sync: sync,
     );
-  }
-
-  DateTime? _completedAt(SyncMeta sync) {
-    final existing = widget.action;
-    final closed =
-        _status == ExecutionActionStatus.done ||
-        _status == ExecutionActionStatus.dropped;
-    if (!closed) return null;
-    if (existing?.status == _status && existing?.completedAt != null) {
-      return existing!.completedAt;
-    }
-    return sync.updatedAt;
   }
 
   void _markDirty() => widget.dirty.markDirty();
@@ -220,21 +206,6 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
               validator: (value) => (value == null || value.trim().isEmpty)
                   ? l10n.executionTitleRequired
                   : null,
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            Text(l10n.executionStatusField, style: context.captionLabelStyle),
-            const SizedBox(height: AppSpacing.s6),
-            SegmentedRow<ExecutionActionStatus>(
-              options: ExecutionActionStatus.values,
-              value: _status,
-              labelOf: (status) => executionStatusLabel(l10n, status),
-              iconOf: _statusIcon,
-              onChanged: _saving
-                  ? (_) {}
-                  : (status) {
-                      setState(() => _status = status);
-                      _markDirty();
-                    },
             ),
             const SizedBox(height: AppSpacing.s12),
             Text(l10n.executionPriorityField, style: context.captionLabelStyle),
@@ -362,16 +333,6 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
       ),
     );
   }
-}
-
-IconData _statusIcon(ExecutionActionStatus status) {
-  return switch (status) {
-    ExecutionActionStatus.todo => FLucideIcons.circle,
-    ExecutionActionStatus.doing => FLucideIcons.play,
-    ExecutionActionStatus.blocked => FLucideIcons.octagonAlert,
-    ExecutionActionStatus.done => FLucideIcons.check,
-    ExecutionActionStatus.dropped => FLucideIcons.archive,
-  };
 }
 
 IconData _priorityIcon(ExecutionPriority priority) {

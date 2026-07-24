@@ -21,6 +21,7 @@ import 'execution_action_card_controller.dart';
 import 'execution_action_sheet.dart';
 import 'execution_delete_confirm.dart';
 import 'execution_progress_sheet.dart';
+import 'execution_source_route.dart';
 import 'execution_widgets.dart';
 
 class ExecutionReviewPage extends ConsumerWidget {
@@ -60,9 +61,18 @@ class ExecutionReviewPage extends ConsumerWidget {
   }
 }
 
-class _ReviewBody extends ConsumerWidget {
+enum _ReviewWindow { sevenDays, thirtyDays, all }
+
+class _ReviewBody extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ReviewBody> createState() => _ReviewBodyState();
+}
+
+class _ReviewBodyState extends ConsumerState<_ReviewBody> {
+  _ReviewWindow _window = _ReviewWindow.sevenDays;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final progressAsync = ref.watch(executionRecentProgressProvider);
     final closedActionsAsync = ref.watch(executionClosedActionsProvider);
@@ -85,14 +95,54 @@ class _ReviewBody extends ConsumerWidget {
       return AppListPageSkeleton(padding: shellTabContentPadding(context));
     }
 
-    final entries = progressAsync.value ?? const <ExecutionProgressEntry>[];
-    final closedActions = closedActionsAsync.value ?? const <ExecutionAction>[];
-    if (entries.isEmpty && closedActions.isEmpty) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: shellTabContentPadding(context),
-        children: [
-          const _ExecutionReviewAgentPanel(),
+    final cutoff = switch (_window) {
+      _ReviewWindow.sevenDays => DateTime.now().subtract(
+        const Duration(days: 7),
+      ),
+      _ReviewWindow.thirtyDays => DateTime.now().subtract(
+        const Duration(days: 30),
+      ),
+      _ReviewWindow.all => null,
+    };
+    final entries = (progressAsync.value ?? const <ExecutionProgressEntry>[])
+        .where(
+          (entry) =>
+              cutoff == null || !entry.createdAt.toLocal().isBefore(cutoff),
+        )
+        .toList(growable: false);
+    final closedActions =
+        (closedActionsAsync.value ?? const <ExecutionAction>[])
+            .where((action) {
+              final at = action.completedAt ?? action.createdAt;
+              return cutoff == null || !at.toLocal().isBefore(cutoff);
+            })
+            .toList(growable: false);
+    final empty = entries.isEmpty && closedActions.isEmpty;
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: shellTabContentPadding(context),
+      children: [
+        SegmentedRow<_ReviewWindow>(
+          options: _ReviewWindow.values,
+          value: _window,
+          labelOf: (window) => switch (window) {
+            _ReviewWindow.sevenDays => l10n.executionReviewWindow7d,
+            _ReviewWindow.thirtyDays => l10n.executionReviewWindow30d,
+            _ReviewWindow.all => l10n.executionReviewWindowAll,
+          },
+          iconOf: (window) => switch (window) {
+            _ReviewWindow.sevenDays => FLucideIcons.calendarDays,
+            _ReviewWindow.thirtyDays => FLucideIcons.calendarRange,
+            _ReviewWindow.all => FLucideIcons.infinity,
+          },
+          onChanged: (window) => setState(() => _window = window),
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        _ReviewSummary(entries: entries, closedActions: closedActions),
+        const SizedBox(height: AppSpacing.s16),
+        const _ExecutionReviewAgentPanel(),
+        if (empty)
           ExecutionStateView(
             icon: FLucideIcons.clipboardCheck,
             title: l10n.executionReviewEmptyTitle,
@@ -101,17 +151,8 @@ class _ReviewBody extends ConsumerWidget {
               onPress: () => showExecutionProgressSheet(context: context),
               child: Text(l10n.executionCreateProgressTitle),
             ),
-          ),
-        ],
-      );
-    }
-
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: shellTabContentPadding(context),
-      children: [
-        const _ExecutionReviewAgentPanel(),
-        if (entries.isNotEmpty) ...[
+          )
+        else if (entries.isNotEmpty) ...[
           ExecutionSectionHeader(
             title: l10n.executionReviewTitle,
             count: entries.length,
@@ -130,7 +171,21 @@ class _ReviewBody extends ConsumerWidget {
               commitmentLabel:
                   relations?.commitmentLabel(entry.commitmentId) ??
                   _fallbackRelationLabel(entry.commitmentId),
+              onEdit: () =>
+                  showExecutionProgressSheet(context: context, progress: entry),
               onDelete: () => _deleteProgress(context, ref, entry),
+              onActionOpen: entry.actionId == null
+                  ? null
+                  : () => context.push(ExecutionRoutes.action(entry.actionId!)),
+              onProjectOpen: entry.projectId == null
+                  ? null
+                  : () =>
+                        context.push(ExecutionRoutes.project(entry.projectId!)),
+              onCommitmentOpen: entry.commitmentId == null
+                  ? null
+                  : () => context.push(
+                      ExecutionRoutes.commitment(entry.commitmentId!),
+                    ),
             ),
             const SizedBox(height: AppSpacing.s8),
           ],
@@ -153,6 +208,7 @@ class _ReviewBody extends ConsumerWidget {
                   relations?.commitmentLabel(action.commitmentId) ??
                   _fallbackRelationLabel(action.commitmentId),
               onOpen: () => context.push(ExecutionRoutes.action(action.id)),
+              onSourceOpen: executionSourceOpen(context, ref, action.source),
               onEdit: () =>
                   showExecutionActionSheet(context: context, action: action),
               onRecordProgress: () =>
@@ -170,11 +226,59 @@ class _ReviewBody extends ConsumerWidget {
   }
 }
 
-class _ExecutionReviewAgentPanel extends ConsumerWidget {
+class _ReviewSummary extends StatelessWidget {
+  const _ReviewSummary({required this.entries, required this.closedActions});
+
+  final List<ExecutionProgressEntry> entries;
+  final List<ExecutionAction> closedActions;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final semantic = SemanticColors.of(context);
+    final completed = closedActions
+        .where((action) => action.status == ExecutionActionStatus.done)
+        .length;
+    final blockers = entries
+        .where((entry) => entry.kind == ExecutionProgressKind.blocker)
+        .length;
+    return Wrap(
+      spacing: AppSpacing.s8,
+      runSpacing: AppSpacing.s8,
+      children: [
+        AppBadge(
+          label: '${l10n.executionReviewCompletedMetric} $completed',
+          icon: FLucideIcons.checkCheck,
+          foregroundColor: semantic.success,
+        ),
+        AppBadge(
+          label: '${l10n.executionReviewBlockedMetric} $blockers',
+          icon: FLucideIcons.octagonAlert,
+          foregroundColor: blockers > 0 ? semantic.danger : null,
+        ),
+        AppBadge(
+          label: '${l10n.executionReviewProgressMetric} ${entries.length}',
+          icon: FLucideIcons.messageSquareText,
+        ),
+      ],
+    );
+  }
+}
+
+class _ExecutionReviewAgentPanel extends ConsumerStatefulWidget {
   const _ExecutionReviewAgentPanel();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ExecutionReviewAgentPanel> createState() =>
+      _ExecutionReviewAgentPanelState();
+}
+
+class _ExecutionReviewAgentPanelState
+    extends ConsumerState<_ExecutionReviewAgentPanel> {
+  bool _running = false;
+
+  @override
+  Widget build(BuildContext context) {
     final resultsAsync = ref.watch(
       execution_agent_providers.latestExecutionReviewResultsProvider,
     );
@@ -198,7 +302,47 @@ class _ExecutionReviewAgentPanel extends ConsumerWidget {
     }
     final bundle = resultsAsync.value;
     if (bundle == null || bundle.visibleEntries.isEmpty) {
-      return const SizedBox.shrink();
+      return _ExecutionReviewAgentPanelFrame(
+        child: SoftCard.flat(
+          padding: const EdgeInsets.all(AppSpacing.s12),
+          child: Row(
+            children: [
+              AppIconTile(
+                icon: FLucideIcons.sparkles,
+                color: context.theme.colors.primary,
+                size: 34,
+                iconSize: AppIconSizes.sm,
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.executionReviewGenerateTitle,
+                      style: context.rowTitleStyle,
+                    ),
+                    const SizedBox(height: AppSpacing.s4),
+                    Text(
+                      l10n.executionReviewGenerateBody,
+                      style: context.captionStyle,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              FButton(
+                onPress: _running ? null : _runReview,
+                child: _running
+                    ? const FCircularProgress(
+                        size: FCircularProgressSizeVariant.xs,
+                      )
+                    : Text(l10n.executionReviewGenerateAction),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     return _ExecutionReviewAgentPanelFrame(
       child: AgentResultsSection(
@@ -209,6 +353,23 @@ class _ExecutionReviewAgentPanel extends ConsumerWidget {
         onRetry: (_) => _retryExecutionReview(ref),
       ),
     );
+  }
+
+  Future<void> _runReview() async {
+    setState(() => _running = true);
+    try {
+      await _retryExecutionReview(ref);
+    } catch (error, stackTrace) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(context, error, stackTrace: stackTrace),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _running = false);
+    }
   }
 }
 

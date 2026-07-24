@@ -17,23 +17,29 @@ import 'execution_widgets.dart';
 Future<bool?> showExecutionCommitmentSheet({
   required BuildContext context,
   ExecutionCommitment? commitment,
+  String? initialProjectId,
 }) {
   final dirty = FormDirtyController();
   return showAppFormSheet<bool>(
     context: context,
     dirtyGuard: dirty,
-    builder: (_) =>
-        _ExecutionCommitmentForm(commitment: commitment, dirty: dirty),
+    builder: (_) => _ExecutionCommitmentForm(
+      commitment: commitment,
+      initialProjectId: initialProjectId,
+      dirty: dirty,
+    ),
   ).whenComplete(dirty.dispose);
 }
 
 class _ExecutionCommitmentForm extends ConsumerStatefulWidget {
   const _ExecutionCommitmentForm({
     required this.commitment,
+    required this.initialProjectId,
     required this.dirty,
   });
 
   final ExecutionCommitment? commitment;
+  final String? initialProjectId;
   final FormDirtyController dirty;
 
   @override
@@ -47,7 +53,6 @@ class _ExecutionCommitmentFormState
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _title = TextEditingController();
   final TextEditingController _description = TextEditingController();
-  late ExecutionCommitmentStatus _status;
   late ExecutionHorizon _horizon;
   DateTime? _targetDate;
   String? _projectId;
@@ -59,10 +64,9 @@ class _ExecutionCommitmentFormState
     final commitment = widget.commitment;
     _title.text = commitment?.title ?? '';
     _description.text = commitment?.description ?? '';
-    _status = commitment?.status ?? ExecutionCommitmentStatus.active;
     _horizon = commitment?.horizon ?? ExecutionHorizon.open;
     _targetDate = commitment?.targetDate;
-    _projectId = commitment?.projectId;
+    _projectId = commitment?.projectId ?? widget.initialProjectId;
     widget.dirty.bindTextControllers([_title, _description]);
     _title.addListener(_onTitleChanged);
   }
@@ -135,27 +139,15 @@ class _ExecutionCommitmentFormState
       id: existing?.id ?? kExecutionUuid.v4(),
       title: title,
       description: _description.text.trim(),
-      status: _status,
+      status: existing?.status ?? ExecutionCommitmentStatus.active,
       horizon: _horizon,
       targetDate: _targetDate,
       projectId: _projectId,
       source: existing?.source ?? const ExecutionSourceRef(),
       createdAt: existing?.createdAt ?? sync.updatedAt,
-      completedAt: _completedAt(sync),
+      completedAt: existing?.completedAt,
       sync: sync,
     );
-  }
-
-  DateTime? _completedAt(SyncMeta sync) {
-    final existing = widget.commitment;
-    final closed =
-        _status == ExecutionCommitmentStatus.completed ||
-        _status == ExecutionCommitmentStatus.archived;
-    if (!closed) return null;
-    if (existing?.status == _status && existing?.completedAt != null) {
-      return existing!.completedAt;
-    }
-    return sync.updatedAt;
   }
 
   void _markDirty() => widget.dirty.markDirty();
@@ -197,21 +189,6 @@ class _ExecutionCommitmentFormState
               validator: (value) => (value == null || value.trim().isEmpty)
                   ? l10n.executionTitleRequired
                   : null,
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            Text(l10n.executionStatusField, style: context.captionLabelStyle),
-            const SizedBox(height: AppSpacing.s6),
-            SegmentedRow<ExecutionCommitmentStatus>(
-              options: ExecutionCommitmentStatus.values,
-              value: _status,
-              labelOf: (status) => executionCommitmentStatusLabel(l10n, status),
-              iconOf: _commitmentStatusIcon,
-              onChanged: _saving
-                  ? (_) {}
-                  : (status) {
-                      setState(() => _status = status);
-                      _markDirty();
-                    },
             ),
             const SizedBox(height: AppSpacing.s12),
             Text(l10n.executionHorizonField, style: context.captionLabelStyle),
@@ -283,15 +260,6 @@ class _ExecutionCommitmentFormState
       ),
     );
   }
-}
-
-IconData _commitmentStatusIcon(ExecutionCommitmentStatus status) {
-  return switch (status) {
-    ExecutionCommitmentStatus.active => FLucideIcons.play,
-    ExecutionCommitmentStatus.paused => FLucideIcons.pause,
-    ExecutionCommitmentStatus.completed => FLucideIcons.check,
-    ExecutionCommitmentStatus.archived => FLucideIcons.archive,
-  };
 }
 
 IconData _horizonIcon(ExecutionHorizon horizon) {

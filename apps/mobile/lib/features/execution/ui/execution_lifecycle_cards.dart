@@ -9,9 +9,11 @@ class ExecutionCommitmentCard extends StatelessWidget {
     required this.onPause,
     required this.onResume,
     required this.onComplete,
+    required this.onArchive,
     required this.onRecordProgress,
     this.openActionCount,
     this.blockedActionCount,
+    this.projectLabel,
     this.onOpen,
     this.busy = false,
     this.showActions = true,
@@ -23,9 +25,11 @@ class ExecutionCommitmentCard extends StatelessWidget {
   final VoidCallback onPause;
   final VoidCallback onResume;
   final VoidCallback onComplete;
+  final VoidCallback onArchive;
   final VoidCallback onRecordProgress;
   final int? openActionCount;
   final int? blockedActionCount;
+  final String? projectLabel;
   final VoidCallback? onOpen;
   final bool busy;
   final bool showActions;
@@ -60,6 +64,7 @@ class ExecutionCommitmentCard extends StatelessWidget {
                       commitment: commitment,
                       openActionCount: openActionCount,
                       blockedActionCount: blockedActionCount,
+                      projectLabel: projectLabel,
                     ),
                   ),
                 ],
@@ -86,11 +91,14 @@ class ExecutionCommitmentCard extends StatelessWidget {
               canComplete:
                   commitment.status == ExecutionCommitmentStatus.active ||
                   commitment.status == ExecutionCommitmentStatus.paused,
+              canArchive:
+                  commitment.status != ExecutionCommitmentStatus.archived,
               canCreateAction: commitment.status.isOpen,
               editTooltip: l10n.executionEditCommitmentTitle,
               onPause: onPause,
               onResume: onResume,
               onComplete: onComplete,
+              onArchive: onArchive,
               onRecordProgress: onRecordProgress,
               onCreateAction: onCreateAction,
               onEdit: onEdit,
@@ -106,11 +114,13 @@ class _CommitmentBody extends StatelessWidget {
     required this.commitment,
     required this.openActionCount,
     required this.blockedActionCount,
+    required this.projectLabel,
   });
 
   final ExecutionCommitment commitment;
   final int? openActionCount;
   final int? blockedActionCount;
+  final String? projectLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +169,12 @@ class _CommitmentBody extends StatelessWidget {
                 size: AppBadgeSize.compact,
                 icon: FLucideIcons.calendarDays,
               ),
+            if (projectLabel != null)
+              AppBadge(
+                label: '${l10n.executionProjectField}: $projectLabel',
+                size: AppBadgeSize.compact,
+                icon: FLucideIcons.folder,
+              ),
             ..._rollupBadges(
               l10n,
               openActionCount: openActionCount,
@@ -180,9 +196,11 @@ class ExecutionProjectCard extends StatelessWidget {
     required this.onPause,
     required this.onResume,
     required this.onComplete,
+    required this.onArchive,
     required this.onRecordProgress,
     this.openActionCount,
     this.blockedActionCount,
+    this.commitmentCount,
     this.onOpen,
     this.busy = false,
     this.showActions = true,
@@ -194,9 +212,11 @@ class ExecutionProjectCard extends StatelessWidget {
   final VoidCallback onPause;
   final VoidCallback onResume;
   final VoidCallback onComplete;
+  final VoidCallback onArchive;
   final VoidCallback onRecordProgress;
   final int? openActionCount;
   final int? blockedActionCount;
+  final int? commitmentCount;
   final VoidCallback? onOpen;
   final bool busy;
   final bool showActions;
@@ -231,6 +251,7 @@ class ExecutionProjectCard extends StatelessWidget {
                       project: project,
                       openActionCount: openActionCount,
                       blockedActionCount: blockedActionCount,
+                      commitmentCount: commitmentCount,
                     ),
                   ),
                 ],
@@ -257,11 +278,13 @@ class ExecutionProjectCard extends StatelessWidget {
               canComplete:
                   project.status == ExecutionProjectStatus.active ||
                   project.status == ExecutionProjectStatus.paused,
+              canArchive: project.status != ExecutionProjectStatus.archived,
               canCreateAction: project.status.isOpen,
               editTooltip: l10n.executionEditProjectTitle,
               onPause: onPause,
               onResume: onResume,
               onComplete: onComplete,
+              onArchive: onArchive,
               onRecordProgress: onRecordProgress,
               onCreateAction: onCreateAction,
               onEdit: onEdit,
@@ -277,11 +300,13 @@ class _ProjectBody extends StatelessWidget {
     required this.project,
     required this.openActionCount,
     required this.blockedActionCount,
+    required this.commitmentCount,
   });
 
   final ExecutionProject project;
   final int? openActionCount;
   final int? blockedActionCount;
+  final int? commitmentCount;
 
   @override
   Widget build(BuildContext context) {
@@ -335,6 +360,12 @@ class _ProjectBody extends StatelessWidget {
               openActionCount: openActionCount,
               blockedActionCount: blockedActionCount,
             ),
+            if (commitmentCount != null)
+              AppBadge(
+                label: '${l10n.executionCommitmentsSection}: $commitmentCount',
+                size: AppBadgeSize.compact,
+                icon: FLucideIcons.target,
+              ),
           ],
         ),
       ],
@@ -370,11 +401,13 @@ class _LifecycleQuickButtons extends StatelessWidget {
     required this.canPause,
     required this.canResume,
     required this.canComplete,
+    required this.canArchive,
     required this.canCreateAction,
     required this.editTooltip,
     required this.onPause,
     required this.onResume,
     required this.onComplete,
+    required this.onArchive,
     required this.onRecordProgress,
     required this.onCreateAction,
     required this.onEdit,
@@ -384,11 +417,13 @@ class _LifecycleQuickButtons extends StatelessWidget {
   final bool canPause;
   final bool canResume;
   final bool canComplete;
+  final bool canArchive;
   final bool canCreateAction;
   final String editTooltip;
   final VoidCallback onPause;
   final VoidCallback onResume;
   final VoidCallback onComplete;
+  final VoidCallback onArchive;
   final VoidCallback onRecordProgress;
   final VoidCallback onCreateAction;
   final VoidCallback onEdit;
@@ -444,6 +479,12 @@ class _LifecycleQuickButtons extends StatelessWidget {
                 icon: FLucideIcons.check,
                 title: l10n.executionLifecycleComplete,
                 onPress: onComplete,
+              ),
+            if (canArchive)
+              AppAdaptiveAction(
+                icon: FLucideIcons.archive,
+                title: l10n.executionLifecycleArchive,
+                onPress: onArchive,
               ),
           ],
           triggerBuilder: (context, openMenu, focusNode) => Focus(

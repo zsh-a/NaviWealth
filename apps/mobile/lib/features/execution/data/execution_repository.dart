@@ -61,4 +61,28 @@ class ExecutionRepository
       await _outbox.enqueue(table: tableName, rowId: rowId);
     });
   }
+
+  @override
+  Future<void> _upsertAndRecordProgress<R>(
+    TableInfo<Table, R> table,
+    Insertable<R> companion, {
+    required String tableName,
+    required String rowId,
+    required ExecutionProgressEntry progress,
+  }) async {
+    await _db.transaction(() async {
+      await _db.into(table).insert(companion, mode: InsertMode.insertOrReplace);
+      await _outbox.enqueue(table: tableName, rowId: rowId);
+      await _db
+          .into(_db.executionProgressEntries)
+          .insert(
+            executionProgressCompanion(progress),
+            mode: InsertMode.insertOrReplace,
+          );
+      await _outbox.enqueue(
+        table: ExecutionRepository._progressTable,
+        rowId: progress.id,
+      );
+    });
+  }
 }

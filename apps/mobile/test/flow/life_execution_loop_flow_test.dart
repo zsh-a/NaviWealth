@@ -48,7 +48,7 @@ void main() {
 
       await AppShell(tester).openTab('Review');
       final review = ExecutionReviewPageObject(tester);
-      review.expectCompletedAction('Protect recovery today');
+      await review.expectCompletedAction('Protect recovery today');
       review.expectOutcome('Health: signal still detected');
 
       recovery = <String, Object?>{
@@ -101,7 +101,7 @@ void main() {
 
       await AppShell(tester).openTab('Review');
       final review = ExecutionReviewPageObject(tester);
-      review.expectCompletedAction("View this month's budget");
+      await review.expectCompletedAction("View this month's budget");
       review.expectOutcome('Finance: signal still detected');
 
       budgetSignal = BudgetSignal.comfortable;

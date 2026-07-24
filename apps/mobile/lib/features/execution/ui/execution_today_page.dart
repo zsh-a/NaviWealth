@@ -13,6 +13,7 @@ import '../domain/execution_models.dart';
 import 'execution_action_card_controller.dart';
 import 'execution_action_sheet.dart';
 import 'execution_progress_sheet.dart';
+import 'execution_source_route.dart';
 import 'execution_widgets.dart';
 
 class ExecutionTodayPage extends ConsumerWidget {
@@ -87,7 +88,6 @@ class _TodayListState extends ConsumerState<_TodayList> {
           filter: _filter,
           todayActions: actions,
           openActions: openActions,
-          now: now,
         );
         final snapshot = ExecutionOverviewSnapshot.fromLists(
           todayActions: actions,
@@ -136,6 +136,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
                       action.commitmentId,
                     ),
                 onOpen: () => context.push(ExecutionRoutes.action(action.id)),
+                onSourceOpen: executionSourceOpen(context, ref, action.source),
                 onEdit: () =>
                     showExecutionActionSheet(context: context, action: action),
                 onRecordProgress: () => showExecutionProgressSheet(
@@ -154,29 +155,10 @@ class _TodayListState extends ConsumerState<_TodayList> {
           onRefresh: _refresh,
           greeting: const SizedBox.shrink(),
           stage: AppCollapsingStage(
-            child: Padding(
-              padding: AppPageRhythm.heroPadding,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.executionOverviewFocus,
-                    style: context.mutedLabelStyle,
-                  ),
-                  const SizedBox(height: AppPageRhythm.row),
-                  Text(
-                    '${snapshot.todayCount}',
-                    style: TypographyTokens.displaySmall,
-                  ),
-                  const SizedBox(height: AppSpacing.s6),
-                  Text(
-                    snapshot.blockedCount > 0
-                        ? '${l10n.executionOverviewFocus} · ${l10n.executionOverviewBlocked} ${snapshot.blockedCount}'
-                        : l10n.executionOverviewFocus,
-                    style: context.captionStyle,
-                  ),
-                ],
-              ),
+            child: ExecutionOverviewStrip(
+              snapshot: snapshot,
+              selectedFilter: _filter,
+              onFilterChanged: (filter) => setState(() => _filter = filter),
             ),
           ),
           stickyBuilder: (context, progress) {
@@ -211,13 +193,6 @@ class _TodayListState extends ConsumerState<_TodayList> {
               ),
             );
           },
-          modules: [
-            ExecutionOverviewStrip(
-              snapshot: snapshot,
-              selectedFilter: _filter,
-              onFilterChanged: (filter) => setState(() => _filter = filter),
-            ),
-          ],
           secondary: actionModules,
         );
       },

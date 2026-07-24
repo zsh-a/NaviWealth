@@ -12401,6 +12401,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionCreateProgressTitle => 'New Progress';
 
   @override
+  String get executionEditProgressTitle => 'Edit Progress';
+
+  @override
   String get executionEditActionTitle => 'Edit Action';
 
   @override
@@ -12513,14 +12516,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'This removes it from ExecutionOS and syncs the deletion.';
 
   @override
-  String get executionCommitmentsEmptyTitle => 'No open actions';
+  String get executionCommitmentsEmptyTitle => 'No active work';
 
   @override
   String get executionCommitmentsEmptyBody =>
       'Use actions for personal todos; group larger work into projects or commitments.';
 
   @override
-  String get executionCommitmentsClosedEmptyTitle => 'No closed commitments';
+  String get executionCommitmentsClosedEmptyTitle => 'No closed items';
 
   @override
   String get executionCommitmentsClosedEmptyBody =>
@@ -12612,6 +12615,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String executionScheduledBadge(String date) {
+    return 'Scheduled $date';
+  }
+
+  @override
+  String executionOverdueBadge(String date) {
+    return 'Overdue $date';
+  }
+
+  @override
   String executionTargetBadge(String date) {
     return 'Target $date';
   }
@@ -12679,6 +12692,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionLifecycleComplete => 'Complete';
 
   @override
+  String get executionLifecycleArchive => 'Archive';
+
+  @override
   String get executionLifecycleActiveView => 'Active';
 
   @override
@@ -12700,6 +12716,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionProgressDroppedDefault => 'Marked dropped.';
+
+  @override
+  String get executionProgressStartedDefault => 'Started work.';
+
+  @override
+  String get executionProgressResumedDefault => 'Resumed work.';
+
+  @override
+  String get executionProjectPausedDefault => 'Project paused.';
+
+  @override
+  String get executionProjectResumedDefault => 'Project resumed.';
+
+  @override
+  String get executionProjectCompletedDefault => 'Project completed.';
+
+  @override
+  String get executionProjectArchivedDefault => 'Project archived.';
+
+  @override
+  String get executionCommitmentPausedDefault => 'Commitment paused.';
+
+  @override
+  String get executionCommitmentResumedDefault => 'Commitment resumed.';
+
+  @override
+  String get executionCommitmentCompletedDefault => 'Commitment completed.';
+
+  @override
+  String get executionCommitmentArchivedDefault => 'Commitment archived.';
+
+  @override
+  String get executionLifecycleCompleteConfirmTitle =>
+      'Complete with open actions?';
+
+  @override
+  String executionLifecycleCompleteConfirmBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count open actions will remain active.',
+      one: '1 open action will remain active.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get executionLifecycleArchiveConfirmTitle =>
+      'Archive with open actions?';
+
+  @override
+  String executionLifecycleArchiveConfirmBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count open actions will remain active.',
+      one: '1 open action will remain active.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get executionProgressKindField => 'Progress type';
@@ -12728,6 +12804,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionProgressKindCheckin => 'Check-in';
+
+  @override
+  String get executionOpenActionsSection => 'Open actions';
+
+  @override
+  String get executionProjectCommitmentsSection => 'Project commitments';
+
+  @override
+  String get executionReviewWindow7d => '7 days';
+
+  @override
+  String get executionReviewWindow30d => '30 days';
+
+  @override
+  String get executionReviewWindowAll => 'All';
+
+  @override
+  String get executionReviewCompletedMetric => 'Completed';
+
+  @override
+  String get executionReviewBlockedMetric => 'Blockers';
+
+  @override
+  String get executionReviewProgressMetric => 'Progress';
+
+  @override
+  String get executionReviewGenerateTitle => 'Execution review';
+
+  @override
+  String get executionReviewGenerateBody =>
+      'Generate a local review of focus, blockers, due work, and recent progress.';
+
+  @override
+  String get executionReviewGenerateAction => 'Generate review';
 
   @override
   String get executionProgressSyncActionStatus => 'Update linked action';

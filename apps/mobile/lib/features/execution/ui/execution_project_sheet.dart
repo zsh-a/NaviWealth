@@ -41,7 +41,6 @@ class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _title = TextEditingController();
   final TextEditingController _description = TextEditingController();
-  late ExecutionProjectStatus _status;
   late ExecutionHorizon _horizon;
   DateTime? _targetDate;
   bool _saving = false;
@@ -52,7 +51,6 @@ class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
     final project = widget.project;
     _title.text = project?.title ?? '';
     _description.text = project?.description ?? '';
-    _status = project?.status ?? ExecutionProjectStatus.active;
     _horizon = project?.horizon ?? ExecutionHorizon.open;
     _targetDate = project?.targetDate;
     widget.dirty.bindTextControllers([_title, _description]);
@@ -127,26 +125,14 @@ class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
       id: existing?.id ?? kExecutionUuid.v4(),
       title: title,
       description: _description.text.trim(),
-      status: _status,
+      status: existing?.status ?? ExecutionProjectStatus.active,
       horizon: _horizon,
       targetDate: _targetDate,
       source: existing?.source ?? const ExecutionSourceRef(),
       createdAt: existing?.createdAt ?? sync.updatedAt,
-      completedAt: _completedAt(sync),
+      completedAt: existing?.completedAt,
       sync: sync,
     );
-  }
-
-  DateTime? _completedAt(SyncMeta sync) {
-    final existing = widget.project;
-    final closed =
-        _status == ExecutionProjectStatus.completed ||
-        _status == ExecutionProjectStatus.archived;
-    if (!closed) return null;
-    if (existing?.status == _status && existing?.completedAt != null) {
-      return existing!.completedAt;
-    }
-    return sync.updatedAt;
   }
 
   void _markDirty() => widget.dirty.markDirty();
@@ -181,21 +167,6 @@ class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
               validator: (value) => (value == null || value.trim().isEmpty)
                   ? l10n.executionTitleRequired
                   : null,
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            Text(l10n.executionStatusField, style: context.captionLabelStyle),
-            const SizedBox(height: AppSpacing.s6),
-            SegmentedRow<ExecutionProjectStatus>(
-              options: ExecutionProjectStatus.values,
-              value: _status,
-              labelOf: (status) => executionProjectStatusLabel(l10n, status),
-              iconOf: _projectStatusIcon,
-              onChanged: _saving
-                  ? (_) {}
-                  : (status) {
-                      setState(() => _status = status);
-                      _markDirty();
-                    },
             ),
             const SizedBox(height: AppSpacing.s12),
             Text(l10n.executionHorizonField, style: context.captionLabelStyle),
@@ -246,15 +217,6 @@ class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
       ),
     );
   }
-}
-
-IconData _projectStatusIcon(ExecutionProjectStatus status) {
-  return switch (status) {
-    ExecutionProjectStatus.active => FLucideIcons.play,
-    ExecutionProjectStatus.paused => FLucideIcons.pause,
-    ExecutionProjectStatus.completed => FLucideIcons.check,
-    ExecutionProjectStatus.archived => FLucideIcons.archive,
-  };
 }
 
 IconData _horizonIcon(ExecutionHorizon horizon) {

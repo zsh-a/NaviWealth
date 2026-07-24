@@ -20,6 +20,7 @@ class ExecutionActionCardController extends ConsumerStatefulWidget {
     this.projectLabel,
     this.commitmentLabel,
     this.onOpen,
+    this.onSourceOpen,
     this.showActions = true,
     this.outcome,
   });
@@ -33,6 +34,7 @@ class ExecutionActionCardController extends ConsumerStatefulWidget {
   final String? projectLabel;
   final String? commitmentLabel;
   final VoidCallback? onOpen;
+  final VoidCallback? onSourceOpen;
   final bool showActions;
   final ActionOutcomeSummary? outcome;
 
@@ -80,16 +82,27 @@ class _ExecutionActionCardControllerState
       projectLabel: widget.projectLabel,
       commitmentLabel: widget.commitmentLabel,
       onOpen: widget.onOpen,
+      onSourceOpen: widget.onSourceOpen,
       showActions: widget.showActions,
       outcome: widget.outcome,
       onEdit: _busy ? () {} : widget.onEdit,
       onRecordProgress: _busy ? () {} : widget.onRecordProgress,
-      onStart: () => _changeStatus(ExecutionActionStatus.doing),
+      onStart: () => _changeStatus(
+        ExecutionActionStatus.doing,
+        progressNote: AppLocalizations.of(
+          context,
+        ).executionProgressStartedDefault,
+      ),
       onBlock: () => _changeStatus(
         ExecutionActionStatus.blocked,
         progressNote: widget.blockedProgressNote,
       ),
-      onResume: () => _changeStatus(ExecutionActionStatus.doing),
+      onResume: () => _changeStatus(
+        ExecutionActionStatus.doing,
+        progressNote: AppLocalizations.of(
+          context,
+        ).executionProgressResumedDefault,
+      ),
       onDone: () => _changeStatus(
         ExecutionActionStatus.done,
         progressNote: widget.doneProgressNote,

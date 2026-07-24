@@ -34,20 +34,6 @@ class ExecutionOverviewStrip extends StatelessWidget {
           icon: FLucideIcons.calendarClock,
           color: colors.primary,
         ),
-      if (snapshot.activeProjectCount > 0)
-        _OverviewMeta(
-          label: l10n.executionOverviewProjects,
-          value: snapshot.activeProjectCount,
-          icon: FLucideIcons.folder,
-          color: colors.primary,
-        ),
-      if (snapshot.activeCommitmentCount > 0)
-        _OverviewMeta(
-          label: l10n.executionOverviewCommitments,
-          value: snapshot.activeCommitmentCount,
-          icon: FLucideIcons.target,
-          color: colors.primary,
-        ),
       if (snapshot.recentProgressCount > 0)
         _OverviewMeta(
           label: l10n.executionOverviewProgress7d,
@@ -66,14 +52,16 @@ class ExecutionOverviewStrip extends StatelessWidget {
           labelOf: (filter) => switch (filter) {
             ExecutionTodayFilter.focus =>
               '${l10n.executionOverviewFocus} ${snapshot.todayCount}',
+            ExecutionTodayFilter.backlog =>
+              '${l10n.executionOverviewBacklog} ${snapshot.backlogCount}',
             ExecutionTodayFilter.blocked =>
               '${l10n.executionOverviewBlocked} ${snapshot.blockedCount}',
             ExecutionTodayFilter.open =>
               '${l10n.executionOverviewOpen} ${snapshot.openCount}',
           },
-          iconOf: executionTodayFilterIcon,
+          semanticLabelOf: (filter) => executionTodayFilterLabel(l10n, filter),
           onChanged: onFilterChanged,
-          minSegmentWidth: 88,
+          minSegmentWidth: 72,
         ),
         if (meta.isNotEmpty) ...[
           const SizedBox(height: AppPageRhythm.row),

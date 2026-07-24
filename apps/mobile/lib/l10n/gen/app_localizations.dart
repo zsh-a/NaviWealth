@@ -21098,6 +21098,12 @@ abstract class AppLocalizations {
   /// **'New Progress'**
   String get executionCreateProgressTitle;
 
+  /// No description provided for @executionEditProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Progress'**
+  String get executionEditProgressTitle;
+
   /// No description provided for @executionEditActionTitle.
   ///
   /// In en, this message translates to:
@@ -21311,7 +21317,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionCommitmentsEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'No open actions'**
+  /// **'No active work'**
   String get executionCommitmentsEmptyTitle;
 
   /// No description provided for @executionCommitmentsEmptyBody.
@@ -21323,7 +21329,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionCommitmentsClosedEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'No closed commitments'**
+  /// **'No closed items'**
   String get executionCommitmentsClosedEmptyTitle;
 
   /// No description provided for @executionCommitmentsClosedEmptyBody.
@@ -21494,6 +21500,18 @@ abstract class AppLocalizations {
   /// **'Due {date}'**
   String executionDueBadge(String date);
 
+  /// No description provided for @executionScheduledBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled {date}'**
+  String executionScheduledBadge(String date);
+
+  /// No description provided for @executionOverdueBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue {date}'**
+  String executionOverdueBadge(String date);
+
   /// No description provided for @executionTargetBadge.
   ///
   /// In en, this message translates to:
@@ -21620,6 +21638,12 @@ abstract class AppLocalizations {
   /// **'Complete'**
   String get executionLifecycleComplete;
 
+  /// No description provided for @executionLifecycleArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get executionLifecycleArchive;
+
   /// No description provided for @executionLifecycleActiveView.
   ///
   /// In en, this message translates to:
@@ -21661,6 +21685,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Marked dropped.'**
   String get executionProgressDroppedDefault;
+
+  /// No description provided for @executionProgressStartedDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Started work.'**
+  String get executionProgressStartedDefault;
+
+  /// No description provided for @executionProgressResumedDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Resumed work.'**
+  String get executionProgressResumedDefault;
+
+  /// No description provided for @executionProjectPausedDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Project paused.'**
+  String get executionProjectPausedDefault;
+
+  /// No description provided for @executionProjectResumedDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Project resumed.'**
+  String get executionProjectResumedDefault;
+
+  /// No description provided for @executionProjectCompletedDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Project completed.'**
+  String get executionProjectCompletedDefault;
+
+  /// No description provided for @executionProjectArchivedDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Project archived.'**
+  String get executionProjectArchivedDefault;
+
+  /// No description provided for @executionCommitmentPausedDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Commitment paused.'**
+  String get executionCommitmentPausedDefault;
+
+  /// No description provided for @executionCommitmentResumedDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Commitment resumed.'**
+  String get executionCommitmentResumedDefault;
+
+  /// No description provided for @executionCommitmentCompletedDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Commitment completed.'**
+  String get executionCommitmentCompletedDefault;
+
+  /// No description provided for @executionCommitmentArchivedDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Commitment archived.'**
+  String get executionCommitmentArchivedDefault;
+
+  /// No description provided for @executionLifecycleCompleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete with open actions?'**
+  String get executionLifecycleCompleteConfirmTitle;
+
+  /// No description provided for @executionLifecycleCompleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 open action will remain active.} other{{count} open actions will remain active.}}'**
+  String executionLifecycleCompleteConfirmBody(int count);
+
+  /// No description provided for @executionLifecycleArchiveConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive with open actions?'**
+  String get executionLifecycleArchiveConfirmTitle;
+
+  /// No description provided for @executionLifecycleArchiveConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 open action will remain active.} other{{count} open actions will remain active.}}'**
+  String executionLifecycleArchiveConfirmBody(int count);
 
   /// No description provided for @executionProgressKindField.
   ///
@@ -21715,6 +21823,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Check-in'**
   String get executionProgressKindCheckin;
+
+  /// No description provided for @executionOpenActionsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Open actions'**
+  String get executionOpenActionsSection;
+
+  /// No description provided for @executionProjectCommitmentsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Project commitments'**
+  String get executionProjectCommitmentsSection;
+
+  /// No description provided for @executionReviewWindow7d.
+  ///
+  /// In en, this message translates to:
+  /// **'7 days'**
+  String get executionReviewWindow7d;
+
+  /// No description provided for @executionReviewWindow30d.
+  ///
+  /// In en, this message translates to:
+  /// **'30 days'**
+  String get executionReviewWindow30d;
+
+  /// No description provided for @executionReviewWindowAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get executionReviewWindowAll;
+
+  /// No description provided for @executionReviewCompletedMetric.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get executionReviewCompletedMetric;
+
+  /// No description provided for @executionReviewBlockedMetric.
+  ///
+  /// In en, this message translates to:
+  /// **'Blockers'**
+  String get executionReviewBlockedMetric;
+
+  /// No description provided for @executionReviewProgressMetric.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get executionReviewProgressMetric;
+
+  /// No description provided for @executionReviewGenerateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution review'**
+  String get executionReviewGenerateTitle;
+
+  /// No description provided for @executionReviewGenerateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate a local review of focus, blockers, due work, and recent progress.'**
+  String get executionReviewGenerateBody;
+
+  /// No description provided for @executionReviewGenerateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate review'**
+  String get executionReviewGenerateAction;
 
   /// No description provided for @executionProgressSyncActionStatus.
   ///

@@ -11783,25 +11783,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionReviewTitle => '复盘';
 
   @override
-  String get executionCreateActionTitle => '新建 Action';
+  String get executionCreateActionTitle => '新建行动';
 
   @override
-  String get executionCreateProjectTitle => '新建 Project';
+  String get executionCreateProjectTitle => '新建项目';
 
   @override
-  String get executionCreateCommitmentTitle => '新建 Commitment';
+  String get executionCreateCommitmentTitle => '新建承诺';
 
   @override
   String get executionCreateProgressTitle => '新建进展';
 
   @override
-  String get executionEditActionTitle => '编辑 Action';
+  String get executionEditProgressTitle => '编辑进展';
 
   @override
-  String get executionEditProjectTitle => '编辑 Project';
+  String get executionEditActionTitle => '编辑行动';
 
   @override
-  String get executionEditCommitmentTitle => '编辑 Commitment';
+  String get executionEditProjectTitle => '编辑项目';
+
+  @override
+  String get executionEditCommitmentTitle => '编辑承诺';
 
   @override
   String get executionActionField => '行动';
@@ -11891,7 +11894,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionTodayFilteredEmptyTitle => '没有匹配行动';
 
   @override
-  String get executionTodayFilteredEmptyBody => '切换筛选；有需要跟进的事情再捕获为 Action。';
+  String get executionTodayFilteredEmptyBody => '切换筛选；有需要跟进的事情再捕获为行动。';
 
   @override
   String executionDeleteConfirmTitle(Object item) {
@@ -11899,21 +11902,19 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get executionDeleteConfirmBody => '这会从 ExecutionOS 移除该项目，并同步删除记录。';
+  String get executionDeleteConfirmBody => '这会从 ExecutionOS 移除该条目，并同步删除记录。';
 
   @override
-  String get executionCommitmentsEmptyTitle => '没有未完成行动';
+  String get executionCommitmentsEmptyTitle => '没有进行中事项';
 
   @override
-  String get executionCommitmentsEmptyBody =>
-      '个人 todo 先用 Action；事情变大后再归入 Project 或 Commitment。';
+  String get executionCommitmentsEmptyBody => '个人待办先记录为行动；事情变大后再归入项目或承诺。';
 
   @override
-  String get executionCommitmentsClosedEmptyTitle => '没有已关闭承诺';
+  String get executionCommitmentsClosedEmptyTitle => '没有已关闭事项';
 
   @override
-  String get executionCommitmentsClosedEmptyBody =>
-      '已完成或已归档的 Project 与 Commitment 会出现在这里。';
+  String get executionCommitmentsClosedEmptyBody => '已完成或已归档的项目与承诺会出现在这里。';
 
   @override
   String get executionReviewEmptyTitle => '还没有进展记录';
@@ -11940,7 +11941,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionTimelineSection => '时间线';
 
   @override
-  String get executionDetailMissingTitle => '未找到项目';
+  String get executionDetailMissingTitle => '未找到条目';
 
   @override
   String get executionDetailMissingBody => '它可能已被删除，或暂时不在当前设备上。';
@@ -11996,6 +11997,16 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String executionDueBadge(String date) {
     return '截止 $date';
+  }
+
+  @override
+  String executionScheduledBadge(String date) {
+    return '计划 $date';
+  }
+
+  @override
+  String executionOverdueBadge(String date) {
+    return '逾期 $date';
   }
 
   @override
@@ -12064,6 +12075,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionLifecycleComplete => '完成';
 
   @override
+  String get executionLifecycleArchive => '归档';
+
+  @override
   String get executionLifecycleActiveView => '进行中';
 
   @override
@@ -12083,6 +12097,52 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionProgressDroppedDefault => '已标记为放弃。';
+
+  @override
+  String get executionProgressStartedDefault => '已开始推进。';
+
+  @override
+  String get executionProgressResumedDefault => '已恢复推进。';
+
+  @override
+  String get executionProjectPausedDefault => '项目已暂停。';
+
+  @override
+  String get executionProjectResumedDefault => '项目已恢复。';
+
+  @override
+  String get executionProjectCompletedDefault => '项目已完成。';
+
+  @override
+  String get executionProjectArchivedDefault => '项目已归档。';
+
+  @override
+  String get executionCommitmentPausedDefault => '承诺已暂停。';
+
+  @override
+  String get executionCommitmentResumedDefault => '承诺已恢复。';
+
+  @override
+  String get executionCommitmentCompletedDefault => '承诺已完成。';
+
+  @override
+  String get executionCommitmentArchivedDefault => '承诺已归档。';
+
+  @override
+  String get executionLifecycleCompleteConfirmTitle => '仍有未完成行动，确认完成？';
+
+  @override
+  String executionLifecycleCompleteConfirmBody(int count) {
+    return '完成后仍会保留 $count 条开放行动。';
+  }
+
+  @override
+  String get executionLifecycleArchiveConfirmTitle => '仍有未完成行动，确认归档？';
+
+  @override
+  String executionLifecycleArchiveConfirmBody(int count) {
+    return '归档后仍会保留 $count 条开放行动。';
+  }
 
   @override
   String get executionProgressKindField => '进展类型';
@@ -12112,6 +12172,39 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionProgressKindCheckin => '进展记录';
 
   @override
+  String get executionOpenActionsSection => '开放行动';
+
+  @override
+  String get executionProjectCommitmentsSection => '项目承诺';
+
+  @override
+  String get executionReviewWindow7d => '7 天';
+
+  @override
+  String get executionReviewWindow30d => '30 天';
+
+  @override
+  String get executionReviewWindowAll => '全部';
+
+  @override
+  String get executionReviewCompletedMetric => '已完成';
+
+  @override
+  String get executionReviewBlockedMetric => '阻塞';
+
+  @override
+  String get executionReviewProgressMetric => '进展';
+
+  @override
+  String get executionReviewGenerateTitle => '执行复盘';
+
+  @override
+  String get executionReviewGenerateBody => '在本地生成焦点、阻塞、到期事项和近期进展摘要。';
+
+  @override
+  String get executionReviewGenerateAction => '生成复盘';
+
+  @override
   String get executionProgressSyncActionStatus => '同步更新关联行动';
 
   @override
@@ -12120,16 +12213,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get executionProposalActionLabel => 'Action';
+  String get executionProposalActionLabel => '行动';
 
   @override
   String get executionProposalActionStatusLabel => '行动状态';
 
   @override
-  String get executionProposalProjectLabel => 'Project';
+  String get executionProposalProjectLabel => '项目';
 
   @override
-  String get executionProposalCommitmentLabel => 'Commitment';
+  String get executionProposalCommitmentLabel => '承诺';
 
   @override
   String get executionProposalProgressLabel => '进展';

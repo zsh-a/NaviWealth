@@ -15,6 +15,7 @@ class ExecutionActionCard extends StatelessWidget {
     this.projectLabel,
     this.commitmentLabel,
     this.onOpen,
+    this.onSourceOpen,
     this.showActions = true,
     this.outcome,
   });
@@ -31,6 +32,7 @@ class ExecutionActionCard extends StatelessWidget {
   final String? projectLabel;
   final String? commitmentLabel;
   final VoidCallback? onOpen;
+  final VoidCallback? onSourceOpen;
   final bool showActions;
   final ActionOutcomeSummary? outcome;
 
@@ -112,13 +114,18 @@ class ExecutionActionCard extends StatelessWidget {
                                     icon: FLucideIcons.flag,
                                   ),
                                 if (action.dueAt != null)
+                                  _ActionDueBadge(dueAt: action.dueAt!),
+                                if (action.scheduledFor != null)
                                   AppBadge(
-                                    label: l10n.executionDueBadge(
-                                      executionDate(context, action.dueAt!),
+                                    label: l10n.executionScheduledBadge(
+                                      executionDate(
+                                        context,
+                                        action.scheduledFor!,
+                                      ),
                                     ),
                                     tone: AppBadgeTone.info,
                                     size: AppBadgeSize.compact,
-                                    icon: FLucideIcons.calendarDays,
+                                    icon: FLucideIcons.calendarClock,
                                   ),
                                 if (projectLabel != null)
                                   AppBadge(
@@ -138,10 +145,9 @@ class ExecutionActionCard extends StatelessWidget {
                                   ),
                                 if (action.source.labelSnapshot != null &&
                                     action.source.labelSnapshot!.isNotEmpty)
-                                  AppBadge(
+                                  _ActionSourceBadge(
                                     label: action.source.labelSnapshot!,
-                                    size: AppBadgeSize.compact,
-                                    icon: FLucideIcons.link,
+                                    onPress: onSourceOpen,
                                   ),
                                 if (outcome != null)
                                   AppBadge(
@@ -206,6 +212,56 @@ class ExecutionActionCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ActionSourceBadge extends StatelessWidget {
+  const _ActionSourceBadge({required this.label, this.onPress});
+
+  final String label;
+  final VoidCallback? onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final callback = onPress;
+    final badge = AppBadge(
+      label: label,
+      size: AppBadgeSize.compact,
+      icon: callback == null ? FLucideIcons.link : FLucideIcons.externalLink,
+    );
+    if (callback == null) return badge;
+    return Semantics(
+      button: true,
+      label: label,
+      child: FTappable(onPress: callback, child: badge),
+    );
+  }
+}
+
+class _ActionDueBadge extends StatelessWidget {
+  const _ActionDueBadge({required this.dueAt});
+
+  final DateTime dueAt;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final due = dueAt.toLocal();
+    final now = DateTime.now();
+    final overdue = DateTime(
+      due.year,
+      due.month,
+      due.day,
+    ).isBefore(DateTime(now.year, now.month, now.day));
+    final date = executionDate(context, due);
+    return AppBadge(
+      label: overdue
+          ? l10n.executionOverdueBadge(date)
+          : l10n.executionDueBadge(date),
+      tone: overdue ? AppBadgeTone.error : AppBadgeTone.info,
+      size: AppBadgeSize.compact,
+      icon: overdue ? FLucideIcons.triangleAlert : FLucideIcons.calendarDays,
     );
   }
 }

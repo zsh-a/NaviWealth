@@ -51,6 +51,23 @@ ExecutionAction _action({
   );
 }
 
+ExecutionProgressEntry _progress({
+  required String id,
+  required SyncMeta sync,
+  String? projectId,
+  String? commitmentId,
+}) {
+  return ExecutionProgressEntry(
+    id: id,
+    projectId: projectId,
+    commitmentId: commitmentId,
+    kind: ExecutionProgressKind.checkin,
+    note: 'Lifecycle changed',
+    createdAt: sync.updatedAt,
+    sync: sync,
+  );
+}
+
 void main() {
   late AppDatabase db;
   late InMemoryOutboxStore outbox;
@@ -297,6 +314,11 @@ void main() {
       project: project,
       status: ExecutionProjectStatus.completed,
       sync: _sync(4),
+      progress: _progress(
+        id: 'progress-project-complete',
+        projectId: project.id,
+        sync: _sync(4),
+      ),
     );
     final completed = await repo.findProject(
       ownerUserId: _userId,
@@ -314,6 +336,11 @@ void main() {
       project: completed,
       status: ExecutionProjectStatus.active,
       sync: _sync(5),
+      progress: _progress(
+        id: 'progress-project-reopen',
+        projectId: project.id,
+        sync: _sync(5),
+      ),
     );
     final reopened = await repo.findProject(
       ownerUserId: _userId,
@@ -324,7 +351,9 @@ void main() {
     expect(reopened.completedAt, isNull);
     expect(outbox.queued, [
       (table: 'execution_projects', rowId: 'proj-life'),
+      (table: 'execution_progress_entries', rowId: 'progress-project-complete'),
       (table: 'execution_projects', rowId: 'proj-life'),
+      (table: 'execution_progress_entries', rowId: 'progress-project-reopen'),
     ]);
   });
 
@@ -356,11 +385,21 @@ void main() {
         project: completed,
         status: ExecutionProjectStatus.completed,
         sync: _sync(4),
+        progress: _progress(
+          id: 'progress-project-closed',
+          projectId: completed.id,
+          sync: _sync(4),
+        ),
       );
       await repo.updateProjectStatus(
         project: archived,
         status: ExecutionProjectStatus.archived,
         sync: _sync(5),
+        progress: _progress(
+          id: 'progress-project-archived',
+          projectId: archived.id,
+          sync: _sync(5),
+        ),
       );
       final closedBeforeDelete = await repo
           .watchClosedProjects(ownerUserId: _userId)
@@ -425,6 +464,11 @@ void main() {
         commitment: commitment,
         status: ExecutionCommitmentStatus.paused,
         sync: _sync(3),
+        progress: _progress(
+          id: 'progress-commitment-pause',
+          commitmentId: commitment.id,
+          sync: _sync(3),
+        ),
       );
       final paused = await repo.findCommitment(
         ownerUserId: _userId,
@@ -437,6 +481,11 @@ void main() {
         commitment: paused,
         status: ExecutionCommitmentStatus.completed,
         sync: _sync(4),
+        progress: _progress(
+          id: 'progress-commitment-complete',
+          commitmentId: commitment.id,
+          sync: _sync(4),
+        ),
       );
       final completed = await repo.findCommitment(
         ownerUserId: _userId,
@@ -454,6 +503,11 @@ void main() {
         commitment: completed,
         status: ExecutionCommitmentStatus.active,
         sync: _sync(5),
+        progress: _progress(
+          id: 'progress-commitment-reopen',
+          commitmentId: commitment.id,
+          sync: _sync(5),
+        ),
       );
       final reopened = await repo.findCommitment(
         ownerUserId: _userId,
@@ -464,8 +518,20 @@ void main() {
       expect(reopened.completedAt, isNull);
       expect(outbox.queued, [
         (table: 'execution_commitments', rowId: 'commit-life'),
+        (
+          table: 'execution_progress_entries',
+          rowId: 'progress-commitment-pause',
+        ),
         (table: 'execution_commitments', rowId: 'commit-life'),
+        (
+          table: 'execution_progress_entries',
+          rowId: 'progress-commitment-complete',
+        ),
         (table: 'execution_commitments', rowId: 'commit-life'),
+        (
+          table: 'execution_progress_entries',
+          rowId: 'progress-commitment-reopen',
+        ),
       ]);
     },
   );
@@ -498,11 +564,21 @@ void main() {
         commitment: completed,
         status: ExecutionCommitmentStatus.completed,
         sync: _sync(4),
+        progress: _progress(
+          id: 'progress-commitment-closed',
+          commitmentId: completed.id,
+          sync: _sync(4),
+        ),
       );
       await repo.updateCommitmentStatus(
         commitment: archived,
         status: ExecutionCommitmentStatus.archived,
         sync: _sync(5),
+        progress: _progress(
+          id: 'progress-commitment-archived',
+          commitmentId: archived.id,
+          sync: _sync(5),
+        ),
       );
       final closedBeforeDelete = await repo
           .watchClosedCommitments(ownerUserId: _userId)
@@ -571,6 +647,7 @@ void main() {
       ExecutionCommitment(
         id: 'c-detail',
         title: 'Ship detail view',
+        projectId: 'project-detail',
         createdAt: DateTime.utc(2026, 6, 1),
         sync: _sync(2),
       ),
@@ -627,6 +704,12 @@ void main() {
           projectId: 'project-detail',
         )
         .first;
+    final projectCommitments = await repo
+        .watchCommitmentsForProject(
+          ownerUserId: _userId,
+          projectId: 'project-detail',
+        )
+        .first;
     final actionProgress = await repo
         .watchProgressForAction(ownerUserId: _userId, actionId: linked.id)
         .first;
@@ -646,6 +729,7 @@ void main() {
     expect(project?.id, 'project-detail');
     expect(actions.map((action) => action.id), ['a-linked']);
     expect(projectActions.map((action) => action.id), ['a-linked']);
+    expect(projectCommitments.map((commitment) => commitment.id), ['c-detail']);
     expect(actionProgress.map((entry) => entry.id), ['p-linked']);
     expect(commitmentProgress.map((entry) => entry.id), ['p-linked']);
     expect(projectProgress.map((entry) => entry.id), ['p-linked']);

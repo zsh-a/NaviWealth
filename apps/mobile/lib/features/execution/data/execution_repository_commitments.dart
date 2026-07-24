@@ -10,6 +10,14 @@ mixin ExecutionCommitmentRepositoryMixin {
     required String rowId,
   });
 
+  Future<void> _upsertAndRecordProgress<R>(
+    TableInfo<Table, R> table,
+    Insertable<R> companion, {
+    required String tableName,
+    required String rowId,
+    required ExecutionProgressEntry progress,
+  });
+
   Stream<List<ExecutionCommitment>> watchActiveCommitments({
     required String ownerUserId,
     int limit = 100,
@@ -47,6 +55,33 @@ mixin ExecutionCommitmentRepositoryMixin {
         ]),
       )
       ..orderBy([
+        (t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    return q.watch().map(
+      (rows) => rows.map(executionCommitmentFromRow).toList(),
+    );
+  }
+
+  Stream<List<ExecutionCommitment>> watchCommitmentsForProject({
+    required String ownerUserId,
+    required String projectId,
+    int limit = 200,
+  }) {
+    final q = _db.select(_db.executionCommitments)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..where((t) => t.projectId.equals(projectId))
+      ..orderBy([
+        (t) => OrderingTerm(
+          expression: t.status.isIn(<String>[
+            ExecutionCommitmentStatus.active.wire,
+            ExecutionCommitmentStatus.paused.wire,
+          ]),
+          mode: OrderingMode.desc,
+        ),
+        (t) => OrderingTerm(expression: t.targetDate, mode: OrderingMode.asc),
         (t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc),
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
@@ -130,9 +165,19 @@ mixin ExecutionCommitmentRepositoryMixin {
     required ExecutionCommitment commitment,
     required ExecutionCommitmentStatus status,
     required SyncMeta sync,
+    required ExecutionProgressEntry progress,
   }) {
-    return upsertCommitment(
-      _commitmentWithStatus(commitment, status: status, sync: sync),
+    final updated = _commitmentWithStatus(
+      commitment,
+      status: status,
+      sync: sync,
+    );
+    return _upsertAndRecordProgress(
+      _db.executionCommitments,
+      executionCommitmentCompanion(updated),
+      tableName: ExecutionRepository._commitmentsTable,
+      rowId: commitment.id,
+      progress: progress,
     );
   }
 

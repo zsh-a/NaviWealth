@@ -10,6 +10,14 @@ mixin ExecutionProjectRepositoryMixin {
     required String rowId,
   });
 
+  Future<void> _upsertAndRecordProgress<R>(
+    TableInfo<Table, R> table,
+    Insertable<R> companion, {
+    required String tableName,
+    required String rowId,
+    required ExecutionProgressEntry progress,
+  });
+
   Stream<List<ExecutionProject>> watchActiveProjects({
     required String ownerUserId,
     int limit = 100,
@@ -123,9 +131,15 @@ mixin ExecutionProjectRepositoryMixin {
     required ExecutionProject project,
     required ExecutionProjectStatus status,
     required SyncMeta sync,
+    required ExecutionProgressEntry progress,
   }) {
-    return upsertProject(
-      _projectWithStatus(project, status: status, sync: sync),
+    final updated = _projectWithStatus(project, status: status, sync: sync);
+    return _upsertAndRecordProgress(
+      _db.executionProjects,
+      executionProjectCompanion(updated),
+      tableName: ExecutionRepository._projectsTable,
+      rowId: project.id,
+      progress: progress,
     );
   }
 

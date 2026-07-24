@@ -11,11 +11,13 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../composition/execution_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
+import 'execution_action_card_controller.dart';
 import 'execution_action_sheet.dart';
 import 'execution_commitment_sheet.dart';
 import 'execution_lifecycle_card_controller.dart';
 import 'execution_progress_sheet.dart';
 import 'execution_project_sheet.dart';
+import 'execution_source_route.dart';
 import 'execution_widgets.dart';
 
 enum _CommitmentsView { active, closed }
@@ -92,6 +94,7 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
           ? executionCommitmentsProvider
           : executionClosedCommitmentsProvider,
     );
+    final relations = ref.watch(executionActionRelationsProvider).value;
     final error =
         actionsAsync.error ?? projectsAsync.error ?? commitmentsAsync.error;
     if (error != null) {
@@ -117,8 +120,11 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
     final actions = actionsAsync.value ?? const <ExecutionAction>[];
     final projects = projectsAsync.value ?? const <ExecutionProject>[];
     final commitments = commitmentsAsync.value ?? const <ExecutionCommitment>[];
-    final showActions = _view == _CommitmentsView.active;
-    final empty = projects.isEmpty && commitments.isEmpty;
+    final activeView = _view == _CommitmentsView.active;
+    final empty =
+        projects.isEmpty &&
+        commitments.isEmpty &&
+        (!activeView || actions.isEmpty);
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -134,14 +140,14 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
         const SizedBox(height: AppSpacing.s12),
         if (empty)
           ExecutionStateView(
-            icon: showActions ? FLucideIcons.listTodo : FLucideIcons.archive,
-            title: showActions
+            icon: activeView ? FLucideIcons.listTodo : FLucideIcons.archive,
+            title: activeView
                 ? l10n.executionCommitmentsEmptyTitle
                 : l10n.executionCommitmentsClosedEmptyTitle,
-            message: showActions
+            message: activeView
                 ? l10n.executionCommitmentsEmptyBody
                 : l10n.executionCommitmentsClosedEmptyBody,
-            action: showActions
+            action: activeView
                 ? FButton(
                     onPress: () =>
                         showExecutionCommitmentSheet(context: context),
@@ -168,6 +174,9 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
                   actions,
                   projectId: project.id,
                 ),
+                commitmentCount: commitments
+                    .where((commitment) => commitment.projectId == project.id)
+                    .length,
                 onCreateAction: () => showExecutionActionSheet(
                   context: context,
                   initialProjectId: project.id,
@@ -204,6 +213,12 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
                   actions,
                   commitmentId: commitment.id,
                 ),
+                projectLabel:
+                    relations?.projectLabel(commitment.projectId) ??
+                    executionProjectRelationLabel(
+                      projects,
+                      commitment.projectId,
+                    ),
                 onCreateAction: () => showExecutionActionSheet(
                   context: context,
                   initialProjectId: commitment.projectId,
@@ -224,6 +239,40 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
               const SizedBox(height: AppSpacing.s8),
             ],
             const SizedBox(height: AppSpacing.s8),
+          ],
+          if (activeView && actions.isNotEmpty) ...[
+            ExecutionSectionHeader(
+              title: l10n.executionOpenActionsSection,
+              count: actions.length,
+              icon: FLucideIcons.listTodo,
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            for (final action in actions) ...[
+              ExecutionActionCardController(
+                action: action,
+                projectLabel:
+                    relations?.projectLabel(action.projectId) ??
+                    executionProjectRelationLabel(projects, action.projectId),
+                commitmentLabel:
+                    relations?.commitmentLabel(action.commitmentId) ??
+                    executionCommitmentRelationLabel(
+                      commitments,
+                      action.commitmentId,
+                    ),
+                onOpen: () => context.push(ExecutionRoutes.action(action.id)),
+                onSourceOpen: executionSourceOpen(context, ref, action.source),
+                onEdit: () =>
+                    showExecutionActionSheet(context: context, action: action),
+                onRecordProgress: () => showExecutionProgressSheet(
+                  context: context,
+                  action: action,
+                ),
+                blockedProgressNote: l10n.executionProgressBlockedDefault,
+                doneProgressNote: l10n.executionProgressDoneDefault,
+                droppedProgressNote: l10n.executionProgressDroppedDefault,
+              ),
+              const SizedBox(height: AppSpacing.s8),
+            ],
           ],
         ],
       ],
