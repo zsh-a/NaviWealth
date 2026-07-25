@@ -28,7 +28,7 @@ defaults:
 
 jobs:
   check:
-    name: fmt + clippy + check (wasm32)
+    name: fmt + clippy + test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -41,7 +41,6 @@ jobs:
           workspaces: apps/backend
       - run: cargo fmt --all -- --check
       - run: cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings
-      - run: cargo check --target wasm32-unknown-unknown --all-targets
       - name: Run backend unit tests (native host target)
         # The crate ships as a wasm32 Worker, but every `#[cfg(test)]`
         # module is plain `#[test]` and the dependency tree compiles for
@@ -77,8 +76,6 @@ jobs:
         if: env.HAS_CLOUDFLARE_API_TOKEN != 'true'
         working-directory: ${{ github.workspace }}
         run: echo "::notice::CLOUDFLARE_API_TOKEN not set in GitHub Secrets — skipping backend deploy."
-      - run: cargo install -q worker-build
-        if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
       - name: Apply D1 migrations
         if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
         uses: cloudflare/wrangler-action@v4
@@ -86,7 +83,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/backend
-          command: d1 migrations apply naviwealth
+          command: d1 migrations apply naviwealth --remote
       - name: Deploy to Cloudflare Workers
         if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
         uses: cloudflare/wrangler-action@v4
@@ -95,38 +92,3 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/backend
           command: deploy
-
-  deploy-preview:
-    needs: [check]
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    env:
-      HAS_CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
-    steps:
-      - uses: actions/checkout@v7
-        if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
-      - uses: dtolnay/rust-toolchain@stable
-        if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
-        with:
-          targets: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v2
-        if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
-        with:
-          workspaces: apps/backend
-      - name: Skip Cloudflare preview deploy
-        if: env.HAS_CLOUDFLARE_API_TOKEN != 'true'
-        working-directory: ${{ github.workspace }}
-        run: echo "::notice::CLOUDFLARE_API_TOKEN not set in GitHub Secrets — skipping backend preview deploy."
-      - run: cargo install -q worker-build
-        if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
-      - id: upload
-        if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: apps/backend
-          command: versions upload --message "PR #${{ github.event.pull_request.number }} @ ${{ github.event.pull_request.head.sha }}"

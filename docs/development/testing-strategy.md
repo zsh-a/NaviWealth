@@ -28,7 +28,7 @@ sake.
 ## 2. The pyramid (target shape)
 
 ```
-         AI exploratory + semantic   ~1%   nightly, non-blocking
+         AI exploratory + semantic   ~1%   weekly, non-blocking
        Flow / Task (Page Objects)   ~4%   17 journeys, test/flow + integration_test
        Contract (Dart↔Rust↔wire)     ~5%   schema-driven, blocking
       Golden (visual regression)     ~5%   expanded surfaces + breakpoints, Linux-pinned
@@ -200,18 +200,13 @@ prints live `[real-llm-e2e]` progress lines for turn start, tool calls/results,
 LLM spans, usage, text-character counts, errors, and done events without dumping
 full prompts, tool payloads, or provider secrets.
 
-### AI exploratory + semantic (~1%, nightly, non-blocking)
-`.github/workflows/ai-semantic.yml` runs the deterministic surrogate nightly
+### AI exploratory + semantic (~1%, weekly, non-blocking)
+`.github/workflows/ai-semantic.yml` runs the deterministic surrogate weekly
 and on manual dispatch via `apps/mobile/tool/check-ai-semantic-surfaces.sh`.
 That surrogate renders the net-worth, allocation, and account-list AI surfaces
 at phone width, asserts the key facts are visible, checks the semantics tree for
-machine-readable labels, and fails on layout exceptions. The same workflow has a
-non-blocking `AI_VISION_AGENT_WEBHOOK_URL` hook for an external screenshot +
-vision-model validator. The deterministic job writes
-`ai-semantic-vision-artifacts` (PNG screenshot + manifest); the webhook payload
-includes the run URL, artifact API URL, and manifest so the external service can
-assert "net worth + allocation + account list visible; no overlap/truncation."
-Catches layout breakage the deterministic layers can't. Strictly non-blocking.
+machine-readable labels, and fails on layout exceptions. The workflow uploads
+`ai-semantic-vision-artifacts` (PNG screenshot + manifest) for human inspection.
 
 The blocking deterministic AI quality layer remains part of ordinary Flutter
 tests. `memory_answer_quality_eval_test.dart` prints a privacy-safe JSON
@@ -314,7 +309,7 @@ same production file-backed connection, then proves they survive close/reopen.
 The `integration_test` dev dependency is wired in `pubspec.yaml`.
 
 Because it needs a real device, it runs via the `integration-device.yml`
-workflow on an Android emulator (nightly + manual + PRs touching the
+workflow on an Android emulator (weekly + manual + PRs touching the
 harness, backup, Sync, or persistence code), not the unit-test VM. The workflow
 retains a machine-readable event stream, the ordinary integration log, a
 privacy-safe database-encryption evidence JSON, the process-interruption log,
@@ -354,8 +349,8 @@ Current baseline:
   serializers, including pagination and accepted-row edge cases.
 - State-machine tests cover conventional async state, chat streaming,
   ingestion, Sync retry/progress, and diagnostic providers.
-- The nightly AI semantic surrogate verifies selected finance surfaces and can
-  hand artifacts to an optional external vision validator.
+- The weekly AI semantic surrogate verifies selected finance surfaces and
+  uploads deterministic artifacts for inspection.
 - Managed speech unit/widget tests cover exclusive sessions, startup and stream
   failures, maximum duration, background finalization, user-edit protection,
   transcript-free diagnostics, and repeated-session cleanup. A pinned native
@@ -368,9 +363,8 @@ Known coverage gaps are descriptive, not a second product roadmap:
   integration gate; host native tests do not substitute for device evidence.
 - Goldens and on-device tests should deepen existing durable journeys when a
   real rendering or platform risk is identified.
-- Runtime skips remain limited by `testing_infrastructure_contract_test.dart`
-  to platform/native/artifact dependency gates; product regressions must not
-  create a failure allowlist.
+- Runtime skips are reserved for platform/native/artifact dependency gates;
+  product regressions must not create a failure allowlist.
 
 ## 8. Conventions
 

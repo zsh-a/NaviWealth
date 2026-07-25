@@ -129,7 +129,7 @@ Generated code:
 
 ```bash
 cd apps/mobile
-rtk dart run build_runner build --delete-conflicting-outputs
+rtk dart run build_runner build
 ```
 
 One-time or asset setup:

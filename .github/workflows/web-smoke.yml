@@ -39,7 +39,7 @@ jobs:
           cache: true
       - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
       - run: flutter pub get
 
       # Web build needs the same asset materialisation as the build-web job
@@ -62,7 +62,7 @@ jobs:
       - name: Install Playwright + browsers
         working-directory: apps/mobile/web_smoke
         run: |
-          npm install
+          npm ci
           # PRs only need chromium; nightly/manual installs the full matrix.
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             npx playwright install --with-deps chromium

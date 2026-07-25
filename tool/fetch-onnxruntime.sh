@@ -3,8 +3,8 @@
 # Rust target triple, placing the resulting `libonnxruntime.{dylib,so}`
 # into the requested destination directory.
 #
-# Called by the platform embedding scripts used from Gradle/Xcode during
-# normal `flutter run` and `flutter build` commands.
+# This is a standalone developer helper for native embedder tests. Production
+# Android and Apple builds reuse the runtime bundled by sherpa_onnx.
 #
 # Why a separate script: `ort 2.0.0-rc.12` (the version `fastembed`
 # pulls in) uses the ONNX Runtime C API. Keep this aligned with the sherpa-onnx

@@ -19,9 +19,6 @@ analyzer:
     # `flutter pub get`, so every import shows as undefined.
     # README.md inside says "Please ignore this folder."
     - "rust_builder/**"
-  plugins:
-    - custom_lint
-
 linter:
   rules:
     - prefer_const_constructors

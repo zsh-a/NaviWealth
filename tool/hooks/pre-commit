@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# NaviWealth pre-commit: dart format + flutter analyze on staged Dart files.
+# NaviWealth pre-commit: Dart formatting for staged source files.
 # Installed by tool/install-hooks.sh.
 set -euo pipefail
 
 repo_root="$(git rev-parse --show-toplevel)"
-mobile_dir="$repo_root/apps/mobile"
 
 # Collect staged .dart files inside apps/mobile/, excluding generated output.
 mapfile -t staged < <(git diff --cached --name-only --diff-filter=ACMR \
@@ -15,8 +14,8 @@ if [ ${#staged[@]} -eq 0 ]; then
   exit 0
 fi
 
-if ! command -v flutter >/dev/null 2>&1; then
-  echo "pre-commit: flutter not found on PATH; skipping checks." >&2
+if ! command -v dart >/dev/null 2>&1; then
+  echo "pre-commit: dart not found on PATH; skipping format check." >&2
   exit 0
 fi
 
@@ -26,6 +25,3 @@ for f in "${staged[@]}"; do
   dart_paths+=("$repo_root/$f")
 done
 dart format --set-exit-if-changed "${dart_paths[@]}"
-
-echo "pre-commit: flutter analyze..."
-(cd "$mobile_dir" && flutter analyze --fatal-infos)

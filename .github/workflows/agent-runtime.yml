@@ -11,8 +11,6 @@ on:
       - 'apps/mobile/lib/src/rust/**'
       - 'apps/mobile/test/app/agent_runtime_*.dart'
       - 'apps/mobile/test/app/frb_chat_runner_test.dart'
-      - 'docs/architecture/agent-runtime-current.md'
-      - 'docs/architecture/rust-agent-runtime-mvp.md'
       - '.github/workflows/agent-runtime.yml'
   pull_request:
     paths:
@@ -23,8 +21,6 @@ on:
       - 'apps/mobile/lib/src/rust/**'
       - 'apps/mobile/test/app/agent_runtime_*.dart'
       - 'apps/mobile/test/app/frb_chat_runner_test.dart'
-      - 'docs/architecture/agent-runtime-current.md'
-      - 'docs/architecture/rust-agent-runtime-mvp.md'
       - '.github/workflows/agent-runtime.yml'
 
 concurrency:
@@ -83,12 +79,7 @@ jobs:
           cache: true
       - run: flutter pub get
       - name: Stub web-only font assets so the asset bundle resolves
-        run: |
-          mkdir -p assets/fonts
-          touch assets/fonts/app-cn-base.woff2 assets/fonts/app-cn-ext.woff2
-          touch assets/fonts/inter-regular.woff2 assets/fonts/inter-medium.woff2 \
-                assets/fonts/inter-semibold.woff2 assets/fonts/inter-bold.woff2 \
-                assets/fonts/outfit-bold.woff2
+        run: tool/prepare-test-font-stubs.sh
       - name: Run embedded-runtime consumer tests
         run: >
           flutter test

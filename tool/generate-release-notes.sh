@@ -230,7 +230,7 @@ mkdir -p "$(dirname "$output")"
   echo "## Release Validation"
   echo
   echo "- Mobile version stamped as \`${semver}+${build_number}\`"
-  echo "- Securities catalog refreshed before the mobile build"
+  echo "- Committed securities catalog bundled without release-time mutation"
   echo "- CN and Latin font subsets generated"
   echo "- Drift web assets materialized"
   echo "- Android APK and Flutter web release bundle built from [\`${short_sha}\`](${repo_url}/commit/${target_commit})"
