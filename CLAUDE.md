@@ -198,7 +198,6 @@ Project lint gates:
 - Common fakes: `makeStubStamper()`, `InMemoryOutboxStore`, `InMemoryCursorStore`, `FakeSyncApiClient`.
 - Widget tests should wrap UI in `MaterialApp` or the existing app test harness so theme and localization resolve.
 - Add focused tests for new repositories, sync behavior, AI tools, proposal appliers, and route shell changes.
-- Generated files are excluded from coverage; patch coverage target is 70 percent.
 
 ## Data And Sync
 

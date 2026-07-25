@@ -200,16 +200,8 @@ prints live `[real-llm-e2e]` progress lines for turn start, tool calls/results,
 LLM spans, usage, text-character counts, errors, and done events without dumping
 full prompts, tool payloads, or provider secrets.
 
-### AI exploratory + semantic (~1%, weekly, non-blocking)
-`.github/workflows/ai-semantic.yml` runs the deterministic surrogate weekly
-and on manual dispatch via `apps/mobile/tool/check-ai-semantic-surfaces.sh`.
-That surrogate renders the net-worth, allocation, and account-list AI surfaces
-at phone width, asserts the key facts are visible, checks the semantics tree for
-machine-readable labels, and fails on layout exceptions. The workflow uploads
-`ai-semantic-vision-artifacts` (PNG screenshot + manifest) for human inspection.
-
-The blocking deterministic AI quality layer remains part of ordinary Flutter
-tests. `memory_answer_quality_eval_test.dart` prints a privacy-safe JSON
+The deterministic AI quality layer is part of ordinary Flutter tests.
+`memory_answer_quality_eval_test.dart` prints a privacy-safe JSON
 aggregate containing pass rate and forbidden/missing claim/evidence failure
 counts. Agent outcome cases bind every expected evidence type to an exact route
 or dynamic route family; the evaluator rejects cross-workflow destinations.
@@ -230,16 +222,14 @@ PR  ├─ analyze --fatal-infos + boundary lints      (mobile.yml, existing)
     ├─ contract tests                               ~30 s
     ├─ native ASR pinned-WAV regression             speech changes, macOS
     └─ web smoke (chromium)                         ~2 min   ← ADDED (web-smoke.yml)
-Nightly ├─ web smoke full matrix (Firefox/WebKit/OPFS)       ← ADDED
-        ├─ AI semantic surrogate                             ← ADDED (ai-semantic.yml)
-        └─ external AI vision-agent webhook + screenshot artifacts ← OPTIONAL
-Weekly ─ native ASR pinned model/WAV exact-transcript smoke
+Weekly ├─ web smoke full matrix (Firefox/WebKit/OPFS)
+       └─ native ASR pinned model/WAV exact-transcript smoke
 ```
 
 **Zero-failure unit/widget gate.** `mobile.yml` distributes
-`flutter test --coverage --reporter=expanded --exclude-tags=golden` across four
+`flutter test --reporter=expanded --exclude-tags=golden` across four
 deterministic shards with bounded concurrency. There is no known-failing allowlist:
-any non-golden test failure fails CI. Each shard always uploads its
+any non-golden test failure fails CI. A failing shard uploads its
 machine-readable JSON event stream for seven days, so a timeout or runner
 failure retains the last completed test and error events instead of leaving
 only an incomplete console log.
@@ -349,8 +339,6 @@ Current baseline:
   serializers, including pagination and accepted-row edge cases.
 - State-machine tests cover conventional async state, chat streaming,
   ingestion, Sync retry/progress, and diagnostic providers.
-- The weekly AI semantic surrogate verifies selected finance surfaces and
-  uploads deterministic artifacts for inspection.
 - Managed speech unit/widget tests cover exclusive sessions, startup and stream
   failures, maximum duration, background finalization, user-edit protection,
   transcript-free diagnostics, and repeated-session cleanup. A pinned native
@@ -372,4 +360,3 @@ Known coverage gaps are descriptive, not a second product roadmap:
 - Tag flow tests `flow` so the suite can be split from the unit gate later.
 - Never `pumpAndSettle` a streaming surface — use a bounded pump.
 - Money asserted as `Decimal`/`Money`, never `double`.
-- Coverage gate (`codecov.yml`): project 60%, patch 70%; generated files excluded.

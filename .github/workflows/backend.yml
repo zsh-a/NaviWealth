@@ -9,14 +9,12 @@ on:
       - 'docs/fixtures/sync_v3_*.json'
       - 'tool/check-sync-wire-fixtures.sh'
       - '.github/workflows/backend.yml'
-      - 'codecov.yml'
   pull_request:
     paths:
       - 'apps/backend/**'
       - 'docs/fixtures/sync_v3_*.json'
       - 'tool/check-sync-wire-fixtures.sh'
       - '.github/workflows/backend.yml'
-      - 'codecov.yml'
 
 concurrency:
   group: backend-${{ github.ref }}

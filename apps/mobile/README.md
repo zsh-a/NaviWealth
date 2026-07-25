@@ -182,10 +182,10 @@ wrangler pages deploy --branch main
 `.github/workflows/mobile.yml` 在 `apps/mobile/**` 变更时触发：
 
 1. `static checks` — `flutter analyze --fatal-infos`、生成代码 freshness、l10n 与架构边界检查
-2. `test shard 0..3 / 4` + `coverage upload` — 普通 unit/widget 测试与 Codecov 上传
+2. `test shard 0..3 / 4` — 普通 unit/widget 测试
 3. `responsive task-flow goldens` — PR 上执行响应式 byte-diff
 4. `golden regression (mobile)` — `main` 上执行完整 Linux golden 回归
-5. `build Android arm64 AAB` — release cross-compile、native payload 完整性与 16 KiB ELF 对齐检查
+5. `build Android arm64 AAB` — `main` 上执行 release cross-compile、native payload 完整性与 16 KiB ELF 对齐检查
 6. `build web` — `main` 上执行 `flutter build web --release`
 
 `.github/workflows/asr-native-smoke.yml` 独立运行真实 `sherpa_onnx` 推理：

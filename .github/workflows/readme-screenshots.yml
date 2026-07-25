@@ -39,8 +39,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.44.5'
@@ -48,17 +46,6 @@ jobs:
 
       - name: Render deterministic README screenshots
         run: ./tool/update-readme-screenshots.sh --update
-
-      - name: Upload rendered screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: readme-screenshots-${{ github.run_id }}
-          path: |
-            docs/assets/readme/generated/**
-            docs/assets/readme/failures/**
-          if-no-files-found: error
-          retention-days: 14
 
       - name: Detect refreshed assets
         id: changes
@@ -69,6 +56,17 @@ jobs:
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Upload changed screenshots or failure diagnostics
+        if: failure() || steps.changes.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: readme-screenshots-${{ github.run_id }}
+          path: |
+            docs/assets/readme/generated/**
+            docs/assets/readme/failures/**
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Fail when committed screenshots are stale
         if: steps.changes.outputs.changed == 'true'

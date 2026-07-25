@@ -72,7 +72,7 @@ jobs:
             bash tool/run-android-integration.sh "$device_id"
             bash tool/run-android-backup-interruption.sh
       - name: Upload integration test events
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: android-integration-test-events

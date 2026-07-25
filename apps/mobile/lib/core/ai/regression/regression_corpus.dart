@@ -19,8 +19,8 @@
 ///      union of dispatched tools doesn't include `expectedTools`.
 ///      Catches: SYSTEM_PROMPT regression, tool descriptor schema
 ///      drift, and upstream model behaviour change. Requires API
-///      credentials + a $/run budget and is intentionally outside the
-///      deterministic `ai-semantic` workflow.
+///      credentials + a $/run budget and is intentionally a manual
+///      release gate.
 ///
 /// Add prompts to widen coverage. Removing prompts requires a
 /// `// coverage shrink rationale: …` comment.

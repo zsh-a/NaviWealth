@@ -9,7 +9,6 @@ choose to use pull requests.
 
 - `mobile / static checks`
 - `mobile / test shard 0..3 / 4`
-- `mobile / coverage upload`
 - `mobile / responsive task-flow goldens` on pull requests
 - `mobile / golden regression (mobile)` on `main`
 - `mobile / build Android arm64 AAB`

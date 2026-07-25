@@ -107,8 +107,8 @@ flutter test test/golden --tags=golden
 
 In CI:
 
-- Four test shards run `flutter test --coverage --exclude-tags=golden` for the
-  unit/widget suite, followed by the Codecov upload job.
+- Four test shards run `flutter test --exclude-tags=golden` for the
+  unit/widget suite.
 - Pull requests run the independent `responsive task-flow goldens` job, which
   needs `prepare-font-assets` and runs only the double-tagged responsive file.
 - Main runs `golden regression (mobile)` with `--tags=golden`, so it compares

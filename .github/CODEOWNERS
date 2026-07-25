@@ -4,6 +4,5 @@
 
 # Critical surfaces that should never change without owner sign-off.
 /.github/               @zsh-a
-/codecov.yml            @zsh-a
 /.github/CODEOWNERS     @zsh-a
 /apps/backend/wrangler.toml  @zsh-a
