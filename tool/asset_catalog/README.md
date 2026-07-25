@@ -70,14 +70,11 @@ mootdx-only pass. The build script also runs an opt-in cross-check pass
 (BaoStock vs. mootdx) and warns if the SH+SZ universes disagree by more
 than 1% — this catches BaoStock data lag and mootdx protocol drift.
 
-## CI integration
+## Release integration
 
-| workflow | when it runs | what it does |
-|---|---|---|
-| `asset-catalog.yml` | on PRs touching `tool/asset_catalog/**` or `tool/build-asset-catalog.sh` | `pytest` (offline parser tests) + stub bake + gzip-budget + body-sha256 parity check against the committed bundle |
-| `release.yml` (`mobile release` job) | on `vX.Y.Z` tag push | refreshes the catalog from the globally-reachable feeds (HKEX + NASDAQ Trader + SEC + CoinGecko) via `--full --allow-degraded --sources hk_stock,us_stock,crypto`, then bakes a fresh NDJSON that the Flutter web/Android build packages into the release artifact. A-share gracefully degrades to the last-committed CSV. |
-
-To pick up A-share refreshes in a release, run `--full` (no source filter) locally on a CN host and commit the regenerated CSVs + bundle before tagging. Alternatively move the release step onto a self-hosted runner with `runs-on: [self-hosted, cn]`.
+Releases package the committed catalog without fetching mutable upstream data.
+Refresh the desired sources, run the offline tests and stub bake, then commit
+the CSVs and generated NDJSON before creating a release tag.
 
 ## Output
 
@@ -100,9 +97,8 @@ behaviour against captured upstream payloads. Run them with:
 python3 -m pytest tool/asset_catalog/tests
 ```
 
-The tests do not require any of the network deps in `requirements.txt`
-(they exercise the pure parser functions directly), so they run on
-GitHub-hosted runners as part of the standard CI matrix.
+The tests exercise pure parser functions and are run manually when catalog
+sources or adapters change.
 
 ## Troubleshooting
 

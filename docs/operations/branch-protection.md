@@ -1,52 +1,47 @@
-# Branch Protection — `main`
+# Main Branch And Release Policy
 
-`main` is the only long-lived branch. All changes land via PR.
-Configure at **Settings → Branches → Branch protection rules** for `main` (Owner: `@zsh-a`).
+`main` is the only long-lived branch. The repository currently permits direct
+pushes and has no GitHub branch-protection rule or Ruleset. CI therefore acts as
+post-push validation on `main` and as pre-merge validation when contributors
+choose to use pull requests.
 
-## Required settings
+## CI checks
 
-- **Require a pull request before merging**
-  - Approvals: **1**; dismiss stale approvals on new pushes; require Code Owner review (uses `.github/CODEOWNERS`); require approval of the most recent reviewable push.
-- **Require status checks to pass before merging** (branches must be up to date)
-  - `mobile / analyze + test (coverage)`
-  - `mobile / golden regression (mobile)`
-  - `mobile / build web`
-  - `backend / fmt + clippy + check (wasm32)`
-  - `codecov/project`, `codecov/patch` (auto once Codecov is wired up)
-- **Require conversation resolution**: on
-- **Require linear history**: on
-- **Do not allow bypassing the above settings**: on (admins included)
-- **Restrict who can push to matching branches**: on (only the merge button)
-- **Allow force pushes / deletions**: off
+- `mobile / static checks`
+- `mobile / test shard 0..3 / 4`
+- `mobile / responsive task-flow goldens` on pull requests
+- `mobile / golden regression (mobile)` on `main`
+- `mobile / build Android arm64 AAB`
+- `mobile / build web` on `main`
+- `backend / fmt + clippy + test`
+- `web-smoke / web smoke (...)` for web-relevant pull requests
 
-Only the core app checks are required. Auxiliary dependency-audit, asset-catalog,
-and browser-smoke workflows were removed from CI because they were not branch
-protection gates.
+Workflows use path filters, so unrelated application areas do not start each
+other's checks.
 
-## Path-filtered checks
+## Optional protected-main setup
 
-`mobile.yml` and `backend.yml` are scoped via `on.pull_request.paths`, so a PR that only touches one app won't trigger the other. GitHub treats a non-running required check as **pending forever**. Two options:
-
-1. **(Recommended)** Use **Rulesets** → mark each required check as "required only when present"; GitHub honors the path filter and skips the gate when the check did not run.
-2. (Fallback) Drop the path filter from `on:` so every PR runs every job. Simpler, slower.
-
-We use option 1 via Rulesets.
+If protected-main development is re-enabled, use a Ruleset and require only
+checks that are present for the changed paths. Do not require push-only jobs
+such as `golden regression (mobile)` or `build web` on pull requests.
 
 ## Repository secrets
 
-Set at **Settings → Secrets and variables → Actions**:
-
-| Name | Used by | Required? |
-|------|---------|-----------|
-| `CODECOV_TOKEN` | `mobile.yml` coverage upload | Public repos: optional. Private: required. |
-
-`GITHUB_TOKEN` is auto-provisioned.
-
+| Name | Used by |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Worker and Pages deploys |
+| `CLOUDFLARE_ACCOUNT_ID` | Worker and Pages deploys |
+| `KEYSTORE_BASE64` | Signed Android releases |
+| `KEYSTORE_PASSWORD` | Signed Android releases |
+| `KEY_ALIAS` | Signed Android releases |
+| `KEY_PASSWORD` | Signed Android releases |
 ## Tag-based release flow
 
-Tags drive `release.yml`. A single tag `vX.Y.Z` stamps and builds both mobile and backend; build numbers come from `git rev-list --count <tag>` (monotonic, reproducible).
+Tags drive `release.yml`. A tag `vX.Y.Z` builds Android and Web artifacts from
+the committed source and optionally deploys the backend. Build numbers come
+from `git rev-list --count <tag>`.
 
 ```bash
-./tool/bump-version.sh 0.4.1            # stamps mobile + backend, commits, tags v0.4.1
-git push origin HEAD --follow-tags      # triggers release.yml
+./tool/bump-version.sh 0.9.0
+git push origin HEAD --follow-tags
 ```

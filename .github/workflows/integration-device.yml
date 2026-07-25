@@ -8,7 +8,7 @@ name: integration-device
 #
 # They need a real device, so they run on an Android emulator rather than
 # the unit-test VM. Kept off the fast PR path (emulator boot is slow);
-# nightly + manual, plus PRs that touch the harness or the connection code.
+# weekly + manual, plus PRs that touch the harness or the connection code.
 on:
   pull_request:
     paths:
@@ -24,7 +24,7 @@ on:
       - 'third_party/agent-runtime'
       - '.github/workflows/integration-device.yml'
   schedule:
-    - cron: '45 2 * * *'
+    - cron: '45 2 * * 1'
   workflow_dispatch:
 
 concurrency:
@@ -53,12 +53,7 @@ jobs:
           cache: true
       - run: flutter pub get
       - name: Stub web-only font assets so the asset bundle resolves
-        run: |
-          mkdir -p assets/fonts
-          touch assets/fonts/app-cn-base.woff2 assets/fonts/app-cn-ext.woff2
-          touch assets/fonts/inter-regular.woff2 assets/fonts/inter-medium.woff2 \
-                assets/fonts/inter-semibold.woff2 assets/fonts/inter-bold.woff2 \
-                assets/fonts/outfit-bold.woff2
+        run: tool/prepare-test-font-stubs.sh
       # KVM is required for a hardware-accelerated emulator on the runner.
       - name: Enable KVM
         run: |
@@ -77,7 +72,7 @@ jobs:
             bash tool/run-android-integration.sh "$device_id"
             bash tool/run-android-backup-interruption.sh
       - name: Upload integration test events
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: android-integration-test-events

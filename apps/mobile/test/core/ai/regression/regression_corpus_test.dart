@@ -5,11 +5,9 @@
 // expected tool in the corpus has a real renderer (or is on the
 // allowlisted JSON-only set), and every intent is registered.
 //
-// The nightly `ai-semantic` workflow runs this corpus contract alongside
-// the AI surface semantic surrogate. A future live-runtime pass can pump
-// each prompt through a real runtime and verify the dispatched tool set is
-// a superset of `expectedTools`; this static check keeps that path from
-// accumulating dead references in the meantime.
+// A future live-runtime pass can pump each prompt through a real runtime and
+// verify the dispatched tool set is a superset of `expectedTools`; this static
+// check keeps that path from accumulating dead references in the meantime.
 
 import 'dart:io';
 

@@ -19,6 +19,7 @@ on:
       - 'apps/mobile/tool/update-readme-screenshots.sh'
       - 'apps/mobile/tool/validate_readme_screenshots.dart'
       - 'apps/mobile/assets/fonts/**'
+      - '.github/workflows/readme-screenshots.yml'
   workflow_dispatch:
 
 concurrency:
@@ -26,8 +27,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 defaults:
   run:
@@ -39,31 +39,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.44.5'
           cache: true
 
-      - name: Render screenshot preview on pull requests
-        if: github.event_name == 'pull_request'
+      - name: Render deterministic README screenshots
         run: ./tool/update-readme-screenshots.sh --update
-
-      - name: Refresh screenshots after merge or manual dispatch
-        if: github.event_name != 'pull_request'
-        run: ./tool/update-readme-screenshots.sh --update
-
-      - name: Upload rendered screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: readme-screenshots-${{ github.run_id }}
-          path: |
-            docs/assets/readme/generated/**
-            docs/assets/readme/failures/**
-          if-no-files-found: error
-          retention-days: 14
 
       - name: Detect refreshed assets
         id: changes
@@ -75,33 +57,21 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Report screenshot drift on pull requests
-        if: github.event_name == 'pull_request' && steps.changes.outputs.changed == 'true'
+      - name: Upload changed screenshots or failure diagnostics
+        if: failure() || steps.changes.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: readme-screenshots-${{ github.run_id }}
+          path: |
+            docs/assets/readme/generated/**
+            docs/assets/readme/failures/**
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Fail when committed screenshots are stale
+        if: steps.changes.outputs.changed == 'true'
         working-directory: ${{ github.workspace }}
         run: |
-          echo "::warning::README screenshots changed. Review the rendered artifact; main will open a canonical Linux refresh PR after merge."
+          echo "::error::README screenshots are stale. Download the rendered artifact and commit the refreshed PNG files."
           git diff --stat -- docs/assets/readme/generated
-
-      - name: Open or refresh screenshot update PR
-        if: github.event_name != 'pull_request' && steps.changes.outputs.changed == 'true'
-        working-directory: ${{ github.workspace }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BRANCH: automation/readme-screenshots
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -B "$BRANCH"
-          git add docs/assets/readme/generated
-          git commit -m "docs: refresh README screenshots"
-          git push --force origin "HEAD:$BRANCH"
-
-          if [[ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')" ]]; then
-            if ! gh pr create \
-              --base main \
-              --head "$BRANCH" \
-              --title "docs: refresh README screenshots" \
-              --body "Automated refresh of README product screenshots from deterministic Flutter fixtures."; then
-              echo "::warning::GitHub Actions cannot create pull requests for this repository. Refreshed screenshots remain available on branch '$BRANCH'."
-            fi
-          fi
+          exit 1

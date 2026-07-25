@@ -24,7 +24,7 @@ flutter build web --release
 
 # 2. Install Playwright browsers (one-time).
 cd web_smoke
-npm install
+npm ci
 npm run install-browsers
 
 # 3. Run the smoke against the static build above.

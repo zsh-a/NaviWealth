@@ -42,3 +42,14 @@ updates:
         patterns: ['worker', 'worker-*']
       serde:
         patterns: ['serde', 'serde_*']
+
+  - package-ecosystem: npm
+    directory: /apps/mobile/web_smoke
+    schedule:
+      interval: weekly
+      day: monday
+      time: '04:00'
+    open-pull-requests-limit: 5
+    labels: [dependencies, web]
+    commit-message:
+      prefix: 'chore(web-deps)'
