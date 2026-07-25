@@ -139,7 +139,7 @@ void main() {
 String _findRepoRoot() {
   var dir = Directory.current;
   while (true) {
-    final agents = File('${dir.path}/Agents.md');
+    final agents = File('${dir.path}/AGENTS.md');
     final mobile = Directory('${dir.path}/apps/mobile');
     if (agents.existsSync() && mobile.existsSync()) {
       return dir.path;
