@@ -28,7 +28,7 @@ argon2 = "0.5"
 # remains valid for HS256 JWT and scoped-detail merchant hashes.
 hmac = "0.13"
 sha2 = "0.11"
-base64 = "0.22"
+base64 = "0.23"
 getrandom = { version = "0.2", features = ["js"] }
 
 # AI assistant (FIR-59). `futures-channel` + `futures-util` give us an
