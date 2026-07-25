@@ -57,6 +57,7 @@ void main() {
       page.expectBudgetVisible('Dining');
       await page.editBudget(
         categoryId: categoryId,
+        categoryLabel: 'Dining',
         amount: '1800',
         note: 'Flow dining cap',
       );

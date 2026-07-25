@@ -59,6 +59,10 @@ class IntegrationEnv {
         sharedPreferencesProvider.overrideWithValue(prefs),
         appDatabaseProvider.overrideWith((ref) async => db),
         authControllerProvider.overrideWith(_LocalOnlyAuthController.new),
+        currentUserIdProvider.overrideWith(
+          (ref) =>
+              () async => 'u-test',
+        ),
         mutationStamperProvider.overrideWith((ref) async => makeStubStamper()),
         ...extraOverrides,
       ],

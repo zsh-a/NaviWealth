@@ -14311,7 +14311,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lifeEventFireNoDelay => 'No material delay';
 
   @override
-  String get lifeEventAskAi => 'Ask AI';
+  String get lifeEventAskAi => 'Explore with assistant';
 
   @override
   String get lifeEventChooseScenario => 'Choose';

@@ -4223,7 +4223,7 @@
   "lifeEventFireDelay": "约推迟 {months} 个月",
   "@lifeEventFireDelay": { "placeholders": { "months": { "type": "int" } } },
   "lifeEventFireNoDelay": "无明显推迟",
-  "lifeEventAskAi": "问 AI",
+  "lifeEventAskAi": "让助手解读",
   "lifeEventChooseScenario": "选择",
   "lifeEventOpenAction": "打开后续行动",
   "lifeEventAdjustPlan": "调整预算",

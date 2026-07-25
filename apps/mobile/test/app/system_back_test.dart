@@ -26,6 +26,7 @@ import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/persistence/test_database.dart';
@@ -53,6 +54,8 @@ Future<GoRouter> _boot(WidgetTester tester, String initial) async {
       appDatabaseProvider.overrideWith((_) async => db),
       sharedPreferencesProvider.overrideWithValue(prefs),
       mutationStamperProvider.overrideWith((_) async => makeStubStamper()),
+      accountsStreamProvider.overrideWith((_) => const Stream.empty()),
+      allAccountsStreamProvider.overrideWith((_) => const Stream.empty()),
       ...lifeOsDomainCompositionOverrides(),
       routeGuardsProvider.overrideWith(
         (ref) => <RouteGuard>[ref.watch(domainOptInRouteGuardProvider)],

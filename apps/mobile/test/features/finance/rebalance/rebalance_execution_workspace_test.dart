@@ -807,7 +807,13 @@ void main() {
 }
 
 Finder _amountField(String label) => find.descendant(
-  of: find.widgetWithText(AmountField, label),
+  of: find.byKey(
+    ValueKey<String>(
+      label == 'Quantity'
+          ? 'rebalance-review.quantity'
+          : 'rebalance-review.price',
+    ),
+  ),
   matching: find.byType(EditableText),
 );
 

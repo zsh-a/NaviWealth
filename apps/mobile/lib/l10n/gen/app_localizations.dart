@@ -24172,7 +24172,7 @@ abstract class AppLocalizations {
   /// No description provided for @lifeEventAskAi.
   ///
   /// In en, this message translates to:
-  /// **'Ask AI'**
+  /// **'Explore with assistant'**
   String get lifeEventAskAi;
 
   /// No description provided for @lifeEventChooseScenario.

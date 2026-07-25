@@ -465,7 +465,7 @@ Future<_CustomRunwayScenario?> _showCustomScenarioDialog(
         builder: (context, setDialogState) => AlertDialog(
           title: Text(l10n.moneyRunwayCustomScenarioTitle),
           content: SizedBox(
-            width: 420,
+            width: AppControlWidths.financeConfigDialog,
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,

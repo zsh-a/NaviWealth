@@ -303,6 +303,18 @@ List<Override> _homeOverrides(
           ),
     ),
   ),
+  activityFeedPreviewProvider.overrideWith(
+    (_) => Stream.value(
+      activityFeed ??
+          const ActivityFeedPage(
+            entries: [],
+            totalCount: 0,
+            hasMore: false,
+            isFiltered: false,
+            accountsById: {},
+          ),
+    ),
+  ),
   recurringMaterialiseDueProvider.overrideWith((ref, now) async => 0),
   manualAssetsStreamProvider.overrideWith(
     (_) => Stream.value([_cash('cash-1'), _cash('cash-2')]),

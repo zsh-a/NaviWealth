@@ -102,7 +102,7 @@ Future<void> _runLoop(
   await execution.completeAction(actionTitle);
   await AppShell(tester).openTab('Review');
   final review = ExecutionReviewPageObject(tester);
-  review.expectCompletedAction(actionTitle);
+  await review.expectCompletedAction(actionTitle);
   review.expectOutcome(outcome);
   await closeApp(tester);
 }

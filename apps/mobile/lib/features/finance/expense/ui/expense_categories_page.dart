@@ -433,7 +433,7 @@ const _editableColorHexes = <String>[
   '#F59E0B',
   '#84CC16',
   '#10B981',
-  '#14B8A6',
+  '#17A8B0',
   '#06B6D4',
   '#3B82F6',
   '#6366F1',
@@ -512,7 +512,7 @@ class _ColorChoice extends StatelessWidget {
           duration: const Duration(milliseconds: 160),
           width: 34,
           height: 34,
-          padding: const EdgeInsets.all(3),
+          padding: const EdgeInsets.all(AppSpacing.accentBar),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(

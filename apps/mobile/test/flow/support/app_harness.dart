@@ -152,7 +152,10 @@ Future<void> bootApp(
         if (liveData != null) ...[
           outboxStoreProvider.overrideWith((_) async => liveData.outbox),
           mutationStamperProvider.overrideWith((_) async => liveData.stamper),
-        ],
+        ] else
+          mutationStamperProvider.overrideWith(
+            (_) async => makeStubStamper(userId: kLocalOnlyUserId),
+          ),
         // Match production bootstrap so the DomainPack inventory, shell
         // routes, active-domain aggregators, and domain-owned provider
         // seams stay in sync.
@@ -231,7 +234,7 @@ Future<void> closeApp(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pump(Duration.zero);
   await tester.pump(Duration.zero);
-  await tester.pump(const Duration(milliseconds: 1));
+  await tester.pump(const Duration(milliseconds: 600));
 }
 
 /// Pumps a bounded number of frames. Flow surfaces subscribe to streams

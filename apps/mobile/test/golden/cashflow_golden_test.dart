@@ -5,6 +5,7 @@ import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/dividend_center_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/dividend_forecast_providers.dart';
+import 'package:naviwealth/features/finance/cashflow/data/dividend_forecast_repository.dart';
 import 'package:naviwealth/features/finance/cashflow/data/recurring_transaction_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_event.dart';
@@ -14,9 +15,12 @@ import 'package:naviwealth/features/finance/cashflow/ui/cashflow_page.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/dividend_center_page.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/cost_basis/fifo_strategy.dart';
 import 'package:naviwealth/features/finance/investment/domain/cost_basis_engine.dart';
 import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/corporate_actions.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/ui/corporate_action_entry_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -235,6 +239,18 @@ List<Lot> _lotsForAsset(CorporateActionAsset asset) {
 List<Override> _commonOverrides(SharedPreferences prefs) {
   return [
     sharedPreferencesProvider.overrideWithValue(prefs),
+    holdingsSnapshotProvider.overrideWith(
+      (_) async => <String, HoldingSnapshot>{},
+    ),
+    dividendForecastQualityProvider.overrideWith(
+      (_) async => const DividendForecastQuality(
+        evaluatedCount: 0,
+        meanRelativeError: null,
+      ),
+    ),
+    dividendForecastDeclaredActionsProvider.overrideWith(
+      (_) => const <CorporateAction>[],
+    ),
     cashFlowNowProvider.overrideWithValue(_goldenNow),
     recurringMaterialiseDueProvider.overrideWith((ref, now) async => 0),
   ];
@@ -260,16 +276,15 @@ void main() {
       child: const CashFlowPage(),
     );
     final inflowTop = tester.getTopLeft(find.text('Inflow').first).dy;
-    final outflowTop = tester.getTopLeft(find.text('Outflow').first).dy;
-    final netTop = tester.getTopLeft(find.text('Net').first).dy;
+    final outflowTop = tester.getTopLeft(find.text('Cash spending').first).dy;
+    final netTop = tester.getTopLeft(find.text('Operating net').first).dy;
     expect(outflowTop, closeTo(inflowTop, 0.5));
     expect(netTop, greaterThan(inflowTop));
     expect(find.text('25-06'), findsNothing);
     expect(find.text('06'), findsOneWidget);
-    expect(find.text('Inflow / Outflow'), findsOneWidget);
+    expect(find.text('Inflow / Cash spending'), findsOneWidget);
     expect(find.text('Income vs expense'), findsNothing);
-    expect(find.text('Expense categories'), findsNothing);
-    expect(find.bySemanticsLabel('Expense categories'), findsOneWidget);
+    expect(find.text('Income sources'), findsOneWidget);
   });
 
   testVisualGolden('cashflow_page — wide', (tester) async {
@@ -282,14 +297,17 @@ void main() {
       child: const CashFlowPage(),
     );
     final inflowTop = tester.getTopLeft(find.text('Inflow')).dy;
-    expect(tester.getTopLeft(find.text('Outflow')).dy, closeTo(inflowTop, 0.5));
     expect(
-      tester.getTopLeft(find.text('Net').first).dy,
+      tester.getTopLeft(find.text('Cash spending')).dy,
+      closeTo(inflowTop, 0.5),
+    );
+    expect(
+      tester.getTopLeft(find.text('Operating net').first).dy,
       closeTo(inflowTop, 0.5),
     );
     expect(find.text('25-06'), findsOneWidget);
     expect(find.text('Income vs expense'), findsOneWidget);
-    expect(find.text('Expense categories'), findsOneWidget);
+    expect(find.text('Income sources'), findsOneWidget);
   });
 
   testVisualGolden('cashflow_page — text scale', (tester) async {
@@ -301,9 +319,8 @@ void main() {
       overrides: _cashflowOverrides(prefs),
       child: const CashFlowPage(),
     );
-    expect(find.text('Inflow / Outflow'), findsOneWidget);
-    expect(find.text('Expense categories'), findsNothing);
-    expect(find.bySemanticsLabel('Expense categories'), findsOneWidget);
+    expect(find.text('Inflow / Cash spending'), findsOneWidget);
+    expect(find.text('Income sources'), findsOneWidget);
   });
 
   runAllVariants('dividend_center', (tester, variant) async {

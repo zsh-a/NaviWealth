@@ -57,6 +57,7 @@ void main() {
   });
 
   List<Override> commonOverrides() => <Override>[
+    appDatabaseProvider.overrideWith((_) async => database),
     sharedPreferencesProvider.overrideWithValue(preferences),
     formClockProvider.overrideWithValue(() => taskFlowLocalDate),
   ];
@@ -98,7 +99,6 @@ void main() {
 
   List<Override> tradeOverrides() => <Override>[
     ...commonOverrides(),
-    appDatabaseProvider.overrideWith((_) async => database),
     accountsStreamProvider.overrideWith(
       (_) => Stream<List<Account>>.value(
         taskFlowAccounts

@@ -305,10 +305,18 @@ class _NextAction extends StatelessWidget {
       ],
     );
     if (onPress == null) return content;
-    return FButton(
-      variant: FButtonVariant.ghost,
-      onPress: onPress,
-      child: content,
+    return Semantics(
+      button: true,
+      child: FTappable(
+        onPress: onPress,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s12,
+            vertical: AppSpacing.s8,
+          ),
+          child: content,
+        ),
+      ),
     );
   }
 }

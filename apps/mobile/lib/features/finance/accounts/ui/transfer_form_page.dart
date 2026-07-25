@@ -433,6 +433,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                           ),
                           const SizedBox(height: AppSpacing.s12),
                           NoteField(
+                            key: const Key('transfer-note-field'),
                             controller: _noteController,
                             focusNode: _noteFocus,
                           ),

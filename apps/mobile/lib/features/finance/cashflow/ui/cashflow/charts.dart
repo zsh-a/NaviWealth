@@ -201,8 +201,16 @@ class _IncomeSourcesPanel extends StatelessWidget {
               child: FButton(
                 variant: FButtonVariant.outline,
                 onPress: () => context.push(FinanceRoutes.cashflowDividends),
-                prefix: const Icon(FLucideIcons.wallet),
-                child: Text(l10n.cashFlowViewDividendCenter),
+                prefix: MediaQuery.textScalerOf(context).scale(1) > 1.3
+                    ? null
+                    : const Icon(FLucideIcons.wallet),
+                child: Flexible(
+                  child: Text(
+                    l10n.cashFlowViewDividendCenter,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
             ),
         ],

@@ -213,12 +213,14 @@ class _ReviewEditorState extends ConsumerState<_ReviewEditor> {
             ),
             const SizedBox(height: AppSpacing.s12),
             AmountField(
+              key: const ValueKey<String>('rebalance-review.quantity'),
               label: l10n.tradeEntryQuantityLabel,
               controller: _quantity,
               allowZero: false,
             ),
             const SizedBox(height: AppSpacing.s12),
             AmountField(
+              key: const ValueKey<String>('rebalance-review.price'),
               label: l10n.tradeEntryPriceLabel,
               controller: _price,
               currencyCode: _currency,

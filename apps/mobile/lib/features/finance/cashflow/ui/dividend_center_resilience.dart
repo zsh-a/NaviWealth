@@ -184,7 +184,7 @@ class _ResilienceMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 148,
+      width: AppControlWidths.metricTile,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -247,7 +247,9 @@ class _AttributionRow extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
         decoration: focused
             ? BoxDecoration(
-                color: context.theme.colors.primary.withValues(alpha: 0.08),
+                color: context.theme.colors.primary.withValues(
+                  alpha: AppOpacity.softTint,
+                ),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               )
             : null,

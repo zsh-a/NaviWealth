@@ -99,7 +99,7 @@ void main() {
       );
       await _settle(tester);
 
-      expect(find.textContaining('暂无法本地解析'), findsOneWidget);
+      expect(find.textContaining('暂时无法回答'), findsOneWidget);
     });
 
     testWidgets('continue-in-chat link calls back with the trimmed query', (
@@ -119,10 +119,9 @@ void main() {
       );
       await _settle(tester);
 
-      // The pane renders both the no-match notice ("…可去 AI 历史里继续追问。")
-      // and the link below it ("去 AI 历史继续追问 →"). The link is the
-      // one that ends with the arrow glyph.
-      final link = find.textContaining('继续追问 →');
+      // The pane renders a no-match notice and a separate link into the
+      // assistant. Target the link's current localized action copy.
+      final link = find.text('在 AI 助手中继续');
       expect(link, findsOneWidget);
       await tester.tap(link);
       // FTappable schedules a 100ms press-feedback timer; drain it so

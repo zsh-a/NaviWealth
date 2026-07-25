@@ -15,6 +15,7 @@ import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/entry_kind.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_category_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/price_confidence.dart';
@@ -76,6 +77,7 @@ void main() {
         accountRepositoryProvider.future,
       );
       await accountRepo.seedSystemAccounts();
+      await env.container.read(expenseCategoriesSeedProvider.future);
       final checking = await accountRepo.create(
         type: AccountCategory.bank,
         name: 'E2E Checking',

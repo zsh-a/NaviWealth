@@ -75,7 +75,9 @@ class _DividendPolicyRow extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s6),
       decoration: focused
           ? BoxDecoration(
-              color: context.theme.colors.primary.withValues(alpha: 0.08),
+              color: context.theme.colors.primary.withValues(
+                alpha: AppOpacity.softTint,
+              ),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             )
           : null,

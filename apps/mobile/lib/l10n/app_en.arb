@@ -7108,7 +7108,7 @@
   "lifeEventFireDelay": "About {months} months later",
   "@lifeEventFireDelay": { "placeholders": { "months": { "type": "int" } } },
   "lifeEventFireNoDelay": "No material delay",
-  "lifeEventAskAi": "Ask AI",
+  "lifeEventAskAi": "Explore with assistant",
   "lifeEventChooseScenario": "Choose",
   "lifeEventOpenAction": "Open follow-up",
   "lifeEventAdjustPlan": "Adjust budget",

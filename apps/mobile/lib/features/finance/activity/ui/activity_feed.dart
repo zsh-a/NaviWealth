@@ -283,7 +283,9 @@ class _VirtualizedDayEntry extends StatelessWidget {
     );
 
     return Padding(
-      padding: EdgeInsets.only(bottom: isLastInDay ? AppSpacing.s12 : 0),
+      padding: EdgeInsets.only(
+        bottom: isLastInDay ? AppSpacing.s12 : AppSpacing.s0,
+      ),
       child: DecoratedBox(
         decoration: BoxDecoration(color: surface, borderRadius: radius),
         child: Column(
@@ -293,8 +295,7 @@ class _VirtualizedDayEntry extends StatelessWidget {
               accountsById: accountsById,
               formatter: formatter,
             ),
-            if (!isLastInDay)
-              const AppGroupedDivider(indent: AppSpacing.s56),
+            if (!isLastInDay) const AppGroupedDivider(indent: AppSpacing.s56),
           ],
         ),
       ),

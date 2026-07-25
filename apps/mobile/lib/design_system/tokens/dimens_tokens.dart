@@ -107,6 +107,9 @@ class AppOpacity {
   /// Very subtle -- faint tint layers. (~0.06)
   static const double faint = 0.06;
 
+  /// Soft tint for low-emphasis accent containers. (~0.08)
+  static const double softTint = 0.08;
+
   /// Subtle -- selection highlights, icon tints, card surfaces. (~0.10)
   static const double subtle = 0.10;
 
@@ -389,6 +392,9 @@ class AppControlWidths {
 
   /// AI chat sessions side panel width.
   static const double aiSessionsPanel = 320;
+
+  /// Compact desktop dialog for focused financial configuration forms.
+  static const double financeConfigDialog = 420;
 
   /// Horizontal AI action card width.
   static const double aiActionCard = 240;

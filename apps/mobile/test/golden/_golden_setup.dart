@@ -229,6 +229,13 @@ Future<void> pumpAndSnapshotMobile(
             supportedLocales: AppLocalizations.supportedLocales,
             locale: locale,
             routerConfig: router,
+            builder: (context, routedChild) => FTheme(
+              data: buildAppForuiTheme(
+                brightness: Brightness.dark,
+                touch: true,
+              ),
+              child: routedChild!,
+            ),
           ),
         ),
       ),

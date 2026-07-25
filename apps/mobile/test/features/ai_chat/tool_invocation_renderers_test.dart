@@ -77,7 +77,7 @@ void main() {
       expect(find.text('资产'), findsOneWidget);
       expect(find.text('数量'), findsOneWidget);
       expect(find.text('成本'), findsOneWidget);
-      expect(find.text('查看 raw JSON'), findsOneWidget);
+      expect(find.text('查看原始数据'), findsOneWidget);
     });
 
     testWidgets('compute_xirr → big rate + range label', (tester) async {
@@ -336,7 +336,7 @@ void main() {
       );
       await _expandCard(tester);
       // No specialized renderer → no toggle, just JSON.
-      expect(find.text('查看 raw JSON'), findsNothing);
+      expect(find.text('查看原始数据'), findsNothing);
       expect(find.textContaining('"foo"'), findsOneWidget);
     });
 
@@ -357,7 +357,7 @@ void main() {
       );
       await _expandCard(tester);
       expect(find.textContaining('"asset_id"'), findsNothing);
-      await tester.tap(find.text('查看 raw JSON'));
+      await tester.tap(find.text('查看原始数据'));
       await tester.pumpAndSettle();
       expect(find.textContaining('"asset_id"'), findsOneWidget);
       expect(find.text('返回精简视图'), findsOneWidget);

@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/app/agent_artifact_page.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
@@ -819,6 +821,27 @@ void main() {
         createdAt: startedAt,
       ),
     );
+    final router = GoRouter(
+      routes: <RouteBase>[
+        GoRoute(
+          path: '/',
+          builder: (context, state) => FTheme(
+            data: FThemes.slate.light.desktop,
+            child: const AgentsSettingsPage(),
+          ),
+        ),
+        GoRoute(
+          path: AgentArtifactRoutes.detailPath,
+          builder: (context, state) => FTheme(
+            data: FThemes.slate.light.desktop,
+            child: AgentArtifactPage(
+              artifactId: state.pathParameters['artifactId'] ?? '',
+            ),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
 
     await tester.pumpWidget(
       ProviderScope(
@@ -853,14 +876,11 @@ void main() {
             (ref) async => artifactStore,
           ),
         ],
-        child: MaterialApp(
+        child: MaterialApp.router(
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: FTheme(
-            data: FThemes.slate.light.desktop,
-            child: const AgentsSettingsPage(),
-          ),
+          routerConfig: router,
         ),
       ),
     );

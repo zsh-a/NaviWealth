@@ -282,17 +282,31 @@ class TransferFormObject {
   }
 
   Future<void> enterAmount(String amount, {String currency = 'CNY'}) async {
-    final field = find.widgetWithText(FTextFormField, 'Amount ($currency)');
+    final field = find.descendant(
+      of: find.byKey(const Key('transfer-amount-field')),
+      matching: find.byType(EditableText),
+    );
     expect(field, findsOneWidget);
     await tester.enterText(field, amount);
     await settle(tester);
   }
 
   Future<void> enterNote(String note) async {
-    final field = find.widgetWithText(FTextFormField, 'Notes');
-    expect(field, findsOneWidget);
-    await tester.ensureVisible(field);
+    final details = find.byKey(const Key('transfer-details-disclosure'));
+    expect(details, findsOneWidget);
+    await tester.ensureVisible(details);
+    await tester.tap(details);
     await settle(tester);
+
+    final noteField = find.byKey(const Key('transfer-note-field'));
+    expect(noteField, findsOneWidget);
+    await tester.ensureVisible(noteField);
+    await settle(tester);
+    final field = find.descendant(
+      of: noteField,
+      matching: find.byType(EditableText),
+    );
+    expect(field, findsOneWidget);
     await tester.enterText(field, note);
     await settle(tester);
   }
@@ -799,9 +813,10 @@ class BudgetPageObject {
     required String categoryId,
     required String amount,
     required String note,
+    String? categoryLabel,
     String currency = 'CNY',
   }) async {
-    final tile = find.text(categoryId);
+    final tile = find.text(categoryLabel ?? categoryId);
     expect(tile, findsOneWidget, reason: 'budget tile missing');
     await tester.tap(tile);
     await settle(tester);

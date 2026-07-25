@@ -13617,7 +13617,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeEventFireNoDelay => '无明显推迟';
 
   @override
-  String get lifeEventAskAi => '问 AI';
+  String get lifeEventAskAi => '让助手解读';
 
   @override
   String get lifeEventChooseScenario => '选择';
