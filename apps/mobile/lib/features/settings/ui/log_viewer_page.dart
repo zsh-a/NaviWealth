@@ -175,12 +175,12 @@ class _LogTile extends StatelessWidget {
   }
 
   Color _colorForLevel(BuildContext context, LogLevel? level) {
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final colors = context.theme.colors;
     return switch (level) {
-      LogLevel.error || LogLevel.critical => semantic.danger,
-      LogLevel.warning => semantic.warning,
-      LogLevel.info => semantic.info,
+      LogLevel.error || LogLevel.critical => status.danger.fg,
+      LogLevel.warning => status.warning.fg,
+      LogLevel.info => status.info.fg,
       LogLevel.debug || LogLevel.verbose => colors.mutedForeground,
       _ => colors.mutedForeground,
     };

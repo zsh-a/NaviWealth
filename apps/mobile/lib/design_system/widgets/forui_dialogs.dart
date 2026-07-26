@@ -4,7 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
-import '../theme/semantic_colors.dart';
+import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
 import 'app_sheet.dart';
@@ -53,7 +53,7 @@ Future<bool?> showConfirmDialog({
     builder: (ctx, style, animation) => _DialogFrame(
       child: _AppDialog(
         accentColor: destructive
-            ? SemanticColors.of(ctx).danger
+            ? ctx.appTheme.status.danger.fg
             : FTheme.of(ctx).colors.primary,
         icon: icon,
         title: title,

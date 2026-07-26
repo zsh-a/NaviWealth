@@ -279,7 +279,7 @@ class _BudgetBody extends ConsumerWidget {
                         child: Text(
                           l10n.planBudgetCurrencyMismatch(mismatchedCount),
                           style: context.captionStyle.copyWith(
-                            color: SemanticColors.of(context).warning,
+                            color: context.appTheme.status.warning.fg,
                           ),
                         ),
                       ),

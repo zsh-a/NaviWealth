@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
-import '../theme/semantic_colors.dart';
+import '../theme/app_theme_scope.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
@@ -21,7 +21,7 @@ Future<T?> showAppSidePanel<T>({
     context: context,
     barrierLabel: barrierLabel,
     barrierDismissible: barrierDismissible,
-    barrierColor: SemanticColors.of(context).scrim,
+    barrierColor: context.appTheme.surfaces.scrim,
     transitionDuration: AppMotionPolicy.duration(
       context,
       Motion.medium,

@@ -811,7 +811,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
                           currency,
                         ),
                         style: context.mutedLabelStyle.copyWith(
-                          color: SemanticColors.of(context).warning,
+                          color: context.appTheme.status.warning.fg,
                         ),
                       ),
                     ],
@@ -820,7 +820,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
                       Text(
                         l10n.tradeEntryCashAccountCurrencyChanged,
                         style: context.mutedLabelStyle.copyWith(
-                          color: SemanticColors.of(context).warning,
+                          color: context.appTheme.status.warning.fg,
                         ),
                       ),
                     ],

@@ -84,7 +84,7 @@ class _RateList extends ConsumerWidget {
     final formatters = context.formatters(ref);
     // Most-recent first.
     final ordered = [...rates]..sort((a, b) => b.date.compareTo(a.date));
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final colors = context.theme.colors;
     return ListView.separated(
       padding: const EdgeInsets.all(AppSpacing.s16),
@@ -97,12 +97,12 @@ class _RateList extends ConsumerWidget {
           direction: DismissDirection.endToStart,
           background: Container(
             decoration: BoxDecoration(
-              color: semantic.dangerContainer,
+              color: status.danger.container,
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             alignment: AlignmentDirectional.centerEnd,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
-            child: Icon(FLucideIcons.trash2, color: semantic.danger),
+            child: Icon(FLucideIcons.trash2, color: status.danger.fg),
           ),
           confirmDismiss: (_) async {
             final confirmed = await showConfirmDialog(

@@ -181,7 +181,7 @@ class _AttentionSection extends StatelessWidget {
                 Icon(
                   FLucideIcons.cloudAlert,
                   size: AppIconSizes.sm,
-                  color: SemanticColors.of(context).warning,
+                  color: context.appTheme.status.warning.fg,
                 ),
                 const SizedBox(width: AppSpacing.s6),
                 Expanded(
@@ -674,14 +674,14 @@ String _dcaStatusLabel(
 
 Color _toneColor(BuildContext context, AppBadgeTone tone) {
   final colors = context.theme.colors;
-  final semantic = SemanticColors.of(context);
+  final status = context.appTheme.status;
   return switch (tone) {
     AppBadgeTone.neutral => colors.mutedForeground,
     AppBadgeTone.accent => colors.primary,
-    AppBadgeTone.info => semantic.info,
-    AppBadgeTone.success => semantic.success,
-    AppBadgeTone.warning => semantic.warning,
-    AppBadgeTone.error => semantic.danger,
+    AppBadgeTone.info => status.info.fg,
+    AppBadgeTone.success => status.success.fg,
+    AppBadgeTone.warning => status.warning.fg,
+    AppBadgeTone.error => status.danger.fg,
   };
 }
 

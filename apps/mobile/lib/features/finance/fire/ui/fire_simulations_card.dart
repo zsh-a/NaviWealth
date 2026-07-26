@@ -197,7 +197,7 @@ class _DeltaPanel extends StatelessWidget {
                   '${baseline.safetyLevel.name} → ${result.safetyLevel.name}',
                   style: context.captionLabelStyle.copyWith(
                     color: fireSafetyColor(
-                      SemanticColors.of(context),
+                      context.appTheme,
                       result.safetyLevel,
                     ),
                   ),

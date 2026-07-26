@@ -100,7 +100,7 @@ class _StressRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final verdictColor = fireStressVerdictColor(
-      SemanticColors.of(context),
+      context.appTheme,
       result.verdict,
     );
     final scenarioLabel = _scenarioLabel(l10n, result, formatters);

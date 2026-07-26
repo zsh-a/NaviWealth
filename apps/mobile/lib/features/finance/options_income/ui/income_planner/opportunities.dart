@@ -33,7 +33,7 @@ class _OpportunitiesHeader extends StatelessWidget {
                   _formatLastScan(l10n, cacheState!),
                   style: context.captionStyle.copyWith(
                     color: cacheState!.isStale
-                        ? SemanticColors.of(context).warning
+                        ? context.appTheme.status.warning.fg
                         : context.theme.colors.mutedForeground,
                   ),
                 ),

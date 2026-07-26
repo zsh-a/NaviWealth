@@ -620,7 +620,7 @@ class _RunStatusBannerState extends State<_RunStatusBanner> {
     final record = widget.record;
     final failed = record.status == AgentRunLifecycleStatus.failed;
     final running = record.status == AgentRunLifecycleStatus.running;
-    final accent = failed ? SemanticColors.of(context).danger : colors.primary;
+    final accent = failed ? context.appTheme.status.danger.fg : colors.primary;
     final message = failed
         ? (record.error ?? record.summary ?? l10n.agentResultRetryAction)
         : (record.summary ?? l10n.agentResultLoadingBody);
@@ -984,9 +984,8 @@ class AgentResultPanelStateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final sem = SemanticColors.of(context);
     final l10n = AppLocalizations.of(context);
-    final accent = error ? sem.danger : colors.primary;
+    final accent = error ? context.appTheme.status.danger.fg : colors.primary;
     return SoftCard(
       level: SoftCardLevel.flat,
       padding: const EdgeInsets.all(AppSpacing.s16),
@@ -2354,11 +2353,11 @@ AppBadgeTone _badgeTone(AgentArtifactSeverity severity) => switch (severity) {
 
 Color _accentColor(BuildContext context, AgentArtifactSeverity severity) {
   final colors = context.theme.colors;
-  final semantic = SemanticColors.of(context);
+  final status = context.appTheme.status;
   return switch (severity) {
     AgentArtifactSeverity.info => colors.primary,
-    AgentArtifactSeverity.attention => semantic.warning,
-    AgentArtifactSeverity.warning => semantic.danger,
+    AgentArtifactSeverity.attention => status.warning.fg,
+    AgentArtifactSeverity.warning => status.danger.fg,
   };
 }
 
@@ -2387,11 +2386,11 @@ AppBadgeTone _badgeToneForRun(AgentRunLifecycleStatus status) =>
 
 Color _accentColorForRun(BuildContext context, AgentRunLifecycleStatus status) {
   final colors = context.theme.colors;
-  final semantic = SemanticColors.of(context);
+  final appStatus = context.appTheme.status;
   return switch (status) {
-    AgentRunLifecycleStatus.running => semantic.info,
+    AgentRunLifecycleStatus.running => appStatus.info.fg,
     AgentRunLifecycleStatus.noFinding => colors.mutedForeground,
     AgentRunLifecycleStatus.ready => colors.primary,
-    AgentRunLifecycleStatus.failed => semantic.danger,
+    AgentRunLifecycleStatus.failed => appStatus.danger.fg,
   };
 }

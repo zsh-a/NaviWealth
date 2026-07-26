@@ -26,12 +26,12 @@ class DeviationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final barColor = switch (severity) {
       DriftSeverity.ok => context.theme.colors.primary,
-      DriftSeverity.warning => semantic.warning,
-      DriftSeverity.critical => semantic.danger,
+      DriftSeverity.warning => status.warning.fg,
+      DriftSeverity.critical => status.danger.fg,
     };
     final bgBarColor = context.theme.colors.secondary;
 
@@ -119,22 +119,22 @@ class _DeviationChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final text = formatters.signedPercent(deviation, decimalDigits: 1);
 
     final (bg, fg) = switch (severity) {
       DriftSeverity.ok => (
-        AccentColors.tint(context.theme.colors.brightness),
+        context.appTheme.accent.container,
         context.theme.colors.primary,
       ),
       DriftSeverity.warning => (
-        semantic.warningContainer,
-        semantic.onWarningContainer,
+        status.warning.container,
+        status.warning.onContainer,
       ),
       DriftSeverity.critical => (
-        semantic.dangerContainer,
-        semantic.onDangerContainer,
+        status.danger.container,
+        status.danger.onContainer,
       ),
     };
 

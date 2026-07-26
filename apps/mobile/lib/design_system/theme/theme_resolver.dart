@@ -91,6 +91,7 @@ AppThemeData resolveAppTheme(ThemeInputs inputs) {
     fg: AccentColors.primary(inputs.brightness),
     container: AccentColors.tint(inputs.brightness),
     onContainer: isDark ? ColorPalette.cyanBrand100 : ColorPalette.cyanBrand800,
+    onFg: AccentColors.onPrimary(inputs.brightness),
   );
 
   final status = AppStatus(
@@ -98,21 +99,25 @@ AppThemeData resolveAppTheme(ThemeInputs inputs) {
       fg: semantic.success,
       container: semantic.successContainer,
       onContainer: semantic.onSuccessContainer,
+      onFg: semantic.onSuccess,
     ),
     warning: ColorRole(
       fg: semantic.warning,
       container: semantic.warningContainer,
       onContainer: semantic.onWarningContainer,
+      onFg: semantic.onWarning,
     ),
     danger: ColorRole(
       fg: semantic.danger,
       container: semantic.dangerContainer,
       onContainer: semantic.onDangerContainer,
+      onFg: semantic.onDanger,
     ),
     info: ColorRole(
       fg: semantic.info,
       container: semantic.infoContainer,
       onContainer: semantic.onInfoContainer,
+      onFg: semantic.onInfo,
     ),
   );
 
@@ -122,16 +127,19 @@ AppThemeData resolveAppTheme(ThemeInputs inputs) {
       fg: legacyMarket.up,
       container: legacyMarket.upContainer,
       onContainer: legacyMarket.onUpContainer,
+      onFg: legacyMarket.onUp,
     ),
     down: ColorRole(
       fg: legacyMarket.down,
       container: legacyMarket.downContainer,
       onContainer: legacyMarket.onDownContainer,
+      onFg: legacyMarket.onDown,
     ),
     flat: ColorRole(
       fg: legacyMarket.flat,
       container: surfaces.raised,
       onContainer: legacyMarket.onFlat,
+      onFg: legacyMarket.onFlat,
     ),
     upMuted: legacyMarket.upMuted,
     downMuted: legacyMarket.downMuted,

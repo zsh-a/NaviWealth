@@ -17,6 +17,7 @@ class ColorRole {
     required this.fg,
     required this.container,
     required this.onContainer,
+    required this.onFg,
   });
 
   /// Foreground drawn directly on the ambient surface.
@@ -28,15 +29,20 @@ class ColorRole {
   /// Foreground drawn on top of [container].
   final Color onContainer;
 
+  /// Foreground drawn on top of a solid [fg]-colored fill (filled buttons,
+  /// solid pills).
+  final Color onFg;
+
   @override
   bool operator ==(Object other) =>
       other is ColorRole &&
       other.fg == fg &&
       other.container == container &&
-      other.onContainer == onContainer;
+      other.onContainer == onContainer &&
+      other.onFg == onFg;
 
   @override
-  int get hashCode => Object.hash(fg, container, onContainer);
+  int get hashCode => Object.hash(fg, container, onContainer, onFg);
 }
 
 /// Ambient surface ladder, from page canvas up to hero emphasis.

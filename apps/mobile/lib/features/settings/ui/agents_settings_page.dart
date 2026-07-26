@@ -165,7 +165,7 @@ class _AgentQualitySummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final hasFailures = report.failedRuns > 0;
     return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s14),
@@ -176,7 +176,7 @@ class _AgentQualitySummary extends StatelessWidget {
             children: [
               AppIconTile(
                 icon: FLucideIcons.chartNoAxesColumnIncreasing,
-                color: hasFailures ? semantic.warning : colors.primary,
+                color: hasFailures ? status.warning.fg : colors.primary,
                 size: AppSpacing.s32,
                 iconSize: AppIconSizes.sm,
                 backgroundOpacity: AppOpacity.subtle,
@@ -423,12 +423,12 @@ class _OverviewFragment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     return Text(
       text,
       style: context.captionStyle.copyWith(
         color: danger
-            ? semantic.danger
+            ? status.danger.fg
             : emphasis
             ? colors.primary
             : colors.mutedForeground,

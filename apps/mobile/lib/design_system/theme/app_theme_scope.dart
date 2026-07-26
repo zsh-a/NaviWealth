@@ -16,11 +16,12 @@ class AppThemeScope extends InheritedWidget {
 
   static AppThemeData of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppThemeScope>();
-    assert(scope != null, 'AppThemeScope is missing above this context.');
     return scope?.data ?? _fallback;
   }
 
-  /// Test/edge fallback mirroring the app defaults (light, red-up).
+  /// Fallback mirroring the app defaults (light, red-up) so widget tests
+  /// can pump components without installing the scope — the same contract
+  /// as `MarketColors.of`. The app root always installs the real scope.
   static final AppThemeData _fallback = resolveAppTheme(
     const ThemeInputs(
       brightness: Brightness.light,

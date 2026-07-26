@@ -161,7 +161,7 @@ class _StatusPalette {
 }
 
 _StatusPalette _palette(BuildContext context, SyncStatus s) {
-  final semantic = SemanticColors.of(context);
+  final status = context.appTheme.status;
   return switch (s) {
     SyncStatus.idle => _StatusPalette(
       foreground: context.theme.colors.mutedForeground,
@@ -174,19 +174,19 @@ _StatusPalette _palette(BuildContext context, SyncStatus s) {
       container: context.theme.colors.muted,
     ),
     SyncStatus.online => _StatusPalette(
-      foreground: semantic.success,
-      onForeground: semantic.onSuccess,
-      container: semantic.successContainer,
+      foreground: status.success.fg,
+      onForeground: status.success.onFg,
+      container: status.success.container,
     ),
     SyncStatus.offline => _StatusPalette(
-      foreground: semantic.warning,
-      onForeground: semantic.onWarning,
-      container: semantic.warningContainer,
+      foreground: status.warning.fg,
+      onForeground: status.warning.onFg,
+      container: status.warning.container,
     ),
     SyncStatus.failed => _StatusPalette(
-      foreground: semantic.danger,
-      onForeground: semantic.onDanger,
-      container: semantic.dangerContainer,
+      foreground: status.danger.fg,
+      onForeground: status.danger.onFg,
+      container: status.danger.container,
     ),
   };
 }

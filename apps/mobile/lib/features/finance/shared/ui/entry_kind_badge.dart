@@ -37,14 +37,8 @@ class EntryKindIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
-    final brightness = context.theme.colors.brightness;
-    final visuals = _entryKindVisuals(
-      classification,
-      colors,
-      semantic,
-      brightness,
-    );
+    final theme = context.appTheme;
+    final visuals = _entryKindVisuals(classification, colors, theme);
     final l10n = AppLocalizations.of(context);
 
     final semanticLabel = entryKindLabel(l10n, classification.kind);
@@ -106,8 +100,7 @@ class _BadgeVisuals {
 _BadgeVisuals _entryKindVisuals(
   EntryKindClassification c,
   FColors colors,
-  SemanticColors semantic,
-  Brightness brightness,
+  AppThemeData theme,
 ) {
   switch (c.kind) {
     case EntryKind.trade:
@@ -121,7 +114,7 @@ _BadgeVisuals _entryKindVisuals(
       };
       return _BadgeVisuals(
         icon: icon,
-        background: AccentColors.tint(brightness),
+        background: theme.accent.container,
         foreground: colors.primary,
         defaultLabel: 'Trade',
       );
@@ -135,15 +128,15 @@ _BadgeVisuals _entryKindVisuals(
     case EntryKind.income:
       return _BadgeVisuals(
         icon: FLucideIcons.arrowDownLeft,
-        background: semantic.successContainer,
-        foreground: semantic.onSuccessContainer,
+        background: theme.status.success.container,
+        foreground: theme.status.success.onContainer,
         defaultLabel: 'Income',
       );
     case EntryKind.expense:
       return _BadgeVisuals(
         icon: FLucideIcons.arrowUpRight,
-        background: semantic.dangerContainer,
-        foreground: semantic.onDangerContainer,
+        background: theme.status.danger.container,
+        foreground: theme.status.danger.onContainer,
         defaultLabel: 'Expense',
       );
     case EntryKind.payment:

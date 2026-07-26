@@ -22,8 +22,8 @@ class _HeroAmountCard extends StatelessWidget {
     final title = entry.entry.narration.isEmpty ? '—' : entry.entry.narration;
     final payee = entry.entry.payee;
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
-    final tint = _tintForKind(classification.kind, colors, semantic);
+    final status = context.appTheme.status;
+    final tint = _tintForKind(classification.kind, colors, status);
     return SoftCard.hero(
       padding: AppPageRhythm.heroPadding,
       child: Column(

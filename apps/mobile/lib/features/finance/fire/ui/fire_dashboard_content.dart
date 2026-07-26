@@ -89,7 +89,7 @@ class _FireBudgetPosture extends ConsumerWidget {
       error: (_, _) => const SizedBox.shrink(),
       data: (signal) {
         final l10n = AppLocalizations.of(context);
-        final semantic = SemanticColors.of(context);
+        final status = context.appTheme.status;
         final (icon, color, title, detail) = switch (signal) {
           BudgetSignal.noData => (
             FLucideIcons.walletCards,
@@ -99,19 +99,19 @@ class _FireBudgetPosture extends ConsumerWidget {
           ),
           BudgetSignal.comfortable => (
             FLucideIcons.circleCheck,
-            semantic.success,
+            status.success.fg,
             l10n.fireBudgetComfortableTitle,
             l10n.fireBudgetComfortableDetail,
           ),
           BudgetSignal.strained => (
             FLucideIcons.gauge,
-            semantic.warning,
+            status.warning.fg,
             l10n.fireBudgetStrainedTitle,
             l10n.fireBudgetStrainedDetail,
           ),
           BudgetSignal.overBudget => (
             FLucideIcons.triangleAlert,
-            semantic.danger,
+            status.danger.fg,
             l10n.fireBudgetOverTitle,
             l10n.fireBudgetOverDetail,
           ),

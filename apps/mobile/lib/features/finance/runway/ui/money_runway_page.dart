@@ -88,8 +88,8 @@ class _RunwayContent extends ConsumerWidget {
     }
     final status = _statusCopy(l10n, snapshot.status);
     final statusColor = switch (snapshot.status) {
-      MoneyRunwayStatus.healthy => SemanticColors.of(context).success,
-      MoneyRunwayStatus.watch => SemanticColors.of(context).warning,
+      MoneyRunwayStatus.healthy => context.appTheme.status.success.fg,
+      MoneyRunwayStatus.watch => context.appTheme.status.warning.fg,
       MoneyRunwayStatus.shortfall => context.theme.colors.destructive,
     };
     return ListView(
@@ -259,7 +259,7 @@ class _RunwayContent extends ConsumerWidget {
               (snapshot.missingCurrencies.toList()..sort()).join(', '),
             ),
             style: context.captionStyle.copyWith(
-              color: SemanticColors.of(context).warning,
+              color: context.appTheme.status.warning.fg,
             ),
           ),
           FButton(

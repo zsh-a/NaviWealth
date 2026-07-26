@@ -185,12 +185,12 @@ IconData _progressIcon(ExecutionProgressKind kind) {
 
 Color _progressColor(BuildContext context, ExecutionProgressKind kind) {
   final colors = context.theme.colors;
-  final semantic = SemanticColors.of(context);
+  final status = context.appTheme.status;
   return switch (kind) {
-    ExecutionProgressKind.blocker => semantic.danger,
-    ExecutionProgressKind.completion => semantic.success,
+    ExecutionProgressKind.blocker => status.danger.fg,
+    ExecutionProgressKind.completion => status.success.fg,
     ExecutionProgressKind.dropped => colors.mutedForeground,
-    ExecutionProgressKind.scopeChange => semantic.warning,
-    ExecutionProgressKind.checkin => semantic.info,
+    ExecutionProgressKind.scopeChange => status.warning.fg,
+    ExecutionProgressKind.checkin => status.info.fg,
   };
 }

@@ -41,7 +41,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final classification = classifyEntryKind(
       postings: entry.postings,
       resolveCategory: (id) => accountsById[id]?.category,
@@ -55,7 +55,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
       kind: classification.kind,
     );
     final timeStr = formatter.time(entry.entry.date);
-    final iconTint = activityKindTint(classification.kind, colors, semantic);
+    final iconTint = activityKindTint(classification.kind, colors, status);
     final iconData = activityKindIcon(classification.kind);
     final padH = compact ? AppSpacing.s14 : AppSpacing.s12;
     final padV = compact ? AppSpacing.s10 : AppSpacing.s12;
@@ -286,23 +286,19 @@ IconData activityKindIcon(EntryKind kind) {
   }
 }
 
-Color activityKindTint(
-  EntryKind kind,
-  FColors colors,
-  SemanticColors semantic,
-) {
+Color activityKindTint(EntryKind kind, FColors colors, AppStatus status) {
   switch (kind) {
     case EntryKind.income:
-      return semantic.success;
+      return status.success.fg;
     case EntryKind.trade:
       return colors.primary;
     case EntryKind.expense:
     case EntryKind.payment:
-      return semantic.danger;
+      return status.danger.fg;
     case EntryKind.transfer:
-      return semantic.info;
+      return status.info.fg;
     case EntryKind.adjustment:
-      return semantic.warning;
+      return status.warning.fg;
     case EntryKind.opening:
     case EntryKind.other:
       return colors.mutedForeground;

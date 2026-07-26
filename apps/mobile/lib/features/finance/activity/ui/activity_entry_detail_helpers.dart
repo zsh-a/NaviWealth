@@ -9,8 +9,8 @@ Posting? _headlinePosting(
 
 IconData _iconForKind(EntryKind kind) => activityKindIcon(kind);
 
-Color _tintForKind(EntryKind kind, FColors colors, SemanticColors semantic) {
-  return activityKindTint(kind, colors, semantic);
+Color _tintForKind(EntryKind kind, FColors colors, AppStatus status) {
+  return activityKindTint(kind, colors, status);
 }
 
 String _costLabel(Cost cost) {

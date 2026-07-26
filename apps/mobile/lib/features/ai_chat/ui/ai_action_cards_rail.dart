@@ -80,12 +80,12 @@ class _ActionCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
-    final sem = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final tint = switch (item.tone) {
-      ChatRailTone.success => sem.success,
-      ChatRailTone.warning => sem.warning,
-      ChatRailTone.danger => sem.danger,
-      ChatRailTone.info => sem.info,
+      ChatRailTone.success => status.success.fg,
+      ChatRailTone.warning => status.warning.fg,
+      ChatRailTone.danger => status.danger.fg,
+      ChatRailTone.info => status.info.fg,
       null => colors.primary,
     };
     final route = item.route;

@@ -8,7 +8,7 @@ class _ActiveEmbedderCard extends ConsumerWidget {
     final diagnostics = ref.watch(embedderDiagnosticsProvider);
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: diagnostics.when(
@@ -31,13 +31,13 @@ class _ActiveEmbedderCard extends ConsumerWidget {
             Icon(
               FLucideIcons.circleAlert,
               size: AppIconSizes.h18,
-              color: semantic.danger,
+              color: status.danger.fg,
             ),
             const SizedBox(width: AppSpacing.s8),
             Expanded(
               child: Text(
                 l10n.settingsAiModelsActiveRuntimeFailed('$e'),
-                style: context.captionStyle.copyWith(color: semantic.danger),
+                style: context.captionStyle.copyWith(color: status.danger.fg),
               ),
             ),
           ],
@@ -46,10 +46,10 @@ class _ActiveEmbedderCard extends ConsumerWidget {
           final isNative = d.kind == EmbedderRuntimeKind.native;
           final isStub = d.kind == EmbedderRuntimeKind.stub;
           final statusColor = isNative
-              ? semantic.success
+              ? status.success.fg
               : isStub
-              ? semantic.warning
-              : semantic.danger;
+              ? status.warning.fg
+              : status.danger.fg;
           final statusLabel = switch (d.kind) {
             EmbedderRuntimeKind.native =>
               l10n.settingsAiModelsActiveRuntimeNative,
@@ -83,7 +83,7 @@ class _ActiveEmbedderCard extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.s8),
                 Text(
                   d.error!,
-                  style: context.captionStyle.copyWith(color: semantic.danger),
+                  style: context.captionStyle.copyWith(color: status.danger.fg),
                 ),
               ],
               const SizedBox(height: AppSpacing.s10),
@@ -117,7 +117,7 @@ class _ActiveEmbedderCard extends ConsumerWidget {
                     label: l10n.settingsAiModelsStaleVectorsLabel,
                     value: d.staleVectorCount,
                     color: d.hasStaleVectors
-                        ? semantic.warning
+                        ? status.warning.fg
                         : colors.mutedForeground,
                   ),
                   _MetricTile(
@@ -130,7 +130,9 @@ class _ActiveEmbedderCard extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.s8),
                 Text(
                   l10n.settingsAiModelsStaleVectorsHint,
-                  style: context.captionStyle.copyWith(color: semantic.warning),
+                  style: context.captionStyle.copyWith(
+                    color: status.warning.fg,
+                  ),
                 ),
               ],
               const SizedBox(height: AppSpacing.s12),
@@ -237,7 +239,7 @@ class _RuntimeDiagnosticsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final colors = context.theme.colors;
     return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s12),
@@ -263,7 +265,7 @@ class _RuntimeDiagnosticsCard extends StatelessWidget {
               operation: 'check embedder runtime',
             ),
           ),
-          style: context.captionStyle.copyWith(color: semantic.danger),
+          style: context.captionStyle.copyWith(color: status.danger.fg),
         ),
         data: (r) {
           final complete = r.isComplete;
@@ -275,7 +277,7 @@ class _RuntimeDiagnosticsCard extends StatelessWidget {
                   Icon(
                     complete ? FLucideIcons.cpu : FLucideIcons.circleAlert,
                     size: AppIconSizes.h18,
-                    color: complete ? semantic.success : semantic.warning,
+                    color: complete ? status.success.fg : status.warning.fg,
                   ),
                   const SizedBox(width: AppSpacing.s8),
                   Expanded(

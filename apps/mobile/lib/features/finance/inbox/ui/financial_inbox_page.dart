@@ -246,7 +246,7 @@ class _InboxRow extends ConsumerWidget {
           AppIconTile(
             icon: icon,
             color: important
-                ? SemanticColors.of(context).warning
+                ? context.appTheme.status.warning.fg
                 : context.theme.colors.primary,
           ),
           const SizedBox(width: AppSpacing.s12),

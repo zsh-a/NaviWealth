@@ -28,7 +28,7 @@ class CurrencyMismatchNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     if (mismatches.isEmpty) return const SizedBox.shrink();
 
     final l10n = AppLocalizations.of(context);
@@ -43,7 +43,7 @@ class CurrencyMismatchNotice extends StatelessWidget {
       semanticLabel: l10n.dashboardCurrencyMismatchAction,
       action: Text(
         l10n.dashboardCurrencyMismatchAction,
-        style: context.labelStyle.copyWith(color: semantic.onDangerContainer),
+        style: context.labelStyle.copyWith(color: status.danger.onContainer),
       ),
     );
   }

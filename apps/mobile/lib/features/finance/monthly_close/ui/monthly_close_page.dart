@@ -664,8 +664,8 @@ class _CloseStepRow extends ConsumerWidget {
           Icon(
             accepted ? FLucideIcons.circleCheckBig : FLucideIcons.circleAlert,
             color: accepted
-                ? SemanticColors.of(context).success
-                : SemanticColors.of(context).warning,
+                ? context.appTheme.status.success.fg
+                : context.appTheme.status.warning.fg,
           ),
           const SizedBox(width: AppSpacing.s10),
           Expanded(child: Text(label, style: context.labelStyle)),

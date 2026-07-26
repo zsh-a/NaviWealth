@@ -235,7 +235,7 @@ class _ReviewSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final completed = closedActions
         .where((action) => action.status == ExecutionActionStatus.done)
         .length;
@@ -249,12 +249,12 @@ class _ReviewSummary extends StatelessWidget {
         AppBadge(
           label: '${l10n.executionReviewCompletedMetric} $completed',
           icon: FLucideIcons.checkCheck,
-          foregroundColor: semantic.success,
+          foregroundColor: status.success.fg,
         ),
         AppBadge(
           label: '${l10n.executionReviewBlockedMetric} $blockers',
           icon: FLucideIcons.octagonAlert,
-          foregroundColor: blockers > 0 ? semantic.danger : null,
+          foregroundColor: blockers > 0 ? status.danger.fg : null,
         ),
         AppBadge(
           label: '${l10n.executionReviewProgressMetric} ${entries.length}',

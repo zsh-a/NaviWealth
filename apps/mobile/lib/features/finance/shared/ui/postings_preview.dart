@@ -155,7 +155,7 @@ class _UnitBalanceRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final balanced = total == Decimal.zero;
     final tone = balanced
-        ? SemanticColors.of(context).success
+        ? context.appTheme.status.success.fg
         : context.theme.colors.destructive;
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
     return Padding(

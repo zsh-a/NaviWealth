@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
-import '../theme/semantic_colors.dart';
+import '../theme/app_theme_scope.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
@@ -39,17 +39,17 @@ class AppQuietButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final enabled = onPress != null && !busy;
     final activeForeground = switch (tone) {
       AppQuietButtonTone.neutral => colors.foreground,
-      AppQuietButtonTone.danger => semantic.danger,
+      AppQuietButtonTone.danger => status.danger.fg,
     };
     final activeContainer = switch (tone) {
       AppQuietButtonTone.neutral => colors.muted.withValues(
         alpha: AppOpacity.disabled,
       ),
-      AppQuietButtonTone.danger => semantic.dangerContainer,
+      AppQuietButtonTone.danger => status.danger.container,
     };
     final foreground = enabled
         ? activeForeground
