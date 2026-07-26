@@ -40,7 +40,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('添加资产项目'), findsOneWidget);
-    expect(find.byType(AppActionSheetTile), findsNWidgets(6));
+    expect(find.byType(AppActionSheetTile), findsNWidgets(7));
     expect(find.byType(SoftCard), findsNothing);
   });
 }

@@ -3435,6 +3435,7 @@
   "accountDetailBalanceTitle": "Available balance",
   "accountDetailTransferAction": "Transfer",
   "accountDetailAdjustBalanceAction": "Adjust balance",
+  "accountDetailAddBalanceAction": "Add cash balance",
   "@accountDetailAdjustBalanceAction": { "description": "Action shown on a cash account detail reached from a cash asset" },
   "accountDetailRecentActivityTitle": "Recent activity",
   "accountDetailNoActivity": "No activity recorded for this account yet.",

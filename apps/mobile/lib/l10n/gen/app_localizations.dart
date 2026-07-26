@@ -11113,6 +11113,12 @@ abstract class AppLocalizations {
   /// **'Adjust balance'**
   String get accountDetailAdjustBalanceAction;
 
+  /// No description provided for @accountDetailAddBalanceAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add cash balance'**
+  String get accountDetailAddBalanceAction;
+
   /// No description provided for @accountDetailRecentActivityTitle.
   ///
   /// In en, this message translates to:

@@ -6254,6 +6254,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountDetailAdjustBalanceAction => '调整余额';
 
   @override
+  String get accountDetailAddBalanceAction => '录入余额';
+
+  @override
   String get accountDetailRecentActivityTitle => '最近活动';
 
   @override

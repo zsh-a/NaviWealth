@@ -6595,6 +6595,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountDetailAdjustBalanceAction => 'Adjust balance';
 
   @override
+  String get accountDetailAddBalanceAction => 'Add cash balance';
+
+  @override
   String get accountDetailRecentActivityTitle => 'Recent activity';
 
   @override

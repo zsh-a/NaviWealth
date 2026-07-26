@@ -203,6 +203,21 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
       run: (BuildContext ctx) => ctx.push(FinanceRoutes.wealthCorporateAction),
     ),
     CommandPaletteEntry(
+      id: 'action.newCash',
+      label: l10n.assetsAddCashTitle,
+      icon: FLucideIcons.wallet,
+      keywords: const <String>[
+        FinanceRoutes.wealthNewCash,
+        'cash',
+        'balance',
+        'deposit funds',
+        '现金',
+        '余额',
+        '入金',
+      ],
+      run: (BuildContext ctx) => ctx.push(FinanceRoutes.wealthNewCash),
+    ),
+    CommandPaletteEntry(
       id: 'action.newExpense',
       label: l10n.commandPaletteNewExpense,
       icon: FLucideIcons.creditCard,
