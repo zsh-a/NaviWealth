@@ -199,7 +199,10 @@ class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
     }
     Widget header(String title) => SectionHeader(
       title: title,
-      padding: const EdgeInsets.fromLTRB(0, AppSpacing.s12, 0, AppSpacing.s4),
+      padding: const EdgeInsets.only(
+        top: AppSpacing.s12,
+        bottom: AppSpacing.s4,
+      ),
     );
     return [
       header(l10n.incomePlannerLaneSellSection),
