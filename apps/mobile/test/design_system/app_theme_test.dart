@@ -36,10 +36,8 @@ void main() {
     });
   });
 
-  testWidgets('SemanticColors.of / context.appTheme resolve from context', (
-    tester,
-  ) async {
-    SemanticColors? semantic;
+  testWidgets('context.appTheme resolves from context', (tester) async {
+    AppStatus? status;
     AppMarket? market;
 
     await tester.pumpWidget(
@@ -54,7 +52,7 @@ void main() {
           theme: AppTheme.light(),
           home: Builder(
             builder: (context) {
-              semantic = SemanticColors.of(context);
+              status = context.appTheme.status;
               market = context.appTheme.market;
               return const SizedBox.shrink();
             },
@@ -63,7 +61,7 @@ void main() {
       ),
     );
 
-    expect(semantic, isNotNull);
+    expect(status, isNotNull);
     expect(market, isNotNull);
     expect(market!.mode, MarketColorMode.redUpGreenDown);
   });
