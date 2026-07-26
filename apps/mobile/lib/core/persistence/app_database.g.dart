@@ -10286,6 +10286,1400 @@ class OptionsTradeJournalCompanion
   }
 }
 
+class $OptionsLeapsCallPositionsTable extends OptionsLeapsCallPositions
+    with
+        TableInfo<
+          $OptionsLeapsCallPositionsTable,
+          OptionsLeapsCallPositionRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $OptionsLeapsCallPositionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($OptionsLeapsCallPositionsTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
+  @override
+  late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
+    'symbol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _optionSymbolMeta = const VerificationMeta(
+    'optionSymbol',
+  );
+  @override
+  late final GeneratedColumn<String> optionSymbol = GeneratedColumn<String>(
+    'option_symbol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _openedAtMeta = const VerificationMeta(
+    'openedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> openedAt = GeneratedColumn<DateTime>(
+    'opened_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _expirationAtMeta = const VerificationMeta(
+    'expirationAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> expirationAt = GeneratedColumn<DateTime>(
+    'expiration_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _closedAtMeta = const VerificationMeta(
+    'closedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> closedAt = GeneratedColumn<DateTime>(
+    'closed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> strikePrice =
+      GeneratedColumn<String>(
+        'strike_price',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $OptionsLeapsCallPositionsTable.$converterstrikePrice,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> entryDebit =
+      GeneratedColumn<String>(
+        'entry_debit',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $OptionsLeapsCallPositionsTable.$converterentryDebit,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> exitCredit =
+      GeneratedColumn<String>(
+        'exit_credit',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $OptionsLeapsCallPositionsTable.$converterexitCreditn,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> fees =
+      GeneratedColumn<String>(
+        'fees',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('0'),
+      ).withConverter<Decimal>($OptionsLeapsCallPositionsTable.$converterfees);
+  static const VerificationMeta _currencyMeta = const VerificationMeta(
+    'currency',
+  );
+  @override
+  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
+    'currency',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 3,
+      maxTextLength: 8,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _contractSizeMeta = const VerificationMeta(
+    'contractSize',
+  );
+  @override
+  late final GeneratedColumn<int> contractSize = GeneratedColumn<int>(
+    'contract_size',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(100),
+  );
+  static const VerificationMeta _contractQuantityMeta = const VerificationMeta(
+    'contractQuantity',
+  );
+  @override
+  late final GeneratedColumn<int> contractQuantity = GeneratedColumn<int>(
+    'contract_quantity',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> currentMark =
+      GeneratedColumn<String>(
+        'current_mark',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $OptionsLeapsCallPositionsTable.$convertercurrentMarkn,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> currentDelta =
+      GeneratedColumn<String>(
+        'current_delta',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $OptionsLeapsCallPositionsTable.$convertercurrentDeltan,
+      );
+  static const VerificationMeta _markedAtMeta = const VerificationMeta(
+    'markedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> markedAt = GeneratedColumn<DateTime>(
+    'marked_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _brokerageAccountIdMeta =
+      const VerificationMeta('brokerageAccountId');
+  @override
+  late final GeneratedColumn<String> brokerageAccountId =
+      GeneratedColumn<String>(
+        'brokerage_account_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    symbol,
+    optionSymbol,
+    openedAt,
+    expirationAt,
+    closedAt,
+    strikePrice,
+    entryDebit,
+    exitCredit,
+    fees,
+    currency,
+    contractSize,
+    contractQuantity,
+    status,
+    currentMark,
+    currentDelta,
+    markedAt,
+    brokerageAccountId,
+    notes,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'options_leaps_call_positions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<OptionsLeapsCallPositionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('symbol')) {
+      context.handle(
+        _symbolMeta,
+        symbol.isAcceptableOrUnknown(data['symbol']!, _symbolMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symbolMeta);
+    }
+    if (data.containsKey('option_symbol')) {
+      context.handle(
+        _optionSymbolMeta,
+        optionSymbol.isAcceptableOrUnknown(
+          data['option_symbol']!,
+          _optionSymbolMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_optionSymbolMeta);
+    }
+    if (data.containsKey('opened_at')) {
+      context.handle(
+        _openedAtMeta,
+        openedAt.isAcceptableOrUnknown(data['opened_at']!, _openedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_openedAtMeta);
+    }
+    if (data.containsKey('expiration_at')) {
+      context.handle(
+        _expirationAtMeta,
+        expirationAt.isAcceptableOrUnknown(
+          data['expiration_at']!,
+          _expirationAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_expirationAtMeta);
+    }
+    if (data.containsKey('closed_at')) {
+      context.handle(
+        _closedAtMeta,
+        closedAt.isAcceptableOrUnknown(data['closed_at']!, _closedAtMeta),
+      );
+    }
+    if (data.containsKey('currency')) {
+      context.handle(
+        _currencyMeta,
+        currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_currencyMeta);
+    }
+    if (data.containsKey('contract_size')) {
+      context.handle(
+        _contractSizeMeta,
+        contractSize.isAcceptableOrUnknown(
+          data['contract_size']!,
+          _contractSizeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('contract_quantity')) {
+      context.handle(
+        _contractQuantityMeta,
+        contractQuantity.isAcceptableOrUnknown(
+          data['contract_quantity']!,
+          _contractQuantityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('marked_at')) {
+      context.handle(
+        _markedAtMeta,
+        markedAt.isAcceptableOrUnknown(data['marked_at']!, _markedAtMeta),
+      );
+    }
+    if (data.containsKey('brokerage_account_id')) {
+      context.handle(
+        _brokerageAccountIdMeta,
+        brokerageAccountId.isAcceptableOrUnknown(
+          data['brokerage_account_id']!,
+          _brokerageAccountIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  OptionsLeapsCallPositionRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OptionsLeapsCallPositionRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $OptionsLeapsCallPositionsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      symbol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symbol'],
+      )!,
+      optionSymbol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}option_symbol'],
+      )!,
+      openedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}opened_at'],
+      )!,
+      expirationAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}expiration_at'],
+      )!,
+      closedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}closed_at'],
+      ),
+      strikePrice: $OptionsLeapsCallPositionsTable.$converterstrikePrice
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}strike_price'],
+            )!,
+          ),
+      entryDebit: $OptionsLeapsCallPositionsTable.$converterentryDebit.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}entry_debit'],
+        )!,
+      ),
+      exitCredit: $OptionsLeapsCallPositionsTable.$converterexitCreditn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}exit_credit'],
+        ),
+      ),
+      fees: $OptionsLeapsCallPositionsTable.$converterfees.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}fees'],
+        )!,
+      ),
+      currency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency'],
+      )!,
+      contractSize: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}contract_size'],
+      )!,
+      contractQuantity: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}contract_quantity'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      currentMark: $OptionsLeapsCallPositionsTable.$convertercurrentMarkn
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}current_mark'],
+            ),
+          ),
+      currentDelta: $OptionsLeapsCallPositionsTable.$convertercurrentDeltan
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}current_delta'],
+            ),
+          ),
+      markedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}marked_at'],
+      ),
+      brokerageAccountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}brokerage_account_id'],
+      ),
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+    );
+  }
+
+  @override
+  $OptionsLeapsCallPositionsTable createAlias(String alias) {
+    return $OptionsLeapsCallPositionsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+  static TypeConverter<Decimal, String> $converterstrikePrice =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterentryDebit =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterexitCredit =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterexitCreditn =
+      NullAwareTypeConverter.wrap($converterexitCredit);
+  static TypeConverter<Decimal, String> $converterfees =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $convertercurrentMark =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $convertercurrentMarkn =
+      NullAwareTypeConverter.wrap($convertercurrentMark);
+  static TypeConverter<Decimal, String> $convertercurrentDelta =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $convertercurrentDeltan =
+      NullAwareTypeConverter.wrap($convertercurrentDelta);
+}
+
+class OptionsLeapsCallPositionRow extends DataClass
+    implements Insertable<OptionsLeapsCallPositionRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String symbol;
+  final String optionSymbol;
+  final DateTime openedAt;
+  final DateTime expirationAt;
+  final DateTime? closedAt;
+  final Decimal strikePrice;
+  final Decimal entryDebit;
+  final Decimal? exitCredit;
+  final Decimal fees;
+  final String currency;
+  final int contractSize;
+  final int contractQuantity;
+  final String status;
+  final Decimal? currentMark;
+  final Decimal? currentDelta;
+  final DateTime? markedAt;
+  final String? brokerageAccountId;
+  final String? notes;
+  const OptionsLeapsCallPositionRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.symbol,
+    required this.optionSymbol,
+    required this.openedAt,
+    required this.expirationAt,
+    this.closedAt,
+    required this.strikePrice,
+    required this.entryDebit,
+    this.exitCredit,
+    required this.fees,
+    required this.currency,
+    required this.contractSize,
+    required this.contractQuantity,
+    required this.status,
+    this.currentMark,
+    this.currentDelta,
+    this.markedAt,
+    this.brokerageAccountId,
+    this.notes,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $OptionsLeapsCallPositionsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['symbol'] = Variable<String>(symbol);
+    map['option_symbol'] = Variable<String>(optionSymbol);
+    map['opened_at'] = Variable<DateTime>(openedAt);
+    map['expiration_at'] = Variable<DateTime>(expirationAt);
+    if (!nullToAbsent || closedAt != null) {
+      map['closed_at'] = Variable<DateTime>(closedAt);
+    }
+    {
+      map['strike_price'] = Variable<String>(
+        $OptionsLeapsCallPositionsTable.$converterstrikePrice.toSql(
+          strikePrice,
+        ),
+      );
+    }
+    {
+      map['entry_debit'] = Variable<String>(
+        $OptionsLeapsCallPositionsTable.$converterentryDebit.toSql(entryDebit),
+      );
+    }
+    if (!nullToAbsent || exitCredit != null) {
+      map['exit_credit'] = Variable<String>(
+        $OptionsLeapsCallPositionsTable.$converterexitCreditn.toSql(exitCredit),
+      );
+    }
+    {
+      map['fees'] = Variable<String>(
+        $OptionsLeapsCallPositionsTable.$converterfees.toSql(fees),
+      );
+    }
+    map['currency'] = Variable<String>(currency);
+    map['contract_size'] = Variable<int>(contractSize);
+    map['contract_quantity'] = Variable<int>(contractQuantity);
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || currentMark != null) {
+      map['current_mark'] = Variable<String>(
+        $OptionsLeapsCallPositionsTable.$convertercurrentMarkn.toSql(
+          currentMark,
+        ),
+      );
+    }
+    if (!nullToAbsent || currentDelta != null) {
+      map['current_delta'] = Variable<String>(
+        $OptionsLeapsCallPositionsTable.$convertercurrentDeltan.toSql(
+          currentDelta,
+        ),
+      );
+    }
+    if (!nullToAbsent || markedAt != null) {
+      map['marked_at'] = Variable<DateTime>(markedAt);
+    }
+    if (!nullToAbsent || brokerageAccountId != null) {
+      map['brokerage_account_id'] = Variable<String>(brokerageAccountId);
+    }
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    return map;
+  }
+
+  OptionsLeapsCallPositionsCompanion toCompanion(bool nullToAbsent) {
+    return OptionsLeapsCallPositionsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      symbol: Value(symbol),
+      optionSymbol: Value(optionSymbol),
+      openedAt: Value(openedAt),
+      expirationAt: Value(expirationAt),
+      closedAt: closedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(closedAt),
+      strikePrice: Value(strikePrice),
+      entryDebit: Value(entryDebit),
+      exitCredit: exitCredit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exitCredit),
+      fees: Value(fees),
+      currency: Value(currency),
+      contractSize: Value(contractSize),
+      contractQuantity: Value(contractQuantity),
+      status: Value(status),
+      currentMark: currentMark == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currentMark),
+      currentDelta: currentDelta == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currentDelta),
+      markedAt: markedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(markedAt),
+      brokerageAccountId: brokerageAccountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(brokerageAccountId),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+    );
+  }
+
+  factory OptionsLeapsCallPositionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OptionsLeapsCallPositionRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      symbol: serializer.fromJson<String>(json['symbol']),
+      optionSymbol: serializer.fromJson<String>(json['optionSymbol']),
+      openedAt: serializer.fromJson<DateTime>(json['openedAt']),
+      expirationAt: serializer.fromJson<DateTime>(json['expirationAt']),
+      closedAt: serializer.fromJson<DateTime?>(json['closedAt']),
+      strikePrice: serializer.fromJson<Decimal>(json['strikePrice']),
+      entryDebit: serializer.fromJson<Decimal>(json['entryDebit']),
+      exitCredit: serializer.fromJson<Decimal?>(json['exitCredit']),
+      fees: serializer.fromJson<Decimal>(json['fees']),
+      currency: serializer.fromJson<String>(json['currency']),
+      contractSize: serializer.fromJson<int>(json['contractSize']),
+      contractQuantity: serializer.fromJson<int>(json['contractQuantity']),
+      status: serializer.fromJson<String>(json['status']),
+      currentMark: serializer.fromJson<Decimal?>(json['currentMark']),
+      currentDelta: serializer.fromJson<Decimal?>(json['currentDelta']),
+      markedAt: serializer.fromJson<DateTime?>(json['markedAt']),
+      brokerageAccountId: serializer.fromJson<String?>(
+        json['brokerageAccountId'],
+      ),
+      notes: serializer.fromJson<String?>(json['notes']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'symbol': serializer.toJson<String>(symbol),
+      'optionSymbol': serializer.toJson<String>(optionSymbol),
+      'openedAt': serializer.toJson<DateTime>(openedAt),
+      'expirationAt': serializer.toJson<DateTime>(expirationAt),
+      'closedAt': serializer.toJson<DateTime?>(closedAt),
+      'strikePrice': serializer.toJson<Decimal>(strikePrice),
+      'entryDebit': serializer.toJson<Decimal>(entryDebit),
+      'exitCredit': serializer.toJson<Decimal?>(exitCredit),
+      'fees': serializer.toJson<Decimal>(fees),
+      'currency': serializer.toJson<String>(currency),
+      'contractSize': serializer.toJson<int>(contractSize),
+      'contractQuantity': serializer.toJson<int>(contractQuantity),
+      'status': serializer.toJson<String>(status),
+      'currentMark': serializer.toJson<Decimal?>(currentMark),
+      'currentDelta': serializer.toJson<Decimal?>(currentDelta),
+      'markedAt': serializer.toJson<DateTime?>(markedAt),
+      'brokerageAccountId': serializer.toJson<String?>(brokerageAccountId),
+      'notes': serializer.toJson<String?>(notes),
+    };
+  }
+
+  OptionsLeapsCallPositionRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? symbol,
+    String? optionSymbol,
+    DateTime? openedAt,
+    DateTime? expirationAt,
+    Value<DateTime?> closedAt = const Value.absent(),
+    Decimal? strikePrice,
+    Decimal? entryDebit,
+    Value<Decimal?> exitCredit = const Value.absent(),
+    Decimal? fees,
+    String? currency,
+    int? contractSize,
+    int? contractQuantity,
+    String? status,
+    Value<Decimal?> currentMark = const Value.absent(),
+    Value<Decimal?> currentDelta = const Value.absent(),
+    Value<DateTime?> markedAt = const Value.absent(),
+    Value<String?> brokerageAccountId = const Value.absent(),
+    Value<String?> notes = const Value.absent(),
+  }) => OptionsLeapsCallPositionRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    symbol: symbol ?? this.symbol,
+    optionSymbol: optionSymbol ?? this.optionSymbol,
+    openedAt: openedAt ?? this.openedAt,
+    expirationAt: expirationAt ?? this.expirationAt,
+    closedAt: closedAt.present ? closedAt.value : this.closedAt,
+    strikePrice: strikePrice ?? this.strikePrice,
+    entryDebit: entryDebit ?? this.entryDebit,
+    exitCredit: exitCredit.present ? exitCredit.value : this.exitCredit,
+    fees: fees ?? this.fees,
+    currency: currency ?? this.currency,
+    contractSize: contractSize ?? this.contractSize,
+    contractQuantity: contractQuantity ?? this.contractQuantity,
+    status: status ?? this.status,
+    currentMark: currentMark.present ? currentMark.value : this.currentMark,
+    currentDelta: currentDelta.present ? currentDelta.value : this.currentDelta,
+    markedAt: markedAt.present ? markedAt.value : this.markedAt,
+    brokerageAccountId: brokerageAccountId.present
+        ? brokerageAccountId.value
+        : this.brokerageAccountId,
+    notes: notes.present ? notes.value : this.notes,
+  );
+  OptionsLeapsCallPositionRow copyWithCompanion(
+    OptionsLeapsCallPositionsCompanion data,
+  ) {
+    return OptionsLeapsCallPositionRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      symbol: data.symbol.present ? data.symbol.value : this.symbol,
+      optionSymbol: data.optionSymbol.present
+          ? data.optionSymbol.value
+          : this.optionSymbol,
+      openedAt: data.openedAt.present ? data.openedAt.value : this.openedAt,
+      expirationAt: data.expirationAt.present
+          ? data.expirationAt.value
+          : this.expirationAt,
+      closedAt: data.closedAt.present ? data.closedAt.value : this.closedAt,
+      strikePrice: data.strikePrice.present
+          ? data.strikePrice.value
+          : this.strikePrice,
+      entryDebit: data.entryDebit.present
+          ? data.entryDebit.value
+          : this.entryDebit,
+      exitCredit: data.exitCredit.present
+          ? data.exitCredit.value
+          : this.exitCredit,
+      fees: data.fees.present ? data.fees.value : this.fees,
+      currency: data.currency.present ? data.currency.value : this.currency,
+      contractSize: data.contractSize.present
+          ? data.contractSize.value
+          : this.contractSize,
+      contractQuantity: data.contractQuantity.present
+          ? data.contractQuantity.value
+          : this.contractQuantity,
+      status: data.status.present ? data.status.value : this.status,
+      currentMark: data.currentMark.present
+          ? data.currentMark.value
+          : this.currentMark,
+      currentDelta: data.currentDelta.present
+          ? data.currentDelta.value
+          : this.currentDelta,
+      markedAt: data.markedAt.present ? data.markedAt.value : this.markedAt,
+      brokerageAccountId: data.brokerageAccountId.present
+          ? data.brokerageAccountId.value
+          : this.brokerageAccountId,
+      notes: data.notes.present ? data.notes.value : this.notes,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OptionsLeapsCallPositionRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('symbol: $symbol, ')
+          ..write('optionSymbol: $optionSymbol, ')
+          ..write('openedAt: $openedAt, ')
+          ..write('expirationAt: $expirationAt, ')
+          ..write('closedAt: $closedAt, ')
+          ..write('strikePrice: $strikePrice, ')
+          ..write('entryDebit: $entryDebit, ')
+          ..write('exitCredit: $exitCredit, ')
+          ..write('fees: $fees, ')
+          ..write('currency: $currency, ')
+          ..write('contractSize: $contractSize, ')
+          ..write('contractQuantity: $contractQuantity, ')
+          ..write('status: $status, ')
+          ..write('currentMark: $currentMark, ')
+          ..write('currentDelta: $currentDelta, ')
+          ..write('markedAt: $markedAt, ')
+          ..write('brokerageAccountId: $brokerageAccountId, ')
+          ..write('notes: $notes')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    symbol,
+    optionSymbol,
+    openedAt,
+    expirationAt,
+    closedAt,
+    strikePrice,
+    entryDebit,
+    exitCredit,
+    fees,
+    currency,
+    contractSize,
+    contractQuantity,
+    status,
+    currentMark,
+    currentDelta,
+    markedAt,
+    brokerageAccountId,
+    notes,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OptionsLeapsCallPositionRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.symbol == this.symbol &&
+          other.optionSymbol == this.optionSymbol &&
+          other.openedAt == this.openedAt &&
+          other.expirationAt == this.expirationAt &&
+          other.closedAt == this.closedAt &&
+          other.strikePrice == this.strikePrice &&
+          other.entryDebit == this.entryDebit &&
+          other.exitCredit == this.exitCredit &&
+          other.fees == this.fees &&
+          other.currency == this.currency &&
+          other.contractSize == this.contractSize &&
+          other.contractQuantity == this.contractQuantity &&
+          other.status == this.status &&
+          other.currentMark == this.currentMark &&
+          other.currentDelta == this.currentDelta &&
+          other.markedAt == this.markedAt &&
+          other.brokerageAccountId == this.brokerageAccountId &&
+          other.notes == this.notes);
+}
+
+class OptionsLeapsCallPositionsCompanion
+    extends UpdateCompanion<OptionsLeapsCallPositionRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> symbol;
+  final Value<String> optionSymbol;
+  final Value<DateTime> openedAt;
+  final Value<DateTime> expirationAt;
+  final Value<DateTime?> closedAt;
+  final Value<Decimal> strikePrice;
+  final Value<Decimal> entryDebit;
+  final Value<Decimal?> exitCredit;
+  final Value<Decimal> fees;
+  final Value<String> currency;
+  final Value<int> contractSize;
+  final Value<int> contractQuantity;
+  final Value<String> status;
+  final Value<Decimal?> currentMark;
+  final Value<Decimal?> currentDelta;
+  final Value<DateTime?> markedAt;
+  final Value<String?> brokerageAccountId;
+  final Value<String?> notes;
+  final Value<int> rowid;
+  const OptionsLeapsCallPositionsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.symbol = const Value.absent(),
+    this.optionSymbol = const Value.absent(),
+    this.openedAt = const Value.absent(),
+    this.expirationAt = const Value.absent(),
+    this.closedAt = const Value.absent(),
+    this.strikePrice = const Value.absent(),
+    this.entryDebit = const Value.absent(),
+    this.exitCredit = const Value.absent(),
+    this.fees = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.contractSize = const Value.absent(),
+    this.contractQuantity = const Value.absent(),
+    this.status = const Value.absent(),
+    this.currentMark = const Value.absent(),
+    this.currentDelta = const Value.absent(),
+    this.markedAt = const Value.absent(),
+    this.brokerageAccountId = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  OptionsLeapsCallPositionsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String symbol,
+    required String optionSymbol,
+    required DateTime openedAt,
+    required DateTime expirationAt,
+    this.closedAt = const Value.absent(),
+    required Decimal strikePrice,
+    required Decimal entryDebit,
+    this.exitCredit = const Value.absent(),
+    this.fees = const Value.absent(),
+    required String currency,
+    this.contractSize = const Value.absent(),
+    this.contractQuantity = const Value.absent(),
+    required String status,
+    this.currentMark = const Value.absent(),
+    this.currentDelta = const Value.absent(),
+    this.markedAt = const Value.absent(),
+    this.brokerageAccountId = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       symbol = Value(symbol),
+       optionSymbol = Value(optionSymbol),
+       openedAt = Value(openedAt),
+       expirationAt = Value(expirationAt),
+       strikePrice = Value(strikePrice),
+       entryDebit = Value(entryDebit),
+       currency = Value(currency),
+       status = Value(status);
+  static Insertable<OptionsLeapsCallPositionRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? symbol,
+    Expression<String>? optionSymbol,
+    Expression<DateTime>? openedAt,
+    Expression<DateTime>? expirationAt,
+    Expression<DateTime>? closedAt,
+    Expression<String>? strikePrice,
+    Expression<String>? entryDebit,
+    Expression<String>? exitCredit,
+    Expression<String>? fees,
+    Expression<String>? currency,
+    Expression<int>? contractSize,
+    Expression<int>? contractQuantity,
+    Expression<String>? status,
+    Expression<String>? currentMark,
+    Expression<String>? currentDelta,
+    Expression<DateTime>? markedAt,
+    Expression<String>? brokerageAccountId,
+    Expression<String>? notes,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (symbol != null) 'symbol': symbol,
+      if (optionSymbol != null) 'option_symbol': optionSymbol,
+      if (openedAt != null) 'opened_at': openedAt,
+      if (expirationAt != null) 'expiration_at': expirationAt,
+      if (closedAt != null) 'closed_at': closedAt,
+      if (strikePrice != null) 'strike_price': strikePrice,
+      if (entryDebit != null) 'entry_debit': entryDebit,
+      if (exitCredit != null) 'exit_credit': exitCredit,
+      if (fees != null) 'fees': fees,
+      if (currency != null) 'currency': currency,
+      if (contractSize != null) 'contract_size': contractSize,
+      if (contractQuantity != null) 'contract_quantity': contractQuantity,
+      if (status != null) 'status': status,
+      if (currentMark != null) 'current_mark': currentMark,
+      if (currentDelta != null) 'current_delta': currentDelta,
+      if (markedAt != null) 'marked_at': markedAt,
+      if (brokerageAccountId != null)
+        'brokerage_account_id': brokerageAccountId,
+      if (notes != null) 'notes': notes,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  OptionsLeapsCallPositionsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? symbol,
+    Value<String>? optionSymbol,
+    Value<DateTime>? openedAt,
+    Value<DateTime>? expirationAt,
+    Value<DateTime?>? closedAt,
+    Value<Decimal>? strikePrice,
+    Value<Decimal>? entryDebit,
+    Value<Decimal?>? exitCredit,
+    Value<Decimal>? fees,
+    Value<String>? currency,
+    Value<int>? contractSize,
+    Value<int>? contractQuantity,
+    Value<String>? status,
+    Value<Decimal?>? currentMark,
+    Value<Decimal?>? currentDelta,
+    Value<DateTime?>? markedAt,
+    Value<String?>? brokerageAccountId,
+    Value<String?>? notes,
+    Value<int>? rowid,
+  }) {
+    return OptionsLeapsCallPositionsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      symbol: symbol ?? this.symbol,
+      optionSymbol: optionSymbol ?? this.optionSymbol,
+      openedAt: openedAt ?? this.openedAt,
+      expirationAt: expirationAt ?? this.expirationAt,
+      closedAt: closedAt ?? this.closedAt,
+      strikePrice: strikePrice ?? this.strikePrice,
+      entryDebit: entryDebit ?? this.entryDebit,
+      exitCredit: exitCredit ?? this.exitCredit,
+      fees: fees ?? this.fees,
+      currency: currency ?? this.currency,
+      contractSize: contractSize ?? this.contractSize,
+      contractQuantity: contractQuantity ?? this.contractQuantity,
+      status: status ?? this.status,
+      currentMark: currentMark ?? this.currentMark,
+      currentDelta: currentDelta ?? this.currentDelta,
+      markedAt: markedAt ?? this.markedAt,
+      brokerageAccountId: brokerageAccountId ?? this.brokerageAccountId,
+      notes: notes ?? this.notes,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $OptionsLeapsCallPositionsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (symbol.present) {
+      map['symbol'] = Variable<String>(symbol.value);
+    }
+    if (optionSymbol.present) {
+      map['option_symbol'] = Variable<String>(optionSymbol.value);
+    }
+    if (openedAt.present) {
+      map['opened_at'] = Variable<DateTime>(openedAt.value);
+    }
+    if (expirationAt.present) {
+      map['expiration_at'] = Variable<DateTime>(expirationAt.value);
+    }
+    if (closedAt.present) {
+      map['closed_at'] = Variable<DateTime>(closedAt.value);
+    }
+    if (strikePrice.present) {
+      map['strike_price'] = Variable<String>(
+        $OptionsLeapsCallPositionsTable.$converterstrikePrice.toSql(
+          strikePrice.value,
+        ),
+      );
+    }
+    if (entryDebit.present) {
+      map['entry_debit'] = Variable<String>(
+        $OptionsLeapsCallPositionsTable.$converterentryDebit.toSql(
+          entryDebit.value,
+        ),
+      );
+    }
+    if (exitCredit.present) {
+      map['exit_credit'] = Variable<String>(
+        $OptionsLeapsCallPositionsTable.$converterexitCreditn.toSql(
+          exitCredit.value,
+        ),
+      );
+    }
+    if (fees.present) {
+      map['fees'] = Variable<String>(
+        $OptionsLeapsCallPositionsTable.$converterfees.toSql(fees.value),
+      );
+    }
+    if (currency.present) {
+      map['currency'] = Variable<String>(currency.value);
+    }
+    if (contractSize.present) {
+      map['contract_size'] = Variable<int>(contractSize.value);
+    }
+    if (contractQuantity.present) {
+      map['contract_quantity'] = Variable<int>(contractQuantity.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (currentMark.present) {
+      map['current_mark'] = Variable<String>(
+        $OptionsLeapsCallPositionsTable.$convertercurrentMarkn.toSql(
+          currentMark.value,
+        ),
+      );
+    }
+    if (currentDelta.present) {
+      map['current_delta'] = Variable<String>(
+        $OptionsLeapsCallPositionsTable.$convertercurrentDeltan.toSql(
+          currentDelta.value,
+        ),
+      );
+    }
+    if (markedAt.present) {
+      map['marked_at'] = Variable<DateTime>(markedAt.value);
+    }
+    if (brokerageAccountId.present) {
+      map['brokerage_account_id'] = Variable<String>(brokerageAccountId.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OptionsLeapsCallPositionsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('symbol: $symbol, ')
+          ..write('optionSymbol: $optionSymbol, ')
+          ..write('openedAt: $openedAt, ')
+          ..write('expirationAt: $expirationAt, ')
+          ..write('closedAt: $closedAt, ')
+          ..write('strikePrice: $strikePrice, ')
+          ..write('entryDebit: $entryDebit, ')
+          ..write('exitCredit: $exitCredit, ')
+          ..write('fees: $fees, ')
+          ..write('currency: $currency, ')
+          ..write('contractSize: $contractSize, ')
+          ..write('contractQuantity: $contractQuantity, ')
+          ..write('status: $status, ')
+          ..write('currentMark: $currentMark, ')
+          ..write('currentDelta: $currentDelta, ')
+          ..write('markedAt: $markedAt, ')
+          ..write('brokerageAccountId: $brokerageAccountId, ')
+          ..write('notes: $notes, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ApprovedUnderlyingsTable extends ApprovedUnderlyings
     with TableInfo<$ApprovedUnderlyingsTable, ApprovedUnderlyingRow> {
   @override
@@ -40245,6 +41639,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $OptionsStrategyProfileTableTable(this);
   late final $OptionsTradeJournalTable optionsTradeJournal =
       $OptionsTradeJournalTable(this);
+  late final $OptionsLeapsCallPositionsTable optionsLeapsCallPositions =
+      $OptionsLeapsCallPositionsTable(this);
   late final $ApprovedUnderlyingsTable approvedUnderlyings =
       $ApprovedUnderlyingsTable(this);
   late final $RecurringTransactionsTable recurringTransactions =
@@ -40325,6 +41721,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     watchlistItems,
     optionsStrategyProfileTable,
     optionsTradeJournal,
+    optionsLeapsCallPositions,
     approvedUnderlyings,
     recurringTransactions,
     liabilities,
@@ -44984,6 +46381,622 @@ typedef $$OptionsTradeJournalTableProcessedTableManager =
         >,
       ),
       OptionsTradeJournalRow,
+      PrefetchHooks Function()
+    >;
+typedef $$OptionsLeapsCallPositionsTableCreateCompanionBuilder =
+    OptionsLeapsCallPositionsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String symbol,
+      required String optionSymbol,
+      required DateTime openedAt,
+      required DateTime expirationAt,
+      Value<DateTime?> closedAt,
+      required Decimal strikePrice,
+      required Decimal entryDebit,
+      Value<Decimal?> exitCredit,
+      Value<Decimal> fees,
+      required String currency,
+      Value<int> contractSize,
+      Value<int> contractQuantity,
+      required String status,
+      Value<Decimal?> currentMark,
+      Value<Decimal?> currentDelta,
+      Value<DateTime?> markedAt,
+      Value<String?> brokerageAccountId,
+      Value<String?> notes,
+      Value<int> rowid,
+    });
+typedef $$OptionsLeapsCallPositionsTableUpdateCompanionBuilder =
+    OptionsLeapsCallPositionsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> symbol,
+      Value<String> optionSymbol,
+      Value<DateTime> openedAt,
+      Value<DateTime> expirationAt,
+      Value<DateTime?> closedAt,
+      Value<Decimal> strikePrice,
+      Value<Decimal> entryDebit,
+      Value<Decimal?> exitCredit,
+      Value<Decimal> fees,
+      Value<String> currency,
+      Value<int> contractSize,
+      Value<int> contractQuantity,
+      Value<String> status,
+      Value<Decimal?> currentMark,
+      Value<Decimal?> currentDelta,
+      Value<DateTime?> markedAt,
+      Value<String?> brokerageAccountId,
+      Value<String?> notes,
+      Value<int> rowid,
+    });
+
+class $$OptionsLeapsCallPositionsTableFilterComposer
+    extends Composer<_$AppDatabase, $OptionsLeapsCallPositionsTable> {
+  $$OptionsLeapsCallPositionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get optionSymbol => $composableBuilder(
+    column: $table.optionSymbol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get openedAt => $composableBuilder(
+    column: $table.openedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get expirationAt => $composableBuilder(
+    column: $table.expirationAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get closedAt => $composableBuilder(
+    column: $table.closedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get strikePrice =>
+      $composableBuilder(
+        column: $table.strikePrice,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get entryDebit =>
+      $composableBuilder(
+        column: $table.entryDebit,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get exitCredit =>
+      $composableBuilder(
+        column: $table.exitCredit,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get fees =>
+      $composableBuilder(
+        column: $table.fees,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get contractSize => $composableBuilder(
+    column: $table.contractSize,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get contractQuantity => $composableBuilder(
+    column: $table.contractQuantity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get currentMark =>
+      $composableBuilder(
+        column: $table.currentMark,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get currentDelta =>
+      $composableBuilder(
+        column: $table.currentDelta,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get markedAt => $composableBuilder(
+    column: $table.markedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get brokerageAccountId => $composableBuilder(
+    column: $table.brokerageAccountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$OptionsLeapsCallPositionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $OptionsLeapsCallPositionsTable> {
+  $$OptionsLeapsCallPositionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get optionSymbol => $composableBuilder(
+    column: $table.optionSymbol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get openedAt => $composableBuilder(
+    column: $table.openedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get expirationAt => $composableBuilder(
+    column: $table.expirationAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get closedAt => $composableBuilder(
+    column: $table.closedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get strikePrice => $composableBuilder(
+    column: $table.strikePrice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get entryDebit => $composableBuilder(
+    column: $table.entryDebit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get exitCredit => $composableBuilder(
+    column: $table.exitCredit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fees => $composableBuilder(
+    column: $table.fees,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get contractSize => $composableBuilder(
+    column: $table.contractSize,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get contractQuantity => $composableBuilder(
+    column: $table.contractQuantity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currentMark => $composableBuilder(
+    column: $table.currentMark,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currentDelta => $composableBuilder(
+    column: $table.currentDelta,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get markedAt => $composableBuilder(
+    column: $table.markedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get brokerageAccountId => $composableBuilder(
+    column: $table.brokerageAccountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$OptionsLeapsCallPositionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $OptionsLeapsCallPositionsTable> {
+  $$OptionsLeapsCallPositionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get symbol =>
+      $composableBuilder(column: $table.symbol, builder: (column) => column);
+
+  GeneratedColumn<String> get optionSymbol => $composableBuilder(
+    column: $table.optionSymbol,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get openedAt =>
+      $composableBuilder(column: $table.openedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get expirationAt => $composableBuilder(
+    column: $table.expirationAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get closedAt =>
+      $composableBuilder(column: $table.closedAt, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get strikePrice =>
+      $composableBuilder(
+        column: $table.strikePrice,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get entryDebit =>
+      $composableBuilder(
+        column: $table.entryDebit,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get exitCredit =>
+      $composableBuilder(
+        column: $table.exitCredit,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get fees =>
+      $composableBuilder(column: $table.fees, builder: (column) => column);
+
+  GeneratedColumn<String> get currency =>
+      $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumn<int> get contractSize => $composableBuilder(
+    column: $table.contractSize,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get contractQuantity => $composableBuilder(
+    column: $table.contractQuantity,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get currentMark =>
+      $composableBuilder(
+        column: $table.currentMark,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get currentDelta =>
+      $composableBuilder(
+        column: $table.currentDelta,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get markedAt =>
+      $composableBuilder(column: $table.markedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get brokerageAccountId => $composableBuilder(
+    column: $table.brokerageAccountId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+}
+
+class $$OptionsLeapsCallPositionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $OptionsLeapsCallPositionsTable,
+          OptionsLeapsCallPositionRow,
+          $$OptionsLeapsCallPositionsTableFilterComposer,
+          $$OptionsLeapsCallPositionsTableOrderingComposer,
+          $$OptionsLeapsCallPositionsTableAnnotationComposer,
+          $$OptionsLeapsCallPositionsTableCreateCompanionBuilder,
+          $$OptionsLeapsCallPositionsTableUpdateCompanionBuilder,
+          (
+            OptionsLeapsCallPositionRow,
+            BaseReferences<
+              _$AppDatabase,
+              $OptionsLeapsCallPositionsTable,
+              OptionsLeapsCallPositionRow
+            >,
+          ),
+          OptionsLeapsCallPositionRow,
+          PrefetchHooks Function()
+        > {
+  $$OptionsLeapsCallPositionsTableTableManager(
+    _$AppDatabase db,
+    $OptionsLeapsCallPositionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$OptionsLeapsCallPositionsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$OptionsLeapsCallPositionsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$OptionsLeapsCallPositionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> symbol = const Value.absent(),
+                Value<String> optionSymbol = const Value.absent(),
+                Value<DateTime> openedAt = const Value.absent(),
+                Value<DateTime> expirationAt = const Value.absent(),
+                Value<DateTime?> closedAt = const Value.absent(),
+                Value<Decimal> strikePrice = const Value.absent(),
+                Value<Decimal> entryDebit = const Value.absent(),
+                Value<Decimal?> exitCredit = const Value.absent(),
+                Value<Decimal> fees = const Value.absent(),
+                Value<String> currency = const Value.absent(),
+                Value<int> contractSize = const Value.absent(),
+                Value<int> contractQuantity = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<Decimal?> currentMark = const Value.absent(),
+                Value<Decimal?> currentDelta = const Value.absent(),
+                Value<DateTime?> markedAt = const Value.absent(),
+                Value<String?> brokerageAccountId = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => OptionsLeapsCallPositionsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                symbol: symbol,
+                optionSymbol: optionSymbol,
+                openedAt: openedAt,
+                expirationAt: expirationAt,
+                closedAt: closedAt,
+                strikePrice: strikePrice,
+                entryDebit: entryDebit,
+                exitCredit: exitCredit,
+                fees: fees,
+                currency: currency,
+                contractSize: contractSize,
+                contractQuantity: contractQuantity,
+                status: status,
+                currentMark: currentMark,
+                currentDelta: currentDelta,
+                markedAt: markedAt,
+                brokerageAccountId: brokerageAccountId,
+                notes: notes,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String symbol,
+                required String optionSymbol,
+                required DateTime openedAt,
+                required DateTime expirationAt,
+                Value<DateTime?> closedAt = const Value.absent(),
+                required Decimal strikePrice,
+                required Decimal entryDebit,
+                Value<Decimal?> exitCredit = const Value.absent(),
+                Value<Decimal> fees = const Value.absent(),
+                required String currency,
+                Value<int> contractSize = const Value.absent(),
+                Value<int> contractQuantity = const Value.absent(),
+                required String status,
+                Value<Decimal?> currentMark = const Value.absent(),
+                Value<Decimal?> currentDelta = const Value.absent(),
+                Value<DateTime?> markedAt = const Value.absent(),
+                Value<String?> brokerageAccountId = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => OptionsLeapsCallPositionsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                symbol: symbol,
+                optionSymbol: optionSymbol,
+                openedAt: openedAt,
+                expirationAt: expirationAt,
+                closedAt: closedAt,
+                strikePrice: strikePrice,
+                entryDebit: entryDebit,
+                exitCredit: exitCredit,
+                fees: fees,
+                currency: currency,
+                contractSize: contractSize,
+                contractQuantity: contractQuantity,
+                status: status,
+                currentMark: currentMark,
+                currentDelta: currentDelta,
+                markedAt: markedAt,
+                brokerageAccountId: brokerageAccountId,
+                notes: notes,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$OptionsLeapsCallPositionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $OptionsLeapsCallPositionsTable,
+      OptionsLeapsCallPositionRow,
+      $$OptionsLeapsCallPositionsTableFilterComposer,
+      $$OptionsLeapsCallPositionsTableOrderingComposer,
+      $$OptionsLeapsCallPositionsTableAnnotationComposer,
+      $$OptionsLeapsCallPositionsTableCreateCompanionBuilder,
+      $$OptionsLeapsCallPositionsTableUpdateCompanionBuilder,
+      (
+        OptionsLeapsCallPositionRow,
+        BaseReferences<
+          _$AppDatabase,
+          $OptionsLeapsCallPositionsTable,
+          OptionsLeapsCallPositionRow
+        >,
+      ),
+      OptionsLeapsCallPositionRow,
       PrefetchHooks Function()
     >;
 typedef $$ApprovedUnderlyingsTableCreateCompanionBuilder =
@@ -59064,6 +61077,11 @@ class $AppDatabaseManager {
       );
   $$OptionsTradeJournalTableTableManager get optionsTradeJournal =>
       $$OptionsTradeJournalTableTableManager(_db, _db.optionsTradeJournal);
+  $$OptionsLeapsCallPositionsTableTableManager get optionsLeapsCallPositions =>
+      $$OptionsLeapsCallPositionsTableTableManager(
+        _db,
+        _db.optionsLeapsCallPositions,
+      );
   $$ApprovedUnderlyingsTableTableManager get approvedUnderlyings =>
       $$ApprovedUnderlyingsTableTableManager(_db, _db.approvedUnderlyings);
   $$RecurringTransactionsTableTableManager get recurringTransactions =>

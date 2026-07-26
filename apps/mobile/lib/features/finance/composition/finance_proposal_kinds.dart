@@ -89,6 +89,13 @@ const List<ProposalKindMeta> kFinanceProposalKinds = [
     editableFields: _optionsJournalEntryFields,
     previewRows: _optionsJournalEntryRows,
   ),
+  ProposalKindMeta(
+    kind: 'leaps_call_position',
+    icon: FLucideIcons.trendingUp,
+    label: _leapsCallPositionLabel,
+    toolName: 'propose_leaps_call_position',
+    previewRows: _leapsCallPositionRows,
+  ),
 ];
 
 /// Proposal kinds owned by FinanceOS. Derived from the same specs that
@@ -113,6 +120,8 @@ String _optionsProfileUpdateLabel(AppLocalizations l) =>
     l.aiChatProposalKindOptionsProfileUpdate;
 String _optionsJournalEntryLabel(AppLocalizations l) =>
     l.aiChatProposalKindOptionsJournalEntry;
+String _leapsCallPositionLabel(AppLocalizations l) =>
+    l.aiChatProposalKindLeapsCall;
 
 // ─── Editable fields ───
 
@@ -395,6 +404,30 @@ List<ProposalKindRow> _optionsJournalEntryRows(
       ProposalKindRow(l10n.liabilityScheduleColStatus, r('status')!),
     if (r('opened_at_iso') != null)
       ProposalKindRow(l10n.aiChatRowDate, r('opened_at_iso')!),
+    if (r('notes') != null) ProposalKindRow(l10n.aiChatRowNote, r('notes')!),
+  ];
+}
+
+List<ProposalKindRow> _leapsCallPositionRows(
+  AppLocalizations l10n,
+  ReadyProposalPlan plan,
+  Map<String, Object?>? overrides,
+) {
+  String? r(String key) => _read(plan, overrides, key);
+  return [
+    if (r('underlying') != null)
+      ProposalKindRow(l10n.aiChatRowUnderlying, r('underlying')!),
+    if (r('option_symbol') != null)
+      ProposalKindRow(l10n.aiChatRowOptionContract, r('option_symbol')!),
+    if (r('entry_debit') != null)
+      ProposalKindRow(
+        l10n.leapsOverlayEntryDebit,
+        '${r('entry_debit')} ${r('currency') ?? ''}'.trim(),
+      ),
+    if (r('strike_price') != null)
+      ProposalKindRow(l10n.leapsOverlayStrike, r('strike_price')!),
+    if (r('expiration_at_iso') != null)
+      ProposalKindRow(l10n.leapsOverlayExpiration, r('expiration_at_iso')!),
     if (r('notes') != null) ProposalKindRow(l10n.aiChatRowNote, r('notes')!),
   ];
 }

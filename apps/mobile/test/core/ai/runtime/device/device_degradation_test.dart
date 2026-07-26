@@ -291,6 +291,7 @@ void main() {
         'propose_expense',
         'propose_fire_plan_update',
         'propose_income',
+        'propose_leaps_call_position',
         'propose_liability_payment',
         'propose_memory',
         'propose_merge',

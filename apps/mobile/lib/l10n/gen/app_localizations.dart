@@ -26007,6 +26007,240 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose a color used in lists and reports.'**
   String get expenseCategoriesColorHelper;
+
+  /// No description provided for @leapsOverlayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS upside overlay'**
+  String get leapsOverlayTitle;
+
+  /// No description provided for @leapsOverlaySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Long calls tracked separately from the Wheel'**
+  String get leapsOverlaySubtitle;
+
+  /// No description provided for @leapsOverlayAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add LEAPS call'**
+  String get leapsOverlayAdd;
+
+  /// No description provided for @leapsOverlayEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit LEAPS call'**
+  String get leapsOverlayEdit;
+
+  /// No description provided for @leapsOverlayEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No long calls recorded'**
+  String get leapsOverlayEmpty;
+
+  /// No description provided for @leapsOverlayOpenCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} open LEAPS'**
+  String leapsOverlayOpenCount(int count);
+
+  /// No description provided for @leapsOverlayCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Open premium at risk'**
+  String get leapsOverlayCost;
+
+  /// No description provided for @leapsOverlayCoverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Wheel income coverage'**
+  String get leapsOverlayCoverage;
+
+  /// No description provided for @leapsOverlayDeltaShares.
+  ///
+  /// In en, this message translates to:
+  /// **'Delta-equivalent shares'**
+  String get leapsOverlayDeltaShares;
+
+  /// No description provided for @leapsOverlayCombinedRealized.
+  ///
+  /// In en, this message translates to:
+  /// **'Combined realized P&L'**
+  String get leapsOverlayCombinedRealized;
+
+  /// No description provided for @leapsOverlayUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Not recorded'**
+  String get leapsOverlayUnknown;
+
+  /// No description provided for @leapsOverlayCoverageValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% covered'**
+  String leapsOverlayCoverageValue(String percent);
+
+  /// No description provided for @leapsOverlayRiskStacked.
+  ///
+  /// In en, this message translates to:
+  /// **'Wheel and LEAPS are both exposed to an underlying decline. The long call does not hedge put assignment.'**
+  String get leapsOverlayRiskStacked;
+
+  /// No description provided for @leapsOverlayRiskCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Open LEAPS premium is greater than realized Wheel income.'**
+  String get leapsOverlayRiskCost;
+
+  /// No description provided for @leapsOverlayRiskDelta.
+  ///
+  /// In en, this message translates to:
+  /// **'Delta is missing, so total upside exposure cannot be calculated.'**
+  String get leapsOverlayRiskDelta;
+
+  /// No description provided for @leapsOverlayRiskMark.
+  ///
+  /// In en, this message translates to:
+  /// **'Current mark is missing; unrealized P&L is unavailable.'**
+  String get leapsOverlayRiskMark;
+
+  /// No description provided for @leapsOverlayRiskExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'A LEAPS call has 180 days or less remaining. Review roll, close, exercise, and tax consequences.'**
+  String get leapsOverlayRiskExpiry;
+
+  /// No description provided for @leapsOverlayRiskDividend.
+  ///
+  /// In en, this message translates to:
+  /// **'A long call does not receive dividends unless shares are acquired before the ex-dividend date.'**
+  String get leapsOverlayRiskDividend;
+
+  /// No description provided for @leapsOverlayOptionSymbol.
+  ///
+  /// In en, this message translates to:
+  /// **'Call contract'**
+  String get leapsOverlayOptionSymbol;
+
+  /// No description provided for @leapsOverlayOpenedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Opened'**
+  String get leapsOverlayOpenedAt;
+
+  /// No description provided for @leapsOverlayExpiration.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiration'**
+  String get leapsOverlayExpiration;
+
+  /// No description provided for @leapsOverlayStrike.
+  ///
+  /// In en, this message translates to:
+  /// **'Strike'**
+  String get leapsOverlayStrike;
+
+  /// No description provided for @leapsOverlayEntryDebit.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry debit per contract'**
+  String get leapsOverlayEntryDebit;
+
+  /// No description provided for @leapsOverlayExitCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit credit per contract'**
+  String get leapsOverlayExitCredit;
+
+  /// No description provided for @leapsOverlayCurrentMark.
+  ///
+  /// In en, this message translates to:
+  /// **'Current mark per contract'**
+  String get leapsOverlayCurrentMark;
+
+  /// No description provided for @leapsOverlayCurrentDelta.
+  ///
+  /// In en, this message translates to:
+  /// **'Current delta (0–1)'**
+  String get leapsOverlayCurrentDelta;
+
+  /// No description provided for @leapsOverlayMarkedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark date'**
+  String get leapsOverlayMarkedAt;
+
+  /// No description provided for @leapsOverlayStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Position status'**
+  String get leapsOverlayStatus;
+
+  /// No description provided for @leapsOverlayStatusOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get leapsOverlayStatusOpen;
+
+  /// No description provided for @leapsOverlayStatusClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get leapsOverlayStatusClosed;
+
+  /// No description provided for @leapsOverlayStatusExercised.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercised'**
+  String get leapsOverlayStatusExercised;
+
+  /// No description provided for @leapsOverlayStatusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get leapsOverlayStatusExpired;
+
+  /// No description provided for @leapsOverlayDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete LEAPS position?'**
+  String get leapsOverlayDeleteTitle;
+
+  /// No description provided for @leapsOverlayDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the position from the synced strategy record.'**
+  String get leapsOverlayDeleteBody;
+
+  /// No description provided for @leapsOverlayDurationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS are long-dated at listing. Record the actual expiration even when less than one year remains.'**
+  String get leapsOverlayDurationHint;
+
+  /// No description provided for @leapsOverlayDeltaHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional manual snapshot. Leave empty when unknown; NaviWealth will not invent a value.'**
+  String get leapsOverlayDeltaHint;
+
+  /// No description provided for @leapsOverlayDateInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiration must be after the open date.'**
+  String get leapsOverlayDateInvalid;
+
+  /// No description provided for @leapsOverlayDeltaInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a delta from 0 to 1.'**
+  String get leapsOverlayDeltaInvalid;
+
+  /// No description provided for @aiChatProposalKindLeapsCall.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS call position'**
+  String get aiChatProposalKindLeapsCall;
 }
 
 class _AppLocalizationsDelegate

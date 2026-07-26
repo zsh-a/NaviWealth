@@ -72,6 +72,42 @@ class OptionsTradeJournal extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Long calls held as an upside overlay beside Wheel positions. This table is
+/// intentionally separate from the Wheel journal because a bought call is
+/// neither a short-premium trade nor a Wheel lifecycle stage.
+@DataClassName('OptionsLeapsCallPositionRow')
+class OptionsLeapsCallPositions extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get symbol => text()();
+  TextColumn get optionSymbol => text()();
+  DateTimeColumn get openedAt => dateTime()();
+  DateTimeColumn get expirationAt => dateTime()();
+  DateTimeColumn get closedAt => dateTime().nullable()();
+  TextColumn get strikePrice => text().map(const DecimalConverter())();
+  TextColumn get entryDebit => text().map(const DecimalConverter())();
+  TextColumn get exitCredit =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get fees =>
+      text().map(const DecimalConverter()).withDefault(const Constant('0'))();
+  TextColumn get currency => text().withLength(min: 3, max: 8)();
+  IntColumn get contractSize => integer().withDefault(const Constant(100))();
+  IntColumn get contractQuantity => integer().withDefault(const Constant(1))();
+  TextColumn get status => text()();
+  TextColumn get currentMark =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get currentDelta =>
+      text().map(const DecimalConverter()).nullable()();
+  DateTimeColumn get markedAt => dateTime().nullable()();
+  TextColumn get brokerageAccountId => text().nullable()();
+  TextColumn get notes => text().nullable()();
+
+  @override
+  String? get tableName => 'options_leaps_call_positions';
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 /// Options Income Planner — symbols the user has explicitly approved for
 /// sell-put / covered-call candidate generation. See
 /// `docs/domains/options-income.md` §6.2.

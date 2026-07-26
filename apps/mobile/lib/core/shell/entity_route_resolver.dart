@@ -20,6 +20,7 @@ abstract final class EntityRouteTables {
   static const liabilities = 'liabilities';
   static const journalEntries = 'journal_entries';
   static const optionsTradeJournal = 'options_trade_journal';
+  static const optionsLeapsCallPositions = 'options_leaps_call_positions';
 }
 
 final entityRouteResolverProvider = Provider<EntityRouteResolver>(

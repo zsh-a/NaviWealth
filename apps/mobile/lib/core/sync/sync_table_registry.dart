@@ -127,6 +127,10 @@ kSyncTableRegistrations = <SyncTableRegistration>[
     'options_trade_journal',
     domainPrefix: kFinanceDomainPrefix,
   ),
+  SyncTableRegistration(
+    'options_leaps_call_positions',
+    domainPrefix: kFinanceDomainPrefix,
+  ),
   SyncTableRegistration('health_metrics', domainPrefix: kHealthDomainPrefix),
   SyncTableRegistration(
     'knowledge_notes',

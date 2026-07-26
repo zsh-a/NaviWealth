@@ -7,6 +7,7 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/options_income/data/providers.dart';
+import 'package:naviwealth/features/finance/options_income/domain/leaps_call_position.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
 import 'package:naviwealth/features/finance/options_income/domain/trade_journal_entry.dart';
 import 'package:naviwealth/features/finance/options_income/ui/wheel_lifecycle_page.dart';
@@ -44,7 +45,11 @@ TradeJournalEntry _entry({
   sync: _meta(),
 );
 
-Future<void> _pump(WidgetTester tester, List<TradeJournalEntry> entries) async {
+Future<void> _pump(
+  WidgetTester tester,
+  List<TradeJournalEntry> entries, {
+  List<LeapsCallPosition> leaps = const [],
+}) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -52,6 +57,9 @@ Future<void> _pump(WidgetTester tester, List<TradeJournalEntry> entries) async {
         // from it without touching the database.
         tradeJournalEntriesProvider.overrideWith((ref) async* {
           yield entries;
+        }),
+        leapsCallPositionsProvider.overrideWith((ref) async* {
+          yield leaps;
         }),
       ],
       child: MaterialApp(
@@ -133,5 +141,55 @@ void main() {
       lessThan(msftTop),
       reason: 'open ZM cycle must render above closed MSFT cycle',
     );
+  });
+
+  testWidgets('cycle detail separates LEAPS cost and risk from Wheel stage', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      [
+        _entry(
+          symbol: 'TSM',
+          strategy: OptionsStrategyKind.cashSecuredPut,
+          status: TradeJournalStatus.open,
+        ),
+      ],
+      leaps: [
+        LeapsCallPosition(
+          id: 'leaps',
+          symbol: 'TSM',
+          optionSymbol: 'TSM280121C00200000',
+          openedAt: DateTime.utc(2026, 7, 1),
+          expirationAt: DateTime.utc(2028, 1, 21),
+          closedAt: null,
+          strikePrice: Decimal.fromInt(200),
+          entryDebit: Decimal.fromInt(1000),
+          exitCredit: null,
+          fees: Decimal.zero,
+          currency: 'USD',
+          contractSize: 100,
+          contractQuantity: 1,
+          status: LeapsCallStatus.open,
+          currentMark: null,
+          currentDelta: null,
+          markedAt: null,
+          brokerageAccountId: null,
+          notes: null,
+          sync: _meta(),
+        ),
+      ],
+    );
+
+    await tester.tap(find.text('TSM'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('LEAPS upside overlay'), findsOneWidget);
+    expect(find.text('Open premium at risk'), findsOneWidget);
+    expect(
+      find.textContaining('does not hedge put assignment'),
+      findsOneWidget,
+    );
+    expect(find.text('TSM280121C00200000'), findsOneWidget);
   });
 }

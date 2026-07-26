@@ -127,6 +127,8 @@ class FinanceProposalApplier implements ProposalApplier {
         await optionsApplier.undoProfileUpdate(state);
       case 'options_trade_journal':
         await optionsApplier.undoJournalEntry(id);
+      case 'options_leaps_call_positions':
+        await optionsApplier.undoLeapsCallPosition(id);
       default:
         throw ProposalApplyException('unknown undo table: $table');
     }
@@ -156,6 +158,10 @@ class FinanceProposalApplier implements ProposalApplier {
           at,
         ),
         'options_journal_entry' => await optionsApplier.applyJournalEntry(
+          plan,
+          at,
+        ),
+        'leaps_call_position' => await optionsApplier.applyLeapsCallPosition(
           plan,
           at,
         ),
@@ -227,6 +233,9 @@ final financeProposalApplierProvider = FutureProvider<ProposalApplier>((
   final tradeJournalRepo = await ref.watch(
     tradeJournalRepositoryProvider.future,
   );
+  final leapsCallRepo = await ref.watch(
+    leapsCallPositionRepositoryProvider.future,
+  );
   final optionsLedgerService = await ref.watch(
     optionsJournalLedgerServiceProvider.future,
   );
@@ -244,6 +253,7 @@ final financeProposalApplierProvider = FutureProvider<ProposalApplier>((
     optionsApplier: OptionsProposalApplier(
       profileRepo: optionsProfileRepo,
       tradeJournalRepo: tradeJournalRepo,
+      leapsCallRepo: leapsCallRepo,
       ledgerService: optionsLedgerService,
       currentUserId: currentUserId,
     ),

@@ -15413,4 +15413,136 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get expenseCategoriesColorHelper =>
       'Choose a color used in lists and reports.';
+
+  @override
+  String get leapsOverlayTitle => 'LEAPS upside overlay';
+
+  @override
+  String get leapsOverlaySubtitle =>
+      'Long calls tracked separately from the Wheel';
+
+  @override
+  String get leapsOverlayAdd => 'Add LEAPS call';
+
+  @override
+  String get leapsOverlayEdit => 'Edit LEAPS call';
+
+  @override
+  String get leapsOverlayEmpty => 'No long calls recorded';
+
+  @override
+  String leapsOverlayOpenCount(int count) {
+    return '$count open LEAPS';
+  }
+
+  @override
+  String get leapsOverlayCost => 'Open premium at risk';
+
+  @override
+  String get leapsOverlayCoverage => 'Wheel income coverage';
+
+  @override
+  String get leapsOverlayDeltaShares => 'Delta-equivalent shares';
+
+  @override
+  String get leapsOverlayCombinedRealized => 'Combined realized P&L';
+
+  @override
+  String get leapsOverlayUnknown => 'Not recorded';
+
+  @override
+  String leapsOverlayCoverageValue(String percent) {
+    return '$percent% covered';
+  }
+
+  @override
+  String get leapsOverlayRiskStacked =>
+      'Wheel and LEAPS are both exposed to an underlying decline. The long call does not hedge put assignment.';
+
+  @override
+  String get leapsOverlayRiskCost =>
+      'Open LEAPS premium is greater than realized Wheel income.';
+
+  @override
+  String get leapsOverlayRiskDelta =>
+      'Delta is missing, so total upside exposure cannot be calculated.';
+
+  @override
+  String get leapsOverlayRiskMark =>
+      'Current mark is missing; unrealized P&L is unavailable.';
+
+  @override
+  String get leapsOverlayRiskExpiry =>
+      'A LEAPS call has 180 days or less remaining. Review roll, close, exercise, and tax consequences.';
+
+  @override
+  String get leapsOverlayRiskDividend =>
+      'A long call does not receive dividends unless shares are acquired before the ex-dividend date.';
+
+  @override
+  String get leapsOverlayOptionSymbol => 'Call contract';
+
+  @override
+  String get leapsOverlayOpenedAt => 'Opened';
+
+  @override
+  String get leapsOverlayExpiration => 'Expiration';
+
+  @override
+  String get leapsOverlayStrike => 'Strike';
+
+  @override
+  String get leapsOverlayEntryDebit => 'Entry debit per contract';
+
+  @override
+  String get leapsOverlayExitCredit => 'Exit credit per contract';
+
+  @override
+  String get leapsOverlayCurrentMark => 'Current mark per contract';
+
+  @override
+  String get leapsOverlayCurrentDelta => 'Current delta (0–1)';
+
+  @override
+  String get leapsOverlayMarkedAt => 'Mark date';
+
+  @override
+  String get leapsOverlayStatus => 'Position status';
+
+  @override
+  String get leapsOverlayStatusOpen => 'Open';
+
+  @override
+  String get leapsOverlayStatusClosed => 'Closed';
+
+  @override
+  String get leapsOverlayStatusExercised => 'Exercised';
+
+  @override
+  String get leapsOverlayStatusExpired => 'Expired';
+
+  @override
+  String get leapsOverlayDeleteTitle => 'Delete LEAPS position?';
+
+  @override
+  String get leapsOverlayDeleteBody =>
+      'This removes the position from the synced strategy record.';
+
+  @override
+  String get leapsOverlayDurationHint =>
+      'LEAPS are long-dated at listing. Record the actual expiration even when less than one year remains.';
+
+  @override
+  String get leapsOverlayDeltaHint =>
+      'Optional manual snapshot. Leave empty when unknown; NaviWealth will not invent a value.';
+
+  @override
+  String get leapsOverlayDateInvalid =>
+      'Expiration must be after the open date.';
+
+  @override
+  String get leapsOverlayDeltaInvalid => 'Enter a delta from 0 to 1.';
+
+  @override
+  String get aiChatProposalKindLeapsCall => 'LEAPS call position';
 }

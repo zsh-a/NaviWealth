@@ -14649,4 +14649,128 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get expenseCategoriesColorHelper => '选择用于列表与报表的类别颜色。';
+
+  @override
+  String get leapsOverlayTitle => 'LEAPS 上涨敞口';
+
+  @override
+  String get leapsOverlaySubtitle => '独立于 Wheel 记录的长期看涨期权';
+
+  @override
+  String get leapsOverlayAdd => '添加 LEAPS Call';
+
+  @override
+  String get leapsOverlayEdit => '编辑 LEAPS Call';
+
+  @override
+  String get leapsOverlayEmpty => '尚未记录长期看涨期权';
+
+  @override
+  String leapsOverlayOpenCount(int count) {
+    return '$count 个未平仓 LEAPS';
+  }
+
+  @override
+  String get leapsOverlayCost => '未平仓权利金风险';
+
+  @override
+  String get leapsOverlayCoverage => 'Wheel 收益覆盖率';
+
+  @override
+  String get leapsOverlayDeltaShares => 'Delta 等效股数';
+
+  @override
+  String get leapsOverlayCombinedRealized => '组合已实现损益';
+
+  @override
+  String get leapsOverlayUnknown => '未记录';
+
+  @override
+  String leapsOverlayCoverageValue(String percent) {
+    return '已覆盖 $percent%';
+  }
+
+  @override
+  String get leapsOverlayRiskStacked =>
+      'Wheel 与 LEAPS 都暴露于标的下跌；Long Call 不能对冲 Put 被行权。';
+
+  @override
+  String get leapsOverlayRiskCost => '未平仓 LEAPS 权利金高于 Wheel 已实现收入。';
+
+  @override
+  String get leapsOverlayRiskDelta => '缺少 Delta，无法计算总上涨敞口。';
+
+  @override
+  String get leapsOverlayRiskMark => '缺少当前市值，无法计算未实现损益。';
+
+  @override
+  String get leapsOverlayRiskExpiry =>
+      '有 LEAPS 剩余期限不超过 180 天，请复核展期、平仓、行权及税务影响。';
+
+  @override
+  String get leapsOverlayRiskDividend => 'Long Call 本身不获得股息；除非在除息日前行权并取得正股。';
+
+  @override
+  String get leapsOverlayOptionSymbol => 'Call 合约';
+
+  @override
+  String get leapsOverlayOpenedAt => '开仓日期';
+
+  @override
+  String get leapsOverlayExpiration => '到期日';
+
+  @override
+  String get leapsOverlayStrike => '行权价';
+
+  @override
+  String get leapsOverlayEntryDebit => '每张开仓支出';
+
+  @override
+  String get leapsOverlayExitCredit => '每张平仓收入';
+
+  @override
+  String get leapsOverlayCurrentMark => '每张当前市值';
+
+  @override
+  String get leapsOverlayCurrentDelta => '当前 Delta（0–1）';
+
+  @override
+  String get leapsOverlayMarkedAt => '估值日期';
+
+  @override
+  String get leapsOverlayStatus => '持仓状态';
+
+  @override
+  String get leapsOverlayStatusOpen => '持仓中';
+
+  @override
+  String get leapsOverlayStatusClosed => '已平仓';
+
+  @override
+  String get leapsOverlayStatusExercised => '已行权';
+
+  @override
+  String get leapsOverlayStatusExpired => '已到期';
+
+  @override
+  String get leapsOverlayDeleteTitle => '删除 LEAPS 持仓？';
+
+  @override
+  String get leapsOverlayDeleteBody => '该持仓会从已同步的策略记录中移除。';
+
+  @override
+  String get leapsOverlayDurationHint =>
+      'LEAPS 在挂牌时属于长期合约；即使当前剩余不足一年，也应记录真实到期日。';
+
+  @override
+  String get leapsOverlayDeltaHint => '可选的手工快照。未知时请留空，NaviWealth 不会虚构数值。';
+
+  @override
+  String get leapsOverlayDateInvalid => '到期日必须晚于开仓日期。';
+
+  @override
+  String get leapsOverlayDeltaInvalid => '请输入 0 到 1 之间的 Delta。';
+
+  @override
+  String get aiChatProposalKindLeapsCall => 'LEAPS Call 持仓';
 }

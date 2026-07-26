@@ -10,6 +10,7 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/options_income/ai_tools/get_wheel_lifecycle_tool.dart';
 import 'package:naviwealth/features/finance/options_income/data/providers.dart';
+import 'package:naviwealth/features/finance/options_income/domain/leaps_call_position.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
 import 'package:naviwealth/features/finance/options_income/domain/trade_journal_entry.dart';
 
@@ -46,14 +47,19 @@ TradeJournalEntry _entry({
   sync: _meta(),
 );
 
-ProviderContainer _container(List<TradeJournalEntry> entries) =>
-    ProviderContainer(
-      overrides: [
-        tradeJournalEntriesProvider.overrideWith((ref) async* {
-          yield entries;
-        }),
-      ],
-    );
+ProviderContainer _container(
+  List<TradeJournalEntry> entries, {
+  List<LeapsCallPosition> leaps = const [],
+}) => ProviderContainer(
+  overrides: [
+    tradeJournalEntriesProvider.overrideWith((ref) async* {
+      yield entries;
+    }),
+    leapsCallPositionsProvider.overrideWith((ref) async* {
+      yield leaps;
+    }),
+  ],
+);
 
 /// Runs [body] inside a probe so it gets a real Riverpod [Ref].
 Future<T> _withRef<T>(ProviderContainer c, Future<T> Function(Ref ref) body) {
@@ -74,7 +80,10 @@ Future<Map<String, Object?>> _invoke(
   if (drainStream) {
     // Subscribe so autoDispose providers stay mounted across the read.
     container.listen(tradeJournalEntriesProvider, (_, _) {});
+    container.listen(leapsCallPositionsProvider, (_, _) {});
     await container.read(tradeJournalEntriesProvider.future);
+    await container.read(leapsCallPositionsProvider.future);
+    container.read(wheelLeapsOverlaysProvider);
   }
   return _withRef(container, (ref) async {
     final out = await tool.invoke(
@@ -107,6 +116,9 @@ void main() {
           tradeJournalEntriesProvider.overrideWith((ref) async* {
             // Never emits — pause indefinitely.
             await Completer<void>().future;
+          }),
+          leapsCallPositionsProvider.overrideWith((ref) async* {
+            yield const [];
           }),
         ],
       );
@@ -239,6 +251,54 @@ void main() {
       for (final e in evidence.cast<Map<Object?, Object?>>()) {
         expect(e['entity_table'], 'options_trade_journal');
       }
+    });
+
+    test('returns LEAPS overlay metrics and evidence separately', () async {
+      final c = _container(
+        [
+          _entry(
+            id: 'put',
+            symbol: 'TSM',
+            strategy: OptionsStrategyKind.cashSecuredPut,
+            status: TradeJournalStatus.open,
+          ),
+        ],
+        leaps: [
+          LeapsCallPosition(
+            id: 'leaps',
+            symbol: 'TSM',
+            optionSymbol: 'TSM280121C00200000',
+            openedAt: DateTime.utc(2026, 7, 1),
+            expirationAt: DateTime.utc(2028, 1, 21),
+            closedAt: null,
+            strikePrice: Decimal.fromInt(200),
+            entryDebit: Decimal.fromInt(1000),
+            exitCredit: null,
+            fees: Decimal.zero,
+            currency: 'USD',
+            contractSize: 100,
+            contractQuantity: 1,
+            status: LeapsCallStatus.open,
+            currentMark: Decimal.fromInt(1100),
+            currentDelta: Decimal.parse('0.65'),
+            markedAt: DateTime.utc(2026, 7, 20),
+            brokerageAccountId: null,
+            notes: null,
+            sync: _meta(),
+          ),
+        ],
+      );
+      addTearDown(c.dispose);
+      final out = await _invoke(tool, c, const {'symbol': 'TSM'});
+      final cycle = (out['cycles']! as List).single as Map;
+      final overlay = cycle['leaps_overlay']! as Map;
+      expect(overlay['open_premium_at_risk'], '1000');
+      expect(overlay['delta_equivalent_shares'], '65');
+      final evidence = (out['evidence']! as List).cast<Map<Object?, Object?>>();
+      expect(
+        evidence.map((value) => value['entity_table']),
+        contains('options_leaps_call_positions'),
+      );
     });
 
     test(

@@ -2,6 +2,7 @@ import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/features/finance/options_income/data/providers.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
+import 'package:naviwealth/features/finance/options_income/domain/wheel_leaps_overlay.dart';
 import 'package:naviwealth/features/finance/options_income/domain/wheel_lifecycle.dart';
 
 /// `get_wheel_lifecycle` — return the per-underlying Wheel cycle posture
@@ -40,9 +41,9 @@ class GetWheelLifecycleTool implements DeviceTool {
     DeviceToolContext ctx,
     Map<String, Object?> input,
   ) async {
-    final cyclesAsync = ctx.ref.read(wheelLifecyclesProvider);
-    final cycles = cyclesAsync.value;
-    if (cycles == null) {
+    final overlaysAsync = ctx.ref.read(wheelLeapsOverlaysProvider);
+    final overlays = overlaysAsync.value;
+    if (overlays == null) {
       return <String, Object?>{
         'cycles': <Object?>[],
         'guidance': '交易日志尚未加载完毕,请稍后再问;或先邀请用户在 Income Planner 录入一笔交易。',
@@ -51,51 +52,84 @@ class GetWheelLifecycleTool implements DeviceTool {
 
     final filter = (input['symbol'] as String?)?.trim().toUpperCase();
     final filtered = filter == null || filter.isEmpty
-        ? cycles
-        : cycles
-              .where((c) => c.symbol.toUpperCase() == filter)
+        ? overlays
+        : overlays
+              .where((value) => value.wheel.symbol.toUpperCase() == filter)
               .toList(growable: false);
 
     final result = <String, Object?>{
-      'cycles': [for (final cycle in filtered) _cycleToWire(cycle)],
+      'cycles': [for (final overlay in filtered) _cycleToWire(overlay)],
       if (filter != null && filtered.isEmpty)
         'guidance': '$filter 没有任何 Wheel 周期记录;请先建议用户在 Income Planner 录入一笔交易。',
     };
     return withEvidence(
       result: result,
       anchors: [
-        for (final cycle in filtered)
-          for (final entry in cycle.entries)
+        for (final overlay in filtered) ...[
+          for (final entry in overlay.wheel.entries)
             EvidenceAnchor(
               entityTable: 'options_trade_journal',
               entityId: entry.id,
-              label: '${cycle.symbol} · ${entry.strategy.wire}',
+              label: '${overlay.wheel.symbol} · ${entry.strategy.wire}',
             ),
+          for (final position in overlay.positions)
+            EvidenceAnchor(
+              entityTable: 'options_leaps_call_positions',
+              entityId: position.id,
+              label: '${overlay.wheel.symbol} · LEAPS long call',
+            ),
+        ],
       ],
     );
   }
 
-  Map<String, Object?> _cycleToWire(WheelLifecycle cycle) => <String, Object?>{
-    'symbol': cycle.symbol,
-    'currency': cycle.currency,
-    'stage': _stageWire(cycle.stage),
-    'has_open_position': cycle.hasOpenPosition,
-    'holds_shares': cycle.holdsShares,
-    'cumulative_income': cycle.cumulativeIncome.toString(),
-    'entry_count': cycle.entries.length,
-    'open_positions': [
-      for (final position in cycle.openPositions)
-        <String, Object?>{
-          'id': position.id,
-          'strategy': position.strategy.wire,
-          'option_symbol': position.optionSymbol,
-          'opened_at': position.openedAt.toUtc().toIso8601String(),
-          'expiration_at': position.expirationAt?.toUtc().toIso8601String(),
-          'entry_credit': position.entryCredit.toString(),
-          'contract_quantity': position.contractQuantity,
-        },
-    ],
-  };
+  Map<String, Object?> _cycleToWire(WheelLeapsOverlay overlay) {
+    final cycle = overlay.wheel;
+    return <String, Object?>{
+      'symbol': cycle.symbol,
+      'currency': cycle.currency,
+      'stage': _stageWire(cycle.stage),
+      'has_open_position': cycle.hasOpenPosition,
+      'holds_shares': cycle.holdsShares,
+      'cumulative_income': cycle.cumulativeIncome.toString(),
+      'entry_count': cycle.entries.length,
+      'open_positions': [
+        for (final position in cycle.openPositions)
+          <String, Object?>{
+            'id': position.id,
+            'strategy': position.strategy.wire,
+            'option_symbol': position.optionSymbol,
+            'opened_at': position.openedAt.toUtc().toIso8601String(),
+            'expiration_at': position.expirationAt?.toUtc().toIso8601String(),
+            'entry_credit': position.entryCredit.toString(),
+            'contract_quantity': position.contractQuantity,
+          },
+      ],
+      'leaps_overlay': <String, Object?>{
+        'open_position_count': overlay.openPositions.length,
+        'open_premium_at_risk': overlay.openLeapsCost.toString(),
+        'realized_leaps_pnl': overlay.realizedLeapsPnl.toString(),
+        'combined_realized_pnl': overlay.combinedRealizedPnl.toString(),
+        'wheel_income_coverage_ratio': overlay.wheelIncomeCoverageRatio
+            ?.toString(),
+        'delta_equivalent_shares': overlay.deltaEquivalentShares?.toString(),
+        'warnings': [for (final warning in overlay.warnings) warning.name],
+        'positions': [
+          for (final position in overlay.openPositions)
+            <String, Object?>{
+              'id': position.id,
+              'option_symbol': position.optionSymbol,
+              'expiration_at': position.expirationAt.toUtc().toIso8601String(),
+              'strike_price': position.strikePrice.toString(),
+              'entry_debit': position.entryDebit.toString(),
+              'contract_quantity': position.contractQuantity,
+              'current_mark': position.currentMark?.toString(),
+              'current_delta': position.currentDelta?.toString(),
+            },
+        ],
+      },
+    };
+  }
 
   static String _stageWire(WheelStage stage) => switch (stage) {
     WheelStage.between => 'between',

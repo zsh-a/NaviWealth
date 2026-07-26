@@ -39,6 +39,7 @@ import 'liabilities/ai_tools/propose_liability_payment_tool.dart';
 import 'options_income/ai_tools/get_options_income_opportunities_tool.dart';
 import 'options_income/ai_tools/get_options_strategy_profile_tool.dart';
 import 'options_income/ai_tools/get_wheel_lifecycle_tool.dart';
+import 'options_income/ai_tools/propose_leaps_call_position_tool.dart';
 import 'options_income/ai_tools/propose_options_journal_entry_tool.dart';
 import 'options_income/ai_tools/propose_options_profile_update_tool.dart';
 
@@ -129,6 +130,10 @@ kFinanceToolRegistrations = <RegisteredDeviceTool>[
     const ProposeOptionsJournalEntryTool(),
     tier: BudgetTier.standard,
   ),
+  _financeTool.propose(
+    const ProposeLeapsCallPositionTool(),
+    tier: BudgetTier.standard,
+  ),
   _financeTool.read(const GetWheelLifecycleTool(), tier: BudgetTier.standard),
 ];
 
@@ -153,5 +158,6 @@ const String kFinanceSystemPromptBlock =
     '  • propose_asset_valuation（房产 / 车 / 存款等手工估值资产更新）\n'
     '  • propose_fire_plan_update（FIRE 计划调整）\n'
     '  • propose_options_journal_entry / propose_options_profile_update（期权 wheel 流水与策略画像）\n'
+    '  • propose_leaps_call_position（独立于 Wheel 阶段的长期 Long Call 上涨敞口）\n'
     '- 记录支出或收入时，若用户没有指定账户，先调用 list_payment_accounts 看候选；只有工具返回空时才提示「没有可用账户，是否新建」。\n'
     '- 期权 / 投资类问题优先用 get_holdings / get_asset_allocation / get_investment_performance，不要凭印象推断仓位与收益。';

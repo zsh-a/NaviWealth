@@ -6,9 +6,12 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
+import '../domain/leaps_call_position.dart';
 import '../domain/trade_journal_entry.dart';
+import '../domain/wheel_leaps_overlay.dart';
 import '../domain/wheel_lifecycle.dart';
 import 'income_planner_labels.dart';
+import 'leaps_call_position_sheet.dart';
 import 'trade_journal_sheet.dart';
 
 /// `/plan/wheel` — per-underlying Wheel cycle review
@@ -25,12 +28,12 @@ class WheelLifecyclePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (kIsWeb) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
-    final cyclesAsync = ref.watch(wheelLifecyclesProvider);
+    final overlaysAsync = ref.watch(wheelLeapsOverlaysProvider);
 
     return AppPageScaffold(
       title: l10n.planWheelTitle,
       childPad: false,
-      child: cyclesAsync.whenOrLoading(
+      child: overlaysAsync.whenOrLoading(
         context: context,
         error: (_, _) => Center(
           child: AppEmptyState(
@@ -38,16 +41,26 @@ class WheelLifecyclePage extends ConsumerWidget {
             title: l10n.planWheelEmptyTitle,
           ),
         ),
-        data: (cycles) {
-          if (cycles.isEmpty) {
+        data: (overlays) {
+          if (overlays.isEmpty) {
             return Center(
               child: AppEmptyState(
                 icon: FLucideIcons.refreshCw,
                 title: l10n.planWheelEmptyTitle,
                 message: l10n.planWheelEmptyBody,
-                action: FButton(
-                  onPress: () => showTradeJournalSheet(context),
-                  child: Text(l10n.incomePlannerJournalAddCta),
+                action: Column(
+                  children: [
+                    FButton(
+                      onPress: () => showTradeJournalSheet(context),
+                      child: Text(l10n.incomePlannerJournalAddCta),
+                    ),
+                    const SizedBox(height: AppSpacing.s8),
+                    FButton(
+                      variant: FButtonVariant.outline,
+                      onPress: () => showLeapsCallPositionSheet(context),
+                      child: Text(l10n.leapsOverlayAdd),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -59,11 +72,11 @@ class WheelLifecyclePage extends ConsumerWidget {
               AppSpacing.s16,
               AppSpacing.s24,
             ),
-            itemCount: cycles.length,
+            itemCount: overlays.length,
             separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
             itemBuilder: (context, i) => _WheelTile(
-              cycle: cycles[i],
-              onPress: () => _showWheelCycleSheet(context, cycles[i]),
+              overlay: overlays[i],
+              onPress: () => _showWheelCycleSheet(context, overlays[i]),
             ),
           );
         },
@@ -73,15 +86,16 @@ class WheelLifecyclePage extends ConsumerWidget {
 }
 
 class _WheelTile extends StatelessWidget {
-  const _WheelTile({required this.cycle, required this.onPress});
+  const _WheelTile({required this.overlay, required this.onPress});
 
-  final WheelLifecycle cycle;
+  final WheelLeapsOverlay overlay;
   final VoidCallback onPress;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
+    final cycle = overlay.wheel;
     final stageLabel = _stageLabel(l10n, cycle.stage);
     return SoftCard.raised(
       onPress: onPress,
@@ -113,18 +127,19 @@ class _WheelTile extends StatelessWidget {
         ),
         subtitle: Text(
           '${_nextActionLabel(l10n, cycle.nextAction)} · '
-          '${l10n.incomePlannerWheelOpenCount(cycle.openPositions.length)}',
+          '${l10n.incomePlannerWheelOpenCount(cycle.openPositions.length)} · '
+          '${l10n.leapsOverlayOpenCount(overlay.openPositions.length)}',
           maxLines: 2,
         ),
         suffix: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              l10n.incomePlannerWheelRealizedIncome,
+              l10n.leapsOverlayCombinedRealized,
               style: context.captionStyle,
             ),
             MoneyText(
-              amount: cycle.cumulativeIncome.toDouble(),
+              amount: overlay.combinedRealizedPnl.toDouble(),
               currencyCode: cycle.currency,
               showSign: true,
             ),
@@ -137,14 +152,14 @@ class _WheelTile extends StatelessWidget {
 
 Future<void> _showWheelCycleSheet(
   BuildContext pageContext,
-  WheelLifecycle cycle,
+  WheelLeapsOverlay overlay,
 ) {
   return showAppFormSheet<void>(
     context: pageContext,
     builder: (sheetContext) => _WheelCycleSheet(
       pageContext: pageContext,
       sheetContext: sheetContext,
-      cycle: cycle,
+      overlay: overlay,
     ),
   );
 }
@@ -153,12 +168,14 @@ class _WheelCycleSheet extends StatelessWidget {
   const _WheelCycleSheet({
     required this.pageContext,
     required this.sheetContext,
-    required this.cycle,
+    required this.overlay,
   });
 
   final BuildContext pageContext;
   final BuildContext sheetContext;
-  final WheelLifecycle cycle;
+  final WheelLeapsOverlay overlay;
+
+  WheelLifecycle get cycle => overlay.wheel;
 
   @override
   Widget build(BuildContext context) {
@@ -203,6 +220,59 @@ class _WheelCycleSheet extends StatelessWidget {
               ),
           ],
           const SizedBox(height: AppSpacing.s16),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.leapsOverlayTitle,
+                      style: context.mutedLabelStyle,
+                    ),
+                    Text(
+                      l10n.leapsOverlaySubtitle,
+                      style: context.captionStyle,
+                    ),
+                  ],
+                ),
+              ),
+              FButton(
+                onPress: _openNewLeaps,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+                    const SizedBox(width: AppSpacing.s4),
+                    Text(l10n.leapsOverlayAdd),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          _OverlayMetrics(overlay: overlay),
+          if (overlay.positions.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s8),
+            for (final position in overlay.positions.reversed)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+                child: _LeapsPositionTile(
+                  position: position,
+                  onPress: () => _openLeaps(position.id),
+                ),
+              ),
+          ] else
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
+              child: Text(l10n.leapsOverlayEmpty, style: context.captionStyle),
+            ),
+          if (overlay.warnings.isNotEmpty ||
+              overlay.openPositions.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s8),
+            _OverlayWarnings(warnings: overlay.warnings),
+          ],
+          const SizedBox(height: AppSpacing.s16),
           Text(l10n.planWheelHistoryTitle, style: context.mutedLabelStyle),
           const SizedBox(height: AppSpacing.s8),
           for (final entry in cycle.entries.reversed)
@@ -230,7 +300,194 @@ class _WheelCycleSheet extends StatelessWidget {
       showTradeJournalSheet(pageContext, existingId: existingId);
     });
   }
+
+  void _openNewLeaps() => _openLeaps(null);
+
+  void _openLeaps(String? existingId) {
+    Navigator.of(sheetContext).pop();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!pageContext.mounted) return;
+      showLeapsCallPositionSheet(
+        pageContext,
+        existingId: existingId,
+        symbol: cycle.symbol,
+      );
+    });
+  }
 }
+
+class _OverlayMetrics extends StatelessWidget {
+  const _OverlayMetrics({required this.overlay});
+
+  final WheelLeapsOverlay overlay;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final coverage = overlay.wheelIncomeCoverageRatio;
+    return SoftCard.flat(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Wrap(
+        spacing: AppSpacing.s16,
+        runSpacing: AppSpacing.s12,
+        children: [
+          _Metric(
+            label: l10n.leapsOverlayCost,
+            value: '${overlay.wheel.currency} ${overlay.openLeapsCost}',
+          ),
+          _Metric(
+            label: l10n.leapsOverlayCoverage,
+            value: coverage == null
+                ? l10n.leapsOverlayUnknown
+                : l10n.leapsOverlayCoverageValue(
+                    (coverage.toDouble() * 100).toStringAsFixed(0),
+                  ),
+          ),
+          _Metric(
+            label: l10n.leapsOverlayDeltaShares,
+            value:
+                overlay.deltaEquivalentShares?.toString() ??
+                l10n.leapsOverlayUnknown,
+          ),
+          _Metric(
+            label: l10n.leapsOverlayCombinedRealized,
+            value: '${overlay.wheel.currency} ${overlay.combinedRealizedPnl}',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Metric extends StatelessWidget {
+  const _Metric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => ConstrainedBox(
+    constraints: const BoxConstraints(minWidth: 128),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: context.captionStyle),
+        const SizedBox(height: AppSpacing.s2),
+        Text(value, style: context.labelStyle),
+      ],
+    ),
+  );
+}
+
+class _LeapsPositionTile extends StatelessWidget {
+  const _LeapsPositionTile({required this.position, required this.onPress});
+
+  final LeapsCallPosition position;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final days = position.expirationAt
+        .toUtc()
+        .difference(DateTime.now().toUtc())
+        .inDays;
+    return SoftCard.flat(
+      onPress: onPress,
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(position.optionSymbol, style: context.labelStyle),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  position.isOpen
+                      ? l10n.incomePlannerWheelDueSummary(
+                          MaterialLocalizations.of(
+                            context,
+                          ).formatShortDate(position.expirationAt.toLocal()),
+                          days,
+                        )
+                      : '${l10n.leapsOverlayExpiration}: '
+                            '${MaterialLocalizations.of(context).formatShortDate(position.expirationAt.toLocal())}',
+                  style: context.captionStyle,
+                ),
+              ],
+            ),
+          ),
+          AppBadge(
+            label: _leapsStatusLabel(l10n, position.status),
+            tone: position.isOpen ? AppBadgeTone.accent : AppBadgeTone.neutral,
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          MoneyText(
+            amount: position.grossEntryCost.toDouble(),
+            currencyCode: position.currency,
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          const Icon(FLucideIcons.chevronRight, size: AppIconSizes.sm),
+        ],
+      ),
+    );
+  }
+}
+
+String _leapsStatusLabel(AppLocalizations l10n, LeapsCallStatus status) =>
+    switch (status) {
+      LeapsCallStatus.open => l10n.leapsOverlayStatusOpen,
+      LeapsCallStatus.closed => l10n.leapsOverlayStatusClosed,
+      LeapsCallStatus.exercised => l10n.leapsOverlayStatusExercised,
+      LeapsCallStatus.expired => l10n.leapsOverlayStatusExpired,
+    };
+
+class _OverlayWarnings extends StatelessWidget {
+  const _OverlayWarnings({required this.warnings});
+
+  final Set<WheelLeapsWarning> warnings;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SoftCard.flat(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final warning in warnings)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(FLucideIcons.triangleAlert, size: AppIconSizes.sm),
+                  const SizedBox(width: AppSpacing.s8),
+                  Expanded(
+                    child: Text(
+                      _warningLabel(l10n, warning),
+                      style: context.bodyCaptionStyle,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Text(l10n.leapsOverlayRiskDividend, style: context.bodyCaptionStyle),
+        ],
+      ),
+    );
+  }
+}
+
+String _warningLabel(AppLocalizations l10n, WheelLeapsWarning warning) =>
+    switch (warning) {
+      WheelLeapsWarning.stackedDownside => l10n.leapsOverlayRiskStacked,
+      WheelLeapsWarning.costNotCovered => l10n.leapsOverlayRiskCost,
+      WheelLeapsWarning.deltaUnavailable => l10n.leapsOverlayRiskDelta,
+      WheelLeapsWarning.markUnavailable => l10n.leapsOverlayRiskMark,
+      WheelLeapsWarning.expirationNear => l10n.leapsOverlayRiskExpiry,
+    };
 
 class _OpenPositionTile extends StatelessWidget {
   const _OpenPositionTile({required this.entry, required this.onPress});

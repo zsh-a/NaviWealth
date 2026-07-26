@@ -4,6 +4,7 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/options_income/data/approved_underlyings_repository.dart';
+import 'package:naviwealth/features/finance/options_income/data/leaps_call_position_repository.dart';
 import 'package:naviwealth/features/finance/options_income/data/options_strategy_profile_repository.dart';
 import 'package:naviwealth/features/finance/options_income/data/trade_journal_repository.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
@@ -18,6 +19,7 @@ void main() {
   late OptionsStrategyProfileRepository profileRepo;
   late ApprovedUnderlyingsRepository approvedRepo;
   late TradeJournalRepository journalRepo;
+  late LeapsCallPositionRepository leapsRepo;
 
   setUp(() {
     db = makeTestDatabase();
@@ -34,6 +36,11 @@ void main() {
       stamper: stamper,
     );
     journalRepo = TradeJournalRepository(
+      db: db,
+      outbox: outbox,
+      stamper: stamper,
+    );
+    leapsRepo = LeapsCallPositionRepository(
       db: db,
       outbox: outbox,
       stamper: stamper,
@@ -199,6 +206,38 @@ void main() {
       expect(loaded.fees, Decimal.parse('2.50'));
       expect(loaded.contractQuantity, 3);
       expect(loaded.grossEntryCredit, Decimal.fromInt(375));
+    });
+  });
+
+  group('LeapsCallPositionRepository', () {
+    test('round-trips, updates, and queues the synced row pointer', () async {
+      outbox.clearQueued();
+      final saved = await leapsRepo.create(
+        symbol: 'aapl',
+        optionSymbol: 'AAPL280121C00180000',
+        openedAt: DateTime.utc(2026, 7, 20),
+        expirationAt: DateTime.utc(2028, 1, 21),
+        strikePrice: Decimal.fromInt(180),
+        entryDebit: Decimal.fromInt(1200),
+        fees: Decimal.parse('2.50'),
+        currentMark: Decimal.fromInt(1250),
+        currentDelta: Decimal.parse('0.72'),
+      );
+
+      expect(saved.symbol, 'AAPL');
+      expect(saved.grossEntryCost, Decimal.parse('1202.50'));
+      expect(outbox.queued.single.table, 'options_leaps_call_positions');
+
+      final loaded = await leapsRepo.get(saved.id);
+      expect(loaded?.currentDelta, Decimal.parse('0.72'));
+      final updated = await leapsRepo.update(
+        loaded!.copyWith(currentMark: Decimal.fromInt(1400)),
+      );
+      expect(updated.currentMark, Decimal.fromInt(1400));
+      expect(
+        (await leapsRepo.get(saved.id))?.currentMark,
+        Decimal.fromInt(1400),
+      );
     });
   });
 }

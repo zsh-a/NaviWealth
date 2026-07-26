@@ -21,6 +21,7 @@ import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_service.dart';
 import 'package:naviwealth/features/finance/liabilities/data/liability_repository.dart';
 import 'package:naviwealth/features/finance/options_income/application/options_proposal_applier.dart';
+import 'package:naviwealth/features/finance/options_income/data/leaps_call_position_repository.dart';
 import 'package:naviwealth/features/finance/options_income/data/options_strategy_profile_repository.dart';
 import 'package:naviwealth/features/finance/options_income/data/trade_journal_repository.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
@@ -40,6 +41,7 @@ void main() {
   late ExpenseCategoryRepository expenseCategoryRepo;
   late OptionsStrategyProfileRepository profileRepo;
   late TradeJournalRepository journalRepo;
+  late LeapsCallPositionRepository leapsRepo;
   late FinanceProposalApplier applier;
   Map<String, Object?>? firePlanAfter;
 
@@ -94,6 +96,11 @@ void main() {
       outbox: outbox,
       stamper: stamper,
     );
+    leapsRepo = LeapsCallPositionRepository(
+      db: db,
+      outbox: outbox,
+      stamper: stamper,
+    );
     firePlanAfter = null;
     applier = FinanceProposalApplier(
       tradeEntryService: _FakeTradeEntryService(),
@@ -106,6 +113,7 @@ void main() {
       optionsApplier: OptionsProposalApplier(
         profileRepo: profileRepo,
         tradeJournalRepo: journalRepo,
+        leapsCallRepo: leapsRepo,
         currentUserId: () async => 'u-test',
       ),
       fireApplier: FireProposalApplier(
@@ -409,6 +417,40 @@ void main() {
     await applier.undo(state);
     expect(await journalRepo.get(state.appliedEntityId!), isNull);
   });
+
+  test(
+    'leaps_call_position stays separate from Wheel journal and undoes',
+    () async {
+      final state = await applier.apply(
+        plan('leaps_call_position', {
+          'underlying': 'aapl',
+          'option_symbol': 'AAPL280121C00180000',
+          'opened_at_iso': '2026-07-20T00:00:00Z',
+          'expiration_at_iso': '2028-01-21T00:00:00Z',
+          'strike_price': '180',
+          'entry_debit': '1200',
+          'fees': '2.5',
+          'contract_quantity': 1,
+          'contract_size': 100,
+          'currency': 'USD',
+          'status': 'open',
+          'current_mark': '0',
+          'current_delta': '0',
+        }),
+      );
+
+      expect(state.appliedTable, 'options_leaps_call_positions');
+      final position = await leapsRepo.get(state.appliedEntityId!);
+      expect(position?.symbol, 'AAPL');
+      expect(position?.entryDebit, Decimal.fromInt(1200));
+      expect(position?.currentMark, Decimal.zero);
+      expect(position?.currentDelta, Decimal.zero);
+      expect(await journalRepo.get(state.appliedEntityId!), isNull);
+
+      await applier.undo(state);
+      expect(await leapsRepo.get(state.appliedEntityId!), isNull);
+    },
+  );
 }
 
 class _FakeTradeEntryService implements TradeEntryService {

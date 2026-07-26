@@ -4,7 +4,7 @@
 > 关联：[`ai-architecture.md`](../ai/ai-architecture.md)、[`ai-protocol.md`](../ai/ai-protocol.md)、[`roadmap-finance.md`](../roadmap/roadmap-finance.md)、[`market-data-providers.md`](./market-data-providers.md)、[`sync-v3.md`](../sync/sync-v3.md)
 > 定位：在 NaviWealth 已有的"持仓 + 现金 + FIRE 现金桶 + 风险偏好"之上，新增一个**低频期权现金流规划器**。
 >
-> 状态（2026-07-26）：P0–P4 已实现。Income Planner 采用 Opportunities / Wheel / Journal 三工作区；交易日志记录到期日、合约数量和总费用。MVP 行情源锁定 yfinance；AI tool **只读 cache**，不触发实时扫描。P5（Tradier OAuth 接入）是触发式工作，尚未排期。
+> 状态（2026-07-26）：P0–P4 已实现。Income Planner 采用 Opportunities / Wheel / Journal 三工作区；交易日志记录到期日、合约数量和总费用。Wheel 工作区还支持独立的 LEAPS Long Call 上涨敞口；LEAPS 不属于 Wheel 阶段，也不是 PMCC。MVP 行情源锁定 yfinance；AI tool **只读 cache**，不触发实时扫描。P5（Tradier OAuth 接入）是触发式工作，尚未排期。
 
 ---
 
@@ -272,6 +272,7 @@ class OpportunityExplanation with _$OpportunityExplanation {
 | `options_strategy_profile` | ✅ sync_rows | 用户偏好，跨设备一致 |
 | `options_approved_underlyings` | ✅ sync_rows | 用户清单，跨设备一致 |
 | `options_trade_journal` | ✅ sync_rows | 真实复盘，需要历史 |
+| `options_leaps_call_positions` | ✅ sync_rows | Long Call 成本、状态与人工风险快照 |
 | `options_opportunity_cache` | ❌ 本地 | 派生数据，重算成本低；跨设备各自扫描 |
 
 **行级变更类型**（client 自定义，backend 不解析语义）：
@@ -283,6 +284,8 @@ options_approved.delete
 options_journal.insert
 options_journal.update
 options_journal.close
+options_leaps.upsert
+options_leaps.delete
 ```
 
 ### 6.2 Drift 表落点
@@ -350,6 +353,17 @@ class OptionsTradeJournalTable extends Table {
   Set<Column> get primaryKey => {id};
 }
 ```
+
+`options_leaps_call_positions` 独立保存长期 Long Call：标的与合约代码、
+开仓/到期/平仓日期、行权价、每张开仓支出与平仓收入、总费用、数量、乘数、
+状态，以及可选的人工 `currentMark` / `currentDelta` / `markedAt` 快照。
+行情和 Delta 缺失时保持 `null`，不得用推测值补齐。
+
+组合视图 `WheelLeapsOverlay` 是纯派生模型，计算 Wheel 收入、LEAPS
+已实现损益、未平仓权利金风险、Wheel 收入覆盖率和（数据完整时）Delta
+等效股数，并提示同时下跌暴露、成本未覆盖、行情/Delta 缺失和临近到期。
+它不会修改 `WheelStage`。Long Call 不能对冲现金担保 Put 被行权的下跌风险，
+也不自动获得股息。
 
 加到本地非同步表区域（`apps/mobile/lib/core/persistence/local_only_tables.dart`）：
 
@@ -477,7 +491,8 @@ lib/features/finance/options_income/ai_tools/
 ├── get_options_strategy_profile_tool.dart
 ├── get_wheel_lifecycle_tool.dart
 ├── propose_options_profile_update_tool.dart
-└── propose_options_journal_entry_tool.dart
+├── propose_options_journal_entry_tool.dart
+└── propose_leaps_call_position_tool.dart
 ```
 
 `get_options_income_opportunities` 的合约：
@@ -529,7 +544,7 @@ LLM **不能**做的事（dispatcher 层不强制，但 system prompt 提示）�
 
 ```text
 Opportunities   机会：Put / Call 筛选、适配度排序、扫描状态与拒绝原因
-Wheel           轮动：按标的聚合周期阶段、开放腿、最近到期日与下一步
+Wheel           轮动：按标的聚合周期阶段、开放腿、LEAPS 上涨敞口与组合风险
 Journal         日志：开放/已结算筛选、数量、费用、到期日与净损益
 ```
 
@@ -544,6 +559,11 @@ Journal         日志：开放/已结算筛选、数量、费用、到期日与
 交易日志表单必须记录真实开仓日、到期日、合约数量、合约乘数和总费用；
 `entryCredit` / `exitDebit` 是每张合约金额，展示与统计按数量放大，净损益扣除
 总费用。`assigned` / `expired` 在没有人工覆盖时将保留 premium 计为已实现。
+
+LEAPS 使用独立表单和字段语义。表单对日期顺序、正数金额、合约数量、乘数和
+0–1 Delta 做就地校验；当前市值和 Delta 是可选人工快照。Wheel 详情展示
+未平仓成本、收益覆盖率、Delta 等效股数、组合已实现损益和文字风险提示。
+不能把 LEAPS 命名为“Wheel 新阶段”、备兑 Call 或 PMCC。
 
 ### 9.2 偏好设置
 
@@ -662,6 +682,7 @@ apps/mobile/lib/features/finance/options_income/
 │   └── scan_orchestrator.dart          # P1 — universe → chain → scorer → cache
 ├── data/
 │   ├── approved_underlyings_repository.dart
+│   ├── leaps_call_position_repository.dart
 │   ├── options_opportunity_cache_repository.dart  # P1 — local-only cache repo
 │   ├── options_strategy_profile_repository.dart
 │   ├── providers.dart
@@ -671,6 +692,8 @@ apps/mobile/lib/features/finance/options_income/
 │   ├── option_contract.dart            # P1
 │   ├── options_opportunity.dart        # P1 — Opportunity / Metrics / RiskLevel
 │   ├── options_strategy_profile.dart
+│   ├── leaps_call_position.dart         # independent long-call source row
+│   ├── wheel_leaps_overlay.dart         # Wheel + LEAPS pure derivation
 │   ├── opportunity_explanation.dart    # P1 — UI ⇄ AI shared explanation struct
 │   ├── services/opportunity_scorer.dart# P1/P2 — pure-Dart scorer
 │   └── trade_journal_entry.dart        # P3
@@ -681,6 +704,7 @@ apps/mobile/lib/features/finance/options_income/
     │   └── income_planner_page_*.dart
     ├── income_planner_labels.dart
     ├── occ_disclosure_sheet.dart
+    ├── leaps_call_position_sheet.dart
     ├── opportunity_detail_sheet.dart   # P1 — score breakdown, worst-case, log-trade CTA
     ├── strategy_profile_sheet.dart
     └── trade_journal_sheet.dart        # P3
@@ -694,7 +718,8 @@ apps/mobile/lib/features/finance/options_income/ai_tools/
 ├── get_options_strategy_profile_tool.dart      # P1 — profile read tool
 ├── get_wheel_lifecycle_tool.dart               # P4 — wheel lifecycle read tool
 ├── propose_options_profile_update_tool.dart    # P1 — proposal
-└── propose_options_journal_entry_tool.dart     # P3 — proposal
+├── propose_options_journal_entry_tool.dart     # P3 — proposal
+└── propose_leaps_call_position_tool.dart       # independent Long Call proposal
 
 apps/mobile/lib/core/persistence/tables.dart       # +OptionsTradeJournal
 apps/mobile/lib/core/persistence/local_only_tables.dart # opportunity cache DDL

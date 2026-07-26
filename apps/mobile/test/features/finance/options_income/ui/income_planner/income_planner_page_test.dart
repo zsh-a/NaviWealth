@@ -104,6 +104,12 @@ Future<void> _pump(WidgetTester tester) async {
           return [_opportunity()];
         }),
         latestScanStateProvider.overrideWith((ref) async => null),
+        tradeJournalEntriesProvider.overrideWith((ref) async* {
+          yield const [];
+        }),
+        leapsCallPositionsProvider.overrideWith((ref) async* {
+          yield const [];
+        }),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),

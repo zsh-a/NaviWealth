@@ -10,13 +10,16 @@ import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import '../application/options_journal_ledger_service.dart';
 import '../application/scan_orchestrator.dart';
 import '../domain/approved_underlying.dart';
+import '../domain/leaps_call_position.dart';
 import '../domain/options_opportunity.dart';
 import '../domain/options_strategy_profile.dart';
 import '../domain/options_trade_stats.dart';
 import '../domain/services/opportunity_scorer.dart';
 import '../domain/trade_journal_entry.dart';
+import '../domain/wheel_leaps_overlay.dart';
 import '../domain/wheel_lifecycle.dart';
 import 'approved_underlyings_repository.dart';
+import 'leaps_call_position_repository.dart';
 import 'options_opportunity_cache_repository.dart';
 import 'options_strategy_profile_repository.dart';
 import 'trade_journal_repository.dart';
@@ -122,6 +125,25 @@ final tradeJournalRepositoryProvider = FutureProvider<TradeJournalRepository>((
   return TradeJournalRepository(db: db, outbox: outbox, stamper: stamper);
 });
 
+final leapsCallPositionRepositoryProvider =
+    FutureProvider<LeapsCallPositionRepository>((ref) async {
+      final db = await ref.watch(appDatabaseProvider.future);
+      final outbox = await ref.watch(outboxStoreProvider.future);
+      final stamper = await ref.watch(mutationStamperProvider.future);
+      return LeapsCallPositionRepository(
+        db: db,
+        outbox: outbox,
+        stamper: stamper,
+      );
+    });
+
+final leapsCallPositionsProvider =
+    StreamProvider.autoDispose<List<LeapsCallPosition>>((ref) async* {
+      final repo = await ref.watch(leapsCallPositionRepositoryProvider.future);
+      final ownerUserId = await ref.watch(currentUserIdProvider)();
+      yield* repo.watchActive(ownerUserId);
+    });
+
 final optionsJournalLedgerServiceProvider =
     FutureProvider<OptionsJournalLedgerService>((ref) async {
       final journalEntryRepo = await ref.watch(
@@ -194,6 +216,52 @@ final wheelLifecyclesProvider =
         });
         return cycles;
       });
+    });
+
+final wheelLeapsOverlaysProvider =
+    Provider.autoDispose<AsyncValue<List<WheelLeapsOverlay>>>((ref) {
+      final wheels = ref.watch(wheelLifecyclesProvider);
+      final leaps = ref.watch(leapsCallPositionsProvider);
+      return wheels.when(
+        data: (cycles) => leaps.when(
+          data: (positions) {
+            final bySymbol = <String, WheelLifecycle>{
+              for (final cycle in cycles) cycle.symbol: cycle,
+            };
+            for (final position in positions) {
+              bySymbol.putIfAbsent(
+                position.symbol,
+                () => WheelLifecycle.empty(
+                  symbol: position.symbol,
+                  currency: position.currency,
+                ),
+              );
+            }
+            final overlays =
+                bySymbol.values
+                    .map(
+                      (wheel) => buildWheelLeapsOverlay(
+                        wheel: wheel,
+                        positions: positions,
+                      ),
+                    )
+                    .toList(growable: false)
+                  ..sort((a, b) {
+                    final aActive =
+                        a.wheel.hasOpenPosition || a.openPositions.isNotEmpty;
+                    final bActive =
+                        b.wheel.hasOpenPosition || b.openPositions.isNotEmpty;
+                    if (aActive != bActive) return aActive ? -1 : 1;
+                    return a.wheel.symbol.compareTo(b.wheel.symbol);
+                  });
+            return AsyncData(overlays);
+          },
+          error: AsyncError.new,
+          loading: AsyncLoading.new,
+        ),
+        error: AsyncError.new,
+        loading: AsyncLoading.new,
+      );
     });
 
 int _stageRank(WheelStage stage) => switch (stage) {

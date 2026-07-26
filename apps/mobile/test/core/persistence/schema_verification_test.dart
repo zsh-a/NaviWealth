@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 59', () {
-      expect(db.schemaVersion, 59);
+    test('is 60', () {
+      expect(db.schemaVersion, 60);
     });
   });
 
@@ -604,6 +604,28 @@ void main() {
   });
 
   group('SyncableTable mixin columns', () {
+    test('LEAPS overlay positions are synced and retain risk inputs', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(options_leaps_call_positions)')
+          .get();
+      final columns = result.map((r) => r.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll([
+          'id',
+          'symbol',
+          'option_symbol',
+          'expiration_at',
+          'entry_debit',
+          'current_mark',
+          'current_delta',
+          'owner_user_id',
+          'deleted_at',
+          'hlc',
+        ]),
+      );
+    });
+
     test(
       'accounts has sync columns (owner_user_id, deleted_at, hlc, updated_at, updated_by_device)',
       () async {

@@ -163,7 +163,7 @@ void main() {
       // The union is derived from production DomainPack registrations.
       // Keep the exact count pinned so adding or removing a device tool is
       // an intentional contract change.
-      expect(productionToolDescriptors.values, hasLength(73));
+      expect(productionToolDescriptors.values, hasLength(74));
       expect(
         productionToolDescriptors['propose_options_profile_update']?.sideEffect,
         SideEffect.deviceLocalWrite,

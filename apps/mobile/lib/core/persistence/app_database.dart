@@ -77,6 +77,7 @@ final class AppDatabaseTransactionScope {
     WatchlistItems,
     OptionsStrategyProfileTable,
     OptionsTradeJournal,
+    OptionsLeapsCallPositions,
     ApprovedUnderlyings,
     RecurringTransactions,
     Liabilities,
@@ -147,7 +148,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 59;
+  int get schemaVersion => 60;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -877,6 +878,15 @@ class AppDatabase extends _$AppDatabase {
           table: 'options_trade_journal',
           column: 'contract_quantity',
           definition: 'INTEGER NOT NULL DEFAULT 1',
+        );
+      }
+      // v59 -> v60: independent long-dated call overlay for Wheel portfolios.
+      if (from < 60) {
+        await m.createTable(optionsLeapsCallPositions);
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_options_leaps_owner_opened '
+          'ON options_leaps_call_positions(owner_user_id, opened_at DESC) '
+          'WHERE deleted_at IS NULL',
         );
       }
     },

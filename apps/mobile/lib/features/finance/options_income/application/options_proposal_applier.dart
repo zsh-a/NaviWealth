@@ -3,8 +3,10 @@ import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
 import 'package:naviwealth/features/finance/options_income/application/options_journal_ledger_service.dart';
+import 'package:naviwealth/features/finance/options_income/data/leaps_call_position_repository.dart';
 import 'package:naviwealth/features/finance/options_income/data/options_strategy_profile_repository.dart';
 import 'package:naviwealth/features/finance/options_income/data/trade_journal_repository.dart';
+import 'package:naviwealth/features/finance/options_income/domain/leaps_call_position.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
 import 'package:naviwealth/features/finance/options_income/domain/trade_journal_entry.dart';
 
@@ -17,12 +19,14 @@ class OptionsProposalApplier {
   const OptionsProposalApplier({
     required this.profileRepo,
     required this.tradeJournalRepo,
+    required this.leapsCallRepo,
     required this.currentUserId,
     this.ledgerService,
   });
 
   final OptionsStrategyProfileRepository profileRepo;
   final TradeJournalRepository tradeJournalRepo;
+  final LeapsCallPositionRepository leapsCallRepo;
   final OptionsJournalLedgerService? ledgerService;
   final Future<String> Function() currentUserId;
 
@@ -148,6 +152,44 @@ class OptionsProposalApplier {
     if (entry == null) return;
     await ledgerService?.removeMirrors(entry.id);
     await tradeJournalRepo.remove(entry);
+  }
+
+  Future<ProposalApplyState> applyLeapsCallPosition(
+    ReadyProposalPlan plan,
+    DateTime at,
+  ) async {
+    final mark = _optionalDecimalRaw(plan.payload['current_mark']);
+    final position = await leapsCallRepo.create(
+      symbol: _requireString(plan, 'underlying'),
+      optionSymbol: _requireString(plan, 'option_symbol'),
+      openedAt: _parseRequiredDate(plan, 'opened_at_iso'),
+      expirationAt: _parseRequiredDate(plan, 'expiration_at_iso'),
+      strikePrice: _requireDecimal(plan, 'strike_price'),
+      entryDebit: _requireDecimal(plan, 'entry_debit'),
+      fees: _optionalDecimalRaw(plan.payload['fees']),
+      currency: (plan.get('currency') ?? 'USD').toUpperCase(),
+      contractQuantity: _optionalInt(plan.payload['contract_quantity']) ?? 1,
+      contractSize: _optionalInt(plan.payload['contract_size']) ?? 100,
+      status: parseLeapsCallStatus(plan.get('status') ?? 'open'),
+      currentMark: mark,
+      currentDelta: _optionalDecimalRaw(plan.payload['current_delta']),
+      markedAt: mark == null
+          ? null
+          : _parseOptionalDate(plan, 'marked_at_iso') ?? at,
+      notes: plan.get('notes'),
+    );
+    return ProposalApplyState(
+      status: ProposalApplyStatus.applied,
+      appliedEntityId: position.id,
+      appliedTable: LeapsCallPositionRepository.tableName,
+      appliedAt: at,
+      shortLabel: 'Recorded ${plan.summaryZh}',
+    );
+  }
+
+  Future<void> undoLeapsCallPosition(String id) async {
+    final position = await leapsCallRepo.get(id);
+    if (position != null) await leapsCallRepo.remove(position);
   }
 
   String _requireString(ReadyProposalPlan plan, String key) {

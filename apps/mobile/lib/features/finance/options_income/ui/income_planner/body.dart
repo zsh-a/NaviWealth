@@ -23,7 +23,7 @@ class _ConfiguredBodyState extends ConsumerState<_ConfiguredBody> {
     final cacheState = ref.watch(latestScanStateProvider);
     final opportunitiesAsync = ref.watch(cachedOpportunitiesProvider);
     final journalAsync = ref.watch(tradeJournalEntriesProvider);
-    final cyclesAsync = ref.watch(wheelLifecyclesProvider);
+    final overlaysAsync = ref.watch(wheelLeapsOverlaysProvider);
     final approvedCount = approvedAsync.value?.length ?? 0;
     final opportunityCount = opportunitiesAsync.value?.length ?? 0;
     final openCount =
@@ -79,7 +79,7 @@ class _ConfiguredBodyState extends ConsumerState<_ConfiguredBody> {
             cacheState: cacheState.value,
             opportunitiesAsync: opportunitiesAsync,
           ),
-          _PlannerTab.wheel => _WheelWorkspace(cyclesAsync: cyclesAsync),
+          _PlannerTab.wheel => _WheelWorkspace(overlaysAsync: overlaysAsync),
           _PlannerTab.journal => const _TradeJournalSection(),
         },
       ],
@@ -323,38 +323,48 @@ class _PlannerOverviewCard extends StatelessWidget {
 }
 
 class _WheelWorkspace extends StatelessWidget {
-  const _WheelWorkspace({required this.cyclesAsync});
+  const _WheelWorkspace({required this.overlaysAsync});
 
-  final AsyncValue<List<WheelLifecycle>> cyclesAsync;
+  final AsyncValue<List<WheelLeapsOverlay>> overlaysAsync;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return cyclesAsync.when(
+    return overlaysAsync.when(
       loading: () => const _LoadingTile(),
       error: (error, _) => AppEmptyState.error(
         title: l10n.commonLoadFailed,
         message: userSafeErrorMessage(context, error),
       ),
-      data: (cycles) {
-        if (cycles.isEmpty) {
+      data: (overlays) {
+        if (overlays.isEmpty) {
           return AppEmptyState(
             icon: FLucideIcons.refreshCw,
             title: l10n.planWheelEmptyTitle,
             message: l10n.planWheelEmptyBody,
-            action: FButton(
-              onPress: () => showTradeJournalSheet(context),
-              child: Text(l10n.incomePlannerJournalAddCta),
+            action: Column(
+              children: [
+                FButton(
+                  onPress: () => showTradeJournalSheet(context),
+                  child: Text(l10n.incomePlannerJournalAddCta),
+                ),
+                const SizedBox(height: AppSpacing.s8),
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => showLeapsCallPositionSheet(context),
+                  child: Text(l10n.leapsOverlayAdd),
+                ),
+              ],
             ),
           );
         }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            for (final cycle in cycles)
+            for (final overlay in overlays)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-                child: _WheelWorkspaceTile(cycle: cycle),
+                child: _WheelWorkspaceTile(overlay: overlay),
               ),
           ],
         );
@@ -364,13 +374,14 @@ class _WheelWorkspace extends StatelessWidget {
 }
 
 class _WheelWorkspaceTile extends StatelessWidget {
-  const _WheelWorkspaceTile({required this.cycle});
+  const _WheelWorkspaceTile({required this.overlay});
 
-  final WheelLifecycle cycle;
+  final WheelLeapsOverlay overlay;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final cycle = overlay.wheel;
     final next = _wheelNextActionLabel(l10n, cycle.nextAction);
     return SoftCard.flat(
       onPress: () => context.push(FinanceRoutes.planWheel),
@@ -405,13 +416,24 @@ class _WheelWorkspaceTile extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  l10n.incomePlannerWheelOpenCount(cycle.openPositions.length),
-                  style: context.captionStyle,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.incomePlannerWheelOpenCount(
+                        cycle.openPositions.length,
+                      ),
+                      style: context.captionStyle,
+                    ),
+                    Text(
+                      l10n.leapsOverlayOpenCount(overlay.openPositions.length),
+                      style: context.captionStyle,
+                    ),
+                  ],
                 ),
               ),
               MoneyText(
-                amount: cycle.cumulativeIncome.toDouble(),
+                amount: overlay.combinedRealizedPnl.toDouble(),
                 currencyCode: cycle.currency,
                 showSign: true,
                 style: context.labelStyle,
