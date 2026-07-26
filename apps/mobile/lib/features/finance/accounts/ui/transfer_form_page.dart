@@ -64,6 +64,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
   bool _busy = false;
   bool _detailsExpanded = false;
   bool _routeDefaultsHydrated = false;
+  bool _routePrefillHydrated = false;
 
   /// Tracks whether the user has typed into the to-amount field. Until
   /// they do, we keep [_toAmountController] in lock-step with
@@ -111,6 +112,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     final queryParameters = GoRouter.of(
       context,
     ).routeInformationProvider.value.uri.queryParameters;
+    _hydrateRoutePrefill(queryParameters);
     // Accounts are single-currency ledger containers. Convert mode therefore
     // guides the user toward two accounts with different currencies rather
     // than asking them to select one account twice.
@@ -138,6 +140,22 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         ),
       ),
     );
+  }
+
+  void _hydrateRoutePrefill(Map<String, String> queryParameters) {
+    if (_routePrefillHydrated) return;
+    _routePrefillHydrated = true;
+    final amount = Decimal.tryParse(queryParameters['amount'] ?? '');
+    if (amount != null && amount > Decimal.zero) {
+      _amountController.text = amount.toString();
+    }
+    final date = DateTime.tryParse(queryParameters['date'] ?? '');
+    if (date != null) _date = date;
+    final note = queryParameters['note']?.trim();
+    if (note != null && note.isNotEmpty) {
+      _noteController.text = note;
+      _detailsExpanded = true;
+    }
   }
 
   Widget _buildForm(

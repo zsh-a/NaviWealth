@@ -12,6 +12,7 @@ Map<String, Money> buildBudgetSpendByCategoryId({
   required Iterable<Expense> expenses,
   required String targetCurrency,
   required CurrencyConverter converter,
+  void Function()? onMissingFx,
 }) {
   final currency = targetCurrency.trim().toUpperCase();
   final spendByCategory = <String, Money>{};
@@ -25,7 +26,10 @@ Map<String, Money> buildBudgetSpendByCategoryId({
       converter: converter,
       on: expense.tradeDate,
     );
-    if (converted == null) continue;
+    if (converted == null) {
+      onMissingFx?.call();
+      continue;
+    }
     spendByCategory.update(
       expense.categoryId,
       (current) => current + converted,

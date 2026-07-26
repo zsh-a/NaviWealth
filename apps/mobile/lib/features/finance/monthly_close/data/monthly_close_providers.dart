@@ -42,11 +42,13 @@ final reconciliationTargetsProvider =
       ),
     );
 
-final monthlyCloseEvidenceProvider =
-    Provider.autoDispose<AsyncValue<MonthlyCloseEvidence>>((ref) {
+final monthlyCloseEvidenceForPeriodProvider = Provider.autoDispose
+    .family<AsyncValue<MonthlyCloseEvidence>, String>((ref, periodMonth) {
       final pendingImportsAsync = ref.watch(pendingIngestReviewItemsProvider);
       final inboxAsync = ref.watch(financialInboxProvider);
-      final targetsAsync = ref.watch(reconciliationTargetsProvider);
+      final targetsAsync = ref.watch(
+        reconciliationTargetsForPeriodProvider(periodMonth),
+      );
       final runwayAsync = ref.watch(moneyRunwayProvider);
       final openActionCountAsync = ref.watch(lifeOpenActionCountProvider);
       if (pendingImportsAsync.isLoading ||
@@ -136,12 +138,33 @@ final monthlyCloseEvidenceProvider =
       );
     });
 
+final monthlyCloseEvidenceProvider =
+    Provider.autoDispose<AsyncValue<MonthlyCloseEvidence>>(
+      (ref) => ref.watch(
+        monthlyCloseEvidenceForPeriodProvider(
+          ref.watch(currentClosePeriodProvider),
+        ),
+      ),
+    );
+
+final monthlyCloseForPeriodProvider = StreamProvider.autoDispose
+    .family<MonthlyClose?, String>((ref, periodMonth) async* {
+      final repository = await ref.watch(monthlyCloseRepositoryProvider.future);
+      yield* repository.watch(periodMonth);
+    });
+
 final currentMonthlyCloseProvider = StreamProvider.autoDispose<MonthlyClose?>((
   ref,
 ) async* {
   final repository = await ref.watch(monthlyCloseRepositoryProvider.future);
   yield* repository.watch(ref.watch(currentClosePeriodProvider));
 });
+
+final previousMonthlyCloseForPeriodProvider = StreamProvider.autoDispose
+    .family<MonthlyClose?, String>((ref, periodMonth) async* {
+      final repository = await ref.watch(monthlyCloseRepositoryProvider.future);
+      yield* repository.watchPreviousClosed(periodMonth);
+    });
 
 final previousMonthlyCloseProvider = StreamProvider.autoDispose<MonthlyClose?>((
   ref,
@@ -150,15 +173,25 @@ final previousMonthlyCloseProvider = StreamProvider.autoDispose<MonthlyClose?>((
   yield* repository.watchPreviousClosed(ref.watch(currentClosePeriodProvider));
 });
 
+final latestOpenMonthlyCloseProvider =
+    StreamProvider.autoDispose<MonthlyClose?>((ref) async* {
+      final repository = await ref.watch(monthlyCloseRepositoryProvider.future);
+      yield* repository.watchLatestOpen();
+    });
+
 final monthlyCloseHistoryProvider = StreamProvider.autoDispose((ref) async* {
   final repository = await ref.watch(monthlyCloseRepositoryProvider.future);
   yield* repository.watchHistory();
 });
 
-final monthlyCloseComparisonProvider =
-    Provider.autoDispose<AsyncValue<MonthlyCloseComparison>>((ref) {
-      final evidence = ref.watch(monthlyCloseEvidenceProvider);
-      final previous = ref.watch(previousMonthlyCloseProvider);
+final monthlyCloseComparisonForPeriodProvider = Provider.autoDispose
+    .family<AsyncValue<MonthlyCloseComparison>, String>((ref, periodMonth) {
+      final evidence = ref.watch(
+        monthlyCloseEvidenceForPeriodProvider(periodMonth),
+      );
+      final previous = ref.watch(
+        previousMonthlyCloseForPeriodProvider(periodMonth),
+      );
       if (evidence.isLoading || previous.isLoading) {
         return const AsyncValue.loading();
       }
@@ -171,3 +204,12 @@ final monthlyCloseComparisonProvider =
         ),
       );
     });
+
+final monthlyCloseComparisonProvider =
+    Provider.autoDispose<AsyncValue<MonthlyCloseComparison>>(
+      (ref) => ref.watch(
+        monthlyCloseComparisonForPeriodProvider(
+          ref.watch(currentClosePeriodProvider),
+        ),
+      ),
+    );

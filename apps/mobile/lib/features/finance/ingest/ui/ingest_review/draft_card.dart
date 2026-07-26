@@ -114,6 +114,9 @@ class _DraftCard extends StatelessWidget {
     this.showSelection = true,
     required this.onConfirm,
     required this.onSkip,
+    required this.onEdit,
+    required this.onTransfer,
+    required this.onTrade,
     required this.onFinalize,
     required this.onSelectionChanged,
     required this.onFocus,
@@ -129,6 +132,9 @@ class _DraftCard extends StatelessWidget {
   final bool showSelection;
   final VoidCallback onConfirm;
   final VoidCallback onSkip;
+  final VoidCallback onEdit;
+  final VoidCallback onTransfer;
+  final VoidCallback onTrade;
   final VoidCallback? onFinalize;
   final ValueChanged<bool> onSelectionChanged;
   final VoidCallback onFocus;
@@ -187,12 +193,20 @@ class _DraftCard extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 _DraftMetaChip(
-                  icon: p.kind == IngestTransactionKind.income
-                      ? FLucideIcons.trendingUp
-                      : FLucideIcons.trendingDown,
-                  label: p.kind == IngestTransactionKind.income
-                      ? l10n.ingestKindIncome
-                      : l10n.ingestKindExpense,
+                  icon: switch (p.kind) {
+                    IngestTransactionKind.income => FLucideIcons.trendingUp,
+                    IngestTransactionKind.expense => FLucideIcons.trendingDown,
+                    IngestTransactionKind.transfer =>
+                      FLucideIcons.arrowRightLeft,
+                    IngestTransactionKind.trade =>
+                      FLucideIcons.chartCandlestick,
+                  },
+                  label: switch (p.kind) {
+                    IngestTransactionKind.income => l10n.ingestKindIncome,
+                    IngestTransactionKind.expense => l10n.ingestKindExpense,
+                    IngestTransactionKind.transfer => l10n.ingestKindTransfer,
+                    IngestTransactionKind.trade => l10n.ingestKindTrade,
+                  },
                 ),
                 _DraftMetaChip(
                   icon: FLucideIcons.calendar,
@@ -245,34 +259,55 @@ class _DraftCard extends StatelessWidget {
                 ),
               ],
             ] else
-              Row(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: AppActionButton(
-                      variant: FButtonVariant.outline,
-                      onPress: busy ? null : onSkip,
-                      child: Flexible(
-                        child: Text(
-                          l10n.ingestSkip,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
+                  AppActionButton(
+                    variant: FButtonVariant.ghost,
+                    onPress: busy ? null : onEdit,
+                    child: Text(l10n.ingestEditDraft),
                   ),
-                  const SizedBox(width: AppSpacing.s8),
-                  Expanded(
-                    child: AppActionButton(
-                      variant: FButtonVariant.primary,
-                      onPress: busy ? null : onConfirm,
-                      child: Flexible(
-                        child: Text(
-                          l10n.ingestConfirm,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                  const SizedBox(height: AppSpacing.s6),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppActionButton(
+                          variant: FButtonVariant.outline,
+                          onPress: busy ? null : onSkip,
+                          child: Flexible(
+                            child: Text(
+                              l10n.ingestSkip,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: AppSpacing.s8),
+                      Expanded(
+                        child: AppActionButton(
+                          variant: FButtonVariant.primary,
+                          onPress: busy
+                              ? null
+                              : p.kind == IngestTransactionKind.transfer
+                              ? onTransfer
+                              : p.kind == IngestTransactionKind.trade
+                              ? onTrade
+                              : onConfirm,
+                          child: Flexible(
+                            child: Text(
+                              p.kind == IngestTransactionKind.transfer
+                                  ? l10n.ingestRecordTransfer
+                                  : p.kind == IngestTransactionKind.trade
+                                  ? l10n.ingestRecordTrade
+                                  : l10n.ingestConfirm,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

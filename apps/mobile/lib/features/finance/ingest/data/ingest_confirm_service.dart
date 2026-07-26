@@ -133,7 +133,10 @@ class IngestReviewItem {
       !recoveryUnreadable;
 
   bool get canBatchConfirm =>
-      isOrdinaryPending && draft.verdict == DedupVerdict.newTxn;
+      isOrdinaryPending &&
+      draft.verdict == DedupVerdict.newTxn &&
+      draft.parsed.kind != IngestTransactionKind.transfer &&
+      draft.parsed.kind != IngestTransactionKind.trade;
 
   bool get canBatchDismiss => isOrdinaryPending;
 }
@@ -708,6 +711,12 @@ class IngestConfirmService {
     IngestTransactionKind.income => incomePlanFor(
       draft,
       toAccountId: accountId,
+    ),
+    IngestTransactionKind.transfer => throw StateError(
+      'Transfer drafts must use the atomic transfer form.',
+    ),
+    IngestTransactionKind.trade => throw StateError(
+      'Trade drafts must use the typed trade form.',
     ),
   };
 

@@ -304,6 +304,12 @@ final moneyRunwayProvider = Provider<AsyncValue<MoneyRunwaySnapshot>>((ref) {
         historicalForecastError: forecastError,
         missingCurrencies: missingCurrencies,
         hasData: !snapshot.isEmpty || events.requireValue.events.isNotEmpty,
+        monthlyExpenseSource: plan.monthlyExpenses > Decimal.zero
+            ? MoneyRunwayAssumptionSource.firePlan
+            : MoneyRunwayAssumptionSource.observedHistory,
+        reserveSource: plan.targetCashBucketMonths > 0
+            ? MoneyRunwayAssumptionSource.firePlan
+            : MoneyRunwayAssumptionSource.defaultPolicy,
       ),
     );
   } on Object catch (error, stackTrace) {

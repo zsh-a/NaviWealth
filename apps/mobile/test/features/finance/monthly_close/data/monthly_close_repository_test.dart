@@ -146,6 +146,30 @@ void main() {
 
     expect(history.map((close) => close.periodMonth), ['2026-07', '2026-06']);
   });
+
+  test(
+    'latest unfinished close can be resumed after calendar rollover',
+    () async {
+      final evidence = _evidence(MonthlyCloseStepState.ready);
+      await repository.begin(
+        periodMonth: '2026-06',
+        evidence: evidence,
+        snapshot: const <String, Object?>{},
+        now: DateTime.utc(2026, 6, 30),
+      );
+      await repository.begin(
+        periodMonth: '2026-07',
+        evidence: evidence,
+        snapshot: const <String, Object?>{},
+        now: DateTime.utc(2026, 7, 31),
+      );
+
+      final open = await repository.watchLatestOpen().first;
+
+      expect(open?.periodMonth, '2026-07');
+      expect(open?.isClosed, isFalse);
+    },
+  );
 }
 
 MonthlyCloseEvidence _evidence(MonthlyCloseStepState state) =>

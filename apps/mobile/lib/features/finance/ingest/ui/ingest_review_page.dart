@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
@@ -27,6 +28,7 @@ import '../../../../core/shortcuts/master_detail_shortcuts.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../activation/data/finance_activation_store.dart';
+import '../../composition/finance_route_paths.dart';
 import '../../shared/ui/forms/forms.dart';
 import '../data/capture_encoder.dart';
 import '../data/ingest_capture_feedback.dart';
@@ -345,6 +347,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       showSelection: showSelection,
       onConfirm: () => _confirm(draft, data.selectedAccountId),
       onSkip: () => _skip(draft),
+      onEdit: () => _editDraft(draft),
+      onTransfer: () => _recordTransfer(draft),
+      onTrade: () => _recordTrade(draft),
       onFinalize: pending == null ? null : () => _finalizeApplied(pending),
       onSelectionChanged: (selected) =>
           _toggleSelection(draft.draftId, selected),
@@ -518,6 +523,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
                 recoveryUnavailable: item.recoveryUnreadable,
                 onConfirm: () => _confirm(draft, data.selectedAccountId),
                 onSkip: () => _skip(draft),
+                onEdit: () => _editDraft(draft),
+                onTransfer: () => _recordTransfer(draft),
+                onTrade: () => _recordTrade(draft),
                 onFinalize: pending == null
                     ? null
                     : () => _finalizeApplied(pending),
@@ -538,6 +546,102 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       _selectedIds.remove(draftId);
       if (selected) _selectedIds.add(draftId);
     });
+  }
+
+  Future<void> _editDraft(IngestDraft draft) async {
+    if (_isBusy) return;
+    final parsed = await showAppFormSheet<ParsedTransaction>(
+      context: context,
+      maxHeightFactor: 0.9,
+      builder: (_) => _IngestDraftEditSheet(parsed: draft.parsed),
+    );
+    if (parsed == null || !mounted) return;
+    final store = ref.read(ingestDraftStoreProvider);
+    if (store == null) return;
+    final updated = await store.updateParsed(
+      draftId: draft.draftId,
+      expectedRevision: draft.revision,
+      parsed: parsed,
+    );
+    if (!mounted) return;
+    if (!updated) {
+      AppMessenger.show(
+        context,
+        ToastKind.warning,
+        AppLocalizations.of(context).ingestEditConflict,
+      );
+    }
+  }
+
+  Future<void> _recordTransfer(IngestDraft draft) async {
+    if (_isBusy) return;
+    final parsed = draft.parsed;
+    final route = Uri(
+      path: FinanceRoutes.transfer,
+      queryParameters: <String, String>{
+        'amount': (parsed.amountMinor.abs() / 100).toStringAsFixed(2),
+        'date': _ingestYmd(parsed.occurredAt),
+        'note': parsed.description,
+      },
+    ).toString();
+    final recorded = await context.push<bool>(route);
+    if (recorded != true || !mounted) return;
+    await _settleExternalDraft(
+      draft,
+      AppLocalizations.of(context).ingestTransferRecorded,
+    );
+  }
+
+  Future<void> _recordTrade(IngestDraft draft) async {
+    if (_isBusy) return;
+    final parsed = draft.parsed;
+    final route = Uri(
+      path: FinanceRoutes.tradeEntry,
+      queryParameters: <String, String>{
+        if (parsed.activitySide != null) 'side': parsed.activitySide!,
+        if (parsed.instrumentSymbol != null) 'symbol': parsed.instrumentSymbol!,
+        if (parsed.quantity != null) 'quantity': parsed.quantity!,
+        if (parsed.unitPrice != null) 'price': parsed.unitPrice!,
+        'currency': parsed.currency,
+        'date': _ingestYmd(parsed.occurredAt),
+        'note': parsed.description,
+        'ingest': '1',
+      },
+    ).toString();
+    final recorded = await context.push<bool>(route);
+    if (recorded != true || !mounted) return;
+    await _settleExternalDraft(
+      draft,
+      AppLocalizations.of(context).ingestTradeRecorded,
+    );
+  }
+
+  Future<void> _settleExternalDraft(
+    IngestDraft draft,
+    String successMessage,
+  ) async {
+    final store = ref.read(ingestDraftStoreProvider);
+    if (store == null) return;
+    final result = await store.transition(
+      IngestLifecycleTransition(
+        ownerUserId: draft.ownerUserId,
+        draftId: draft.draftId,
+        expectedStatus: DraftStatus.pending,
+        expectedRevision: draft.revision,
+        nextStatus: DraftStatus.confirmed,
+      ),
+    );
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
+    AppMessenger.show(
+      context,
+      result.outcome == IngestLifecycleMutationOutcome.applied
+          ? ToastKind.success
+          : ToastKind.warning,
+      result.outcome == IngestLifecycleMutationOutcome.applied
+          ? successMessage
+          : l10n.ingestEditConflict,
+    );
   }
 
   void _scheduleSelectionPrune(
@@ -1637,6 +1741,153 @@ class _CaptureOption extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _IngestDraftEditSheet extends StatefulWidget {
+  const _IngestDraftEditSheet({required this.parsed});
+
+  final ParsedTransaction parsed;
+
+  @override
+  State<_IngestDraftEditSheet> createState() => _IngestDraftEditSheetState();
+}
+
+String _ingestYmd(DateTime value) {
+  final local = value.toLocal();
+  return '${local.year.toString().padLeft(4, '0')}-'
+      '${local.month.toString().padLeft(2, '0')}-'
+      '${local.day.toString().padLeft(2, '0')}';
+}
+
+class _IngestDraftEditSheetState extends State<_IngestDraftEditSheet> {
+  late final TextEditingController _description;
+  late final TextEditingController _amount;
+  late final TextEditingController _currency;
+  late final TextEditingController _category;
+  late DateTime _date;
+  late IngestTransactionKind _kind;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final parsed = widget.parsed;
+    _description = TextEditingController(text: parsed.description);
+    _amount = TextEditingController(
+      text: (parsed.amountMinor.abs() / 100).toStringAsFixed(2),
+    );
+    _currency = TextEditingController(text: parsed.currency);
+    _category = TextEditingController(text: parsed.categoryHint);
+    _date = parsed.occurredAt;
+    _kind = parsed.kind;
+  }
+
+  @override
+  void dispose() {
+    _description.dispose();
+    _amount.dispose();
+    _currency.dispose();
+    _category.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppSheet(
+      title: l10n.ingestEditDraft,
+      footer: AppSheetFooter(
+        submitLabel: l10n.commonSave,
+        cancelLabel: l10n.commonCancel,
+        onSubmit: _submit,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SegmentedRow<IngestTransactionKind>(
+            options: IngestTransactionKind.values,
+            value: _kind,
+            labelOf: (kind) => switch (kind) {
+              IngestTransactionKind.income => l10n.ingestKindIncome,
+              IngestTransactionKind.expense => l10n.ingestKindExpense,
+              IngestTransactionKind.transfer => l10n.ingestKindTransfer,
+              IngestTransactionKind.trade => l10n.ingestKindTrade,
+            },
+            onChanged: (kind) => setState(() => _kind = kind),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FTextField(
+            control: FTextFieldControl.managed(controller: _description),
+            label: Text(l10n.ingestEditDescription),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FTextField(
+            control: FTextFieldControl.managed(controller: _amount),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            label: Text(l10n.ingestEditAmount),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FTextField(
+            control: FTextFieldControl.managed(controller: _currency),
+            textCapitalization: TextCapitalization.characters,
+            label: Text(l10n.ingestEditCurrency),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          DateField(
+            label: l10n.ingestEditDate,
+            initialValue: _date,
+            firstDate: DateTime(1970),
+            lastDate: DateTime.now().add(const Duration(days: 1)),
+            required: true,
+            onChanged: (value) {
+              if (value != null) setState(() => _date = value);
+            },
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FTextField(
+            control: FTextFieldControl.managed(controller: _category),
+            label: Text(l10n.ingestEditCategory),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: AppSpacing.s12),
+            AppStatusBanner(kind: AppStatusKind.error, message: _error!),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _submit() {
+    final amount = double.tryParse(_amount.text.trim());
+    final currency = _currency.text.trim().toUpperCase();
+    final description = _description.text.trim();
+    if (amount == null ||
+        amount <= 0 ||
+        currency.isEmpty ||
+        description.isEmpty) {
+      setState(() {
+        _error = AppLocalizations.of(context).ingestEditInvalid;
+      });
+      return;
+    }
+    final unsignedMinor = (amount * 100).round();
+    final amountMinor = _kind == IngestTransactionKind.income
+        ? unsignedMinor
+        : -unsignedMinor;
+    Navigator.of(context).pop(
+      widget.parsed.copyWith(
+        description: description,
+        amountMinor: amountMinor,
+        currency: currency,
+        occurredAt: _date,
+        kind: _kind,
+        clearCategoryHint: _category.text.trim().isEmpty,
+        categoryHint: _category.text.trim().isEmpty
+            ? null
+            : _category.text.trim(),
       ),
     );
   }

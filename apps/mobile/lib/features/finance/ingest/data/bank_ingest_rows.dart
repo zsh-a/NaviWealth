@@ -51,9 +51,10 @@ ParsedTransaction? _rowToBankTransaction(
   );
   if (resolved == null || resolved.$2 == 0) return null;
   final (kind, minor) = resolved;
-  if (kind == IngestTransactionKind.income && (isRefund || isTransfer)) {
+  if (kind == IngestTransactionKind.income && isRefund) {
     return null;
   }
+  final resolvedKind = isTransfer ? IngestTransactionKind.transfer : kind;
 
   final currency = (cell(_BankCol.currency) ?? defaultCurrency)
       .toUpperCase()
@@ -65,8 +66,10 @@ ParsedTransaction? _rowToBankTransaction(
         : -minor.abs(),
     currency: currency.isEmpty ? defaultCurrency : currency,
     occurredAt: date,
-    kind: kind,
-    categoryHint: kind == IngestTransactionKind.income
+    kind: resolvedKind,
+    categoryHint: resolvedKind == IngestTransactionKind.transfer
+        ? null
+        : kind == IngestTransactionKind.income
         ? _incomeCategoryHint(description)
         : _categoryHint(description),
     confidence: 0.9,

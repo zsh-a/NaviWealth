@@ -82,6 +82,29 @@ class MonthlyCloseRepository {
     );
   }
 
+  /// Most recently touched unfinished close, regardless of calendar month.
+  ///
+  /// This is the resume anchor for users who start a close near month-end
+  /// and return after the calendar has rolled over.
+  Stream<MonthlyClose?> watchLatestOpen() async* {
+    final owner = await _stamper.currentUserId();
+    final query = _db.select(_db.financialMonthlyCloses)
+      ..where(
+        (table) =>
+            table.ownerUserId.equals(owner) &
+            table.closedAt.isNull() &
+            table.deletedAt.isNull(),
+      )
+      ..orderBy([
+        (table) =>
+            OrderingTerm(expression: table.startedAt, mode: OrderingMode.desc),
+      ])
+      ..limit(1);
+    yield* query.watchSingleOrNull().map(
+      (row) => row == null ? null : _fromRow(row),
+    );
+  }
+
   Future<MonthlyClose> begin({
     required String periodMonth,
     required MonthlyCloseEvidence evidence,

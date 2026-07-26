@@ -190,6 +190,33 @@ class IngestDraftStore implements IngestDraftBatchLifecycleStore {
     }
   }
 
+  /// Correct parsed fields while the row is still awaiting confirmation.
+  ///
+  /// Optimistic revision matching prevents an edit from overwriting a
+  /// concurrent confirm/dismiss transition.
+  Future<bool> updateParsed({
+    required String draftId,
+    required int expectedRevision,
+    required ParsedTransaction parsed,
+  }) async {
+    final changed = await _db.customUpdate(
+      'UPDATE ingest_drafts SET parsed_json = ?1, confidence = ?2, '
+      'revision = revision + 1 '
+      'WHERE draft_id = ?3 AND owner_user_id = ?4 AND status = ?5 '
+      'AND revision = ?6',
+      variables: [
+        Variable.withString(jsonEncode(parsed.toJson())),
+        Variable.withReal(parsed.confidence),
+        Variable.withString(draftId),
+        Variable.withString(_owner),
+        Variable.withString(DraftStatus.pending.wire),
+        Variable.withInt(expectedRevision),
+      ],
+    );
+    if (changed == 1) _notify();
+    return changed == 1;
+  }
+
   @override
   Future<IngestLifecycleMutationResult> transition(
     IngestLifecycleTransition transition,

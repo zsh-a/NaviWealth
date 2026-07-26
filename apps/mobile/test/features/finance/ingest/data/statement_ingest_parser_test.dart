@@ -122,20 +122,24 @@ void main() {
       expect(rows.single.categoryHint, 'transport');
     });
 
-    test('broker exports route to fee/tax-only parser', () {
+    test('broker exports preserve income and withholding as separate drafts', () {
       final rows = parseStatementLedger(
         'ClientAccountID,Asset Category,Currency,Symbol,Date/Time,Description,Amount\n'
         'U123,Stocks,USD,AAPL,2026-05-10,Dividend,12.34\n'
         'U123,Stocks,USD,AAPL,2026-05-10,Withholding Tax,-3.70\n',
       );
 
-      expect(rows, hasLength(1));
-      expect(rows.single.description, contains('withholding tax'));
-      expect(rows.single.amountMinor, -370);
-      expect(rows.single.categoryHint, 'tax:withholding');
+      expect(rows, hasLength(2));
+      expect(rows.first.kind, IngestTransactionKind.income);
+      expect(rows.first.description, contains('dividend'));
+      expect(rows.first.amountMinor, 1234);
+      expect(rows.first.categoryHint, 'dividend');
+      expect(rows.last.description, contains('withholding tax'));
+      expect(rows.last.amountMinor, -370);
+      expect(rows.last.categoryHint, 'tax:withholding');
     });
 
-    test('trade principal and transfers stay outside the cash ledger', () {
+    test('trade principal and transfers use typed review destinations', () {
       final brokerRows = parseStatementLedger(
         'Date,Action,Symbol,Description,Fees & Comm,Amount,Currency\n'
         '2026-05-10,BUY,AAPL,Bought 10 shares,,-1000.00,USD\n',
@@ -145,8 +149,13 @@ void main() {
         '2026-05-11,转账收入,示例用户,1000.00,CNY\n',
       );
 
-      expect(brokerRows, isEmpty);
-      expect(transferRows, isEmpty);
+      expect(brokerRows, hasLength(1));
+      expect(brokerRows.single.kind, IngestTransactionKind.trade);
+      expect(brokerRows.single.instrumentSymbol, 'AAPL');
+      expect(brokerRows.single.amountMinor, -100000);
+      expect(transferRows, hasLength(1));
+      expect(transferRows.single.kind, IngestTransactionKind.transfer);
+      expect(transferRows.single.amountMinor, 100000);
     });
   });
 }

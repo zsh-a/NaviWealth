@@ -103,6 +103,45 @@ void main() {
     },
   );
 
+  test('typed trade metadata round-trips through draft persistence', () async {
+    final db = makeTestDatabase();
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    final base = _draft('trade-1');
+    await store.putAll([
+      IngestDraft(
+        draftId: base.draftId,
+        ownerUserId: base.ownerUserId,
+        createdAt: base.createdAt,
+        sourceKind: base.sourceKind,
+        parsed: ParsedTransaction(
+          description: 'Buy AAPL',
+          amountMinor: -190000,
+          currency: 'USD',
+          occurredAt: DateTime.utc(2026, 5, 10),
+          kind: IngestTransactionKind.trade,
+          categoryHint: 'trade',
+          instrumentSymbol: 'AAPL',
+          quantity: '10',
+          unitPrice: '190',
+          activitySide: 'buy',
+        ),
+        verdict: base.verdict,
+        status: base.status,
+        originLabel: base.originLabel,
+      ),
+    ]);
+
+    final parsed = (await store.listByStatus(
+      DraftStatus.pending,
+    )).single.parsed;
+    expect(parsed.kind, IngestTransactionKind.trade);
+    expect(parsed.instrumentSymbol, 'AAPL');
+    expect(parsed.quantity, '10');
+    expect(parsed.unitPrice, '190');
+    expect(parsed.activitySide, 'buy');
+    await db.close();
+  });
+
   test('owner-scoped CAS moves a draft out of the pending queue', () async {
     final db = makeTestDatabase();
     final store = IngestDraftStore(db, ownerUserId: 'u1');
@@ -125,6 +164,42 @@ void main() {
     expect(pending.single.draftId, 'd2');
     await db.close();
   });
+
+  test(
+    'pending draft fields can be corrected with revision protection',
+    () async {
+      final db = makeTestDatabase();
+      final store = IngestDraftStore(db, ownerUserId: 'u1');
+      await store.putAll([_draft('d1')]);
+      final original = (await store.listByStatus(DraftStatus.pending)).single;
+
+      final changed = await store.updateParsed(
+        draftId: original.draftId,
+        expectedRevision: original.revision,
+        parsed: original.parsed.copyWith(
+          description: 'Corrected coffee',
+          amountMinor: -4200,
+          currency: 'USD',
+          clearCategoryHint: true,
+        ),
+      );
+      final staleWrite = await store.updateParsed(
+        draftId: original.draftId,
+        expectedRevision: original.revision,
+        parsed: original.parsed,
+      );
+      final corrected = (await store.listByStatus(DraftStatus.pending)).single;
+
+      expect(changed, isTrue);
+      expect(staleWrite, isFalse);
+      expect(corrected.revision, 1);
+      expect(corrected.parsed.description, 'Corrected coffee');
+      expect(corrected.parsed.amountMinor, -4200);
+      expect(corrected.parsed.currency, 'USD');
+      expect(corrected.parsed.categoryHint, isNull);
+      await db.close();
+    },
+  );
 
   test('runBatch commits lifecycle transitions atomically', () async {
     final db = makeTestDatabase();

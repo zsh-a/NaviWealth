@@ -77,6 +77,7 @@ void main() {
     });
 
     test('skips expenses when FX is missing', () {
+      var missingFxCount = 0;
       final spend = buildBudgetSpendByCategoryId(
         periodMonth: '2026-05',
         expenses: [
@@ -84,9 +85,11 @@ void main() {
         ],
         targetCurrency: 'CNY',
         converter: FxRateCurrencyConverter(InMemoryFxRateLookup(const [])),
+        onMissingFx: () => missingFxCount++,
       );
 
       expect(spend, isEmpty);
+      expect(missingFxCount, 1);
     });
   });
 }

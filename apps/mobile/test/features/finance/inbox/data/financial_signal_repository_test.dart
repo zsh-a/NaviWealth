@@ -60,6 +60,43 @@ void main() {
   });
 
   test(
+    'bulk resolve clears the selected group and enqueues every row',
+    () async {
+      final items = await repository.reconcile(const [
+        FinancialSignalCandidate(
+          sourceKey: 'runway-risk',
+          kind: FinancialInboxKind.runwayRisk,
+          priority: FinancialInboxPriority.important,
+          count: 1,
+          route: '/plan/runway',
+          evidence: {'balance': '-100'},
+        ),
+        FinancialSignalCandidate(
+          sourceKey: 'fx-missing',
+          kind: FinancialInboxKind.missingExchangeRate,
+          priority: FinancialInboxPriority.attention,
+          count: 1,
+          route: '/settings/fx',
+          evidence: {
+            'currencies': ['USD'],
+          },
+        ),
+      ], now: DateTime.utc(2026, 7, 1));
+
+      await repository.resolveMany(
+        items.map((item) => item.id),
+        now: DateTime.utc(2026, 7, 2),
+      );
+
+      expect(
+        await repository.listVisible(now: DateTime.utc(2026, 7, 2)),
+        isEmpty,
+      );
+      expect(await outbox.depth(), 4);
+    },
+  );
+
+  test(
     'partial detection never resolves signals from another detector',
     () async {
       final now = DateTime.utc(2026, 7, 1);

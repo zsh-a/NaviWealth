@@ -5,6 +5,8 @@ enum MoneyRunwayStatus { healthy, watch, shortfall }
 
 enum MoneyRunwayConfidence { low, medium, high }
 
+enum MoneyRunwayAssumptionSource { observedHistory, firePlan, defaultPolicy }
+
 enum MoneyRunwayScenarioKind { largePurchase, delayedIncome, reducedIncome }
 
 enum RunwayFlowCertainty { known, estimated }
@@ -102,6 +104,8 @@ class MoneyRunwaySnapshot {
     required this.historicalForecastError,
     required this.missingCurrencies,
     required this.hasData,
+    this.monthlyExpenseSource = MoneyRunwayAssumptionSource.observedHistory,
+    this.reserveSource = MoneyRunwayAssumptionSource.defaultPolicy,
   });
 
   final DateTime asOf;
@@ -118,6 +122,8 @@ class MoneyRunwaySnapshot {
   final double? historicalForecastError;
   final Set<String> missingCurrencies;
   final bool hasData;
+  final MoneyRunwayAssumptionSource monthlyExpenseSource;
+  final MoneyRunwayAssumptionSource reserveSource;
 
   Decimal balanceAt(int days, {bool includeEstimates = true}) {
     if (points.isEmpty) return startingBalance;
@@ -168,6 +174,8 @@ class MoneyRunwaySnapshot {
         .where((flow) => flow.certainty == RunwayFlowCertainty.estimated)
         .length,
     'missing_currencies': missingCurrencies.toList()..sort(),
+    'monthly_expense_source': monthlyExpenseSource.name,
+    'reserve_source': reserveSource.name,
   };
 }
 
@@ -185,6 +193,10 @@ MoneyRunwaySnapshot buildMoneyRunway({
   Set<String> missingCurrencies = const <String>{},
   int horizonDays = 90,
   bool hasData = true,
+  MoneyRunwayAssumptionSource monthlyExpenseSource =
+      MoneyRunwayAssumptionSource.observedHistory,
+  MoneyRunwayAssumptionSource reserveSource =
+      MoneyRunwayAssumptionSource.defaultPolicy,
 }) {
   final start = _day(asOf);
   final flows = scheduledFlows.toList(growable: false)
@@ -250,6 +262,8 @@ MoneyRunwaySnapshot buildMoneyRunway({
     historicalForecastError: historicalForecastError,
     missingCurrencies: Set<String>.unmodifiable(missingCurrencies),
     hasData: hasData,
+    monthlyExpenseSource: monthlyExpenseSource,
+    reserveSource: reserveSource,
   );
 }
 
@@ -320,6 +334,8 @@ MoneyRunwaySnapshot applyMoneyRunwayScenario(
     historicalForecastError: base.historicalForecastError,
     missingCurrencies: base.missingCurrencies,
     hasData: base.hasData,
+    monthlyExpenseSource: base.monthlyExpenseSource,
+    reserveSource: base.reserveSource,
   );
 }
 

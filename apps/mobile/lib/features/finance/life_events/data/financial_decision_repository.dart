@@ -47,6 +47,7 @@ class FinancialDecisionRepository {
     required LifeEventBaseline baseline,
     required LifeEventAssumptions assumptions,
     required LifeEventOutcome outcome,
+    required DateTime reviewDate,
     required DateTime now,
   }) async {
     final stamp = await _stamper.stamp();
@@ -64,7 +65,7 @@ class FinancialDecisionRepository {
               assumptionsJson: jsonEncode(assumptions.toJson()),
               selectedOutcomeJson: jsonEncode(outcome.toJson()),
               decidedAt: now,
-              reviewDate: now.add(const Duration(days: 90)),
+              reviewDate: reviewDate,
               ownerUserId: stamp.ownerUserId,
               updatedAt: stamp.now,
               updatedByDevice: stamp.deviceId,

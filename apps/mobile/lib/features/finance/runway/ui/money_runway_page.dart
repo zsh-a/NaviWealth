@@ -181,17 +181,15 @@ class _RunwayContent extends ConsumerWidget {
               ),
               _ValueRow(
                 label: l10n.moneyRunwayReserveTarget,
-                value: formatters.currency(
-                  snapshot.reserveTarget,
-                  code: snapshot.currency,
-                ),
+                value:
+                    '${formatters.currency(snapshot.reserveTarget, code: snapshot.currency)}'
+                    ' · ${_assumptionSourceLabel(l10n, snapshot.reserveSource)}',
               ),
               _ValueRow(
                 label: l10n.moneyRunwayVariableEstimate,
-                value: formatters.currency(
-                  snapshot.estimatedDailyVariableOutflow * Decimal.fromInt(30),
-                  code: snapshot.currency,
-                ),
+                value:
+                    '${formatters.currency(snapshot.estimatedDailyVariableOutflow * Decimal.fromInt(30), code: snapshot.currency)}'
+                    ' · ${_assumptionSourceLabel(l10n, snapshot.monthlyExpenseSource)}',
               ),
               _ValueRow(
                 label: l10n.moneyRunwayCoverage,
@@ -335,6 +333,7 @@ class _ScenarioSection extends ConsumerStatefulWidget {
 
 class _ScenarioSectionState extends ConsumerState<_ScenarioSection> {
   MoneyRunwaySnapshot? _customResult;
+  _CustomRunwayScenario? _customInput;
 
   @override
   Widget build(BuildContext context) {
@@ -424,10 +423,42 @@ class _ScenarioSectionState extends ConsumerState<_ScenarioSection> {
                   style: context.captionStyle,
                 ),
                 const SizedBox(height: AppSpacing.s6),
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: () => setState(() => _customResult = null),
-                  child: Text(l10n.moneyRunwayCustomReset),
+                Wrap(
+                  spacing: AppSpacing.s8,
+                  runSpacing: AppSpacing.s8,
+                  children: [
+                    FButton(
+                      variant: FButtonVariant.outline,
+                      onPress: () => _createRunwayAction(
+                        context,
+                        ref,
+                        l10n,
+                        result,
+                        scenario: _customInput?.toEvidenceJson(),
+                      ),
+                      child: Flexible(
+                        child: Text(
+                          l10n.moneyRunwayCreateAction,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                    FButton(
+                      variant: FButtonVariant.ghost,
+                      onPress: () => setState(() {
+                        _customResult = null;
+                        _customInput = null;
+                      }),
+                      child: Flexible(
+                        child: Text(
+                          l10n.moneyRunwayCustomReset,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -462,7 +493,10 @@ class _ScenarioSectionState extends ConsumerState<_ScenarioSection> {
         ),
       );
     }
-    setState(() => _customResult = result);
+    setState(() {
+      _customResult = result;
+      _customInput = input;
+    });
   }
 }
 
@@ -478,6 +512,13 @@ final class _CustomRunwayScenario {
   final int incomeDelayDays;
   final Decimal incomeReduction;
   final int reductionDurationDays;
+
+  Map<String, Object?> toEvidenceJson() => <String, Object?>{
+    'purchase_amount': purchaseAmount.toString(),
+    'income_delay_days': incomeDelayDays,
+    'income_reduction': incomeReduction.toString(),
+    'reduction_duration_days': reductionDurationDays,
+  };
 }
 
 Future<_CustomRunwayScenario?> _showCustomScenarioDialog(
@@ -668,7 +709,14 @@ class _ValueRow extends StatelessWidget {
     child: Row(
       children: [
         Expanded(child: Text(label, style: context.captionStyle)),
-        Text(value, style: context.labelStyle),
+        const SizedBox(width: AppSpacing.s12),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: context.labelStyle,
+          ),
+        ),
       ],
     ),
   );
@@ -699,12 +747,24 @@ String _confidenceLabel(
   MoneyRunwayConfidence.high => l10n.moneyRunwayConfidenceHigh,
 };
 
+String _assumptionSourceLabel(
+  AppLocalizations l10n,
+  MoneyRunwayAssumptionSource source,
+) => switch (source) {
+  MoneyRunwayAssumptionSource.observedHistory =>
+    l10n.moneyRunwaySourceObservedHistory,
+  MoneyRunwayAssumptionSource.firePlan => l10n.moneyRunwaySourceFirePlan,
+  MoneyRunwayAssumptionSource.defaultPolicy =>
+    l10n.moneyRunwaySourceDefaultPolicy,
+};
+
 Future<void> _createRunwayAction(
   BuildContext context,
   WidgetRef ref,
   AppLocalizations l10n,
-  MoneyRunwaySnapshot snapshot,
-) async {
+  MoneyRunwaySnapshot snapshot, {
+  Map<String, Object?>? scenario,
+}) async {
   final confirmed = await showConfirmDialog(
     context: context,
     title: Text(l10n.moneyRunwayActionConfirmTitle),
@@ -715,13 +775,15 @@ Future<void> _createRunwayAction(
   );
   if (confirmed != true || !context.mounted) return;
   final dispatch = ref.read(lifeActionDispatcherProvider);
+  final evidence = <String, Object?>{...snapshot.toEvidenceJson()};
+  if (scenario != null) evidence['scenario'] = scenario;
   final id = await dispatch(
     LifeActionDraft(
       title: l10n.moneyRunwayActionTitle,
-      note: jsonEncode(snapshot.toEvidenceJson()),
+      note: jsonEncode(evidence),
       sourceDomain: 'finance',
       sourceRowFamily: 'money_runway',
-      sourceRowId: 'current',
+      sourceRowId: scenario == null ? 'current' : 'custom-scenario',
       priority: snapshot.status == MoneyRunwayStatus.shortfall
           ? 'high'
           : 'normal',

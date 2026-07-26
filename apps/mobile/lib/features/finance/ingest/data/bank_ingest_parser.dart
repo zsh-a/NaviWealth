@@ -3,8 +3,10 @@
 /// The generic CSV parser handles simple `date,description,amount` exports.
 /// Bank statements often split money into debit/credit columns or use a
 /// signed `amount` plus a separate debit/credit marker. This parser covers
-/// those common shapes as typed expense/income drafts. Refunds and
-/// transfer-like credits remain excluded until reconciliation can link them.
+/// those common shapes as typed expense/income drafts. Transfer rows retain a
+/// typed transfer destination so review can hand them to the atomic two-account
+/// transfer form. Refund credits remain excluded until reconciliation can link
+/// them to an original expense.
 library;
 
 import '../domain/ingest_models.dart';

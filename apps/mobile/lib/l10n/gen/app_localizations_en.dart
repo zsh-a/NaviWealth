@@ -10061,6 +10061,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ingestConfirm => 'Record';
 
   @override
+  String get ingestEditDraft => 'Correct fields';
+
+  @override
+  String get ingestEditDescription => 'Description';
+
+  @override
+  String get ingestEditAmount => 'Amount';
+
+  @override
+  String get ingestEditCurrency => 'Currency';
+
+  @override
+  String get ingestEditDate => 'Transaction date';
+
+  @override
+  String get ingestEditCategory => 'Category hint (optional)';
+
+  @override
+  String get ingestEditInvalid =>
+      'Enter a description, positive amount, and currency.';
+
+  @override
+  String get ingestEditConflict =>
+      'This draft changed while you were editing. Review the latest version and try again.';
+
+  @override
   String get ingestVerdictNew => 'New';
 
   @override
@@ -14094,6 +14120,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ingestKindIncome => 'Income';
 
   @override
+  String get ingestKindTransfer => 'Transfer';
+
+  @override
+  String get ingestKindTrade => 'Security trade';
+
+  @override
+  String get ingestRecordTransfer => 'Open transfer form';
+
+  @override
+  String get ingestRecordTrade => 'Open trade form';
+
+  @override
+  String get ingestTransferRecorded => 'Transfer recorded and draft completed.';
+
+  @override
+  String get ingestTradeRecorded => 'Trade recorded and draft completed.';
+
+  @override
   String get databaseUnlockLoading => 'Unlocking your local data…';
 
   @override
@@ -14286,7 +14330,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get financialInboxResolve => 'Resolve';
 
   @override
-  String get financialInboxSnooze => '7 days';
+  String get financialInboxSnooze => 'Snooze';
+
+  @override
+  String get financialInboxChooseSnooze => 'Snooze until';
+
+  @override
+  String get financialInboxSnoozeTomorrow => 'Tomorrow';
+
+  @override
+  String get financialInboxSnoozeWeek => 'In 7 days';
+
+  @override
+  String get financialInboxSnoozeMonth => 'In 30 days';
+
+  @override
+  String get financialInboxResolveGroup => 'Resolve group';
+
+  @override
+  String financialInboxResolveGroupBody(int count) {
+    return 'Resolve all $count items in this priority group?';
+  }
+
+  @override
+  String financialInboxResolvedCount(int count) {
+    return 'Resolved $count items';
+  }
 
   @override
   String financialInboxImportTitle(int count) {
@@ -14551,6 +14620,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get lifeEventChooseReviewDate => 'Choose review timing';
+
+  @override
+  String get lifeEventReviewIn30Days => 'In 30 days';
+
+  @override
+  String get lifeEventReviewIn90Days => 'In 90 days';
+
+  @override
+  String get lifeEventReviewIn180Days => 'In 180 days';
+
+  @override
   String get lifeEventCaptureActual => 'Capture current outcome';
 
   @override
@@ -14642,6 +14723,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get moneyRunwayVariableEstimate =>
       'Estimated variable spending / month';
+
+  @override
+  String get moneyRunwaySourceObservedHistory => 'Observed 90-day history';
+
+  @override
+  String get moneyRunwaySourceFirePlan => 'FIRE plan';
+
+  @override
+  String get moneyRunwaySourceDefaultPolicy => 'Default 3-month reserve';
 
   @override
   String get moneyRunwayCoverage => 'Emergency coverage';
