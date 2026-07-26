@@ -134,6 +134,7 @@ class OpportunityScorer {
     return RejectedCandidate(
       optionSymbol: contract.optionSymbol,
       reasons: reasons,
+      strategy: opportunityStrategyFromSellSide(strategy),
     );
   }
 }

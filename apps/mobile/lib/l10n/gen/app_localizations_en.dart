@@ -11404,6 +11404,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incomePlannerRejectDelta => 'Outside delta range';
 
   @override
+  String get incomePlannerRejectDeltaUnavailable =>
+      'Greeks unavailable from the data source';
+
+  @override
+  String get incomePlannerRejectLeapsBudget => 'Above the LEAPS budget';
+
+  @override
+  String get incomePlannerRejectQuote => 'No usable quote';
+
+  @override
   String get incomePlannerRejectPriceIntent => 'Outside your acceptable price';
 
   @override

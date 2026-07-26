@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:decimal/decimal.dart';
 
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
@@ -42,7 +44,7 @@ class LeapsOpportunityScorer {
       return null;
     }
     final asOf = now ?? DateTime.now().toUtc();
-    final delta = contract.delta!;
+    final delta = _effectiveDelta(contract)!;
     final currency = contract.strike.currency;
     final hundred = Decimal.fromInt(100);
 
@@ -126,6 +128,7 @@ class LeapsOpportunityScorer {
     return RejectedCandidate(
       optionSymbol: contract.optionSymbol,
       reasons: reasons,
+      strategy: OpportunityStrategy.leapsCall,
     );
   }
 
@@ -148,7 +151,7 @@ class LeapsOpportunityScorer {
         contract.dte > profile.leapsMaxDte) {
       reasons.add('dte_outside_target_range');
     }
-    final delta = contract.delta;
+    final delta = _effectiveDelta(contract);
     if (delta == null) {
       reasons.add('delta_unavailable');
     } else if (delta < profile.leapsDeltaMin || delta > profile.leapsDeltaMax) {
@@ -231,6 +234,47 @@ class LeapsOpportunityScorer {
       scoreBreakdown: {'cost_efficiency': score},
     );
   }
+}
+
+/// Broker delta when the source provides greeks, else a Black–Scholes
+/// call-delta estimate from the contract's implied volatility.
+///
+/// yfinance never returns greeks, so without this fallback the LEAPS
+/// lane would reject every candidate. The estimate is deterministic and
+/// conservative for its purpose (a coarse stock-substitute band), using
+/// a fixed risk-free rate — precision beyond the delta band would be
+/// pseudo-accuracy on free quote data.
+Decimal? _effectiveDelta(OptionContract contract) {
+  final broker = contract.delta;
+  if (broker != null) return broker;
+  final iv = contract.impliedVolatility;
+  if (iv == null || iv <= Decimal.zero) return null;
+  if (contract.type != OptionType.call) return null;
+  final spot = contract.underlyingPrice.amount.toDouble();
+  final strike = contract.strike.amount.toDouble();
+  if (spot <= 0 || strike <= 0 || contract.dte <= 0) return null;
+  const riskFreeRate = 0.04;
+  final sigma = iv.toDouble();
+  final years = contract.dte / 365.0;
+  final d1 =
+      (math.log(spot / strike) + (riskFreeRate + sigma * sigma / 2) * years) /
+      (sigma * math.sqrt(years));
+  return Decimal.parse(_normalCdf(d1).toStringAsFixed(4));
+}
+
+/// Standard normal CDF via the Abramowitz–Stegun 7.1.26 erf
+/// approximation (max error ~1.5e-7 — far below quote noise).
+double _normalCdf(double x) {
+  final t = 1 / (1 + 0.3275911 * x.abs() / math.sqrt2);
+  final erf =
+      1 -
+      (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t -
+                      0.284496736) *
+                  t +
+              0.254829592) *
+          t *
+          math.exp(-x * x / 2);
+  return x >= 0 ? 0.5 * (1 + erf) : 0.5 * (1 - erf);
 }
 
 Decimal _max(Decimal a, Decimal b) => a > b ? a : b;

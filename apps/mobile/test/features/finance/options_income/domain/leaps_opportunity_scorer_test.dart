@@ -84,6 +84,50 @@ void main() {
       expect(m.fundingCoveragePct, Decimal.parse('0.5'));
     });
 
+    test('missing broker delta falls back to a Black–Scholes estimate', () {
+      // yfinance never returns greeks: delta comes from IV instead.
+      // Spot 200, strike 160, IV 22%, 730d, r 4% → d1 ≈ 1.5987 → Δ ≈ 0.945.
+      // That is above the balanced band, so pick a strike near spot:
+      // strike 195 → d1 ≈ 0.4941 → Δ ≈ 0.689 (inside 0.65–0.80).
+      final scored = scorer.scoreOne(
+        contract: _call(
+          strike: 195,
+          mid: 30,
+          delta: null,
+          dte: 730,
+          impliedVolatility: '0.22',
+        ),
+        profile: profile,
+      );
+      expect(scored, isNotNull);
+      final m = scored!.metrics as LeapsOpportunityMetrics;
+      expect(m.leverageRatio, isNotNull);
+      // Estimated delta lands in the band and the explanation carries it.
+      expect(scored.explanation.summary, contains('0.6'));
+    });
+
+    test('missing delta AND missing IV still rejects', () {
+      final contract = _call(
+        strike: 195,
+        mid: 30,
+        delta: null,
+        dte: 730,
+        impliedVolatility: null,
+      );
+      expect(
+        scorer.filter(contract: contract, profile: profile)!.reasons,
+        contains('delta_unavailable'),
+      );
+    });
+
+    test('rejections carry the LEAPS lane tag', () {
+      final contract = _call(strike: 150, mid: 55, delta: '0.95', dte: 730);
+      expect(
+        scorer.filter(contract: contract, profile: profile)!.strategy,
+        OpportunityStrategy.leapsCall,
+      );
+    });
+
     test('puts never enter the LEAPS lane', () {
       final put = _call(
         strike: 150,
@@ -103,9 +147,10 @@ void main() {
 OptionContract _call({
   required int strike,
   required double mid,
-  required String delta,
+  required String? delta,
   required int dte,
   OptionType type = OptionType.call,
+  String? impliedVolatility = '0.22',
 }) {
   final midMoney = Money.parse(mid.toString(), 'USD');
   return OptionContract(
@@ -121,8 +166,10 @@ OptionContract _call({
     mid: midMoney,
     volume: 40,
     openInterest: 400,
-    impliedVolatility: Decimal.parse('0.22'),
-    delta: Decimal.parse(delta),
+    impliedVolatility: impliedVolatility == null
+        ? null
+        : Decimal.parse(impliedVolatility),
+    delta: delta == null ? null : Decimal.parse(delta),
     underlyingPrice: Money.parse('200', 'USD'),
     bidAskSpreadPct: Decimal.parse('0.02'),
     fetchedAt: DateTime.utc(2026, 7, 26),

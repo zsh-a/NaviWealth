@@ -183,6 +183,7 @@ class ScanOrchestrator {
         final ignoreOiFloor = _openInterestUnavailable(snapshot);
         var scoredCount = 0;
         final laneOpps = <OptionsOpportunity>[];
+        final laneRejected = <RejectedCandidate>[];
         for (final contract in snapshot.contracts) {
           if (contract.type != OptionType.call) continue;
           final scored = _leapsScorer.scoreOne(
@@ -203,16 +204,19 @@ class ScanOrchestrator {
               budgetRemaining: target.budgetRemaining,
               ignoreOpenInterestFloor: ignoreOiFloor,
             );
-            if (rejection != null) rejected.add(rejection);
+            if (rejection != null) laneRejected.add(rejection);
           }
         }
+        rejected.addAll(laneRejected);
         // Keep the top few per underlying — LEAPS chains list dozens of
         // near-identical strikes.
         laneOpps.sort((a, b) => b.score.compareTo(a.score));
         opportunities.addAll(laneOpps.take(3));
         logger.d(
           'options-income scan: LEAPS ${target.symbol} '
-          'scored=$scoredCount kept=${laneOpps.take(3).length}',
+          'scored=$scoredCount kept=${laneOpps.take(3).length} '
+          'rejected=${laneRejected.length} '
+          'topRejects=${_formatReasonCounts(laneRejected)}',
         );
       } catch (e, st) {
         AppLogger.instance.w(
