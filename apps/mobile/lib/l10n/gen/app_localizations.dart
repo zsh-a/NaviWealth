@@ -19162,6 +19162,24 @@ abstract class AppLocalizations {
   /// **'Outside delta range'**
   String get incomePlannerRejectDelta;
 
+  /// No description provided for @incomePlannerRejectDeltaUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Greeks unavailable from the data source'**
+  String get incomePlannerRejectDeltaUnavailable;
+
+  /// No description provided for @incomePlannerRejectLeapsBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Above the LEAPS budget'**
+  String get incomePlannerRejectLeapsBudget;
+
+  /// No description provided for @incomePlannerRejectQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'No usable quote'**
+  String get incomePlannerRejectQuote;
+
   /// No description provided for @incomePlannerRejectPriceIntent.
   ///
   /// In en, this message translates to:

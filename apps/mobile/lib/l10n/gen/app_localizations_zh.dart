@@ -10835,6 +10835,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerRejectDelta => '不在 Delta 范围';
 
   @override
+  String get incomePlannerRejectDeltaUnavailable => '数据源未提供希腊值（delta）';
+
+  @override
+  String get incomePlannerRejectLeapsBudget => '超出 LEAPS 预算';
+
+  @override
+  String get incomePlannerRejectQuote => '无可用报价';
+
+  @override
   String get incomePlannerRejectPriceIntent => '不符合你的价格意愿';
 
   @override

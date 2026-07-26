@@ -183,8 +183,16 @@ OpportunityRiskLevel parseOpportunityRiskLevel(String wire) {
 
 /// Why a candidate was rejected by the hard-filter pass.
 class RejectedCandidate {
-  const RejectedCandidate({required this.optionSymbol, required this.reasons});
+  const RejectedCandidate({
+    required this.optionSymbol,
+    required this.reasons,
+    this.strategy,
+  });
 
   final String optionSymbol;
   final List<String> reasons;
+
+  /// Which scan lane rejected the candidate. Lets the UI scope "why is
+  /// this filter empty?" summaries to the selected lane.
+  final OpportunityStrategy? strategy;
 }

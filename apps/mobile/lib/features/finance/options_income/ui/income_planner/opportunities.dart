@@ -153,11 +153,18 @@ class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
             ),
             const SizedBox(height: AppSpacing.s4),
             if (visible.isEmpty)
-              AppEmptyState(
-                icon: FLucideIcons.scanSearch,
-                title: l10n.incomePlannerOpportunityFilterEmpty,
-                compact: true,
-              )
+              // A lane can be empty even when the scan succeeded — show
+              // that lane's rejection reasons instead of a mute shrug.
+              widget.state is ScanSuccess
+                  ? _ScanEmptyResultCard(
+                      result: (widget.state as ScanSuccess).result,
+                      lane: _laneStrategy,
+                    )
+                  : AppEmptyState(
+                      icon: FLucideIcons.scanSearch,
+                      title: l10n.incomePlannerOpportunityFilterEmpty,
+                      compact: true,
+                    )
             else
               for (final opportunity in visible)
                 Padding(
@@ -170,15 +177,17 @@ class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
     );
   }
 
-  bool _matchesFilter(OptionsOpportunity opportunity) => switch (_filter) {
-    _OpportunityFilter.all => true,
-    _OpportunityFilter.put =>
-      opportunity.strategy == OpportunityStrategy.cashSecuredPut,
-    _OpportunityFilter.call =>
-      opportunity.strategy == OpportunityStrategy.coveredCall,
-    _OpportunityFilter.leaps =>
-      opportunity.strategy == OpportunityStrategy.leapsCall,
+  OpportunityStrategy? get _laneStrategy => switch (_filter) {
+    _OpportunityFilter.all => null,
+    _OpportunityFilter.put => OpportunityStrategy.cashSecuredPut,
+    _OpportunityFilter.call => OpportunityStrategy.coveredCall,
+    _OpportunityFilter.leaps => OpportunityStrategy.leapsCall,
   };
+
+  bool _matchesFilter(OptionsOpportunity opportunity) {
+    final lane = _laneStrategy;
+    return lane == null || opportunity.strategy == lane;
+  }
 }
 
 class _OpportunityCard extends ConsumerWidget {
@@ -331,16 +340,25 @@ class _OpportunityCard extends ConsumerWidget {
 }
 
 class _ScanEmptyResultCard extends StatelessWidget {
-  const _ScanEmptyResultCard({required this.result});
+  const _ScanEmptyResultCard({required this.result, this.lane});
 
   final ScanResult result;
+
+  /// Scope the rejection summary to one scan lane (the selected filter
+  /// chip); null summarises the whole batch.
+  final OpportunityStrategy? lane;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final universeEmpty = result.universe.isEmpty;
+    final rejectedInLane = lane == null
+        ? result.rejected
+        : result.rejected
+              .where((r) => r.strategy == null || r.strategy == lane)
+              .toList(growable: false);
     final counts = <String, int>{};
-    for (final rejected in result.rejected) {
+    for (final rejected in rejectedInLane) {
       for (final reason in rejected.reasons) {
         counts.update(reason, (value) => value + 1, ifAbsent: () => 1);
       }
@@ -434,6 +452,9 @@ String _rejectionReasonLabel(AppLocalizations l10n, String reason) =>
       'bid_ask_spread_above_maximum' => l10n.incomePlannerRejectSpread,
       'dte_outside_target_range' => l10n.incomePlannerRejectDte,
       'delta_outside_target_range' => l10n.incomePlannerRejectDelta,
+      'delta_unavailable' => l10n.incomePlannerRejectDeltaUnavailable,
+      'leaps_budget_exceeded' => l10n.incomePlannerRejectLeapsBudget,
+      'quote_unavailable' => l10n.incomePlannerRejectQuote,
       'strike_above_user_max_buy_price' ||
       'strike_below_user_min_sell_price' => l10n.incomePlannerRejectPriceIntent,
       'upcoming_earnings' ||
