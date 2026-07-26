@@ -83,7 +83,9 @@ class _FireBudgetPosture extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final signalAsync = ref.watch(fireBudgetSignalProvider);
     return signalAsync.when(
-      loading: () => const SizedBox.shrink(),
+      // Matches the rendered posture banner footprint (two text lines +
+      // vertical padding) so the hero column does not jump on resolve.
+      loading: () => const SkeletonBox(height: 56, radius: AppRadius.md),
       error: (_, _) => const SizedBox.shrink(),
       data: (signal) {
         final l10n = AppLocalizations.of(context);

@@ -503,7 +503,12 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                           ),
                           child: FProgress(),
                         ),
-                        error: (e, _) => Text(userSafeErrorMessage(context, e)),
+                        error: (e, _) => Text(
+                          userSafeErrorMessage(context, e),
+                          style: context.captionStyle.copyWith(
+                            color: SemanticColors.of(context).danger,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.s12),
                       accountsAsync.when(
@@ -578,7 +583,12 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                           );
                         },
                         loading: () => const FProgress(),
-                        error: (e, _) => Text(userSafeErrorMessage(context, e)),
+                        error: (e, _) => Text(
+                          userSafeErrorMessage(context, e),
+                          style: context.captionStyle.copyWith(
+                            color: SemanticColors.of(context).danger,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.s12),
                       FAccordion(

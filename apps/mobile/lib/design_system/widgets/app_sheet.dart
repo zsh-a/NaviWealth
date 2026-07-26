@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/app_motion_policy.dart';
+import '../tokens/breakpoints.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/text_style_presets.dart';
@@ -567,7 +568,7 @@ class AppSheetSurface extends StatelessWidget {
       ),
     );
 
-    return _AppSheetSurfaceScope(
+    final surfaceWidget = _AppSheetSurfaceScope(
       child: ClipRRect(
         borderRadius: borderRadius,
         child: frosted
@@ -581,5 +582,22 @@ class AppSheetSurface extends StatelessWidget {
             : decorated,
       ),
     );
+
+    // Wide viewports: a bottom sheet glued edge-to-edge across a desktop
+    // window reads as a full-window band (doc 15 §6.5 / design doc
+    // 01-responsive-layout §2.4). Center and cap it instead; phones keep
+    // the classic full-width sheet.
+    if (mediaQuery.size.width < Breakpoints.mobile) return surfaceWidget;
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: _kWideSheetMaxWidth),
+        child: surfaceWidget,
+      ),
+    );
   }
 }
+
+/// Max sheet width on tablet/desktop viewports (design doc
+/// 01-responsive-layout §2.4: form dialogs cap at 720).
+const double _kWideSheetMaxWidth = 720;

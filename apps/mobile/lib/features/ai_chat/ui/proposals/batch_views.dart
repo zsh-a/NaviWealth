@@ -222,7 +222,7 @@ class _BatchChildStatus extends StatelessWidget {
       if (progress.recovering && index < progress.completed) {
         return const Padding(
           padding: EdgeInsets.all(AppSpacing.s2),
-          child: CircularProgressIndicator(strokeWidth: AppStroke.medium),
+          child: FCircularProgress(),
         );
       }
       if (index < progress.completed) {
@@ -235,7 +235,7 @@ class _BatchChildStatus extends StatelessWidget {
       if (index == progress.completed && !progress.recovering) {
         return const Padding(
           padding: EdgeInsets.all(AppSpacing.s2),
-          child: CircularProgressIndicator(strokeWidth: AppStroke.medium),
+          child: FCircularProgress(),
         );
       }
     }

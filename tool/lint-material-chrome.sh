@@ -11,9 +11,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LIB="$ROOT/apps/mobile/lib"
 
 # P2 cleared SnackBar / ScaffoldMessenger / Material Divider to zero.
-# The 3 remaining CircularProgressIndicator are small inline spinners
-# (speech button, AI proposal batch views) scheduled for P3.
-BASELINE=3
+# P3 cleared the last CircularProgressIndicator call sites (FCircularProgress
+# is the Forui replacement), so all Material chrome is now banned outright.
+BASELINE=0
 PATTERN='ScaffoldMessenger|SnackBar\(|CircularProgressIndicator|showModalBottomSheet|(^|[^A-Za-z_])Divider\('
 
 count="$({ grep -RhoE --include='*.dart' "$PATTERN" "$LIB" || true; } | wc -l | tr -d ' ')"

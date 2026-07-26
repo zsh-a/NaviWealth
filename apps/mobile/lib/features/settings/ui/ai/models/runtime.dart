@@ -256,7 +256,13 @@ class _RuntimeDiagnosticsCard extends StatelessWidget {
           ],
         ),
         error: (e, _) => Text(
-          l10n.settingsAiModelsRuntimeCheckFailed('$e'),
+          l10n.settingsAiModelsRuntimeCheckFailed(
+            userSafeErrorMessage(
+              context,
+              e,
+              operation: 'check embedder runtime',
+            ),
+          ),
           style: context.captionStyle.copyWith(color: semantic.danger),
         ),
         data: (r) {

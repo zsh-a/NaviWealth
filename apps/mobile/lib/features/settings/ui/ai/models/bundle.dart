@@ -10,7 +10,6 @@ class _BundleCard extends ConsumerWidget {
     final stateAsync = ref.watch(modelInstallProvider(bundle));
     final controller = ref.read(modelInstallProvider(bundle).notifier);
     final l10n = AppLocalizations.of(context);
-    final semantic = SemanticColors.of(context);
     final colors = context.theme.colors;
 
     return SoftCard.flat(
@@ -48,9 +47,16 @@ class _BundleCard extends ConsumerWidget {
               padding: EdgeInsets.symmetric(vertical: AppSpacing.s8),
               child: FProgress(),
             ),
-            error: (e, _) => Text(
-              l10n.settingsAiModelsStateLoadFailed('$e'),
-              style: context.captionStyle.copyWith(color: semantic.danger),
+            error: (error, _) => AppEmptyState.error(
+              title: l10n.commonLoadFailed,
+              message: userSafeErrorMessage(
+                context,
+                error,
+                operation: 'load model bundle state',
+              ),
+              retryLabel: l10n.commonRetry,
+              onRetry: () => ref.invalidate(modelInstallProvider(bundle)),
+              compact: true,
             ),
             data: (bundleState) => _BundleBody(
               state: bundleState,

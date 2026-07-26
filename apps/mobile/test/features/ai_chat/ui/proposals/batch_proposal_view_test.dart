@@ -79,7 +79,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Applying 1 of 3'), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(FCircularProgress), findsOneWidget);
     expect(find.text('Recording…'), findsOneWidget);
     expect(find.text('Undo applied items'), findsNothing);
     expect(

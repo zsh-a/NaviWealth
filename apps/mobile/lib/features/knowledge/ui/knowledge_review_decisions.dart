@@ -13,6 +13,8 @@ class _DueReviewsCard extends ConsumerWidget {
         final owner = ownerSnap.data!;
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
         return repoAsync.when(
+          // loading: intentionally empty — the card only appears when reviews
+          // are due; a skeleton would flash for a usually-hidden section.
           loading: () => const SizedBox.shrink(),
           error: (e, stackTrace) => KnowledgeSection.group(
             title: l10n.knowledgeReviewDecisionsTitle,

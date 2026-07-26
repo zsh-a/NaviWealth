@@ -44,12 +44,28 @@ class _FireSimulationsCardState extends ConsumerState<FireSimulationsCard> {
       child: SoftCard.raised(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: stateAsync.when(
-          loading: () => const SizedBox.shrink(),
-          error: (e, _) => Text(
-            '$e',
-            style: context.captionStyle.copyWith(
-              color: context.theme.colors.destructive,
+          loading: () => const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 120, height: 14, radius: AppRadius.sm),
+              SizedBox(height: AppSpacing.s8),
+              SkeletonBox(width: 200, height: 12, radius: AppRadius.sm),
+              SizedBox(height: AppSpacing.s12),
+              SkeletonBox(height: 32, radius: AppRadius.full),
+              SizedBox(height: AppSpacing.s12),
+              SkeletonBox(height: 88, radius: AppRadius.sm),
+            ],
+          ),
+          error: (error, _) => AppEmptyState.error(
+            title: l10n.commonLoadFailed,
+            message: userSafeErrorMessage(
+              context,
+              error,
+              operation: 'load FIRE state',
             ),
+            retryLabel: l10n.commonRetry,
+            onRetry: () => ref.invalidate(fireStateProvider),
+            compact: true,
           ),
           data: (baseline) => _Body(
             baseline: baseline,

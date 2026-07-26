@@ -11,6 +11,9 @@ class _ConcentrationRiskSection extends ConsumerWidget {
     final async = ref.watch(concentrationAlertsProvider);
     return async.when(
       skipLoadingOnReload: true,
+      // loading: intentionally empty — this section only exists when there
+      // are concentration breaches; a skeleton would promise content that
+      // usually never appears and shift the Allocation tab on resolve.
       loading: () => const SizedBox.shrink(),
       error: (_, _) => const SizedBox.shrink(),
       data: (alerts) {
