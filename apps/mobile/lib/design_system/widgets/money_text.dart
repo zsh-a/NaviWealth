@@ -4,7 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/format/formatters.dart';
-import '../theme/semantic_colors.dart';
+import '../theme/app_theme_scope.dart';
 import '../tokens/typography_tokens.dart';
 import 'amount_privacy_placeholder.dart';
 import 'amount_privacy_scope.dart';
@@ -328,8 +328,13 @@ class SignedMoneyText extends StatelessWidget {
     if (value == null || value == Decimal.zero) {
       return context.theme.colors.foreground;
     }
-    final semantic = SemanticColors.of(context);
-    return value > Decimal.zero ? semantic.success : semantic.danger;
+    // Direction-sensitive money color flows through MarketColors so the
+    // user's up/down convention (and colorblind mode) applies here exactly
+    // as it does in DeltaText — previously this used SemanticColors and
+    // disagreed with adjacent deltas under 红涨绿跌.
+    return context.appTheme.market
+        .roleForDelta(value.compareTo(Decimal.zero))
+        .fg;
   }
 
   AmountPrivacyPlaceholderDensity _placeholderDensity(TextStyle style) {

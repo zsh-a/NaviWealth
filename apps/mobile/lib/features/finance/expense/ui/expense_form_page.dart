@@ -503,7 +503,12 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                           ),
                           child: FProgress(),
                         ),
-                        error: (e, _) => Text(userSafeErrorMessage(context, e)),
+                        error: (e, _) => Text(
+                          userSafeErrorMessage(context, e),
+                          style: context.captionStyle.copyWith(
+                            color: context.appTheme.status.danger.fg,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.s12),
                       accountsAsync.when(
@@ -561,7 +566,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                                           _currency ?? '',
                                         ),
                                   style: context.mutedLabelStyle.copyWith(
-                                    color: SemanticColors.of(context).warning,
+                                    color: context.appTheme.status.warning.fg,
                                   ),
                                 ),
                                 const SizedBox(height: AppSpacing.s8),
@@ -578,7 +583,12 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                           );
                         },
                         loading: () => const FProgress(),
-                        error: (e, _) => Text(userSafeErrorMessage(context, e)),
+                        error: (e, _) => Text(
+                          userSafeErrorMessage(context, e),
+                          style: context.captionStyle.copyWith(
+                            color: context.appTheme.status.danger.fg,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.s12),
                       FAccordion(
@@ -643,7 +653,7 @@ class _NoAccountsHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     return SoftCard.flat(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s14,
@@ -658,14 +668,14 @@ class _NoAccountsHint extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: semantic.warning.withValues(alpha: AppOpacity.medium),
+              color: status.warning.fg.withValues(alpha: AppOpacity.medium),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             alignment: Alignment.center,
             child: Icon(
               FLucideIcons.wallet,
               size: AppIconSizes.h18,
-              color: semantic.warning,
+              color: status.warning.fg,
             ),
           ),
           const SizedBox(width: AppSpacing.s12),

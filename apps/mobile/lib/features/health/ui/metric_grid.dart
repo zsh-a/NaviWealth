@@ -324,7 +324,7 @@ class _MetricCompactRow extends StatelessWidget {
                 ),
               ),
               if (trend != null) ...[
-                _CompactTrend(trend: trend!),
+                _TrendBadge(trend: trend!),
                 const SizedBox(width: AppSpacing.s8),
               ],
               Text(value, style: context.strongTitleStyle),
@@ -342,27 +342,6 @@ class _MetricCompactRow extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _CompactTrend extends StatelessWidget {
-  const _CompactTrend({required this.trend});
-
-  final MetricTrend trend;
-
-  @override
-  Widget build(BuildContext context) {
-    final dir = trend.direction;
-    if (dir == TrendDirection.flat) return const SizedBox.shrink();
-    final colors = context.theme.colors;
-    final isUp = dir == TrendDirection.up;
-    final color = isUp ? colors.primary : colors.destructive;
-    final arrow = isUp ? '↑' : '↓';
-    final pct = trend.deltaPct.abs().round();
-    return Text(
-      '$arrow$pct%',
-      style: context.captionLabelStyle.copyWith(color: color),
     );
   }
 }

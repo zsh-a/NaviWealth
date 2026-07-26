@@ -190,20 +190,20 @@ class _KpiGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final tiles = <Widget>[
       _KpiTile(
         label: l10n.cashFlowKpiInflow,
         money: model.currentInflow,
         formatter: formatter,
-        tint: semantic.success,
+        tint: status.success.fg,
         onPress: onOpenIncome,
       ),
       _KpiTile(
         label: l10n.cashFlowKpiOutflow,
         money: model.currentOutflow,
         formatter: formatter,
-        tint: semantic.danger,
+        tint: status.danger.fg,
         onPress: onOpenExpenses,
       ),
       _KpiTile(
@@ -211,8 +211,8 @@ class _KpiGrid extends StatelessWidget {
         money: model.currentNet,
         formatter: formatter,
         tint: model.currentNet.baseAmount < Decimal.zero
-            ? semantic.danger
-            : semantic.success,
+            ? status.danger.fg
+            : status.success.fg,
         signed: true,
         onPress: onOpenNet,
       ),

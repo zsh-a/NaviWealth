@@ -341,10 +341,10 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
                                   ProductFunnelEvent.financialDecisionSaved,
                                 );
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(l10n.lifeEventDecisionSaved),
-                                ),
+                              AppMessenger.show(
+                                context,
+                                ToastKind.success,
+                                l10n.lifeEventDecisionSaved,
                               );
                             }
                           } catch (_) {

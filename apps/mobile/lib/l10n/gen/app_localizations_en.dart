@@ -7207,6 +7207,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDomainsSection => 'Domains';
 
   @override
+  String get settingsDomainsDeepLinkBlockedNotice =>
+      'That link belongs to a domain that is not enabled yet. Turn the domain on below to open it.';
+
+  @override
   String get settingsDomainsTitle => 'Domain management';
 
   @override

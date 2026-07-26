@@ -50,6 +50,7 @@ class _TotalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final colors = context.theme.colors;
     final fg = valid ? colors.primary : colors.destructive;
     final bg = valid
@@ -87,7 +88,10 @@ class _TotalCard extends StatelessWidget {
                   symbolStyle: MoneySymbolStyle.none,
                   fractionDigits: 1,
                   style: context.strongLabelStyle.copyWith(color: fg),
-                  semanticsLabel: '${totalPct.toStringAsFixed(1)}%',
+                  semanticsLabel: formatters.percent(
+                    totalPct / 100,
+                    decimalDigits: 1,
+                  ),
                 ),
                 Text('%', style: context.strongLabelStyle.copyWith(color: fg)),
               ],
@@ -123,6 +127,7 @@ class _AllocationRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final colors = context.theme.colors;
 
     return SoftCard.raised(
@@ -182,9 +187,9 @@ class _AllocationRow extends StatelessWidget {
                 onChange: (next) => onSliderChanged(next.max * 100),
               ),
               tooltipBuilder: (_, next) =>
-                  Text('${(next * 100).toStringAsFixed(1)}%'),
+                  Text(formatters.percent(next, decimalDigits: 1)),
               semanticValueFormatterCallback: (next) =>
-                  '${(next * 100).toStringAsFixed(1)}%',
+                  formatters.percent(next, decimalDigits: 1),
             ),
           ],
         ),

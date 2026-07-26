@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 
-import '../theme/market_colors.dart';
+import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import '../widgets/amount_privacy_placeholder.dart';

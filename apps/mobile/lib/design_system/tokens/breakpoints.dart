@@ -8,17 +8,18 @@ class Breakpoints {
   /// `< mobile` is single-column mobile.
   static const double mobile = 600;
 
+  /// `mobile..desktop` is the tablet range for content-owned layouts.
+  static const double desktop = 1240;
+
   /// Window width at which the application shell expands its compact rail
   /// into the full desktop sidebar. Shell chrome must use this token against
   /// the total viewport width so nested navigation rails do not shift the
   /// breakpoint.
-  static const double shellDesktop = 1280;
-
-  /// `mobile..desktop` is the tablet range for content-owned layouts.
   ///
-  /// Shell-owned layouts must use [shellDesktop] explicitly so shell chrome
-  /// can evolve without shifting content breakpoints.
-  static const double desktop = 1240;
+  /// Aliases [desktop]: the previous 1280 value left a 1240–1279 band where
+  /// content flipped to its desktop layout while the shell still showed the
+  /// tablet rail (blueprint doc 15 §7.1).
+  static const double shellDesktop = desktop;
 
   /// Threshold (measured against a *surface's* own constraints, not the
   /// window) at which content frames flip from a stacked column to a

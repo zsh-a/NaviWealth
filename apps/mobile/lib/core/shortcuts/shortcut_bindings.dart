@@ -19,7 +19,10 @@ class ShortcutBinding {
   final String descriptionKey;
 }
 
-/// Built-in primary navigation tab count.
+/// Number of Cmd/Ctrl-1..N bindings registered — the maximum tab count of
+/// any single domain (Finance's 4). The handler in `app/` resolves the
+/// CURRENT domain's tab list, so an index beyond that domain's tabs is a
+/// no-op rather than a cross-domain jump.
 ///
 /// Kept here (not imported from the router) so `core/shortcuts/` stays free of
 /// feature-layer dependencies — the [SwitchPrimaryTabIntent] handler is wired

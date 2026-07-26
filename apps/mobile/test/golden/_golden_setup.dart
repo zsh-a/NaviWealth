@@ -51,25 +51,14 @@ extension GoldenThemeData on GoldenTheme {
     }
   }
 
-  MarketColors get marketColors {
-    switch (this) {
-      case GoldenTheme.light:
-        return MarketColors.fromMode(
-          MarketColorMode.redUpGreenDown,
-          brightness: Brightness.light,
-        );
-      case GoldenTheme.dark:
-        return MarketColors.fromMode(
-          MarketColorMode.redUpGreenDown,
-          brightness: Brightness.dark,
-        );
-      case GoldenTheme.colorblind:
-        return MarketColors.fromMode(
-          MarketColorMode.colorblind,
-          brightness: Brightness.dark,
-        );
-    }
-  }
+  MarketColorMode get marketMode => switch (this) {
+    GoldenTheme.colorblind => MarketColorMode.colorblind,
+    _ => MarketColorMode.redUpGreenDown,
+  };
+
+  AppThemeData get appThemeData => resolveAppTheme(
+    ThemeInputs(brightness: brightness, marketMode: marketMode),
+  );
 
   Brightness get brightness => switch (this) {
     GoldenTheme.light => Brightness.light,
@@ -234,8 +223,8 @@ Future<void> pumpAndSnapshotMobile(
       data: const MediaQueryData(disableAnimations: true),
       child: ProviderScope(
         overrides: overrides,
-        child: MarketColorsScope(
-          colors: variant.marketColors,
+        child: AppThemeScope(
+          data: variant.appThemeData,
           child: MaterialApp.router(
             debugShowCheckedModeBanner: false,
             theme: variant.buildTheme(),
@@ -376,8 +365,8 @@ Future<void> pumpAndSnapshotResponsive(
     await tester.pumpWidget(
       ProviderScope(
         overrides: overrides,
-        child: MarketColorsScope(
-          colors: GoldenTheme.dark.marketColors,
+        child: AppThemeScope(
+          data: GoldenTheme.dark.appThemeData,
           child: MaterialApp.router(
             debugShowCheckedModeBanner: false,
             theme: materialTheme,

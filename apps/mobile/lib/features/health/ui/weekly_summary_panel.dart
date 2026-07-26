@@ -152,7 +152,8 @@ class _WeeklySummaryMetricsCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return async.when(
-      // Quiet while metrics resolve — empty weeks stay off Today.
+      // loading: intentionally empty — empty weeks stay off Today, so this
+      // card may never render; a skeleton would flash for a hidden section.
       loading: () => const SizedBox.shrink(),
       error: (_, _) => const SizedBox.shrink(),
       data: (summary) {

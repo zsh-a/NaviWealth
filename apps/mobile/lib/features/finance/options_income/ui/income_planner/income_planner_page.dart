@@ -58,10 +58,10 @@ class IncomePlannerPage extends ConsumerWidget {
       childPad: false,
       child: profileAsync.when(
         loading: () => const _LoadingState(),
-        error: (error, _) => AppEmptyState.error(
-          title: l10n.commonLoadFailed,
-          message: userSafeErrorMessage(context, error),
-          retryLabel: l10n.commonRetry,
+        error: (error, stackTrace) => kDefaultError(
+          context,
+          error,
+          stackTrace,
           onRetry: () => ref.invalidate(optionsStrategyProfileProvider),
         ),
         data: (profile) {

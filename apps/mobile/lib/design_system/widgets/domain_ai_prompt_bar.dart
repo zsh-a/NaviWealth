@@ -1,10 +1,9 @@
 import 'package:flutter/widgets.dart';
-import 'package:forui/forui.dart';
 
-import '../tokens/dimens_tokens.dart';
-import '../tokens/text_style_presets.dart';
-import 'soft_card.dart';
-
+/// Value object for a quick action on a domain AI entry surface (used by
+/// KnowledgeOS's inbox assistant bar). The old `DomainAiPromptBar` widget
+/// itself shipped with zero call sites and was removed (doc 15 §8) — the
+/// tablet rail and floating dock now own the Ask-AI affordance.
 class DomainAiPromptAction {
   const DomainAiPromptAction({
     required this.label,
@@ -15,76 +14,4 @@ class DomainAiPromptAction {
   final String label;
   final IconData icon;
   final VoidCallback onPress;
-}
-
-/// Compact domain-level AI entry used inside task pages.
-class DomainAiPromptBar extends StatelessWidget {
-  const DomainAiPromptBar({
-    super.key,
-    required this.hint,
-    required this.onPress,
-    this.actions = const <DomainAiPromptAction>[],
-  });
-
-  final String hint;
-  final VoidCallback onPress;
-  final List<DomainAiPromptAction> actions;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SoftCard(
-          onPress: onPress,
-          level: SoftCardLevel.raised,
-          borderless: true,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s14,
-            vertical: AppSpacing.s14,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                FLucideIcons.sparkles,
-                size: AppIconSizes.sm,
-                color: colors.primary,
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              Expanded(
-                child: Text(
-                  hint,
-                  style: context.bodyCaptionStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Icon(
-                FLucideIcons.arrowRight,
-                size: AppIconSizes.sm,
-                color: colors.mutedForeground,
-              ),
-            ],
-          ),
-        ),
-        if (actions.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s8),
-          Wrap(
-            spacing: AppSpacing.s8,
-            runSpacing: AppSpacing.s8,
-            children: [
-              for (final action in actions)
-                FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: action.onPress,
-                  prefix: Icon(action.icon, size: AppIconSizes.xs),
-                  child: Text(action.label),
-                ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
 }

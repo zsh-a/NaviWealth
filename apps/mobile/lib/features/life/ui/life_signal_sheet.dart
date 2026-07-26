@@ -46,7 +46,7 @@ class _LifeSignalSheetState extends ConsumerState<_LifeSignalSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final semanticColors = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final event = widget.event;
     final suggestion = event.actionSuggestion;
     final actionTitle = event.localizedActionTitle(l10n);
@@ -126,14 +126,14 @@ class _LifeSignalSheetState extends ConsumerState<_LifeSignalSheet> {
                         Icon(
                           FLucideIcons.circleCheck,
                           size: AppIconSizes.sm,
-                          color: semanticColors.success,
+                          color: status.success.fg,
                         ),
                         const SizedBox(width: AppSpacing.s8),
                         Expanded(
                           child: Text(
                             l10n.lifeSignalActionCreated,
                             style: context.captionStyle.copyWith(
-                              color: semanticColors.success,
+                              color: status.success.fg,
                             ),
                           ),
                         ),

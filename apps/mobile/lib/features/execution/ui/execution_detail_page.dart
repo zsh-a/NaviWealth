@@ -35,10 +35,12 @@ class ExecutionActionDetailPage extends ConsumerWidget {
           itemCount: 2,
           showControls: false,
         ),
-        error: (error, _) => ExecutionStateView(
-          icon: FLucideIcons.circleX,
-          title: l10n.commonError,
-          message: userSafeErrorMessage(context, error),
+        error: (error, stackTrace) => kDefaultError(
+          context,
+          error,
+          stackTrace,
+          onRetry: () =>
+              ref.invalidate(executionActionDetailProvider(actionId)),
         ),
         data: (action) {
           if (action == null) {
@@ -74,10 +76,12 @@ class ExecutionCommitmentDetailPage extends ConsumerWidget {
           itemCount: 3,
           showControls: false,
         ),
-        error: (error, _) => ExecutionStateView(
-          icon: FLucideIcons.circleX,
-          title: l10n.commonError,
-          message: userSafeErrorMessage(context, error),
+        error: (error, stackTrace) => kDefaultError(
+          context,
+          error,
+          stackTrace,
+          onRetry: () =>
+              ref.invalidate(executionCommitmentDetailProvider(commitmentId)),
         ),
         data: (commitment) {
           if (commitment == null) {
@@ -111,10 +115,12 @@ class ExecutionProjectDetailPage extends ConsumerWidget {
           itemCount: 3,
           showControls: false,
         ),
-        error: (error, _) => ExecutionStateView(
-          icon: FLucideIcons.circleX,
-          title: l10n.commonError,
-          message: userSafeErrorMessage(context, error),
+        error: (error, stackTrace) => kDefaultError(
+          context,
+          error,
+          stackTrace,
+          onRetry: () =>
+              ref.invalidate(executionProjectDetailProvider(projectId)),
         ),
         data: (project) {
           if (project == null) {
@@ -309,11 +315,7 @@ class _RelatedCommitmentsSection extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return commitmentsAsync.when(
       loading: () => const _DetailSectionSkeleton(),
-      error: (error, _) => ExecutionStateView(
-        icon: FLucideIcons.circleX,
-        title: l10n.commonError,
-        message: userSafeErrorMessage(context, error),
-      ),
+      error: (error, stackTrace) => kDefaultError(context, error, stackTrace),
       data: (commitments) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -392,11 +394,7 @@ class _RelatedActionsSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     return actionsAsync.when(
       loading: () => const _DetailSectionSkeleton(),
-      error: (error, _) => ExecutionStateView(
-        icon: FLucideIcons.circleX,
-        title: l10n.commonError,
-        message: userSafeErrorMessage(context, error),
-      ),
+      error: (error, stackTrace) => kDefaultError(context, error, stackTrace),
       data: (actions) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -466,11 +464,7 @@ class _ProgressTimeline extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return entries.when(
       loading: () => const _DetailSectionSkeleton(),
-      error: (error, _) => ExecutionStateView(
-        icon: FLucideIcons.circleX,
-        title: l10n.commonError,
-        message: userSafeErrorMessage(context, error),
-      ),
+      error: (error, stackTrace) => kDefaultError(context, error, stackTrace),
       data: (items) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

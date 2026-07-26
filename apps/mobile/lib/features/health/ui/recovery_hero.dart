@@ -24,11 +24,16 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
             height: AppControlHeights.compactLoadingState,
             child: Center(child: FCircularProgress()),
           ),
-          error: (e, _) => Text(
-            l10n.healthSyncFailed,
-            style: context.captionStyle.copyWith(color: colors.destructive),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+          error: (error, _) => AppEmptyState.error(
+            title: l10n.commonLoadFailed,
+            message: userSafeErrorMessage(
+              context,
+              error,
+              operation: 'load recovery signal',
+            ),
+            retryLabel: l10n.commonRetry,
+            onRetry: () => ref.invalidate(recoverySignalProvider),
+            compact: true,
           ),
           data: (out) {
             final verdict = out?['verdict']?.toString() ?? 'insufficient_data';
@@ -276,6 +281,8 @@ class _RecoverySparkline extends ConsumerWidget {
     final async = ref.watch(recoverySparklineProvider);
     final colors = context.theme.colors;
     return async.when(
+      // loading: intentionally empty — the sparkline only renders with >= 2
+      // points, so a placeholder would promise a chart that may never appear.
       loading: () => const SizedBox.shrink(),
       error: (_, _) => const SizedBox.shrink(),
       data: (values) {

@@ -485,7 +485,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       return const [
         SliverFillRemaining(
           hasScrollBody: false,
-          child: Center(child: CircularProgressIndicator()),
+          child: Center(child: FCircularProgress()),
         ),
       ];
     }

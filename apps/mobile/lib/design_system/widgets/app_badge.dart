@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
-import '../theme/semantic_colors.dart';
+import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
 
@@ -97,7 +97,7 @@ class _BadgePalette {
 
   static _BadgePalette resolve(BuildContext context, AppBadgeTone tone) {
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     return switch (tone) {
       AppBadgeTone.neutral => _BadgePalette(
         foreground: colors.mutedForeground,
@@ -107,21 +107,24 @@ class _BadgePalette {
         foreground: colors.primary,
         container: colors.primary.withValues(alpha: AppOpacity.subtle),
       ),
+      // Status badges pair the container with its on-container foreground —
+      // the bare status color on a tinted fill lands well below WCAG AA
+      // (info was 1.92:1 in light mode). See theme_contrast_test.dart.
       AppBadgeTone.info => _BadgePalette(
-        foreground: semantic.info,
-        container: semantic.infoContainer,
+        foreground: status.info.onContainer,
+        container: status.info.container,
       ),
       AppBadgeTone.success => _BadgePalette(
-        foreground: semantic.success,
-        container: semantic.successContainer,
+        foreground: status.success.onContainer,
+        container: status.success.container,
       ),
       AppBadgeTone.warning => _BadgePalette(
-        foreground: semantic.warning,
-        container: semantic.warningContainer,
+        foreground: status.warning.onContainer,
+        container: status.warning.container,
       ),
       AppBadgeTone.error => _BadgePalette(
-        foreground: semantic.danger,
-        container: semantic.dangerContainer,
+        foreground: status.danger.onContainer,
+        container: status.danger.container,
       ),
     };
   }

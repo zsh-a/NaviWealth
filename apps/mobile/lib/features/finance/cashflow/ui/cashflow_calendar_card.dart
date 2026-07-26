@@ -51,7 +51,7 @@ class _CashflowCalendarContent extends ConsumerWidget {
         ? colors.destructive
         : positive
         ? AccentColors.series
-        : SemanticColors.of(context).warning;
+        : context.appTheme.status.warning.fg;
 
     return SoftCard.raised(
       onPress: () => context.push(FinanceRoutes.cashflow),

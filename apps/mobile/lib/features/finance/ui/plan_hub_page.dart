@@ -15,6 +15,7 @@ import 'package:naviwealth/features/finance/options_income/data/providers.dart';
 import 'package:naviwealth/features/finance/rebalance/data/rebalance_providers.dart';
 import 'package:naviwealth/features/finance/runway/data/money_runway_providers.dart';
 
+import '../../../core/format/formatters.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
@@ -163,7 +164,7 @@ class _AttentionSection extends StatelessWidget {
           const SizedBox(height: AppSpacing.s12),
           if (hasAttention)
             for (final (index, item) in items.take(3).indexed) ...[
-              if (index > 0) const Divider(height: AppSpacing.s20),
+              if (index > 0) const FDivider(),
               _AttentionRow(spec: item),
             ]
           else if (status.isLoading)
@@ -180,7 +181,7 @@ class _AttentionSection extends StatelessWidget {
                 Icon(
                   FLucideIcons.cloudAlert,
                   size: AppIconSizes.sm,
-                  color: SemanticColors.of(context).warning,
+                  color: context.appTheme.status.warning.fg,
                 ),
                 const SizedBox(width: AppSpacing.s6),
                 Expanded(
@@ -279,14 +280,15 @@ class _PlanningOverview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     return AppSection.group(
       title: l10n.planOverviewTitle,
       children: [
         _PlanRow(spec: _runwayEntry(l10n, status)),
-        const Divider(height: AppSpacing.s16),
+        const FDivider(),
         _PlanRow(spec: _budgetEntry(l10n, status)),
-        const Divider(height: AppSpacing.s16),
-        _PlanRow(spec: _fireEntry(l10n, fire)),
+        const FDivider(),
+        _PlanRow(spec: _fireEntry(l10n, formatters, fire)),
       ],
     );
   }
@@ -304,13 +306,13 @@ class _MyPlansSection extends StatelessWidget {
       title: l10n.planMyPlansTitle,
       children: [
         _PlanRow(spec: _dcaEntry(context, l10n, status)),
-        const Divider(height: AppSpacing.s16),
+        const FDivider(),
         _PlanRow(spec: _rebalanceEntry(l10n, status)),
         if (!kIsWeb) ...[
-          const Divider(height: AppSpacing.s16),
+          const FDivider(),
           _PlanRow(spec: _incomeStrategyEntry(l10n, status)),
         ],
-        const Divider(height: AppSpacing.s16),
+        const FDivider(),
         _PlanRow(
           spec: _PlanEntrySpec(
             icon: FLucideIcons.waypoints,
@@ -547,6 +549,7 @@ _PlanEntrySpec _budgetEntry(AppLocalizations l10n, PlanningHubStatus status) {
 
 _PlanEntrySpec _fireEntry(
   AppLocalizations l10n,
+  AppFormatters formatters,
   AsyncValue<FireDashboardView> fire,
 ) {
   final view = fire.value;
@@ -579,7 +582,7 @@ _PlanEntrySpec _fireEntry(
     tone: progress == null ? AppBadgeTone.neutral : AppBadgeTone.accent,
     badge: progress == null
         ? l10n.planStatusNeedsSetup
-        : '${(progress * 100).clamp(0, 100).toStringAsFixed(0)}%',
+        : formatters.percent(progress.clamp(0, 1), decimalDigits: 0),
   );
 }
 
@@ -671,14 +674,14 @@ String _dcaStatusLabel(
 
 Color _toneColor(BuildContext context, AppBadgeTone tone) {
   final colors = context.theme.colors;
-  final semantic = SemanticColors.of(context);
+  final status = context.appTheme.status;
   return switch (tone) {
     AppBadgeTone.neutral => colors.mutedForeground,
     AppBadgeTone.accent => colors.primary,
-    AppBadgeTone.info => semantic.info,
-    AppBadgeTone.success => semantic.success,
-    AppBadgeTone.warning => semantic.warning,
-    AppBadgeTone.error => semantic.danger,
+    AppBadgeTone.info => status.info.fg,
+    AppBadgeTone.success => status.success.fg,
+    AppBadgeTone.warning => status.warning.fg,
+    AppBadgeTone.error => status.danger.fg,
   };
 }
 

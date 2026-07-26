@@ -3769,6 +3769,7 @@
   },
   "settingsDomainsSection": "Domains",
   "@settingsDomainsSection": { "description": "Settings section header for LifeOS domain opt-in management" },
+  "settingsDomainsDeepLinkBlockedNotice": "That link belongs to a domain that is not enabled yet. Turn the domain on below to open it.",
   "settingsDomainsTitle": "Domain management",
   "@settingsDomainsTitle": { "description": "Settings tile and page title for LifeOS domain management" },
   "settingsDomainsSubtitle": "Manage FinanceOS, HealthOS, KnowledgeOS, and ExecutionOS",

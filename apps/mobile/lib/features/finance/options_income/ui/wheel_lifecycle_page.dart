@@ -381,11 +381,11 @@ class _RiskRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final color = switch (severity) {
       IncomeStrategyRiskSeverity.info => context.theme.colors.mutedForeground,
-      IncomeStrategyRiskSeverity.warning => semantic.warning,
-      IncomeStrategyRiskSeverity.critical => semantic.danger,
+      IncomeStrategyRiskSeverity.warning => status.warning.fg,
+      IncomeStrategyRiskSeverity.critical => status.danger.fg,
     };
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

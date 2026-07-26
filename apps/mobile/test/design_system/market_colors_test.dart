@@ -35,9 +35,12 @@ void main() {
         MarketColorMode.colorblind,
         brightness: Brightness.light,
       );
-      // Wong colorblind palette: blue up, orange down.
+      // Wong colorblind palette: blue up, orange down. Light mode uses the
+      // dark orange as fg — bright #E69F00 is ~2.3:1 on white and fails the
+      // contrast invariant (doc 15 §3.1); the bright hue stays in
+      // container/chart roles.
       expect(cb.up, const Color(0xFF2271B3));
-      expect(cb.down, const Color(0xFFE69F00));
+      expect(cb.down, const Color(0xFF8A5F00));
     });
 
     test('Dark variants differ from light variants', () {

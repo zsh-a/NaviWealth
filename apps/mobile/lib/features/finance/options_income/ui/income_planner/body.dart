@@ -121,10 +121,10 @@ class _ConfiguredBodyState extends ConsumerState<_ConfiguredBody> {
                 const SizedBox(height: AppSpacing.s8),
                 approvedAsync.when(
                   loading: () => const _LoadingTile(),
-                  error: (error, _) => AppEmptyState.error(
-                    title: l10n.commonLoadFailed,
-                    message: userSafeErrorMessage(context, error),
-                    retryLabel: l10n.commonRetry,
+                  error: (error, stackTrace) => kDefaultError(
+                    context,
+                    error,
+                    stackTrace,
                     onRetry: () => ref.invalidate(approvedUnderlyingsProvider),
                   ),
                   data: (items) => items.isEmpty

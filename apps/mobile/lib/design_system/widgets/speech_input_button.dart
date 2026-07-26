@@ -242,7 +242,7 @@ class _SpeechInputButtonState extends ConsumerState<SpeechInputButton>
         child: loading
             ? const SizedBox.square(
                 dimension: AppIconSizes.sm,
-                child: CircularProgressIndicator(strokeWidth: AppStroke.branch),
+                child: FCircularProgress(),
               )
             : Icon(listening ? FLucideIcons.square : FLucideIcons.mic),
       ),

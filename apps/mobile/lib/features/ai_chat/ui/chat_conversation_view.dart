@@ -141,7 +141,13 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
       loading: () =>
           widget.loadingBuilder?.call(context) ??
           const Center(child: FCircularProgress()),
-      error: (e, _) => Center(child: Text(userSafeErrorMessage(context, e))),
+      error: (e, st) => kDefaultError(
+        context,
+        e,
+        st,
+        onRetry: () =>
+            ref.invalidate(chatMessagesStreamProvider(widget.sessionId)),
+      ),
       data: (slots) {
         if (slots.isEmpty) {
           _renderedInitialSnapshot = true;

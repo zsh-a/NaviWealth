@@ -51,14 +51,10 @@ class _RecurringTransactionsPageState
         isLoading: rulesAsync.isLoading,
         child: rulesAsync.when(
           loading: () => const _RecurringSkeleton(),
-          error: (error, stackTrace) => AppEmptyState.error(
-            title: userSafeErrorMessage(
-              context,
-              error,
-              stackTrace: stackTrace,
-              operation: 'load recurring transactions',
-            ),
-            retryLabel: l10n.commonRetry,
+          error: (error, stackTrace) => kDefaultError(
+            context,
+            error,
+            stackTrace,
             onRetry: () => ref.invalidate(recurringTransactionsProvider),
           ),
           data: (rules) {

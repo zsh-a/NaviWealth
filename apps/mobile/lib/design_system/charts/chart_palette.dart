@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
-import '../theme/market_colors.dart';
+import '../theme/app_theme_scope.dart';
 import '../tokens/color_palette.dart';
 
 /// Chart-only color sequence and theme-derived palette helpers.
@@ -41,9 +41,10 @@ class ChartPalette {
   /// point.
   factory ChartPalette.of(BuildContext context) {
     final colors = context.theme.colors;
-    final isDark =
-        MediaQuery.maybeOf(context)?.platformBrightness == Brightness.dark ||
-        colors.brightness == Brightness.dark;
+    // App theme brightness only. OS `platformBrightness` must not leak in
+    // here: a dark-OS device running the app in light mode would get the
+    // neon dark accent sequence painted on white cards.
+    final isDark = colors.brightness == Brightness.dark;
     return ChartPalette(
       accentSequence: _accentSequence(isDark: isDark),
       // Ultra-low-opacity grid — visible enough to anchor the eye when
@@ -128,7 +129,7 @@ Color resolveSeriesColor(
   if (override != null) return override;
   final colors = context.theme.colors;
   final palette = ChartPalette.of(context);
-  final market = MarketColors.of(context);
+  final market = context.appTheme.market;
   switch (intent) {
     case SeriesIntent.primary:
       return colors.primary;
@@ -139,8 +140,8 @@ Color resolveSeriesColor(
     case SeriesIntent.muted:
       return colors.mutedForeground;
     case SeriesIntent.up:
-      return market.up;
+      return market.up.fg;
     case SeriesIntent.down:
-      return market.down;
+      return market.down.fg;
   }
 }

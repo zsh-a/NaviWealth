@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
-import '../theme/semantic_colors.dart';
+import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
 import 'app_interaction.dart';
@@ -114,31 +114,33 @@ class _StatusPalette {
 
   static _StatusPalette resolve(BuildContext context, AppStatusKind kind) {
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     return switch (kind) {
       AppStatusKind.neutral => _StatusPalette(
         foreground: colors.mutedForeground,
         container: colors.muted,
         icon: FLucideIcons.info,
       ),
+      // Container fills take the on-container foreground; the bare status
+      // color fails WCAG AA on its own tint. See theme_contrast_test.dart.
       AppStatusKind.info => _StatusPalette(
-        foreground: semantic.info,
-        container: semantic.infoContainer,
+        foreground: status.info.onContainer,
+        container: status.info.container,
         icon: FLucideIcons.info,
       ),
       AppStatusKind.success => _StatusPalette(
-        foreground: semantic.success,
-        container: semantic.successContainer,
+        foreground: status.success.onContainer,
+        container: status.success.container,
         icon: FLucideIcons.circleCheck,
       ),
       AppStatusKind.warning => _StatusPalette(
-        foreground: semantic.warning,
-        container: semantic.warningContainer,
+        foreground: status.warning.onContainer,
+        container: status.warning.container,
         icon: FLucideIcons.triangleAlert,
       ),
       AppStatusKind.error => _StatusPalette(
-        foreground: semantic.danger,
-        container: semantic.dangerContainer,
+        foreground: status.danger.onContainer,
+        container: status.danger.container,
         icon: FLucideIcons.circleAlert,
       ),
     };

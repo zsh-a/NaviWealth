@@ -202,21 +202,21 @@ class _RiskAlertList extends StatelessWidget {
   }
 
   Widget _alertTile(BuildContext context, _RiskAlert alert) {
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final (bg, fg, icon) = switch (alert.severity) {
       'high' => (
-        semantic.dangerContainer,
-        semantic.onDangerContainer,
+        status.danger.container,
+        status.danger.onContainer,
         FLucideIcons.circleAlert,
       ),
       'low' => (
-        semantic.infoContainer,
-        semantic.onInfoContainer,
+        status.info.container,
+        status.info.onContainer,
         FLucideIcons.info,
       ),
       _ => (
-        semantic.warningContainer,
-        semantic.onWarningContainer,
+        status.warning.container,
+        status.warning.onContainer,
         FLucideIcons.triangleAlert,
       ),
     };

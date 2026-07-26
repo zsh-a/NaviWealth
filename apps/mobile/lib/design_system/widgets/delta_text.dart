@@ -2,8 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../theme/market_color_mode.dart';
-import '../theme/market_colors.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'amount_privacy_placeholder.dart';
@@ -37,6 +37,7 @@ class DeltaText extends StatelessWidget {
     this.currencyCode = 'CNY',
     this.fractionDigits,
     this.style,
+    this.color,
     this.showIcon = true,
     this.showSign = true,
     this.locale,
@@ -71,6 +72,11 @@ class DeltaText extends StatelessWidget {
   final int? fractionDigits;
   final TextStyle? style;
 
+  /// Explicit foreground override. When set, replaces the direction tone —
+  /// used by [DeltaChip] to render the on-container pairing of the active
+  /// [MarketColors].
+  final Color? color;
+
   /// Arrow icon next to the number. We default this on so a color-blind user
   /// can still tell direction even before they switch to the colorblind
   /// palette.
@@ -95,8 +101,12 @@ class DeltaText extends StatelessWidget {
         semanticsLabel: AmountPrivacyScope.hiddenSemanticsLabelOf(context),
       );
     }
-    final market = MarketColors.of(context);
-    final tone = market.forDelta(value);
+    final market = context.appTheme.market;
+    // An explicit [color] wins (DeltaChip passes the on-container pairing
+    // for contrast on tinted fills); the market tone is only the default
+    // for bare, on-surface deltas. Colors baked into [style] presets are
+    // intentionally still overridden by the tone.
+    final tone = color ?? market.roleForDelta(value).fg;
     final effectiveStyle = baseStyle.copyWith(color: tone);
 
     return Semantics(

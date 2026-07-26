@@ -108,14 +108,10 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
       child: state.when(
         skipLoadingOnReload: true,
         loading: () => const _PortfolioHubSkeleton(),
-        error: (error, stackTrace) => AppEmptyState.error(
-          title: userSafeErrorMessage(
-            context,
-            error,
-            stackTrace: stackTrace,
-            operation: 'load portfolio hub',
-          ),
-          retryLabel: l10n.commonRetry,
+        error: (error, stackTrace) => kDefaultError(
+          context,
+          error,
+          stackTrace,
           onRetry: () {
             ref.read(portfolioHubCoreProvider.notifier).refresh();
             ref.read(portfolioHubInsightsProvider.notifier).refresh();

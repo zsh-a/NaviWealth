@@ -18,7 +18,7 @@ class _ChartsPanelState extends State<_ChartsPanel> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final locale = Localizations.localeOf(context).toString();
     final media = MediaQuery.of(context);
     final compactLabels =
@@ -70,7 +70,7 @@ class _ChartsPanelState extends State<_ChartsPanel> {
                             ),
                             tooltipLabel: period.label,
                             value: period.inflow.toDouble(),
-                            colorOverride: semantic.success,
+                            colorOverride: status.success.fg,
                           ),
                         )
                         .toList(),
@@ -86,7 +86,7 @@ class _ChartsPanelState extends State<_ChartsPanel> {
                             ),
                             tooltipLabel: period.label,
                             value: period.outflow.toDouble(),
-                            colorOverride: semantic.danger,
+                            colorOverride: status.danger.fg,
                           ),
                         )
                         .toList(),

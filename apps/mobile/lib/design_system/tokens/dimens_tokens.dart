@@ -4,9 +4,10 @@ import 'color_palette.dart';
 
 /// Spacing + corner-radius scale.
 ///
-/// Dart mirror of the `spacing` / `radius` groups in
-/// `apps/mobile/design_tokens/tokens.json` (Figma is the source of
-/// truth — keep the two in sync; see `design_tokens/README.md`).
+/// Source of truth for the `spacing` / `radius` groups in
+/// `apps/mobile/design_tokens/tokens.json` (the JSON is generated from
+/// these Dart values by `tool/export_design_tokens.dart`; see
+/// `design_tokens/README.md`).
 ///
 /// Exposed so chrome (sheets, cards, headers) references the scale
 /// instead of inlining magic numbers, which is what makes a global

@@ -17,7 +17,7 @@ class ExecutionOverviewStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
 
     final meta = <_OverviewMeta>[
       if (snapshot.highPriorityCount > 0)
@@ -25,7 +25,7 @@ class ExecutionOverviewStrip extends StatelessWidget {
           label: l10n.executionOverviewHigh,
           value: snapshot.highPriorityCount,
           icon: FLucideIcons.flag,
-          color: semantic.warning,
+          color: status.warning.fg,
         ),
       if (snapshot.dueCount > 0)
         _OverviewMeta(
@@ -39,7 +39,7 @@ class ExecutionOverviewStrip extends StatelessWidget {
           label: l10n.executionOverviewProgress7d,
           value: snapshot.recentProgressCount,
           icon: FLucideIcons.clipboardCheck,
-          color: semantic.success,
+          color: status.success.fg,
         ),
     ];
 

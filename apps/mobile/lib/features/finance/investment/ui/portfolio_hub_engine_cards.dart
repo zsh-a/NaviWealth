@@ -9,23 +9,10 @@ class _EngineExposureSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final insightsAsync = ref.watch(portfolioHubInsightsProvider);
-    return insightsAsync.when(
+    return insightsAsync.whenOrLoading(
+      context: context,
       skipLoadingOnReload: true,
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.s24),
-        child: Center(child: FCircularProgress()),
-      ),
-      error: (error, stackTrace) => AppEmptyState.error(
-        title: userSafeErrorMessage(
-          context,
-          error,
-          stackTrace: stackTrace,
-          operation: 'load portfolio insights',
-        ),
-        retryLabel: l10n.commonRetry,
-        onRetry: () =>
-            ref.read(portfolioHubInsightsProvider.notifier).refresh(),
-      ),
+      onRetry: () => ref.read(portfolioHubInsightsProvider.notifier).refresh(),
       data: (insights) {
         final cards = [
           _RealizedPnlCard(insights: insights, baseCurrency: baseCurrency),

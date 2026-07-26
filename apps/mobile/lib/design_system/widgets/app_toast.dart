@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../../core/haptics/haptics.dart';
-import '../theme/semantic_colors.dart';
+import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
 
@@ -148,7 +148,7 @@ class _AppToastSurface extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: SemanticColors.of(context).scrim.withValues(
+                color: context.appTheme.surfaces.scrim.withValues(
                   alpha: isDark ? AppOpacity.muted : AppOpacity.faint,
                 ),
                 blurRadius: 24,
@@ -235,26 +235,26 @@ class _ToastPalette {
   final IconData icon;
 
   static _ToastPalette resolve(BuildContext context, ToastKind kind) {
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     return switch (kind) {
       ToastKind.success => _ToastPalette(
-        accent: semantic.success,
-        container: semantic.successContainer,
+        accent: status.success.fg,
+        container: status.success.container,
         icon: FLucideIcons.circleCheck,
       ),
       ToastKind.warning => _ToastPalette(
-        accent: semantic.warning,
-        container: semantic.warningContainer,
+        accent: status.warning.fg,
+        container: status.warning.container,
         icon: FLucideIcons.triangleAlert,
       ),
       ToastKind.error => _ToastPalette(
-        accent: semantic.danger,
-        container: semantic.dangerContainer,
+        accent: status.danger.fg,
+        container: status.danger.container,
         icon: FLucideIcons.circleX,
       ),
       ToastKind.info => _ToastPalette(
-        accent: semantic.info,
-        container: semantic.infoContainer,
+        accent: status.info.fg,
+        container: status.info.container,
         icon: FLucideIcons.info,
       ),
     };

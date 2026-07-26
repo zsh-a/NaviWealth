@@ -74,7 +74,12 @@ class _HomeLiveBody extends ConsumerWidget {
         bottom: false,
         child: snapshotAsync.when(
           loading: () => const HomeSkeleton(),
-          error: (e, st) => _ErrorBody(error: e),
+          error: (e, st) => kDefaultError(
+            context,
+            e,
+            st,
+            onRetry: () => ref.invalidate(dashboardSnapshotProvider),
+          ),
           data: (snapshot) => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -87,26 +92,6 @@ class _HomeLiveBody extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ErrorBody extends ConsumerWidget {
-  const _ErrorBody({required this.error});
-
-  final Object error;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    return AppEmptyState.error(
-      title: userSafeErrorMessage(
-        context,
-        error,
-        operation: 'load dashboard snapshot',
-      ),
-      retryLabel: l10n.commonRetry,
-      onRetry: () => ref.invalidate(dashboardSnapshotProvider),
     );
   }
 }

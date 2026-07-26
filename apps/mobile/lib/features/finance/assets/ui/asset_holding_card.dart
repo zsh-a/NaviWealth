@@ -32,8 +32,11 @@ class AssetHoldingCard extends ConsumerWidget {
           ],
         ),
       ),
-      error: (e, _) => AssetDetailErrorCard(
-        message: l10n.assetDetailHoldingsLoadError('$e'),
+      error: (e, st) => kDefaultError(
+        context,
+        e,
+        st,
+        onRetry: () => ref.invalidate(assetHoldingSnapshotProvider(asset.id)),
       ),
       data: (snap) {
         final qty = snap?.quantity ?? Decimal.zero;

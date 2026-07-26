@@ -33,7 +33,9 @@ class _TrendCard extends StatelessWidget {
                 ),
               ),
               points.when(
-                loading: () => const SizedBox.shrink(),
+                // Matches the latest-value readout footprint so the header
+                // row does not jump when the number lands.
+                loading: () => const SkeletonBox(width: 56, height: 20),
                 error: (_, _) => const SizedBox.shrink(),
                 data: (pts) {
                   if (pts == null || pts.isEmpty) {

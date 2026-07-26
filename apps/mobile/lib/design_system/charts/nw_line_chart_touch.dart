@@ -506,7 +506,7 @@ class _DeltaBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final market = MarketColors.of(context);
+    final market = context.appTheme.market;
     if (hideAmounts) {
       final colors = context.theme.colors;
       return Container(
@@ -525,7 +525,7 @@ class _DeltaBadge extends StatelessWidget {
       );
     }
     final positive = value >= 0;
-    final color = market.forDelta(value);
+    final color = market.roleForDelta(value).fg;
     final bg = color.withValues(alpha: AppOpacity.accentContainer);
     final sign = positive ? '+' : '';
     final label = '$sign${yAxis.formatValue(value)}';

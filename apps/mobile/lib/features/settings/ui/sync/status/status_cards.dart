@@ -104,7 +104,7 @@ class _StatGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
 
     final pendingValue = pending == null ? '\u2014' : '$pending';
     final pendingHasItems = (pending ?? 0) > 0;
@@ -147,7 +147,7 @@ class _StatGrid extends StatelessWidget {
                 icon: FLucideIcons.history,
                 value: lastSyncLabel,
                 label: l10n.syncStatusStatLastSync,
-                accent: lastSyncAt == null ? semantic.warning : null,
+                accent: lastSyncAt == null ? status.warning.fg : null,
               ),
             ),
           ],
@@ -210,7 +210,7 @@ class _ErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Row(
@@ -218,7 +218,7 @@ class _ErrorCard extends StatelessWidget {
         children: [
           Icon(
             FLucideIcons.triangleAlert,
-            color: semantic.danger,
+            color: status.danger.fg,
             size: AppIconSizes.md,
           ),
           const SizedBox(width: AppSpacing.s8),
@@ -226,7 +226,7 @@ class _ErrorCard extends StatelessWidget {
             child: Text(
               message,
               style: context.captionStyle.copyWith(
-                color: semantic.onDangerContainer,
+                color: status.danger.onContainer,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
@@ -245,7 +245,7 @@ class _ConflictCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Row(
@@ -253,7 +253,7 @@ class _ConflictCard extends StatelessWidget {
         children: [
           Icon(
             FLucideIcons.arrowLeftRight,
-            color: semantic.warning,
+            color: status.warning.fg,
             size: AppIconSizes.md,
           ),
           const SizedBox(width: AppSpacing.s8),
@@ -291,21 +291,21 @@ class _StabilityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final (icon, color, title) = switch (report.gateStatus) {
       SyncStabilityGateStatus.passing => (
         FLucideIcons.circleCheck,
-        semantic.success,
+        status.success.fg,
         l10n.syncStabilityPassing,
       ),
       SyncStabilityGateStatus.failing => (
         FLucideIcons.triangleAlert,
-        semantic.danger,
+        status.danger.fg,
         l10n.syncStabilityFailing,
       ),
       SyncStabilityGateStatus.insufficientData => (
         FLucideIcons.clock,
-        semantic.warning,
+        status.warning.fg,
         l10n.syncStabilityCollecting,
       ),
     };

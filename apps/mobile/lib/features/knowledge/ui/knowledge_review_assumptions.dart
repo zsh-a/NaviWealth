@@ -64,6 +64,9 @@ class _StaleAssumptionsCard extends ConsumerWidget {
         final owner = ownerSnap.data!;
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
         return repoAsync.when(
+          // loading: intentionally empty — the card only appears when stale
+          // assumptions exist; a skeleton would flash for a usually-hidden
+          // section.
           loading: () => const SizedBox.shrink(),
           error: (e, stackTrace) => KnowledgeSection.group(
             title: l10n.knowledgeReviewAssumptionsTitle,

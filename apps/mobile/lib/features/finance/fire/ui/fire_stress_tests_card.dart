@@ -44,15 +44,23 @@ class FireStressTestsCard extends ConsumerWidget {
             Text(l10n.fireOsStressSubtitle, style: context.captionStyle),
             const SizedBox(height: AppSpacing.s12),
             stressAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: AppSpacing.s8),
-                child: SizedBox.shrink(),
+              loading: () => const Column(
+                children: [
+                  SkeletonBox(height: 40, radius: AppRadius.sm),
+                  SizedBox(height: AppSpacing.s10),
+                  SkeletonBox(height: 40, radius: AppRadius.sm),
+                ],
               ),
-              error: (e, _) => Text(
-                '$e',
-                style: context.captionStyle.copyWith(
-                  color: context.theme.colors.destructive,
+              error: (error, _) => AppEmptyState.error(
+                title: l10n.commonLoadFailed,
+                message: userSafeErrorMessage(
+                  context,
+                  error,
+                  operation: 'load FIRE stress tests',
                 ),
+                retryLabel: l10n.commonRetry,
+                onRetry: () => ref.invalidate(fireStressTestsProvider),
+                compact: true,
               ),
               data: (results) {
                 if (results.isEmpty) {
@@ -92,7 +100,7 @@ class _StressRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final verdictColor = fireStressVerdictColor(
-      SemanticColors.of(context),
+      context.appTheme,
       result.verdict,
     );
     final scenarioLabel = _scenarioLabel(l10n, result, formatters);

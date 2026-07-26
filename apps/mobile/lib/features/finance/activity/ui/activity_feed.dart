@@ -77,12 +77,11 @@ class ActivityFeed extends ConsumerWidget {
         skeleton: ActivityFeedSkeleton(),
         child: SizedBox.shrink(),
       ),
-      error: (_, _) => Center(
-        child: AppEmptyState.error(
-          title: l10n.commonLoadFailed,
-          retryLabel: l10n.commonRetry,
-          onRetry: () => ref.invalidate(activityFeedProvider),
-        ),
+      error: (e, st) => kDefaultError(
+        context,
+        e,
+        st,
+        onRetry: () => ref.invalidate(activityFeedProvider),
       ),
     );
   }
@@ -317,7 +316,7 @@ class _PageSummaryStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     return SoftCard.raised(
       borderless: true,
       padding: const EdgeInsets.symmetric(
@@ -331,7 +330,7 @@ class _PageSummaryStrip extends StatelessWidget {
               label: l10n.activityFeedSummaryExpense,
               value: formatter.currency(totals.expenseTotal, code: totals.unit),
               valueColor: totals.expenseTotal > Decimal.zero
-                  ? semantic.danger
+                  ? status.danger.fg
                   : colors.mutedForeground,
             ),
           ),
@@ -345,7 +344,7 @@ class _PageSummaryStrip extends StatelessWidget {
               label: l10n.activityFeedSummaryIncome,
               value: formatter.currency(totals.incomeTotal, code: totals.unit),
               valueColor: totals.incomeTotal > Decimal.zero
-                  ? semantic.success
+                  ? status.success.fg
                   : colors.mutedForeground,
             ),
           ),

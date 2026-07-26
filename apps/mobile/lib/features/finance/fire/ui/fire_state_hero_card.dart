@@ -46,7 +46,8 @@ class FireStateHeroCard extends ConsumerWidget {
     }
     return stateAsync.when(
       loading: () => const _HeroSkeleton(),
-      error: (e, _) => _HeroErrorCard(message: '$e'),
+      error: (e, _) =>
+          _HeroErrorCard(message: userSafeErrorMessage(context, e)),
       data: (state) =>
           _HeroBody(l10n: l10n, state: state, view: view, onExplain: explain),
     );
@@ -71,10 +72,7 @@ class _HeroBody extends ConsumerWidget {
     final formatters = ref.watch(
       appFormattersProvider(Localizations.localeOf(context)),
     );
-    final accent = fireSafetyColor(
-      SemanticColors.of(context),
-      state.safetyLevel,
-    );
+    final accent = fireSafetyColor(context.appTheme, state.safetyLevel);
     final safetyLabel = _safetyLabel(l10n, state.safetyLevel);
     final progress = view.progressRatio ?? 0;
     final etaMonths = state.fireEtaMonths ?? view.sensitivity.baselineMonths;
@@ -265,7 +263,7 @@ class _NextAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final severityColor = fireActionSeverityColor(
-      SemanticColors.of(context),
+      context.appTheme,
       action.severity,
     );
     final title = fireActionTitle(l10n, action);

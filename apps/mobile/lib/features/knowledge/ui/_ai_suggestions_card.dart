@@ -54,6 +54,9 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
         final owner = ownerSnap.data!;
         final triageAsync = ref.watch(inboxTriageRepositoryProvider);
         return triageAsync.when(
+          // loading: intentionally empty — the card only appears when triage
+          // proposals are pending; a skeleton would flash for a section that
+          // is usually hidden ("empty triage does not occupy Review chrome").
           loading: () => const SizedBox.shrink(),
           error: (e, stackTrace) => KnowledgeSection.group(
             title: l10n.knowledgeAiSuggestionsTitle,

@@ -79,24 +79,30 @@ class NaviWealthApp extends ConsumerWidget {
           brightness: brightness,
           touch: isTouch,
         );
-        // Sync brightnessProvider so marketColorsProvider derives correctly.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          final current = ref.read(brightnessProvider);
-          final resolved = isDark ? Brightness.dark : Brightness.light;
-          if (current != resolved) {
-            ref.read(brightnessProvider.notifier).state = resolved;
-          }
-        });
-        final marketColors = ref.watch(marketColorsProvider);
+        // Resolve the app theme once for the whole tree (blueprint doc 15,
+        // §3.3) — the single source for every color role, including the
+        // market direction preference.
+        final appTheme = resolveAppTheme(
+          ThemeInputs(
+            brightness: brightness,
+            marketMode: ref.watch(marketColorModeProvider),
+            density: isTouch ? AppDensity.touch : AppDensity.desktop,
+          ),
+        );
         return _AndroidSystemBackOwner(
           child: FTheme(
             data: fTheme,
-            child: MarketColorsScope(
-              colors: marketColors,
+            child: AppThemeScope(
+              data: appTheme,
               child: AppMessenger.init(
                 child: GlobalShortcutsScope(
                   onSwitchPrimaryTab: (int index) {
-                    final paths = ref.read(primaryTabPathsProvider);
+                    // Cmd/Ctrl-1..N switches tabs within the CURRENT
+                    // domain rather than always jumping to Finance.
+                    final paths = domainTabPathsForLocation(
+                      ref.read(activeDomainPacksProvider),
+                      router.routeInformationProvider.value.uri.path,
+                    );
                     if (index < 0 || index >= paths.length) return;
                     router.go(paths[index]);
                   },

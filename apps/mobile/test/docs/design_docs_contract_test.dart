@@ -48,7 +48,10 @@ void main() {
 Directory _repoRoot() {
   var current = Directory.current.absolute;
   while (true) {
-    if (Directory('${current.path}/.git').existsSync() &&
+    // `.git` is a directory in a primary checkout but a plain file in a
+    // git worktree — accept both so the suite passes in worktrees too.
+    if (FileSystemEntity.typeSync('${current.path}/.git') !=
+            FileSystemEntityType.notFound &&
         File('${current.path}/README.md').existsSync() &&
         Directory('${current.path}/docs').existsSync() &&
         Directory('${current.path}/apps/mobile').existsSync()) {

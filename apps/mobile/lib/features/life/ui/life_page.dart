@@ -36,6 +36,13 @@ class LifePage extends ConsumerWidget {
       child: SafeArea(
         bottom: false,
         child: BriefScaffold(
+          // The Life hub is the initial route: it must be refreshable and
+          // width-capped like every domain Today surface (doc 15 §7.3).
+          onRefresh: () async {
+            ref.invalidate(lifeEventsProvider);
+            ref.invalidate(lifeHeroSummaryProvider);
+          },
+          maxContentWidth: AdaptiveMaxWidth.page,
           greeting: _LifeGreeting(l10n: l10n),
           stage: AppCollapsingStage(
             child: _LifeHero(l10n: l10n, summary: hero),
@@ -95,19 +102,19 @@ class LifePage extends ConsumerWidget {
 
   static Color _accentFor(BuildContext context, LifeEvent e) {
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     if (e.priority == LifeSignalPriority.high) {
       return switch (e.domain) {
         DomainScope.health => colors.destructive,
-        DomainScope.execution => semantic.warning,
+        DomainScope.execution => status.warning.fg,
         _ => colors.primary,
       };
     }
     return switch (e.domain) {
       DomainScope.finance => colors.primary,
-      DomainScope.health => semantic.success,
-      DomainScope.knowledge => semantic.info,
-      DomainScope.execution => semantic.warning,
+      DomainScope.health => status.success.fg,
+      DomainScope.knowledge => status.info.fg,
+      DomainScope.execution => status.warning.fg,
     };
   }
 
@@ -175,9 +182,9 @@ class _LifeHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final metricColor = summary.hasAttention
-        ? semantic.warning
+        ? status.warning.fg
         : summary.isCalm
         ? colors.mutedForeground
         : colors.primary;
@@ -239,7 +246,7 @@ class _WorkspaceChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -260,7 +267,7 @@ class _WorkspaceChips extends StatelessWidget {
                   pack: packs[i],
                   l10n: l10n,
                   colors: colors,
-                  semantic: semantic,
+                  status: status,
                   signalCount: summary.signalsFor(packs[i].scope),
                   highCount: summary.highFor(packs[i].scope),
                 ),
@@ -278,7 +285,7 @@ class _DomainChip extends StatelessWidget {
     required this.pack,
     required this.l10n,
     required this.colors,
-    required this.semantic,
+    required this.status,
     required this.signalCount,
     required this.highCount,
   });
@@ -286,7 +293,7 @@ class _DomainChip extends StatelessWidget {
   final DomainPack pack;
   final AppLocalizations l10n;
   final FColors colors;
-  final SemanticColors semantic;
+  final AppStatus status;
   final int signalCount;
   final int highCount;
 
@@ -301,8 +308,8 @@ class _DomainChip extends StatelessWidget {
     final accent = highCount > 0
         ? switch (pack.scope) {
             DomainScope.health => colors.destructive,
-            DomainScope.execution => semantic.warning,
-            DomainScope.knowledge => semantic.info,
+            DomainScope.execution => status.warning.fg,
+            DomainScope.knowledge => status.info.fg,
             DomainScope.finance => colors.primary,
           }
         : colors.primary;

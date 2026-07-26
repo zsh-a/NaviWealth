@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:forui/forui.dart';
 
 import '../tokens/color_palette.dart';
 
-/// Status colors that aren't directionally tied to market gain/loss.
+/// Status color value tables (light/dark), not directionally tied to market
+/// gain/loss — `success` is always green, `danger` is always red.
 ///
-/// Direction-sensitive colors live on [MarketColors] (which can swap based
-/// on user preference). These tokens stay stable across all market color
-/// modes — `success` is always green, `danger` is always red.
-///
-/// Forui's [FColors] doesn't carry success/warning/info; this small object
-/// fills the gap. `divider` aliases forui's `colors.border` at call sites
-/// where preferred.
+/// These tables now feed `resolveAppTheme` exclusively; UI code reads
+/// `context.appTheme.status` roles. The old `SemanticColors.of` context
+/// lookup is retired (doc 15 P5).
 @immutable
 class SemanticColors {
   const SemanticColors({
@@ -71,7 +67,10 @@ class SemanticColors {
     onDanger: ColorPalette.neutral0,
     dangerContainer: ColorPalette.red50,
     onDangerContainer: ColorPalette.red900,
-    info: ColorPalette.cyanBrand500,
+    // cyanBrand700, not 500: the bright interaction cyan sits at ~2:1 on
+    // white and was effectively invisible as an info foreground
+    // (doc 15 §3.1; enforced by theme_contrast_test.dart).
+    info: ColorPalette.cyanBrand700,
     onInfo: ColorPalette.neutral0,
     infoContainer: ColorPalette.cyanBrand50,
     onInfoContainer: ColorPalette.cyanBrand900,
@@ -99,8 +98,4 @@ class SemanticColors {
     divider: ColorPalette.navy800,
     scrim: ColorPalette.scrimDark,
   );
-
-  /// Resolve the appropriate set from the surrounding theme brightness.
-  static SemanticColors of(BuildContext context) =>
-      FTheme.of(context).colors.brightness == Brightness.dark ? dark : light;
 }

@@ -347,7 +347,7 @@ class _StrategyTrack extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s8),
           for (final (index, module) in lanes.indexed) ...[
-            if (index > 0) const Divider(height: AppSpacing.s16),
+            if (index > 0) const FDivider(),
             _SleeveLane(
               module: module,
               enabled: underlying.enabledSleeves.contains(module.id),
@@ -529,11 +529,11 @@ class _RiskRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final color = switch (risk.severity) {
       IncomeStrategyRiskSeverity.info => context.theme.colors.mutedForeground,
-      IncomeStrategyRiskSeverity.warning => semantic.warning,
-      IncomeStrategyRiskSeverity.critical => semantic.danger,
+      IncomeStrategyRiskSeverity.warning => status.warning.fg,
+      IncomeStrategyRiskSeverity.critical => status.danger.fg,
     };
     return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s12),

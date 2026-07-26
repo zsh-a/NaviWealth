@@ -15,8 +15,8 @@ import 'package:flutter/widgets.dart';
 import '../intent/ai_intent_invocation.dart';
 
 /// Semantic tone for a chat-rail icon. Resolved to a concrete [Color]
-/// by the view layer via [SemanticColors]. Keeps composition providers
-/// free of theme dependencies.
+/// by the view layer via `context.appTheme.status`. Keeps composition
+/// providers free of theme dependencies.
 enum ChatRailTone { success, warning, danger, info }
 
 class ChatRailContent {

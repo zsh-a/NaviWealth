@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/budget_signal.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import '../../../../core/format/formatters.dart';
 import '../data/fire_providers.dart';
 import '../domain/fire_projection.dart';
 import 'fire_goal_form.dart';
@@ -82,11 +83,13 @@ class _FireBudgetPosture extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final signalAsync = ref.watch(fireBudgetSignalProvider);
     return signalAsync.when(
-      loading: () => const SizedBox.shrink(),
+      // Matches the rendered posture banner footprint (two text lines +
+      // vertical padding) so the hero column does not jump on resolve.
+      loading: () => const SkeletonBox(height: 56, radius: AppRadius.md),
       error: (_, _) => const SizedBox.shrink(),
       data: (signal) {
         final l10n = AppLocalizations.of(context);
-        final semantic = SemanticColors.of(context);
+        final status = context.appTheme.status;
         final (icon, color, title, detail) = switch (signal) {
           BudgetSignal.noData => (
             FLucideIcons.walletCards,
@@ -96,19 +99,19 @@ class _FireBudgetPosture extends ConsumerWidget {
           ),
           BudgetSignal.comfortable => (
             FLucideIcons.circleCheck,
-            semantic.success,
+            status.success.fg,
             l10n.fireBudgetComfortableTitle,
             l10n.fireBudgetComfortableDetail,
           ),
           BudgetSignal.strained => (
             FLucideIcons.gauge,
-            semantic.warning,
+            status.warning.fg,
             l10n.fireBudgetStrainedTitle,
             l10n.fireBudgetStrainedDetail,
           ),
           BudgetSignal.overBudget => (
             FLucideIcons.triangleAlert,
-            semantic.danger,
+            status.danger.fg,
             l10n.fireBudgetOverTitle,
             l10n.fireBudgetOverDetail,
           ),
@@ -200,6 +203,7 @@ class _ScenarioLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final palette = ChartPalette.of(context);
     return Wrap(
       spacing: AppSpacing.s12,
@@ -210,7 +214,7 @@ class _ScenarioLegend extends StatelessWidget {
             color: _colorForTier(context, palette, s.tier),
             label:
                 '${_scenarioLabel(l10n, s.tier)} '
-                '(${(s.annualReturn * 100).toStringAsFixed(1)}%)',
+                '(${formatters.percent(s.annualReturn, decimalDigits: 1)})',
           ),
         _LegendDot(
           color: context.theme.colors.mutedForeground,

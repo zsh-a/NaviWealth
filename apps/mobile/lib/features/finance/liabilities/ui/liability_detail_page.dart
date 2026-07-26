@@ -40,10 +40,10 @@ class LiabilityDetailPage extends ConsumerWidget {
       childPad: false,
       child: summaryAsync.when(
         loading: () => const AssetDetailSkeleton(),
-        error: (error, stackTrace) => AppEmptyState.error(
-          title: l10n.commonLoadFailed,
-          message: userSafeErrorMessage(context, error, stackTrace: stackTrace),
-          retryLabel: l10n.commonRetry,
+        error: (error, stackTrace) => kDefaultError(
+          context,
+          error,
+          stackTrace,
           onRetry: () => ref.invalidate(liabilitySummaryProvider(id)),
         ),
         data: (summary) {
@@ -95,14 +95,10 @@ class _LiabilityDetailBody extends ConsumerWidget {
               ],
             ),
           ),
-          error: (error, stackTrace) => AppEmptyState.error(
-            title: l10n.commonLoadFailed,
-            message: userSafeErrorMessage(
-              context,
-              error,
-              stackTrace: stackTrace,
-            ),
-            retryLabel: l10n.commonRetry,
+          error: (error, stackTrace) => kDefaultError(
+            context,
+            error,
+            stackTrace,
             onRetry: () => ref.invalidate(
               amortizationScheduleStreamProvider(liability.id),
             ),

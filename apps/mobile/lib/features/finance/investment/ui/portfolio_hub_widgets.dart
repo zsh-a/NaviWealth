@@ -11,6 +11,9 @@ class _ConcentrationRiskSection extends ConsumerWidget {
     final async = ref.watch(concentrationAlertsProvider);
     return async.when(
       skipLoadingOnReload: true,
+      // loading: intentionally empty — this section only exists when there
+      // are concentration breaches; a skeleton would promise content that
+      // usually never appears and shift the Allocation tab on resolve.
       loading: () => const SizedBox.shrink(),
       error: (_, _) => const SizedBox.shrink(),
       data: (alerts) {
@@ -227,7 +230,7 @@ class _HoldingRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final pnl = holding.unrealizedPnlInBase;
-    final pnlColor = MarketColors.of(context).forDelta(pnl.toDouble());
+    final pnlColor = context.appTheme.market.roleForDelta(pnl.toDouble()).fg;
     final subtitle = _holdingSubtitle(l10n, holding);
     return Semantics(
       button: true,

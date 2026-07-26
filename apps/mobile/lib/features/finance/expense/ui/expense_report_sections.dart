@@ -5,6 +5,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../../../core/format/formatters.dart';
 import '../domain/expense_category.dart';
 import '../domain/expense_report.dart';
 import '../domain/expense_report_pie.dart';

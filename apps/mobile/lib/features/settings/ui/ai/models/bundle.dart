@@ -10,7 +10,6 @@ class _BundleCard extends ConsumerWidget {
     final stateAsync = ref.watch(modelInstallProvider(bundle));
     final controller = ref.read(modelInstallProvider(bundle).notifier);
     final l10n = AppLocalizations.of(context);
-    final semantic = SemanticColors.of(context);
     final colors = context.theme.colors;
 
     return SoftCard.flat(
@@ -48,9 +47,16 @@ class _BundleCard extends ConsumerWidget {
               padding: EdgeInsets.symmetric(vertical: AppSpacing.s8),
               child: FProgress(),
             ),
-            error: (e, _) => Text(
-              l10n.settingsAiModelsStateLoadFailed('$e'),
-              style: context.captionStyle.copyWith(color: semantic.danger),
+            error: (error, _) => AppEmptyState.error(
+              title: l10n.commonLoadFailed,
+              message: userSafeErrorMessage(
+                context,
+                error,
+                operation: 'load model bundle state',
+              ),
+              retryLabel: l10n.commonRetry,
+              onRetry: () => ref.invalidate(modelInstallProvider(bundle)),
+              compact: true,
             ),
             data: (bundleState) => _BundleBody(
               state: bundleState,
@@ -147,12 +153,12 @@ class _BundleStatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     final colors = context.theme.colors;
     if (state.isInstalled) {
       return _StatusChip(
         text: l10n.settingsAiModelsStatusInstalled,
-        color: semantic.success,
+        color: status.success.fg,
       );
     }
     if (state.isInstalling) {
@@ -165,7 +171,7 @@ class _BundleStatusChip extends StatelessWidget {
     if (state.files.any((f) => f.status == ModelFileStatus.failed)) {
       return _StatusChip(
         text: l10n.settingsAiModelsStatusFailed,
-        color: semantic.danger,
+        color: status.danger.fg,
       );
     }
     return _StatusChip(
@@ -184,7 +190,7 @@ class _FileRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final progress = file.progress;
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Column(
@@ -236,7 +242,7 @@ class _FileRow extends StatelessWidget {
             Text(
               file.error!,
               style: context.theme.typography.body.xs2.copyWith(
-                color: semantic.danger,
+                color: status.danger.fg,
               ),
             ),
           ],
@@ -247,7 +253,7 @@ class _FileRow extends StatelessWidget {
 
   Widget _statusIcon(BuildContext context, ModelFileStatus s) {
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
+    final status = context.appTheme.status;
     return switch (s) {
       ModelFileStatus.notInstalled => Icon(
         FLucideIcons.download,
@@ -262,12 +268,12 @@ class _FileRow extends StatelessWidget {
       ModelFileStatus.installed => Icon(
         FLucideIcons.circleCheck,
         size: AppIconSizes.sm,
-        color: semantic.success,
+        color: status.success.fg,
       ),
       ModelFileStatus.failed => Icon(
         FLucideIcons.circleAlert,
         size: AppIconSizes.sm,
-        color: semantic.danger,
+        color: status.danger.fg,
       ),
     };
   }

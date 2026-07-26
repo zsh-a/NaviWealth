@@ -7,6 +7,7 @@ import 'package:naviwealth/features/finance/data/preferences/risk_appetite_prefe
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/home/ui/asset_category_visuals.dart';
 
+import '../../../../core/format/formatters.dart';
 import '../../../../core/forms/form_dirty_guard.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';

@@ -28,7 +28,9 @@ class DomainOptInRouteGuard implements RouteGuard {
       state.uri.path,
     );
     if (owner == null || optIns.contains(owner)) return null;
-    return SettingsRoutes.domains;
+    // `blocked` lets the domains page explain the redirect instead of
+    // silently teleporting the user (doc 15 §7.7).
+    return '${SettingsRoutes.domains}?blocked=${owner.name}';
   }
 }
 

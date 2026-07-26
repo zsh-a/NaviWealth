@@ -129,19 +129,14 @@ void main() {
   });
 
   group('Root exits require a second system back gesture', () {
-    const primaryRoots = <String>[
+    // Doc 15 §7.5: only the domain's FIRST tab root arms the exit prompt.
+    const firstTabRoots = <String>[
       AppRoutes.home,
-      AppRoutes.activity,
-      AppRoutes.wealth,
-      AppRoutes.plan,
       AppRoutes.healthToday,
-      AppRoutes.healthTrend,
       AppRoutes.knowledgeInbox,
-      AppRoutes.knowledgeLibrary,
-      AppRoutes.knowledgeReview,
     ];
 
-    for (final root in primaryRoots) {
+    for (final root in firstTabRoots) {
       testWidgets(
         '$root root → first back arms, second back exits',
         (tester) async {
@@ -170,6 +165,47 @@ void main() {
       );
     }
 
+    // Non-first tab roots step back to the domain's first tab before the
+    // exit prompt (doc 15 §7.5 step 4).
+    const nonFirstRoots = <String, String>{
+      AppRoutes.activity: AppRoutes.home,
+      AppRoutes.wealth: AppRoutes.home,
+      AppRoutes.plan: AppRoutes.home,
+      AppRoutes.healthTrend: AppRoutes.healthToday,
+      AppRoutes.knowledgeLibrary: AppRoutes.knowledgeInbox,
+      AppRoutes.knowledgeReview: AppRoutes.knowledgeInbox,
+    };
+
+    nonFirstRoots.forEach((root, firstTab) {
+      testWidgets(
+        '$root root → back returns to $firstTab, then arms, then exits',
+        (tester) async {
+          final platform = _capturePlatformBackCalls(tester);
+
+          final router = await _boot(tester, root);
+          expect(_path(router), root);
+
+          final toFirstTab = await tester.binding.handlePopRoute();
+          await _drain(tester);
+          expect(toFirstTab, isTrue);
+          expect(_path(router), firstTab);
+          expect(platform.pop, 0);
+
+          final arm = await tester.binding.handlePopRoute();
+          await _drain(tester);
+          expect(arm, isTrue);
+          expect(_path(router), firstTab);
+          expect(platform.pop, 0);
+
+          final exit = await tester.binding.handlePopRoute();
+          await _drain(tester);
+          expect(exit, isTrue);
+          expect(platform.pop, 1);
+        },
+        variant: TargetPlatformVariant.only(TargetPlatform.android),
+      );
+    });
+
     testWidgets(
       'navigating after first back disarms root exit',
       (tester) async {
@@ -192,15 +228,23 @@ void main() {
           reason: 'Android gesture handling must survive tab navigation',
         );
 
+        // /activity is not Finance's first tab: back first returns to
+        // /home (doc 15 §7.5 step 4), then arms, then exits.
         final second = await tester.binding.handlePopRoute();
         await _drain(tester);
         expect(second, isTrue);
-        expect(_path(router), AppRoutes.activity);
+        expect(_path(router), AppRoutes.home);
         expect(platform.pop, 0);
 
         final third = await tester.binding.handlePopRoute();
         await _drain(tester);
         expect(third, isTrue);
+        expect(_path(router), AppRoutes.home);
+        expect(platform.pop, 0);
+
+        final fourth = await tester.binding.handlePopRoute();
+        await _drain(tester);
+        expect(fourth, isTrue);
         expect(platform.pop, 1);
       },
       variant: TargetPlatformVariant.only(TargetPlatform.android),

@@ -402,12 +402,12 @@ AppBadgeTone _statusTone(ExecutionActionStatus status) {
 
 Color _statusColor(BuildContext context, ExecutionActionStatus status) {
   final colors = context.theme.colors;
-  final semantic = SemanticColors.of(context);
+  final appStatus = context.appTheme.status;
   return switch (status) {
     ExecutionActionStatus.todo => colors.mutedForeground,
-    ExecutionActionStatus.doing => semantic.info,
-    ExecutionActionStatus.blocked => semantic.danger,
-    ExecutionActionStatus.done => semantic.success,
+    ExecutionActionStatus.doing => appStatus.info.fg,
+    ExecutionActionStatus.blocked => appStatus.danger.fg,
+    ExecutionActionStatus.done => appStatus.success.fg,
     ExecutionActionStatus.dropped => colors.mutedForeground,
   };
 }
