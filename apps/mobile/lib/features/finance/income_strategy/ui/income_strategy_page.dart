@@ -155,11 +155,14 @@ class _Overview extends ConsumerWidget {
         ),
       );
     }
-    final risks = snapshot.underlyings
-        .expand((underlying) => underlying.risks)
-        .where((risk) => risk.severity != IncomeStrategyRiskSeverity.info)
-        .take(4)
-        .toList(growable: false);
+    final risks =
+        [
+              ...snapshot.groupRisks,
+              ...snapshot.underlyings.expand((underlying) => underlying.risks),
+            ]
+            .where((risk) => risk.severity != IncomeStrategyRiskSeverity.info)
+            .take(4)
+            .toList(growable: false);
     return ListView(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s16,
@@ -325,6 +328,14 @@ class _StrategyTrack extends StatelessWidget {
                   ],
                 ),
               ),
+              if (plan?.groupId != null) ...[
+                AppBadge(
+                  label: plan?.groupLabel ?? l10n.incomeStrategyPlanGroup,
+                  tone: AppBadgeTone.accent,
+                  size: AppBadgeSize.compact,
+                ),
+                const SizedBox(width: AppSpacing.s6),
+              ],
               if (activeRisks > 0)
                 AppBadge(
                   label: l10n.incomeStrategyRiskSummary(activeRisks),

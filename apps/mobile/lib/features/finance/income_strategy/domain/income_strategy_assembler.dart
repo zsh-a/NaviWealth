@@ -17,6 +17,7 @@ class IncomeStrategyAssembler {
     required Iterable<IncomeStrategyPlan> plans,
     required Iterable<IncomeStrategySleeveContribution> contributions,
     required Iterable<IncomeStrategyRule> rules,
+    Iterable<IncomeStrategyGroupRule> groupRules = const [],
     Iterable<IncomeStrategyCashFlow> unassignedCashFlows = const [],
   }) {
     final normalizedBase = baseCurrency.trim().toUpperCase();
@@ -51,7 +52,9 @@ class IncomeStrategyAssembler {
       byKind[contribution.snapshot.kind] = contribution.snapshot;
     }
 
-    final underlyings = <UnderlyingIncomeStrategySnapshot>[];
+    // Pass 1 — per-asset contexts and per-asset rule findings.
+    final contexts = <String, IncomeStrategyRuleContext>{};
+    final assetRisks = <String, List<IncomeStrategyRisk>>{};
     for (final entry in assets.entries) {
       final plan = planByAsset[entry.key];
       final byKind =
@@ -68,25 +71,88 @@ class IncomeStrategyAssembler {
         sleeves: byKind,
         converter: converter,
       );
-      final risks = <IncomeStrategyRisk>[
+      contexts[entry.key] = context;
+      assetRisks[entry.key] = <IncomeStrategyRisk>[
         for (final sleeve in byKind.values) ...sleeve.risks,
         for (final rule in rules) ...rule.evaluate(context),
       ];
-      underlyings.add(
-        UnderlyingIncomeStrategySnapshot(
-          asset: entry.value,
-          baseCurrency: normalizedBase,
-          periodStart: periodStart,
-          asOf: clock,
-          enabledSleeves: Set.unmodifiable(enabled),
-          sleeves: Map.unmodifiable(byKind),
-          risks: List.unmodifiable(risks),
-          capitalBudget: context.tryConvertToBase(plan?.capitalBudgetMoney),
-          annualIncomeTarget: context.tryConvertToBase(
-            plan?.annualIncomeTargetMoney,
-          ),
+    }
+
+    // Pass 2 — strategy groups. Every asset lands in exactly one group:
+    // its plan's explicit groupId, or an implicit singleton keyed by
+    // assetId. Group rules run once per group; singleton findings merge
+    // back into the member so ungrouped assets behave exactly as before.
+    final groupMembers = <String, List<String>>{};
+    final explicitGroups = <String>{};
+    for (final assetId in assets.keys) {
+      final plan = planByAsset[assetId];
+      final groupId = plan?.groupId;
+      final key = groupId == null || groupId.isEmpty ? assetId : groupId;
+      if (key != assetId) explicitGroups.add(key);
+      groupMembers.putIfAbsent(key, () => <String>[]).add(assetId);
+    }
+
+    final groupRisksById = <String, List<IncomeStrategyRisk>>{};
+    final groupLabels = <String, String>{};
+    for (final entry in groupMembers.entries) {
+      final isExplicit = explicitGroups.contains(entry.key);
+      final memberContexts = [
+        for (final assetId in entry.value) contexts[assetId]!,
+      ];
+      String label;
+      if (isExplicit) {
+        final named = entry.value
+            .map((assetId) => planByAsset[assetId]?.groupLabel?.trim())
+            .where((value) => value != null && value.isNotEmpty)
+            .firstOrNull;
+        label =
+            named ??
+            memberContexts.map((context) => context.asset.symbol).join(' + ');
+      } else {
+        label = memberContexts.first.asset.symbol;
+      }
+      groupLabels[entry.key] = label;
+      final groupContext = IncomeStrategyGroupRuleContext(
+        groupId: entry.key,
+        groupLabel: label,
+        isExplicit: isExplicit,
+        baseCurrency: normalizedBase,
+        asOf: clock,
+        converter: converter,
+        members: memberContexts,
+      );
+      final findings = <IncomeStrategyRisk>[
+        for (final rule in groupRules) ...rule.evaluate(groupContext),
+      ];
+      if (isExplicit) {
+        groupRisksById[entry.key] = findings;
+      } else {
+        // Singleton: keep the finding on the underlying, same as the old
+        // per-asset coordination rules.
+        assetRisks[entry.value.single]!.addAll(findings);
+      }
+    }
+
+    final underlyingById = <String, UnderlyingIncomeStrategySnapshot>{};
+    final underlyings = <UnderlyingIncomeStrategySnapshot>[];
+    for (final entry in assets.entries) {
+      final context = contexts[entry.key]!;
+      final plan = planByAsset[entry.key];
+      final underlying = UnderlyingIncomeStrategySnapshot(
+        asset: entry.value,
+        baseCurrency: normalizedBase,
+        periodStart: periodStart,
+        asOf: clock,
+        enabledSleeves: Set.unmodifiable(context.enabledSleeves),
+        sleeves: Map.unmodifiable(context.sleeves),
+        risks: List.unmodifiable(assetRisks[entry.key]!),
+        capitalBudget: context.tryConvertToBase(plan?.capitalBudgetMoney),
+        annualIncomeTarget: context.tryConvertToBase(
+          plan?.annualIncomeTargetMoney,
         ),
       );
+      underlyingById[entry.key] = underlying;
+      underlyings.add(underlying);
     }
 
     underlyings.sort((a, b) {
@@ -96,12 +162,36 @@ class IncomeStrategyAssembler {
       if (aActive != bActive) return aActive ? -1 : 1;
       return a.asset.symbol.compareTo(b.asset.symbol);
     });
+
+    final groups =
+        <IncomeStrategyGroupSnapshot>[
+          for (final entry in groupMembers.entries)
+            IncomeStrategyGroupSnapshot(
+              id: entry.key,
+              label: groupLabels[entry.key]!,
+              isExplicit: explicitGroups.contains(entry.key),
+              baseCurrency: normalizedBase,
+              members: List.unmodifiable([
+                for (final assetId in entry.value) underlyingById[assetId]!,
+              ]),
+              risks: List.unmodifiable(
+                groupRisksById[entry.key] ?? const <IncomeStrategyRisk>[],
+              ),
+            ),
+        ]..sort((a, b) {
+          if (a.hasActiveRisk != b.hasActiveRisk) {
+            return a.hasActiveRisk ? -1 : 1;
+          }
+          return a.label.compareTo(b.label);
+        });
+
     return PortfolioIncomeStrategySnapshot(
       baseCurrency: normalizedBase,
       periodStart: periodStart,
       asOf: clock,
       underlyings: List.unmodifiable(underlyings),
       unassignedCashFlows: List.unmodifiable(unassignedCashFlows),
+      groups: List.unmodifiable(groups),
     );
   }
 

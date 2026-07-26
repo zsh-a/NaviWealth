@@ -148,7 +148,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 63;
+  int get schemaVersion => 64;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -944,6 +944,15 @@ class AppDatabase extends _$AppDatabase {
           'ON options_leaps_call_positions(owner_user_id, opened_at DESC) '
           'WHERE deleted_at IS NULL',
         );
+      }
+      // v63 -> v64: strategy groups — plans may join a cross-underlying
+      // group (e.g. TQQQ wheel funding a QQQ LEAPS call). Nullable columns;
+      // ungrouped plans keep their implicit per-asset behaviour. Skipped
+      // when the v62 step already recreated the table with the current
+      // schema (from < 62), which would make addColumn a duplicate.
+      if (from >= 62 && from < 64) {
+        await m.addColumn(incomeStrategyPlans, incomeStrategyPlans.groupId);
+        await m.addColumn(incomeStrategyPlans, incomeStrategyPlans.groupLabel);
       }
     },
     beforeOpen: (details) async {

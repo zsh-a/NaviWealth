@@ -55,6 +55,7 @@ final portfolioIncomeStrategyProvider =
           ...kCoreIncomeStrategyRules,
           for (final module in modules) ...module.rules,
         ],
+        groupRules: [for (final module in modules) ...module.groupRules],
       );
     });
 

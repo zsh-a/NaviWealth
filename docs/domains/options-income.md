@@ -536,8 +536,16 @@ Journal         日志：开放/已结算筛选、数量、费用、到期日与
 ```
 
 Wheel 生命周期只有一个表面：`wheel_lifecycle_page.dart`（`/plan/income/wheel`，
-按标的聚合周期阶段、开放腿、LEAPS 上涨敞口与组合风险）。工作台顶部卡片和
+按**策略组**聚合周期阶段、开放腿、LEAPS 上涨敞口与组合风险）。工作台顶部卡片和
 收益策略页（`/plan/income`）都提供直达按钮；不再在工作台内嵌第二份 Wheel 列表。
+
+**策略组（Strategy Group）**：组是唯一的聚合概念。未分组的标的构成隐式单例组
+（等价于旧的"同标的 wheel+LEAPS 自动配对"）；显式组可跨标的（如 TQQQ Wheel 资助
+QQQ LEAPS）。`IncomeStrategyPlan.groupId/groupLabel`（可空、随 sync_rows 同步）
+定义成员关系；组级协调规则（`IncomeStrategyGroupRule`：LeapsFundingRule、
+StackedDownsideRule）在组作用域求值——收入池与下行叠加跨成员计算，单例组的
+发现合并回标的自身风险列表，行为与旧实现一致。跨标的 delta 不自动折算
+（杠杆/路径依赖会造成伪精确），组内只在恰好一个 LEAPS 标的时合并 delta 等效股数。
 
 每张卡片：
 

@@ -15099,6 +15099,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomeStrategyPlanSleeves => '启用的策略模块';
 
   @override
+  String get incomeStrategyPlanGroup => '策略组';
+
+  @override
+  String get incomeStrategyPlanGroupHint =>
+      '跨标的协同 wheel 与 LEAPS——例如用 TQQQ Wheel 收入资助 QQQ LEAPS。';
+
+  @override
+  String get incomeStrategyPlanGroupNone => '无（独立标的）';
+
+  @override
+  String get incomeStrategyPlanGroupNew => '新建组…';
+
+  @override
+  String get incomeStrategyPlanGroupNameLabel => '组名称';
+
+  @override
+  String get incomeStrategyPlanGroupNameRequired => '请输入新组的名称。';
+
+  @override
   String get incomeStrategyPlanPreserveDividend => '优先保留股息收入';
 
   @override

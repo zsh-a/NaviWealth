@@ -6,74 +6,162 @@ import 'package:naviwealth/features/finance/options_income/domain/wheel_lifecycl
 import 'leaps_income_sleeve_adapter.dart';
 import 'wheel_income_sleeve_adapter.dart';
 
-/// Wheel drill-down projected from the generic income strategy snapshot.
+/// One Wheel leg inside a strategy group: the member underlying plus its
+/// lifecycle state machine.
+class WheelCycleLeg {
+  const WheelCycleLeg({required this.underlying, required this.lifecycle});
+
+  final UnderlyingIncomeStrategySnapshot underlying;
+  final WheelLifecycle lifecycle;
+}
+
+/// Wheel drill-down projected from the generic income strategy snapshot,
+/// one view per strategy group.
 ///
-/// This keeps the Wheel UI convenient without establishing a second
-/// composition engine or a special Wheel+LEAPS source of truth.
+/// An implicit singleton group reproduces the old per-underlying pairing;
+/// an explicit group may pair legs across underlyings (wheel on TQQQ
+/// funding a LEAPS call on QQQ). This stays a projection — no second
+/// composition engine and no special Wheel+LEAPS source of truth.
 class WheelStrategyView {
   const WheelStrategyView({
-    required this.underlying,
-    required this.wheel,
+    required this.group,
+    required this.wheels,
     required this.positions,
   });
 
-  final UnderlyingIncomeStrategySnapshot underlying;
-  final WheelLifecycle wheel;
+  final IncomeStrategyGroupSnapshot group;
+
+  /// Wheel legs in group order. Never empty: a LEAPS-only group carries a
+  /// synthesized empty lifecycle so the UI keeps one stable shape.
+  final List<WheelCycleLeg> wheels;
+
+  /// LEAPS positions across every group member.
   final List<LeapsCallPosition> positions;
+
+  String get label => group.label;
+
+  /// Primary wheel leg. Views are sorted so the leg with open positions
+  /// leads; single-underlying groups have exactly one leg.
+  WheelLifecycle get wheel => wheels.first.lifecycle;
 
   List<LeapsCallPosition> get openPositions =>
       positions.where((position) => position.isOpen).toList(growable: false);
 
-  IncomeStrategySleeveSnapshot? get leaps =>
-      underlying.sleeves[IncomeStrategySleeveKind.leapsCall];
+  Iterable<IncomeStrategySleeveSnapshot> get _leapsSleeves sync* {
+    for (final member in group.members) {
+      final sleeve = member.sleeves[IncomeStrategySleeveKind.leapsCall];
+      if (sleeve != null) yield sleeve;
+    }
+  }
 
-  Decimal get openLeapsCost =>
-      leaps?.capitalAtRisk.value.amount ?? Decimal.zero;
-  Decimal get realizedLeapsPnl =>
-      leaps?.realizedResult.value.amount ?? Decimal.zero;
-  Decimal get underlyingRealizedResult =>
-      underlying.realizedResult.value.amount;
-  Decimal? get deltaEquivalentShares => leaps?.deltaEquivalentShares;
-  List<IncomeStrategyRisk> get risks => underlying.risks;
+  Decimal get openLeapsCost {
+    var total = Decimal.zero;
+    for (final sleeve in _leapsSleeves) {
+      total += sleeve.capitalAtRisk.value.amount;
+    }
+    return total;
+  }
 
-  Decimal? get wheelIncomeCoverageRatio => openLeapsCost == Decimal.zero
-      ? null
-      : (wheel.cumulativeIncome / openLeapsCost).toDecimal(
-          scaleOnInfinitePrecision: 8,
-        );
+  Decimal get realizedLeapsPnl {
+    var total = Decimal.zero;
+    for (final sleeve in _leapsSleeves) {
+      total += sleeve.realizedResult.value.amount;
+    }
+    return total;
+  }
+
+  /// Combined realized result across the whole group (base currency).
+  Decimal get realizedResult => group.realizedResult.value.amount;
+
+  /// Delta-equivalent shares only merge within one underlying — a QQQ
+  /// delta is not a TQQQ share count, so cross-asset groups report null
+  /// and the UI shows per-leg values instead.
+  Decimal? get deltaEquivalentShares {
+    final sleeves = _leapsSleeves.toList(growable: false);
+    if (sleeves.length != 1) return null;
+    return sleeves.single.deltaEquivalentShares;
+  }
+
+  /// Group-scope findings plus every member's own findings.
+  List<IncomeStrategyRisk> get risks => List.unmodifiable([
+    ...group.risks,
+    for (final member in group.members) ...member.risks,
+  ]);
+
+  /// Wheel income (all legs, native currency) over open LEAPS cost.
+  /// Null when legs disagree on currency — no silent FX guessing.
+  Decimal? get wheelIncomeCoverageRatio {
+    final cost = openLeapsCost;
+    if (cost == Decimal.zero) return null;
+    final currencies = wheels.map((leg) => leg.lifecycle.currency).toSet();
+    if (currencies.length != 1) return null;
+    var income = Decimal.zero;
+    for (final leg in wheels) {
+      income += leg.lifecycle.cumulativeIncome;
+    }
+    return (income / cost).toDecimal(scaleOnInfinitePrecision: 8);
+  }
 }
 
 List<WheelStrategyView> buildWheelStrategyViews(
   PortfolioIncomeStrategySnapshot portfolio,
 ) {
   final views = <WheelStrategyView>[];
-  for (final underlying in portfolio.underlyings) {
-    final wheelSnapshot = underlying.sleeves[IncomeStrategySleeveKind.wheel];
-    final leapsSnapshot =
-        underlying.sleeves[IncomeStrategySleeveKind.leapsCall];
-    if (wheelSnapshot == null && leapsSnapshot == null) continue;
-    final wheelDetails = wheelSnapshot?.details;
-    final leapsDetails = leapsSnapshot?.details;
+  for (final group in portfolio.groups) {
+    final wheels = <WheelCycleLeg>[];
+    final positions = <LeapsCallPosition>[];
+    var hasAnySleeve = false;
+    for (final member in group.members) {
+      final wheelSnapshot = member.sleeves[IncomeStrategySleeveKind.wheel];
+      final leapsSnapshot = member.sleeves[IncomeStrategySleeveKind.leapsCall];
+      if (wheelSnapshot != null || leapsSnapshot != null) hasAnySleeve = true;
+      final wheelDetails = wheelSnapshot?.details;
+      if (wheelDetails is WheelIncomeSleeveDetails) {
+        wheels.add(
+          WheelCycleLeg(underlying: member, lifecycle: wheelDetails.lifecycle),
+        );
+      }
+      final leapsDetails = leapsSnapshot?.details;
+      if (leapsDetails is LeapsIncomeSleeveDetails) {
+        positions.addAll(leapsDetails.positions);
+      }
+    }
+    if (!hasAnySleeve) continue;
+    if (wheels.isEmpty) {
+      final anchor = group.members.first;
+      wheels.add(
+        WheelCycleLeg(
+          underlying: anchor,
+          lifecycle: WheelLifecycle.empty(
+            symbol: anchor.asset.symbol,
+            currency: anchor.asset.currency,
+          ),
+        ),
+      );
+    }
+    wheels.sort((a, b) {
+      if (a.lifecycle.hasOpenPosition != b.lifecycle.hasOpenPosition) {
+        return a.lifecycle.hasOpenPosition ? -1 : 1;
+      }
+      return a.lifecycle.symbol.compareTo(b.lifecycle.symbol);
+    });
     views.add(
       WheelStrategyView(
-        underlying: underlying,
-        wheel: wheelDetails is WheelIncomeSleeveDetails
-            ? wheelDetails.lifecycle
-            : WheelLifecycle.empty(
-                symbol: underlying.asset.symbol,
-                currency: underlying.asset.currency,
-              ),
-        positions: leapsDetails is LeapsIncomeSleeveDetails
-            ? leapsDetails.positions
-            : const <LeapsCallPosition>[],
+        group: group,
+        wheels: List.unmodifiable(wheels),
+        positions: List.unmodifiable(positions),
       ),
     );
   }
   views.sort((a, b) {
-    final aOpen = a.wheel.hasOpenPosition || a.openPositions.isNotEmpty;
-    final bOpen = b.wheel.hasOpenPosition || b.openPositions.isNotEmpty;
+    final aOpen =
+        a.wheels.any((leg) => leg.lifecycle.hasOpenPosition) ||
+        a.openPositions.isNotEmpty;
+    final bOpen =
+        b.wheels.any((leg) => leg.lifecycle.hasOpenPosition) ||
+        b.openPositions.isNotEmpty;
     if (aOpen != bOpen) return aOpen ? -1 : 1;
-    return a.underlying.asset.symbol.compareTo(b.underlying.asset.symbol);
+    return a.label.compareTo(b.label);
   });
   return List.unmodifiable(views);
 }

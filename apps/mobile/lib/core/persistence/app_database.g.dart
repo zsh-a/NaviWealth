@@ -11940,6 +11940,28 @@ class $IncomeStrategyPlansTable extends IncomeStrategyPlans
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _groupLabelMeta = const VerificationMeta(
+    'groupLabel',
+  );
+  @override
+  late final GeneratedColumn<String> groupLabel = GeneratedColumn<String>(
+    'group_label',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
@@ -11957,6 +11979,8 @@ class $IncomeStrategyPlansTable extends IncomeStrategyPlans
     annualIncomeTarget,
     maxPositionWeight,
     notes,
+    groupId,
+    groupLabel,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -12058,6 +12082,18 @@ class $IncomeStrategyPlansTable extends IncomeStrategyPlans
         notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
       );
     }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    }
+    if (data.containsKey('group_label')) {
+      context.handle(
+        _groupLabelMeta,
+        groupLabel.isAcceptableOrUnknown(data['group_label']!, _groupLabelMeta),
+      );
+    }
     return context;
   }
 
@@ -12138,6 +12174,14 @@ class $IncomeStrategyPlansTable extends IncomeStrategyPlans
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
       ),
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      ),
+      groupLabel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_label'],
+      ),
     );
   }
 
@@ -12194,6 +12238,12 @@ class IncomeStrategyPlanRow extends DataClass
   final Decimal? annualIncomeTarget;
   final Decimal? maxPositionWeight;
   final String? notes;
+
+  /// Optional strategy-group membership. Plans sharing a non-empty group id
+  /// are coordinated as one cross-underlying group (e.g. TQQQ wheel funding
+  /// a QQQ LEAPS call). Null keeps the asset as its own implicit group.
+  final String? groupId;
+  final String? groupLabel;
   const IncomeStrategyPlanRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -12210,6 +12260,8 @@ class IncomeStrategyPlanRow extends DataClass
     this.annualIncomeTarget,
     this.maxPositionWeight,
     this.notes,
+    this.groupId,
+    this.groupLabel,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -12253,6 +12305,12 @@ class IncomeStrategyPlanRow extends DataClass
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
+    if (!nullToAbsent || groupId != null) {
+      map['group_id'] = Variable<String>(groupId);
+    }
+    if (!nullToAbsent || groupLabel != null) {
+      map['group_label'] = Variable<String>(groupLabel);
+    }
     return map;
   }
 
@@ -12283,6 +12341,12 @@ class IncomeStrategyPlanRow extends DataClass
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
+      groupId: groupId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupId),
+      groupLabel: groupLabel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupLabel),
     );
   }
 
@@ -12311,6 +12375,8 @@ class IncomeStrategyPlanRow extends DataClass
         json['maxPositionWeight'],
       ),
       notes: serializer.fromJson<String?>(json['notes']),
+      groupId: serializer.fromJson<String?>(json['groupId']),
+      groupLabel: serializer.fromJson<String?>(json['groupLabel']),
     );
   }
   @override
@@ -12332,6 +12398,8 @@ class IncomeStrategyPlanRow extends DataClass
       'annualIncomeTarget': serializer.toJson<Decimal?>(annualIncomeTarget),
       'maxPositionWeight': serializer.toJson<Decimal?>(maxPositionWeight),
       'notes': serializer.toJson<String?>(notes),
+      'groupId': serializer.toJson<String?>(groupId),
+      'groupLabel': serializer.toJson<String?>(groupLabel),
     };
   }
 
@@ -12351,6 +12419,8 @@ class IncomeStrategyPlanRow extends DataClass
     Value<Decimal?> annualIncomeTarget = const Value.absent(),
     Value<Decimal?> maxPositionWeight = const Value.absent(),
     Value<String?> notes = const Value.absent(),
+    Value<String?> groupId = const Value.absent(),
+    Value<String?> groupLabel = const Value.absent(),
   }) => IncomeStrategyPlanRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -12373,6 +12443,8 @@ class IncomeStrategyPlanRow extends DataClass
         ? maxPositionWeight.value
         : this.maxPositionWeight,
     notes: notes.present ? notes.value : this.notes,
+    groupId: groupId.present ? groupId.value : this.groupId,
+    groupLabel: groupLabel.present ? groupLabel.value : this.groupLabel,
   );
   IncomeStrategyPlanRow copyWithCompanion(IncomeStrategyPlansCompanion data) {
     return IncomeStrategyPlanRow(
@@ -12403,6 +12475,10 @@ class IncomeStrategyPlanRow extends DataClass
           ? data.maxPositionWeight.value
           : this.maxPositionWeight,
       notes: data.notes.present ? data.notes.value : this.notes,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      groupLabel: data.groupLabel.present
+          ? data.groupLabel.value
+          : this.groupLabel,
     );
   }
 
@@ -12423,7 +12499,9 @@ class IncomeStrategyPlanRow extends DataClass
           ..write('capitalBudget: $capitalBudget, ')
           ..write('annualIncomeTarget: $annualIncomeTarget, ')
           ..write('maxPositionWeight: $maxPositionWeight, ')
-          ..write('notes: $notes')
+          ..write('notes: $notes, ')
+          ..write('groupId: $groupId, ')
+          ..write('groupLabel: $groupLabel')
           ..write(')'))
         .toString();
   }
@@ -12445,6 +12523,8 @@ class IncomeStrategyPlanRow extends DataClass
     annualIncomeTarget,
     maxPositionWeight,
     notes,
+    groupId,
+    groupLabel,
   );
   @override
   bool operator ==(Object other) =>
@@ -12464,7 +12544,9 @@ class IncomeStrategyPlanRow extends DataClass
           other.capitalBudget == this.capitalBudget &&
           other.annualIncomeTarget == this.annualIncomeTarget &&
           other.maxPositionWeight == this.maxPositionWeight &&
-          other.notes == this.notes);
+          other.notes == this.notes &&
+          other.groupId == this.groupId &&
+          other.groupLabel == this.groupLabel);
 }
 
 class IncomeStrategyPlansCompanion
@@ -12484,6 +12566,8 @@ class IncomeStrategyPlansCompanion
   final Value<Decimal?> annualIncomeTarget;
   final Value<Decimal?> maxPositionWeight;
   final Value<String?> notes;
+  final Value<String?> groupId;
+  final Value<String?> groupLabel;
   final Value<int> rowid;
   const IncomeStrategyPlansCompanion({
     this.ownerUserId = const Value.absent(),
@@ -12501,6 +12585,8 @@ class IncomeStrategyPlansCompanion
     this.annualIncomeTarget = const Value.absent(),
     this.maxPositionWeight = const Value.absent(),
     this.notes = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.groupLabel = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   IncomeStrategyPlansCompanion.insert({
@@ -12519,6 +12605,8 @@ class IncomeStrategyPlansCompanion
     this.annualIncomeTarget = const Value.absent(),
     this.maxPositionWeight = const Value.absent(),
     this.notes = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.groupLabel = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -12545,6 +12633,8 @@ class IncomeStrategyPlansCompanion
     Expression<String>? annualIncomeTarget,
     Expression<String>? maxPositionWeight,
     Expression<String>? notes,
+    Expression<String>? groupId,
+    Expression<String>? groupLabel,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -12564,6 +12654,8 @@ class IncomeStrategyPlansCompanion
         'annual_income_target': annualIncomeTarget,
       if (maxPositionWeight != null) 'max_position_weight': maxPositionWeight,
       if (notes != null) 'notes': notes,
+      if (groupId != null) 'group_id': groupId,
+      if (groupLabel != null) 'group_label': groupLabel,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -12584,6 +12676,8 @@ class IncomeStrategyPlansCompanion
     Value<Decimal?>? annualIncomeTarget,
     Value<Decimal?>? maxPositionWeight,
     Value<String?>? notes,
+    Value<String?>? groupId,
+    Value<String?>? groupLabel,
     Value<int>? rowid,
   }) {
     return IncomeStrategyPlansCompanion(
@@ -12602,6 +12696,8 @@ class IncomeStrategyPlansCompanion
       annualIncomeTarget: annualIncomeTarget ?? this.annualIncomeTarget,
       maxPositionWeight: maxPositionWeight ?? this.maxPositionWeight,
       notes: notes ?? this.notes,
+      groupId: groupId ?? this.groupId,
+      groupLabel: groupLabel ?? this.groupLabel,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -12668,6 +12764,12 @@ class IncomeStrategyPlansCompanion
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (groupLabel.present) {
+      map['group_label'] = Variable<String>(groupLabel.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -12692,6 +12794,8 @@ class IncomeStrategyPlansCompanion
           ..write('annualIncomeTarget: $annualIncomeTarget, ')
           ..write('maxPositionWeight: $maxPositionWeight, ')
           ..write('notes: $notes, ')
+          ..write('groupId: $groupId, ')
+          ..write('groupLabel: $groupLabel, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -47278,6 +47382,8 @@ typedef $$IncomeStrategyPlansTableCreateCompanionBuilder =
       Value<Decimal?> annualIncomeTarget,
       Value<Decimal?> maxPositionWeight,
       Value<String?> notes,
+      Value<String?> groupId,
+      Value<String?> groupLabel,
       Value<int> rowid,
     });
 typedef $$IncomeStrategyPlansTableUpdateCompanionBuilder =
@@ -47297,6 +47403,8 @@ typedef $$IncomeStrategyPlansTableUpdateCompanionBuilder =
       Value<Decimal?> annualIncomeTarget,
       Value<Decimal?> maxPositionWeight,
       Value<String?> notes,
+      Value<String?> groupId,
+      Value<String?> groupLabel,
       Value<int> rowid,
     });
 
@@ -47387,6 +47495,16 @@ class $$IncomeStrategyPlansTableFilterComposer
     column: $table.notes,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupLabel => $composableBuilder(
+    column: $table.groupLabel,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$IncomeStrategyPlansTableOrderingComposer
@@ -47472,6 +47590,16 @@ class $$IncomeStrategyPlansTableOrderingComposer
     column: $table.notes,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupLabel => $composableBuilder(
+    column: $table.groupLabel,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$IncomeStrategyPlansTableAnnotationComposer
@@ -47542,6 +47670,14 @@ class $$IncomeStrategyPlansTableAnnotationComposer
 
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get groupLabel => $composableBuilder(
+    column: $table.groupLabel,
+    builder: (column) => column,
+  );
 }
 
 class $$IncomeStrategyPlansTableTableManager
@@ -47602,6 +47738,8 @@ class $$IncomeStrategyPlansTableTableManager
                 Value<Decimal?> annualIncomeTarget = const Value.absent(),
                 Value<Decimal?> maxPositionWeight = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
+                Value<String?> groupLabel = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => IncomeStrategyPlansCompanion(
                 ownerUserId: ownerUserId,
@@ -47619,6 +47757,8 @@ class $$IncomeStrategyPlansTableTableManager
                 annualIncomeTarget: annualIncomeTarget,
                 maxPositionWeight: maxPositionWeight,
                 notes: notes,
+                groupId: groupId,
+                groupLabel: groupLabel,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -47638,6 +47778,8 @@ class $$IncomeStrategyPlansTableTableManager
                 Value<Decimal?> annualIncomeTarget = const Value.absent(),
                 Value<Decimal?> maxPositionWeight = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
+                Value<String?> groupLabel = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => IncomeStrategyPlansCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -47655,6 +47797,8 @@ class $$IncomeStrategyPlansTableTableManager
                 annualIncomeTarget: annualIncomeTarget,
                 maxPositionWeight: maxPositionWeight,
                 notes: notes,
+                groupId: groupId,
+                groupLabel: groupLabel,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

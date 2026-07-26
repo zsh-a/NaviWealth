@@ -64,4 +64,51 @@ void main() {
       isNull,
     );
   });
+
+  test('round-trips strategy group membership', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final repo = IncomeStrategyPlanRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+      stamper: makeStubStamper(userId: 'user-1'),
+    );
+
+    await repo.upsert(
+      assetId: 'nasdaq:TQQQ',
+      symbol: 'TQQQ',
+      market: 'nasdaq',
+      currency: 'usd',
+      sleeveIntents: {
+        IncomeStrategySleeveKind.wheel: const IncomeStrategySleeveIntent(
+          kind: IncomeStrategySleeveKind.wheel,
+          enabled: true,
+        ),
+      },
+      groupId: 'g1',
+      groupLabel: 'QQQ enhanced',
+    );
+
+    final loaded = await repo.get(
+      ownerUserId: 'user-1',
+      assetId: 'nasdaq:TQQQ',
+    );
+    expect(loaded?.groupId, 'g1');
+    expect(loaded?.groupLabel, 'QQQ enhanced');
+
+    // Clearing the group persists null again.
+    await repo.upsert(
+      assetId: 'nasdaq:TQQQ',
+      symbol: 'TQQQ',
+      market: 'nasdaq',
+      currency: 'usd',
+      sleeveIntents: loaded!.sleeveIntents,
+    );
+    final cleared = await repo.get(
+      ownerUserId: 'user-1',
+      assetId: 'nasdaq:TQQQ',
+    );
+    expect(cleared?.groupId, isNull);
+    expect(cleared?.groupLabel, isNull);
+  });
 }

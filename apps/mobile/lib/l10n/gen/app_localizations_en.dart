@@ -15889,6 +15889,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incomeStrategyPlanSleeves => 'Enabled sleeves';
 
   @override
+  String get incomeStrategyPlanGroup => 'Strategy group';
+
+  @override
+  String get incomeStrategyPlanGroupHint =>
+      'Coordinate wheel and LEAPS legs across underlyings — e.g. a TQQQ wheel funding a QQQ LEAPS call.';
+
+  @override
+  String get incomeStrategyPlanGroupNone => 'None (standalone)';
+
+  @override
+  String get incomeStrategyPlanGroupNew => 'New group…';
+
+  @override
+  String get incomeStrategyPlanGroupNameLabel => 'Group name';
+
+  @override
+  String get incomeStrategyPlanGroupNameRequired =>
+      'Enter a name for the new group.';
+
+  @override
   String get incomeStrategyPlanPreserveDividend => 'Preserve dividend income';
 
   @override

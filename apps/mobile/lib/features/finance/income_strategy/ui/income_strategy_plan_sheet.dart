@@ -8,6 +8,7 @@ import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/symbol_field.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:uuid/uuid.dart';
 
 import '../composition/income_strategy_presentation.dart';
 import '../data/providers.dart';
@@ -56,13 +57,18 @@ class _IncomeStrategyPlanFormState
     Map<IncomeStrategySettingKey, TextEditingController>
   >
   _decimalSettings = {};
+  static const _kNoGroup = '';
+  static const _kNewGroup = '__new__';
+
   LocalSecurityChoice? _choice;
   bool _advanced = false;
   bool _busy = false;
+  String _groupSelection = _kNoGroup;
   late final TextEditingController _capitalBudget;
   late final TextEditingController _annualIncomeTarget;
   late final TextEditingController _maxPositionWeight;
   late final TextEditingController _notes;
+  late final TextEditingController _groupName;
 
   bool get _isEdit => widget.existing != null || widget.asset != null;
 
@@ -104,11 +110,14 @@ class _IncomeStrategyPlanFormState
           : existing!.maxPositionWeight! * Decimal.fromInt(100),
     );
     _notes = TextEditingController(text: existing?.notes ?? '');
+    _groupName = TextEditingController();
+    _groupSelection = existing?.groupId ?? _kNoGroup;
     widget.dirty.bindTextControllers([
       _capitalBudget,
       _annualIncomeTarget,
       _maxPositionWeight,
       _notes,
+      _groupName,
       for (final values in _decimalSettings.values) ...values.values,
     ]);
   }
@@ -123,11 +132,52 @@ class _IncomeStrategyPlanFormState
       _annualIncomeTarget,
       _maxPositionWeight,
       _notes,
+      _groupName,
       for (final values in _decimalSettings.values) ...values.values,
     ]) {
       controller.dispose();
     }
     super.dispose();
+  }
+
+  /// Existing explicit groups across all plans: id → display label.
+  Map<String, String> _existingGroups() {
+    final plans = ref.read(incomeStrategyPlansProvider).value ?? const [];
+    final groups = <String, String>{};
+    for (final plan in plans) {
+      final groupId = plan.groupId;
+      if (groupId == null || groupId.isEmpty) continue;
+      groups.putIfAbsent(
+        groupId,
+        () => plan.groupLabel?.trim().isNotEmpty == true
+            ? plan.groupLabel!.trim()
+            : plan.symbol,
+      );
+    }
+    return groups;
+  }
+
+  (String?, String?)? _resolveGroup(
+    AppLocalizations l10n,
+    Map<String, String> groups,
+  ) {
+    switch (_groupSelection) {
+      case _kNoGroup:
+        return (null, null);
+      case _kNewGroup:
+        final name = _groupName.text.trim();
+        if (name.isEmpty) {
+          AppMessenger.show(
+            context,
+            ToastKind.error,
+            l10n.incomeStrategyPlanGroupNameRequired,
+          );
+          return null;
+        }
+        return (const Uuid().v4(), name);
+      default:
+        return (_groupSelection, groups[_groupSelection]);
+    }
   }
 
   Decimal? _decimal(TextEditingController controller) {
@@ -168,6 +218,9 @@ class _IncomeStrategyPlanFormState
     final currency =
         existing?.currency ?? fallback?.currency ?? choice!.currency;
     final maxWeightPercent = _decimal(_maxPositionWeight);
+    final resolvedGroup = _resolveGroup(l10n, _existingGroups());
+    if (resolvedGroup == null) return;
+    final (groupId, groupLabel) = resolvedGroup;
     setState(() => _busy = true);
     widget.dirty.busy = true;
     try {
@@ -210,6 +263,8 @@ class _IncomeStrategyPlanFormState
                 scaleOnInfinitePrecision: 8,
               ),
         notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+        groupId: groupId,
+        groupLabel: groupLabel,
       );
       widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
@@ -357,6 +412,47 @@ class _IncomeStrategyPlanFormState
                     ),
                   ),
             ],
+            const SizedBox(height: AppSpacing.s16),
+            Builder(
+              builder: (context) {
+                final groups = _existingGroups();
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    FSelect<String>(
+                      items: {
+                        l10n.incomeStrategyPlanGroupNone: _kNoGroup,
+                        for (final entry in groups.entries)
+                          entry.value: entry.key,
+                        l10n.incomeStrategyPlanGroupNew: _kNewGroup,
+                      },
+                      control: FSelectControl<String>.managed(
+                        initial: _groupSelection,
+                        onChange: (value) {
+                          if (value == null) return;
+                          widget.dirty.markDirty();
+                          setState(() => _groupSelection = value);
+                        },
+                      ),
+                      label: Text(l10n.incomeStrategyPlanGroup),
+                      description: Text(l10n.incomeStrategyPlanGroupHint),
+                    ),
+                    AnimatedSizeFade(
+                      visible: _groupSelection == _kNewGroup,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.s12),
+                        child: FTextFormField(
+                          control: FTextFieldControl.managed(
+                            controller: _groupName,
+                          ),
+                          label: Text(l10n.incomeStrategyPlanGroupNameLabel),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
             const SizedBox(height: AppSpacing.s16),
             AppDisclosureHeader(
               title: l10n.incomeStrategyPlanLimits,

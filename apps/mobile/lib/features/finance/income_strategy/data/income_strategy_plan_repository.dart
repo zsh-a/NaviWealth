@@ -63,6 +63,8 @@ class IncomeStrategyPlanRepository {
     Decimal? annualIncomeTarget,
     Decimal? maxPositionWeight,
     String? notes,
+    String? groupId,
+    String? groupLabel,
   }) async {
     final stamp = await _stamper.stamp();
     final current =
@@ -82,6 +84,10 @@ class IncomeStrategyPlanRepository {
       annualIncomeTarget: annualIncomeTarget,
       maxPositionWeight: maxPositionWeight,
       notes: notes,
+      groupId: groupId?.trim().isEmpty == true ? null : groupId?.trim(),
+      groupLabel: groupLabel?.trim().isEmpty == true
+          ? null
+          : groupLabel?.trim(),
       sync: SyncMeta(
         ownerUserId: stamp.ownerUserId,
         updatedAt: stamp.now,
@@ -130,6 +136,8 @@ class IncomeStrategyPlanRepository {
         annualIncomeTarget: Value(plan.annualIncomeTarget),
         maxPositionWeight: Value(plan.maxPositionWeight),
         notes: Value(plan.notes),
+        groupId: Value(plan.groupId),
+        groupLabel: Value(plan.groupLabel),
         ownerUserId: plan.sync.ownerUserId,
         updatedAt: plan.sync.updatedAt,
         updatedByDevice: plan.sync.updatedByDevice,
@@ -193,6 +201,8 @@ IncomeStrategyPlan _rowToDomain(IncomeStrategyPlanRow row) {
     annualIncomeTarget: row.annualIncomeTarget,
     maxPositionWeight: row.maxPositionWeight,
     notes: row.notes,
+    groupId: row.groupId,
+    groupLabel: row.groupLabel,
     sync: SyncMeta(
       ownerUserId: row.ownerUserId,
       updatedAt: row.updatedAt,

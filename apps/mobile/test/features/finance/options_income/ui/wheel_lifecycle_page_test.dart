@@ -47,6 +47,7 @@ List<WheelStrategyView> _views(
       converter: converter,
       plans: const [],
       rules: kBuiltInIncomeStrategyCoordinationRules,
+      groupRules: kBuiltInIncomeStrategyGroupRules,
       contributions: [
         ...const WheelIncomeSleeveAdapter().buildFromEntries(
           entries: entries,
