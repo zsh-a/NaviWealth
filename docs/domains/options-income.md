@@ -526,15 +526,18 @@ LLM **不能**做的事（dispatcher 层不强制，但 system prompt 提示）�
 
 ### 9.1 入口
 
-主页面：`apps/mobile/lib/features/finance/options_income/ui/income_planner/income_planner_page.dart`，命名 **Income Planner / 期权现金流规划**。
+主页面：`apps/mobile/lib/features/finance/options_income/ui/income_planner/income_planner_page.dart`，命名 **Options workspace / 期权工作台**（`/plan/income/options`）。
 
-页内三个工作区：
+页内两个工作区 + 独立 Wheel 页面：
 
 ```text
 Opportunities   机会：Put / Call 筛选、适配度排序、扫描状态与拒绝原因
-Wheel           轮动：按标的聚合周期阶段、开放腿、LEAPS 上涨敞口与组合风险
 Journal         日志：开放/已结算筛选、数量、费用、到期日与净损益
 ```
+
+Wheel 生命周期只有一个表面：`wheel_lifecycle_page.dart`（`/plan/income/wheel`，
+按标的聚合周期阶段、开放腿、LEAPS 上涨敞口与组合风险）。工作台顶部卡片和
+收益策略页（`/plan/income`）都提供直达按钮；不再在工作台内嵌第二份 Wheel 列表。
 
 每张卡片：
 
@@ -557,21 +560,22 @@ LEAPS 使用独立表单和字段语义。表单对日期顺序、正数金额�
 
 ### 9.2 偏好设置
 
-`profile_settings_sheet.dart`（`showAppFormSheet`）：
+`strategy_profile_sheet.dart`（`showGuardedFormSheet`，带未保存拦截）：
 
 - StrategyMode 三选一（conservative / balanced / aggressive）—— 预填 delta / DTE / 收益阈值。
-- 标的和逐标的边界在统一 Income Strategy 计划表单的 Wheel 模块中编辑。
+- 标的和逐标的边界（Wheel 的 allowPut/allowCall、价格上下限）统一在
+  `income_strategy/ui/income_strategy_plan_sheet.dart` 中编辑——它是
+  Income Strategy 计划的唯一写入表面；旧的 approved-underlying 表单已删除。
 - 首次进入强制弹"期权风险披露"（基于 OCC ODD），用户确认后写入 `riskDisclosureAckAt`。
 
-**L10n**:所有 UI 字符串走 `lib/l10n/app_en.arb` + `app_zh.arb`,通过 `AppLocalizations.of(context).incomePlanner*` 访问。Domain 枚举(`TradeJournalStatus` / `OptionsStrategyKind` / `OptionsStrategyMode`)的展示标签集中在 `ui/income_planner_labels.dart` 的本地化辅助函数中,domain 层不依赖 `AppLocalizations`。
+**L10n**:所有 UI 字符串走 `lib/l10n/app_en.arb` + `app_zh.arb`,通过 `AppLocalizations.of(context).incomePlanner*` 访问。Domain 枚举(`TradeJournalStatus` / `OptionsStrategyKind` / `OptionsStrategyMode` / `WheelStage` / `WheelNextAction` / `LeapsCallStatus`)的展示标签集中在 `ui/income_planner_labels.dart` 的本地化辅助函数中，风险文案统一走 `income_strategy_presentation.dart` 的 `incomeStrategyRiskLabel`；domain 层不依赖 `AppLocalizations`。扫描解释文案（`OpportunityExplanation`）与账本镜像叙述在生成时按用户语言本地化：scorer 注入 `OpportunityExplanationTexts`、ledger 服务注入 `OptionsLedgerNarrations`（切换语言后重新扫描/写入才会更新既有缓存行）。
 
 ### 9.3 web 行为
 
-```dart
-if (kIsWeb) return const SizedBox.shrink();
-```
-
-入口在 web 构建中不显示。`web_smoke` 加一条反向断言："web build 不应出现 'Income Planner' 字样"。
+入口在 web 构建中不显示（Plan hub 的收入策略行带 `!kIsWeb` 守卫）。直接
+命中路由（如 AI 深链）时，`IncomePlannerPage` / `WheelLifecyclePage` /
+`OptionsTradeStatsPage` 渲染带脚手架的"web 不支持"占位页，而不是空白。
+`web_smoke` 加一条反向断言："web build 不应出现 'Options workspace' 字样"。
 
 ---
 
@@ -668,7 +672,11 @@ P0–P3 已落地（2026-05-21）：
 ```
 apps/mobile/lib/features/finance/options_income/
 ├── application/
-│   ├── scan_controller.dart            # P1 — StateNotifier driving refresh button
+│   ├── opportunity_explanation_l10n.dart  # locale-aware explanation texts
+│   ├── options_journal_ledger_service.dart
+│   ├── options_ledger_narrations.dart     # narration contract + EN default
+│   ├── options_ledger_narrations_l10n.dart
+│   ├── scan_controller.dart            # P1 — Notifier driving refresh button
 │   ├── scan_inputs_bridge.dart         # P1 — holdings/cash bridge from portfolio
 │   └── scan_orchestrator.dart          # P1 — universe → chain → scorer → cache
 ├── data/
@@ -678,25 +686,27 @@ apps/mobile/lib/features/finance/options_income/
 │   ├── providers.dart
 │   └── trade_journal_repository.dart   # P3 — synced journal CRUD
 ├── domain/
-│   ├── approved_underlying.dart
+│   ├── approved_underlying.dart        # derived view of Wheel-enabled plans
 │   ├── option_contract.dart            # P1
 │   ├── options_opportunity.dart        # P1 — Opportunity / Metrics / RiskLevel
 │   ├── options_strategy_profile.dart
 │   ├── leaps_call_position.dart         # independent long-call source row
 │   ├── opportunity_explanation.dart    # P1 — UI ⇄ AI shared explanation struct
 │   ├── services/opportunity_scorer.dart# P1/P2 — pure-Dart scorer
+│   ├── services/opportunity_explanation_texts.dart
 │   └── trade_journal_entry.dart        # P3
 └── ui/
-    ├── approved_underlying_form_sheet.dart
     ├── income_planner/
     │   ├── income_planner_page.dart
-    │   └── income_planner_page_*.dart
-    ├── income_planner_labels.dart
+    │   └── {approved,body,journal,opportunities,shared,states}.dart (parts)
+    ├── income_planner_labels.dart      # single source for enum labels
     ├── occ_disclosure_sheet.dart
     ├── leaps_call_position_sheet.dart
     ├── opportunity_detail_sheet.dart   # P1 — score breakdown, worst-case, log-trade CTA
+    ├── options_trade_stats_page.dart   # /plan/income/stats — Options review
     ├── strategy_profile_sheet.dart
-    └── trade_journal_sheet.dart        # P3
+    ├── trade_journal_sheet.dart        # P3
+    └── wheel_lifecycle_page.dart       # /plan/income/wheel — single Wheel surface
 
 apps/mobile/lib/data/market/providers/options/
 ├── options_chain_provider.dart         # P1 abstract chain provider

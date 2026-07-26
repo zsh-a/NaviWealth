@@ -227,7 +227,7 @@ void main() {
     expect(find.text('LEAPS upside overlay'), findsOneWidget);
     expect(find.text('Open premium at risk'), findsOneWidget);
     expect(
-      find.textContaining('does not hedge put assignment'),
+      find.textContaining('stack downside-sensitive capital'),
       findsOneWidget,
     );
     expect(find.text('TSM280121C00200000'), findsOneWidget);

@@ -52,17 +52,20 @@ class _TradeJournalSectionState extends ConsumerState<_TradeJournalSection> {
         const SizedBox(height: AppSpacing.s12),
         entriesAsync.when(
           loading: () => const _LoadingTile(),
-          error: (error, _) => _ErrorCard(
+          error: (error, _) => AppEmptyState.error(
             title: l10n.incomePlannerRefreshFailedTitle,
             message: userSafeErrorMessage(context, error),
+            compact: true,
           ),
           data: (entries) {
             final visible = entries.where(_matchesFilter).toList();
             if (visible.isEmpty) {
-              return _EmptyCard(
-                body: entries.isEmpty
+              return AppEmptyState(
+                icon: FLucideIcons.notebookPen,
+                title: entries.isEmpty
                     ? l10n.incomePlannerJournalEmpty
                     : l10n.incomePlannerJournalFilterEmpty,
+                compact: true,
               );
             }
             return Column(

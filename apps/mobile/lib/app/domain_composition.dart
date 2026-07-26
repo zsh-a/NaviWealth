@@ -224,7 +224,9 @@ String? appEntityRouteResolver(EntityRouteRef ref) {
     EntityRouteTables.journalEntries => FinanceRoutes.activityEntry(
       ref.entityId,
     ),
-    EntityRouteTables.optionsTradeJournal => FinanceRoutes.planIncome,
+    // Journal entities live in the Options workspace's Journal tab; LEAPS
+    // positions surface inside the Wheel lifecycle drill-down.
+    EntityRouteTables.optionsTradeJournal => FinanceRoutes.planIncomeOptions,
     EntityRouteTables.optionsLeapsCallPositions => FinanceRoutes.planWheel,
     EntityRouteTables.incomeStrategyPlans => FinanceRoutes.planIncome,
     'budgets' => FinanceRoutes.planBudget,

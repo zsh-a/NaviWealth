@@ -134,6 +134,6 @@ void main() {
     await _pump(tester);
 
     expect(find.text('Total premium'), findsOneWidget);
-    expect(find.text('USD 255'), findsOneWidget);
+    expect(find.text(r'$255.00'), findsOneWidget);
   });
 }

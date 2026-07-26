@@ -3,32 +3,41 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/income_strategy/application/wheel_strategy_view.dart';
+import 'package:naviwealth/features/finance/income_strategy/composition/income_strategy_presentation.dart';
 import 'package:naviwealth/features/finance/income_strategy/data/providers.dart';
 import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../domain/leaps_call_position.dart';
 import '../domain/trade_journal_entry.dart';
-import '../domain/wheel_lifecycle.dart';
 import 'income_planner_labels.dart';
 import 'leaps_call_position_sheet.dart';
 import 'trade_journal_sheet.dart';
 
-/// `/plan/income/wheel` — per-underlying Wheel cycle review
+/// `/plan/income/wheel` — the single Wheel lifecycle surface
 /// (`docs/domains/options-income.md` §12 P4).
 ///
 /// Reads the generic FinanceOS income strategy composition and projects its
-/// Wheel/LEAPS sleeves into a dedicated lifecycle drill-down.
-/// Each underlying renders as one tile showing the current stage,
-/// cumulative income, and whether a position is open.
+/// Wheel/LEAPS sleeves into a per-underlying drill-down. Each underlying
+/// renders as one tile showing the current stage, cumulative income, and
+/// whether a position is open.
 class WheelLifecyclePage extends ConsumerWidget {
   const WheelLifecyclePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (kIsWeb) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
+    if (kIsWeb) {
+      return AppPageScaffold(
+        title: l10n.planWheelTitle,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s24),
+          child: Text(l10n.incomePlannerUnsupportedOnWeb),
+        ),
+      );
+    }
     final overlaysAsync = ref.watch(wheelStrategyViewsProvider);
 
     return AppPageScaffold(
@@ -36,33 +45,31 @@ class WheelLifecyclePage extends ConsumerWidget {
       childPad: false,
       child: overlaysAsync.whenOrLoading(
         context: context,
-        error: (_, _) => Center(
-          child: AppEmptyState(
-            icon: FLucideIcons.refreshCw,
-            title: l10n.planWheelEmptyTitle,
-          ),
+        error: (error, _) => AppEmptyState.error(
+          title: l10n.commonLoadFailed,
+          message: userSafeErrorMessage(context, error),
+          retryLabel: l10n.commonRetry,
+          onRetry: () => ref.invalidate(wheelStrategyViewsProvider),
         ),
         data: (overlays) {
           if (overlays.isEmpty) {
-            return Center(
-              child: AppEmptyState(
-                icon: FLucideIcons.refreshCw,
-                title: l10n.planWheelEmptyTitle,
-                message: l10n.planWheelEmptyBody,
-                action: Column(
-                  children: [
-                    FButton(
-                      onPress: () => showTradeJournalSheet(context),
-                      child: Text(l10n.incomePlannerJournalAddCta),
-                    ),
-                    const SizedBox(height: AppSpacing.s8),
-                    FButton(
-                      variant: FButtonVariant.outline,
-                      onPress: () => showLeapsCallPositionSheet(context),
-                      child: Text(l10n.leapsOverlayAdd),
-                    ),
-                  ],
-                ),
+            return AppEmptyState(
+              icon: FLucideIcons.refreshCw,
+              title: l10n.planWheelEmptyTitle,
+              message: l10n.planWheelEmptyBody,
+              action: Column(
+                children: [
+                  FButton(
+                    onPress: () => showTradeJournalSheet(context),
+                    child: Text(l10n.incomePlannerJournalAddCta),
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
+                  FButton(
+                    variant: FButtonVariant.outline,
+                    onPress: () => showLeapsCallPositionSheet(context),
+                    child: Text(l10n.leapsOverlayAdd),
+                  ),
+                ],
               ),
             );
           }
@@ -97,55 +104,67 @@ class _WheelTile extends StatelessWidget {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     final cycle = overlay.wheel;
-    final stageLabel = _stageLabel(l10n, cycle.stage);
     return SoftCard.raised(
       onPress: onPress,
-      child: FTile(
-        prefix: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: colors.foreground.withValues(alpha: AppOpacity.whisper),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppIconTile(
+            icon: wheelStageIcon(cycle.stage),
+            color: cycle.hasOpenPosition
+                ? colors.primary
+                : colors.mutedForeground,
+            size: 36,
           ),
-          alignment: Alignment.center,
-          child: Icon(
-            _stageIcon(cycle.stage),
-            size: AppIconSizes.h18,
-            color: colors.mutedForeground,
+          const SizedBox(width: AppSpacing.s10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(cycle.symbol, style: context.rowTitleStyle),
+                    ),
+                    AppBadge(
+                      label: wheelStageLabel(l10n, cycle.stage),
+                      tone: cycle.hasOpenPosition
+                          ? AppBadgeTone.accent
+                          : AppBadgeTone.neutral,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.s4),
+                Text(
+                  '${wheelNextActionLabel(l10n, cycle.nextAction)} · '
+                  '${l10n.incomePlannerWheelOpenCount(cycle.openPositions.length)} · '
+                  '${l10n.leapsOverlayOpenCount(overlay.openPositions.length)}',
+                  style: context.captionStyle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.s6),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.leapsOverlayCombinedRealized,
+                        style: context.captionStyle,
+                      ),
+                    ),
+                    MoneyText(
+                      amount: overlay.underlyingRealizedResult.toDouble(),
+                      currencyCode: cycle.currency,
+                      showSign: true,
+                      style: context.labelStyle,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-        title: Row(
-          children: [
-            Expanded(child: Text(cycle.symbol)),
-            AppBadge(
-              label: stageLabel,
-              tone: cycle.hasOpenPosition
-                  ? AppBadgeTone.accent
-                  : AppBadgeTone.neutral,
-            ),
-          ],
-        ),
-        subtitle: Text(
-          '${_nextActionLabel(l10n, cycle.nextAction)} · '
-          '${l10n.incomePlannerWheelOpenCount(cycle.openPositions.length)} · '
-          '${l10n.leapsOverlayOpenCount(overlay.openPositions.length)}',
-          maxLines: 2,
-        ),
-        suffix: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              l10n.leapsOverlayCombinedRealized,
-              style: context.captionStyle,
-            ),
-            MoneyText(
-              amount: overlay.underlyingRealizedResult.toDouble(),
-              currencyCode: cycle.currency,
-              showSign: true,
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -155,229 +174,187 @@ Future<void> _showWheelCycleSheet(
   BuildContext pageContext,
   WheelStrategyView overlay,
 ) {
-  return showAppFormSheet<void>(
+  final l10n = AppLocalizations.of(pageContext);
+  return showAppSheet<void>(
     context: pageContext,
-    builder: (sheetContext) => _WheelCycleSheet(
-      pageContext: pageContext,
-      sheetContext: sheetContext,
-      overlay: overlay,
-    ),
+    title: overlay.wheel.symbol,
+    subtitle: wheelStageLabel(l10n, overlay.wheel.stage),
+    builder: (_) =>
+        _WheelCycleSheet(pageContext: pageContext, overlay: overlay),
   );
 }
 
-class _WheelCycleSheet extends StatelessWidget {
-  const _WheelCycleSheet({
-    required this.pageContext,
-    required this.sheetContext,
-    required this.overlay,
-  });
+class _WheelCycleSheet extends ConsumerWidget {
+  const _WheelCycleSheet({required this.pageContext, required this.overlay});
 
   final BuildContext pageContext;
-  final BuildContext sheetContext;
   final WheelStrategyView overlay;
 
-  WheelLifecycle get cycle => overlay.wheel;
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return AppSheet(
-      title: cycle.symbol,
-      subtitle: _stageLabel(l10n, cycle.stage),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SoftCard.flat(
-            padding: const EdgeInsets.all(AppSpacing.s12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.incomePlannerWheelNextActionTitle,
-                  style: context.captionLabelStyle,
-                ),
-                const SizedBox(height: AppSpacing.s4),
-                Text(
-                  _nextActionLabel(l10n, cycle.nextAction),
-                  style: context.bodyCaptionStyle,
-                ),
-              ],
-            ),
-          ),
-          if (cycle.openPositions.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.s16),
-            Text(
-              l10n.incomePlannerWheelOpenPositionsTitle,
-              style: context.mutedLabelStyle,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            for (final entry in cycle.openPositions)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-                child: _OpenPositionTile(
-                  entry: entry,
-                  onPress: () => _openJournal(entry.id),
-                ),
+    final cycle = overlay.wheel;
+    final formatters = context.formatters(ref);
+    final presentations = [
+      for (final module in ref.watch(incomeStrategyModulesProvider))
+        module.presentation,
+    ];
+    final coverage = overlay.wheelIncomeCoverageRatio;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                wheelNextActionLabel(l10n, cycle.nextAction),
+                style: context.bodyCaptionStyle,
               ),
+            ),
           ],
+        ),
+        if (cycle.openPositions.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s16),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.leapsOverlayTitle,
-                      style: context.mutedLabelStyle,
-                    ),
-                    Text(
-                      l10n.leapsOverlaySubtitle,
-                      style: context.captionStyle,
-                    ),
-                  ],
-                ),
-              ),
-              FButton(
-                onPress: _openNewLeaps,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
-                    const SizedBox(width: AppSpacing.s4),
-                    Text(l10n.leapsOverlayAdd),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          _OverlayMetrics(overlay: overlay),
-          if (overlay.positions.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.s8),
-            for (final position in overlay.positions.reversed)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-                child: _LeapsPositionTile(
-                  position: position,
-                  onPress: () => _openLeaps(position.id),
-                ),
-              ),
-          ] else
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
-              child: Text(l10n.leapsOverlayEmpty, style: context.captionStyle),
+          AppSheetSectionLabel(l10n.incomePlannerWheelOpenPositionsTitle),
+          for (final entry in cycle.openPositions)
+            _OpenPositionTile(
+              entry: entry,
+              onPress: () => _openJournal(context, entry.id),
             ),
-          if (overlay.risks.isNotEmpty || overlay.openPositions.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.s8),
-            _OverlayWarnings(risks: overlay.risks),
+        ],
+        const SizedBox(height: AppSpacing.s16),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.leapsOverlayTitle, style: context.mutedLabelStyle),
+                  Text(l10n.leapsOverlaySubtitle, style: context.captionStyle),
+                ],
+              ),
+            ),
+            FButton(
+              onPress: () => _openLeaps(context, null),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+                  const SizedBox(width: AppSpacing.s4),
+                  Text(l10n.leapsOverlayAdd),
+                ],
+              ),
+            ),
           ],
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        AppMetricCluster(
+          dense: true,
+          items: [
+            AppMetricItem(
+              label: l10n.leapsOverlayCost,
+              value: formatters.currency(
+                overlay.openLeapsCost,
+                code: cycle.currency,
+              ),
+            ),
+            AppMetricItem(
+              label: l10n.leapsOverlayCoverage,
+              value: coverage == null
+                  ? l10n.leapsOverlayUnknown
+                  : formatters.percent(coverage.toDouble(), decimalDigits: 0),
+            ),
+            AppMetricItem(
+              label: l10n.leapsOverlayDeltaShares,
+              value:
+                  overlay.deltaEquivalentShares?.toString() ??
+                  l10n.leapsOverlayUnknown,
+            ),
+          ],
+        ),
+        if (overlay.positions.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s12),
+          for (final position in overlay.positions.reversed)
+            _LeapsPositionTile(
+              position: position,
+              onPress: () => _openLeaps(context, position.id),
+            ),
+        ] else
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
+            child: Text(l10n.leapsOverlayEmpty, style: context.captionStyle),
+          ),
+        if (overlay.risks.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s16),
-          Text(l10n.planWheelHistoryTitle, style: context.mutedLabelStyle),
-          const SizedBox(height: AppSpacing.s8),
-          for (final entry in cycle.entries.reversed)
+          AppSheetSectionLabel(l10n.incomeStrategyRisksTitle),
+          for (final risk in overlay.risks)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-              child: _WheelHistoryTile(
-                entry: entry,
-                onPress: () => _openJournal(entry.id),
+              child: _RiskRow(
+                label: incomeStrategyRiskLabel(l10n, presentations, risk.code),
+                severity: risk.severity,
               ),
             ),
-          const SizedBox(height: AppSpacing.s8),
-          FButton(
-            onPress: () => _openJournal(null),
-            child: Text(l10n.incomePlannerJournalAddCta),
-          ),
         ],
-      ),
+        const SizedBox(height: AppSpacing.s16),
+        AppSheetSectionLabel(l10n.planWheelHistoryTitle),
+        for (final entry in cycle.entries.reversed)
+          _WheelHistoryTile(
+            entry: entry,
+            onPress: () => _openJournal(context, entry.id),
+          ),
+        const SizedBox(height: AppSpacing.s8),
+        FButton(
+          onPress: () => _openJournal(context, null),
+          child: Text(l10n.incomePlannerJournalAddCta),
+        ),
+      ],
     );
   }
 
-  void _openJournal(String? existingId) {
-    Navigator.of(sheetContext).pop();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+  void _openJournal(BuildContext sheetContext, String? existingId) {
+    closeSheetThen(sheetContext, () {
       if (!pageContext.mounted) return;
       showTradeJournalSheet(pageContext, existingId: existingId);
     });
   }
 
-  void _openNewLeaps() => _openLeaps(null);
-
-  void _openLeaps(String? existingId) {
-    Navigator.of(sheetContext).pop();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+  void _openLeaps(BuildContext sheetContext, String? existingId) {
+    closeSheetThen(sheetContext, () {
       if (!pageContext.mounted) return;
       showLeapsCallPositionSheet(
         pageContext,
         existingId: existingId,
-        symbol: cycle.symbol,
+        symbol: overlay.wheel.symbol,
       );
     });
   }
 }
 
-class _OverlayMetrics extends StatelessWidget {
-  const _OverlayMetrics({required this.overlay});
+class _RiskRow extends StatelessWidget {
+  const _RiskRow({required this.label, required this.severity});
 
-  final WheelStrategyView overlay;
+  final String label;
+  final IncomeStrategyRiskSeverity severity;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final coverage = overlay.wheelIncomeCoverageRatio;
-    return SoftCard.flat(
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      child: Wrap(
-        spacing: AppSpacing.s16,
-        runSpacing: AppSpacing.s12,
-        children: [
-          _Metric(
-            label: l10n.leapsOverlayCost,
-            value: '${overlay.wheel.currency} ${overlay.openLeapsCost}',
-          ),
-          _Metric(
-            label: l10n.leapsOverlayCoverage,
-            value: coverage == null
-                ? l10n.leapsOverlayUnknown
-                : l10n.leapsOverlayCoverageValue(
-                    (coverage.toDouble() * 100).toStringAsFixed(0),
-                  ),
-          ),
-          _Metric(
-            label: l10n.leapsOverlayDeltaShares,
-            value:
-                overlay.deltaEquivalentShares?.toString() ??
-                l10n.leapsOverlayUnknown,
-          ),
-          _Metric(
-            label: l10n.leapsOverlayCombinedRealized,
-            value:
-                '${overlay.wheel.currency} ${overlay.underlyingRealizedResult}',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Metric extends StatelessWidget {
-  const _Metric({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) => ConstrainedBox(
-    constraints: const BoxConstraints(minWidth: 128),
-    child: Column(
+    final semantic = SemanticColors.of(context);
+    final color = switch (severity) {
+      IncomeStrategyRiskSeverity.info => context.theme.colors.mutedForeground,
+      IncomeStrategyRiskSeverity.warning => semantic.warning,
+      IncomeStrategyRiskSeverity.critical => semantic.danger,
+    };
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: context.captionStyle),
-        const SizedBox(height: AppSpacing.s2),
-        Text(value, style: context.labelStyle),
+        Icon(FLucideIcons.triangleAlert, size: AppIconSizes.sm, color: color),
+        const SizedBox(width: AppSpacing.s8),
+        Expanded(child: Text(label, style: context.bodyCaptionStyle)),
       ],
-    ),
-  );
+    );
+  }
 }
 
 class _LeapsPositionTile extends StatelessWidget {
@@ -389,13 +366,14 @@ class _LeapsPositionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final days = position.expirationAt
-        .toUtc()
-        .difference(DateTime.now().toUtc())
-        .inDays;
+    final expiration = MaterialLocalizations.of(
+      context,
+    ).formatShortDate(position.expirationAt.toLocal());
     return SoftCard.flat(
+      borderless: true,
+      tinted: false,
       onPress: onPress,
-      padding: const EdgeInsets.all(AppSpacing.s12),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
       child: Row(
         children: [
           Expanded(
@@ -406,21 +384,15 @@ class _LeapsPositionTile extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   position.isOpen
-                      ? l10n.incomePlannerWheelDueSummary(
-                          MaterialLocalizations.of(
-                            context,
-                          ).formatShortDate(position.expirationAt.toLocal()),
-                          days,
-                        )
-                      : '${l10n.leapsOverlayExpiration}: '
-                            '${MaterialLocalizations.of(context).formatShortDate(position.expirationAt.toLocal())}',
+                      ? _dueOrExpired(l10n, expiration, position.expirationAt)
+                      : '${l10n.leapsOverlayExpiration}: $expiration',
                   style: context.captionStyle,
                 ),
               ],
             ),
           ),
           AppBadge(
-            label: _leapsStatusLabel(l10n, position.status),
+            label: leapsCallStatusLabel(l10n, position.status),
             tone: position.isOpen ? AppBadgeTone.accent : AppBadgeTone.neutral,
           ),
           const SizedBox(width: AppSpacing.s8),
@@ -436,70 +408,6 @@ class _LeapsPositionTile extends StatelessWidget {
   }
 }
 
-String _leapsStatusLabel(AppLocalizations l10n, LeapsCallStatus status) =>
-    switch (status) {
-      LeapsCallStatus.open => l10n.leapsOverlayStatusOpen,
-      LeapsCallStatus.closed => l10n.leapsOverlayStatusClosed,
-      LeapsCallStatus.exercised => l10n.leapsOverlayStatusExercised,
-      LeapsCallStatus.expired => l10n.leapsOverlayStatusExpired,
-    };
-
-class _OverlayWarnings extends StatelessWidget {
-  const _OverlayWarnings({required this.risks});
-
-  final List<IncomeStrategyRisk> risks;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return SoftCard.flat(
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final risk in risks)
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(FLucideIcons.triangleAlert, size: AppIconSizes.sm),
-                  const SizedBox(width: AppSpacing.s8),
-                  Expanded(
-                    child: Text(
-                      _warningLabel(l10n, risk.code),
-                      style: context.bodyCaptionStyle,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          Text(l10n.leapsOverlayRiskDividend, style: context.bodyCaptionStyle),
-        ],
-      ),
-    );
-  }
-}
-
-String _warningLabel(AppLocalizations l10n, IncomeStrategyRiskCode warning) =>
-    switch (warning.wire) {
-      'stacked_downside' => l10n.leapsOverlayRiskStacked,
-      'leaps_cost_not_covered' => l10n.leapsOverlayRiskCost,
-      'missing_delta' => l10n.leapsOverlayRiskDelta,
-      'missing_market_value' => l10n.leapsOverlayRiskMark,
-      'expiration_near' => l10n.leapsOverlayRiskExpiry,
-      'unplanned_sleeve' => l10n.incomeStrategyRiskUnplanned,
-      'capital_budget_exceeded' => l10n.incomeStrategyRiskCapitalBudget,
-      'assignment_budget_exceeded' => l10n.incomeStrategyRiskAssignment,
-      'concentration_exceeded' => l10n.incomeStrategyRiskConcentration,
-      'dividend_interruption' => l10n.incomeStrategyRiskDividend,
-      'leaps_budget_exceeded' => l10n.incomeStrategyRiskLeapsBudget,
-      'missing_fx_rate' => l10n.incomeStrategyRiskMissingFx,
-      'stale_valuation' => l10n.incomeStrategyRiskStaleValuation,
-      'income_target_at_risk' => l10n.incomeStrategyRiskIncomeTarget,
-      _ => warning.wire,
-    };
-
 class _OpenPositionTile extends StatelessWidget {
   const _OpenPositionTile({required this.entry, required this.onPress});
 
@@ -512,39 +420,44 @@ class _OpenPositionTile extends StatelessWidget {
     final expiration = entry.expirationAt;
     final due = expiration == null
         ? l10n.incomePlannerWheelExpirationMissing
-        : l10n.incomePlannerWheelDueSummary(
+        : _dueOrExpired(
+            l10n,
             MaterialLocalizations.of(
               context,
             ).formatShortDate(expiration.toLocal()),
-            expiration.toUtc().difference(DateTime.now().toUtc()).inDays,
+            expiration,
           );
     return SoftCard.flat(
+      borderless: true,
+      tinted: false,
       onPress: onPress,
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(entry.optionSymbol, style: context.labelStyle),
-              ),
-              AppBadge(
-                label: optionsStrategyKindShortLabel(l10n, entry.strategy),
-                tone: AppBadgeTone.accent,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          Text(due, style: context.captionStyle),
-          const SizedBox(height: AppSpacing.s4),
-          Text(
-            l10n.incomePlannerJournalQuantitySummary(
-              entry.contractQuantity,
-              entry.effectiveContractSize,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(entry.optionSymbol, style: context.labelStyle),
+                const SizedBox(height: AppSpacing.s2),
+                Text(due, style: context.captionStyle),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  l10n.incomePlannerJournalQuantitySummary(
+                    entry.contractQuantity,
+                    entry.effectiveContractSize,
+                  ),
+                  style: context.captionStyle,
+                ),
+              ],
             ),
-            style: context.captionStyle,
           ),
+          AppBadge(
+            label: optionsStrategyKindShortLabel(l10n, entry.strategy),
+            tone: AppBadgeTone.accent,
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          const Icon(FLucideIcons.chevronRight, size: AppIconSizes.sm),
         ],
       ),
     );
@@ -561,8 +474,10 @@ class _WheelHistoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return SoftCard.flat(
+      borderless: true,
+      tinted: false,
       onPress: onPress,
-      padding: const EdgeInsets.all(AppSpacing.s12),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
       child: Row(
         children: [
           Expanded(
@@ -585,44 +500,13 @@ class _WheelHistoryTile extends StatelessWidget {
   }
 }
 
-IconData _stageIcon(WheelStage stage) => switch (stage) {
-  WheelStage.between => FLucideIcons.circle,
-  WheelStage.cashWaiting => FLucideIcons.wallet,
-  WheelStage.shortPut => FLucideIcons.arrowDownLeft,
-  WheelStage.putExpired => FLucideIcons.circleCheck,
-  WheelStage.putAssigned => FLucideIcons.logIn,
-  WheelStage.sharesHeld => FLucideIcons.package,
-  WheelStage.shortCall => FLucideIcons.arrowUpRight,
-  WheelStage.mixedOpen => FLucideIcons.layers3,
-  WheelStage.callExpired => FLucideIcons.circleCheck,
-  WheelStage.callCalled => FLucideIcons.logOut,
-};
-
-/// Labels are pinned in code (not l10n) because the Wheel stages are a
-/// canonical strategy taxonomy — translating "short put" into a free
-/// rendering for each locale would lose the strategy semantics.
-String _stageLabel(AppLocalizations l10n, WheelStage stage) => switch (stage) {
-  WheelStage.between => l10n.planWheelStageBetween,
-  WheelStage.cashWaiting => l10n.planWheelStageCashWaiting,
-  WheelStage.shortPut => l10n.planWheelStageShortPut,
-  WheelStage.putExpired => l10n.planWheelStagePutExpired,
-  WheelStage.putAssigned => l10n.planWheelStagePutAssigned,
-  WheelStage.sharesHeld => l10n.planWheelStageSharesHeld,
-  WheelStage.shortCall => l10n.planWheelStageShortCall,
-  WheelStage.mixedOpen => l10n.planWheelStageMixedOpen,
-  WheelStage.callExpired => l10n.planWheelStageCallExpired,
-  WheelStage.callCalled => l10n.planWheelStageCallCalled,
-};
-
-String _nextActionLabel(
+String _dueOrExpired(
   AppLocalizations l10n,
-  WheelNextAction action,
-) => switch (action) {
-  WheelNextAction.reviewOpenPositions => l10n.incomePlannerWheelNextReviewOpen,
-  WheelNextAction.waitForPut => l10n.incomePlannerWheelNextWaitPut,
-  WheelNextAction.recordPutOutcome => l10n.incomePlannerWheelNextRecordPut,
-  WheelNextAction.scanCoveredCall => l10n.incomePlannerWheelNextScanCall,
-  WheelNextAction.waitForCall => l10n.incomePlannerWheelNextWaitCall,
-  WheelNextAction.recordCallOutcome => l10n.incomePlannerWheelNextRecordCall,
-  WheelNextAction.startNewPut => l10n.incomePlannerWheelNextStartPut,
-};
+  String position,
+  DateTime expiration,
+) {
+  final days = expiration.toUtc().difference(DateTime.now().toUtc()).inDays;
+  return days < 0
+      ? l10n.incomePlannerWheelExpiredSummary(position, -days)
+      : l10n.incomePlannerWheelDueSummary(position, days);
+}

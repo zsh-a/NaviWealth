@@ -98,10 +98,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: AppCollapsedSummaryBar(
-            visible: false,
-            child: Text('summary'),
-          ),
+          body: AppCollapsedSummaryBar(visible: false, child: Text('summary')),
         ),
       ),
     );

@@ -73,6 +73,6 @@ class _StartState extends ConsumerWidget {
     if (!accepted || !context.mounted) return;
     await showStrategyProfileSheet(context);
     if (!context.mounted) return;
-    await showApprovedUnderlyingSheet(context);
+    await showIncomeStrategyPlanSheet(context);
   }
 }

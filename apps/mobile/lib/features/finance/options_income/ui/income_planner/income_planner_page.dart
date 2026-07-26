@@ -1,14 +1,14 @@
-import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/core/format/formatters.dart';
+import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
-import 'package:naviwealth/features/finance/domain/fx/money.dart';
-import 'package:naviwealth/features/finance/income_strategy/application/wheel_strategy_view.dart';
-import 'package:naviwealth/features/finance/income_strategy/data/providers.dart';
+import 'package:naviwealth/features/finance/income_strategy/data/income_strategy_plan_providers.dart';
+import 'package:naviwealth/features/finance/income_strategy/ui/income_strategy_plan_sheet.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../application/scan_controller.dart';
@@ -19,10 +19,7 @@ import '../../domain/approved_underlying.dart';
 import '../../domain/options_opportunity.dart';
 import '../../domain/options_strategy_profile.dart';
 import '../../domain/trade_journal_entry.dart';
-import '../../domain/wheel_lifecycle.dart';
-import '../approved_underlying_form_sheet.dart';
 import '../income_planner_labels.dart';
-import '../leaps_call_position_sheet.dart';
 import '../occ_disclosure_sheet.dart';
 import '../opportunity_detail_sheet.dart';
 import '../strategy_profile_sheet.dart';
@@ -60,9 +57,9 @@ class IncomePlannerPage extends ConsumerWidget {
       childPad: false,
       child: profileAsync.when(
         loading: () => const _LoadingState(),
-        error: (e, _) => AppEmptyState.error(
+        error: (error, _) => AppEmptyState.error(
           title: l10n.commonLoadFailed,
-          message: '$e',
+          message: userSafeErrorMessage(context, error),
           retryLabel: l10n.commonRetry,
           onRetry: () => ref.invalidate(optionsStrategyProfileProvider),
         ),

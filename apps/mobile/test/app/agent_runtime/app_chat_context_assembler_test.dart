@@ -107,9 +107,9 @@ void main() {
         blocks.map((block) => block.id),
         containsAll(<String>['memory:finance-memory', 'event:finance-event']),
       );
-    final blockIds = blocks.map((block) => block.id);
-    expect(blockIds, isNot(contains('memory:health-memory')));
-    expect(blockIds, isNot(contains('event:health-event')));
+      final blockIds = blocks.map((block) => block.id);
+      expect(blockIds, isNot(contains('memory:health-memory')));
+      expect(blockIds, isNot(contains('event:health-event')));
       expect(
         blocks,
         everyElement(

@@ -21,10 +21,7 @@ void main() {
 
     test('exposes Today / Trends tabs in IA order', () {
       final spec = healthDomainShell(l10n);
-      expect(spec.tabs.map((t) => t.label).toList(), [
-        'Today',
-        'Trends',
-      ]);
+      expect(spec.tabs.map((t) => t.label).toList(), ['Today', 'Trends']);
       expect(spec.tabs.map((t) => t.routePath).toList(), [
         AppRoutes.healthToday,
         AppRoutes.healthTrend,

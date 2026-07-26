@@ -5,6 +5,7 @@ Future<void> _upsertOptionsPremium({
   required Future<String> Function() currentUserId,
   required TradeJournalEntry entry,
   required String cashAccountId,
+  required OptionsLedgerNarrations narrations,
 }) async {
   final amount = entry.grossEntryCredit - entry.effectiveFees;
   final id = _optionsLedgerEntryId(entry.id, _OptionsLedgerLeg.premium);
@@ -26,7 +27,7 @@ Future<void> _upsertOptionsPremium({
     ),
     amount: amount,
     currency: entry.currency,
-    narration: 'Options premium ${entry.optionSymbol}',
+    narration: narrations.premium(entry.optionSymbol),
     tagIds: _optionsLedgerTags(entry),
   );
   await _upsertOptionsLedgerBuild(
@@ -40,6 +41,7 @@ Future<void> _upsertOptionsCloseDebit({
   required Future<String> Function() currentUserId,
   required TradeJournalEntry entry,
   required String cashAccountId,
+  required OptionsLedgerNarrations narrations,
 }) async {
   final id = _optionsLedgerEntryId(entry.id, _OptionsLedgerLeg.closeDebit);
   final debit = entry.grossExitDebit;
@@ -57,7 +59,7 @@ Future<void> _upsertOptionsCloseDebit({
     entry: JournalEntryDraft(
       id: id,
       date: entry.closedAt ?? DateTime.now().toUtc(),
-      narration: 'Options close debit ${entry.optionSymbol}',
+      narration: narrations.closeDebit(entry.optionSymbol),
       tagIds: _optionsLedgerTags(entry),
     ),
     postings: <PostingDraft>[
@@ -93,6 +95,7 @@ Future<void> _upsertOptionsAssignment({
   required TradeJournalEntry entry,
   required String cashAccountId,
   required int defaultContractSize,
+  required OptionsLedgerNarrations narrations,
 }) async {
   final id = _optionsLedgerEntryId(entry.id, _OptionsLedgerLeg.assignment);
   if (entry.status != TradeJournalStatus.assigned) {
@@ -136,7 +139,7 @@ Future<void> _upsertOptionsAssignment({
         quoteCurrency: entry.currency,
         lotId: 'options:${entry.id}:assignment',
         acquiredOn: date,
-        narration: 'Put assigned ${entry.symbol}',
+        narration: narrations.putAssigned(entry.symbol),
         tagIds: _optionsLedgerTags(entry),
       );
     case OptionsStrategyKind.coveredCall:
@@ -165,7 +168,7 @@ Future<void> _upsertOptionsAssignment({
         costCurrency: basis.currency,
         lotId: basis.lotId,
         acquiredOn: basis.acquiredOn,
-        narration: 'Covered call assigned ${entry.symbol}',
+        narration: narrations.callAssigned(entry.symbol),
         tagIds: _optionsLedgerTags(entry),
       );
   }
@@ -200,6 +203,7 @@ Future<void> _upsertLeapsOpen({
   required LeapsCallPosition position,
   required String brokerageAccountId,
   required String cashAccountId,
+  required OptionsLedgerNarrations narrations,
 }) async {
   final quantity = Decimal.fromInt(position.contractQuantity);
   final build = JournalEntryBuilders.buy(
@@ -214,7 +218,7 @@ Future<void> _upsertLeapsOpen({
     acquiredOn: position.openedAt,
     capitalizeFeeIntoLot: true,
     feeAmount: position.fees,
-    narration: 'LEAPS open ${position.optionSymbol}',
+    narration: narrations.leapsOpen(position.optionSymbol),
     tagIds: _leapsLedgerTags(position),
   );
   await _upsertOptionsLedgerBuild(
@@ -233,6 +237,7 @@ Future<void> _upsertLeapsClose({
   required LeapsCallPosition position,
   required String brokerageAccountId,
   required String cashAccountId,
+  required OptionsLedgerNarrations narrations,
 }) async {
   final id = _optionsLedgerEntryId(position.id, _OptionsLedgerLeg.leapsClose);
   if (position.status == LeapsCallStatus.open) {
@@ -268,7 +273,7 @@ Future<void> _upsertLeapsClose({
       costCurrency: position.currency,
       lotId: _leapsLotId(position),
       acquiredOn: position.openedAt,
-      narration: 'LEAPS close ${position.optionSymbol}',
+      narration: narrations.leapsClose(position.optionSymbol),
       tagIds: _leapsLedgerTags(position),
     );
   } else if (position.status == LeapsCallStatus.exercised) {
@@ -285,7 +290,7 @@ Future<void> _upsertLeapsClose({
     build = JournalEntryBuild(
       entry: JournalEntryDraft(
         date: closedAt,
-        narration: 'LEAPS exercise ${position.optionSymbol}',
+        narration: narrations.leapsExercise(position.optionSymbol),
         tagIds: _leapsLedgerTags(position),
       ),
       postings: <PostingDraft>[
@@ -325,7 +330,7 @@ Future<void> _upsertLeapsClose({
     build = JournalEntryBuild(
       entry: JournalEntryDraft(
         date: closedAt,
-        narration: 'LEAPS expired ${position.optionSymbol}',
+        narration: narrations.leapsExpired(position.optionSymbol),
         tagIds: _leapsLedgerTags(position),
       ),
       postings: <PostingDraft>[

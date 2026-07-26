@@ -16,22 +16,31 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/providers.dart';
 import '../domain/leaps_call_position.dart';
+import 'income_planner_labels.dart';
 
 Future<void> showLeapsCallPositionSheet(
   BuildContext context, {
   String? existingId,
   String? symbol,
-}) => showAppFormSheet<void>(
+}) => showGuardedFormSheet<void>(
   context: context,
-  builder: (_) =>
-      _LeapsCallPositionForm(existingId: existingId, initialSymbol: symbol),
+  builder: (_, dirty) => _LeapsCallPositionForm(
+    existingId: existingId,
+    initialSymbol: symbol,
+    dirty: dirty,
+  ),
 );
 
 class _LeapsCallPositionForm extends ConsumerStatefulWidget {
-  const _LeapsCallPositionForm({this.existingId, this.initialSymbol});
+  const _LeapsCallPositionForm({
+    required this.dirty,
+    this.existingId,
+    this.initialSymbol,
+  });
 
   final String? existingId;
   final String? initialSymbol;
+  final FormDirtyController dirty;
 
   @override
   ConsumerState<_LeapsCallPositionForm> createState() =>
@@ -79,7 +88,52 @@ class _LeapsCallPositionFormState
     _mark = TextEditingController();
     _delta = TextEditingController();
     _notes = TextEditingController();
+    widget.dirty.bindTextControllers([
+      _symbol,
+      _optionSymbol,
+      _strike,
+      _entryDebit,
+      _exitCredit,
+      _fees,
+      _quantity,
+      _multiplier,
+      _mark,
+      _delta,
+      _notes,
+    ]);
+    ref.listenManual(accountsStreamProvider, fireImmediately: true, (
+      previous,
+      next,
+    ) {
+      final accounts = next.value;
+      if (accounts == null || accounts.isEmpty) return;
+      _hydrateAccountDefaults(accounts);
+    });
     if (widget.existingId != null) unawaited(_load());
+  }
+
+  void _hydrateAccountDefaults(List<Account> accounts) {
+    final brokerageAccounts = accounts
+        .where((account) => account.type == AccountCategory.broker)
+        .toList(growable: false);
+    final cashAccounts = accounts
+        .where(
+          (account) =>
+              account.type == AccountCategory.bank ||
+              account.type == AccountCategory.cash ||
+              account.type == AccountCategory.broker,
+        )
+        .toList(growable: false);
+    var changed = false;
+    if (_brokerageAccountId == null && brokerageAccounts.isNotEmpty) {
+      _brokerageAccountId = brokerageAccounts.first.id;
+      changed = true;
+    }
+    if (_cashAccountId == null && cashAccounts.isNotEmpty) {
+      _cashAccountId = cashAccounts.first.id;
+      changed = true;
+    }
+    if (changed && mounted) setState(() {});
   }
 
   Future<void> _load() async {
@@ -108,6 +162,7 @@ class _LeapsCallPositionFormState
       _brokerageAccountId = value.brokerageAccountId;
       _cashAccountId = value.cashAccountId;
     });
+    widget.dirty.snapshotBaseline();
   }
 
   @override
@@ -143,6 +198,7 @@ class _LeapsCallPositionFormState
       return;
     }
     setState(() => _busy = true);
+    widget.dirty.busy = true;
     try {
       final repo = await ref.read(leapsCallPositionRepositoryProvider.future);
       final closedAt = _status == LeapsCallStatus.open
@@ -210,12 +266,14 @@ class _LeapsCallPositionFormState
       }
       final ledger = await ref.read(optionsJournalLedgerServiceProvider.future);
       await ledger.mirrorLeaps(saved);
+      widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
         AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
       }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -235,17 +293,20 @@ class _LeapsCallPositionFormState
     );
     if (confirmed != true || !mounted) return;
     setState(() => _busy = true);
+    widget.dirty.busy = true;
     try {
       final repo = await ref.read(leapsCallPositionRepositoryProvider.future);
       final ledger = await ref.read(optionsJournalLedgerServiceProvider.future);
       await ledger.removeMirrors(value.id);
       await repo.remove(value);
+      widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
         AppMessenger.show(context, ToastKind.error, l10n.commonDeleteFailed);
       }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -283,12 +344,6 @@ class _LeapsCallPositionFormState
               account.type == AccountCategory.broker,
         )
         .toList(growable: false);
-    if (_brokerageAccountId == null && brokerageAccounts.isNotEmpty) {
-      _brokerageAccountId = brokerageAccounts.first.id;
-    }
-    if (_cashAccountId == null && cashAccounts.isNotEmpty) {
-      _cashAccountId = cashAccounts.first.id;
-    }
     return Form(
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -312,7 +367,10 @@ class _LeapsCallPositionFormState
             initialValue: _openedAt,
             required: true,
             onChanged: (value) {
-              if (value != null) setState(() => _openedAt = value.toUtc());
+              if (value != null) {
+                widget.dirty.markDirty();
+                setState(() => _openedAt = value.toUtc());
+              }
             },
           ),
           _gap,
@@ -323,6 +381,7 @@ class _LeapsCallPositionFormState
             firstDate: _openedAt,
             onChanged: (value) {
               if (value != null) {
+                widget.dirty.markDirty();
                 setState(() => _expirationAt = value.toUtc());
               }
             },
@@ -334,7 +393,10 @@ class _LeapsCallPositionFormState
             value: _currency,
             label: l10n.formCurrencyPickerLabelDefault,
             onChanged: (value) {
-              if (value != null) setState(() => _currency = value);
+              if (value != null) {
+                widget.dirty.markDirty();
+                setState(() => _currency = value);
+              }
             },
           ),
           _gap,
@@ -345,14 +407,20 @@ class _LeapsCallPositionFormState
                   ? accounts
                   : brokerageAccounts,
               value: _brokerageAccountId,
-              onChanged: (value) => setState(() => _brokerageAccountId = value),
+              onChanged: (value) {
+                widget.dirty.markDirty();
+                setState(() => _brokerageAccountId = value);
+              },
             ),
             _gap,
             AccountPicker(
               label: l10n.incomePlannerJournalCashAccountLabel,
               accounts: cashAccounts.isEmpty ? accounts : cashAccounts,
               value: _cashAccountId,
-              onChanged: (value) => setState(() => _cashAccountId = value),
+              onChanged: (value) {
+                widget.dirty.markDirty();
+                setState(() => _cashAccountId = value);
+              },
             ),
             _gap,
           ],
@@ -405,13 +473,16 @@ class _LeapsCallPositionFormState
           SegmentedRow<LeapsCallStatus>(
             options: LeapsCallStatus.values,
             value: _status,
-            labelOf: (value) => _statusLabel(l10n, value),
-            onChanged: (value) => setState(() {
-              _status = value;
-              _closedAt = value == LeapsCallStatus.open
-                  ? null
-                  : (_closedAt ?? DateTime.now().toUtc());
-            }),
+            labelOf: (value) => leapsCallStatusLabel(l10n, value),
+            onChanged: (value) {
+              widget.dirty.markDirty();
+              setState(() {
+                _status = value;
+                _closedAt = value == LeapsCallStatus.open
+                    ? null
+                    : (_closedAt ?? DateTime.now().toUtc());
+              });
+            },
           ),
           AnimatedSizeFade(
             visible: _status != LeapsCallStatus.open,
@@ -535,11 +606,3 @@ class _Field extends StatelessWidget {
     ],
   );
 }
-
-String _statusLabel(AppLocalizations l10n, LeapsCallStatus status) =>
-    switch (status) {
-      LeapsCallStatus.open => l10n.leapsOverlayStatusOpen,
-      LeapsCallStatus.closed => l10n.leapsOverlayStatusClosed,
-      LeapsCallStatus.exercised => l10n.leapsOverlayStatusExercised,
-      LeapsCallStatus.expired => l10n.leapsOverlayStatusExpired,
-    };

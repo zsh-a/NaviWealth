@@ -15,6 +15,7 @@ import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import '../domain/leaps_call_position.dart';
 import '../domain/options_strategy_profile.dart';
 import '../domain/trade_journal_entry.dart';
+import 'options_ledger_narrations.dart';
 
 part 'options_journal_ledger_assets.dart';
 part 'options_journal_ledger_builds.dart';
@@ -34,12 +35,14 @@ class OptionsJournalLedgerService {
     required PriceRepository priceRepo,
     required Future<HoldingService> Function() holdingService,
     required Future<String> Function() currentUserId,
+    OptionsLedgerNarrations narrations = const DefaultOptionsLedgerNarrations(),
   }) : _journalEntryRepo = journalEntryRepo,
        _manualAssetRepo = manualAssetRepo,
        _securitiesAssetRepo = securitiesAssetRepo,
        _priceRepo = priceRepo,
        _holdingService = holdingService,
-       _currentUserId = currentUserId;
+       _currentUserId = currentUserId,
+       _narrations = narrations;
 
   final JournalEntryRepository _journalEntryRepo;
   final ManualAssetRepository _manualAssetRepo;
@@ -47,6 +50,7 @@ class OptionsJournalLedgerService {
   final PriceRepository _priceRepo;
   final Future<HoldingService> Function() _holdingService;
   final Future<String> Function() _currentUserId;
+  final OptionsLedgerNarrations _narrations;
 
   static const int defaultContractSize = 100;
 
@@ -67,12 +71,14 @@ class OptionsJournalLedgerService {
       currentUserId: _currentUserId,
       entry: entry,
       cashAccountId: cashAccountId,
+      narrations: _narrations,
     );
     await _upsertOptionsCloseDebit(
       journalEntryRepo: _journalEntryRepo,
       currentUserId: _currentUserId,
       entry: entry,
       cashAccountId: cashAccountId,
+      narrations: _narrations,
     );
     await _upsertOptionsAssignment(
       journalEntryRepo: _journalEntryRepo,
@@ -83,6 +89,7 @@ class OptionsJournalLedgerService {
       entry: entry,
       cashAccountId: cashAccountId,
       defaultContractSize: defaultContractSize,
+      narrations: _narrations,
     );
   }
 
@@ -117,6 +124,7 @@ class OptionsJournalLedgerService {
       position: position,
       brokerageAccountId: brokerageAccountId,
       cashAccountId: cashAccountId,
+      narrations: _narrations,
     );
     await _upsertLeapsClose(
       journalEntryRepo: _journalEntryRepo,
@@ -125,6 +133,7 @@ class OptionsJournalLedgerService {
       position: position,
       brokerageAccountId: brokerageAccountId,
       cashAccountId: cashAccountId,
+      narrations: _narrations,
     );
   }
 }

@@ -89,9 +89,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planRebalanceSectionSubtitle => '偏离目标配置情况';
 
   @override
-  String get planIncomeSectionTitle => '收入策略';
-
-  @override
   String get planIncomeSectionSubtitle => '股息、Wheel 与 LEAPS';
 
   @override
@@ -130,12 +127,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get planMyPlansTitle => '我的计划';
-
-  @override
-  String get planExploreTitle => '模拟与高级策略';
-
-  @override
-  String get planExploreSubtitle => '比较情景，探索可选的投资方法';
 
   @override
   String planExploreActiveOptions(int count) {
@@ -371,12 +362,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String planBudgetSaveFailed(String error) {
     return '保存预算失败：$error';
   }
-
-  @override
-  String get planWheelSectionTitle => 'Wheel 周期';
-
-  @override
-  String get planWheelSectionSubtitle => '卖 put + 备兑 call 复盘';
 
   @override
   String get planWheelTitle => 'Wheel 周期';
@@ -9905,7 +9890,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get masterDetailBackToList => '返回列表';
 
   @override
-  String get incomePlannerTitle => '期权现金流';
+  String get incomePlannerTitle => '期权工作台';
 
   @override
   String get incomePlannerAccountsEntrySubtitle => '扫描卖出看跌和备兑看涨的现金流机会';
@@ -10165,6 +10150,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerDetailWorstCase => '最坏情况';
 
   @override
+  String get incomePlannerDetailContractSection => '合约信息';
+
+  @override
+  String get incomePlannerDetailLiquiditySection => '流动性';
+
+  @override
   String get incomePlannerDetailBestFor => '适合';
 
   @override
@@ -10195,10 +10186,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerJournalDeleteBody => '该记录将从统计、Wheel 历史及对应账本镜像中移除。';
 
   @override
-  String get incomePlannerJournalCreditLabel => '收取权利金';
+  String get incomePlannerJournalCreditLabel => '收取权利金（每张合约）';
 
   @override
-  String get incomePlannerJournalDebitLabel => '平仓支付';
+  String incomePlannerJournalTotalCredit(String amount) {
+    return '权利金总额：$amount';
+  }
+
+  @override
+  String get incomePlannerAssignmentNeedsAccount =>
+      '记录行权指派前请先选择券商账户，否则股票腿无法记入账本。';
+
+  @override
+  String get incomePlannerJournalDebitLabel => '平仓支付（每张合约）';
 
   @override
   String get incomePlannerJournalOptionSymbolLabel => '期权代码';
@@ -10231,7 +10231,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerJournalStatusClosed => '已平仓';
 
   @override
-  String get incomePlannerJournalStatusAssigned => '已行权';
+  String get incomePlannerJournalStatusAssigned => '被指派';
 
   @override
   String get incomePlannerJournalStatusExpired => '已到期';
@@ -10279,6 +10279,190 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String incomePlannerStatsMultiCurrencyNote(String currencies) {
     return '此日记包含 $currencies，金额按币种分别展示，不强行合并。';
+  }
+
+  @override
+  String get incomePlannerStatsPremiumChartTitle => '各标的权利金';
+
+  @override
+  String optionsExplainYieldStrength(String yieldPct, String score) {
+    return '年化收益 $yieldPct（评分 $score）';
+  }
+
+  @override
+  String optionsExplainLiquidityStrength(
+    String spread,
+    int openInterest,
+    String score,
+  ) {
+    return '流动性良好：买卖价差 $spread，未平仓量 $openInterest（评分 $score）';
+  }
+
+  @override
+  String optionsExplainSafetyStrength(String margin, String score) {
+    return '距盈亏平衡有 $margin 安全边际（评分 $score）';
+  }
+
+  @override
+  String optionsExplainIvStrength(String iv, String score) {
+    return '隐含波动率 $iv 处于稳健区间（评分 $score）';
+  }
+
+  @override
+  String get optionsExplainIvUnknown => '未知';
+
+  @override
+  String optionsExplainFitStrength(String score) {
+    return '与当前持仓契合（评分 $score）';
+  }
+
+  @override
+  String optionsExplainEventStrength(String score) {
+    return '未来 7 天无财报或宏观事件（评分 $score）';
+  }
+
+  @override
+  String get optionsExplainEventUnavailable => '事件日历不可用；未对事件风险评分';
+
+  @override
+  String optionsExplainGenericScore(String dimension, String score) {
+    return '$dimension 评分 $score';
+  }
+
+  @override
+  String optionsExplainYieldWeak(String yieldPct, String score) {
+    return '年化收益偏低：$yieldPct（评分 $score）';
+  }
+
+  @override
+  String optionsExplainLiquidityWeak(String spread, String score) {
+    return '流动性一般：买卖价差 $spread（评分 $score）';
+  }
+
+  @override
+  String optionsExplainSafetyWeak(String margin, String score) {
+    return '安全边际有限：$margin（评分 $score）';
+  }
+
+  @override
+  String optionsExplainIvWeak(String score) {
+    return '隐含波动率超出正常区间（评分 $score）';
+  }
+
+  @override
+  String optionsExplainFitWeak(String score) {
+    return '与当前持仓契合度一般（评分 $score）';
+  }
+
+  @override
+  String optionsExplainEventWeak(String score) {
+    return '处于事件窗口内，执行需谨慎（评分 $score）';
+  }
+
+  @override
+  String get optionsExplainEventCheck => '下单前请先核对财报与宏观事件日期';
+
+  @override
+  String optionsExplainSummaryPut(
+    String symbol,
+    int dte,
+    String strike,
+    String yieldPct,
+    String margin,
+  ) {
+    return '$symbol ${dte}DTE 卖出看跌 @ $strike — 年化 $yieldPct，安全边际 $margin';
+  }
+
+  @override
+  String optionsExplainSummaryCall(
+    String symbol,
+    int dte,
+    String strike,
+    String yieldPct,
+    String margin,
+  ) {
+    return '$symbol ${dte}DTE 备兑看涨 @ $strike — 年化 $yieldPct，安全边际 $margin';
+  }
+
+  @override
+  String get optionsExplainBestForPutConservative =>
+      '适合保守现金流偏好：优先考虑更高的安全边际与流动性。';
+
+  @override
+  String get optionsExplainBestForPutBalanced => '适合均衡现金流偏好：在收益与下行风险之间取得平衡。';
+
+  @override
+  String get optionsExplainBestForPutAggressive => '适合愿意承担更高被指派概率以换取年化收益的场景。';
+
+  @override
+  String get optionsExplainBestForCallConservative =>
+      '适合保守增强：卖出更虚值的看涨期权，被行权概率更低。';
+
+  @override
+  String get optionsExplainBestForCallBalanced => '适合均衡增强：增加收入而不明显影响持仓。';
+
+  @override
+  String get optionsExplainBestForCallAggressive => '适合愿意接受被行权以兑现收益的场景。';
+
+  @override
+  String get optionsExplainAvoidPut => '如果你不愿在被指派时按行权价买入 100 股，请回避。';
+
+  @override
+  String get optionsExplainAvoidCall => '如果你不愿按行权价卖出 100 股，请回避。';
+
+  @override
+  String optionsExplainWorstPut(
+    String symbol,
+    String strike,
+    String breakeven,
+    String cash,
+  ) {
+    return '如果 $symbol 跌破 $strike，你将以 $breakeven 的有效成本买入 100 股，占用现金 $cash。';
+  }
+
+  @override
+  String optionsExplainWorstCall(String symbol, String strike, String cap) {
+    return '如果 $symbol 上涨至 $strike，你将按 $strike 卖出 100 股并放弃其上方涨幅；总收入上限为 $cap。';
+  }
+
+  @override
+  String optionsLedgerPremium(String symbol) {
+    return '期权权利金 $symbol';
+  }
+
+  @override
+  String optionsLedgerCloseDebit(String symbol) {
+    return '期权平仓支出 $symbol';
+  }
+
+  @override
+  String optionsLedgerPutAssigned(String symbol) {
+    return '看跌期权被指派 $symbol';
+  }
+
+  @override
+  String optionsLedgerCallAssigned(String symbol) {
+    return '备兑看涨被行权 $symbol';
+  }
+
+  @override
+  String optionsLedgerLeapsOpen(String symbol) {
+    return 'LEAPS 开仓 $symbol';
+  }
+
+  @override
+  String optionsLedgerLeapsClose(String symbol) {
+    return 'LEAPS 平仓 $symbol';
+  }
+
+  @override
+  String optionsLedgerLeapsExercise(String symbol) {
+    return 'LEAPS 行权 $symbol';
+  }
+
+  @override
+  String optionsLedgerLeapsExpired(String symbol) {
+    return 'LEAPS 到期 $symbol';
   }
 
   @override
@@ -10430,13 +10614,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerProfileDeltaOrderValidation => '上限必须大于或等于下限。';
 
   @override
-  String get incomePlannerWorkspaceTitle => '期权现金流工作台';
-
-  @override
   String get incomePlannerWorkspaceOpportunities => '机会';
-
-  @override
-  String get incomePlannerWorkspaceWheel => 'Wheel';
 
   @override
   String get incomePlannerWorkspaceJournal => '日志';
@@ -10648,10 +10826,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get incomePlannerWheelRealizedIncome => '已实现净收入';
+  String incomePlannerWheelExpiredSummary(String position, int days) {
+    return '$position · 已到期 $days 天，请记录结果';
+  }
 
   @override
-  String get incomePlannerWheelNextActionTitle => '下一检查点';
+  String get incomePlannerWheelRealizedIncome => '已实现净收入';
 
   @override
   String get incomePlannerWheelOpenPositionsTitle => '未平仓头寸';
@@ -14691,26 +14871,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get leapsOverlayRiskStacked =>
-      'Wheel 与 LEAPS 都暴露于标的下跌；Long Call 不能对冲 Put 被行权。';
-
-  @override
-  String get leapsOverlayRiskCost => '未平仓 LEAPS 权利金高于 Wheel 已实现收入。';
-
-  @override
-  String get leapsOverlayRiskDelta => '缺少 Delta，无法计算总上涨敞口。';
-
-  @override
-  String get leapsOverlayRiskMark => '缺少当前市值，无法计算未实现损益。';
-
-  @override
-  String get leapsOverlayRiskExpiry =>
-      '有 LEAPS 剩余期限不超过 180 天，请复核展期、平仓、行权及税务影响。';
-
-  @override
-  String get leapsOverlayRiskDividend => 'Long Call 本身不获得股息；除非在除息日前行权并取得正股。';
-
-  @override
   String get leapsOverlayOptionSymbol => 'Call 合约';
 
   @override
@@ -14835,7 +14995,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomeStrategyOpenDividendCenter => '股息中心';
 
   @override
-  String get incomeStrategyOpenOptionsPlanner => '期权工作区';
+  String get incomeStrategyOpenOptionsPlanner => '期权工作台';
 
   @override
   String get incomeStrategySleeveDividends => '股息';

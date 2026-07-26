@@ -66,6 +66,39 @@ class IncomeStrategyModulePresentation {
   final List<IncomeStrategyRiskPresentation> risks;
 }
 
+/// Single source of truth for risk copy across every income surface
+/// (strategy overview, wheel lifecycle, AI evidence). Module-registered
+/// presentations win; the fallback switch only covers portfolio-level
+/// rules that no module owns.
+String incomeStrategyRiskLabel(
+  AppLocalizations l10n,
+  Iterable<IncomeStrategyModulePresentation> presentations,
+  IncomeStrategyRiskCode code,
+) {
+  for (final presentation in presentations) {
+    for (final risk in presentation.risks) {
+      if (risk.code == code) return risk.label(l10n);
+    }
+  }
+  return switch (code.wire) {
+    'unplanned_sleeve' => l10n.incomeStrategyRiskUnplanned,
+    'capital_budget_exceeded' => l10n.incomeStrategyRiskCapitalBudget,
+    'assignment_budget_exceeded' => l10n.incomeStrategyRiskAssignment,
+    'concentration_exceeded' => l10n.incomeStrategyRiskConcentration,
+    'dividend_interruption' => l10n.incomeStrategyRiskDividend,
+    'stacked_downside' => l10n.incomeStrategyRiskStacked,
+    'leaps_budget_exceeded' => l10n.incomeStrategyRiskLeapsBudget,
+    'leaps_cost_not_covered' => l10n.incomeStrategyRiskLeapsCoverage,
+    'missing_market_value' => l10n.incomeStrategyRiskMissingMark,
+    'missing_delta' => l10n.incomeStrategyRiskMissingDelta,
+    'missing_fx_rate' => l10n.incomeStrategyRiskMissingFx,
+    'stale_valuation' => l10n.incomeStrategyRiskStaleValuation,
+    'expiration_near' => l10n.incomeStrategyRiskExpiration,
+    'income_target_at_risk' => l10n.incomeStrategyRiskIncomeTarget,
+    _ => code.wire,
+  };
+}
+
 const dividendIncomeStrategyPresentation = IncomeStrategyModulePresentation(
   icon: FLucideIcons.badgeDollarSign,
   label: _dividendLabel,

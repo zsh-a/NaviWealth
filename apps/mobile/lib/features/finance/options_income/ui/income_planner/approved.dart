@@ -6,21 +6,11 @@ class _ApprovedEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard.flat(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.incomePlannerNoApprovedTitle, style: context.labelStyle),
-            const SizedBox(height: AppSpacing.s4),
-            Text(
-              l10n.incomePlannerNoApprovedBody,
-              style: context.captionStyle.copyWith(height: 1.4),
-            ),
-          ],
-        ),
-      ),
+    return AppEmptyState(
+      icon: FLucideIcons.listChecks,
+      title: l10n.incomePlannerNoApprovedTitle,
+      message: l10n.incomePlannerNoApprovedBody,
+      compact: true,
     );
   }
 }
@@ -44,16 +34,23 @@ class _ApprovedList extends StatelessWidget {
   }
 }
 
-class _ApprovedTile extends StatelessWidget {
+class _ApprovedTile extends ConsumerWidget {
   const _ApprovedTile({required this.item});
 
   final ApprovedUnderlying item;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return SoftCard.flat(
-      onPress: () => showApprovedUnderlyingSheet(context, existing: item),
+      onPress: () {
+        final plan = ref
+            .read(incomeStrategyPlansProvider)
+            .value
+            ?.where((plan) => plan.assetId == item.id)
+            .firstOrNull;
+        showIncomeStrategyPlanSheet(context, existing: plan);
+      },
       borderRadius: AppRadius.lg,
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -78,14 +75,16 @@ class _ApprovedTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.s8),
-            _StrategyChip(
+            AppBadge(
               label: l10n.incomePlannerProfileAllowPut,
-              enabled: item.allowPut,
+              tone: item.allowPut ? AppBadgeTone.accent : AppBadgeTone.neutral,
+              size: AppBadgeSize.compact,
             ),
             const SizedBox(width: AppSpacing.s6),
-            _StrategyChip(
+            AppBadge(
               label: l10n.incomePlannerProfileAllowCall,
-              enabled: item.allowCall,
+              tone: item.allowCall ? AppBadgeTone.accent : AppBadgeTone.neutral,
+              size: AppBadgeSize.compact,
             ),
             const SizedBox(width: AppSpacing.s6),
             const Icon(FLucideIcons.chevronRight, size: AppIconSizes.sm),
@@ -108,36 +107,4 @@ String _approvedIntentSummary(AppLocalizations l10n, ApprovedUnderlying item) {
           : l10n.incomePlannerApprovedCallLimit(item.minSellPrice!.toString()),
   ];
   return intents.join(' · ');
-}
-
-class _StrategyChip extends StatelessWidget {
-  const _StrategyChip({required this.label, required this.enabled});
-
-  final String label;
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: enabled
-            ? colors.primary.withValues(alpha: AppOpacity.light)
-            : colors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.full),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s8,
-          vertical: AppSpacing.s2,
-        ),
-        child: Text(
-          label,
-          style: context.captionMediumStyle.copyWith(
-            color: enabled ? colors.primary : colors.mutedForeground,
-          ),
-        ),
-      ),
-    );
-  }
 }

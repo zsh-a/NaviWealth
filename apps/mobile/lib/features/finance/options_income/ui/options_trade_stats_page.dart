@@ -59,16 +59,30 @@ class OptionsTradeStatsPage extends ConsumerWidget {
             children: [
               _OverviewCard(stats: stats),
               const SizedBox(height: AppSpacing.s16),
-              SectionHeader(title: l10n.incomePlannerStatsStrategySectionTitle),
-              const SizedBox(height: AppSpacing.s4),
+              _PremiumBySymbolChart(stats: stats),
+              SectionHeader(
+                title: l10n.incomePlannerStatsStrategySectionTitle,
+                padding: const EdgeInsets.fromLTRB(
+                  0,
+                  AppSpacing.s16,
+                  0,
+                  AppSpacing.s8,
+                ),
+              ),
               for (final item in stats.byStrategy)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
                   child: _StrategyTile(item: item),
                 ),
-              const SizedBox(height: AppSpacing.s16),
-              SectionHeader(title: l10n.incomePlannerStatsSymbolSectionTitle),
-              const SizedBox(height: AppSpacing.s4),
+              SectionHeader(
+                title: l10n.incomePlannerStatsSymbolSectionTitle,
+                padding: const EdgeInsets.fromLTRB(
+                  0,
+                  AppSpacing.s16,
+                  0,
+                  AppSpacing.s8,
+                ),
+              ),
               for (final item in stats.bySymbol.take(12))
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
@@ -102,28 +116,33 @@ class _OverviewCard extends StatelessWidget {
         children: [
           Text(l10n.incomePlannerStatsOverviewTitle, style: context.labelStyle),
           const SizedBox(height: AppSpacing.s12),
-          Wrap(
-            spacing: AppSpacing.s12,
-            runSpacing: AppSpacing.s12,
-            children: [
-              _Metric(
+          AppMetricCluster(
+            dense: true,
+            items: [
+              AppMetricItem(
                 label: l10n.incomePlannerStatsTotalTrades,
                 value: '${stats.totalEntries}',
               ),
-              _Metric(
+              AppMetricItem(
                 label: l10n.incomePlannerStatsOpenTrades,
                 value: '${stats.openEntries}',
               ),
-              _Metric(
+              AppMetricItem(
                 label: l10n.incomePlannerStatsAssignedTrades,
                 value: '${stats.assignedEntries}',
               ),
-              _Metric(
+              AppMetricItem(
                 label: l10n.incomePlannerStatsExpiredTrades,
                 value: '${stats.expiredEntries}',
               ),
-              if (primary != null) ...[
-                _Metric(
+            ],
+          ),
+          if (primary != null) ...[
+            const SizedBox(height: AppSpacing.s12),
+            AppMetricCluster(
+              dense: true,
+              items: [
+                AppMetricItem(
                   label: l10n.incomePlannerStatsPremium,
                   value: _money(
                     primary.totalPremium,
@@ -131,7 +150,7 @@ class _OverviewCard extends StatelessWidget {
                     formatters,
                   ),
                 ),
-                _Metric(
+                AppMetricItem(
                   label: l10n.incomePlannerStatsRealizedPnl,
                   value: _signedMoney(
                     primary.trackedRealizedPnl,
@@ -139,11 +158,11 @@ class _OverviewCard extends StatelessWidget {
                     formatters,
                   ),
                 ),
-                _Metric(
+                AppMetricItem(
                   label: l10n.incomePlannerStatsWinRate,
                   value: _pct(primary.winRate, formatters),
                 ),
-                _Metric(
+                AppMetricItem(
                   label: l10n.incomePlannerStatsAvgHoldingDays,
                   value: primary.averageHoldingDays == null
                       ? '—'
@@ -153,8 +172,8 @@ class _OverviewCard extends StatelessWidget {
                         ),
                 ),
               ],
-            ],
-          ),
+            ),
+          ],
           if (stats.byCurrency.length > 1) ...[
             const SizedBox(height: AppSpacing.s12),
             Text(
@@ -256,22 +275,46 @@ class _SymbolTile extends StatelessWidget {
   }
 }
 
-class _Metric extends StatelessWidget {
-  const _Metric({required this.label, required this.value});
+/// Total premium collected per underlying, in the journal's primary
+/// currency. Symbols with premium only in secondary currencies are
+/// covered by the per-row breakdown below the chart.
+class _PremiumBySymbolChart extends StatelessWidget {
+  const _PremiumBySymbolChart({required this.stats});
 
-  final String label;
-  final String value;
+  final OptionsTradeStats stats;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: AppControlWidths.statsTile,
+    final l10n = AppLocalizations.of(context);
+    final primary = stats.primaryCurrency;
+    if (primary == null) return const SizedBox.shrink();
+    final data = <CategoryDatum>[
+      for (final item in stats.bySymbol)
+        if (item.totalPremiumByCurrency[primary.currency] case final premium?
+            when premium > Decimal.zero)
+          CategoryDatum(label: item.symbol, value: premium.toDouble()),
+    ];
+    if (data.length < 2) return const SizedBox.shrink();
+    data.sort((a, b) => b.value.compareTo(a.value));
+    return SoftCard.raised(
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: context.captionStyle),
-          const SizedBox(height: AppSpacing.s2),
-          Text(value, style: context.labelStyle, maxLines: 1),
+          Text(
+            l10n.incomePlannerStatsPremiumChartTitle,
+            style: context.labelStyle,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          NwBarChart(
+            series: [
+              CategorySeries(
+                name: l10n.incomePlannerStatsPremium,
+                data: data.take(8).toList(growable: false),
+              ),
+            ],
+            aspectRatio: 16 / 8,
+          ),
         ],
       ),
     );

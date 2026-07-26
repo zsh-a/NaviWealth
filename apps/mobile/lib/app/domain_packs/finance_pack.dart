@@ -64,8 +64,8 @@ final DomainPack kFinancePack = DomainPack(
     AppRoutes.plan,
   ],
   // `/cashflow*` is reachable from the Finance shell (cashflow page +
-  // recurring + dividends) but isn't a primary tab. It is surfaced through
-  // Wealth / Plan navigation, but route ownership still belongs to Finance.
+  // recurring) but isn't a primary tab. Dividends live under
+  // `/wealth/portfolio/dividends`. Route ownership still belongs to Finance.
   additionalPathPrefixes: [AppRoutes.cashflow],
   agentBuilder: _financeAgents,
   agentPresentationSpecs: const [

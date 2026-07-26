@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import 'package:naviwealth/core/forms/form_dirty_guard.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
@@ -12,15 +13,17 @@ import 'income_planner_labels.dart';
 
 /// Edit-or-create the strategy profile. Returns `true` on save.
 Future<bool> showStrategyProfileSheet(BuildContext context) async {
-  final result = await showAppFormSheet<bool>(
+  final result = await showGuardedFormSheet<bool>(
     context: context,
-    builder: (_) => const _StrategyProfileSheet(),
+    builder: (_, dirty) => _StrategyProfileSheet(dirty: dirty),
   );
   return result ?? false;
 }
 
 class _StrategyProfileSheet extends ConsumerStatefulWidget {
-  const _StrategyProfileSheet();
+  const _StrategyProfileSheet({required this.dirty});
+
+  final FormDirtyController dirty;
 
   @override
   ConsumerState<_StrategyProfileSheet> createState() =>
@@ -40,62 +43,19 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
   late final TextEditingController _putDeltaHighCtrl;
   late final TextEditingController _callDeltaLowCtrl;
   late final TextEditingController _callDeltaHighCtrl;
-  OptionsStrategyProfile? _draft;
+  late OptionsStrategyProfile _draft;
   bool _busy = false;
   bool _advancedOpen = false;
-  bool _initialized = false;
-  bool _controllersReady = false;
   bool _suppressControllerListeners = false;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_initialized) return;
-    _initialized = true;
+  void initState() {
+    super.initState();
     final asyncProfile = ref.read(optionsStrategyProfileProvider);
     _draft = asyncProfile.maybeWhen(
       data: (p) => p ?? defaultProfileForMode(OptionsStrategyMode.balanced),
       orElse: () => defaultProfileForMode(OptionsStrategyMode.balanced),
     );
-    _createControllers(_draft!);
-  }
-
-  void _setMode(OptionsStrategyMode mode) {
-    if (mode == OptionsStrategyMode.custom) {
-      final draft = _draft;
-      if (draft != null) {
-        setState(() => _draft = draft.copyWith(mode: mode));
-      }
-      return;
-    }
-    final next = defaultProfileForMode(mode).copyWith(
-      // Preserve the disclosure ack across mode switches — re-presenting
-      // the OCC ODD just because the user toggled Balanced → Aggressive
-      // is hostile.
-      riskDisclosureAckAt: _draft?.riskDisclosureAckAt,
-    );
-    _seedControllers(next);
-    setState(() => _draft = next);
-  }
-
-  void _toggleAllowed(OptionsStrategyKind kind, bool enabled) {
-    final draft = _draft;
-    if (draft == null) return;
-    final next = {...draft.allowedStrategies};
-    if (enabled) {
-      next.add(kind);
-    } else {
-      next.remove(kind);
-    }
-    setState(() {
-      _draft = draft.copyWith(
-        allowedStrategies: next,
-        mode: OptionsStrategyMode.custom,
-      );
-    });
-  }
-
-  void _createControllers(OptionsStrategyProfile profile) {
     _minDteCtrl = TextEditingController();
     _maxDteCtrl = TextEditingController();
     _minYieldCtrl = TextEditingController();
@@ -107,27 +67,60 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
     _putDeltaHighCtrl = TextEditingController();
     _callDeltaLowCtrl = TextEditingController();
     _callDeltaHighCtrl = TextEditingController();
-    for (final controller in [
-      _minDteCtrl,
-      _maxDteCtrl,
-      _minYieldCtrl,
-      _minOpenInterestCtrl,
-      _minVolumeCtrl,
-      _maxSpreadCtrl,
-      _maxCapitalCtrl,
-      _putDeltaLowCtrl,
-      _putDeltaHighCtrl,
-      _callDeltaLowCtrl,
-      _callDeltaHighCtrl,
-    ]) {
+    for (final controller in _controllers) {
       controller.addListener(_markAdvancedCustom);
     }
-    _controllersReady = true;
-    _seedControllers(profile);
+    _seedControllers(_draft);
+    widget.dirty.bindTextControllers(_controllers);
+  }
+
+  List<TextEditingController> get _controllers => [
+    _minDteCtrl,
+    _maxDteCtrl,
+    _minYieldCtrl,
+    _minOpenInterestCtrl,
+    _minVolumeCtrl,
+    _maxSpreadCtrl,
+    _maxCapitalCtrl,
+    _putDeltaLowCtrl,
+    _putDeltaHighCtrl,
+    _callDeltaLowCtrl,
+    _callDeltaHighCtrl,
+  ];
+
+  void _setMode(OptionsStrategyMode mode) {
+    widget.dirty.markDirty();
+    if (mode == OptionsStrategyMode.custom) {
+      setState(() => _draft = _draft.copyWith(mode: mode));
+      return;
+    }
+    final next = defaultProfileForMode(mode).copyWith(
+      // Preserve the disclosure ack across mode switches — re-presenting
+      // the OCC ODD just because the user toggled Balanced → Aggressive
+      // is hostile.
+      riskDisclosureAckAt: _draft.riskDisclosureAckAt,
+    );
+    _seedControllers(next);
+    setState(() => _draft = next);
+  }
+
+  void _toggleAllowed(OptionsStrategyKind kind, bool enabled) {
+    widget.dirty.markDirty();
+    final next = {..._draft.allowedStrategies};
+    if (enabled) {
+      next.add(kind);
+    } else {
+      next.remove(kind);
+    }
+    setState(() {
+      _draft = _draft.copyWith(
+        allowedStrategies: next,
+        mode: OptionsStrategyMode.custom,
+      );
+    });
   }
 
   void _seedControllers(OptionsStrategyProfile profile) {
-    if (!_controllersReady) return;
     _suppressControllerListeners = true;
     _minDteCtrl.text = profile.minDte.toString();
     _maxDteCtrl.text = profile.maxDte.toString();
@@ -145,10 +138,9 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
 
   void _markAdvancedCustom() {
     if (_suppressControllerListeners) return;
-    final draft = _draft;
-    if (draft == null || draft.mode == OptionsStrategyMode.custom) return;
+    if (_draft.mode == OptionsStrategyMode.custom) return;
     setState(() {
-      _draft = draft.copyWith(mode: OptionsStrategyMode.custom);
+      _draft = _draft.copyWith(mode: OptionsStrategyMode.custom);
     });
   }
 
@@ -170,7 +162,6 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
 
   Future<void> _save() async {
     final draft = _draft;
-    if (draft == null) return;
     final l10n = AppLocalizations.of(context);
     if (draft.allowedStrategies.isEmpty) {
       AppMessenger.show(
@@ -183,15 +174,18 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
     if (!_formKey.currentState!.validate()) return;
     final profile = _profileFromForm(draft);
     setState(() => _busy = true);
+    widget.dirty.busy = true;
     try {
       final repo = await ref.read(
         optionsStrategyProfileRepositoryProvider.future,
       );
       await repo.upsert(profile);
       ref.invalidate(optionsStrategyProfileProvider);
+      widget.dirty.markPristine();
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (_) {
+      widget.dirty.busy = false;
       if (!mounted) return;
       setState(() => _busy = false);
       AppMessenger.show(
@@ -204,18 +198,8 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
 
   @override
   void dispose() {
-    if (_controllersReady) {
-      _minDteCtrl.dispose();
-      _maxDteCtrl.dispose();
-      _minYieldCtrl.dispose();
-      _minOpenInterestCtrl.dispose();
-      _minVolumeCtrl.dispose();
-      _maxSpreadCtrl.dispose();
-      _maxCapitalCtrl.dispose();
-      _putDeltaLowCtrl.dispose();
-      _putDeltaHighCtrl.dispose();
-      _callDeltaLowCtrl.dispose();
-      _callDeltaHighCtrl.dispose();
+    for (final controller in _controllers) {
+      controller.dispose();
     }
     super.dispose();
   }
@@ -224,12 +208,6 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final draft = _draft;
-    if (draft == null) {
-      return AppSheet(
-        title: l10n.incomePlannerProfileTitle,
-        child: const SizedBox(height: AppSpacing.s40 * 2),
-      );
-    }
     return AppSheet(
       title: l10n.incomePlannerProfileTitle,
       footer: AppSheetFooter(
@@ -440,7 +418,7 @@ class _SwitchRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
       child: Row(
         children: [
-          Expanded(child: Text(label, style: context.theme.typography.body.sm)),
+          Expanded(child: Text(label, style: context.bodyCaptionStyle)),
           const SizedBox(width: AppSpacing.s12),
           FSwitch(value: value, onChange: onChanged),
         ],

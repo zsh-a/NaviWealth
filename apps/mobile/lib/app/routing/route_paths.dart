@@ -119,6 +119,7 @@ abstract final class AppRoutes {
   static const planRebalance = FinanceRoutes.planRebalance;
   static const planRebalanceExecution = FinanceRoutes.planRebalanceExecution;
   static const planIncome = FinanceRoutes.planIncome;
+  static const planIncomeOptions = FinanceRoutes.planIncomeOptions;
   static const planIncomeStats = FinanceRoutes.planIncomeStats;
   static const planDca = FinanceRoutes.planDca;
   static const planBudget = FinanceRoutes.planBudget;
@@ -251,6 +252,7 @@ abstract final class AppRouteNames {
   static const planRebalanceExecution =
       FinanceRouteNames.planRebalanceExecution;
   static const planIncome = FinanceRouteNames.planIncome;
+  static const planIncomeOptions = FinanceRouteNames.planIncomeOptions;
   static const planIncomeStats = FinanceRouteNames.planIncomeStats;
   static const planDca = FinanceRouteNames.planDca;
   static const planBudget = FinanceRouteNames.planBudget;
