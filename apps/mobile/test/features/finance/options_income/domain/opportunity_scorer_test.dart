@@ -26,12 +26,12 @@ void main() {
       expect(result!.reasons, contains('underlying_not_approved_for_put'));
     });
 
-    test('approved-underlying boundary cannot be disabled by profile', () {
+    test('Wheel intent is always the approved-underlying boundary', () {
       const scorer = OpportunityScorer();
       final result = scorer.filter(
         contract: _putContract(strike: 190),
         strategy: OptionsStrategyKind.cashSecuredPut,
-        profile: _profileBalanced().copyWith(onlyOnApprovedUnderlyings: false),
+        profile: _profileBalanced(),
         approved: null,
         sharesOwned: 0,
         availableCash: Money.parse('1000000', 'USD'),
@@ -243,14 +243,15 @@ void main() {
     test('portfolio fit drops as current underlying exposure nears cap', () {
       const scorer = OpportunityScorer();
       final contract = _putContract(strike: 190, bid: 2.5, ask: 2.6);
-      final profile = _profileBalanced().copyWith(
-        maxUnderlyingExposurePct: Decimal.parse('0.20'),
-      );
+      final profile = _profileBalanced();
       final lowExposure = scorer.scoreOne(
         contract: contract,
         strategy: OptionsStrategyKind.cashSecuredPut,
         profile: profile,
-        approved: _approved(symbol: 'AAPL'),
+        approved: _approved(
+          symbol: 'AAPL',
+          maxPositionWeight: Decimal.parse('0.20'),
+        ),
         sharesOwned: 0,
         availableCash: Money.parse('1000000', 'USD'),
         currentUnderlyingExposurePct: Decimal.parse('0.05'),
@@ -259,7 +260,10 @@ void main() {
         contract: contract,
         strategy: OptionsStrategyKind.cashSecuredPut,
         profile: profile,
-        approved: _approved(symbol: 'AAPL'),
+        approved: _approved(
+          symbol: 'AAPL',
+          maxPositionWeight: Decimal.parse('0.20'),
+        ),
         sharesOwned: 0,
         availableCash: Money.parse('1000000', 'USD'),
         currentUnderlyingExposurePct: Decimal.parse('0.20'),
@@ -283,6 +287,7 @@ ApprovedUnderlying _approved({
   required String symbol,
   bool allowPut = true,
   bool allowCall = true,
+  Decimal? maxPositionWeight,
 }) => ApprovedUnderlying(
   id: ApprovedUnderlying.idFor(market: AssetMarket.usStock, symbol: symbol),
   symbol: symbol,
@@ -291,6 +296,7 @@ ApprovedUnderlying _approved({
   allowCall: allowCall,
   maxBuyPrice: null,
   minSellPrice: null,
+  maxPositionWeight: maxPositionWeight,
   notes: null,
   sync: SyncMeta(
     ownerUserId: 'u1',

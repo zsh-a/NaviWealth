@@ -8,6 +8,7 @@ import 'package:naviwealth/features/finance/options_income/domain/trade_journal_
 void main() {
   test('copyWith can explicitly clear nullable lifecycle fields', () {
     final entry = TradeJournalEntry(
+      underlyingAssetId: 'nasdaq:AAPL',
       id: 'entry',
       strategy: OptionsStrategyKind.cashSecuredPut,
       symbol: 'VOO',
@@ -44,6 +45,7 @@ void main() {
 
   test('tracked net P&L includes quantity and total fees', () {
     final entry = TradeJournalEntry(
+      underlyingAssetId: 'nasdaq:AAPL',
       id: 'entry',
       strategy: OptionsStrategyKind.cashSecuredPut,
       symbol: 'VOO',
@@ -74,6 +76,7 @@ void main() {
 
   test('assigned option realizes retained premium after fees', () {
     final entry = TradeJournalEntry(
+      underlyingAssetId: 'nasdaq:AAPL',
       id: 'entry',
       strategy: OptionsStrategyKind.coveredCall,
       symbol: 'VOO',

@@ -378,19 +378,6 @@ class _ExploreSectionState extends State<_ExploreSection> {
                       tone: AppBadgeTone.neutral,
                     ),
                   ),
-                if (!kIsWeb) const Divider(height: AppSpacing.s16),
-                if (!kIsWeb)
-                  _PlanRow(
-                    spec: _PlanEntrySpec(
-                      icon: FLucideIcons.refreshCw,
-                      title: l10n.planWheelSectionTitle,
-                      subtitle: _wheelStatusLabel(l10n, widget.status),
-                      path: FinanceRoutes.planWheel,
-                      tone: activeOptions > 0
-                          ? AppBadgeTone.accent
-                          : AppBadgeTone.neutral,
-                    ),
-                  ),
               ],
             ),
           ),
@@ -716,16 +703,6 @@ String _dcaStatusLabel(
     context,
   ).formatShortDate(nextDue.toLocal());
   return l10n.planStatusDcaNext(date);
-}
-
-String _wheelStatusLabel(AppLocalizations l10n, PlanningHubStatus status) {
-  final count = status.wheelCycleCount;
-  if (count == null) return l10n.planStatusLoading;
-  if (count == 0) return l10n.planWheelEmptyTitle;
-  final open = status.wheelOpenPositionCount ?? 0;
-  return open > 0
-      ? l10n.planStatusWheelOpen(open)
-      : l10n.planStatusWheelCycles(count);
 }
 
 Color _toneColor(BuildContext context, AppBadgeTone tone) {

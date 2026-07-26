@@ -1,10 +1,18 @@
 import 'package:decimal/decimal.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
 import 'package:naviwealth/features/finance/options_income/domain/trade_journal_entry.dart';
 import 'package:naviwealth/features/finance/options_income/domain/wheel_lifecycle.dart';
 
 import 'income_strategy_asset_resolver.dart';
+import 'income_strategy_valuation.dart';
+
+class WheelIncomeSleeveDetails implements IncomeStrategySleeveDetails {
+  const WheelIncomeSleeveDetails({required this.lifecycle});
+
+  final WheelLifecycle lifecycle;
+}
 
 class WheelIncomeSleeveAdapter {
   const WheelIncomeSleeveAdapter();
@@ -12,72 +20,76 @@ class WheelIncomeSleeveAdapter {
   List<IncomeStrategySleeveContribution> buildFromEntries({
     required Iterable<TradeJournalEntry> entries,
     required IncomeStrategyAssetResolver assets,
-    DateTime? now,
+    required IncomeStrategyValuation valuation,
   }) {
-    final bySymbol = <String, List<TradeJournalEntry>>{};
-    for (final entry in entries) {
-      bySymbol
-          .putIfAbsent(entry.symbol, () => <TradeJournalEntry>[])
-          .add(entry);
+    final grouped =
+        <
+          String,
+          ({IncomeStrategyAsset asset, List<TradeJournalEntry> entries})
+        >{};
+    for (final journalEntry in entries) {
+      final asset = assets.fromAssetId(
+        journalEntry.underlyingAssetId,
+        fallbackCurrency: journalEntry.currency,
+        fallbackLabel: journalEntry.symbol,
+      );
+      grouped
+          .putIfAbsent(
+            asset.assetId,
+            () => (asset: asset, entries: <TradeJournalEntry>[]),
+          )
+          .entries
+          .add(journalEntry);
     }
-    return build(
-      lifecycles: [
-        for (final entry in bySymbol.entries)
-          buildWheelLifecycle(
-            symbol: entry.key,
-            currency: entry.value.first.currency,
-            entries: entry.value,
-          ),
-      ],
-      assets: assets,
-      now: now,
-    );
-  }
-
-  List<IncomeStrategySleeveContribution> build({
-    required Iterable<WheelLifecycle> lifecycles,
-    required IncomeStrategyAssetResolver assets,
-    DateTime? now,
-  }) {
-    final clock = (now ?? DateTime.now()).toUtc();
     return [
-      for (final lifecycle in lifecycles)
-        _buildOne(lifecycle, assets: assets, now: clock),
+      for (final group in grouped.values)
+        _buildOne(
+          asset: group.asset,
+          entries: group.entries,
+          valuation: valuation,
+        ),
     ];
   }
 
-  IncomeStrategySleeveContribution _buildOne(
-    WheelLifecycle lifecycle, {
-    required IncomeStrategyAssetResolver assets,
-    required DateTime now,
+  IncomeStrategySleeveContribution _buildOne({
+    required IncomeStrategyAsset asset,
+    required List<TradeJournalEntry> entries,
+    required IncomeStrategyValuation valuation,
   }) {
-    final first = lifecycle.entries.firstOrNull;
-    final asset = assets.fromSymbol(
-      symbol: lifecycle.symbol,
-      currency: lifecycle.currency,
-      marketWire: first?.underlyingMarket,
+    final lifecycle = buildWheelLifecycle(
+      symbol: asset.symbol,
+      currency: entries.first.currency,
+      entries: entries,
     );
-    var assignmentValue = Decimal.zero;
+    final periodStart = DateTime.utc(valuation.asOf.toUtc().year);
+    var assignment = IncomeStrategyMoneyMetric.zero(valuation.baseCurrency);
+    var realized = IncomeStrategyMoneyMetric.zero(valuation.baseCurrency);
     final risks = <IncomeStrategyRisk>[];
+    final cashFlows = <IncomeStrategyCashFlow>[];
+
     for (final entry in lifecycle.openPositions) {
       if (entry.strategy == OptionsStrategyKind.cashSecuredPut) {
         final strike = entry.strikePrice;
         if (strike != null) {
-          assignmentValue +=
+          assignment += valuation.metric(
+            Money(
               strike *
-              Decimal.fromInt(entry.effectiveContractSize) *
-              Decimal.fromInt(entry.contractQuantity);
+                  Decimal.fromInt(entry.effectiveContractSize) *
+                  Decimal.fromInt(entry.contractQuantity),
+              entry.currency,
+            ),
+          );
         }
       }
       final expiration = entry.expirationAt;
       if (expiration != null &&
-          expiration.toUtc().difference(now).inDays <= 14) {
+          expiration.toUtc().difference(valuation.asOf.toUtc()).inDays <= 14) {
         risks.add(
           IncomeStrategyRisk(
             code: IncomeStrategyRiskCode.expirationNear,
             severity: IncomeStrategyRiskSeverity.warning,
             assetId: asset.assetId,
-            sleeves: const {IncomeStrategySleeveKind.wheel},
+            sleeves: {IncomeStrategySleeveKind.wheel},
             evidence: {
               'option_symbol': entry.optionSymbol,
               'expiration_at': expiration.toIso8601String(),
@@ -86,47 +98,78 @@ class WheelIncomeSleeveAdapter {
         );
       }
     }
-    final cashFlows = [
-      for (final entry in lifecycle.entries)
-        if (entry.trackedNetPnl case final realized?)
+
+    for (final entry in lifecycle.entries) {
+      if (entry.trackedNetPnl case final tracked?) {
+        final date = entry.closedAt ?? entry.openedAt;
+        final original = Money(tracked, entry.currency);
+        final base = valuation.tryToBase(original, on: date);
+        if (!date.isBefore(periodStart) &&
+            !date.isAfter(valuation.asOf) &&
+            base != null) {
+          realized += IncomeStrategyMoneyMetric(value: base);
+        } else if (!date.isBefore(periodStart) &&
+            !date.isAfter(valuation.asOf) &&
+            base == null) {
+          realized += IncomeStrategyMoneyMetric.zero(
+            valuation.baseCurrency,
+            quality: IncomeStrategyMetricQuality.partial,
+          );
+        }
+        cashFlows.add(
           IncomeStrategyCashFlow(
             id: 'wheel:${entry.id}:realized',
             assetId: asset.assetId,
             sleeve: IncomeStrategySleeveKind.wheel,
             kind: IncomeStrategyCashFlowKind.optionRealized,
             state: IncomeStrategyCashFlowState.actual,
-            date: entry.closedAt ?? entry.openedAt,
-            amount: realized,
-            currency: entry.currency,
-            sourceTable: 'options_trade_journal',
-            sourceId: entry.id,
-            hasCompleteEvidence: true,
+            date: date,
+            amount: original,
+            baseAmount: base,
+            source: IncomeStrategySourceRef(
+              table: 'options_trade_journal',
+              id: entry.id,
+            ),
           ),
-    ];
+        );
+      }
+    }
+
+    if (assignment.quality == IncomeStrategyMetricQuality.unavailable ||
+        realized.quality == IncomeStrategyMetricQuality.partial) {
+      risks.add(
+        IncomeStrategyRisk(
+          code: IncomeStrategyRiskCode.missingFxRate,
+          severity: IncomeStrategyRiskSeverity.warning,
+          assetId: asset.assetId,
+          sleeves: {IncomeStrategySleeveKind.wheel},
+        ),
+      );
+    }
+
     return IncomeStrategySleeveContribution(
       asset: asset,
       snapshot: IncomeStrategySleeveSnapshot(
         kind: IncomeStrategySleeveKind.wheel,
         status: lifecycle.stage.name,
-        realizedResult: lifecycle.cumulativeIncome,
-        projectedCash: Decimal.zero,
-        capitalAtRisk: assignmentValue,
-        marketValue: null,
-        deltaEquivalentShares: null,
-        cashFlows: List.unmodifiable(cashFlows),
-        risks: List.unmodifiable(risks),
-        facts: <String, Object?>{
-          'stage': lifecycle.stage.name,
-          'open_count': lifecycle.openPositions.length,
-          'assignment_value': assignmentValue,
-          'has_open_short_put': lifecycle.openPositions.any(
+        periodStart: periodStart,
+        asOf: valuation.asOf.toUtc(),
+        realizedIncome: realized,
+        realizedResult: realized,
+        projectedCash: IncomeStrategyMoneyMetric.zero(valuation.baseCurrency),
+        exposure: IncomeStrategyExposure(
+          capitalAtRisk: assignment,
+          assignmentObligation: assignment,
+          hasOpenShortPut: lifecycle.openPositions.any(
             (entry) => entry.strategy == OptionsStrategyKind.cashSecuredPut,
           ),
-          'has_open_covered_call': lifecycle.openPositions.any(
+          hasOpenCoveredCall: lifecycle.openPositions.any(
             (entry) => entry.strategy == OptionsStrategyKind.coveredCall,
           ),
-          'lifecycle': lifecycle,
-        },
+        ),
+        cashFlows: List.unmodifiable(cashFlows),
+        risks: List.unmodifiable(risks),
+        details: WheelIncomeSleeveDetails(lifecycle: lifecycle),
       ),
     );
   }

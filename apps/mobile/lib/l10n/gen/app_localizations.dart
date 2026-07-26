@@ -698,7 +698,7 @@ abstract class AppLocalizations {
   /// **'Sell-put + covered-call review'**
   String get planWheelSectionSubtitle;
 
-  /// Title shown on /plan/wheel page header
+  /// Title shown on /plan/income/wheel page header
   ///
   /// In en, this message translates to:
   /// **'Wheel cycles'**
@@ -26380,6 +26380,36 @@ abstract class AppLocalizations {
   /// **'LEAPS call'**
   String get incomeStrategySleeveLeaps;
 
+  /// No description provided for @incomeStrategyStatusHolding.
+  ///
+  /// In en, this message translates to:
+  /// **'Holding'**
+  String get incomeStrategyStatusHolding;
+
+  /// No description provided for @incomeStrategyStatusPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned'**
+  String get incomeStrategyStatusPlanned;
+
+  /// No description provided for @incomeStrategyStatusOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get incomeStrategyStatusOpen;
+
+  /// No description provided for @incomeStrategyStatusResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get incomeStrategyStatusResolved;
+
+  /// No description provided for @incomeStrategyMetricPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Partial valuation'**
+  String get incomeStrategyMetricPartial;
+
   /// No description provided for @incomeStrategyCashFlowDividend.
   ///
   /// In en, this message translates to:
@@ -26475,6 +26505,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A LEAPS position has no delta, so equivalent-share exposure is incomplete.'**
   String get incomeStrategyRiskMissingDelta;
+
+  /// No description provided for @incomeStrategyRiskMissingFx.
+  ///
+  /// In en, this message translates to:
+  /// **'An FX rate is missing, so one or more monetary totals are incomplete.'**
+  String get incomeStrategyRiskMissingFx;
+
+  /// No description provided for @incomeStrategyRiskStaleValuation.
+  ///
+  /// In en, this message translates to:
+  /// **'A position mark is stale and should be refreshed.'**
+  String get incomeStrategyRiskStaleValuation;
+
+  /// No description provided for @incomeStrategyRiskIncomeTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Year-to-date realized income is materially behind the configured annual target.'**
+  String get incomeStrategyRiskIncomeTarget;
 
   /// No description provided for @incomeStrategyRiskExpiration.
   ///

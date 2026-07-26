@@ -15,7 +15,7 @@ import 'income_planner_labels.dart';
 import 'leaps_call_position_sheet.dart';
 import 'trade_journal_sheet.dart';
 
-/// `/plan/wheel` — per-underlying Wheel cycle review
+/// `/plan/income/wheel` — per-underlying Wheel cycle review
 /// (`docs/domains/options-income.md` §12 P4).
 ///
 /// Reads the generic FinanceOS income strategy composition and projects its
@@ -482,24 +482,22 @@ class _OverlayWarnings extends StatelessWidget {
 }
 
 String _warningLabel(AppLocalizations l10n, IncomeStrategyRiskCode warning) =>
-    switch (warning) {
-      IncomeStrategyRiskCode.stackedDownside => l10n.leapsOverlayRiskStacked,
-      IncomeStrategyRiskCode.leapsCostNotCovered => l10n.leapsOverlayRiskCost,
-      IncomeStrategyRiskCode.missingDelta => l10n.leapsOverlayRiskDelta,
-      IncomeStrategyRiskCode.missingMarketValue => l10n.leapsOverlayRiskMark,
-      IncomeStrategyRiskCode.expirationNear => l10n.leapsOverlayRiskExpiry,
-      IncomeStrategyRiskCode.unplannedSleeve =>
-        l10n.incomeStrategyRiskUnplanned,
-      IncomeStrategyRiskCode.capitalBudgetExceeded =>
-        l10n.incomeStrategyRiskCapitalBudget,
-      IncomeStrategyRiskCode.assignmentBudgetExceeded =>
-        l10n.incomeStrategyRiskAssignment,
-      IncomeStrategyRiskCode.concentrationExceeded =>
-        l10n.incomeStrategyRiskConcentration,
-      IncomeStrategyRiskCode.dividendInterruption =>
-        l10n.incomeStrategyRiskDividend,
-      IncomeStrategyRiskCode.leapsBudgetExceeded =>
-        l10n.incomeStrategyRiskLeapsBudget,
+    switch (warning.wire) {
+      'stacked_downside' => l10n.leapsOverlayRiskStacked,
+      'leaps_cost_not_covered' => l10n.leapsOverlayRiskCost,
+      'missing_delta' => l10n.leapsOverlayRiskDelta,
+      'missing_market_value' => l10n.leapsOverlayRiskMark,
+      'expiration_near' => l10n.leapsOverlayRiskExpiry,
+      'unplanned_sleeve' => l10n.incomeStrategyRiskUnplanned,
+      'capital_budget_exceeded' => l10n.incomeStrategyRiskCapitalBudget,
+      'assignment_budget_exceeded' => l10n.incomeStrategyRiskAssignment,
+      'concentration_exceeded' => l10n.incomeStrategyRiskConcentration,
+      'dividend_interruption' => l10n.incomeStrategyRiskDividend,
+      'leaps_budget_exceeded' => l10n.incomeStrategyRiskLeapsBudget,
+      'missing_fx_rate' => l10n.incomeStrategyRiskMissingFx,
+      'stale_valuation' => l10n.incomeStrategyRiskStaleValuation,
+      'income_target_at_risk' => l10n.incomeStrategyRiskIncomeTarget,
+      _ => warning.wire,
     };
 
 class _OpenPositionTile extends StatelessWidget {

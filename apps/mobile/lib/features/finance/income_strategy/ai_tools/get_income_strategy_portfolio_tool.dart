@@ -44,9 +44,12 @@ class GetIncomeStrategyPortfolioTool implements DeviceTool {
               .toList(growable: false);
     final result = <String, Object?>{
       'base_currency': snapshot.baseCurrency,
-      'realized_result': snapshot.realizedResult.toString(),
-      'projected_cash_90d': snapshot.projectedCash.toString(),
-      'capital_at_risk': snapshot.capitalAtRisk.toString(),
+      'as_of': snapshot.asOf.toIso8601String(),
+      'period_start': snapshot.periodStart.toIso8601String(),
+      'realized_income_ytd': snapshot.realizedIncome.value.amount.toString(),
+      'realized_result_ytd': snapshot.realizedResult.value.amount.toString(),
+      'projected_cash_90d': snapshot.projectedCash.value.amount.toString(),
+      'capital_at_risk': snapshot.capitalAtRisk.value.amount.toString(),
       'active_risk_count': snapshot.activeRiskCount,
       'underlyings': [
         for (final underlying in underlyings) _underlyingToWire(underlying),
@@ -60,10 +63,10 @@ class GetIncomeStrategyPortfolioTool implements DeviceTool {
         for (final underlying in underlyings)
           for (final flow in underlying.cashFlows)
             EvidenceAnchor(
-              entityTable: flow.sourceTable,
-              entityId: flow.sourceId,
+              entityTable: flow.source.table,
+              entityId: flow.source.id,
               label:
-                  '${underlying.asset.symbol} · ${flow.sleeve.wire} · ${flow.kind.name}',
+                  '${underlying.asset.symbol} · ${flow.sleeve.wire} · ${flow.kind.wire}',
             ),
       ],
     );
@@ -77,29 +80,36 @@ class GetIncomeStrategyPortfolioTool implements DeviceTool {
     'market': value.asset.market,
     'currency': value.asset.currency,
     'enabled_sleeves': [for (final sleeve in value.enabledSleeves) sleeve.wire],
-    'realized_result': value.realizedResult.toString(),
-    'actual_cash_movement': value.actualCashMovement.toString(),
-    'projected_cash': value.projectedCash.toString(),
-    'capital_at_risk': value.capitalAtRisk.toString(),
-    'capital_budget': value.capitalBudget?.toString(),
-    'annual_income_target': value.annualIncomeTarget?.toString(),
+    'realized_income_ytd': value.realizedIncome.value.amount.toString(),
+    'realized_result_ytd': value.realizedResult.value.amount.toString(),
+    'actual_cash_movement_ytd': value.actualCashMovement.value.amount
+        .toString(),
+    'projected_cash': value.projectedCash.value.amount.toString(),
+    'capital_at_risk': value.capitalAtRisk.value.amount.toString(),
+    'capital_budget': value.capitalBudget?.amount.toString(),
+    'annual_income_target': value.annualIncomeTarget?.amount.toString(),
     'delta_equivalent_shares': value.deltaEquivalentShares?.toString(),
     'sleeves': [
       for (final sleeve in value.sleeves.values)
         <String, Object?>{
           'kind': sleeve.kind.wire,
           'status': sleeve.status,
-          'realized_result': sleeve.realizedResult.toString(),
-          'projected_cash': sleeve.projectedCash.toString(),
-          'capital_at_risk': sleeve.capitalAtRisk.toString(),
-          'market_value': sleeve.marketValue?.toString(),
+          'period_start': sleeve.periodStart.toIso8601String(),
+          'as_of': sleeve.asOf.toIso8601String(),
+          'realized_income_ytd': sleeve.realizedIncome.value.amount.toString(),
+          'realized_result_ytd': sleeve.realizedResult.value.amount.toString(),
+          'projected_cash': sleeve.projectedCash.value.amount.toString(),
+          'capital_at_risk': sleeve.capitalAtRisk.value.amount.toString(),
+          'capital_at_risk_quality': sleeve.capitalAtRisk.quality.name,
+          'market_value': sleeve.marketValue?.value.amount.toString(),
+          'market_value_quality': sleeve.marketValue?.quality.name,
           'delta_equivalent_shares': sleeve.deltaEquivalentShares?.toString(),
         },
     ],
     'risks': [
       for (final risk in value.risks)
         <String, Object?>{
-          'code': risk.code.name,
+          'code': risk.code.wire,
           'severity': risk.severity.name,
           'sleeves': [for (final sleeve in risk.sleeves) sleeve.wire],
           'evidence': risk.evidence,

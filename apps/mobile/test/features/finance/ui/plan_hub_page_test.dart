@@ -202,7 +202,8 @@ void main() {
     );
     await tester.tap(find.text(l10n.planExploreTitle));
     await tester.pumpAndSettle();
-    expect(find.text('1 open position'), findsOneWidget);
+    expect(find.text(l10n.incomeStrategyTitle), findsOneWidget);
+    expect(find.text(l10n.planWheelSectionTitle), findsNothing);
   });
 
   testWidgets('plan hub stays bounded on a narrow scaled viewport', (

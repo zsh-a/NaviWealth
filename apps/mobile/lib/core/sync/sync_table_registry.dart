@@ -120,10 +120,6 @@ kSyncTableRegistrations = <SyncTableRegistration>[
     primaryKey: 'user_id',
   ),
   SyncTableRegistration(
-    'approved_underlyings',
-    domainPrefix: kFinanceDomainPrefix,
-  ),
-  SyncTableRegistration(
     'options_trade_journal',
     domainPrefix: kFinanceDomainPrefix,
   ),

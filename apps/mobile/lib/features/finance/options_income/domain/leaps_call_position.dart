@@ -12,6 +12,7 @@ const Object _unsetLeapsField = Object();
 class LeapsCallPosition {
   const LeapsCallPosition({
     required this.id,
+    required this.underlyingAssetId,
     required this.symbol,
     required this.optionSymbol,
     required this.openedAt,
@@ -36,6 +37,7 @@ class LeapsCallPosition {
   });
 
   final String id;
+  final String underlyingAssetId;
   final String symbol;
   final String optionSymbol;
   final DateTime openedAt;
@@ -83,6 +85,7 @@ class LeapsCallPosition {
             Decimal.fromInt(contractQuantity);
 
   LeapsCallPosition copyWith({
+    String? underlyingAssetId,
     String? symbol,
     String? optionSymbol,
     DateTime? openedAt,
@@ -106,6 +109,7 @@ class LeapsCallPosition {
     SyncMeta? sync,
   }) => LeapsCallPosition(
     id: id,
+    underlyingAssetId: underlyingAssetId ?? this.underlyingAssetId,
     symbol: symbol ?? this.symbol,
     optionSymbol: optionSymbol ?? this.optionSymbol,
     openedAt: openedAt ?? this.openedAt,

@@ -62,6 +62,7 @@ class OpportunityScorer {
       contract: contract,
       strategy: strategy,
       profile: profile,
+      maxPositionWeight: approved?.maxPositionWeight,
       currentUnderlyingExposurePct: currentUnderlyingExposurePct,
       hasUpcomingEarnings: hasUpcomingEarnings,
       hasUpcomingMacroEvent: hasUpcomingMacroEvent,

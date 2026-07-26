@@ -4,7 +4,7 @@ import 'package:naviwealth/features/finance/options_income/domain/options_strate
 
 /// `get_options_strategy_profile` — return the user's current Income
 /// Planner stance (preset mode, DTE / delta / yield windows, hard caps,
-/// approved-only flag). Read-only mirror of the synced singleton row.
+/// scanner thresholds). Read-only mirror of the synced singleton row.
 class GetOptionsStrategyProfileTool implements DeviceTool {
   const GetOptionsStrategyProfileTool();
 
@@ -53,14 +53,11 @@ class GetOptionsStrategyProfileTool implements DeviceTool {
         'max': profile.deltaCallMax.toString(),
       },
       'max_capital_per_trade_pct': profile.maxCapitalPerTradePct.toString(),
-      'max_underlying_exposure_pct': profile.maxUnderlyingExposurePct
-          .toString(),
       'min_annualized_yield': profile.minAnnualizedYield.toString(),
       'min_open_interest': profile.minOpenInterest,
       'min_volume': profile.minVolume,
       'max_bid_ask_spread_pct': profile.maxBidAskSpreadPct.toString(),
       'event_calendar_status': 'unavailable',
-      'only_on_approved_underlyings': true,
       'risk_disclosure_ack_at_iso': profile.riskDisclosureAckAt
           ?.toUtc()
           .toIso8601String(),

@@ -41,7 +41,7 @@ abstract final class FinanceRoutes {
   static const planExpenseCategories = '/plan/expense-categories';
   static const planRunway = '/plan/runway';
   static const planLifeEvents = '/plan/life-events';
-  static const planWheel = '/plan/wheel';
+  static const planWheel = '/plan/income/wheel';
 
   static String wealthAsset(String id) =>
       '/wealth/assets/${Uri.encodeComponent(id)}';

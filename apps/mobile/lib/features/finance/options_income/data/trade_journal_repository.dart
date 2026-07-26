@@ -50,6 +50,7 @@ class TradeJournalRepository {
   }
 
   Future<TradeJournalEntry> create({
+    required String underlyingAssetId,
     required OptionsStrategyKind strategy,
     required String symbol,
     required String optionSymbol,
@@ -74,6 +75,7 @@ class TradeJournalRepository {
     final id = _uuid.v4();
     final companion = OptionsTradeJournalCompanion.insert(
       id: id,
+      underlyingAssetId: underlyingAssetId,
       strategy: strategy.wire,
       symbol: symbol,
       optionSymbol: optionSymbol,
@@ -105,6 +107,7 @@ class TradeJournalRepository {
     });
     return TradeJournalEntry(
       id: id,
+      underlyingAssetId: underlyingAssetId,
       strategy: strategy,
       symbol: symbol,
       optionSymbol: optionSymbol,
@@ -141,6 +144,7 @@ class TradeJournalRepository {
       )..where((t) => t.id.equals(entry.id))).write(
         OptionsTradeJournalCompanion(
           strategy: Value(entry.strategy.wire),
+          underlyingAssetId: Value(entry.underlyingAssetId),
           symbol: Value(entry.symbol),
           optionSymbol: Value(entry.optionSymbol),
           openedAt: Value(entry.openedAt),
@@ -200,6 +204,7 @@ TradeJournalEntry _rowToDomain(OptionsTradeJournalRow row) {
       OptionsStrategyKind.cashSecuredPut;
   return TradeJournalEntry(
     id: row.id,
+    underlyingAssetId: row.underlyingAssetId,
     strategy: strategy,
     symbol: row.symbol,
     optionSymbol: row.optionSymbol,

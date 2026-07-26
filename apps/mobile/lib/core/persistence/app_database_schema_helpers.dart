@@ -332,11 +332,6 @@ Future<void> _createWatchlistIndexes(AppDatabase db) async {
 const List<String> _optionsIncomeIndexStmts = [
   'CREATE INDEX IF NOT EXISTS idx_options_strategy_profile_owner_hlc '
       'ON options_strategy_profile(owner_user_id, hlc)',
-  'CREATE INDEX IF NOT EXISTS idx_approved_underlyings_owner_hlc '
-      'ON approved_underlyings(owner_user_id, hlc)',
-  'CREATE INDEX IF NOT EXISTS idx_approved_underlyings_owner_symbol '
-      'ON approved_underlyings(owner_user_id, symbol) '
-      'WHERE deleted_at IS NULL',
 ];
 
 const List<String> _optionsTradeJournalIndexStmts = [

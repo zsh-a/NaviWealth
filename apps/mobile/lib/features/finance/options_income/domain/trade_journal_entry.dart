@@ -13,6 +13,7 @@ const Object _unsetTradeJournalField = Object();
 class TradeJournalEntry {
   const TradeJournalEntry({
     required this.id,
+    required this.underlyingAssetId,
     required this.strategy,
     required this.symbol,
     required this.optionSymbol,
@@ -36,6 +37,7 @@ class TradeJournalEntry {
   });
 
   final String id;
+  final String underlyingAssetId;
   final OptionsStrategyKind strategy;
   final String symbol;
   final String optionSymbol;
@@ -89,6 +91,7 @@ class TradeJournalEntry {
   }
 
   TradeJournalEntry copyWith({
+    String? underlyingAssetId,
     OptionsStrategyKind? strategy,
     String? symbol,
     String? optionSymbol,
@@ -112,6 +115,7 @@ class TradeJournalEntry {
   }) {
     return TradeJournalEntry(
       id: id,
+      underlyingAssetId: underlyingAssetId ?? this.underlyingAssetId,
       strategy: strategy ?? this.strategy,
       symbol: symbol ?? this.symbol,
       optionSymbol: optionSymbol ?? this.optionSymbol,

@@ -1,18 +1,27 @@
-import 'package:decimal/decimal.dart';
-
+import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
 import 'income_strategy.dart';
 import 'income_strategy_plan.dart';
+import 'income_strategy_rule.dart';
 
-/// Pure composition boundary for every current and future income sleeve.
+/// Pure composition boundary for every current and future strategy module.
+///
+/// The assembler knows no concrete sleeve ids and no strategy-specific rule.
+/// Modules contribute snapshots; registered [rules] coordinate them.
 class IncomeStrategyAssembler {
   const IncomeStrategyAssembler();
 
   PortfolioIncomeStrategySnapshot assemble({
     required String baseCurrency,
+    required DateTime asOf,
+    required CurrencyConverter converter,
     required Iterable<IncomeStrategyPlan> plans,
     required Iterable<IncomeStrategySleeveContribution> contributions,
+    required Iterable<IncomeStrategyRule> rules,
     Iterable<IncomeStrategyCashFlow> unassignedCashFlows = const [],
   }) {
+    final normalizedBase = baseCurrency.trim().toUpperCase();
+    final clock = asOf.toUtc();
+    final periodStart = DateTime.utc(clock.year);
     final planByAsset = {for (final plan in plans) plan.assetId: plan};
     final assets = <String, IncomeStrategyAsset>{};
     final sleeves =
@@ -27,6 +36,7 @@ class IncomeStrategyAssembler {
       );
     }
     for (final contribution in contributions) {
+      _validateBaseCurrency(contribution.snapshot, normalizedBase);
       final assetId = contribution.asset.assetId;
       assets[assetId] = contribution.asset;
       final byKind = sleeves.putIfAbsent(
@@ -49,23 +59,32 @@ class IncomeStrategyAssembler {
           const <IncomeStrategySleeveKind, IncomeStrategySleeveSnapshot>{};
       final enabled =
           plan?.enabledSleeves ?? Set<IncomeStrategySleeveKind>.of(byKind.keys);
+      final context = IncomeStrategyRuleContext(
+        baseCurrency: normalizedBase,
+        asOf: clock,
+        asset: entry.value,
+        plan: plan,
+        enabledSleeves: enabled,
+        sleeves: byKind,
+        converter: converter,
+      );
       final risks = <IncomeStrategyRisk>[
         for (final sleeve in byKind.values) ...sleeve.risks,
-        ..._coordinationRisks(
-          assetId: entry.key,
-          enabled: enabled,
-          sleeves: byKind,
-          plan: plan,
-        ),
+        for (final rule in rules) ...rule.evaluate(context),
       ];
       underlyings.add(
         UnderlyingIncomeStrategySnapshot(
           asset: entry.value,
+          baseCurrency: normalizedBase,
+          periodStart: periodStart,
+          asOf: clock,
           enabledSleeves: Set.unmodifiable(enabled),
           sleeves: Map.unmodifiable(byKind),
           risks: List.unmodifiable(risks),
-          capitalBudget: plan?.capitalBudget,
-          annualIncomeTarget: plan?.annualIncomeTarget,
+          capitalBudget: context.tryConvertToBase(plan?.capitalBudgetMoney),
+          annualIncomeTarget: context.tryConvertToBase(
+            plan?.annualIncomeTargetMoney,
+          ),
         ),
       );
     }
@@ -78,158 +97,42 @@ class IncomeStrategyAssembler {
       return a.asset.symbol.compareTo(b.asset.symbol);
     });
     return PortfolioIncomeStrategySnapshot(
-      baseCurrency: baseCurrency,
+      baseCurrency: normalizedBase,
+      periodStart: periodStart,
+      asOf: clock,
       underlyings: List.unmodifiable(underlyings),
       unassignedCashFlows: List.unmodifiable(unassignedCashFlows),
     );
   }
 
-  List<IncomeStrategyRisk> _coordinationRisks({
-    required String assetId,
-    required Set<IncomeStrategySleeveKind> enabled,
-    required Map<IncomeStrategySleeveKind, IncomeStrategySleeveSnapshot>
-    sleeves,
-    required IncomeStrategyPlan? plan,
-  }) {
-    final risks = <IncomeStrategyRisk>[];
-    for (final kind in sleeves.keys.where((kind) => !enabled.contains(kind))) {
-      risks.add(
-        IncomeStrategyRisk(
-          code: IncomeStrategyRiskCode.unplannedSleeve,
-          severity: IncomeStrategyRiskSeverity.warning,
-          assetId: assetId,
-          sleeves: {kind},
-        ),
-      );
-    }
-
-    final wheel = sleeves[IncomeStrategySleeveKind.wheel];
-    final leaps = sleeves[IncomeStrategySleeveKind.leapsCall];
-    final capitalBudget = plan?.capitalBudget;
-    final totalCapital = sleeves.values.fold(
-      Decimal.zero,
-      (sum, sleeve) => sum + sleeve.capitalAtRisk,
-    );
-    if (capitalBudget != null && totalCapital > capitalBudget) {
-      risks.add(
-        IncomeStrategyRisk(
-          code: IncomeStrategyRiskCode.capitalBudgetExceeded,
-          severity: IncomeStrategyRiskSeverity.critical,
-          assetId: assetId,
-          sleeves: Set.unmodifiable(sleeves.keys),
-          evidence: {
-            'capital_at_risk': totalCapital.toString(),
-            'limit': capitalBudget.toString(),
-          },
-        ),
-      );
-    }
-    if (wheel?.facts['has_open_short_put'] == true && leaps != null) {
-      risks.add(
-        IncomeStrategyRisk(
-          code: IncomeStrategyRiskCode.stackedDownside,
-          severity: IncomeStrategyRiskSeverity.warning,
-          assetId: assetId,
-          sleeves: const {
-            IncomeStrategySleeveKind.wheel,
-            IncomeStrategySleeveKind.leapsCall,
-          },
-        ),
-      );
-    }
-    if (leaps != null && leaps.capitalAtRisk > Decimal.zero) {
-      final fundingResult =
-          (sleeves[IncomeStrategySleeveKind.dividends]?.realizedResult ??
-              Decimal.zero) +
-          (wheel?.realizedResult ?? Decimal.zero);
-      if (fundingResult < leaps.capitalAtRisk) {
-        risks.add(
-          IncomeStrategyRisk(
-            code: IncomeStrategyRiskCode.leapsCostNotCovered,
-            severity: IncomeStrategyRiskSeverity.warning,
-            assetId: assetId,
-            sleeves: const {
-              IncomeStrategySleeveKind.dividends,
-              IncomeStrategySleeveKind.wheel,
-              IncomeStrategySleeveKind.leapsCall,
-            },
-            evidence: {
-              'realized_income': fundingResult.toString(),
-              'open_leaps_cost': leaps.capitalAtRisk.toString(),
-            },
-          ),
+  void _validateBaseCurrency(
+    IncomeStrategySleeveSnapshot snapshot,
+    String baseCurrency,
+  ) {
+    final metrics = <IncomeStrategyMoneyMetric>[
+      snapshot.realizedIncome,
+      snapshot.realizedResult,
+      snapshot.projectedCash,
+      snapshot.capitalAtRisk,
+      ?snapshot.marketValue,
+      ?snapshot.exposure.assignmentObligation,
+    ];
+    for (final metric in metrics) {
+      if (metric.value.currency != baseCurrency) {
+        throw StateError(
+          '${snapshot.kind.wire} contributed ${metric.value.currency} '
+          'metric to $baseCurrency portfolio.',
         );
       }
     }
-    if (plan?.preserveDividend == true &&
-        plan?.allowSharesCalledAway == false &&
-        wheel?.facts['has_open_covered_call'] == true) {
-      risks.add(
-        IncomeStrategyRisk(
-          code: IncomeStrategyRiskCode.dividendInterruption,
-          severity: IncomeStrategyRiskSeverity.warning,
-          assetId: assetId,
-          sleeves: const {
-            IncomeStrategySleeveKind.dividends,
-            IncomeStrategySleeveKind.wheel,
-          },
-        ),
-      );
+    for (final flow in snapshot.cashFlows) {
+      final base = flow.baseAmount;
+      if (base != null && base.currency != baseCurrency) {
+        throw StateError(
+          '${snapshot.kind.wire} cash flow ${flow.id} has '
+          '${base.currency} base amount in $baseCurrency portfolio.',
+        );
+      }
     }
-
-    final maxLeapsCost = plan?.maxLeapsCost;
-    if (maxLeapsCost != null &&
-        (leaps?.capitalAtRisk ?? Decimal.zero) > maxLeapsCost) {
-      risks.add(
-        IncomeStrategyRisk(
-          code: IncomeStrategyRiskCode.leapsBudgetExceeded,
-          severity: IncomeStrategyRiskSeverity.critical,
-          assetId: assetId,
-          sleeves: const {IncomeStrategySleeveKind.leapsCall},
-          evidence: {
-            'capital_at_risk': leaps!.capitalAtRisk.toString(),
-            'limit': maxLeapsCost.toString(),
-          },
-        ),
-      );
-    }
-    final maxAssignment = plan?.maxAssignmentValue;
-    final assignmentValue = wheel?.facts['assignment_value'];
-    if (maxAssignment != null &&
-        assignmentValue is Decimal &&
-        assignmentValue > maxAssignment) {
-      risks.add(
-        IncomeStrategyRisk(
-          code: IncomeStrategyRiskCode.assignmentBudgetExceeded,
-          severity: IncomeStrategyRiskSeverity.critical,
-          assetId: assetId,
-          sleeves: const {IncomeStrategySleeveKind.wheel},
-          evidence: {
-            'assignment_value': assignmentValue.toString(),
-            'limit': maxAssignment.toString(),
-          },
-        ),
-      );
-    }
-    final maxWeight = plan?.maxPositionWeight;
-    final holdingWeight =
-        sleeves[IncomeStrategySleeveKind.dividends]?.facts['holding_weight'];
-    if (maxWeight != null &&
-        holdingWeight is Decimal &&
-        holdingWeight > maxWeight) {
-      risks.add(
-        IncomeStrategyRisk(
-          code: IncomeStrategyRiskCode.concentrationExceeded,
-          severity: IncomeStrategyRiskSeverity.critical,
-          assetId: assetId,
-          sleeves: const {IncomeStrategySleeveKind.dividends},
-          evidence: {
-            'weight': holdingWeight.toString(),
-            'limit': maxWeight.toString(),
-          },
-        ),
-      );
-    }
-    return risks;
   }
 }

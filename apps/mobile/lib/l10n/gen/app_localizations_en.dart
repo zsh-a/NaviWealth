@@ -15619,6 +15619,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incomeStrategySleeveLeaps => 'LEAPS call';
 
   @override
+  String get incomeStrategyStatusHolding => 'Holding';
+
+  @override
+  String get incomeStrategyStatusPlanned => 'Planned';
+
+  @override
+  String get incomeStrategyStatusOpen => 'Open';
+
+  @override
+  String get incomeStrategyStatusResolved => 'Resolved';
+
+  @override
+  String get incomeStrategyMetricPartial => 'Partial valuation';
+
+  @override
   String get incomeStrategyCashFlowDividend => 'Gross dividend';
 
   @override
@@ -15675,6 +15690,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get incomeStrategyRiskMissingDelta =>
       'A LEAPS position has no delta, so equivalent-share exposure is incomplete.';
+
+  @override
+  String get incomeStrategyRiskMissingFx =>
+      'An FX rate is missing, so one or more monetary totals are incomplete.';
+
+  @override
+  String get incomeStrategyRiskStaleValuation =>
+      'A position mark is stale and should be refreshed.';
+
+  @override
+  String get incomeStrategyRiskIncomeTarget =>
+      'Year-to-date realized income is materially behind the configured annual target.';
 
   @override
   String get incomeStrategyRiskExpiration =>

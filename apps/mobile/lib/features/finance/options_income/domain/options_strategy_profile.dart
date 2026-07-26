@@ -21,14 +21,12 @@ class OptionsStrategyProfile {
     required this.deltaCallMin,
     required this.deltaCallMax,
     required this.maxCapitalPerTradePct,
-    required this.maxUnderlyingExposurePct,
     required this.minAnnualizedYield,
     required this.minOpenInterest,
     required this.minVolume,
     required this.maxBidAskSpreadPct,
     required this.avoidEarnings,
     required this.avoidMacroEvents,
-    required this.onlyOnApprovedUnderlyings,
     required this.riskDisclosureAckAt,
     required this.sync,
   });
@@ -55,10 +53,6 @@ class OptionsStrategyProfile {
   /// Stored as a 0..1 decimal (e.g. `0.10` = 10%).
   final Decimal maxCapitalPerTradePct;
 
-  /// Max share of total net worth a single underlying can occupy post-
-  /// assignment. 0..1 decimal.
-  final Decimal maxUnderlyingExposurePct;
-
   /// Annualized return floor (0..1 decimal, e.g. `0.08` = 8%).
   final Decimal minAnnualizedYield;
 
@@ -70,7 +64,6 @@ class OptionsStrategyProfile {
 
   final bool avoidEarnings;
   final bool avoidMacroEvents;
-  final bool onlyOnApprovedUnderlyings;
 
   /// OCC ODD acknowledgement timestamp. `null` until the user reads and
   /// confirms the disclosure — gate-keeps the scanner UI.
@@ -90,14 +83,12 @@ class OptionsStrategyProfile {
     Decimal? deltaCallMin,
     Decimal? deltaCallMax,
     Decimal? maxCapitalPerTradePct,
-    Decimal? maxUnderlyingExposurePct,
     Decimal? minAnnualizedYield,
     int? minOpenInterest,
     int? minVolume,
     Decimal? maxBidAskSpreadPct,
     bool? avoidEarnings,
     bool? avoidMacroEvents,
-    bool? onlyOnApprovedUnderlyings,
     DateTime? riskDisclosureAckAt,
     SyncMeta? sync,
   }) {
@@ -112,16 +103,12 @@ class OptionsStrategyProfile {
       deltaCallMax: deltaCallMax ?? this.deltaCallMax,
       maxCapitalPerTradePct:
           maxCapitalPerTradePct ?? this.maxCapitalPerTradePct,
-      maxUnderlyingExposurePct:
-          maxUnderlyingExposurePct ?? this.maxUnderlyingExposurePct,
       minAnnualizedYield: minAnnualizedYield ?? this.minAnnualizedYield,
       minOpenInterest: minOpenInterest ?? this.minOpenInterest,
       minVolume: minVolume ?? this.minVolume,
       maxBidAskSpreadPct: maxBidAskSpreadPct ?? this.maxBidAskSpreadPct,
       avoidEarnings: avoidEarnings ?? this.avoidEarnings,
       avoidMacroEvents: avoidMacroEvents ?? this.avoidMacroEvents,
-      onlyOnApprovedUnderlyings:
-          onlyOnApprovedUnderlyings ?? this.onlyOnApprovedUnderlyings,
       riskDisclosureAckAt: riskDisclosureAckAt ?? this.riskDisclosureAckAt,
       sync: sync ?? this.sync,
     );
@@ -207,14 +194,12 @@ OptionsStrategyProfile defaultProfileForMode(OptionsStrategyMode mode) {
         deltaCallMin: Decimal.parse('0.10'),
         deltaCallMax: Decimal.parse('0.20'),
         maxCapitalPerTradePct: Decimal.parse('0.10'),
-        maxUnderlyingExposurePct: Decimal.parse('0.15'),
         minAnnualizedYield: Decimal.parse('0.08'),
         minOpenInterest: 200,
         minVolume: 25,
         maxBidAskSpreadPct: Decimal.parse('0.08'),
         avoidEarnings: true,
         avoidMacroEvents: true,
-        onlyOnApprovedUnderlyings: true,
         riskDisclosureAckAt: null,
         sync: sync,
       );
@@ -233,14 +218,12 @@ OptionsStrategyProfile defaultProfileForMode(OptionsStrategyMode mode) {
         deltaCallMin: Decimal.parse('0.15'),
         deltaCallMax: Decimal.parse('0.30'),
         maxCapitalPerTradePct: Decimal.parse('0.15'),
-        maxUnderlyingExposurePct: Decimal.parse('0.20'),
         minAnnualizedYield: Decimal.parse('0.12'),
         minOpenInterest: 100,
         minVolume: 10,
         maxBidAskSpreadPct: Decimal.parse('0.12'),
         avoidEarnings: true,
         avoidMacroEvents: true,
-        onlyOnApprovedUnderlyings: true,
         riskDisclosureAckAt: null,
         sync: sync,
       );
@@ -258,14 +241,12 @@ OptionsStrategyProfile defaultProfileForMode(OptionsStrategyMode mode) {
         deltaCallMin: Decimal.parse('0.20'),
         deltaCallMax: Decimal.parse('0.40'),
         maxCapitalPerTradePct: Decimal.parse('0.20'),
-        maxUnderlyingExposurePct: Decimal.parse('0.25'),
         minAnnualizedYield: Decimal.parse('0.18'),
         minOpenInterest: 50,
         minVolume: 5,
         maxBidAskSpreadPct: Decimal.parse('0.15'),
         avoidEarnings: false,
         avoidMacroEvents: false,
-        onlyOnApprovedUnderlyings: true,
         riskDisclosureAckAt: null,
         sync: sync,
       );

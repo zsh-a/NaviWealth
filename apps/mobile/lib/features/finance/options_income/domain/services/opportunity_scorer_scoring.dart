@@ -4,6 +4,7 @@ Map<String, Decimal> _softScore({
   required OptionContract contract,
   required OptionsStrategyKind strategy,
   required OptionsStrategyProfile profile,
+  required Decimal? maxPositionWeight,
   required Decimal? currentUnderlyingExposurePct,
   required bool hasUpcomingEarnings,
   required bool hasUpcomingMacroEvent,
@@ -56,7 +57,7 @@ Map<String, Decimal> _softScore({
 
   final portfolioFitScore = _portfolioFitScore(
     currentExposure: currentUnderlyingExposurePct,
-    maxExposure: profile.maxUnderlyingExposurePct,
+    maxExposure: maxPositionWeight ?? Decimal.one,
   );
 
   final eventSafetyScore = !eventDataAvailable

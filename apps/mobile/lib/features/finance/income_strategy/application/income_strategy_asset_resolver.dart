@@ -1,3 +1,4 @@
+import 'package:naviwealth/core/persistence/domain_enums.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
@@ -8,6 +9,11 @@ class IncomeStrategyAssetResolver {
     : _assetsById = {for (final asset in assets) asset.id: asset};
 
   final Map<String, Asset> _assetsById;
+
+  bool isSecurity(String assetId) {
+    final asset = _assetsById[assetId];
+    return asset != null && kSecuritiesAssetTypes.contains(asset.type);
+  }
 
   IncomeStrategyAsset fromAssetId(
     String assetId, {

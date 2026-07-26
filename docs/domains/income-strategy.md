@@ -1,96 +1,111 @@
 # Income Strategy Framework
 
-> 状态（2026-07-26）：已实现股息、Wheel、LEAPS Call 三类 sleeve 的统一组合框架。
+> 状态（2026-07-26）：股息、Wheel、LEAPS Call 已统一到开放式模块框架。
 
-## 1. 定位
+## 1. 定位与边界
 
-Income Strategy 是 FinanceOS 的收益策略组合层。它不拥有股息事件、期权交易或
-LEAPS 持仓，而是把这些独立事实源投影成同一种只读组合快照：
+Income Strategy 是 FinanceOS 的收益策略组合层。它不拥有股息事件、持仓、
+期权日志或 LEAPS 仓位，只把各自的事实源投影成统一只读快照：
 
 ```text
-事实源 → sleeve adapter → sleeve contribution
-                         ↓
-                 IncomeStrategyAssembler
-                         ↓
-       portfolio / underlying / cash flow / risk snapshot
+事实源 → IncomeStrategyModule → sleeve contribution ┐
+计划   → sleeve intents                             ├→ assembler → rules → UI / AI
+汇率   → base-currency valuation                    ┘
 ```
 
-每个 sleeve 独立维护自己的生命周期。Wheel 仍按 short put、持股、short call
-推进；股息按事件与预测推进；LEAPS 是独立的 long-call 持仓。组合层不得把三者
-压进同一状态机。
+每个 sleeve 保留自己的生命周期；组合层不建立一个覆盖所有策略的超级状态机。
+Wheel、股息和 LEAPS 的写入仍由所属 feature/repository 负责。
 
-## 2. 扩展契约
+## 2. 核心契约
 
-新增策略类型时：
+- `IncomeStrategySleeveKind`、`IncomeStrategyCashFlowKind`、
+  `IncomeStrategyRiskCode` 是稳定 wire id 值对象，不是封闭 enum。
+- `IncomeStrategyModule` 是扩展单元，一次注册贡献数据加载、adapter、规则和 UI
+  presentation。
+- `IncomeStrategyAssembler` 只负责按 canonical `assetId` 组合、校验和执行注册规则；
+  它不知道任何内置 sleeve id。
+- 模块详情实现 `IncomeStrategySleeveDetails`；跨模块规则只读取
+  `IncomeStrategyExposure`。禁止使用动态 `Map<String, Object?> facts`。
+- 同一资产、同一 sleeve 的重复贡献直接失败，防止多个事实源争夺所有权。
 
-1. 在 `IncomeStrategySleeveKind` 增加稳定 wire 值。
-2. 在所属 feature 实现 adapter，输出
-   `IncomeStrategySleeveContribution(asset, snapshot)`。
-3. snapshot 必须区分：
-   - `realizedResult`：已实现经济结果；
-   - `projectedCash`：尚未发生的预计现金；
-   - `cashFlows`：带 actual / declared / estimated / contingent 状态的现金事实；
-   - `capitalAtRisk`、市值、Delta 等风险量；
-   - 仅供确定性规则使用的只读 facts。
-4. 把 contribution 加入 `portfolioIncomeStrategyProvider` 的输入列表。
-5. 仅在确有跨 sleeve 冲突时向 assembler 增加协调规则。
+新增模块只需：
 
-Assembler 对同一标的、同一 sleeve 的重复贡献直接失败，避免两个实现同时成为
-来源。没有计划但已有真实仓位的 sleeve 仍会展示，并标记 `unplannedSleeve`。
+1. 定义模块自己的 wire id、settings、adapter、details 和规则；
+2. 输出 `IncomeStrategySleeveContribution`，金额已经换算为组合基准币；
+3. 定义本地化 presentation；
+4. 在 `kIncomeStrategyModules` 增加一个注册项并补测试。
 
-## 3. 计划与事实
+无需修改 assembler、共享计划表列、总览页 switch 或 AI 序列化分支。
 
-`income_strategy_plans` 只保存用户意图和约束：
+## 3. 金额与时间语义
 
-- 规范资产 id（`<market>:<symbol>`）；
-- 任意 sleeve 组合；
-- 总资金预算、年度收益目标；
-- 最大仓位权重、Wheel 行权预算、LEAPS 成本；
-- 是否保留股息仓位、是否允许股票被 call away。
+所有金额使用 `Money`。每条现金流同时保留：
 
-计划不复制持仓、收益或现金流。真实事实仍由股息中心、投资持仓、期权日志和
-LEAPS 持仓表负责。计划使用 `fin:income_strategy_plans` 参与通用 row-state sync。
+- `amount`：事实发生时的原币金额；
+- `baseAmount`：按事实日期换算的组合基准币金额；缺失汇率时为 `null`；
+- `source`：类型化的实体表、实体 id 和证据完整性。
 
-## 4. 统一语义
+所有汇总只允许对基准币金额求和。缺失 FX、行情或 Delta 会降低
+`IncomeStrategyMetricQuality` 并产生规则风险，绝不把不同币种 Decimal 直接相加。
 
-- 买入 LEAPS 是现金流出和资产转换，不是即时亏损。
-- Wheel premium 只有在结果确定后进入已实现结果。
-- 股息预测不会伪装成实际到账。
-- `capitalAtRisk` 是各 sleeve 的策略资金占用之和，可能包含同一标的的叠加暴露；
-  它不是去重后的净资产。
-- 无法归属到具体资产的 90 天股息预测保留为 portfolio-level cash flow，不凭空
-  猜测资产归属。
+当前已实现结果统一采用 calendar YTD：
 
-## 5. 协调规则
+- `periodStart = 当年 1 月 1 日`；
+- `asOf` 由 provider 注入，测试可固定时间；
+- 90 天预测和 YTD 已实现值不会混为一个数字；
+- LEAPS 买入是现金流出和资产转换，不是即时亏损；
+- Wheel premium 仅在关闭、到期或行权等结果确定后进入已实现值。
 
-当前确定性规则包括：
+## 4. 计划是唯一策略意图源
 
-- 组合资金预算、Wheel 行权预算、LEAPS 成本和持仓权重超限；
-- short put 与 long call 的叠加下跌暴露；
-- 要求保留股息但存在 covered call 的中断风险；
-- 已实现的股息和 Wheel 收益不足以覆盖未平仓 LEAPS 成本；
-- 缺少行情、Delta、临近到期和计划外仓位。
+`income_strategy_plans` 每个 owner + asset 只有一行，稳定行 id 与 asset id 分离。
+它只保存：
 
-规则只报告事实、证据和严重度，不自动下单。
+- canonical `<market>:<symbol>` 资产 id；
+- 通用资本预算、年度收入目标、最大仓位权重；
+- `sleeveIntentsJson`：模块是否启用及模块自有 typed settings；
+- 备注和通用 sync metadata。
 
-## 6. 账本闭环
+Wheel 标的清单已合并为 Wheel intent。`allowPut`、`allowCall`、最大买入价、
+最小卖出价、最大行权金额和是否允许被 call away 都属于该 intent。
+不存在第二份 `approved_underlyings` 权威表；Options scanner 读取由计划投影出的
+`ApprovedUnderlying`。
 
-期权交易日志与 LEAPS 持仓是策略事实源，`OptionsJournalLedgerService` 负责以
-确定性 journal id 镜像到 FinanceOS 复式账本：
+真实持仓、收益和现金流不复制到计划。没有计划但已有真实仓位仍展示，并由
+`UnplannedSleeveRule` 标记。
 
-- LEAPS 开仓：建立 option lot 并扣减现金，费用计入 lot 成本；
-- 平仓：移除 lot、增加现金并确认资本损益；
-- 到期：移除 lot并确认全部成本损失；
-- 行权：移除 option lot，将权利金与行权现金共同计入标的股票成本。
+## 5. 规则层
 
-编辑采用 upsert，删除会软删除镜像分录。未选择券商和现金账户时保留策略记录，
-但不生成账本镜像，避免猜测账户。
+规则实现 `IncomeStrategyRule`，由模块或 core registry 注册：
+
+- core：计划外 sleeve、资本预算、仓位集中度、年度收入进度；
+- coordination：short put + long call 叠加下跌暴露、股息仓位被 call away、
+  LEAPS 成本覆盖、LEAPS 成本上限、Wheel 行权预算；
+- module：缺失行情、Delta、FX、估值过期、临近到期等。
+
+规则只输出稳定 code、严重度、涉及 sleeves 和结构化 evidence；不自动交易。
+
+## 6. 身份、持久化与同步
+
+- 计划、期权日志、LEAPS 仓位都持久化 canonical `underlyingAssetId`；
+- symbol 只用于展示，不用于跨来源 join；
+- 同步边界使用 `fin:income_strategy_plans`、`fin:options_trade_journal` 和
+  `fin:options_leaps_call_positions`；
+- 行情、机会缓存及其它可重算结果保持本地派生数据。
+
+期权和 LEAPS 仍由 `OptionsJournalLedgerService` 以确定性 journal id 镜像到
+FinanceOS 复式账本。未选择账户时保留策略事实，但不猜测账本账户。
 
 ## 7. 产品入口
 
-- `/plan/income`：统一收益策略总览、标的轨道、活动流和计划编辑；
-- `/plan/income/options`：期权机会、Wheel 和日志的专用工作区；
-- Dividend Center：股息事件和预测的专用工作区。
+- `/plan/income`：统一总览、标的轨道、活动和策略计划；
+- `/plan/income/wheel`：Wheel 生命周期专业钻取；
+- `/plan/income/options`：期权机会扫描与日志工作区；
+- Dividend Center：股息事件和预测工作区。
 
-设备 AI 通过 `get_income_strategy_portfolio` 读取与 UI 相同的快照。它必须区分
-实际现金、预计现金与已实现结果，并返回原始实体 evidence anchors。
+顶层 Plan 只暴露统一收益策略入口，Wheel 不再作为平级的第二套信息架构。
+计划表单按已注册模块渐进展开模块设置；状态、现金流和风险文案由 presentation
+registry 本地化，并为未知第三方模块提供稳定 fallback。
+
+设备 AI 的 `get_income_strategy_portfolio` 与 UI 读取同一快照，返回 YTD 周期、
+金额质量和原始实体 evidence anchors。

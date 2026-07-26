@@ -41,6 +41,7 @@ void main() {
         optionsJournalLedgerServiceProvider.future,
       );
       final entry = await journalRepo.create(
+        underlyingAssetId: 'nasdaq:AAPL',
         strategy: OptionsStrategyKind.cashSecuredPut,
         symbol: 'AAPL',
         optionSymbol: 'AAPL260619P00190000',
@@ -91,6 +92,7 @@ void main() {
         optionsJournalLedgerServiceProvider.future,
       );
       final entry = await journalRepo.create(
+        underlyingAssetId: 'nasdaq:AAPL',
         strategy: OptionsStrategyKind.cashSecuredPut,
         symbol: 'AAPL',
         optionSymbol: 'AAPL260619P00190000',
@@ -141,6 +143,7 @@ void main() {
           optionsJournalLedgerServiceProvider.future,
         );
         final opened = await journalRepo.create(
+          underlyingAssetId: 'nasdaq:AAPL',
           strategy: OptionsStrategyKind.cashSecuredPut,
           symbol: 'AAPL',
           optionSymbol: 'AAPL260619P00190000',
@@ -232,6 +235,7 @@ void main() {
         optionsJournalLedgerServiceProvider.future,
       );
       final entry = await journalRepo.create(
+        underlyingAssetId: 'nasdaq:AAPL',
         strategy: OptionsStrategyKind.cashSecuredPut,
         symbol: 'AAPL',
         optionSymbol: 'AAPL260619P00190000',
@@ -305,6 +309,7 @@ void main() {
           optionsJournalLedgerServiceProvider.future,
         );
         final opened = await repo.create(
+          underlyingAssetId: 'nasdaq:AAPL',
           symbol: 'AAPL',
           optionSymbol: 'AAPL280120C00200000',
           openedAt: DateTime.utc(2026, 7, 1),
@@ -354,11 +359,11 @@ void main() {
               ],
             )
             .get();
-      expect(closeRows.map((row) => row.read<String>('units')), [
-        '-2',
-        '-29',
-        '80',
-      ]);
+        expect(closeRows.map((row) => row.read<String>('units')), [
+          '-2',
+          '-29',
+          '80',
+        ]);
       },
       tags: 'integration',
     );
@@ -387,6 +392,7 @@ void main() {
           optionsJournalLedgerServiceProvider.future,
         );
         final opened = await repo.create(
+          underlyingAssetId: 'nasdaq:AAPL',
           symbol: 'AAPL',
           optionSymbol: 'AAPL280120C00200000',
           openedAt: DateTime.utc(2026, 7, 1),

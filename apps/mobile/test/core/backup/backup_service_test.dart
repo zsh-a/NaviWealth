@@ -119,12 +119,11 @@ void main() {
       'INSERT INTO options_strategy_profile '
       '(user_id, mode, allowed_strategies_json, min_dte, max_dte, '
       'delta_put_min, delta_put_max, delta_call_min, delta_call_max, '
-      'max_capital_per_trade_pct, max_underlying_exposure_pct, '
-      'min_annualized_yield, min_open_interest, min_volume, '
+      'max_capital_per_trade_pct, min_annualized_yield, min_open_interest, min_volume, '
       'max_bid_ask_spread_pct, avoid_earnings, avoid_macro_events, '
-      'only_on_approved_underlyings, risk_disclosure_ack_at, '
+      'risk_disclosure_ack_at, '
       'owner_user_id, updated_at, updated_by_device, hlc, deleted_at) '
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         'user-1',
         'balanced',
@@ -136,12 +135,10 @@ void main() {
         '0.15',
         '0.30',
         '0.05',
-        '0.20',
         '0.12',
         100,
         10,
         '0.08',
-        1,
         1,
         1,
         null,

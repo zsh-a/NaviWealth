@@ -3,6 +3,9 @@ import 'package:naviwealth/features/finance/income_strategy/domain/income_strate
 import 'package:naviwealth/features/finance/options_income/domain/leaps_call_position.dart';
 import 'package:naviwealth/features/finance/options_income/domain/wheel_lifecycle.dart';
 
+import 'leaps_income_sleeve_adapter.dart';
+import 'wheel_income_sleeve_adapter.dart';
+
 /// Wheel drill-down projected from the generic income strategy snapshot.
 ///
 /// This keeps the Wheel UI convenient without establishing a second
@@ -24,9 +27,12 @@ class WheelStrategyView {
   IncomeStrategySleeveSnapshot? get leaps =>
       underlying.sleeves[IncomeStrategySleeveKind.leapsCall];
 
-  Decimal get openLeapsCost => leaps?.capitalAtRisk ?? Decimal.zero;
-  Decimal get realizedLeapsPnl => leaps?.realizedResult ?? Decimal.zero;
-  Decimal get underlyingRealizedResult => underlying.realizedResult;
+  Decimal get openLeapsCost =>
+      leaps?.capitalAtRisk.value.amount ?? Decimal.zero;
+  Decimal get realizedLeapsPnl =>
+      leaps?.realizedResult.value.amount ?? Decimal.zero;
+  Decimal get underlyingRealizedResult =>
+      underlying.realizedResult.value.amount;
   Decimal? get deltaEquivalentShares => leaps?.deltaEquivalentShares;
   List<IncomeStrategyRisk> get risks => underlying.risks;
 
@@ -46,19 +52,19 @@ List<WheelStrategyView> buildWheelStrategyViews(
     final leapsSnapshot =
         underlying.sleeves[IncomeStrategySleeveKind.leapsCall];
     if (wheelSnapshot == null && leapsSnapshot == null) continue;
-    final lifecycle = wheelSnapshot?.facts['lifecycle'];
-    final positions = leapsSnapshot?.facts['positions'];
+    final wheelDetails = wheelSnapshot?.details;
+    final leapsDetails = leapsSnapshot?.details;
     views.add(
       WheelStrategyView(
         underlying: underlying,
-        wheel: lifecycle is WheelLifecycle
-            ? lifecycle
+        wheel: wheelDetails is WheelIncomeSleeveDetails
+            ? wheelDetails.lifecycle
             : WheelLifecycle.empty(
                 symbol: underlying.asset.symbol,
                 currency: underlying.asset.currency,
               ),
-        positions: positions is List<LeapsCallPosition>
-            ? List<LeapsCallPosition>.unmodifiable(positions)
+        positions: leapsDetails is LeapsIncomeSleeveDetails
+            ? leapsDetails.positions
             : const <LeapsCallPosition>[],
       ),
     );

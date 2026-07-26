@@ -3,72 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/income_strategy/data/providers.dart';
 import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy.dart';
 import 'package:naviwealth/features/finance/income_strategy/ui/income_strategy_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-const _asset = IncomeStrategyAsset(
-  assetId: 'us_stock:AAPL',
-  symbol: 'AAPL',
-  market: 'us_stock',
-  currency: 'USD',
-  label: 'Apple',
-);
-
-IncomeStrategySleeveSnapshot _sleeve(
-  IncomeStrategySleeveKind kind,
-  String result,
-) => IncomeStrategySleeveSnapshot(
-  kind: kind,
-  status: 'active',
-  realizedResult: Decimal.parse(result),
-  projectedCash: Decimal.zero,
-  capitalAtRisk: Decimal.fromInt(1000),
-  marketValue: null,
-  deltaEquivalentShares: null,
-  cashFlows: const [],
-  risks: const [],
-);
-
-PortfolioIncomeStrategySnapshot _snapshot() => PortfolioIncomeStrategySnapshot(
-  baseCurrency: 'USD',
-  underlyings: [
-    UnderlyingIncomeStrategySnapshot(
-      asset: _asset,
-      enabledSleeves: IncomeStrategySleeveKind.values.toSet(),
-      sleeves: {
-        IncomeStrategySleeveKind.dividends: _sleeve(
-          IncomeStrategySleeveKind.dividends,
-          '300',
-        ),
-        IncomeStrategySleeveKind.wheel: _sleeve(
-          IncomeStrategySleeveKind.wheel,
-          '200',
-        ),
-        IncomeStrategySleeveKind.leapsCall: _sleeve(
-          IncomeStrategySleeveKind.leapsCall,
-          '100',
-        ),
-      },
-      risks: const [
-        IncomeStrategyRisk(
-          code: IncomeStrategyRiskCode.stackedDownside,
-          severity: IncomeStrategyRiskSeverity.warning,
-          assetId: 'us_stock:AAPL',
-          sleeves: {
-            IncomeStrategySleeveKind.wheel,
-            IncomeStrategySleeveKind.leapsCall,
-          },
-        ),
-      ],
-    ),
-  ],
-  unassignedCashFlows: const [],
-);
-
 void main() {
-  testWidgets('renders composable strategy tracks on a compact phone', (
+  testWidgets('renders registered strategy modules on a compact phone', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(375, 812);
@@ -106,4 +48,54 @@ void main() {
     expect(find.text('LEAPS call'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+}
+
+PortfolioIncomeStrategySnapshot _snapshot() {
+  final asOf = DateTime.utc(2026, 7, 26);
+  final sleeves = <IncomeStrategySleeveKind, IncomeStrategySleeveSnapshot>{
+    for (final kind in [
+      IncomeStrategySleeveKind.dividends,
+      IncomeStrategySleeveKind.wheel,
+      IncomeStrategySleeveKind.leapsCall,
+    ])
+      kind: IncomeStrategySleeveSnapshot(
+        kind: kind,
+        status: 'open',
+        periodStart: DateTime.utc(2026),
+        asOf: asOf,
+        realizedIncome: IncomeStrategyMoneyMetric.zero('USD'),
+        realizedResult: IncomeStrategyMoneyMetric(
+          value: Money(Decimal.fromInt(100), 'USD'),
+        ),
+        projectedCash: IncomeStrategyMoneyMetric.zero('USD'),
+        exposure: IncomeStrategyExposure(
+          capitalAtRisk: IncomeStrategyMoneyMetric.zero('USD'),
+        ),
+        cashFlows: const [],
+        risks: const [],
+      ),
+  };
+  return PortfolioIncomeStrategySnapshot(
+    baseCurrency: 'USD',
+    periodStart: DateTime.utc(2026),
+    asOf: asOf,
+    unassignedCashFlows: const [],
+    underlyings: [
+      UnderlyingIncomeStrategySnapshot(
+        asset: const IncomeStrategyAsset(
+          assetId: 'nasdaq:AAPL',
+          symbol: 'AAPL',
+          market: 'nasdaq',
+          currency: 'USD',
+          label: 'Apple',
+        ),
+        baseCurrency: 'USD',
+        periodStart: DateTime.utc(2026),
+        asOf: asOf,
+        enabledSleeves: sleeves.keys.toSet(),
+        sleeves: sleeves,
+        risks: const [],
+      ),
+    ],
+  );
 }

@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/income_strategy/data/income_strategy_plan_providers.dart';
+import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy.dart';
+import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy_plan.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/symbol_field.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -107,29 +110,56 @@ class _ApprovedUnderlyingFormSheetState
     final notes = _notesCtl.text.trim();
     setState(() => _busy = true);
     try {
-      final repo = await ref.read(approvedUnderlyingsRepositoryProvider.future);
-      final existing = widget.existing;
-      if (existing == null) {
-        await repo.add(
-          symbol: choice.symbol,
-          market: choice.market,
-          allowPut: _allowPut,
-          allowCall: _allowCall,
-          maxBuyPrice: maxBuyPrice,
-          minSellPrice: minSellPrice,
-          notes: notes.isEmpty ? null : notes,
-        );
+      final repo = await ref.read(incomeStrategyPlanRepositoryProvider.future);
+      final plans = await ref.read(incomeStrategyPlansProvider.future);
+      final assetId = ApprovedUnderlying.idFor(
+        market: choice.market,
+        symbol: choice.symbol,
+      );
+      final current = plans
+          .where((plan) => plan.assetId == assetId)
+          .firstOrNull;
+      final intents =
+          Map<IncomeStrategySleeveKind, IncomeStrategySleeveIntent>.of(
+            current?.sleeveIntents ?? const {},
+          );
+      final previousWheel = current?.intent(IncomeStrategySleeveKind.wheel);
+      final settings =
+          Map<IncomeStrategySettingKey, IncomeStrategySettingValue>.of(
+            previousWheel?.settings ?? const {},
+          );
+      settings[WheelIncomeStrategySettings.allowPut] =
+          IncomeStrategyBoolSetting(_allowPut);
+      settings[WheelIncomeStrategySettings.allowCall] =
+          IncomeStrategyBoolSetting(_allowCall);
+      if (maxBuyPrice == null) {
+        settings.remove(WheelIncomeStrategySettings.maxBuyPrice);
       } else {
-        await repo.update(
-          existing.copyWith(
-            allowPut: _allowPut,
-            allowCall: _allowCall,
-            maxBuyPrice: maxBuyPrice,
-            minSellPrice: minSellPrice,
-            notes: notes.isEmpty ? null : notes,
-          ),
-        );
+        settings[WheelIncomeStrategySettings.maxBuyPrice] =
+            IncomeStrategyDecimalSetting(maxBuyPrice);
       }
+      if (minSellPrice == null) {
+        settings.remove(WheelIncomeStrategySettings.minSellPrice);
+      } else {
+        settings[WheelIncomeStrategySettings.minSellPrice] =
+            IncomeStrategyDecimalSetting(minSellPrice);
+      }
+      intents[IncomeStrategySleeveKind.wheel] = IncomeStrategySleeveIntent(
+        kind: IncomeStrategySleeveKind.wheel,
+        enabled: true,
+        settings: Map.unmodifiable(settings),
+      );
+      await repo.upsert(
+        assetId: assetId,
+        symbol: choice.symbol,
+        market: choice.market.wire,
+        currency: choice.currency,
+        sleeveIntents: intents,
+        capitalBudget: current?.capitalBudget,
+        annualIncomeTarget: current?.annualIncomeTarget,
+        maxPositionWeight: current?.maxPositionWeight,
+        notes: notes.isEmpty ? null : notes,
+      );
       ref.invalidate(approvedUnderlyingsProvider);
       if (!mounted) return;
       Navigator.of(context).pop(true);
@@ -162,8 +192,41 @@ class _ApprovedUnderlyingFormSheetState
     if (confirmed != true || !mounted) return;
     setState(() => _busy = true);
     try {
-      final repo = await ref.read(approvedUnderlyingsRepositoryProvider.future);
-      await repo.remove(existing);
+      final repo = await ref.read(incomeStrategyPlanRepositoryProvider.future);
+      final plans = await ref.read(incomeStrategyPlansProvider.future);
+      final plan = plans
+          .where((candidate) => candidate.assetId == existing.id)
+          .firstOrNull;
+      if (plan != null) {
+        final intents =
+            Map<IncomeStrategySleeveKind, IncomeStrategySleeveIntent>.of(
+              plan.sleeveIntents,
+            );
+        final wheel = intents[IncomeStrategySleeveKind.wheel];
+        if (wheel != null) {
+          intents[IncomeStrategySleeveKind.wheel] = IncomeStrategySleeveIntent(
+            kind: wheel.kind,
+            enabled: false,
+            settings: wheel.settings,
+          );
+        }
+        final hasEnabled = intents.values.any((intent) => intent.enabled);
+        if (hasEnabled) {
+          await repo.upsert(
+            assetId: plan.assetId,
+            symbol: plan.symbol,
+            market: plan.market,
+            currency: plan.currency,
+            sleeveIntents: intents,
+            capitalBudget: plan.capitalBudget,
+            annualIncomeTarget: plan.annualIncomeTarget,
+            maxPositionWeight: plan.maxPositionWeight,
+            notes: plan.notes,
+          );
+        } else {
+          await repo.remove(plan);
+        }
+      }
       ref.invalidate(approvedUnderlyingsProvider);
       if (!mounted) return;
       Navigator.of(context).pop(true);

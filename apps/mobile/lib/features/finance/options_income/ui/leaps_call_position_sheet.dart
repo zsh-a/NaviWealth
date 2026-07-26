@@ -8,7 +8,9 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -149,10 +151,16 @@ class _LeapsCallPositionFormState
       final mark = _optionalDecimal(_mark);
       final delta = _optionalDecimal(_delta);
       final notes = _notes.text.trim();
+      final symbol = _symbol.text.trim().toUpperCase();
+      final market =
+          assetMarketFromWire(_loaded?.underlyingMarket) ??
+          inferAssetMarket(symbol);
+      final underlyingAssetId = Asset.idFor(market, symbol);
       final LeapsCallPosition saved;
       if (_loaded == null) {
         saved = await repo.create(
-          symbol: _symbol.text,
+          underlyingAssetId: underlyingAssetId,
+          symbol: symbol,
           optionSymbol: _optionSymbol.text,
           openedAt: _openedAt,
           expirationAt: _expirationAt,
@@ -175,7 +183,8 @@ class _LeapsCallPositionFormState
       } else {
         saved = await repo.update(
           _loaded!.copyWith(
-            symbol: _symbol.text.trim().toUpperCase(),
+            underlyingAssetId: underlyingAssetId,
+            symbol: symbol,
             optionSymbol: _optionSymbol.text.trim(),
             openedAt: _openedAt,
             expirationAt: _expirationAt,

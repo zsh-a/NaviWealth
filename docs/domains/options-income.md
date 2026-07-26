@@ -73,7 +73,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 | 约束 | 来源 | 对设计的影响 |
 |---|---|---|
 | AI 完全设备端，无 `/ai/chat` 中继 | [`ai-architecture.md`](../ai/ai-architecture.md) §4.6 | 评分 + tool 实现全部 Dart。Backend 不解析期权语义。 |
-| Backend 只做 sync_rows 存储 | [`sync-v3.md`](../sync/sync-v3.md) | 派生数据（opportunity cache）**不上同步**；用户状态（profile / approved / journal）走行级同步。 |
+| Backend 只做 sync_rows 存储 | [`sync-v3.md`](../sync/sync-v3.md) | 派生数据（opportunity cache）**不上同步**；用户状态（profile / income strategy plan / journal）走行级同步。 |
 | Device tool descriptor catalog | `features/finance/options_income/ai_tools/` + `features/finance/finance_ai_tools.dart` | profile / opportunity / wheel lifecycle descriptors live with the owning domain tool registrations and are exposed through `DomainPack.toolDescriptors`。 |
 | Money 类型 | CLAUDE.md「Money」 | 所有期权金额走 `Money` + `Decimal`。 |
 | Web 无 AI | CLAUDE.md「AI」 | Income Planner 通过 `kIsWeb` 短路；`web_smoke` 反向断言不出现期权文案。 |
@@ -94,7 +94,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
                 ┌──────────────────────────────────────────────┐
                 │  User Inputs (Drift, synced via sync_rows)    │
                 │   • OptionsStrategyProfile                    │
-                │   • ApprovedUnderlyings                       │
+                │   • IncomeStrategyPlan Wheel intents          │
                 │   • Portfolio holdings + cash (existing)      │
                 └─────────────────┬────────────────────────────┘
                                   │
@@ -222,14 +222,12 @@ class OptionsStrategyProfile with _$OptionsStrategyProfile {
     required DecimalRange targetDeltaPut,    // e.g. [-0.30, -0.15]
     required DecimalRange targetDeltaCall,   // e.g. [0.15, 0.30]
     required Decimal maxCapitalPerTradePct,
-    required Decimal maxUnderlyingExposurePct,
     required Decimal minAnnualizedYield,
     required int minOpenInterest,
     required int minVolume,
     required Decimal maxBidAskSpreadPct,
     required bool avoidEarnings,
     required bool avoidMacroEvents,
-    required bool onlyOnApprovedUnderlyings,
     DateTime? riskDisclosureAckAt,        // OCC ODD acknowledgement
   }) = _OptionsStrategyProfile;
 }
@@ -270,7 +268,7 @@ class OpportunityExplanation with _$OpportunityExplanation {
 | 表 | 同步 | 理由 |
 |---|---|---|
 | `options_strategy_profile` | ✅ sync_rows | 用户偏好，跨设备一致 |
-| `options_approved_underlyings` | ✅ sync_rows | 用户清单，跨设备一致 |
+| `income_strategy_plans` | ✅ sync_rows | Wheel 标的与逐标的约束的唯一事实源 |
 | `options_trade_journal` | ✅ sync_rows | 真实复盘，需要历史 |
 | `options_leaps_call_positions` | ✅ sync_rows | Long Call 成本、状态与人工风险快照 |
 | `options_opportunity_cache` | ❌ 本地 | 派生数据，重算成本低；跨设备各自扫描 |
@@ -279,8 +277,8 @@ class OpportunityExplanation with _$OpportunityExplanation {
 
 ```
 options_profile.upsert
-options_approved.upsert
-options_approved.delete
+income_strategy_plan.upsert
+income_strategy_plan.delete
 options_journal.insert
 options_journal.update
 options_journal.close
@@ -303,14 +301,12 @@ class OptionsStrategyProfileTable extends Table {
   TextColumn get deltaCallMin => text().map(decimalConverter)();
   TextColumn get deltaCallMax => text().map(decimalConverter)();
   TextColumn get maxCapitalPerTradePct => text().map(decimalConverter)();
-  TextColumn get maxUnderlyingExposurePct => text().map(decimalConverter)();
   TextColumn get minAnnualizedYield => text().map(decimalConverter)();
   IntColumn get minOpenInterest => integer()();
   IntColumn get minVolume => integer()();
   TextColumn get maxBidAskSpreadPct => text().map(decimalConverter)();
   BoolColumn get avoidEarnings => boolean()();
   BoolColumn get avoidMacroEvents => boolean()();
-  BoolColumn get onlyOnApprovedUnderlyings => boolean()();
   DateTimeColumn get riskDisclosureAckAt => dateTime().nullable()();
   DateTimeColumn get updatedAt => dateTime()();
 
@@ -318,21 +314,8 @@ class OptionsStrategyProfileTable extends Table {
   Set<Column> get primaryKey => {userId};
 }
 
-class OptionsApprovedUnderlyingsTable extends Table {
-  TextColumn get userId => text()();
-  TextColumn get symbol => text()();
-  BoolColumn get allowPut => boolean()();
-  BoolColumn get allowCall => boolean()();
-  TextColumn get maxBuyPrice => text().nullable().map(decimalConverter)();
-  TextColumn get minSellPrice => text().nullable().map(decimalConverter)();
-  TextColumn get notes => text().nullable()();
-  DateTimeColumn get updatedAt => dateTime()();
-
-  @override
-  Set<Column> get primaryKey => {userId, symbol};
-}
-
 class OptionsTradeJournalTable extends Table {
+  TextColumn get underlyingAssetId => text()();
   TextColumn get id => text()();
   TextColumn get userId => text()();
   TextColumn get strategy => text()();
@@ -354,7 +337,11 @@ class OptionsTradeJournalTable extends Table {
 }
 ```
 
-`options_leaps_call_positions` 独立保存长期 Long Call：标的与合约代码、
+`income_strategy_plans.sleeve_intents_json` 中的 Wheel intent 保存允许的策略方向、
+最大买入价、最小卖出价、最大行权金额及逐标的最大仓位。scanner 将其投影为
+只读 `ApprovedUnderlying`，不再维护第二张 approved 表。
+
+`options_leaps_call_positions` 独立保存 canonical `underlyingAssetId`、长期 Long Call：标的与合约代码、
 开仓/到期/平仓日期、行权价、每张开仓支出与平仓收入、总费用、数量、乘数、
 状态，以及可选的人工 `currentMark` / `currentDelta` / `markedAt` 快照。
 行情和 Delta 缺失时保持 `null`，不得用推测值补齐。
@@ -423,8 +410,8 @@ eventDataAvailable AND profile.avoidEarnings AND earningsWithinDays(symbol, 7)
 eventDataAvailable AND profile.avoidMacroEvents AND macroEventWithinDays(7)
 ```
 
-批准标的是不可关闭的硬边界；UI 和 AI 提案均不能把
-`onlyOnApprovedUnderlyings` 改为 `false`。当前 yfinance 扫描没有可靠的事件
+启用 Wheel intent 是不可绕过的硬边界；UI 和 AI 不能通过全局 profile 扩大
+标的范围。当前 yfinance 扫描没有可靠的事件
 日历输入，因此 `eventDataAvailable=false`：事件硬过滤不运行，
 `event_safety_score=0.50`，解释中要求用户下单前自行核对财报、CPI 和 FOMC
 日期。只有接入真实、带时效的日历后才能启用相关开关。
@@ -573,7 +560,7 @@ LEAPS 使用独立表单和字段语义。表单对日期顺序、正数金额�
 `profile_settings_sheet.dart`（`showAppFormSheet`）：
 
 - StrategyMode 三选一（conservative / balanced / aggressive）—— 预填 delta / DTE / 收益阈值。
-- ApprovedUnderlyings 列表：增删 + 单个标的的 `allowPut` / `allowCall` / `maxBuyPrice` / `minSellPrice`。
+- 标的和逐标的边界在统一 Income Strategy 计划表单的 Wheel 模块中编辑。
 - 首次进入强制弹"期权风险披露"（基于 OCC ODD），用户确认后写入 `riskDisclosureAckAt`。
 
 **L10n**:所有 UI 字符串走 `lib/l10n/app_en.arb` + `app_zh.arb`,通过 `AppLocalizations.of(context).incomePlanner*` 访问。Domain 枚举(`TradeJournalStatus` / `OptionsStrategyKind` / `OptionsStrategyMode`)的展示标签集中在 `ui/income_planner_labels.dart` 的本地化辅助函数中,domain 层不依赖 `AppLocalizations`。
@@ -653,7 +640,7 @@ P0/P3 不需要新增 backend 业务表；服务端通过 [`sync-v3.md`](../sync
 - ❌ 不把评分 / 排名 / 候选生成放在 Worker。
 - ❌ 不让 AI tool 触发实时扫描。
 - ❌ 不在 web 构建出现 Income Planner 入口。
-- ❌ 不绕过 `OptionsApprovedUnderlyings` 给"陌生标的"打分。
+- ❌ 不绕过启用的 Wheel intent 给陌生标的打分。
 - ❌ 不引入新的 chat 入口或新的 AI runtime——所有 LLM 调用走现有 FRB/native runtime。
 - ❌ MVP 不接券商交易 API；不存在 `propose_options_trade` 工具。
 
@@ -667,7 +654,8 @@ P0/P3 不需要新增 backend 业务表；服务端通过 [`sync-v3.md`](../sync
 | 2026-05-21 | AI tool 只读 cache | tool 可触发扫描 | 控本 + 解释一致性 + 限流可预测；详见 §8.1 |
 | 2026-05-21 | 评分引擎在端侧（纯 Dart） | 在 Worker 上 | 与 device-only 原则一致；评分逻辑不下放 server |
 | 2026-05-21 | opportunity cache 不上同步 | 走 sync_rows | 派生数据，重算成本低；跨设备各自扫描更新鲜 |
-| 2026-05-21 | profile / approved / journal 走 sync_rows | 仅本地 | 用户状态，跨设备一致性必要 |
+| 2026-05-21 | profile / income strategy plan / journal 走 sync_rows | 仅本地 | 用户状态，跨设备一致性必要 |
+| 2026-07-26 | approved-underlying 合并进 Wheel intent | 独立 approved 表 | 消除双写和互相矛盾的策略权威 |
 | 2026-05-21 | 模块为 FinanceOS 子 feature `features/finance/options_income/` | 塞进 `investment/` | 跨 investment / accounts / fire / rebalance，保持独立 FinanceOS slice 避免双向依赖 |
 | 2026-05-21 | 命名 "Income Planner" | "Options Scanner" | 避免被识别成交易终端；与 NaviWealth 财富管理定位一致 |
 
@@ -684,7 +672,6 @@ apps/mobile/lib/features/finance/options_income/
 │   ├── scan_inputs_bridge.dart         # P1 — holdings/cash bridge from portfolio
 │   └── scan_orchestrator.dart          # P1 — universe → chain → scorer → cache
 ├── data/
-│   ├── approved_underlyings_repository.dart
 │   ├── leaps_call_position_repository.dart
 │   ├── options_opportunity_cache_repository.dart  # P1 — local-only cache repo
 │   ├── options_strategy_profile_repository.dart

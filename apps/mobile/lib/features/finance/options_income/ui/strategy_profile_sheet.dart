@@ -36,7 +36,6 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
   late final TextEditingController _minVolumeCtrl;
   late final TextEditingController _maxSpreadCtrl;
   late final TextEditingController _maxCapitalCtrl;
-  late final TextEditingController _maxExposureCtrl;
   late final TextEditingController _putDeltaLowCtrl;
   late final TextEditingController _putDeltaHighCtrl;
   late final TextEditingController _callDeltaLowCtrl;
@@ -104,7 +103,6 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
     _minVolumeCtrl = TextEditingController();
     _maxSpreadCtrl = TextEditingController();
     _maxCapitalCtrl = TextEditingController();
-    _maxExposureCtrl = TextEditingController();
     _putDeltaLowCtrl = TextEditingController();
     _putDeltaHighCtrl = TextEditingController();
     _callDeltaLowCtrl = TextEditingController();
@@ -117,7 +115,6 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
       _minVolumeCtrl,
       _maxSpreadCtrl,
       _maxCapitalCtrl,
-      _maxExposureCtrl,
       _putDeltaLowCtrl,
       _putDeltaHighCtrl,
       _callDeltaLowCtrl,
@@ -139,7 +136,6 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
     _minVolumeCtrl.text = profile.minVolume.toString();
     _maxSpreadCtrl.text = _percentText(profile.maxBidAskSpreadPct);
     _maxCapitalCtrl.text = _percentText(profile.maxCapitalPerTradePct);
-    _maxExposureCtrl.text = _percentText(profile.maxUnderlyingExposurePct);
     _putDeltaLowCtrl.text = profile.deltaPutMax.abs().toString();
     _putDeltaHighCtrl.text = profile.deltaPutMin.abs().toString();
     _callDeltaLowCtrl.text = profile.deltaCallMin.toString();
@@ -165,12 +161,10 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
       minVolume: int.parse(_minVolumeCtrl.text.trim()),
       maxBidAskSpreadPct: _parsePercent(_maxSpreadCtrl.text),
       maxCapitalPerTradePct: _parsePercent(_maxCapitalCtrl.text),
-      maxUnderlyingExposurePct: _parsePercent(_maxExposureCtrl.text),
       deltaPutMin: -Decimal.parse(_putDeltaHighCtrl.text.trim()),
       deltaPutMax: -Decimal.parse(_putDeltaLowCtrl.text.trim()),
       deltaCallMin: Decimal.parse(_callDeltaLowCtrl.text.trim()),
       deltaCallMax: Decimal.parse(_callDeltaHighCtrl.text.trim()),
-      onlyOnApprovedUnderlyings: true,
     );
   }
 
@@ -218,7 +212,6 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
       _minVolumeCtrl.dispose();
       _maxSpreadCtrl.dispose();
       _maxCapitalCtrl.dispose();
-      _maxExposureCtrl.dispose();
       _putDeltaLowCtrl.dispose();
       _putDeltaHighCtrl.dispose();
       _callDeltaLowCtrl.dispose();
@@ -391,13 +384,6 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
                     _PercentField(
                       controller: _maxCapitalCtrl,
                       label: l10n.incomePlannerProfileMaxCapitalPerTrade,
-                      min: 1,
-                      max: 100,
-                    ),
-                    const SizedBox(height: AppSpacing.s12),
-                    _PercentField(
-                      controller: _maxExposureCtrl,
-                      label: l10n.incomePlannerProfileMaxUnderlyingExposure,
                       min: 1,
                       max: 100,
                     ),

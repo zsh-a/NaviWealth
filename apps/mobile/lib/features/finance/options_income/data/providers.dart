@@ -5,7 +5,11 @@ import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/income_strategy/data/income_strategy_plan_providers.dart';
+import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy.dart';
+import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy_plan.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 import '../application/options_journal_ledger_service.dart';
 import '../application/scan_orchestrator.dart';
@@ -17,7 +21,6 @@ import '../domain/options_trade_stats.dart';
 import '../domain/services/opportunity_scorer.dart';
 import '../domain/trade_journal_entry.dart';
 import '../domain/wheel_lifecycle.dart';
-import 'approved_underlyings_repository.dart';
 import 'leaps_call_position_repository.dart';
 import 'options_opportunity_cache_repository.dart';
 import 'options_strategy_profile_repository.dart';
@@ -35,18 +38,6 @@ final optionsStrategyProfileRepositoryProvider =
       );
     });
 
-final approvedUnderlyingsRepositoryProvider =
-    FutureProvider<ApprovedUnderlyingsRepository>((ref) async {
-      final db = await ref.watch(appDatabaseProvider.future);
-      final outbox = await ref.watch(outboxStoreProvider.future);
-      final stamper = await ref.watch(mutationStamperProvider.future);
-      return ApprovedUnderlyingsRepository(
-        db: db,
-        outbox: outbox,
-        stamper: stamper,
-      );
-    });
-
 /// Streams the current user's [OptionsStrategyProfile], `null` when the
 /// user hasn't configured one yet (first run).
 final optionsStrategyProfileProvider =
@@ -58,15 +49,48 @@ final optionsStrategyProfileProvider =
       yield* repo.watch(ownerUserId);
     });
 
-/// Streams the user's approved underlyings list (alphabetic by symbol).
+/// Projects Wheel-enabled plans into the approved-underlying view.
+///
+/// This remains a derived value of the plan stream rather than a second
+/// persisted source of truth, so every plan emission updates consumers.
 final approvedUnderlyingsProvider =
-    StreamProvider.autoDispose<List<ApprovedUnderlying>>((ref) async* {
-      final repo = await ref.watch(
-        approvedUnderlyingsRepositoryProvider.future,
-      );
-      final ownerUserId = await ref.watch(currentUserIdProvider)();
-      yield* repo.watchActive(ownerUserId);
+    Provider.autoDispose<AsyncValue<List<ApprovedUnderlying>>>((ref) {
+      return ref.watch(incomeStrategyPlansProvider).whenData((plans) {
+        return [
+          for (final plan in plans)
+            if (plan.enabledSleeves.contains(IncomeStrategySleeveKind.wheel))
+              _approvedUnderlyingFromPlan(plan),
+        ]..sort((a, b) => a.symbol.compareTo(b.symbol));
+      });
     });
+
+ApprovedUnderlying _approvedUnderlyingFromPlan(IncomeStrategyPlan plan) {
+  final intent = plan.intent(IncomeStrategySleeveKind.wheel);
+  return ApprovedUnderlying(
+    id: plan.assetId,
+    symbol: plan.symbol,
+    market: assetMarketFromWire(plan.market) ?? AssetMarket.unknown,
+    allowPut:
+        intent?.boolValue(
+          WheelIncomeStrategySettings.allowPut,
+          fallback: true,
+        ) ??
+        true,
+    allowCall:
+        intent?.boolValue(
+          WheelIncomeStrategySettings.allowCall,
+          fallback: true,
+        ) ??
+        true,
+    maxBuyPrice: intent?.decimalValue(WheelIncomeStrategySettings.maxBuyPrice),
+    minSellPrice: intent?.decimalValue(
+      WheelIncomeStrategySettings.minSellPrice,
+    ),
+    maxPositionWeight: plan.maxPositionWeight,
+    notes: plan.notes,
+    sync: plan.sync,
+  );
+}
 
 /// Override hook for tests — production wiring uses [ScoringWeights]'
 /// defaults from `docs/domains/options-income.md` §7.2.

@@ -32,6 +32,7 @@ TradeJournalEntry _entry({
   String? realizedPnl,
   String? notes,
 }) => TradeJournalEntry(
+  underlyingAssetId: 'nasdaq:AAPL',
   id: id,
   strategy: strategy,
   symbol: symbol,

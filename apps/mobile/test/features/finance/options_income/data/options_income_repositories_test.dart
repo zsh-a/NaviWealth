@@ -2,8 +2,6 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
-import 'package:naviwealth/features/finance/options_income/data/approved_underlyings_repository.dart';
 import 'package:naviwealth/features/finance/options_income/data/leaps_call_position_repository.dart';
 import 'package:naviwealth/features/finance/options_income/data/options_strategy_profile_repository.dart';
 import 'package:naviwealth/features/finance/options_income/data/trade_journal_repository.dart';
@@ -17,7 +15,6 @@ void main() {
   late AppDatabase db;
   late InMemoryOutboxStore outbox;
   late OptionsStrategyProfileRepository profileRepo;
-  late ApprovedUnderlyingsRepository approvedRepo;
   late TradeJournalRepository journalRepo;
   late LeapsCallPositionRepository leapsRepo;
 
@@ -26,11 +23,6 @@ void main() {
     outbox = InMemoryOutboxStore();
     final stamper = makeStubStamper();
     profileRepo = OptionsStrategyProfileRepository(
-      db: db,
-      outbox: outbox,
-      stamper: stamper,
-    );
-    approvedRepo = ApprovedUnderlyingsRepository(
       db: db,
       outbox: outbox,
       stamper: stamper,
@@ -118,77 +110,11 @@ void main() {
     });
   });
 
-  group('ApprovedUnderlyingsRepository', () {
-    test(
-      'add persists row and queues a dirty pointer with composite id',
-      () async {
-        final saved = await approvedRepo.add(
-          symbol: 'aapl',
-          market: AssetMarket.usStock,
-        );
-
-        // Symbol normalised to upper-case; id is `<market>:<symbol>`.
-        expect(saved.symbol, 'AAPL');
-        expect(saved.id, 'us_stock:AAPL');
-        expect(saved.allowPut, isTrue);
-        expect(saved.allowCall, isTrue);
-
-        final batch = outbox.queued;
-        expect(batch, hasLength(1));
-        expect(batch.single.table, 'approved_underlyings');
-        expect(batch.single.rowId, 'us_stock:AAPL');
-      },
-    );
-
-    test('update queues a dirty pointer at the row', () async {
-      final initial = await approvedRepo.add(
-        symbol: 'MSFT',
-        market: AssetMarket.usStock,
-      );
-      outbox.clearQueued();
-
-      await approvedRepo.update(initial.copyWith(allowCall: false));
-
-      final batch = outbox.queued;
-      expect(batch, hasLength(1));
-      expect(batch.single.table, 'approved_underlyings');
-      expect(batch.single.rowId, initial.id);
-    });
-
-    test('remove writes tombstone and queues a dirty pointer', () async {
-      final initial = await approvedRepo.add(
-        symbol: 'NVDA',
-        market: AssetMarket.usStock,
-      );
-      outbox.clearQueued();
-
-      await approvedRepo.remove(initial);
-
-      final batch = outbox.queued;
-      expect(batch, hasLength(1));
-      expect(batch.single.table, 'approved_underlyings');
-      expect(batch.single.rowId, initial.id);
-
-      // List queries omit the soft-deleted row.
-      final active = await approvedRepo.listActive('u-test');
-      expect(active, isEmpty);
-    });
-
-    test('listActive only returns rows owned by the requested user', () async {
-      await approvedRepo.add(symbol: 'AAPL', market: AssetMarket.usStock);
-
-      final ownRows = await approvedRepo.listActive('u-test');
-      final otherRows = await approvedRepo.listActive('other-user');
-
-      expect(ownRows.map((row) => row.symbol), ['AAPL']);
-      expect(otherRows, isEmpty);
-    });
-  });
-
   group('TradeJournalRepository', () {
     test('round-trips lifecycle, quantity, and fee fields', () async {
       final expiration = DateTime.utc(2026, 8, 21);
       final saved = await journalRepo.create(
+        underlyingAssetId: 'nasdaq:AAPL',
         strategy: OptionsStrategyKind.cashSecuredPut,
         symbol: 'AAPL',
         optionSymbol: 'AAPL260821P00200000',
@@ -213,6 +139,7 @@ void main() {
     test('round-trips, updates, and queues the synced row pointer', () async {
       outbox.clearQueued();
       final saved = await leapsRepo.create(
+        underlyingAssetId: 'nasdaq:AAPL',
         symbol: 'aapl',
         optionSymbol: 'AAPL280121C00180000',
         openedAt: DateTime.utc(2026, 7, 20),

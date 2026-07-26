@@ -17,16 +17,12 @@ class OptionsStrategyProfileTable extends Table with SyncableTable {
   TextColumn get deltaCallMax => text().map(const DecimalConverter())();
   TextColumn get maxCapitalPerTradePct =>
       text().map(const DecimalConverter())();
-  TextColumn get maxUnderlyingExposurePct =>
-      text().map(const DecimalConverter())();
   TextColumn get minAnnualizedYield => text().map(const DecimalConverter())();
   IntColumn get minOpenInterest => integer()();
   IntColumn get minVolume => integer()();
   TextColumn get maxBidAskSpreadPct => text().map(const DecimalConverter())();
   BoolColumn get avoidEarnings => boolean().withDefault(const Constant(true))();
   BoolColumn get avoidMacroEvents =>
-      boolean().withDefault(const Constant(true))();
-  BoolColumn get onlyOnApprovedUnderlyings =>
       boolean().withDefault(const Constant(true))();
   DateTimeColumn get riskDisclosureAckAt => dateTime().nullable()();
 
@@ -43,6 +39,7 @@ class OptionsStrategyProfileTable extends Table with SyncableTable {
 @DataClassName('OptionsTradeJournalRow')
 class OptionsTradeJournal extends Table with SyncableTable {
   TextColumn get id => text()();
+  TextColumn get underlyingAssetId => text()();
   TextColumn get strategy => text()(); // cash_secured_put | covered_call
   TextColumn get symbol => text()();
   TextColumn get optionSymbol => text()();
@@ -78,6 +75,7 @@ class OptionsTradeJournal extends Table with SyncableTable {
 @DataClassName('OptionsLeapsCallPositionRow')
 class OptionsLeapsCallPositions extends Table with SyncableTable {
   TextColumn get id => text()();
+  TextColumn get underlyingAssetId => text()();
   TextColumn get symbol => text()();
   TextColumn get optionSymbol => text()();
   DateTimeColumn get openedAt => dateTime()();
@@ -117,55 +115,26 @@ class OptionsLeapsCallPositions extends Table with SyncableTable {
 /// that the deterministic coordinator should enforce.
 @DataClassName('IncomeStrategyPlanRow')
 class IncomeStrategyPlans extends Table with SyncableTable {
-  TextColumn get id => text()(); // canonical `<market>:<symbol>` asset id
+  TextColumn get id => text()();
+  TextColumn get assetId => text()(); // canonical `<market>:<symbol>` asset id
   TextColumn get symbol => text()();
   TextColumn get market => text()();
   TextColumn get currency => text().withLength(min: 3, max: 8)();
-  TextColumn get enabledSleevesJson =>
-      text().withDefault(const Constant('[]'))();
+  TextColumn get sleeveIntentsJson =>
+      text().withDefault(const Constant('{}'))();
   TextColumn get capitalBudget =>
       text().map(const DecimalConverter()).nullable()();
   TextColumn get annualIncomeTarget =>
       text().map(const DecimalConverter()).nullable()();
   TextColumn get maxPositionWeight =>
       text().map(const DecimalConverter()).nullable()();
-  TextColumn get maxLeapsCost =>
-      text().map(const DecimalConverter()).nullable()();
-  TextColumn get maxAssignmentValue =>
-      text().map(const DecimalConverter()).nullable()();
-  BoolColumn get preserveDividend =>
-      boolean().withDefault(const Constant(true))();
-  BoolColumn get allowSharesCalledAway =>
-      boolean().withDefault(const Constant(false))();
   TextColumn get notes => text().nullable()();
+
+  @override
+  List<String> get customConstraints => ['UNIQUE(owner_user_id, asset_id)'];
 
   @override
   String? get tableName => 'income_strategy_plans';
-
-  @override
-  Set<Column<Object>> get primaryKey => {id};
-}
-
-/// Options Income Planner — symbols the user has explicitly approved for
-/// sell-put / covered-call candidate generation. See
-/// `docs/domains/options-income.md` §6.2.
-@DataClassName('ApprovedUnderlyingRow')
-class ApprovedUnderlyings extends Table with SyncableTable {
-  TextColumn get id => text()();
-  TextColumn get symbol => text()();
-  TextColumn get market => text()();
-  BoolColumn get allowPut => boolean().withDefault(const Constant(true))();
-  BoolColumn get allowCall => boolean().withDefault(const Constant(true))();
-  TextColumn get maxBuyPrice =>
-      text().map(const DecimalConverter()).nullable()();
-  TextColumn get minSellPrice =>
-      text().map(const DecimalConverter()).nullable()();
-  TextColumn get notes => text().nullable()();
-
-  @override
-  List<String> get customConstraints => [
-    'UNIQUE(owner_user_id, market, symbol)',
-  ];
 
   @override
   Set<Column<Object>> get primaryKey => {id};

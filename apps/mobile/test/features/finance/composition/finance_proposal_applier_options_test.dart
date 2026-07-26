@@ -362,7 +362,6 @@ void main() {
           'max_dte': 60,
           'min_annualized_yield': '0.18',
           'avoid_earnings': false,
-          'only_on_approved_underlyings': false,
         },
       }),
     );
@@ -377,7 +376,6 @@ void main() {
     expect(saved.maxDte, 60);
     expect(saved.minAnnualizedYield, Decimal.parse('0.18'));
     expect(saved.avoidEarnings, isTrue);
-    expect(saved.onlyOnApprovedUnderlyings, isTrue);
 
     await applier.undo(state);
     final restored = await profileRepo.get('u-test');
@@ -386,7 +384,6 @@ void main() {
     expect(restored.maxDte, 45);
     expect(restored.minAnnualizedYield, Decimal.parse('0.12'));
     expect(restored.avoidEarnings, isTrue);
-    expect(restored.onlyOnApprovedUnderlyings, isTrue);
   });
 
   test('options_journal_entry creates journal row and can undo it', () async {

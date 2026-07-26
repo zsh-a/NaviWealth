@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 61', () {
-      expect(db.schemaVersion, 61);
+    test('is 63', () {
+      expect(db.schemaVersion, 63);
     });
   });
 
@@ -613,17 +613,14 @@ void main() {
         columns,
         containsAll([
           'id',
+          'asset_id',
           'symbol',
           'market',
           'currency',
-          'enabled_sleeves_json',
+          'sleeve_intents_json',
           'capital_budget',
           'annual_income_target',
           'max_position_weight',
-          'max_leaps_cost',
-          'max_assignment_value',
-          'preserve_dividend',
-          'allow_shares_called_away',
           'owner_user_id',
           'deleted_at',
           'hlc',
@@ -640,6 +637,7 @@ void main() {
         columns,
         containsAll([
           'id',
+          'underlying_asset_id',
           'symbol',
           'option_symbol',
           'expiration_at',

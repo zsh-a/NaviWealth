@@ -9,6 +9,7 @@ import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../composition/income_strategy_presentation.dart';
 import '../data/providers.dart';
 import '../domain/income_strategy.dart';
 import '../domain/income_strategy_plan.dart';
@@ -36,28 +37,52 @@ class _IncomeStrategyPlanForm extends ConsumerStatefulWidget {
 class _IncomeStrategyPlanFormState
     extends ConsumerState<_IncomeStrategyPlanForm> {
   late Set<IncomeStrategySleeveKind> _enabled;
-  late bool _preserveDividend;
-  late bool _allowSharesCalledAway;
+  final Map<IncomeStrategySleeveKind, Map<IncomeStrategySettingKey, bool>>
+  _boolSettings = {};
+  final Map<
+    IncomeStrategySleeveKind,
+    Map<IncomeStrategySettingKey, TextEditingController>
+  >
+  _decimalSettings = {};
   String? _assetId;
   bool _advanced = false;
   bool _busy = false;
   late final TextEditingController _capitalBudget;
   late final TextEditingController _annualIncomeTarget;
   late final TextEditingController _maxPositionWeight;
-  late final TextEditingController _maxLeapsCost;
-  late final TextEditingController _maxAssignmentValue;
   late final TextEditingController _notes;
 
   @override
   void initState() {
     super.initState();
     final existing = widget.existing;
+    final modules = ref.read(incomeStrategyModulesProvider);
     _assetId = existing?.assetId ?? widget.asset?.assetId;
     _enabled =
         existing?.enabledSleeves.toSet() ??
-        IncomeStrategySleeveKind.values.toSet();
-    _preserveDividend = existing?.preserveDividend ?? true;
-    _allowSharesCalledAway = existing?.allowSharesCalledAway ?? false;
+        modules.map((module) => module.id).toSet();
+    for (final module in modules) {
+      final existingIntent = existing?.intent(module.id);
+      final boolValues = <IncomeStrategySettingKey, bool>{};
+      final decimalValues = <IncomeStrategySettingKey, TextEditingController>{};
+      for (final setting in module.presentation.settings) {
+        switch (setting.control) {
+          case IncomeStrategySettingControl.toggle:
+            boolValues[setting.key] =
+                existingIntent?.boolValue(
+                  setting.key,
+                  fallback: setting.defaultBool,
+                ) ??
+                setting.defaultBool;
+          case IncomeStrategySettingControl.decimal:
+            decimalValues[setting.key] = _controller(
+              existingIntent?.decimalValue(setting.key),
+            );
+        }
+      }
+      _boolSettings[module.id] = boolValues;
+      _decimalSettings[module.id] = decimalValues;
+    }
     _capitalBudget = _controller(existing?.capitalBudget);
     _annualIncomeTarget = _controller(existing?.annualIncomeTarget);
     _maxPositionWeight = _controller(
@@ -65,8 +90,6 @@ class _IncomeStrategyPlanFormState
           ? null
           : existing!.maxPositionWeight! * Decimal.fromInt(100),
     );
-    _maxLeapsCost = _controller(existing?.maxLeapsCost);
-    _maxAssignmentValue = _controller(existing?.maxAssignmentValue);
     _notes = TextEditingController(text: existing?.notes ?? '');
   }
 
@@ -79,9 +102,8 @@ class _IncomeStrategyPlanFormState
       _capitalBudget,
       _annualIncomeTarget,
       _maxPositionWeight,
-      _maxLeapsCost,
-      _maxAssignmentValue,
       _notes,
+      for (final values in _decimalSettings.values) ...values.values,
     ]) {
       controller.dispose();
     }
@@ -127,6 +149,28 @@ class _IncomeStrategyPlanFormState
     }
     setState(() => _busy = true);
     try {
+      final modules = ref.read(incomeStrategyModulesProvider);
+      final intents = <IncomeStrategySleeveKind, IncomeStrategySleeveIntent>{};
+      for (final module in modules) {
+        final settings =
+            <IncomeStrategySettingKey, IncomeStrategySettingValue>{};
+        final boolSettings = _boolSettings[module.id]!;
+        final decimalSettings = _decimalSettings[module.id]!;
+        for (final entry in boolSettings.entries) {
+          settings[entry.key] = IncomeStrategyBoolSetting(entry.value);
+        }
+        for (final entry in decimalSettings.entries) {
+          final value = _decimal(entry.value);
+          if (value != null) {
+            settings[entry.key] = IncomeStrategyDecimalSetting(value);
+          }
+        }
+        intents[module.id] = IncomeStrategySleeveIntent(
+          kind: module.id,
+          enabled: _enabled.contains(module.id),
+          settings: Map.unmodifiable(settings),
+        );
+      }
       final repository = await ref.read(
         incomeStrategyPlanRepositoryProvider.future,
       );
@@ -135,7 +179,7 @@ class _IncomeStrategyPlanFormState
         symbol: symbol,
         market: market,
         currency: currency,
-        enabledSleeves: _enabled,
+        sleeveIntents: intents,
         capitalBudget: _decimal(_capitalBudget),
         annualIncomeTarget: _decimal(_annualIncomeTarget),
         maxPositionWeight: maxWeightPercent == null
@@ -143,10 +187,6 @@ class _IncomeStrategyPlanFormState
             : (maxWeightPercent / Decimal.fromInt(100)).toDecimal(
                 scaleOnInfinitePrecision: 8,
               ),
-        maxLeapsCost: _decimal(_maxLeapsCost),
-        maxAssignmentValue: _decimal(_maxAssignmentValue),
-        preserveDividend: _preserveDividend,
-        allowSharesCalledAway: _allowSharesCalledAway,
         notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
       );
       if (mounted) Navigator.of(context).pop();
@@ -163,8 +203,7 @@ class _IncomeStrategyPlanFormState
     for (final controller in [
       _capitalBudget,
       _annualIncomeTarget,
-      _maxLeapsCost,
-      _maxAssignmentValue,
+      for (final values in _decimalSettings.values) ...values.values,
     ]) {
       final value = controller.text.trim();
       if (value.isEmpty) continue;
@@ -227,6 +266,7 @@ class _IncomeStrategyPlanFormState
       child: assetsAsync.whenOrLoading(
         context: context,
         data: (allAssets) {
+          final modules = ref.watch(incomeStrategyModulesProvider);
           final assets = allAssets
               .where((asset) => kSecuritiesAssetTypes.contains(asset.type))
               .toList(growable: false);
@@ -270,30 +310,36 @@ class _IncomeStrategyPlanFormState
                 style: context.captionLabelStyle,
               ),
               const SizedBox(height: AppSpacing.s6),
-              for (final sleeve in IncomeStrategySleeveKind.values)
+              for (final module in modules) ...[
                 _ToggleRow(
-                  label: _sleeveLabel(l10n, sleeve),
-                  value: _enabled.contains(sleeve),
+                  label: module.presentation.label(l10n),
+                  value: _enabled.contains(module.id),
                   onChanged: (value) => setState(() {
                     if (value) {
-                      _enabled.add(sleeve);
+                      _enabled.add(module.id);
                     } else {
-                      _enabled.remove(sleeve);
+                      _enabled.remove(module.id);
                     }
                   }),
                 ),
-              const SizedBox(height: AppSpacing.s12),
-              _ToggleRow(
-                label: l10n.incomeStrategyPlanPreserveDividend,
-                value: _preserveDividend,
-                onChanged: (value) => setState(() => _preserveDividend = value),
-              ),
-              _ToggleRow(
-                label: l10n.incomeStrategyPlanAllowCalledAway,
-                value: _allowSharesCalledAway,
-                onChanged: (value) =>
-                    setState(() => _allowSharesCalledAway = value),
-              ),
+                if (_enabled.contains(module.id))
+                  for (final setting in module.presentation.settings.where(
+                    (setting) =>
+                        setting.control == IncomeStrategySettingControl.toggle,
+                  ))
+                    Padding(
+                      padding: const EdgeInsets.only(left: AppSpacing.s16),
+                      child: _ToggleRow(
+                        label: setting.label(l10n),
+                        value:
+                            _boolSettings[module.id]?[setting.key] ??
+                            setting.defaultBool,
+                        onChanged: (value) => setState(() {
+                          _boolSettings[module.id]?[setting.key] = value;
+                        }),
+                      ),
+                    ),
+              ],
               const SizedBox(height: AppSpacing.s16),
               AppDisclosureHeader(
                 title: l10n.incomeStrategyPlanLimits,
@@ -321,16 +367,21 @@ class _IncomeStrategyPlanFormState
                         controller: _maxPositionWeight,
                         label: l10n.incomeStrategyPlanMaxWeight,
                       ),
-                      const SizedBox(height: AppSpacing.s12),
-                      _DecimalField(
-                        controller: _maxLeapsCost,
-                        label: l10n.incomeStrategyPlanMaxLeapsCost,
-                      ),
-                      const SizedBox(height: AppSpacing.s12),
-                      _DecimalField(
-                        controller: _maxAssignmentValue,
-                        label: l10n.incomeStrategyPlanMaxAssignment,
-                      ),
+                      for (final module in modules)
+                        if (_enabled.contains(module.id))
+                          for (final setting
+                              in module.presentation.settings.where(
+                                (setting) =>
+                                    setting.control ==
+                                    IncomeStrategySettingControl.decimal,
+                              )) ...[
+                            const SizedBox(height: AppSpacing.s12),
+                            _DecimalField(
+                              controller:
+                                  _decimalSettings[module.id]![setting.key]!,
+                              label: setting.label(l10n),
+                            ),
+                          ],
                     ],
                   ),
                 ),
@@ -411,10 +462,3 @@ class _DecimalField extends StatelessWidget {
     keyboardType: const TextInputType.numberWithOptions(decimal: true),
   );
 }
-
-String _sleeveLabel(AppLocalizations l10n, IncomeStrategySleeveKind sleeve) =>
-    switch (sleeve) {
-      IncomeStrategySleeveKind.dividends => l10n.incomeStrategySleeveDividends,
-      IncomeStrategySleeveKind.wheel => l10n.incomeStrategySleeveWheel,
-      IncomeStrategySleeveKind.leapsCall => l10n.incomeStrategySleeveLeaps,
-    };

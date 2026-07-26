@@ -446,7 +446,6 @@ void main() {
           delta_call_min,
           delta_call_max,
           max_capital_per_trade_pct,
-          max_underlying_exposure_pct,
           min_annualized_yield,
           min_open_interest,
           min_volume,
@@ -455,7 +454,7 @@ void main() {
           updated_at,
           updated_by_device,
           hlc
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''',
         [
           userId,
@@ -467,7 +466,6 @@ void main() {
           '0.15',
           '0.35',
           '0.05',
-          '0.20',
           '0.05',
           100,
           10,
@@ -508,68 +506,58 @@ void main() {
   });
 
   test(
-    'approved underlyings are unique per owner market symbol pair',
+    'income strategy plans are unique per owner and canonical asset',
     () async {
       final db = makeTestDatabase();
       addTearDown(db.close);
 
-      Future<void> insertUnderlying({
+      Future<void> insertPlan({
         required String id,
         required String ownerUserId,
-        required String market,
-        required String symbol,
       }) {
         return db.customStatement(
           '''
-        INSERT INTO approved_underlyings (
+        INSERT INTO income_strategy_plans (
           id,
+          asset_id,
           symbol,
           market,
+          currency,
+          sleeve_intents_json,
           owner_user_id,
           updated_at,
           updated_by_device,
           hlc
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''',
-          [id, symbol, market, ownerUserId, 1, 'device-1', '1:device-1'],
+          [
+            id,
+            'nasdaq:AAPL',
+            'AAPL',
+            'nasdaq',
+            'USD',
+            '{"wheel":{"enabled":true,"settings":{}}}',
+            ownerUserId,
+            1,
+            'device-1',
+            '1:device-1',
+          ],
         );
       }
 
-      await insertUnderlying(
-        id: 'us_stock:AAPL',
-        ownerUserId: 'user-1',
-        market: 'us_stock',
-        symbol: 'AAPL',
-      );
+      await insertPlan(id: 'plan-user-1', ownerUserId: 'user-1');
       await expectLater(
-        insertUnderlying(
-          id: 'duplicate',
-          ownerUserId: 'user-1',
-          market: 'us_stock',
-          symbol: 'AAPL',
-        ),
+        insertPlan(id: 'duplicate', ownerUserId: 'user-1'),
         throwsA(isA<SqliteException>()),
       );
-      await insertUnderlying(
-        id: 'user2:us_stock:AAPL',
-        ownerUserId: 'user-2',
-        market: 'us_stock',
-        symbol: 'AAPL',
-      );
-      await insertUnderlying(
-        id: 'user1:hk_stock:AAPL',
-        ownerUserId: 'user-1',
-        market: 'hk_stock',
-        symbol: 'AAPL',
-      );
+      await insertPlan(id: 'plan-user-2', ownerUserId: 'user-2');
 
       final rows = await db
-          .customSelect('SELECT id FROM approved_underlyings ORDER BY id')
+          .customSelect('SELECT id FROM income_strategy_plans ORDER BY id')
           .get();
       expect(rows.map((r) => r.read<String>('id')), [
-        'us_stock:AAPL',
-        'user1:hk_stock:AAPL',
-        'user2:us_stock:AAPL',
+        'plan-user-1',
+        'plan-user-2',
       ]);
     },
   );
@@ -1427,10 +1415,10 @@ void main() {
     expect(rows.last.read<String>('turn_id'), 'turn-interaction');
     expect(rows.last.read<String>('status'), 'requires_interaction');
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 61);
+    expect(version.read<int>('user_version'), db.schemaVersion);
   });
 
-  test('migrates v23 options journal rows through v26 additions', () async {
+  test('rebuilds the pre-canonical options journal on upgrade', () async {
     final dir = await Directory.systemTemp.createTemp('naviwealth_migration_');
     addTearDown(() async {
       if (await dir.exists()) await dir.delete(recursive: true);
@@ -1567,6 +1555,7 @@ void main() {
     expect(
       optionsColumns.map((r) => r.read<String>('name')).toSet(),
       containsAll([
+        'underlying_asset_id',
         'brokerage_account_id',
         'cash_account_id',
         'underlying_market',
@@ -1578,25 +1567,16 @@ void main() {
       ]),
     );
 
-    final journalRow = await db
-        .customSelect(
-          '''
-          SELECT symbol, notes, brokerage_account_id, strike_price
-          FROM options_trade_journal
-          WHERE id = ?
-          ''',
-          variables: [Variable.withString('otj-1')],
-        )
-        .getSingle();
-    expect(journalRow.read<String>('symbol'), 'AAPL');
-    expect(journalRow.read<String?>('notes'), 'legacy row');
-    expect(journalRow.read<String?>('brokerage_account_id'), null);
-    expect(journalRow.read<String?>('strike_price'), null);
+    final legacyRows = await db
+        .customSelect('SELECT id FROM options_trade_journal')
+        .get();
+    expect(legacyRows, isEmpty);
 
     await db.customStatement(
       '''
       INSERT INTO options_trade_journal (
         id,
+        underlying_asset_id,
         strategy,
         symbol,
         option_symbol,
@@ -1613,10 +1593,11 @@ void main() {
         underlying_market,
         strike_price,
         contract_size
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ''',
       [
         'otj-2',
+        'nasdaq:MSFT',
         'covered_call',
         'MSFT',
         'MSFT260117C00400000',
@@ -2050,7 +2031,7 @@ void main() {
       ]),
     );
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 61);
+    expect(version.read<int>('user_version'), db.schemaVersion);
   });
 
   test('v54 upgrade creates memory candidate staging', () async {
@@ -2079,6 +2060,6 @@ void main() {
       containsAll(['id', 'proposal_id', 'operation', 'status', 'payload_json']),
     );
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 61);
+    expect(version.read<int>('user_version'), db.schemaVersion);
   });
 }

@@ -26,7 +26,7 @@ void main() {
     addTearDown(db.close);
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 61);
+    expect(version.read<int>('user_version'), db.schemaVersion);
     final table = await db
         .customSelect(
           "SELECT name FROM sqlite_master WHERE type = 'table' "

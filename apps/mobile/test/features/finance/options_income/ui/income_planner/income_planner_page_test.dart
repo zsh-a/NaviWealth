@@ -100,7 +100,7 @@ Future<void> _pump(WidgetTester tester) async {
           return Stream.value(_profile());
         }),
         approvedUnderlyingsProvider.overrideWith((ref) {
-          return Stream.value([_approvedUnderlying()]);
+          return AsyncData([_approvedUnderlying()]);
         }),
         cachedOpportunitiesProvider.overrideWith((ref) async {
           return [_opportunity()];

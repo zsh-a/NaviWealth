@@ -100,6 +100,7 @@ TradeJournalEntry _entry({
   required TradeJournalStatus status,
 }) {
   return TradeJournalEntry(
+    underlyingAssetId: 'nasdaq:AAPL',
     id: id,
     strategy: strategy,
     symbol: symbol,

@@ -2,197 +2,148 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
+import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
+import 'package:naviwealth/features/finance/income_strategy/application/income_strategy_rules.dart';
 import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy.dart';
 import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy_assembler.dart';
 import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy_plan.dart';
 
-const _asset = IncomeStrategyAsset(
-  assetId: 'us_stock:AAPL',
-  symbol: 'AAPL',
-  market: 'us_stock',
-  currency: 'USD',
-);
-
-final _sync = SyncMeta(
-  ownerUserId: 'user',
-  updatedAt: DateTime.utc(2026, 7, 1),
-  updatedByDevice: 'device',
-  hlc: const Hlc(wallMillis: 1, counter: 0, nodeId: 'device'),
-);
-
-IncomeStrategySleeveContribution _sleeve(
-  IncomeStrategySleeveKind kind, {
-  String realized = '0',
-  String capital = '0',
-  Map<String, Object?> facts = const {},
-}) => IncomeStrategySleeveContribution(
-  asset: _asset,
-  snapshot: IncomeStrategySleeveSnapshot(
-    kind: kind,
-    status: 'active',
-    realizedResult: Decimal.parse(realized),
-    projectedCash: Decimal.zero,
-    capitalAtRisk: Decimal.parse(capital),
-    marketValue: null,
-    deltaEquivalentShares: null,
-    cashFlows: const [],
-    risks: const [],
-    facts: facts,
-  ),
-);
-
-IncomeStrategyPlan _plan({
-  required Set<IncomeStrategySleeveKind> enabled,
-  Decimal? maxLeapsCost,
-  bool preserveDividend = true,
-}) => IncomeStrategyPlan(
-  assetId: _asset.assetId,
-  symbol: _asset.symbol,
-  market: _asset.market,
-  currency: _asset.currency,
-  enabledSleeves: enabled,
-  capitalBudget: null,
-  annualIncomeTarget: null,
-  maxPositionWeight: null,
-  maxLeapsCost: maxLeapsCost,
-  maxAssignmentValue: null,
-  preserveDividend: preserveDividend,
-  allowSharesCalledAway: false,
-  notes: null,
-  sync: _sync,
-);
-
 void main() {
-  test('combines any sleeve subset without inventing a shared lifecycle', () {
+  final asOf = DateTime.utc(2026, 7, 26);
+
+  test('accepts a custom sleeve without changing the core assembler', () {
+    const custom = IncomeStrategySleeveKind('bond_ladder');
     final snapshot = const IncomeStrategyAssembler().assemble(
       baseCurrency: 'USD',
-      plans: [
-        _plan(
-          enabled: const {
-            IncomeStrategySleeveKind.dividends,
-            IncomeStrategySleeveKind.leapsCall,
-          },
-        ),
-      ],
-      contributions: [
-        _sleeve(IncomeStrategySleeveKind.dividends, realized: '300'),
-        _sleeve(
-          IncomeStrategySleeveKind.leapsCall,
-          realized: '100',
-          capital: '200',
-        ),
-      ],
+      asOf: asOf,
+      converter: _converter(),
+      plans: const [],
+      contributions: [_contribution(custom, '10')],
+      rules: const [],
     );
 
-    final underlying = snapshot.underlyings.single;
-    expect(underlying.sleeves, hasLength(2));
-    expect(underlying.realizedResult, Decimal.fromInt(400));
-    expect(
-      underlying.sleeves.containsKey(IncomeStrategySleeveKind.wheel),
-      isFalse,
-    );
+    expect(snapshot.underlyings.single.sleeves.keys, {custom});
+    expect(snapshot.realizedIncome.value, Money(Decimal.parse('10'), 'USD'));
   });
 
-  test('keeps live unplanned sleeves visible and flags them', () {
-    final snapshot = const IncomeStrategyAssembler().assemble(
-      baseCurrency: 'USD',
-      plans: [
-        _plan(enabled: const {IncomeStrategySleeveKind.dividends}),
-      ],
-      contributions: [
-        _sleeve(IncomeStrategySleeveKind.dividends),
-        _sleeve(IncomeStrategySleeveKind.wheel),
-      ],
-    );
-
+  test('rejects duplicate module contributions for one asset', () {
+    const assembler = IncomeStrategyAssembler();
     expect(
-      snapshot.underlyings.single.risks.map((risk) => risk.code),
-      contains(IncomeStrategyRiskCode.unplannedSleeve),
-    );
-  });
-
-  test('coordinates dividend, Wheel and LEAPS risks across adapters', () {
-    final snapshot = const IncomeStrategyAssembler().assemble(
-      baseCurrency: 'USD',
-      plans: [
-        _plan(
-          enabled: IncomeStrategySleeveKind.values.toSet(),
-          maxLeapsCost: Decimal.fromInt(500),
-        ),
-      ],
-      contributions: [
-        _sleeve(IncomeStrategySleeveKind.dividends, realized: '100'),
-        _sleeve(
-          IncomeStrategySleeveKind.wheel,
-          realized: '100',
-          facts: const {
-            'has_open_short_put': true,
-            'has_open_covered_call': true,
-          },
-        ),
-        _sleeve(IncomeStrategySleeveKind.leapsCall, capital: '700'),
-      ],
-    );
-
-    final codes = snapshot.underlyings.single.risks
-        .map((risk) => risk.code)
-        .toSet();
-    expect(codes, contains(IncomeStrategyRiskCode.stackedDownside));
-    expect(codes, contains(IncomeStrategyRiskCode.dividendInterruption));
-    expect(codes, contains(IncomeStrategyRiskCode.leapsCostNotCovered));
-    expect(codes, contains(IncomeStrategyRiskCode.leapsBudgetExceeded));
-  });
-
-  test('fails fast when two adapters claim the same sleeve', () {
-    expect(
-      () => const IncomeStrategyAssembler().assemble(
+      () => assembler.assemble(
         baseCurrency: 'USD',
+        asOf: asOf,
+        converter: _converter(),
         plans: const [],
         contributions: [
-          _sleeve(IncomeStrategySleeveKind.dividends),
-          _sleeve(IncomeStrategySleeveKind.dividends),
+          _contribution(IncomeStrategySleeveKind.wheel, '1'),
+          _contribution(IncomeStrategySleeveKind.wheel, '2'),
         ],
+        rules: const [],
       ),
       throwsStateError,
     );
   });
 
-  test('enforces total capital budget across arbitrary sleeves', () {
-    final snapshot = const IncomeStrategyAssembler().assemble(
+  test('converts a native-currency plan budget before applying rules', () {
+    final result = const IncomeStrategyAssembler().assemble(
       baseCurrency: 'USD',
-      plans: [
-        IncomeStrategyPlan(
-          assetId: 'us_stock:AAPL',
-          symbol: 'AAPL',
-          market: 'us_stock',
-          currency: 'USD',
-          enabledSleeves: {
-            IncomeStrategySleeveKind.dividends,
-            IncomeStrategySleeveKind.leapsCall,
-          },
-          capitalBudget: Decimal.fromInt(1200),
-          annualIncomeTarget: Decimal.fromInt(100),
-          maxPositionWeight: null,
-          maxLeapsCost: null,
-          maxAssignmentValue: null,
-          preserveDividend: false,
-          allowSharesCalledAway: true,
-          notes: null,
-          sync: _sync,
-        ),
-      ],
-      contributions: [
-        _sleeve(IncomeStrategySleeveKind.dividends, capital: '1000'),
-        _sleeve(IncomeStrategySleeveKind.leapsCall, capital: '300'),
-      ],
+      asOf: asOf,
+      converter: _converter(withHkd: true),
+      plans: [_plan(capitalBudget: Decimal.parse('78'))],
+      contributions: [_contribution(IncomeStrategySleeveKind.wheel, '20')],
+      rules: kCoreIncomeStrategyRules,
     );
 
-    final underlying = snapshot.underlyings.single;
-    expect(underlying.capitalBudget, Decimal.fromInt(1200));
-    expect(underlying.annualIncomeTarget, Decimal.fromInt(100));
+    final underlying = result.underlyings.single;
+    expect(underlying.capitalBudget, Money(Decimal.parse('10.14'), 'USD'));
     expect(
       underlying.risks.map((risk) => risk.code),
       contains(IncomeStrategyRiskCode.capitalBudgetExceeded),
     );
   });
+
+  test('reports missing FX instead of comparing unlike currencies', () {
+    final result = const IncomeStrategyAssembler().assemble(
+      baseCurrency: 'USD',
+      asOf: asOf,
+      converter: _converter(),
+      plans: [_plan(capitalBudget: Decimal.parse('78'))],
+      contributions: [_contribution(IncomeStrategySleeveKind.wheel, '20')],
+      rules: const [CapitalBudgetRule()],
+    );
+
+    expect(result.underlyings.single.capitalBudget, isNull);
+    expect(
+      result.underlyings.single.risks.map((risk) => risk.code),
+      contains(IncomeStrategyRiskCode.missingFxRate),
+    );
+  });
 }
+
+IncomeStrategySleeveContribution _contribution(
+  IncomeStrategySleeveKind kind,
+  String amount,
+) {
+  final value = IncomeStrategyMoneyMetric(
+    value: Money(Decimal.parse(amount), 'USD'),
+  );
+  return IncomeStrategySleeveContribution(
+    asset: const IncomeStrategyAsset(
+      assetId: 'hk:0700',
+      symbol: '0700',
+      market: 'hk',
+      currency: 'HKD',
+    ),
+    snapshot: IncomeStrategySleeveSnapshot(
+      kind: kind,
+      status: 'open',
+      periodStart: DateTime.utc(2026),
+      asOf: DateTime.utc(2026, 7, 26),
+      realizedIncome: value,
+      realizedResult: value,
+      projectedCash: IncomeStrategyMoneyMetric.zero('USD'),
+      exposure: IncomeStrategyExposure(capitalAtRisk: value),
+      cashFlows: const [],
+      risks: const [],
+    ),
+  );
+}
+
+IncomeStrategyPlan _plan({Decimal? capitalBudget}) => IncomeStrategyPlan(
+  id: 'plan-1',
+  assetId: 'hk:0700',
+  symbol: '0700',
+  market: 'hk',
+  currency: 'HKD',
+  sleeveIntents: {
+    IncomeStrategySleeveKind.wheel: const IncomeStrategySleeveIntent(
+      kind: IncomeStrategySleeveKind.wheel,
+      enabled: true,
+    ),
+  },
+  capitalBudget: capitalBudget,
+  annualIncomeTarget: null,
+  maxPositionWeight: null,
+  notes: null,
+  sync: SyncMeta(
+    ownerUserId: 'user-1',
+    updatedAt: DateTime.utc(2026),
+    updatedByDevice: 'device-1',
+    hlc: Hlc.zero('device-1'),
+  ),
+);
+
+CurrencyConverter _converter({bool withHkd = false}) => FxRateCurrencyConverter(
+  InMemoryFxRateLookup([
+    if (withHkd)
+      FxRate(
+        base: 'HKD',
+        quote: 'USD',
+        date: DateTime.utc(2026, 7, 26),
+        rate: Decimal.parse('0.13'),
+        source: 'test',
+      ),
+  ]),
+);

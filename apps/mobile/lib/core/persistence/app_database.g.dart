@@ -7557,18 +7557,6 @@ class $OptionsStrategyProfileTableTable extends OptionsStrategyProfileTable
       );
   @override
   late final GeneratedColumnWithTypeConverter<Decimal, String>
-  maxUnderlyingExposurePct =
-      GeneratedColumn<String>(
-        'max_underlying_exposure_pct',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<Decimal>(
-        $OptionsStrategyProfileTableTable.$convertermaxUnderlyingExposurePct,
-      );
-  @override
-  late final GeneratedColumnWithTypeConverter<Decimal, String>
   minAnnualizedYield =
       GeneratedColumn<String>(
         'min_annualized_yield',
@@ -7643,21 +7631,6 @@ class $OptionsStrategyProfileTableTable extends OptionsStrategyProfileTable
     ),
     defaultValue: const Constant(true),
   );
-  static const VerificationMeta _onlyOnApprovedUnderlyingsMeta =
-      const VerificationMeta('onlyOnApprovedUnderlyings');
-  @override
-  late final GeneratedColumn<bool> onlyOnApprovedUnderlyings =
-      GeneratedColumn<bool>(
-        'only_on_approved_underlyings',
-        aliasedName,
-        false,
-        type: DriftSqlType.bool,
-        requiredDuringInsert: false,
-        defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("only_on_approved_underlyings" IN (0, 1))',
-        ),
-        defaultValue: const Constant(true),
-      );
   static const VerificationMeta _riskDisclosureAckAtMeta =
       const VerificationMeta('riskDisclosureAckAt');
   @override
@@ -7686,14 +7659,12 @@ class $OptionsStrategyProfileTableTable extends OptionsStrategyProfileTable
     deltaCallMin,
     deltaCallMax,
     maxCapitalPerTradePct,
-    maxUnderlyingExposurePct,
     minAnnualizedYield,
     minOpenInterest,
     minVolume,
     maxBidAskSpreadPct,
     avoidEarnings,
     avoidMacroEvents,
-    onlyOnApprovedUnderlyings,
     riskDisclosureAckAt,
   ];
   @override
@@ -7822,15 +7793,6 @@ class $OptionsStrategyProfileTableTable extends OptionsStrategyProfileTable
         ),
       );
     }
-    if (data.containsKey('only_on_approved_underlyings')) {
-      context.handle(
-        _onlyOnApprovedUnderlyingsMeta,
-        onlyOnApprovedUnderlyings.isAcceptableOrUnknown(
-          data['only_on_approved_underlyings']!,
-          _onlyOnApprovedUnderlyingsMeta,
-        ),
-      );
-    }
     if (data.containsKey('risk_disclosure_ack_at')) {
       context.handle(
         _riskDisclosureAckAtMeta,
@@ -7930,14 +7892,6 @@ class $OptionsStrategyProfileTableTable extends OptionsStrategyProfileTable
               data['${effectivePrefix}max_capital_per_trade_pct'],
             )!,
           ),
-      maxUnderlyingExposurePct: $OptionsStrategyProfileTableTable
-          .$convertermaxUnderlyingExposurePct
-          .fromSql(
-            attachedDatabase.typeMapping.read(
-              DriftSqlType.string,
-              data['${effectivePrefix}max_underlying_exposure_pct'],
-            )!,
-          ),
       minAnnualizedYield: $OptionsStrategyProfileTableTable
           .$converterminAnnualizedYield
           .fromSql(
@@ -7970,10 +7924,6 @@ class $OptionsStrategyProfileTableTable extends OptionsStrategyProfileTable
         DriftSqlType.bool,
         data['${effectivePrefix}avoid_macro_events'],
       )!,
-      onlyOnApprovedUnderlyings: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}only_on_approved_underlyings'],
-      )!,
       riskDisclosureAckAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}risk_disclosure_ack_at'],
@@ -7996,8 +7946,6 @@ class $OptionsStrategyProfileTableTable extends OptionsStrategyProfileTable
   static TypeConverter<Decimal, String> $converterdeltaCallMax =
       const DecimalConverter();
   static TypeConverter<Decimal, String> $convertermaxCapitalPerTradePct =
-      const DecimalConverter();
-  static TypeConverter<Decimal, String> $convertermaxUnderlyingExposurePct =
       const DecimalConverter();
   static TypeConverter<Decimal, String> $converterminAnnualizedYield =
       const DecimalConverter();
@@ -8038,14 +7986,12 @@ class OptionsStrategyProfileRow extends DataClass
   final Decimal deltaCallMin;
   final Decimal deltaCallMax;
   final Decimal maxCapitalPerTradePct;
-  final Decimal maxUnderlyingExposurePct;
   final Decimal minAnnualizedYield;
   final int minOpenInterest;
   final int minVolume;
   final Decimal maxBidAskSpreadPct;
   final bool avoidEarnings;
   final bool avoidMacroEvents;
-  final bool onlyOnApprovedUnderlyings;
   final DateTime? riskDisclosureAckAt;
   const OptionsStrategyProfileRow({
     required this.ownerUserId,
@@ -8063,14 +8009,12 @@ class OptionsStrategyProfileRow extends DataClass
     required this.deltaCallMin,
     required this.deltaCallMax,
     required this.maxCapitalPerTradePct,
-    required this.maxUnderlyingExposurePct,
     required this.minAnnualizedYield,
     required this.minOpenInterest,
     required this.minVolume,
     required this.maxBidAskSpreadPct,
     required this.avoidEarnings,
     required this.avoidMacroEvents,
-    required this.onlyOnApprovedUnderlyings,
     this.riskDisclosureAckAt,
   });
   @override
@@ -8128,12 +8072,6 @@ class OptionsStrategyProfileRow extends DataClass
       );
     }
     {
-      map['max_underlying_exposure_pct'] = Variable<String>(
-        $OptionsStrategyProfileTableTable.$convertermaxUnderlyingExposurePct
-            .toSql(maxUnderlyingExposurePct),
-      );
-    }
-    {
       map['min_annualized_yield'] = Variable<String>(
         $OptionsStrategyProfileTableTable.$converterminAnnualizedYield.toSql(
           minAnnualizedYield,
@@ -8151,9 +8089,6 @@ class OptionsStrategyProfileRow extends DataClass
     }
     map['avoid_earnings'] = Variable<bool>(avoidEarnings);
     map['avoid_macro_events'] = Variable<bool>(avoidMacroEvents);
-    map['only_on_approved_underlyings'] = Variable<bool>(
-      onlyOnApprovedUnderlyings,
-    );
     if (!nullToAbsent || riskDisclosureAckAt != null) {
       map['risk_disclosure_ack_at'] = Variable<DateTime>(riskDisclosureAckAt);
     }
@@ -8179,14 +8114,12 @@ class OptionsStrategyProfileRow extends DataClass
       deltaCallMin: Value(deltaCallMin),
       deltaCallMax: Value(deltaCallMax),
       maxCapitalPerTradePct: Value(maxCapitalPerTradePct),
-      maxUnderlyingExposurePct: Value(maxUnderlyingExposurePct),
       minAnnualizedYield: Value(minAnnualizedYield),
       minOpenInterest: Value(minOpenInterest),
       minVolume: Value(minVolume),
       maxBidAskSpreadPct: Value(maxBidAskSpreadPct),
       avoidEarnings: Value(avoidEarnings),
       avoidMacroEvents: Value(avoidMacroEvents),
-      onlyOnApprovedUnderlyings: Value(onlyOnApprovedUnderlyings),
       riskDisclosureAckAt: riskDisclosureAckAt == null && nullToAbsent
           ? const Value.absent()
           : Value(riskDisclosureAckAt),
@@ -8218,9 +8151,6 @@ class OptionsStrategyProfileRow extends DataClass
       maxCapitalPerTradePct: serializer.fromJson<Decimal>(
         json['maxCapitalPerTradePct'],
       ),
-      maxUnderlyingExposurePct: serializer.fromJson<Decimal>(
-        json['maxUnderlyingExposurePct'],
-      ),
       minAnnualizedYield: serializer.fromJson<Decimal>(
         json['minAnnualizedYield'],
       ),
@@ -8231,9 +8161,6 @@ class OptionsStrategyProfileRow extends DataClass
       ),
       avoidEarnings: serializer.fromJson<bool>(json['avoidEarnings']),
       avoidMacroEvents: serializer.fromJson<bool>(json['avoidMacroEvents']),
-      onlyOnApprovedUnderlyings: serializer.fromJson<bool>(
-        json['onlyOnApprovedUnderlyings'],
-      ),
       riskDisclosureAckAt: serializer.fromJson<DateTime?>(
         json['riskDisclosureAckAt'],
       ),
@@ -8260,18 +8187,12 @@ class OptionsStrategyProfileRow extends DataClass
       'maxCapitalPerTradePct': serializer.toJson<Decimal>(
         maxCapitalPerTradePct,
       ),
-      'maxUnderlyingExposurePct': serializer.toJson<Decimal>(
-        maxUnderlyingExposurePct,
-      ),
       'minAnnualizedYield': serializer.toJson<Decimal>(minAnnualizedYield),
       'minOpenInterest': serializer.toJson<int>(minOpenInterest),
       'minVolume': serializer.toJson<int>(minVolume),
       'maxBidAskSpreadPct': serializer.toJson<Decimal>(maxBidAskSpreadPct),
       'avoidEarnings': serializer.toJson<bool>(avoidEarnings),
       'avoidMacroEvents': serializer.toJson<bool>(avoidMacroEvents),
-      'onlyOnApprovedUnderlyings': serializer.toJson<bool>(
-        onlyOnApprovedUnderlyings,
-      ),
       'riskDisclosureAckAt': serializer.toJson<DateTime?>(riskDisclosureAckAt),
     };
   }
@@ -8292,14 +8213,12 @@ class OptionsStrategyProfileRow extends DataClass
     Decimal? deltaCallMin,
     Decimal? deltaCallMax,
     Decimal? maxCapitalPerTradePct,
-    Decimal? maxUnderlyingExposurePct,
     Decimal? minAnnualizedYield,
     int? minOpenInterest,
     int? minVolume,
     Decimal? maxBidAskSpreadPct,
     bool? avoidEarnings,
     bool? avoidMacroEvents,
-    bool? onlyOnApprovedUnderlyings,
     Value<DateTime?> riskDisclosureAckAt = const Value.absent(),
   }) => OptionsStrategyProfileRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
@@ -8317,16 +8236,12 @@ class OptionsStrategyProfileRow extends DataClass
     deltaCallMin: deltaCallMin ?? this.deltaCallMin,
     deltaCallMax: deltaCallMax ?? this.deltaCallMax,
     maxCapitalPerTradePct: maxCapitalPerTradePct ?? this.maxCapitalPerTradePct,
-    maxUnderlyingExposurePct:
-        maxUnderlyingExposurePct ?? this.maxUnderlyingExposurePct,
     minAnnualizedYield: minAnnualizedYield ?? this.minAnnualizedYield,
     minOpenInterest: minOpenInterest ?? this.minOpenInterest,
     minVolume: minVolume ?? this.minVolume,
     maxBidAskSpreadPct: maxBidAskSpreadPct ?? this.maxBidAskSpreadPct,
     avoidEarnings: avoidEarnings ?? this.avoidEarnings,
     avoidMacroEvents: avoidMacroEvents ?? this.avoidMacroEvents,
-    onlyOnApprovedUnderlyings:
-        onlyOnApprovedUnderlyings ?? this.onlyOnApprovedUnderlyings,
     riskDisclosureAckAt: riskDisclosureAckAt.present
         ? riskDisclosureAckAt.value
         : this.riskDisclosureAckAt,
@@ -8366,9 +8281,6 @@ class OptionsStrategyProfileRow extends DataClass
       maxCapitalPerTradePct: data.maxCapitalPerTradePct.present
           ? data.maxCapitalPerTradePct.value
           : this.maxCapitalPerTradePct,
-      maxUnderlyingExposurePct: data.maxUnderlyingExposurePct.present
-          ? data.maxUnderlyingExposurePct.value
-          : this.maxUnderlyingExposurePct,
       minAnnualizedYield: data.minAnnualizedYield.present
           ? data.minAnnualizedYield.value
           : this.minAnnualizedYield,
@@ -8385,9 +8297,6 @@ class OptionsStrategyProfileRow extends DataClass
       avoidMacroEvents: data.avoidMacroEvents.present
           ? data.avoidMacroEvents.value
           : this.avoidMacroEvents,
-      onlyOnApprovedUnderlyings: data.onlyOnApprovedUnderlyings.present
-          ? data.onlyOnApprovedUnderlyings.value
-          : this.onlyOnApprovedUnderlyings,
       riskDisclosureAckAt: data.riskDisclosureAckAt.present
           ? data.riskDisclosureAckAt.value
           : this.riskDisclosureAckAt,
@@ -8412,14 +8321,12 @@ class OptionsStrategyProfileRow extends DataClass
           ..write('deltaCallMin: $deltaCallMin, ')
           ..write('deltaCallMax: $deltaCallMax, ')
           ..write('maxCapitalPerTradePct: $maxCapitalPerTradePct, ')
-          ..write('maxUnderlyingExposurePct: $maxUnderlyingExposurePct, ')
           ..write('minAnnualizedYield: $minAnnualizedYield, ')
           ..write('minOpenInterest: $minOpenInterest, ')
           ..write('minVolume: $minVolume, ')
           ..write('maxBidAskSpreadPct: $maxBidAskSpreadPct, ')
           ..write('avoidEarnings: $avoidEarnings, ')
           ..write('avoidMacroEvents: $avoidMacroEvents, ')
-          ..write('onlyOnApprovedUnderlyings: $onlyOnApprovedUnderlyings, ')
           ..write('riskDisclosureAckAt: $riskDisclosureAckAt')
           ..write(')'))
         .toString();
@@ -8442,14 +8349,12 @@ class OptionsStrategyProfileRow extends DataClass
     deltaCallMin,
     deltaCallMax,
     maxCapitalPerTradePct,
-    maxUnderlyingExposurePct,
     minAnnualizedYield,
     minOpenInterest,
     minVolume,
     maxBidAskSpreadPct,
     avoidEarnings,
     avoidMacroEvents,
-    onlyOnApprovedUnderlyings,
     riskDisclosureAckAt,
   ]);
   @override
@@ -8471,14 +8376,12 @@ class OptionsStrategyProfileRow extends DataClass
           other.deltaCallMin == this.deltaCallMin &&
           other.deltaCallMax == this.deltaCallMax &&
           other.maxCapitalPerTradePct == this.maxCapitalPerTradePct &&
-          other.maxUnderlyingExposurePct == this.maxUnderlyingExposurePct &&
           other.minAnnualizedYield == this.minAnnualizedYield &&
           other.minOpenInterest == this.minOpenInterest &&
           other.minVolume == this.minVolume &&
           other.maxBidAskSpreadPct == this.maxBidAskSpreadPct &&
           other.avoidEarnings == this.avoidEarnings &&
           other.avoidMacroEvents == this.avoidMacroEvents &&
-          other.onlyOnApprovedUnderlyings == this.onlyOnApprovedUnderlyings &&
           other.riskDisclosureAckAt == this.riskDisclosureAckAt);
 }
 
@@ -8499,14 +8402,12 @@ class OptionsStrategyProfileTableCompanion
   final Value<Decimal> deltaCallMin;
   final Value<Decimal> deltaCallMax;
   final Value<Decimal> maxCapitalPerTradePct;
-  final Value<Decimal> maxUnderlyingExposurePct;
   final Value<Decimal> minAnnualizedYield;
   final Value<int> minOpenInterest;
   final Value<int> minVolume;
   final Value<Decimal> maxBidAskSpreadPct;
   final Value<bool> avoidEarnings;
   final Value<bool> avoidMacroEvents;
-  final Value<bool> onlyOnApprovedUnderlyings;
   final Value<DateTime?> riskDisclosureAckAt;
   final Value<int> rowid;
   const OptionsStrategyProfileTableCompanion({
@@ -8525,14 +8426,12 @@ class OptionsStrategyProfileTableCompanion
     this.deltaCallMin = const Value.absent(),
     this.deltaCallMax = const Value.absent(),
     this.maxCapitalPerTradePct = const Value.absent(),
-    this.maxUnderlyingExposurePct = const Value.absent(),
     this.minAnnualizedYield = const Value.absent(),
     this.minOpenInterest = const Value.absent(),
     this.minVolume = const Value.absent(),
     this.maxBidAskSpreadPct = const Value.absent(),
     this.avoidEarnings = const Value.absent(),
     this.avoidMacroEvents = const Value.absent(),
-    this.onlyOnApprovedUnderlyings = const Value.absent(),
     this.riskDisclosureAckAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -8552,14 +8451,12 @@ class OptionsStrategyProfileTableCompanion
     required Decimal deltaCallMin,
     required Decimal deltaCallMax,
     required Decimal maxCapitalPerTradePct,
-    required Decimal maxUnderlyingExposurePct,
     required Decimal minAnnualizedYield,
     required int minOpenInterest,
     required int minVolume,
     required Decimal maxBidAskSpreadPct,
     this.avoidEarnings = const Value.absent(),
     this.avoidMacroEvents = const Value.absent(),
-    this.onlyOnApprovedUnderlyings = const Value.absent(),
     this.riskDisclosureAckAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
@@ -8575,7 +8472,6 @@ class OptionsStrategyProfileTableCompanion
        deltaCallMin = Value(deltaCallMin),
        deltaCallMax = Value(deltaCallMax),
        maxCapitalPerTradePct = Value(maxCapitalPerTradePct),
-       maxUnderlyingExposurePct = Value(maxUnderlyingExposurePct),
        minAnnualizedYield = Value(minAnnualizedYield),
        minOpenInterest = Value(minOpenInterest),
        minVolume = Value(minVolume),
@@ -8596,14 +8492,12 @@ class OptionsStrategyProfileTableCompanion
     Expression<String>? deltaCallMin,
     Expression<String>? deltaCallMax,
     Expression<String>? maxCapitalPerTradePct,
-    Expression<String>? maxUnderlyingExposurePct,
     Expression<String>? minAnnualizedYield,
     Expression<int>? minOpenInterest,
     Expression<int>? minVolume,
     Expression<String>? maxBidAskSpreadPct,
     Expression<bool>? avoidEarnings,
     Expression<bool>? avoidMacroEvents,
-    Expression<bool>? onlyOnApprovedUnderlyings,
     Expression<DateTime>? riskDisclosureAckAt,
     Expression<int>? rowid,
   }) {
@@ -8625,8 +8519,6 @@ class OptionsStrategyProfileTableCompanion
       if (deltaCallMax != null) 'delta_call_max': deltaCallMax,
       if (maxCapitalPerTradePct != null)
         'max_capital_per_trade_pct': maxCapitalPerTradePct,
-      if (maxUnderlyingExposurePct != null)
-        'max_underlying_exposure_pct': maxUnderlyingExposurePct,
       if (minAnnualizedYield != null)
         'min_annualized_yield': minAnnualizedYield,
       if (minOpenInterest != null) 'min_open_interest': minOpenInterest,
@@ -8635,8 +8527,6 @@ class OptionsStrategyProfileTableCompanion
         'max_bid_ask_spread_pct': maxBidAskSpreadPct,
       if (avoidEarnings != null) 'avoid_earnings': avoidEarnings,
       if (avoidMacroEvents != null) 'avoid_macro_events': avoidMacroEvents,
-      if (onlyOnApprovedUnderlyings != null)
-        'only_on_approved_underlyings': onlyOnApprovedUnderlyings,
       if (riskDisclosureAckAt != null)
         'risk_disclosure_ack_at': riskDisclosureAckAt,
       if (rowid != null) 'rowid': rowid,
@@ -8659,14 +8549,12 @@ class OptionsStrategyProfileTableCompanion
     Value<Decimal>? deltaCallMin,
     Value<Decimal>? deltaCallMax,
     Value<Decimal>? maxCapitalPerTradePct,
-    Value<Decimal>? maxUnderlyingExposurePct,
     Value<Decimal>? minAnnualizedYield,
     Value<int>? minOpenInterest,
     Value<int>? minVolume,
     Value<Decimal>? maxBidAskSpreadPct,
     Value<bool>? avoidEarnings,
     Value<bool>? avoidMacroEvents,
-    Value<bool>? onlyOnApprovedUnderlyings,
     Value<DateTime?>? riskDisclosureAckAt,
     Value<int>? rowid,
   }) {
@@ -8688,16 +8576,12 @@ class OptionsStrategyProfileTableCompanion
       deltaCallMax: deltaCallMax ?? this.deltaCallMax,
       maxCapitalPerTradePct:
           maxCapitalPerTradePct ?? this.maxCapitalPerTradePct,
-      maxUnderlyingExposurePct:
-          maxUnderlyingExposurePct ?? this.maxUnderlyingExposurePct,
       minAnnualizedYield: minAnnualizedYield ?? this.minAnnualizedYield,
       minOpenInterest: minOpenInterest ?? this.minOpenInterest,
       minVolume: minVolume ?? this.minVolume,
       maxBidAskSpreadPct: maxBidAskSpreadPct ?? this.maxBidAskSpreadPct,
       avoidEarnings: avoidEarnings ?? this.avoidEarnings,
       avoidMacroEvents: avoidMacroEvents ?? this.avoidMacroEvents,
-      onlyOnApprovedUnderlyings:
-          onlyOnApprovedUnderlyings ?? this.onlyOnApprovedUnderlyings,
       riskDisclosureAckAt: riskDisclosureAckAt ?? this.riskDisclosureAckAt,
       rowid: rowid ?? this.rowid,
     );
@@ -8775,12 +8659,6 @@ class OptionsStrategyProfileTableCompanion
         ),
       );
     }
-    if (maxUnderlyingExposurePct.present) {
-      map['max_underlying_exposure_pct'] = Variable<String>(
-        $OptionsStrategyProfileTableTable.$convertermaxUnderlyingExposurePct
-            .toSql(maxUnderlyingExposurePct.value),
-      );
-    }
     if (minAnnualizedYield.present) {
       map['min_annualized_yield'] = Variable<String>(
         $OptionsStrategyProfileTableTable.$converterminAnnualizedYield.toSql(
@@ -8806,11 +8684,6 @@ class OptionsStrategyProfileTableCompanion
     }
     if (avoidMacroEvents.present) {
       map['avoid_macro_events'] = Variable<bool>(avoidMacroEvents.value);
-    }
-    if (onlyOnApprovedUnderlyings.present) {
-      map['only_on_approved_underlyings'] = Variable<bool>(
-        onlyOnApprovedUnderlyings.value,
-      );
     }
     if (riskDisclosureAckAt.present) {
       map['risk_disclosure_ack_at'] = Variable<DateTime>(
@@ -8841,14 +8714,12 @@ class OptionsStrategyProfileTableCompanion
           ..write('deltaCallMin: $deltaCallMin, ')
           ..write('deltaCallMax: $deltaCallMax, ')
           ..write('maxCapitalPerTradePct: $maxCapitalPerTradePct, ')
-          ..write('maxUnderlyingExposurePct: $maxUnderlyingExposurePct, ')
           ..write('minAnnualizedYield: $minAnnualizedYield, ')
           ..write('minOpenInterest: $minOpenInterest, ')
           ..write('minVolume: $minVolume, ')
           ..write('maxBidAskSpreadPct: $maxBidAskSpreadPct, ')
           ..write('avoidEarnings: $avoidEarnings, ')
           ..write('avoidMacroEvents: $avoidMacroEvents, ')
-          ..write('onlyOnApprovedUnderlyings: $onlyOnApprovedUnderlyings, ')
           ..write('riskDisclosureAckAt: $riskDisclosureAckAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -8924,6 +8795,18 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _underlyingAssetIdMeta = const VerificationMeta(
+    'underlyingAssetId',
+  );
+  @override
+  late final GeneratedColumn<String> underlyingAssetId =
+      GeneratedColumn<String>(
+        'underlying_asset_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
   static const VerificationMeta _strategyMeta = const VerificationMeta(
     'strategy',
   );
@@ -9134,6 +9017,7 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
     hlc,
     deletedAt,
     id,
+    underlyingAssetId,
     strategy,
     symbol,
     optionSymbol,
@@ -9206,6 +9090,17 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     } else if (isInserting) {
       context.missing(_idMeta);
+    }
+    if (data.containsKey('underlying_asset_id')) {
+      context.handle(
+        _underlyingAssetIdMeta,
+        underlyingAssetId.isAcceptableOrUnknown(
+          data['underlying_asset_id']!,
+          _underlyingAssetIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_underlyingAssetIdMeta);
     }
     if (data.containsKey('strategy')) {
       context.handle(
@@ -9359,6 +9254,10 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
         DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
+      underlyingAssetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}underlying_asset_id'],
+      )!,
       strategy: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}strategy'],
@@ -9498,6 +9397,7 @@ class OptionsTradeJournalRow extends DataClass
   /// during a separate `vacuum` pass.
   final DateTime? deletedAt;
   final String id;
+  final String underlyingAssetId;
   final String strategy;
   final String symbol;
   final String optionSymbol;
@@ -9524,6 +9424,7 @@ class OptionsTradeJournalRow extends DataClass
     required this.hlc,
     this.deletedAt,
     required this.id,
+    required this.underlyingAssetId,
     required this.strategy,
     required this.symbol,
     required this.optionSymbol,
@@ -9559,6 +9460,7 @@ class OptionsTradeJournalRow extends DataClass
       map['deleted_at'] = Variable<DateTime>(deletedAt);
     }
     map['id'] = Variable<String>(id);
+    map['underlying_asset_id'] = Variable<String>(underlyingAssetId);
     map['strategy'] = Variable<String>(strategy);
     map['symbol'] = Variable<String>(symbol);
     map['option_symbol'] = Variable<String>(optionSymbol);
@@ -9625,6 +9527,7 @@ class OptionsTradeJournalRow extends DataClass
           ? const Value.absent()
           : Value(deletedAt),
       id: Value(id),
+      underlyingAssetId: Value(underlyingAssetId),
       strategy: Value(strategy),
       symbol: Value(symbol),
       optionSymbol: Value(optionSymbol),
@@ -9679,6 +9582,7 @@ class OptionsTradeJournalRow extends DataClass
       hlc: serializer.fromJson<Hlc>(json['hlc']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       id: serializer.fromJson<String>(json['id']),
+      underlyingAssetId: serializer.fromJson<String>(json['underlyingAssetId']),
       strategy: serializer.fromJson<String>(json['strategy']),
       symbol: serializer.fromJson<String>(json['symbol']),
       optionSymbol: serializer.fromJson<String>(json['optionSymbol']),
@@ -9712,6 +9616,7 @@ class OptionsTradeJournalRow extends DataClass
       'hlc': serializer.toJson<Hlc>(hlc),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'id': serializer.toJson<String>(id),
+      'underlyingAssetId': serializer.toJson<String>(underlyingAssetId),
       'strategy': serializer.toJson<String>(strategy),
       'symbol': serializer.toJson<String>(symbol),
       'optionSymbol': serializer.toJson<String>(optionSymbol),
@@ -9741,6 +9646,7 @@ class OptionsTradeJournalRow extends DataClass
     Hlc? hlc,
     Value<DateTime?> deletedAt = const Value.absent(),
     String? id,
+    String? underlyingAssetId,
     String? strategy,
     String? symbol,
     String? optionSymbol,
@@ -9767,6 +9673,7 @@ class OptionsTradeJournalRow extends DataClass
     hlc: hlc ?? this.hlc,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     id: id ?? this.id,
+    underlyingAssetId: underlyingAssetId ?? this.underlyingAssetId,
     strategy: strategy ?? this.strategy,
     symbol: symbol ?? this.symbol,
     optionSymbol: optionSymbol ?? this.optionSymbol,
@@ -9805,6 +9712,9 @@ class OptionsTradeJournalRow extends DataClass
       hlc: data.hlc.present ? data.hlc.value : this.hlc,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
       id: data.id.present ? data.id.value : this.id,
+      underlyingAssetId: data.underlyingAssetId.present
+          ? data.underlyingAssetId.value
+          : this.underlyingAssetId,
       strategy: data.strategy.present ? data.strategy.value : this.strategy,
       symbol: data.symbol.present ? data.symbol.value : this.symbol,
       optionSymbol: data.optionSymbol.present
@@ -9856,6 +9766,7 @@ class OptionsTradeJournalRow extends DataClass
           ..write('hlc: $hlc, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
+          ..write('underlyingAssetId: $underlyingAssetId, ')
           ..write('strategy: $strategy, ')
           ..write('symbol: $symbol, ')
           ..write('optionSymbol: $optionSymbol, ')
@@ -9887,6 +9798,7 @@ class OptionsTradeJournalRow extends DataClass
     hlc,
     deletedAt,
     id,
+    underlyingAssetId,
     strategy,
     symbol,
     optionSymbol,
@@ -9917,6 +9829,7 @@ class OptionsTradeJournalRow extends DataClass
           other.hlc == this.hlc &&
           other.deletedAt == this.deletedAt &&
           other.id == this.id &&
+          other.underlyingAssetId == this.underlyingAssetId &&
           other.strategy == this.strategy &&
           other.symbol == this.symbol &&
           other.optionSymbol == this.optionSymbol &&
@@ -9946,6 +9859,7 @@ class OptionsTradeJournalCompanion
   final Value<Hlc> hlc;
   final Value<DateTime?> deletedAt;
   final Value<String> id;
+  final Value<String> underlyingAssetId;
   final Value<String> strategy;
   final Value<String> symbol;
   final Value<String> optionSymbol;
@@ -9973,6 +9887,7 @@ class OptionsTradeJournalCompanion
     this.hlc = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.id = const Value.absent(),
+    this.underlyingAssetId = const Value.absent(),
     this.strategy = const Value.absent(),
     this.symbol = const Value.absent(),
     this.optionSymbol = const Value.absent(),
@@ -10001,6 +9916,7 @@ class OptionsTradeJournalCompanion
     required Hlc hlc,
     this.deletedAt = const Value.absent(),
     required String id,
+    required String underlyingAssetId,
     required String strategy,
     required String symbol,
     required String optionSymbol,
@@ -10026,6 +9942,7 @@ class OptionsTradeJournalCompanion
        updatedByDevice = Value(updatedByDevice),
        hlc = Value(hlc),
        id = Value(id),
+       underlyingAssetId = Value(underlyingAssetId),
        strategy = Value(strategy),
        symbol = Value(symbol),
        optionSymbol = Value(optionSymbol),
@@ -10040,6 +9957,7 @@ class OptionsTradeJournalCompanion
     Expression<String>? hlc,
     Expression<DateTime>? deletedAt,
     Expression<String>? id,
+    Expression<String>? underlyingAssetId,
     Expression<String>? strategy,
     Expression<String>? symbol,
     Expression<String>? optionSymbol,
@@ -10068,6 +9986,7 @@ class OptionsTradeJournalCompanion
       if (hlc != null) 'hlc': hlc,
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (id != null) 'id': id,
+      if (underlyingAssetId != null) 'underlying_asset_id': underlyingAssetId,
       if (strategy != null) 'strategy': strategy,
       if (symbol != null) 'symbol': symbol,
       if (optionSymbol != null) 'option_symbol': optionSymbol,
@@ -10099,6 +10018,7 @@ class OptionsTradeJournalCompanion
     Value<Hlc>? hlc,
     Value<DateTime?>? deletedAt,
     Value<String>? id,
+    Value<String>? underlyingAssetId,
     Value<String>? strategy,
     Value<String>? symbol,
     Value<String>? optionSymbol,
@@ -10127,6 +10047,7 @@ class OptionsTradeJournalCompanion
       hlc: hlc ?? this.hlc,
       deletedAt: deletedAt ?? this.deletedAt,
       id: id ?? this.id,
+      underlyingAssetId: underlyingAssetId ?? this.underlyingAssetId,
       strategy: strategy ?? this.strategy,
       symbol: symbol ?? this.symbol,
       optionSymbol: optionSymbol ?? this.optionSymbol,
@@ -10172,6 +10093,9 @@ class OptionsTradeJournalCompanion
     }
     if (id.present) {
       map['id'] = Variable<String>(id.value);
+    }
+    if (underlyingAssetId.present) {
+      map['underlying_asset_id'] = Variable<String>(underlyingAssetId.value);
     }
     if (strategy.present) {
       map['strategy'] = Variable<String>(strategy.value);
@@ -10261,6 +10185,7 @@ class OptionsTradeJournalCompanion
           ..write('hlc: $hlc, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
+          ..write('underlyingAssetId: $underlyingAssetId, ')
           ..write('strategy: $strategy, ')
           ..write('symbol: $symbol, ')
           ..write('optionSymbol: $optionSymbol, ')
@@ -10358,6 +10283,18 @@ class $OptionsLeapsCallPositionsTable extends OptionsLeapsCallPositions
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _underlyingAssetIdMeta = const VerificationMeta(
+    'underlyingAssetId',
+  );
+  @override
+  late final GeneratedColumn<String> underlyingAssetId =
+      GeneratedColumn<String>(
+        'underlying_asset_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
   static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
   @override
   late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
@@ -10585,6 +10522,7 @@ class $OptionsLeapsCallPositionsTable extends OptionsLeapsCallPositions
     hlc,
     deletedAt,
     id,
+    underlyingAssetId,
     symbol,
     optionSymbol,
     openedAt,
@@ -10658,6 +10596,17 @@ class $OptionsLeapsCallPositionsTable extends OptionsLeapsCallPositions
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     } else if (isInserting) {
       context.missing(_idMeta);
+    }
+    if (data.containsKey('underlying_asset_id')) {
+      context.handle(
+        _underlyingAssetIdMeta,
+        underlyingAssetId.isAcceptableOrUnknown(
+          data['underlying_asset_id']!,
+          _underlyingAssetIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_underlyingAssetIdMeta);
     }
     if (data.containsKey('symbol')) {
       context.handle(
@@ -10814,6 +10763,10 @@ class $OptionsLeapsCallPositionsTable extends OptionsLeapsCallPositions
         DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
+      underlyingAssetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}underlying_asset_id'],
+      )!,
       symbol: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}symbol'],
@@ -10962,6 +10915,7 @@ class OptionsLeapsCallPositionRow extends DataClass
   /// during a separate `vacuum` pass.
   final DateTime? deletedAt;
   final String id;
+  final String underlyingAssetId;
   final String symbol;
   final String optionSymbol;
   final DateTime openedAt;
@@ -10989,6 +10943,7 @@ class OptionsLeapsCallPositionRow extends DataClass
     required this.hlc,
     this.deletedAt,
     required this.id,
+    required this.underlyingAssetId,
     required this.symbol,
     required this.optionSymbol,
     required this.openedAt,
@@ -11025,6 +10980,7 @@ class OptionsLeapsCallPositionRow extends DataClass
       map['deleted_at'] = Variable<DateTime>(deletedAt);
     }
     map['id'] = Variable<String>(id);
+    map['underlying_asset_id'] = Variable<String>(underlyingAssetId);
     map['symbol'] = Variable<String>(symbol);
     map['option_symbol'] = Variable<String>(optionSymbol);
     map['opened_at'] = Variable<DateTime>(openedAt);
@@ -11100,6 +11056,7 @@ class OptionsLeapsCallPositionRow extends DataClass
           ? const Value.absent()
           : Value(deletedAt),
       id: Value(id),
+      underlyingAssetId: Value(underlyingAssetId),
       symbol: Value(symbol),
       optionSymbol: Value(optionSymbol),
       openedAt: Value(openedAt),
@@ -11153,6 +11110,7 @@ class OptionsLeapsCallPositionRow extends DataClass
       hlc: serializer.fromJson<Hlc>(json['hlc']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       id: serializer.fromJson<String>(json['id']),
+      underlyingAssetId: serializer.fromJson<String>(json['underlyingAssetId']),
       symbol: serializer.fromJson<String>(json['symbol']),
       optionSymbol: serializer.fromJson<String>(json['optionSymbol']),
       openedAt: serializer.fromJson<DateTime>(json['openedAt']),
@@ -11187,6 +11145,7 @@ class OptionsLeapsCallPositionRow extends DataClass
       'hlc': serializer.toJson<Hlc>(hlc),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'id': serializer.toJson<String>(id),
+      'underlyingAssetId': serializer.toJson<String>(underlyingAssetId),
       'symbol': serializer.toJson<String>(symbol),
       'optionSymbol': serializer.toJson<String>(optionSymbol),
       'openedAt': serializer.toJson<DateTime>(openedAt),
@@ -11217,6 +11176,7 @@ class OptionsLeapsCallPositionRow extends DataClass
     Hlc? hlc,
     Value<DateTime?> deletedAt = const Value.absent(),
     String? id,
+    String? underlyingAssetId,
     String? symbol,
     String? optionSymbol,
     DateTime? openedAt,
@@ -11244,6 +11204,7 @@ class OptionsLeapsCallPositionRow extends DataClass
     hlc: hlc ?? this.hlc,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     id: id ?? this.id,
+    underlyingAssetId: underlyingAssetId ?? this.underlyingAssetId,
     symbol: symbol ?? this.symbol,
     optionSymbol: optionSymbol ?? this.optionSymbol,
     openedAt: openedAt ?? this.openedAt,
@@ -11285,6 +11246,9 @@ class OptionsLeapsCallPositionRow extends DataClass
       hlc: data.hlc.present ? data.hlc.value : this.hlc,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
       id: data.id.present ? data.id.value : this.id,
+      underlyingAssetId: data.underlyingAssetId.present
+          ? data.underlyingAssetId.value
+          : this.underlyingAssetId,
       symbol: data.symbol.present ? data.symbol.value : this.symbol,
       optionSymbol: data.optionSymbol.present
           ? data.optionSymbol.value
@@ -11341,6 +11305,7 @@ class OptionsLeapsCallPositionRow extends DataClass
           ..write('hlc: $hlc, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
+          ..write('underlyingAssetId: $underlyingAssetId, ')
           ..write('symbol: $symbol, ')
           ..write('optionSymbol: $optionSymbol, ')
           ..write('openedAt: $openedAt, ')
@@ -11373,6 +11338,7 @@ class OptionsLeapsCallPositionRow extends DataClass
     hlc,
     deletedAt,
     id,
+    underlyingAssetId,
     symbol,
     optionSymbol,
     openedAt,
@@ -11404,6 +11370,7 @@ class OptionsLeapsCallPositionRow extends DataClass
           other.hlc == this.hlc &&
           other.deletedAt == this.deletedAt &&
           other.id == this.id &&
+          other.underlyingAssetId == this.underlyingAssetId &&
           other.symbol == this.symbol &&
           other.optionSymbol == this.optionSymbol &&
           other.openedAt == this.openedAt &&
@@ -11434,6 +11401,7 @@ class OptionsLeapsCallPositionsCompanion
   final Value<Hlc> hlc;
   final Value<DateTime?> deletedAt;
   final Value<String> id;
+  final Value<String> underlyingAssetId;
   final Value<String> symbol;
   final Value<String> optionSymbol;
   final Value<DateTime> openedAt;
@@ -11462,6 +11430,7 @@ class OptionsLeapsCallPositionsCompanion
     this.hlc = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.id = const Value.absent(),
+    this.underlyingAssetId = const Value.absent(),
     this.symbol = const Value.absent(),
     this.optionSymbol = const Value.absent(),
     this.openedAt = const Value.absent(),
@@ -11491,6 +11460,7 @@ class OptionsLeapsCallPositionsCompanion
     required Hlc hlc,
     this.deletedAt = const Value.absent(),
     required String id,
+    required String underlyingAssetId,
     required String symbol,
     required String optionSymbol,
     required DateTime openedAt,
@@ -11517,6 +11487,7 @@ class OptionsLeapsCallPositionsCompanion
        updatedByDevice = Value(updatedByDevice),
        hlc = Value(hlc),
        id = Value(id),
+       underlyingAssetId = Value(underlyingAssetId),
        symbol = Value(symbol),
        optionSymbol = Value(optionSymbol),
        openedAt = Value(openedAt),
@@ -11532,6 +11503,7 @@ class OptionsLeapsCallPositionsCompanion
     Expression<String>? hlc,
     Expression<DateTime>? deletedAt,
     Expression<String>? id,
+    Expression<String>? underlyingAssetId,
     Expression<String>? symbol,
     Expression<String>? optionSymbol,
     Expression<DateTime>? openedAt,
@@ -11561,6 +11533,7 @@ class OptionsLeapsCallPositionsCompanion
       if (hlc != null) 'hlc': hlc,
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (id != null) 'id': id,
+      if (underlyingAssetId != null) 'underlying_asset_id': underlyingAssetId,
       if (symbol != null) 'symbol': symbol,
       if (optionSymbol != null) 'option_symbol': optionSymbol,
       if (openedAt != null) 'opened_at': openedAt,
@@ -11593,6 +11566,7 @@ class OptionsLeapsCallPositionsCompanion
     Value<Hlc>? hlc,
     Value<DateTime?>? deletedAt,
     Value<String>? id,
+    Value<String>? underlyingAssetId,
     Value<String>? symbol,
     Value<String>? optionSymbol,
     Value<DateTime>? openedAt,
@@ -11622,6 +11596,7 @@ class OptionsLeapsCallPositionsCompanion
       hlc: hlc ?? this.hlc,
       deletedAt: deletedAt ?? this.deletedAt,
       id: id ?? this.id,
+      underlyingAssetId: underlyingAssetId ?? this.underlyingAssetId,
       symbol: symbol ?? this.symbol,
       optionSymbol: optionSymbol ?? this.optionSymbol,
       openedAt: openedAt ?? this.openedAt,
@@ -11668,6 +11643,9 @@ class OptionsLeapsCallPositionsCompanion
     }
     if (id.present) {
       map['id'] = Variable<String>(id.value);
+    }
+    if (underlyingAssetId.present) {
+      map['underlying_asset_id'] = Variable<String>(underlyingAssetId.value);
     }
     if (symbol.present) {
       map['symbol'] = Variable<String>(symbol.value);
@@ -11766,6 +11744,7 @@ class OptionsLeapsCallPositionsCompanion
           ..write('hlc: $hlc, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
+          ..write('underlyingAssetId: $underlyingAssetId, ')
           ..write('symbol: $symbol, ')
           ..write('optionSymbol: $optionSymbol, ')
           ..write('openedAt: $openedAt, ')
@@ -11860,6 +11839,17 @@ class $IncomeStrategyPlansTable extends IncomeStrategyPlans
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _assetIdMeta = const VerificationMeta(
+    'assetId',
+  );
+  @override
+  late final GeneratedColumn<String> assetId = GeneratedColumn<String>(
+    'asset_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
   @override
   late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
@@ -11893,17 +11883,18 @@ class $IncomeStrategyPlansTable extends IncomeStrategyPlans
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _enabledSleevesJsonMeta =
-      const VerificationMeta('enabledSleevesJson');
+  static const VerificationMeta _sleeveIntentsJsonMeta = const VerificationMeta(
+    'sleeveIntentsJson',
+  );
   @override
-  late final GeneratedColumn<String> enabledSleevesJson =
+  late final GeneratedColumn<String> sleeveIntentsJson =
       GeneratedColumn<String>(
-        'enabled_sleeves_json',
+        'sleeve_intents_json',
         aliasedName,
         false,
         type: DriftSqlType.string,
         requiredDuringInsert: false,
-        defaultValue: const Constant('[]'),
+        defaultValue: const Constant('{}'),
       );
   @override
   late final GeneratedColumnWithTypeConverter<Decimal?, String> capitalBudget =
@@ -11940,59 +11931,6 @@ class $IncomeStrategyPlansTable extends IncomeStrategyPlans
       ).withConverter<Decimal?>(
         $IncomeStrategyPlansTable.$convertermaxPositionWeightn,
       );
-  @override
-  late final GeneratedColumnWithTypeConverter<Decimal?, String> maxLeapsCost =
-      GeneratedColumn<String>(
-        'max_leaps_cost',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      ).withConverter<Decimal?>(
-        $IncomeStrategyPlansTable.$convertermaxLeapsCostn,
-      );
-  @override
-  late final GeneratedColumnWithTypeConverter<Decimal?, String>
-  maxAssignmentValue =
-      GeneratedColumn<String>(
-        'max_assignment_value',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      ).withConverter<Decimal?>(
-        $IncomeStrategyPlansTable.$convertermaxAssignmentValuen,
-      );
-  static const VerificationMeta _preserveDividendMeta = const VerificationMeta(
-    'preserveDividend',
-  );
-  @override
-  late final GeneratedColumn<bool> preserveDividend = GeneratedColumn<bool>(
-    'preserve_dividend',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("preserve_dividend" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
-  static const VerificationMeta _allowSharesCalledAwayMeta =
-      const VerificationMeta('allowSharesCalledAway');
-  @override
-  late final GeneratedColumn<bool> allowSharesCalledAway =
-      GeneratedColumn<bool>(
-        'allow_shares_called_away',
-        aliasedName,
-        false,
-        type: DriftSqlType.bool,
-        requiredDuringInsert: false,
-        defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("allow_shares_called_away" IN (0, 1))',
-        ),
-        defaultValue: const Constant(false),
-      );
   static const VerificationMeta _notesMeta = const VerificationMeta('notes');
   @override
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
@@ -12010,17 +11948,14 @@ class $IncomeStrategyPlansTable extends IncomeStrategyPlans
     hlc,
     deletedAt,
     id,
+    assetId,
     symbol,
     market,
     currency,
-    enabledSleevesJson,
+    sleeveIntentsJson,
     capitalBudget,
     annualIncomeTarget,
     maxPositionWeight,
-    maxLeapsCost,
-    maxAssignmentValue,
-    preserveDividend,
-    allowSharesCalledAway,
     notes,
   ];
   @override
@@ -12076,6 +12011,14 @@ class $IncomeStrategyPlansTable extends IncomeStrategyPlans
     } else if (isInserting) {
       context.missing(_idMeta);
     }
+    if (data.containsKey('asset_id')) {
+      context.handle(
+        _assetIdMeta,
+        assetId.isAcceptableOrUnknown(data['asset_id']!, _assetIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_assetIdMeta);
+    }
     if (data.containsKey('symbol')) {
       context.handle(
         _symbolMeta,
@@ -12100,30 +12043,12 @@ class $IncomeStrategyPlansTable extends IncomeStrategyPlans
     } else if (isInserting) {
       context.missing(_currencyMeta);
     }
-    if (data.containsKey('enabled_sleeves_json')) {
+    if (data.containsKey('sleeve_intents_json')) {
       context.handle(
-        _enabledSleevesJsonMeta,
-        enabledSleevesJson.isAcceptableOrUnknown(
-          data['enabled_sleeves_json']!,
-          _enabledSleevesJsonMeta,
-        ),
-      );
-    }
-    if (data.containsKey('preserve_dividend')) {
-      context.handle(
-        _preserveDividendMeta,
-        preserveDividend.isAcceptableOrUnknown(
-          data['preserve_dividend']!,
-          _preserveDividendMeta,
-        ),
-      );
-    }
-    if (data.containsKey('allow_shares_called_away')) {
-      context.handle(
-        _allowSharesCalledAwayMeta,
-        allowSharesCalledAway.isAcceptableOrUnknown(
-          data['allow_shares_called_away']!,
-          _allowSharesCalledAwayMeta,
+        _sleeveIntentsJsonMeta,
+        sleeveIntentsJson.isAcceptableOrUnknown(
+          data['sleeve_intents_json']!,
+          _sleeveIntentsJsonMeta,
         ),
       );
     }
@@ -12168,6 +12093,10 @@ class $IncomeStrategyPlansTable extends IncomeStrategyPlans
         DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
+      assetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}asset_id'],
+      )!,
       symbol: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}symbol'],
@@ -12180,9 +12109,9 @@ class $IncomeStrategyPlansTable extends IncomeStrategyPlans
         DriftSqlType.string,
         data['${effectivePrefix}currency'],
       )!,
-      enabledSleevesJson: attachedDatabase.typeMapping.read(
+      sleeveIntentsJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}enabled_sleeves_json'],
+        data['${effectivePrefix}sleeve_intents_json'],
       )!,
       capitalBudget: $IncomeStrategyPlansTable.$convertercapitalBudgetn.fromSql(
         attachedDatabase.typeMapping.read(
@@ -12205,28 +12134,6 @@ class $IncomeStrategyPlansTable extends IncomeStrategyPlans
               data['${effectivePrefix}max_position_weight'],
             ),
           ),
-      maxLeapsCost: $IncomeStrategyPlansTable.$convertermaxLeapsCostn.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}max_leaps_cost'],
-        ),
-      ),
-      maxAssignmentValue: $IncomeStrategyPlansTable
-          .$convertermaxAssignmentValuen
-          .fromSql(
-            attachedDatabase.typeMapping.read(
-              DriftSqlType.string,
-              data['${effectivePrefix}max_assignment_value'],
-            ),
-          ),
-      preserveDividend: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}preserve_dividend'],
-      )!,
-      allowSharesCalledAway: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}allow_shares_called_away'],
-      )!,
       notes: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
@@ -12252,14 +12159,6 @@ class $IncomeStrategyPlansTable extends IncomeStrategyPlans
       const DecimalConverter();
   static TypeConverter<Decimal?, String?> $convertermaxPositionWeightn =
       NullAwareTypeConverter.wrap($convertermaxPositionWeight);
-  static TypeConverter<Decimal, String> $convertermaxLeapsCost =
-      const DecimalConverter();
-  static TypeConverter<Decimal?, String?> $convertermaxLeapsCostn =
-      NullAwareTypeConverter.wrap($convertermaxLeapsCost);
-  static TypeConverter<Decimal, String> $convertermaxAssignmentValue =
-      const DecimalConverter();
-  static TypeConverter<Decimal?, String?> $convertermaxAssignmentValuen =
-      NullAwareTypeConverter.wrap($convertermaxAssignmentValue);
 }
 
 class IncomeStrategyPlanRow extends DataClass
@@ -12286,17 +12185,14 @@ class IncomeStrategyPlanRow extends DataClass
   /// during a separate `vacuum` pass.
   final DateTime? deletedAt;
   final String id;
+  final String assetId;
   final String symbol;
   final String market;
   final String currency;
-  final String enabledSleevesJson;
+  final String sleeveIntentsJson;
   final Decimal? capitalBudget;
   final Decimal? annualIncomeTarget;
   final Decimal? maxPositionWeight;
-  final Decimal? maxLeapsCost;
-  final Decimal? maxAssignmentValue;
-  final bool preserveDividend;
-  final bool allowSharesCalledAway;
   final String? notes;
   const IncomeStrategyPlanRow({
     required this.ownerUserId,
@@ -12305,17 +12201,14 @@ class IncomeStrategyPlanRow extends DataClass
     required this.hlc,
     this.deletedAt,
     required this.id,
+    required this.assetId,
     required this.symbol,
     required this.market,
     required this.currency,
-    required this.enabledSleevesJson,
+    required this.sleeveIntentsJson,
     this.capitalBudget,
     this.annualIncomeTarget,
     this.maxPositionWeight,
-    this.maxLeapsCost,
-    this.maxAssignmentValue,
-    required this.preserveDividend,
-    required this.allowSharesCalledAway,
     this.notes,
   });
   @override
@@ -12333,10 +12226,11 @@ class IncomeStrategyPlanRow extends DataClass
       map['deleted_at'] = Variable<DateTime>(deletedAt);
     }
     map['id'] = Variable<String>(id);
+    map['asset_id'] = Variable<String>(assetId);
     map['symbol'] = Variable<String>(symbol);
     map['market'] = Variable<String>(market);
     map['currency'] = Variable<String>(currency);
-    map['enabled_sleeves_json'] = Variable<String>(enabledSleevesJson);
+    map['sleeve_intents_json'] = Variable<String>(sleeveIntentsJson);
     if (!nullToAbsent || capitalBudget != null) {
       map['capital_budget'] = Variable<String>(
         $IncomeStrategyPlansTable.$convertercapitalBudgetn.toSql(capitalBudget),
@@ -12356,20 +12250,6 @@ class IncomeStrategyPlanRow extends DataClass
         ),
       );
     }
-    if (!nullToAbsent || maxLeapsCost != null) {
-      map['max_leaps_cost'] = Variable<String>(
-        $IncomeStrategyPlansTable.$convertermaxLeapsCostn.toSql(maxLeapsCost),
-      );
-    }
-    if (!nullToAbsent || maxAssignmentValue != null) {
-      map['max_assignment_value'] = Variable<String>(
-        $IncomeStrategyPlansTable.$convertermaxAssignmentValuen.toSql(
-          maxAssignmentValue,
-        ),
-      );
-    }
-    map['preserve_dividend'] = Variable<bool>(preserveDividend);
-    map['allow_shares_called_away'] = Variable<bool>(allowSharesCalledAway);
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
@@ -12386,10 +12266,11 @@ class IncomeStrategyPlanRow extends DataClass
           ? const Value.absent()
           : Value(deletedAt),
       id: Value(id),
+      assetId: Value(assetId),
       symbol: Value(symbol),
       market: Value(market),
       currency: Value(currency),
-      enabledSleevesJson: Value(enabledSleevesJson),
+      sleeveIntentsJson: Value(sleeveIntentsJson),
       capitalBudget: capitalBudget == null && nullToAbsent
           ? const Value.absent()
           : Value(capitalBudget),
@@ -12399,14 +12280,6 @@ class IncomeStrategyPlanRow extends DataClass
       maxPositionWeight: maxPositionWeight == null && nullToAbsent
           ? const Value.absent()
           : Value(maxPositionWeight),
-      maxLeapsCost: maxLeapsCost == null && nullToAbsent
-          ? const Value.absent()
-          : Value(maxLeapsCost),
-      maxAssignmentValue: maxAssignmentValue == null && nullToAbsent
-          ? const Value.absent()
-          : Value(maxAssignmentValue),
-      preserveDividend: Value(preserveDividend),
-      allowSharesCalledAway: Value(allowSharesCalledAway),
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
@@ -12425,26 +12298,17 @@ class IncomeStrategyPlanRow extends DataClass
       hlc: serializer.fromJson<Hlc>(json['hlc']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       id: serializer.fromJson<String>(json['id']),
+      assetId: serializer.fromJson<String>(json['assetId']),
       symbol: serializer.fromJson<String>(json['symbol']),
       market: serializer.fromJson<String>(json['market']),
       currency: serializer.fromJson<String>(json['currency']),
-      enabledSleevesJson: serializer.fromJson<String>(
-        json['enabledSleevesJson'],
-      ),
+      sleeveIntentsJson: serializer.fromJson<String>(json['sleeveIntentsJson']),
       capitalBudget: serializer.fromJson<Decimal?>(json['capitalBudget']),
       annualIncomeTarget: serializer.fromJson<Decimal?>(
         json['annualIncomeTarget'],
       ),
       maxPositionWeight: serializer.fromJson<Decimal?>(
         json['maxPositionWeight'],
-      ),
-      maxLeapsCost: serializer.fromJson<Decimal?>(json['maxLeapsCost']),
-      maxAssignmentValue: serializer.fromJson<Decimal?>(
-        json['maxAssignmentValue'],
-      ),
-      preserveDividend: serializer.fromJson<bool>(json['preserveDividend']),
-      allowSharesCalledAway: serializer.fromJson<bool>(
-        json['allowSharesCalledAway'],
       ),
       notes: serializer.fromJson<String?>(json['notes']),
     );
@@ -12459,17 +12323,14 @@ class IncomeStrategyPlanRow extends DataClass
       'hlc': serializer.toJson<Hlc>(hlc),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'id': serializer.toJson<String>(id),
+      'assetId': serializer.toJson<String>(assetId),
       'symbol': serializer.toJson<String>(symbol),
       'market': serializer.toJson<String>(market),
       'currency': serializer.toJson<String>(currency),
-      'enabledSleevesJson': serializer.toJson<String>(enabledSleevesJson),
+      'sleeveIntentsJson': serializer.toJson<String>(sleeveIntentsJson),
       'capitalBudget': serializer.toJson<Decimal?>(capitalBudget),
       'annualIncomeTarget': serializer.toJson<Decimal?>(annualIncomeTarget),
       'maxPositionWeight': serializer.toJson<Decimal?>(maxPositionWeight),
-      'maxLeapsCost': serializer.toJson<Decimal?>(maxLeapsCost),
-      'maxAssignmentValue': serializer.toJson<Decimal?>(maxAssignmentValue),
-      'preserveDividend': serializer.toJson<bool>(preserveDividend),
-      'allowSharesCalledAway': serializer.toJson<bool>(allowSharesCalledAway),
       'notes': serializer.toJson<String?>(notes),
     };
   }
@@ -12481,17 +12342,14 @@ class IncomeStrategyPlanRow extends DataClass
     Hlc? hlc,
     Value<DateTime?> deletedAt = const Value.absent(),
     String? id,
+    String? assetId,
     String? symbol,
     String? market,
     String? currency,
-    String? enabledSleevesJson,
+    String? sleeveIntentsJson,
     Value<Decimal?> capitalBudget = const Value.absent(),
     Value<Decimal?> annualIncomeTarget = const Value.absent(),
     Value<Decimal?> maxPositionWeight = const Value.absent(),
-    Value<Decimal?> maxLeapsCost = const Value.absent(),
-    Value<Decimal?> maxAssignmentValue = const Value.absent(),
-    bool? preserveDividend,
-    bool? allowSharesCalledAway,
     Value<String?> notes = const Value.absent(),
   }) => IncomeStrategyPlanRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
@@ -12500,10 +12358,11 @@ class IncomeStrategyPlanRow extends DataClass
     hlc: hlc ?? this.hlc,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     id: id ?? this.id,
+    assetId: assetId ?? this.assetId,
     symbol: symbol ?? this.symbol,
     market: market ?? this.market,
     currency: currency ?? this.currency,
-    enabledSleevesJson: enabledSleevesJson ?? this.enabledSleevesJson,
+    sleeveIntentsJson: sleeveIntentsJson ?? this.sleeveIntentsJson,
     capitalBudget: capitalBudget.present
         ? capitalBudget.value
         : this.capitalBudget,
@@ -12513,12 +12372,6 @@ class IncomeStrategyPlanRow extends DataClass
     maxPositionWeight: maxPositionWeight.present
         ? maxPositionWeight.value
         : this.maxPositionWeight,
-    maxLeapsCost: maxLeapsCost.present ? maxLeapsCost.value : this.maxLeapsCost,
-    maxAssignmentValue: maxAssignmentValue.present
-        ? maxAssignmentValue.value
-        : this.maxAssignmentValue,
-    preserveDividend: preserveDividend ?? this.preserveDividend,
-    allowSharesCalledAway: allowSharesCalledAway ?? this.allowSharesCalledAway,
     notes: notes.present ? notes.value : this.notes,
   );
   IncomeStrategyPlanRow copyWithCompanion(IncomeStrategyPlansCompanion data) {
@@ -12533,12 +12386,13 @@ class IncomeStrategyPlanRow extends DataClass
       hlc: data.hlc.present ? data.hlc.value : this.hlc,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
       id: data.id.present ? data.id.value : this.id,
+      assetId: data.assetId.present ? data.assetId.value : this.assetId,
       symbol: data.symbol.present ? data.symbol.value : this.symbol,
       market: data.market.present ? data.market.value : this.market,
       currency: data.currency.present ? data.currency.value : this.currency,
-      enabledSleevesJson: data.enabledSleevesJson.present
-          ? data.enabledSleevesJson.value
-          : this.enabledSleevesJson,
+      sleeveIntentsJson: data.sleeveIntentsJson.present
+          ? data.sleeveIntentsJson.value
+          : this.sleeveIntentsJson,
       capitalBudget: data.capitalBudget.present
           ? data.capitalBudget.value
           : this.capitalBudget,
@@ -12548,18 +12402,6 @@ class IncomeStrategyPlanRow extends DataClass
       maxPositionWeight: data.maxPositionWeight.present
           ? data.maxPositionWeight.value
           : this.maxPositionWeight,
-      maxLeapsCost: data.maxLeapsCost.present
-          ? data.maxLeapsCost.value
-          : this.maxLeapsCost,
-      maxAssignmentValue: data.maxAssignmentValue.present
-          ? data.maxAssignmentValue.value
-          : this.maxAssignmentValue,
-      preserveDividend: data.preserveDividend.present
-          ? data.preserveDividend.value
-          : this.preserveDividend,
-      allowSharesCalledAway: data.allowSharesCalledAway.present
-          ? data.allowSharesCalledAway.value
-          : this.allowSharesCalledAway,
       notes: data.notes.present ? data.notes.value : this.notes,
     );
   }
@@ -12573,17 +12415,14 @@ class IncomeStrategyPlanRow extends DataClass
           ..write('hlc: $hlc, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
+          ..write('assetId: $assetId, ')
           ..write('symbol: $symbol, ')
           ..write('market: $market, ')
           ..write('currency: $currency, ')
-          ..write('enabledSleevesJson: $enabledSleevesJson, ')
+          ..write('sleeveIntentsJson: $sleeveIntentsJson, ')
           ..write('capitalBudget: $capitalBudget, ')
           ..write('annualIncomeTarget: $annualIncomeTarget, ')
           ..write('maxPositionWeight: $maxPositionWeight, ')
-          ..write('maxLeapsCost: $maxLeapsCost, ')
-          ..write('maxAssignmentValue: $maxAssignmentValue, ')
-          ..write('preserveDividend: $preserveDividend, ')
-          ..write('allowSharesCalledAway: $allowSharesCalledAway, ')
           ..write('notes: $notes')
           ..write(')'))
         .toString();
@@ -12597,17 +12436,14 @@ class IncomeStrategyPlanRow extends DataClass
     hlc,
     deletedAt,
     id,
+    assetId,
     symbol,
     market,
     currency,
-    enabledSleevesJson,
+    sleeveIntentsJson,
     capitalBudget,
     annualIncomeTarget,
     maxPositionWeight,
-    maxLeapsCost,
-    maxAssignmentValue,
-    preserveDividend,
-    allowSharesCalledAway,
     notes,
   );
   @override
@@ -12620,17 +12456,14 @@ class IncomeStrategyPlanRow extends DataClass
           other.hlc == this.hlc &&
           other.deletedAt == this.deletedAt &&
           other.id == this.id &&
+          other.assetId == this.assetId &&
           other.symbol == this.symbol &&
           other.market == this.market &&
           other.currency == this.currency &&
-          other.enabledSleevesJson == this.enabledSleevesJson &&
+          other.sleeveIntentsJson == this.sleeveIntentsJson &&
           other.capitalBudget == this.capitalBudget &&
           other.annualIncomeTarget == this.annualIncomeTarget &&
           other.maxPositionWeight == this.maxPositionWeight &&
-          other.maxLeapsCost == this.maxLeapsCost &&
-          other.maxAssignmentValue == this.maxAssignmentValue &&
-          other.preserveDividend == this.preserveDividend &&
-          other.allowSharesCalledAway == this.allowSharesCalledAway &&
           other.notes == this.notes);
 }
 
@@ -12642,17 +12475,14 @@ class IncomeStrategyPlansCompanion
   final Value<Hlc> hlc;
   final Value<DateTime?> deletedAt;
   final Value<String> id;
+  final Value<String> assetId;
   final Value<String> symbol;
   final Value<String> market;
   final Value<String> currency;
-  final Value<String> enabledSleevesJson;
+  final Value<String> sleeveIntentsJson;
   final Value<Decimal?> capitalBudget;
   final Value<Decimal?> annualIncomeTarget;
   final Value<Decimal?> maxPositionWeight;
-  final Value<Decimal?> maxLeapsCost;
-  final Value<Decimal?> maxAssignmentValue;
-  final Value<bool> preserveDividend;
-  final Value<bool> allowSharesCalledAway;
   final Value<String?> notes;
   final Value<int> rowid;
   const IncomeStrategyPlansCompanion({
@@ -12662,17 +12492,14 @@ class IncomeStrategyPlansCompanion
     this.hlc = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.id = const Value.absent(),
+    this.assetId = const Value.absent(),
     this.symbol = const Value.absent(),
     this.market = const Value.absent(),
     this.currency = const Value.absent(),
-    this.enabledSleevesJson = const Value.absent(),
+    this.sleeveIntentsJson = const Value.absent(),
     this.capitalBudget = const Value.absent(),
     this.annualIncomeTarget = const Value.absent(),
     this.maxPositionWeight = const Value.absent(),
-    this.maxLeapsCost = const Value.absent(),
-    this.maxAssignmentValue = const Value.absent(),
-    this.preserveDividend = const Value.absent(),
-    this.allowSharesCalledAway = const Value.absent(),
     this.notes = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -12683,17 +12510,14 @@ class IncomeStrategyPlansCompanion
     required Hlc hlc,
     this.deletedAt = const Value.absent(),
     required String id,
+    required String assetId,
     required String symbol,
     required String market,
     required String currency,
-    this.enabledSleevesJson = const Value.absent(),
+    this.sleeveIntentsJson = const Value.absent(),
     this.capitalBudget = const Value.absent(),
     this.annualIncomeTarget = const Value.absent(),
     this.maxPositionWeight = const Value.absent(),
-    this.maxLeapsCost = const Value.absent(),
-    this.maxAssignmentValue = const Value.absent(),
-    this.preserveDividend = const Value.absent(),
-    this.allowSharesCalledAway = const Value.absent(),
     this.notes = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
@@ -12701,6 +12525,7 @@ class IncomeStrategyPlansCompanion
        updatedByDevice = Value(updatedByDevice),
        hlc = Value(hlc),
        id = Value(id),
+       assetId = Value(assetId),
        symbol = Value(symbol),
        market = Value(market),
        currency = Value(currency);
@@ -12711,17 +12536,14 @@ class IncomeStrategyPlansCompanion
     Expression<String>? hlc,
     Expression<DateTime>? deletedAt,
     Expression<String>? id,
+    Expression<String>? assetId,
     Expression<String>? symbol,
     Expression<String>? market,
     Expression<String>? currency,
-    Expression<String>? enabledSleevesJson,
+    Expression<String>? sleeveIntentsJson,
     Expression<String>? capitalBudget,
     Expression<String>? annualIncomeTarget,
     Expression<String>? maxPositionWeight,
-    Expression<String>? maxLeapsCost,
-    Expression<String>? maxAssignmentValue,
-    Expression<bool>? preserveDividend,
-    Expression<bool>? allowSharesCalledAway,
     Expression<String>? notes,
     Expression<int>? rowid,
   }) {
@@ -12732,21 +12554,15 @@ class IncomeStrategyPlansCompanion
       if (hlc != null) 'hlc': hlc,
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (id != null) 'id': id,
+      if (assetId != null) 'asset_id': assetId,
       if (symbol != null) 'symbol': symbol,
       if (market != null) 'market': market,
       if (currency != null) 'currency': currency,
-      if (enabledSleevesJson != null)
-        'enabled_sleeves_json': enabledSleevesJson,
+      if (sleeveIntentsJson != null) 'sleeve_intents_json': sleeveIntentsJson,
       if (capitalBudget != null) 'capital_budget': capitalBudget,
       if (annualIncomeTarget != null)
         'annual_income_target': annualIncomeTarget,
       if (maxPositionWeight != null) 'max_position_weight': maxPositionWeight,
-      if (maxLeapsCost != null) 'max_leaps_cost': maxLeapsCost,
-      if (maxAssignmentValue != null)
-        'max_assignment_value': maxAssignmentValue,
-      if (preserveDividend != null) 'preserve_dividend': preserveDividend,
-      if (allowSharesCalledAway != null)
-        'allow_shares_called_away': allowSharesCalledAway,
       if (notes != null) 'notes': notes,
       if (rowid != null) 'rowid': rowid,
     });
@@ -12759,17 +12575,14 @@ class IncomeStrategyPlansCompanion
     Value<Hlc>? hlc,
     Value<DateTime?>? deletedAt,
     Value<String>? id,
+    Value<String>? assetId,
     Value<String>? symbol,
     Value<String>? market,
     Value<String>? currency,
-    Value<String>? enabledSleevesJson,
+    Value<String>? sleeveIntentsJson,
     Value<Decimal?>? capitalBudget,
     Value<Decimal?>? annualIncomeTarget,
     Value<Decimal?>? maxPositionWeight,
-    Value<Decimal?>? maxLeapsCost,
-    Value<Decimal?>? maxAssignmentValue,
-    Value<bool>? preserveDividend,
-    Value<bool>? allowSharesCalledAway,
     Value<String?>? notes,
     Value<int>? rowid,
   }) {
@@ -12780,18 +12593,14 @@ class IncomeStrategyPlansCompanion
       hlc: hlc ?? this.hlc,
       deletedAt: deletedAt ?? this.deletedAt,
       id: id ?? this.id,
+      assetId: assetId ?? this.assetId,
       symbol: symbol ?? this.symbol,
       market: market ?? this.market,
       currency: currency ?? this.currency,
-      enabledSleevesJson: enabledSleevesJson ?? this.enabledSleevesJson,
+      sleeveIntentsJson: sleeveIntentsJson ?? this.sleeveIntentsJson,
       capitalBudget: capitalBudget ?? this.capitalBudget,
       annualIncomeTarget: annualIncomeTarget ?? this.annualIncomeTarget,
       maxPositionWeight: maxPositionWeight ?? this.maxPositionWeight,
-      maxLeapsCost: maxLeapsCost ?? this.maxLeapsCost,
-      maxAssignmentValue: maxAssignmentValue ?? this.maxAssignmentValue,
-      preserveDividend: preserveDividend ?? this.preserveDividend,
-      allowSharesCalledAway:
-          allowSharesCalledAway ?? this.allowSharesCalledAway,
       notes: notes ?? this.notes,
       rowid: rowid ?? this.rowid,
     );
@@ -12820,6 +12629,9 @@ class IncomeStrategyPlansCompanion
     if (id.present) {
       map['id'] = Variable<String>(id.value);
     }
+    if (assetId.present) {
+      map['asset_id'] = Variable<String>(assetId.value);
+    }
     if (symbol.present) {
       map['symbol'] = Variable<String>(symbol.value);
     }
@@ -12829,8 +12641,8 @@ class IncomeStrategyPlansCompanion
     if (currency.present) {
       map['currency'] = Variable<String>(currency.value);
     }
-    if (enabledSleevesJson.present) {
-      map['enabled_sleeves_json'] = Variable<String>(enabledSleevesJson.value);
+    if (sleeveIntentsJson.present) {
+      map['sleeve_intents_json'] = Variable<String>(sleeveIntentsJson.value);
     }
     if (capitalBudget.present) {
       map['capital_budget'] = Variable<String>(
@@ -12853,28 +12665,6 @@ class IncomeStrategyPlansCompanion
         ),
       );
     }
-    if (maxLeapsCost.present) {
-      map['max_leaps_cost'] = Variable<String>(
-        $IncomeStrategyPlansTable.$convertermaxLeapsCostn.toSql(
-          maxLeapsCost.value,
-        ),
-      );
-    }
-    if (maxAssignmentValue.present) {
-      map['max_assignment_value'] = Variable<String>(
-        $IncomeStrategyPlansTable.$convertermaxAssignmentValuen.toSql(
-          maxAssignmentValue.value,
-        ),
-      );
-    }
-    if (preserveDividend.present) {
-      map['preserve_dividend'] = Variable<bool>(preserveDividend.value);
-    }
-    if (allowSharesCalledAway.present) {
-      map['allow_shares_called_away'] = Variable<bool>(
-        allowSharesCalledAway.value,
-      );
-    }
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
@@ -12893,813 +12683,14 @@ class IncomeStrategyPlansCompanion
           ..write('hlc: $hlc, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
+          ..write('assetId: $assetId, ')
           ..write('symbol: $symbol, ')
           ..write('market: $market, ')
           ..write('currency: $currency, ')
-          ..write('enabledSleevesJson: $enabledSleevesJson, ')
+          ..write('sleeveIntentsJson: $sleeveIntentsJson, ')
           ..write('capitalBudget: $capitalBudget, ')
           ..write('annualIncomeTarget: $annualIncomeTarget, ')
           ..write('maxPositionWeight: $maxPositionWeight, ')
-          ..write('maxLeapsCost: $maxLeapsCost, ')
-          ..write('maxAssignmentValue: $maxAssignmentValue, ')
-          ..write('preserveDividend: $preserveDividend, ')
-          ..write('allowSharesCalledAway: $allowSharesCalledAway, ')
-          ..write('notes: $notes, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $ApprovedUnderlyingsTable extends ApprovedUnderlyings
-    with TableInfo<$ApprovedUnderlyingsTable, ApprovedUnderlyingRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $ApprovedUnderlyingsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
-    'ownerUserId',
-  );
-  @override
-  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
-    'owner_user_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
-    'updatedByDevice',
-  );
-  @override
-  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
-    'updated_by_device',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
-      GeneratedColumn<String>(
-        'hlc',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<Hlc>($ApprovedUnderlyingsTable.$converterhlc);
-  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
-    'deletedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-    'deleted_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
-  @override
-  late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
-    'symbol',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _marketMeta = const VerificationMeta('market');
-  @override
-  late final GeneratedColumn<String> market = GeneratedColumn<String>(
-    'market',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _allowPutMeta = const VerificationMeta(
-    'allowPut',
-  );
-  @override
-  late final GeneratedColumn<bool> allowPut = GeneratedColumn<bool>(
-    'allow_put',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("allow_put" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
-  static const VerificationMeta _allowCallMeta = const VerificationMeta(
-    'allowCall',
-  );
-  @override
-  late final GeneratedColumn<bool> allowCall = GeneratedColumn<bool>(
-    'allow_call',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("allow_call" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<Decimal?, String> maxBuyPrice =
-      GeneratedColumn<String>(
-        'max_buy_price',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      ).withConverter<Decimal?>(
-        $ApprovedUnderlyingsTable.$convertermaxBuyPricen,
-      );
-  @override
-  late final GeneratedColumnWithTypeConverter<Decimal?, String> minSellPrice =
-      GeneratedColumn<String>(
-        'min_sell_price',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      ).withConverter<Decimal?>(
-        $ApprovedUnderlyingsTable.$converterminSellPricen,
-      );
-  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
-  @override
-  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
-    'notes',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    symbol,
-    market,
-    allowPut,
-    allowCall,
-    maxBuyPrice,
-    minSellPrice,
-    notes,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'approved_underlyings';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<ApprovedUnderlyingRow> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('owner_user_id')) {
-      context.handle(
-        _ownerUserIdMeta,
-        ownerUserId.isAcceptableOrUnknown(
-          data['owner_user_id']!,
-          _ownerUserIdMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_ownerUserIdMeta);
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
-    if (data.containsKey('updated_by_device')) {
-      context.handle(
-        _updatedByDeviceMeta,
-        updatedByDevice.isAcceptableOrUnknown(
-          data['updated_by_device']!,
-          _updatedByDeviceMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedByDeviceMeta);
-    }
-    if (data.containsKey('deleted_at')) {
-      context.handle(
-        _deletedAtMeta,
-        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
-      );
-    }
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('symbol')) {
-      context.handle(
-        _symbolMeta,
-        symbol.isAcceptableOrUnknown(data['symbol']!, _symbolMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_symbolMeta);
-    }
-    if (data.containsKey('market')) {
-      context.handle(
-        _marketMeta,
-        market.isAcceptableOrUnknown(data['market']!, _marketMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_marketMeta);
-    }
-    if (data.containsKey('allow_put')) {
-      context.handle(
-        _allowPutMeta,
-        allowPut.isAcceptableOrUnknown(data['allow_put']!, _allowPutMeta),
-      );
-    }
-    if (data.containsKey('allow_call')) {
-      context.handle(
-        _allowCallMeta,
-        allowCall.isAcceptableOrUnknown(data['allow_call']!, _allowCallMeta),
-      );
-    }
-    if (data.containsKey('notes')) {
-      context.handle(
-        _notesMeta,
-        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  ApprovedUnderlyingRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return ApprovedUnderlyingRow(
-      ownerUserId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}owner_user_id'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      updatedByDevice: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}updated_by_device'],
-      )!,
-      hlc: $ApprovedUnderlyingsTable.$converterhlc.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}hlc'],
-        )!,
-      ),
-      deletedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}deleted_at'],
-      ),
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      symbol: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}symbol'],
-      )!,
-      market: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}market'],
-      )!,
-      allowPut: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}allow_put'],
-      )!,
-      allowCall: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}allow_call'],
-      )!,
-      maxBuyPrice: $ApprovedUnderlyingsTable.$convertermaxBuyPricen.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}max_buy_price'],
-        ),
-      ),
-      minSellPrice: $ApprovedUnderlyingsTable.$converterminSellPricen.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}min_sell_price'],
-        ),
-      ),
-      notes: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}notes'],
-      ),
-    );
-  }
-
-  @override
-  $ApprovedUnderlyingsTable createAlias(String alias) {
-    return $ApprovedUnderlyingsTable(attachedDatabase, alias);
-  }
-
-  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
-  static TypeConverter<Decimal, String> $convertermaxBuyPrice =
-      const DecimalConverter();
-  static TypeConverter<Decimal?, String?> $convertermaxBuyPricen =
-      NullAwareTypeConverter.wrap($convertermaxBuyPrice);
-  static TypeConverter<Decimal, String> $converterminSellPrice =
-      const DecimalConverter();
-  static TypeConverter<Decimal?, String?> $converterminSellPricen =
-      NullAwareTypeConverter.wrap($converterminSellPrice);
-}
-
-class ApprovedUnderlyingRow extends DataClass
-    implements Insertable<ApprovedUnderlyingRow> {
-  /// Owner partition. Sync filters every read by the active user id, so
-  /// even multi-account installs never leak rows across boundaries.
-  final String ownerUserId;
-
-  /// Server-authoritative wall time. The client writes this locally on
-  /// creation; the server stomps it on push. It is the *displayable*
-  /// "last modified" — never used for conflict resolution.
-  final DateTime updatedAt;
-
-  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
-  /// also useful when debugging cross-device weirdness.
-  final String updatedByDevice;
-
-  /// Hybrid Logical Clock — the single source of truth for ordering and
-  /// conflict resolution. See `domain/hlc.dart`.
-  final Hlc hlc;
-
-  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
-  /// rows so peers learn about the delete; physical removal happens only
-  /// during a separate `vacuum` pass.
-  final DateTime? deletedAt;
-  final String id;
-  final String symbol;
-  final String market;
-  final bool allowPut;
-  final bool allowCall;
-  final Decimal? maxBuyPrice;
-  final Decimal? minSellPrice;
-  final String? notes;
-  const ApprovedUnderlyingRow({
-    required this.ownerUserId,
-    required this.updatedAt,
-    required this.updatedByDevice,
-    required this.hlc,
-    this.deletedAt,
-    required this.id,
-    required this.symbol,
-    required this.market,
-    required this.allowPut,
-    required this.allowCall,
-    this.maxBuyPrice,
-    this.minSellPrice,
-    this.notes,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['owner_user_id'] = Variable<String>(ownerUserId);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['updated_by_device'] = Variable<String>(updatedByDevice);
-    {
-      map['hlc'] = Variable<String>(
-        $ApprovedUnderlyingsTable.$converterhlc.toSql(hlc),
-      );
-    }
-    if (!nullToAbsent || deletedAt != null) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt);
-    }
-    map['id'] = Variable<String>(id);
-    map['symbol'] = Variable<String>(symbol);
-    map['market'] = Variable<String>(market);
-    map['allow_put'] = Variable<bool>(allowPut);
-    map['allow_call'] = Variable<bool>(allowCall);
-    if (!nullToAbsent || maxBuyPrice != null) {
-      map['max_buy_price'] = Variable<String>(
-        $ApprovedUnderlyingsTable.$convertermaxBuyPricen.toSql(maxBuyPrice),
-      );
-    }
-    if (!nullToAbsent || minSellPrice != null) {
-      map['min_sell_price'] = Variable<String>(
-        $ApprovedUnderlyingsTable.$converterminSellPricen.toSql(minSellPrice),
-      );
-    }
-    if (!nullToAbsent || notes != null) {
-      map['notes'] = Variable<String>(notes);
-    }
-    return map;
-  }
-
-  ApprovedUnderlyingsCompanion toCompanion(bool nullToAbsent) {
-    return ApprovedUnderlyingsCompanion(
-      ownerUserId: Value(ownerUserId),
-      updatedAt: Value(updatedAt),
-      updatedByDevice: Value(updatedByDevice),
-      hlc: Value(hlc),
-      deletedAt: deletedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedAt),
-      id: Value(id),
-      symbol: Value(symbol),
-      market: Value(market),
-      allowPut: Value(allowPut),
-      allowCall: Value(allowCall),
-      maxBuyPrice: maxBuyPrice == null && nullToAbsent
-          ? const Value.absent()
-          : Value(maxBuyPrice),
-      minSellPrice: minSellPrice == null && nullToAbsent
-          ? const Value.absent()
-          : Value(minSellPrice),
-      notes: notes == null && nullToAbsent
-          ? const Value.absent()
-          : Value(notes),
-    );
-  }
-
-  factory ApprovedUnderlyingRow.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return ApprovedUnderlyingRow(
-      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
-      hlc: serializer.fromJson<Hlc>(json['hlc']),
-      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
-      id: serializer.fromJson<String>(json['id']),
-      symbol: serializer.fromJson<String>(json['symbol']),
-      market: serializer.fromJson<String>(json['market']),
-      allowPut: serializer.fromJson<bool>(json['allowPut']),
-      allowCall: serializer.fromJson<bool>(json['allowCall']),
-      maxBuyPrice: serializer.fromJson<Decimal?>(json['maxBuyPrice']),
-      minSellPrice: serializer.fromJson<Decimal?>(json['minSellPrice']),
-      notes: serializer.fromJson<String?>(json['notes']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'ownerUserId': serializer.toJson<String>(ownerUserId),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
-      'hlc': serializer.toJson<Hlc>(hlc),
-      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
-      'id': serializer.toJson<String>(id),
-      'symbol': serializer.toJson<String>(symbol),
-      'market': serializer.toJson<String>(market),
-      'allowPut': serializer.toJson<bool>(allowPut),
-      'allowCall': serializer.toJson<bool>(allowCall),
-      'maxBuyPrice': serializer.toJson<Decimal?>(maxBuyPrice),
-      'minSellPrice': serializer.toJson<Decimal?>(minSellPrice),
-      'notes': serializer.toJson<String?>(notes),
-    };
-  }
-
-  ApprovedUnderlyingRow copyWith({
-    String? ownerUserId,
-    DateTime? updatedAt,
-    String? updatedByDevice,
-    Hlc? hlc,
-    Value<DateTime?> deletedAt = const Value.absent(),
-    String? id,
-    String? symbol,
-    String? market,
-    bool? allowPut,
-    bool? allowCall,
-    Value<Decimal?> maxBuyPrice = const Value.absent(),
-    Value<Decimal?> minSellPrice = const Value.absent(),
-    Value<String?> notes = const Value.absent(),
-  }) => ApprovedUnderlyingRow(
-    ownerUserId: ownerUserId ?? this.ownerUserId,
-    updatedAt: updatedAt ?? this.updatedAt,
-    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-    hlc: hlc ?? this.hlc,
-    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
-    id: id ?? this.id,
-    symbol: symbol ?? this.symbol,
-    market: market ?? this.market,
-    allowPut: allowPut ?? this.allowPut,
-    allowCall: allowCall ?? this.allowCall,
-    maxBuyPrice: maxBuyPrice.present ? maxBuyPrice.value : this.maxBuyPrice,
-    minSellPrice: minSellPrice.present ? minSellPrice.value : this.minSellPrice,
-    notes: notes.present ? notes.value : this.notes,
-  );
-  ApprovedUnderlyingRow copyWithCompanion(ApprovedUnderlyingsCompanion data) {
-    return ApprovedUnderlyingRow(
-      ownerUserId: data.ownerUserId.present
-          ? data.ownerUserId.value
-          : this.ownerUserId,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      updatedByDevice: data.updatedByDevice.present
-          ? data.updatedByDevice.value
-          : this.updatedByDevice,
-      hlc: data.hlc.present ? data.hlc.value : this.hlc,
-      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
-      id: data.id.present ? data.id.value : this.id,
-      symbol: data.symbol.present ? data.symbol.value : this.symbol,
-      market: data.market.present ? data.market.value : this.market,
-      allowPut: data.allowPut.present ? data.allowPut.value : this.allowPut,
-      allowCall: data.allowCall.present ? data.allowCall.value : this.allowCall,
-      maxBuyPrice: data.maxBuyPrice.present
-          ? data.maxBuyPrice.value
-          : this.maxBuyPrice,
-      minSellPrice: data.minSellPrice.present
-          ? data.minSellPrice.value
-          : this.minSellPrice,
-      notes: data.notes.present ? data.notes.value : this.notes,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('ApprovedUnderlyingRow(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('symbol: $symbol, ')
-          ..write('market: $market, ')
-          ..write('allowPut: $allowPut, ')
-          ..write('allowCall: $allowCall, ')
-          ..write('maxBuyPrice: $maxBuyPrice, ')
-          ..write('minSellPrice: $minSellPrice, ')
-          ..write('notes: $notes')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    symbol,
-    market,
-    allowPut,
-    allowCall,
-    maxBuyPrice,
-    minSellPrice,
-    notes,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is ApprovedUnderlyingRow &&
-          other.ownerUserId == this.ownerUserId &&
-          other.updatedAt == this.updatedAt &&
-          other.updatedByDevice == this.updatedByDevice &&
-          other.hlc == this.hlc &&
-          other.deletedAt == this.deletedAt &&
-          other.id == this.id &&
-          other.symbol == this.symbol &&
-          other.market == this.market &&
-          other.allowPut == this.allowPut &&
-          other.allowCall == this.allowCall &&
-          other.maxBuyPrice == this.maxBuyPrice &&
-          other.minSellPrice == this.minSellPrice &&
-          other.notes == this.notes);
-}
-
-class ApprovedUnderlyingsCompanion
-    extends UpdateCompanion<ApprovedUnderlyingRow> {
-  final Value<String> ownerUserId;
-  final Value<DateTime> updatedAt;
-  final Value<String> updatedByDevice;
-  final Value<Hlc> hlc;
-  final Value<DateTime?> deletedAt;
-  final Value<String> id;
-  final Value<String> symbol;
-  final Value<String> market;
-  final Value<bool> allowPut;
-  final Value<bool> allowCall;
-  final Value<Decimal?> maxBuyPrice;
-  final Value<Decimal?> minSellPrice;
-  final Value<String?> notes;
-  final Value<int> rowid;
-  const ApprovedUnderlyingsCompanion({
-    this.ownerUserId = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.updatedByDevice = const Value.absent(),
-    this.hlc = const Value.absent(),
-    this.deletedAt = const Value.absent(),
-    this.id = const Value.absent(),
-    this.symbol = const Value.absent(),
-    this.market = const Value.absent(),
-    this.allowPut = const Value.absent(),
-    this.allowCall = const Value.absent(),
-    this.maxBuyPrice = const Value.absent(),
-    this.minSellPrice = const Value.absent(),
-    this.notes = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  ApprovedUnderlyingsCompanion.insert({
-    required String ownerUserId,
-    required DateTime updatedAt,
-    required String updatedByDevice,
-    required Hlc hlc,
-    this.deletedAt = const Value.absent(),
-    required String id,
-    required String symbol,
-    required String market,
-    this.allowPut = const Value.absent(),
-    this.allowCall = const Value.absent(),
-    this.maxBuyPrice = const Value.absent(),
-    this.minSellPrice = const Value.absent(),
-    this.notes = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : ownerUserId = Value(ownerUserId),
-       updatedAt = Value(updatedAt),
-       updatedByDevice = Value(updatedByDevice),
-       hlc = Value(hlc),
-       id = Value(id),
-       symbol = Value(symbol),
-       market = Value(market);
-  static Insertable<ApprovedUnderlyingRow> custom({
-    Expression<String>? ownerUserId,
-    Expression<DateTime>? updatedAt,
-    Expression<String>? updatedByDevice,
-    Expression<String>? hlc,
-    Expression<DateTime>? deletedAt,
-    Expression<String>? id,
-    Expression<String>? symbol,
-    Expression<String>? market,
-    Expression<bool>? allowPut,
-    Expression<bool>? allowCall,
-    Expression<String>? maxBuyPrice,
-    Expression<String>? minSellPrice,
-    Expression<String>? notes,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (ownerUserId != null) 'owner_user_id': ownerUserId,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
-      if (hlc != null) 'hlc': hlc,
-      if (deletedAt != null) 'deleted_at': deletedAt,
-      if (id != null) 'id': id,
-      if (symbol != null) 'symbol': symbol,
-      if (market != null) 'market': market,
-      if (allowPut != null) 'allow_put': allowPut,
-      if (allowCall != null) 'allow_call': allowCall,
-      if (maxBuyPrice != null) 'max_buy_price': maxBuyPrice,
-      if (minSellPrice != null) 'min_sell_price': minSellPrice,
-      if (notes != null) 'notes': notes,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  ApprovedUnderlyingsCompanion copyWith({
-    Value<String>? ownerUserId,
-    Value<DateTime>? updatedAt,
-    Value<String>? updatedByDevice,
-    Value<Hlc>? hlc,
-    Value<DateTime?>? deletedAt,
-    Value<String>? id,
-    Value<String>? symbol,
-    Value<String>? market,
-    Value<bool>? allowPut,
-    Value<bool>? allowCall,
-    Value<Decimal?>? maxBuyPrice,
-    Value<Decimal?>? minSellPrice,
-    Value<String?>? notes,
-    Value<int>? rowid,
-  }) {
-    return ApprovedUnderlyingsCompanion(
-      ownerUserId: ownerUserId ?? this.ownerUserId,
-      updatedAt: updatedAt ?? this.updatedAt,
-      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-      hlc: hlc ?? this.hlc,
-      deletedAt: deletedAt ?? this.deletedAt,
-      id: id ?? this.id,
-      symbol: symbol ?? this.symbol,
-      market: market ?? this.market,
-      allowPut: allowPut ?? this.allowPut,
-      allowCall: allowCall ?? this.allowCall,
-      maxBuyPrice: maxBuyPrice ?? this.maxBuyPrice,
-      minSellPrice: minSellPrice ?? this.minSellPrice,
-      notes: notes ?? this.notes,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (ownerUserId.present) {
-      map['owner_user_id'] = Variable<String>(ownerUserId.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (updatedByDevice.present) {
-      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
-    }
-    if (hlc.present) {
-      map['hlc'] = Variable<String>(
-        $ApprovedUnderlyingsTable.$converterhlc.toSql(hlc.value),
-      );
-    }
-    if (deletedAt.present) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
-    }
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (symbol.present) {
-      map['symbol'] = Variable<String>(symbol.value);
-    }
-    if (market.present) {
-      map['market'] = Variable<String>(market.value);
-    }
-    if (allowPut.present) {
-      map['allow_put'] = Variable<bool>(allowPut.value);
-    }
-    if (allowCall.present) {
-      map['allow_call'] = Variable<bool>(allowCall.value);
-    }
-    if (maxBuyPrice.present) {
-      map['max_buy_price'] = Variable<String>(
-        $ApprovedUnderlyingsTable.$convertermaxBuyPricen.toSql(
-          maxBuyPrice.value,
-        ),
-      );
-    }
-    if (minSellPrice.present) {
-      map['min_sell_price'] = Variable<String>(
-        $ApprovedUnderlyingsTable.$converterminSellPricen.toSql(
-          minSellPrice.value,
-        ),
-      );
-    }
-    if (notes.present) {
-      map['notes'] = Variable<String>(notes.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('ApprovedUnderlyingsCompanion(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('symbol: $symbol, ')
-          ..write('market: $market, ')
-          ..write('allowPut: $allowPut, ')
-          ..write('allowCall: $allowCall, ')
-          ..write('maxBuyPrice: $maxBuyPrice, ')
-          ..write('minSellPrice: $minSellPrice, ')
           ..write('notes: $notes, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -42874,8 +41865,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $OptionsLeapsCallPositionsTable(this);
   late final $IncomeStrategyPlansTable incomeStrategyPlans =
       $IncomeStrategyPlansTable(this);
-  late final $ApprovedUnderlyingsTable approvedUnderlyings =
-      $ApprovedUnderlyingsTable(this);
   late final $RecurringTransactionsTable recurringTransactions =
       $RecurringTransactionsTable(this);
   late final $LiabilitiesTable liabilities = $LiabilitiesTable(this);
@@ -42956,7 +41945,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     optionsTradeJournal,
     optionsLeapsCallPositions,
     incomeStrategyPlans,
-    approvedUnderlyings,
     recurringTransactions,
     liabilities,
     amortizationEntries,
@@ -46376,14 +45364,12 @@ typedef $$OptionsStrategyProfileTableTableCreateCompanionBuilder =
       required Decimal deltaCallMin,
       required Decimal deltaCallMax,
       required Decimal maxCapitalPerTradePct,
-      required Decimal maxUnderlyingExposurePct,
       required Decimal minAnnualizedYield,
       required int minOpenInterest,
       required int minVolume,
       required Decimal maxBidAskSpreadPct,
       Value<bool> avoidEarnings,
       Value<bool> avoidMacroEvents,
-      Value<bool> onlyOnApprovedUnderlyings,
       Value<DateTime?> riskDisclosureAckAt,
       Value<int> rowid,
     });
@@ -46404,14 +45390,12 @@ typedef $$OptionsStrategyProfileTableTableUpdateCompanionBuilder =
       Value<Decimal> deltaCallMin,
       Value<Decimal> deltaCallMax,
       Value<Decimal> maxCapitalPerTradePct,
-      Value<Decimal> maxUnderlyingExposurePct,
       Value<Decimal> minAnnualizedYield,
       Value<int> minOpenInterest,
       Value<int> minVolume,
       Value<Decimal> maxBidAskSpreadPct,
       Value<bool> avoidEarnings,
       Value<bool> avoidMacroEvents,
-      Value<bool> onlyOnApprovedUnderlyings,
       Value<DateTime?> riskDisclosureAckAt,
       Value<int> rowid,
     });
@@ -46507,12 +45491,6 @@ class $$OptionsStrategyProfileTableTableFilterComposer
   );
 
   ColumnWithTypeConverterFilters<Decimal, Decimal, String>
-  get maxUnderlyingExposurePct => $composableBuilder(
-    column: $table.maxUnderlyingExposurePct,
-    builder: (column) => ColumnWithTypeConverterFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Decimal, Decimal, String>
   get minAnnualizedYield => $composableBuilder(
     column: $table.minAnnualizedYield,
     builder: (column) => ColumnWithTypeConverterFilters(column),
@@ -46541,11 +45519,6 @@ class $$OptionsStrategyProfileTableTableFilterComposer
 
   ColumnFilters<bool> get avoidMacroEvents => $composableBuilder(
     column: $table.avoidMacroEvents,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get onlyOnApprovedUnderlyings => $composableBuilder(
-    column: $table.onlyOnApprovedUnderlyings,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -46639,11 +45612,6 @@ class $$OptionsStrategyProfileTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get maxUnderlyingExposurePct => $composableBuilder(
-    column: $table.maxUnderlyingExposurePct,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get minAnnualizedYield => $composableBuilder(
     column: $table.minAnnualizedYield,
     builder: (column) => ColumnOrderings(column),
@@ -46671,11 +45639,6 @@ class $$OptionsStrategyProfileTableTableOrderingComposer
 
   ColumnOrderings<bool> get avoidMacroEvents => $composableBuilder(
     column: $table.avoidMacroEvents,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get onlyOnApprovedUnderlyings => $composableBuilder(
-    column: $table.onlyOnApprovedUnderlyings,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -46760,12 +45723,6 @@ class $$OptionsStrategyProfileTableTableAnnotationComposer
         builder: (column) => column,
       );
 
-  GeneratedColumnWithTypeConverter<Decimal, String>
-  get maxUnderlyingExposurePct => $composableBuilder(
-    column: $table.maxUnderlyingExposurePct,
-    builder: (column) => column,
-  );
-
   GeneratedColumnWithTypeConverter<Decimal, String> get minAnnualizedYield =>
       $composableBuilder(
         column: $table.minAnnualizedYield,
@@ -46793,11 +45750,6 @@ class $$OptionsStrategyProfileTableTableAnnotationComposer
 
   GeneratedColumn<bool> get avoidMacroEvents => $composableBuilder(
     column: $table.avoidMacroEvents,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<bool> get onlyOnApprovedUnderlyings => $composableBuilder(
-    column: $table.onlyOnApprovedUnderlyings,
     builder: (column) => column,
   );
 
@@ -46868,14 +45820,12 @@ class $$OptionsStrategyProfileTableTableTableManager
                 Value<Decimal> deltaCallMin = const Value.absent(),
                 Value<Decimal> deltaCallMax = const Value.absent(),
                 Value<Decimal> maxCapitalPerTradePct = const Value.absent(),
-                Value<Decimal> maxUnderlyingExposurePct = const Value.absent(),
                 Value<Decimal> minAnnualizedYield = const Value.absent(),
                 Value<int> minOpenInterest = const Value.absent(),
                 Value<int> minVolume = const Value.absent(),
                 Value<Decimal> maxBidAskSpreadPct = const Value.absent(),
                 Value<bool> avoidEarnings = const Value.absent(),
                 Value<bool> avoidMacroEvents = const Value.absent(),
-                Value<bool> onlyOnApprovedUnderlyings = const Value.absent(),
                 Value<DateTime?> riskDisclosureAckAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => OptionsStrategyProfileTableCompanion(
@@ -46894,14 +45844,12 @@ class $$OptionsStrategyProfileTableTableTableManager
                 deltaCallMin: deltaCallMin,
                 deltaCallMax: deltaCallMax,
                 maxCapitalPerTradePct: maxCapitalPerTradePct,
-                maxUnderlyingExposurePct: maxUnderlyingExposurePct,
                 minAnnualizedYield: minAnnualizedYield,
                 minOpenInterest: minOpenInterest,
                 minVolume: minVolume,
                 maxBidAskSpreadPct: maxBidAskSpreadPct,
                 avoidEarnings: avoidEarnings,
                 avoidMacroEvents: avoidMacroEvents,
-                onlyOnApprovedUnderlyings: onlyOnApprovedUnderlyings,
                 riskDisclosureAckAt: riskDisclosureAckAt,
                 rowid: rowid,
               ),
@@ -46922,14 +45870,12 @@ class $$OptionsStrategyProfileTableTableTableManager
                 required Decimal deltaCallMin,
                 required Decimal deltaCallMax,
                 required Decimal maxCapitalPerTradePct,
-                required Decimal maxUnderlyingExposurePct,
                 required Decimal minAnnualizedYield,
                 required int minOpenInterest,
                 required int minVolume,
                 required Decimal maxBidAskSpreadPct,
                 Value<bool> avoidEarnings = const Value.absent(),
                 Value<bool> avoidMacroEvents = const Value.absent(),
-                Value<bool> onlyOnApprovedUnderlyings = const Value.absent(),
                 Value<DateTime?> riskDisclosureAckAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => OptionsStrategyProfileTableCompanion.insert(
@@ -46948,14 +45894,12 @@ class $$OptionsStrategyProfileTableTableTableManager
                 deltaCallMin: deltaCallMin,
                 deltaCallMax: deltaCallMax,
                 maxCapitalPerTradePct: maxCapitalPerTradePct,
-                maxUnderlyingExposurePct: maxUnderlyingExposurePct,
                 minAnnualizedYield: minAnnualizedYield,
                 minOpenInterest: minOpenInterest,
                 minVolume: minVolume,
                 maxBidAskSpreadPct: maxBidAskSpreadPct,
                 avoidEarnings: avoidEarnings,
                 avoidMacroEvents: avoidMacroEvents,
-                onlyOnApprovedUnderlyings: onlyOnApprovedUnderlyings,
                 riskDisclosureAckAt: riskDisclosureAckAt,
                 rowid: rowid,
               ),
@@ -46996,6 +45940,7 @@ typedef $$OptionsTradeJournalTableCreateCompanionBuilder =
       required Hlc hlc,
       Value<DateTime?> deletedAt,
       required String id,
+      required String underlyingAssetId,
       required String strategy,
       required String symbol,
       required String optionSymbol,
@@ -47025,6 +45970,7 @@ typedef $$OptionsTradeJournalTableUpdateCompanionBuilder =
       Value<Hlc> hlc,
       Value<DateTime?> deletedAt,
       Value<String> id,
+      Value<String> underlyingAssetId,
       Value<String> strategy,
       Value<String> symbol,
       Value<String> optionSymbol,
@@ -47084,6 +46030,11 @@ class $$OptionsTradeJournalTableFilterComposer
 
   ColumnFilters<String> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get underlyingAssetId => $composableBuilder(
+    column: $table.underlyingAssetId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -47227,6 +46178,11 @@ class $$OptionsTradeJournalTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get underlyingAssetId => $composableBuilder(
+    column: $table.underlyingAssetId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get strategy => $composableBuilder(
     column: $table.strategy,
     builder: (column) => ColumnOrderings(column),
@@ -47353,6 +46309,11 @@ class $$OptionsTradeJournalTableAnnotationComposer
 
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get underlyingAssetId => $composableBuilder(
+    column: $table.underlyingAssetId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get strategy =>
       $composableBuilder(column: $table.strategy, builder: (column) => column);
@@ -47484,6 +46445,7 @@ class $$OptionsTradeJournalTableTableManager
                 Value<Hlc> hlc = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String> id = const Value.absent(),
+                Value<String> underlyingAssetId = const Value.absent(),
                 Value<String> strategy = const Value.absent(),
                 Value<String> symbol = const Value.absent(),
                 Value<String> optionSymbol = const Value.absent(),
@@ -47511,6 +46473,7 @@ class $$OptionsTradeJournalTableTableManager
                 hlc: hlc,
                 deletedAt: deletedAt,
                 id: id,
+                underlyingAssetId: underlyingAssetId,
                 strategy: strategy,
                 symbol: symbol,
                 optionSymbol: optionSymbol,
@@ -47540,6 +46503,7 @@ class $$OptionsTradeJournalTableTableManager
                 required Hlc hlc,
                 Value<DateTime?> deletedAt = const Value.absent(),
                 required String id,
+                required String underlyingAssetId,
                 required String strategy,
                 required String symbol,
                 required String optionSymbol,
@@ -47567,6 +46531,7 @@ class $$OptionsTradeJournalTableTableManager
                 hlc: hlc,
                 deletedAt: deletedAt,
                 id: id,
+                underlyingAssetId: underlyingAssetId,
                 strategy: strategy,
                 symbol: symbol,
                 optionSymbol: optionSymbol,
@@ -47625,6 +46590,7 @@ typedef $$OptionsLeapsCallPositionsTableCreateCompanionBuilder =
       required Hlc hlc,
       Value<DateTime?> deletedAt,
       required String id,
+      required String underlyingAssetId,
       required String symbol,
       required String optionSymbol,
       required DateTime openedAt,
@@ -47655,6 +46621,7 @@ typedef $$OptionsLeapsCallPositionsTableUpdateCompanionBuilder =
       Value<Hlc> hlc,
       Value<DateTime?> deletedAt,
       Value<String> id,
+      Value<String> underlyingAssetId,
       Value<String> symbol,
       Value<String> optionSymbol,
       Value<DateTime> openedAt,
@@ -47715,6 +46682,11 @@ class $$OptionsLeapsCallPositionsTableFilterComposer
 
   ColumnFilters<String> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get underlyingAssetId => $composableBuilder(
+    column: $table.underlyingAssetId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -47864,6 +46836,11 @@ class $$OptionsLeapsCallPositionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get underlyingAssetId => $composableBuilder(
+    column: $table.underlyingAssetId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get symbol => $composableBuilder(
     column: $table.symbol,
     builder: (column) => ColumnOrderings(column),
@@ -47995,6 +46972,11 @@ class $$OptionsLeapsCallPositionsTableAnnotationComposer
 
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get underlyingAssetId => $composableBuilder(
+    column: $table.underlyingAssetId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get symbol =>
       $composableBuilder(column: $table.symbol, builder: (column) => column);
@@ -48138,6 +47120,7 @@ class $$OptionsLeapsCallPositionsTableTableManager
                 Value<Hlc> hlc = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String> id = const Value.absent(),
+                Value<String> underlyingAssetId = const Value.absent(),
                 Value<String> symbol = const Value.absent(),
                 Value<String> optionSymbol = const Value.absent(),
                 Value<DateTime> openedAt = const Value.absent(),
@@ -48166,6 +47149,7 @@ class $$OptionsLeapsCallPositionsTableTableManager
                 hlc: hlc,
                 deletedAt: deletedAt,
                 id: id,
+                underlyingAssetId: underlyingAssetId,
                 symbol: symbol,
                 optionSymbol: optionSymbol,
                 openedAt: openedAt,
@@ -48196,6 +47180,7 @@ class $$OptionsLeapsCallPositionsTableTableManager
                 required Hlc hlc,
                 Value<DateTime?> deletedAt = const Value.absent(),
                 required String id,
+                required String underlyingAssetId,
                 required String symbol,
                 required String optionSymbol,
                 required DateTime openedAt,
@@ -48224,6 +47209,7 @@ class $$OptionsLeapsCallPositionsTableTableManager
                 hlc: hlc,
                 deletedAt: deletedAt,
                 id: id,
+                underlyingAssetId: underlyingAssetId,
                 symbol: symbol,
                 optionSymbol: optionSymbol,
                 openedAt: openedAt,
@@ -48283,17 +47269,14 @@ typedef $$IncomeStrategyPlansTableCreateCompanionBuilder =
       required Hlc hlc,
       Value<DateTime?> deletedAt,
       required String id,
+      required String assetId,
       required String symbol,
       required String market,
       required String currency,
-      Value<String> enabledSleevesJson,
+      Value<String> sleeveIntentsJson,
       Value<Decimal?> capitalBudget,
       Value<Decimal?> annualIncomeTarget,
       Value<Decimal?> maxPositionWeight,
-      Value<Decimal?> maxLeapsCost,
-      Value<Decimal?> maxAssignmentValue,
-      Value<bool> preserveDividend,
-      Value<bool> allowSharesCalledAway,
       Value<String?> notes,
       Value<int> rowid,
     });
@@ -48305,17 +47288,14 @@ typedef $$IncomeStrategyPlansTableUpdateCompanionBuilder =
       Value<Hlc> hlc,
       Value<DateTime?> deletedAt,
       Value<String> id,
+      Value<String> assetId,
       Value<String> symbol,
       Value<String> market,
       Value<String> currency,
-      Value<String> enabledSleevesJson,
+      Value<String> sleeveIntentsJson,
       Value<Decimal?> capitalBudget,
       Value<Decimal?> annualIncomeTarget,
       Value<Decimal?> maxPositionWeight,
-      Value<Decimal?> maxLeapsCost,
-      Value<Decimal?> maxAssignmentValue,
-      Value<bool> preserveDividend,
-      Value<bool> allowSharesCalledAway,
       Value<String?> notes,
       Value<int> rowid,
     });
@@ -48360,6 +47340,11 @@ class $$IncomeStrategyPlansTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get assetId => $composableBuilder(
+    column: $table.assetId,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get symbol => $composableBuilder(
     column: $table.symbol,
     builder: (column) => ColumnFilters(column),
@@ -48375,8 +47360,8 @@ class $$IncomeStrategyPlansTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get enabledSleevesJson => $composableBuilder(
-    column: $table.enabledSleevesJson,
+  ColumnFilters<String> get sleeveIntentsJson => $composableBuilder(
+    column: $table.sleeveIntentsJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -48396,28 +47381,6 @@ class $$IncomeStrategyPlansTableFilterComposer
   get maxPositionWeight => $composableBuilder(
     column: $table.maxPositionWeight,
     builder: (column) => ColumnWithTypeConverterFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get maxLeapsCost =>
-      $composableBuilder(
-        column: $table.maxLeapsCost,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnWithTypeConverterFilters<Decimal?, Decimal, String>
-  get maxAssignmentValue => $composableBuilder(
-    column: $table.maxAssignmentValue,
-    builder: (column) => ColumnWithTypeConverterFilters(column),
-  );
-
-  ColumnFilters<bool> get preserveDividend => $composableBuilder(
-    column: $table.preserveDividend,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get allowSharesCalledAway => $composableBuilder(
-    column: $table.allowSharesCalledAway,
-    builder: (column) => ColumnFilters(column),
   );
 
   ColumnFilters<String> get notes => $composableBuilder(
@@ -48465,6 +47428,11 @@ class $$IncomeStrategyPlansTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get assetId => $composableBuilder(
+    column: $table.assetId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get symbol => $composableBuilder(
     column: $table.symbol,
     builder: (column) => ColumnOrderings(column),
@@ -48480,8 +47448,8 @@ class $$IncomeStrategyPlansTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get enabledSleevesJson => $composableBuilder(
-    column: $table.enabledSleevesJson,
+  ColumnOrderings<String> get sleeveIntentsJson => $composableBuilder(
+    column: $table.sleeveIntentsJson,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -48497,26 +47465,6 @@ class $$IncomeStrategyPlansTableOrderingComposer
 
   ColumnOrderings<String> get maxPositionWeight => $composableBuilder(
     column: $table.maxPositionWeight,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get maxLeapsCost => $composableBuilder(
-    column: $table.maxLeapsCost,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get maxAssignmentValue => $composableBuilder(
-    column: $table.maxAssignmentValue,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get preserveDividend => $composableBuilder(
-    column: $table.preserveDividend,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get allowSharesCalledAway => $composableBuilder(
-    column: $table.allowSharesCalledAway,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -48557,6 +47505,9 @@ class $$IncomeStrategyPlansTableAnnotationComposer
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
+  GeneratedColumn<String> get assetId =>
+      $composableBuilder(column: $table.assetId, builder: (column) => column);
+
   GeneratedColumn<String> get symbol =>
       $composableBuilder(column: $table.symbol, builder: (column) => column);
 
@@ -48566,8 +47517,8 @@ class $$IncomeStrategyPlansTableAnnotationComposer
   GeneratedColumn<String> get currency =>
       $composableBuilder(column: $table.currency, builder: (column) => column);
 
-  GeneratedColumn<String> get enabledSleevesJson => $composableBuilder(
-    column: $table.enabledSleevesJson,
+  GeneratedColumn<String> get sleeveIntentsJson => $composableBuilder(
+    column: $table.sleeveIntentsJson,
     builder: (column) => column,
   );
 
@@ -48588,28 +47539,6 @@ class $$IncomeStrategyPlansTableAnnotationComposer
         column: $table.maxPositionWeight,
         builder: (column) => column,
       );
-
-  GeneratedColumnWithTypeConverter<Decimal?, String> get maxLeapsCost =>
-      $composableBuilder(
-        column: $table.maxLeapsCost,
-        builder: (column) => column,
-      );
-
-  GeneratedColumnWithTypeConverter<Decimal?, String> get maxAssignmentValue =>
-      $composableBuilder(
-        column: $table.maxAssignmentValue,
-        builder: (column) => column,
-      );
-
-  GeneratedColumn<bool> get preserveDividend => $composableBuilder(
-    column: $table.preserveDividend,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<bool> get allowSharesCalledAway => $composableBuilder(
-    column: $table.allowSharesCalledAway,
-    builder: (column) => column,
-  );
 
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
@@ -48664,17 +47593,14 @@ class $$IncomeStrategyPlansTableTableManager
                 Value<Hlc> hlc = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String> id = const Value.absent(),
+                Value<String> assetId = const Value.absent(),
                 Value<String> symbol = const Value.absent(),
                 Value<String> market = const Value.absent(),
                 Value<String> currency = const Value.absent(),
-                Value<String> enabledSleevesJson = const Value.absent(),
+                Value<String> sleeveIntentsJson = const Value.absent(),
                 Value<Decimal?> capitalBudget = const Value.absent(),
                 Value<Decimal?> annualIncomeTarget = const Value.absent(),
                 Value<Decimal?> maxPositionWeight = const Value.absent(),
-                Value<Decimal?> maxLeapsCost = const Value.absent(),
-                Value<Decimal?> maxAssignmentValue = const Value.absent(),
-                Value<bool> preserveDividend = const Value.absent(),
-                Value<bool> allowSharesCalledAway = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => IncomeStrategyPlansCompanion(
@@ -48684,17 +47610,14 @@ class $$IncomeStrategyPlansTableTableManager
                 hlc: hlc,
                 deletedAt: deletedAt,
                 id: id,
+                assetId: assetId,
                 symbol: symbol,
                 market: market,
                 currency: currency,
-                enabledSleevesJson: enabledSleevesJson,
+                sleeveIntentsJson: sleeveIntentsJson,
                 capitalBudget: capitalBudget,
                 annualIncomeTarget: annualIncomeTarget,
                 maxPositionWeight: maxPositionWeight,
-                maxLeapsCost: maxLeapsCost,
-                maxAssignmentValue: maxAssignmentValue,
-                preserveDividend: preserveDividend,
-                allowSharesCalledAway: allowSharesCalledAway,
                 notes: notes,
                 rowid: rowid,
               ),
@@ -48706,17 +47629,14 @@ class $$IncomeStrategyPlansTableTableManager
                 required Hlc hlc,
                 Value<DateTime?> deletedAt = const Value.absent(),
                 required String id,
+                required String assetId,
                 required String symbol,
                 required String market,
                 required String currency,
-                Value<String> enabledSleevesJson = const Value.absent(),
+                Value<String> sleeveIntentsJson = const Value.absent(),
                 Value<Decimal?> capitalBudget = const Value.absent(),
                 Value<Decimal?> annualIncomeTarget = const Value.absent(),
                 Value<Decimal?> maxPositionWeight = const Value.absent(),
-                Value<Decimal?> maxLeapsCost = const Value.absent(),
-                Value<Decimal?> maxAssignmentValue = const Value.absent(),
-                Value<bool> preserveDividend = const Value.absent(),
-                Value<bool> allowSharesCalledAway = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => IncomeStrategyPlansCompanion.insert(
@@ -48726,17 +47646,14 @@ class $$IncomeStrategyPlansTableTableManager
                 hlc: hlc,
                 deletedAt: deletedAt,
                 id: id,
+                assetId: assetId,
                 symbol: symbol,
                 market: market,
                 currency: currency,
-                enabledSleevesJson: enabledSleevesJson,
+                sleeveIntentsJson: sleeveIntentsJson,
                 capitalBudget: capitalBudget,
                 annualIncomeTarget: annualIncomeTarget,
                 maxPositionWeight: maxPositionWeight,
-                maxLeapsCost: maxLeapsCost,
-                maxAssignmentValue: maxAssignmentValue,
-                preserveDividend: preserveDividend,
-                allowSharesCalledAway: allowSharesCalledAway,
                 notes: notes,
                 rowid: rowid,
               ),
@@ -48767,387 +47684,6 @@ typedef $$IncomeStrategyPlansTableProcessedTableManager =
         >,
       ),
       IncomeStrategyPlanRow,
-      PrefetchHooks Function()
-    >;
-typedef $$ApprovedUnderlyingsTableCreateCompanionBuilder =
-    ApprovedUnderlyingsCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String symbol,
-      required String market,
-      Value<bool> allowPut,
-      Value<bool> allowCall,
-      Value<Decimal?> maxBuyPrice,
-      Value<Decimal?> minSellPrice,
-      Value<String?> notes,
-      Value<int> rowid,
-    });
-typedef $$ApprovedUnderlyingsTableUpdateCompanionBuilder =
-    ApprovedUnderlyingsCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> symbol,
-      Value<String> market,
-      Value<bool> allowPut,
-      Value<bool> allowCall,
-      Value<Decimal?> maxBuyPrice,
-      Value<Decimal?> minSellPrice,
-      Value<String?> notes,
-      Value<int> rowid,
-    });
-
-class $$ApprovedUnderlyingsTableFilterComposer
-    extends Composer<_$AppDatabase, $ApprovedUnderlyingsTable> {
-  $$ApprovedUnderlyingsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
-      $composableBuilder(
-        column: $table.hlc,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get symbol => $composableBuilder(
-    column: $table.symbol,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get market => $composableBuilder(
-    column: $table.market,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get allowPut => $composableBuilder(
-    column: $table.allowPut,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get allowCall => $composableBuilder(
-    column: $table.allowCall,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get maxBuyPrice =>
-      $composableBuilder(
-        column: $table.maxBuyPrice,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get minSellPrice =>
-      $composableBuilder(
-        column: $table.minSellPrice,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<String> get notes => $composableBuilder(
-    column: $table.notes,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$ApprovedUnderlyingsTableOrderingComposer
-    extends Composer<_$AppDatabase, $ApprovedUnderlyingsTable> {
-  $$ApprovedUnderlyingsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get hlc => $composableBuilder(
-    column: $table.hlc,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get symbol => $composableBuilder(
-    column: $table.symbol,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get market => $composableBuilder(
-    column: $table.market,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get allowPut => $composableBuilder(
-    column: $table.allowPut,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get allowCall => $composableBuilder(
-    column: $table.allowCall,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get maxBuyPrice => $composableBuilder(
-    column: $table.maxBuyPrice,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get minSellPrice => $composableBuilder(
-    column: $table.minSellPrice,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get notes => $composableBuilder(
-    column: $table.notes,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$ApprovedUnderlyingsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $ApprovedUnderlyingsTable> {
-  $$ApprovedUnderlyingsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
-      $composableBuilder(column: $table.hlc, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get deletedAt =>
-      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get symbol =>
-      $composableBuilder(column: $table.symbol, builder: (column) => column);
-
-  GeneratedColumn<String> get market =>
-      $composableBuilder(column: $table.market, builder: (column) => column);
-
-  GeneratedColumn<bool> get allowPut =>
-      $composableBuilder(column: $table.allowPut, builder: (column) => column);
-
-  GeneratedColumn<bool> get allowCall =>
-      $composableBuilder(column: $table.allowCall, builder: (column) => column);
-
-  GeneratedColumnWithTypeConverter<Decimal?, String> get maxBuyPrice =>
-      $composableBuilder(
-        column: $table.maxBuyPrice,
-        builder: (column) => column,
-      );
-
-  GeneratedColumnWithTypeConverter<Decimal?, String> get minSellPrice =>
-      $composableBuilder(
-        column: $table.minSellPrice,
-        builder: (column) => column,
-      );
-
-  GeneratedColumn<String> get notes =>
-      $composableBuilder(column: $table.notes, builder: (column) => column);
-}
-
-class $$ApprovedUnderlyingsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $ApprovedUnderlyingsTable,
-          ApprovedUnderlyingRow,
-          $$ApprovedUnderlyingsTableFilterComposer,
-          $$ApprovedUnderlyingsTableOrderingComposer,
-          $$ApprovedUnderlyingsTableAnnotationComposer,
-          $$ApprovedUnderlyingsTableCreateCompanionBuilder,
-          $$ApprovedUnderlyingsTableUpdateCompanionBuilder,
-          (
-            ApprovedUnderlyingRow,
-            BaseReferences<
-              _$AppDatabase,
-              $ApprovedUnderlyingsTable,
-              ApprovedUnderlyingRow
-            >,
-          ),
-          ApprovedUnderlyingRow,
-          PrefetchHooks Function()
-        > {
-  $$ApprovedUnderlyingsTableTableManager(
-    _$AppDatabase db,
-    $ApprovedUnderlyingsTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$ApprovedUnderlyingsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$ApprovedUnderlyingsTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
-          createComputedFieldComposer: () =>
-              $$ApprovedUnderlyingsTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
-          updateCompanionCallback:
-              ({
-                Value<String> ownerUserId = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<String> updatedByDevice = const Value.absent(),
-                Value<Hlc> hlc = const Value.absent(),
-                Value<DateTime?> deletedAt = const Value.absent(),
-                Value<String> id = const Value.absent(),
-                Value<String> symbol = const Value.absent(),
-                Value<String> market = const Value.absent(),
-                Value<bool> allowPut = const Value.absent(),
-                Value<bool> allowCall = const Value.absent(),
-                Value<Decimal?> maxBuyPrice = const Value.absent(),
-                Value<Decimal?> minSellPrice = const Value.absent(),
-                Value<String?> notes = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => ApprovedUnderlyingsCompanion(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                symbol: symbol,
-                market: market,
-                allowPut: allowPut,
-                allowCall: allowCall,
-                maxBuyPrice: maxBuyPrice,
-                minSellPrice: minSellPrice,
-                notes: notes,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String ownerUserId,
-                required DateTime updatedAt,
-                required String updatedByDevice,
-                required Hlc hlc,
-                Value<DateTime?> deletedAt = const Value.absent(),
-                required String id,
-                required String symbol,
-                required String market,
-                Value<bool> allowPut = const Value.absent(),
-                Value<bool> allowCall = const Value.absent(),
-                Value<Decimal?> maxBuyPrice = const Value.absent(),
-                Value<Decimal?> minSellPrice = const Value.absent(),
-                Value<String?> notes = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => ApprovedUnderlyingsCompanion.insert(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                symbol: symbol,
-                market: market,
-                allowPut: allowPut,
-                allowCall: allowCall,
-                maxBuyPrice: maxBuyPrice,
-                minSellPrice: minSellPrice,
-                notes: notes,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$ApprovedUnderlyingsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $ApprovedUnderlyingsTable,
-      ApprovedUnderlyingRow,
-      $$ApprovedUnderlyingsTableFilterComposer,
-      $$ApprovedUnderlyingsTableOrderingComposer,
-      $$ApprovedUnderlyingsTableAnnotationComposer,
-      $$ApprovedUnderlyingsTableCreateCompanionBuilder,
-      $$ApprovedUnderlyingsTableUpdateCompanionBuilder,
-      (
-        ApprovedUnderlyingRow,
-        BaseReferences<
-          _$AppDatabase,
-          $ApprovedUnderlyingsTable,
-          ApprovedUnderlyingRow
-        >,
-      ),
-      ApprovedUnderlyingRow,
       PrefetchHooks Function()
     >;
 typedef $$RecurringTransactionsTableCreateCompanionBuilder =
@@ -62854,8 +61390,6 @@ class $AppDatabaseManager {
       );
   $$IncomeStrategyPlansTableTableManager get incomeStrategyPlans =>
       $$IncomeStrategyPlansTableTableManager(_db, _db.incomeStrategyPlans);
-  $$ApprovedUnderlyingsTableTableManager get approvedUnderlyings =>
-      $$ApprovedUnderlyingsTableTableManager(_db, _db.approvedUnderlyings);
   $$RecurringTransactionsTableTableManager get recurringTransactions =>
       $$RecurringTransactionsTableTableManager(_db, _db.recurringTransactions);
   $$LiabilitiesTableTableManager get liabilities =>

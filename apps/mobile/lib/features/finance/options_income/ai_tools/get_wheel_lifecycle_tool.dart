@@ -114,7 +114,7 @@ class GetWheelLifecycleTool implements DeviceTool {
         'wheel_income_coverage_ratio': overlay.wheelIncomeCoverageRatio
             ?.toString(),
         'delta_equivalent_shares': overlay.deltaEquivalentShares?.toString(),
-        'warnings': [for (final risk in overlay.risks) risk.code.name],
+        'warnings': [for (final risk in overlay.risks) risk.code.wire],
         'positions': [
           for (final position in overlay.openPositions)
             <String, Object?>{

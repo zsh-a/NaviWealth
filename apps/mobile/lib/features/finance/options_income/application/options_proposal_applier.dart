@@ -2,6 +2,8 @@ import 'package:decimal/decimal.dart';
 import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/options_income/application/options_journal_ledger_service.dart';
 import 'package:naviwealth/features/finance/options_income/data/leaps_call_position_repository.dart';
 import 'package:naviwealth/features/finance/options_income/data/options_strategy_profile_repository.dart';
@@ -93,7 +95,6 @@ class OptionsProposalApplier {
       maxCapitalPerTradePct:
           _optionalDecimalRaw(payload['max_capital_per_trade_pct']) ??
           current.maxCapitalPerTradePct,
-      onlyOnApprovedUnderlyings: true,
     );
   }
 
@@ -119,9 +120,14 @@ class OptionsProposalApplier {
       );
     }
     final openedAt = _parseRequiredDate(plan, 'opened_at_iso');
+    final symbol = _requireString(plan, 'underlying').toUpperCase();
+    final market =
+        assetMarketFromWire(plan.get('underlying_market')) ??
+        inferAssetMarket(symbol);
     final entry = await tradeJournalRepo.create(
+      underlyingAssetId: Asset.idFor(market, symbol),
       strategy: strategy,
-      symbol: _requireString(plan, 'underlying').toUpperCase(),
+      symbol: symbol,
       optionSymbol: _requireString(plan, 'option_symbol'),
       openedAt: openedAt,
       expirationAt: _parseOptionalDate(plan, 'expiration_at_iso'),
@@ -159,8 +165,13 @@ class OptionsProposalApplier {
     DateTime at,
   ) async {
     final mark = _optionalDecimalRaw(plan.payload['current_mark']);
+    final symbol = _requireString(plan, 'underlying').toUpperCase();
+    final market =
+        assetMarketFromWire(plan.get('underlying_market')) ??
+        inferAssetMarket(symbol);
     final position = await leapsCallRepo.create(
-      symbol: _requireString(plan, 'underlying'),
+      underlyingAssetId: Asset.idFor(market, symbol),
+      symbol: symbol,
       optionSymbol: _requireString(plan, 'option_symbol'),
       openedAt: _parseRequiredDate(plan, 'opened_at_iso'),
       expirationAt: _parseRequiredDate(plan, 'expiration_at_iso'),

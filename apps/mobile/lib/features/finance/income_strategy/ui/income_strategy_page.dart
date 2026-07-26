@@ -7,6 +7,8 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../composition/income_strategy_modules.dart';
+import '../composition/income_strategy_presentation.dart';
 import '../data/providers.dart';
 import '../domain/income_strategy.dart';
 import '../domain/income_strategy_plan.dart';
@@ -29,6 +31,7 @@ class _IncomeStrategyPageState extends ConsumerState<IncomeStrategyPage> {
     final l10n = AppLocalizations.of(context);
     final snapshot = ref.watch(portfolioIncomeStrategyProvider);
     final plans = ref.watch(incomeStrategyPlansProvider);
+    final modules = ref.watch(incomeStrategyModulesProvider);
     return AppPageScaffold(
       title: l10n.incomeStrategyTitle,
       actions: [
@@ -84,12 +87,17 @@ class _IncomeStrategyPageState extends ConsumerState<IncomeStrategyPage> {
                   _IncomeStrategyTab.overview => _Overview(
                     snapshot: data,
                     planByAsset: planByAsset,
+                    modules: modules,
                   ),
                   _IncomeStrategyTab.underlyings => _Underlyings(
                     snapshot: data,
                     planByAsset: planByAsset,
+                    modules: modules,
                   ),
-                  _IncomeStrategyTab.activity => _Activity(snapshot: data),
+                  _IncomeStrategyTab.activity => _Activity(
+                    snapshot: data,
+                    modules: modules,
+                  ),
                 },
               ),
             ],
@@ -101,10 +109,15 @@ class _IncomeStrategyPageState extends ConsumerState<IncomeStrategyPage> {
 }
 
 class _Overview extends StatelessWidget {
-  const _Overview({required this.snapshot, required this.planByAsset});
+  const _Overview({
+    required this.snapshot,
+    required this.planByAsset,
+    required this.modules,
+  });
 
   final PortfolioIncomeStrategySnapshot snapshot;
   final Map<String, IncomeStrategyPlan> planByAsset;
+  final List<IncomeStrategyModule> modules;
 
   @override
   Widget build(BuildContext context) {
@@ -150,24 +163,15 @@ class _Overview extends StatelessWidget {
             children: [
               _Metric(
                 label: l10n.incomeStrategyRealizedResult,
-                value: _money(
-                  snapshot.realizedResult.toString(),
-                  snapshot.baseCurrency,
-                ),
+                value: _metricMoney(l10n, snapshot.realizedResult),
               ),
               _Metric(
                 label: l10n.incomeStrategyProjectedCash,
-                value: _money(
-                  snapshot.projectedCash.toString(),
-                  snapshot.baseCurrency,
-                ),
+                value: _metricMoney(l10n, snapshot.projectedCash),
               ),
               _Metric(
                 label: l10n.incomeStrategyCapitalAtRisk,
-                value: _money(
-                  snapshot.capitalAtRisk.toString(),
-                  snapshot.baseCurrency,
-                ),
+                value: _metricMoney(l10n, snapshot.capitalAtRisk),
               ),
               _Metric(
                 label: l10n.incomeStrategyRiskCount,
@@ -185,7 +189,7 @@ class _Overview extends StatelessWidget {
           for (final risk in risks)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-              child: _RiskRow(risk: risk),
+              child: _RiskRow(risk: risk, modules: modules),
             ),
         ],
         const SizedBox(height: AppSpacing.s20),
@@ -200,6 +204,7 @@ class _Overview extends StatelessWidget {
             child: _StrategyTrack(
               underlying: underlying,
               plan: planByAsset[underlying.asset.assetId],
+              modules: modules,
             ),
           ),
       ],
@@ -208,10 +213,15 @@ class _Overview extends StatelessWidget {
 }
 
 class _Underlyings extends StatelessWidget {
-  const _Underlyings({required this.snapshot, required this.planByAsset});
+  const _Underlyings({
+    required this.snapshot,
+    required this.planByAsset,
+    required this.modules,
+  });
 
   final PortfolioIncomeStrategySnapshot snapshot;
   final Map<String, IncomeStrategyPlan> planByAsset;
+  final List<IncomeStrategyModule> modules;
 
   @override
   Widget build(BuildContext context) {
@@ -249,6 +259,7 @@ class _Underlyings extends StatelessWidget {
         return _StrategyTrack(
           underlying: underlying,
           plan: planByAsset[underlying.asset.assetId],
+          modules: modules,
         );
       },
     );
@@ -256,10 +267,15 @@ class _Underlyings extends StatelessWidget {
 }
 
 class _StrategyTrack extends StatelessWidget {
-  const _StrategyTrack({required this.underlying, required this.plan});
+  const _StrategyTrack({
+    required this.underlying,
+    required this.plan,
+    required this.modules,
+  });
 
   final UnderlyingIncomeStrategySnapshot underlying;
   final IncomeStrategyPlan? plan;
+  final List<IncomeStrategyModule> modules;
 
   @override
   Widget build(BuildContext context) {
@@ -315,14 +331,14 @@ class _StrategyTrack extends StatelessWidget {
                 spacing: AppSpacing.s8,
                 runSpacing: AppSpacing.s8,
                 children: [
-                  for (final kind in IncomeStrategySleeveKind.values)
+                  for (final module in modules)
                     SizedBox(
                       width: width,
                       child: _SleeveLane(
-                        kind: kind,
-                        enabled: underlying.enabledSleeves.contains(kind),
-                        snapshot: underlying.sleeves[kind],
-                        currency: underlying.asset.currency,
+                        module: module,
+                        enabled: underlying.enabledSleeves.contains(module.id),
+                        snapshot: underlying.sleeves[module.id],
+                        baseCurrency: underlying.baseCurrency,
                       ),
                     ),
                 ],
@@ -337,16 +353,16 @@ class _StrategyTrack extends StatelessWidget {
 
 class _SleeveLane extends StatelessWidget {
   const _SleeveLane({
-    required this.kind,
+    required this.module,
     required this.enabled,
     required this.snapshot,
-    required this.currency,
+    required this.baseCurrency,
   });
 
-  final IncomeStrategySleeveKind kind;
+  final IncomeStrategyModule module;
   final bool enabled;
   final IncomeStrategySleeveSnapshot? snapshot;
-  final String currency;
+  final String baseCurrency;
 
   @override
   Widget build(BuildContext context) {
@@ -366,11 +382,11 @@ class _SleeveLane extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(_sleeveIcon(kind), size: AppIconSizes.sm),
+                Icon(module.presentation.icon, size: AppIconSizes.sm),
                 const SizedBox(width: AppSpacing.s6),
                 Expanded(
                   child: Text(
-                    _sleeveLabel(l10n, kind),
+                    module.presentation.label(l10n),
                     style: context.labelStyle,
                   ),
                 ),
@@ -384,14 +400,14 @@ class _SleeveLane extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.s6),
             Text(
-              value == null ? l10n.incomeStrategyNoPosition : value.status,
+              value == null
+                  ? l10n.incomeStrategyNoPosition
+                  : module.presentation.statusLabel(l10n, value.status),
               style: context.captionStyle,
             ),
             const SizedBox(height: AppSpacing.s2),
             Text(
-              value == null
-                  ? '—'
-                  : _money(value.realizedResult.toString(), currency),
+              value == null ? '—' : _metricMoney(l10n, value.realizedResult),
               style: context.labelStyle,
             ),
           ],
@@ -402,9 +418,10 @@ class _SleeveLane extends StatelessWidget {
 }
 
 class _Activity extends StatelessWidget {
-  const _Activity({required this.snapshot});
+  const _Activity({required this.snapshot, required this.modules});
 
   final PortfolioIncomeStrategySnapshot snapshot;
+  final List<IncomeStrategyModule> modules;
 
   @override
   Widget build(BuildContext context) {
@@ -433,14 +450,19 @@ class _Activity extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.s12),
           child: Row(
             children: [
-              Icon(_cashFlowIcon(flow.kind), size: AppIconSizes.md),
+              Icon(
+                _cashFlowPresentation(modules, flow.kind)?.icon ??
+                    FLucideIcons.circleDollarSign,
+                size: AppIconSizes.md,
+              ),
               const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _cashFlowLabel(l10n, flow.kind),
+                      _cashFlowPresentation(modules, flow.kind)?.label(l10n) ??
+                          flow.kind.wire,
                       style: context.labelStyle,
                     ),
                     Text(
@@ -452,8 +474,8 @@ class _Activity extends StatelessWidget {
                 ),
               ),
               MoneyText(
-                amount: flow.amount.toDouble(),
-                currencyCode: flow.currency,
+                amount: flow.amount.amount.toDouble(),
+                currencyCode: flow.amount.currency,
                 showSign: true,
               ),
             ],
@@ -489,9 +511,10 @@ class _WorkspaceActions extends StatelessWidget {
 }
 
 class _RiskRow extends StatelessWidget {
-  const _RiskRow({required this.risk});
+  const _RiskRow({required this.risk, required this.modules});
 
   final IncomeStrategyRisk risk;
+  final List<IncomeStrategyModule> modules;
 
   @override
   Widget build(BuildContext context) => SoftCard.flat(
@@ -503,7 +526,7 @@ class _RiskRow extends StatelessWidget {
         const SizedBox(width: AppSpacing.s8),
         Expanded(
           child: Text(
-            _riskLabel(AppLocalizations.of(context), risk.code),
+            _riskLabel(AppLocalizations.of(context), modules, risk.code),
             style: context.bodyCaptionStyle,
           ),
         ),
@@ -532,65 +555,43 @@ class _Metric extends StatelessWidget {
   );
 }
 
-String _money(String amount, String currency) => '$currency $amount';
+String _metricMoney(AppLocalizations l10n, IncomeStrategyMoneyMetric metric) {
+  final value = '${metric.value.currency} ${metric.value.amount}';
+  return metric.quality == IncomeStrategyMetricQuality.complete
+      ? value
+      : '$value · ${l10n.incomeStrategyMetricPartial}';
+}
 
-IconData _sleeveIcon(IncomeStrategySleeveKind kind) => switch (kind) {
-  IncomeStrategySleeveKind.dividends => FLucideIcons.badgeDollarSign,
-  IncomeStrategySleeveKind.wheel => FLucideIcons.refreshCw,
-  IncomeStrategySleeveKind.leapsCall => FLucideIcons.trendingUp,
-};
-
-String _sleeveLabel(AppLocalizations l10n, IncomeStrategySleeveKind kind) =>
-    switch (kind) {
-      IncomeStrategySleeveKind.dividends => l10n.incomeStrategySleeveDividends,
-      IncomeStrategySleeveKind.wheel => l10n.incomeStrategySleeveWheel,
-      IncomeStrategySleeveKind.leapsCall => l10n.incomeStrategySleeveLeaps,
-    };
-
-IconData _cashFlowIcon(IncomeStrategyCashFlowKind kind) => switch (kind) {
-  IncomeStrategyCashFlowKind.dividend => FLucideIcons.badgeDollarSign,
-  IncomeStrategyCashFlowKind.dividendWithholding => FLucideIcons.receipt,
-  IncomeStrategyCashFlowKind.optionRealized => FLucideIcons.refreshCw,
-  IncomeStrategyCashFlowKind.leapsPurchase => FLucideIcons.arrowDownLeft,
-  IncomeStrategyCashFlowKind.leapsSale => FLucideIcons.arrowUpRight,
-  IncomeStrategyCashFlowKind.leapsExercise => FLucideIcons.moveUpRight,
-};
-
-String _cashFlowLabel(
-  AppLocalizations l10n,
+IncomeStrategyCashFlowPresentation? _cashFlowPresentation(
+  Iterable<IncomeStrategyModule> modules,
   IncomeStrategyCashFlowKind kind,
-) => switch (kind) {
-  IncomeStrategyCashFlowKind.dividend => l10n.incomeStrategyCashFlowDividend,
-  IncomeStrategyCashFlowKind.dividendWithholding =>
-    l10n.incomeStrategyCashFlowWithholding,
-  IncomeStrategyCashFlowKind.optionRealized => l10n.incomeStrategyCashFlowWheel,
-  IncomeStrategyCashFlowKind.leapsPurchase =>
-    l10n.incomeStrategyCashFlowLeapsPurchase,
-  IncomeStrategyCashFlowKind.leapsSale => l10n.incomeStrategyCashFlowLeapsSale,
-  IncomeStrategyCashFlowKind.leapsExercise =>
-    l10n.incomeStrategyCashFlowLeapsExercise,
-};
+) {
+  for (final module in modules) {
+    for (final presentation in module.presentation.cashFlows) {
+      if (presentation.kind == kind) return presentation;
+    }
+  }
+  return null;
+}
 
 String _riskLabel(
   AppLocalizations l10n,
+  Iterable<IncomeStrategyModule> modules,
   IncomeStrategyRiskCode code,
-) => switch (code) {
-  IncomeStrategyRiskCode.unplannedSleeve => l10n.incomeStrategyRiskUnplanned,
-  IncomeStrategyRiskCode.capitalBudgetExceeded =>
-    l10n.incomeStrategyRiskCapitalBudget,
-  IncomeStrategyRiskCode.assignmentBudgetExceeded =>
-    l10n.incomeStrategyRiskAssignment,
-  IncomeStrategyRiskCode.concentrationExceeded =>
-    l10n.incomeStrategyRiskConcentration,
-  IncomeStrategyRiskCode.dividendInterruption =>
-    l10n.incomeStrategyRiskDividend,
-  IncomeStrategyRiskCode.stackedDownside => l10n.incomeStrategyRiskStacked,
-  IncomeStrategyRiskCode.leapsBudgetExceeded =>
-    l10n.incomeStrategyRiskLeapsBudget,
-  IncomeStrategyRiskCode.leapsCostNotCovered =>
-    l10n.incomeStrategyRiskLeapsCoverage,
-  IncomeStrategyRiskCode.missingMarketValue =>
-    l10n.incomeStrategyRiskMissingMark,
-  IncomeStrategyRiskCode.missingDelta => l10n.incomeStrategyRiskMissingDelta,
-  IncomeStrategyRiskCode.expirationNear => l10n.incomeStrategyRiskExpiration,
-};
+) {
+  for (final module in modules) {
+    for (final presentation in module.presentation.risks) {
+      if (presentation.code == code) return presentation.label(l10n);
+    }
+  }
+  return switch (code.wire) {
+    'unplanned_sleeve' => l10n.incomeStrategyRiskUnplanned,
+    'capital_budget_exceeded' => l10n.incomeStrategyRiskCapitalBudget,
+    'concentration_exceeded' => l10n.incomeStrategyRiskConcentration,
+    'missing_fx_rate' => l10n.incomeStrategyRiskMissingFx,
+    'stale_valuation' => l10n.incomeStrategyRiskStaleValuation,
+    'income_target_at_risk' => l10n.incomeStrategyRiskIncomeTarget,
+    'expiration_near' => l10n.incomeStrategyRiskExpiration,
+    _ => code.wire,
+  };
+}

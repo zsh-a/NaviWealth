@@ -1,53 +1,144 @@
 import 'package:decimal/decimal.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 
-/// Independently composable strategy sleeves for one underlying.
+/// Stable, open identifier for an independently composable strategy sleeve.
 ///
-/// A sleeve is a source of exposure and cash-flow facts, not a shared trade
-/// state machine. New sleeves can participate by contributing a snapshot to
-/// [IncomeStrategyAssembler].
-enum IncomeStrategySleeveKind { dividends, wheel, leapsCall }
+/// This is deliberately a value object instead of an enum: a new module can
+/// define its own identifier without changing the composition engine.
+class IncomeStrategySleeveKind {
+  const IncomeStrategySleeveKind(this.wire)
+    : assert(wire != '', 'Sleeve wire id must not be empty.');
 
-extension IncomeStrategySleeveKindWire on IncomeStrategySleeveKind {
-  String get wire => switch (this) {
-    IncomeStrategySleeveKind.dividends => 'dividends',
-    IncomeStrategySleeveKind.wheel => 'wheel',
-    IncomeStrategySleeveKind.leapsCall => 'leaps_call',
-  };
+  static const dividends = IncomeStrategySleeveKind('dividends');
+  static const wheel = IncomeStrategySleeveKind('wheel');
+  static const leapsCall = IncomeStrategySleeveKind('leaps_call');
+
+  final String wire;
+
+  @override
+  bool operator ==(Object other) =>
+      other is IncomeStrategySleeveKind && other.wire == wire;
+
+  @override
+  int get hashCode => wire.hashCode;
+
+  @override
+  String toString() => wire;
 }
 
-IncomeStrategySleeveKind? incomeStrategySleeveKindFromWire(String wire) =>
-    switch (wire) {
-      'dividends' => IncomeStrategySleeveKind.dividends,
-      'wheel' => IncomeStrategySleeveKind.wheel,
-      'leaps_call' => IncomeStrategySleeveKind.leapsCall,
-      _ => null,
-    };
+IncomeStrategySleeveKind incomeStrategySleeveKindFromWire(String wire) =>
+    IncomeStrategySleeveKind(wire.trim());
 
-enum IncomeStrategyCashFlowKind {
-  dividend,
-  dividendWithholding,
-  optionRealized,
-  leapsPurchase,
-  leapsSale,
-  leapsExercise,
+/// Stable, module-owned cash-flow identifier.
+class IncomeStrategyCashFlowKind {
+  const IncomeStrategyCashFlowKind(this.wire)
+    : assert(wire != '', 'Cash-flow wire id must not be empty.');
+
+  static const dividend = IncomeStrategyCashFlowKind('dividend');
+  static const dividendWithholding = IncomeStrategyCashFlowKind(
+    'dividend_withholding',
+  );
+  static const optionRealized = IncomeStrategyCashFlowKind('option_realized');
+  static const leapsPurchase = IncomeStrategyCashFlowKind('leaps_purchase');
+  static const leapsSale = IncomeStrategyCashFlowKind('leaps_sale');
+  static const leapsExercise = IncomeStrategyCashFlowKind('leaps_exercise');
+
+  final String wire;
+
+  @override
+  bool operator ==(Object other) =>
+      other is IncomeStrategyCashFlowKind && other.wire == wire;
+
+  @override
+  int get hashCode => wire.hashCode;
 }
 
 enum IncomeStrategyCashFlowState { actual, declared, estimated, contingent }
 
+enum IncomeStrategyMetricQuality { complete, partial, stale, unavailable }
+
+IncomeStrategyMetricQuality combineIncomeStrategyMetricQuality(
+  Iterable<IncomeStrategyMetricQuality> qualities,
+) {
+  var result = IncomeStrategyMetricQuality.complete;
+  for (final quality in qualities) {
+    if (quality.index > result.index) result = quality;
+  }
+  return result;
+}
+
+/// A base-currency monetary metric with explicit completeness.
+///
+/// Unknown FX or missing marks must degrade [quality]; callers never silently
+/// add amounts from different currencies.
+class IncomeStrategyMoneyMetric {
+  const IncomeStrategyMoneyMetric({
+    required this.value,
+    this.quality = IncomeStrategyMetricQuality.complete,
+  });
+
+  factory IncomeStrategyMoneyMetric.zero(
+    String currency, {
+    IncomeStrategyMetricQuality quality = IncomeStrategyMetricQuality.complete,
+  }) =>
+      IncomeStrategyMoneyMetric(value: Money.zero(currency), quality: quality);
+
+  final Money value;
+  final IncomeStrategyMetricQuality quality;
+
+  IncomeStrategyMoneyMetric operator +(IncomeStrategyMoneyMetric other) =>
+      IncomeStrategyMoneyMetric(
+        value: value + other.value,
+        quality: combineIncomeStrategyMetricQuality([quality, other.quality]),
+      );
+}
+
 enum IncomeStrategyRiskSeverity { info, warning, critical }
 
-enum IncomeStrategyRiskCode {
-  unplannedSleeve,
-  capitalBudgetExceeded,
-  assignmentBudgetExceeded,
-  concentrationExceeded,
-  dividendInterruption,
-  stackedDownside,
-  leapsBudgetExceeded,
-  leapsCostNotCovered,
-  missingMarketValue,
-  missingDelta,
-  expirationNear,
+/// Stable, open identifier for a deterministic risk finding.
+class IncomeStrategyRiskCode {
+  const IncomeStrategyRiskCode(this.wire)
+    : assert(wire != '', 'Risk wire id must not be empty.');
+
+  static const unplannedSleeve = IncomeStrategyRiskCode('unplanned_sleeve');
+  static const capitalBudgetExceeded = IncomeStrategyRiskCode(
+    'capital_budget_exceeded',
+  );
+  static const assignmentBudgetExceeded = IncomeStrategyRiskCode(
+    'assignment_budget_exceeded',
+  );
+  static const concentrationExceeded = IncomeStrategyRiskCode(
+    'concentration_exceeded',
+  );
+  static const dividendInterruption = IncomeStrategyRiskCode(
+    'dividend_interruption',
+  );
+  static const stackedDownside = IncomeStrategyRiskCode('stacked_downside');
+  static const leapsBudgetExceeded = IncomeStrategyRiskCode(
+    'leaps_budget_exceeded',
+  );
+  static const leapsCostNotCovered = IncomeStrategyRiskCode(
+    'leaps_cost_not_covered',
+  );
+  static const missingMarketValue = IncomeStrategyRiskCode(
+    'missing_market_value',
+  );
+  static const missingDelta = IncomeStrategyRiskCode('missing_delta');
+  static const missingFxRate = IncomeStrategyRiskCode('missing_fx_rate');
+  static const staleValuation = IncomeStrategyRiskCode('stale_valuation');
+  static const expirationNear = IncomeStrategyRiskCode('expiration_near');
+  static const incomeTargetAtRisk = IncomeStrategyRiskCode(
+    'income_target_at_risk',
+  );
+
+  final String wire;
+
+  @override
+  bool operator ==(Object other) =>
+      other is IncomeStrategyRiskCode && other.wire == wire;
+
+  @override
+  int get hashCode => wire.hashCode;
 }
 
 class IncomeStrategyAsset {
@@ -71,6 +162,19 @@ class IncomeStrategyAsset {
   }
 }
 
+/// Domain-owned source reference. AI adapters convert this into EvidenceAnchor.
+class IncomeStrategySourceRef {
+  const IncomeStrategySourceRef({
+    required this.table,
+    required this.id,
+    this.complete = true,
+  });
+
+  final String table;
+  final String id;
+  final bool complete;
+}
+
 class IncomeStrategyCashFlow {
   const IncomeStrategyCashFlow({
     required this.id,
@@ -80,10 +184,8 @@ class IncomeStrategyCashFlow {
     required this.state,
     required this.date,
     required this.amount,
-    required this.currency,
-    required this.sourceTable,
-    required this.sourceId,
-    required this.hasCompleteEvidence,
+    required this.baseAmount,
+    required this.source,
   });
 
   final String id;
@@ -93,12 +195,13 @@ class IncomeStrategyCashFlow {
   final IncomeStrategyCashFlowState state;
   final DateTime date;
 
-  /// Signed amount: cash received is positive and cash paid is negative.
-  final Decimal amount;
-  final String currency;
-  final String sourceTable;
-  final String sourceId;
-  final bool hasCompleteEvidence;
+  /// Signed original-currency movement: received is positive, paid is negative.
+  final Money amount;
+
+  /// Same movement valued in the portfolio base currency. Null means the
+  /// required historical FX rate is unavailable.
+  final Money? baseAmount;
+  final IncomeStrategySourceRef source;
 }
 
 class IncomeStrategyRisk {
@@ -117,36 +220,68 @@ class IncomeStrategyRisk {
   final Map<String, Object?> evidence;
 }
 
+/// Typed cross-sleeve capabilities consumed by coordination rules.
+///
+/// Module-specific lifecycle objects belong in [IncomeStrategySleeveDetails],
+/// never in a string-keyed facts map.
+class IncomeStrategyExposure {
+  const IncomeStrategyExposure({
+    required this.capitalAtRisk,
+    this.marketValue,
+    this.deltaEquivalentShares,
+    this.assignmentObligation,
+    this.holdingQuantity,
+    this.holdingWeight,
+    this.hasOpenShortPut = false,
+    this.hasOpenCoveredCall = false,
+  });
+
+  final IncomeStrategyMoneyMetric capitalAtRisk;
+  final IncomeStrategyMoneyMetric? marketValue;
+  final Decimal? deltaEquivalentShares;
+  final IncomeStrategyMoneyMetric? assignmentObligation;
+  final Decimal? holdingQuantity;
+  final Decimal? holdingWeight;
+  final bool hasOpenShortPut;
+  final bool hasOpenCoveredCall;
+}
+
+abstract interface class IncomeStrategySleeveDetails {
+  const IncomeStrategySleeveDetails();
+}
+
 class IncomeStrategySleeveSnapshot {
   const IncomeStrategySleeveSnapshot({
     required this.kind,
     required this.status,
+    required this.periodStart,
+    required this.asOf,
+    required this.realizedIncome,
     required this.realizedResult,
     required this.projectedCash,
-    required this.capitalAtRisk,
-    required this.marketValue,
-    required this.deltaEquivalentShares,
+    required this.exposure,
     required this.cashFlows,
     required this.risks,
-    this.facts = const <String, Object?>{},
+    this.details,
   });
 
   final IncomeStrategySleeveKind kind;
   final String status;
 
-  /// Realized economic result. This is deliberately separate from cash
-  /// movement so buying a long call is not treated as an immediate loss.
-  final Decimal realizedResult;
-  final Decimal projectedCash;
-  final Decimal capitalAtRisk;
-  final Decimal? marketValue;
-  final Decimal? deltaEquivalentShares;
+  /// Realized-result reporting window. Current modules use calendar YTD.
+  final DateTime periodStart;
+  final DateTime asOf;
+  final IncomeStrategyMoneyMetric realizedIncome;
+  final IncomeStrategyMoneyMetric realizedResult;
+  final IncomeStrategyMoneyMetric projectedCash;
+  final IncomeStrategyExposure exposure;
   final List<IncomeStrategyCashFlow> cashFlows;
   final List<IncomeStrategyRisk> risks;
+  final IncomeStrategySleeveDetails? details;
 
-  /// Sleeve-specific read-only facts consumed by deterministic coordination
-  /// rules and drill-down UI. Facts must never become persistence contracts.
-  final Map<String, Object?> facts;
+  IncomeStrategyMoneyMetric get capitalAtRisk => exposure.capitalAtRisk;
+  IncomeStrategyMoneyMetric? get marketValue => exposure.marketValue;
+  Decimal? get deltaEquivalentShares => exposure.deltaEquivalentShares;
 }
 
 class IncomeStrategySleeveContribution {
@@ -162,6 +297,9 @@ class IncomeStrategySleeveContribution {
 class UnderlyingIncomeStrategySnapshot {
   const UnderlyingIncomeStrategySnapshot({
     required this.asset,
+    required this.baseCurrency,
+    required this.periodStart,
+    required this.asOf,
     required this.enabledSleeves,
     required this.sleeves,
     required this.risks,
@@ -170,33 +308,60 @@ class UnderlyingIncomeStrategySnapshot {
   });
 
   final IncomeStrategyAsset asset;
+  final String baseCurrency;
+  final DateTime periodStart;
+  final DateTime asOf;
   final Set<IncomeStrategySleeveKind> enabledSleeves;
   final Map<IncomeStrategySleeveKind, IncomeStrategySleeveSnapshot> sleeves;
   final List<IncomeStrategyRisk> risks;
-  final Decimal? capitalBudget;
-  final Decimal? annualIncomeTarget;
+  final Money? capitalBudget;
+  final Money? annualIncomeTarget;
 
-  Decimal get realizedResult =>
-      _sum(sleeves.values.map((value) => value.realizedResult));
-
-  Decimal get projectedCash =>
-      _sum(sleeves.values.map((value) => value.projectedCash));
-
-  Decimal get capitalAtRisk =>
-      _sum(sleeves.values.map((value) => value.capitalAtRisk));
-
-  Decimal get actualCashMovement => _sum(
-    cashFlows
-        .where((flow) => flow.state == IncomeStrategyCashFlowState.actual)
-        .map((flow) => flow.amount),
+  IncomeStrategyMoneyMetric get realizedResult => _sumMetrics(
+    baseCurrency,
+    sleeves.values.map((value) => value.realizedResult),
   );
+
+  IncomeStrategyMoneyMetric get realizedIncome => _sumMetrics(
+    baseCurrency,
+    sleeves.values.map((value) => value.realizedIncome),
+  );
+
+  IncomeStrategyMoneyMetric get projectedCash => _sumMetrics(
+    baseCurrency,
+    sleeves.values.map((value) => value.projectedCash),
+  );
+
+  IncomeStrategyMoneyMetric get capitalAtRisk => _sumMetrics(
+    baseCurrency,
+    sleeves.values.map((value) => value.capitalAtRisk),
+  );
+
+  IncomeStrategyMoneyMetric get actualCashMovement {
+    var value = Money.zero(baseCurrency);
+    var quality = IncomeStrategyMetricQuality.complete;
+    for (final flow in cashFlows.where(
+      (flow) =>
+          flow.state == IncomeStrategyCashFlowState.actual &&
+          !flow.date.isBefore(periodStart) &&
+          !flow.date.isAfter(asOf),
+    )) {
+      final base = flow.baseAmount;
+      if (base == null) {
+        quality = IncomeStrategyMetricQuality.partial;
+      } else {
+        value += base;
+      }
+    }
+    return IncomeStrategyMoneyMetric(value: value, quality: quality);
+  }
 
   Decimal? get deltaEquivalentShares {
     final values = sleeves.values
         .map((value) => value.deltaEquivalentShares)
+        .whereType<Decimal>()
         .toList(growable: false);
-    if (values.isEmpty || values.any((value) => value == null)) return null;
-    return _sum(values.cast<Decimal>());
+    return values.isEmpty ? null : _sumDecimal(values);
   }
 
   List<IncomeStrategyCashFlow> get cashFlows {
@@ -212,29 +377,56 @@ class UnderlyingIncomeStrategySnapshot {
 class PortfolioIncomeStrategySnapshot {
   const PortfolioIncomeStrategySnapshot({
     required this.baseCurrency,
+    required this.periodStart,
+    required this.asOf,
     required this.underlyings,
     required this.unassignedCashFlows,
   });
 
   final String baseCurrency;
+  final DateTime periodStart;
+  final DateTime asOf;
   final List<UnderlyingIncomeStrategySnapshot> underlyings;
   final List<IncomeStrategyCashFlow> unassignedCashFlows;
 
-  Decimal get realizedResult =>
-      _sum(underlyings.map((value) => value.realizedResult));
-  Decimal get projectedCash =>
-      _sum(underlyings.map((value) => value.projectedCash)) +
-      _sum(
-        unassignedCashFlows
-            .where(
-              (flow) =>
-                  flow.state == IncomeStrategyCashFlowState.declared ||
-                  flow.state == IncomeStrategyCashFlowState.estimated,
-            )
-            .map((flow) => flow.amount),
-      );
-  Decimal get capitalAtRisk =>
-      _sum(underlyings.map((value) => value.capitalAtRisk));
+  IncomeStrategyMoneyMetric get realizedResult => _sumMetrics(
+    baseCurrency,
+    underlyings.map((value) => value.realizedResult),
+  );
+
+  IncomeStrategyMoneyMetric get realizedIncome => _sumMetrics(
+    baseCurrency,
+    underlyings.map((value) => value.realizedIncome),
+  );
+
+  IncomeStrategyMoneyMetric get projectedCash {
+    final assigned = _sumMetrics(
+      baseCurrency,
+      underlyings.map((value) => value.projectedCash),
+    );
+    var unassigned = Money.zero(baseCurrency);
+    var quality = IncomeStrategyMetricQuality.complete;
+    for (final flow in unassignedCashFlows.where(
+      (flow) =>
+          flow.state == IncomeStrategyCashFlowState.declared ||
+          flow.state == IncomeStrategyCashFlowState.estimated,
+    )) {
+      final base = flow.baseAmount;
+      if (base == null) {
+        quality = IncomeStrategyMetricQuality.partial;
+      } else {
+        unassigned += base;
+      }
+    }
+    return assigned +
+        IncomeStrategyMoneyMetric(value: unassigned, quality: quality);
+  }
+
+  IncomeStrategyMoneyMetric get capitalAtRisk => _sumMetrics(
+    baseCurrency,
+    underlyings.map((value) => value.capitalAtRisk),
+  );
+
   int get activeRiskCount => underlyings
       .expand((value) => value.risks)
       .where((risk) => risk.severity != IncomeStrategyRiskSeverity.info)
@@ -249,7 +441,18 @@ class PortfolioIncomeStrategySnapshot {
   }
 }
 
-Decimal _sum(Iterable<Decimal> values) {
+IncomeStrategyMoneyMetric _sumMetrics(
+  String currency,
+  Iterable<IncomeStrategyMoneyMetric> values,
+) {
+  var result = IncomeStrategyMoneyMetric.zero(currency);
+  for (final value in values) {
+    result += value;
+  }
+  return result;
+}
+
+Decimal _sumDecimal(Iterable<Decimal> values) {
   var total = Decimal.zero;
   for (final value in values) {
     total += value;

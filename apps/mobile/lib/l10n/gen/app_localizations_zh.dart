@@ -14847,6 +14847,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomeStrategySleeveLeaps => 'LEAPS Call';
 
   @override
+  String get incomeStrategyStatusHolding => '持有中';
+
+  @override
+  String get incomeStrategyStatusPlanned => '已规划';
+
+  @override
+  String get incomeStrategyStatusOpen => '持仓中';
+
+  @override
+  String get incomeStrategyStatusResolved => '已结束';
+
+  @override
+  String get incomeStrategyMetricPartial => '估值不完整';
+
+  @override
   String get incomeStrategyCashFlowDividend => '股息税前收入';
 
   @override
@@ -14895,6 +14910,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get incomeStrategyRiskMissingDelta => 'LEAPS 缺少 Delta，等效股数敞口不完整。';
+
+  @override
+  String get incomeStrategyRiskMissingFx => '缺少汇率，一个或多个金额汇总不完整。';
+
+  @override
+  String get incomeStrategyRiskStaleValuation => '持仓估值已过期，需要刷新。';
+
+  @override
+  String get incomeStrategyRiskIncomeTarget => '年初至今已实现收入明显落后于年度目标。';
 
   @override
   String get incomeStrategyRiskExpiration => '有期权临近到期，需要复核。';

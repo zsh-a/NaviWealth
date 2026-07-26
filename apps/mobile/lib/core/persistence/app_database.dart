@@ -79,7 +79,6 @@ final class AppDatabaseTransactionScope {
     OptionsTradeJournal,
     OptionsLeapsCallPositions,
     IncomeStrategyPlans,
-    ApprovedUnderlyings,
     RecurringTransactions,
     Liabilities,
     AmortizationEntries,
@@ -149,7 +148,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 61;
+  int get schemaVersion => 63;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -285,7 +284,6 @@ class AppDatabase extends _$AppDatabase {
       // the scanner; see docs/domains/options-income.md §6.2.
       if (from < 11) {
         await m.createTable(optionsStrategyProfileTable);
-        await m.createTable(approvedUnderlyings);
         await _createOptionsIncomeIndexes(this);
       }
       // v11 -> v12: Options Income Planner P1 — local-only opportunity
@@ -908,6 +906,42 @@ class AppDatabase extends _$AppDatabase {
         await customStatement(
           'CREATE INDEX IF NOT EXISTS idx_income_strategy_plans_owner '
           'ON income_strategy_plans(owner_user_id, symbol) '
+          'WHERE deleted_at IS NULL',
+        );
+      }
+      // v61 -> v62: replace the closed three-sleeve plan shape with an open
+      // module-intent document. Plans are derived user configuration and the
+      // product explicitly drops compatibility with the v61 experiment.
+      if (from < 62) {
+        await m.deleteTable('income_strategy_plans');
+        await m.createTable(incomeStrategyPlans);
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_income_strategy_plans_owner '
+          'ON income_strategy_plans(owner_user_id, symbol) '
+          'WHERE deleted_at IS NULL',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_income_strategy_plans_asset '
+          'ON income_strategy_plans(owner_user_id, asset_id) '
+          'WHERE deleted_at IS NULL',
+        );
+      }
+      // v62 -> v63: approved-underlying intent now lives inside the Wheel
+      // module section of income_strategy_plans. The global profile now keeps
+      // only scanner behavior; per-underlying exposure belongs to that Wheel
+      // intent. Both experimental tables are intentionally rebuilt.
+      if (from < 63) {
+        await m.deleteTable('approved_underlyings');
+        await m.deleteTable('options_strategy_profile');
+        await m.createTable(optionsStrategyProfileTable);
+        await m.deleteTable('options_trade_journal');
+        await m.createTable(optionsTradeJournal);
+        await _createOptionsTradeJournalIndexes(this);
+        await m.deleteTable('options_leaps_call_positions');
+        await m.createTable(optionsLeapsCallPositions);
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_options_leaps_owner_opened '
+          'ON options_leaps_call_positions(owner_user_id, opened_at DESC) '
           'WHERE deleted_at IS NULL',
         );
       }

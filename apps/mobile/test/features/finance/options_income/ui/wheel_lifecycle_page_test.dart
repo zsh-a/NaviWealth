@@ -6,7 +6,10 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
 import 'package:naviwealth/features/finance/income_strategy/application/income_strategy_asset_resolver.dart';
+import 'package:naviwealth/features/finance/income_strategy/application/income_strategy_coordination_rules.dart';
+import 'package:naviwealth/features/finance/income_strategy/application/income_strategy_valuation.dart';
 import 'package:naviwealth/features/finance/income_strategy/application/leaps_income_sleeve_adapter.dart';
 import 'package:naviwealth/features/finance/income_strategy/application/wheel_income_sleeve_adapter.dart';
 import 'package:naviwealth/features/finance/income_strategy/application/wheel_strategy_view.dart';
@@ -30,18 +33,30 @@ List<WheelStrategyView> _views(
   List<LeapsCallPosition> leaps,
 ) {
   final assets = IncomeStrategyAssetResolver(const []);
+  final converter = FxRateCurrencyConverter(InMemoryFxRateLookup(const []));
+  final asOf = DateTime.utc(2026, 5, 24);
+  final valuation = IncomeStrategyValuation(
+    baseCurrency: 'USD',
+    converter: converter,
+    asOf: asOf,
+  );
   return buildWheelStrategyViews(
     const IncomeStrategyAssembler().assemble(
       baseCurrency: 'USD',
+      asOf: asOf,
+      converter: converter,
       plans: const [],
+      rules: kBuiltInIncomeStrategyCoordinationRules,
       contributions: [
         ...const WheelIncomeSleeveAdapter().buildFromEntries(
           entries: entries,
           assets: assets,
+          valuation: valuation,
         ),
         ...const LeapsIncomeSleeveAdapter().build(
           positions: leaps,
           assets: assets,
+          valuation: valuation,
         ),
       ],
     ),
@@ -56,6 +71,7 @@ TradeJournalEntry _entry({
   String entryCredit = '0',
   String? exitDebit,
 }) => TradeJournalEntry(
+  underlyingAssetId: 'nasdaq:$symbol',
   id: id,
   strategy: strategy,
   symbol: symbol,
@@ -180,6 +196,7 @@ void main() {
       ],
       leaps: [
         LeapsCallPosition(
+          underlyingAssetId: 'nasdaq:TSM',
           id: 'leaps',
           symbol: 'TSM',
           optionSymbol: 'TSM280121C00200000',

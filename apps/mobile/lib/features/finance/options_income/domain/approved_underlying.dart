@@ -25,6 +25,7 @@ class ApprovedUnderlying {
     required this.allowCall,
     required this.maxBuyPrice,
     required this.minSellPrice,
+    this.maxPositionWeight,
     required this.notes,
     required this.sync,
   });
@@ -49,6 +50,7 @@ class ApprovedUnderlying {
   /// Price floor the user is willing to be called away at. Same logic as
   /// above but on the covered-call side.
   final Decimal? minSellPrice;
+  final Decimal? maxPositionWeight;
 
   final String? notes;
 
@@ -64,6 +66,7 @@ class ApprovedUnderlying {
     bool? allowCall,
     Object? maxBuyPrice = _unsetApprovedUnderlyingField,
     Object? minSellPrice = _unsetApprovedUnderlyingField,
+    Object? maxPositionWeight = _unsetApprovedUnderlyingField,
     Object? notes = _unsetApprovedUnderlyingField,
     SyncMeta? sync,
   }) {
@@ -79,6 +82,10 @@ class ApprovedUnderlying {
       minSellPrice: identical(minSellPrice, _unsetApprovedUnderlyingField)
           ? this.minSellPrice
           : minSellPrice as Decimal?,
+      maxPositionWeight:
+          identical(maxPositionWeight, _unsetApprovedUnderlyingField)
+          ? this.maxPositionWeight
+          : maxPositionWeight as Decimal?,
       notes: identical(notes, _unsetApprovedUnderlyingField)
           ? this.notes
           : notes as String?,

@@ -45,6 +45,7 @@ class LeapsCallPositionRepository {
   }
 
   Future<LeapsCallPosition> create({
+    required String underlyingAssetId,
     required String symbol,
     required String optionSymbol,
     required DateTime openedAt,
@@ -70,6 +71,7 @@ class LeapsCallPositionRepository {
     final id = _uuid.v4();
     final position = LeapsCallPosition(
       id: id,
+      underlyingAssetId: underlyingAssetId,
       symbol: symbol.trim().toUpperCase(),
       optionSymbol: optionSymbol.trim(),
       openedAt: openedAt.toUtc(),
@@ -145,6 +147,7 @@ class LeapsCallPositionRepository {
   OptionsLeapsCallPositionsCompanion _toCompanion(LeapsCallPosition position) =>
       OptionsLeapsCallPositionsCompanion.insert(
         id: position.id,
+        underlyingAssetId: position.underlyingAssetId,
         symbol: position.symbol,
         optionSymbol: position.optionSymbol,
         openedAt: position.openedAt,
@@ -176,6 +179,7 @@ class LeapsCallPositionRepository {
 LeapsCallPosition _rowToDomain(OptionsLeapsCallPositionRow row) =>
     LeapsCallPosition(
       id: row.id,
+      underlyingAssetId: row.underlyingAssetId,
       symbol: row.symbol,
       optionSymbol: row.optionSymbol,
       openedAt: row.openedAt,

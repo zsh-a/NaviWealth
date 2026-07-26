@@ -466,7 +466,7 @@ StatefulShellRoute financeShellRoute() {
                 builder: (context, state) => const ExpenseCategoriesPage(),
               ),
               GoRoute(
-                path: 'wheel',
+                path: 'income/wheel',
                 name: FinanceRouteNames.planWheel,
                 builder: (context, state) => const WheelLifecyclePage(),
               ),

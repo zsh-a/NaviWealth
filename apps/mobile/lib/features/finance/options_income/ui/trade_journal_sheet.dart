@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
@@ -161,6 +162,10 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
       final repo = await ref.read(tradeJournalRepositoryProvider.future);
       final ledger = await ref.read(optionsJournalLedgerServiceProvider.future);
       final market = widget.prefilled?.contract.market.wire;
+      final assetMarket =
+          assetMarketFromWire(_loaded?.underlyingMarket ?? market) ??
+          inferAssetMarket(symbol);
+      final underlyingAssetId = Asset.idFor(assetMarket, symbol);
       TradeJournalEntry saved;
       final realized = (debit == null)
           ? null
@@ -171,6 +176,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
       if (_loaded != null) {
         saved = await repo.update(
           _loaded!.copyWith(
+            underlyingAssetId: underlyingAssetId,
             strategy: _strategy,
             symbol: symbol,
             optionSymbol: optionSymbol,
@@ -194,6 +200,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
         );
       } else {
         saved = await repo.create(
+          underlyingAssetId: underlyingAssetId,
           strategy: _strategy,
           symbol: symbol,
           optionSymbol: optionSymbol,
