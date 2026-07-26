@@ -155,4 +155,47 @@ class LocalizedOpportunityExplanationTexts
   @override
   String worstCaseCall(String symbol, String strike, String cap) =>
       _l10n.optionsExplainWorstCall(symbol, strike, cap);
+
+  @override
+  String leapsSummary(
+    String symbol,
+    int dte,
+    String strike,
+    String cost,
+    String delta,
+  ) => _l10n.optionsExplainLeapsSummary(symbol, dte, strike, cost, delta);
+
+  @override
+  String leapsWorstCase(String symbol, String strike, String cost) =>
+      _l10n.optionsExplainLeapsWorstCase(symbol, strike, cost);
+
+  @override
+  String leapsBestFor() => _l10n.optionsExplainLeapsBestFor;
+
+  @override
+  String leapsAvoid() => _l10n.optionsExplainLeapsAvoid;
+
+  @override
+  String leapsCostBullet(String costPct) =>
+      _l10n.optionsExplainLeapsCostBullet(costPct);
+
+  @override
+  String leapsLeverageBullet(String leverage, String delta) =>
+      _l10n.optionsExplainLeapsLeverageBullet(leverage, delta);
+
+  @override
+  String leapsIntrinsicBullet(String intrinsicPct) =>
+      _l10n.optionsExplainLeapsIntrinsicBullet(intrinsicPct);
+
+  @override
+  String leapsSpreadBullet(String spread) =>
+      _l10n.optionsExplainLeapsSpreadBullet(spread);
+
+  @override
+  String leapsThetaBullet(String extrinsic) =>
+      _l10n.optionsExplainLeapsThetaBullet(extrinsic);
+
+  @override
+  String leapsFundingBullet(String coverage) =>
+      _l10n.optionsExplainLeapsFundingBullet(coverage);
 }

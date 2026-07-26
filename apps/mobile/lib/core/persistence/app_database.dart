@@ -148,7 +148,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 64;
+  int get schemaVersion => 65;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -953,6 +953,24 @@ class AppDatabase extends _$AppDatabase {
       if (from >= 62 && from < 64) {
         await m.addColumn(incomeStrategyPlans, incomeStrategyPlans.groupId);
         await m.addColumn(incomeStrategyPlans, incomeStrategyPlans.groupLabel);
+      }
+      // v64 -> v65: buy-side LEAPS scan lane. Profile gains LEAPS window /
+      // delta / liquidity thresholds (defaults = balanced preset; skipped
+      // when the v63 step already recreated the table with them). The
+      // opportunity cache is derived data — drop and let the local-only
+      // DDL recreate it with the leaps_metrics_json column.
+      if (from >= 63 && from < 65) {
+        final t = optionsStrategyProfileTable;
+        await m.addColumn(t, t.leapsMinDte);
+        await m.addColumn(t, t.leapsMaxDte);
+        await m.addColumn(t, t.leapsDeltaMin);
+        await m.addColumn(t, t.leapsDeltaMax);
+        await m.addColumn(t, t.leapsMaxSpreadPct);
+        await m.addColumn(t, t.leapsMinOpenInterest);
+      }
+      if (from < 65) {
+        await customStatement('DROP TABLE IF EXISTS options_opportunity_cache');
+        await _createOptionsOpportunityCache(this);
       }
     },
     beforeOpen: (details) async {

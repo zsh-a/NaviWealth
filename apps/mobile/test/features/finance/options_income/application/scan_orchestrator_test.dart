@@ -10,6 +10,7 @@ import 'package:naviwealth/features/finance/options_income/application/scan_orch
 import 'package:naviwealth/features/finance/options_income/data/options_opportunity_cache_repository.dart';
 import 'package:naviwealth/features/finance/options_income/domain/approved_underlying.dart';
 import 'package:naviwealth/features/finance/options_income/domain/option_contract.dart';
+import 'package:naviwealth/features/finance/options_income/domain/options_opportunity.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
 import 'package:naviwealth/features/finance/options_income/domain/services/opportunity_scorer.dart';
 
@@ -122,7 +123,7 @@ void main() {
         hasLength(1),
       );
       expect(result.opportunities.map((o) => o.strategy).toSet(), {
-        OptionsStrategyKind.cashSecuredPut,
+        OpportunityStrategy.cashSecuredPut,
       });
 
       final cached = await cache.getLatest('u1');

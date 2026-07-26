@@ -3,7 +3,6 @@ import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/features/finance/options_income/data/providers.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_opportunity.dart';
-import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
 
 /// `get_options_income_opportunities` — read-only cache surface.
 ///
@@ -98,15 +97,33 @@ class GetOptionsIncomeOpportunitiesTool implements DeviceTool {
     };
   }
 
-  OptionsStrategyKind? _parseStrategy(Object? raw) {
+  OpportunityStrategy? _parseStrategy(Object? raw) {
     if (raw is! String) return null;
-    return parseOptionsStrategyKind(raw);
+    return parseOpportunityStrategy(raw);
   }
 }
 
 Map<String, Object?> _toJson(OptionsOpportunity opp) {
   final c = opp.contract;
-  final m = opp.metrics;
+  final metrics = switch (opp.metrics) {
+    final OpportunityMetrics m => <String, Object?>{
+      'premium': m.premium.amount.toString(),
+      'cash_required': m.cashRequired.amount.toString(),
+      'breakeven': m.breakeven.amount.toString(),
+      'static_return': m.staticReturn.toString(),
+      'annualized_yield': m.annualizedYield.toString(),
+      'margin_of_safety': m.marginOfSafety.toString(),
+    },
+    final LeapsOpportunityMetrics m => <String, Object?>{
+      'total_cost': m.totalCost.amount.toString(),
+      'breakeven': m.breakeven.amount.toString(),
+      'extrinsic_value': m.extrinsicValue.amount.toString(),
+      'extrinsic_ratio': m.extrinsicRatio.toString(),
+      'leverage_ratio': m.leverageRatio?.toString(),
+      'annualized_extrinsic_cost_pct': m.annualizedExtrinsicCostPct?.toString(),
+      'funding_coverage_pct': m.fundingCoveragePct?.toString(),
+    },
+  };
   return <String, Object?>{
     'strategy': opp.strategy.wire,
     'underlying': c.underlying,
@@ -123,14 +140,7 @@ Map<String, Object?> _toJson(OptionsOpportunity opp) {
     'open_interest': c.openInterest,
     'implied_volatility': c.impliedVolatility?.toString(),
     'delta': c.delta?.toString(),
-    'metrics': <String, Object?>{
-      'premium': m.premium.amount.toString(),
-      'cash_required': m.cashRequired.amount.toString(),
-      'breakeven': m.breakeven.amount.toString(),
-      'static_return': m.staticReturn.toString(),
-      'annualized_yield': m.annualizedYield.toString(),
-      'margin_of_safety': m.marginOfSafety.toString(),
-    },
+    'metrics': metrics,
     'risk_level': opp.risk.wire,
     'explanation': opp.explanation.toJson(),
     'score': opp.score.toString(),

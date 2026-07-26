@@ -531,9 +531,24 @@ LLM **不能**做的事（dispatcher 层不强制，但 system prompt 提示）�
 页内两个工作区 + 独立 Wheel 页面：
 
 ```text
-Opportunities   机会：Put / Call 筛选、适配度排序、扫描状态与拒绝原因
+Opportunities   机会：Put / Call / LEAPS 筛选、排序、扫描状态与拒绝原因
 Journal         日志：开放/已结算筛选、数量、费用、到期日与净损益
 ```
+
+**LEAPS 买方扫描通道**：与卖方（CSP/CC）共用 universe 纪律、chain
+provider、缓存与 AI 契约，但评分路径独立（`LeapsOpportunityScorer`）——
+卖方与买方经济学相反（高 IV 利卖方害买方；年化收益率对 debit 无意义）。
+universe = 计划中启用 `leaps_call` sleeve 的标的；DTE 窗口 / delta 区间 /
+价差与 OI 阈值来自 profile 的 LEAPS 段（随三档预设联动）。排序用单一透明
+指标：**每单位 delta 等效敞口的年化时间价值成本**（不做合成分）。预算硬
+过滤 = 计划 `max_cost` − 该标的已开 LEAPS 成本；组资金覆盖率（组内
+wheel+股息已实现收入 ÷ 候选成本）与 `LeapsFundingRule` 同口径，随解释
+文案缓存。`OpportunityMetricsBase` 为 sealed：卖方 `OpportunityMetrics`
+与买方 `LeapsOpportunityMetrics` 字段互不冒充；缓存行以
+`leaps_metrics_json` 持久化买方指标，`strategy` wire 增加 `leaps_call`
+（`OpportunityStrategy` 与日志的 `OptionsStrategyKind` 刻意分离，
+`leaps_call` 永不进入交易日志表单与账本镜像）。LEAPS 卡片 CTA 直达
+LEAPS 持仓表单；最坏情况文案强制为「权利金全部归零」。
 
 Wheel 生命周期只有一个表面：`wheel_lifecycle_page.dart`（`/plan/income/wheel`，
 按**策略组**聚合周期阶段、开放腿、LEAPS 上涨敞口与组合风险）。工作台顶部卡片和
@@ -684,6 +699,7 @@ apps/mobile/lib/features/finance/options_income/
 │   ├── options_journal_ledger_service.dart
 │   ├── options_ledger_narrations.dart     # narration contract + EN default
 │   ├── options_ledger_narrations_l10n.dart
+│   ├── leaps_scan_targets.dart            # LEAPS lane universe + budget/funding
 │   ├── scan_controller.dart            # P1 — Notifier driving refresh button
 │   ├── scan_inputs_bridge.dart         # P1 — holdings/cash bridge from portfolio
 │   └── scan_orchestrator.dart          # P1 — universe → chain → scorer → cache
@@ -696,11 +712,12 @@ apps/mobile/lib/features/finance/options_income/
 ├── domain/
 │   ├── approved_underlying.dart        # derived view of Wheel-enabled plans
 │   ├── option_contract.dart            # P1
-│   ├── options_opportunity.dart        # P1 — Opportunity / Metrics / RiskLevel
-│   ├── options_strategy_profile.dart
+│   ├── options_opportunity.dart        # P1 — Opportunity / sealed Metrics / RiskLevel
+│   ├── options_strategy_profile.dart   # incl. LEAPS lane thresholds
 │   ├── leaps_call_position.dart         # independent long-call source row
 │   ├── opportunity_explanation.dart    # P1 — UI ⇄ AI shared explanation struct
-│   ├── services/opportunity_scorer.dart# P1/P2 — pure-Dart scorer
+│   ├── services/opportunity_scorer.dart# P1/P2 — sell-side pure-Dart scorer
+│   ├── services/leaps_opportunity_scorer.dart # buy-side LEAPS lane
 │   ├── services/opportunity_explanation_texts.dart
 │   └── trade_journal_entry.dart        # P3
 └── ui/

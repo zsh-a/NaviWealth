@@ -6,6 +6,7 @@ import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/options_income/domain/approved_underlying.dart';
 import 'package:naviwealth/features/finance/options_income/domain/option_contract.dart';
+import 'package:naviwealth/features/finance/options_income/domain/options_opportunity.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
 import 'package:naviwealth/features/finance/options_income/domain/services/opportunity_scorer.dart';
 
@@ -162,8 +163,9 @@ void main() {
       final opp = scored!.opportunity;
       expect(opp.score, greaterThan(Decimal.zero));
       expect(opp.score, lessThanOrEqualTo(Decimal.one));
-      expect(opp.metrics.cashRequired.amount.toString(), '19000');
-      expect(opp.metrics.premium.amount, greaterThan(Decimal.zero));
+      final oppMetrics = opp.metrics as OpportunityMetrics;
+      expect(oppMetrics.cashRequired.amount.toString(), '19000');
+      expect(oppMetrics.premium.amount, greaterThan(Decimal.zero));
       expect(opp.explanation.whyGood, isNotEmpty);
       expect(opp.explanation.worstCase, contains('AAPL'));
       expect(
@@ -200,7 +202,10 @@ void main() {
         availableCash: Money.parse('1000000', 'USD'),
       );
       expect(scored, isNotNull);
-      expect(scored!.opportunity.metrics.premium.amount, Decimal.fromInt(250));
+      expect(
+        (scored!.opportunity.metrics as OpportunityMetrics).premium.amount,
+        Decimal.fromInt(250),
+      );
     });
 
     test('annualized yield = static return × 365 / dte', () {
@@ -215,7 +220,7 @@ void main() {
         availableCash: Money.parse('1000000', 'USD'),
       );
       expect(scored, isNotNull);
-      final metrics = scored!.opportunity.metrics;
+      final metrics = scored!.opportunity.metrics as OpportunityMetrics;
       // mid = 2.10, premium = 210, cashRequired = 20000, static = 0.0105
       expect(metrics.staticReturn.toString(), startsWith('0.0105'));
       // annualised = 0.0105 * 365/30 ≈ 0.12775
@@ -235,7 +240,7 @@ void main() {
         availableCash: Money.parse('1000000', 'USD'),
       );
       expect(scored, isNotNull);
-      final m = scored!.opportunity.metrics;
+      final m = scored!.opportunity.metrics as OpportunityMetrics;
       // mid = 2.60, breakeven = 212.6
       expect(m.breakeven.amount.toString(), '212.6');
     });

@@ -64,6 +64,24 @@ abstract interface class OpportunityExplanationTexts {
     String cash,
   );
   String worstCaseCall(String symbol, String strike, String cap);
+
+  // Buy-side LEAPS lane.
+  String leapsSummary(
+    String symbol,
+    int dte,
+    String strike,
+    String cost,
+    String delta,
+  );
+  String leapsWorstCase(String symbol, String strike, String cost);
+  String leapsBestFor();
+  String leapsAvoid();
+  String leapsCostBullet(String costPct);
+  String leapsLeverageBullet(String leverage, String delta);
+  String leapsIntrinsicBullet(String intrinsicPct);
+  String leapsSpreadBullet(String spread);
+  String leapsThetaBullet(String extrinsic);
+  String leapsFundingBullet(String coverage);
 }
 
 /// English fallback mirroring the pre-localized copy.
@@ -224,4 +242,54 @@ class DefaultOpportunityExplanationTexts
   String worstCaseCall(String symbol, String strike, String cap) =>
       'If $symbol rises to $strike, you would sell 100 shares at $strike '
       'and miss upside above that level; total proceeds are capped at $cap.';
+
+  @override
+  String leapsSummary(
+    String symbol,
+    int dte,
+    String strike,
+    String cost,
+    String delta,
+  ) => '$symbol ${dte}DTE LEAPS call @ $strike — cost $cost, delta $delta';
+
+  @override
+  String leapsWorstCase(String symbol, String strike, String cost) =>
+      'If $symbol closes below $strike at expiration, the entire $cost '
+      'premium is lost. Maximum loss is the full cost paid.';
+
+  @override
+  String leapsBestFor() =>
+      'Best as a funded stock substitute: long-dated deep-in-the-money '
+      'exposure paid for by wheel or dividend income.';
+
+  @override
+  String leapsAvoid() =>
+      'Avoid if you cannot hold through a full drawdown — time value '
+      'decays and the position can expire worthless.';
+
+  @override
+  String leapsCostBullet(String costPct) =>
+      'Annualized time-value cost $costPct per unit of share exposure';
+
+  @override
+  String leapsLeverageBullet(String leverage, String delta) =>
+      'Controls ${leverage}x the share exposure per unit of capital '
+      '(delta $delta)';
+
+  @override
+  String leapsIntrinsicBullet(String intrinsicPct) =>
+      '$intrinsicPct of the premium is intrinsic value';
+
+  @override
+  String leapsSpreadBullet(String spread) =>
+      'Wide bid/ask spread $spread — LEAPS liquidity is thin, use limit '
+      'orders';
+
+  @override
+  String leapsThetaBullet(String extrinsic) =>
+      '$extrinsic of time value will decay to zero by expiration';
+
+  @override
+  String leapsFundingBullet(String coverage) =>
+      'Group income already covers $coverage of this cost';
 }

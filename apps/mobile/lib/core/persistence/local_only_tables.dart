@@ -341,7 +341,7 @@ CREATE TABLE IF NOT EXISTS options_opportunity_cache (
   owner_user_id      TEXT NOT NULL,
   underlying         TEXT NOT NULL,
   market             TEXT NOT NULL,
-  strategy           TEXT NOT NULL,        -- cash_secured_put | covered_call
+  strategy           TEXT NOT NULL,        -- cash_secured_put | covered_call | leaps_call
   expiration         TEXT NOT NULL,        -- ISO8601 UTC midnight
   dte                INTEGER NOT NULL,
   type               TEXT NOT NULL,        -- call | put
@@ -365,6 +365,8 @@ CREATE TABLE IF NOT EXISTS options_opportunity_cache (
   score              TEXT NOT NULL,
   risk_level         TEXT NOT NULL,        -- low | moderate | elevated
   explanation_json   TEXT NOT NULL,        -- OpportunityExplanation JSON
+  leaps_metrics_json TEXT,                 -- LeapsOpportunityMetrics JSON,
+                                           -- set only for leaps_call rows
   scanned_at         TEXT NOT NULL,
   PRIMARY KEY (scan_id, option_symbol)
 )

@@ -90,7 +90,7 @@ class OpportunityScorer {
     final risk = _classifyRisk(metrics, breakdown);
     return ScoredCandidate(
       opportunity: OptionsOpportunity(
-        strategy: strategy,
+        strategy: opportunityStrategyFromSellSide(strategy),
         contract: contract,
         metrics: metrics,
         risk: risk,

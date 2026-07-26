@@ -35,7 +35,6 @@ import 'package:naviwealth/features/finance/options_income/data/providers.dart';
 import 'package:naviwealth/features/finance/options_income/domain/opportunity_explanation.dart';
 import 'package:naviwealth/features/finance/options_income/domain/option_contract.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_opportunity.dart';
-import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../core/persistence/test_database.dart';
@@ -431,7 +430,7 @@ OptionsOpportunity _opportunity({
     fetchedAt: scannedAt,
   );
   return OptionsOpportunity(
-    strategy: OptionsStrategyKind.cashSecuredPut,
+    strategy: OpportunityStrategy.cashSecuredPut,
     contract: contract,
     metrics: OpportunityMetrics(
       premium: Money.parse('255', 'USD'),

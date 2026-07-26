@@ -10108,6 +10108,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerChipCoveredCall => '备兑看涨';
 
   @override
+  String get incomePlannerChipLeaps => 'LEAPS 看涨';
+
+  @override
+  String get incomePlannerMetricLeapsCost => '成本（最大亏损）';
+
+  @override
+  String get incomePlannerMetricLeverage => '杠杆';
+
+  @override
+  String get incomePlannerMetricAnnualCost => '年化时间价值成本';
+
+  @override
+  String get incomePlannerMetricFundingCoverage => '收入覆盖';
+
+  @override
   String get incomePlannerRiskLow => '相对较低';
 
   @override
@@ -10429,6 +10444,63 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String optionsExplainLeapsSummary(
+    String symbol,
+    int dte,
+    String strike,
+    String cost,
+    String delta,
+  ) {
+    return '$symbol ${dte}DTE LEAPS 看涨 @ $strike — 成本 $cost，delta $delta';
+  }
+
+  @override
+  String optionsExplainLeapsWorstCase(
+    String symbol,
+    String strike,
+    String cost,
+  ) {
+    return '如果到期时 $symbol 收于 $strike 之下，$cost 权利金将全部归零。最大亏损为全部已付成本。';
+  }
+
+  @override
+  String get optionsExplainLeapsBestFor =>
+      '适合作为有收入资助的股票替代：由 Wheel 或股息收入支付的长期深实值敞口。';
+
+  @override
+  String get optionsExplainLeapsAvoid => '如果无法持有穿越完整回撤，请回避——时间价值会衰减，仓位可能到期归零。';
+
+  @override
+  String optionsExplainLeapsCostBullet(String costPct) {
+    return '每单位股票敞口的年化时间价值成本 $costPct';
+  }
+
+  @override
+  String optionsExplainLeapsLeverageBullet(String leverage, String delta) {
+    return '每单位资金控制 $leverage 倍股票敞口（delta $delta）';
+  }
+
+  @override
+  String optionsExplainLeapsIntrinsicBullet(String intrinsicPct) {
+    return '权利金中 $intrinsicPct 为内在价值';
+  }
+
+  @override
+  String optionsExplainLeapsSpreadBullet(String spread) {
+    return '买卖价差较宽 $spread——LEAPS 流动性偏薄，请使用限价单';
+  }
+
+  @override
+  String optionsExplainLeapsThetaBullet(String extrinsic) {
+    return '$extrinsic 的时间价值将在到期前衰减殆尽';
+  }
+
+  @override
+  String optionsExplainLeapsFundingBullet(String coverage) {
+    return '组内收入已覆盖此成本的 $coverage';
+  }
+
+  @override
   String optionsLedgerPremium(String symbol) {
     return '期权权利金 $symbol';
   }
@@ -10600,6 +10672,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get incomePlannerProfilePutDeltaRange => 'Put 绝对 Delta 范围';
+
+  @override
+  String get incomePlannerProfileLeapsSection => 'LEAPS 扫描';
+
+  @override
+  String get incomePlannerProfileLeapsMinDte => 'LEAPS 最小 DTE';
+
+  @override
+  String get incomePlannerProfileLeapsMaxDte => 'LEAPS 最大 DTE';
+
+  @override
+  String get incomePlannerProfileLeapsDeltaRange => 'LEAPS 看涨 delta 区间';
+
+  @override
+  String get incomePlannerProfileLeapsMaxSpread => 'LEAPS 最大价差 (%)';
 
   @override
   String get incomePlannerProfileCallDeltaRange => 'Call Delta 范围';

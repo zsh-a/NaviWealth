@@ -10,6 +10,26 @@ class HoldingsLite {
   final String symbol;
 }
 
+/// One underlying whose plan enables the LEAPS call sleeve. Carries the
+/// budget and group-funding context the buy-side scorer needs.
+class LeapsScanTarget {
+  const LeapsScanTarget({
+    required this.symbol,
+    this.budgetRemaining,
+    this.groupFundingPool,
+  });
+
+  final String symbol;
+
+  /// Plan `max_cost` minus the gross cost of already-open LEAPS on this
+  /// underlying. Null when the plan sets no budget.
+  final Money? budgetRemaining;
+
+  /// Realized income (wheel + dividends) across the underlying's strategy
+  /// group — the pool that pays for LEAPS premium. Null without context.
+  final Money? groupFundingPool;
+}
+
 class ScanInputs {
   const ScanInputs({
     required this.ownerUserId,
@@ -21,11 +41,15 @@ class ScanInputs {
     required this.upcomingEarningsSymbols,
     required this.upcomingMacroEvent,
     this.eventDataAvailable = false,
+    this.leapsTargets = const <LeapsScanTarget>[],
   });
 
   final String ownerUserId;
   final OptionsStrategyProfile profile;
   final List<ApprovedUnderlying> approved;
+
+  /// Buy-side LEAPS lane universe. Empty when no plan enables the sleeve.
+  final List<LeapsScanTarget> leapsTargets;
 
   /// Symbol -> integer share count. Symbols not in the map default to 0.
   final Map<String, int> holdingsBySymbol;

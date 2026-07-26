@@ -7,7 +7,6 @@ import 'package:naviwealth/features/finance/options_income/data/options_opportun
 import 'package:naviwealth/features/finance/options_income/domain/opportunity_explanation.dart';
 import 'package:naviwealth/features/finance/options_income/domain/option_contract.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_opportunity.dart';
-import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
 
 import '../../../../core/persistence/test_database.dart';
 
@@ -109,12 +108,13 @@ void main() {
       final latest = await repo.getLatest('u1');
       expect(latest, hasLength(1));
       final opp = latest.single;
-      expect(opp.strategy, OptionsStrategyKind.cashSecuredPut);
+      expect(opp.strategy, OpportunityStrategy.cashSecuredPut);
       expect(opp.contract.optionSymbol, 'AAPL250620P00190000');
       expect(opp.contract.market, AssetMarket.usStock);
       expect(opp.contract.strike, Money.parse('190', 'USD'));
-      expect(opp.metrics.premium, Money.parse('255', 'USD'));
-      expect(opp.metrics.marginOfSafety, Decimal.parse('0.0627'));
+      final metrics = opp.metrics as OpportunityMetrics;
+      expect(metrics.premium, Money.parse('255', 'USD'));
+      expect(metrics.marginOfSafety, Decimal.parse('0.0627'));
       expect(opp.risk, OpportunityRiskLevel.moderate);
       expect(opp.explanation.summary, 'AAPL put');
       expect(opp.explanation.scoreBreakdown['yield'], Decimal.parse('0.45'));
@@ -152,7 +152,7 @@ OptionsOpportunity _opportunity({
     fetchedAt: fetchedAt,
   );
   return OptionsOpportunity(
-    strategy: OptionsStrategyKind.cashSecuredPut,
+    strategy: OpportunityStrategy.cashSecuredPut,
     contract: contract,
     metrics: OpportunityMetrics(
       premium: Money.parse('255', 'USD'),
