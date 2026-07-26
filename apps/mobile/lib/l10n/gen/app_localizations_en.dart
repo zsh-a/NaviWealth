@@ -3010,6 +3010,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonError => 'Something went wrong';
 
   @override
+  String get commonRequiredField => 'Enter a value.';
+
+  @override
+  String get commonInvalidNumber => 'Enter a valid number.';
+
+  @override
   String get commonSafeErrorMessage =>
       'We couldn\'t complete that. Please try again.';
 
@@ -14147,7 +14153,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get financialInboxTitle => 'Financial inbox';
 
   @override
+  String get financialInboxPriorityImportant => 'Important';
+
+  @override
+  String get financialInboxPriorityAttention => 'Review';
+
+  @override
+  String financialInboxLastCheckedCompact(String date) {
+    return 'Checked $date';
+  }
+
+  @override
   String get monthlyCloseTitle => 'Monthly close';
+
+  @override
+  String get monthlyCloseStart => 'Start monthly close';
+
+  @override
+  String get monthlyCloseStartBody =>
+      'Review this month\'s evidence, reconcile balances, and close with a clear audit trail.';
 
   @override
   String monthlyClosePeriod(String period) {
@@ -14864,6 +14888,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monthlyCloseHistoryTitle => 'Close history';
+
+  @override
+  String monthlyCloseHistoryCount(int count) {
+    return '$count previous closes';
+  }
 
   @override
   String monthlyCloseHistoryExceptions(int count) {

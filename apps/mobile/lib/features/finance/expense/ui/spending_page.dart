@@ -1,6 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/expense_category_providers.dart';
@@ -21,14 +24,20 @@ class SpendingPage extends ConsumerWidget {
     final categoriesAsync = ref.watch(allExpenseCategoriesProvider);
     return AppPageScaffold(
       title: l10n.spendingTitle,
+      actions: [
+        AppHeaderAction(
+          icon: const Icon(FLucideIcons.piggyBank),
+          semanticsLabel: l10n.planBudgetTitle,
+          onPress: () => context.push(FinanceRoutes.planBudget),
+        ),
+      ],
       childPad: false,
       child: reportAsync.whenOrLoading(
         context: context,
-        error: (e, _) => Center(child: Text(userSafeErrorMessage(context, e))),
+        onRetry: () => ref.invalidate(expenseReportProvider),
         data: (report) => categoriesAsync.whenOrLoading(
           context: context,
-          error: (e, _) =>
-              Center(child: Text(userSafeErrorMessage(context, e))),
+          onRetry: () => ref.invalidate(allExpenseCategoriesProvider),
           data: (categories) => SpendingBody(
             report: report,
             categoryById: {

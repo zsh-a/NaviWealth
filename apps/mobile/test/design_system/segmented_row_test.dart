@@ -69,12 +69,10 @@ void main() {
     expect(find.text('By category'), findsOneWidget);
   });
 
-  testWidgets('falls back to a horizontal scroll on narrow widths', (
-    tester,
-  ) async {
+  testWidgets('wraps all options on narrow widths', (tester) async {
     await tester.pumpWidget(
       _wrap(
-        // 5 segments / 200dp → each slot < 96dp min → scroll fallback.
+        // 5 segments / 200dp → each slot < 96dp min → visible wrap fallback.
         SegmentedRow<int>(
           options: const [0, 1, 2, 3, 4],
           value: 2,
@@ -85,10 +83,11 @@ void main() {
       ),
     );
     expect(tester.takeException(), isNull);
-    expect(find.byType(SingleChildScrollView), findsOneWidget);
+    expect(find.byType(Wrap), findsOneWidget);
+    expect(find.byType(SingleChildScrollView), findsNothing);
   });
 
-  testWidgets('large text switches equal segments to horizontal scroll', (
+  testWidgets('large text switches equal segments to visible wrapping', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -103,7 +102,8 @@ void main() {
       ),
     );
 
-    expect(find.byType(SingleChildScrollView), findsOneWidget);
+    expect(find.byType(Wrap), findsOneWidget);
+    expect(find.byType(SingleChildScrollView), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

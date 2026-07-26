@@ -2891,6 +2891,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonError => '出错了';
 
   @override
+  String get commonRequiredField => '请输入内容。';
+
+  @override
+  String get commonInvalidNumber => '请输入有效数字。';
+
+  @override
   String get commonSafeErrorMessage => '暂时无法完成，请稍后重试。';
 
   @override
@@ -13466,7 +13472,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get financialInboxTitle => '财务收件箱';
 
   @override
+  String get financialInboxPriorityImportant => '重要';
+
+  @override
+  String get financialInboxPriorityAttention => '待复核';
+
+  @override
+  String financialInboxLastCheckedCompact(String date) {
+    return '检查于 $date';
+  }
+
+  @override
   String get monthlyCloseTitle => '月度关账';
+
+  @override
+  String get monthlyCloseStart => '开始月度关账';
+
+  @override
+  String get monthlyCloseStartBody => '复核本月证据、核对账户余额，并保留清晰的关账记录。';
 
   @override
   String monthlyClosePeriod(String period) {
@@ -14141,6 +14164,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monthlyCloseHistoryTitle => '月结历史';
+
+  @override
+  String monthlyCloseHistoryCount(int count) {
+    return '$count 次历史关账';
+  }
 
   @override
   String monthlyCloseHistoryExceptions(int count) {

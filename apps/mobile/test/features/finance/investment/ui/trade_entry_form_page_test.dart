@@ -412,6 +412,7 @@ void main() {
     await tester.tap(find.text('Trade details'));
     await tester.pumpAndSettle();
     expect(tester.widget<Semantics>(toggle).properties.expanded, isFalse);
+    await tester.ensureVisible(find.text('Trade details'));
     await tester.tap(find.text('Trade details'));
     await tester.pumpAndSettle();
     expect(

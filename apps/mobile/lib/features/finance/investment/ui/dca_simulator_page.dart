@@ -195,22 +195,14 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
 
   Future<void> _deletePlan(DcaPlan plan) async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.dcaPlanDeleteTitle),
-        content: Text(l10n.dcaPlanDeleteBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.commonDelete),
-          ),
-        ],
-      ),
+      title: Text(l10n.dcaPlanDeleteTitle),
+      body: Text(l10n.dcaPlanDeleteBody),
+      cancelLabel: l10n.commonCancel,
+      confirmLabel: l10n.commonDelete,
+      destructive: true,
+      icon: FLucideIcons.trash2,
     );
     if (confirmed != true || !mounted) return;
     try {

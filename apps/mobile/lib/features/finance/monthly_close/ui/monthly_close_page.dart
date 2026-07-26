@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,22 +23,12 @@ class MonthlyClosePage extends ConsumerStatefulWidget {
 class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
   String? _beginRequestedFor;
 
-  void _ensureSessionStarted({
-    required String period,
-    required MonthlyClose? close,
-    required MonthlyCloseEvidence? evidence,
-  }) {
-    if (close != null || evidence == null || _beginRequestedFor == period) {
-      return;
-    }
-    _beginRequestedFor = period;
-    unawaited(_beginSession(period: period, evidence: evidence));
-  }
-
   Future<void> _beginSession({
     required String period,
     required MonthlyCloseEvidence evidence,
   }) async {
+    if (_beginRequestedFor == period) return;
+    setState(() => _beginRequestedFor = period);
     try {
       final repository = await ref.read(monthlyCloseRepositoryProvider.future);
       await repository.begin(
@@ -49,10 +37,21 @@ class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
         snapshot: evidence.details,
         now: DateTime.now(),
       );
-    } catch (_) {
-      if (mounted && _beginRequestedFor == period) {
-        setState(() => _beginRequestedFor = null);
+    } catch (error, stackTrace) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(
+            context,
+            error,
+            stackTrace: stackTrace,
+            operation: 'start monthly close',
+          ),
+        );
       }
+    } finally {
+      if (mounted) setState(() => _beginRequestedFor = null);
     }
   }
 
@@ -65,11 +64,6 @@ class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
     final targetsAsync = ref.watch(reconciliationTargetsProvider);
     final comparison = ref.watch(monthlyCloseComparisonProvider).value;
     final history = ref.watch(monthlyCloseHistoryProvider).value ?? const [];
-    _ensureSessionStarted(
-      period: period,
-      close: closeAsync.value,
-      evidence: evidenceAsync.value,
-    );
     return AppPageScaffold(
       title: l10n.monthlyCloseTitle,
       childPad: false,
@@ -83,59 +77,79 @@ class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
           return evidenceAsync.when(
             loading: () => const Center(child: FCircularProgress()),
             error: (error, _) => _LoadError(error: error),
-            data: (evidence) => ListView(
-              padding: const EdgeInsets.all(AppSpacing.s16),
-              children: [
-                Text(
-                  l10n.monthlyClosePeriod(period),
-                  style: context.rowTitleStyle,
-                ),
-                const SizedBox(height: AppSpacing.s4),
-                Text(l10n.monthlyCloseIntro, style: context.captionStyle),
-                const SizedBox(height: AppSpacing.s16),
-                _CloseProgress(evidence: evidence, comparison: comparison),
-                const SizedBox(height: AppSpacing.s16),
-                for (final step in MonthlyCloseStep.values) ...[
-                  _CloseStepRow(step: step, state: evidence.states[step]!),
+            data: (evidence) {
+              if (close == null) {
+                return _StartMonthlyClose(
+                  period: period,
+                  evidence: evidence,
+                  busy: _beginRequestedFor == period,
+                  onStart: () =>
+                      _beginSession(period: period, evidence: evidence),
+                );
+              }
+              return ListView(
+                padding: const EdgeInsets.all(AppSpacing.s16),
+                children: [
+                  Text(
+                    l10n.monthlyClosePeriod(period),
+                    style: context.rowTitleStyle,
+                  ),
+                  const SizedBox(height: AppSpacing.s4),
+                  Text(l10n.monthlyCloseIntro, style: context.captionStyle),
+                  const SizedBox(height: AppSpacing.s16),
+                  _CloseProgress(evidence: evidence, comparison: comparison),
+                  const SizedBox(height: AppSpacing.s16),
+                  _CloseStepsGroup(evidence: evidence),
+                  const SizedBox(height: AppSpacing.s16),
+                  Text(
+                    l10n.monthlyCloseReconciliationTitle,
+                    style: context.rowTitleStyle,
+                  ),
                   const SizedBox(height: AppSpacing.s8),
-                ],
-                const SizedBox(height: AppSpacing.s16),
-                Text(
-                  l10n.monthlyCloseReconciliationTitle,
-                  style: context.rowTitleStyle,
-                ),
-                const SizedBox(height: AppSpacing.s8),
-                targetsAsync.when(
-                  loading: () => const Center(child: FCircularProgress()),
-                  error: (error, _) => Text('$error'),
-                  data: (targets) => Column(
-                    children: [
-                      for (final target in targets) ...[
-                        _ReconciliationRow(target: target),
-                        const SizedBox(height: AppSpacing.s8),
+                  targetsAsync.when(
+                    loading: () => const Center(child: FCircularProgress()),
+                    error: (error, stackTrace) => AppEmptyState.error(
+                      compact: true,
+                      title: l10n.commonLoadFailed,
+                      message: userSafeErrorMessage(
+                        context,
+                        error,
+                        stackTrace: stackTrace,
+                        operation: 'load reconciliation targets',
+                      ),
+                      retryLabel: l10n.commonRetry,
+                      onRetry: () =>
+                          ref.invalidate(reconciliationTargetsProvider),
+                    ),
+                    data: (targets) => Column(
+                      children: [
+                        for (final target in targets) ...[
+                          _ReconciliationRow(target: target),
+                          const SizedBox(height: AppSpacing.s8),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.s16),
-                FButton(
-                  onPress: () => _closeMonth(
-                    context,
-                    ref,
-                    evidence: evidence,
-                    period: period,
-                    startedAt: close?.startedAt,
+                  const SizedBox(height: AppSpacing.s16),
+                  FButton(
+                    onPress: () => _closeMonth(
+                      context,
+                      ref,
+                      evidence: evidence,
+                      period: period,
+                      startedAt: close.startedAt,
+                    ),
+                    child: Text(
+                      evidence.isVerified
+                          ? l10n.monthlyCloseComplete
+                          : l10n.monthlyCloseWithException,
+                    ),
                   ),
-                  child: Text(
-                    evidence.isVerified
-                        ? l10n.monthlyCloseComplete
-                        : l10n.monthlyCloseWithException,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.s24),
-                _CloseHistory(closes: history),
-              ],
-            ),
+                  const SizedBox(height: AppSpacing.s24),
+                  _CloseHistory(closes: history),
+                ],
+              );
+            },
           );
         },
       ),
@@ -182,6 +196,68 @@ class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
           duration: duration,
           success: true,
         );
+  }
+}
+
+class _StartMonthlyClose extends StatelessWidget {
+  const _StartMonthlyClose({
+    required this.period,
+    required this.evidence,
+    required this.busy,
+    required this.onStart,
+  });
+
+  final String period;
+  final MonthlyCloseEvidence evidence;
+  final bool busy;
+  final VoidCallback onStart;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      children: [
+        _CloseProgress(evidence: evidence, comparison: null),
+        const SizedBox(height: AppSpacing.s16),
+        AppEmptyState(
+          icon: FLucideIcons.clipboardCheck,
+          title: l10n.monthlyClosePeriod(period),
+          message: l10n.monthlyCloseStartBody,
+          action: AppBusyButton(
+            busy: busy,
+            onPress: onStart,
+            label: l10n.monthlyCloseStart,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CloseStepsGroup extends StatelessWidget {
+  const _CloseStepsGroup({required this.evidence});
+
+  final MonthlyCloseEvidence evidence;
+
+  @override
+  Widget build(BuildContext context) {
+    const steps = MonthlyCloseStep.values;
+    return AppGroupedSurface(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          for (var index = 0; index < steps.length; index++) ...[
+            _CloseStepRow(
+              step: steps[index],
+              state: evidence.states[steps[index]]!,
+            ),
+            if (index < steps.length - 1)
+              const AppGroupedDivider(indent: AppSpacing.s48),
+          ],
+        ],
+      ),
+    );
   }
 }
 
@@ -303,50 +379,91 @@ class _ClosedMonth extends ConsumerWidget {
   }
 }
 
-class _CloseHistory extends StatelessWidget {
+class _CloseHistory extends StatefulWidget {
   const _CloseHistory({required this.closes});
 
   final List<MonthlyClose> closes;
 
   @override
+  State<_CloseHistory> createState() => _CloseHistoryState();
+}
+
+class _CloseHistoryState extends State<_CloseHistory> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    if (closes.isEmpty) return const SizedBox.shrink();
+    if (widget.closes.isEmpty) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(l10n.monthlyCloseHistoryTitle, style: context.rowTitleStyle),
-        const SizedBox(height: AppSpacing.s8),
-        for (final close in closes.take(6)) ...[
-          SoftCard.flat(
-            padding: const EdgeInsets.all(AppSpacing.s12),
-            child: Row(
+        AppDisclosureHeader(
+          title: l10n.monthlyCloseHistoryTitle,
+          subtitle: l10n.monthlyCloseHistoryCount(widget.closes.length),
+          expanded: _expanded,
+          onToggle: () => setState(() => _expanded = !_expanded),
+        ),
+        AnimatedSizeFade(
+          visible: _expanded,
+          child: Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.s8),
+            child: AppGroupedSurface(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  for (
+                    var index = 0;
+                    index < widget.closes.take(6).length;
+                    index++
+                  ) ...[
+                    _CloseHistoryRow(close: widget.closes[index]),
+                    if (index < widget.closes.take(6).length - 1)
+                      const AppGroupedDivider(indent: AppSpacing.s12),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CloseHistoryRow extends StatelessWidget {
+  const _CloseHistoryRow({required this.close});
+
+  final MonthlyClose close;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(close.periodMonth, style: context.labelStyle),
-                      const SizedBox(height: AppSpacing.s2),
-                      Text(
-                        l10n.monthlyCloseHistoryExceptions(
-                          _historyExceptionCount(close),
-                        ),
-                        style: context.captionStyle,
-                      ),
-                    ],
-                  ),
-                ),
+                Text(close.periodMonth, style: context.labelStyle),
+                const SizedBox(height: AppSpacing.s2),
                 Text(
-                  _historyDuration(l10n, close),
-                  style: TypographyTokens.numericBodyStrong,
+                  l10n.monthlyCloseHistoryExceptions(
+                    _historyExceptionCount(close),
+                  ),
+                  style: context.captionStyle,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.s8),
+          Text(
+            _historyDuration(l10n, close),
+            style: TypographyTokens.numericBodyStrong,
+          ),
         ],
-      ],
+      ),
     );
   }
 }
@@ -401,7 +518,8 @@ class _CloseStepRow extends ConsumerWidget {
     final accepted =
         state == MonthlyCloseStepState.verified ||
         state == MonthlyCloseStepState.overridden;
-    return SoftCard.raised(
+    return SoftCard.flat(
+      tinted: false,
       borderless: true,
       onPress: () => context.push(route),
       padding: const EdgeInsets.all(AppSpacing.s12),
@@ -465,8 +583,10 @@ class _ReconciliationRow extends ConsumerWidget {
             ),
           ],
           const SizedBox(height: AppSpacing.s8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: AppSpacing.s8,
+            runSpacing: AppSpacing.s8,
             children: [
               if (reconciliation?.status ==
                   AccountReconciliationStatus.mismatch)
@@ -549,34 +669,22 @@ Future<String?> _textPrompt(
   bool numeric = false,
 }) async {
   final l10n = AppLocalizations.of(context);
-  final controller = TextEditingController();
-  final result = await showDialog<String>(
+  return showAppTextPromptSheet(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(title),
-      content: TextField(
-        controller: controller,
-        autofocus: true,
-        keyboardType: numeric
-            ? const TextInputType.numberWithOptions(decimal: true, signed: true)
-            : TextInputType.text,
-        decoration: InputDecoration(hintText: hint),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(),
-          child: Text(l10n.commonCancel),
-        ),
-        FilledButton(
-          onPressed: () {
-            final value = controller.text.trim();
-            if (value.isNotEmpty) Navigator.of(dialogContext).pop(value);
-          },
-          child: Text(l10n.commonConfirm),
-        ),
-      ],
-    ),
+    title: title,
+    fieldLabel: title,
+    hint: hint,
+    submitLabel: l10n.commonConfirm,
+    cancelLabel: l10n.commonCancel,
+    keyboardType: numeric
+        ? const TextInputType.numberWithOptions(decimal: true, signed: true)
+        : TextInputType.text,
+    validator: (value) {
+      if (value.isEmpty) return l10n.commonRequiredField;
+      if (numeric && Decimal.tryParse(value) == null) {
+        return l10n.commonInvalidNumber;
+      }
+      return null;
+    },
   );
-  controller.dispose();
-  return result;
 }

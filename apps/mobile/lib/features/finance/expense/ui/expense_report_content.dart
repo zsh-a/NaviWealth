@@ -258,32 +258,35 @@ class _SummaryCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.s8),
-            Row(
-              children: [
-                Expanded(
-                  child: _Metric(
-                    label: l10n.expenseReportDailyAverage,
-                    value: formatter.compactCurrency(
-                      avgDecimal,
-                      code: report.baseCurrency,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final stacked =
+                    constraints.maxWidth < 360 ||
+                    MediaQuery.textScalerOf(context).scale(1) > 1.3;
+                return AppMetricCluster(
+                  axis: stacked ? Axis.vertical : Axis.horizontal,
+                  dense: true,
+                  items: [
+                    AppMetricItem(
+                      label: l10n.expenseReportDailyAverage,
+                      value: formatter.compactCurrency(
+                        avgDecimal,
+                        code: report.baseCurrency,
+                      ),
                     ),
-                  ),
-                ),
-                Expanded(
-                  child: _Metric(
-                    label: l10n.expenseReportEntryCount,
-                    value: report.byCategory
-                        .fold<int>(0, (a, c) => a + c.count)
-                        .toString(),
-                  ),
-                ),
-                Expanded(
-                  child: _Metric(
-                    label: l10n.expenseReportCategoryCount,
-                    value: report.byCategory.length.toString(),
-                  ),
-                ),
-              ],
+                    AppMetricItem(
+                      label: l10n.expenseReportEntryCount,
+                      value: report.byCategory
+                          .fold<int>(0, (a, c) => a + c.count)
+                          .toString(),
+                    ),
+                    AppMetricItem(
+                      label: l10n.expenseReportCategoryCount,
+                      value: report.byCategory.length.toString(),
+                    ),
+                  ],
+                );
+              },
             ),
             if (report.skippedFxCount > 0) ...[
               const SizedBox(height: AppSpacing.s8),
@@ -302,36 +305,6 @@ class _SummaryCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _Metric extends StatelessWidget {
-  const _Metric({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.captionStyle,
-        ),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.theme.typography.body.md.copyWith(
-            fontFeatures: TypographyTokens.tabularFigures,
-          ),
-        ),
-      ],
     );
   }
 }

@@ -275,7 +275,9 @@ void main() {
     await _pumpLive(tester, repository: repository);
     await tester.pump(const Duration(milliseconds: 100));
 
-    await tester.tap(find.byIcon(FLucideIcons.copy));
+    await tester.tap(find.byIcon(FLucideIcons.ellipsis));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Copy previous month'));
     await tester.pumpAndSettle();
 
     final copied = await repository.findForCategoryMonth(

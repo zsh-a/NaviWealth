@@ -36,8 +36,7 @@ class ExpenseCategoriesPage extends ConsumerWidget {
       childPad: false,
       child: categoriesAsync.whenOrLoading(
         context: context,
-        error: (error, _) =>
-            Center(child: Text(userSafeErrorMessage(context, error))),
+        onRetry: () => ref.invalidate(allExpenseCategoriesProvider),
         data: (categories) => _CategoryList(categories: categories),
       ),
     );

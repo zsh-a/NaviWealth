@@ -21,7 +21,8 @@ Widget kDefaultError(
   VoidCallback? onRetry,
 }) {
   return AppEmptyState.error(
-    title: userSafeErrorMessage(context, error, stackTrace: stackTrace),
+    title: AppLocalizations.of(context).commonLoadFailed,
+    message: userSafeErrorMessage(context, error, stackTrace: stackTrace),
     retryLabel: onRetry == null
         ? null
         : AppLocalizations.of(context).commonRetry,

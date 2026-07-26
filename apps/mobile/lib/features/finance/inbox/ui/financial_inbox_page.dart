@@ -28,24 +28,86 @@ class FinancialInboxPage extends ConsumerWidget {
         loading: () => const Center(child: FCircularProgress()),
         error: (error, _) => AppEmptyState.error(
           title: l10n.commonLoadFailed,
-          message: '$error',
+          message: userSafeErrorMessage(
+            context,
+            error,
+            operation: 'load financial inbox',
+          ),
           retryLabel: l10n.commonRetry,
           onRetry: () => ref.invalidate(financialInboxScanProvider),
         ),
-        data: (rows) => rows.isEmpty
-            ? AppEmptyState(
-                icon: FLucideIcons.circleCheckBig,
-                title: l10n.financialInboxEmptyTitle,
-                message: l10n.financialInboxEmptyBody,
+        data: (rows) {
+          if (rows.isEmpty) {
+            return AppEmptyState(
+              icon: FLucideIcons.circleCheckBig,
+              title: l10n.financialInboxEmptyTitle,
+              message: l10n.financialInboxEmptyBody,
+            );
+          }
+          final important = rows
+              .where(
+                (item) => item.priority == FinancialInboxPriority.important,
               )
-            : ListView.separated(
-                padding: const EdgeInsets.all(AppSpacing.s16),
-                itemCount: rows.length,
-                separatorBuilder: (_, _) =>
-                    const SizedBox(height: AppSpacing.s10),
-                itemBuilder: (context, index) => _InboxRow(item: rows[index]),
-              ),
+              .toList(growable: false);
+          final attention = rows
+              .where(
+                (item) => item.priority == FinancialInboxPriority.attention,
+              )
+              .toList(growable: false);
+          return ListView(
+            padding: const EdgeInsets.all(AppSpacing.s16),
+            children: [
+              if (important.isNotEmpty)
+                _InboxGroup(
+                  label: l10n.financialInboxPriorityImportant,
+                  items: important,
+                ),
+              if (important.isNotEmpty && attention.isNotEmpty)
+                const SizedBox(height: AppPageRhythm.section),
+              if (attention.isNotEmpty)
+                _InboxGroup(
+                  label: l10n.financialInboxPriorityAttention,
+                  items: attention,
+                ),
+            ],
+          );
+        },
       ),
+    );
+  }
+}
+
+class _InboxGroup extends StatelessWidget {
+  const _InboxGroup({required this.label, required this.items});
+
+  final String label;
+  final List<FinancialInboxItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsetsDirectional.only(
+            start: AppSpacing.s4,
+            bottom: AppSpacing.s8,
+          ),
+          child: Text(label, style: context.mutedLabelStyle),
+        ),
+        AppGroupedSurface(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              for (var index = 0; index < items.length; index++) ...[
+                _InboxRow(item: items[index]),
+                if (index < items.length - 1)
+                  const AppGroupedDivider(indent: AppSpacing.s48),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -115,7 +177,9 @@ class _InboxRow extends ConsumerWidget {
         l10n.financialInboxDividendBody,
       ),
     };
-    return SoftCard.raised(
+    final important = item.priority == FinancialInboxPriority.important;
+    return SoftCard.flat(
+      tinted: false,
       borderless: true,
       onPress: () => _showInboxDetail(
         context,
@@ -126,8 +190,14 @@ class _InboxRow extends ConsumerWidget {
       ),
       padding: const EdgeInsets.all(AppSpacing.s14),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: context.theme.colors.primary),
+          AppIconTile(
+            icon: icon,
+            color: important
+                ? SemanticColors.of(context).warning
+                : context.theme.colors.primary,
+          ),
           const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(
@@ -136,9 +206,33 @@ class _InboxRow extends ConsumerWidget {
                 Text(title, style: context.labelStyle),
                 const SizedBox(height: AppSpacing.s4),
                 Text(body, style: context.captionStyle),
+                const SizedBox(height: AppSpacing.s8),
+                Wrap(
+                  spacing: AppSpacing.s8,
+                  runSpacing: AppSpacing.s4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    AppBadge(
+                      label: important
+                          ? l10n.financialInboxPriorityImportant
+                          : l10n.financialInboxPriorityAttention,
+                      tone: important
+                          ? AppBadgeTone.warning
+                          : AppBadgeTone.info,
+                      size: AppBadgeSize.compact,
+                    ),
+                    Text(
+                      l10n.financialInboxLastCheckedCompact(
+                        _dateTime(item.lastDetectedAt),
+                      ),
+                      style: context.captionStyle,
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
+          const SizedBox(width: AppSpacing.s8),
           const Icon(FLucideIcons.chevronRight, size: AppIconSizes.sm),
         ],
       ),
@@ -311,24 +405,27 @@ class _InboxDetail extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.s8),
-        Row(
-          children: [
-            Expanded(
-              child: FButton(
-                variant: FButtonVariant.ghost,
-                onPress: () => _snooze(context, ref),
-                child: Text(l10n.financialInboxSnooze),
-              ),
+        AppAdaptiveActionMenu(
+          title: l10n.shellMoreActions,
+          actions: [
+            AppAdaptiveAction(
+              icon: FLucideIcons.clock3,
+              title: l10n.financialInboxSnooze,
+              onPress: () => _snooze(context, ref),
             ),
-            const SizedBox(width: AppSpacing.s8),
-            Expanded(
-              child: FButton(
-                variant: FButtonVariant.ghost,
-                onPress: () => _resolve(context, ref),
-                child: Text(l10n.financialInboxResolve),
-              ),
+            AppAdaptiveAction(
+              icon: FLucideIcons.circleCheckBig,
+              title: l10n.financialInboxResolve,
+              onPress: () => _resolve(context, ref),
             ),
           ],
+          triggerBuilder: (context, openMenu, focusNode) => FButton(
+            variant: FButtonVariant.outline,
+            focusNode: focusNode,
+            onPress: openMenu,
+            prefix: const Icon(FLucideIcons.ellipsis, size: AppIconSizes.sm),
+            child: Text(l10n.shellMoreActions),
+          ),
         ),
       ],
     );

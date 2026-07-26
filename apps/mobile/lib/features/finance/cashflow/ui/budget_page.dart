@@ -69,25 +69,6 @@ class _PlanBudgetPageState extends ConsumerState<PlanBudgetPage> {
       title: l10n.planBudgetTitle,
       actions: [
         AppHeaderAction(
-          semanticsLabel: l10n.expenseCategoriesManageTitle,
-          icon: const Icon(FLucideIcons.tags),
-          onPress: () => context.push(FinanceRoutes.planExpenseCategories),
-        ),
-        AppHeaderAction(
-          semanticsLabel: l10n.planBudgetCopyPreviousAction,
-          icon: const Icon(FLucideIcons.copy),
-          onPress:
-              !_copying &&
-                  previousRowsAsync.hasValue &&
-                  previousRowsAsync.requireValue.isNotEmpty
-              ? () => _copyPreviousMonth(
-                  previousRowsAsync.requireValue,
-                  rows,
-                  monthKey,
-                )
-              : null,
-        ),
-        AppHeaderAction(
           semanticsLabel: l10n.planBudgetAddAction,
           icon: const Icon(FLucideIcons.plus),
           onPress:
@@ -99,16 +80,48 @@ class _PlanBudgetPageState extends ConsumerState<PlanBudgetPage> {
               ? openCreate
               : null,
         ),
+        AppAdaptiveActionMenu(
+          title: l10n.shellMoreActions,
+          actions: [
+            AppAdaptiveAction(
+              icon: FLucideIcons.tags,
+              title: l10n.expenseCategoriesManageTitle,
+              onPress: () => context.push(FinanceRoutes.planExpenseCategories),
+            ),
+            AppAdaptiveAction(
+              icon: FLucideIcons.chartPie,
+              title: l10n.spendingTitle,
+              onPress: () => context.push(FinanceRoutes.spending),
+            ),
+            if (!_copying &&
+                previousRowsAsync.hasValue &&
+                previousRowsAsync.requireValue.isNotEmpty)
+              AppAdaptiveAction(
+                icon: FLucideIcons.copy,
+                title: l10n.planBudgetCopyPreviousAction,
+                onPress: () => _copyPreviousMonth(
+                  previousRowsAsync.requireValue,
+                  rows,
+                  monthKey,
+                ),
+              ),
+          ],
+          triggerBuilder: (context, openMenu, focusNode) => AppHeaderAction(
+            semanticsLabel: l10n.shellMoreActions,
+            icon: const Icon(FLucideIcons.ellipsis),
+            focusNode: focusNode,
+            onPress: openMenu,
+          ),
+        ),
       ],
       childPad: false,
       child: budgetsAsync.whenOrLoading(
         context: context,
-        error: (_, _) => Center(
-          child: AppEmptyState(
-            icon: FLucideIcons.piggyBank,
-            title: l10n.planBudgetEmptyTitle,
-          ),
-        ),
+        onRetry: () {
+          ref.invalidate(budgetsForMonthProvider(monthKey));
+          ref.invalidate(monthlyBudgetSummaryProvider(monthKey));
+          ref.invalidate(allExpenseCategoriesProvider);
+        },
         data: (rows) => _BudgetBody(
           monthKey: monthKey,
           rows: rows,
@@ -116,6 +129,7 @@ class _PlanBudgetPageState extends ConsumerState<PlanBudgetPage> {
           categoriesLoading:
               categoriesAsync.isLoading && !categoriesAsync.hasValue,
           categoriesError: categoriesAsync.error,
+          summaryError: summaryAsync.error,
           summary: summaryAsync.hasValue
               ? summaryAsync.requireValue.summary
               : null,
@@ -181,6 +195,7 @@ class _BudgetBody extends ConsumerWidget {
     required this.categories,
     required this.categoriesLoading,
     required this.categoriesError,
+    required this.summaryError,
     required this.summary,
     required this.mismatchedCount,
     required this.onPreviousMonth,
@@ -193,6 +208,7 @@ class _BudgetBody extends ConsumerWidget {
   final List<ExpenseCategory> categories;
   final bool categoriesLoading;
   final Object? categoriesError;
+  final Object? summaryError;
   final MonthlyBudgetSummary? summary;
   final int mismatchedCount;
   final VoidCallback onPreviousMonth;
@@ -244,6 +260,19 @@ class _BudgetBody extends ConsumerWidget {
                     AppSpacing.s24,
                   ),
                   children: [
+                    if (categoriesError != null || summaryError != null) ...[
+                      AppStatusBanner(
+                        kind: AppStatusKind.warning,
+                        message: userSafeErrorMessage(
+                          context,
+                          summaryError ?? categoriesError!,
+                          operation: summaryError != null
+                              ? 'load budget summary'
+                              : 'load expense categories',
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.s12),
+                    ],
                     if (mismatchedCount > 0) ...[
                       SoftCard.flat(
                         padding: const EdgeInsets.all(AppSpacing.s12),

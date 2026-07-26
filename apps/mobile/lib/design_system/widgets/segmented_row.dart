@@ -17,10 +17,10 @@ import 'app_interaction.dart';
 /// and breaks inside Forui sheets, so this is the portable replacement.
 ///
 /// Layout: when each segment can be at least [minSegmentWidth] wide the
-/// buttons split the row equally (labels ellipsize within their slot —
-/// the scroll fallback keeps intrinsic-width labels legible on narrow screens).
-/// The minimum grows with the active text scale; below that effective width
-/// the row falls back to a horizontally scrollable strip.
+/// buttons split the row equally. On compact widths or with large dynamic
+/// type, segments wrap into an equal-width grid instead of hiding choices in
+/// a horizontal scroller. This keeps every option visible and keyboard /
+/// screen-reader order identical to visual order.
 class SegmentedRow<T> extends StatelessWidget {
   const SegmentedRow({
     super.key,
@@ -62,49 +62,63 @@ class SegmentedRow<T> extends StatelessWidget {
             maxW.isFinite &&
             (maxW - gap * (n - 1)) / n >= effectiveMinSegmentWidth;
 
-        final children = <Widget>[];
-        for (var i = 0; i < n; i++) {
-          if (i > 0) children.add(const SizedBox(width: gap));
-          children.add(
-            _segment(
-              context,
-              options[i],
-              expand: fits,
-              minWidth: effectiveMinSegmentWidth,
-            ),
-          );
-        }
-
         final row = Row(
-          mainAxisSize: fits ? MainAxisSize.max : MainAxisSize.min,
-          children: children,
+          children: [
+            for (var i = 0; i < n; i++) ...[
+              if (i > 0) const SizedBox(width: gap),
+              _segment(
+                context,
+                options[i],
+                expand: true,
+                minWidth: effectiveMinSegmentWidth,
+              ),
+            ],
+          ],
+        );
+
+        final columns = maxW.isFinite
+            ? ((maxW + gap) / (effectiveMinSegmentWidth + gap)).floor().clamp(
+                1,
+                n,
+              )
+            : n;
+        final wrappedSegmentWidth = maxW.isFinite
+            ? (maxW - gap * (columns - 1)) / columns
+            : effectiveMinSegmentWidth;
+        final wrapped = Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final option in options)
+              SizedBox(
+                width: wrappedSegmentWidth,
+                child: _segment(
+                  context,
+                  option,
+                  expand: false,
+                  minWidth: wrappedSegmentWidth,
+                ),
+              ),
+          ],
         );
 
         final surface = DecoratedBox(
           decoration: BoxDecoration(
             color: colors.muted.withValues(alpha: AppOpacity.disabled),
-            borderRadius: BorderRadius.circular(AppRadius.full),
+            borderRadius: BorderRadius.circular(
+              fits ? AppRadius.full : AppRadius.lg,
+            ),
             border: Border.all(
               color: colors.border.withValues(alpha: AppOpacity.highlight),
             ),
           ),
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.s4),
-            child: fits
-                ? row
-                : SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: row,
-                  ),
+            child: fits ? row : wrapped,
           ),
         );
 
-        return fits
-            ? surface
-            : ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.full),
-                child: surface,
-              );
+        return surface;
       },
     );
   }
