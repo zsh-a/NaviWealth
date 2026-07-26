@@ -177,7 +177,7 @@ void main() {
       final out = await _invoke(tool, c, const <String, Object?>{});
       final cycles = out['cycles']! as List;
       expect(cycles, hasLength(2));
-      final symbols = cycles.map((c) => (c as Map)['symbol']).toSet();
+      final symbols = cycles.map((c) => (c as Map)['group']).toSet();
       expect(symbols, {'TSM', 'AAPL'});
     });
 
@@ -202,7 +202,7 @@ void main() {
         final out = await _invoke(tool, c, const {'symbol': 'tsm'});
         final cycles = out['cycles']! as List;
         expect(cycles, hasLength(1));
-        expect((cycles.single as Map)['symbol'], 'TSM');
+        expect((cycles.single as Map)['group'], 'TSM');
       },
     );
 
@@ -234,9 +234,10 @@ void main() {
       addTearDown(c.dispose);
       final out = await _invoke(tool, c, const <String, Object?>{});
       final cycle = (out['cycles']! as List).single as Map;
-      expect(cycle['has_open_position'], isTrue);
-      expect(cycle['stage'], 'short_put');
-      final open = (cycle['open_positions']! as List).single as Map;
+      final leg = (cycle['wheel_legs']! as List).single as Map;
+      expect(leg['has_open_position'], isTrue);
+      expect(leg['stage'], 'short_put');
+      final open = (leg['open_positions']! as List).single as Map;
       expect(open['id'], 'open-put');
       expect(open['strategy'], 'cash_secured_put');
       expect(open['entry_credit'], '120');
@@ -340,10 +341,11 @@ void main() {
         addTearDown(c.dispose);
         final out = await _invoke(tool, c, const <String, Object?>{});
         final cycle = (out['cycles']! as List).single as Map;
-        expect(cycle['has_open_position'], isFalse);
-        expect(cycle['stage'], 'cash_waiting');
-        expect(cycle['open_position'], isNull);
-        expect(cycle['cumulative_income'], '120');
+        final leg = (cycle['wheel_legs']! as List).single as Map;
+        expect(leg['has_open_position'], isFalse);
+        expect(leg['stage'], 'cash_waiting');
+        expect(leg['open_position'], isNull);
+        expect(leg['cumulative_income'], '120');
       },
     );
   });

@@ -57,6 +57,10 @@ abstract interface class IncomeStrategyModule {
 
   List<IncomeStrategyRule> get rules;
 
+  /// Coordination rules that reason across a whole strategy group —
+  /// including cross-underlying groups (TQQQ wheel funding a QQQ LEAPS).
+  List<IncomeStrategyGroupRule> get groupRules;
+
   Future<IncomeStrategyModuleResult> load(
     Ref ref,
     IncomeStrategyModuleContext context,
@@ -81,6 +85,9 @@ class DividendIncomeStrategyModule implements IncomeStrategyModule {
 
   @override
   List<IncomeStrategyRule> get rules => const [DividendInterruptionRule()];
+
+  @override
+  List<IncomeStrategyGroupRule> get groupRules => const [];
 
   @override
   Future<IncomeStrategyModuleResult> load(
@@ -135,10 +142,10 @@ class WheelIncomeStrategyModule implements IncomeStrategyModule {
       wheelIncomeStrategyPresentation;
 
   @override
-  List<IncomeStrategyRule> get rules => const [
-    StackedDownsideRule(),
-    AssignmentBudgetRule(),
-  ];
+  List<IncomeStrategyRule> get rules => const [AssignmentBudgetRule()];
+
+  @override
+  List<IncomeStrategyGroupRule> get groupRules => const [StackedDownsideRule()];
 
   @override
   Future<IncomeStrategyModuleResult> load(
@@ -167,10 +174,10 @@ class LeapsCallIncomeStrategyModule implements IncomeStrategyModule {
       leapsIncomeStrategyPresentation;
 
   @override
-  List<IncomeStrategyRule> get rules => const [
-    LeapsFundingRule(),
-    LeapsBudgetRule(),
-  ];
+  List<IncomeStrategyRule> get rules => const [LeapsBudgetRule()];
+
+  @override
+  List<IncomeStrategyGroupRule> get groupRules => const [LeapsFundingRule()];
 
   @override
   Future<IncomeStrategyModuleResult> load(

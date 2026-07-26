@@ -54,11 +54,17 @@ class GetWheelLifecycleTool implements DeviceTool {
     final filtered = filter == null || filter.isEmpty
         ? overlays
         : overlays
-              .where((value) => value.wheel.symbol.toUpperCase() == filter)
+              .where(
+                (value) =>
+                    value.label.toUpperCase() == filter ||
+                    value.wheels.any(
+                      (leg) => leg.lifecycle.symbol.toUpperCase() == filter,
+                    ),
+              )
               .toList(growable: false);
 
     final result = <String, Object?>{
-      'cycles': [for (final overlay in filtered) _cycleToWire(overlay)],
+      'cycles': [for (final overlay in filtered) _groupToWire(overlay)],
       if (filter != null && filtered.isEmpty)
         'guidance': '$filter 没有任何 Wheel 周期记录;请先建议用户在 Income Planner 录入一笔交易。',
     };
@@ -66,25 +72,58 @@ class GetWheelLifecycleTool implements DeviceTool {
       result: result,
       anchors: [
         for (final overlay in filtered) ...[
-          for (final entry in overlay.wheel.entries)
-            EvidenceAnchor(
-              entityTable: 'options_trade_journal',
-              entityId: entry.id,
-              label: '${overlay.wheel.symbol} · ${entry.strategy.wire}',
-            ),
+          for (final leg in overlay.wheels)
+            for (final entry in leg.lifecycle.entries)
+              EvidenceAnchor(
+                entityTable: 'options_trade_journal',
+                entityId: entry.id,
+                label: '${leg.lifecycle.symbol} · ${entry.strategy.wire}',
+              ),
           for (final position in overlay.positions)
             EvidenceAnchor(
               entityTable: 'options_leaps_call_positions',
               entityId: position.id,
-              label: '${overlay.wheel.symbol} · LEAPS long call',
+              label: '${position.symbol} · LEAPS long call',
             ),
         ],
       ],
     );
   }
 
-  Map<String, Object?> _cycleToWire(WheelStrategyView overlay) {
-    final cycle = overlay.wheel;
+  Map<String, Object?> _groupToWire(WheelStrategyView overlay) {
+    return <String, Object?>{
+      'group': overlay.label,
+      'is_cross_underlying_group': overlay.group.isExplicit,
+      'wheel_legs': [
+        for (final leg in overlay.wheels) _legToWire(leg.lifecycle),
+      ],
+      'group_realized_result': overlay.realizedResult.toString(),
+      'leaps_overlay': <String, Object?>{
+        'open_position_count': overlay.openPositions.length,
+        'open_premium_at_risk': overlay.openLeapsCost.toString(),
+        'realized_leaps_pnl': overlay.realizedLeapsPnl.toString(),
+        'wheel_income_coverage_ratio': overlay.wheelIncomeCoverageRatio
+            ?.toString(),
+        'delta_equivalent_shares': overlay.deltaEquivalentShares?.toString(),
+        'warnings': [for (final risk in overlay.risks) risk.code.wire],
+        'positions': [
+          for (final position in overlay.openPositions)
+            <String, Object?>{
+              'id': position.id,
+              'option_symbol': position.optionSymbol,
+              'expiration_at': position.expirationAt.toUtc().toIso8601String(),
+              'strike_price': position.strikePrice.toString(),
+              'entry_debit': position.entryDebit.toString(),
+              'contract_quantity': position.contractQuantity,
+              'current_mark': position.currentMark?.toString(),
+              'current_delta': position.currentDelta?.toString(),
+            },
+        ],
+      },
+    };
+  }
+
+  Map<String, Object?> _legToWire(WheelLifecycle cycle) {
     return <String, Object?>{
       'symbol': cycle.symbol,
       'currency': cycle.currency,
@@ -105,30 +144,6 @@ class GetWheelLifecycleTool implements DeviceTool {
             'contract_quantity': position.contractQuantity,
           },
       ],
-      'leaps_overlay': <String, Object?>{
-        'open_position_count': overlay.openPositions.length,
-        'open_premium_at_risk': overlay.openLeapsCost.toString(),
-        'realized_leaps_pnl': overlay.realizedLeapsPnl.toString(),
-        'underlying_realized_result': overlay.underlyingRealizedResult
-            .toString(),
-        'wheel_income_coverage_ratio': overlay.wheelIncomeCoverageRatio
-            ?.toString(),
-        'delta_equivalent_shares': overlay.deltaEquivalentShares?.toString(),
-        'warnings': [for (final risk in overlay.risks) risk.code.wire],
-        'positions': [
-          for (final position in overlay.openPositions)
-            <String, Object?>{
-              'id': position.id,
-              'option_symbol': position.optionSymbol,
-              'expiration_at': position.expirationAt.toUtc().toIso8601String(),
-              'strike_price': position.strikePrice.toString(),
-              'entry_debit': position.entryDebit.toString(),
-              'contract_quantity': position.contractQuantity,
-              'current_mark': position.currentMark?.toString(),
-              'current_delta': position.currentDelta?.toString(),
-            },
-        ],
-      },
     };
   }
 

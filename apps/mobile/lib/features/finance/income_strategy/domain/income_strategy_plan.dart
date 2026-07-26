@@ -142,6 +142,8 @@ class IncomeStrategyPlan {
     required this.maxPositionWeight,
     required this.notes,
     required this.sync,
+    this.groupId,
+    this.groupLabel,
   });
 
   /// Stable sync row id. It is not the asset id; owner/asset uniqueness is a
@@ -156,6 +158,12 @@ class IncomeStrategyPlan {
   final Decimal? annualIncomeTarget;
   final Decimal? maxPositionWeight;
   final String? notes;
+
+  /// Optional strategy group. Plans sharing a non-empty [groupId] are
+  /// coordinated as one group (cross-underlying wheel/LEAPS pairing);
+  /// null means the asset forms its own implicit singleton group.
+  final String? groupId;
+  final String? groupLabel;
   final SyncMeta sync;
 
   Set<IncomeStrategySleeveKind> get enabledSleeves => Set.unmodifiable(
@@ -179,6 +187,8 @@ class IncomeStrategyPlan {
     Object? annualIncomeTarget = _unsetIncomePlanField,
     Object? maxPositionWeight = _unsetIncomePlanField,
     Object? notes = _unsetIncomePlanField,
+    Object? groupId = _unsetIncomePlanField,
+    Object? groupLabel = _unsetIncomePlanField,
     SyncMeta? sync,
   }) => IncomeStrategyPlan(
     id: id,
@@ -199,6 +209,12 @@ class IncomeStrategyPlan {
     notes: identical(notes, _unsetIncomePlanField)
         ? this.notes
         : notes as String?,
+    groupId: identical(groupId, _unsetIncomePlanField)
+        ? this.groupId
+        : groupId as String?,
+    groupLabel: identical(groupLabel, _unsetIncomePlanField)
+        ? this.groupLabel
+        : groupLabel as String?,
     sync: sync ?? this.sync,
   );
 }

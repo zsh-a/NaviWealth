@@ -210,12 +210,17 @@ class IncomeStrategyRisk {
     required this.severity,
     required this.assetId,
     required this.sleeves,
+    this.groupId,
     this.evidence = const <String, Object?>{},
   });
 
   final IncomeStrategyRiskCode code;
   final IncomeStrategyRiskSeverity severity;
   final String assetId;
+
+  /// Set when the risk was produced by a group-scope rule spanning
+  /// several underlyings (e.g. a TQQQ wheel funding a QQQ LEAPS call).
+  final String? groupId;
   final Set<IncomeStrategySleeveKind> sleeves;
   final Map<String, Object?> evidence;
 }
@@ -374,6 +379,53 @@ class UnderlyingIncomeStrategySnapshot {
       risks.any((risk) => risk.severity != IncomeStrategyRiskSeverity.info);
 }
 
+/// One strategy group: the aggregation axis above underlyings.
+///
+/// Every underlying belongs to exactly one group. Ungrouped assets form an
+/// implicit singleton group (id = assetId), so "same underlying pairs wheel
+/// with LEAPS" is just the default case of the general model — an explicit
+/// group spans several underlyings (e.g. wheel on TQQQ funding a LEAPS call
+/// on QQQ).
+class IncomeStrategyGroupSnapshot {
+  const IncomeStrategyGroupSnapshot({
+    required this.id,
+    required this.label,
+    required this.isExplicit,
+    required this.baseCurrency,
+    required this.members,
+    required this.risks,
+  });
+
+  final String id;
+  final String label;
+
+  /// True when the user created the group; false for implicit singletons.
+  final bool isExplicit;
+  final String baseCurrency;
+  final List<UnderlyingIncomeStrategySnapshot> members;
+
+  /// Group-scope coordination findings (funding coverage, stacked downside
+  /// across members). Singleton groups merge these into the member's own
+  /// risk list instead, so this is only populated for explicit groups.
+  final List<IncomeStrategyRisk> risks;
+
+  IncomeStrategyMoneyMetric get realizedResult =>
+      _sumMetrics(baseCurrency, members.map((member) => member.realizedResult));
+
+  IncomeStrategyMoneyMetric get realizedIncome =>
+      _sumMetrics(baseCurrency, members.map((member) => member.realizedIncome));
+
+  IncomeStrategyMoneyMetric get projectedCash =>
+      _sumMetrics(baseCurrency, members.map((member) => member.projectedCash));
+
+  IncomeStrategyMoneyMetric get capitalAtRisk =>
+      _sumMetrics(baseCurrency, members.map((member) => member.capitalAtRisk));
+
+  bool get hasActiveRisk =>
+      risks.any((risk) => risk.severity != IncomeStrategyRiskSeverity.info) ||
+      members.any((member) => member.hasActiveRisk);
+}
+
 class PortfolioIncomeStrategySnapshot {
   const PortfolioIncomeStrategySnapshot({
     required this.baseCurrency,
@@ -381,6 +433,7 @@ class PortfolioIncomeStrategySnapshot {
     required this.asOf,
     required this.underlyings,
     required this.unassignedCashFlows,
+    this.groups = const <IncomeStrategyGroupSnapshot>[],
   });
 
   final String baseCurrency;
@@ -388,6 +441,17 @@ class PortfolioIncomeStrategySnapshot {
   final DateTime asOf;
   final List<UnderlyingIncomeStrategySnapshot> underlyings;
   final List<IncomeStrategyCashFlow> unassignedCashFlows;
+
+  /// Group projection over [underlyings]; singleton groups included so the
+  /// list always covers the whole portfolio.
+  final List<IncomeStrategyGroupSnapshot> groups;
+
+  /// Risks produced by group-scope rules on explicit groups. Singleton
+  /// findings already live on the member underlying.
+  List<IncomeStrategyRisk> get groupRisks => List.unmodifiable([
+    for (final group in groups)
+      if (group.isExplicit) ...group.risks,
+  ]);
 
   IncomeStrategyMoneyMetric get realizedResult => _sumMetrics(
     baseCurrency,
@@ -427,10 +491,10 @@ class PortfolioIncomeStrategySnapshot {
     underlyings.map((value) => value.capitalAtRisk),
   );
 
-  int get activeRiskCount => underlyings
-      .expand((value) => value.risks)
-      .where((risk) => risk.severity != IncomeStrategyRiskSeverity.info)
-      .length;
+  int get activeRiskCount => [
+    ...underlyings.expand((value) => value.risks),
+    ...groupRisks,
+  ].where((risk) => risk.severity != IncomeStrategyRiskSeverity.info).length;
 
   List<IncomeStrategyCashFlow> get activity {
     final values = [

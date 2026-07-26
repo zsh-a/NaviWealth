@@ -26749,6 +26749,42 @@ abstract class AppLocalizations {
   /// **'Enabled sleeves'**
   String get incomeStrategyPlanSleeves;
 
+  /// No description provided for @incomeStrategyPlanGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Strategy group'**
+  String get incomeStrategyPlanGroup;
+
+  /// No description provided for @incomeStrategyPlanGroupHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Coordinate wheel and LEAPS legs across underlyings — e.g. a TQQQ wheel funding a QQQ LEAPS call.'**
+  String get incomeStrategyPlanGroupHint;
+
+  /// No description provided for @incomeStrategyPlanGroupNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None (standalone)'**
+  String get incomeStrategyPlanGroupNone;
+
+  /// No description provided for @incomeStrategyPlanGroupNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New group…'**
+  String get incomeStrategyPlanGroupNew;
+
+  /// No description provided for @incomeStrategyPlanGroupNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Group name'**
+  String get incomeStrategyPlanGroupNameLabel;
+
+  /// No description provided for @incomeStrategyPlanGroupNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name for the new group.'**
+  String get incomeStrategyPlanGroupNameRequired;
+
   /// No description provided for @incomeStrategyPlanPreserveDividend.
   ///
   /// In en, this message translates to:

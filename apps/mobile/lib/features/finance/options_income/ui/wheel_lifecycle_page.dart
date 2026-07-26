@@ -104,6 +104,13 @@ class _WheelTile extends StatelessWidget {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     final cycle = overlay.wheel;
+    final hasOpen =
+        overlay.wheels.any((leg) => leg.lifecycle.hasOpenPosition) ||
+        overlay.openPositions.isNotEmpty;
+    final wheelOpenCount = overlay.wheels.fold<int>(
+      0,
+      (total, leg) => total + leg.lifecycle.openPositions.length,
+    );
     return SoftCard.raised(
       onPress: onPress,
       padding: const EdgeInsets.all(AppSpacing.s12),
@@ -112,9 +119,7 @@ class _WheelTile extends StatelessWidget {
         children: [
           AppIconTile(
             icon: wheelStageIcon(cycle.stage),
-            color: cycle.hasOpenPosition
-                ? colors.primary
-                : colors.mutedForeground,
+            color: hasOpen ? colors.primary : colors.mutedForeground,
             size: 36,
           ),
           const SizedBox(width: AppSpacing.s10),
@@ -125,8 +130,18 @@ class _WheelTile extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(cycle.symbol, style: context.rowTitleStyle),
+                      child: Text(overlay.label, style: context.rowTitleStyle),
                     ),
+                    if (overlay.group.isExplicit) ...[
+                      AppBadge(
+                        label: overlay.wheels
+                            .map((leg) => leg.lifecycle.symbol)
+                            .join(' · '),
+                        tone: AppBadgeTone.neutral,
+                        size: AppBadgeSize.compact,
+                      ),
+                      const SizedBox(width: AppSpacing.s6),
+                    ],
                     AppBadge(
                       label: wheelStageLabel(l10n, cycle.stage),
                       tone: cycle.hasOpenPosition
@@ -138,7 +153,7 @@ class _WheelTile extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s4),
                 Text(
                   '${wheelNextActionLabel(l10n, cycle.nextAction)} · '
-                  '${l10n.incomePlannerWheelOpenCount(cycle.openPositions.length)} · '
+                  '${l10n.incomePlannerWheelOpenCount(wheelOpenCount)} · '
                   '${l10n.leapsOverlayOpenCount(overlay.openPositions.length)}',
                   style: context.captionStyle,
                   maxLines: 2,
@@ -154,8 +169,8 @@ class _WheelTile extends StatelessWidget {
                       ),
                     ),
                     MoneyText(
-                      amount: overlay.underlyingRealizedResult.toDouble(),
-                      currencyCode: cycle.currency,
+                      amount: overlay.realizedResult.toDouble(),
+                      currencyCode: overlay.group.baseCurrency,
                       showSign: true,
                       style: context.labelStyle,
                     ),
@@ -177,8 +192,10 @@ Future<void> _showWheelCycleSheet(
   final l10n = AppLocalizations.of(pageContext);
   return showAppSheet<void>(
     context: pageContext,
-    title: overlay.wheel.symbol,
-    subtitle: wheelStageLabel(l10n, overlay.wheel.stage),
+    title: overlay.label,
+    subtitle: overlay.group.isExplicit
+        ? overlay.group.members.map((member) => member.asset.symbol).join(' + ')
+        : wheelStageLabel(l10n, overlay.wheel.stage),
     builder: (_) =>
         _WheelCycleSheet(pageContext: pageContext, overlay: overlay),
   );
@@ -193,35 +210,47 @@ class _WheelCycleSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final cycle = overlay.wheel;
     final formatters = context.formatters(ref);
     final presentations = [
       for (final module in ref.watch(incomeStrategyModulesProvider))
         module.presentation,
     ];
     final coverage = overlay.wheelIncomeCoverageRatio;
+    final showLegHeaders = overlay.wheels.length > 1;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Text(
-                wheelNextActionLabel(l10n, cycle.nextAction),
-                style: context.bodyCaptionStyle,
+        for (final (index, leg) in overlay.wheels.indexed) ...[
+          if (index > 0) const SizedBox(height: AppSpacing.s16),
+          if (showLegHeaders)
+            Row(
+              children: [
+                Expanded(
+                  child: Text(leg.lifecycle.symbol, style: context.labelStyle),
+                ),
+                AppBadge(
+                  label: wheelStageLabel(l10n, leg.lifecycle.stage),
+                  tone: leg.lifecycle.hasOpenPosition
+                      ? AppBadgeTone.accent
+                      : AppBadgeTone.neutral,
+                  size: AppBadgeSize.compact,
+                ),
+              ],
+            ),
+          if (showLegHeaders) const SizedBox(height: AppSpacing.s4),
+          Text(
+            wheelNextActionLabel(l10n, leg.lifecycle.nextAction),
+            style: context.bodyCaptionStyle,
+          ),
+          if (leg.lifecycle.openPositions.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s12),
+            AppSheetSectionLabel(l10n.incomePlannerWheelOpenPositionsTitle),
+            for (final entry in leg.lifecycle.openPositions)
+              _OpenPositionTile(
+                entry: entry,
+                onPress: () => _openJournal(context, entry.id),
               ),
-            ),
           ],
-        ),
-        if (cycle.openPositions.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s16),
-          AppSheetSectionLabel(l10n.incomePlannerWheelOpenPositionsTitle),
-          for (final entry in cycle.openPositions)
-            _OpenPositionTile(
-              entry: entry,
-              onPress: () => _openJournal(context, entry.id),
-            ),
         ],
         const SizedBox(height: AppSpacing.s16),
         Row(
@@ -256,7 +285,7 @@ class _WheelCycleSheet extends ConsumerWidget {
               label: l10n.leapsOverlayCost,
               value: formatters.currency(
                 overlay.openLeapsCost,
-                code: cycle.currency,
+                code: overlay.group.baseCurrency,
               ),
             ),
             AppMetricItem(
@@ -299,11 +328,12 @@ class _WheelCycleSheet extends ConsumerWidget {
         ],
         const SizedBox(height: AppSpacing.s16),
         AppSheetSectionLabel(l10n.planWheelHistoryTitle),
-        for (final entry in cycle.entries.reversed)
-          _WheelHistoryTile(
-            entry: entry,
-            onPress: () => _openJournal(context, entry.id),
-          ),
+        for (final leg in overlay.wheels)
+          for (final entry in leg.lifecycle.entries.reversed)
+            _WheelHistoryTile(
+              entry: entry,
+              onPress: () => _openJournal(context, entry.id),
+            ),
         const SizedBox(height: AppSpacing.s8),
         FButton(
           onPress: () => _openJournal(context, null),

@@ -130,6 +130,12 @@ class IncomeStrategyPlans extends Table with SyncableTable {
       text().map(const DecimalConverter()).nullable()();
   TextColumn get notes => text().nullable()();
 
+  /// Optional strategy-group membership. Plans sharing a non-empty group id
+  /// are coordinated as one cross-underlying group (e.g. TQQQ wheel funding
+  /// a QQQ LEAPS call). Null keeps the asset as its own implicit group.
+  TextColumn get groupId => text().nullable()();
+  TextColumn get groupLabel => text().nullable()();
+
   @override
   List<String> get customConstraints => ['UNIQUE(owner_user_id, asset_id)'];
 

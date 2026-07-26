@@ -6,14 +6,20 @@ import '../domain/income_strategy_plan.dart';
 import '../domain/income_strategy_rule.dart';
 
 const kBuiltInIncomeStrategyCoordinationRules = <IncomeStrategyRule>[
-  StackedDownsideRule(),
   DividendInterruptionRule(),
-  LeapsFundingRule(),
   LeapsBudgetRule(),
   AssignmentBudgetRule(),
 ];
 
-class StackedDownsideRule implements IncomeStrategyRule {
+/// Group-scope coordination rules. For an implicit singleton group these
+/// behave exactly like the old per-asset checks; for an explicit group the
+/// legs may live on different underlyings (TQQQ wheel + QQQ LEAPS).
+const kBuiltInIncomeStrategyGroupRules = <IncomeStrategyGroupRule>[
+  StackedDownsideRule(),
+  LeapsFundingRule(),
+];
+
+class StackedDownsideRule implements IncomeStrategyGroupRule {
   const StackedDownsideRule();
 
   @override
@@ -21,18 +27,31 @@ class StackedDownsideRule implements IncomeStrategyRule {
 
   @override
   Iterable<IncomeStrategyRisk> evaluate(
-    IncomeStrategyRuleContext context,
+    IncomeStrategyGroupRuleContext context,
   ) sync* {
-    final wheel = context.sleeves[IncomeStrategySleeveKind.wheel];
-    final leaps = context.sleeves[IncomeStrategySleeveKind.leapsCall];
-    if (wheel?.exposure.hasOpenShortPut == true && leaps != null) {
+    final shortPut = context
+        .sleevesOf(IncomeStrategySleeveKind.wheel)
+        .where((entry) => entry.$2.exposure.hasOpenShortPut)
+        .firstOrNull;
+    final leaps = context
+        .sleevesOf(IncomeStrategySleeveKind.leapsCall)
+        .firstOrNull;
+    if (shortPut != null && leaps != null) {
       yield IncomeStrategyRisk(
         code: code,
         severity: IncomeStrategyRiskSeverity.warning,
-        assetId: context.asset.assetId,
+        assetId: leaps.$1.asset.assetId,
+        groupId: context.isExplicit ? context.groupId : null,
         sleeves: {
           IncomeStrategySleeveKind.wheel,
           IncomeStrategySleeveKind.leapsCall,
+        },
+        evidence: {
+          if (context.isExplicit) ...{
+            'group': context.groupLabel,
+            'short_put_asset': shortPut.$1.asset.symbol,
+            'leaps_asset': leaps.$1.asset.symbol,
+          },
         },
       );
     }
@@ -83,7 +102,7 @@ class DividendInterruptionRule implements IncomeStrategyRule {
   }
 }
 
-class LeapsFundingRule implements IncomeStrategyRule {
+class LeapsFundingRule implements IncomeStrategyGroupRule {
   const LeapsFundingRule();
 
   @override
@@ -91,25 +110,35 @@ class LeapsFundingRule implements IncomeStrategyRule {
 
   @override
   Iterable<IncomeStrategyRisk> evaluate(
-    IncomeStrategyRuleContext context,
+    IncomeStrategyGroupRuleContext context,
   ) sync* {
-    final leaps = context.sleeves[IncomeStrategySleeveKind.leapsCall];
-    if (leaps == null || leaps.capitalAtRisk.value.amount <= Decimal.zero) {
-      return;
+    final leapsSleeves = context
+        .sleevesOf(IncomeStrategySleeveKind.leapsCall)
+        .toList(growable: false);
+    if (leapsSleeves.isEmpty) return;
+    var openLeapsCost = Money.zero(context.baseCurrency);
+    for (final (_, sleeve) in leapsSleeves) {
+      openLeapsCost += sleeve.capitalAtRisk.value;
     }
+    if (openLeapsCost.amount <= Decimal.zero) return;
+
+    // Funding pools across the whole group: a TQQQ wheel or an SCHD
+    // dividend sleeve can both pay for a QQQ LEAPS call.
     var funding = Money.zero(context.baseCurrency);
     for (final kind in const [
       IncomeStrategySleeveKind.dividends,
       IncomeStrategySleeveKind.wheel,
     ]) {
-      final sleeve = context.sleeves[kind];
-      if (sleeve != null) funding += sleeve.realizedIncome.value;
+      for (final (_, sleeve) in context.sleevesOf(kind)) {
+        funding += sleeve.realizedIncome.value;
+      }
     }
-    if (funding < leaps.capitalAtRisk.value) {
+    if (funding < openLeapsCost) {
       yield IncomeStrategyRisk(
         code: code,
         severity: IncomeStrategyRiskSeverity.warning,
-        assetId: context.asset.assetId,
+        assetId: leapsSleeves.first.$1.asset.assetId,
+        groupId: context.isExplicit ? context.groupId : null,
         sleeves: {
           IncomeStrategySleeveKind.dividends,
           IncomeStrategySleeveKind.wheel,
@@ -117,8 +146,9 @@ class LeapsFundingRule implements IncomeStrategyRule {
         },
         evidence: {
           'realized_income_ytd': funding.amount.toString(),
-          'open_leaps_cost': leaps.capitalAtRisk.value.amount.toString(),
+          'open_leaps_cost': openLeapsCost.amount.toString(),
           'currency': context.baseCurrency,
+          if (context.isExplicit) 'group': context.groupLabel,
         },
       );
     }
