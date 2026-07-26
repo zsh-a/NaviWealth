@@ -286,10 +286,13 @@ class _OrangeTone {
         onContainer: ColorPalette.cbOrangeLight,
       );
     }
+    // Foreground uses the dark orange: Okabe-Ito orange (#E69F00) is only
+    // ~2.3:1 on white cards (doc 15 §3.1). The bright hue survives in the
+    // container/chart roles where it doesn't carry small text.
     return _ToneSet(
-      fg: ColorPalette.cbOrange,
-      mutedFg: _muted(ColorPalette.cbOrange),
-      onFg: ColorPalette.neutral1000,
+      fg: ColorPalette.cbOrangeDark,
+      mutedFg: _muted(ColorPalette.cbOrangeDark),
+      onFg: ColorPalette.neutral0,
       container: ColorPalette.cbOrangeContainerLight,
       onContainer: ColorPalette.cbOrangeDark,
     );

@@ -71,7 +71,10 @@ class SemanticColors {
     onDanger: ColorPalette.neutral0,
     dangerContainer: ColorPalette.red50,
     onDangerContainer: ColorPalette.red900,
-    info: ColorPalette.cyanBrand500,
+    // cyanBrand700, not 500: the bright interaction cyan sits at ~2:1 on
+    // white and was effectively invisible as an info foreground
+    // (doc 15 §3.1; enforced by theme_contrast_test.dart).
+    info: ColorPalette.cyanBrand700,
     onInfo: ColorPalette.neutral0,
     infoContainer: ColorPalette.cyanBrand50,
     onInfoContainer: ColorPalette.cyanBrand900,

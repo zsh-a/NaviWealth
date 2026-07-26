@@ -28,16 +28,9 @@ List<_RoleEntry> _roles(AppThemeData t) => [
 /// blueprint (doc 15 §3.1). Entries here may FAIL the invariant but must not
 /// grow — fixing a pair means deleting its exemption in the same change.
 /// Key format: `brightness/marketMode/role/check`.
-const Set<String> _exemptions = {
-  // cyanBrand500 (#3BC6D9) on white — the audit's "invisible info" debt;
-  // fix by re-deriving the light-mode info fg (doc 15 §3.1).
-  'light/redUpGreenDown/status.info/fgOnCard',
-  'light/greenUpRedDown/status.info/fgOnCard',
-  'light/colorblind/status.info/fgOnCard',
-  // Okabe-Ito orange (#E69F00) on white — colorblind "down" needs the
-  // darker cbOrange variant as its light-mode fg (doc 15 §3.1).
-  'light/colorblind/market.down/fgOnCard',
-};
+// Both P5 palette debts (invisible light info cyan, colorblind light
+// orange) were re-derived — the set stays empty and any regression fails.
+const Set<String> _exemptions = {};
 
 void main() {
   final inputs = [

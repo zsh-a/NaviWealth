@@ -4,7 +4,7 @@
 > 依据 2026-07 全库 UI 审查(设计系统 / 壳层导航 / FinanceOS / 跨领域四份走查)撰写。
 > 原则:**不推翻现有 token 纪律,只补齐"解析层 + 唯一入口 + 类型护栏"**;所有阶段可独立合入、可独立回滚。
 
-> **实施进度(2026-07-26)**:P0 ✅(4 个 lint 护栏进 CI,`DESIGN.md` 已删)· P1 ✅(`AppThemeData`/`ColorRole`/`resolveAppTheme`/`context.appTheme` 落地,108 项对比度不变量测试,4 项既有色板债入豁免表)· P2 ✅(§3.6 四个 bug 修复;`SignedMoneyText`/Health 趋势接 `MarketColors`;badge/banner 换 `on*Container`;手拼百分比 19→0;SnackBar/Material Divider/页面级 spinner 清零;`KnowledgeEmptyState` 补 `action`;zh ARB 知识类型补译)。P3–P5 待启动。注:P1 聚合对象命名为 `AppThemeData`(避让既有 Material 工厂类 `AppTheme`)。
+> **实施进度(2026-07-26)**:P0 ✅(4 个 lint 护栏进 CI,`DESIGN.md` 已删)· P1 ✅(`AppThemeData`/`ColorRole`/`resolveAppTheme`/`context.appTheme` 落地,108 项对比度不变量测试,4 项既有色板债入豁免表)· P2 ✅(§3.6 四个 bug 修复;`SignedMoneyText`/Health 趋势接 `MarketColors`;badge/banner 换 `on*Container`;手拼百分比 19→0;SnackBar/Material Divider/页面级 spinner 清零;`KnowledgeEmptyState` 补 `action`;zh ARB 知识类型补译)。P3 部分 ✅(静默加载 10 处判定完毕——4 处换骨架、7 处标注为有意为空;裸错误态 7 处接 `AppEmptyState.error`/`userSafeErrorMessage`;Material spinner 清零并锁 0;sheet 桌面限宽 720)· P4 核心 ✅(`shellDesktop` 并入 1240;切换 chip 在 <1240 常驻、平板侧栏新增切域与 Ask-AI 入口;撤销横幅上移至全部布局;`Cmd/Ctrl-1..N` 域内化)· P5 部分 ✅(浅色 info 前景 cyanBrand700、色盲浅色 down 前景 cbOrangeDark,对比度豁免表清零)。剩余:P3 组件收编(scaffold 8→3、96 处 raw `.when`、度量瓦片/徽章/分隔线)、P4 `/life` 进壳与返回栈协议、P5 旧入口删除与 tokens.json 导出管线。注:P1 聚合对象命名为 `AppThemeData`(避让既有 Material 工厂类 `AppTheme`)。
 
 ---
 
