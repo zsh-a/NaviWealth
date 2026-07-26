@@ -12145,6 +12145,12 @@ abstract class AppLocalizations {
   /// **'Domains'**
   String get settingsDomainsSection;
 
+  /// No description provided for @settingsDomainsDeepLinkBlockedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'That link belongs to a domain that is not enabled yet. Turn the domain on below to open it.'**
+  String get settingsDomainsDeepLinkBlockedNotice;
+
   /// Settings tile and page title for LifeOS domain management
   ///
   /// In en, this message translates to:

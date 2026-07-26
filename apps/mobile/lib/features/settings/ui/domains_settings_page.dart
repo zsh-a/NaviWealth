@@ -21,17 +21,30 @@ class DomainsSettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final optIns = ref.watch(auth_providers.domainOptInsProvider).value;
     final l10n = AppLocalizations.of(context);
+    // Set when DomainOptInRouteGuard redirected a deep link into a domain
+    // the user hasn't enabled — explain why they landed here.
+    final blocked =
+        GoRouterState.of(context).uri.queryParameters['blocked'] != null;
 
     return AppPageScaffold(
       title: l10n.settingsDomainsTitle,
       childPad: false,
       child: SettingsPageFrame(
-        children: _domainSettingSections(
-          context: context,
-          ref: ref,
-          optIns: optIns,
-          l10n: l10n,
-        ),
+        children: [
+          if (blocked) ...[
+            AppStatusBanner(
+              kind: AppStatusKind.info,
+              message: l10n.settingsDomainsDeepLinkBlockedNotice,
+            ),
+            const SizedBox(height: AppSpacing.s16),
+          ],
+          ..._domainSettingSections(
+            context: context,
+            ref: ref,
+            optIns: optIns,
+            l10n: l10n,
+          ),
+        ],
       ),
     );
   }

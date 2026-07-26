@@ -288,17 +288,19 @@ void main() {
 
       await container.read(domainOptInsProvider.future);
 
+      // The `blocked` query lets the domains page explain the redirect
+      // (doc 15 §7.7).
       expect(
         container
             .read(domainOptInRouteGuardProvider)
             .redirect(_stateFor(AppRoutes.healthToday)),
-        AppRoutes.settingsDomains,
+        '${AppRoutes.settingsDomains}?blocked=health',
       );
       expect(
         container
             .read(domainOptInRouteGuardProvider)
             .redirect(_stateFor(AppRoutes.knowledgeInbox)),
-        AppRoutes.settingsDomains,
+        '${AppRoutes.settingsDomains}?blocked=knowledge',
       );
     },
   );

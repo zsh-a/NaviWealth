@@ -6842,6 +6842,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDomainsSection => '功能领域';
 
   @override
+  String get settingsDomainsDeepLinkBlockedNotice => '该链接属于尚未开通的领域,在下方开通后即可访问。';
+
+  @override
   String get settingsDomainsTitle => '功能领域';
 
   @override

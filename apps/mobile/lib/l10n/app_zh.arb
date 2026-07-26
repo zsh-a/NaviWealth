@@ -2160,6 +2160,7 @@
   "dataManagementResetAllEverywhereConfirmBody": "全部 OS 数据会从服务器和所有设备永久删除。账户、设备、设置与汇率配置会保留。此操作无法撤销。",
   "backupDomainPageTitle": "{domain} 备份",
   "settingsDomainsSection": "功能领域",
+  "settingsDomainsDeepLinkBlockedNotice": "该链接属于尚未开通的领域,在下方开通后即可访问。",
   "settingsDomainsTitle": "功能领域",
   "settingsDomainsSubtitle": "管理 FinanceOS、HealthOS、KnowledgeOS 和 ExecutionOS",
   "settingsDomainsFinanceSubtitle": "始终启用的财务功能：货币、汇率、风险偏好、资产配置和 FIRE 规划",
