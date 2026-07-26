@@ -347,7 +347,7 @@ class _StrategyTrack extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s8),
           for (final (index, module) in lanes.indexed) ...[
-            if (index > 0) const Divider(height: AppSpacing.s16),
+            if (index > 0) const FDivider(),
             _SleeveLane(
               module: module,
               enabled: underlying.enabledSleeves.contains(module.id),

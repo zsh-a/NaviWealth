@@ -111,6 +111,7 @@ class _AllocBlock extends StatelessWidget {
     final sorted = [...buckets]..sort((a, b) => b.weight.compareTo(a.weight));
     final fmt = NumberFormat.decimalPattern();
     final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
@@ -168,7 +169,10 @@ class _AllocBlock extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '${(sorted[i].weight * 100).toStringAsFixed(1)}%',
+                              formatters.percent(
+                                sorted[i].weight,
+                                decimalDigits: 1,
+                              ),
                               style: context.captionStyle.copyWith(
                                 fontFeatures: const [
                                   FontFeature.tabularFigures(),

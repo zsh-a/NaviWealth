@@ -41,9 +41,10 @@ class ChartPalette {
   /// point.
   factory ChartPalette.of(BuildContext context) {
     final colors = context.theme.colors;
-    final isDark =
-        MediaQuery.maybeOf(context)?.platformBrightness == Brightness.dark ||
-        colors.brightness == Brightness.dark;
+    // App theme brightness only. OS `platformBrightness` must not leak in
+    // here: a dark-OS device running the app in light mode would get the
+    // neon dark accent sequence painted on white cards.
+    final isDark = colors.brightness == Brightness.dark;
     return ChartPalette(
       accentSequence: _accentSequence(isDark: isDark),
       // Ultra-low-opacity grid — visible enough to anchor the eye when

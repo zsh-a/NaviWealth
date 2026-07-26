@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/format/formatters.dart';
 import '../../../core/perf/frame_timing_collector.dart';
 import '../../../core/perf/providers.dart';
 import '../../../core/shell/settings_ui/settings_page_frame.dart';
@@ -45,6 +46,7 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
@@ -61,7 +63,9 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.s12),
           _MetricRow(
             label: l10n.settingsPerfJankFrames,
-            value: '${stats.jankFrameCount} / ${_percent(stats.jankRatio)}',
+            value:
+                '${stats.jankFrameCount} / '
+                '${formatters.percent(stats.jankRatio, decimalDigits: 1)}',
           ),
           _MetricRow(
             label: l10n.settingsPerfFrameBudget,
@@ -146,8 +150,4 @@ class _MetricRow extends StatelessWidget {
 
 String _ms(int microseconds) {
   return '${(microseconds / 1000).toStringAsFixed(1)} ms';
-}
-
-String _percent(double ratio) {
-  return '${(ratio * 100).toStringAsFixed(1)}%';
 }

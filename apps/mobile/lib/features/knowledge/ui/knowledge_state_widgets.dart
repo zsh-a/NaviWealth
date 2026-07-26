@@ -214,18 +214,30 @@ class KnowledgeEmptyState extends StatelessWidget {
     required this.icon,
     required this.title,
     this.message,
+    this.action,
     this.density = KnowledgeStateDensity.page,
   });
 
   final IconData icon;
   final String title;
   final String? message;
+
+  /// CTA forwarded to [AppEmptyState] — empty states should offer the next
+  /// step instead of dead-ending (blueprint doc 15 §8). Section density
+  /// keeps its compact row form and ignores the action.
+  final Widget? action;
+
   final KnowledgeStateDensity density;
 
   @override
   Widget build(BuildContext context) {
     if (density == KnowledgeStateDensity.page) {
-      return AppEmptyState(icon: icon, title: title, message: message);
+      return AppEmptyState(
+        icon: icon,
+        title: title,
+        message: message,
+        action: action,
+      );
     }
     return _KnowledgeStateRow(
       icon: icon,

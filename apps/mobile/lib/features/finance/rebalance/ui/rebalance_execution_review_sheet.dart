@@ -93,7 +93,7 @@ class _ReviewEditorState extends ConsumerState<_ReviewEditor> {
     final accountsAsync = ref.watch(rebalanceOwnedAccountsProvider);
     final assetsAsync = ref.watch(rebalanceOwnedSecuritiesProvider);
     if (accountsAsync.isLoading || assetsAsync.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: FCircularProgress());
     }
     final dependencyError = accountsAsync.error ?? assetsAsync.error;
     if (dependencyError != null) {

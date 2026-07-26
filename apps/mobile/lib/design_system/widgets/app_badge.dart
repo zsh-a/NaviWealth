@@ -107,20 +107,23 @@ class _BadgePalette {
         foreground: colors.primary,
         container: colors.primary.withValues(alpha: AppOpacity.subtle),
       ),
+      // Status badges pair the container with its on-container foreground —
+      // the bare status color on a tinted fill lands well below WCAG AA
+      // (info was 1.92:1 in light mode). See theme_contrast_test.dart.
       AppBadgeTone.info => _BadgePalette(
-        foreground: semantic.info,
+        foreground: semantic.onInfoContainer,
         container: semantic.infoContainer,
       ),
       AppBadgeTone.success => _BadgePalette(
-        foreground: semantic.success,
+        foreground: semantic.onSuccessContainer,
         container: semantic.successContainer,
       ),
       AppBadgeTone.warning => _BadgePalette(
-        foreground: semantic.warning,
+        foreground: semantic.onWarningContainer,
         container: semantic.warningContainer,
       ),
       AppBadgeTone.error => _BadgePalette(
-        foreground: semantic.danger,
+        foreground: semantic.onDangerContainer,
         container: semantic.dangerContainer,
       ),
     };

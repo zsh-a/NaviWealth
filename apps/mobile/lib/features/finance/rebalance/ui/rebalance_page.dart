@@ -6,6 +6,7 @@ import 'package:naviwealth/features/finance/composition/finance_route_paths.dart
 import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
 import 'package:naviwealth/features/finance/home/ui/asset_category_visuals.dart';
 
+import '../../../../core/format/formatters.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../data/rebalance_execution_codecs.dart';
@@ -283,6 +284,7 @@ class _DriftOverview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
 
     return SoftCard.flat(
       child: Padding(
@@ -322,7 +324,7 @@ class _DriftOverview extends StatelessWidget {
             const SizedBox(height: AppSpacing.s4),
             Text(
               l10n.rebalanceOverallDrift(
-                '${(plan.driftBeforePct * 100).toStringAsFixed(1)}%',
+                formatters.percent(plan.driftBeforePct, decimalDigits: 1),
               ),
               style: context.captionStyle,
             ),
@@ -351,6 +353,7 @@ class _TradeList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
 
     if (plan.isBalanced) {
       return SoftCard.raised(
@@ -442,7 +445,7 @@ class _TradeList extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  '${(plan.driftAfterPct * 100).toStringAsFixed(1)}%',
+                  formatters.percent(plan.driftAfterPct, decimalDigits: 1),
                   style: context.captionLabelStyle,
                 ),
               ],
@@ -568,6 +571,7 @@ class _SettingsSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final warning = ref.watch(warningThresholdProvider);
     final critical = ref.watch(criticalThresholdProvider);
 
@@ -587,7 +591,7 @@ class _SettingsSheet extends ConsumerWidget {
                 .set(0.01 + v.max * 0.19),
           ),
           tooltipBuilder: (_, v) =>
-              Text('${((0.01 + v * 0.19) * 100).toStringAsFixed(0)}%'),
+              Text(formatters.percent(0.01 + v * 0.19, decimalDigits: 0)),
         ),
         const SizedBox(height: AppSpacing.s8),
         Text(
@@ -602,7 +606,7 @@ class _SettingsSheet extends ConsumerWidget {
                 .set(0.05 + v.max * 0.25),
           ),
           tooltipBuilder: (_, v) =>
-              Text('${((0.05 + v * 0.25) * 100).toStringAsFixed(0)}%'),
+              Text(formatters.percent(0.05 + v * 0.25, decimalDigits: 0)),
         ),
       ],
     );

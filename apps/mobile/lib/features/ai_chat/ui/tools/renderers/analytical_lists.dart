@@ -192,6 +192,7 @@ class SubscriptionChangesView extends StatelessWidget {
         ? context.theme.colors.destructive
         : context.theme.colors.primary;
     final fmt = NumberFormat.decimalPattern();
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s12,
@@ -226,7 +227,7 @@ class SubscriptionChangesView extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.s8),
           Text(
-            '${delta >= 0 ? '+' : ''}${(delta * 100).toStringAsFixed(1)}%',
+            formatters.signedPercent(delta, decimalDigits: 1),
             style: context.labelStyle.copyWith(
               color: accent,
               fontFeatures: const [FontFeature.tabularFigures()],

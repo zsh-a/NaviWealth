@@ -207,6 +207,10 @@ class _NotesList extends ConsumerWidget {
             icon: FLucideIcons.inbox,
             title: l10n.knowledgeInboxEmptyTitle,
             message: l10n.knowledgeInboxEmptyBody,
+            action: FButton(
+              onPress: () => showKnowledgeCaptureSheet(context, ref),
+              child: Text(l10n.knowledgeCaptureAction),
+            ),
           );
         }
         return KnowledgePullToRefresh(

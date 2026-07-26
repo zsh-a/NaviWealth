@@ -46,7 +46,8 @@ class FireStateHeroCard extends ConsumerWidget {
     }
     return stateAsync.when(
       loading: () => const _HeroSkeleton(),
-      error: (e, _) => _HeroErrorCard(message: '$e'),
+      error: (e, _) =>
+          _HeroErrorCard(message: userSafeErrorMessage(context, e)),
       data: (state) =>
           _HeroBody(l10n: l10n, state: state, view: view, onExplain: explain),
     );

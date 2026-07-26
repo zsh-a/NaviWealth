@@ -121,23 +121,25 @@ class _StatusPalette {
         container: colors.muted,
         icon: FLucideIcons.info,
       ),
+      // Container fills take the on-container foreground; the bare status
+      // color fails WCAG AA on its own tint. See theme_contrast_test.dart.
       AppStatusKind.info => _StatusPalette(
-        foreground: semantic.info,
+        foreground: semantic.onInfoContainer,
         container: semantic.infoContainer,
         icon: FLucideIcons.info,
       ),
       AppStatusKind.success => _StatusPalette(
-        foreground: semantic.success,
+        foreground: semantic.onSuccessContainer,
         container: semantic.successContainer,
         icon: FLucideIcons.circleCheck,
       ),
       AppStatusKind.warning => _StatusPalette(
-        foreground: semantic.warning,
+        foreground: semantic.onWarningContainer,
         container: semantic.warningContainer,
         icon: FLucideIcons.triangleAlert,
       ),
       AppStatusKind.error => _StatusPalette(
-        foreground: semantic.danger,
+        foreground: semantic.onDangerContainer,
         container: semantic.dangerContainer,
         icon: FLucideIcons.circleAlert,
       ),

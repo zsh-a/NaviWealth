@@ -65,7 +65,7 @@ class _RebalanceExecutionWorkspacePageState
       child: sessionAsync.when(
         loading: () => _WorkspaceStatePage(
           title: l10n.rebalanceExecutionWorkspaceTitle,
-          child: const Center(child: CircularProgressIndicator()),
+          child: const Center(child: FCircularProgress()),
         ),
         error: (error, stackTrace) => _WorkspaceStatePage(
           title: l10n.rebalanceExecutionWorkspaceTitle,

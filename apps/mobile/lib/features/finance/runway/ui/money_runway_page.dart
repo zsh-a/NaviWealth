@@ -201,14 +201,18 @@ class _RunwayContent extends ConsumerWidget {
               ),
               _ValueRow(
                 label: l10n.moneyRunwayCompleteness,
-                value:
-                    '${(snapshot.dataCompleteness * 100).toStringAsFixed(0)}%',
+                value: formatters.percent(
+                  snapshot.dataCompleteness,
+                  decimalDigits: 0,
+                ),
               ),
               if (snapshot.historicalForecastError != null)
                 _ValueRow(
                   label: l10n.moneyRunwayHistoricalError,
-                  value:
-                      '${(snapshot.historicalForecastError! * 100).toStringAsFixed(1)}%',
+                  value: formatters.percent(
+                    snapshot.historicalForecastError!,
+                    decimalDigits: 1,
+                  ),
                 ),
             ],
           ),
@@ -243,7 +247,7 @@ class _RunwayContent extends ConsumerWidget {
                 for (var i = 0; i < snapshot.scheduledFlows.length; i++) ...[
                   _ScheduledFlowRow(flow: snapshot.scheduledFlows[i]),
                   if (i < snapshot.scheduledFlows.length - 1)
-                    const Divider(height: 1),
+                    const AppDivider(horizontalPadding: 0),
                 ],
               ],
             ),
@@ -796,9 +800,11 @@ Future<void> _createRunwayAction(
           .read(productMetricsProvider.notifier)
           .record(ProductFunnelEvent.executionActionCreated, success: true),
     );
-    ScaffoldMessenger.of(
+    AppMessenger.show(
       context,
-    ).showSnackBar(SnackBar(content: Text(l10n.moneyRunwayActionCreated)));
+      ToastKind.success,
+      l10n.moneyRunwayActionCreated,
+    );
     final routeBuilder = ref.read(lifeActionRouteBuilderProvider);
     if (routeBuilder != null && context.mounted) {
       await context.push<void>(routeBuilder(id));

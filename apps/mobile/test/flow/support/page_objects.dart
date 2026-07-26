@@ -529,9 +529,11 @@ class KnowledgeInboxPageObject {
   void expectLanded() => expect(find.text('Inbox'), findsWidgets);
 
   Future<void> captureNote(String body) async {
+    // An empty inbox exposes two capture entry points by design: the header
+    // action and the empty-state CTA. Either one opens the capture sheet.
     final add = find.bySemanticsLabel('New capture');
-    expect(add, findsOneWidget, reason: 'knowledge capture action missing');
-    await tester.tap(add);
+    expect(add, findsWidgets, reason: 'knowledge capture action missing');
+    await tester.tap(add.first);
     await settle(tester);
 
     await tester.enterText(find.widgetWithText(FTextField, 'Content'), body);

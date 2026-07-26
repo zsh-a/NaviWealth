@@ -116,6 +116,7 @@ class _LegendRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -146,7 +147,7 @@ class _LegendRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    '${(percent * 100).toStringAsFixed(1)}%',
+                    formatters.percent(percent, decimalDigits: 1),
                     style: context.captionStyle,
                   ),
                 ],

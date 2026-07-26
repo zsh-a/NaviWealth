@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/budget_signal.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import '../../../../core/format/formatters.dart';
 import '../data/fire_providers.dart';
 import '../domain/fire_projection.dart';
 import 'fire_goal_form.dart';
@@ -200,6 +201,7 @@ class _ScenarioLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final palette = ChartPalette.of(context);
     return Wrap(
       spacing: AppSpacing.s12,
@@ -210,7 +212,7 @@ class _ScenarioLegend extends StatelessWidget {
             color: _colorForTier(context, palette, s.tier),
             label:
                 '${_scenarioLabel(l10n, s.tier)} '
-                '(${(s.annualReturn * 100).toStringAsFixed(1)}%)',
+                '(${formatters.percent(s.annualReturn, decimalDigits: 1)})',
           ),
         _LegendDot(
           color: context.theme.colors.mutedForeground,

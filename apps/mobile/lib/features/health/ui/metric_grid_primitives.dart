@@ -116,22 +116,27 @@ class _SourceChip extends StatelessWidget {
   }
 }
 
+/// Shared trend badge for metric tiles (regular and compact grids).
+///
+/// Renders through [DeltaText] so the direction color follows the user's
+/// market-color preference (incl. colorblind mode) like every other delta
+/// in the app, instead of the old hard-coded primary/destructive pair.
+// TODO(doc 15 §8): flip good/bad per metric kind (resting HR down = good)
+// once metric metadata carries a `higherIsBetter` flag.
 class _TrendBadge extends StatelessWidget {
   const _TrendBadge({required this.trend});
   final MetricTrend trend;
 
   @override
   Widget build(BuildContext context) {
-    final dir = trend.direction;
-    if (dir == TrendDirection.flat) return const SizedBox.shrink();
-    final colors = context.theme.colors;
-    final isUp = dir == TrendDirection.up;
-    final color = isUp ? colors.primary : colors.destructive;
-    final arrow = isUp ? '↑' : '↓';
-    final pct = trend.deltaPct.abs().round();
-    return Text(
-      '$arrow$pct%',
-      style: context.captionLabelStyle.copyWith(color: color),
+    if (trend.direction == TrendDirection.flat) {
+      return const SizedBox.shrink();
+    }
+    return DeltaText(
+      value: trend.deltaPct,
+      format: DeltaFormat.percent,
+      fractionDigits: 0,
+      style: context.captionLabelStyle,
     );
   }
 }

@@ -11572,25 +11572,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeCaptureKindAuto => '自动';
 
   @override
-  String get knowledgeCaptureKindNote => 'Note';
+  String get knowledgeCaptureKindNote => '笔记';
 
   @override
-  String get knowledgeCaptureKindRoutine => 'Routine';
+  String get knowledgeCaptureKindRoutine => '例行事项';
 
   @override
-  String get knowledgeCaptureKindDecision => 'Decision';
+  String get knowledgeCaptureKindDecision => '决策';
 
   @override
-  String get knowledgeCaptureKindAssumption => 'Assumption';
+  String get knowledgeCaptureKindAssumption => '假设';
 
   @override
-  String get knowledgeCaptureKindPrinciple => 'Principle';
+  String get knowledgeCaptureKindPrinciple => '原则';
 
   @override
-  String get knowledgeCaptureKindConcept => 'Concept';
+  String get knowledgeCaptureKindConcept => '概念';
 
   @override
-  String get knowledgeCaptureKindExperiment => 'Experiment';
+  String get knowledgeCaptureKindExperiment => '实验';
 
   @override
   String get knowledgeCaptureSave => '保存并分析';
@@ -11666,7 +11666,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeCaptureKindExperimentDescription => '看起来在描述一个实验';
 
   @override
-  String get knowledgeCaptureKindNoteDescription => '保留为 Note';
+  String get knowledgeCaptureKindNoteDescription => '保留为笔记';
 
   @override
   String knowledgeCaptureRoutineUpgradeDetail(

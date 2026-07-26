@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../../../../core/format/formatters.dart';
 import '../../../../design_system/design_system.dart';
 
 import '../domain/rebalance_models.dart';
@@ -26,6 +27,7 @@ class DeviationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final semantic = SemanticColors.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final barColor = switch (severity) {
       DriftSeverity.ok => context.theme.colors.primary,
       DriftSeverity.warning => semantic.warning,
@@ -44,11 +46,11 @@ class DeviationBar extends StatelessWidget {
                 child: Text(label, style: context.theme.typography.body.sm),
               ),
               Text(
-                '${(actualWeight * 100).toStringAsFixed(1)}%',
+                formatters.percent(actualWeight, decimalDigits: 1),
                 style: context.labelStyle,
               ),
               Text(
-                ' / ${(targetWeight * 100).toStringAsFixed(1)}%',
+                ' / ${formatters.percent(targetWeight, decimalDigits: 1)}',
                 style: context.captionStyle,
               ),
               const SizedBox(width: AppSpacing.s8),
@@ -118,8 +120,8 @@ class _DeviationChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final semantic = SemanticColors.of(context);
-    final sign = deviation >= 0 ? '+' : '';
-    final text = '$sign${(deviation * 100).toStringAsFixed(1)}%';
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
+    final text = formatters.signedPercent(deviation, decimalDigits: 1);
 
     final (bg, fg) = switch (severity) {
       DriftSeverity.ok => (

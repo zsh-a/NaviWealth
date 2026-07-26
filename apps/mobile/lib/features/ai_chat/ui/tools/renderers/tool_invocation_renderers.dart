@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/format/formatters.dart';
 import '../../../../../design_system/design_system.dart';
 import '../../../../../l10n/gen/app_localizations.dart';
 import '../../ai_navigation.dart';

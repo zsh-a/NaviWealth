@@ -49,11 +49,10 @@ class DeltaChip extends StatelessWidget {
           format: format,
           currencyCode: currencyCode,
           fractionDigits: fractionDigits,
-          style: (style ?? const TextStyle()).copyWith(
-            color: hidden
-                ? colors.mutedForeground
-                : market.onContainerForDelta(value),
-          ),
+          style: style,
+          color: hidden
+              ? colors.mutedForeground
+              : market.onContainerForDelta(value),
         ),
       ),
     );

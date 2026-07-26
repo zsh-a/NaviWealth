@@ -205,8 +205,10 @@ class _ProductMetricsRow extends ConsumerWidget {
                   .exportAggregates();
               await Clipboard.setData(ClipboardData(text: jsonEncode(report)));
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.settingsProductMetricsCopied)),
+                AppMessenger.show(
+                  context,
+                  ToastKind.success,
+                  l10n.settingsProductMetricsCopied,
                 );
               }
             },
