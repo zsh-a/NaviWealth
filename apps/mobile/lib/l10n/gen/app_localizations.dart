@@ -17985,6 +17985,36 @@ abstract class AppLocalizations {
   /// **'Covered call'**
   String get incomePlannerChipCoveredCall;
 
+  /// No description provided for @incomePlannerChipLeaps.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS call'**
+  String get incomePlannerChipLeaps;
+
+  /// No description provided for @incomePlannerMetricLeapsCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost (max loss)'**
+  String get incomePlannerMetricLeapsCost;
+
+  /// No description provided for @incomePlannerMetricLeverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Leverage'**
+  String get incomePlannerMetricLeverage;
+
+  /// No description provided for @incomePlannerMetricAnnualCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Annualized time-value cost'**
+  String get incomePlannerMetricAnnualCost;
+
+  /// No description provided for @incomePlannerMetricFundingCoverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Income coverage'**
+  String get incomePlannerMetricFundingCoverage;
+
   /// Risk badge: low
   ///
   /// In en, this message translates to:
@@ -18522,6 +18552,76 @@ abstract class AppLocalizations {
   /// **'If {symbol} rises to {strike}, you would sell 100 shares at {strike} and miss upside above that level; total proceeds are capped at {cap}.'**
   String optionsExplainWorstCall(String symbol, String strike, String cap);
 
+  /// No description provided for @optionsExplainLeapsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} {dte}DTE LEAPS call @ {strike} — cost {cost}, delta {delta}'**
+  String optionsExplainLeapsSummary(
+    String symbol,
+    int dte,
+    String strike,
+    String cost,
+    String delta,
+  );
+
+  /// No description provided for @optionsExplainLeapsWorstCase.
+  ///
+  /// In en, this message translates to:
+  /// **'If {symbol} closes below {strike} at expiration, the entire {cost} premium is lost. Maximum loss is the full cost paid.'**
+  String optionsExplainLeapsWorstCase(
+    String symbol,
+    String strike,
+    String cost,
+  );
+
+  /// No description provided for @optionsExplainLeapsBestFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Best as a funded stock substitute: long-dated deep-in-the-money exposure paid for by wheel or dividend income.'**
+  String get optionsExplainLeapsBestFor;
+
+  /// No description provided for @optionsExplainLeapsAvoid.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid if you cannot hold through a full drawdown — time value decays and the position can expire worthless.'**
+  String get optionsExplainLeapsAvoid;
+
+  /// No description provided for @optionsExplainLeapsCostBullet.
+  ///
+  /// In en, this message translates to:
+  /// **'Annualized time-value cost {costPct} per unit of share exposure'**
+  String optionsExplainLeapsCostBullet(String costPct);
+
+  /// No description provided for @optionsExplainLeapsLeverageBullet.
+  ///
+  /// In en, this message translates to:
+  /// **'Controls {leverage}x the share exposure per unit of capital (delta {delta})'**
+  String optionsExplainLeapsLeverageBullet(String leverage, String delta);
+
+  /// No description provided for @optionsExplainLeapsIntrinsicBullet.
+  ///
+  /// In en, this message translates to:
+  /// **'{intrinsicPct} of the premium is intrinsic value'**
+  String optionsExplainLeapsIntrinsicBullet(String intrinsicPct);
+
+  /// No description provided for @optionsExplainLeapsSpreadBullet.
+  ///
+  /// In en, this message translates to:
+  /// **'Wide bid/ask spread {spread} — LEAPS liquidity is thin, use limit orders'**
+  String optionsExplainLeapsSpreadBullet(String spread);
+
+  /// No description provided for @optionsExplainLeapsThetaBullet.
+  ///
+  /// In en, this message translates to:
+  /// **'{extrinsic} of time value will decay to zero by expiration'**
+  String optionsExplainLeapsThetaBullet(String extrinsic);
+
+  /// No description provided for @optionsExplainLeapsFundingBullet.
+  ///
+  /// In en, this message translates to:
+  /// **'Group income already covers {coverage} of this cost'**
+  String optionsExplainLeapsFundingBullet(String coverage);
+
   /// No description provided for @optionsLedgerPremium.
   ///
   /// In en, this message translates to:
@@ -18768,6 +18868,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Put absolute delta range'**
   String get incomePlannerProfilePutDeltaRange;
+
+  /// No description provided for @incomePlannerProfileLeapsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS scan'**
+  String get incomePlannerProfileLeapsSection;
+
+  /// No description provided for @incomePlannerProfileLeapsMinDte.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS min DTE'**
+  String get incomePlannerProfileLeapsMinDte;
+
+  /// No description provided for @incomePlannerProfileLeapsMaxDte.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS max DTE'**
+  String get incomePlannerProfileLeapsMaxDte;
+
+  /// No description provided for @incomePlannerProfileLeapsDeltaRange.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS call delta range'**
+  String get incomePlannerProfileLeapsDeltaRange;
+
+  /// No description provided for @incomePlannerProfileLeapsMaxSpread.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS max spread (%)'**
+  String get incomePlannerProfileLeapsMaxSpread;
 
   /// Call delta range label
   ///

@@ -48,7 +48,7 @@ ApprovedUnderlying _approvedUnderlying() {
 OptionsOpportunity _opportunity() {
   final fetchedAt = DateTime.utc(2026, 6, 20, 12);
   return OptionsOpportunity(
-    strategy: OptionsStrategyKind.cashSecuredPut,
+    strategy: OpportunityStrategy.cashSecuredPut,
     contract: OptionContract(
       underlying: 'AAPL',
       market: AssetMarket.usStock,

@@ -8,6 +8,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../domain/options_opportunity.dart';
+import 'leaps_call_position_sheet.dart';
 import 'trade_journal_sheet.dart';
 
 /// Detail sheet for a single [OptionsOpportunity]. Surfaced from the
@@ -18,16 +19,26 @@ Future<void> showOpportunityDetailSheet(
   OptionsOpportunity opportunity,
 ) {
   final l10n = AppLocalizations.of(context);
+  final isLeaps = opportunity.strategy == OpportunityStrategy.leapsCall;
   return showAppFormSheet(
     context: context,
     builder: (sheetCtx) => AppSheet(
       title: opportunity.explanation.summary,
       footer: AppSheetFooter(
-        submitLabel: l10n.incomePlannerDetailLogTrade,
+        submitLabel: isLeaps
+            ? l10n.leapsOverlayAdd
+            : l10n.incomePlannerDetailLogTrade,
         cancelLabel: l10n.commonCancel,
         onSubmit: () => closeSheetThen(sheetCtx, () async {
           if (!context.mounted) return;
-          await showTradeJournalSheet(context, prefilled: opportunity);
+          if (isLeaps) {
+            await showLeapsCallPositionSheet(
+              context,
+              symbol: opportunity.contract.underlying,
+            );
+          } else {
+            await showTradeJournalSheet(context, prefilled: opportunity);
+          }
         }),
       ),
       child: _DetailBody(opportunity: opportunity),
@@ -67,43 +78,88 @@ class _DetailBody extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.s16),
           _StatsGrid(
-            entries: <(String, Widget)>[
-              (
-                l10n.incomePlannerMetricPremiumTotal,
-                MoneyText(
-                  amount: metrics.premium.amount.toDouble(),
-                  currencyCode: metrics.premium.currency,
-                  symbolStyle: MoneySymbolStyle.isoCode,
-                  style: context.labelStyle,
+            entries: switch (metrics) {
+              final OpportunityMetrics sell => <(String, Widget)>[
+                (
+                  l10n.incomePlannerMetricPremiumTotal,
+                  MoneyText(
+                    amount: sell.premium.amount.toDouble(),
+                    currencyCode: sell.premium.currency,
+                    symbolStyle: MoneySymbolStyle.isoCode,
+                    style: context.labelStyle,
+                  ),
                 ),
-              ),
-              (
-                l10n.incomePlannerMetricAnnualized,
-                Text(pct(metrics.annualizedYield), style: context.labelStyle),
-              ),
-              (
-                l10n.incomePlannerMetricBreakeven,
-                MoneyText(
-                  amount: metrics.breakeven.amount.toDouble(),
-                  currencyCode: metrics.breakeven.currency,
-                  symbolStyle: MoneySymbolStyle.isoCode,
-                  style: context.labelStyle,
+                (
+                  l10n.incomePlannerMetricAnnualized,
+                  Text(pct(sell.annualizedYield), style: context.labelStyle),
                 ),
-              ),
-              (
-                l10n.incomePlannerMetricCash,
-                MoneyText(
-                  amount: metrics.cashRequired.amount.toDouble(),
-                  currencyCode: metrics.cashRequired.currency,
-                  symbolStyle: MoneySymbolStyle.isoCode,
-                  style: context.labelStyle,
+                (
+                  l10n.incomePlannerMetricBreakeven,
+                  MoneyText(
+                    amount: sell.breakeven.amount.toDouble(),
+                    currencyCode: sell.breakeven.currency,
+                    symbolStyle: MoneySymbolStyle.isoCode,
+                    style: context.labelStyle,
+                  ),
                 ),
-              ),
-              (
-                l10n.incomePlannerMetricMargin,
-                Text(pct(metrics.marginOfSafety), style: context.labelStyle),
-              ),
-            ],
+                (
+                  l10n.incomePlannerMetricCash,
+                  MoneyText(
+                    amount: sell.cashRequired.amount.toDouble(),
+                    currencyCode: sell.cashRequired.currency,
+                    symbolStyle: MoneySymbolStyle.isoCode,
+                    style: context.labelStyle,
+                  ),
+                ),
+                (
+                  l10n.incomePlannerMetricMargin,
+                  Text(pct(sell.marginOfSafety), style: context.labelStyle),
+                ),
+              ],
+              final LeapsOpportunityMetrics leaps => <(String, Widget)>[
+                (
+                  l10n.incomePlannerMetricLeapsCost,
+                  MoneyText(
+                    amount: leaps.totalCost.amount.toDouble(),
+                    currencyCode: leaps.totalCost.currency,
+                    symbolStyle: MoneySymbolStyle.isoCode,
+                    style: context.labelStyle,
+                  ),
+                ),
+                (
+                  l10n.incomePlannerMetricBreakeven,
+                  MoneyText(
+                    amount: leaps.breakeven.amount.toDouble(),
+                    currencyCode: leaps.breakeven.currency,
+                    symbolStyle: MoneySymbolStyle.isoCode,
+                    style: context.labelStyle,
+                  ),
+                ),
+                (
+                  l10n.incomePlannerMetricAnnualCost,
+                  Text(
+                    leaps.annualizedExtrinsicCostPct == null
+                        ? '—'
+                        : pct(leaps.annualizedExtrinsicCostPct!),
+                    style: context.labelStyle,
+                  ),
+                ),
+                (
+                  l10n.incomePlannerMetricLeverage,
+                  Text(
+                    leaps.leverageRatio == null
+                        ? '—'
+                        : '${leaps.leverageRatio!.toStringAsFixed(1)}x',
+                    style: context.labelStyle,
+                  ),
+                ),
+                if (leaps.fundingCoveragePct case final coverage?)
+                  (
+                    l10n.incomePlannerMetricFundingCoverage,
+                    Text(pct(coverage), style: context.labelStyle),
+                  ),
+              ],
+            },
           ),
           const SizedBox(height: AppSpacing.s16),
           _Section(

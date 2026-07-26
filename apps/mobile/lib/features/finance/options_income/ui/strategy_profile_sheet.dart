@@ -43,6 +43,11 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
   late final TextEditingController _putDeltaHighCtrl;
   late final TextEditingController _callDeltaLowCtrl;
   late final TextEditingController _callDeltaHighCtrl;
+  late final TextEditingController _leapsMinDteCtrl;
+  late final TextEditingController _leapsMaxDteCtrl;
+  late final TextEditingController _leapsDeltaLowCtrl;
+  late final TextEditingController _leapsDeltaHighCtrl;
+  late final TextEditingController _leapsSpreadCtrl;
   late OptionsStrategyProfile _draft;
   bool _busy = false;
   bool _advancedOpen = false;
@@ -67,6 +72,11 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
     _putDeltaHighCtrl = TextEditingController();
     _callDeltaLowCtrl = TextEditingController();
     _callDeltaHighCtrl = TextEditingController();
+    _leapsMinDteCtrl = TextEditingController();
+    _leapsMaxDteCtrl = TextEditingController();
+    _leapsDeltaLowCtrl = TextEditingController();
+    _leapsDeltaHighCtrl = TextEditingController();
+    _leapsSpreadCtrl = TextEditingController();
     for (final controller in _controllers) {
       controller.addListener(_markAdvancedCustom);
     }
@@ -86,6 +96,11 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
     _putDeltaHighCtrl,
     _callDeltaLowCtrl,
     _callDeltaHighCtrl,
+    _leapsMinDteCtrl,
+    _leapsMaxDteCtrl,
+    _leapsDeltaLowCtrl,
+    _leapsDeltaHighCtrl,
+    _leapsSpreadCtrl,
   ];
 
   void _setMode(OptionsStrategyMode mode) {
@@ -133,6 +148,11 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
     _putDeltaHighCtrl.text = profile.deltaPutMin.abs().toString();
     _callDeltaLowCtrl.text = profile.deltaCallMin.toString();
     _callDeltaHighCtrl.text = profile.deltaCallMax.toString();
+    _leapsMinDteCtrl.text = profile.leapsMinDte.toString();
+    _leapsMaxDteCtrl.text = profile.leapsMaxDte.toString();
+    _leapsDeltaLowCtrl.text = profile.leapsDeltaMin.toString();
+    _leapsDeltaHighCtrl.text = profile.leapsDeltaMax.toString();
+    _leapsSpreadCtrl.text = _percentText(profile.leapsMaxSpreadPct);
     _suppressControllerListeners = false;
   }
 
@@ -157,6 +177,11 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
       deltaPutMax: -Decimal.parse(_putDeltaLowCtrl.text.trim()),
       deltaCallMin: Decimal.parse(_callDeltaLowCtrl.text.trim()),
       deltaCallMax: Decimal.parse(_callDeltaHighCtrl.text.trim()),
+      leapsMinDte: int.parse(_leapsMinDteCtrl.text.trim()),
+      leapsMaxDte: int.parse(_leapsMaxDteCtrl.text.trim()),
+      leapsDeltaMin: Decimal.parse(_leapsDeltaLowCtrl.text.trim()),
+      leapsDeltaMax: Decimal.parse(_leapsDeltaHighCtrl.text.trim()),
+      leapsMaxSpreadPct: _parsePercent(_leapsSpreadCtrl.text),
     );
   }
 
@@ -376,6 +401,43 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
                       lowController: _callDeltaLowCtrl,
                       highController: _callDeltaHighCtrl,
                       label: l10n.incomePlannerProfileCallDeltaRange,
+                    ),
+                    const SizedBox(height: AppSpacing.s16),
+                    _SectionLabel(l10n.incomePlannerProfileLeapsSection),
+                    const SizedBox(height: AppSpacing.s8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _IntegerField(
+                            controller: _leapsMinDteCtrl,
+                            label: l10n.incomePlannerProfileLeapsMinDte,
+                            min: 180,
+                            max: 1460,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.s12),
+                        Expanded(
+                          child: _IntegerField(
+                            controller: _leapsMaxDteCtrl,
+                            label: l10n.incomePlannerProfileLeapsMaxDte,
+                            min: 180,
+                            max: 1460,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    _DeltaRangeRow(
+                      lowController: _leapsDeltaLowCtrl,
+                      highController: _leapsDeltaHighCtrl,
+                      label: l10n.incomePlannerProfileLeapsDeltaRange,
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    _PercentField(
+                      controller: _leapsSpreadCtrl,
+                      label: l10n.incomePlannerProfileLeapsMaxSpread,
+                      min: 0,
+                      max: 100,
                     ),
                   ],
                 ),

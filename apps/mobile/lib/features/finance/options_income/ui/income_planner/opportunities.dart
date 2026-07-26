@@ -1,6 +1,6 @@
 part of 'income_planner_page.dart';
 
-enum _OpportunityFilter { all, put, call }
+enum _OpportunityFilter { all, put, call, leaps }
 
 class _OpportunitiesHeader extends StatelessWidget {
   const _OpportunitiesHeader({
@@ -139,6 +139,7 @@ class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
                   l10n.incomePlannerOpportunityFilterAll,
                 _OpportunityFilter.put => l10n.incomePlannerChipCashSecuredPut,
                 _OpportunityFilter.call => l10n.incomePlannerChipCoveredCall,
+                _OpportunityFilter.leaps => l10n.incomePlannerChipLeaps,
               },
               onChanged: (filter) => setState(() => _filter = filter),
             ),
@@ -172,9 +173,11 @@ class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
   bool _matchesFilter(OptionsOpportunity opportunity) => switch (_filter) {
     _OpportunityFilter.all => true,
     _OpportunityFilter.put =>
-      opportunity.strategy == OptionsStrategyKind.cashSecuredPut,
+      opportunity.strategy == OpportunityStrategy.cashSecuredPut,
     _OpportunityFilter.call =>
-      opportunity.strategy == OptionsStrategyKind.coveredCall,
+      opportunity.strategy == OpportunityStrategy.coveredCall,
+    _OpportunityFilter.leaps =>
+      opportunity.strategy == OpportunityStrategy.leapsCall,
   };
 }
 
@@ -227,7 +230,7 @@ class _OpportunityCard extends ConsumerWidget {
                   alignment: WrapAlignment.end,
                   children: [
                     AppBadge(
-                      label: optionsStrategyKindShortLabel(
+                      label: opportunityStrategyShortLabel(
                         l10n,
                         opportunity.strategy,
                       ),
@@ -244,29 +247,56 @@ class _OpportunityCard extends ConsumerWidget {
             const SizedBox(height: AppSpacing.s14),
             AppMetricCluster(
               dense: true,
-              items: [
-                AppMetricItem(
-                  label: l10n.incomePlannerMetricPremiumTotal,
-                  value: formatters.currency(
-                    metrics.premium.amount,
-                    code: metrics.premium.currency,
+              items: switch (metrics) {
+                final OpportunityMetrics sell => [
+                  AppMetricItem(
+                    label: l10n.incomePlannerMetricPremiumTotal,
+                    value: formatters.currency(
+                      sell.premium.amount,
+                      code: sell.premium.currency,
+                    ),
                   ),
-                ),
-                AppMetricItem(
-                  label: l10n.incomePlannerMetricBreakeven,
-                  value: formatters.currency(
-                    metrics.breakeven.amount,
-                    code: metrics.breakeven.currency,
+                  AppMetricItem(
+                    label: l10n.incomePlannerMetricBreakeven,
+                    value: formatters.currency(
+                      sell.breakeven.amount,
+                      code: sell.breakeven.currency,
+                    ),
                   ),
-                ),
-                AppMetricItem(
-                  label: l10n.incomePlannerMetricAnnualized,
-                  value: formatters.percent(
-                    metrics.annualizedYield.toDouble(),
-                    decimalDigits: 1,
+                  AppMetricItem(
+                    label: l10n.incomePlannerMetricAnnualized,
+                    value: formatters.percent(
+                      sell.annualizedYield.toDouble(),
+                      decimalDigits: 1,
+                    ),
                   ),
-                ),
-              ],
+                ],
+                final LeapsOpportunityMetrics leaps => [
+                  AppMetricItem(
+                    label: l10n.incomePlannerMetricLeapsCost,
+                    value: formatters.currency(
+                      leaps.totalCost.amount,
+                      code: leaps.totalCost.currency,
+                    ),
+                  ),
+                  AppMetricItem(
+                    label: l10n.incomePlannerMetricBreakeven,
+                    value: formatters.currency(
+                      leaps.breakeven.amount,
+                      code: leaps.breakeven.currency,
+                    ),
+                  ),
+                  AppMetricItem(
+                    label: l10n.incomePlannerMetricAnnualCost,
+                    value: leaps.annualizedExtrinsicCostPct == null
+                        ? '—'
+                        : formatters.percent(
+                            leaps.annualizedExtrinsicCostPct!.toDouble(),
+                            decimalDigits: 1,
+                          ),
+                  ),
+                ],
+              },
             ),
             const SizedBox(height: AppSpacing.s12),
             Text(

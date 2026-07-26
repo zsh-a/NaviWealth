@@ -11,6 +11,7 @@ import '../domain/approved_underlying.dart';
 import '../domain/option_contract.dart';
 import '../domain/options_opportunity.dart';
 import '../domain/options_strategy_profile.dart';
+import '../domain/services/leaps_opportunity_scorer.dart';
 import '../domain/services/opportunity_scorer.dart';
 
 part 'scan_orchestrator_diagnostics.dart';
@@ -33,12 +34,15 @@ class ScanOrchestrator {
     required OptionsChainProvider chainProvider,
     required OpportunityScorer scorer,
     required OptionsOpportunityCacheRepository cache,
+    LeapsOpportunityScorer leapsScorer = const LeapsOpportunityScorer(),
   }) : _chainProvider = chainProvider,
        _scorer = scorer,
+       _leapsScorer = leapsScorer,
        _cache = cache;
 
   final OptionsChainProvider _chainProvider;
   final OpportunityScorer _scorer;
+  final LeapsOpportunityScorer _leapsScorer;
   final OptionsOpportunityCacheRepository _cache;
 
   Future<ScanResult> run(ScanInputs inputs) async {
@@ -152,6 +156,74 @@ class ScanOrchestrator {
       }
     }
 
+    // Buy-side LEAPS lane: separate DTE window, calls only, budget-aware.
+    for (final target in inputs.leapsTargets) {
+      if (DateTime.now().toUtc().isAfter(deadline)) {
+        errors['scan'] = 'scan timed out after ${_scanBudget.inSeconds}s';
+        logger.w(
+          'options-income scan: budget exhausted before LEAPS '
+          '${target.symbol}',
+        );
+        break;
+      }
+      try {
+        logger.d(
+          'options-income scan: fetching LEAPS ${target.symbol} '
+          'dte=${inputs.profile.leapsMinDte}-${inputs.profile.leapsMaxDte}',
+        );
+        final snapshot = await _chainProvider
+            .fetchChain(
+              OptionsChainRequest(
+                underlying: target.symbol,
+                minDte: inputs.profile.leapsMinDte,
+                maxDte: inputs.profile.leapsMaxDte,
+              ),
+            )
+            .timeout(_perUnderlyingFetchTimeout);
+        final ignoreOiFloor = _openInterestUnavailable(snapshot);
+        var scoredCount = 0;
+        final laneOpps = <OptionsOpportunity>[];
+        for (final contract in snapshot.contracts) {
+          if (contract.type != OptionType.call) continue;
+          final scored = _leapsScorer.scoreOne(
+            contract: contract,
+            profile: inputs.profile,
+            budgetRemaining: target.budgetRemaining,
+            groupFundingPool: target.groupFundingPool,
+            ignoreOpenInterestFloor: ignoreOiFloor,
+            now: now,
+          );
+          if (scored != null) {
+            laneOpps.add(scored);
+            scoredCount++;
+          } else {
+            final rejection = _leapsScorer.filter(
+              contract: contract,
+              profile: inputs.profile,
+              budgetRemaining: target.budgetRemaining,
+              ignoreOpenInterestFloor: ignoreOiFloor,
+            );
+            if (rejection != null) rejected.add(rejection);
+          }
+        }
+        // Keep the top few per underlying — LEAPS chains list dozens of
+        // near-identical strikes.
+        laneOpps.sort((a, b) => b.score.compareTo(a.score));
+        opportunities.addAll(laneOpps.take(3));
+        logger.d(
+          'options-income scan: LEAPS ${target.symbol} '
+          'scored=$scoredCount kept=${laneOpps.take(3).length}',
+        );
+      } catch (e, st) {
+        AppLogger.instance.w(
+          'options-income scan: LEAPS ${target.symbol} failed',
+          error: e,
+          stackTrace: st,
+        );
+        errors['LEAPS:${target.symbol}'] = e.toString();
+      }
+    }
+
     opportunities.sort((a, b) => b.score.compareTo(a.score));
     logger.i(
       'options-income scan: persisting '
@@ -171,7 +243,10 @@ class ScanOrchestrator {
       scannedAt: now,
       opportunities: opportunities,
       rejected: rejected,
-      universe: universe.map((a) => a.symbol).toList(),
+      universe: <String>{
+        for (final ap in universe) ap.symbol,
+        for (final target in inputs.leapsTargets) target.symbol,
+      }.toList(),
       errors: errors,
       warnings: warnings,
     );

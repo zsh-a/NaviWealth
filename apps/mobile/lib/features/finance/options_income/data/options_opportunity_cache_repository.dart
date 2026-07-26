@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
@@ -9,7 +10,6 @@ import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import '../domain/opportunity_explanation.dart';
 import '../domain/option_contract.dart';
 import '../domain/options_opportunity.dart';
-import '../domain/options_strategy_profile.dart';
 
 /// Local-only cache repository for [OptionsOpportunity]s.
 ///
@@ -122,7 +122,14 @@ class OptionsOpportunityCacheRepository {
     OptionsOpportunity opp,
   ) async {
     final c = opp.contract;
-    final m = opp.metrics;
+    // Sell-side numeric columns stay authoritative for sell-side rows;
+    // LEAPS rows persist their buy-side metrics as JSON and zero-fill the
+    // sell columns (never read back for that lane).
+    final (m, leapsJson) = switch (opp.metrics) {
+      final OpportunityMetrics sell => (sell, null),
+      final LeapsOpportunityMetrics leaps => (null, _encodeLeaps(leaps)),
+    };
+    final zero = Decimal.zero.toString();
     await _db.customStatement(
       'INSERT OR REPLACE INTO options_opportunity_cache ('
       '  scan_id, option_symbol, owner_user_id, underlying, market, strategy,'
@@ -130,9 +137,9 @@ class OptionsOpportunityCacheRepository {
       '  underlying_price, volume, open_interest, implied_volatility, delta,'
       '  bid_ask_spread_pct, premium, cash_required, breakeven, static_return,'
       '  annualized_yield, margin_of_safety, score, risk_level,'
-      '  explanation_json, scanned_at'
+      '  explanation_json, leaps_metrics_json, scanned_at'
       ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '
-      '?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      '?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       <Object?>[
         scanId,
         c.optionSymbol,
@@ -154,15 +161,16 @@ class OptionsOpportunityCacheRepository {
         c.impliedVolatility?.toString(),
         c.delta?.toString(),
         c.bidAskSpreadPct.toString(),
-        m.premium.amount.toString(),
-        m.cashRequired.amount.toString(),
-        m.breakeven.amount.toString(),
-        m.staticReturn.toString(),
-        m.annualizedYield.toString(),
-        m.marginOfSafety.toString(),
+        m?.premium.amount.toString() ?? zero,
+        m?.cashRequired.amount.toString() ?? zero,
+        m?.breakeven.amount.toString() ?? zero,
+        m?.staticReturn.toString() ?? zero,
+        m?.annualizedYield.toString() ?? zero,
+        m?.marginOfSafety.toString() ?? zero,
         opp.score.toString(),
         opp.risk.wire,
         opp.explanation.encode(),
+        leapsJson,
         _iso(opp.scannedAt),
       ],
     );
@@ -190,8 +198,8 @@ OptionsOpportunity _rowToDomain(QueryRow row) {
   final market = assetMarketFromWire(marketWire) ?? AssetMarket.unknown;
   final type = parseOptionType(row.read<String>('type')) ?? OptionType.put;
   final strategy =
-      parseOptionsStrategyKind(row.read<String>('strategy')) ??
-      OptionsStrategyKind.cashSecuredPut;
+      parseOpportunityStrategy(row.read<String>('strategy')) ??
+      OpportunityStrategy.cashSecuredPut;
   final scannedAt = DateTime.parse(row.read<String>('scanned_at')).toUtc();
   final expiration = DateTime.parse(row.read<String>('expiration')).toUtc();
   final explanation = OpportunityExplanation.decode(
@@ -219,14 +227,21 @@ OptionsOpportunity _rowToDomain(QueryRow row) {
     bidAskSpreadPct: Decimal.parse(row.read<String>('bid_ask_spread_pct')),
     fetchedAt: scannedAt,
   );
-  final metrics = OpportunityMetrics(
-    premium: Money.parse(row.read<String>('premium'), currency),
-    cashRequired: Money.parse(row.read<String>('cash_required'), currency),
-    breakeven: Money.parse(row.read<String>('breakeven'), currency),
-    staticReturn: Decimal.parse(row.read<String>('static_return')),
-    annualizedYield: Decimal.parse(row.read<String>('annualized_yield')),
-    marginOfSafety: Decimal.parse(row.read<String>('margin_of_safety')),
-  );
+  final leapsJson = row.read<String?>('leaps_metrics_json');
+  final OpportunityMetricsBase metrics =
+      strategy == OpportunityStrategy.leapsCall && leapsJson != null
+      ? _decodeLeaps(leapsJson, currency)
+      : OpportunityMetrics(
+          premium: Money.parse(row.read<String>('premium'), currency),
+          cashRequired: Money.parse(
+            row.read<String>('cash_required'),
+            currency,
+          ),
+          breakeven: Money.parse(row.read<String>('breakeven'), currency),
+          staticReturn: Decimal.parse(row.read<String>('static_return')),
+          annualizedYield: Decimal.parse(row.read<String>('annualized_yield')),
+          marginOfSafety: Decimal.parse(row.read<String>('margin_of_safety')),
+        );
   return OptionsOpportunity(
     strategy: strategy,
     contract: contract,
@@ -243,3 +258,28 @@ Decimal? _decimalOrNull(String? raw) =>
     raw == null || raw.isEmpty ? null : Decimal.parse(raw);
 
 String _iso(DateTime value) => value.toUtc().toIso8601String();
+
+String _encodeLeaps(LeapsOpportunityMetrics m) => jsonEncode(<String, Object?>{
+  'total_cost': m.totalCost.amount.toString(),
+  'breakeven': m.breakeven.amount.toString(),
+  'extrinsic_value': m.extrinsicValue.amount.toString(),
+  'extrinsic_ratio': m.extrinsicRatio.toString(),
+  'leverage_ratio': m.leverageRatio?.toString(),
+  'annualized_extrinsic_cost_pct': m.annualizedExtrinsicCostPct?.toString(),
+  'funding_coverage_pct': m.fundingCoveragePct?.toString(),
+});
+
+LeapsOpportunityMetrics _decodeLeaps(String raw, String currency) {
+  final json = jsonDecode(raw) as Map<String, Object?>;
+  return LeapsOpportunityMetrics(
+    totalCost: Money.parse(json['total_cost']! as String, currency),
+    breakeven: Money.parse(json['breakeven']! as String, currency),
+    extrinsicValue: Money.parse(json['extrinsic_value']! as String, currency),
+    extrinsicRatio: Decimal.parse(json['extrinsic_ratio']! as String),
+    leverageRatio: _decimalOrNull(json['leverage_ratio'] as String?),
+    annualizedExtrinsicCostPct: _decimalOrNull(
+      json['annualized_extrinsic_cost_pct'] as String?,
+    ),
+    fundingCoveragePct: _decimalOrNull(json['funding_coverage_pct'] as String?),
+  );
+}

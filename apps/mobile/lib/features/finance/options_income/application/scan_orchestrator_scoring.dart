@@ -94,9 +94,10 @@ List<OptionsOpportunity> _topPerBucket(List<OptionsOpportunity> opps) {
     OptionsOpportunity? safest;
     Decimal safestMargin = Decimal.zero;
     for (final o in list.skip(1)) {
-      if (o.metrics.marginOfSafety > safestMargin) {
+      if (o.metrics case final OpportunityMetrics m
+          when m.marginOfSafety > safestMargin) {
         safest = o;
-        safestMargin = o.metrics.marginOfSafety;
+        safestMargin = m.marginOfSafety;
       }
     }
     if (safest != null) out.add(safest);

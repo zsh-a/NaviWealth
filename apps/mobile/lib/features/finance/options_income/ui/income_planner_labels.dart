@@ -13,6 +13,7 @@ import 'package:forui/forui.dart';
 
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../domain/leaps_call_position.dart';
+import '../domain/options_opportunity.dart';
 import '../domain/options_strategy_profile.dart';
 import '../domain/trade_journal_entry.dart';
 import '../domain/wheel_lifecycle.dart';
@@ -44,6 +45,15 @@ String optionsStrategyKindShortLabel(
       return l10n.incomePlannerChipCoveredCall;
   }
 }
+
+String opportunityStrategyShortLabel(
+  AppLocalizations l10n,
+  OpportunityStrategy strategy,
+) => switch (strategy) {
+  OpportunityStrategy.cashSecuredPut => l10n.incomePlannerChipCashSecuredPut,
+  OpportunityStrategy.coveredCall => l10n.incomePlannerChipCoveredCall,
+  OpportunityStrategy.leapsCall => l10n.incomePlannerChipLeaps,
+};
 
 String optionsStrategyModeLabel(
   AppLocalizations l10n,

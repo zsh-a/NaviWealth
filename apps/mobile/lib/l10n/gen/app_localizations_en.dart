@@ -10643,6 +10643,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incomePlannerChipCoveredCall => 'Covered call';
 
   @override
+  String get incomePlannerChipLeaps => 'LEAPS call';
+
+  @override
+  String get incomePlannerMetricLeapsCost => 'Cost (max loss)';
+
+  @override
+  String get incomePlannerMetricLeverage => 'Leverage';
+
+  @override
+  String get incomePlannerMetricAnnualCost => 'Annualized time-value cost';
+
+  @override
+  String get incomePlannerMetricFundingCoverage => 'Income coverage';
+
+  @override
   String get incomePlannerRiskLow => 'Lower relative risk';
 
   @override
@@ -10976,6 +10991,64 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String optionsExplainLeapsSummary(
+    String symbol,
+    int dte,
+    String strike,
+    String cost,
+    String delta,
+  ) {
+    return '$symbol ${dte}DTE LEAPS call @ $strike — cost $cost, delta $delta';
+  }
+
+  @override
+  String optionsExplainLeapsWorstCase(
+    String symbol,
+    String strike,
+    String cost,
+  ) {
+    return 'If $symbol closes below $strike at expiration, the entire $cost premium is lost. Maximum loss is the full cost paid.';
+  }
+
+  @override
+  String get optionsExplainLeapsBestFor =>
+      'Best as a funded stock substitute: long-dated deep-in-the-money exposure paid for by wheel or dividend income.';
+
+  @override
+  String get optionsExplainLeapsAvoid =>
+      'Avoid if you cannot hold through a full drawdown — time value decays and the position can expire worthless.';
+
+  @override
+  String optionsExplainLeapsCostBullet(String costPct) {
+    return 'Annualized time-value cost $costPct per unit of share exposure';
+  }
+
+  @override
+  String optionsExplainLeapsLeverageBullet(String leverage, String delta) {
+    return 'Controls ${leverage}x the share exposure per unit of capital (delta $delta)';
+  }
+
+  @override
+  String optionsExplainLeapsIntrinsicBullet(String intrinsicPct) {
+    return '$intrinsicPct of the premium is intrinsic value';
+  }
+
+  @override
+  String optionsExplainLeapsSpreadBullet(String spread) {
+    return 'Wide bid/ask spread $spread — LEAPS liquidity is thin, use limit orders';
+  }
+
+  @override
+  String optionsExplainLeapsThetaBullet(String extrinsic) {
+    return '$extrinsic of time value will decay to zero by expiration';
+  }
+
+  @override
+  String optionsExplainLeapsFundingBullet(String coverage) {
+    return 'Group income already covers $coverage of this cost';
+  }
+
+  @override
   String optionsLedgerPremium(String symbol) {
     return 'Options premium $symbol';
   }
@@ -11157,6 +11230,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get incomePlannerProfilePutDeltaRange => 'Put absolute delta range';
+
+  @override
+  String get incomePlannerProfileLeapsSection => 'LEAPS scan';
+
+  @override
+  String get incomePlannerProfileLeapsMinDte => 'LEAPS min DTE';
+
+  @override
+  String get incomePlannerProfileLeapsMaxDte => 'LEAPS max DTE';
+
+  @override
+  String get incomePlannerProfileLeapsDeltaRange => 'LEAPS call delta range';
+
+  @override
+  String get incomePlannerProfileLeapsMaxSpread => 'LEAPS max spread (%)';
 
   @override
   String get incomePlannerProfileCallDeltaRange => 'Call delta range';

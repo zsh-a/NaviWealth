@@ -28,7 +28,6 @@ import '../options_income/data/options_opportunity_cache_repository.dart';
 import '../options_income/data/providers.dart';
 import '../options_income/domain/option_contract.dart';
 import '../options_income/domain/options_opportunity.dart';
-import '../options_income/domain/options_strategy_profile.dart';
 
 const String kOptionsIncomeRiskReviewAgentId = 'options_income_risk_review';
 const String kOptionsIncomeRiskReviewMemorySource =
@@ -302,7 +301,13 @@ class OptionsIncomeRiskAnalysis {
     }
 
     final narrowCushion = opportunities
-        .where((opp) => opp.metrics.marginOfSafety < Decimal.parse('0.05'))
+        .where(
+          (opp) => switch (opp.metrics) {
+            final OpportunityMetrics m =>
+              m.marginOfSafety < Decimal.parse('0.05'),
+            LeapsOpportunityMetrics() => false,
+          },
+        )
         .toList(growable: false);
     if (narrowCushion.isNotEmpty) {
       issues.add(
@@ -668,7 +673,12 @@ String _riskMixLabel(
 
 Map<String, Object?> _opportunityPayload(OptionsOpportunity opportunity) {
   final contract = opportunity.contract;
-  final metrics = opportunity.metrics;
+  final metrics = switch (opportunity.metrics) {
+    final OpportunityMetrics sell => sell,
+    // The risk-review agent focuses on sell-side exposure; LEAPS rows
+    // carry their own metrics shape and are summarised without them.
+    LeapsOpportunityMetrics() => null,
+  };
   return <String, Object?>{
     'scan_id': opportunity.scanId,
     'option_symbol': contract.optionSymbol,
@@ -682,10 +692,12 @@ Map<String, Object?> _opportunityPayload(OptionsOpportunity opportunity) {
     'open_interest': contract.openInterest,
     'delta': contract.delta?.toString(),
     'implied_volatility': contract.impliedVolatility?.toString(),
-    'margin_of_safety': _pct(metrics.marginOfSafety),
-    'annualized_yield': _pct(metrics.annualizedYield),
-    'cash_required': metrics.cashRequired.amount.toString(),
-    'currency': metrics.cashRequired.currency,
+    if (metrics != null) ...{
+      'margin_of_safety': _pct(metrics.marginOfSafety),
+      'annualized_yield': _pct(metrics.annualizedYield),
+      'cash_required': metrics.cashRequired.amount.toString(),
+      'currency': metrics.cashRequired.currency,
+    },
     'why_risky': opportunity.explanation.whyRisky,
   };
 }

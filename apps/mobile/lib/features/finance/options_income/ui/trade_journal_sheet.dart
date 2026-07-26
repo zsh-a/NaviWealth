@@ -86,8 +86,14 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
     _optionSymbolCtl = TextEditingController(
       text: pre?.contract.optionSymbol ?? '',
     );
+    // Prefill only carries sell-side opportunities — LEAPS candidates
+    // route to the LEAPS position sheet instead.
+    final preMetrics = switch (pre?.metrics) {
+      final OpportunityMetrics sell => sell,
+      _ => null,
+    };
     _creditCtl = TextEditingController(
-      text: pre == null ? '' : pre.metrics.premium.amount.toString(),
+      text: preMetrics?.premium.amount.toString() ?? '',
     );
     _debitCtl = TextEditingController();
     _strikeCtl = TextEditingController(
@@ -100,8 +106,10 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
     _openedAt = DateTime.now().toUtc();
     _expirationAt = pre?.contract.expiration;
     if (pre != null) {
-      _strategy = pre.strategy;
-      _currency = pre.metrics.premium.currency;
+      _strategy = pre.strategy.sellSideKind ?? _strategy;
+    }
+    if (preMetrics != null) {
+      _currency = preMetrics.premium.currency;
     }
     final defaults = ref.read(formDefaultsProvider);
     _brokerageAccountId = defaults.tradeAccountId;

@@ -21,6 +21,21 @@ class OptionsStrategyProfileTable extends Table with SyncableTable {
   IntColumn get minOpenInterest => integer()();
   IntColumn get minVolume => integer()();
   TextColumn get maxBidAskSpreadPct => text().map(const DecimalConverter())();
+  // Buy-side LEAPS lane thresholds. Defaults mirror the balanced preset so
+  // migrated rows behave like a freshly-created balanced profile.
+  IntColumn get leapsMinDte => integer().withDefault(const Constant(365))();
+  IntColumn get leapsMaxDte => integer().withDefault(const Constant(1095))();
+  TextColumn get leapsDeltaMin => text()
+      .map(const DecimalConverter())
+      .withDefault(const Constant('0.65'))();
+  TextColumn get leapsDeltaMax => text()
+      .map(const DecimalConverter())
+      .withDefault(const Constant('0.80'))();
+  TextColumn get leapsMaxSpreadPct => text()
+      .map(const DecimalConverter())
+      .withDefault(const Constant('0.08'))();
+  IntColumn get leapsMinOpenInterest =>
+      integer().withDefault(const Constant(50))();
   BoolColumn get avoidEarnings => boolean().withDefault(const Constant(true))();
   BoolColumn get avoidMacroEvents =>
       boolean().withDefault(const Constant(true))();

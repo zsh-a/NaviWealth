@@ -29,6 +29,12 @@ class OptionsStrategyProfile {
     required this.avoidMacroEvents,
     required this.riskDisclosureAckAt,
     required this.sync,
+    required this.leapsMinDte,
+    required this.leapsMaxDte,
+    required this.leapsDeltaMin,
+    required this.leapsDeltaMax,
+    required this.leapsMaxSpreadPct,
+    required this.leapsMinOpenInterest,
   });
 
   final OptionsStrategyMode mode;
@@ -69,6 +75,20 @@ class OptionsStrategyProfile {
   /// confirms the disclosure — gate-keeps the scanner UI.
   final DateTime? riskDisclosureAckAt;
 
+  // Buy-side LEAPS lane. Separate window and thresholds because the
+  // sell-side numbers (short DTE, tight spreads, OTM deltas) would
+  // reject every long-dated deep-ITM call.
+  final int leapsMinDte;
+  final int leapsMaxDte;
+
+  /// Call delta bounds for the stock-substitute sweet spot (positive).
+  final Decimal leapsDeltaMin;
+  final Decimal leapsDeltaMax;
+
+  /// LEAPS chains trade wider than monthlies; independent ceiling.
+  final Decimal leapsMaxSpreadPct;
+  final int leapsMinOpenInterest;
+
   final SyncMeta sync;
 
   bool get hasAcknowledgedRiskDisclosure => riskDisclosureAckAt != null;
@@ -91,6 +111,12 @@ class OptionsStrategyProfile {
     bool? avoidMacroEvents,
     DateTime? riskDisclosureAckAt,
     SyncMeta? sync,
+    int? leapsMinDte,
+    int? leapsMaxDte,
+    Decimal? leapsDeltaMin,
+    Decimal? leapsDeltaMax,
+    Decimal? leapsMaxSpreadPct,
+    int? leapsMinOpenInterest,
   }) {
     return OptionsStrategyProfile(
       mode: mode ?? this.mode,
@@ -111,6 +137,12 @@ class OptionsStrategyProfile {
       avoidMacroEvents: avoidMacroEvents ?? this.avoidMacroEvents,
       riskDisclosureAckAt: riskDisclosureAckAt ?? this.riskDisclosureAckAt,
       sync: sync ?? this.sync,
+      leapsMinDte: leapsMinDte ?? this.leapsMinDte,
+      leapsMaxDte: leapsMaxDte ?? this.leapsMaxDte,
+      leapsDeltaMin: leapsDeltaMin ?? this.leapsDeltaMin,
+      leapsDeltaMax: leapsDeltaMax ?? this.leapsDeltaMax,
+      leapsMaxSpreadPct: leapsMaxSpreadPct ?? this.leapsMaxSpreadPct,
+      leapsMinOpenInterest: leapsMinOpenInterest ?? this.leapsMinOpenInterest,
     );
   }
 }
@@ -202,6 +234,12 @@ OptionsStrategyProfile defaultProfileForMode(OptionsStrategyMode mode) {
         avoidMacroEvents: true,
         riskDisclosureAckAt: null,
         sync: sync,
+        leapsMinDte: 540,
+        leapsMaxDte: 1095,
+        leapsDeltaMin: Decimal.parse('0.75'),
+        leapsDeltaMax: Decimal.parse('0.85'),
+        leapsMaxSpreadPct: Decimal.parse('0.06'),
+        leapsMinOpenInterest: 100,
       );
     case OptionsStrategyMode.balanced:
     case OptionsStrategyMode.custom:
@@ -226,6 +264,12 @@ OptionsStrategyProfile defaultProfileForMode(OptionsStrategyMode mode) {
         avoidMacroEvents: true,
         riskDisclosureAckAt: null,
         sync: sync,
+        leapsMinDte: 365,
+        leapsMaxDte: 1095,
+        leapsDeltaMin: Decimal.parse('0.65'),
+        leapsDeltaMax: Decimal.parse('0.80'),
+        leapsMaxSpreadPct: Decimal.parse('0.08'),
+        leapsMinOpenInterest: 50,
       );
     case OptionsStrategyMode.aggressive:
       return OptionsStrategyProfile(
@@ -249,6 +293,12 @@ OptionsStrategyProfile defaultProfileForMode(OptionsStrategyMode mode) {
         avoidMacroEvents: false,
         riskDisclosureAckAt: null,
         sync: sync,
+        leapsMinDte: 365,
+        leapsMaxDte: 1095,
+        leapsDeltaMin: Decimal.parse('0.55'),
+        leapsDeltaMax: Decimal.parse('0.70'),
+        leapsMaxSpreadPct: Decimal.parse('0.10'),
+        leapsMinOpenInterest: 25,
       );
   }
 }

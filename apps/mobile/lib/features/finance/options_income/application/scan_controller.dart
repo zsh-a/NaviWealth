@@ -2,7 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
+import 'package:naviwealth/features/finance/income_strategy/data/providers.dart';
+import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy.dart';
 import '../data/providers.dart';
+import 'leaps_scan_targets.dart';
 import 'scan_inputs_bridge.dart';
 import 'scan_orchestrator.dart';
 
@@ -48,6 +51,22 @@ class ScanController extends Notifier<ScanState> {
         throw StateError('profile_missing');
       }
       final approved = ref.read(approvedUnderlyingsProvider).value ?? const [];
+      final plans = await ref.read(incomeStrategyPlansProvider.future);
+      final leapsPositions =
+          ref.read(leapsCallPositionsProvider).value ?? const [];
+      PortfolioIncomeStrategySnapshot? portfolio;
+      try {
+        portfolio = await ref.read(portfolioIncomeStrategyProvider.future);
+      } catch (_) {
+        // Funding context is best-effort; the LEAPS lane still scans with
+        // budget-only filtering when the snapshot is unavailable.
+        portfolio = null;
+      }
+      final leapsTargets = buildLeapsScanTargets(
+        plans: plans,
+        positions: leapsPositions,
+        portfolio: portfolio,
+      );
       logger.d(
         'options-income scan: inputs '
         'approved=${approved.map((a) => a.symbol).join(",")} '
@@ -66,6 +85,7 @@ class ScanController extends Notifier<ScanState> {
         upcomingEarningsSymbols: const {},
         upcomingMacroEvent: false,
         eventDataAvailable: false,
+        leapsTargets: leapsTargets,
       );
       final result = await orchestrator.run(inputs);
       logger.i(

@@ -7601,6 +7601,78 @@ class $OptionsStrategyProfileTableTable extends OptionsStrategyProfileTable
       ).withConverter<Decimal>(
         $OptionsStrategyProfileTableTable.$convertermaxBidAskSpreadPct,
       );
+  static const VerificationMeta _leapsMinDteMeta = const VerificationMeta(
+    'leapsMinDte',
+  );
+  @override
+  late final GeneratedColumn<int> leapsMinDte = GeneratedColumn<int>(
+    'leaps_min_dte',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(365),
+  );
+  static const VerificationMeta _leapsMaxDteMeta = const VerificationMeta(
+    'leapsMaxDte',
+  );
+  @override
+  late final GeneratedColumn<int> leapsMaxDte = GeneratedColumn<int>(
+    'leaps_max_dte',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1095),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> leapsDeltaMin =
+      GeneratedColumn<String>(
+        'leaps_delta_min',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('0.65'),
+      ).withConverter<Decimal>(
+        $OptionsStrategyProfileTableTable.$converterleapsDeltaMin,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> leapsDeltaMax =
+      GeneratedColumn<String>(
+        'leaps_delta_max',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('0.80'),
+      ).withConverter<Decimal>(
+        $OptionsStrategyProfileTableTable.$converterleapsDeltaMax,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String>
+  leapsMaxSpreadPct =
+      GeneratedColumn<String>(
+        'leaps_max_spread_pct',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('0.08'),
+      ).withConverter<Decimal>(
+        $OptionsStrategyProfileTableTable.$converterleapsMaxSpreadPct,
+      );
+  static const VerificationMeta _leapsMinOpenInterestMeta =
+      const VerificationMeta('leapsMinOpenInterest');
+  @override
+  late final GeneratedColumn<int> leapsMinOpenInterest = GeneratedColumn<int>(
+    'leaps_min_open_interest',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(50),
+  );
   static const VerificationMeta _avoidEarningsMeta = const VerificationMeta(
     'avoidEarnings',
   );
@@ -7663,6 +7735,12 @@ class $OptionsStrategyProfileTableTable extends OptionsStrategyProfileTable
     minOpenInterest,
     minVolume,
     maxBidAskSpreadPct,
+    leapsMinDte,
+    leapsMaxDte,
+    leapsDeltaMin,
+    leapsDeltaMax,
+    leapsMaxSpreadPct,
+    leapsMinOpenInterest,
     avoidEarnings,
     avoidMacroEvents,
     riskDisclosureAckAt,
@@ -7774,6 +7852,33 @@ class $OptionsStrategyProfileTableTable extends OptionsStrategyProfileTable
       );
     } else if (isInserting) {
       context.missing(_minVolumeMeta);
+    }
+    if (data.containsKey('leaps_min_dte')) {
+      context.handle(
+        _leapsMinDteMeta,
+        leapsMinDte.isAcceptableOrUnknown(
+          data['leaps_min_dte']!,
+          _leapsMinDteMeta,
+        ),
+      );
+    }
+    if (data.containsKey('leaps_max_dte')) {
+      context.handle(
+        _leapsMaxDteMeta,
+        leapsMaxDte.isAcceptableOrUnknown(
+          data['leaps_max_dte']!,
+          _leapsMaxDteMeta,
+        ),
+      );
+    }
+    if (data.containsKey('leaps_min_open_interest')) {
+      context.handle(
+        _leapsMinOpenInterestMeta,
+        leapsMinOpenInterest.isAcceptableOrUnknown(
+          data['leaps_min_open_interest']!,
+          _leapsMinOpenInterestMeta,
+        ),
+      );
     }
     if (data.containsKey('avoid_earnings')) {
       context.handle(
@@ -7916,6 +8021,40 @@ class $OptionsStrategyProfileTableTable extends OptionsStrategyProfileTable
               data['${effectivePrefix}max_bid_ask_spread_pct'],
             )!,
           ),
+      leapsMinDte: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}leaps_min_dte'],
+      )!,
+      leapsMaxDte: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}leaps_max_dte'],
+      )!,
+      leapsDeltaMin: $OptionsStrategyProfileTableTable.$converterleapsDeltaMin
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}leaps_delta_min'],
+            )!,
+          ),
+      leapsDeltaMax: $OptionsStrategyProfileTableTable.$converterleapsDeltaMax
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}leaps_delta_max'],
+            )!,
+          ),
+      leapsMaxSpreadPct: $OptionsStrategyProfileTableTable
+          .$converterleapsMaxSpreadPct
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}leaps_max_spread_pct'],
+            )!,
+          ),
+      leapsMinOpenInterest: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}leaps_min_open_interest'],
+      )!,
       avoidEarnings: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}avoid_earnings'],
@@ -7950,6 +8089,12 @@ class $OptionsStrategyProfileTableTable extends OptionsStrategyProfileTable
   static TypeConverter<Decimal, String> $converterminAnnualizedYield =
       const DecimalConverter();
   static TypeConverter<Decimal, String> $convertermaxBidAskSpreadPct =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterleapsDeltaMin =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterleapsDeltaMax =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterleapsMaxSpreadPct =
       const DecimalConverter();
 }
 
@@ -7990,6 +8135,12 @@ class OptionsStrategyProfileRow extends DataClass
   final int minOpenInterest;
   final int minVolume;
   final Decimal maxBidAskSpreadPct;
+  final int leapsMinDte;
+  final int leapsMaxDte;
+  final Decimal leapsDeltaMin;
+  final Decimal leapsDeltaMax;
+  final Decimal leapsMaxSpreadPct;
+  final int leapsMinOpenInterest;
   final bool avoidEarnings;
   final bool avoidMacroEvents;
   final DateTime? riskDisclosureAckAt;
@@ -8013,6 +8164,12 @@ class OptionsStrategyProfileRow extends DataClass
     required this.minOpenInterest,
     required this.minVolume,
     required this.maxBidAskSpreadPct,
+    required this.leapsMinDte,
+    required this.leapsMaxDte,
+    required this.leapsDeltaMin,
+    required this.leapsDeltaMax,
+    required this.leapsMaxSpreadPct,
+    required this.leapsMinOpenInterest,
     required this.avoidEarnings,
     required this.avoidMacroEvents,
     this.riskDisclosureAckAt,
@@ -8087,6 +8244,30 @@ class OptionsStrategyProfileRow extends DataClass
         ),
       );
     }
+    map['leaps_min_dte'] = Variable<int>(leapsMinDte);
+    map['leaps_max_dte'] = Variable<int>(leapsMaxDte);
+    {
+      map['leaps_delta_min'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterleapsDeltaMin.toSql(
+          leapsDeltaMin,
+        ),
+      );
+    }
+    {
+      map['leaps_delta_max'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterleapsDeltaMax.toSql(
+          leapsDeltaMax,
+        ),
+      );
+    }
+    {
+      map['leaps_max_spread_pct'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterleapsMaxSpreadPct.toSql(
+          leapsMaxSpreadPct,
+        ),
+      );
+    }
+    map['leaps_min_open_interest'] = Variable<int>(leapsMinOpenInterest);
     map['avoid_earnings'] = Variable<bool>(avoidEarnings);
     map['avoid_macro_events'] = Variable<bool>(avoidMacroEvents);
     if (!nullToAbsent || riskDisclosureAckAt != null) {
@@ -8118,6 +8299,12 @@ class OptionsStrategyProfileRow extends DataClass
       minOpenInterest: Value(minOpenInterest),
       minVolume: Value(minVolume),
       maxBidAskSpreadPct: Value(maxBidAskSpreadPct),
+      leapsMinDte: Value(leapsMinDte),
+      leapsMaxDte: Value(leapsMaxDte),
+      leapsDeltaMin: Value(leapsDeltaMin),
+      leapsDeltaMax: Value(leapsDeltaMax),
+      leapsMaxSpreadPct: Value(leapsMaxSpreadPct),
+      leapsMinOpenInterest: Value(leapsMinOpenInterest),
       avoidEarnings: Value(avoidEarnings),
       avoidMacroEvents: Value(avoidMacroEvents),
       riskDisclosureAckAt: riskDisclosureAckAt == null && nullToAbsent
@@ -8159,6 +8346,16 @@ class OptionsStrategyProfileRow extends DataClass
       maxBidAskSpreadPct: serializer.fromJson<Decimal>(
         json['maxBidAskSpreadPct'],
       ),
+      leapsMinDte: serializer.fromJson<int>(json['leapsMinDte']),
+      leapsMaxDte: serializer.fromJson<int>(json['leapsMaxDte']),
+      leapsDeltaMin: serializer.fromJson<Decimal>(json['leapsDeltaMin']),
+      leapsDeltaMax: serializer.fromJson<Decimal>(json['leapsDeltaMax']),
+      leapsMaxSpreadPct: serializer.fromJson<Decimal>(
+        json['leapsMaxSpreadPct'],
+      ),
+      leapsMinOpenInterest: serializer.fromJson<int>(
+        json['leapsMinOpenInterest'],
+      ),
       avoidEarnings: serializer.fromJson<bool>(json['avoidEarnings']),
       avoidMacroEvents: serializer.fromJson<bool>(json['avoidMacroEvents']),
       riskDisclosureAckAt: serializer.fromJson<DateTime?>(
@@ -8191,6 +8388,12 @@ class OptionsStrategyProfileRow extends DataClass
       'minOpenInterest': serializer.toJson<int>(minOpenInterest),
       'minVolume': serializer.toJson<int>(minVolume),
       'maxBidAskSpreadPct': serializer.toJson<Decimal>(maxBidAskSpreadPct),
+      'leapsMinDte': serializer.toJson<int>(leapsMinDte),
+      'leapsMaxDte': serializer.toJson<int>(leapsMaxDte),
+      'leapsDeltaMin': serializer.toJson<Decimal>(leapsDeltaMin),
+      'leapsDeltaMax': serializer.toJson<Decimal>(leapsDeltaMax),
+      'leapsMaxSpreadPct': serializer.toJson<Decimal>(leapsMaxSpreadPct),
+      'leapsMinOpenInterest': serializer.toJson<int>(leapsMinOpenInterest),
       'avoidEarnings': serializer.toJson<bool>(avoidEarnings),
       'avoidMacroEvents': serializer.toJson<bool>(avoidMacroEvents),
       'riskDisclosureAckAt': serializer.toJson<DateTime?>(riskDisclosureAckAt),
@@ -8217,6 +8420,12 @@ class OptionsStrategyProfileRow extends DataClass
     int? minOpenInterest,
     int? minVolume,
     Decimal? maxBidAskSpreadPct,
+    int? leapsMinDte,
+    int? leapsMaxDte,
+    Decimal? leapsDeltaMin,
+    Decimal? leapsDeltaMax,
+    Decimal? leapsMaxSpreadPct,
+    int? leapsMinOpenInterest,
     bool? avoidEarnings,
     bool? avoidMacroEvents,
     Value<DateTime?> riskDisclosureAckAt = const Value.absent(),
@@ -8240,6 +8449,12 @@ class OptionsStrategyProfileRow extends DataClass
     minOpenInterest: minOpenInterest ?? this.minOpenInterest,
     minVolume: minVolume ?? this.minVolume,
     maxBidAskSpreadPct: maxBidAskSpreadPct ?? this.maxBidAskSpreadPct,
+    leapsMinDte: leapsMinDte ?? this.leapsMinDte,
+    leapsMaxDte: leapsMaxDte ?? this.leapsMaxDte,
+    leapsDeltaMin: leapsDeltaMin ?? this.leapsDeltaMin,
+    leapsDeltaMax: leapsDeltaMax ?? this.leapsDeltaMax,
+    leapsMaxSpreadPct: leapsMaxSpreadPct ?? this.leapsMaxSpreadPct,
+    leapsMinOpenInterest: leapsMinOpenInterest ?? this.leapsMinOpenInterest,
     avoidEarnings: avoidEarnings ?? this.avoidEarnings,
     avoidMacroEvents: avoidMacroEvents ?? this.avoidMacroEvents,
     riskDisclosureAckAt: riskDisclosureAckAt.present
@@ -8291,6 +8506,24 @@ class OptionsStrategyProfileRow extends DataClass
       maxBidAskSpreadPct: data.maxBidAskSpreadPct.present
           ? data.maxBidAskSpreadPct.value
           : this.maxBidAskSpreadPct,
+      leapsMinDte: data.leapsMinDte.present
+          ? data.leapsMinDte.value
+          : this.leapsMinDte,
+      leapsMaxDte: data.leapsMaxDte.present
+          ? data.leapsMaxDte.value
+          : this.leapsMaxDte,
+      leapsDeltaMin: data.leapsDeltaMin.present
+          ? data.leapsDeltaMin.value
+          : this.leapsDeltaMin,
+      leapsDeltaMax: data.leapsDeltaMax.present
+          ? data.leapsDeltaMax.value
+          : this.leapsDeltaMax,
+      leapsMaxSpreadPct: data.leapsMaxSpreadPct.present
+          ? data.leapsMaxSpreadPct.value
+          : this.leapsMaxSpreadPct,
+      leapsMinOpenInterest: data.leapsMinOpenInterest.present
+          ? data.leapsMinOpenInterest.value
+          : this.leapsMinOpenInterest,
       avoidEarnings: data.avoidEarnings.present
           ? data.avoidEarnings.value
           : this.avoidEarnings,
@@ -8325,6 +8558,12 @@ class OptionsStrategyProfileRow extends DataClass
           ..write('minOpenInterest: $minOpenInterest, ')
           ..write('minVolume: $minVolume, ')
           ..write('maxBidAskSpreadPct: $maxBidAskSpreadPct, ')
+          ..write('leapsMinDte: $leapsMinDte, ')
+          ..write('leapsMaxDte: $leapsMaxDte, ')
+          ..write('leapsDeltaMin: $leapsDeltaMin, ')
+          ..write('leapsDeltaMax: $leapsDeltaMax, ')
+          ..write('leapsMaxSpreadPct: $leapsMaxSpreadPct, ')
+          ..write('leapsMinOpenInterest: $leapsMinOpenInterest, ')
           ..write('avoidEarnings: $avoidEarnings, ')
           ..write('avoidMacroEvents: $avoidMacroEvents, ')
           ..write('riskDisclosureAckAt: $riskDisclosureAckAt')
@@ -8353,6 +8592,12 @@ class OptionsStrategyProfileRow extends DataClass
     minOpenInterest,
     minVolume,
     maxBidAskSpreadPct,
+    leapsMinDte,
+    leapsMaxDte,
+    leapsDeltaMin,
+    leapsDeltaMax,
+    leapsMaxSpreadPct,
+    leapsMinOpenInterest,
     avoidEarnings,
     avoidMacroEvents,
     riskDisclosureAckAt,
@@ -8380,6 +8625,12 @@ class OptionsStrategyProfileRow extends DataClass
           other.minOpenInterest == this.minOpenInterest &&
           other.minVolume == this.minVolume &&
           other.maxBidAskSpreadPct == this.maxBidAskSpreadPct &&
+          other.leapsMinDte == this.leapsMinDte &&
+          other.leapsMaxDte == this.leapsMaxDte &&
+          other.leapsDeltaMin == this.leapsDeltaMin &&
+          other.leapsDeltaMax == this.leapsDeltaMax &&
+          other.leapsMaxSpreadPct == this.leapsMaxSpreadPct &&
+          other.leapsMinOpenInterest == this.leapsMinOpenInterest &&
           other.avoidEarnings == this.avoidEarnings &&
           other.avoidMacroEvents == this.avoidMacroEvents &&
           other.riskDisclosureAckAt == this.riskDisclosureAckAt);
@@ -8406,6 +8657,12 @@ class OptionsStrategyProfileTableCompanion
   final Value<int> minOpenInterest;
   final Value<int> minVolume;
   final Value<Decimal> maxBidAskSpreadPct;
+  final Value<int> leapsMinDte;
+  final Value<int> leapsMaxDte;
+  final Value<Decimal> leapsDeltaMin;
+  final Value<Decimal> leapsDeltaMax;
+  final Value<Decimal> leapsMaxSpreadPct;
+  final Value<int> leapsMinOpenInterest;
   final Value<bool> avoidEarnings;
   final Value<bool> avoidMacroEvents;
   final Value<DateTime?> riskDisclosureAckAt;
@@ -8430,6 +8687,12 @@ class OptionsStrategyProfileTableCompanion
     this.minOpenInterest = const Value.absent(),
     this.minVolume = const Value.absent(),
     this.maxBidAskSpreadPct = const Value.absent(),
+    this.leapsMinDte = const Value.absent(),
+    this.leapsMaxDte = const Value.absent(),
+    this.leapsDeltaMin = const Value.absent(),
+    this.leapsDeltaMax = const Value.absent(),
+    this.leapsMaxSpreadPct = const Value.absent(),
+    this.leapsMinOpenInterest = const Value.absent(),
     this.avoidEarnings = const Value.absent(),
     this.avoidMacroEvents = const Value.absent(),
     this.riskDisclosureAckAt = const Value.absent(),
@@ -8455,6 +8718,12 @@ class OptionsStrategyProfileTableCompanion
     required int minOpenInterest,
     required int minVolume,
     required Decimal maxBidAskSpreadPct,
+    this.leapsMinDte = const Value.absent(),
+    this.leapsMaxDte = const Value.absent(),
+    this.leapsDeltaMin = const Value.absent(),
+    this.leapsDeltaMax = const Value.absent(),
+    this.leapsMaxSpreadPct = const Value.absent(),
+    this.leapsMinOpenInterest = const Value.absent(),
     this.avoidEarnings = const Value.absent(),
     this.avoidMacroEvents = const Value.absent(),
     this.riskDisclosureAckAt = const Value.absent(),
@@ -8496,6 +8765,12 @@ class OptionsStrategyProfileTableCompanion
     Expression<int>? minOpenInterest,
     Expression<int>? minVolume,
     Expression<String>? maxBidAskSpreadPct,
+    Expression<int>? leapsMinDte,
+    Expression<int>? leapsMaxDte,
+    Expression<String>? leapsDeltaMin,
+    Expression<String>? leapsDeltaMax,
+    Expression<String>? leapsMaxSpreadPct,
+    Expression<int>? leapsMinOpenInterest,
     Expression<bool>? avoidEarnings,
     Expression<bool>? avoidMacroEvents,
     Expression<DateTime>? riskDisclosureAckAt,
@@ -8525,6 +8800,13 @@ class OptionsStrategyProfileTableCompanion
       if (minVolume != null) 'min_volume': minVolume,
       if (maxBidAskSpreadPct != null)
         'max_bid_ask_spread_pct': maxBidAskSpreadPct,
+      if (leapsMinDte != null) 'leaps_min_dte': leapsMinDte,
+      if (leapsMaxDte != null) 'leaps_max_dte': leapsMaxDte,
+      if (leapsDeltaMin != null) 'leaps_delta_min': leapsDeltaMin,
+      if (leapsDeltaMax != null) 'leaps_delta_max': leapsDeltaMax,
+      if (leapsMaxSpreadPct != null) 'leaps_max_spread_pct': leapsMaxSpreadPct,
+      if (leapsMinOpenInterest != null)
+        'leaps_min_open_interest': leapsMinOpenInterest,
       if (avoidEarnings != null) 'avoid_earnings': avoidEarnings,
       if (avoidMacroEvents != null) 'avoid_macro_events': avoidMacroEvents,
       if (riskDisclosureAckAt != null)
@@ -8553,6 +8835,12 @@ class OptionsStrategyProfileTableCompanion
     Value<int>? minOpenInterest,
     Value<int>? minVolume,
     Value<Decimal>? maxBidAskSpreadPct,
+    Value<int>? leapsMinDte,
+    Value<int>? leapsMaxDte,
+    Value<Decimal>? leapsDeltaMin,
+    Value<Decimal>? leapsDeltaMax,
+    Value<Decimal>? leapsMaxSpreadPct,
+    Value<int>? leapsMinOpenInterest,
     Value<bool>? avoidEarnings,
     Value<bool>? avoidMacroEvents,
     Value<DateTime?>? riskDisclosureAckAt,
@@ -8580,6 +8868,12 @@ class OptionsStrategyProfileTableCompanion
       minOpenInterest: minOpenInterest ?? this.minOpenInterest,
       minVolume: minVolume ?? this.minVolume,
       maxBidAskSpreadPct: maxBidAskSpreadPct ?? this.maxBidAskSpreadPct,
+      leapsMinDte: leapsMinDte ?? this.leapsMinDte,
+      leapsMaxDte: leapsMaxDte ?? this.leapsMaxDte,
+      leapsDeltaMin: leapsDeltaMin ?? this.leapsDeltaMin,
+      leapsDeltaMax: leapsDeltaMax ?? this.leapsDeltaMax,
+      leapsMaxSpreadPct: leapsMaxSpreadPct ?? this.leapsMaxSpreadPct,
+      leapsMinOpenInterest: leapsMinOpenInterest ?? this.leapsMinOpenInterest,
       avoidEarnings: avoidEarnings ?? this.avoidEarnings,
       avoidMacroEvents: avoidMacroEvents ?? this.avoidMacroEvents,
       riskDisclosureAckAt: riskDisclosureAckAt ?? this.riskDisclosureAckAt,
@@ -8679,6 +8973,38 @@ class OptionsStrategyProfileTableCompanion
         ),
       );
     }
+    if (leapsMinDte.present) {
+      map['leaps_min_dte'] = Variable<int>(leapsMinDte.value);
+    }
+    if (leapsMaxDte.present) {
+      map['leaps_max_dte'] = Variable<int>(leapsMaxDte.value);
+    }
+    if (leapsDeltaMin.present) {
+      map['leaps_delta_min'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterleapsDeltaMin.toSql(
+          leapsDeltaMin.value,
+        ),
+      );
+    }
+    if (leapsDeltaMax.present) {
+      map['leaps_delta_max'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterleapsDeltaMax.toSql(
+          leapsDeltaMax.value,
+        ),
+      );
+    }
+    if (leapsMaxSpreadPct.present) {
+      map['leaps_max_spread_pct'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterleapsMaxSpreadPct.toSql(
+          leapsMaxSpreadPct.value,
+        ),
+      );
+    }
+    if (leapsMinOpenInterest.present) {
+      map['leaps_min_open_interest'] = Variable<int>(
+        leapsMinOpenInterest.value,
+      );
+    }
     if (avoidEarnings.present) {
       map['avoid_earnings'] = Variable<bool>(avoidEarnings.value);
     }
@@ -8718,6 +9044,12 @@ class OptionsStrategyProfileTableCompanion
           ..write('minOpenInterest: $minOpenInterest, ')
           ..write('minVolume: $minVolume, ')
           ..write('maxBidAskSpreadPct: $maxBidAskSpreadPct, ')
+          ..write('leapsMinDte: $leapsMinDte, ')
+          ..write('leapsMaxDte: $leapsMaxDte, ')
+          ..write('leapsDeltaMin: $leapsDeltaMin, ')
+          ..write('leapsDeltaMax: $leapsDeltaMax, ')
+          ..write('leapsMaxSpreadPct: $leapsMaxSpreadPct, ')
+          ..write('leapsMinOpenInterest: $leapsMinOpenInterest, ')
           ..write('avoidEarnings: $avoidEarnings, ')
           ..write('avoidMacroEvents: $avoidMacroEvents, ')
           ..write('riskDisclosureAckAt: $riskDisclosureAckAt, ')
@@ -45472,6 +45804,12 @@ typedef $$OptionsStrategyProfileTableTableCreateCompanionBuilder =
       required int minOpenInterest,
       required int minVolume,
       required Decimal maxBidAskSpreadPct,
+      Value<int> leapsMinDte,
+      Value<int> leapsMaxDte,
+      Value<Decimal> leapsDeltaMin,
+      Value<Decimal> leapsDeltaMax,
+      Value<Decimal> leapsMaxSpreadPct,
+      Value<int> leapsMinOpenInterest,
       Value<bool> avoidEarnings,
       Value<bool> avoidMacroEvents,
       Value<DateTime?> riskDisclosureAckAt,
@@ -45498,6 +45836,12 @@ typedef $$OptionsStrategyProfileTableTableUpdateCompanionBuilder =
       Value<int> minOpenInterest,
       Value<int> minVolume,
       Value<Decimal> maxBidAskSpreadPct,
+      Value<int> leapsMinDte,
+      Value<int> leapsMaxDte,
+      Value<Decimal> leapsDeltaMin,
+      Value<Decimal> leapsDeltaMax,
+      Value<Decimal> leapsMaxSpreadPct,
+      Value<int> leapsMinOpenInterest,
       Value<bool> avoidEarnings,
       Value<bool> avoidMacroEvents,
       Value<DateTime?> riskDisclosureAckAt,
@@ -45614,6 +45958,39 @@ class $$OptionsStrategyProfileTableTableFilterComposer
   get maxBidAskSpreadPct => $composableBuilder(
     column: $table.maxBidAskSpreadPct,
     builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<int> get leapsMinDte => $composableBuilder(
+    column: $table.leapsMinDte,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get leapsMaxDte => $composableBuilder(
+    column: $table.leapsMaxDte,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get leapsDeltaMin =>
+      $composableBuilder(
+        column: $table.leapsDeltaMin,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get leapsDeltaMax =>
+      $composableBuilder(
+        column: $table.leapsDeltaMax,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String>
+  get leapsMaxSpreadPct => $composableBuilder(
+    column: $table.leapsMaxSpreadPct,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<int> get leapsMinOpenInterest => $composableBuilder(
+    column: $table.leapsMinOpenInterest,
+    builder: (column) => ColumnFilters(column),
   );
 
   ColumnFilters<bool> get avoidEarnings => $composableBuilder(
@@ -45736,6 +46113,36 @@ class $$OptionsStrategyProfileTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get leapsMinDte => $composableBuilder(
+    column: $table.leapsMinDte,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get leapsMaxDte => $composableBuilder(
+    column: $table.leapsMaxDte,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get leapsDeltaMin => $composableBuilder(
+    column: $table.leapsDeltaMin,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get leapsDeltaMax => $composableBuilder(
+    column: $table.leapsDeltaMax,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get leapsMaxSpreadPct => $composableBuilder(
+    column: $table.leapsMaxSpreadPct,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get leapsMinOpenInterest => $composableBuilder(
+    column: $table.leapsMinOpenInterest,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get avoidEarnings => $composableBuilder(
     column: $table.avoidEarnings,
     builder: (column) => ColumnOrderings(column),
@@ -45847,6 +46254,39 @@ class $$OptionsStrategyProfileTableTableAnnotationComposer
         builder: (column) => column,
       );
 
+  GeneratedColumn<int> get leapsMinDte => $composableBuilder(
+    column: $table.leapsMinDte,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get leapsMaxDte => $composableBuilder(
+    column: $table.leapsMaxDte,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get leapsDeltaMin =>
+      $composableBuilder(
+        column: $table.leapsDeltaMin,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get leapsDeltaMax =>
+      $composableBuilder(
+        column: $table.leapsDeltaMax,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get leapsMaxSpreadPct =>
+      $composableBuilder(
+        column: $table.leapsMaxSpreadPct,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<int> get leapsMinOpenInterest => $composableBuilder(
+    column: $table.leapsMinOpenInterest,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get avoidEarnings => $composableBuilder(
     column: $table.avoidEarnings,
     builder: (column) => column,
@@ -45928,6 +46368,12 @@ class $$OptionsStrategyProfileTableTableTableManager
                 Value<int> minOpenInterest = const Value.absent(),
                 Value<int> minVolume = const Value.absent(),
                 Value<Decimal> maxBidAskSpreadPct = const Value.absent(),
+                Value<int> leapsMinDte = const Value.absent(),
+                Value<int> leapsMaxDte = const Value.absent(),
+                Value<Decimal> leapsDeltaMin = const Value.absent(),
+                Value<Decimal> leapsDeltaMax = const Value.absent(),
+                Value<Decimal> leapsMaxSpreadPct = const Value.absent(),
+                Value<int> leapsMinOpenInterest = const Value.absent(),
                 Value<bool> avoidEarnings = const Value.absent(),
                 Value<bool> avoidMacroEvents = const Value.absent(),
                 Value<DateTime?> riskDisclosureAckAt = const Value.absent(),
@@ -45952,6 +46398,12 @@ class $$OptionsStrategyProfileTableTableTableManager
                 minOpenInterest: minOpenInterest,
                 minVolume: minVolume,
                 maxBidAskSpreadPct: maxBidAskSpreadPct,
+                leapsMinDte: leapsMinDte,
+                leapsMaxDte: leapsMaxDte,
+                leapsDeltaMin: leapsDeltaMin,
+                leapsDeltaMax: leapsDeltaMax,
+                leapsMaxSpreadPct: leapsMaxSpreadPct,
+                leapsMinOpenInterest: leapsMinOpenInterest,
                 avoidEarnings: avoidEarnings,
                 avoidMacroEvents: avoidMacroEvents,
                 riskDisclosureAckAt: riskDisclosureAckAt,
@@ -45978,6 +46430,12 @@ class $$OptionsStrategyProfileTableTableTableManager
                 required int minOpenInterest,
                 required int minVolume,
                 required Decimal maxBidAskSpreadPct,
+                Value<int> leapsMinDte = const Value.absent(),
+                Value<int> leapsMaxDte = const Value.absent(),
+                Value<Decimal> leapsDeltaMin = const Value.absent(),
+                Value<Decimal> leapsDeltaMax = const Value.absent(),
+                Value<Decimal> leapsMaxSpreadPct = const Value.absent(),
+                Value<int> leapsMinOpenInterest = const Value.absent(),
                 Value<bool> avoidEarnings = const Value.absent(),
                 Value<bool> avoidMacroEvents = const Value.absent(),
                 Value<DateTime?> riskDisclosureAckAt = const Value.absent(),
@@ -46002,6 +46460,12 @@ class $$OptionsStrategyProfileTableTableTableManager
                 minOpenInterest: minOpenInterest,
                 minVolume: minVolume,
                 maxBidAskSpreadPct: maxBidAskSpreadPct,
+                leapsMinDte: leapsMinDte,
+                leapsMaxDte: leapsMaxDte,
+                leapsDeltaMin: leapsDeltaMin,
+                leapsDeltaMax: leapsDeltaMax,
+                leapsMaxSpreadPct: leapsMaxSpreadPct,
+                leapsMinOpenInterest: leapsMinOpenInterest,
                 avoidEarnings: avoidEarnings,
                 avoidMacroEvents: avoidMacroEvents,
                 riskDisclosureAckAt: riskDisclosureAckAt,
