@@ -121,7 +121,7 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
             Positioned.fill(
               child: NotificationListener<ScrollUpdateNotification>(
                 onNotification: onScrollUpdate,
-                child: KnowledgePullToRefresh(
+                child: AppRefreshIndicator(
                   onRefresh: () => _refreshReview(ref),
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),

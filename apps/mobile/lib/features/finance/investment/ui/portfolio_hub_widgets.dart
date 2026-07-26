@@ -30,7 +30,6 @@ class _ConcentrationRiskSection extends ConsumerWidget {
                 title: l10n.portfolioHubConcentrationTitle,
               ),
               SoftCard.raised(
-                borderless: true,
                 padding: const EdgeInsets.all(AppSpacing.s12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -146,7 +145,7 @@ class PortfolioHubViewSegment extends StatelessWidget {
         PortfolioHubView.assetClass => FLucideIcons.layoutGrid,
       },
       onChanged: (next) {
-        Haptics.selection();
+        AppInteraction.signal(AppInteractionIntent.select);
         onChanged(next);
       },
     );

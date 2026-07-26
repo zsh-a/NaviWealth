@@ -5,6 +5,16 @@ import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
 
+/// The grouped-surface fill, shared with sliver-based lists that reproduce
+/// [AppGroupedSurface] chrome via `DecoratedSliver` (virtualized rows can't
+/// nest inside a box widget). Single source for the color expression.
+Color appGroupedSurfaceFill(BuildContext context) {
+  final colors = context.theme.colors;
+  return colors.brightness == Brightness.dark
+      ? colors.card.withValues(alpha: AppOpacity.muted)
+      : ColorPalette.surfaceRaised;
+}
+
 /// Shared inset-grouped surface used by settings, action menus and dense
 /// business lists. One surface owns the visual grouping; rows inside it stay
 /// flat and are separated by quiet, indented hairlines.
@@ -20,13 +30,9 @@ class AppGroupedSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final background = colors.brightness == Brightness.dark
-        ? colors.card.withValues(alpha: AppOpacity.muted)
-        : ColorPalette.surfaceRaised;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: background,
+        color: appGroupedSurfaceFill(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Padding(padding: padding, child: child),

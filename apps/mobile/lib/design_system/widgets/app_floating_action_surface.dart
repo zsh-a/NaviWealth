@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
@@ -54,11 +55,19 @@ class _AppFloatingActionSurfaceState extends State<AppFloatingActionSurface> {
           },
           onTapCancel: () => setState(() => _pressed = false),
           child: AnimatedScale(
-            scale: _pressed ? 0.96 : 1,
-            duration: AppMotionPolicy.duration(context, Motion.tapFeedback),
+            scale: _pressed ? context.appTheme.press.scale : 1,
+            duration: AppMotionPolicy.duration(
+              context,
+              Motion.tapFeedback,
+              role: AppMotionRole.decorative,
+            ),
             curve: Motion.standardDecelerate,
             child: AnimatedContainer(
-              duration: AppMotionPolicy.duration(context, Motion.tapFeedback),
+              duration: AppMotionPolicy.duration(
+                context,
+                Motion.tapFeedback,
+                role: AppMotionRole.decorative,
+              ),
               curve: Motion.standardDecelerate,
               width: AppSpacing.s48,
               height: AppSpacing.s48,

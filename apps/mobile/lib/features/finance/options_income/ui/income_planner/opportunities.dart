@@ -243,132 +243,130 @@ class _OpportunityCard extends ConsumerWidget {
     return SoftCard.flat(
       onPress: () => showOpportunityDetailSheet(context, opportunity),
       borderRadius: AppRadius.lg,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(contract.underlying, style: context.titleLabelStyle),
-                      const SizedBox(height: AppSpacing.s2),
-                      Text(
-                        l10n.incomePlannerOpportunityExpirySummary(
-                          expiry,
-                          contract.dte,
-                        ),
-                        style: context.captionStyle,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s8),
-                Wrap(
-                  spacing: AppSpacing.s6,
-                  runSpacing: AppSpacing.s4,
-                  alignment: WrapAlignment.end,
+      padding: AppPageRhythm.cardPadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AppBadge(
-                      label: opportunityStrategyShortLabel(
-                        l10n,
-                        opportunity.strategy,
+                    Text(contract.underlying, style: context.titleLabelStyle),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(
+                      l10n.incomePlannerOpportunityExpirySummary(
+                        expiry,
+                        contract.dte,
                       ),
-                      tone: AppBadgeTone.accent,
-                    ),
-                    AppBadge(
-                      label: _riskLabel(l10n, opportunity.risk),
-                      tone: _riskTone(opportunity.risk),
+                      style: context.captionStyle,
                     ),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s14),
-            AppMetricCluster(
-              dense: true,
-              items: switch (metrics) {
-                final OpportunityMetrics sell => [
-                  AppMetricItem(
-                    label: l10n.incomePlannerMetricPremiumTotal,
-                    value: formatters.currency(
-                      sell.premium.amount,
-                      code: sell.premium.currency,
-                    ),
-                  ),
-                  AppMetricItem(
-                    label: l10n.incomePlannerMetricBreakeven,
-                    value: formatters.currency(
-                      sell.breakeven.amount,
-                      code: sell.breakeven.currency,
-                    ),
-                  ),
-                  AppMetricItem(
-                    label: l10n.incomePlannerMetricAnnualized,
-                    value: formatters.percent(
-                      sell.annualizedYield.toDouble(),
-                      decimalDigits: 1,
-                    ),
-                  ),
-                ],
-                final LeapsOpportunityMetrics leaps => [
-                  AppMetricItem(
-                    label: l10n.incomePlannerMetricLeapsCost,
-                    value: formatters.currency(
-                      leaps.totalCost.amount,
-                      code: leaps.totalCost.currency,
-                    ),
-                  ),
-                  AppMetricItem(
-                    label: l10n.incomePlannerMetricBreakeven,
-                    value: formatters.currency(
-                      leaps.breakeven.amount,
-                      code: leaps.breakeven.currency,
-                    ),
-                  ),
-                  AppMetricItem(
-                    label: l10n.incomePlannerMetricAnnualCost,
-                    value: leaps.annualizedExtrinsicCostPct == null
-                        ? '—'
-                        : formatters.percent(
-                            leaps.annualizedExtrinsicCostPct!.toDouble(),
-                            decimalDigits: 1,
-                          ),
-                  ),
-                ],
-              },
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            Text(
-              opportunity.explanation.worstCase,
-              style: context.bodyCaptionStyle.copyWith(height: 1.45),
-            ),
-            if (opportunity.explanation.whyGood.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.s8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              Wrap(
+                spacing: AppSpacing.s6,
+                runSpacing: AppSpacing.s4,
+                alignment: WrapAlignment.end,
                 children: [
-                  Icon(
-                    FLucideIcons.circleCheck,
-                    size: AppIconSizes.sm,
-                    color: colors.primary,
-                  ),
-                  const SizedBox(width: AppSpacing.s6),
-                  Expanded(
-                    child: Text(
-                      opportunity.explanation.whyGood.first,
-                      style: context.captionStyle,
+                  AppBadge(
+                    label: opportunityStrategyShortLabel(
+                      l10n,
+                      opportunity.strategy,
                     ),
+                    tone: AppBadgeTone.accent,
+                  ),
+                  AppBadge(
+                    label: _riskLabel(l10n, opportunity.risk),
+                    tone: _riskTone(opportunity.risk),
                   ),
                 ],
               ),
             ],
+          ),
+          const SizedBox(height: AppSpacing.s14),
+          AppMetricCluster(
+            dense: true,
+            items: switch (metrics) {
+              final OpportunityMetrics sell => [
+                AppMetricItem(
+                  label: l10n.incomePlannerMetricPremiumTotal,
+                  value: formatters.currency(
+                    sell.premium.amount,
+                    code: sell.premium.currency,
+                  ),
+                ),
+                AppMetricItem(
+                  label: l10n.incomePlannerMetricBreakeven,
+                  value: formatters.currency(
+                    sell.breakeven.amount,
+                    code: sell.breakeven.currency,
+                  ),
+                ),
+                AppMetricItem(
+                  label: l10n.incomePlannerMetricAnnualized,
+                  value: formatters.percent(
+                    sell.annualizedYield.toDouble(),
+                    decimalDigits: 1,
+                  ),
+                ),
+              ],
+              final LeapsOpportunityMetrics leaps => [
+                AppMetricItem(
+                  label: l10n.incomePlannerMetricLeapsCost,
+                  value: formatters.currency(
+                    leaps.totalCost.amount,
+                    code: leaps.totalCost.currency,
+                  ),
+                ),
+                AppMetricItem(
+                  label: l10n.incomePlannerMetricBreakeven,
+                  value: formatters.currency(
+                    leaps.breakeven.amount,
+                    code: leaps.breakeven.currency,
+                  ),
+                ),
+                AppMetricItem(
+                  label: l10n.incomePlannerMetricAnnualCost,
+                  value: leaps.annualizedExtrinsicCostPct == null
+                      ? '—'
+                      : formatters.percent(
+                          leaps.annualizedExtrinsicCostPct!.toDouble(),
+                          decimalDigits: 1,
+                        ),
+                ),
+              ],
+            },
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          Text(
+            opportunity.explanation.worstCase,
+            style: context.bodyCaptionStyle.copyWith(height: 1.45),
+          ),
+          if (opportunity.explanation.whyGood.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  FLucideIcons.circleCheck,
+                  size: AppIconSizes.sm,
+                  color: colors.primary,
+                ),
+                const SizedBox(width: AppSpacing.s6),
+                Expanded(
+                  child: Text(
+                    opportunity.explanation.whyGood.first,
+                    style: context.captionStyle,
+                  ),
+                ),
+              ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -401,74 +399,72 @@ class _ScanEmptyResultCard extends ConsumerWidget {
     final topReasons = counts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     return SoftCard.flat(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(l10n.incomePlannerNoMatchesTitle, style: context.labelStyle),
+      padding: AppPageRhythm.cardPadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l10n.incomePlannerNoMatchesTitle, style: context.labelStyle),
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            universeEmpty
+                ? l10n.incomePlannerRefreshUniverseEmpty
+                : l10n.incomePlannerOpportunitiesAllRejected,
+            style: context.bodyCaptionStyle.copyWith(height: 1.45),
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          Text(
+            l10n.incomePlannerScanSummary(
+              result.universe.length,
+              result.rejected.length,
+              result.errors.length,
+            ),
+            style: context.captionStyle,
+          ),
+          if (topReasons.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s12),
+            Text(
+              l10n.incomePlannerRejectionReasonsTitle,
+              style: context.captionLabelStyle,
+            ),
             const SizedBox(height: AppSpacing.s4),
-            Text(
-              universeEmpty
-                  ? l10n.incomePlannerRefreshUniverseEmpty
-                  : l10n.incomePlannerOpportunitiesAllRejected,
-              style: context.bodyCaptionStyle.copyWith(height: 1.45),
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            Text(
-              l10n.incomePlannerScanSummary(
-                result.universe.length,
-                result.rejected.length,
-                result.errors.length,
-              ),
-              style: context.captionStyle,
-            ),
-            if (topReasons.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.s12),
-              Text(
-                l10n.incomePlannerRejectionReasonsTitle,
-                style: context.captionLabelStyle,
-              ),
-              const SizedBox(height: AppSpacing.s4),
-              for (final reason in topReasons.take(3))
-                Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.s4),
-                  child: Text(
-                    l10n.incomePlannerRejectionReasonSummary(
-                      _rejectionReasonLabel(l10n, reason.key),
-                      reason.value,
-                    ),
-                    style: context.captionStyle,
+            for (final reason in topReasons.take(3))
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.s4),
+                child: Text(
+                  l10n.incomePlannerRejectionReasonSummary(
+                    _rejectionReasonLabel(l10n, reason.key),
+                    reason.value,
                   ),
+                  style: context.captionStyle,
+                ),
+              ),
+          ],
+          const SizedBox(height: AppSpacing.s12),
+          Wrap(
+            spacing: AppSpacing.s8,
+            runSpacing: AppSpacing.s8,
+            children: [
+              FButton(
+                variant: FButtonVariant.outline,
+                onPress: () => showStrategyProfileSheet(context),
+                child: Text(l10n.incomePlannerPreferencesAction),
+              ),
+              FButton(
+                variant: FButtonVariant.outline,
+                onPress: () => showIncomeStrategyPlanSheet(context),
+                child: Text(l10n.incomePlannerAddApprovedCta),
+              ),
+              if (lane == OpportunityStrategy.leapsCall)
+                // The dominant LEAPS rejections (budget, delta band)
+                // are fixed in the plan, not the profile — link there.
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => _openLeapsBudget(context, ref),
+                  child: Text(l10n.incomePlannerAdjustLeapsBudget),
                 ),
             ],
-            const SizedBox(height: AppSpacing.s12),
-            Wrap(
-              spacing: AppSpacing.s8,
-              runSpacing: AppSpacing.s8,
-              children: [
-                FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => showStrategyProfileSheet(context),
-                  child: Text(l10n.incomePlannerPreferencesAction),
-                ),
-                FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => showIncomeStrategyPlanSheet(context),
-                  child: Text(l10n.incomePlannerAddApprovedCta),
-                ),
-                if (lane == OpportunityStrategy.leapsCall)
-                  // The dominant LEAPS rejections (budget, delta band)
-                  // are fixed in the plan, not the profile — link there.
-                  FButton(
-                    variant: FButtonVariant.outline,
-                    onPress: () => _openLeapsBudget(context, ref),
-                    child: Text(l10n.incomePlannerAdjustLeapsBudget),
-                  ),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

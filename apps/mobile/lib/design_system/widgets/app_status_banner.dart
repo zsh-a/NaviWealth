@@ -94,7 +94,6 @@ class AppStatusBanner extends StatelessWidget {
       child: PressableScale(
         onTap: onPress,
         intent: AppInteractionIntent.reveal,
-        scaleFactor: 0.99,
         child: banner,
       ),
     );

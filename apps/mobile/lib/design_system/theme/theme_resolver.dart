@@ -3,8 +3,10 @@ import 'package:flutter/widgets.dart';
 import '../tokens/color_palette.dart';
 import 'accent_colors.dart';
 import 'accent_seed.dart';
+import 'app_categorical.dart';
 import 'app_surface_style.dart';
 import 'app_theme_data.dart';
+import 'app_type_scale.dart';
 import 'market_color_mode.dart';
 import 'market_colors.dart';
 import 'semantic_colors.dart';
@@ -208,5 +210,10 @@ AppThemeData resolveAppTheme(ThemeInputs inputs) {
     accent: accent,
     status: status,
     market: market,
+    type: AppTypeScale.resolve(inputs.density),
+    categorical: AppCategorical(
+      brightness: inputs.brightness,
+      cardSurface: surfaces.card,
+    ),
   );
 }

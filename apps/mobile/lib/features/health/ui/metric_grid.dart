@@ -59,7 +59,6 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
 
     if (showEmptyCluster) {
       return SoftCard.raised(
-        borderless: true,
         padding: AppPageRhythm.cardPadding,
         child: AppEmptyState(
           icon: FLucideIcons.activity,

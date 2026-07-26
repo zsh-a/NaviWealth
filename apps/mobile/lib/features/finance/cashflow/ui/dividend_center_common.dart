@@ -15,7 +15,6 @@ class _DividendPolicySection extends StatelessWidget {
         .where((r) => r.severity == DividendDeteriorationSeverity.critical)
         .length;
     return SoftCard.raised(
-      borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

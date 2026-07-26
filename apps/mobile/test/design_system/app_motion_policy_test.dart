@@ -29,7 +29,7 @@ void main() {
       expect(enabled, isTrue);
     });
 
-    testWidgets('${role.name} motion is disabled by the system setting', (
+    testWidgets('${role.name} motion degrades under the system setting', (
       tester,
     ) async {
       late Duration duration;
@@ -53,8 +53,15 @@ void main() {
         ),
       );
 
-      expect(duration, Duration.zero);
-      expect(enabled, isFalse);
+      // Tiered degradation (doc 11 §2): transitions keep a halved
+      // cross-fade; decorative and status motion stop entirely.
+      if (role == AppMotionRole.transition) {
+        expect(duration, Motion.medium * 0.5);
+        expect(enabled, isTrue);
+      } else {
+        expect(duration, Duration.zero);
+        expect(enabled, isFalse);
+      }
     });
   }
 
@@ -79,7 +86,9 @@ void main() {
       ),
     );
 
-    expect(route.transitionDuration, Duration.zero);
-    expect(route.reverseTransitionDuration, Duration.zero);
+    // Transition role halves under reduce-motion instead of zeroing, so
+    // imperative pushes keep a short legible cross-fade.
+    expect(route.transitionDuration, Motion.pageTransition * 0.5);
+    expect(route.reverseTransitionDuration, Motion.componentChange * 0.5);
   });
 }

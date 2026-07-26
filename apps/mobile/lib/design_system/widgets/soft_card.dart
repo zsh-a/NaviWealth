@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
@@ -25,7 +26,6 @@ class SoftCard extends StatefulWidget {
     this.onPress,
     this.borderRadius,
     this.tinted = true,
-    this.borderless = false,
     this.level = SoftCardLevel.flat,
   });
 
@@ -37,7 +37,6 @@ class SoftCard extends StatefulWidget {
     VoidCallback? onPress,
     double? borderRadius,
     bool tinted = true,
-    bool borderless = false,
   }) : this(
          key: key,
          child: child,
@@ -45,7 +44,6 @@ class SoftCard extends StatefulWidget {
          onPress: onPress,
          borderRadius: borderRadius,
          tinted: tinted,
-         borderless: borderless,
          level: SoftCardLevel.flat,
        );
 
@@ -61,7 +59,6 @@ class SoftCard extends StatefulWidget {
     VoidCallback? onPress,
     double? borderRadius,
     bool tinted = true,
-    bool borderless = false,
   }) : this(
          key: key,
          child: child,
@@ -69,7 +66,6 @@ class SoftCard extends StatefulWidget {
          onPress: onPress,
          borderRadius: borderRadius,
          tinted: tinted,
-         borderless: borderless,
          level: SoftCardLevel.raised,
        );
 
@@ -83,7 +79,6 @@ class SoftCard extends StatefulWidget {
     VoidCallback? onPress,
     double? borderRadius,
     bool tinted = true,
-    bool borderless = false,
   }) : this(
          key: key,
          child: child,
@@ -91,7 +86,6 @@ class SoftCard extends StatefulWidget {
          onPress: onPress,
          borderRadius: borderRadius,
          tinted: tinted,
-         borderless: borderless,
          level: SoftCardLevel.hero,
        );
 
@@ -99,23 +93,16 @@ class SoftCard extends StatefulWidget {
   final EdgeInsetsGeometry padding;
   final VoidCallback? onPress;
 
-  /// Override corner radius. When null, resolves from [level]:
-  /// flat/raised → [AppRadius.lg], hero → [AppRadius.xl].
+  /// Override corner radius. When null, resolves from [level] via
+  /// `theme.card`: flat/raised → [AppRadius.lg], hero → [AppRadius.xl].
   final double? borderRadius;
 
   /// Apply the level's surface fill. Disable for nested rows that sit
   /// inside an already-tinted parent.
   final bool tinted;
 
-  /// Drop the border entirely (grouped inset lists).
-  final bool borderless;
-
   /// Visual depth. Prefer one [SoftCardLevel.hero] per screen.
   final SoftCardLevel level;
-
-  double get resolvedRadius =>
-      borderRadius ??
-      (level == SoftCardLevel.hero ? AppRadius.xl : AppRadius.lg);
 
   @override
   State<SoftCard> createState() => _SoftCardState();
@@ -124,11 +111,13 @@ class SoftCard extends StatefulWidget {
 class _SoftCardState extends State<SoftCard> {
   final ValueNotifier<bool> _hovered = ValueNotifier(false);
   final ValueNotifier<bool> _pressed = ValueNotifier(false);
+  final ValueNotifier<bool> _focused = ValueNotifier(false);
 
   @override
   void dispose() {
     _hovered.dispose();
     _pressed.dispose();
+    _focused.dispose();
     super.dispose();
   }
 
@@ -138,11 +127,26 @@ class _SoftCardState extends State<SoftCard> {
       return _buildStaticCard(context);
     }
 
+    // Keyboard parity (doc 11 §9): interactive cards are focusable, show a
+    // focus ring, and activate on Enter/Space with the same haptic grammar
+    // as a tap.
     return Semantics(
       button: true,
-      child: MouseRegion(
-        onEnter: (_) => _hovered.value = true,
-        onExit: (_) => _hovered.value = false,
+      child: FocusableActionDetector(
+        mouseCursor: SystemMouseCursors.click,
+        onShowHoverHighlight: (value) => _hovered.value = value,
+        onShowFocusHighlight: (value) => _focused.value = value,
+        actions: <Type, Action<Intent>>{
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              AppInteraction.wrap(
+                widget.onPress,
+                intent: AppInteractionIntent.select,
+              )?.call();
+              return null;
+            },
+          ),
+        },
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTapDown: (_) => _pressed.value = true,
@@ -152,12 +156,13 @@ class _SoftCardState extends State<SoftCard> {
             widget.onPress,
             intent: AppInteractionIntent.select,
           ),
-          child: ValueListenableBuilder<bool>(
-            valueListenable: _hovered,
-            builder: (context, hovered, _) => ValueListenableBuilder<bool>(
-              valueListenable: _pressed,
-              builder: (context, pressed, _) =>
-                  _buildCard(context, hovered: hovered, pressed: pressed),
+          child: ListenableBuilder(
+            listenable: Listenable.merge([_hovered, _pressed, _focused]),
+            builder: (context, _) => _buildCard(
+              context,
+              hovered: _hovered.value,
+              pressed: _pressed.value,
+              focused: _focused.value,
             ),
           ),
         ),
@@ -167,7 +172,12 @@ class _SoftCardState extends State<SoftCard> {
 
   Widget _buildStaticCard(BuildContext context) {
     return DecoratedBox(
-      decoration: _decoration(context, hovered: false, pressed: false),
+      decoration: _decoration(
+        context,
+        hovered: false,
+        pressed: false,
+        focused: false,
+      ),
       child: Padding(padding: widget.padding, child: widget.child),
     );
   }
@@ -176,16 +186,26 @@ class _SoftCardState extends State<SoftCard> {
     BuildContext context, {
     required bool hovered,
     required bool pressed,
+    required bool focused,
   }) {
-    final duration = AppMotionPolicy.duration(context, Motion.fast);
+    final duration = AppMotionPolicy.duration(
+      context,
+      Motion.fast,
+      role: AppMotionRole.decorative,
+    );
     return AnimatedScale(
-      scale: pressed ? 0.985 : 1,
+      scale: pressed ? context.appTheme.press.scale : 1,
       duration: duration,
       curve: Motion.standardDecelerate,
       child: AnimatedContainer(
         duration: duration,
         curve: Motion.standardDecelerate,
-        decoration: _decoration(context, hovered: hovered, pressed: pressed),
+        decoration: _decoration(
+          context,
+          hovered: hovered,
+          pressed: pressed,
+          focused: focused,
+        ),
         padding: widget.padding,
         child: widget.child,
       ),
@@ -196,10 +216,15 @@ class _SoftCardState extends State<SoftCard> {
     BuildContext context, {
     required bool hovered,
     required bool pressed,
+    required bool focused,
   }) {
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
-    final radius = BorderRadius.circular(widget.resolvedRadius);
+    final card = context.appTheme.card;
+    final radius = BorderRadius.circular(
+      widget.borderRadius ??
+          (widget.level == SoftCardLevel.hero ? card.heroRadius : card.radius),
+    );
 
     final baseFill = widget.tinted
         ? _surfaceFill(
@@ -223,18 +248,15 @@ class _SoftCardState extends State<SoftCard> {
         ? colors.foreground.withValues(alpha: hoverBoost)
         : baseFill;
 
-    final borderAlpha = widget.borderless
-        ? AppOpacity.transparent
-        : switch (widget.level) {
-            // Light flat stays borderless for dense inset rows; dark flat gets
-            // a whisper edge so rows don't dissolve into the navy canvas.
-            SoftCardLevel.flat =>
-              isDark ? AppOpacity.whisper : AppOpacity.transparent,
-            SoftCardLevel.raised =>
-              isDark ? AppOpacity.medium : AppOpacity.light,
-            SoftCardLevel.hero =>
-              isDark ? AppOpacity.disabled : AppOpacity.medium,
-          };
+    // One border strategy for the whole app (blueprint §8.3):
+    // raised = borderless + shadow (fill difference carries dark mode),
+    // flat = whisper edge in dark only, hero = defined anchor edge.
+    final borderAlpha = switch (widget.level) {
+      SoftCardLevel.flat =>
+        isDark ? AppOpacity.whisper : AppOpacity.transparent,
+      SoftCardLevel.raised => AppOpacity.transparent,
+      SoftCardLevel.hero => isDark ? AppOpacity.disabled : AppOpacity.medium,
+    };
 
     final borderColor = borderAlpha == AppOpacity.transparent
         ? Colors.transparent
@@ -249,13 +271,18 @@ class _SoftCardState extends State<SoftCard> {
         ? _heroGradient(primary: colors.primary, isDark: isDark, base: fill)
         : null;
 
+    // Keyboard focus ring wins over the level border (doc 11 §9).
+    final border = focused
+        ? Border.all(color: colors.primary, width: AppStroke.branch)
+        : borderAlpha == AppOpacity.transparent
+        ? null
+        : Border.all(color: borderColor, width: AppStroke.hairline);
+
     return BoxDecoration(
       color: gradient == null ? fill : null,
       gradient: gradient,
       borderRadius: radius,
-      border: borderAlpha == AppOpacity.transparent
-          ? null
-          : Border.all(color: borderColor, width: AppStroke.hairline),
+      border: border,
       boxShadow: _shadows(isDark: isDark, hovered: hovered, pressed: pressed),
     );
   }

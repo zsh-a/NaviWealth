@@ -65,14 +65,18 @@ AppMotionPolicy.duration(
   context,
   Motion.medium,
   role: AppMotionRole.transition,
-);                      // Duration.zero when the OS requests less motion
+);                      // reduce-motion: transition halves; decorative/status → zero
 Breakpoints.mobile;     // 600
 AppSpacing.s16;         // 16.0
 AppRadius.lg;           // 16.0
 
-// Theme-bound tokens — read from BuildContext:
-final semantic = SemanticColors.of(context);
-final market   = MarketColors.of(context);
+// Theme-bound tokens — one read entry point:
+final t = context.appTheme;
+t.status.success.fg;    // status ColorRole (fg / container / onContainer)
+t.market.roleForDelta(delta).fg;   // direction ColorRole per user preference
+t.type.caption;         // semantic type scale (blueprint §4)
+t.card.padding;         // L2 component specs (card / press / badge / …)
+t.categorical.adapt(seedColor);    // brightness-adapted categorical color
 
 return DeltaText(value: 0.0123, format: DeltaFormat.percent);
 ```
@@ -92,7 +96,7 @@ disable spatial motion automatically when requested by the operating system.
 ## Direction-sensitive (market) colors
 
 Money deltas, charts, and any "up vs. down" indicator must read from
-`MarketColors.of(context)` — never hard-code red or green. Three modes:
+`context.appTheme.market` — never hard-code red or green. Three modes:
 
 | Mode | Up | Down | Use case |
 |------|----|------|----------|

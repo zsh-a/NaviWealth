@@ -56,7 +56,6 @@ import 'package:naviwealth/features/finance/runway/ui/money_runway_page.dart';
 
 import '../../../core/shell/deferred_route.dart';
 import '../../../core/shell/domain_tabs_shell.dart';
-import '../../../core/shell/page_transitions.dart';
 import '../../../core/shell/route_error_page.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../accounts/ui/account_detail_page.dart';
@@ -148,7 +147,7 @@ StatefulShellRoute financeShellRoute() {
               GoRoute(
                 path: 'trade',
                 name: FinanceRouteNames.tradeEntry,
-                pageBuilder: (context, state) {
+                builder: (context, state) {
                   final assetId = state.uri.queryParameters['assetId'];
                   final accountId = state.uri.queryParameters['accountId'];
                   final initialType =
@@ -171,15 +170,11 @@ StatefulShellRoute financeShellRoute() {
                           symbol: params['symbol'],
                         )
                       : null;
-                  return buildHeroAwareTransitionPage<void>(
-                    context: context,
-                    state: state,
-                    child: TradeEntryFormPage(
-                      assetId: assetId,
-                      accountId: accountId,
-                      prefill: ingestPrefill,
-                      initialType: initialType,
-                    ),
+                  return TradeEntryFormPage(
+                    assetId: assetId,
+                    accountId: accountId,
+                    prefill: ingestPrefill,
+                    initialType: initialType,
                   );
                 },
               ),
@@ -248,14 +243,9 @@ StatefulShellRoute financeShellRoute() {
                   GoRoute(
                     path: ':accountId',
                     name: FinanceRouteNames.wealthAccount,
-                    pageBuilder: (context, state) =>
-                        buildHeroAwareTransitionPage<void>(
-                          context: context,
-                          state: state,
-                          child: AccountDetailPage(
-                            accountId: state.pathParameters['accountId']!,
-                          ),
-                        ),
+                    builder: (context, state) => AccountDetailPage(
+                      accountId: state.pathParameters['accountId']!,
+                    ),
                   ),
                 ],
               ),
@@ -318,14 +308,8 @@ StatefulShellRoute financeShellRoute() {
               GoRoute(
                 path: 'assets/:assetId',
                 name: FinanceRouteNames.wealthAssetDetail,
-                pageBuilder: (context, state) =>
-                    buildHeroAwareTransitionPage<void>(
-                      context: context,
-                      state: state,
-                      child: AssetDetailPage(
-                        assetId: state.pathParameters['assetId']!,
-                      ),
-                    ),
+                builder: (context, state) =>
+                    AssetDetailPage(assetId: state.pathParameters['assetId']!),
               ),
               GoRoute(
                 path: 'physical/:id',

@@ -222,7 +222,7 @@ class _CopyIconActionState extends State<_CopyIconAction> {
 
   Future<void> _copy() async {
     await Clipboard.setData(ClipboardData(text: widget.text));
-    Haptics.success();
+    AppInteraction.signal(AppInteractionIntent.success);
     if (!mounted) return;
     setState(() => _copied = true);
     await Future<void>.delayed(const Duration(milliseconds: 1200));

@@ -49,14 +49,15 @@ void main() {
     expect(_decoration(tester).boxShadow, isNotEmpty);
   });
 
-  testWidgets('raised cards keep only a light surface boundary', (
+  testWidgets('raised cards are borderless — shadow carries the elevation', (
     tester,
   ) async {
     await tester.pumpWidget(
       _wrap(const SoftCard(level: SoftCardLevel.raised, child: Text('raised'))),
     );
 
-    expect(_decoration(tester).border, isNotNull);
+    // Blueprint §8.3: raised = borderless + shadow, one strategy app-wide.
+    expect(_decoration(tester).border, isNull);
   });
 
   testWidgets('dark raised cards combine tonal lift with soft shadow', (
@@ -70,7 +71,8 @@ void main() {
 
     expect(_decoration(tester).boxShadow, isNotNull);
     expect(_decoration(tester).boxShadow, isNotEmpty);
-    expect(_decoration(tester).border, isNotNull);
+    // Dark separation comes from the navyRaised fill, not an edge.
+    expect(_decoration(tester).border, isNull);
   });
 
   testWidgets('hero cards resolve a larger corner radius by default', (

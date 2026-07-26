@@ -17,14 +17,13 @@ class FinancialInboxCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final count = ref.watch(financialInboxProvider).value?.length ?? 0;
     return SoftCard.raised(
-      borderless: true,
       onPress: () {
         ref
             .read(productMetricsProvider.notifier)
             .record(ProductFunnelEvent.financialInboxOpened);
         context.push(FinanceRoutes.activityInbox);
       },
-      padding: const EdgeInsets.all(AppSpacing.s14),
+      padding: AppPageRhythm.cardPadding,
       child: Row(
         children: [
           Icon(FLucideIcons.inbox, color: context.theme.colors.primary),

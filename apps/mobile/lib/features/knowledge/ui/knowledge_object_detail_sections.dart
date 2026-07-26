@@ -41,11 +41,21 @@ IconData _kindIcon(KnowledgeObjectKind kind) => switch (kind) {
 Color _kindColor(BuildContext context, KnowledgeObjectKind kind) =>
     switch (kind) {
       KnowledgeObjectKind.note => context.theme.colors.mutedForeground,
-      KnowledgeObjectKind.concept => KnowledgeTypeColors.concept,
-      KnowledgeObjectKind.experiment => KnowledgeTypeColors.experiment,
-      KnowledgeObjectKind.principle => KnowledgeTypeColors.principle,
-      KnowledgeObjectKind.assumption => KnowledgeTypeColors.assumption,
-      KnowledgeObjectKind.routine => KnowledgeTypeColors.routine,
+      KnowledgeObjectKind.concept => context.appTheme.categorical.adapt(
+        KnowledgeTypeColors.concept,
+      ),
+      KnowledgeObjectKind.experiment => context.appTheme.categorical.adapt(
+        KnowledgeTypeColors.experiment,
+      ),
+      KnowledgeObjectKind.principle => context.appTheme.categorical.adapt(
+        KnowledgeTypeColors.principle,
+      ),
+      KnowledgeObjectKind.assumption => context.appTheme.categorical.adapt(
+        KnowledgeTypeColors.assumption,
+      ),
+      KnowledgeObjectKind.routine => context.appTheme.categorical.adapt(
+        KnowledgeTypeColors.routine,
+      ),
     };
 
 String _kindLabel(AppLocalizations l10n, KnowledgeObjectKind kind) {
@@ -165,7 +175,9 @@ List<Widget> _conceptSections(
                   ? AppLocalizations.of(context).knowledgeConceptDetailTitle
                   : concept.aliases.join(' · '),
               icon: FLucideIcons.folderTree,
-              iconColor: KnowledgeTypeColors.concept,
+              iconColor: context.appTheme.categorical.adapt(
+                KnowledgeTypeColors.concept,
+              ),
               onPress: () => context.pushNamed(
                 KnowledgeRouteNames.objectDetail,
                 pathParameters: {'kind': 'concept', 'id': concept.id},
@@ -220,7 +232,9 @@ List<Widget> _experimentSections(
             meta:
                 '${targetAssumption.status.wire} · ${targetAssumption.confidence.toStringAsFixed(2)}',
             icon: FLucideIcons.lightbulb,
-            iconColor: KnowledgeTypeColors.assumption,
+            iconColor: context.appTheme.categorical.adapt(
+              KnowledgeTypeColors.assumption,
+            ),
             onPress: () => context.pushNamed(
               KnowledgeRouteNames.objectDetail,
               pathParameters: {'kind': 'assumption', 'id': targetAssumption.id},
@@ -382,7 +396,9 @@ List<Widget> _assumptionSections(
               label: experiment.hypothesis,
               meta: experiment.status.wire,
               icon: FLucideIcons.flaskConical,
-              iconColor: KnowledgeTypeColors.experiment,
+              iconColor: context.appTheme.categorical.adapt(
+                KnowledgeTypeColors.experiment,
+              ),
               onPress: () => context.pushNamed(
                 KnowledgeRouteNames.objectDetail,
                 pathParameters: {'kind': 'experiment', 'id': experiment.id},

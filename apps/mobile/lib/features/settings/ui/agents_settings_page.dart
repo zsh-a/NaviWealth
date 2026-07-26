@@ -169,7 +169,7 @@ class _AgentQualitySummary extends StatelessWidget {
     final status = context.appTheme.status;
     final hasFailures = report.failedRuns > 0;
     return SoftCard.flat(
-      padding: const EdgeInsets.all(AppSpacing.s14),
+      padding: AppPageRhythm.densePadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -360,7 +360,7 @@ class _AgentSettingsOverview extends StatelessWidget {
         )
         .length;
     return SoftCard.flat(
-      padding: const EdgeInsets.all(AppSpacing.s14),
+      padding: AppPageRhythm.densePadding,
       child: Row(
         children: [
           AppIconTile(

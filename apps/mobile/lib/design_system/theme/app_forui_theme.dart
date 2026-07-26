@@ -7,6 +7,7 @@ import '../tokens/typography_tokens.dart';
 import 'accent_colors.dart';
 import 'accent_seed.dart';
 import 'app_surface_style.dart';
+import 'app_type_scale.dart';
 
 /// Builds the production Forui theme for NaviWealth.
 ///
@@ -50,36 +51,45 @@ FThemeData buildAppForuiTheme({
           )
         : ColorPalette.surfaceOverlay,
   );
-  final inheritedTypography = FTypography.inherit(colors: colors, touch: touch);
-  final typography = FTypography(
-    display: _withAppFont(inheritedTypography.display),
-    body: _withAppFont(inheritedTypography.body),
-  );
+  // One authored slot table for every density (see kAppTypefaceSlots) —
+  // the legacy touch/desktop ±2px fork is deliberately gone. Density still
+  // selects Forui's touch vs desktop *component* styles (padding, targets).
+  final typeface = _buildAppTypeface(colors.foreground);
+  final typography = FTypography(display: typeface, body: typeface);
 
   return FThemeData(touch: touch, typography: typography, colors: colors);
 }
 
-FTypeface _withAppFont(FTypeface base) => FTypeface(
-  fontFamily: TypographyTokens.fontFamilySans,
-  fontFamilyFallback: TypographyTokens.fontFamilyFallback,
-  xs3: _withAppFontStyle(base.xs3),
-  xs2: _withAppFontStyle(base.xs2),
-  xs: _withAppFontStyle(base.xs),
-  sm: _withAppFontStyle(base.sm),
-  md: _withAppFontStyle(base.md),
-  lg: _withAppFontStyle(base.lg),
-  xl: _withAppFontStyle(base.xl),
-  xl2: _withAppFontStyle(base.xl2),
-  xl3: _withAppFontStyle(base.xl3),
-  xl4: _withAppFontStyle(base.xl4),
-  xl5: _withAppFontStyle(base.xl5),
-  xl6: _withAppFontStyle(base.xl6),
-  xl7: _withAppFontStyle(base.xl7),
-  xl8: _withAppFontStyle(base.xl8),
-);
+FTypeface _buildAppTypeface(Color foreground) {
+  TextStyle slot(int index) {
+    final spec = kAppTypefaceSlots[index];
+    return TextStyle(
+      color: foreground,
+      fontFamily: TypographyTokens.fontFamilySans,
+      fontFamilyFallback: TypographyTokens.fontFamilyFallback,
+      fontFeatures: TypographyTokens.tabularFigures,
+      fontSize: spec.size,
+      height: spec.height,
+      leadingDistribution: TextLeadingDistribution.even,
+    );
+  }
 
-TextStyle _withAppFontStyle(TextStyle base) => base.copyWith(
-  fontFamily: TypographyTokens.fontFamilySans,
-  fontFamilyFallback: TypographyTokens.fontFamilyFallback,
-  fontFeatures: TypographyTokens.tabularFigures,
-);
+  return FTypeface(
+    fontFamily: TypographyTokens.fontFamilySans,
+    fontFamilyFallback: TypographyTokens.fontFamilyFallback,
+    xs3: slot(0),
+    xs2: slot(1),
+    xs: slot(2),
+    sm: slot(3),
+    md: slot(4),
+    lg: slot(5),
+    xl: slot(6),
+    xl2: slot(7),
+    xl3: slot(8),
+    xl4: slot(9),
+    xl5: slot(10),
+    xl6: slot(11),
+    xl7: slot(12),
+    xl8: slot(13),
+  );
+}

@@ -9,10 +9,12 @@ class _TrendCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final accent = spec.color ?? colors.primary;
+    final accent = switch (spec.color) {
+      null => colors.primary,
+      final seed => context.appTheme.categorical.adapt(seed),
+    };
     return SoftCard(
       level: SoftCardLevel.raised,
-      borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

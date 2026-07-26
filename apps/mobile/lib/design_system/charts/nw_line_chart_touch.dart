@@ -462,9 +462,8 @@ class _TouchXAxisLabel extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TypographyTokens.numericCaption.copyWith(
+                    style: TypographyTokens.chartCaption.copyWith(
                       color: palette.tooltipForeground,
-                      fontSize: 10,
                     ),
                   ),
                 ),
@@ -520,7 +519,7 @@ class _DeltaBadge extends StatelessWidget {
         ),
         child: AmountPrivacyPlaceholder(
           density: AmountPrivacyPlaceholderDensity.compact,
-          style: TypographyTokens.numericCaption.copyWith(fontSize: 10),
+          style: TypographyTokens.chartCaption,
         ),
       );
     }
@@ -541,10 +540,7 @@ class _DeltaBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TypographyTokens.numericCaption.copyWith(
-          color: color,
-          fontSize: 10,
-        ),
+        style: TypographyTokens.chartCaption.copyWith(color: color),
       ),
     );
   }

@@ -107,7 +107,7 @@ class _JournalTile extends StatelessWidget {
     ].join(' · ');
     return SoftCard.flat(
       onPress: () => showTradeJournalSheet(context, existingId: entry.id),
-      padding: const EdgeInsets.all(AppSpacing.s14),
+      padding: AppPageRhythm.densePadding,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -245,7 +245,6 @@ class _FireDepthSectionState extends State<_FireDepthSection> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SoftCard.raised(
-          borderless: true,
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.s14,
             vertical: AppSpacing.s12,

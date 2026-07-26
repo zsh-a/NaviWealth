@@ -93,7 +93,11 @@ class AppQuietButton extends StatelessWidget {
       child: FTappable(
         onPress: enabled ? onPress : null,
         child: AnimatedContainer(
-          duration: AppMotionPolicy.duration(context, Motion.fast),
+          duration: AppMotionPolicy.duration(
+            context,
+            Motion.fast,
+            role: AppMotionRole.decorative,
+          ),
           curve: Motion.standard,
           constraints: const BoxConstraints(minHeight: 36),
           padding: const EdgeInsets.symmetric(

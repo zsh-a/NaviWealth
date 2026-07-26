@@ -5,7 +5,6 @@ import 'package:naviwealth/features/finance/data/preferences/base_currency_prefe
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart' as dom;
 
 import '../../../../core/format/providers.dart';
-import '../../../../core/haptics/haptics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../data/market/sync/fx_rate_sync_providers.dart';
@@ -121,7 +120,7 @@ class _RateList extends ConsumerWidget {
               quote: r.quote,
               date: r.date,
             );
-            Haptics.destructive();
+            AppInteraction.signal(AppInteractionIntent.destroy);
             return true;
           },
           child: SoftCard.raised(

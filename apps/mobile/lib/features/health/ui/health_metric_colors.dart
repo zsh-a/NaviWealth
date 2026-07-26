@@ -21,7 +21,9 @@ import '../../../design_system/design_system.dart';
 abstract final class HealthMetricColors {
   static const Color recovery = ColorPalette.cyanBrand700;
   static const Color activity = ColorPalette.cyanBrand500;
-  static const Color body = ColorPalette.violet500;
+  // Pink, not violet — violet is KnowledgeOS's concept hue and the two meet
+  // on mixed Life/AI surfaces (blueprint §8.7 semantic-collision fix).
+  static const Color body = ColorPalette.chartPinkLight;
 
   // ── Recovery ──────────────────────────────────────────────────────
   static const Color hrv = recovery;

@@ -29,7 +29,10 @@ class ColorPalette {
   static const Color navy50 = Color(0xFFF0F5F7);
   static const Color navy100 = Color(0xFFD8E3E7);
   static const Color navy200 = Color(0xFFB5C5CB);
-  static const Color navy300 = Color(0xFF8F9BB3);
+  // Re-derived into the cyan-gray navy hue family (was Tailwind slate
+  // #8F9BB3, a blue-purple outlier). navy300 is the dark-mode muted
+  // foreground, so its hue tints every secondary line of dark text.
+  static const Color navy300 = Color(0xFF90A6AD);
   static const Color navy400 = Color(0xFF6B838A);
   static const Color navy500 = Color(0xFF4D666D);
   static const Color navy600 = Color(0xFF3A5058);
@@ -248,7 +251,6 @@ class ExpenseCategoryColors {
   static const Color apartment = Color(0xFF6366F1);
   static const Color movie = Color(0xFFA855F7);
   static const Color hospital = Color(0xFFFB7185);
-  static const Color cart = Color(0xFF16A34A);
   static const Color redeem = Color(0xFFF43F5E);
   static const Color category = Color(0xFF06B6D4);
 

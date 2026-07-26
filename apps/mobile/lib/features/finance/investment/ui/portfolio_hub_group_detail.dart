@@ -41,7 +41,7 @@ class _PortfolioGroupDetail extends StatelessWidget {
       children: [
         SoftCard.raised(
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.s14),
+            padding: AppPageRhythm.cardPadding,
             child: Row(
               children: [
                 Expanded(

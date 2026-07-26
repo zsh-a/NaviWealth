@@ -74,24 +74,28 @@ extension ExpenseCategoryVisuals on ExpenseCategory {
   /// 2. persisted [color]
   /// 3. icon token → [kExpenseCategorySeedHexByIcon]
   /// 4. [ChartPalette.accentAt] for the series ordinal
+  ///
+  /// Seed hexes are authored for light surfaces; `theme.categorical`
+  /// re-derives them per brightness so dark mode never paints raw seeds.
   Color expenseAccentColor(BuildContext context, {int ordinal = 0}) {
+    final categorical = context.appTheme.categorical;
     final pathHex = systemKey == null
         ? null
         : kExpenseCategorySeedHexByPath[systemKey];
     if (pathHex != null) {
       final parsed = parseAccountColor(pathHex);
-      if (parsed != null) return parsed;
+      if (parsed != null) return categorical.adapt(parsed);
     }
 
     final stored = accentColor;
-    if (stored != null) return stored;
+    if (stored != null) return categorical.adapt(stored);
 
     final iconToken = icon;
     if (iconToken != null) {
       final iconHex = kExpenseCategorySeedHexByIcon[iconToken];
       if (iconHex != null) {
         final parsed = parseAccountColor(iconHex);
-        if (parsed != null) return parsed;
+        if (parsed != null) return categorical.adapt(parsed);
       }
     }
 
@@ -124,7 +128,7 @@ Color expenseReportSliceColor(
   int ordinal = 0,
 }) {
   if (categoryId == kExpenseReportPieOtherId) {
-    return ExpenseCategoryColors.pieOther;
+    return context.appTheme.categorical.adapt(ExpenseCategoryColors.pieOther);
   }
   if (category != null) {
     return category.expenseAccentColor(context, ordinal: ordinal);

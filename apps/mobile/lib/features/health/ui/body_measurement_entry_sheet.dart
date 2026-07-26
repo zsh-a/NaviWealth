@@ -6,7 +6,6 @@ import 'package:forui/forui.dart';
 
 import '../../../core/format/providers.dart';
 import '../../../core/forms/forms.dart';
-import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
@@ -178,7 +177,7 @@ class _BodyMeasurementEntrySheetState
       setState(
         () => _valueError = AppLocalizations.of(context).healthBodyFatMaxError,
       );
-      Haptics.error();
+      AppInteraction.signal(AppInteractionIntent.failure);
       return;
     }
 
@@ -198,7 +197,7 @@ class _BodyMeasurementEntrySheetState
         ..invalidate(trendGroupChartProvider);
       widget.dirty.markPristine();
       if (!mounted) return;
-      Haptics.success();
+      AppInteraction.signal(AppInteractionIntent.success);
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;

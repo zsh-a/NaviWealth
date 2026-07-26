@@ -18,7 +18,6 @@ class _MetricCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return SoftCard(
       level: SoftCardLevel.raised,
-      borderless: true,
       padding: AppPageRhythm.cardPadding,
       onPress: trendKind == null
           ? null
@@ -29,7 +28,7 @@ class _MetricCard extends ConsumerWidget {
           AppMetricHeader(
             icon: icon,
             title: label,
-            color: accent,
+            color: context.appTheme.categorical.adapt(accent),
             showChevron: trendKind != null,
           ),
           const SizedBox(height: AppPageRhythm.row),

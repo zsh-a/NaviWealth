@@ -60,7 +60,6 @@ class LifeTimeline extends StatelessWidget {
     final colors = context.theme.colors;
     return SoftCard.raised(
       padding: AppPageRhythm.cardPadding,
-      borderless: true,
       child: Column(
         children: [
           for (var i = 0; i < items.length; i++) ...[

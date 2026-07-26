@@ -156,8 +156,7 @@ class _RunwayContent extends ConsumerWidget {
         _ScenarioSection(snapshot: snapshot),
         const SizedBox(height: AppSpacing.s16),
         SoftCard.raised(
-          borderless: true,
-          padding: const EdgeInsets.all(AppSpacing.s14),
+          padding: AppPageRhythm.cardPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -213,7 +212,7 @@ class _RunwayContent extends ConsumerWidget {
         const SizedBox(height: AppSpacing.s8),
         if (snapshot.scheduledFlows.isEmpty)
           SoftCard.flat(
-            padding: const EdgeInsets.all(AppSpacing.s14),
+            padding: AppPageRhythm.densePadding,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -390,7 +389,6 @@ class _ScenarioSectionState extends ConsumerState<_ScenarioSection> {
         if (_customResult case final result?) ...[
           const SizedBox(height: AppSpacing.s8),
           SoftCard.raised(
-            borderless: true,
             padding: const EdgeInsets.all(AppSpacing.s12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

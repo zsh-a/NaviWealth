@@ -244,7 +244,9 @@ Widget _buildPrincipleTile(
     itemKey: itemKey,
     statusBadge: p.status.wire,
     typeIcon: FLucideIcons.badgeCheck,
-    typeColor: KnowledgeTypeColors.principle,
+    typeColor: context.appTheme.categorical.adapt(
+      KnowledgeTypeColors.principle,
+    ),
     onPress: () => context.pushNamed(
       KnowledgeRouteNames.objectDetail,
       pathParameters: {'kind': 'principle', 'id': p.id},
@@ -278,7 +280,9 @@ Widget _buildAssumptionTile(
     itemKey: itemKey,
     statusBadge: a.status.wire,
     typeIcon: FLucideIcons.lightbulb,
-    typeColor: KnowledgeTypeColors.assumption,
+    typeColor: context.appTheme.categorical.adapt(
+      KnowledgeTypeColors.assumption,
+    ),
     onPress: () => context.pushNamed(
       KnowledgeRouteNames.objectDetail,
       pathParameters: {'kind': 'assumption', 'id': a.id},
@@ -309,7 +313,7 @@ Widget _buildConceptTile(
     query: query,
     itemKey: itemKey,
     typeIcon: FLucideIcons.folderTree,
-    typeColor: KnowledgeTypeColors.concept,
+    typeColor: context.appTheme.categorical.adapt(KnowledgeTypeColors.concept),
     onPress: () => context.pushNamed(
       KnowledgeRouteNames.objectDetail,
       pathParameters: {'kind': 'concept', 'id': c.id},
@@ -333,7 +337,9 @@ Widget _buildExperimentTile(
     itemKey: itemKey,
     statusBadge: e.status.wire,
     typeIcon: FLucideIcons.flaskConical,
-    typeColor: KnowledgeTypeColors.experiment,
+    typeColor: context.appTheme.categorical.adapt(
+      KnowledgeTypeColors.experiment,
+    ),
     onPress: () => context.pushNamed(
       KnowledgeRouteNames.objectDetail,
       pathParameters: {'kind': 'experiment', 'id': e.id},
@@ -372,7 +378,7 @@ Widget _buildRoutineTile(
     itemKey: itemKey,
     statusBadge: r.status.wire,
     typeIcon: FLucideIcons.calendarClock,
-    typeColor: KnowledgeTypeColors.routine,
+    typeColor: context.appTheme.categorical.adapt(KnowledgeTypeColors.routine),
     onPress: () => context.pushNamed(
       KnowledgeRouteNames.objectDetail,
       pathParameters: {'kind': 'routine', 'id': r.id},

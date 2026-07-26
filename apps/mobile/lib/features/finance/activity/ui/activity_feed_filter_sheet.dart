@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 
@@ -209,7 +208,7 @@ class _DateRangeRow extends StatelessWidget {
             label: label,
             active: active == range,
             onPress: () {
-              Haptics.selection();
+              AppInteraction.signal(AppInteractionIntent.select);
               onPick(range);
             },
           ),
@@ -299,7 +298,7 @@ class _AccountFilterRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return FTappable(
       onPress: () {
-        Haptics.selection();
+        AppInteraction.signal(AppInteractionIntent.select);
         onToggle();
       },
       child: Padding(
@@ -318,7 +317,7 @@ class _AccountFilterRow extends StatelessWidget {
             FCheckbox(
               value: selected,
               onChange: (_) {
-                Haptics.selection();
+                AppInteraction.signal(AppInteractionIntent.select);
                 onToggle();
               },
             ),

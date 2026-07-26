@@ -56,7 +56,6 @@ class _CashflowCalendarContent extends ConsumerWidget {
     return SoftCard.raised(
       onPress: () => context.push(FinanceRoutes.cashflow),
       padding: AppPageRhythm.cardPadding,
-      borderless: true,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 140),
         child: Column(
@@ -120,7 +119,6 @@ class _CashflowCalendarSkeleton extends StatelessWidget {
     return const SoftCard(
       padding: EdgeInsets.all(AppSpacing.s16),
       borderRadius: AppRadius.lg,
-      borderless: true,
       level: SoftCardLevel.raised,
       child: SizedBox(
         height: AppChartHeights.compact,
@@ -149,7 +147,6 @@ class _CashflowCalendarError extends StatelessWidget {
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s16),
       borderRadius: AppRadius.lg,
-      borderless: true,
       level: SoftCardLevel.raised,
       child: SizedBox(
         height: AppChartHeights.compact,

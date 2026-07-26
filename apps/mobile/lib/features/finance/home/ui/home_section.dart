@@ -73,11 +73,6 @@ class HomeSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard.raised(
-      onPress: onPress,
-      padding: padding,
-      borderless: true,
-      child: child,
-    );
+    return SoftCard.raised(onPress: onPress, padding: padding, child: child);
   }
 }

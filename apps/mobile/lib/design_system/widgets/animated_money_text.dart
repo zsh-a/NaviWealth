@@ -1,6 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../tokens/app_motion_policy.dart';
+import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import 'money_text.dart';
 
@@ -35,6 +39,7 @@ class AnimatedMoneyText extends StatefulWidget {
     this.curve = Motion.emphasizedDecelerate,
     this.shortDeltaThreshold = 0.05,
     this.minDeltaThreshold = 0,
+    this.highlightChanges = true,
   });
 
   // -- MoneyText pass-through props -----------------------------------------
@@ -75,12 +80,20 @@ class AnimatedMoneyText extends StatefulWidget {
   /// default) means every change animates.
   final double minDeltaThreshold;
 
+  /// Pulse a direction-colored wash (12% alpha, fade in/out) behind the
+  /// number while it rolls, so a live update reads as "this just moved up /
+  /// down" without the reader re-parsing digits. Color routes through
+  /// `theme.market`, so the up/down preference and colorblind mode apply.
+  final bool highlightChanges;
+
   @override
   State<AnimatedMoneyText> createState() => _AnimatedMoneyTextState();
 }
 
 class _AnimatedMoneyTextState extends State<AnimatedMoneyText> {
   num? _previous;
+  int _pulseSeq = 0;
+  int _pulseDirection = 0;
 
   @override
   void initState() {
@@ -93,6 +106,12 @@ class _AnimatedMoneyTextState extends State<AnimatedMoneyText> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.amount != widget.amount) {
       _previous = oldWidget.amount;
+      final from = oldWidget.amount;
+      final to = widget.amount;
+      if (from != null && to != null && from != to) {
+        _pulseDirection = to > from ? 1 : -1;
+        _pulseSeq++;
+      }
     }
   }
 
@@ -123,18 +142,49 @@ class _AnimatedMoneyTextState extends State<AnimatedMoneyText> {
 
     final duration = _pickDuration(from, to);
 
-    return TweenAnimationBuilder<double>(
-      key: ValueKey<String>(
-        '${widget.currencyCode}|${widget.compact}|${widget.symbolStyle.index}',
+    return _withChangePulse(
+      TweenAnimationBuilder<double>(
+        key: ValueKey<String>(
+          '${widget.currencyCode}|${widget.compact}|${widget.symbolStyle.index}',
+        ),
+        tween: Tween<double>(begin: from, end: to),
+        duration: AppMotionPolicy.duration(
+          context,
+          duration,
+          role: AppMotionRole.status,
+        ),
+        curve: widget.curve,
+        builder: (context, value, _) => _staticMoneyText(value),
       ),
-      tween: Tween<double>(begin: from, end: to),
+    );
+  }
+
+  /// One sine-shaped wash (0 → 12% alpha → 0 over [Motion.ticker]) behind
+  /// the rolling number, restarted per change via [_pulseSeq].
+  Widget _withChangePulse(Widget child) {
+    if (!widget.highlightChanges || _pulseSeq == 0 || _pulseDirection == 0) {
+      return child;
+    }
+    final tint = context.appTheme.market.roleForDelta(_pulseDirection).fg;
+    return TweenAnimationBuilder<double>(
+      key: ValueKey<int>(_pulseSeq),
+      tween: Tween<double>(begin: 0, end: 1),
       duration: AppMotionPolicy.duration(
         context,
-        duration,
+        Motion.ticker,
         role: AppMotionRole.status,
       ),
-      curve: widget.curve,
-      builder: (context, value, _) => _staticMoneyText(value),
+      curve: Curves.linear,
+      builder: (context, t, inner) => DecoratedBox(
+        decoration: BoxDecoration(
+          color: tint.withValues(
+            alpha: math.sin(math.pi * t) * AppOpacity.light,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        child: inner,
+      ),
+      child: child,
     );
   }
 

@@ -77,7 +77,7 @@ class _DashboardBodyContent extends ConsumerWidget {
         return AmountPrivacyScope(
           hidden: amountsHidden,
           child: useCockpit
-              ? RefreshIndicator(
+              ? AppRefreshIndicator(
                   onRefresh: onRefresh,
                   child: AppAtmosphere(
                     child: AppCollapsingScrollHost(

@@ -3,7 +3,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -618,7 +617,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         amount <= Decimal.zero ||
         _fromAccountId == null ||
         _toAccountId == null) {
-      Haptics.error();
+      AppInteraction.signal(AppInteractionIntent.failure);
       return;
     }
     final accounts = ref.read(accountsStreamProvider).asData?.value ?? const [];
@@ -626,7 +625,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     final fromCcy = byId[_fromAccountId!]?.currency;
     final toCcy = byId[_toAccountId!]?.currency;
     if (fromCcy == null || toCcy == null) {
-      Haptics.error();
+      AppInteraction.signal(AppInteractionIntent.failure);
       return;
     }
     final isCross = fromCcy != toCcy;
@@ -634,7 +633,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     if (isCross) {
       toAmount = readAmount(_toAmountController);
       if (toAmount == null || toAmount <= Decimal.zero) {
-        Haptics.error();
+        AppInteraction.signal(AppInteractionIntent.failure);
         return;
       }
     }

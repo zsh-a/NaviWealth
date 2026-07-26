@@ -9,7 +9,6 @@ import 'package:intl/intl.dart';
 import 'package:naviwealth/core/async/async_notifier_convention.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/format/providers.dart';
-import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/analytics/data/providers.dart';
@@ -162,6 +161,19 @@ class _PortfolioHubBody extends StatefulWidget {
 class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
   bool _showAllPositions = false;
 
+  // First-frame entrance stagger (doc 11 §5) — first-paint rows cascade in;
+  // later builds (reveal-more, data ticks) appear instantly.
+  bool _entranceStagger = true;
+  static const int _kStaggerRowCap = 8;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _entranceStagger = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -255,10 +267,7 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
 
     // Visual chrome matches [AppGroupedSurface] via DecoratedSliver so rows
     // stay virtualized inside one continuous group surface.
-    final themeColors = context.theme.colors;
-    final surfaceColor = themeColors.brightness == Brightness.dark
-        ? themeColors.card.withValues(alpha: AppOpacity.muted)
-        : ColorPalette.surfaceRaised;
+    final surfaceColor = appGroupedSurfaceFill(context);
 
     return SliverMainAxisGroup(
       slivers: [
@@ -276,8 +285,16 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
               indent: AppSpacing.s12,
               endIndent: AppSpacing.s12,
             ),
-            itemBuilder: (context, index) =>
-                _HoldingRow(holding: holdings[index]),
+            itemBuilder: (context, index) {
+              final row = _HoldingRow(holding: holdings[index]);
+              if (_entranceStagger && index < _kStaggerRowCap) {
+                return FadeSlideIn(
+                  delay: Duration(milliseconds: 30 * index),
+                  child: row,
+                );
+              }
+              return row;
+            },
           ),
         ),
         if (showReveal)
@@ -366,7 +383,7 @@ class _PortfolioSelector extends StatelessWidget {
       control: FSelectControl<String>.lifted(
         value: value ?? '',
         onChange: (id) {
-          Haptics.selection();
+          AppInteraction.signal(AppInteractionIntent.select);
           onChanged(id == null || id.isEmpty ? null : id);
         },
       ),
@@ -407,7 +424,7 @@ class _PortfolioSectionSegment extends StatelessWidget {
         _PortfolioSection.insights => l10n.portfolioHubSectionInsights,
       },
       onChanged: (next) {
-        Haptics.selection();
+        AppInteraction.signal(AppInteractionIntent.select);
         onChanged(next);
       },
     );

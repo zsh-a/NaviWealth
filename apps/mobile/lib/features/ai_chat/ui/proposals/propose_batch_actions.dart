@@ -5,7 +5,6 @@ import 'package:forui/forui.dart';
 import '../../../../core/ai/composition/proposal_applier.dart';
 import '../../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../../core/ai/composition/proposal_plan.dart';
-import '../../../../core/haptics/haptics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../data/providers.dart';
@@ -80,7 +79,7 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
   }
 
   Future<void> _confirmAll() async {
-    Haptics.primaryPress();
+    AppInteraction.signal(AppInteractionIntent.commit);
     setState(() => _busy = true);
     var applied = 0;
     var failed = 0;

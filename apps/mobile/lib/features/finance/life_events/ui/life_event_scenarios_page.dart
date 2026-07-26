@@ -166,8 +166,7 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
     }
 
     return SoftCard.raised(
-      borderless: true,
-      padding: const EdgeInsets.all(AppSpacing.s14),
+      padding: AppPageRhythm.cardPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

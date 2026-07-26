@@ -11,20 +11,22 @@ void main() {
 
   group('KnowledgeOS static UI constraints', () {
     test('does not import or use Material-only affordances', () {
-      final forbidden = <String>[
-        'package:flutter/material.dart',
-        'RefreshIndicator',
-        'ReorderableListView',
-        'FloatingActionButton',
-        'Hero(',
+      // Word-boundary patterns so the sanctioned design-system wrappers
+      // (AppRefreshIndicator, OptionalHero) don't trip the ban.
+      final forbidden = <RegExp>[
+        RegExp(r'package:flutter/material\.dart'),
+        RegExp(r'\bRefreshIndicator\('),
+        RegExp(r'\bReorderableListView\b'),
+        RegExp(r'\bFloatingActionButton\b'),
+        RegExp(r'\bHero\('),
       ];
 
       final offenders = <String>[];
       for (final file in knowledgeFiles) {
         final text = file.readAsStringSync();
         for (final pattern in forbidden) {
-          if (text.contains(pattern)) {
-            offenders.add('${file.path}: $pattern');
+          if (pattern.hasMatch(text)) {
+            offenders.add('${file.path}: ${pattern.pattern}');
           }
         }
       }

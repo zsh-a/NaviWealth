@@ -20,7 +20,7 @@ class _AppearanceSection extends ConsumerWidget {
             for (final m in ThemeMode.values) _themeModeLabel(l10n, m): m,
           },
           onChanged: (m) {
-            Haptics.selection();
+            AppInteraction.signal(AppInteractionIntent.select);
             ref.read(themeModeProvider.notifier).set(m);
           },
         ),
@@ -34,7 +34,7 @@ class _AppearanceSection extends ConsumerWidget {
               _surfaceStyleLabel(l10n, s): s,
           },
           onChanged: (s) {
-            Haptics.selection();
+            AppInteraction.signal(AppInteractionIntent.select);
             ref.read(surfaceStyleProvider.notifier).set(s);
           },
         ),
@@ -47,7 +47,7 @@ class _AppearanceSection extends ConsumerWidget {
             for (final a in AppAccentSeed.values) _accentSeedLabel(l10n, a): a,
           },
           onChanged: (a) {
-            Haptics.selection();
+            AppInteraction.signal(AppInteractionIntent.select);
             ref.read(accentSeedProvider.notifier).set(a);
           },
         ),
@@ -83,7 +83,7 @@ class _AppearanceSection extends ConsumerWidget {
             l10n.langChinese: 'zh',
           },
           onChanged: (picked) {
-            Haptics.selection();
+            AppInteraction.signal(AppInteractionIntent.select);
             ref
                 .read(localeProvider.notifier)
                 .set(picked.isEmpty ? null : Locale(picked));

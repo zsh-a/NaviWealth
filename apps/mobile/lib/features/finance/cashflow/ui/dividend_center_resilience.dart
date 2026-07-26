@@ -184,7 +184,7 @@ class _ResilienceMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: AppControlWidths.metricTile,
+      width: context.appTheme.metricTile.minWidth,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

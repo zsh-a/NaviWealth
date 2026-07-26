@@ -411,7 +411,6 @@ class _LeapsPositionTile extends StatelessWidget {
       context,
     ).formatShortDate(position.expirationAt.toLocal());
     return SoftCard.flat(
-      borderless: true,
       tinted: false,
       onPress: onPress,
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
@@ -469,7 +468,6 @@ class _OpenPositionTile extends StatelessWidget {
             expiration,
           );
     return SoftCard.flat(
-      borderless: true,
       tinted: false,
       onPress: onPress,
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
@@ -515,7 +513,6 @@ class _WheelHistoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return SoftCard.flat(
-      borderless: true,
       tinted: false,
       onPress: onPress,
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),

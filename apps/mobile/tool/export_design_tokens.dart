@@ -372,7 +372,6 @@ Map<String, Object> _colorGroup() => {
     'apartment': _color(ExpenseCategoryColors.apartment),
     'movie': _color(ExpenseCategoryColors.movie),
     'hospital': _color(ExpenseCategoryColors.hospital),
-    'cart': _color(ExpenseCategoryColors.cart),
     'redeem': _color(ExpenseCategoryColors.redeem),
     'category': _color(ExpenseCategoryColors.category),
     'pieOther': _color(ExpenseCategoryColors.pieOther),

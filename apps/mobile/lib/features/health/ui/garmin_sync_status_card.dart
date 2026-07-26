@@ -27,7 +27,6 @@ class GarminSyncStatusCard extends ConsumerWidget {
 
     return SoftCard(
       level: SoftCardLevel.raised,
-      borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: switch (state) {
         GarminInitial() => _Disconnected(ref: ref),

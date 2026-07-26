@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/core/shell/shell_visibility.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -223,7 +222,7 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
           label: _labelForKind(l10n, kind),
           active: selected.contains(kind),
           onTap: () {
-            Haptics.selection();
+            AppInteraction.signal(AppInteractionIntent.select);
             final next = {...selected};
             if (next.contains(kind)) {
               next.remove(kind);
@@ -410,6 +409,6 @@ void _setActivityKinds(
   ActivityFeedQuery query,
   Set<ActivityKind> kinds,
 ) {
-  Haptics.selection();
+  AppInteraction.signal(AppInteractionIntent.select);
   controller.setQuery(query.copyWith(kinds: kinds));
 }

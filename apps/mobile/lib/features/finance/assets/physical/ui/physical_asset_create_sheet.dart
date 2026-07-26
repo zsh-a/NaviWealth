@@ -4,7 +4,6 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
@@ -395,7 +394,7 @@ class _PhysicalAssetCreateSheetState
       );
       if (!mounted) return;
       widget.dirty.markPristine();
-      Haptics.success();
+      AppInteraction.signal(AppInteractionIntent.success);
       Navigator.of(context).pop(created);
     } catch (_) {
       if (!mounted) return;

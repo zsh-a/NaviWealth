@@ -173,7 +173,11 @@ class _NavTabButton extends StatelessWidget {
           onTap();
         },
         child: AnimatedContainer(
-          duration: AppMotionPolicy.duration(context, Motion.fast),
+          duration: AppMotionPolicy.duration(
+            context,
+            Motion.fast,
+            role: AppMotionRole.decorative,
+          ),
           curve: Motion.standardDecelerate,
           height: _kDestinationHeight,
           padding: const EdgeInsets.symmetric(
@@ -195,7 +199,11 @@ class _NavTabButton extends StatelessWidget {
                 width: _kIconSlotSize,
                 height: _kIconSlotSize,
                 child: AnimatedSwitcher(
-                  duration: AppMotionPolicy.duration(context, Motion.fast),
+                  duration: AppMotionPolicy.duration(
+                    context,
+                    Motion.fast,
+                    role: AppMotionRole.decorative,
+                  ),
                   switchInCurve: Motion.standardDecelerate,
                   switchOutCurve: Motion.standardAccelerate,
                   child: Icon(

@@ -442,7 +442,6 @@ class _DiffRow extends StatelessWidget {
         const SizedBox(height: AppSpacing.s4),
         // Original — muted, stricken
         SoftCard.flat(
-          borderless: true,
           padding: const EdgeInsets.all(AppSpacing.s8),
           child: Text(
             knowledgeExcerpt(before),
@@ -464,7 +463,6 @@ class _DiffRow extends StatelessWidget {
         const SizedBox(height: AppSpacing.s4),
         // Improved — primary tint via SoftCard (hero wash kept off for density)
         SoftCard.raised(
-          borderless: false,
           padding: const EdgeInsets.all(AppSpacing.s8),
           child: Text(
             knowledgeExcerpt(after),

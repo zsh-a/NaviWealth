@@ -95,7 +95,7 @@ class _RefreshableFeed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(onRefresh: onRefresh, child: child);
+    return AppRefreshIndicator(onRefresh: onRefresh, child: child);
   }
 }
 
@@ -122,6 +122,20 @@ class _FeedList extends ConsumerStatefulWidget {
 
 class _FeedListState extends ConsumerState<_FeedList> {
   bool _loadingMore = false;
+
+  // First-frame entrance stagger (doc 11 §5): rows built during the first
+  // frame cascade in; anything built later (scroll, load-more) appears
+  // instantly so the table never "shimmies" on updates.
+  bool _entranceStagger = true;
+  static const int _kStaggerRowCap = 10;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _entranceStagger = false;
+    });
+  }
 
   Future<void> _tryLoadMore() async {
     if (!widget.hasMore || _loadingMore) return;
@@ -160,7 +174,7 @@ class _FeedListState extends ConsumerState<_FeedList> {
         itemCount: items.length,
         itemBuilder: (context, index) {
           final item = items[index];
-          return switch (item) {
+          final row = switch (item) {
             _FeedSummaryItem() => Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.s12),
               child: _PageSummaryStrip(
@@ -196,6 +210,13 @@ class _FeedListState extends ConsumerState<_FeedList> {
               onLoadMore: _tryLoadMore,
             ),
           };
+          if (_entranceStagger && index < _kStaggerRowCap) {
+            return FadeSlideIn(
+              delay: Duration(milliseconds: 30 * index),
+              child: row,
+            );
+          }
+          return row;
         },
       ),
     );
@@ -318,7 +339,6 @@ class _PageSummaryStrip extends StatelessWidget {
     final colors = context.theme.colors;
     final status = context.appTheme.status;
     return SoftCard.raised(
-      borderless: true,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s14,
         vertical: AppSpacing.s12,
