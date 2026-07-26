@@ -45,6 +45,14 @@ class ColorPalette {
   static const Color navyHero = Color(0xFF1B3542);
   static const Color navySoftBorder = Color(0xFFCAD7DA);
 
+  // ── OLED surfaces (AppSurfaceStyle.oled, dark only) ────────────────────
+  // True-black canvas with the card ladder pulled down two steps so the
+  // elevation rhythm survives on pitch black. Hues stay in the navy family.
+  static const Color oledCanvas = Color(0xFF000000);
+  static const Color oledCard = Color(0xFF0A121A);
+  static const Color oledRaised = Color(0xFF0F1B26);
+  static const Color oledHero = Color(0xFF152532);
+
   // ── Neutral grayscale ───────────────────────────────────────────────────
   static const Color neutral0 = Color(0xFFFFFFFF);
   static const Color neutral50 = Color(0xFFF7F8FA);
@@ -128,8 +136,22 @@ class ColorPalette {
   static const Color profitGlowDark = Color(0x6610B981);
   static const Color profitGlowLight = Color(0x66059669);
 
-  // ── Violet (knowledge concepts) ────────────────────────────────────────
+  // ── Violet (knowledge concepts + accent seed ramp) ─────────────────────
+  static const Color violet50 = Color(0xFFF5F3FF);
+  static const Color violet100 = Color(0xFFEDE9FE);
+  static const Color violet400 = Color(0xFFA78BFA);
   static const Color violet500 = Color(0xFF8B5CF6);
+  static const Color violet700 = Color(0xFF6D28D9);
+  static const Color violet800 = Color(0xFF5B21B6);
+  static const Color violet900 = Color(0xFF4C1D95);
+
+  // ── Indigo (accent seed ramp) ──────────────────────────────────────────
+  static const Color indigo50 = Color(0xFFEEF2FF);
+  static const Color indigo100 = Color(0xFFE0E7FF);
+  static const Color indigo400 = Color(0xFF818CF8);
+  static const Color indigo700 = Color(0xFF4338CA);
+  static const Color indigo800 = Color(0xFF3730A3);
+  static const Color indigo900 = Color(0xFF312E81);
 
   // ── Orange (knowledge / expense accent) ────────────────────────────────
   static const Color orange500 = Color(0xFFF97316);

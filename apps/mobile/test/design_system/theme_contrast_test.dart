@@ -36,12 +36,61 @@ void main() {
   final inputs = [
     for (final brightness in [Brightness.light, Brightness.dark])
       for (final mode in MarketColorMode.values)
-        ThemeInputs(brightness: brightness, marketMode: mode),
+        for (final style in AppSurfaceStyle.values)
+          ThemeInputs(
+            brightness: brightness,
+            marketMode: mode,
+            surfaceStyle: style,
+          ),
   ];
 
+  group('accent seed invariants', () {
+    for (final seed in AppAccentSeed.values) {
+      for (final brightness in [Brightness.light, Brightness.dark]) {
+        for (final style in AppSurfaceStyle.values) {
+          final theme = resolveAppTheme(
+            ThemeInputs(
+              brightness: brightness,
+              marketMode: MarketColorMode.redUpGreenDown,
+              surfaceStyle: style,
+              accentSeed: seed,
+            ),
+          );
+          final highContrast = style == AppSurfaceStyle.highContrast;
+          final label = '${seed.name}/${brightness.name}/${style.name}';
+          test('accent role holds contrast [$label]', () {
+            final role = theme.accent;
+            expect(
+              _contrast(role.onContainer, role.container),
+              greaterThanOrEqualTo(4.5),
+              reason: '$label accent onContainer/container',
+            );
+            expect(
+              _contrast(role.fg, theme.surfaces.card),
+              greaterThanOrEqualTo(highContrast ? 4.5 : 3.0),
+              reason: '$label accent fg on card',
+            );
+            expect(
+              _contrast(role.onFg, role.fg),
+              greaterThanOrEqualTo(3.0),
+              reason: '$label accent onFg on solid fg fill',
+            );
+          });
+        }
+      }
+    }
+  });
+
   for (final input in inputs) {
-    final label = '${input.brightness.name}/${input.marketMode.name}';
+    final label =
+        '${input.brightness.name}/${input.marketMode.name}'
+        '/${input.surfaceStyle.name}';
     final theme = resolveAppTheme(input);
+    // High contrast raises the floors: AAA (7:1) body text, AA (4.5:1)
+    // status/market foregrounds. Other styles keep the standard tiers.
+    final highContrast = input.surfaceStyle == AppSurfaceStyle.highContrast;
+    final fgFloor = highContrast ? 4.5 : 3.0;
+    final contentFloor = highContrast ? 7.0 : 4.5;
 
     group('contrast invariants [$label]', () {
       for (final (name, role) in _roles(theme)) {
@@ -65,25 +114,23 @@ void main() {
           );
         });
 
-        // TODO(blueprint doc 15 P5): raise to 4.5 once the palette debts
-        // (info-on-card, dark rose-on-card) are re-derived.
-        test('$name fg vs card >= 3.0', () {
+        test('$name fg vs card >= floor', () {
           final key = '$label/$name/fgOnCard';
           final ratio = _contrast(role.fg, theme.surfaces.card);
           if (_exemptions.contains(key)) {
             expect(
               ratio,
-              lessThan(3.0),
+              lessThan(fgFloor),
               reason: '$key is exempted but now passes — delete the exemption.',
             );
             return;
           }
           expect(
             ratio,
-            greaterThanOrEqualTo(3.0),
+            greaterThanOrEqualTo(fgFloor),
             reason:
                 '$name.fg on surfaces.card is ${ratio.toStringAsFixed(2)}:1 '
-                '— needs at least 3.0:1 (large-text tier).',
+                '— needs at least $fgFloor:1 for ${input.surfaceStyle.name}.',
           );
         });
       }
@@ -97,8 +144,10 @@ void main() {
           final ratio = _contrast(color, theme.surfaces.card);
           expect(
             ratio,
-            greaterThanOrEqualTo(4.5),
-            reason: 'content.$name on card is ${ratio.toStringAsFixed(2)}:1.',
+            greaterThanOrEqualTo(contentFloor),
+            reason:
+                'content.$name on card is ${ratio.toStringAsFixed(2)}:1 '
+                '(floor $contentFloor for ${input.surfaceStyle.name}).',
           );
         }
       });

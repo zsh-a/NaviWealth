@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 
 import '../tokens/color_palette.dart';
 import 'accent_colors.dart';
+import 'accent_seed.dart';
+import 'app_surface_style.dart';
 import 'app_theme_data.dart';
 import 'market_color_mode.dart';
 import 'market_colors.dart';
@@ -21,11 +23,15 @@ class ThemeInputs {
   const ThemeInputs({
     required this.brightness,
     required this.marketMode,
+    this.surfaceStyle = AppSurfaceStyle.standard,
+    this.accentSeed = AppAccentSeed.cyan,
     this.density = AppDensity.touch,
   });
 
   final Brightness brightness;
   final MarketColorMode marketMode;
+  final AppSurfaceStyle surfaceStyle;
+  final AppAccentSeed accentSeed;
   final AppDensity density;
 
   @override
@@ -33,10 +39,13 @@ class ThemeInputs {
       other is ThemeInputs &&
       other.brightness == brightness &&
       other.marketMode == marketMode &&
+      other.surfaceStyle == surfaceStyle &&
+      other.accentSeed == accentSeed &&
       other.density == density;
 
   @override
-  int get hashCode => Object.hash(brightness, marketMode, density);
+  int get hashCode =>
+      Object.hash(brightness, marketMode, surfaceStyle, accentSeed, density);
 }
 
 /// Pure resolver: [ThemeInputs] → [AppThemeData].
@@ -47,6 +56,24 @@ class ThemeInputs {
 /// Phase P1 note: values are sourced from the legacy [SemanticColors] /
 /// [MarketColors] / [AccentColors] tables so adopting `context.appTheme`
 /// changes no pixels. Those tables fold into this file in phase P5.
+/// Hue-preserving contrast boost for [AppSurfaceStyle.highContrast]
+/// foregrounds: darkens on light surfaces, lightens on dark ones. Values are
+/// verified by theme_contrast_test.dart's raised per-style thresholds.
+Color _boostFg(Color c, {required bool isDark}) {
+  final hsl = HSLColor.fromColor(c);
+  final l = hsl.lightness;
+  return hsl
+      .withLightness((isDark ? l * 1.25 + 0.06 : l * 0.72).clamp(0.0, 1.0))
+      .toColor();
+}
+
+ColorRole _boostRoleFg(ColorRole role, {required bool isDark}) => ColorRole(
+  fg: _boostFg(role.fg, isDark: isDark),
+  container: role.container,
+  onContainer: role.onContainer,
+  onFg: role.onFg,
+);
+
 AppThemeData resolveAppTheme(ThemeInputs inputs) {
   final isDark = inputs.brightness == Brightness.dark;
   final semantic = isDark ? SemanticColors.dark : SemanticColors.light;
@@ -55,91 +82,119 @@ AppThemeData resolveAppTheme(ThemeInputs inputs) {
     brightness: inputs.brightness,
   );
 
+  // OLED is a dark-only override; light mode falls back to standard.
+  final oled = inputs.surfaceStyle == AppSurfaceStyle.oled && isDark;
+  final highContrast = inputs.surfaceStyle == AppSurfaceStyle.highContrast;
+
   final surfaces = isDark
-      ? const AppSurfaces(
-          canvas: ColorPalette.navy950,
-          card: ColorPalette.navyGlass,
-          raised: ColorPalette.navyRaised,
-          hero: ColorPalette.navyHero,
-          border: ColorPalette.navy800,
+      ? AppSurfaces(
+          canvas: oled ? ColorPalette.oledCanvas : ColorPalette.navy950,
+          card: oled ? ColorPalette.oledCard : ColorPalette.navyGlass,
+          raised: oled ? ColorPalette.oledRaised : ColorPalette.navyRaised,
+          hero: oled ? ColorPalette.oledHero : ColorPalette.navyHero,
+          border: highContrast ? ColorPalette.navy500 : ColorPalette.navy800,
           scrim: ColorPalette.scrimDark,
         )
-      : const AppSurfaces(
+      : AppSurfaces(
           canvas: ColorPalette.surfaceBackground,
           card: ColorPalette.surface,
           raised: ColorPalette.surfaceRaised,
           hero: ColorPalette.surface,
-          border: ColorPalette.surfaceHairline,
+          border: highContrast
+              ? ColorPalette.navy400
+              : ColorPalette.surfaceHairline,
           scrim: ColorPalette.scrimLight,
         );
 
+  // High contrast tightens the text ladder toward WCAG AAA (7:1) on card;
+  // the contrast test enforces the raised threshold per style.
   final content = isDark
-      ? const AppContent(
+      ? AppContent(
           strong: ColorPalette.neutral0,
           body: ColorPalette.navy50,
-          muted: ColorPalette.navy300,
-          faint: ColorPalette.navy400,
+          muted: highContrast ? ColorPalette.navy100 : ColorPalette.navy300,
+          faint: highContrast ? ColorPalette.navy300 : ColorPalette.navy400,
         )
-      : const AppContent(
+      : AppContent(
           strong: ColorPalette.neutral1000,
           body: ColorPalette.navy900,
-          muted: ColorPalette.navy500,
-          faint: ColorPalette.neutral400,
+          muted: highContrast ? ColorPalette.navy700 : ColorPalette.navy500,
+          faint: highContrast ? ColorPalette.navy500 : ColorPalette.neutral400,
         );
 
   final accent = ColorRole(
-    fg: AccentColors.primary(inputs.brightness),
-    container: AccentColors.tint(inputs.brightness),
-    onContainer: isDark ? ColorPalette.cyanBrand100 : ColorPalette.cyanBrand800,
+    fg: AccentColors.primary(inputs.brightness, seed: inputs.accentSeed),
+    container: AccentColors.tint(inputs.brightness, seed: inputs.accentSeed),
+    onContainer: AccentColors.onTint(
+      inputs.brightness,
+      seed: inputs.accentSeed,
+    ),
     onFg: AccentColors.onPrimary(inputs.brightness),
   );
 
+  ColorRole role(ColorRole r) =>
+      highContrast ? _boostRoleFg(r, isDark: isDark) : r;
+
   final status = AppStatus(
-    success: ColorRole(
-      fg: semantic.success,
-      container: semantic.successContainer,
-      onContainer: semantic.onSuccessContainer,
-      onFg: semantic.onSuccess,
+    success: role(
+      ColorRole(
+        fg: semantic.success,
+        container: semantic.successContainer,
+        onContainer: semantic.onSuccessContainer,
+        onFg: semantic.onSuccess,
+      ),
     ),
-    warning: ColorRole(
-      fg: semantic.warning,
-      container: semantic.warningContainer,
-      onContainer: semantic.onWarningContainer,
-      onFg: semantic.onWarning,
+    warning: role(
+      ColorRole(
+        fg: semantic.warning,
+        container: semantic.warningContainer,
+        onContainer: semantic.onWarningContainer,
+        onFg: semantic.onWarning,
+      ),
     ),
-    danger: ColorRole(
-      fg: semantic.danger,
-      container: semantic.dangerContainer,
-      onContainer: semantic.onDangerContainer,
-      onFg: semantic.onDanger,
+    danger: role(
+      ColorRole(
+        fg: semantic.danger,
+        container: semantic.dangerContainer,
+        onContainer: semantic.onDangerContainer,
+        onFg: semantic.onDanger,
+      ),
     ),
-    info: ColorRole(
-      fg: semantic.info,
-      container: semantic.infoContainer,
-      onContainer: semantic.onInfoContainer,
-      onFg: semantic.onInfo,
+    info: role(
+      ColorRole(
+        fg: semantic.info,
+        container: semantic.infoContainer,
+        onContainer: semantic.onInfoContainer,
+        onFg: semantic.onInfo,
+      ),
     ),
   );
 
   final market = AppMarket(
     mode: inputs.marketMode,
-    up: ColorRole(
-      fg: legacyMarket.up,
-      container: legacyMarket.upContainer,
-      onContainer: legacyMarket.onUpContainer,
-      onFg: legacyMarket.onUp,
+    up: role(
+      ColorRole(
+        fg: legacyMarket.up,
+        container: legacyMarket.upContainer,
+        onContainer: legacyMarket.onUpContainer,
+        onFg: legacyMarket.onUp,
+      ),
     ),
-    down: ColorRole(
-      fg: legacyMarket.down,
-      container: legacyMarket.downContainer,
-      onContainer: legacyMarket.onDownContainer,
-      onFg: legacyMarket.onDown,
+    down: role(
+      ColorRole(
+        fg: legacyMarket.down,
+        container: legacyMarket.downContainer,
+        onContainer: legacyMarket.onDownContainer,
+        onFg: legacyMarket.onDown,
+      ),
     ),
-    flat: ColorRole(
-      fg: legacyMarket.flat,
-      container: surfaces.raised,
-      onContainer: legacyMarket.onFlat,
-      onFg: legacyMarket.onFlat,
+    flat: role(
+      ColorRole(
+        fg: legacyMarket.flat,
+        container: surfaces.raised,
+        onContainer: legacyMarket.onFlat,
+        onFg: legacyMarket.onFlat,
+      ),
     ),
     upMuted: legacyMarket.upMuted,
     downMuted: legacyMarket.downMuted,

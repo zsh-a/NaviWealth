@@ -2911,6 +2911,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAppearanceSection => 'Appearance';
 
   @override
+  String get settingsAccentSeedTitle => 'Accent color';
+
+  @override
+  String get accentSeedCyan => 'Turquoise';
+
+  @override
+  String get accentSeedViolet => 'Violet';
+
+  @override
+  String get accentSeedIndigo => 'Indigo';
+
+  @override
+  String get settingsSurfaceStyleTitle => 'Surface style';
+
+  @override
+  String get surfaceStyleStandard => 'Standard';
+
+  @override
+  String get surfaceStyleOled => 'OLED black';
+
+  @override
+  String get surfaceStyleHighContrast => 'High contrast';
+
+  @override
   String get settingsThemeModeTitle => 'Theme';
 
   @override
