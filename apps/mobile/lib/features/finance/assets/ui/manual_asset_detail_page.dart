@@ -74,6 +74,7 @@ class _ManualAssetDetailPageState extends ConsumerState<ManualAssetDetailPage> {
       title: asset.name ?? asset.symbol,
       actions: [
         AppHeaderAction(
+          key: const Key('manual-asset-edit-primary'),
           icon: const Icon(FLucideIcons.pencil),
           semanticsLabel: l10n.manualAssetDetailEditAction,
           onPress: () => context.push(FinanceRoutes.wealthAssetEdit(asset.id)),
@@ -128,19 +129,6 @@ class _ManualAssetDetailPageState extends ConsumerState<ManualAssetDetailPage> {
                       Text(
                         manualAssetTypeLabel(l10n, asset.type),
                         style: context.bodyCaptionStyle,
-                      ),
-                      const SizedBox(height: AppSpacing.s16),
-                      FButton(
-                        key: const Key('manual-asset-edit-primary'),
-                        variant: FButtonVariant.primary,
-                        onPress: () => context.push(
-                          FinanceRoutes.wealthAssetEdit(asset.id),
-                        ),
-                        prefix: const Icon(
-                          FLucideIcons.pencil,
-                          size: AppIconSizes.sm,
-                        ),
-                        child: Text(l10n.manualAssetDetailEditAction),
                       ),
                     ],
                   ),

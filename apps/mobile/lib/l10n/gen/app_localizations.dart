@@ -5205,6 +5205,18 @@ abstract class AppLocalizations {
   /// **'Something went wrong'**
   String get commonError;
 
+  /// No description provided for @commonRequiredField.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a value.'**
+  String get commonRequiredField;
+
+  /// No description provided for @commonInvalidNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid number.'**
+  String get commonInvalidNumber;
+
   /// No description provided for @commonSafeErrorMessage.
   ///
   /// In en, this message translates to:
@@ -23851,11 +23863,41 @@ abstract class AppLocalizations {
   /// **'Financial inbox'**
   String get financialInboxTitle;
 
+  /// No description provided for @financialInboxPriorityImportant.
+  ///
+  /// In en, this message translates to:
+  /// **'Important'**
+  String get financialInboxPriorityImportant;
+
+  /// No description provided for @financialInboxPriorityAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get financialInboxPriorityAttention;
+
+  /// No description provided for @financialInboxLastCheckedCompact.
+  ///
+  /// In en, this message translates to:
+  /// **'Checked {date}'**
+  String financialInboxLastCheckedCompact(String date);
+
   /// No description provided for @monthlyCloseTitle.
   ///
   /// In en, this message translates to:
   /// **'Monthly close'**
   String get monthlyCloseTitle;
+
+  /// No description provided for @monthlyCloseStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start monthly close'**
+  String get monthlyCloseStart;
+
+  /// No description provided for @monthlyCloseStartBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Review this month\'s evidence, reconcile balances, and close with a clear audit trail.'**
+  String get monthlyCloseStartBody;
 
   /// No description provided for @monthlyClosePeriod.
   ///
@@ -25086,6 +25128,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close history'**
   String get monthlyCloseHistoryTitle;
+
+  /// No description provided for @monthlyCloseHistoryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} previous closes'**
+  String monthlyCloseHistoryCount(int count);
 
   /// No description provided for @monthlyCloseHistoryExceptions.
   ///

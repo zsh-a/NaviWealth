@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
@@ -33,7 +34,12 @@ class AssetDetailPage extends ConsumerWidget {
       error: (e, _) => AppPageScaffold(
         title: l10n.assetDetailUnknown,
         childPad: false,
-        child: Center(child: Text(userSafeErrorMessage(context, e))),
+        child: AppEmptyState.error(
+          title: l10n.commonLoadFailed,
+          message: userSafeErrorMessage(context, e),
+          retryLabel: l10n.commonRetry,
+          onRetry: () => ref.invalidate(manualAssetRepositoryProvider),
+        ),
       ),
       data: (repo) {
         return FutureBuilder<Asset?>(
@@ -67,7 +73,10 @@ class AssetDetailPage extends ConsumerWidget {
               return AppPageScaffold(
                 title: l10n.assetDetailUnknown,
                 childPad: false,
-                child: Center(child: Text(l10n.assetDetailNotFound)),
+                child: AppEmptyState(
+                  icon: FLucideIcons.box,
+                  title: l10n.assetDetailNotFound,
+                ),
               );
             }
             return switch (asset.type) {
@@ -85,7 +94,10 @@ class AssetDetailPage extends ConsumerWidget {
               _ => AppPageScaffold(
                 title: asset.name ?? asset.symbol,
                 childPad: false,
-                child: Center(child: Text(l10n.assetDetailUnsupportedType)),
+                child: AppEmptyState(
+                  icon: FLucideIcons.circleX,
+                  title: l10n.assetDetailUnsupportedType,
+                ),
               ),
             };
           },

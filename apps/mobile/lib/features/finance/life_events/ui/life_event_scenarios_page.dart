@@ -19,11 +19,20 @@ import '../data/financial_decision_providers.dart';
 import '../domain/financial_decision.dart';
 import '../domain/life_event_scenario.dart';
 
-class LifeEventScenariosPage extends ConsumerWidget {
+class LifeEventScenariosPage extends ConsumerStatefulWidget {
   const LifeEventScenariosPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LifeEventScenariosPage> createState() =>
+      _LifeEventScenariosPageState();
+}
+
+class _LifeEventScenariosPageState
+    extends ConsumerState<LifeEventScenariosPage> {
+  LifeEventTemplate _selectedTemplate = LifeEventTemplate.largePurchase;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final baseline = ref.watch(lifeEventBaselineProvider);
     final decisions =
@@ -54,11 +63,20 @@ class LifeEventScenariosPage extends ConsumerWidget {
                   l10n.lifeEventScenariosIntro,
                   style: context.bodyCaptionStyle,
                 ),
+                const SizedBox(height: AppSpacing.s12),
+                SegmentedRow<LifeEventTemplate>(
+                  options: LifeEventTemplate.values,
+                  value: _selectedTemplate,
+                  labelOf: (template) => _templateLabel(l10n, template),
+                  onChanged: (template) =>
+                      setState(() => _selectedTemplate = template),
+                ),
                 const SizedBox(height: AppSpacing.s16),
-                for (final template in LifeEventTemplate.values) ...[
-                  _ScenarioCard(template: template, baseline: baseline),
-                  const SizedBox(height: AppSpacing.s12),
-                ],
+                _ScenarioCard(
+                  key: ValueKey(_selectedTemplate),
+                  template: _selectedTemplate,
+                  baseline: baseline,
+                ),
                 if (decisions.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.s12),
                   Text(
@@ -76,7 +94,11 @@ class LifeEventScenariosPage extends ConsumerWidget {
 }
 
 class _ScenarioCard extends ConsumerStatefulWidget {
-  const _ScenarioCard({required this.template, required this.baseline});
+  const _ScenarioCard({
+    super.key,
+    required this.template,
+    required this.baseline,
+  });
 
   final LifeEventTemplate template;
   final LifeEventBaseline baseline;
@@ -108,6 +130,41 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
     final groundedOutcome = exactFireDelay == null
         ? outcome
         : outcome.withFireDelay(exactFireDelay);
+    Widget variantTile(LifeEventVariant variant) {
+      return Semantics(
+        selected: variant == _selectedVariant,
+        child: SoftCard.flat(
+          onPress: () => setState(() => _selectedVariant = variant),
+          padding: const EdgeInsets.all(AppSpacing.s8),
+          child: Column(
+            children: [
+              Text(
+                _variantLabel(l10n, variant),
+                style: context.captionStyle.copyWith(
+                  color: variant == _selectedVariant
+                      ? context.theme.colors.primary
+                      : null,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s4),
+              Text(
+                formatter.compactCurrency(
+                  engine
+                      .simulate(
+                        widget.baseline,
+                        engine.variant(baseAssumptions, variant),
+                      )
+                      .liquidAfter90Days,
+                  code: widget.baseline.currency,
+                ),
+                style: TypographyTokens.numericCaptionStrong,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return SoftCard.raised(
       borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s14),
@@ -128,46 +185,41 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
             style: context.captionStyle,
           ),
           const SizedBox(height: AppSpacing.s12),
-          Row(
-            children: [
-              for (final variant in LifeEventVariant.values) ...[
-                if (variant != LifeEventVariant.optimistic)
-                  const SizedBox(width: AppSpacing.s6),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedVariant = variant),
-                    child: SoftCard.flat(
-                      padding: const EdgeInsets.all(AppSpacing.s8),
-                      child: Column(
-                        children: [
-                          Text(
-                            _variantLabel(l10n, variant),
-                            style: context.captionStyle.copyWith(
-                              color: variant == _selectedVariant
-                                  ? context.theme.colors.primary
-                                  : null,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.s4),
-                          Text(
-                            formatter.compactCurrency(
-                              engine
-                                  .simulate(
-                                    widget.baseline,
-                                    engine.variant(baseAssumptions, variant),
-                                  )
-                                  .liquidAfter90Days,
-                              code: widget.baseline.currency,
-                            ),
-                            style: TypographyTokens.numericCaptionStrong,
-                          ),
-                        ],
-                      ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final stacked =
+                  constraints.maxWidth < 360 ||
+                  MediaQuery.textScalerOf(context).scale(1) > 1.3;
+              if (stacked) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (
+                      var index = 0;
+                      index < LifeEventVariant.values.length;
+                      index++
+                    ) ...[
+                      if (index > 0) const SizedBox(height: AppSpacing.s6),
+                      variantTile(LifeEventVariant.values[index]),
+                    ],
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  for (
+                    var index = 0;
+                    index < LifeEventVariant.values.length;
+                    index++
+                  ) ...[
+                    if (index > 0) const SizedBox(width: AppSpacing.s6),
+                    Expanded(
+                      child: variantTile(LifeEventVariant.values[index]),
                     ),
-                  ),
-                ),
-              ],
-            ],
+                  ],
+                ],
+              );
+            },
           ),
           const SizedBox(height: AppSpacing.s12),
           _MetricRow(
@@ -509,97 +561,129 @@ Future<LifeEventAssumptions?> _editAssumptions(
   BuildContext context,
   AppLocalizations l10n,
   LifeEventAssumptions current,
-) async {
-  final upfront = TextEditingController(text: current.upfrontCost.toString());
-  final income = TextEditingController(
-    text: current.monthlyIncomeDelta.toString(),
-  );
-  final outflow = TextEditingController(
-    text: current.monthlyOutflowDelta.toString(),
-  );
-  final duration = TextEditingController(
-    text: current.durationMonths.toString(),
-  );
-  final result = await showDialog<LifeEventAssumptions>(
+) {
+  return showAppFormSheet<LifeEventAssumptions>(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(l10n.lifeEventEditAssumptions),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: upfront,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: InputDecoration(labelText: l10n.lifeEventUpfrontCost),
-            ),
-            TextField(
-              controller: income,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-                signed: true,
-              ),
-              decoration: InputDecoration(labelText: l10n.lifeEventIncomeDelta),
-            ),
-            TextField(
-              controller: outflow,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-                signed: true,
-              ),
-              decoration: InputDecoration(
-                labelText: l10n.lifeEventOutflowDelta,
-              ),
-            ),
-            TextField(
-              controller: duration,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: l10n.lifeEventDurationMonths,
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(),
-          child: Text(l10n.commonCancel),
-        ),
-        FilledButton(
-          onPressed: () {
-            final parsedUpfront = Decimal.tryParse(upfront.text.trim());
-            final parsedIncome = Decimal.tryParse(income.text.trim());
-            final parsedOutflow = Decimal.tryParse(outflow.text.trim());
-            final parsedDuration = int.tryParse(duration.text.trim());
-            if (parsedUpfront == null ||
-                parsedIncome == null ||
-                parsedOutflow == null ||
-                parsedDuration == null ||
-                parsedDuration < 1) {
-              return;
-            }
-            Navigator.of(dialogContext).pop(
-              LifeEventAssumptions(
-                upfrontCost: parsedUpfront,
-                monthlyIncomeDelta: parsedIncome,
-                monthlyOutflowDelta: parsedOutflow,
-                durationMonths: parsedDuration,
-              ),
-            );
-          },
-          child: Text(l10n.commonSave),
-        ),
-      ],
-    ),
+    builder: (_) => _LifeEventAssumptionsSheet(l10n: l10n, current: current),
   );
-  upfront.dispose();
-  income.dispose();
-  outflow.dispose();
-  duration.dispose();
-  return result;
+}
+
+class _LifeEventAssumptionsSheet extends StatefulWidget {
+  const _LifeEventAssumptionsSheet({required this.l10n, required this.current});
+
+  final AppLocalizations l10n;
+  final LifeEventAssumptions current;
+
+  @override
+  State<_LifeEventAssumptionsSheet> createState() =>
+      _LifeEventAssumptionsSheetState();
+}
+
+class _LifeEventAssumptionsSheetState
+    extends State<_LifeEventAssumptionsSheet> {
+  late final TextEditingController _upfront;
+  late final TextEditingController _income;
+  late final TextEditingController _outflow;
+  late final TextEditingController _duration;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _upfront = TextEditingController(
+      text: widget.current.upfrontCost.toString(),
+    );
+    _income = TextEditingController(
+      text: widget.current.monthlyIncomeDelta.toString(),
+    );
+    _outflow = TextEditingController(
+      text: widget.current.monthlyOutflowDelta.toString(),
+    );
+    _duration = TextEditingController(
+      text: widget.current.durationMonths.toString(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _upfront.dispose();
+    _income.dispose();
+    _outflow.dispose();
+    _duration.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = widget.l10n;
+    const signedNumber = TextInputType.numberWithOptions(
+      decimal: true,
+      signed: true,
+    );
+    return AppSheet(
+      title: l10n.lifeEventEditAssumptions,
+      footer: AppSheetFooter(
+        submitLabel: l10n.commonSave,
+        cancelLabel: l10n.commonCancel,
+        onSubmit: _save,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FTextField(
+            control: FTextFieldControl.managed(controller: _upfront),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            label: Text(l10n.lifeEventUpfrontCost),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FTextField(
+            control: FTextFieldControl.managed(controller: _income),
+            keyboardType: signedNumber,
+            label: Text(l10n.lifeEventIncomeDelta),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FTextField(
+            control: FTextFieldControl.managed(controller: _outflow),
+            keyboardType: signedNumber,
+            label: Text(l10n.lifeEventOutflowDelta),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FTextField(
+            control: FTextFieldControl.managed(controller: _duration),
+            keyboardType: TextInputType.number,
+            label: Text(l10n.lifeEventDurationMonths),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: AppSpacing.s12),
+            AppStatusBanner(kind: AppStatusKind.error, message: _error!),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _save() {
+    final parsedUpfront = Decimal.tryParse(_upfront.text.trim());
+    final parsedIncome = Decimal.tryParse(_income.text.trim());
+    final parsedOutflow = Decimal.tryParse(_outflow.text.trim());
+    final parsedDuration = int.tryParse(_duration.text.trim());
+    if (parsedUpfront == null ||
+        parsedIncome == null ||
+        parsedOutflow == null ||
+        parsedDuration == null ||
+        parsedDuration < 1) {
+      setState(() => _error = widget.l10n.commonInvalidNumber);
+      return;
+    }
+    Navigator.of(context).pop(
+      LifeEventAssumptions(
+        upfrontCost: parsedUpfront,
+        monthlyIncomeDelta: parsedIncome,
+        monthlyOutflowDelta: parsedOutflow,
+        durationMonths: parsedDuration,
+      ),
+    );
+  }
 }
 
 int? _exactFireDelayMonths(

@@ -42,6 +42,7 @@ class AppEmptyState extends StatelessWidget {
     String? retryLabel,
     VoidCallback? onRetry,
     IconData icon = FLucideIcons.circleX,
+    bool compact = false,
   }) {
     assert(
       action == null || onRetry == null,
@@ -64,6 +65,7 @@ class AppEmptyState extends StatelessWidget {
               child: Text(retryLabel!),
             ),
       tone: AppEmptyStateTone.error,
+      compact: compact,
     );
   }
 

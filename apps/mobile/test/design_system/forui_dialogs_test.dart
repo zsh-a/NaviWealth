@@ -112,4 +112,43 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Exporting backup'), findsNothing);
   });
+
+  testWidgets('text prompt keeps validation inline and returns trimmed input', (
+    tester,
+  ) async {
+    late Future<String?> result;
+    await tester.pumpWidget(
+      _wrap(
+        Builder(
+          builder: (context) => FButton(
+            onPress: () {
+              result = showAppTextPromptSheet(
+                context: context,
+                title: 'Add note',
+                fieldLabel: 'Note',
+                submitLabel: 'Save',
+                cancelLabel: 'Cancel',
+                validator: (value) =>
+                    value.trim().isEmpty ? 'A note is required' : null,
+              );
+            },
+            child: const Text('Open'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(find.text('A note is required'), findsOneWidget);
+
+    await tester.enterText(find.byType(FTextField), '  Reviewed  ');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(await result, 'Reviewed');
+    expect(find.text('Add note'), findsNothing);
+  });
 }

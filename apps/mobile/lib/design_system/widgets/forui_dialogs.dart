@@ -7,6 +7,8 @@ import 'package:forui/forui.dart';
 import '../theme/semantic_colors.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
+import 'app_sheet.dart';
+import 'app_status_banner.dart';
 
 /// Shows arbitrary app-styled dialog content in a centered, width-constrained
 /// frame. Feature code should use this seam instead of calling [showFDialog]
@@ -73,6 +75,117 @@ Future<bool?> showConfirmDialog({
       ),
     ),
   );
+}
+
+/// Shows a single-field prompt using the same keyboard-safe sheet and Forui
+/// controls as the rest of the app. Use this instead of a Material
+/// [AlertDialog] for names, amounts, reasons, and other short values.
+Future<String?> showAppTextPromptSheet({
+  required BuildContext context,
+  required String title,
+  required String fieldLabel,
+  required String submitLabel,
+  required String cancelLabel,
+  String initialValue = '',
+  String? hint,
+  TextInputType keyboardType = TextInputType.text,
+  String? Function(String value)? validator,
+}) {
+  return showAppFormSheet<String>(
+    context: context,
+    builder: (_) => _TextPromptSheet(
+      title: title,
+      fieldLabel: fieldLabel,
+      submitLabel: submitLabel,
+      cancelLabel: cancelLabel,
+      initialValue: initialValue,
+      hint: hint,
+      keyboardType: keyboardType,
+      validator: validator,
+    ),
+  );
+}
+
+class _TextPromptSheet extends StatefulWidget {
+  const _TextPromptSheet({
+    required this.title,
+    required this.fieldLabel,
+    required this.submitLabel,
+    required this.cancelLabel,
+    required this.initialValue,
+    required this.hint,
+    required this.keyboardType,
+    required this.validator,
+  });
+
+  final String title;
+  final String fieldLabel;
+  final String submitLabel;
+  final String cancelLabel;
+  final String initialValue;
+  final String? hint;
+  final TextInputType keyboardType;
+  final String? Function(String value)? validator;
+
+  @override
+  State<_TextPromptSheet> createState() => _TextPromptSheetState();
+}
+
+class _TextPromptSheetState extends State<_TextPromptSheet> {
+  late final TextEditingController _controller;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSheet(
+      title: widget.title,
+      footer: AppSheetFooter(
+        submitLabel: widget.submitLabel,
+        cancelLabel: widget.cancelLabel,
+        onSubmit: _submit,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FTextField(
+            autofocus: true,
+            control: FTextFieldControl.managed(controller: _controller),
+            keyboardType: widget.keyboardType,
+            label: Text(widget.fieldLabel),
+            hint: widget.hint,
+            onSubmit: (_) => _submit(),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: AppSpacing.s12),
+            AppStatusBanner(kind: AppStatusKind.error, message: _error!),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _submit() {
+    final value = _controller.text.trim();
+    final error = widget.validator?.call(value);
+    if (error != null) {
+      setState(() => _error = error);
+      return;
+    }
+    if (value.isEmpty) return;
+    Navigator.of(context).pop(value);
+  }
 }
 
 /// Show a non-dismissable progress dialog and return a callback that closes it.

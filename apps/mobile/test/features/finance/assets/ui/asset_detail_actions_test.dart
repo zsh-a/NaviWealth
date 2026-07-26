@@ -204,7 +204,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Retry'), findsOneWidget);
-      expect(find.byKey(const Key('manual-asset-edit-primary')), findsNothing);
+      expect(
+        find.byKey(const Key('manual-asset-edit-primary')),
+        findsOneWidget,
+      );
 
       await tester.tap(find.text('Retry'));
       await tester.pumpAndSettle();

@@ -40,7 +40,11 @@ class MoneyRunwayPage extends ConsumerWidget {
         loading: () => const Center(child: FCircularProgress()),
         error: (error, _) => AppEmptyState.error(
           title: l10n.commonLoadFailed,
-          message: '$error',
+          message: userSafeErrorMessage(
+            context,
+            error,
+            operation: 'load money runway',
+          ),
           retryLabel: l10n.commonRetry,
           onRetry: () => ref.invalidate(moneyRunwayProvider),
         ),
@@ -151,34 +155,11 @@ class _RunwayContent extends ConsumerWidget {
         const SizedBox(height: AppSpacing.s16),
         Text(l10n.moneyRunwayHorizonsTitle, style: context.mutedLabelStyle),
         const SizedBox(height: AppSpacing.s8),
-        Row(
-          children: [
-            for (final days in const [30, 60, 90]) ...[
-              if (days != 30) const SizedBox(width: AppSpacing.s8),
-              Expanded(
-                child: SoftCard.flat(
-                  padding: const EdgeInsets.all(AppSpacing.s12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.moneyRunwayDays(days),
-                        style: context.captionStyle,
-                      ),
-                      const SizedBox(height: AppSpacing.s6),
-                      Text(
-                        formatters.compactCurrency(
-                          snapshot.balanceAt(days),
-                          code: snapshot.currency,
-                        ),
-                        style: TypographyTokens.numericTitleStrong,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ],
+        _RunwayHorizonGrid(
+          formatValue: (days) => formatters.compactCurrency(
+            snapshot.balanceAt(days),
+            code: snapshot.currency,
+          ),
         ),
         const SizedBox(height: AppSpacing.s16),
         _ScenarioSection(snapshot: snapshot),
@@ -286,6 +267,59 @@ class _RunwayContent extends ConsumerWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _RunwayHorizonGrid extends StatelessWidget {
+  const _RunwayHorizonGrid({required this.formatValue});
+
+  final String Function(int days) formatValue;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final cards = [
+      for (final days in const [30, 60, 90])
+        SoftCard.flat(
+          padding: const EdgeInsets.all(AppSpacing.s12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.moneyRunwayDays(days), style: context.captionStyle),
+              const SizedBox(height: AppSpacing.s6),
+              Text(
+                formatValue(days),
+                style: TypographyTokens.numericTitleStrong,
+              ),
+            ],
+          ),
+        ),
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textScale = MediaQuery.textScalerOf(context).scale(1);
+        if (constraints.maxWidth < 420 || textScale > 1.3) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < cards.length; i++) ...[
+                if (i > 0) const SizedBox(height: AppSpacing.s8),
+                cards[i],
+              ],
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var i = 0; i < cards.length; i++) ...[
+              if (i > 0) const SizedBox(width: AppSpacing.s8),
+              Expanded(child: cards[i]),
+            ],
+          ],
+        );
+      },
     );
   }
 }
@@ -449,113 +483,130 @@ final class _CustomRunwayScenario {
 Future<_CustomRunwayScenario?> _showCustomScenarioDialog(
   BuildContext context,
   MoneyRunwaySnapshot snapshot,
-) async {
-  final l10n = AppLocalizations.of(context);
-  final purchase = TextEditingController(
-    text: snapshot.averageMonthlyExpense.toString(),
+) {
+  return showAppFormSheet<_CustomRunwayScenario>(
+    context: context,
+    builder: (_) => _CustomRunwayScenarioSheet(snapshot: snapshot),
   );
-  final delay = TextEditingController(text: '14');
-  final reduction = TextEditingController(text: '30');
-  final duration = TextEditingController(text: '90');
-  String? error;
-  try {
-    return await showDialog<_CustomRunwayScenario>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(l10n.moneyRunwayCustomScenarioTitle),
-          content: SizedBox(
-            width: AppControlWidths.financeConfigDialog,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FTextField(
-                    control: FTextFieldControl.managed(controller: purchase),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    label: Text(
-                      l10n.moneyRunwayCustomPurchase(snapshot.currency),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.s10),
-                  FTextField(
-                    control: FTextFieldControl.managed(controller: delay),
-                    keyboardType: TextInputType.number,
-                    label: Text(l10n.moneyRunwayCustomDelayDays),
-                  ),
-                  const SizedBox(height: AppSpacing.s10),
-                  FTextField(
-                    control: FTextFieldControl.managed(controller: reduction),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    label: Text(l10n.moneyRunwayCustomReductionPercent),
-                  ),
-                  const SizedBox(height: AppSpacing.s10),
-                  FTextField(
-                    control: FTextFieldControl.managed(controller: duration),
-                    keyboardType: TextInputType.number,
-                    label: Text(l10n.moneyRunwayCustomDurationDays),
-                  ),
-                  if (error != null) ...[
-                    const SizedBox(height: AppSpacing.s10),
-                    AppStatusBanner(kind: AppStatusKind.error, message: error!),
-                  ],
-                ],
-              ),
+}
+
+class _CustomRunwayScenarioSheet extends StatefulWidget {
+  const _CustomRunwayScenarioSheet({required this.snapshot});
+
+  final MoneyRunwaySnapshot snapshot;
+
+  @override
+  State<_CustomRunwayScenarioSheet> createState() =>
+      _CustomRunwayScenarioSheetState();
+}
+
+class _CustomRunwayScenarioSheetState
+    extends State<_CustomRunwayScenarioSheet> {
+  late final TextEditingController _purchase;
+  late final TextEditingController _delay;
+  late final TextEditingController _reduction;
+  late final TextEditingController _duration;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _purchase = TextEditingController(
+      text: widget.snapshot.averageMonthlyExpense.toString(),
+    );
+    _delay = TextEditingController(text: '14');
+    _reduction = TextEditingController(text: '30');
+    _duration = TextEditingController(text: '90');
+  }
+
+  @override
+  void dispose() {
+    _purchase.dispose();
+    _delay.dispose();
+    _reduction.dispose();
+    _duration.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppSheet(
+      title: l10n.moneyRunwayCustomScenarioTitle,
+      footer: AppSheetFooter(
+        submitLabel: l10n.moneyRunwayCustomRun,
+        cancelLabel: l10n.commonCancel,
+        onSubmit: _submit,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FTextField(
+            control: FTextFieldControl.managed(controller: _purchase),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            label: Text(
+              l10n.moneyRunwayCustomPurchase(widget.snapshot.currency),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(l10n.commonCancel),
-            ),
-            FilledButton(
-              onPressed: () {
-                final purchaseAmount = Decimal.tryParse(purchase.text.trim());
-                final delayDays = int.tryParse(delay.text.trim());
-                final reductionPercent = Decimal.tryParse(
-                  reduction.text.trim(),
-                );
-                final durationDays = int.tryParse(duration.text.trim());
-                if (purchaseAmount == null ||
-                    purchaseAmount < Decimal.zero ||
-                    delayDays == null ||
-                    delayDays < 0 ||
-                    reductionPercent == null ||
-                    reductionPercent < Decimal.zero ||
-                    reductionPercent > Decimal.fromInt(100) ||
-                    durationDays == null ||
-                    durationDays <= 0 ||
-                    (purchaseAmount == Decimal.zero &&
-                        delayDays == 0 &&
-                        reductionPercent == Decimal.zero)) {
-                  setDialogState(() => error = l10n.moneyRunwayCustomInvalid);
-                  return;
-                }
-                Navigator.of(dialogContext).pop(
-                  _CustomRunwayScenario(
-                    purchaseAmount: purchaseAmount,
-                    incomeDelayDays: delayDays,
-                    incomeReduction: (reductionPercent / Decimal.fromInt(100))
-                        .toDecimal(scaleOnInfinitePrecision: 4),
-                    reductionDurationDays: durationDays,
-                  ),
-                );
-              },
-              child: Text(l10n.moneyRunwayCustomRun),
-            ),
+          const SizedBox(height: AppSpacing.s12),
+          FTextField(
+            control: FTextFieldControl.managed(controller: _delay),
+            keyboardType: TextInputType.number,
+            label: Text(l10n.moneyRunwayCustomDelayDays),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FTextField(
+            control: FTextFieldControl.managed(controller: _reduction),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            label: Text(l10n.moneyRunwayCustomReductionPercent),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FTextField(
+            control: FTextFieldControl.managed(controller: _duration),
+            keyboardType: TextInputType.number,
+            label: Text(l10n.moneyRunwayCustomDurationDays),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: AppSpacing.s12),
+            AppStatusBanner(kind: AppStatusKind.error, message: _error!),
           ],
-        ),
+        ],
       ),
     );
-  } finally {
-    purchase.dispose();
-    delay.dispose();
-    reduction.dispose();
-    duration.dispose();
+  }
+
+  void _submit() {
+    final purchaseAmount = Decimal.tryParse(_purchase.text.trim());
+    final delayDays = int.tryParse(_delay.text.trim());
+    final reductionPercent = Decimal.tryParse(_reduction.text.trim());
+    final durationDays = int.tryParse(_duration.text.trim());
+    if (purchaseAmount == null ||
+        purchaseAmount < Decimal.zero ||
+        delayDays == null ||
+        delayDays < 0 ||
+        reductionPercent == null ||
+        reductionPercent < Decimal.zero ||
+        reductionPercent > Decimal.fromInt(100) ||
+        durationDays == null ||
+        durationDays <= 0 ||
+        (purchaseAmount == Decimal.zero &&
+            delayDays == 0 &&
+            reductionPercent == Decimal.zero)) {
+      setState(
+        () => _error = AppLocalizations.of(context).moneyRunwayCustomInvalid,
+      );
+      return;
+    }
+    Navigator.of(context).pop(
+      _CustomRunwayScenario(
+        purchaseAmount: purchaseAmount,
+        incomeDelayDays: delayDays,
+        incomeReduction: (reductionPercent / Decimal.fromInt(100)).toDecimal(
+          scaleOnInfinitePrecision: 4,
+        ),
+        reductionDurationDays: durationDays,
+      ),
+    );
   }
 }
 
@@ -654,22 +705,13 @@ Future<void> _createRunwayAction(
   AppLocalizations l10n,
   MoneyRunwaySnapshot snapshot,
 ) async {
-  final confirmed = await showDialog<bool>(
+  final confirmed = await showConfirmDialog(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(l10n.moneyRunwayActionConfirmTitle),
-      content: Text(l10n.moneyRunwayActionConfirmBody),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(false),
-          child: Text(l10n.commonCancel),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(dialogContext).pop(true),
-          child: Text(l10n.commonConfirm),
-        ),
-      ],
-    ),
+    title: Text(l10n.moneyRunwayActionConfirmTitle),
+    body: Text(l10n.moneyRunwayActionConfirmBody),
+    confirmLabel: l10n.commonConfirm,
+    cancelLabel: l10n.commonCancel,
+    icon: FLucideIcons.listTodo,
   );
   if (confirmed != true || !context.mounted) return;
   final dispatch = ref.read(lifeActionDispatcherProvider);

@@ -248,17 +248,10 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
           Row(
             children: [
               Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      for (var index = 0; index < chips.length; index++) ...[
-                        _FilterChip(spec: chips[index]),
-                        if (index < chips.length - 1)
-                          const SizedBox(width: AppSpacing.s8),
-                      ],
-                    ],
-                  ),
+                child: Wrap(
+                  spacing: AppSpacing.s8,
+                  runSpacing: AppSpacing.s8,
+                  children: [for (final chip in chips) _FilterChip(spec: chip)],
                 ),
               ),
               const SizedBox(width: AppSpacing.s8),

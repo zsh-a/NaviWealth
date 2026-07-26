@@ -1586,6 +1586,8 @@
   },
   "commonLoading": "Loading…",
   "commonError": "Something went wrong",
+  "commonRequiredField": "Enter a value.",
+  "commonInvalidNumber": "Enter a valid number.",
   "commonSafeErrorMessage": "We couldn't complete that. Please try again.",
   "shellMoreActions": "More actions",
   "commonLoadError": "Failed to load: {error}",
@@ -7042,7 +7044,15 @@
   "databaseRecoveryResetConfirmAction": "Reset local data",
   "databaseRecoveryResetFailed": "Local data could not be reset. Nothing else was changed.",
   "financialInboxTitle": "Financial inbox",
+  "financialInboxPriorityImportant": "Important",
+  "financialInboxPriorityAttention": "Review",
+  "financialInboxLastCheckedCompact": "Checked {date}",
+  "@financialInboxLastCheckedCompact": {
+    "placeholders": { "date": { "type": "String" } }
+  },
   "monthlyCloseTitle": "Monthly close",
+  "monthlyCloseStart": "Start monthly close",
+  "monthlyCloseStartBody": "Review this month's evidence, reconcile balances, and close with a clear audit trail.",
   "monthlyClosePeriod": "Close {period}",
   "@monthlyClosePeriod": { "placeholders": { "period": { "type": "String" } } },
   "monthlyCloseIntro": "Complete each evidence check before closing the month.",
@@ -7273,6 +7283,10 @@
   "monthlyCloseCarriedForward": "Still open from last close: {signals} signals, {reconciliations} reconciliation exceptions.",
   "@monthlyCloseCarriedForward": { "placeholders": { "signals": { "type": "int" }, "reconciliations": { "type": "int" } } },
   "monthlyCloseHistoryTitle": "Close history",
+  "monthlyCloseHistoryCount": "{count} previous closes",
+  "@monthlyCloseHistoryCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "monthlyCloseHistoryExceptions": "{count} exceptions",
   "@monthlyCloseHistoryExceptions": { "placeholders": { "count": { "type": "int" } } },
   "monthlyCloseHistoryDuration": "{minutes} min",
