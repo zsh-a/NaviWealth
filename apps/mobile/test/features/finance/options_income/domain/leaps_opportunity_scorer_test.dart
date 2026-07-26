@@ -103,7 +103,12 @@ void main() {
       final m = scored!.metrics as LeapsOpportunityMetrics;
       expect(m.leverageRatio, isNotNull);
       // Estimated delta lands in the band and the explanation carries it.
-      expect(scored.explanation.summary, contains('0.6'));
+      // Estimated deltas are visibly marked and disclosed as a risk.
+      expect(scored.explanation.summary, contains('≈0.6'));
+      expect(
+        scored.explanation.whyRisky.join(' '),
+        contains('estimated from implied volatility'),
+      );
     });
 
     test('missing delta AND missing IV still rejects', () {

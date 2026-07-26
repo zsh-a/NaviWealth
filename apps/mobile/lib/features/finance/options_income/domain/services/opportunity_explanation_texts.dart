@@ -82,6 +82,7 @@ abstract interface class OpportunityExplanationTexts {
   String leapsSpreadBullet(String spread);
   String leapsThetaBullet(String extrinsic);
   String leapsFundingBullet(String coverage);
+  String leapsDeltaEstimatedBullet();
 }
 
 /// English fallback mirroring the pre-localized copy.
@@ -292,4 +293,9 @@ class DefaultOpportunityExplanationTexts
   @override
   String leapsFundingBullet(String coverage) =>
       'Group income already covers $coverage of this cost';
+
+  @override
+  String leapsDeltaEstimatedBullet() =>
+      'Delta is estimated from implied volatility — the data source '
+      'provides no greeks';
 }

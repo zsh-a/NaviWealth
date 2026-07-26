@@ -51,6 +51,7 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
   late OptionsStrategyProfile _draft;
   bool _busy = false;
   bool _advancedOpen = false;
+  bool _leapsOpen = false;
   bool _suppressControllerListeners = false;
 
   @override
@@ -282,7 +283,7 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
             ),
             const SizedBox(height: AppSpacing.s16),
             AppDisclosureHeader(
-              title: l10n.incomePlannerProfileAdvancedFilters,
+              title: l10n.incomePlannerProfileSellFilters,
               subtitle: l10n.incomePlannerProfileAdvancedSummary(
                 draft.minDte,
                 draft.maxDte,
@@ -402,9 +403,29 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
                       highController: _callDeltaHighCtrl,
                       label: l10n.incomePlannerProfileCallDeltaRange,
                     ),
-                    const SizedBox(height: AppSpacing.s16),
-                    _SectionLabel(l10n.incomePlannerProfileLeapsSection),
-                    const SizedBox(height: AppSpacing.s8),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s12),
+            AppDisclosureHeader(
+              title: l10n.incomePlannerProfileLeapsSection,
+              subtitle: l10n.incomePlannerProfileLeapsSummary(
+                draft.leapsMinDte,
+                draft.leapsMaxDte,
+                draft.leapsDeltaMin.toString(),
+                draft.leapsDeltaMax.toString(),
+              ),
+              expanded: _leapsOpen,
+              onToggle: () => setState(() => _leapsOpen = !_leapsOpen),
+            ),
+            AnimatedSizeFade(
+              visible: _leapsOpen,
+              child: Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.s12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                     Row(
                       children: [
                         Expanded(

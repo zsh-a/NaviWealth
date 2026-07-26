@@ -45,6 +45,7 @@ class LeapsOpportunityScorer {
     }
     final asOf = now ?? DateTime.now().toUtc();
     final delta = _effectiveDelta(contract)!;
+    final deltaIsEstimated = contract.delta == null;
     final currency = contract.strike.currency;
     final hundred = Decimal.fromInt(100);
 
@@ -103,6 +104,7 @@ class LeapsOpportunityScorer {
         contract: contract,
         metrics: metrics,
         delta: delta,
+        deltaIsEstimated: deltaIsEstimated,
         score: score,
       ),
       score: score,
@@ -193,11 +195,16 @@ class LeapsOpportunityScorer {
     required OptionContract contract,
     required LeapsOpportunityMetrics metrics,
     required Decimal delta,
+    required bool deltaIsEstimated,
     required Decimal score,
   }) {
     final strike = texts.money(contract.strike);
     final cost = texts.money(metrics.totalCost);
-    final deltaLabel = delta.toStringAsFixed(2);
+    // An IV-derived delta is a coarse estimate — never present it with
+    // the same confidence as a broker greek.
+    final deltaLabel = deltaIsEstimated
+        ? '≈${delta.toStringAsFixed(2)}'
+        : delta.toStringAsFixed(2);
     final whyGood = <String>[
       if (metrics.annualizedExtrinsicCostPct case final costPct?)
         texts.leapsCostBullet(texts.percent(costPct)),
@@ -211,6 +218,7 @@ class LeapsOpportunityScorer {
         texts.leapsFundingBullet(texts.percent(coverage)),
     ];
     final whyRisky = <String>[
+      if (deltaIsEstimated) texts.leapsDeltaEstimatedBullet(),
       texts.leapsThetaBullet(texts.money(metrics.extrinsicValue)),
       if (contract.bidAskSpreadPct > Decimal.parse('0.04'))
         texts.leapsSpreadBullet(texts.percent(contract.bidAskSpreadPct)),

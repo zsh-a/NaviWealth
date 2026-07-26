@@ -550,6 +550,11 @@ wheel+股息已实现收入 ÷ 候选成本）与 `LeapsFundingRule` 同口径�
 `leaps_call` 永不进入交易日志表单与账本镜像）。LEAPS 卡片 CTA 直达
 LEAPS 持仓表单；最坏情况文案强制为「权利金全部归零」。
 
+**跨通道分数不可比**：卖方 score 是收益合成分，LEAPS score 是成本效率
+分。「全部」视图按通道分节展示（各节内排序），AI 工具无 strategy 过滤
+时按通道配额混合并在描述中禁止跨通道比分。数据源缺希腊值时 delta 由 IV
+按 Black–Scholes 推算，展示为「≈0.xx」并在 why_risky 中披露为估算值。
+
 Wheel 生命周期只有一个表面：`wheel_lifecycle_page.dart`（`/plan/income/wheel`，
 按**策略组**聚合周期阶段、开放腿、LEAPS 上涨敞口与组合风险）。工作台顶部卡片和
 收益策略页（`/plan/income`）都提供直达按钮；不再在工作台内嵌第二份 Wheel 列表。

@@ -8,6 +8,7 @@ import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/income_strategy/data/income_strategy_plan_providers.dart';
+import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy.dart';
 import 'package:naviwealth/features/finance/income_strategy/ui/income_strategy_plan_sheet.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 

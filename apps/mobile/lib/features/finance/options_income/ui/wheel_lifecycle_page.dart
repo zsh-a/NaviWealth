@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/income_strategy/application/wheel_strategy_view.dart';
 import 'package:naviwealth/features/finance/income_strategy/composition/income_strategy_presentation.dart';
 import 'package:naviwealth/features/finance/income_strategy/data/providers.dart';
@@ -253,27 +255,36 @@ class _WheelCycleSheet extends ConsumerWidget {
           ],
         ],
         const SizedBox(height: AppSpacing.s16),
-        Row(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l10n.leapsOverlayTitle, style: context.mutedLabelStyle),
-                  Text(l10n.leapsOverlaySubtitle, style: context.captionStyle),
-                ],
-              ),
-            ),
-            FButton(
-              onPress: () => _openLeaps(context, null),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
-                  const SizedBox(width: AppSpacing.s4),
-                  Text(l10n.leapsOverlayAdd),
-                ],
-              ),
+            Text(l10n.leapsOverlayTitle, style: context.mutedLabelStyle),
+            Text(l10n.leapsOverlaySubtitle, style: context.captionStyle),
+            const SizedBox(height: AppSpacing.s8),
+            Wrap(
+              spacing: AppSpacing.s8,
+              runSpacing: AppSpacing.s8,
+              children: [
+                FButton(
+                  onPress: () => _openLeaps(context, null),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+                      const SizedBox(width: AppSpacing.s4),
+                      Text(l10n.leapsOverlayAdd),
+                    ],
+                  ),
+                ),
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => closeSheetThen(context, () {
+                    if (!pageContext.mounted) return;
+                    pageContext.push(FinanceRoutes.planIncomeOptions);
+                  }),
+                  child: Text(l10n.incomePlannerScanLeapsCta),
+                ),
+              ],
             ),
           ],
         ),

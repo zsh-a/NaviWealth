@@ -18,10 +18,13 @@ class GetOptionsIncomeOpportunitiesTool implements DeviceTool {
 
   @override
   String get description =>
-      '返回最近一次扫描出的期权现金流机会(sell put / covered call)。'
+      '返回最近一次扫描出的期权机会(sell put / covered call / LEAPS call)。'
       '只读 cache,**不会触发实时扫描**。'
+      '`score` 只在同一 strategy 通道内可比:卖方是收益合成分,'
+      'leaps_call 是成本效率分,不要跨通道比较分数。'
+      '不传 strategy 时结果按通道配额混合,建议尽量指定 strategy。'
       '当 `cache_state.is_stale=true` 或 `opportunities` 为空时,'
-      '请引导用户回到 Income Planner 页面手动刷新,不要凭空生成数字。'
+      '请引导用户回到期权工作台手动刷新,不要凭空生成数字。'
       '解释字段(why_good / why_risky / worst_case)由本地评分引擎产出,'
       'LLM 只可引用与转述,不得改写。';
 
@@ -31,8 +34,8 @@ class GetOptionsIncomeOpportunitiesTool implements DeviceTool {
     'properties': <String, Object?>{
       'strategy': <String, Object?>{
         'type': ['string', 'null'],
-        'enum': ['cash_secured_put', 'covered_call', null],
-        'description': 'Filter to one strategy (null = both)',
+        'enum': ['cash_secured_put', 'covered_call', 'leaps_call', null],
+        'description': 'Filter to one strategy (null = all lanes, quota-mixed)',
       },
       'max_results': <String, Object?>{
         'type': 'integer',
@@ -66,13 +69,34 @@ class GetOptionsIncomeOpportunitiesTool implements DeviceTool {
     final minScoreRaw = (input['min_score'] as num?) ?? 0.6;
     final minScore = Decimal.parse(minScoreRaw.toString());
 
-    var filtered = all
+    final passing = all
         .where((o) => strategyFilter == null || o.strategy == strategyFilter)
         .where((o) => o.score >= minScore)
         .toList();
-    filtered.sort((a, b) => b.score.compareTo(a.score));
-    if (filtered.length > maxResults) {
-      filtered = filtered.sublist(0, maxResults);
+    passing.sort((a, b) => b.score.compareTo(a.score));
+    List<OptionsOpportunity> filtered;
+    if (strategyFilter != null) {
+      filtered = passing.take(maxResults).toList();
+    } else {
+      // Scores are lane-relative (LEAPS cost-efficiency runs ~0.95+,
+      // sell-side composites ~0.5–0.85), so a merged top-N would return
+      // only LEAPS. Split the budget: sell first, LEAPS fills the rest.
+      final sell = passing
+          .where((o) => o.strategy != OpportunityStrategy.leapsCall)
+          .toList(growable: false);
+      final leaps = passing
+          .where((o) => o.strategy == OpportunityStrategy.leapsCall)
+          .toList(growable: false);
+      final sellQuota = (maxResults + 1) ~/ 2;
+      final sellTaken = sell.take(sellQuota).toList();
+      final leapsTaken = leaps.take(maxResults - sellTaken.length).toList();
+      filtered = [
+        ...sellTaken,
+        ...sell
+            .skip(sellTaken.length)
+            .take(maxResults - sellTaken.length - leapsTaken.length),
+        ...leapsTaken,
+      ];
     }
 
     final guidance = scanState == null

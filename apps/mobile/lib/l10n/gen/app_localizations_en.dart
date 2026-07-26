@@ -10646,6 +10646,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incomePlannerChipLeaps => 'LEAPS call';
 
   @override
+  String get incomePlannerLaneSellSection => 'Income (puts & calls)';
+
+  @override
+  String get incomePlannerLaneLeapsSection => 'LEAPS calls';
+
+  @override
+  String get incomePlannerAdjustLeapsBudget => 'Adjust LEAPS budget';
+
+  @override
+  String get incomePlannerScanLeapsCta => 'Scan candidates';
+
+  @override
   String get incomePlannerMetricLeapsCost => 'Cost (max loss)';
 
   @override
@@ -11039,6 +11051,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get optionsExplainLeapsDeltaEstimated =>
+      'Delta is estimated from implied volatility — the data source provides no greeks';
+
+  @override
   String optionsExplainLeapsThetaBullet(String extrinsic) {
     return '$extrinsic of time value will decay to zero by expiration';
   }
@@ -11233,6 +11249,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get incomePlannerProfileLeapsSection => 'LEAPS scan';
+
+  @override
+  String get incomePlannerProfileSellFilters => 'Sell-side filters';
+
+  @override
+  String incomePlannerProfileLeapsSummary(
+    int minDte,
+    int maxDte,
+    String low,
+    String high,
+  ) {
+    return '$minDte–$maxDte DTE · delta $low–$high';
+  }
 
   @override
   String get incomePlannerProfileLeapsMinDte => 'LEAPS min DTE';
