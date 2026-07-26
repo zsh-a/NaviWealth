@@ -39,6 +39,19 @@ class _AppearanceSection extends ConsumerWidget {
           },
         ),
         const AppGradientDivider(),
+        InlineSettingRow<AppAccentSeed>(
+          icon: FLucideIcons.paintbrush,
+          label: l10n.settingsAccentSeedTitle,
+          value: ref.watch(accentSeedProvider),
+          options: {
+            for (final a in AppAccentSeed.values) _accentSeedLabel(l10n, a): a,
+          },
+          onChanged: (a) {
+            Haptics.selection();
+            ref.read(accentSeedProvider.notifier).set(a);
+          },
+        ),
+        const AppGradientDivider(),
         InlineSettingRow<MarketColorMode>(
           icon: FLucideIcons.arrowUpDown,
           label: l10n.settingsMarketColorTitle,
@@ -92,6 +105,13 @@ class _AppearanceSection extends ConsumerWidget {
         MarketColorMode.redUpGreenDown => l10n.marketColorRedUpGreenDown,
         MarketColorMode.greenUpRedDown => l10n.marketColorGreenUpRedDown,
         MarketColorMode.colorblind => l10n.marketColorColorblind,
+      };
+
+  String _accentSeedLabel(AppLocalizations l10n, AppAccentSeed seed) =>
+      switch (seed) {
+        AppAccentSeed.cyan => l10n.accentSeedCyan,
+        AppAccentSeed.violet => l10n.accentSeedViolet,
+        AppAccentSeed.indigo => l10n.accentSeedIndigo,
       };
 
   String _surfaceStyleLabel(AppLocalizations l10n, AppSurfaceStyle style) =>

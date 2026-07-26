@@ -265,7 +265,23 @@ Map<String, Object> _colorGroup() => {
       '700': _color(ColorPalette.cyan700),
       '950': _color(ColorPalette.cyan950),
     },
-    'violet': {'500': _color(ColorPalette.violet500)},
+    'violet': {
+      '50': _color(ColorPalette.violet50),
+      '100': _color(ColorPalette.violet100),
+      '400': _color(ColorPalette.violet400),
+      '500': _color(ColorPalette.violet500),
+      '700': _color(ColorPalette.violet700),
+      '800': _color(ColorPalette.violet800),
+      '900': _color(ColorPalette.violet900),
+    },
+    'indigo': {
+      '50': _color(ColorPalette.indigo50),
+      '100': _color(ColorPalette.indigo100),
+      '400': _color(ColorPalette.indigo400),
+      '700': _color(ColorPalette.indigo700),
+      '800': _color(ColorPalette.indigo800),
+      '900': _color(ColorPalette.indigo900),
+    },
     'orange': {'500': _color(ColorPalette.orange500)},
     'colorblind': {
       r'$description':

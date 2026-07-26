@@ -6,6 +6,7 @@ import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'accent_colors.dart';
+import 'accent_seed.dart';
 
 bool useCompactDensity(TargetPlatform platform, bool isWeb) {
   if (isWeb) return true;
@@ -26,16 +27,24 @@ bool useCompactDensity(TargetPlatform platform, bool isWeb) {
 class AppTheme {
   const AppTheme._();
 
-  static ThemeData light({bool compact = false}) =>
-      _build(Brightness.light, compact);
+  static ThemeData light({
+    bool compact = false,
+    AppAccentSeed accentSeed = AppAccentSeed.cyan,
+  }) => _build(Brightness.light, compact, accentSeed);
 
-  static ThemeData dark({bool compact = false}) =>
-      _build(Brightness.dark, compact);
+  static ThemeData dark({
+    bool compact = false,
+    AppAccentSeed accentSeed = AppAccentSeed.cyan,
+  }) => _build(Brightness.dark, compact, accentSeed);
 
-  static ThemeData _build(Brightness brightness, bool compact) {
+  static ThemeData _build(
+    Brightness brightness,
+    bool compact,
+    AppAccentSeed accentSeed,
+  ) {
     final isDark = brightness == Brightness.dark;
     final f = isDark ? FColors.slateDark : FColors.slateLight;
-    final accent = AccentColors.primary(brightness);
+    final accent = AccentColors.primary(brightness, seed: accentSeed);
     final onAccent = AccentColors.onPrimary(brightness);
     final pageBackground = isDark
         ? ColorPalette.navy950

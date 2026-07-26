@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../theme/accent_seed.dart';
 import '../theme/app_surface_style.dart';
 import '../theme/market_color_mode.dart';
 
@@ -30,6 +31,12 @@ final themeModeProvider = StateNotifierProvider<ThemeModeController, ThemeMode>(
   },
 );
 
+/// User preference: accent seed (brand hue).
+final accentSeedProvider =
+    StateNotifierProvider<AccentSeedController, AppAccentSeed>((ref) {
+      return AccentSeedController(ref.watch(sharedPreferencesProvider));
+    });
+
 /// User preference: surface style (standard / OLED black / high contrast).
 final surfaceStyleProvider =
     StateNotifierProvider<SurfaceStyleController, AppSurfaceStyle>((ref) {
@@ -49,6 +56,22 @@ class MarketColorModeController extends StateNotifier<MarketColorMode> {
     if (mode == state) return;
     state = mode;
     await _prefs.setString(_key, mode.persistedKey);
+  }
+}
+
+class AccentSeedController extends StateNotifier<AppAccentSeed> {
+  AccentSeedController(this._prefs) : super(_load(_prefs));
+
+  static const String _key = 'naviwealth.theme.accent_seed';
+  final SharedPreferences _prefs;
+
+  static AppAccentSeed _load(SharedPreferences p) =>
+      AppAccentSeed.fromKey(p.getString(_key));
+
+  Future<void> set(AppAccentSeed seed) async {
+    if (seed == state) return;
+    state = seed;
+    await _prefs.setString(_key, seed.persistedKey);
   }
 }
 

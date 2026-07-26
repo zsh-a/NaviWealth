@@ -47,12 +47,13 @@ class NaviWealthApp extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
     final compact = useCompactDensity(defaultTargetPlatform, kIsWeb);
+    final accentSeed = ref.watch(accentSeedProvider);
 
     return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(compact: compact),
-      darkTheme: AppTheme.dark(compact: compact),
+      theme: AppTheme.light(compact: compact, accentSeed: accentSeed),
+      darkTheme: AppTheme.dark(compact: compact, accentSeed: accentSeed),
       themeMode: themeMode,
       locale: locale,
       routerConfig: router,
@@ -80,6 +81,7 @@ class NaviWealthApp extends ConsumerWidget {
           brightness: brightness,
           touch: isTouch,
           surfaceStyle: surfaceStyle,
+          accentSeed: accentSeed,
         );
         // Resolve the app theme once for the whole tree (blueprint doc 15,
         // §3.3) — the single source for every color role, including the
@@ -89,6 +91,7 @@ class NaviWealthApp extends ConsumerWidget {
             brightness: brightness,
             marketMode: ref.watch(marketColorModeProvider),
             surfaceStyle: surfaceStyle,
+            accentSeed: accentSeed,
             density: isTouch ? AppDensity.touch : AppDensity.desktop,
           ),
         );

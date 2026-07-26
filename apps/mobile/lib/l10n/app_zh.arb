@@ -870,6 +870,10 @@
   "settingsAboutSubtitle": "v{version}",
 
   "settingsAppearanceSection": "外观",
+  "settingsAccentSeedTitle": "强调色",
+  "accentSeedCyan": "青蓝",
+  "accentSeedViolet": "紫罗兰",
+  "accentSeedIndigo": "靛蓝",
   "settingsSurfaceStyleTitle": "界面风格",
   "surfaceStyleStandard": "标准",
   "surfaceStyleOled": "OLED 纯黑",

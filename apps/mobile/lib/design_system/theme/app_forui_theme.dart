@@ -5,6 +5,7 @@ import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'accent_colors.dart';
+import 'accent_seed.dart';
 import 'app_surface_style.dart';
 
 /// Builds the production Forui theme for NaviWealth.
@@ -16,6 +17,7 @@ FThemeData buildAppForuiTheme({
   required Brightness brightness,
   required bool touch,
   AppSurfaceStyle surfaceStyle = AppSurfaceStyle.standard,
+  AppAccentSeed accentSeed = AppAccentSeed.cyan,
 }) {
   final isDark = brightness == Brightness.dark;
   // Keep these in lockstep with resolveAppTheme's surface/content tables —
@@ -25,7 +27,7 @@ FThemeData buildAppForuiTheme({
   final platform = isDark ? FThemes.slate.dark : FThemes.slate.light;
   final base = touch ? platform.touch : platform.desktop;
   final colors = base.colors.copyWith(
-    primary: AccentColors.primary(brightness),
+    primary: AccentColors.primary(brightness, seed: accentSeed),
     primaryForeground: AccentColors.onPrimary(brightness),
     background: isDark
         ? (oled ? ColorPalette.oledCanvas : ColorPalette.navy950)

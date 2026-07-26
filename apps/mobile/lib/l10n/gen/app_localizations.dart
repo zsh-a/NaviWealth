@@ -5013,6 +5013,30 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get settingsAppearanceSection;
 
+  /// No description provided for @settingsAccentSeedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Accent color'**
+  String get settingsAccentSeedTitle;
+
+  /// No description provided for @accentSeedCyan.
+  ///
+  /// In en, this message translates to:
+  /// **'Turquoise'**
+  String get accentSeedCyan;
+
+  /// No description provided for @accentSeedViolet.
+  ///
+  /// In en, this message translates to:
+  /// **'Violet'**
+  String get accentSeedViolet;
+
+  /// No description provided for @accentSeedIndigo.
+  ///
+  /// In en, this message translates to:
+  /// **'Indigo'**
+  String get accentSeedIndigo;
+
   /// No description provided for @settingsSurfaceStyleTitle.
   ///
   /// In en, this message translates to:

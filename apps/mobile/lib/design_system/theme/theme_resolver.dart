@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../tokens/color_palette.dart';
 import 'accent_colors.dart';
+import 'accent_seed.dart';
 import 'app_surface_style.dart';
 import 'app_theme_data.dart';
 import 'market_color_mode.dart';
@@ -23,12 +24,14 @@ class ThemeInputs {
     required this.brightness,
     required this.marketMode,
     this.surfaceStyle = AppSurfaceStyle.standard,
+    this.accentSeed = AppAccentSeed.cyan,
     this.density = AppDensity.touch,
   });
 
   final Brightness brightness;
   final MarketColorMode marketMode;
   final AppSurfaceStyle surfaceStyle;
+  final AppAccentSeed accentSeed;
   final AppDensity density;
 
   @override
@@ -37,11 +40,12 @@ class ThemeInputs {
       other.brightness == brightness &&
       other.marketMode == marketMode &&
       other.surfaceStyle == surfaceStyle &&
+      other.accentSeed == accentSeed &&
       other.density == density;
 
   @override
   int get hashCode =>
-      Object.hash(brightness, marketMode, surfaceStyle, density);
+      Object.hash(brightness, marketMode, surfaceStyle, accentSeed, density);
 }
 
 /// Pure resolver: [ThemeInputs] → [AppThemeData].
@@ -119,9 +123,12 @@ AppThemeData resolveAppTheme(ThemeInputs inputs) {
         );
 
   final accent = ColorRole(
-    fg: AccentColors.primary(inputs.brightness),
-    container: AccentColors.tint(inputs.brightness),
-    onContainer: isDark ? ColorPalette.cyanBrand100 : ColorPalette.cyanBrand800,
+    fg: AccentColors.primary(inputs.brightness, seed: inputs.accentSeed),
+    container: AccentColors.tint(inputs.brightness, seed: inputs.accentSeed),
+    onContainer: AccentColors.onTint(
+      inputs.brightness,
+      seed: inputs.accentSeed,
+    ),
     onFg: AccentColors.onPrimary(inputs.brightness),
   );
 

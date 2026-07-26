@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
+import 'accent_seed.dart';
 
 /// Single source of truth for the accent (cyan brand) color used across
 /// `ColorScheme.primary`, the Forui `FColors.primary` override, chart
@@ -16,9 +17,15 @@ class AccentColors {
   ///
   /// Light mode → a deep cyan that stays legible on pale surfaces.
   /// Dark mode  → medium cyan, avoiding the neon read of cyanBrand400.
-  static Color primary(Brightness brightness) => brightness == Brightness.dark
-      ? ColorPalette.cyanBrand500
-      : ColorPalette.cyanBrand800;
+  static Color primary(
+    Brightness brightness, {
+    AppAccentSeed seed = AppAccentSeed.cyan,
+  }) {
+    final slots = AccentSeedSlots.of(seed);
+    return brightness == Brightness.dark
+        ? slots.darkPrimary
+        : slots.lightPrimary;
+  }
 
   /// Color drawn on top of `primary` (button labels, badge text).
   ///
@@ -28,10 +35,22 @@ class AccentColors {
       ? ColorPalette.navy950
       : ColorPalette.neutral0;
 
+  /// Foreground on [tint] for the given seed.
+  static Color onTint(Brightness brightness, {required AppAccentSeed seed}) {
+    final slots = AccentSeedSlots.of(seed);
+    return brightness == Brightness.dark
+        ? slots.onContainerDark
+        : slots.onContainerLight;
+  }
+
   /// Soft tinted background (insight cards, chip backgrounds).
-  static Color tint(Brightness brightness) => brightness == Brightness.dark
-      ? ColorPalette.cyanBrand900
-      : ColorPalette.surfaceOverlay;
+  static Color tint(
+    Brightness brightness, {
+    AppAccentSeed seed = AppAccentSeed.cyan,
+  }) {
+    final slots = AccentSeedSlots.of(seed);
+    return brightness == Brightness.dark ? slots.tintDark : slots.tintLight;
+  }
 
   /// Mid-saturation series color used by charts.
   static const Color series = ColorPalette.cyanBrand600;
