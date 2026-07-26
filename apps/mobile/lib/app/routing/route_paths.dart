@@ -298,8 +298,7 @@ DomainScope? domainForRoute(List<DomainPack> packs, String path) {
 }
 
 /// Primary shell tab paths in display order across active domains. Used by
-/// root-tab affordances and by the global Cmd-1..N tab switcher in `app.dart`.
-/// Settings is not a tab (IA contract §1).
+/// root-tab affordances. Settings is not a tab (IA contract §1).
 ///
 /// Reads [activeDomainPacksProvider] so optional-domain tabs do not become
 /// keyboard targets before the user opts in.
@@ -307,3 +306,19 @@ final primaryTabPathsProvider = Provider<List<String>>((ref) {
   final packs = ref.watch(activeDomainPacksProvider);
   return [for (final p in packs) ...p.tabPaths];
 });
+
+/// Tab paths for the domain that owns [path] — the Cmd/Ctrl-1..N targets.
+///
+/// The old flat concatenation permanently bound Cmd-1..4 to the first
+/// domain's (Finance's) tabs, teleporting users out of whatever domain they
+/// were in and leaving every other domain keyboard-unreachable (blueprint
+/// doc 15 §7.4). Outside any domain (e.g. `/life`) this falls back to the
+/// first active domain, preserving the old behavior there.
+List<String> domainTabPathsForLocation(List<DomainPack> packs, String path) {
+  if (packs.isEmpty) return const [];
+  final scope = domainForRoute(packs, path);
+  for (final p in packs) {
+    if (p.scope == scope) return p.tabPaths;
+  }
+  return packs.first.tabPaths;
+}

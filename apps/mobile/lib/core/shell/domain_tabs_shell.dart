@@ -74,19 +74,23 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell> {
         // widget's reduced constraints would make the desktop threshold drift.
         final width = MediaQuery.sizeOf(context).width;
         if (width >= DomainTabsShell._desktopBreakpoint) {
-          return _DesktopLayout(
-            tabs: tabs,
-            selectedIndex: index,
-            onDestinationSelected: _onSelected,
-            child: shellChild,
+          return _withGlobalOverlays(
+            _DesktopLayout(
+              tabs: tabs,
+              selectedIndex: index,
+              onDestinationSelected: _onSelected,
+              child: shellChild,
+            ),
           );
         }
         if (width >= DomainTabsShell._tabletBreakpoint) {
-          return _TabletLayout(
-            tabs: tabs,
-            selectedIndex: index,
-            onDestinationSelected: _onSelected,
-            child: shellChild,
+          return _withGlobalOverlays(
+            _TabletLayout(
+              tabs: tabs,
+              selectedIndex: index,
+              onDestinationSelected: _onSelected,
+              child: shellChild,
+            ),
           );
         }
         return _MobileLayout(
@@ -98,6 +102,24 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell> {
       },
     );
   }
+}
+
+/// Cross-layout overlays that must not be phone-only: the "AI changed X ·
+/// undo" banner previously lived inside [_MobileLayout] alone, so every
+/// tablet/desktop viewport silently lost the undo affordance (blueprint
+/// doc 15 §7.3). Mobile keeps its own copy stacked above the floating dock.
+Widget _withGlobalOverlays(Widget layout) {
+  return Stack(
+    children: [
+      Positioned.fill(child: layout),
+      const Positioned(
+        left: 0,
+        right: 0,
+        bottom: 0,
+        child: SafeArea(top: false, child: PersistentUndoBanner()),
+      ),
+    ],
+  );
 }
 
 class _MobileLayout extends ConsumerWidget {
@@ -259,7 +281,7 @@ String _activePath(GoRouter router) {
   return config.uri.path;
 }
 
-class _TabletLayout extends StatelessWidget {
+class _TabletLayout extends ConsumerWidget {
   const _TabletLayout({
     required this.tabs,
     required this.selectedIndex,
@@ -273,7 +295,14 @@ class _TabletLayout extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Tablet widths have no always-visible domain dock, so the rail itself
+    // carries the cross-domain switcher and the Ask-AI entry — previously
+    // both were phone/desktop-only (blueprint doc 15 §7.2).
+    final specs = ref.watch(activeDomainShellsProvider);
+    final switcherHomePath = ref.watch(domainSwitcherHomePathProvider);
+    final assistantAction = ref.watch(domainTabsAssistantActionProvider);
+    final l10n = AppLocalizations.of(context);
     return FScaffold(
       childPad: false,
       // See _MobileLayout: the routed page owns keyboard avoidance; the shell
@@ -283,16 +312,79 @@ class _TabletLayout extends StatelessWidget {
         width: AppControlWidths.tabletRail,
         child: FSidebar(
           children: [
+            if (specs.length >= 2) ...[
+              _TabletRailAction(
+                icon: FLucideIcons.layoutGrid,
+                label: l10n.shellSwitchDomainTitle,
+                onTap: () {
+                  AppInteraction.signal(AppInteractionIntent.navigate);
+                  showDomainSwitcherSheet(context, specs, switcherHomePath);
+                },
+              ),
+              const FDivider(),
+            ],
             for (var i = 0; i < tabs.length; i++)
               _TabletRailItem(
                 tab: tabs[i],
                 selected: i == selectedIndex,
                 onTap: () => onDestinationSelected(i),
               ),
+            if (assistantAction != null) ...[
+              const FDivider(),
+              _TabletRailAction(
+                icon: FLucideIcons.sparkles,
+                label: l10n.navAskAi,
+                onTap: () => assistantAction(context, ref),
+              ),
+            ],
           ],
         ),
       ),
       child: child,
+    );
+  }
+}
+
+/// Rail entry for non-tab actions (domain switcher, Ask-AI). Mirrors
+/// [_TabletRailItem]'s metrics in its unselected state.
+class _TabletRailAction extends StatelessWidget {
+  const _TabletRailAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return FTappable(
+      onPress: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s8,
+          vertical: AppSpacing.s4,
+        ),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s10),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: colors.mutedForeground, size: AppIconSizes.mlg),
+            const SizedBox(height: AppSpacing.s4),
+            Text(
+              label,
+              style: context.captionMediumStyle.copyWith(
+                color: colors.foreground,
+              ),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

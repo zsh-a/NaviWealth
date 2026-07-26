@@ -108,7 +108,12 @@ class NaviWealthApp extends ConsumerWidget {
                 child: AppMessenger.init(
                   child: GlobalShortcutsScope(
                     onSwitchPrimaryTab: (int index) {
-                      final paths = ref.read(primaryTabPathsProvider);
+                      // Cmd/Ctrl-1..N switches tabs within the CURRENT
+                      // domain rather than always jumping to Finance.
+                      final paths = domainTabPathsForLocation(
+                        ref.read(activeDomainPacksProvider),
+                        router.routeInformationProvider.value.uri.path,
+                      );
                       if (index < 0 || index >= paths.length) return;
                       router.go(paths[index]);
                     },

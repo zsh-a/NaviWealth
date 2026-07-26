@@ -122,13 +122,17 @@ void main() {
   });
 
   group('Multi-domain dock (Health opt-in)', () {
-    for (final testCase in <({double width, bool mobile, bool desktop})>[
-      (width: 599, mobile: true, desktop: false),
-      (width: 600, mobile: false, desktop: false),
-      (width: 1279, mobile: false, desktop: false),
-      (width: 1280, mobile: false, desktop: true),
-      (width: 1440, mobile: false, desktop: true),
-    ]) {
+    // Below shellDesktop (=desktop, 1240) the header chip is the switcher;
+    // at and above it the always-visible dock takes over — exactly one
+    // switching affordance per tier, with no dead band (doc 15 §7.2).
+    for (final testCase
+        in <({double width, bool mobile, bool desktop, bool chip})>[
+          (width: 599, mobile: true, desktop: false, chip: true),
+          (width: 600, mobile: false, desktop: false, chip: true),
+          (width: 1239, mobile: false, desktop: false, chip: true),
+          (width: 1240, mobile: false, desktop: true, chip: false),
+          (width: 1440, mobile: false, desktop: true, chip: false),
+        ]) {
       testWidgets('uses one shell tier at ${testCase.width}px', (tester) async {
         final l10n = lookupAppLocalizations(const Locale('en'));
         await _pumpAt(
@@ -150,7 +154,7 @@ void main() {
           testCase.desktop ? findsOneWidget : findsNothing,
         );
         final switcher = find.byType(DomainSwitcherChip);
-        if (testCase.mobile) {
+        if (testCase.chip) {
           expect(switcher, findsOneWidget);
           expect(tester.getSize(switcher).width, greaterThan(0));
         } else if (switcher.evaluate().isNotEmpty) {

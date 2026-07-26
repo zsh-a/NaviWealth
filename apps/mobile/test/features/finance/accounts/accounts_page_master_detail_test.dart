@@ -96,8 +96,9 @@ void main() {
     expect(find.text('single-account-detail'), findsNothing);
   });
 
-  testWidgets('pushes a detail route below 1280', (tester) async {
-    await _setSurface(tester, 1279);
+  // shellDesktop aliases desktop (1240) since doc 15 §7.1.
+  testWidgets('pushes a detail route below 1240', (tester) async {
+    await _setSurface(tester, 1239);
     final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(_wrap(prefs: prefs, contentWidth: 900));
     await tester.pumpAndSettle();

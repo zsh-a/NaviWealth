@@ -78,7 +78,11 @@ class DomainSwitcherChip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (MediaQuery.sizeOf(context).width >= Breakpoints.mobile) {
+    // Visible on phones AND tablets: below [Breakpoints.shellDesktop] the
+    // always-visible domain dock is absent, so the header chip is the
+    // discoverable way to leave the current domain. The old `>= mobile`
+    // guard left every 600–1280px viewport with no switcher at all.
+    if (MediaQuery.sizeOf(context).width >= Breakpoints.shellDesktop) {
       return const SizedBox.shrink();
     }
     final specs = ref.watch(activeDomainShellsProvider);
