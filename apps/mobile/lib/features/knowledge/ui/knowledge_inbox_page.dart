@@ -213,7 +213,7 @@ class _NotesList extends ConsumerWidget {
             ),
           );
         }
-        return KnowledgePullToRefresh(
+        return AppRefreshIndicator(
           onRefresh: () => _refreshKnowledgeRepository(ref),
           child: ListView.separated(
             physics: const AlwaysScrollableScrollPhysics(),

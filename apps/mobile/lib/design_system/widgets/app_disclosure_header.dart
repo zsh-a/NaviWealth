@@ -29,7 +29,6 @@ class AppDisclosureHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return SoftCard.raised(
-      borderless: true,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s14,
         vertical: AppSpacing.s12,

@@ -72,8 +72,7 @@ class _MarkdownEditorWithPreviewState extends State<MarkdownEditorWithPreview> {
         else
           // Match detail reading skin (no muted "disabled field" fill).
           SoftCard.flat(
-            borderless: true,
-            padding: const EdgeInsets.all(AppSpacing.s14),
+            padding: AppPageRhythm.densePadding,
             child: ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 96),
               child: widget.controller.text.trim().isEmpty

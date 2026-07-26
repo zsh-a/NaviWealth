@@ -46,7 +46,7 @@ class PlanHubPage extends ConsumerWidget {
           maxWidth: AdaptiveMaxWidth.dashboard,
           expandSinglePrimary: true,
           padding: EdgeInsets.zero,
-          primary: RefreshIndicator(
+          primary: AppRefreshIndicator(
             onRefresh: () => _refreshPlanningWorkspace(ref),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -208,7 +208,6 @@ class _AttentionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _toneColor(context, spec.tone);
     return SoftCard.flat(
-      borderless: true,
       tinted: false,
       onPress: () => context.push(spec.path),
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
@@ -346,7 +345,6 @@ class _PlanRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _toneColor(context, spec.tone);
     return SoftCard.flat(
-      borderless: true,
       tinted: false,
       onPress: () => context.push(spec.path),
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),

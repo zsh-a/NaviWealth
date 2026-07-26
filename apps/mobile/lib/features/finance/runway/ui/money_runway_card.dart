@@ -20,7 +20,6 @@ class MoneyRunwayCard extends ConsumerWidget {
     final runway = ref.watch(moneyRunwayProvider);
     return runway.when(
       loading: () => const SoftCard.raised(
-        borderless: true,
         padding: EdgeInsets.all(AppSpacing.s16),
         child: SkeletonBox(height: 112, radius: AppRadius.md),
       ),
@@ -34,7 +33,6 @@ class MoneyRunwayCard extends ConsumerWidget {
           MoneyRunwayStatus.shortfall => l10n.moneyRunwayStatusShortfall,
         };
         return SoftCard.raised(
-          borderless: true,
           onPress: () {
             ref
                 .read(productMetricsProvider.notifier)

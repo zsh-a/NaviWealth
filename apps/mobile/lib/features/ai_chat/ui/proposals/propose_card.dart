@@ -14,7 +14,6 @@ import '../../../../core/ai/contracts/interaction.dart';
 import '../../../../core/ai/visual/visual.dart';
 import '../../../../core/ai/write/interaction_mode.dart';
 import '../../../../core/ai/write/providers.dart';
-import '../../../../core/haptics/haptics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../application/batch_proposal_apply_coordinator.dart';
@@ -194,7 +193,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
   Future<void> _onConfirm() async {
     final plan = widget.plan;
     if (plan is! ReadyProposalPlan) return;
-    Haptics.primaryPress();
+    AppInteraction.signal(AppInteractionIntent.commit);
     final effective = _overrides == null
         ? plan
         : ReadyProposalPlan(
@@ -217,10 +216,10 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
     try {
       final applier = await ref.read(proposalApplierProvider.future);
       final result = await applier.apply(effective);
-      Haptics.success();
+      AppInteraction.signal(AppInteractionIntent.success);
       await _persistWithRepo(repo, result);
     } on ProposalApplyException catch (e) {
-      Haptics.error();
+      AppInteraction.signal(AppInteractionIntent.failure);
       await _persistWithRepo(
         repo,
         _applyState.copyWith(
@@ -229,7 +228,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
         ),
       );
     } catch (e) {
-      Haptics.error();
+      AppInteraction.signal(AppInteractionIntent.failure);
       await _persistWithRepo(
         repo,
         _applyState.copyWith(
@@ -241,7 +240,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
   }
 
   Future<void> _onConfirmBatch(BatchProposalPlan plan) async {
-    Haptics.primaryPress();
+    AppInteraction.signal(AppInteractionIntent.commit);
     final repo = await ref.read(chatRepositoryProvider.future);
     final stack = ref.read(undoStackProvider);
     try {
@@ -289,9 +288,11 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
           );
         },
       );
-      if (result.status == ProposalApplyStatus.errored) Haptics.error();
+      if (result.status == ProposalApplyStatus.errored) {
+        AppInteraction.signal(AppInteractionIntent.failure);
+      }
     } on Object catch (e) {
-      Haptics.error();
+      AppInteraction.signal(AppInteractionIntent.failure);
       await _persistWithRepo(
         repo,
         ProposalApplyState(
@@ -303,7 +304,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
   }
 
   Future<void> _onRecoverBatch(BatchProposalPlan plan) async {
-    Haptics.primaryPress();
+    AppInteraction.signal(AppInteractionIntent.commit);
     final repo = await ref.read(chatRepositoryProvider.future);
     try {
       final applier = await ref.read(proposalApplierProvider.future);
@@ -315,9 +316,11 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
         result,
         total: plan.children.length,
       );
-      if (progress.requiresRecovery) Haptics.error();
+      if (progress.requiresRecovery) {
+        AppInteraction.signal(AppInteractionIntent.failure);
+      }
     } on Object catch (e) {
-      Haptics.error();
+      AppInteraction.signal(AppInteractionIntent.failure);
       await _persistWithRepo(
         repo,
         ProposalApplyState(

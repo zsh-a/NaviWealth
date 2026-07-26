@@ -30,7 +30,6 @@ class ExecutionProgressCard extends StatelessWidget {
     final color = _progressColor(context, entry.kind);
     final colors = context.theme.colors;
     return SoftCard.flat(
-      borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

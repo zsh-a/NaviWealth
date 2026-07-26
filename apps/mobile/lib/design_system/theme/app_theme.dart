@@ -7,6 +7,7 @@ import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'accent_colors.dart';
 import 'accent_seed.dart';
+import 'app_page_transitions.dart';
 
 bool useCompactDensity(TargetPlatform platform, bool isWeb) {
   if (isWeb) return true;
@@ -100,13 +101,16 @@ class AppTheme {
       highlightColor: Colors.transparent,
       hoverColor: accent.withValues(alpha: AppOpacity.whisper),
       focusColor: accent.withValues(alpha: AppOpacity.faint),
+      // Width-aware app transition on every desktop-capable platform; iOS
+      // keeps the Cupertino builder for the edge-swipe back gesture.
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
-          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.android: AppPageTransitionsBuilder(),
           TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.linux: AppPageTransitionsBuilder(),
+          TargetPlatform.macOS: AppPageTransitionsBuilder(),
+          TargetPlatform.windows: AppPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: AppPageTransitionsBuilder(),
         },
       ),
     );

@@ -183,7 +183,7 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
           );
         }
 
-        final list = KnowledgePullToRefresh(
+        final list = AppRefreshIndicator(
           onRefresh: widget.onRefresh,
           child: ListView.separated(
             physics: const AlwaysScrollableScrollPhysics(),

@@ -48,9 +48,9 @@ class _ConceptGraphPanel extends StatelessWidget {
                         painter: _ConceptGraphPainter(
                           center: center,
                           related: nodeCenters,
-                          color: KnowledgeTypeColors.concept.withValues(
-                            alpha: AppOpacity.medium,
-                          ),
+                          color: context.appTheme.categorical
+                              .adapt(KnowledgeTypeColors.concept)
+                              .withValues(alpha: AppOpacity.medium),
                         ),
                       ),
                     ),
@@ -155,7 +155,6 @@ class _ConceptNodeChip extends StatelessWidget {
     final foreground = active ? colors.primary : colors.foreground;
     Widget child = KnowledgeCardSurface(
       level: active ? SoftCardLevel.raised : SoftCardLevel.flat,
-      borderless: !active,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
       child: Align(
         alignment: Alignment.center,

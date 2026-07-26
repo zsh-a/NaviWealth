@@ -135,7 +135,11 @@ class SegmentedRow<T> extends StatelessWidget {
     final foreground = selected ? colors.foreground : colors.mutedForeground;
     final label = labelOf(option);
     final semanticLabel = semanticLabelOf?.call(option) ?? label;
-    final duration = AppMotionPolicy.duration(context, Motion.fast);
+    final duration = AppMotionPolicy.duration(
+      context,
+      Motion.fast,
+      role: AppMotionRole.decorative,
+    );
 
     final content = AnimatedDefaultTextStyle(
       duration: duration,

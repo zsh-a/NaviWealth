@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/dimens_tokens.dart';
 import 'app_collapsing_stage.dart';
+import 'app_refresh_indicator.dart';
 import 'atmosphere.dart';
 import 'staggered_column.dart';
 
@@ -122,7 +123,7 @@ class BriefScaffold extends StatelessWidget {
     );
 
     if (onRefresh != null) {
-      body = RefreshIndicator(onRefresh: onRefresh!, child: body);
+      body = AppRefreshIndicator(onRefresh: onRefresh!, child: body);
     }
 
     final sticky = stickyBuilder;

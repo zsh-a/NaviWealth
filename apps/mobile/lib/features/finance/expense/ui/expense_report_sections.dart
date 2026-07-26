@@ -56,7 +56,6 @@ class ExpenseCategoryPieCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
-      borderless: true,
       level: SoftCardLevel.raised,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s20),
@@ -143,7 +142,6 @@ class ExpenseTrendCard extends StatelessWidget {
         ),
     ];
     return SoftCard(
-      borderless: true,
       level: SoftCardLevel.raised,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s20),

@@ -35,8 +35,9 @@ class OptionalHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!enabled ||
-        !AppMotionPolicy.isEnabled(context, role: AppMotionRole.transition)) {
+    // Hero flights are spatial motion — under reduce-motion they are dropped
+    // outright even though transition cross-fades stay enabled.
+    if (!enabled || AppMotionPolicy.reduceMotion(context)) {
       return child;
     }
     return Hero(

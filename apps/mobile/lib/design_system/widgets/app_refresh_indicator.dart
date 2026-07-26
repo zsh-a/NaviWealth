@@ -1,0 +1,42 @@
+import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
+
+import '../tokens/color_palette.dart';
+import '../tokens/dimens_tokens.dart';
+
+/// The one pull-to-refresh affordance for every domain.
+///
+/// Wraps Material's drag mechanics (arming, physics, a11y) but skins the
+/// indicator with app tokens — brand progress stroke on a raised surface
+/// disc — so refresh reads identically on Finance, Health, Knowledge,
+/// Execution and Life. Replaces both raw `RefreshIndicator` call sites and
+/// KnowledgeOS's hand-rolled overscroll accumulator.
+class AppRefreshIndicator extends StatelessWidget {
+  const AppRefreshIndicator({
+    super.key,
+    required this.onRefresh,
+    required this.child,
+    this.edgeOffset = 0,
+  });
+
+  final Future<void> Function() onRefresh;
+  final Widget child;
+
+  /// Offset for surfaces with collapsed/floating headers.
+  final double edgeOffset;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final isDark = colors.brightness == Brightness.dark;
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      color: colors.primary,
+      backgroundColor: isDark ? ColorPalette.navyRaised : ColorPalette.surface,
+      strokeWidth: AppStroke.sparkline,
+      displacement: AppSpacing.s40,
+      edgeOffset: edgeOffset,
+      child: child,
+    );
+  }
+}

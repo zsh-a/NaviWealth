@@ -56,7 +56,6 @@ class _MetaPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SoftCard.flat(
-      borderless: true,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s8,
         vertical: AppSpacing.s4,

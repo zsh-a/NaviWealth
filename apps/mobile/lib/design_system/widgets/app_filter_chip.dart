@@ -41,7 +41,11 @@ class AppFilterChip extends StatelessWidget {
 
     final showClear = active && onClear != null;
     return AnimatedContainer(
-      duration: AppMotionPolicy.duration(context, Motion.fast),
+      duration: AppMotionPolicy.duration(
+        context,
+        Motion.fast,
+        role: AppMotionRole.decorative,
+      ),
       curve: Motion.standard,
       constraints: const BoxConstraints(
         minHeight: AppControlHeights.touchTarget,

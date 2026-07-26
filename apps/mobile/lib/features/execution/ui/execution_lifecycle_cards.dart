@@ -39,7 +39,6 @@ class ExecutionCommitmentCard extends StatelessWidget {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     return SoftCard.flat(
-      borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,7 +225,6 @@ class ExecutionProjectCard extends StatelessWidget {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     return SoftCard.flat(
-      borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

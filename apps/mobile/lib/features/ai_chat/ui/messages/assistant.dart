@@ -156,7 +156,7 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
     final l10n = AppLocalizations.of(context);
     final text = message.content.trim();
     if (text.isEmpty && !isLastAssistant) return;
-    Haptics.selection();
+    AppInteraction.signal(AppInteractionIntent.select);
     await showAppSheet<void>(
       context: context,
       title: l10n.aiChatMessageActionsTitle,

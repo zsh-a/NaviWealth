@@ -4,7 +4,6 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 import '../../../../../core/forms/currency_picker.dart';
-import '../../../../../core/haptics/haptics.dart';
 import '../../../../../design_system/design_system.dart';
 import '../../../../../l10n/gen/app_localizations.dart';
 import '../../../data/market/market_data_providers.dart';
@@ -264,7 +263,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
       isin: isin.isEmpty ? null : isin,
     );
     widget.dirty.markPristine();
-    Haptics.success();
+    AppInteraction.signal(AppInteractionIntent.success);
     Navigator.of(context).pop(choice);
   }
 

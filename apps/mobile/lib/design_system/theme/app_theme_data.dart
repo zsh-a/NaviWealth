@@ -1,5 +1,8 @@
 import 'package:flutter/widgets.dart';
 
+import 'app_categorical.dart';
+import 'app_type_scale.dart';
+import 'component_specs.dart';
 import 'market_color_mode.dart';
 
 /// A pairing of colors that is guaranteed legible by construction.
@@ -157,6 +160,13 @@ class AppThemeData {
     required this.accent,
     required this.status,
     required this.market,
+    required this.type,
+    required this.categorical,
+    this.press = kAppPressSpec,
+    this.card = kAppCardSpec,
+    this.badge = kAppBadgeSpec,
+    this.divider = kAppDividerSpec,
+    this.metricTile = kAppMetricTileSpec,
   });
 
   final Brightness brightness;
@@ -168,4 +178,18 @@ class AppThemeData {
 
   final AppStatus status;
   final AppMarket market;
+
+  /// The semantic type scale (blueprint §4) — the only sanctioned way to
+  /// pick a font size outside the Forui presets.
+  final AppTypeScale type;
+
+  /// Brightness-aware categorical data colors (expense/knowledge/health).
+  final AppCategorical categorical;
+
+  // ── L2 component specs (blueprint §6.3) ────────────────────────────────
+  final PressSpec press;
+  final CardSpec card;
+  final BadgeSpec badge;
+  final DividerSpec divider;
+  final MetricTileSpec metricTile;
 }

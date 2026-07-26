@@ -83,7 +83,11 @@ class FocusDim extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final duration = AppMotionPolicy.duration(context, Motion.medium);
+    final duration = AppMotionPolicy.duration(
+      context,
+      Motion.medium,
+      role: AppMotionRole.decorative,
+    );
     return AnimatedScale(
       scale: active ? scale : 1,
       duration: duration,

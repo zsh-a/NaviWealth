@@ -14,6 +14,9 @@ class Motion {
   static const Duration slow = Duration(milliseconds: 360);
   static const Duration ticker = Duration(milliseconds: 800);
 
+  /// One-shot chart entrance reveal (left → right draw-in on first data).
+  static const Duration chartEnter = Duration(milliseconds: 600);
+
   /// Ambient transitions — money text short ticks, keyboard inset, etc.
   /// Sits between [medium] and [slow] for cases that need a slightly
   /// longer, more relaxed feel than a standard component change.

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/motion_tokens.dart';
 import 'app_interaction.dart';
@@ -27,7 +28,6 @@ class PressableScale extends StatefulWidget {
     this.onTap,
     this.haptic = true,
     this.intent = AppInteractionIntent.select,
-    this.scaleFactor = 0.97,
   });
 
   final Widget child;
@@ -38,10 +38,6 @@ class PressableScale extends StatefulWidget {
 
   /// Semantic intent when [haptic] is true.
   final AppInteractionIntent intent;
-
-  /// The scale factor applied when pressed. 0.97 gives a subtle
-  /// "press in" feel without being distracting.
-  final double scaleFactor;
 
   @override
   State<PressableScale> createState() => _PressableScaleState();
@@ -64,7 +60,7 @@ class _PressableScaleState extends State<PressableScale> {
         widget.onTap?.call();
       },
       child: AnimatedScale(
-        scale: _pressed ? widget.scaleFactor : 1,
+        scale: _pressed ? context.appTheme.press.scale : 1,
         duration: AppMotionPolicy.duration(
           context,
           Motion.fast,

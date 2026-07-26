@@ -32,7 +32,6 @@ class _OptionEditorTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSpacing.s8),
       child: KnowledgeCardSurface(
         level: SoftCardLevel.flat,
-        borderless: !selected,
         padding: const EdgeInsets.all(AppSpacing.s8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

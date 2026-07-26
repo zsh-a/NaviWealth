@@ -503,7 +503,6 @@ class _CloseHistoryRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return SoftCard.flat(
       tinted: false,
-      borderless: true,
       onPress: () => _showCloseDetail(context, close),
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Row(
@@ -637,7 +636,6 @@ class _CloseStepRow extends ConsumerWidget {
         state == MonthlyCloseStepState.overridden;
     return SoftCard.flat(
       tinted: false,
-      borderless: true,
       onPress: () => context.push(route),
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Row(
@@ -672,7 +670,6 @@ class _ReconciliationRow extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final reconciliation = target.reconciliation;
     return SoftCard.raised(
-      borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

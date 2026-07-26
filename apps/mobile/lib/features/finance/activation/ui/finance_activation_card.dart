@@ -68,7 +68,6 @@ class _FinanceActivationCardState extends ConsumerState<FinanceActivationCard> {
       FinanceActivationStage.complete => throw StateError('unreachable'),
     };
     return SoftCard.raised(
-      borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

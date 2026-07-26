@@ -18,7 +18,6 @@ class AppSection extends StatelessWidget {
     this.trailing,
     this.onPress,
     this.level = SoftCardLevel.flat,
-    this.borderless = false,
   });
 
   const AppSection.item({
@@ -35,7 +34,6 @@ class AppSection extends StatelessWidget {
          trailing: trailing,
          onPress: onPress,
          level: SoftCardLevel.flat,
-         borderless: true,
        );
 
   const AppSection.group({
@@ -62,7 +60,6 @@ class AppSection extends StatelessWidget {
   final Widget? trailing;
   final VoidCallback? onPress;
   final SoftCardLevel level;
-  final bool borderless;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +68,6 @@ class AppSection extends StatelessWidget {
       onPress: onPress,
       padding: padding,
       level: level,
-      borderless: borderless,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

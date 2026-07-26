@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/write/write.dart';
-import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
@@ -362,7 +361,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
                       label: l10n.depositTypeTerm,
                       selected: _kind == AssetType.bankDepositTerm,
                       onTap: () {
-                        Haptics.selection();
+                        AppInteraction.signal(AppInteractionIntent.select);
                         setState(() {
                           _kind = AssetType.bankDepositTerm;
                           dirty.markDirty();
@@ -377,7 +376,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
                       label: l10n.depositTypeDemand,
                       selected: _kind == AssetType.bankDepositDemand,
                       onTap: () {
-                        Haptics.selection();
+                        AppInteraction.signal(AppInteractionIntent.select);
                         setState(() {
                           _kind = AssetType.bankDepositDemand;
                           dirty.markDirty();

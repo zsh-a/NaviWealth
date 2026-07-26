@@ -193,9 +193,8 @@ class _NwPieChartState extends State<NwPieChart> {
           ),
           Text(
             '${pct.toStringAsFixed(1)}%',
-            style: TypographyTokens.numericCaption.copyWith(
+            style: TypographyTokens.chartCaption.copyWith(
               color: onSurface.withValues(alpha: AppOpacity.scrim),
-              fontSize: 10,
             ),
           ),
         ],
@@ -311,18 +310,16 @@ class LegendRow extends StatelessWidget {
                 const SizedBox(width: AppSpacing.s4),
                 Text(
                   '${percent.toStringAsFixed(1)}%',
-                  style: TypographyTokens.numericCaption.copyWith(
+                  style: TypographyTokens.chartCaption.copyWith(
                     color: onSurface.withValues(alpha: AppOpacity.prominent),
-                    fontSize: 10,
                   ),
                 ),
                 if (value != null) ...[
                   const SizedBox(width: AppSpacing.s4),
                   Text(
                     value!,
-                    style: TypographyTokens.numericCaption.copyWith(
+                    style: TypographyTokens.chartCaption.copyWith(
                       color: onSurface.withValues(alpha: AppOpacity.emphasis),
-                      fontSize: 10,
                     ),
                   ),
                 ],

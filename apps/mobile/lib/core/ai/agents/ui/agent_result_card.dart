@@ -69,8 +69,7 @@ class AgentResultCard extends StatelessWidget {
     if (layout == AgentResultCardLayout.summary) {
       return SoftCard(
         level: SoftCardLevel.raised,
-        borderless: true,
-        padding: const EdgeInsets.all(AppSpacing.s14),
+        padding: AppPageRhythm.cardPadding,
         onPress: onOpen,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,7 +93,6 @@ class AgentResultCard extends StatelessWidget {
 
     return SoftCard(
       level: SoftCardLevel.raised,
-      borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s16),
       // Whole card opens detail even when a secondary footer is present.
       onPress: onOpen,
@@ -627,7 +625,6 @@ class _RunStatusBannerState extends State<_RunStatusBanner> {
 
     return SoftCard(
       level: SoftCardLevel.flat,
-      borderless: true,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s12,
         vertical: AppSpacing.s10,
@@ -874,7 +871,6 @@ class _AgentRunStatusCardState extends State<AgentRunStatusCard> {
 
     return SoftCard(
       level: SoftCardLevel.raised,
-      borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1809,10 +1805,7 @@ class _MetricCell extends StatelessWidget {
             const SizedBox(height: AppSpacing.s2),
             Text(
               contextLabel,
-              style: context.captionStyle.copyWith(
-                color: colors.mutedForeground,
-                fontSize: 10,
-              ),
+              style: context.microCaptionStyle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

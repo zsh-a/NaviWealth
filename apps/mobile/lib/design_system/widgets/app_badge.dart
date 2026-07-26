@@ -40,10 +40,7 @@ class AppBadge extends StatelessWidget {
     final palette = _BadgePalette.resolve(context, tone);
     final foreground = foregroundColor ?? palette.foreground;
     final container = containerColor ?? palette.container;
-    final verticalPadding = switch (size) {
-      AppBadgeSize.compact => AppSpacing.s2,
-      AppBadgeSize.regular => AppSpacing.s4,
-    };
+    final spec = context.appTheme.badge;
     final textStyle = switch (size) {
       AppBadgeSize.compact => context.compactBadgeLabelStyle,
       AppBadgeSize.regular => context.badgeLabelStyle,
@@ -53,16 +50,16 @@ class AppBadge extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: container,
-          borderRadius: BorderRadius.circular(AppRadius.full),
+          borderRadius: BorderRadius.circular(spec.radius),
           border: outlined || borderColor != null
               ? Border.all(color: borderColor ?? colors.border)
               : null,
         ),
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.s8,
-            vertical: verticalPadding,
-          ),
+          padding: switch (size) {
+            AppBadgeSize.compact => spec.compactPadding,
+            AppBadgeSize.regular => spec.regularPadding,
+          },
           child: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: minWidth == null

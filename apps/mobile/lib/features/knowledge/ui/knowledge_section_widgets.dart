@@ -69,7 +69,6 @@ class KnowledgeSection extends StatelessWidget {
       trailing: trailing,
       onPress: onPress,
       level: level,
-      borderless: level == SoftCardLevel.flat,
       children: children,
     );
   }
@@ -87,7 +86,6 @@ class KnowledgePromptSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SoftCard.raised(
-      borderless: true,
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s12,
         AppSpacing.s8,
@@ -107,23 +105,16 @@ class KnowledgeCardSurface extends StatelessWidget {
     super.key,
     required this.child,
     this.level = SoftCardLevel.flat,
-    this.borderless = true,
     this.padding = AppPageRhythm.densePadding,
   });
 
   final Widget child;
   final SoftCardLevel level;
-  final bool borderless;
   final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
-      level: level,
-      borderless: borderless,
-      padding: padding,
-      child: child,
-    );
+    return SoftCard(level: level, padding: padding, child: child);
   }
 }
 

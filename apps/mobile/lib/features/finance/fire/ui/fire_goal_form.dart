@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -248,11 +247,11 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
       await ref.read(firePlanExtrasProvider.notifier).save(updatedExtras);
       if (!mounted) return;
       widget.dirty.markPristine();
-      Haptics.success();
+      AppInteraction.signal(AppInteractionIntent.success);
       Navigator.of(context).pop();
     } on Object {
       if (!mounted) return;
-      Haptics.error();
+      AppInteraction.signal(AppInteractionIntent.failure);
       AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
     } finally {
       widget.dirty.busy = false;

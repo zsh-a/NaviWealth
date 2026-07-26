@@ -202,7 +202,6 @@ class _WeeklySummaryMetricsCard extends StatelessWidget {
         if (stats.isEmpty) return const SizedBox.shrink();
         return SoftCard(
           level: SoftCardLevel.raised,
-          borderless: true,
           padding: const EdgeInsets.all(AppSpacing.s16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,7 +226,7 @@ class _WeeklySummaryMetricsCard extends StatelessWidget {
                       icon: stat.icon,
                       value: stat.value,
                       label: stat.label,
-                      color: stat.color,
+                      color: context.appTheme.categorical.adapt(stat.color),
                     ),
                 ],
               ),

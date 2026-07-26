@@ -72,5 +72,4 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
     expect(selected, 'bank');
   });
-
 }

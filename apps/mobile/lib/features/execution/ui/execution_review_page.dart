@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart' show RefreshIndicator;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -41,7 +40,7 @@ class ExecutionReviewPage extends ConsumerWidget {
       ],
       child: ShellTabPause(
         routePath: ExecutionRoutes.review,
-        child: RefreshIndicator(
+        child: AppRefreshIndicator(
           onRefresh: () async {
             ref.invalidate(
               execution_agent_providers.latestExecutionReviewResultsProvider,

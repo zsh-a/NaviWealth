@@ -298,7 +298,6 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
         final compactAction = constraints.maxWidth < 360;
         return SoftCard(
           level: SoftCardLevel.raised,
-          borderless: true,
           padding: const EdgeInsets.all(AppSpacing.s12),
           child: Row(
             children: [

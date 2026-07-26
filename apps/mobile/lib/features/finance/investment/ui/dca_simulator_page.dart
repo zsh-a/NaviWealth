@@ -272,7 +272,7 @@ class _DcaPlansSection extends StatelessWidget {
       data: (rows) {
         if (rows.isEmpty) {
           return SoftCard.flat(
-            padding: const EdgeInsets.all(AppSpacing.s14),
+            padding: AppPageRhythm.densePadding,
             child: Text(l10n.dcaPlanEmpty, style: context.captionStyle),
           );
         }
@@ -319,7 +319,7 @@ class _DcaPlanCard extends StatelessWidget {
       context,
     ).formatShortDate(plan.nextDueAt.toLocal());
     return SoftCard.raised(
-      padding: const EdgeInsets.all(AppSpacing.s14),
+      padding: AppPageRhythm.cardPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -713,7 +713,7 @@ class _MetricShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: AppControlWidths.metricTile,
+      width: context.appTheme.metricTile.minWidth,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: context.theme.colors.foreground.withValues(

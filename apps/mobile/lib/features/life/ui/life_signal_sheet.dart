@@ -107,7 +107,6 @@ class _LifeSignalSheetState extends ConsumerState<_LifeSignalSheet> {
           if (actionTitle != null) ...[
             const SizedBox(height: AppSpacing.s12),
             SoftCard.raised(
-              borderless: true,
               padding: const EdgeInsets.all(AppSpacing.s12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

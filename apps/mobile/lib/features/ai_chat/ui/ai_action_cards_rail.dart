@@ -107,7 +107,7 @@ class _ActionCard extends ConsumerWidget {
       width: AppControlWidths.aiActionCard,
       child: SoftCard.raised(
         onPress: onPress,
-        padding: const EdgeInsets.all(AppSpacing.s14),
+        padding: AppPageRhythm.cardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

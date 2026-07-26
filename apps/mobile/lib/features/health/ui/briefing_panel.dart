@@ -176,7 +176,6 @@ class _BriefingCard extends StatelessWidget {
     final sourceLabel = source == 'llm' ? 'LLM' : l10n.healthBriefingAuto;
     return SoftCard(
       level: SoftCardLevel.raised,
-      borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,7 +241,6 @@ class _BriefingEmpty extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
       level: SoftCardLevel.flat,
-      borderless: true,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s14,
         vertical: AppSpacing.s12,

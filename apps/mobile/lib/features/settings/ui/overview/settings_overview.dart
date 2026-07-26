@@ -9,7 +9,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/auth/auth_state.dart';
 import '../../../../core/auth/providers.dart' as auth_providers;
 import '../../../../core/config/app_version.dart';
-import '../../../../core/haptics/haptics.dart';
 import '../../../../core/logging/crash_reporting_preference.dart';
 import '../../../../core/product/product_metrics.dart';
 import '../../../../core/security/biometric_auth_service.dart';

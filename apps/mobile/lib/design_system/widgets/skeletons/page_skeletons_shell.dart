@@ -56,7 +56,11 @@ class _PageSkeletonShellState<T> extends State<PageSkeletonShell<T>> {
   Widget build(BuildContext context) {
     final showSkeleton = widget.isLoading || !_minElapsed;
     return AnimatedSwitcher(
-      duration: AppMotionPolicy.duration(context, Motion.fast),
+      duration: AppMotionPolicy.duration(
+        context,
+        Motion.fast,
+        role: AppMotionRole.decorative,
+      ),
       child: showSkeleton
           ? KeyedSubtree(
               key: const ValueKey('page-skeleton'),

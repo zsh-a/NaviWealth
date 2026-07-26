@@ -294,7 +294,9 @@ class _BodyState extends ConsumerState<_Body> {
                   label: p.statement,
                   status: p.status.wire,
                   icon: FLucideIcons.badgeCheck,
-                  iconColor: KnowledgeTypeColors.principle,
+                  iconColor: context.appTheme.categorical.adapt(
+                    KnowledgeTypeColors.principle,
+                  ),
                   onPress: () => context.pushNamed(
                     KnowledgeRouteNames.objectDetail,
                     pathParameters: {'kind': 'principle', 'id': p.id},
@@ -314,7 +316,9 @@ class _BodyState extends ConsumerState<_Body> {
                   status:
                       '${a.status.wire} · ${a.confidence.toStringAsFixed(2)}',
                   icon: FLucideIcons.lightbulb,
-                  iconColor: KnowledgeTypeColors.assumption,
+                  iconColor: context.appTheme.categorical.adapt(
+                    KnowledgeTypeColors.assumption,
+                  ),
                   onPress: () => context.pushNamed(
                     KnowledgeRouteNames.objectDetail,
                     pathParameters: {'kind': 'assumption', 'id': a.id},

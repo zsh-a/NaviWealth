@@ -212,6 +212,15 @@ class TypographyTokens {
     weight: FontWeight.w600,
   );
 
+  /// Chart-internal caption (axis annotations, slice labels, crosshair
+  /// readouts). The only sanctioned 10px style — chart code must consume
+  /// this token instead of a raw `fontSize: 10`.
+  static final TextStyle chartCaption = _t(
+    10,
+    height: 1.3,
+    weight: FontWeight.w500,
+  );
+
   /// §5.10.4 — true monospace numeral style for surfaces that explicitly
   /// want a "data-grid" read (structured answer tables in the command
   /// palette result pane, ingest preview rows, etc.). MoneyText keeps its

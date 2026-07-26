@@ -289,7 +289,7 @@ class _SpanDetail extends StatelessWidget {
         span.kind == AiSpanKind.tool || span.kind == AiSpanKind.llm;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.s14),
+      padding: AppPageRhythm.densePadding,
       decoration: BoxDecoration(
         color: AiTone.surfaceTint(context).withValues(alpha: AppOpacity.muted),
         borderRadius: BorderRadius.circular(AppRadius.sm),

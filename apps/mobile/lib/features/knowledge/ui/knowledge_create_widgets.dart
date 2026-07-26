@@ -23,7 +23,6 @@ class KnowledgeCreateTile extends StatelessWidget {
     final colors = context.theme.colors;
     return SoftCard(
       level: SoftCardLevel.raised,
-      borderless: !highlighted,
       onPress: onPress,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s12,

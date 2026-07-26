@@ -315,7 +315,6 @@ class _DomainChip extends StatelessWidget {
         : colors.primary;
 
     return SoftCard.raised(
-      borderless: true,
       padding: AppPageRhythm.densePadding,
       onPress: () => context.go(path),
       child: Row(
@@ -382,7 +381,6 @@ class _AttentionSectionState extends State<_AttentionSection> {
     if (events.isEmpty) {
       return SoftCard.raised(
         padding: AppPageRhythm.cardPadding,
-        borderless: true,
         child: AppEmptyState(
           icon: FLucideIcons.sparkles,
           title: l10n.lifeTimelineEmptyTitle,

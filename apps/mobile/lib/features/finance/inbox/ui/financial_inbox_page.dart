@@ -222,7 +222,6 @@ class _InboxRow extends ConsumerWidget {
     final important = item.priority == FinancialInboxPriority.important;
     return SoftCard.flat(
       tinted: false,
-      borderless: true,
       onPress: () => _showInboxDetail(
         context,
         item: item,
@@ -364,7 +363,6 @@ class _InboxDetail extends ConsumerWidget {
           AppSheetSectionLabel(l10n.financialInboxExpenseDetailsTitle),
           for (final expense in anomalyExpenses) ...[
             SoftCard.raised(
-              borderless: true,
               onPress: () {
                 final router = GoRouter.of(context);
                 Navigator.of(context).pop();

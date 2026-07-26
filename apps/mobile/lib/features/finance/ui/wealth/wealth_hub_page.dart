@@ -97,7 +97,7 @@ class _WealthHubBody extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final width = MediaQuery.sizeOf(context).width;
     final hPad = Breakpoints.isMobile(width) ? AppSpacing.s16 : AppSpacing.s24;
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async {
         final range = ref.read(dashboardTimeRangeProvider);
         ref.invalidate(dashboardSnapshotProvider);
@@ -330,7 +330,6 @@ class _WealthDestinationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return SoftCard.raised(
-      borderless: true,
       onPress: () => context.push(spec.path),
       padding: AppPageRhythm.densePadding,
       child: Column(
