@@ -16,7 +16,9 @@ class _LongTaskProgressRow extends StatelessWidget {
         : l10n.aiChatRunningTool(friendlyToolName(l10n, toolName));
     final detail = toolName == null ? progress.detail : null;
     final active = AiTone.active(context);
-    final line = detail != null && detail.isNotEmpty ? '$label · $detail' : label;
+    final line = detail != null && detail.isNotEmpty
+        ? '$label · $detail'
+        : label;
     return Semantics(
       container: true,
       label: line,
@@ -33,9 +35,7 @@ class _LongTaskProgressRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.s6),
-          _TypingDots(
-            color: active.withValues(alpha: AppOpacity.strong),
-          ),
+          _TypingDots(color: active.withValues(alpha: AppOpacity.strong)),
         ],
       ),
     );

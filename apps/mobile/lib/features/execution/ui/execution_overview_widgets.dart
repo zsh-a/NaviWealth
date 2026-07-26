@@ -61,7 +61,6 @@ class ExecutionOverviewStrip extends StatelessWidget {
           },
           semanticLabelOf: (filter) => executionTodayFilterLabel(l10n, filter),
           onChanged: onFilterChanged,
-          minSegmentWidth: 72,
         ),
         if (meta.isNotEmpty) ...[
           const SizedBox(height: AppPageRhythm.row),

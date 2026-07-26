@@ -25,11 +25,7 @@ import '../proposals/propose_batch_actions.dart';
 import '../proposals/propose_card.dart';
 import '../reply_chips.dart';
 import '../tools/renderers/tool_invocation_renderers.dart'
-    show
-        isRichToolOutput,
-        netWorthSparkValues,
-        richToolPriority,
-        ToolMiniSpark;
+    show isRichToolOutput, netWorthSparkValues, richToolPriority, ToolMiniSpark;
 import '../tools/tool_invocation_card.dart' show friendlyToolName;
 import '../tools/tool_invocation_inline.dart';
 
@@ -143,11 +139,8 @@ class _UserBubble extends ConsumerWidget {
                     container: true,
                     label: l10n.aiChatSemanticsUserMessage,
                     child: GestureDetector(
-                      onLongPress: () => _showUserActions(
-                        context,
-                        ref,
-                        canEdit: showEdit,
-                      ),
+                      onLongPress: () =>
+                          _showUserActions(context, ref, canEdit: showEdit),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.s14,
@@ -240,14 +233,7 @@ class _UserBubble extends ConsumerWidget {
   void _loadIntoComposer(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     ref.read(chatComposerDraftProvider(sessionId).notifier).state =
-        ComposerDraft(
-          text: message.content,
-          replaceMessageId: message.id,
-        );
-    AppMessenger.show(
-      context,
-      ToastKind.info,
-      l10n.aiChatEditUserMessageHint,
-    );
+        ComposerDraft(text: message.content, replaceMessageId: message.id);
+    AppMessenger.show(context, ToastKind.info, l10n.aiChatEditUserMessageHint);
   }
 }

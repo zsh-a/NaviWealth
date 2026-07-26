@@ -184,6 +184,14 @@ class _RecurringTransactionSheetState
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (submissionFailureMessage != null) ...[
+              AppStatusBanner(
+                kind: AppStatusKind.error,
+                message: submissionFailureMessage!,
+                compact: true,
+              ),
+              const SizedBox(height: AppSpacing.s12),
+            ],
             _Segmented<_RecurringKind>(
               label: l10n.recurringFieldKind,
               value: _kind,

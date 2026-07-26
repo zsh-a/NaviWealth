@@ -180,6 +180,14 @@ class _ExecutionCommitmentFormState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (submissionFailureMessage != null) ...[
+              AppStatusBanner(
+                kind: AppStatusKind.error,
+                message: submissionFailureMessage!,
+                compact: true,
+              ),
+              const SizedBox(height: AppSpacing.s12),
+            ],
             FTextFormField(
               control: FTextFieldControl.managed(controller: _title),
               label: Text(l10n.executionCommitmentField),

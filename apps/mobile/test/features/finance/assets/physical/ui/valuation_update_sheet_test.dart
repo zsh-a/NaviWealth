@@ -128,10 +128,7 @@ void main() {
 
       expect(find.byType(ValuationUpdateSheet), findsOneWidget);
       expect(find.text('25000'), findsOneWidget);
-      expect(
-        find.text("Couldn't save your changes. Try again."),
-        findsOneWidget,
-      );
+      expect(find.text("Couldn't save your changes. Try again."), findsWidgets);
       expect(
         tester
             .widget<FButton>(find.widgetWithText(FButton, 'Save valuation'))

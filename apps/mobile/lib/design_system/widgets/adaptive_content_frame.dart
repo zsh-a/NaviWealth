@@ -180,7 +180,10 @@ enum AdaptiveFrameLayout { singleColumn, twoColumn, cockpit }
 class AdaptiveMaxWidth {
   const AdaptiveMaxWidth._();
 
-  static const double narrow = 840;
+  /// Focused reading and form measure. 640 keeps labels, inputs, and helper
+  /// copy within a comfortable scan width on desktop instead of stretching a
+  /// mobile form across most of the window.
+  static const double narrow = 640;
   static const double page = 1200;
   static const double dashboard = 1440;
 }

@@ -390,10 +390,7 @@ void main() {
 
       expect(find.byType(LiabilityFormPage), findsOneWidget);
       expect(find.text('Draft mortgage'), findsOneWidget);
-      expect(
-        find.text("Couldn't save your changes. Try again."),
-        findsOneWidget,
-      );
+      expect(find.text("Couldn't save your changes. Try again."), findsWidgets);
       expect(
         tester.widget<FButton>(find.widgetWithText(FButton, 'Save')).onPress,
         isNotNull,

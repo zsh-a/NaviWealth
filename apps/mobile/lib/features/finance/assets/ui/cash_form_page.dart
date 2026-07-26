@@ -305,6 +305,14 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
           ),
         ),
         children: [
+          if (submissionFailureMessage != null) ...[
+            AppStatusBanner(
+              kind: AppStatusKind.error,
+              message: submissionFailureMessage!,
+              compact: true,
+            ),
+            const SizedBox(height: AppSpacing.s12),
+          ],
           // AI provenance hint for assets touched by
           // `propose_asset_valuation`. Self-gating: hidden when no
           // recent touch on this asset id.

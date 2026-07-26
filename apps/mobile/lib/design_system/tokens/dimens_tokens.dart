@@ -364,14 +364,20 @@ class AppChartHeights {
 class AppControlHeights {
   const AppControlHeights._();
 
+  /// Minimum interactive target shared by touch and pointer layouts.
+  ///
+  /// Visual glyphs may remain compact inside this box, but the hit region
+  /// must never shrink below the iOS 44pt baseline.
+  static const double touchTarget = 44;
+
   /// Desktop/sidebar collapse affordance height.
   static const double sidebarToggle = AppSpacing.s40;
 
   /// Horizontal chip/filter rail with compact pill controls.
-  static const double chipRail = AppSpacing.s40;
+  static const double chipRail = touchTarget;
 
   /// Denser horizontal chip/filter rail used under search fields.
-  static const double compactChipRail = 36;
+  static const double compactChipRail = touchTarget;
 
   /// Drag-hit area at the top of floating sheets.
   static const double sheetDragHandleHitArea = AppIconSizes.lg;

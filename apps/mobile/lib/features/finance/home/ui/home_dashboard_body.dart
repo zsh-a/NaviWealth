@@ -21,11 +21,12 @@ class _DashboardBodyContent extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        // The wide cockpit assumes there is meaningful primary content to
-        // balance its secondary rail. During first use that column is empty,
-        // so keep the onboarding journey in a focused single-column flow.
-        final useCockpit =
-            width >= Breakpoints.contentTwoColumn && !snapshot.isEmpty;
+        // Keep one stable desktop workspace before and after activation.
+        // Switching from a centered onboarding column to a separate cockpit
+        // after the first import made the product feel like two different
+        // apps and moved familiar actions at the exact moment users began to
+        // rely on them.
+        final useCockpit = width >= Breakpoints.contentTwoColumn;
         final basePadding = Breakpoints.isMobile(width)
             ? const EdgeInsets.symmetric(
                 horizontal: AppSpacing.s16,

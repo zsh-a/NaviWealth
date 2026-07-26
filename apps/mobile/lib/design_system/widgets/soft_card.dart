@@ -239,7 +239,10 @@ class _SoftCardState extends State<SoftCard> {
     final borderColor = borderAlpha == AppOpacity.transparent
         ? Colors.transparent
         : (isDark
-              ? colors.border.withValues(alpha: borderAlpha)
+              // Resolve dark borders from the foreground. Applying opacity to
+              // the already-dark border token made raised and hero cards
+              // visually indistinguishable from the canvas.
+              ? colors.foreground.withValues(alpha: borderAlpha)
               : ColorPalette.surfaceHairline.withValues(alpha: borderAlpha));
 
     final gradient = widget.level == SoftCardLevel.hero && widget.tinted
@@ -274,13 +277,10 @@ class _SoftCardState extends State<SoftCard> {
     }
     return switch (widget.level) {
       SoftCardLevel.flat => card,
-      SoftCardLevel.raised => Color.alphaBlend(
-        foreground.withValues(alpha: AppOpacity.faint),
-        card,
-      ),
+      SoftCardLevel.raised => ColorPalette.navyRaised,
       SoftCardLevel.hero => Color.alphaBlend(
-        primary.withValues(alpha: AppOpacity.subtle),
-        Color.alphaBlend(foreground.withValues(alpha: AppOpacity.faint), card),
+        primary.withValues(alpha: AppOpacity.faint),
+        ColorPalette.navyHero,
       ),
     };
   }

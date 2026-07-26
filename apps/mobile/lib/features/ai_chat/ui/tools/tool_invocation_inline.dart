@@ -67,11 +67,15 @@ class _ToolInvocationInlineState extends State<ToolInvocationInline> {
         ? null
         : renderToolOutput(context, invocation.name, invocation.output);
     final hasBody = body != null || invocation.output != null;
-    final success = !pending && invocation.status == ToolInvocationStatus.completed;
+    final success =
+        !pending && invocation.status == ToolInvocationStatus.completed;
 
     if (widget.showAsPrimary && body != null && !pending) {
       return Padding(
-        padding: const EdgeInsets.only(top: AppSpacing.s4, bottom: AppSpacing.s6),
+        padding: const EdgeInsets.only(
+          top: AppSpacing.s4,
+          bottom: AppSpacing.s6,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -86,9 +90,9 @@ class _ToolInvocationInlineState extends State<ToolInvocationInline> {
                 Flexible(
                   child: Text(
                     label,
-                    style: AiType.meta(context).copyWith(
-                      color: AiTone.muted(context),
-                    ),
+                    style: AiType.meta(
+                      context,
+                    ).copyWith(color: AiTone.muted(context)),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -169,7 +173,8 @@ class _ToolInvocationInlineState extends State<ToolInvocationInline> {
                 ? const SizedBox(width: double.infinity)
                 : Padding(
                     padding: const EdgeInsets.only(top: AppSpacing.s6),
-                    child: body ??
+                    child:
+                        body ??
                         (invocation.output != null
                             ? _CompactOutput(output: invocation.output)
                             : const SizedBox.shrink()),
@@ -193,9 +198,7 @@ class _ToolInvocationInlineState extends State<ToolInvocationInline> {
               AppSpacing.s16,
               AppSpacing.s24,
             ),
-            children: [
-              ToolInvocationCard(invocation: widget.invocation),
-            ],
+            children: [ToolInvocationCard(invocation: widget.invocation)],
           ),
         ),
       ),

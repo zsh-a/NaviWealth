@@ -26,11 +26,13 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 const Size kGoldenLogicalSize = Size(390, 844);
 const double kGoldenDpr = 2.0;
 
-enum GoldenTheme { dark, colorblind }
+enum GoldenTheme { light, dark, colorblind }
 
 extension GoldenThemeData on GoldenTheme {
   String get filenameSuffix {
     switch (this) {
+      case GoldenTheme.light:
+        return 'light';
       case GoldenTheme.dark:
         return 'dark';
       case GoldenTheme.colorblind:
@@ -40,6 +42,8 @@ extension GoldenThemeData on GoldenTheme {
 
   ThemeData buildTheme() {
     switch (this) {
+      case GoldenTheme.light:
+        return AppTheme.light();
       case GoldenTheme.dark:
         return AppTheme.dark();
       case GoldenTheme.colorblind:
@@ -49,6 +53,11 @@ extension GoldenThemeData on GoldenTheme {
 
   MarketColors get marketColors {
     switch (this) {
+      case GoldenTheme.light:
+        return MarketColors.fromMode(
+          MarketColorMode.redUpGreenDown,
+          brightness: Brightness.light,
+        );
       case GoldenTheme.dark:
         return MarketColors.fromMode(
           MarketColorMode.redUpGreenDown,
@@ -61,6 +70,11 @@ extension GoldenThemeData on GoldenTheme {
         );
     }
   }
+
+  Brightness get brightness => switch (this) {
+    GoldenTheme.light => Brightness.light,
+    GoldenTheme.dark || GoldenTheme.colorblind => Brightness.dark,
+  };
 }
 
 bool _fontsLoaded = false;
@@ -231,7 +245,7 @@ Future<void> pumpAndSnapshotMobile(
             routerConfig: router,
             builder: (context, routedChild) => FTheme(
               data: buildAppForuiTheme(
-                brightness: Brightness.dark,
+                brightness: variant.brightness,
                 touch: true,
               ),
               child: routedChild!,

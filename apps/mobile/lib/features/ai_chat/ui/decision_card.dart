@@ -52,8 +52,7 @@ class _DecisionCardState extends State<DecisionCard> {
 
   DecisionRequest get request => widget.request;
   bool get interactive => widget.interactive && !_submitting;
-  String? get selectedOptionId =>
-      _localSelectedId ?? widget.selectedOptionId;
+  String? get selectedOptionId => _localSelectedId ?? widget.selectedOptionId;
 
   @override
   void dispose() {
@@ -170,10 +169,7 @@ class _DecisionCardState extends State<DecisionCard> {
           ],
           if (request.allowCustom && interactive) ...[
             const SizedBox(height: AppSpacing.s12),
-            Text(
-              l10n.aiChatDecisionAllowCustom,
-              style: context.captionStyle,
-            ),
+            Text(l10n.aiChatDecisionAllowCustom, style: context.captionStyle),
             const SizedBox(height: AppSpacing.s6),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -279,7 +275,9 @@ class _OptionTile extends StatelessWidget {
                   ),
                   if (option.recommended)
                     AppBadge(
-                      label: AppLocalizations.of(context).aiChatRecommendedBadge,
+                      label: AppLocalizations.of(
+                        context,
+                      ).aiChatRecommendedBadge,
                       tone: AppBadgeTone.accent,
                       size: AppBadgeSize.compact,
                     ),
@@ -304,7 +302,8 @@ class _OptionTile extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s4),
                 Text(option.description, style: context.captionStyle),
               ],
-              for (final pro in option.pros) _Tradeoff(text: pro, positive: true),
+              for (final pro in option.pros)
+                _Tradeoff(text: pro, positive: true),
               for (final con in option.cons)
                 _Tradeoff(text: con, positive: false),
             ],

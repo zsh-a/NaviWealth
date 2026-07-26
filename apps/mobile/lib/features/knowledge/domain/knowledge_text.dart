@@ -59,17 +59,14 @@ String knowledgePlainText(String markdown) {
   );
 
   // Autolinks / bare angle URLs.
-  s = s.replaceAllMapped(RegExp(r'<(https?://[^>]+)>'), (m) => m.group(1) ?? '');
+  s = s.replaceAllMapped(
+    RegExp(r'<(https?://[^>]+)>'),
+    (m) => m.group(1) ?? '',
+  );
 
   // Headings, blockquotes, HR, list markers (incl. task lists).
-  s = s.replaceAllMapped(
-    RegExp(r'^#{1,6}\s*', multiLine: true),
-    (_) => '',
-  );
-  s = s.replaceAllMapped(
-    RegExp(r'^>\s?', multiLine: true),
-    (_) => '',
-  );
+  s = s.replaceAllMapped(RegExp(r'^#{1,6}\s*', multiLine: true), (_) => '');
+  s = s.replaceAllMapped(RegExp(r'^>\s?', multiLine: true), (_) => '');
   s = s.replaceAll(RegExp(r'^([-*_]){3,}\s*$', multiLine: true), '');
   s = s.replaceAllMapped(
     RegExp(r'^(\s*)([-*+]|\d+\.)\s+(\[[ xX]\]\s+)?', multiLine: true),
@@ -77,22 +74,13 @@ String knowledgePlainText(String markdown) {
   );
 
   // Inline emphasis / code (non-greedy; tolerates unclosed leftovers).
-  s = s.replaceAllMapped(
-    RegExp(r'`([^`]+)`'),
-    (m) => m.group(1) ?? '',
-  );
-  s = s.replaceAllMapped(
-    RegExp(r'(\*\*|__)(.+?)\1'),
-    (m) => m.group(2) ?? '',
-  );
+  s = s.replaceAllMapped(RegExp(r'`([^`]+)`'), (m) => m.group(1) ?? '');
+  s = s.replaceAllMapped(RegExp(r'(\*\*|__)(.+?)\1'), (m) => m.group(2) ?? '');
   s = s.replaceAllMapped(
     RegExp(r'(\*|_)([^*_\n]+?)\1'),
     (m) => m.group(2) ?? '',
   );
-  s = s.replaceAllMapped(
-    RegExp(r'~~(.+?)~~'),
-    (m) => m.group(1) ?? '',
-  );
+  s = s.replaceAllMapped(RegExp(r'~~(.+?)~~'), (m) => m.group(1) ?? '');
 
   // Table pipes → spaces.
   s = s.replaceAllMapped(

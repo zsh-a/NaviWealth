@@ -200,9 +200,19 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                       onPress: canSave ? _save : null,
                     ),
                   ),
-                  children: _isEdit
-                      ? _editFields(l10n, accountsAsync)
-                      : _createFields(l10n, accountsAsync),
+                  children: [
+                    if (submissionFailureMessage != null) ...[
+                      AppStatusBanner(
+                        kind: AppStatusKind.error,
+                        message: submissionFailureMessage!,
+                        compact: true,
+                      ),
+                      const SizedBox(height: AppSpacing.s12),
+                    ],
+                    ...(_isEdit
+                        ? _editFields(l10n, accountsAsync)
+                        : _createFields(l10n, accountsAsync)),
+                  ],
                 ),
               ),
       ),

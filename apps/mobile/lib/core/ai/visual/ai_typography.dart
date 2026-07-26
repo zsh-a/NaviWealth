@@ -31,11 +31,8 @@ class AiType {
 
   /// Knowledge / long-form reading (notes, rationale, method) — calmer than
   /// chat density so detail pages feel like documents, not bubbles.
-  static TextStyle readingBody(BuildContext c) =>
-      TypographyTokens.bodyLarge.copyWith(
-        height: 1.62,
-        color: AiTone.onSurface(c),
-      );
+  static TextStyle readingBody(BuildContext c) => TypographyTokens.bodyLarge
+      .copyWith(height: 1.62, color: AiTone.onSurface(c));
 
   /// Strong body text for selected rows and AI-surface section labels.
   static TextStyle bodyStrong(BuildContext c) => strong(body(c));

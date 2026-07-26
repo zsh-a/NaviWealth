@@ -59,8 +59,9 @@ class _TruncationFooter extends ConsumerWidget {
                   enabled: !turn.isBusy,
                   label: l10n.aiChatTruncatedContinue,
                   onPressed: () {
-                    final systemContext =
-                        ref.read(aiContextProvider).toSystemContext();
+                    final systemContext = ref
+                        .read(aiContextProvider)
+                        .toSystemContext();
                     ref
                         .read(chatControllerProvider(sessionId).notifier)
                         .send(

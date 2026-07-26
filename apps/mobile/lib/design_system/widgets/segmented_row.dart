@@ -160,7 +160,9 @@ class SegmentedRow<T> extends StatelessWidget {
         child: AnimatedContainer(
           duration: duration,
           curve: Motion.standard,
-          constraints: const BoxConstraints(minHeight: 36),
+          constraints: const BoxConstraints(
+            minHeight: AppControlHeights.touchTarget,
+          ),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.s12,
             vertical: AppSpacing.s8,

@@ -110,10 +110,7 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
           // over follow-up chips so the primary next step is unambiguous.
           if (message.status == ChatMessageStatus.complete &&
               !_hasBlockingAction(message))
-            _FollowUpChips(
-              sessionId: sessionId,
-              tools: message.toolCalls,
-            ),
+            _FollowUpChips(sessionId: sessionId, tools: message.toolCalls),
         ],
       ],
     );
@@ -262,9 +259,7 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
         if (request != null) {
           final selected = t.decisionSelection;
           final interactive =
-              selected == null &&
-              isLastAssistant &&
-              onDecisionSelect != null;
+              selected == null && isLastAssistant && onDecisionSelect != null;
           actionWidgets.add(
             DecisionCard(
               request: request,
@@ -411,7 +406,8 @@ class _ToolStepsGroup extends StatelessWidget {
           .toList(growable: false);
       if (rich.isNotEmpty) {
         rich.sort(
-          (a, b) => richToolPriority(a.name).compareTo(richToolPriority(b.name)),
+          (a, b) =>
+              richToolPriority(a.name).compareTo(richToolPriority(b.name)),
         );
         primary = rich.first;
       }
@@ -453,10 +449,7 @@ class _ToolStepsGroup extends StatelessWidget {
                       primary == null
                           ? '${l10n.aiChatToolsUsed(tools.length)}  ·  $summary'
                           : '${l10n.aiChatToolsUsed(secondary.length)}  ·  '
-                                '${[
-                                  for (final t in secondary)
-                                    friendlyToolName(l10n, t.name),
-                                ].take(2).join(' · ')}'
+                                '${[for (final t in secondary) friendlyToolName(l10n, t.name)].take(2).join(' · ')}'
                                 '${secondary.length > 2 ? ' +${secondary.length - 2}' : ''}',
                       style: AiType.meta(context).copyWith(color: muted),
                       maxLines: 1,
@@ -533,10 +526,7 @@ bool _hasBlockingAction(ChatMessage message) {
 
 /// Context follow-up chips under the trailing complete assistant turn.
 class _FollowUpChips extends ConsumerWidget {
-  const _FollowUpChips({
-    required this.sessionId,
-    required this.tools,
-  });
+  const _FollowUpChips({required this.sessionId, required this.tools});
 
   final String sessionId;
   final List<ToolInvocation> tools;
@@ -608,10 +598,7 @@ class _FollowUpChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: context.captionStyle.copyWith(
-            color: foreground,
-            height: 1.2,
-          ),
+          style: context.captionStyle.copyWith(color: foreground, height: 1.2),
         ),
       ),
     );

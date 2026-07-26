@@ -122,53 +122,53 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
       child: ShellTabPause(
         routePath: HealthRoutes.trend,
         child: ListView(
-        padding: shellTabContentPadding(context),
-        children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final groupPicker = SegmentedRow<TrendGroup>(
-                options: TrendGroup.values,
-                value: _group,
-                labelOf: (g) => _trendGroupLabel(l10n, g),
-                onChanged: (value) => _go(context, group: value),
-              );
-              final windowPicker = SegmentedRow<_TrendWindow>(
-                options: _TrendWindow.values,
-                value: _window,
-                labelOf: (w) => '${w.days}d',
-                onChanged: (value) => _go(context, window: value),
-              );
-              if (constraints.maxWidth < 560) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+          padding: shellTabContentPadding(context),
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final groupPicker = SegmentedRow<TrendGroup>(
+                  options: TrendGroup.values,
+                  value: _group,
+                  labelOf: (g) => _trendGroupLabel(l10n, g),
+                  onChanged: (value) => _go(context, group: value),
+                );
+                final windowPicker = SegmentedRow<_TrendWindow>(
+                  options: _TrendWindow.values,
+                  value: _window,
+                  labelOf: (w) => '${w.days}d',
+                  onChanged: (value) => _go(context, window: value),
+                );
+                if (constraints.maxWidth < 560) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      groupPicker,
+                      const SizedBox(height: AppSpacing.s8),
+                      windowPicker,
+                    ],
+                  );
+                }
+                return Row(
                   children: [
-                    groupPicker,
-                    const SizedBox(height: AppSpacing.s8),
-                    windowPicker,
+                    Expanded(child: groupPicker),
+                    const SizedBox(width: AppSpacing.s12),
+                    SizedBox(
+                      width: AppControlWidths.segmentedCompact,
+                      child: windowPicker,
+                    ),
                   ],
                 );
-              }
-              return Row(
-                children: [
-                  Expanded(child: groupPicker),
-                  const SizedBox(width: AppSpacing.s12),
-                  SizedBox(
-                    width: AppControlWidths.segmentedCompact,
-                    child: windowPicker,
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          for (final spec in visibleSpecs) ...[
-            _TrendCard(
-              spec: spec,
-              points: groupData.whenData((m) => m[spec.kind]),
+              },
             ),
             const SizedBox(height: AppSpacing.s16),
+            for (final spec in visibleSpecs) ...[
+              _TrendCard(
+                spec: spec,
+                points: groupData.whenData((m) => m[spec.kind]),
+              ),
+              const SizedBox(height: AppSpacing.s16),
+            ],
           ],
-        ],
         ),
       ),
     );

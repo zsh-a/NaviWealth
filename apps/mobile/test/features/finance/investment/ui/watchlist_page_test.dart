@@ -82,7 +82,7 @@ void main() {
 
     expect(find.semantics.byLabel('Actions for AAPL'), findsOneWidget);
     final action = find.byType(AppIconButton);
-    expect(tester.getSize(action), const Size.square(40));
+    expect(tester.getSize(action), const Size.square(44));
     await tester.tap(action);
     await tester.pumpAndSettle();
 

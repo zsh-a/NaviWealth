@@ -233,15 +233,24 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         onSubmit: onSubmit,
         action: SizedBox(
           width: double.infinity,
-          child: FButton(
-            variant: FButtonVariant.primary,
+          child: AppBusyButton(
+            label: convertMode
+                ? l10n.superFabConvert
+                : l10n.transferSubmitAction,
+            busyLabel: l10n.commonSaving,
+            busy: _busy,
             onPress: onSubmit,
-            child: Text(
-              convertMode ? l10n.superFabConvert : l10n.transferSubmitAction,
-            ),
           ),
         ),
         children: [
+          if (submissionFailureMessage != null) ...[
+            AppStatusBanner(
+              kind: AppStatusKind.error,
+              message: submissionFailureMessage!,
+              icon: FLucideIcons.circleAlert,
+            ),
+            const SizedBox(height: AppSpacing.s12),
+          ],
           if (convertMode)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.s12),

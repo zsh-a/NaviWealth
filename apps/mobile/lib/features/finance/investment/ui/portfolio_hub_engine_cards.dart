@@ -23,7 +23,8 @@ class _EngineExposureSection extends ConsumerWidget {
           operation: 'load portfolio insights',
         ),
         retryLabel: l10n.commonRetry,
-        onRetry: () => ref.read(portfolioHubInsightsProvider.notifier).refresh(),
+        onRetry: () =>
+            ref.read(portfolioHubInsightsProvider.notifier).refresh(),
       ),
       data: (insights) {
         final cards = [

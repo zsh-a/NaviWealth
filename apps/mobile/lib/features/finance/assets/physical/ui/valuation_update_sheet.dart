@@ -83,6 +83,14 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (submissionFailureMessage != null) ...[
+              AppStatusBanner(
+                kind: AppStatusKind.error,
+                message: submissionFailureMessage!,
+                compact: true,
+              ),
+              const SizedBox(height: AppSpacing.s12),
+            ],
             FTextFormField(
               key: const Key('valuation-update-amount-field'),
               control: FTextFieldControl.managed(controller: _amountCtrl),

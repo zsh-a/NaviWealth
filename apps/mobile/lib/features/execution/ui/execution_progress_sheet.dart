@@ -204,6 +204,14 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (submissionFailureMessage != null) ...[
+              AppStatusBanner(
+                kind: AppStatusKind.error,
+                message: submissionFailureMessage!,
+                compact: true,
+              ),
+              const SizedBox(height: AppSpacing.s12),
+            ],
             Text(
               l10n.executionProgressKindField,
               style: context.captionLabelStyle,

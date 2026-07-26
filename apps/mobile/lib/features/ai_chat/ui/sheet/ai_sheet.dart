@@ -398,9 +398,8 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
                       systemContext: routeCtx.toSystemContext(),
                     );
                   },
-                  emptyBuilder: (context) => _SheetEmptyConversation(
-                    sessionId: activeId,
-                  ),
+                  emptyBuilder: (context) =>
+                      _SheetEmptyConversation(sessionId: activeId),
                 ),
         ),
         if (activeId != null)

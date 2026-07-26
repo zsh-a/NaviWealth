@@ -89,18 +89,18 @@ class DomainSwitcherChip extends ConsumerWidget {
     final active = activeSpecForPath(specs, path);
     final colors = context.theme.colors;
 
-    // Spec-style pill selector: soft cyan-gray background, large radius,
-    // no hard border, icon + chevron.
+    // A named workspace switcher is more discoverable than the old icon-only
+    // control and keeps users oriented while moving across LifeOS domains.
     return Semantics(
       label: active.label,
       button: true,
       child: FTappable(
         onPress: () => showDomainSwitcherSheet(context, specs, homePath),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s12,
-            vertical: AppSpacing.s6,
+          constraints: const BoxConstraints(
+            minHeight: AppControlHeights.touchTarget,
           ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10),
           decoration: BoxDecoration(
             color: colors.muted,
             borderRadius: BorderRadius.circular(AppRadius.full),
@@ -112,6 +112,18 @@ class DomainSwitcherChip extends ConsumerWidget {
                 active.selectedIcon,
                 size: AppIconSizes.sm,
                 color: colors.primary,
+              ),
+              const SizedBox(width: AppSpacing.s6),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 76),
+                child: Text(
+                  active.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.captionLabelStyle.copyWith(
+                    color: colors.foreground,
+                  ),
+                ),
               ),
               const SizedBox(width: AppSpacing.s4),
               Icon(

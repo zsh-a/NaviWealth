@@ -230,6 +230,7 @@ void main() {
 
     expect(selected, ExecutionTodayFilter.blocked);
 
+    await tester.ensureVisible(find.textContaining('Open'));
     await tester.tap(find.textContaining('Open'));
     await tester.pump(const Duration(milliseconds: 200));
 

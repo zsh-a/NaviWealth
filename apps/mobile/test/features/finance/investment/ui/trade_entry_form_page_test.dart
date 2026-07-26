@@ -814,9 +814,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       find.textContaining('Change the visible Currency field'),
-      findsOneWidget,
+      findsWidgets,
     );
-    expect(find.textContaining('repair or split the holding'), findsOneWidget);
+    expect(find.textContaining('repair or split the holding'), findsWidgets);
     expect(find.textContaining('lotCurrencyMismatch'), findsNothing);
     await tester.pump(const Duration(seconds: 7));
   });

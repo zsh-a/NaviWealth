@@ -81,12 +81,12 @@ class _ExecutionActionCardControllerState
       busy: _busy,
       projectLabel: widget.projectLabel,
       commitmentLabel: widget.commitmentLabel,
-      onOpen: widget.onOpen,
-      onSourceOpen: widget.onSourceOpen,
+      onOpen: _busy ? null : widget.onOpen,
+      onSourceOpen: _busy ? null : widget.onSourceOpen,
       showActions: widget.showActions,
       outcome: widget.outcome,
-      onEdit: _busy ? () {} : widget.onEdit,
-      onRecordProgress: _busy ? () {} : widget.onRecordProgress,
+      onEdit: widget.onEdit,
+      onRecordProgress: widget.onRecordProgress,
       onStart: () => _changeStatus(
         ExecutionActionStatus.doing,
         progressNote: AppLocalizations.of(

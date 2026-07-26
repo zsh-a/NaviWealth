@@ -33,11 +33,16 @@ class ColorPalette {
   static const Color navy400 = Color(0xFF6B838A);
   static const Color navy500 = Color(0xFF4D666D);
   static const Color navy600 = Color(0xFF3A5058);
-  static const Color navy700 = Color(0xFF2A3B42);
-  static const Color navy800 = Color(0xFF1A2830);
+  static const Color navy700 = Color(0xFF344A55);
+  static const Color navy800 = Color(0xFF203641);
   static const Color navy900 = Color(0xFF111827);
-  static const Color navy950 = Color(0xFF002A38);
-  static const Color navyGlass = Color(0xFF0F2A35);
+  // Dark surfaces intentionally stay neutral-navy. The previous green-biased
+  // canvas made every surface read as branded and flattened the elevation
+  // ladder; cyan is now reserved for interaction and data emphasis.
+  static const Color navy950 = Color(0xFF071821);
+  static const Color navyGlass = Color(0xFF101F2A);
+  static const Color navyRaised = Color(0xFF142936);
+  static const Color navyHero = Color(0xFF1B3542);
   static const Color navySoftBorder = Color(0xFFCAD7DA);
 
   // ── Neutral grayscale ───────────────────────────────────────────────────
@@ -58,7 +63,7 @@ class ColorPalette {
   // ── Light surfaces ──────────────────────────────────────────────────────
   // Cool canvas + pure white modules. SoftCard differentiates levels with
   // shadow / hero wash rather than stacking near-identical greys.
-  static const Color surfaceBackground = Color(0xFFF3F6F7);
+  static const Color surfaceBackground = Color(0xFFF4F7F7);
   static const Color surface = neutral0;
   static const Color surfaceRaised = neutral0;
   static const Color surfaceOverlay = Color(0xFFEEF6F7);

@@ -330,6 +330,14 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
           ),
         ),
         children: [
+          if (submissionFailureMessage != null) ...[
+            AppStatusBanner(
+              kind: AppStatusKind.error,
+              message: submissionFailureMessage!,
+              compact: true,
+            ),
+            const SizedBox(height: AppSpacing.s12),
+          ],
           // Surface AI provenance for assets touched by
           // `propose_asset_valuation`. Self-gating.
           if (widget.isEdit && widget.assetId != null) ...[

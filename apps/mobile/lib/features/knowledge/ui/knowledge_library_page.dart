@@ -140,86 +140,86 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage>
       child: ShellTabPause(
         routePath: KnowledgeRoutes.library,
         child: Stack(
-        children: [
-          Positioned.fill(
-            child: NotificationListener<ScrollUpdateNotification>(
-              onNotification: onScrollUpdate,
-              child: Padding(
-                padding: shellTabContentPadding(context, top: AppSpacing.s8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _LibraryTabBar(
-                      selected: _segment,
-                      onChanged: (s) => setState(() {
-                        _segment = s;
-                        fabHidden = false;
-                      }),
-                    ),
-                    const SizedBox(height: AppSpacing.s16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Focus(
-                            onKeyEvent: _onSearchKey,
-                            child: FTextField(
-                              control: FTextFieldControl.managed(
-                                controller: _searchCtrl,
-                              ),
-                              focusNode: _searchFocus,
-                              textInputAction: TextInputAction.search,
-                              prefixBuilder: (_, _, _) => const Padding(
-                                padding: EdgeInsetsDirectional.only(
-                                  start: AppSpacing.s12,
-                                  end: AppSpacing.s8,
+          children: [
+            Positioned.fill(
+              child: NotificationListener<ScrollUpdateNotification>(
+                onNotification: onScrollUpdate,
+                child: Padding(
+                  padding: shellTabContentPadding(context, top: AppSpacing.s8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _LibraryTabBar(
+                        selected: _segment,
+                        onChanged: (s) => setState(() {
+                          _segment = s;
+                          fabHidden = false;
+                        }),
+                      ),
+                      const SizedBox(height: AppSpacing.s16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Focus(
+                              onKeyEvent: _onSearchKey,
+                              child: FTextField(
+                                control: FTextFieldControl.managed(
+                                  controller: _searchCtrl,
                                 ),
-                                child: Icon(
-                                  FLucideIcons.search,
-                                  size: AppIconSizes.h18,
+                                focusNode: _searchFocus,
+                                textInputAction: TextInputAction.search,
+                                prefixBuilder: (_, _, _) => const Padding(
+                                  padding: EdgeInsetsDirectional.only(
+                                    start: AppSpacing.s12,
+                                    end: AppSpacing.s8,
+                                  ),
+                                  child: Icon(
+                                    FLucideIcons.search,
+                                    size: AppIconSizes.h18,
+                                  ),
                                 ),
-                              ),
-                              hint: l10n.knowledgeLibrarySearchSegmentHint(
-                                _segmentLabel(l10n, _segment),
+                                hint: l10n.knowledgeLibrarySearchSegmentHint(
+                                  _segmentLabel(l10n, _segment),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        if (_searchCtrl.text.isNotEmpty) ...[
-                          const SizedBox(width: AppSpacing.s8),
-                          FButton.icon(
-                            variant: FButtonVariant.ghost,
-                            onPress: _searchCtrl.clear,
-                            child: const Icon(FLucideIcons.x),
-                          ),
+                          if (_searchCtrl.text.isNotEmpty) ...[
+                            const SizedBox(width: AppSpacing.s8),
+                            FButton.icon(
+                              variant: FButtonVariant.ghost,
+                              onPress: _searchCtrl.clear,
+                              child: const Icon(FLucideIcons.x),
+                            ),
+                          ],
                         ],
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.s12),
-                    Expanded(
-                      child: _LibraryList(
-                        segment: _segment,
-                        query: _searchCtrl.text,
-                        searchHistory: _searchHistory,
-                        onSearchSelected: _applySearch,
-                        onSearchHistoryClear: _clearSearchHistory,
-                        onSearchHistoryItemDelete: _removeSearchHistoryItem,
-                        onRefresh: () => _refreshKnowledgeRepository(ref),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: AppSpacing.s12),
+                      Expanded(
+                        child: _LibraryList(
+                          segment: _segment,
+                          query: _searchCtrl.text,
+                          searchHistory: _searchHistory,
+                          onSearchSelected: _applySearch,
+                          onSearchHistoryClear: _clearSearchHistory,
+                          onSearchHistoryItemDelete: _removeSearchHistoryItem,
+                          onRefresh: () => _refreshKnowledgeRepository(ref),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          Positioned(
-            right: AppSpacing.s16,
-            bottom: shellTabFloatingActionBottom(context),
-            child: KnowledgeFloatingActionMotion(
-              hidden: fabHidden,
-              child: _LibraryCreateFab(activeSegment: _segment),
+            Positioned(
+              right: AppSpacing.s16,
+              bottom: shellTabFloatingActionBottom(context),
+              child: KnowledgeFloatingActionMotion(
+                hidden: fabHidden,
+                child: _LibraryCreateFab(activeSegment: _segment),
+              ),
             ),
-          ),
-        ],
+          ],
         ),
       ),
     );

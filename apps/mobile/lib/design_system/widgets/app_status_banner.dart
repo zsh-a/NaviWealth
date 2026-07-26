@@ -4,6 +4,8 @@ import 'package:forui/forui.dart';
 import '../theme/semantic_colors.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
+import 'app_interaction.dart';
+import 'pressable_scale.dart';
 
 enum AppStatusKind { neutral, info, success, warning, error }
 
@@ -17,6 +19,8 @@ class AppStatusBanner extends StatelessWidget {
     this.icon,
     this.action,
     this.compact = false,
+    this.onPress,
+    this.semanticLabel,
   });
 
   final String message;
@@ -25,13 +29,15 @@ class AppStatusBanner extends StatelessWidget {
   final IconData? icon;
   final Widget? action;
   final bool compact;
+  final VoidCallback? onPress;
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final palette = _StatusPalette.resolve(context, kind);
     final hasDetails = details != null && details!.isNotEmpty;
-    return DecoratedBox(
+    final banner = DecoratedBox(
       decoration: BoxDecoration(
         color: palette.container,
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -79,6 +85,17 @@ class AppStatusBanner extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+    if (onPress == null) return banner;
+    return Semantics(
+      button: true,
+      label: semanticLabel ?? message,
+      child: PressableScale(
+        onTap: onPress,
+        intent: AppInteractionIntent.reveal,
+        scaleFactor: 0.99,
+        child: banner,
       ),
     );
   }

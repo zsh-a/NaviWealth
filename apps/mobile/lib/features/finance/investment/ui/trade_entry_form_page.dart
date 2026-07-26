@@ -526,14 +526,23 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         onSubmit: onSubmit,
         action: SizedBox(
           width: double.infinity,
-          child: FButton(
-            key: const Key('trade-entry-submit'),
-            variant: FButtonVariant.primary,
+          child: AppBusyButton(
+            buttonKey: const Key('trade-entry-submit'),
+            label: l10n.commonSave,
+            busyLabel: l10n.commonSaving,
+            busy: _busy,
             onPress: onSubmit,
-            child: Text(_busy ? l10n.commonSaving : l10n.commonSave),
           ),
         ),
         children: [
+          if (submissionFailureMessage != null) ...[
+            AppStatusBanner(
+              kind: AppStatusKind.error,
+              message: submissionFailureMessage!,
+              icon: FLucideIcons.circleAlert,
+            ),
+            const SizedBox(height: AppSpacing.s12),
+          ],
           _buildAssetSearch(accounts),
           const SizedBox(height: AppSpacing.s12),
 

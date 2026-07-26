@@ -24,8 +24,23 @@ void main() {
           active: true,
           onPress: () => pressed = true,
           onClear: () => cleared = true,
+          clearSemanticLabel: 'Clear meals',
         ),
       ),
+    );
+
+    expect(
+      tester.getSize(find.byType(AppFilterChip)).height,
+      greaterThanOrEqualTo(44),
+    );
+    expect(
+      tester.getSize(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics && widget.properties.label == 'Clear meals',
+        ),
+      ),
+      const Size(44, 44),
     );
 
     await tester.tap(find.text('Meals'));

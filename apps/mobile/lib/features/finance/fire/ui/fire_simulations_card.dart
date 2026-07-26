@@ -129,27 +129,7 @@ class _PresetChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final bg = selected ? colors.primary : Colors.transparent;
-    final fg = selected ? colors.primaryForeground : colors.foreground;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s10,
-          vertical: AppSpacing.s4,
-        ),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          border: Border.all(color: colors.border),
-        ),
-        child: Text(
-          label,
-          style: context.captionLabelStyle.copyWith(color: fg),
-        ),
-      ),
-    );
+    return AppFilterChip(label: label, active: selected, onPress: onTap);
   }
 }
 

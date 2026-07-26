@@ -169,17 +169,15 @@ class _SearchAssistChip extends StatelessWidget {
           ),
           if (onDelete != null) ...[
             const SizedBox(width: AppSpacing.s2),
-            GestureDetector(
-              onTap: onDelete,
-              behavior: HitTestBehavior.opaque,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.s2),
-                child: Icon(
-                  FLucideIcons.x,
-                  size: AppIconSizes.xs,
-                  color: colors.mutedForeground,
-                ),
-              ),
+            AppIconButton(
+              icon: FLucideIcons.x,
+              tooltip: AppLocalizations.of(
+                context,
+              ).knowledgeLibraryDeleteTooltip,
+              onPress: onDelete,
+              size: AppControlHeights.touchTarget,
+              iconSize: AppIconSizes.xs,
+              iconColor: colors.mutedForeground,
             ),
           ],
         ],

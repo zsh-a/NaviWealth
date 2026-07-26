@@ -32,20 +32,18 @@ class CurrencyMismatchNotice extends StatelessWidget {
     if (mismatches.isEmpty) return const SizedBox.shrink();
 
     final l10n = AppLocalizations.of(context);
-    return GestureDetector(
-      onTap: () => _showDetails(context, mismatches, baseCurrency),
-      behavior: HitTestBehavior.opaque,
-      child: AppStatusBanner(
-        kind: AppStatusKind.error,
-        icon: FLucideIcons.triangleAlert,
-        message: l10n.dashboardCurrencyMismatchBanner(
-          mismatches.length,
-          baseCurrency,
-        ),
-        action: Text(
-          l10n.dashboardCurrencyMismatchAction,
-          style: context.labelStyle.copyWith(color: semantic.onDangerContainer),
-        ),
+    return AppStatusBanner(
+      kind: AppStatusKind.error,
+      icon: FLucideIcons.triangleAlert,
+      message: l10n.dashboardCurrencyMismatchBanner(
+        mismatches.length,
+        baseCurrency,
+      ),
+      onPress: () => _showDetails(context, mismatches, baseCurrency),
+      semanticLabel: l10n.dashboardCurrencyMismatchAction,
+      action: Text(
+        l10n.dashboardCurrencyMismatchAction,
+        style: context.labelStyle.copyWith(color: semantic.onDangerContainer),
       ),
     );
   }

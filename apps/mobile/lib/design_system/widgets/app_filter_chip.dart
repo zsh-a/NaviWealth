@@ -17,6 +17,7 @@ class AppFilterChip extends StatelessWidget {
     required this.active,
     required this.onPress,
     this.onClear,
+    this.clearSemanticLabel,
     this.icon,
   });
 
@@ -24,6 +25,7 @@ class AppFilterChip extends StatelessWidget {
   final bool active;
   final VoidCallback? onPress;
   final VoidCallback? onClear;
+  final String? clearSemanticLabel;
   final IconData? icon;
 
   @override
@@ -37,59 +39,84 @@ class AppFilterChip extends StatelessWidget {
         ? colors.primary.withValues(alpha: AppOpacity.highlight)
         : colors.border.withValues(alpha: AppOpacity.highlight);
 
-    return Semantics(
-      button: onPress != null,
-      selected: active,
-      child: FTappable(
-        onPress: onPress,
-        child: AnimatedContainer(
-          duration: AppMotionPolicy.duration(context, Motion.fast),
-          curve: Motion.standard,
-          constraints: const BoxConstraints(minHeight: 34),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s10,
-            vertical: AppSpacing.s6,
-          ),
-          decoration: BoxDecoration(
-            color: background,
-            borderRadius: BorderRadius.circular(AppRadius.full),
-            border: Border.all(color: border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon ?? (active ? FLucideIcons.check : FLucideIcons.circle),
-                size: AppIconSizes.xs,
-                color: active ? colors.primary : colors.mutedForeground,
-              ),
-              const SizedBox(width: AppSpacing.s6),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style:
-                      (active
-                              ? context.captionLabelStyle
-                              : context.captionMediumStyle)
-                          .copyWith(color: foreground),
+    final showClear = active && onClear != null;
+    return AnimatedContainer(
+      duration: AppMotionPolicy.duration(context, Motion.fast),
+      curve: Motion.standard,
+      constraints: const BoxConstraints(
+        minHeight: AppControlHeights.touchTarget,
+      ),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        border: Border.all(color: border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Semantics(
+            button: onPress != null,
+            selected: active,
+            label: label,
+            excludeSemantics: true,
+            child: FTappable(
+              onPress: onPress,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minHeight: AppControlHeights.touchTarget,
+                ),
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: AppSpacing.s10,
+                    right: showClear ? AppSpacing.s4 : AppSpacing.s10,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        icon ??
+                            (active ? FLucideIcons.check : FLucideIcons.circle),
+                        size: AppIconSizes.xs,
+                        color: active ? colors.primary : colors.mutedForeground,
+                      ),
+                      const SizedBox(width: AppSpacing.s6),
+                      Flexible(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              (active
+                                      ? context.captionLabelStyle
+                                      : context.captionMediumStyle)
+                                  .copyWith(color: foreground),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              if (active && onClear != null) ...[
-                const SizedBox(width: AppSpacing.s6),
-                FTappable(
-                  onPress: onClear,
+            ),
+          ),
+          if (showClear)
+            Semantics(
+              button: true,
+              label: clearSemanticLabel ?? label,
+              excludeSemantics: true,
+              child: FTappable(
+                onPress: onClear,
+                child: SizedBox.square(
+                  dimension: AppControlHeights.touchTarget,
                   child: Icon(
                     FLucideIcons.x,
                     size: AppIconSizes.xs,
                     color: colors.primary,
                   ),
                 ),
-              ],
-            ],
-          ),
-        ),
+              ),
+            ),
+        ],
       ),
     );
   }

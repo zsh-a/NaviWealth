@@ -34,6 +34,14 @@ final class FormUndoPresentation<T> {
 /// the form's submit button is the retry.
 mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
   Future<void>? _submission;
+  String? _submissionFailureMessage;
+
+  /// Persistent, user-safe failure copy for the mounted form.
+  ///
+  /// Toasts remain useful for transient global feedback, but a failed commit
+  /// must also stay visible beside the user's preserved input until they
+  /// retry. Forms render this through [AppStatusBanner].
+  String? get submissionFailureMessage => _submissionFailureMessage;
 
   /// Commits once, then leaves the form and shows success feedback.
   ///
@@ -121,6 +129,9 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     final operation =
         diagnosticOperation ??
         logger.startOperation('form.submit', fields: {'form_type': tag});
+    if (_submissionFailureMessage != null && mounted) {
+      setState(() => _submissionFailureMessage = null);
+    }
     onBusyChanged(true);
     dirty.busy = true;
     var committed = false;
@@ -227,10 +238,12 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
         retryable: true,
       );
       if (mounted) {
+        final message = failureMessage(error);
+        setState(() => _submissionFailureMessage = message);
         AppMessenger.show(
           context,
           ToastKind.error,
-          failureMessage(error),
+          message,
           duration: const Duration(seconds: 6),
         );
       }

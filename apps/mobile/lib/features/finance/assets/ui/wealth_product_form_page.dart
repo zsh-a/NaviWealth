@@ -363,6 +363,14 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
           ),
         ),
         children: [
+          if (submissionFailureMessage != null) ...[
+            AppStatusBanner(
+              kind: AppStatusKind.error,
+              message: submissionFailureMessage!,
+              compact: true,
+            ),
+            const SizedBox(height: AppSpacing.s12),
+          ],
           // AI provenance for `propose_asset_valuation`.
           if (widget.isEdit && widget.assetId != null) ...[
             Align(

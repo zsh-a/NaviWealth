@@ -334,15 +334,22 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                   onSubmit: onSubmit,
                   action: SizedBox(
                     width: double.infinity,
-                    child: FButton(
-                      variant: FButtonVariant.primary,
+                    child: AppBusyButton(
+                      label: l10n.accountFormSave,
+                      busyLabel: l10n.accountFormSaving,
+                      busy: _busy,
                       onPress: onSubmit,
-                      child: Text(
-                        _busy ? l10n.accountFormSaving : l10n.accountFormSave,
-                      ),
                     ),
                   ),
                   children: [
+                    if (submissionFailureMessage != null) ...[
+                      AppStatusBanner(
+                        kind: AppStatusKind.error,
+                        message: submissionFailureMessage!,
+                        icon: FLucideIcons.circleAlert,
+                      ),
+                      const SizedBox(height: AppSpacing.s12),
+                    ],
                     // Surface AI provenance when this
                     // account was last touched by an AI proposal
                     // (`propose_account_create`). The widget is

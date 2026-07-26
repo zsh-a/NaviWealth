@@ -96,6 +96,10 @@ void main() {
       expect(state.busy, isFalse);
       expect(state.dirty.busy, isFalse);
       expect(state.dirty.isDirty, isTrue);
+      expect(
+        state.submissionFailureMessage,
+        'Could not save: Bad state: disk full',
+      );
       expect(events, isEmpty);
 
       await tester.tap(find.byKey(const Key('submit')));

@@ -239,7 +239,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       // Sheet exposes both domain labels.
-      expect(find.text('FinanceOS'), findsOneWidget);
+      expect(find.text('FinanceOS'), findsNWidgets(2));
       expect(find.text('HealthOS'), findsOneWidget);
 
       // Tapping HealthOS closes the sheet first. Route construction must not

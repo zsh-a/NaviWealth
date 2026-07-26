@@ -436,15 +436,22 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                     onSubmit: onSubmit,
                     action: SizedBox(
                       width: double.infinity,
-                      child: FButton(
-                        variant: FButtonVariant.primary,
+                      child: AppBusyButton(
+                        label: l10n.commonSave,
+                        busyLabel: l10n.commonSaving,
+                        busy: _busy,
                         onPress: onSubmit,
-                        child: Text(
-                          _busy ? l10n.commonSaving : l10n.commonSave,
-                        ),
                       ),
                     ),
                     children: [
+                      if (submissionFailureMessage != null) ...[
+                        AppStatusBanner(
+                          kind: AppStatusKind.error,
+                          message: submissionFailureMessage!,
+                          icon: FLucideIcons.circleAlert,
+                        ),
+                        const SizedBox(height: AppSpacing.s12),
+                      ],
                       if (widget.isEdit && widget.expenseId != null) ...[
                         // AiTouchMark: shows when this expense was last
                         // touched by an AI proposal. Self-gating: hidden

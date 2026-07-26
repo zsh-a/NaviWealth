@@ -79,6 +79,23 @@ void main() {
     expect(container.decoration, isNull);
   });
 
+  testWidgets('clamps compact requests to the shared touch target', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        AppIconButton(
+          icon: FLucideIcons.settings,
+          tooltip: 'Settings',
+          size: 24,
+          onPress: () {},
+        ),
+      ),
+    );
+
+    expect(tester.getSize(find.byType(AppIconButton)), const Size(44, 44));
+  });
+
   testWidgets('softPrimaryRing and softPrimaryTile paint borders', (
     tester,
   ) async {

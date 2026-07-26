@@ -40,7 +40,7 @@ class AppIconButton extends StatelessWidget {
     required this.icon,
     required this.onPress,
     this.tooltip,
-    this.size = 40,
+    this.size = AppControlHeights.touchTarget,
     this.iconSize,
     this.iconColor,
     this.surface = AppIconButtonSurface.plain,
@@ -56,7 +56,7 @@ class AppIconButton extends StatelessWidget {
     required IconData icon,
     required VoidCallback? onPress,
     String? tooltip,
-    double size = 32,
+    double size = AppControlHeights.touchTarget,
     double? iconSize = AppIconSizes.xs,
     Color? iconColor,
     EdgeInsetsGeometry? margin,
@@ -104,7 +104,7 @@ class AppIconButton extends StatelessWidget {
     required IconData icon,
     required VoidCallback? onPress,
     String? tooltip,
-    double size = 32,
+    double size = AppControlHeights.touchTarget,
     double? iconSize = AppIconSizes.xs,
     Color? iconColor,
     EdgeInsetsGeometry? margin,
@@ -160,6 +160,9 @@ class AppIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resolvedIconSize = iconSize ?? AppIconSizes.md;
+    final resolvedSize = size < AppControlHeights.touchTarget
+        ? AppControlHeights.touchTarget
+        : size;
     final colors = context.theme.colors;
     final resolvedDecoration = decoration ?? _surfaceDecoration(colors);
     final resolvedIconColor =
@@ -183,8 +186,12 @@ class AppIconButton extends StatelessWidget {
       child: FTappable(
         onPress: busy ? null : onPress,
         child: Container(
-          width: size,
-          height: size,
+          constraints: const BoxConstraints(
+            minWidth: AppControlHeights.touchTarget,
+            minHeight: AppControlHeights.touchTarget,
+          ),
+          width: resolvedSize,
+          height: resolvedSize,
           margin: margin,
           decoration: resolvedDecoration,
           alignment: Alignment.center,
