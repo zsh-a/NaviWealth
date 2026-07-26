@@ -87,9 +87,12 @@ class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
     return AppPageScaffold(
       title: l10n.monthlyCloseTitle,
       childPad: false,
-      child: closeAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
-        error: (error, _) => _LoadError(error: error, period: period),
+      child: closeAsync.whenOrLoading(
+        context: context,
+        onRetry: () {
+          ref.invalidate(monthlyCloseForPeriodProvider(period));
+          ref.invalidate(monthlyCloseEvidenceForPeriodProvider(period));
+        },
         data: (close) {
           if (close?.isClosed == true) {
             return _ClosedMonth(
@@ -104,9 +107,12 @@ class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
               ),
             );
           }
-          return evidenceAsync.when(
-            loading: () => const Center(child: FCircularProgress()),
-            error: (error, _) => _LoadError(error: error, period: period),
+          return evidenceAsync.whenOrLoading(
+            context: context,
+            onRetry: () {
+              ref.invalidate(monthlyCloseForPeriodProvider(period));
+              ref.invalidate(monthlyCloseEvidenceForPeriodProvider(period));
+            },
             data: (evidence) {
               if (close == null) {
                 return _StartMonthlyClose(
@@ -157,8 +163,8 @@ class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
                     style: context.rowTitleStyle,
                   ),
                   const SizedBox(height: AppSpacing.s8),
-                  targetsAsync.when(
-                    loading: () => const Center(child: FCircularProgress()),
+                  targetsAsync.whenOrLoading(
+                    context: context,
                     error: (error, stackTrace) => AppEmptyState.error(
                       compact: true,
                       title: l10n.commonLoadFailed,
@@ -397,31 +403,6 @@ class _CloseProgress extends StatelessWidget {
           ],
         ],
       ),
-    );
-  }
-}
-
-class _LoadError extends ConsumerWidget {
-  const _LoadError({required this.error, required this.period});
-
-  final Object error;
-  final String period;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    return AppEmptyState.error(
-      title: l10n.commonLoadFailed,
-      message: userSafeErrorMessage(
-        context,
-        error,
-        operation: 'load monthly close',
-      ),
-      retryLabel: l10n.commonRetry,
-      onRetry: () {
-        ref.invalidate(monthlyCloseForPeriodProvider(period));
-        ref.invalidate(monthlyCloseEvidenceForPeriodProvider(period));
-      },
     );
   }
 }

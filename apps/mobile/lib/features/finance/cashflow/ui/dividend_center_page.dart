@@ -72,14 +72,10 @@ class DividendCenterPage extends ConsumerWidget {
         isLoading: snapshot.isLoading,
         child: snapshot.when(
           loading: () => const DividendCenterSkeleton(),
-          error: (error, stackTrace) => AppEmptyState.error(
-            title: userSafeErrorMessage(
-              context,
-              error,
-              stackTrace: stackTrace,
-              operation: 'load dividend center',
-            ),
-            retryLabel: l10n.commonRetry,
+          error: (error, stackTrace) => kDefaultError(
+            context,
+            error,
+            stackTrace,
             onRetry: () => ref.invalidate(dividendCenterSnapshotProvider),
           ),
           data: (data) =>

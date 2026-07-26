@@ -110,10 +110,11 @@ class AgentsSettingsPage extends ConsumerWidget {
               padding: EdgeInsets.all(AppSpacing.s16),
               child: SkeletonBox(width: double.infinity, height: 96),
             ),
-            error: (error, _) => AppStatusBanner(
-              kind: AppStatusKind.error,
-              message: userSafeErrorMessage(context, error),
-              icon: FLucideIcons.triangleAlert,
+            error: (error, stackTrace) => kDefaultError(
+              context,
+              error,
+              stackTrace,
+              onRetry: () => ref.invalidate(_agentSettingsRowsProvider),
             ),
             data: (items) {
               if (items.isEmpty) {

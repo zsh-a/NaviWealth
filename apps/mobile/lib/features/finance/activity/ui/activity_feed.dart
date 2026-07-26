@@ -77,12 +77,11 @@ class ActivityFeed extends ConsumerWidget {
         skeleton: ActivityFeedSkeleton(),
         child: SizedBox.shrink(),
       ),
-      error: (_, _) => Center(
-        child: AppEmptyState.error(
-          title: l10n.commonLoadFailed,
-          retryLabel: l10n.commonRetry,
-          onRetry: () => ref.invalidate(activityFeedProvider),
-        ),
+      error: (e, st) => kDefaultError(
+        context,
+        e,
+        st,
+        onRetry: () => ref.invalidate(activityFeedProvider),
       ),
     );
   }

@@ -100,8 +100,8 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
           const SizedBox(height: AppSpacing.s16),
           state.when(
             loading: () => const SkeletonBox(height: 360, radius: 8),
-            error: (error, _) =>
-                _ErrorState(message: userSafeErrorMessage(context, error)),
+            error: (error, stackTrace) =>
+                kDefaultError(context, error, stackTrace),
             data: (data) =>
                 _DcaResults(state: data, onDraft: () => _savePlan(data)),
           ),
@@ -268,8 +268,7 @@ class _DcaPlansSection extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return plans.when(
       loading: () => const SkeletonBox(height: 88, radius: AppRadius.lg),
-      error: (error, _) =>
-          AppEmptyState.error(title: userSafeErrorMessage(context, error)),
+      error: (error, stackTrace) => kDefaultError(context, error, stackTrace),
       data: (rows) {
         if (rows.isEmpty) {
           return SoftCard.flat(

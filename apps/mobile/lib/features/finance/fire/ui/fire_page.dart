@@ -33,8 +33,10 @@ class FirePage extends ConsumerWidget {
         isLoading: viewAsync.isLoading,
         child: viewAsync.when(
           loading: () => const FireSkeleton(),
-          error: (e, _) => _ErrorState(
-            message: l10n.fireLoadError('$e'),
+          error: (e, st) => kDefaultError(
+            context,
+            e,
+            st,
             onRetry: () => ref.invalidate(fireDashboardViewProvider),
           ),
           data: (view) => view.goal.isConfigured
@@ -42,24 +44,6 @@ class FirePage extends ConsumerWidget {
               : const FireUnconfiguredBody(),
         ),
       ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return AppEmptyState.error(
-      icon: FLucideIcons.circleAlert,
-      title: message,
-      retryLabel: l10n.fireRetry,
-      onRetry: onRetry,
     );
   }
 }

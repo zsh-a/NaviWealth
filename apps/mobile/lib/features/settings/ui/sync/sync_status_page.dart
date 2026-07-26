@@ -45,10 +45,10 @@ class _SyncStatusPageState extends ConsumerState<SyncStatusPage> {
       child: eventAsync.when(
         loading: () =>
             const AppListPageSkeleton(showControls: false, itemCount: 4),
-        error: (error, stackTrace) => AppEmptyState.error(
-          title: l10n.commonLoadFailed,
-          message: userSafeErrorMessage(context, error, stackTrace: stackTrace),
-          retryLabel: l10n.commonRetry,
+        error: (error, stackTrace) => kDefaultError(
+          context,
+          error,
+          stackTrace,
           onRetry: () => ref.invalidate(syncStatusEventStreamProvider),
         ),
         data: (event) => _Body(

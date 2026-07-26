@@ -42,10 +42,10 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
       childPad: false,
       child: assetAsync.when(
         loading: () => const AssetDetailSkeleton(),
-        error: (error, stackTrace) => AppEmptyState.error(
-          title: l10n.commonLoadFailed,
-          message: userSafeErrorMessage(context, error, stackTrace: stackTrace),
-          retryLabel: l10n.commonRetry,
+        error: (error, stackTrace) => kDefaultError(
+          context,
+          error,
+          stackTrace,
           onRetry: () => ref.invalidate(physicalAssetDetailProvider(id)),
         ),
         data: (asset) {
@@ -166,14 +166,10 @@ class _DetailBody extends ConsumerWidget {
                       SkeletonBox(height: 18),
                     ],
                   ),
-                  error: (error, stackTrace) => AppEmptyState.error(
-                    title: l10n.commonLoadFailed,
-                    message: userSafeErrorMessage(
-                      context,
-                      error,
-                      stackTrace: stackTrace,
-                    ),
-                    retryLabel: l10n.commonRetry,
+                  error: (error, stackTrace) => kDefaultError(
+                    context,
+                    error,
+                    stackTrace,
                     onRetry: () => ref.invalidate(
                       physicalAssetValuationHistoryProvider(asset.id),
                     ),

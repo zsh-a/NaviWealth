@@ -70,10 +70,10 @@ class _TodayListState extends ConsumerState<_TodayList> {
     return actionsAsync.when(
       loading: () =>
           AppListPageSkeleton(padding: shellTabContentPadding(context)),
-      error: (error, stackTrace) => AppEmptyState.error(
-        title: l10n.commonLoadFailed,
-        message: userSafeErrorMessage(context, error, stackTrace: stackTrace),
-        retryLabel: l10n.commonRetry,
+      error: (error, stackTrace) => kDefaultError(
+        context,
+        error,
+        stackTrace,
         onRetry: () => ref.invalidate(executionTodayActionsProvider),
       ),
       data: (actions) {

@@ -24,18 +24,9 @@ class FinancialInboxPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.financialInboxTitle,
       childPad: false,
-      child: items.when(
-        loading: () => const Center(child: FCircularProgress()),
-        error: (error, _) => AppEmptyState.error(
-          title: l10n.commonLoadFailed,
-          message: userSafeErrorMessage(
-            context,
-            error,
-            operation: 'load financial inbox',
-          ),
-          retryLabel: l10n.commonRetry,
-          onRetry: () => ref.invalidate(financialInboxScanProvider),
-        ),
+      child: items.whenOrLoading(
+        context: context,
+        onRetry: () => ref.invalidate(financialInboxScanProvider),
         data: (rows) {
           if (rows.isEmpty) {
             return AppEmptyState(

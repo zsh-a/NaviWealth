@@ -103,14 +103,10 @@ class _AiTransparencyPageState extends ConsumerState<AiTransparencyPage> {
             loading: () =>
                 const SliverToBoxAdapter(child: _TraceListSkeleton()),
             error: (error, stackTrace) => SliverToBoxAdapter(
-              child: AppEmptyState.error(
-                title: l10n.commonLoadFailed,
-                message: userSafeErrorMessage(
-                  context,
-                  error,
-                  stackTrace: stackTrace,
-                ),
-                retryLabel: l10n.commonRetry,
+              child: kDefaultError(
+                context,
+                error,
+                stackTrace,
                 onRetry: () => ref.invalidate(recentAiTracesProvider),
               ),
             ),
@@ -136,10 +132,10 @@ class AiTransparencyDetailPage extends ConsumerWidget {
       child: traceAsync.when(
         loading: () =>
             const AppListPageSkeleton(showControls: false, itemCount: 4),
-        error: (error, stackTrace) => AppEmptyState.error(
-          title: l10n.commonLoadFailed,
-          message: userSafeErrorMessage(context, error, stackTrace: stackTrace),
-          retryLabel: l10n.commonRetry,
+        error: (error, stackTrace) => kDefaultError(
+          context,
+          error,
+          stackTrace,
           onRetry: () => ref.invalidate(aiTraceByIdProvider(requestId)),
         ),
         data: (trace) {

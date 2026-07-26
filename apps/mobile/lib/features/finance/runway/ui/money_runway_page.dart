@@ -36,18 +36,9 @@ class MoneyRunwayPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.moneyRunwayTitle,
       childPad: false,
-      child: runway.when(
-        loading: () => const Center(child: FCircularProgress()),
-        error: (error, _) => AppEmptyState.error(
-          title: l10n.commonLoadFailed,
-          message: userSafeErrorMessage(
-            context,
-            error,
-            operation: 'load money runway',
-          ),
-          retryLabel: l10n.commonRetry,
-          onRetry: () => ref.invalidate(moneyRunwayProvider),
-        ),
+      child: runway.whenOrLoading(
+        context: context,
+        onRetry: () => ref.invalidate(moneyRunwayProvider),
         data: (snapshot) => _RunwayContent(snapshot: snapshot),
       ),
     );

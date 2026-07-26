@@ -65,16 +65,9 @@ class _InvestmentPortfolioManager extends ConsumerWidget {
           child: Text(l10n.portfolioCreateTitle),
         ),
         const SizedBox(height: AppSpacing.s16),
-        portfolios.when(
-          loading: () => const Center(child: FCircularProgress()),
-          error: (error, stackTrace) => AppEmptyState.error(
-            title: userSafeErrorMessage(
-              context,
-              error,
-              stackTrace: stackTrace,
-              operation: 'load investment portfolios',
-            ),
-          ),
+        portfolios.whenOrLoading(
+          context: context,
+          onRetry: () => ref.invalidate(investmentPortfoliosProvider),
           data: (items) {
             if (items.isEmpty) {
               return AppEmptyState(

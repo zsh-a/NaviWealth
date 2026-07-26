@@ -52,7 +52,6 @@ class _WealthLiveBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
     return snapshotAsync.when(
       loading: () => const PageSkeletonShell<Object>(
@@ -60,12 +59,11 @@ class _WealthLiveBody extends ConsumerWidget {
         skeleton: WealthHubSkeleton(),
         child: SizedBox.shrink(),
       ),
-      error: (_, _) => Center(
-        child: AppEmptyState.error(
-          title: l10n.commonLoadFailed,
-          retryLabel: l10n.commonRetry,
-          onRetry: () => ref.invalidate(dashboardSnapshotProvider),
-        ),
+      error: (e, st) => kDefaultError(
+        context,
+        e,
+        st,
+        onRetry: () => ref.invalidate(dashboardSnapshotProvider),
       ),
       data: (snapshot) => PageSkeletonShell<Object>(
         isLoading: false,
