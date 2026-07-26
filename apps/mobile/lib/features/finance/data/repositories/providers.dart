@@ -11,6 +11,7 @@ import 'package:naviwealth/features/finance/cashflow/domain/budget_summary.dart'
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart' as dom;
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
@@ -184,7 +185,9 @@ final monthlyBudgetSignalProvider = Provider.autoDispose
       }
       if (!summaryAsync.hasValue) return const AsyncValue.loading();
       return AsyncValue.data(
-        budgetSignalFor(summaryAsync.requireValue.summary),
+        summaryAsync.requireValue.mismatchedCount > 0
+            ? BudgetSignal.noData
+            : budgetSignalFor(summaryAsync.requireValue.summary),
       );
     });
 
@@ -225,20 +228,55 @@ final monthlyBudgetSummaryProvider = Provider.autoDispose
       final converter = FxRateCurrencyConverter(
         InMemoryFxRateLookup(ratesAsync.value ?? const <dom.FxRate>[]),
       );
+      var missingExpenseFxCount = 0;
       final spendByCategoryId = buildBudgetSpendByCategoryId(
         periodMonth: periodMonth,
         expenses: expensesAsync.requireValue,
         targetCurrency: targetCurrency,
         converter: converter,
+        onMissingFx: () => missingExpenseFxCount++,
       );
+      final budgetPlans = rows.map((row) {
+        final plan = _budgetCategoryPlanFromRow(row);
+        if (plan.currency.toUpperCase() == targetCurrency) return plan;
+        try {
+          final converted = converter.convert(
+            Money(plan.amount, plan.currency),
+            targetCurrency,
+            on: _budgetValuationDate(periodMonth),
+          );
+          return BudgetCategoryPlan(
+            categoryId: plan.categoryId,
+            periodMonth: plan.periodMonth,
+            amount: converted.amount,
+            currency: converted.currency,
+            deletedAt: plan.deletedAt,
+          );
+        } on FxRateNotFoundError {
+          // Keep the original row so the summary reports it as unresolved
+          // instead of presenting an incomplete total as authoritative.
+          return plan;
+        }
+      });
       final res = buildMonthlyBudgetSummary(
         periodMonth: periodMonth,
-        budgets: rows.map(_budgetCategoryPlanFromRow),
+        budgets: budgetPlans,
         spendByCategoryId: spendByCategoryId,
         targetCurrency: targetCurrency,
       );
-      return AsyncValue.data(res);
+      return AsyncValue.data((
+        summary: res.summary,
+        mismatchedCount: res.mismatchedCount + missingExpenseFxCount,
+      ));
     });
+
+DateTime _budgetValuationDate(String periodMonth) {
+  final parts = periodMonth.split('-');
+  final year = int.tryParse(parts.first);
+  final month = parts.length > 1 ? int.tryParse(parts[1]) : null;
+  if (year == null || month == null) return DateTime.now();
+  return DateTime(year, month + 1, 0);
+}
 
 BudgetCategoryPlan _budgetCategoryPlanFromRow(BudgetRow row) {
   return BudgetCategoryPlan(

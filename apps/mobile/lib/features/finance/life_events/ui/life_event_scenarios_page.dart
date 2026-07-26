@@ -293,6 +293,12 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
                   onPress: _saving
                       ? null
                       : () async {
+                          final now = DateTime.now();
+                          final reviewDate = await _chooseReviewDate(
+                            context,
+                            now,
+                          );
+                          if (reviewDate == null || !mounted) return;
                           setState(() => _saving = true);
                           try {
                             await ref
@@ -307,7 +313,8 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
                               baseline: widget.baseline,
                               assumptions: assumptions,
                               outcome: groundedOutcome,
-                              now: DateTime.now(),
+                              reviewDate: reviewDate,
+                              now: now,
                             );
                             final actionId =
                                 await ref.read(lifeActionDispatcherProvider)(
@@ -486,7 +493,8 @@ class _DecisionRow extends ConsumerWidget {
                   ),
                 FButton(
                   variant: FButtonVariant.outline,
-                  onPress: () => context.push(FinanceRoutes.planBudget),
+                  onPress: () =>
+                      context.push(_adjustmentRouteFor(decision.template)),
                   child: Text(l10n.lifeEventAdjustPlan),
                 ),
                 FButton(
@@ -532,6 +540,42 @@ class _MetricRow extends StatelessWidget {
     ),
   );
 }
+
+Future<DateTime?> _chooseReviewDate(BuildContext context, DateTime now) {
+  final l10n = AppLocalizations.of(context);
+  return showAppSheet<DateTime>(
+    context: context,
+    title: l10n.lifeEventChooseReviewDate,
+    builder: (sheetContext) => Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final option in <(int, String)>[
+          (30, l10n.lifeEventReviewIn30Days),
+          (90, l10n.lifeEventReviewIn90Days),
+          (180, l10n.lifeEventReviewIn180Days),
+        ]) ...[
+          FButton(
+            variant: option.$1 == 90
+                ? FButtonVariant.primary
+                : FButtonVariant.outline,
+            onPress: () => Navigator.of(
+              sheetContext,
+            ).pop(now.add(Duration(days: option.$1))),
+            child: Text(option.$2),
+          ),
+          const SizedBox(height: AppSpacing.s8),
+        ],
+      ],
+    ),
+  );
+}
+
+String _adjustmentRouteFor(LifeEventTemplate template) => switch (template) {
+  LifeEventTemplate.largePurchase => FinanceRoutes.planBudget,
+  LifeEventTemplate.careerBreak => FinanceRoutes.planRunway,
+  LifeEventTemplate.homePurchase => FinanceRoutes.wealthLiabilities,
+};
 
 String _templateLabel(AppLocalizations l10n, LifeEventTemplate template) =>
     switch (template) {

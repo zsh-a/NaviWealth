@@ -22,6 +22,15 @@ class MonthlyClosePage extends ConsumerStatefulWidget {
 
 class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
   String? _beginRequestedFor;
+  String? _selectedPeriod;
+  bool _closing = false;
+
+  String _shiftPeriod(String period, int months) {
+    final parts = period.split('-');
+    final date = DateTime(int.parse(parts[0]), int.parse(parts[1]) + months);
+    return '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}';
+  }
 
   Future<void> _beginSession({
     required String period,
@@ -58,31 +67,62 @@ class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final period = ref.watch(currentClosePeriodProvider);
-    final closeAsync = ref.watch(currentMonthlyCloseProvider);
-    final evidenceAsync = ref.watch(monthlyCloseEvidenceProvider);
-    final targetsAsync = ref.watch(reconciliationTargetsProvider);
-    final comparison = ref.watch(monthlyCloseComparisonProvider).value;
+    final currentPeriod = ref.watch(currentClosePeriodProvider);
+    final latestOpen = ref.watch(latestOpenMonthlyCloseProvider).value;
+    final period =
+        _selectedPeriod ??
+        latestOpen?.periodMonth ??
+        _shiftPeriod(currentPeriod, -1);
+    final closeAsync = ref.watch(monthlyCloseForPeriodProvider(period));
+    final evidenceAsync = ref.watch(
+      monthlyCloseEvidenceForPeriodProvider(period),
+    );
+    final targetsAsync = ref.watch(
+      reconciliationTargetsForPeriodProvider(period),
+    );
+    final comparison = ref
+        .watch(monthlyCloseComparisonForPeriodProvider(period))
+        .value;
     final history = ref.watch(monthlyCloseHistoryProvider).value ?? const [];
     return AppPageScaffold(
       title: l10n.monthlyCloseTitle,
       childPad: false,
       child: closeAsync.when(
         loading: () => const Center(child: FCircularProgress()),
-        error: (error, _) => _LoadError(error: error),
+        error: (error, _) => _LoadError(error: error, period: period),
         data: (close) {
           if (close?.isClosed == true) {
-            return _ClosedMonth(close: close!);
+            return _ClosedMonth(
+              close: close!,
+              periodSwitcher: _PeriodSwitcher(
+                period: period,
+                canGoForward: period.compareTo(currentPeriod) < 0,
+                onPrevious: () =>
+                    setState(() => _selectedPeriod = _shiftPeriod(period, -1)),
+                onNext: () =>
+                    setState(() => _selectedPeriod = _shiftPeriod(period, 1)),
+              ),
+            );
           }
           return evidenceAsync.when(
             loading: () => const Center(child: FCircularProgress()),
-            error: (error, _) => _LoadError(error: error),
+            error: (error, _) => _LoadError(error: error, period: period),
             data: (evidence) {
               if (close == null) {
                 return _StartMonthlyClose(
                   period: period,
                   evidence: evidence,
                   busy: _beginRequestedFor == period,
+                  periodSwitcher: _PeriodSwitcher(
+                    period: period,
+                    canGoForward: period.compareTo(currentPeriod) < 0,
+                    onPrevious: () => setState(
+                      () => _selectedPeriod = _shiftPeriod(period, -1),
+                    ),
+                    onNext: () => setState(
+                      () => _selectedPeriod = _shiftPeriod(period, 1),
+                    ),
+                  ),
                   onStart: () =>
                       _beginSession(period: period, evidence: evidence),
                 );
@@ -90,6 +130,17 @@ class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
               return ListView(
                 padding: const EdgeInsets.all(AppSpacing.s16),
                 children: [
+                  _PeriodSwitcher(
+                    period: period,
+                    canGoForward: period.compareTo(currentPeriod) < 0,
+                    onPrevious: () => setState(
+                      () => _selectedPeriod = _shiftPeriod(period, -1),
+                    ),
+                    onNext: () => setState(
+                      () => _selectedPeriod = _shiftPeriod(period, 1),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s16),
                   Text(
                     l10n.monthlyClosePeriod(period),
                     style: context.rowTitleStyle,
@@ -124,14 +175,15 @@ class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
                     data: (targets) => Column(
                       children: [
                         for (final target in targets) ...[
-                          _ReconciliationRow(target: target),
+                          _ReconciliationRow(target: target, period: period),
                           const SizedBox(height: AppSpacing.s8),
                         ],
                       ],
                     ),
                   ),
                   const SizedBox(height: AppSpacing.s16),
-                  FButton(
+                  AppBusyButton(
+                    busy: _closing,
                     onPress: () => _closeMonth(
                       context,
                       ref,
@@ -139,11 +191,9 @@ class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
                       period: period,
                       startedAt: close.startedAt,
                     ),
-                    child: Text(
-                      evidence.isVerified
-                          ? l10n.monthlyCloseComplete
-                          : l10n.monthlyCloseWithException,
-                    ),
+                    label: evidence.isVerified
+                        ? l10n.monthlyCloseComplete
+                        : l10n.monthlyCloseWithException,
                   ),
                   const SizedBox(height: AppSpacing.s24),
                   _CloseHistory(closes: history),
@@ -173,29 +223,48 @@ class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
       );
       if (reason == null) return;
     }
+    if (_closing) return;
+    setState(() => _closing = true);
     final now = DateTime.now();
     final duration = startedAt == null
         ? Duration.zero
         : now.difference(startedAt);
-    final repository = await ref.read(monthlyCloseRepositoryProvider.future);
-    await repository.close(
-      periodMonth: period,
-      evidence: evidence,
-      snapshot: <String, Object?>{
-        ...evidence.details,
-        'closed_at': now.toUtc().toIso8601String(),
-        'close_duration_ms': duration.inMilliseconds,
-      },
-      overrideReason: reason,
-      now: now,
-    );
-    await ref
-        .read(productMetricsProvider.notifier)
-        .record(
-          ProductFunnelEvent.monthlyCloseCompleted,
-          duration: duration,
-          success: true,
+    try {
+      final repository = await ref.read(monthlyCloseRepositoryProvider.future);
+      await repository.close(
+        periodMonth: period,
+        evidence: evidence,
+        snapshot: <String, Object?>{
+          ...evidence.details,
+          'closed_at': now.toUtc().toIso8601String(),
+          'close_duration_ms': duration.inMilliseconds,
+        },
+        overrideReason: reason,
+        now: now,
+      );
+      await ref
+          .read(productMetricsProvider.notifier)
+          .record(
+            ProductFunnelEvent.monthlyCloseCompleted,
+            duration: duration,
+            success: true,
+          );
+    } catch (error, stackTrace) {
+      if (context.mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(
+            context,
+            error,
+            stackTrace: stackTrace,
+            operation: 'complete monthly close',
+          ),
         );
+      }
+    } finally {
+      if (mounted) setState(() => _closing = false);
+    }
   }
 }
 
@@ -204,12 +273,14 @@ class _StartMonthlyClose extends StatelessWidget {
     required this.period,
     required this.evidence,
     required this.busy,
+    required this.periodSwitcher,
     required this.onStart,
   });
 
   final String period;
   final MonthlyCloseEvidence evidence;
   final bool busy;
+  final Widget periodSwitcher;
   final VoidCallback onStart;
 
   @override
@@ -218,6 +289,8 @@ class _StartMonthlyClose extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s16),
       children: [
+        periodSwitcher,
+        const SizedBox(height: AppSpacing.s16),
         _CloseProgress(evidence: evidence, comparison: null),
         const SizedBox(height: AppSpacing.s16),
         AppEmptyState(
@@ -329,29 +402,35 @@ class _CloseProgress extends StatelessWidget {
 }
 
 class _LoadError extends ConsumerWidget {
-  const _LoadError({required this.error});
+  const _LoadError({required this.error, required this.period});
 
   final Object error;
+  final String period;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return AppEmptyState.error(
       title: l10n.commonLoadFailed,
-      message: '$error',
+      message: userSafeErrorMessage(
+        context,
+        error,
+        operation: 'load monthly close',
+      ),
       retryLabel: l10n.commonRetry,
       onRetry: () {
-        ref.invalidate(currentMonthlyCloseProvider);
-        ref.invalidate(monthlyCloseEvidenceProvider);
+        ref.invalidate(monthlyCloseForPeriodProvider(period));
+        ref.invalidate(monthlyCloseEvidenceForPeriodProvider(period));
       },
     );
   }
 }
 
 class _ClosedMonth extends ConsumerWidget {
-  const _ClosedMonth({required this.close});
+  const _ClosedMonth({required this.close, required this.periodSwitcher});
 
   final MonthlyClose close;
+  final Widget periodSwitcher;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -359,6 +438,8 @@ class _ClosedMonth extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s16),
       children: [
+        periodSwitcher,
+        const SizedBox(height: AppSpacing.s16),
         AppEmptyState(
           icon: FLucideIcons.circleCheckBig,
           title: l10n.monthlyCloseCompleted,
@@ -439,7 +520,10 @@ class _CloseHistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Padding(
+    return SoftCard.flat(
+      tinted: false,
+      borderless: true,
+      onPress: () => _showCloseDetail(context, close),
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Row(
         children: [
@@ -462,10 +546,62 @@ class _CloseHistoryRow extends StatelessWidget {
             _historyDuration(l10n, close),
             style: TypographyTokens.numericBodyStrong,
           ),
+          const SizedBox(width: AppSpacing.s8),
+          const Icon(FLucideIcons.chevronRight, size: AppIconSizes.sm),
         ],
       ),
     );
   }
+}
+
+Future<void> _showCloseDetail(BuildContext context, MonthlyClose close) {
+  final l10n = AppLocalizations.of(context);
+  return showAppSheet<void>(
+    context: context,
+    title: l10n.monthlyClosePeriod(close.periodMonth),
+    builder: (_) => Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppStatusBanner(
+          kind: close.overrideReason == null
+              ? AppStatusKind.success
+              : AppStatusKind.warning,
+          message: close.overrideReason == null
+              ? l10n.monthlyCloseVerifiedBody
+              : l10n.monthlyCloseOverriddenBody(close.overrideReason!),
+          compact: true,
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        for (final step in MonthlyCloseStep.values) ...[
+          _CloseStepRow(step: step, state: close.evidence.states[step]!),
+          const SizedBox(height: AppSpacing.s8),
+        ],
+        const SizedBox(height: AppSpacing.s4),
+        _HistoryEvidenceRow(
+          label: l10n.monthlyCloseHistoryExceptions(
+            _historyExceptionCount(close),
+          ),
+          value: _historyDuration(l10n, close),
+        ),
+      ],
+    ),
+  );
+}
+
+class _HistoryEvidenceRow extends StatelessWidget {
+  const _HistoryEvidenceRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(child: Text(label, style: context.captionStyle)),
+      Text(value, style: TypographyTokens.numericBodyStrong),
+    ],
+  );
 }
 
 int _historyExceptionCount(MonthlyClose close) =>
@@ -545,9 +681,10 @@ class _CloseStepRow extends ConsumerWidget {
 }
 
 class _ReconciliationRow extends ConsumerWidget {
-  const _ReconciliationRow({required this.target});
+  const _ReconciliationRow({required this.target, required this.period});
 
   final ReconciliationTarget target;
+  final String period;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -621,13 +758,13 @@ class _ReconciliationRow extends ConsumerWidget {
       accountReconciliationRepositoryProvider.future,
     );
     await repository.verify(
-      periodMonth: ref.read(currentClosePeriodProvider),
+      periodMonth: period,
       accountId: target.accountId,
       unit: target.unit,
       statementBalance: balance,
       now: DateTime.now(),
     );
-    ref.invalidate(monthlyCloseEvidenceProvider);
+    ref.invalidate(monthlyCloseEvidenceForPeriodProvider(period));
   }
 
   Future<void> _override(
@@ -650,7 +787,52 @@ class _ReconciliationRow extends ConsumerWidget {
       note: note,
       now: DateTime.now(),
     );
-    ref.invalidate(monthlyCloseEvidenceProvider);
+    ref.invalidate(monthlyCloseEvidenceForPeriodProvider(period));
+  }
+}
+
+class _PeriodSwitcher extends StatelessWidget {
+  const _PeriodSwitcher({
+    required this.period,
+    required this.canGoForward,
+    required this.onPrevious,
+    required this.onNext,
+  });
+
+  final String period;
+  final bool canGoForward;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppGroupedSurface(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s4,
+      ),
+      child: Row(
+        children: [
+          FButton.icon(
+            variant: FButtonVariant.ghost,
+            onPress: onPrevious,
+            child: const Icon(FLucideIcons.chevronLeft),
+          ),
+          Expanded(
+            child: Text(
+              period,
+              textAlign: TextAlign.center,
+              style: TypographyTokens.numericBodyStrong,
+            ),
+          ),
+          FButton.icon(
+            variant: FButtonVariant.ghost,
+            onPress: canGoForward ? onNext : null,
+            child: const Icon(FLucideIcons.chevronRight),
+          ),
+        ],
+      ),
+    );
   }
 }
 

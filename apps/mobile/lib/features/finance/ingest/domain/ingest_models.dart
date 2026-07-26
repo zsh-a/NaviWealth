@@ -91,7 +91,7 @@ class IngestSource {
 /// This discriminator is persisted with drafts so the review and confirm
 /// steps never have to infer intent again from the amount sign. Drafts
 /// written before income ingest existed decode as [expense].
-enum IngestTransactionKind { expense, income }
+enum IngestTransactionKind { expense, income, transfer, trade }
 
 extension IngestTransactionKindX on IngestTransactionKind {
   String get wire => name;
@@ -113,6 +113,10 @@ class ParsedTransaction {
     required this.occurredAt,
     this.kind = IngestTransactionKind.expense,
     this.categoryHint,
+    this.instrumentSymbol,
+    this.quantity,
+    this.unitPrice,
+    this.activitySide,
     this.confidence = 1.0,
   });
 
@@ -122,19 +126,36 @@ class ParsedTransaction {
   final DateTime occurredAt;
   final IngestTransactionKind kind;
   final String? categoryHint;
+  final String? instrumentSymbol;
+  final String? quantity;
+  final String? unitPrice;
+  final String? activitySide;
   final double confidence;
 
   ParsedTransaction copyWith({
+    String? description,
+    int? amountMinor,
+    String? currency,
+    DateTime? occurredAt,
     IngestTransactionKind? kind,
     String? categoryHint,
+    bool clearCategoryHint = false,
+    String? instrumentSymbol,
+    String? quantity,
+    String? unitPrice,
+    String? activitySide,
     double? confidence,
   }) => ParsedTransaction(
-    description: description,
-    amountMinor: amountMinor,
-    currency: currency,
-    occurredAt: occurredAt,
+    description: description ?? this.description,
+    amountMinor: amountMinor ?? this.amountMinor,
+    currency: currency ?? this.currency,
+    occurredAt: occurredAt ?? this.occurredAt,
     kind: kind ?? this.kind,
-    categoryHint: categoryHint ?? this.categoryHint,
+    categoryHint: clearCategoryHint ? null : categoryHint ?? this.categoryHint,
+    instrumentSymbol: instrumentSymbol ?? this.instrumentSymbol,
+    quantity: quantity ?? this.quantity,
+    unitPrice: unitPrice ?? this.unitPrice,
+    activitySide: activitySide ?? this.activitySide,
     confidence: confidence ?? this.confidence,
   );
 
@@ -145,6 +166,10 @@ class ParsedTransaction {
     'occurred_at': occurredAt.toUtc().toIso8601String(),
     'kind': kind.wire,
     if (categoryHint != null) 'category_hint': categoryHint,
+    if (instrumentSymbol != null) 'instrument_symbol': instrumentSymbol,
+    if (quantity != null) 'quantity': quantity,
+    if (unitPrice != null) 'unit_price': unitPrice,
+    if (activitySide != null) 'activity_side': activitySide,
     'confidence': confidence,
   };
 
@@ -158,6 +183,10 @@ class ParsedTransaction {
           DateTime.now().toUtc(),
       kind: IngestTransactionKindX.parse(json['kind'] as String?),
       categoryHint: json['category_hint'] as String?,
+      instrumentSymbol: json['instrument_symbol'] as String?,
+      quantity: json['quantity'] as String?,
+      unitPrice: json['unit_price'] as String?,
+      activitySide: json['activity_side'] as String?,
       confidence: (json['confidence'] as num?)?.toDouble() ?? 1.0,
     );
   }

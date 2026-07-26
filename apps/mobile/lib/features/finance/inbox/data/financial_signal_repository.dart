@@ -131,6 +131,37 @@ class FinancialSignalRepository {
   Future<void> resolve(String id, {required DateTime now}) =>
       _setStatus(id, FinancialSignalStatus.resolved, now: now);
 
+  /// Resolve a user-selected group atomically so a failed bulk action never
+  /// leaves half the group cleared.
+  Future<void> resolveMany(
+    Iterable<String> ids, {
+    required DateTime now,
+  }) async {
+    final uniqueIds = ids.toSet();
+    if (uniqueIds.isEmpty) return;
+    final stamp = await _stamper.stamp();
+    await _db.transaction(() async {
+      for (final id in uniqueIds) {
+        await (_db.update(_db.financialSignals)..where(
+              (table) =>
+                  table.id.equals(id) &
+                  table.ownerUserId.equals(stamp.ownerUserId),
+            ))
+            .write(
+              FinancialSignalsCompanion(
+                status: Value(FinancialSignalStatus.resolved.name),
+                snoozedUntil: const Value(null),
+                resolvedAt: Value(now),
+                updatedAt: Value(stamp.now),
+                updatedByDevice: Value(stamp.deviceId),
+                hlc: Value(stamp.hlc),
+              ),
+            );
+        await _outbox.enqueue(table: _tableName, rowId: id);
+      }
+    });
+  }
+
   Future<void> snooze(
     String id, {
     required DateTime until,

@@ -77,14 +77,15 @@ class FinancialInboxPage extends ConsumerWidget {
   }
 }
 
-class _InboxGroup extends StatelessWidget {
+class _InboxGroup extends ConsumerWidget {
   const _InboxGroup({required this.label, required this.items});
 
   final String label;
   final List<FinancialInboxItem> items;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -93,7 +94,16 @@ class _InboxGroup extends StatelessWidget {
             start: AppSpacing.s4,
             bottom: AppSpacing.s8,
           ),
-          child: Text(label, style: context.mutedLabelStyle),
+          child: Row(
+            children: [
+              Expanded(child: Text(label, style: context.mutedLabelStyle)),
+              FButton(
+                variant: FButtonVariant.ghost,
+                onPress: () => _resolveGroup(context, ref),
+                child: Text(l10n.financialInboxResolveGroup),
+              ),
+            ],
+          ),
         ),
         AppGroupedSurface(
           padding: EdgeInsets.zero,
@@ -109,6 +119,47 @@ class _InboxGroup extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _resolveGroup(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: Text(l10n.financialInboxResolveGroup),
+      body: Text(l10n.financialInboxResolveGroupBody(items.length)),
+      confirmLabel: l10n.commonConfirm,
+      cancelLabel: l10n.commonCancel,
+      icon: FLucideIcons.circleCheckBig,
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      final repository = await ref.read(
+        financialSignalRepositoryProvider.future,
+      );
+      final now = DateTime.now();
+      await repository.resolveMany(items.map((item) => item.id), now: now);
+      _refresh(ref);
+      if (context.mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          l10n.financialInboxResolvedCount(items.length),
+        );
+      }
+    } catch (error, stackTrace) {
+      if (context.mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(
+            context,
+            error,
+            stackTrace: stackTrace,
+            operation: 'resolve financial inbox group',
+          ),
+        );
+      }
+    }
   }
 }
 
@@ -436,69 +487,148 @@ class _InboxDetail extends ConsumerWidget {
     WidgetRef ref,
     AppLocalizations l10n,
   ) async {
-    final actionId = await ref.read(lifeActionDispatcherProvider)(
-      LifeActionDraft(
-        title: title,
-        note: jsonEncode(<String, Object?>{
-          'signal_kind': item.kind.name,
-          'evidence': item.evidence,
-          'last_checked_at': item.lastDetectedAt.toUtc().toIso8601String(),
-        }),
-        sourceDomain: 'finance',
-        sourceRowFamily: 'fin:financial_signals',
-        sourceRowId: item.id,
-        priority: item.priority == FinancialInboxPriority.important
-            ? 'high'
-            : 'normal',
-      ),
-    );
-    if (actionId == null || !context.mounted) {
+    try {
+      final actionId = await ref.read(lifeActionDispatcherProvider)(
+        LifeActionDraft(
+          title: title,
+          note: jsonEncode(<String, Object?>{
+            'signal_kind': item.kind.name,
+            'evidence': item.evidence,
+            'last_checked_at': item.lastDetectedAt.toUtc().toIso8601String(),
+          }),
+          sourceDomain: 'finance',
+          sourceRowFamily: 'fin:financial_signals',
+          sourceRowId: item.id,
+          priority: item.priority == FinancialInboxPriority.important
+              ? 'high'
+              : 'normal',
+        ),
+      );
+      if (actionId == null || !context.mounted) {
+        if (context.mounted) {
+          AppMessenger.show(
+            context,
+            ToastKind.warning,
+            l10n.financialInboxActionUnavailable,
+          );
+        }
+        return;
+      }
+      final repository = await ref.read(
+        financialSignalRepositoryProvider.future,
+      );
+      await repository.linkAction(
+        item.id,
+        actionId: actionId,
+        now: DateTime.now(),
+      );
+      await ref
+          .read(productMetricsProvider.notifier)
+          .record(ProductFunnelEvent.executionActionCreated, success: true);
+      _refresh(ref);
+      if (context.mounted) Navigator.of(context).pop();
+    } catch (error, stackTrace) {
       if (context.mounted) {
         AppMessenger.show(
           context,
-          ToastKind.warning,
-          l10n.financialInboxActionUnavailable,
+          ToastKind.error,
+          userSafeErrorMessage(
+            context,
+            error,
+            stackTrace: stackTrace,
+            operation: 'create action from financial inbox',
+          ),
         );
       }
-      return;
     }
-    final repository = await ref.read(financialSignalRepositoryProvider.future);
-    await repository.linkAction(
-      item.id,
-      actionId: actionId,
-      now: DateTime.now(),
-    );
-    await ref
-        .read(productMetricsProvider.notifier)
-        .record(ProductFunnelEvent.executionActionCreated, success: true);
-    _refresh(ref);
-    if (context.mounted) Navigator.of(context).pop();
   }
 
   Future<void> _resolve(BuildContext context, WidgetRef ref) async {
-    final repository = await ref.read(financialSignalRepositoryProvider.future);
-    await repository.resolve(item.id, now: DateTime.now());
-    final remaining = await repository.listVisible(now: DateTime.now());
-    if (remaining.isEmpty) {
-      await ref
-          .read(productMetricsProvider.notifier)
-          .record(ProductFunnelEvent.financialInboxCleared, success: true);
+    try {
+      final repository = await ref.read(
+        financialSignalRepositoryProvider.future,
+      );
+      await repository.resolve(item.id, now: DateTime.now());
+      final remaining = await repository.listVisible(now: DateTime.now());
+      if (remaining.isEmpty) {
+        await ref
+            .read(productMetricsProvider.notifier)
+            .record(ProductFunnelEvent.financialInboxCleared, success: true);
+      }
+      _refresh(ref);
+      if (context.mounted) Navigator.of(context).pop();
+    } catch (error, stackTrace) {
+      if (context.mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(
+            context,
+            error,
+            stackTrace: stackTrace,
+            operation: 'resolve financial inbox item',
+          ),
+        );
+      }
     }
-    _refresh(ref);
-    if (context.mounted) Navigator.of(context).pop();
   }
 
   Future<void> _snooze(BuildContext context, WidgetRef ref) async {
     final now = DateTime.now();
-    final repository = await ref.read(financialSignalRepositoryProvider.future);
-    await repository.snooze(
-      item.id,
-      until: now.add(const Duration(days: 7)),
-      now: now,
-    );
-    _refresh(ref);
-    if (context.mounted) Navigator.of(context).pop();
+    final until = await _chooseSnoozeUntil(context, now);
+    if (until == null || !context.mounted) return;
+    try {
+      final repository = await ref.read(
+        financialSignalRepositoryProvider.future,
+      );
+      await repository.snooze(item.id, until: until, now: now);
+      _refresh(ref);
+      if (context.mounted) Navigator.of(context).pop();
+    } catch (error, stackTrace) {
+      if (context.mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(
+            context,
+            error,
+            stackTrace: stackTrace,
+            operation: 'snooze financial inbox item',
+          ),
+        );
+      }
+    }
   }
+}
+
+Future<DateTime?> _chooseSnoozeUntil(BuildContext context, DateTime now) {
+  final l10n = AppLocalizations.of(context);
+  return showAppSheet<DateTime>(
+    context: context,
+    title: l10n.financialInboxChooseSnooze,
+    builder: (sheetContext) => Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final option in <(int, String)>[
+          (1, l10n.financialInboxSnoozeTomorrow),
+          (7, l10n.financialInboxSnoozeWeek),
+          (30, l10n.financialInboxSnoozeMonth),
+        ]) ...[
+          FButton(
+            variant: option.$1 == 7
+                ? FButtonVariant.primary
+                : FButtonVariant.outline,
+            onPress: () => Navigator.of(
+              sheetContext,
+            ).pop(now.add(Duration(days: option.$1))),
+            child: Text(option.$2),
+          ),
+          const SizedBox(height: AppSpacing.s8),
+        ],
+      ],
+    ),
+  );
 }
 
 class _EvidenceRow extends StatelessWidget {

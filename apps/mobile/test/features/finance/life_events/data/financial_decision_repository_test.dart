@@ -44,6 +44,7 @@ void main() {
       baseline: baseline,
       assumptions: assumptions,
       outcome: predicted,
+      reviewDate: DateTime.utc(2026, 8, 18),
       now: DateTime.utc(2026, 7, 19),
     );
     expect(created.baseline.liquidBalance, Decimal.fromInt(100000));

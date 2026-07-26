@@ -9550,6 +9550,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ingestConfirm => '记录';
 
   @override
+  String get ingestEditDraft => '修正字段';
+
+  @override
+  String get ingestEditDescription => '描述';
+
+  @override
+  String get ingestEditAmount => '金额';
+
+  @override
+  String get ingestEditCurrency => '币种';
+
+  @override
+  String get ingestEditDate => '交易日期';
+
+  @override
+  String get ingestEditCategory => '分类提示（选填）';
+
+  @override
+  String get ingestEditInvalid => '请填写描述、正数金额和币种。';
+
+  @override
+  String get ingestEditConflict => '编辑期间该草稿已发生变化，请检查最新内容后重试。';
+
+  @override
   String get ingestVerdictNew => '新增';
 
   @override
@@ -13415,6 +13439,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ingestKindIncome => '收入';
 
   @override
+  String get ingestKindTransfer => '转账';
+
+  @override
+  String get ingestKindTrade => '证券交易';
+
+  @override
+  String get ingestRecordTransfer => '进入转账表单';
+
+  @override
+  String get ingestRecordTrade => '进入交易表单';
+
+  @override
+  String get ingestTransferRecorded => '转账已记录，草稿已完成。';
+
+  @override
+  String get ingestTradeRecorded => '交易已记录，草稿已完成。';
+
+  @override
   String get databaseUnlockLoading => '正在解锁本地数据…';
 
   @override
@@ -13598,7 +13640,32 @@ class AppLocalizationsZh extends AppLocalizations {
   String get financialInboxResolve => '解决';
 
   @override
-  String get financialInboxSnooze => '稍后 7 天';
+  String get financialInboxSnooze => '稍后处理';
+
+  @override
+  String get financialInboxChooseSnooze => '稍后提醒时间';
+
+  @override
+  String get financialInboxSnoozeTomorrow => '明天';
+
+  @override
+  String get financialInboxSnoozeWeek => '7 天后';
+
+  @override
+  String get financialInboxSnoozeMonth => '30 天后';
+
+  @override
+  String get financialInboxResolveGroup => '批量完成';
+
+  @override
+  String financialInboxResolveGroupBody(int count) {
+    return '确认完成该优先级分组中的全部 $count 项？';
+  }
+
+  @override
+  String financialInboxResolvedCount(int count) {
+    return '已完成 $count 项';
+  }
 
   @override
   String financialInboxImportTitle(int count) {
@@ -13845,6 +13912,18 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get lifeEventChooseReviewDate => '选择复盘时间';
+
+  @override
+  String get lifeEventReviewIn30Days => '30 天后';
+
+  @override
+  String get lifeEventReviewIn90Days => '90 天后';
+
+  @override
+  String get lifeEventReviewIn180Days => '180 天后';
+
+  @override
   String get lifeEventCaptureActual => '记录当前结果';
 
   @override
@@ -13930,6 +14009,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get moneyRunwayVariableEstimate => '每月可变支出估计';
+
+  @override
+  String get moneyRunwaySourceObservedHistory => '近 90 天实际记录';
+
+  @override
+  String get moneyRunwaySourceFirePlan => 'FIRE 计划';
+
+  @override
+  String get moneyRunwaySourceDefaultPolicy => '默认 3 个月储备';
 
   @override
   String get moneyRunwayCoverage => '应急覆盖';

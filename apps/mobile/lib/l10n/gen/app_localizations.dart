@@ -16959,6 +16959,54 @@ abstract class AppLocalizations {
   /// **'Record'**
   String get ingestConfirm;
 
+  /// No description provided for @ingestEditDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct fields'**
+  String get ingestEditDraft;
+
+  /// No description provided for @ingestEditDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get ingestEditDescription;
+
+  /// No description provided for @ingestEditAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get ingestEditAmount;
+
+  /// No description provided for @ingestEditCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get ingestEditCurrency;
+
+  /// No description provided for @ingestEditDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction date'**
+  String get ingestEditDate;
+
+  /// No description provided for @ingestEditCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category hint (optional)'**
+  String get ingestEditCategory;
+
+  /// No description provided for @ingestEditInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a description, positive amount, and currency.'**
+  String get ingestEditInvalid;
+
+  /// No description provided for @ingestEditConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'This draft changed while you were editing. Review the latest version and try again.'**
+  String get ingestEditConflict;
+
   /// Ingest dedup verdict: no match
   ///
   /// In en, this message translates to:
@@ -23761,6 +23809,42 @@ abstract class AppLocalizations {
   /// **'Income'**
   String get ingestKindIncome;
 
+  /// No description provided for @ingestKindTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get ingestKindTransfer;
+
+  /// No description provided for @ingestKindTrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Security trade'**
+  String get ingestKindTrade;
+
+  /// No description provided for @ingestRecordTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Open transfer form'**
+  String get ingestRecordTransfer;
+
+  /// No description provided for @ingestRecordTrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Open trade form'**
+  String get ingestRecordTrade;
+
+  /// No description provided for @ingestTransferRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer recorded and draft completed.'**
+  String get ingestTransferRecorded;
+
+  /// No description provided for @ingestTradeRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Trade recorded and draft completed.'**
+  String get ingestTradeRecorded;
+
   /// No description provided for @databaseUnlockLoading.
   ///
   /// In en, this message translates to:
@@ -24094,8 +24178,50 @@ abstract class AppLocalizations {
   /// No description provided for @financialInboxSnooze.
   ///
   /// In en, this message translates to:
-  /// **'7 days'**
+  /// **'Snooze'**
   String get financialInboxSnooze;
+
+  /// No description provided for @financialInboxChooseSnooze.
+  ///
+  /// In en, this message translates to:
+  /// **'Snooze until'**
+  String get financialInboxChooseSnooze;
+
+  /// No description provided for @financialInboxSnoozeTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get financialInboxSnoozeTomorrow;
+
+  /// No description provided for @financialInboxSnoozeWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'In 7 days'**
+  String get financialInboxSnoozeWeek;
+
+  /// No description provided for @financialInboxSnoozeMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'In 30 days'**
+  String get financialInboxSnoozeMonth;
+
+  /// No description provided for @financialInboxResolveGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve group'**
+  String get financialInboxResolveGroup;
+
+  /// No description provided for @financialInboxResolveGroupBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve all {count} items in this priority group?'**
+  String financialInboxResolveGroupBody(int count);
+
+  /// No description provided for @financialInboxResolvedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved {count} items'**
+  String financialInboxResolvedCount(int count);
 
   /// No description provided for @financialInboxImportTitle.
   ///
@@ -24535,6 +24661,30 @@ abstract class AppLocalizations {
   /// **'Review on {date}'**
   String lifeEventReviewOn(String date);
 
+  /// No description provided for @lifeEventChooseReviewDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose review timing'**
+  String get lifeEventChooseReviewDate;
+
+  /// No description provided for @lifeEventReviewIn30Days.
+  ///
+  /// In en, this message translates to:
+  /// **'In 30 days'**
+  String get lifeEventReviewIn30Days;
+
+  /// No description provided for @lifeEventReviewIn90Days.
+  ///
+  /// In en, this message translates to:
+  /// **'In 90 days'**
+  String get lifeEventReviewIn90Days;
+
+  /// No description provided for @lifeEventReviewIn180Days.
+  ///
+  /// In en, this message translates to:
+  /// **'In 180 days'**
+  String get lifeEventReviewIn180Days;
+
   /// No description provided for @lifeEventCaptureActual.
   ///
   /// In en, this message translates to:
@@ -24696,6 +24846,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Estimated variable spending / month'**
   String get moneyRunwayVariableEstimate;
+
+  /// No description provided for @moneyRunwaySourceObservedHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Observed 90-day history'**
+  String get moneyRunwaySourceObservedHistory;
+
+  /// No description provided for @moneyRunwaySourceFirePlan.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE plan'**
+  String get moneyRunwaySourceFirePlan;
+
+  /// No description provided for @moneyRunwaySourceDefaultPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Default 3-month reserve'**
+  String get moneyRunwaySourceDefaultPolicy;
 
   /// No description provided for @moneyRunwayCoverage.
   ///

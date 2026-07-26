@@ -34,15 +34,20 @@ void main() {
         ProviderScope(
           overrides: [
             currentClosePeriodProvider.overrideWithValue('2026-07'),
-            currentMonthlyCloseProvider.overrideWith((_) => Stream.value(null)),
-            monthlyCloseEvidenceProvider.overrideWith(
-              (_) => const AsyncValue.data(evidence),
+            latestOpenMonthlyCloseProvider.overrideWith(
+              (_) => Stream.value(null),
             ),
-            reconciliationTargetsProvider.overrideWith(
-              (_) => const AsyncValue.data([]),
+            monthlyCloseForPeriodProvider.overrideWith(
+              (_, _) => Stream.value(null),
             ),
-            monthlyCloseComparisonProvider.overrideWith(
-              (_) => const AsyncValue.data(comparison),
+            monthlyCloseEvidenceForPeriodProvider.overrideWith(
+              (_, _) => const AsyncValue.data(evidence),
+            ),
+            reconciliationTargetsForPeriodProvider.overrideWith(
+              (_, _) => const AsyncValue.data([]),
+            ),
+            monthlyCloseComparisonForPeriodProvider.overrideWith(
+              (_, _) => const AsyncValue.data(comparison),
             ),
             monthlyCloseHistoryProvider.overrideWith(
               (_) => Stream.value(const <MonthlyClose>[]),
@@ -63,7 +68,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Start monthly close'), findsOneWidget);
-      expect(find.text('Close 2026-07'), findsOneWidget);
+      expect(find.text('Close 2026-06'), findsOneWidget);
       expect(find.text('Review imported transactions'), findsNothing);
       expect(find.text('Account reconciliation'), findsNothing);
     },

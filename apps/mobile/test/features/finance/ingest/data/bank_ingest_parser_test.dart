@@ -66,5 +66,22 @@ void main() {
       expect(rows, hasLength(1));
       expect(rows.single.occurredAt, DateTime.utc(2026, 5, 13));
     });
+
+    test('keeps transfers typed for the two-account destination form', () {
+      final rows = parseBankCashLedger(
+        'Posting Date,Details,Debit,Credit,Currency\n'
+        '05/15/2026,Transfer to savings,250.00,,USD\n'
+        '05/16/2026,Transfer from checking,,400.00,USD\n',
+        defaultCurrency: 'USD',
+      );
+
+      expect(rows, hasLength(2));
+      expect(
+        rows.map((row) => row.kind),
+        everyElement(IngestTransactionKind.transfer),
+      );
+      expect(rows.first.amountMinor, -25000);
+      expect(rows.last.amountMinor, 40000);
+    });
   });
 }

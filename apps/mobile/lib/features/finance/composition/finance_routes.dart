@@ -7,6 +7,7 @@
 /// [preloadFinanceDeferredRoutesForTest].
 library;
 
+import 'package:decimal/decimal.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/assets/physical/ui/physical_asset_detail_page.dart'
     deferred as physical_detail_lib;
@@ -27,6 +28,7 @@ import 'package:naviwealth/features/finance/fire/ui/fire_page.dart'
 import 'package:naviwealth/features/finance/home/ui/home_page.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart'
     show TradeType;
+import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_prefill.dart';
 import 'package:naviwealth/features/finance/investment/ui/corporate_action_entry_route.dart'
     deferred as corp_action_lib;
 import 'package:naviwealth/features/finance/investment/ui/dca_simulator_page.dart'
@@ -152,12 +154,27 @@ StatefulShellRoute financeShellRoute() {
                         'sell' => TradeType.sell,
                         _ => null,
                       };
+                  final params = state.uri.queryParameters;
+                  final ingestPrefill = params['ingest'] == '1'
+                      ? TradeEntryPrefill(
+                          type: initialType ?? TradeType.buy,
+                          quantity:
+                              Decimal.tryParse(params['quantity'] ?? '') ??
+                              Decimal.zero,
+                          price: Decimal.tryParse(params['price'] ?? ''),
+                          currency: params['currency'] ?? 'USD',
+                          tradeDate: DateTime.tryParse(params['date'] ?? ''),
+                          note: params['note'],
+                          symbol: params['symbol'],
+                        )
+                      : null;
                   return buildHeroAwareTransitionPage<void>(
                     context: context,
                     state: state,
                     child: TradeEntryFormPage(
                       assetId: assetId,
                       accountId: accountId,
+                      prefill: ingestPrefill,
                       initialType: initialType,
                     ),
                   );
