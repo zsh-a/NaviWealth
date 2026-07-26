@@ -861,14 +861,14 @@ class BudgetPageObject {
   }
 }
 
-/// Plan → Income Planner surface.
+/// Plan → Options workspace surface.
 class IncomePlannerPageObject {
   IncomePlannerPageObject(this.tester);
 
   final WidgetTester tester;
 
   void expectStartState() {
-    expect(find.text('Income Planner'), findsWidgets);
+    expect(find.text('Options workspace'), findsWidgets);
     expect(find.text('Set up your stance'), findsOneWidget);
     expect(find.text('Configure preferences'), findsOneWidget);
   }

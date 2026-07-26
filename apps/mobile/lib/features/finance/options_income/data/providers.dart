@@ -11,7 +11,9 @@ import 'package:naviwealth/features/finance/income_strategy/domain/income_strate
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
+import '../application/opportunity_explanation_l10n.dart';
 import '../application/options_journal_ledger_service.dart';
+import '../application/options_ledger_narrations_l10n.dart';
 import '../application/scan_orchestrator.dart';
 import '../domain/approved_underlying.dart';
 import '../domain/leaps_call_position.dart';
@@ -99,7 +101,10 @@ final optionsScoringWeightsProvider = Provider<ScoringWeights>((ref) {
 });
 
 final opportunityScorerProvider = Provider<OpportunityScorer>((ref) {
-  return OpportunityScorer(weights: ref.watch(optionsScoringWeightsProvider));
+  return OpportunityScorer(
+    weights: ref.watch(optionsScoringWeightsProvider),
+    texts: ref.watch(opportunityExplanationTextsProvider),
+  );
 });
 
 final optionsOpportunityCacheRepositoryProvider =
@@ -187,6 +192,7 @@ final optionsJournalLedgerServiceProvider =
         priceRepo: priceRepo,
         holdingService: () => ref.read(holdingServiceProvider.future),
         currentUserId: stamper.currentUserId,
+        narrations: ref.watch(optionsLedgerNarrationsProvider),
       );
     });
 

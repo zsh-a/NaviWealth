@@ -254,12 +254,6 @@ abstract class AppLocalizations {
   /// **'Drift from target allocation'**
   String get planRebalanceSectionSubtitle;
 
-  /// Plan hub: options-income section card title
-  ///
-  /// In en, this message translates to:
-  /// **'Income strategy'**
-  String get planIncomeSectionTitle;
-
   /// Plan hub: options-income section subtitle
   ///
   /// In en, this message translates to:
@@ -325,18 +319,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'My plans'**
   String get planMyPlansTitle;
-
-  /// No description provided for @planExploreTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Simulations & advanced strategies'**
-  String get planExploreTitle;
-
-  /// No description provided for @planExploreSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Explore scenarios and optional investing approaches'**
-  String get planExploreSubtitle;
 
   /// No description provided for @planExploreActiveOptions.
   ///
@@ -685,18 +667,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not save budget: {error}'**
   String planBudgetSaveFailed(String error);
-
-  /// Plan hub: options Wheel lifecycle section title
-  ///
-  /// In en, this message translates to:
-  /// **'Wheel cycles'**
-  String get planWheelSectionTitle;
-
-  /// Plan hub: Wheel section subtitle
-  ///
-  /// In en, this message translates to:
-  /// **'Sell-put + covered-call review'**
-  String get planWheelSectionSubtitle;
 
   /// Title shown on /plan/income/wheel page header
   ///
@@ -17595,10 +17565,10 @@ abstract class AppLocalizations {
   /// **'Back to list'**
   String get masterDetailBackToList;
 
-  /// Income Planner page title; also used by the accounts hub entry and command palette label
+  /// Options workspace page title; also used by the command palette label
   ///
   /// In en, this message translates to:
-  /// **'Income Planner'**
+  /// **'Options workspace'**
   String get incomePlannerTitle;
 
   /// Accounts hub entry subtitle for Income Planner
@@ -18099,6 +18069,18 @@ abstract class AppLocalizations {
   /// **'Worst case'**
   String get incomePlannerDetailWorstCase;
 
+  /// No description provided for @incomePlannerDetailContractSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract'**
+  String get incomePlannerDetailContractSection;
+
+  /// No description provided for @incomePlannerDetailLiquiditySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Liquidity'**
+  String get incomePlannerDetailLiquiditySection;
+
   /// Detail sheet section: best-fit description
   ///
   /// In en, this message translates to:
@@ -18162,13 +18144,25 @@ abstract class AppLocalizations {
   /// Journal sheet field label for entry premium
   ///
   /// In en, this message translates to:
-  /// **'Credit received'**
+  /// **'Credit received (per contract)'**
   String get incomePlannerJournalCreditLabel;
+
+  /// Live preview under the per-contract credit field: credit × contract size × quantity
+  ///
+  /// In en, this message translates to:
+  /// **'Total premium: {amount}'**
+  String incomePlannerJournalTotalCredit(String amount);
+
+  /// No description provided for @incomePlannerAssignmentNeedsAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Link a brokerage account before recording an assignment — otherwise the share leg cannot be booked to the ledger.'**
+  String get incomePlannerAssignmentNeedsAccount;
 
   /// Journal sheet field label for close-out debit
   ///
   /// In en, this message translates to:
-  /// **'Debit paid to close'**
+  /// **'Debit paid to close (per contract)'**
   String get incomePlannerJournalDebitLabel;
 
   /// Journal sheet field label for the OCC option symbol
@@ -18326,6 +18320,249 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Amounts are shown separately because this journal contains {currencies}.'**
   String incomePlannerStatsMultiCurrencyNote(String currencies);
+
+  /// No description provided for @incomePlannerStatsPremiumChartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium by underlying'**
+  String get incomePlannerStatsPremiumChartTitle;
+
+  /// No description provided for @optionsExplainYieldStrength.
+  ///
+  /// In en, this message translates to:
+  /// **'Annualized yield {yieldPct} (score {score})'**
+  String optionsExplainYieldStrength(String yieldPct, String score);
+
+  /// No description provided for @optionsExplainLiquidityStrength.
+  ///
+  /// In en, this message translates to:
+  /// **'Good liquidity: bid/ask spread {spread}, open interest {openInterest} (score {score})'**
+  String optionsExplainLiquidityStrength(
+    String spread,
+    int openInterest,
+    String score,
+  );
+
+  /// No description provided for @optionsExplainSafetyStrength.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin of safety {margin} from breakeven (score {score})'**
+  String optionsExplainSafetyStrength(String margin, String score);
+
+  /// No description provided for @optionsExplainIvStrength.
+  ///
+  /// In en, this message translates to:
+  /// **'Implied volatility {iv} is in a resilient range (score {score})'**
+  String optionsExplainIvStrength(String iv, String score);
+
+  /// No description provided for @optionsExplainIvUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'unknown'**
+  String get optionsExplainIvUnknown;
+
+  /// No description provided for @optionsExplainFitStrength.
+  ///
+  /// In en, this message translates to:
+  /// **'Fits current positions (score {score})'**
+  String optionsExplainFitStrength(String score);
+
+  /// No description provided for @optionsExplainEventStrength.
+  ///
+  /// In en, this message translates to:
+  /// **'No earnings or macro event in the next 7 days (score {score})'**
+  String optionsExplainEventStrength(String score);
+
+  /// No description provided for @optionsExplainEventUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Event calendar unavailable; event risk is not scored'**
+  String get optionsExplainEventUnavailable;
+
+  /// No description provided for @optionsExplainGenericScore.
+  ///
+  /// In en, this message translates to:
+  /// **'{dimension} score {score}'**
+  String optionsExplainGenericScore(String dimension, String score);
+
+  /// No description provided for @optionsExplainYieldWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Lower annualized yield: {yieldPct} (score {score})'**
+  String optionsExplainYieldWeak(String yieldPct, String score);
+
+  /// No description provided for @optionsExplainLiquidityWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate liquidity: bid/ask spread {spread} (score {score})'**
+  String optionsExplainLiquidityWeak(String spread, String score);
+
+  /// No description provided for @optionsExplainSafetyWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Limited margin of safety: {margin} (score {score})'**
+  String optionsExplainSafetyWeak(String margin, String score);
+
+  /// No description provided for @optionsExplainIvWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Implied volatility is outside the normal range (score {score})'**
+  String optionsExplainIvWeak(String score);
+
+  /// No description provided for @optionsExplainFitWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Only a moderate fit with current positions (score {score})'**
+  String optionsExplainFitWeak(String score);
+
+  /// No description provided for @optionsExplainEventWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution needs caution inside the event window (score {score})'**
+  String optionsExplainEventWeak(String score);
+
+  /// No description provided for @optionsExplainEventCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check earnings and macro dates before placing the trade'**
+  String get optionsExplainEventCheck;
+
+  /// No description provided for @optionsExplainSummaryPut.
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} {dte}DTE sell put @ {strike} — annualized {yieldPct}, margin of safety {margin}'**
+  String optionsExplainSummaryPut(
+    String symbol,
+    int dte,
+    String strike,
+    String yieldPct,
+    String margin,
+  );
+
+  /// No description provided for @optionsExplainSummaryCall.
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} {dte}DTE covered call @ {strike} — annualized {yieldPct}, margin of safety {margin}'**
+  String optionsExplainSummaryCall(
+    String symbol,
+    int dte,
+    String strike,
+    String yieldPct,
+    String margin,
+  );
+
+  /// No description provided for @optionsExplainBestForPutConservative.
+  ///
+  /// In en, this message translates to:
+  /// **'Best for conservative cash-flow preference: higher margin of safety and liquidity first.'**
+  String get optionsExplainBestForPutConservative;
+
+  /// No description provided for @optionsExplainBestForPutBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Best for balanced cash-flow preference: balances yield against downside risk.'**
+  String get optionsExplainBestForPutBalanced;
+
+  /// No description provided for @optionsExplainBestForPutAggressive.
+  ///
+  /// In en, this message translates to:
+  /// **'Best when you accept higher assignment probability in exchange for annualized yield.'**
+  String get optionsExplainBestForPutAggressive;
+
+  /// No description provided for @optionsExplainBestForCallConservative.
+  ///
+  /// In en, this message translates to:
+  /// **'Best for conservative enhancement: sell farther OTM calls with lower assignment probability.'**
+  String get optionsExplainBestForCallConservative;
+
+  /// No description provided for @optionsExplainBestForCallBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Best for balanced enhancement: add income without materially disrupting the position.'**
+  String get optionsExplainBestForCallBalanced;
+
+  /// No description provided for @optionsExplainBestForCallAggressive.
+  ///
+  /// In en, this message translates to:
+  /// **'Best when you are willing to accept assignment to realize gains.'**
+  String get optionsExplainBestForCallAggressive;
+
+  /// No description provided for @optionsExplainAvoidPut.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid if you are not willing to buy 100 shares at the strike when assigned.'**
+  String get optionsExplainAvoidPut;
+
+  /// No description provided for @optionsExplainAvoidCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid if you are not willing to sell 100 shares at the strike.'**
+  String get optionsExplainAvoidCall;
+
+  /// No description provided for @optionsExplainWorstPut.
+  ///
+  /// In en, this message translates to:
+  /// **'If {symbol} falls below {strike}, you would buy 100 shares at an effective cost of {breakeven}, using {cash} cash.'**
+  String optionsExplainWorstPut(
+    String symbol,
+    String strike,
+    String breakeven,
+    String cash,
+  );
+
+  /// No description provided for @optionsExplainWorstCall.
+  ///
+  /// In en, this message translates to:
+  /// **'If {symbol} rises to {strike}, you would sell 100 shares at {strike} and miss upside above that level; total proceeds are capped at {cap}.'**
+  String optionsExplainWorstCall(String symbol, String strike, String cap);
+
+  /// No description provided for @optionsLedgerPremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Options premium {symbol}'**
+  String optionsLedgerPremium(String symbol);
+
+  /// No description provided for @optionsLedgerCloseDebit.
+  ///
+  /// In en, this message translates to:
+  /// **'Options close debit {symbol}'**
+  String optionsLedgerCloseDebit(String symbol);
+
+  /// No description provided for @optionsLedgerPutAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Put assigned {symbol}'**
+  String optionsLedgerPutAssigned(String symbol);
+
+  /// No description provided for @optionsLedgerCallAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Covered call assigned {symbol}'**
+  String optionsLedgerCallAssigned(String symbol);
+
+  /// No description provided for @optionsLedgerLeapsOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS open {symbol}'**
+  String optionsLedgerLeapsOpen(String symbol);
+
+  /// No description provided for @optionsLedgerLeapsClose.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS close {symbol}'**
+  String optionsLedgerLeapsClose(String symbol);
+
+  /// No description provided for @optionsLedgerLeapsExercise.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS exercise {symbol}'**
+  String optionsLedgerLeapsExercise(String symbol);
+
+  /// No description provided for @optionsLedgerLeapsExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS expired {symbol}'**
+  String optionsLedgerLeapsExpired(String symbol);
 
   /// Section title: strategy breakdown
   ///
@@ -18556,23 +18793,11 @@ abstract class AppLocalizations {
   /// **'High delta must be at least the low delta.'**
   String get incomePlannerProfileDeltaOrderValidation;
 
-  /// Income Planner workspace overview title
-  ///
-  /// In en, this message translates to:
-  /// **'Options cash-flow workspace'**
-  String get incomePlannerWorkspaceTitle;
-
   /// Workspace opportunities tab
   ///
   /// In en, this message translates to:
   /// **'Opportunities'**
   String get incomePlannerWorkspaceOpportunities;
-
-  /// Workspace Wheel tab
-  ///
-  /// In en, this message translates to:
-  /// **'Wheel'**
-  String get incomePlannerWorkspaceWheel;
 
   /// Workspace journal tab
   ///
@@ -18939,17 +19164,17 @@ abstract class AppLocalizations {
   /// **'{position} · {days} days remaining'**
   String incomePlannerWheelDueSummary(String position, int days);
 
+  /// No description provided for @incomePlannerWheelExpiredSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{position} · expired {days} days ago — record the outcome'**
+  String incomePlannerWheelExpiredSummary(String position, int days);
+
   /// No description provided for @incomePlannerWheelRealizedIncome.
   ///
   /// In en, this message translates to:
   /// **'Realized net income'**
   String get incomePlannerWheelRealizedIncome;
-
-  /// No description provided for @incomePlannerWheelNextActionTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Next checkpoint'**
-  String get incomePlannerWheelNextActionTitle;
 
   /// No description provided for @incomePlannerWheelOpenPositionsTitle.
   ///
@@ -26079,42 +26304,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{percent}% covered'**
   String leapsOverlayCoverageValue(String percent);
-
-  /// No description provided for @leapsOverlayRiskStacked.
-  ///
-  /// In en, this message translates to:
-  /// **'Wheel and LEAPS are both exposed to an underlying decline. The long call does not hedge put assignment.'**
-  String get leapsOverlayRiskStacked;
-
-  /// No description provided for @leapsOverlayRiskCost.
-  ///
-  /// In en, this message translates to:
-  /// **'Open LEAPS premium is greater than realized Wheel income.'**
-  String get leapsOverlayRiskCost;
-
-  /// No description provided for @leapsOverlayRiskDelta.
-  ///
-  /// In en, this message translates to:
-  /// **'Delta is missing, so total upside exposure cannot be calculated.'**
-  String get leapsOverlayRiskDelta;
-
-  /// No description provided for @leapsOverlayRiskMark.
-  ///
-  /// In en, this message translates to:
-  /// **'Current mark is missing; unrealized P&L is unavailable.'**
-  String get leapsOverlayRiskMark;
-
-  /// No description provided for @leapsOverlayRiskExpiry.
-  ///
-  /// In en, this message translates to:
-  /// **'A LEAPS call has 180 days or less remaining. Review roll, close, exercise, and tax consequences.'**
-  String get leapsOverlayRiskExpiry;
-
-  /// No description provided for @leapsOverlayRiskDividend.
-  ///
-  /// In en, this message translates to:
-  /// **'A long call does not receive dividends unless shares are acquired before the ex-dividend date.'**
-  String get leapsOverlayRiskDividend;
 
   /// No description provided for @leapsOverlayOptionSymbol.
   ///

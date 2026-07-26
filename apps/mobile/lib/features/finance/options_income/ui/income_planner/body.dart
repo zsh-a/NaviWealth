@@ -1,6 +1,6 @@
 part of 'income_planner_page.dart';
 
-enum _PlannerTab { opportunities, wheel, journal }
+enum _PlannerTab { opportunities, journal }
 
 class _ConfiguredBody extends ConsumerStatefulWidget {
   const _ConfiguredBody({required this.profile});
@@ -23,7 +23,6 @@ class _ConfiguredBodyState extends ConsumerState<_ConfiguredBody> {
     final cacheState = ref.watch(latestScanStateProvider);
     final opportunitiesAsync = ref.watch(cachedOpportunitiesProvider);
     final journalAsync = ref.watch(tradeJournalEntriesProvider);
-    final overlaysAsync = ref.watch(wheelStrategyViewsProvider);
     final approvedCount = approvedAsync.value?.length ?? 0;
     final opportunityCount = opportunitiesAsync.value?.length ?? 0;
     final openCount =
@@ -60,12 +59,10 @@ class _ConfiguredBodyState extends ConsumerState<_ConfiguredBody> {
           labelOf: (tab) => switch (tab) {
             _PlannerTab.opportunities =>
               l10n.incomePlannerWorkspaceOpportunities,
-            _PlannerTab.wheel => l10n.incomePlannerWorkspaceWheel,
             _PlannerTab.journal => l10n.incomePlannerWorkspaceJournal,
           },
           iconOf: (tab) => switch (tab) {
             _PlannerTab.opportunities => FLucideIcons.scanSearch,
-            _PlannerTab.wheel => FLucideIcons.refreshCw,
             _PlannerTab.journal => FLucideIcons.notebookPen,
           },
           onChanged: (tab) => setState(() => _tab = tab),
@@ -79,7 +76,6 @@ class _ConfiguredBodyState extends ConsumerState<_ConfiguredBody> {
             cacheState: cacheState.value,
             opportunitiesAsync: opportunitiesAsync,
           ),
-          _PlannerTab.wheel => _WheelWorkspace(overlaysAsync: overlaysAsync),
           _PlannerTab.journal => const _TradeJournalSection(),
         },
       ],
@@ -118,7 +114,7 @@ class _ConfiguredBodyState extends ConsumerState<_ConfiguredBody> {
                   alignment: Alignment.centerRight,
                   child: FButton(
                     variant: FButtonVariant.outline,
-                    onPress: () => showApprovedUnderlyingSheet(context),
+                    onPress: () => showIncomeStrategyPlanSheet(context),
                     child: Text(l10n.incomePlannerAddApprovedCta),
                   ),
                 ),
@@ -177,7 +173,7 @@ class _ConfiguredBodyState extends ConsumerState<_ConfiguredBody> {
   }
 }
 
-class _PlannerOverviewCard extends StatelessWidget {
+class _PlannerOverviewCard extends ConsumerWidget {
   const _PlannerOverviewCard({
     required this.profile,
     required this.approvedCount,
@@ -199,8 +195,9 @@ class _PlannerOverviewCard extends StatelessWidget {
   final VoidCallback onManageUnderlyings;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final formatters = context.formatters(ref);
     final running = scanState is ScanRunning;
     return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
@@ -211,21 +208,12 @@ class _PlannerOverviewCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.incomePlannerWorkspaceTitle,
-                      style: context.titleLabelStyle,
-                    ),
-                    const SizedBox(height: AppSpacing.s2),
-                    Text(
-                      _profileSummary(l10n, profile, cacheState),
-                      style: context.captionStyle.copyWith(height: 1.4),
-                    ),
-                  ],
+                child: Text(
+                  _profileSummary(l10n, formatters, profile, cacheState),
+                  style: context.bodyCaptionStyle,
                 ),
               ),
+              const SizedBox(width: AppSpacing.s8),
               AppBadge(
                 label: optionsStrategyModeLabel(l10n, profile.mode),
                 tone: AppBadgeTone.neutral,
@@ -289,6 +277,11 @@ class _PlannerOverviewCard extends StatelessWidget {
                 onPress: onManageUnderlyings,
                 child: Text(l10n.incomePlannerManageApprovedAction),
               ),
+              FButton(
+                variant: FButtonVariant.outline,
+                onPress: () => context.push(FinanceRoutes.planWheel),
+                child: Text(l10n.planWheelTitle),
+              ),
             ],
           ),
           if (running) ...[
@@ -305,6 +298,7 @@ class _PlannerOverviewCard extends StatelessWidget {
 
   String _profileSummary(
     AppLocalizations l10n,
+    AppFormatters formatters,
     OptionsStrategyProfile profile,
     ScanCacheState? cache,
   ) {
@@ -316,162 +310,14 @@ class _PlannerOverviewCard extends StatelessWidget {
     return l10n.incomePlannerWorkspaceProfileSummary(
       profile.minDte,
       profile.maxDte,
-      _pct(profile.maxCapitalPerTradePct),
+      formatters.percent(
+        profile.maxCapitalPerTradePct.toDouble(),
+        decimalDigits: 0,
+      ),
       scan,
-    );
-  }
-}
-
-class _WheelWorkspace extends StatelessWidget {
-  const _WheelWorkspace({required this.overlaysAsync});
-
-  final AsyncValue<List<WheelStrategyView>> overlaysAsync;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return overlaysAsync.when(
-      loading: () => const _LoadingTile(),
-      error: (error, _) => AppEmptyState.error(
-        title: l10n.commonLoadFailed,
-        message: userSafeErrorMessage(context, error),
-      ),
-      data: (overlays) {
-        if (overlays.isEmpty) {
-          return AppEmptyState(
-            icon: FLucideIcons.refreshCw,
-            title: l10n.planWheelEmptyTitle,
-            message: l10n.planWheelEmptyBody,
-            action: Column(
-              children: [
-                FButton(
-                  onPress: () => showTradeJournalSheet(context),
-                  child: Text(l10n.incomePlannerJournalAddCta),
-                ),
-                const SizedBox(height: AppSpacing.s8),
-                FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => showLeapsCallPositionSheet(context),
-                  child: Text(l10n.leapsOverlayAdd),
-                ),
-              ],
-            ),
-          );
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final overlay in overlays)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-                child: _WheelWorkspaceTile(overlay: overlay),
-              ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _WheelWorkspaceTile extends StatelessWidget {
-  const _WheelWorkspaceTile({required this.overlay});
-
-  final WheelStrategyView overlay;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final cycle = overlay.wheel;
-    final next = _wheelNextActionLabel(l10n, cycle.nextAction);
-    return SoftCard.flat(
-      onPress: () => context.push(FinanceRoutes.planWheel),
-      padding: const EdgeInsets.all(AppSpacing.s14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(child: Text(cycle.symbol, style: context.rowTitleStyle)),
-              AppBadge(
-                label: _plannerWheelStageLabel(l10n, cycle.stage),
-                tone: cycle.hasOpenPosition
-                    ? AppBadgeTone.accent
-                    : AppBadgeTone.neutral,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Text(next, style: context.bodyCaptionStyle),
-          if (cycle.nearestExpiringPosition case final position?) ...[
-            const SizedBox(height: AppSpacing.s4),
-            Text(
-              l10n.incomePlannerWheelDueSummary(
-                position.optionSymbol,
-                _daysUntil(position.expirationAt!),
-              ),
-              style: context.captionStyle,
-            ),
-          ],
-          const SizedBox(height: AppSpacing.s8),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.incomePlannerWheelOpenCount(
-                        cycle.openPositions.length,
-                      ),
-                      style: context.captionStyle,
-                    ),
-                    Text(
-                      l10n.leapsOverlayOpenCount(overlay.openPositions.length),
-                      style: context.captionStyle,
-                    ),
-                  ],
-                ),
-              ),
-              MoneyText(
-                amount: overlay.underlyingRealizedResult.toDouble(),
-                currencyCode: cycle.currency,
-                showSign: true,
-                style: context.labelStyle,
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }
 
 int _daysUntil(DateTime date) =>
     date.toUtc().difference(DateTime.now().toUtc()).inDays;
-
-String _plannerWheelStageLabel(AppLocalizations l10n, WheelStage stage) =>
-    switch (stage) {
-      WheelStage.between => l10n.planWheelStageBetween,
-      WheelStage.cashWaiting => l10n.planWheelStageCashWaiting,
-      WheelStage.shortPut => l10n.planWheelStageShortPut,
-      WheelStage.putExpired => l10n.planWheelStagePutExpired,
-      WheelStage.putAssigned => l10n.planWheelStagePutAssigned,
-      WheelStage.sharesHeld => l10n.planWheelStageSharesHeld,
-      WheelStage.shortCall => l10n.planWheelStageShortCall,
-      WheelStage.mixedOpen => l10n.planWheelStageMixedOpen,
-      WheelStage.callExpired => l10n.planWheelStageCallExpired,
-      WheelStage.callCalled => l10n.planWheelStageCallCalled,
-    };
-
-String _wheelNextActionLabel(
-  AppLocalizations l10n,
-  WheelNextAction action,
-) => switch (action) {
-  WheelNextAction.reviewOpenPositions => l10n.incomePlannerWheelNextReviewOpen,
-  WheelNextAction.waitForPut => l10n.incomePlannerWheelNextWaitPut,
-  WheelNextAction.recordPutOutcome => l10n.incomePlannerWheelNextRecordPut,
-  WheelNextAction.scanCoveredCall => l10n.incomePlannerWheelNextScanCall,
-  WheelNextAction.waitForCall => l10n.incomePlannerWheelNextWaitCall,
-  WheelNextAction.recordCallOutcome => l10n.incomePlannerWheelNextRecordCall,
-  WheelNextAction.startNewPut => l10n.incomePlannerWheelNextStartPut,
-};

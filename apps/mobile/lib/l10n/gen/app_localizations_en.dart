@@ -92,9 +92,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planRebalanceSectionSubtitle => 'Drift from target allocation';
 
   @override
-  String get planIncomeSectionTitle => 'Income strategy';
-
-  @override
   String get planIncomeSectionSubtitle => 'Dividends, Wheel & LEAPS';
 
   @override
@@ -135,13 +132,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planMyPlansTitle => 'My plans';
-
-  @override
-  String get planExploreTitle => 'Simulations & advanced strategies';
-
-  @override
-  String get planExploreSubtitle =>
-      'Explore scenarios and optional investing approaches';
 
   @override
   String planExploreActiveOptions(int count) {
@@ -388,12 +378,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String planBudgetSaveFailed(String error) {
     return 'Could not save budget: $error';
   }
-
-  @override
-  String get planWheelSectionTitle => 'Wheel cycles';
-
-  @override
-  String get planWheelSectionSubtitle => 'Sell-put + covered-call review';
 
   @override
   String get planWheelTitle => 'Wheel cycles';
@@ -10429,7 +10413,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get masterDetailBackToList => 'Back to list';
 
   @override
-  String get incomePlannerTitle => 'Income Planner';
+  String get incomePlannerTitle => 'Options workspace';
 
   @override
   String get incomePlannerAccountsEntrySubtitle =>
@@ -10701,6 +10685,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incomePlannerDetailWorstCase => 'Worst case';
 
   @override
+  String get incomePlannerDetailContractSection => 'Contract';
+
+  @override
+  String get incomePlannerDetailLiquiditySection => 'Liquidity';
+
+  @override
   String get incomePlannerDetailBestFor => 'Best for';
 
   @override
@@ -10733,10 +10723,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'This removes the entry from statistics, Wheel history, and its mirrored ledger postings.';
 
   @override
-  String get incomePlannerJournalCreditLabel => 'Credit received';
+  String get incomePlannerJournalCreditLabel =>
+      'Credit received (per contract)';
 
   @override
-  String get incomePlannerJournalDebitLabel => 'Debit paid to close';
+  String incomePlannerJournalTotalCredit(String amount) {
+    return 'Total premium: $amount';
+  }
+
+  @override
+  String get incomePlannerAssignmentNeedsAccount =>
+      'Link a brokerage account before recording an assignment — otherwise the share leg cannot be booked to the ledger.';
+
+  @override
+  String get incomePlannerJournalDebitLabel =>
+      'Debit paid to close (per contract)';
 
   @override
   String get incomePlannerJournalOptionSymbolLabel => 'Option symbol';
@@ -10817,6 +10818,198 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String incomePlannerStatsMultiCurrencyNote(String currencies) {
     return 'Amounts are shown separately because this journal contains $currencies.';
+  }
+
+  @override
+  String get incomePlannerStatsPremiumChartTitle => 'Premium by underlying';
+
+  @override
+  String optionsExplainYieldStrength(String yieldPct, String score) {
+    return 'Annualized yield $yieldPct (score $score)';
+  }
+
+  @override
+  String optionsExplainLiquidityStrength(
+    String spread,
+    int openInterest,
+    String score,
+  ) {
+    return 'Good liquidity: bid/ask spread $spread, open interest $openInterest (score $score)';
+  }
+
+  @override
+  String optionsExplainSafetyStrength(String margin, String score) {
+    return 'Margin of safety $margin from breakeven (score $score)';
+  }
+
+  @override
+  String optionsExplainIvStrength(String iv, String score) {
+    return 'Implied volatility $iv is in a resilient range (score $score)';
+  }
+
+  @override
+  String get optionsExplainIvUnknown => 'unknown';
+
+  @override
+  String optionsExplainFitStrength(String score) {
+    return 'Fits current positions (score $score)';
+  }
+
+  @override
+  String optionsExplainEventStrength(String score) {
+    return 'No earnings or macro event in the next 7 days (score $score)';
+  }
+
+  @override
+  String get optionsExplainEventUnavailable =>
+      'Event calendar unavailable; event risk is not scored';
+
+  @override
+  String optionsExplainGenericScore(String dimension, String score) {
+    return '$dimension score $score';
+  }
+
+  @override
+  String optionsExplainYieldWeak(String yieldPct, String score) {
+    return 'Lower annualized yield: $yieldPct (score $score)';
+  }
+
+  @override
+  String optionsExplainLiquidityWeak(String spread, String score) {
+    return 'Moderate liquidity: bid/ask spread $spread (score $score)';
+  }
+
+  @override
+  String optionsExplainSafetyWeak(String margin, String score) {
+    return 'Limited margin of safety: $margin (score $score)';
+  }
+
+  @override
+  String optionsExplainIvWeak(String score) {
+    return 'Implied volatility is outside the normal range (score $score)';
+  }
+
+  @override
+  String optionsExplainFitWeak(String score) {
+    return 'Only a moderate fit with current positions (score $score)';
+  }
+
+  @override
+  String optionsExplainEventWeak(String score) {
+    return 'Execution needs caution inside the event window (score $score)';
+  }
+
+  @override
+  String get optionsExplainEventCheck =>
+      'Check earnings and macro dates before placing the trade';
+
+  @override
+  String optionsExplainSummaryPut(
+    String symbol,
+    int dte,
+    String strike,
+    String yieldPct,
+    String margin,
+  ) {
+    return '$symbol ${dte}DTE sell put @ $strike — annualized $yieldPct, margin of safety $margin';
+  }
+
+  @override
+  String optionsExplainSummaryCall(
+    String symbol,
+    int dte,
+    String strike,
+    String yieldPct,
+    String margin,
+  ) {
+    return '$symbol ${dte}DTE covered call @ $strike — annualized $yieldPct, margin of safety $margin';
+  }
+
+  @override
+  String get optionsExplainBestForPutConservative =>
+      'Best for conservative cash-flow preference: higher margin of safety and liquidity first.';
+
+  @override
+  String get optionsExplainBestForPutBalanced =>
+      'Best for balanced cash-flow preference: balances yield against downside risk.';
+
+  @override
+  String get optionsExplainBestForPutAggressive =>
+      'Best when you accept higher assignment probability in exchange for annualized yield.';
+
+  @override
+  String get optionsExplainBestForCallConservative =>
+      'Best for conservative enhancement: sell farther OTM calls with lower assignment probability.';
+
+  @override
+  String get optionsExplainBestForCallBalanced =>
+      'Best for balanced enhancement: add income without materially disrupting the position.';
+
+  @override
+  String get optionsExplainBestForCallAggressive =>
+      'Best when you are willing to accept assignment to realize gains.';
+
+  @override
+  String get optionsExplainAvoidPut =>
+      'Avoid if you are not willing to buy 100 shares at the strike when assigned.';
+
+  @override
+  String get optionsExplainAvoidCall =>
+      'Avoid if you are not willing to sell 100 shares at the strike.';
+
+  @override
+  String optionsExplainWorstPut(
+    String symbol,
+    String strike,
+    String breakeven,
+    String cash,
+  ) {
+    return 'If $symbol falls below $strike, you would buy 100 shares at an effective cost of $breakeven, using $cash cash.';
+  }
+
+  @override
+  String optionsExplainWorstCall(String symbol, String strike, String cap) {
+    return 'If $symbol rises to $strike, you would sell 100 shares at $strike and miss upside above that level; total proceeds are capped at $cap.';
+  }
+
+  @override
+  String optionsLedgerPremium(String symbol) {
+    return 'Options premium $symbol';
+  }
+
+  @override
+  String optionsLedgerCloseDebit(String symbol) {
+    return 'Options close debit $symbol';
+  }
+
+  @override
+  String optionsLedgerPutAssigned(String symbol) {
+    return 'Put assigned $symbol';
+  }
+
+  @override
+  String optionsLedgerCallAssigned(String symbol) {
+    return 'Covered call assigned $symbol';
+  }
+
+  @override
+  String optionsLedgerLeapsOpen(String symbol) {
+    return 'LEAPS open $symbol';
+  }
+
+  @override
+  String optionsLedgerLeapsClose(String symbol) {
+    return 'LEAPS close $symbol';
+  }
+
+  @override
+  String optionsLedgerLeapsExercise(String symbol) {
+    return 'LEAPS exercise $symbol';
+  }
+
+  @override
+  String optionsLedgerLeapsExpired(String symbol) {
+    return 'LEAPS expired $symbol';
   }
 
   @override
@@ -10980,13 +11173,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'High delta must be at least the low delta.';
 
   @override
-  String get incomePlannerWorkspaceTitle => 'Options cash-flow workspace';
-
-  @override
   String get incomePlannerWorkspaceOpportunities => 'Opportunities';
-
-  @override
-  String get incomePlannerWorkspaceWheel => 'Wheel';
 
   @override
   String get incomePlannerWorkspaceJournal => 'Journal';
@@ -11215,10 +11402,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get incomePlannerWheelRealizedIncome => 'Realized net income';
+  String incomePlannerWheelExpiredSummary(String position, int days) {
+    return '$position · expired $days days ago — record the outcome';
+  }
 
   @override
-  String get incomePlannerWheelNextActionTitle => 'Next checkpoint';
+  String get incomePlannerWheelRealizedIncome => 'Realized net income';
 
   @override
   String get incomePlannerWheelOpenPositionsTitle => 'Open positions';
@@ -15454,30 +15643,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String leapsOverlayCoverageValue(String percent) {
     return '$percent% covered';
   }
-
-  @override
-  String get leapsOverlayRiskStacked =>
-      'Wheel and LEAPS are both exposed to an underlying decline. The long call does not hedge put assignment.';
-
-  @override
-  String get leapsOverlayRiskCost =>
-      'Open LEAPS premium is greater than realized Wheel income.';
-
-  @override
-  String get leapsOverlayRiskDelta =>
-      'Delta is missing, so total upside exposure cannot be calculated.';
-
-  @override
-  String get leapsOverlayRiskMark =>
-      'Current mark is missing; unrealized P&L is unavailable.';
-
-  @override
-  String get leapsOverlayRiskExpiry =>
-      'A LEAPS call has 180 days or less remaining. Review roll, close, exercise, and tax consequences.';
-
-  @override
-  String get leapsOverlayRiskDividend =>
-      'A long call does not receive dividends unless shares are acquired before the ex-dividend date.';
 
   @override
   String get leapsOverlayOptionSymbol => 'Call contract';

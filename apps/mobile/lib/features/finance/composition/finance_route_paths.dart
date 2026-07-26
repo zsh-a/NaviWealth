@@ -36,12 +36,12 @@ abstract final class FinanceRoutes {
   static const planIncome = '/plan/income';
   static const planIncomeOptions = '/plan/income/options';
   static const planIncomeStats = '/plan/income/stats';
+  static const planWheel = '/plan/income/wheel';
   static const planDca = '/plan/dca';
   static const planBudget = '/plan/budget';
   static const planExpenseCategories = '/plan/expense-categories';
   static const planRunway = '/plan/runway';
   static const planLifeEvents = '/plan/life-events';
-  static const planWheel = '/plan/income/wheel';
 
   static String wealthAsset(String id) =>
       '/wealth/assets/${Uri.encodeComponent(id)}';
@@ -140,12 +140,12 @@ abstract final class FinanceRouteNames {
   static const planIncome = 'plan-income';
   static const planIncomeOptions = 'plan-income-options';
   static const planIncomeStats = 'plan-income-stats';
+  static const planWheel = 'plan-wheel';
   static const planDca = 'plan-dca';
   static const planBudget = 'plan-budget';
   static const planExpenseCategories = 'plan-expense-categories';
   static const planRunway = 'plan-runway';
   static const planLifeEvents = 'plan-life-events';
-  static const planWheel = 'plan-wheel';
 
   static const activity = 'activity';
   static const activityEntryDetail = 'activity-entry-detail';

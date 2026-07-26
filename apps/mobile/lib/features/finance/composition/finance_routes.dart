@@ -50,7 +50,8 @@ import 'package:naviwealth/features/finance/options_income/ui/income_planner/inc
     deferred as income_planner_lib;
 import 'package:naviwealth/features/finance/options_income/ui/options_trade_stats_page.dart'
     deferred as options_stats_lib;
-import 'package:naviwealth/features/finance/options_income/ui/wheel_lifecycle_page.dart';
+import 'package:naviwealth/features/finance/options_income/ui/wheel_lifecycle_page.dart'
+    deferred as wheel_lib;
 import 'package:naviwealth/features/finance/runway/ui/money_runway_page.dart';
 
 import '../../../core/shell/deferred_route.dart';
@@ -438,6 +439,14 @@ StatefulShellRoute financeShellRoute() {
                 ),
               ),
               GoRoute(
+                path: 'income/wheel',
+                name: FinanceRouteNames.planWheel,
+                builder: (context, state) => DeferredRoute(
+                  load: wheel_lib.loadLibrary,
+                  builder: (_) => wheel_lib.WheelLifecyclePage(),
+                ),
+              ),
+              GoRoute(
                 path: 'dca',
                 name: FinanceRouteNames.planDca,
                 builder: (context, state) => DeferredRoute(
@@ -465,11 +474,6 @@ StatefulShellRoute financeShellRoute() {
                 name: FinanceRouteNames.planExpenseCategories,
                 builder: (context, state) => const ExpenseCategoriesPage(),
               ),
-              GoRoute(
-                path: 'income/wheel',
-                name: FinanceRouteNames.planWheel,
-                builder: (context, state) => const WheelLifecyclePage(),
-              ),
             ],
           ),
         ],
@@ -489,6 +493,7 @@ Future<void> preloadFinanceDeferredRoutesForTest() async {
     income_strategy_lib.loadLibrary(),
     income_planner_lib.loadLibrary(),
     options_stats_lib.loadLibrary(),
+    wheel_lib.loadLibrary(),
     liabilities_lib.loadLibrary(),
     liability_detail_lib.loadLibrary(),
     physical_detail_lib.loadLibrary(),

@@ -24,17 +24,20 @@ void main() {
     expect(summary.highFor(DomainScope.knowledge), 0);
   });
 
-  test('primaryMetric falls back to total signals when calm of high-priority', () {
-    const summary = LifeHeroSummary(
-      domainCount: 2,
-      signalCount: 4,
-      highPriorityCount: 0,
-    );
+  test(
+    'primaryMetric falls back to total signals when calm of high-priority',
+    () {
+      const summary = LifeHeroSummary(
+        domainCount: 2,
+        signalCount: 4,
+        highPriorityCount: 0,
+      );
 
-    expect(summary.primaryMetric, 4);
-    expect(summary.hasAttention, isFalse);
-    expect(summary.isCalm, isFalse);
-  });
+      expect(summary.primaryMetric, 4);
+      expect(summary.hasAttention, isFalse);
+      expect(summary.isCalm, isFalse);
+    },
+  );
 
   test('calm when no signals', () {
     const summary = LifeHeroSummary(

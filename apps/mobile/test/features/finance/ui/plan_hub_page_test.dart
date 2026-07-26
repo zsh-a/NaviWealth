@@ -196,14 +196,12 @@ void main() {
     expect(find.text('62% used this month'), findsOneWidget);
 
     await tester.scrollUntilVisible(
-      find.text(l10n.planExploreTitle),
+      find.text(l10n.incomeStrategyTitle),
       160,
       scrollable: find.byType(Scrollable).last,
     );
-    await tester.tap(find.text(l10n.planExploreTitle));
-    await tester.pumpAndSettle();
     expect(find.text(l10n.incomeStrategyTitle), findsOneWidget);
-    expect(find.text(l10n.planWheelSectionTitle), findsNothing);
+    expect(find.text(l10n.planExploreActiveOptions(1)), findsOneWidget);
   });
 
   testWidgets('plan hub stays bounded on a narrow scaled viewport', (
@@ -224,11 +222,11 @@ void main() {
 
     expect(find.text('Needs attention'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Simulations & advanced strategies'),
+      find.text('Income strategy'),
       160,
       scrollable: find.byType(Scrollable).last,
     );
-    expect(find.text('Simulations & advanced strategies'), findsOneWidget);
+    expect(find.text('Income strategy'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -276,14 +274,10 @@ void main() {
     await tester.pump();
 
     await tester.scrollUntilVisible(
-      find.text(l10n.planExploreTitle),
+      find.text(l10n.incomeStrategyTitle),
       160,
       scrollable: find.byType(Scrollable).last,
     );
-    await tester.tap(find.text(l10n.planExploreTitle));
-    await tester.pumpAndSettle();
-
-    await tester.ensureVisible(find.text(l10n.incomeStrategyTitle));
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.incomeStrategyTitle));
     await tester.pumpAndSettle();

@@ -1,7 +1,9 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -33,14 +35,15 @@ Future<void> showOpportunityDetailSheet(
   );
 }
 
-class _DetailBody extends StatelessWidget {
+class _DetailBody extends ConsumerWidget {
   const _DetailBody({required this.opportunity});
 
   final OptionsOpportunity opportunity;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final formatters = context.formatters(ref);
     final exp = opportunity.explanation;
     final metrics = opportunity.metrics;
     final colors = context.theme.colors;
@@ -48,6 +51,10 @@ class _DetailBody extends StatelessWidget {
     final expiry = MaterialLocalizations.of(
       context,
     ).formatShortDate(contract.expiration.toLocal());
+    String pct(Decimal value) =>
+        formatters.percent(value.toDouble(), decimalDigits: 1);
+    String money(Money value) =>
+        formatters.currency(value.amount, code: value.currency);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20),
       child: Column(
@@ -56,49 +63,11 @@ class _DetailBody extends StatelessWidget {
           _Section(
             title: l10n.incomePlannerDetailWorstCase,
             color: colors.destructive,
-            child: Text(
-              exp.worstCase,
-              style: context.theme.typography.body.sm.copyWith(height: 1.4),
-            ),
+            child: Text(exp.worstCase, style: context.bodyCaptionStyle),
           ),
-          const SizedBox(height: AppSpacing.s12),
+          const SizedBox(height: AppSpacing.s16),
           _StatsGrid(
             entries: <(String, Widget)>[
-              (
-                l10n.incomePlannerMetricUnderlyingPrice,
-                MoneyText(
-                  amount: contract.underlyingPrice.amount.toDouble(),
-                  currencyCode: contract.underlyingPrice.currency,
-                  symbolStyle: MoneySymbolStyle.isoCode,
-                  style: context.labelStyle,
-                ),
-              ),
-              (
-                l10n.incomePlannerMetricStrike,
-                MoneyText(
-                  amount: contract.strike.amount.toDouble(),
-                  currencyCode: contract.strike.currency,
-                  symbolStyle: MoneySymbolStyle.isoCode,
-                  style: context.labelStyle,
-                ),
-              ),
-              (
-                l10n.incomePlannerMetricOptionPrice,
-                MoneyText(
-                  amount: contract.mid.amount.toDouble(),
-                  currencyCode: contract.mid.currency,
-                  symbolStyle: MoneySymbolStyle.isoCode,
-                  style: context.labelStyle,
-                ),
-              ),
-              (
-                l10n.incomePlannerMetricBidAsk,
-                Text(
-                  '${_moneyLabel(contract.bid)} / '
-                  '${_moneyLabel(contract.ask)}',
-                  style: context.labelStyle,
-                ),
-              ),
               (
                 l10n.incomePlannerMetricPremiumTotal,
                 MoneyText(
@@ -107,6 +76,10 @@ class _DetailBody extends StatelessWidget {
                   symbolStyle: MoneySymbolStyle.isoCode,
                   style: context.labelStyle,
                 ),
+              ),
+              (
+                l10n.incomePlannerMetricAnnualized,
+                Text(pct(metrics.annualizedYield), style: context.labelStyle),
               ),
               (
                 l10n.incomePlannerMetricBreakeven,
@@ -127,50 +100,101 @@ class _DetailBody extends StatelessWidget {
                 ),
               ),
               (
-                l10n.incomePlannerMetricAnnualized,
-                Text(_pct(metrics.annualizedYield), style: context.labelStyle),
-              ),
-              (
                 l10n.incomePlannerMetricMargin,
-                Text(_pct(metrics.marginOfSafety), style: context.labelStyle),
-              ),
-              (
-                l10n.incomePlannerMetricDte,
-                Text('${contract.dte}', style: context.labelStyle),
-              ),
-              (
-                l10n.incomePlannerMetricExpiration,
-                Text(expiry, style: context.labelStyle),
-              ),
-              (
-                l10n.incomePlannerMetricDelta,
-                Text(
-                  contract.delta?.toStringAsFixed(2) ?? '—',
-                  style: context.labelStyle,
-                ),
-              ),
-              (
-                l10n.incomePlannerMetricIv,
-                Text(
-                  contract.impliedVolatility == null
-                      ? '—'
-                      : _pct(contract.impliedVolatility!),
-                  style: context.labelStyle,
-                ),
-              ),
-              (
-                l10n.incomePlannerMetricOpenInterest,
-                Text('${contract.openInterest}', style: context.labelStyle),
-              ),
-              (
-                l10n.incomePlannerMetricVolume,
-                Text('${contract.volume}', style: context.labelStyle),
-              ),
-              (
-                l10n.incomePlannerMetricSpread,
-                Text(_pct(contract.bidAskSpreadPct), style: context.labelStyle),
+                Text(pct(metrics.marginOfSafety), style: context.labelStyle),
               ),
             ],
+          ),
+          const SizedBox(height: AppSpacing.s16),
+          _Section(
+            title: l10n.incomePlannerDetailContractSection,
+            color: colors.mutedForeground,
+            child: _StatsGrid(
+              entries: <(String, Widget)>[
+                (
+                  l10n.incomePlannerMetricUnderlyingPrice,
+                  MoneyText(
+                    amount: contract.underlyingPrice.amount.toDouble(),
+                    currencyCode: contract.underlyingPrice.currency,
+                    symbolStyle: MoneySymbolStyle.isoCode,
+                    style: context.labelStyle,
+                  ),
+                ),
+                (
+                  l10n.incomePlannerMetricStrike,
+                  MoneyText(
+                    amount: contract.strike.amount.toDouble(),
+                    currencyCode: contract.strike.currency,
+                    symbolStyle: MoneySymbolStyle.isoCode,
+                    style: context.labelStyle,
+                  ),
+                ),
+                (
+                  l10n.incomePlannerMetricOptionPrice,
+                  MoneyText(
+                    amount: contract.mid.amount.toDouble(),
+                    currencyCode: contract.mid.currency,
+                    symbolStyle: MoneySymbolStyle.isoCode,
+                    style: context.labelStyle,
+                  ),
+                ),
+                (
+                  l10n.incomePlannerMetricDte,
+                  Text('${contract.dte}', style: context.labelStyle),
+                ),
+                (
+                  l10n.incomePlannerMetricExpiration,
+                  Text(expiry, style: context.labelStyle),
+                ),
+                (
+                  l10n.incomePlannerMetricDelta,
+                  Text(
+                    contract.delta?.toStringAsFixed(2) ?? '—',
+                    style: context.labelStyle,
+                  ),
+                ),
+                (
+                  l10n.incomePlannerMetricIv,
+                  Text(
+                    contract.impliedVolatility == null
+                        ? '—'
+                        : pct(contract.impliedVolatility!),
+                    style: context.labelStyle,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s16),
+          _Section(
+            title: l10n.incomePlannerDetailLiquiditySection,
+            color: colors.mutedForeground,
+            child: _StatsGrid(
+              entries: <(String, Widget)>[
+                (
+                  l10n.incomePlannerMetricBidAsk,
+                  Text(
+                    '${money(contract.bid)} / ${money(contract.ask)}',
+                    style: context.labelStyle,
+                  ),
+                ),
+                (
+                  l10n.incomePlannerMetricSpread,
+                  Text(
+                    pct(contract.bidAskSpreadPct),
+                    style: context.labelStyle,
+                  ),
+                ),
+                (
+                  l10n.incomePlannerMetricOpenInterest,
+                  Text('${contract.openInterest}', style: context.labelStyle),
+                ),
+                (
+                  l10n.incomePlannerMetricVolume,
+                  Text('${contract.volume}', style: context.labelStyle),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: AppSpacing.s16),
           _Section(
@@ -191,7 +215,7 @@ class _DetailBody extends StatelessWidget {
             label: l10n.incomePlannerDetailBestFor,
             value: exp.bestFor,
           ),
-          const SizedBox(height: AppSpacing.s4),
+          const SizedBox(height: AppSpacing.s8),
           _LabeledLine(
             label: l10n.incomePlannerDetailAvoidIf,
             value: exp.avoidIf,
@@ -274,10 +298,7 @@ class _Bullets extends StatelessWidget {
         for (final line in lines)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
-            child: Text(
-              '• $line',
-              style: context.theme.typography.body.sm.copyWith(height: 1.45),
-            ),
+            child: Text('• $line', style: context.bodyCaptionStyle),
           ),
       ],
     );
@@ -292,33 +313,30 @@ class _LabeledLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '$label：',
+          label,
           style: context.captionLabelStyle.copyWith(
             color: context.theme.colors.mutedForeground,
           ),
         ),
-        Expanded(
-          child: Text(
-            value,
-            style: context.theme.typography.body.sm.copyWith(height: 1.4),
-          ),
-        ),
+        const SizedBox(height: AppSpacing.s2),
+        Text(value, style: context.bodyCaptionStyle),
       ],
     );
   }
 }
 
-class _ScoreBreakdown extends StatelessWidget {
+class _ScoreBreakdown extends ConsumerWidget {
   const _ScoreBreakdown({required this.breakdown});
 
   final Map<String, Decimal> breakdown;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final formatters = context.formatters(ref);
     final sorted = breakdown.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     return Column(
@@ -344,7 +362,10 @@ class _ScoreBreakdown extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s8),
-                Text(_pct(entry.value), style: context.captionLabelStyle),
+                Text(
+                  formatters.percent(entry.value.toDouble(), decimalDigits: 1),
+                  style: context.captionLabelStyle,
+                ),
               ],
             ),
           ),
@@ -364,13 +385,4 @@ String _scoreLabel(BuildContext context, String key) {
     'event_safety' || 'eventSafety' => l10n.incomePlannerScoreEventSafety,
     _ => key,
   };
-}
-
-String _pct(Decimal value) {
-  final pct = (value * Decimal.fromInt(100)).toStringAsFixed(1);
-  return '$pct%';
-}
-
-String _moneyLabel(Money money) {
-  return '${money.amount.toString()} ${money.currency}';
 }

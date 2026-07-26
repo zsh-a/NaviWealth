@@ -2,11 +2,11 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/core/persistence/domain_enums.dart';
+import 'package:naviwealth/core/forms/form_dirty_guard.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
-import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/shared/ui/forms/symbol_field.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../composition/income_strategy_presentation.dart';
@@ -14,20 +14,31 @@ import '../data/providers.dart';
 import '../domain/income_strategy.dart';
 import '../domain/income_strategy_plan.dart';
 
+/// The single write surface for per-underlying income strategy plans.
+///
+/// Owns every sleeve intent (dividends / Wheel / LEAPS) including the
+/// Wheel put/call approval and price bounds that used to live in the
+/// legacy approved-underlying sheet.
 Future<void> showIncomeStrategyPlanSheet(
   BuildContext context, {
   IncomeStrategyAsset? asset,
   IncomeStrategyPlan? existing,
-}) => showAppFormSheet<void>(
+}) => showGuardedFormSheet<void>(
   context: context,
-  builder: (_) => _IncomeStrategyPlanForm(asset: asset, existing: existing),
+  builder: (_, dirty) =>
+      _IncomeStrategyPlanForm(asset: asset, existing: existing, dirty: dirty),
 );
 
 class _IncomeStrategyPlanForm extends ConsumerStatefulWidget {
-  const _IncomeStrategyPlanForm({this.asset, this.existing});
+  const _IncomeStrategyPlanForm({
+    required this.dirty,
+    this.asset,
+    this.existing,
+  });
 
   final IncomeStrategyAsset? asset;
   final IncomeStrategyPlan? existing;
+  final FormDirtyController dirty;
 
   @override
   ConsumerState<_IncomeStrategyPlanForm> createState() =>
@@ -36,6 +47,7 @@ class _IncomeStrategyPlanForm extends ConsumerStatefulWidget {
 
 class _IncomeStrategyPlanFormState
     extends ConsumerState<_IncomeStrategyPlanForm> {
+  final _formKey = GlobalKey<FormState>();
   late Set<IncomeStrategySleeveKind> _enabled;
   final Map<IncomeStrategySleeveKind, Map<IncomeStrategySettingKey, bool>>
   _boolSettings = {};
@@ -44,7 +56,7 @@ class _IncomeStrategyPlanFormState
     Map<IncomeStrategySettingKey, TextEditingController>
   >
   _decimalSettings = {};
-  String? _assetId;
+  LocalSecurityChoice? _choice;
   bool _advanced = false;
   bool _busy = false;
   late final TextEditingController _capitalBudget;
@@ -52,12 +64,13 @@ class _IncomeStrategyPlanFormState
   late final TextEditingController _maxPositionWeight;
   late final TextEditingController _notes;
 
+  bool get _isEdit => widget.existing != null || widget.asset != null;
+
   @override
   void initState() {
     super.initState();
     final existing = widget.existing;
     final modules = ref.read(incomeStrategyModulesProvider);
-    _assetId = existing?.assetId ?? widget.asset?.assetId;
     _enabled =
         existing?.enabledSleeves.toSet() ??
         modules.map((module) => module.id).toSet();
@@ -91,6 +104,13 @@ class _IncomeStrategyPlanFormState
           : existing!.maxPositionWeight! * Decimal.fromInt(100),
     );
     _notes = TextEditingController(text: existing?.notes ?? '');
+    widget.dirty.bindTextControllers([
+      _capitalBudget,
+      _annualIncomeTarget,
+      _maxPositionWeight,
+      _notes,
+      for (final values in _decimalSettings.values) ...values.values,
+    ]);
   }
 
   TextEditingController _controller(Decimal? value) =>
@@ -112,12 +132,23 @@ class _IncomeStrategyPlanFormState
 
   Decimal? _decimal(TextEditingController controller) {
     final value = controller.text.trim();
-    return value.isEmpty ? null : Decimal.parse(value);
+    return value.isEmpty ? null : Decimal.tryParse(value);
   }
 
-  Future<void> _save(List<Asset> assets) async {
+  String? _assetIdForSave() {
+    final existing = widget.existing;
+    if (existing != null) return existing.assetId;
+    final asset = widget.asset;
+    if (asset != null) return asset.assetId;
+    final choice = _choice;
+    if (choice == null) return null;
+    return Asset.idFor(choice.market, choice.symbol);
+  }
+
+  Future<void> _save() async {
     final l10n = AppLocalizations.of(context);
-    final assetId = _assetId;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final assetId = _assetIdForSave();
     if (assetId == null || _enabled.isEmpty) {
       AppMessenger.show(
         context,
@@ -128,26 +159,17 @@ class _IncomeStrategyPlanFormState
       );
       return;
     }
-    final source = assets.where((asset) => asset.id == assetId).firstOrNull;
+    final existing = widget.existing;
     final fallback = widget.asset;
-    if (source == null && fallback == null) return;
-    final symbol = source?.symbol ?? fallback!.symbol;
-    final market =
-        source?.market ?? fallback?.market ?? inferAssetMarket(symbol).wire;
-    final currency = source?.currency ?? fallback?.currency ?? 'USD';
+    final choice = _choice;
+    final symbol =
+        existing?.symbol ?? fallback?.symbol ?? choice!.symbol.toUpperCase();
+    final market = existing?.market ?? fallback?.market ?? choice!.market.wire;
+    final currency =
+        existing?.currency ?? fallback?.currency ?? choice!.currency;
     final maxWeightPercent = _decimal(_maxPositionWeight);
-    if (!_validNonNegativeFields() ||
-        (maxWeightPercent != null &&
-            (maxWeightPercent < Decimal.zero ||
-                maxWeightPercent > Decimal.fromInt(100)))) {
-      AppMessenger.show(
-        context,
-        ToastKind.error,
-        l10n.incomeStrategyPlanNumberInvalid,
-      );
-      return;
-    }
     setState(() => _busy = true);
+    widget.dirty.busy = true;
     try {
       final modules = ref.read(incomeStrategyModulesProvider);
       final intents = <IncomeStrategySleeveKind, IncomeStrategySleeveIntent>{};
@@ -189,33 +211,16 @@ class _IncomeStrategyPlanFormState
               ),
         notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
       );
+      widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
         AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
       }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _busy = false);
     }
-  }
-
-  bool _validNonNegativeFields() {
-    for (final controller in [
-      _capitalBudget,
-      _annualIncomeTarget,
-      for (final values in _decimalSettings.values) ...values.values,
-    ]) {
-      final value = controller.text.trim();
-      if (value.isEmpty) continue;
-      final parsed = Decimal.tryParse(value);
-      if (parsed == null || parsed < Decimal.zero) return false;
-    }
-    return Decimal.tryParse(
-          _maxPositionWeight.text.trim().isEmpty
-              ? '0'
-              : _maxPositionWeight.text.trim(),
-        ) !=
-        null;
   }
 
   Future<void> _delete() async {
@@ -233,25 +238,50 @@ class _IncomeStrategyPlanFormState
     );
     if (confirmed != true || !mounted) return;
     setState(() => _busy = true);
+    widget.dirty.busy = true;
     try {
       final repository = await ref.read(
         incomeStrategyPlanRepositoryProvider.future,
       );
       await repository.remove(existing);
+      widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
         AppMessenger.show(context, ToastKind.error, l10n.commonDeleteFailed);
       }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  String? _validateNonNegative(AppLocalizations l10n, String? value) {
+    final raw = (value ?? '').trim();
+    if (raw.isEmpty) return null;
+    final parsed = Decimal.tryParse(raw);
+    if (parsed == null || parsed < Decimal.zero) {
+      return l10n.incomeStrategyPlanNumberInvalid;
+    }
+    return null;
+  }
+
+  String? _validateWeight(AppLocalizations l10n, String? value) {
+    final raw = (value ?? '').trim();
+    if (raw.isEmpty) return null;
+    final parsed = Decimal.tryParse(raw);
+    if (parsed == null ||
+        parsed < Decimal.zero ||
+        parsed > Decimal.fromInt(100)) {
+      return l10n.incomeStrategyPlanNumberInvalid;
+    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final assetsAsync = ref.watch(allAssetsStreamProvider);
+    final modules = ref.watch(incomeStrategyModulesProvider);
     return AppSheet(
       title: widget.existing == null
           ? l10n.incomeStrategyPlanAdd
@@ -260,149 +290,140 @@ class _IncomeStrategyPlanFormState
       footer: AppSheetFooter(
         submitLabel: l10n.incomePlannerSaveAction,
         cancelLabel: l10n.commonCancel,
-        onSubmit: () => _save(assetsAsync.value ?? const []),
+        onSubmit: _save,
         busy: _busy,
       ),
-      child: assetsAsync.whenOrLoading(
-        context: context,
-        data: (allAssets) {
-          final modules = ref.watch(incomeStrategyModulesProvider);
-          final assets = allAssets
-              .where((asset) => kSecuritiesAssetTypes.contains(asset.type))
-              .toList(growable: false);
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (widget.asset == null && widget.existing == null)
-                FSelect<String>.rich(
-                  format: (id) =>
-                      assets
-                          .where((asset) => asset.id == id)
-                          .map((asset) => asset.symbol)
-                          .firstOrNull ??
-                      '',
-                  control: FSelectControl<String>.lifted(
-                    value: _assetId,
-                    onChange: (value) => setState(() => _assetId = value),
-                  ),
-                  label: Text(l10n.incomeStrategyPlanAsset),
-                  children: [
-                    for (final asset in assets)
-                      FSelectItem<String>(
-                        value: asset.id,
-                        title: Text(
-                          '${asset.symbol} · ${asset.name ?? asset.market ?? ''}',
-                        ),
-                      ),
-                  ],
-                )
-              else
-                _ReadOnlyAsset(
-                  label: l10n.incomeStrategyPlanAsset,
-                  value:
-                      widget.asset?.displayLabel ??
-                      widget.existing?.symbol ??
-                      '—',
-                ),
-              const SizedBox(height: AppSpacing.s16),
-              Text(
-                l10n.incomeStrategyPlanSleeves,
-                style: context.captionLabelStyle,
+      child: Form(
+        key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (_isEdit)
+              _ReadOnlyAsset(
+                label: l10n.incomeStrategyPlanAsset,
+                value:
+                    widget.asset?.displayLabel ?? widget.existing?.symbol ?? '',
+              )
+            else
+              SymbolField(
+                label: l10n.incomeStrategyPlanAsset,
+                hint: l10n.incomePlannerSymbolHint,
+                initialValue: _choice,
+                onChanged: (choice) {
+                  widget.dirty.markDirty();
+                  setState(() => _choice = choice);
+                },
               ),
-              const SizedBox(height: AppSpacing.s6),
-              for (final module in modules) ...[
-                _ToggleRow(
-                  label: module.presentation.label(l10n),
-                  value: _enabled.contains(module.id),
-                  onChanged: (value) => setState(() {
+            const SizedBox(height: AppSpacing.s16),
+            Text(
+              l10n.incomeStrategyPlanSleeves,
+              style: context.captionLabelStyle,
+            ),
+            const SizedBox(height: AppSpacing.s6),
+            for (final module in modules) ...[
+              _ToggleRow(
+                label: module.presentation.label(l10n),
+                value: _enabled.contains(module.id),
+                onChanged: (value) {
+                  widget.dirty.markDirty();
+                  setState(() {
                     if (value) {
                       _enabled.add(module.id);
                     } else {
                       _enabled.remove(module.id);
                     }
-                  }),
-                ),
-                if (_enabled.contains(module.id))
-                  for (final setting in module.presentation.settings.where(
-                    (setting) =>
-                        setting.control == IncomeStrategySettingControl.toggle,
-                  ))
-                    Padding(
-                      padding: const EdgeInsets.only(left: AppSpacing.s16),
-                      child: _ToggleRow(
-                        label: setting.label(l10n),
-                        value:
-                            _boolSettings[module.id]?[setting.key] ??
-                            setting.defaultBool,
-                        onChanged: (value) => setState(() {
+                  });
+                },
+              ),
+              if (_enabled.contains(module.id))
+                for (final setting in module.presentation.settings.where(
+                  (setting) =>
+                      setting.control == IncomeStrategySettingControl.toggle,
+                ))
+                  Padding(
+                    padding: const EdgeInsets.only(left: AppSpacing.s16),
+                    child: _ToggleRow(
+                      label: setting.label(l10n),
+                      value:
+                          _boolSettings[module.id]?[setting.key] ??
+                          setting.defaultBool,
+                      onChanged: (value) {
+                        widget.dirty.markDirty();
+                        setState(() {
                           _boolSettings[module.id]?[setting.key] = value;
-                        }),
-                      ),
+                        });
+                      },
                     ),
-              ],
-              const SizedBox(height: AppSpacing.s16),
-              AppDisclosureHeader(
-                title: l10n.incomeStrategyPlanLimits,
-                subtitle: l10n.incomeStrategyPlanLimitsHint,
-                expanded: _advanced,
-                onToggle: () => setState(() => _advanced = !_advanced),
-              ),
-              AnimatedSizeFade(
-                visible: _advanced,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: AppSpacing.s12),
-                  child: Column(
-                    children: [
-                      _DecimalField(
-                        controller: _capitalBudget,
-                        label: l10n.incomeStrategyPlanCapitalBudget,
-                      ),
-                      const SizedBox(height: AppSpacing.s12),
-                      _DecimalField(
-                        controller: _annualIncomeTarget,
-                        label: l10n.incomeStrategyPlanAnnualTarget,
-                      ),
-                      const SizedBox(height: AppSpacing.s12),
-                      _DecimalField(
-                        controller: _maxPositionWeight,
-                        label: l10n.incomeStrategyPlanMaxWeight,
-                      ),
-                      for (final module in modules)
-                        if (_enabled.contains(module.id))
-                          for (final setting
-                              in module.presentation.settings.where(
-                                (setting) =>
-                                    setting.control ==
-                                    IncomeStrategySettingControl.decimal,
-                              )) ...[
-                            const SizedBox(height: AppSpacing.s12),
-                            _DecimalField(
-                              controller:
-                                  _decimalSettings[module.id]![setting.key]!,
-                              label: setting.label(l10n),
-                            ),
-                          ],
-                    ],
                   ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.s16),
-              FTextFormField(
-                control: FTextFieldControl.managed(controller: _notes),
-                label: Text(l10n.incomePlannerJournalNotesLabel),
-                maxLines: 3,
-              ),
-              if (widget.existing != null) ...[
-                const SizedBox(height: AppSpacing.s20),
-                FButton(
-                  variant: FButtonVariant.destructive,
-                  onPress: _busy ? null : _delete,
-                  child: Text(l10n.commonDelete),
-                ),
-              ],
             ],
-          );
-        },
+            const SizedBox(height: AppSpacing.s16),
+            AppDisclosureHeader(
+              title: l10n.incomeStrategyPlanLimits,
+              subtitle: l10n.incomeStrategyPlanLimitsHint,
+              expanded: _advanced,
+              onToggle: () => setState(() => _advanced = !_advanced),
+            ),
+            AnimatedSizeFade(
+              visible: _advanced,
+              child: Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.s12),
+                child: Column(
+                  children: [
+                    _DecimalField(
+                      controller: _capitalBudget,
+                      label: l10n.incomeStrategyPlanCapitalBudget,
+                      validator: (value) => _validateNonNegative(l10n, value),
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    _DecimalField(
+                      controller: _annualIncomeTarget,
+                      label: l10n.incomeStrategyPlanAnnualTarget,
+                      validator: (value) => _validateNonNegative(l10n, value),
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    _DecimalField(
+                      controller: _maxPositionWeight,
+                      label: l10n.incomeStrategyPlanMaxWeight,
+                      validator: (value) => _validateWeight(l10n, value),
+                    ),
+                    for (final module in modules)
+                      if (_enabled.contains(module.id))
+                        for (final setting
+                            in module.presentation.settings.where(
+                              (setting) =>
+                                  setting.control ==
+                                  IncomeStrategySettingControl.decimal,
+                            )) ...[
+                          const SizedBox(height: AppSpacing.s12),
+                          _DecimalField(
+                            controller:
+                                _decimalSettings[module.id]![setting.key]!,
+                            label: setting.label(l10n),
+                            validator: (value) =>
+                                _validateNonNegative(l10n, value),
+                          ),
+                        ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            FTextFormField(
+              control: FTextFieldControl.managed(controller: _notes),
+              label: Text(l10n.incomePlannerJournalNotesLabel),
+              maxLines: 3,
+            ),
+            if (widget.existing != null) ...[
+              const SizedBox(height: AppSpacing.s20),
+              FButton(
+                variant: FButtonVariant.destructive,
+                onPress: _busy ? null : _delete,
+                child: Text(l10n.commonDelete),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -450,15 +471,21 @@ class _ToggleRow extends StatelessWidget {
 }
 
 class _DecimalField extends StatelessWidget {
-  const _DecimalField({required this.controller, required this.label});
+  const _DecimalField({
+    required this.controller,
+    required this.label,
+    this.validator,
+  });
 
   final TextEditingController controller;
   final String label;
+  final String? Function(String?)? validator;
 
   @override
   Widget build(BuildContext context) => FTextFormField(
     control: FTextFieldControl.managed(controller: controller),
     label: Text(label),
     keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    validator: validator,
   );
 }

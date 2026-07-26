@@ -1,5 +1,4 @@
 import 'package:decimal/decimal.dart';
-import 'package:intl/intl.dart';
 
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import '../approved_underlying.dart';
@@ -7,6 +6,7 @@ import '../opportunity_explanation.dart';
 import '../option_contract.dart';
 import '../options_opportunity.dart';
 import '../options_strategy_profile.dart';
+import 'opportunity_explanation_texts.dart';
 
 part 'opportunity_scorer_explanation.dart';
 part 'opportunity_scorer_filters.dart';
@@ -20,9 +20,17 @@ part 'opportunity_scorer_scoring.dart';
 /// weighted linear combination of normalised sub-scores per
 /// `docs/domains/options-income.md` §7.
 class OpportunityScorer {
-  const OpportunityScorer({this.weights = const ScoringWeights()});
+  const OpportunityScorer({
+    this.weights = const ScoringWeights(),
+    this.texts = const DefaultOpportunityExplanationTexts(),
+  });
 
   final ScoringWeights weights;
+
+  /// Locale-aware leaf strings for the generated explanation. Production
+  /// wiring injects an `AppLocalizations`-backed implementation so cached
+  /// explanations follow the user's language.
+  final OpportunityExplanationTexts texts;
 
   /// Score one [contract] against the user profile + approved-list entry.
   /// Returns `null` when any hard filter rejects the candidate; the caller
@@ -77,6 +85,7 @@ class OpportunityScorer {
       breakdown: breakdown,
       metrics: metrics,
       eventDataAvailable: eventDataAvailable,
+      texts: texts,
     );
     final risk = _classifyRisk(metrics, breakdown);
     return ScoredCandidate(

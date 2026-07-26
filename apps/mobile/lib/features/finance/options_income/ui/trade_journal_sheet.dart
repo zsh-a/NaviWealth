@@ -4,6 +4,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
@@ -28,18 +29,26 @@ Future<void> showTradeJournalSheet(
   String? existingId,
   OptionsOpportunity? prefilled,
 }) {
-  return showAppFormSheet(
+  return showGuardedFormSheet(
     context: context,
-    builder: (sheetCtx) =>
-        _TradeJournalForm(existingId: existingId, prefilled: prefilled),
+    builder: (sheetCtx, dirty) => _TradeJournalForm(
+      existingId: existingId,
+      prefilled: prefilled,
+      dirty: dirty,
+    ),
   );
 }
 
 class _TradeJournalForm extends ConsumerStatefulWidget {
-  const _TradeJournalForm({this.existingId, this.prefilled});
+  const _TradeJournalForm({
+    required this.dirty,
+    this.existingId,
+    this.prefilled,
+  });
 
   final String? existingId;
   final OptionsOpportunity? prefilled;
+  final FormDirtyController dirty;
 
   @override
   ConsumerState<_TradeJournalForm> createState() => _TradeJournalFormState();
@@ -97,6 +106,25 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
     final defaults = ref.read(formDefaultsProvider);
     _brokerageAccountId = defaults.tradeAccountId;
     _cashAccountId = defaults.tradeCashAccountId;
+    widget.dirty.bindTextControllers([
+      _symbolCtl,
+      _optionSymbolCtl,
+      _creditCtl,
+      _debitCtl,
+      _strikeCtl,
+      _contractSizeCtl,
+      _contractQuantityCtl,
+      _feesCtl,
+      _notesCtl,
+    ]);
+    ref.listenManual(accountsStreamProvider, fireImmediately: true, (
+      previous,
+      next,
+    ) {
+      final accounts = next.value;
+      if (accounts == null || accounts.isEmpty || _hydratedAccounts) return;
+      setState(() => _hydrateAccountDefaults(accounts));
+    });
     if (widget.existingId != null) {
       unawaited(_loadExisting());
     }
@@ -126,6 +154,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
       _brokerageAccountId = entry.brokerageAccountId;
       _cashAccountId = entry.cashAccountId;
     });
+    widget.dirty.snapshotBaseline();
   }
 
   @override
@@ -145,6 +174,18 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
   Future<void> _save() async {
     final l10n = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
+    if (_status == TradeJournalStatus.assigned &&
+        (_brokerageAccountId == null || _brokerageAccountId!.isEmpty)) {
+      // Without a brokerage account the assignment share leg cannot be
+      // mirrored into the double-entry ledger — refuse instead of
+      // recording a silently incomplete assignment.
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.incomePlannerAssignmentNeedsAccount,
+      );
+      return;
+    }
     final symbol = _symbolCtl.text.trim().toUpperCase();
     final optionSymbol = _optionSymbolCtl.text.trim();
     final credit = Decimal.parse(_creditCtl.text.trim());
@@ -158,6 +199,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
     final contractQuantity = int.parse(_contractQuantityCtl.text.trim());
     final fees = Decimal.parse(_feesCtl.text.trim());
     setState(() => _busy = true);
+    widget.dirty.busy = true;
     try {
       final repo = await ref.read(tradeJournalRepositoryProvider.future);
       final ledger = await ref.read(optionsJournalLedgerServiceProvider.future);
@@ -232,12 +274,14 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             ),
       );
       await ledger.mirror(saved);
+      widget.dirty.markPristine();
       if (mounted) unawaited(Navigator.of(context).maybePop());
     } catch (_) {
       if (mounted) {
         AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
       }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -257,17 +301,20 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
     );
     if (confirmed != true || !mounted) return;
     setState(() => _busy = true);
+    widget.dirty.busy = true;
     try {
       final repo = await ref.read(tradeJournalRepositoryProvider.future);
       final ledger = await ref.read(optionsJournalLedgerServiceProvider.future);
       await ledger.removeMirrors(existing.id);
       await repo.remove(existing);
+      widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
         AppMessenger.show(context, ToastKind.error, l10n.commonDeleteFailed);
       }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -296,7 +343,6 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
   }
 
   Widget _buildForm(AppLocalizations l10n, List<Account> accounts) {
-    _hydrateAccountDefaults(accounts);
     final brokerageAccounts = accounts
         .where((a) => a.type == AccountCategory.broker)
         .toList(growable: false);
@@ -330,7 +376,10 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
           const SizedBox(height: AppSpacing.s12),
           _StrategySelect(
             value: _strategy,
-            onChanged: (v) => setState(() => _strategy = v),
+            onChanged: (v) {
+              widget.dirty.markDirty();
+              setState(() => _strategy = v);
+            },
           ),
           const SizedBox(height: AppSpacing.s12),
           DateField(
@@ -339,6 +388,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             required: true,
             onChanged: (value) {
               if (value != null) {
+                widget.dirty.markDirty();
                 setState(() => _openedAt = value.toUtc());
               }
             },
@@ -349,8 +399,10 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             initialValue: _expirationAt,
             required: true,
             firstDate: _openedAt,
-            onChanged: (value) =>
-                setState(() => _expirationAt = value?.toUtc()),
+            onChanged: (value) {
+              widget.dirty.markDirty();
+              setState(() => _expirationAt = value?.toUtc());
+            },
           ),
           const SizedBox(height: AppSpacing.s12),
           if (accounts.isNotEmpty) ...[
@@ -360,14 +412,20 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
                   ? accounts
                   : brokerageAccounts,
               value: _brokerageAccountId,
-              onChanged: (v) => setState(() => _brokerageAccountId = v),
+              onChanged: (v) {
+                widget.dirty.markDirty();
+                setState(() => _brokerageAccountId = v);
+              },
             ),
             const SizedBox(height: AppSpacing.s12),
             AccountPicker(
               label: l10n.incomePlannerJournalCashAccountLabel,
               accounts: cashAccounts.isEmpty ? accounts : cashAccounts,
               value: _cashAccountId,
-              onChanged: (v) => setState(() => _cashAccountId = v),
+              onChanged: (v) {
+                widget.dirty.markDirty();
+                setState(() => _cashAccountId = v);
+              },
             ),
             const SizedBox(height: AppSpacing.s12),
           ],
@@ -375,7 +433,10 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             value: _currency,
             label: l10n.formCurrencyPickerLabelDefault,
             onChanged: (value) {
-              if (value != null) setState(() => _currency = value);
+              if (value != null) {
+                widget.dirty.markDirty();
+                setState(() => _currency = value);
+              }
             },
           ),
           const SizedBox(height: AppSpacing.s12),
@@ -390,6 +451,12 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
               required: true,
               allowZero: true,
             ),
+          ),
+          _TotalPremiumPreview(
+            creditController: _creditCtl,
+            sizeController: _contractSizeCtl,
+            quantityController: _contractQuantityCtl,
+            currency: _currency,
           ),
           const SizedBox(height: AppSpacing.s12),
           _LabeledTextField(
@@ -449,12 +516,15 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
           const SizedBox(height: AppSpacing.s12),
           _StatusSelect(
             value: _status,
-            onChanged: (v) => setState(() {
-              _status = v;
-              _closedAt = v == TradeJournalStatus.open
-                  ? null
-                  : (_closedAt ?? DateTime.now().toUtc());
-            }),
+            onChanged: (v) {
+              widget.dirty.markDirty();
+              setState(() {
+                _status = v;
+                _closedAt = v == TradeJournalStatus.open
+                    ? null
+                    : (_closedAt ?? DateTime.now().toUtc());
+              });
+            },
           ),
           AnimatedSizeFade(
             visible: _status != TradeJournalStatus.open,
@@ -465,8 +535,10 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
                 initialValue: _closedAt,
                 required: _status != TradeJournalStatus.open,
                 firstDate: _openedAt,
-                onChanged: (value) =>
-                    setState(() => _closedAt = value?.toUtc()),
+                onChanged: (value) {
+                  widget.dirty.markDirty();
+                  setState(() => _closedAt = value?.toUtc());
+                },
               ),
             ),
           ),
@@ -589,6 +661,55 @@ String? _validatePositiveInt(String? value, AppLocalizations l10n) {
     return l10n.incomePlannerPositiveNumberValidation;
   }
   return null;
+}
+
+/// Live "credit × contract size × quantity" preview so a per-contract
+/// price can never be mistaken for the total premium (the classic 100×
+/// data-entry error).
+class _TotalPremiumPreview extends ConsumerWidget {
+  const _TotalPremiumPreview({
+    required this.creditController,
+    required this.sizeController,
+    required this.quantityController,
+    required this.currency,
+  });
+
+  final TextEditingController creditController;
+  final TextEditingController sizeController;
+  final TextEditingController quantityController;
+  final String currency;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final formatters = context.formatters(ref);
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        creditController,
+        sizeController,
+        quantityController,
+      ]),
+      builder: (context, _) {
+        final credit = Decimal.tryParse(creditController.text.trim());
+        final size = int.tryParse(sizeController.text.trim());
+        final quantity = int.tryParse(quantityController.text.trim());
+        if (credit == null || size == null || quantity == null) {
+          return const SizedBox.shrink();
+        }
+        final total =
+            credit * Decimal.fromInt(size) * Decimal.fromInt(quantity);
+        return Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.s4),
+          child: Text(
+            l10n.incomePlannerJournalTotalCredit(
+              formatters.currency(total, code: currency),
+            ),
+            style: context.captionStyle,
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _StrategySelect extends StatelessWidget {

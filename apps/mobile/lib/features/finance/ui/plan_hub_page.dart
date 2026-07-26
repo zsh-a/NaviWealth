@@ -80,8 +80,6 @@ class PlanHubPage extends ConsumerWidget {
                     );
                   },
                 ),
-                const SizedBox(height: AppSpacing.s20),
-                _ExploreSection(status: status),
               ],
             ),
           ),
@@ -308,6 +306,10 @@ class _MyPlansSection extends StatelessWidget {
         _PlanRow(spec: _dcaEntry(context, l10n, status)),
         const Divider(height: AppSpacing.s16),
         _PlanRow(spec: _rebalanceEntry(l10n, status)),
+        if (!kIsWeb) ...[
+          const Divider(height: AppSpacing.s16),
+          _PlanRow(spec: _incomeStrategyEntry(l10n, status)),
+        ],
         const Divider(height: AppSpacing.s16),
         _PlanRow(
           spec: _PlanEntrySpec(
@@ -326,60 +328,6 @@ class _MyPlansSection extends StatelessWidget {
                 : status.pendingLifeEventReviews! > 0
                 ? AppBadgeTone.warning
                 : AppBadgeTone.success,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ExploreSection extends StatefulWidget {
-  const _ExploreSection({required this.status});
-
-  final PlanningHubStatus status;
-
-  @override
-  State<_ExploreSection> createState() => _ExploreSectionState();
-}
-
-class _ExploreSectionState extends State<_ExploreSection> {
-  bool _open = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final activeOptions = widget.status.wheelOpenPositionCount ?? 0;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AppDisclosureHeader(
-          title: l10n.planExploreTitle,
-          subtitle: activeOptions > 0
-              ? l10n.planExploreActiveOptions(activeOptions)
-              : l10n.planExploreSubtitle,
-          expanded: _open,
-          onToggle: () => setState(() => _open = !_open),
-        ),
-        AnimatedSizeFade(
-          visible: _open,
-          child: Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.s10),
-            child: AppSection(
-              borderless: true,
-              level: SoftCardLevel.raised,
-              children: [
-                if (!kIsWeb)
-                  _PlanRow(
-                    spec: _PlanEntrySpec(
-                      icon: FLucideIcons.candlestickChart,
-                      title: l10n.incomeStrategyTitle,
-                      subtitle: l10n.planIncomeSectionSubtitle,
-                      path: FinanceRoutes.planIncome,
-                      tone: AppBadgeTone.neutral,
-                    ),
-                  ),
-              ],
-            ),
           ),
         ),
       ],
@@ -650,6 +598,22 @@ _PlanEntrySpec _dcaEntry(
       ? AppBadgeTone.success
       : AppBadgeTone.neutral,
 );
+
+_PlanEntrySpec _incomeStrategyEntry(
+  AppLocalizations l10n,
+  PlanningHubStatus status,
+) {
+  final activeOptions = status.wheelOpenPositionCount ?? 0;
+  return _PlanEntrySpec(
+    icon: FLucideIcons.candlestickChart,
+    title: l10n.incomeStrategyTitle,
+    subtitle: activeOptions > 0
+        ? l10n.planExploreActiveOptions(activeOptions)
+        : l10n.planIncomeSectionSubtitle,
+    path: FinanceRoutes.planIncome,
+    tone: activeOptions > 0 ? AppBadgeTone.accent : AppBadgeTone.neutral,
+  );
+}
 
 _PlanEntrySpec _rebalanceEntry(
   AppLocalizations l10n,

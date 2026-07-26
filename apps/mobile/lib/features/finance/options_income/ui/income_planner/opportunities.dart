@@ -97,19 +97,21 @@ class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     if (widget.state is ScanFailure) {
-      return _ErrorCard(
+      return AppEmptyState.error(
         title: l10n.incomePlannerRefreshFailedTitle,
         message: userSafeErrorMessage(
           context,
           (widget.state as ScanFailure).error,
         ),
+        compact: true,
       );
     }
     return widget.opportunitiesAsync.when(
       loading: () => const _LoadingTile(),
-      error: (error, _) => _ErrorCard(
+      error: (error, _) => AppEmptyState.error(
         title: l10n.incomePlannerRefreshFailedTitle,
         message: userSafeErrorMessage(context, error),
+        compact: true,
       ),
       data: (items) {
         if (items.isEmpty) {
@@ -118,7 +120,11 @@ class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
               result: (widget.state as ScanSuccess).result,
             );
           }
-          return _EmptyCard(body: l10n.incomePlannerOpportunitiesEmpty);
+          return AppEmptyState(
+            icon: FLucideIcons.scanSearch,
+            title: l10n.incomePlannerOpportunitiesEmpty,
+            compact: true,
+          );
         }
         final visible = items.where(_matchesFilter).toList()
           ..sort((a, b) => b.score.compareTo(a.score));
@@ -146,7 +152,11 @@ class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
             ),
             const SizedBox(height: AppSpacing.s4),
             if (visible.isEmpty)
-              _EmptyCard(body: l10n.incomePlannerOpportunityFilterEmpty)
+              AppEmptyState(
+                icon: FLucideIcons.scanSearch,
+                title: l10n.incomePlannerOpportunityFilterEmpty,
+                compact: true,
+              )
             else
               for (final opportunity in visible)
                 Padding(
@@ -168,14 +178,15 @@ class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
   };
 }
 
-class _OpportunityCard extends StatelessWidget {
+class _OpportunityCard extends ConsumerWidget {
   const _OpportunityCard({required this.opportunity});
 
   final OptionsOpportunity opportunity;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final formatters = context.formatters(ref);
     final colors = context.theme.colors;
     final contract = opportunity.contract;
     final metrics = opportunity.metrics;
@@ -236,15 +247,24 @@ class _OpportunityCard extends StatelessWidget {
               items: [
                 AppMetricItem(
                   label: l10n.incomePlannerMetricPremiumTotal,
-                  value: _moneyCompact(metrics.premium),
+                  value: formatters.currency(
+                    metrics.premium.amount,
+                    code: metrics.premium.currency,
+                  ),
                 ),
                 AppMetricItem(
                   label: l10n.incomePlannerMetricBreakeven,
-                  value: _moneyCompact(metrics.breakeven),
+                  value: formatters.currency(
+                    metrics.breakeven.amount,
+                    code: metrics.breakeven.currency,
+                  ),
                 ),
                 AppMetricItem(
                   label: l10n.incomePlannerMetricAnnualized,
-                  value: _pct(metrics.annualizedYield),
+                  value: formatters.percent(
+                    metrics.annualizedYield.toDouble(),
+                    decimalDigits: 1,
+                  ),
                 ),
               ],
             ),
@@ -351,7 +371,7 @@ class _ScanEmptyResultCard extends StatelessWidget {
                 ),
                 FButton(
                   variant: FButtonVariant.outline,
-                  onPress: () => showApprovedUnderlyingSheet(context),
+                  onPress: () => showIncomeStrategyPlanSheet(context),
                   child: Text(l10n.incomePlannerAddApprovedCta),
                 ),
               ],
@@ -375,13 +395,6 @@ AppBadgeTone _riskTone(OpportunityRiskLevel risk) => switch (risk) {
   OpportunityRiskLevel.moderate => AppBadgeTone.neutral,
   OpportunityRiskLevel.elevated => AppBadgeTone.error,
 };
-
-String _pct(Decimal value) {
-  final pct = (value * Decimal.fromInt(100)).toStringAsFixed(1);
-  return '$pct%';
-}
-
-String _moneyCompact(Money money) => '${money.currency} ${money.amount}';
 
 String _rejectionReasonLabel(AppLocalizations l10n, String reason) =>
     switch (reason) {

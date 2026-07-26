@@ -1,10 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 
 import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import '../data/providers.dart';
-import '../domain/options_strategy_profile.dart';
 import 'scan_inputs_bridge.dart';
 import 'scan_orchestrator.dart';
 
@@ -32,10 +30,9 @@ class ScanFailure extends ScanState {
   final Object error;
 }
 
-class ScanController extends StateNotifier<ScanState> {
-  ScanController(this._ref) : super(const ScanIdle());
-
-  final Ref _ref;
+class ScanController extends Notifier<ScanState> {
+  @override
+  ScanState build() => const ScanIdle();
 
   Future<ScanResult?> runScan() async {
     if (state is ScanRunning) return null;
@@ -43,14 +40,14 @@ class ScanController extends StateNotifier<ScanState> {
     final logger = AppLogger.instance;
     try {
       logger.i('options-income scan: requested');
-      final sideInputs = await _ref.read(scanSideInputsProvider.future);
-      final orchestrator = await _ref.read(scanOrchestratorProvider.future);
-      final ownerUserId = await _ref.read(currentUserIdProvider)();
-      final profile = _ref.read(optionsStrategyProfileProvider).value;
+      final sideInputs = await ref.read(scanSideInputsProvider.future);
+      final orchestrator = await ref.read(scanOrchestratorProvider.future);
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      final profile = ref.read(optionsStrategyProfileProvider).value;
       if (profile == null) {
         throw StateError('profile_missing');
       }
-      final approved = _ref.read(approvedUnderlyingsProvider).value ?? const [];
+      final approved = ref.read(approvedUnderlyingsProvider).value ?? const [];
       logger.d(
         'options-income scan: inputs '
         'approved=${approved.map((a) => a.symbol).join(",")} '
@@ -81,8 +78,8 @@ class ScanController extends StateNotifier<ScanState> {
         'warnings=${result.warnings}',
       );
       // Touch cached read providers so the UI rebinds without staleness.
-      _ref.invalidate(cachedOpportunitiesProvider);
-      _ref.invalidate(latestScanStateProvider);
+      ref.invalidate(cachedOpportunitiesProvider);
+      ref.invalidate(latestScanStateProvider);
       state = ScanSuccess(result: result);
       return result;
     } catch (e, st) {
@@ -91,19 +88,8 @@ class ScanController extends StateNotifier<ScanState> {
       return null;
     }
   }
-
-  void clear() {
-    state = const ScanIdle();
-  }
-
-  /// Quick accessor for the OptionsStrategyProfile cast used by `runScan`
-  /// callers that want to short-circuit when the profile is missing.
-  OptionsStrategyProfile? get currentProfile =>
-      _ref.read(optionsStrategyProfileProvider).value;
 }
 
-final scanControllerProvider = StateNotifierProvider<ScanController, ScanState>(
-  (ref) {
-    return ScanController(ref);
-  },
+final scanControllerProvider = NotifierProvider<ScanController, ScanState>(
+  ScanController.new,
 );
