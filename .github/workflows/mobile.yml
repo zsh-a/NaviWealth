@@ -21,6 +21,7 @@ on:
       - 'tool/lint-material-chrome.sh'
       - 'tool/lint-format-path.sh'
       - 'tool/lint-typography.sh'
+      - 'tool/check-design-tokens-export.sh'
       - 'tool/check-android-native-libs.sh'
   pull_request:
     paths:
@@ -41,6 +42,7 @@ on:
       - 'tool/lint-material-chrome.sh'
       - 'tool/lint-format-path.sh'
       - 'tool/lint-typography.sh'
+      - 'tool/check-design-tokens-export.sh'
       - 'tool/check-android-native-libs.sh'
 
 concurrency:
