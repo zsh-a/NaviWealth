@@ -114,13 +114,25 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
   /// Root back-button strategy. Defers steps 1–3 ("pop a pushed page /
   /// dismiss a modal / clear `?selected=`") to the shared [attemptBack]
   /// primitive so system back, the toolbar arrow, and the Esc shortcut
-  /// stay in lockstep; only the app-shell-specific tail (root exit
-  /// confirmation) lives here:
+  /// stay in lockstep; only the app-shell-specific tail lives here:
   ///  1–3. delegated to [attemptBack];
-  ///  4. at any primary tab root → fall through to
+  ///  4. at a non-first tab root → return to the domain's first tab
+  ///     (doc 15 §7.5 — previously back at ANY of 12 tab roots went
+  ///     straight to the exit prompt);
+  ///  5. at the domain's first tab root → fall through to
   ///     [ExitConfirmingSystemBackScope].
   bool _handleSystemBackBeforeExit(BuildContext context) {
     if (attemptBack(context)) return true;
+    final router = GoRouter.of(context);
+    final path = router.routeInformationProvider.value.uri.path;
+    final tabs = domainTabPathsForLocation(
+      ref.read(activeDomainPacksProvider),
+      path,
+    );
+    if (tabs.length > 1 && tabs.contains(path) && path != tabs.first) {
+      router.go(tabs.first);
+      return true;
+    }
     return false;
   }
 
