@@ -68,7 +68,12 @@ class _ApprovedTile extends StatelessWidget {
                 children: [
                   Text(item.displaySymbol, style: context.labelStyle),
                   const SizedBox(height: AppSpacing.s2),
-                  Text(item.market.wire, style: context.captionStyle),
+                  Text(
+                    _approvedIntentSummary(l10n, item),
+                    style: context.captionStyle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),
@@ -82,11 +87,27 @@ class _ApprovedTile extends StatelessWidget {
               label: l10n.incomePlannerProfileAllowCall,
               enabled: item.allowCall,
             ),
+            const SizedBox(width: AppSpacing.s6),
+            const Icon(FLucideIcons.chevronRight, size: AppIconSizes.sm),
           ],
         ),
       ),
     );
   }
+}
+
+String _approvedIntentSummary(AppLocalizations l10n, ApprovedUnderlying item) {
+  final intents = <String>[
+    if (item.allowPut)
+      item.maxBuyPrice == null
+          ? l10n.incomePlannerApprovedPutNoLimit
+          : l10n.incomePlannerApprovedPutLimit(item.maxBuyPrice!.toString()),
+    if (item.allowCall)
+      item.minSellPrice == null
+          ? l10n.incomePlannerApprovedCallNoLimit
+          : l10n.incomePlannerApprovedCallLimit(item.minSellPrice!.toString()),
+  ];
+  return intents.join(' · ');
 }
 
 class _StrategyChip extends StatelessWidget {

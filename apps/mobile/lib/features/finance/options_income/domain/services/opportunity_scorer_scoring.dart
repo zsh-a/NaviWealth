@@ -7,6 +7,7 @@ Map<String, Decimal> _softScore({
   required Decimal? currentUnderlyingExposurePct,
   required bool hasUpcomingEarnings,
   required bool hasUpcomingMacroEvent,
+  required bool eventDataAvailable,
 }) {
   final metrics = _metrics(contract: contract, strategy: strategy);
 
@@ -58,7 +59,9 @@ Map<String, Decimal> _softScore({
     maxExposure: profile.maxUnderlyingExposurePct,
   );
 
-  final eventSafetyScore = (hasUpcomingEarnings || hasUpcomingMacroEvent)
+  final eventSafetyScore = !eventDataAvailable
+      ? Decimal.parse('0.50')
+      : (hasUpcomingEarnings || hasUpcomingMacroEvent)
       ? Decimal.parse('0.20')
       : Decimal.parse('0.95');
 

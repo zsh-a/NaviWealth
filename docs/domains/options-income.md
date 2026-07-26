@@ -1,10 +1,10 @@
 # NaviWealth Income Planner（期权现金流机会引擎）
 
-> 文档版本：2026-05-21
+> 文档版本：2026-07-26
 > 关联：[`ai-architecture.md`](../ai/ai-architecture.md)、[`ai-protocol.md`](../ai/ai-protocol.md)、[`roadmap-finance.md`](../roadmap/roadmap-finance.md)、[`market-data-providers.md`](./market-data-providers.md)、[`sync-v3.md`](../sync/sync-v3.md)
 > 定位：在 NaviWealth 已有的"持仓 + 现金 + FIRE 现金桶 + 风险偏好"之上，新增一个**低频期权现金流规划器**。
 >
-> 状态（2026-07-17）：P0–P4 已实现并通过分析与测试。MVP 行情源锁定 yfinance；AI tool **只读 cache**，不触发实时扫描。P5（Tradier OAuth 接入）是触发式工作，尚未排期。
+> 状态（2026-07-26）：P0–P4 已实现。Income Planner 采用 Opportunities / Wheel / Journal 三工作区；交易日志记录到期日、合约数量和总费用。MVP 行情源锁定 yfinance；AI tool **只读 cache**，不触发实时扫描。P5（Tradier OAuth 接入）是触发式工作，尚未排期。
 
 ---
 
@@ -34,7 +34,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 
 - **Covered Call 扫描**：基于用户已持仓（≥100 股）找出合适的卖 call 机会。
 - **Cash-secured Put 扫描**：基于"用户愿意以这个价格长期持有"的标的清单找出卖 put 机会。
-- **风险与适配性评估**：硬过滤（流动性、DTE、事件窗口）+ 软评分（收益 / 流动性 / 安全边际 / IV / 组合契合 / 事件安全）。
+- **风险与适配性评估**：硬过滤（批准标的、流动性、DTE、资金/持仓约束）+ 软评分（收益 / 流动性 / 安全边际 / IV / 组合契合 / 事件安全）。事件日历未接入时，事件维度保持中性并明确提示“未检查”，不得伪装成无事件。
 - **结构化解释**：每个机会输出 `whyGood` / `whyRisky` / `bestFor` / `avoidIf` 字段，**由评分引擎生成**，不由 LLM 重算。
 - **交易日志（Trade Journal）**：用户成交后写入复盘记录，跟踪真实策略收益。
 - **AI 解释层**：在 ai_chat 里通过 read-only tool 让 LLM 帮用户读懂某个机会。
@@ -336,10 +336,13 @@ class OptionsTradeJournalTable extends Table {
   TextColumn get symbol => text()();
   TextColumn get optionSymbol => text()();
   DateTimeColumn get openedAt => dateTime()();
+  DateTimeColumn get expirationAt => dateTime().nullable()();
   DateTimeColumn get closedAt => dateTime().nullable()();
   TextColumn get entryCredit => text().map(decimalConverter)();
   TextColumn get exitDebit => text().nullable().map(decimalConverter)();
+  TextColumn get fees => text().nullable().map(decimalConverter)();
   TextColumn get realizedPnl => text().nullable().map(decimalConverter)();
+  IntColumn get contractQuantity => integer().withDefault(const Constant(1))();
   TextColumn get status => text()();              // open | closed | assigned | expired
   TextColumn get notes => text().nullable()();
 
@@ -401,9 +404,15 @@ delta 缺失且无法估算
 strategy == put AND symbol NOT IN approvedUnderlyings WHERE allow_put
 strategy == call AND user_holdings[symbol] < 100
 strategy == put AND cashRequired > availableCash * profile.maxCapitalPerTradePct
-profile.avoidEarnings AND earningsWithinDays(symbol, 7)
-profile.avoidMacroEvents AND macroEventWithinDays(7)   // CPI / FOMC
+eventDataAvailable AND profile.avoidEarnings AND earningsWithinDays(symbol, 7)
+eventDataAvailable AND profile.avoidMacroEvents AND macroEventWithinDays(7)
 ```
+
+批准标的是不可关闭的硬边界；UI 和 AI 提案均不能把
+`onlyOnApprovedUnderlyings` 改为 `false`。当前 yfinance 扫描没有可靠的事件
+日历输入，因此 `eventDataAvailable=false`：事件硬过滤不运行，
+`event_safety_score=0.50`，解释中要求用户下单前自行核对财报、CPI 和 FOMC
+日期。只有接入真实、带时效的日历后才能启用相关开关。
 
 ### 7.2 软评分（Soft Score）
 
@@ -516,22 +525,25 @@ LLM **不能**做的事（dispatcher 层不强制，但 system prompt 提示）�
 
 主页面：`apps/mobile/lib/features/finance/options_income/ui/income_planner/income_planner_page.dart`，命名 **Income Planner / 期权现金流规划**。
 
-页内四 tab：
+页内三个工作区：
 
 ```text
-Conservative Income      保守现金流机会
-Higher Yield             高收益高风险机会
-Portfolio Repair         降低持仓成本机会
-Watchlist Opportunities  关注标的机会
+Opportunities   机会：Put / Call 筛选、适配度排序、扫描状态与拒绝原因
+Wheel           轮动：按标的聚合周期阶段、开放腿、最近到期日与下一步
+Journal         日志：开放/已结算筛选、数量、费用、到期日与净损益
 ```
 
 每张卡片：
 
-- 外层 `FCard`，padding `AppSpacing.lg`。
+- 使用现有 `FCard`、语义色和 `AppSpacing`，保持信息密度，不嵌套卡片。
 - 顶部 chip：strategy 类型 + risk 等级，颜色映射 design tokens 的 semantic role。
-- 中部数字栏：年化、占用资金、盈亏平衡，走 `core/format/MoneyFormatter` + `PercentFormatter`。
-- 底部："Why good" / "Why risky" 双列，最多各 3 条，直接读 `OpportunityExplanation`。
+- 中部数字栏：总 premium、年化、占用资金、盈亏平衡，走统一金额和百分比格式。
+- 详情面板展示报价、流动性、到期日、最坏情况与评分分解，直接读 `OpportunityExplanation`。
 - CTA："了解详情" → `showAppFormSheet(opportunityDetailSheet)`，**必须**走统一 modal helper（CI 守护）。
+
+交易日志表单必须记录真实开仓日、到期日、合约数量、合约乘数和总费用；
+`entryCredit` / `exitDebit` 是每张合约金额，展示与统计按数量放大，净损益扣除
+总费用。`assigned` / `expired` 在没有人工覆盖时将保留 premium 计为已实现。
 
 ### 9.2 偏好设置
 
@@ -697,6 +709,5 @@ apps/backend/src/sync/store.rs                     # schema-agnostic row store
 后续阶段会落地：
 
 ```
-P4: features/finance/options_income/application/wheel_state_machine.dart   # Wheel / income cycle
 P5: apps/backend/src/routes/market/options.rs                       # Tradier OAuth proxy
 ```

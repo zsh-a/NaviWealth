@@ -10,6 +10,7 @@ List<String> _hardFilter({
   required bool ignoreOpenInterestFloor,
   required bool hasUpcomingEarnings,
   required bool hasUpcomingMacroEvent,
+  required bool eventDataAvailable,
 }) {
   final reasons = <String>[];
   if (!ignoreOpenInterestFloor &&
@@ -32,8 +33,7 @@ List<String> _hardFilter({
       if (contract.type != OptionType.put) {
         reasons.add('contract_type_mismatch');
       }
-      if (profile.onlyOnApprovedUnderlyings &&
-          (approved == null || !approved.allowPut)) {
+      if (approved == null || !approved.allowPut) {
         reasons.add('underlying_not_approved_for_put');
       }
       final cashRequired = _putCashRequired(contract);
@@ -58,8 +58,7 @@ List<String> _hardFilter({
         reasons.add('contract_type_mismatch');
       }
       if (sharesOwned < 100) reasons.add('insufficient_shares');
-      if (profile.onlyOnApprovedUnderlyings &&
-          (approved == null || !approved.allowCall)) {
+      if (approved == null || !approved.allowCall) {
         reasons.add('underlying_not_approved_for_call');
       }
       if (approved?.minSellPrice != null &&
@@ -88,10 +87,10 @@ List<String> _hardFilter({
     }
   }
 
-  if (profile.avoidEarnings && hasUpcomingEarnings) {
+  if (eventDataAvailable && profile.avoidEarnings && hasUpcomingEarnings) {
     reasons.add('earnings_window');
   }
-  if (profile.avoidMacroEvents && hasUpcomingMacroEvent) {
+  if (eventDataAvailable && profile.avoidMacroEvents && hasUpcomingMacroEvent) {
     reasons.add('macro_event_window');
   }
 

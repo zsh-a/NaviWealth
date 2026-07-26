@@ -1,5 +1,5 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import 'package:naviwealth/design_system/design_system.dart';
@@ -44,6 +44,10 @@ class _DetailBody extends StatelessWidget {
     final exp = opportunity.explanation;
     final metrics = opportunity.metrics;
     final colors = context.theme.colors;
+    final contract = opportunity.contract;
+    final expiry = MaterialLocalizations.of(
+      context,
+    ).formatShortDate(contract.expiration.toLocal());
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20),
       child: Column(
@@ -61,10 +65,19 @@ class _DetailBody extends StatelessWidget {
           _StatsGrid(
             entries: <(String, Widget)>[
               (
+                l10n.incomePlannerMetricUnderlyingPrice,
+                MoneyText(
+                  amount: contract.underlyingPrice.amount.toDouble(),
+                  currencyCode: contract.underlyingPrice.currency,
+                  symbolStyle: MoneySymbolStyle.isoCode,
+                  style: context.labelStyle,
+                ),
+              ),
+              (
                 l10n.incomePlannerMetricStrike,
                 MoneyText(
-                  amount: opportunity.contract.strike.amount.toDouble(),
-                  currencyCode: opportunity.contract.strike.currency,
+                  amount: contract.strike.amount.toDouble(),
+                  currencyCode: contract.strike.currency,
                   symbolStyle: MoneySymbolStyle.isoCode,
                   style: context.labelStyle,
                 ),
@@ -72,8 +85,8 @@ class _DetailBody extends StatelessWidget {
               (
                 l10n.incomePlannerMetricOptionPrice,
                 MoneyText(
-                  amount: opportunity.contract.mid.amount.toDouble(),
-                  currencyCode: opportunity.contract.mid.currency,
+                  amount: contract.mid.amount.toDouble(),
+                  currencyCode: contract.mid.currency,
                   symbolStyle: MoneySymbolStyle.isoCode,
                   style: context.labelStyle,
                 ),
@@ -81,8 +94,17 @@ class _DetailBody extends StatelessWidget {
               (
                 l10n.incomePlannerMetricBidAsk,
                 Text(
-                  '${_moneyLabel(opportunity.contract.bid)} / '
-                  '${_moneyLabel(opportunity.contract.ask)}',
+                  '${_moneyLabel(contract.bid)} / '
+                  '${_moneyLabel(contract.ask)}',
+                  style: context.labelStyle,
+                ),
+              ),
+              (
+                l10n.incomePlannerMetricPremiumTotal,
+                MoneyText(
+                  amount: metrics.premium.amount.toDouble(),
+                  currencyCode: metrics.premium.currency,
+                  symbolStyle: MoneySymbolStyle.isoCode,
                   style: context.labelStyle,
                 ),
               ),
@@ -114,7 +136,39 @@ class _DetailBody extends StatelessWidget {
               ),
               (
                 l10n.incomePlannerMetricDte,
-                Text('${opportunity.contract.dte}', style: context.labelStyle),
+                Text('${contract.dte}', style: context.labelStyle),
+              ),
+              (
+                l10n.incomePlannerMetricExpiration,
+                Text(expiry, style: context.labelStyle),
+              ),
+              (
+                l10n.incomePlannerMetricDelta,
+                Text(
+                  contract.delta?.toStringAsFixed(2) ?? '—',
+                  style: context.labelStyle,
+                ),
+              ),
+              (
+                l10n.incomePlannerMetricIv,
+                Text(
+                  contract.impliedVolatility == null
+                      ? '—'
+                      : _pct(contract.impliedVolatility!),
+                  style: context.labelStyle,
+                ),
+              ),
+              (
+                l10n.incomePlannerMetricOpenInterest,
+                Text('${contract.openInterest}', style: context.labelStyle),
+              ),
+              (
+                l10n.incomePlannerMetricVolume,
+                Text('${contract.volume}', style: context.labelStyle),
+              ),
+              (
+                l10n.incomePlannerMetricSpread,
+                Text(_pct(contract.bidAskSpreadPct), style: context.labelStyle),
               ),
             ],
           ),
@@ -276,7 +330,10 @@ class _ScoreBreakdown extends StatelessWidget {
               children: [
                 SizedBox(
                   width: AppControlWidths.detailLabel,
-                  child: Text(entry.key, style: context.captionStyle),
+                  child: Text(
+                    _scoreLabel(context, entry.key),
+                    style: context.captionStyle,
+                  ),
                 ),
                 Expanded(
                   child: ClipRRect(
@@ -294,6 +351,19 @@ class _ScoreBreakdown extends StatelessWidget {
       ],
     );
   }
+}
+
+String _scoreLabel(BuildContext context, String key) {
+  final l10n = AppLocalizations.of(context);
+  return switch (key) {
+    'yield' => l10n.incomePlannerScoreYield,
+    'liquidity' => l10n.incomePlannerScoreLiquidity,
+    'safety_margin' || 'safetyMargin' => l10n.incomePlannerScoreSafetyMargin,
+    'iv' => l10n.incomePlannerScoreIv,
+    'portfolio_fit' || 'portfolioFit' => l10n.incomePlannerScorePortfolioFit,
+    'event_safety' || 'eventSafety' => l10n.incomePlannerScoreEventSafety,
+    _ => key,
+  };
 }
 
 String _pct(Decimal value) {

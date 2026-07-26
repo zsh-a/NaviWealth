@@ -1,14 +1,24 @@
 part of 'income_planner_page.dart';
 
-class _TradeJournalSection extends ConsumerWidget {
+enum _JournalFilter { all, open, resolved }
+
+class _TradeJournalSection extends ConsumerStatefulWidget {
   const _TradeJournalSection();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_TradeJournalSection> createState() =>
+      _TradeJournalSectionState();
+}
+
+class _TradeJournalSectionState extends ConsumerState<_TradeJournalSection> {
+  _JournalFilter _filter = _JournalFilter.all;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
+    final entriesAsync = ref.watch(tradeJournalEntriesProvider);
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionHeader(
           title: l10n.incomePlannerJournalSectionTitle,
@@ -22,89 +32,126 @@ class _TradeJournalSection extends ConsumerWidget {
                 child: Text(l10n.incomePlannerStatsAction),
               ),
               FButton(
-                variant: FButtonVariant.outline,
                 onPress: () => showTradeJournalSheet(context),
                 child: Text(l10n.incomePlannerJournalAddCta),
               ),
             ],
           ),
         ),
-        const SizedBox(height: AppSpacing.s8),
-        // Keep the planner page light; full history is available from the
-        // sheet's "All entries" link.
-        Consumer(
-          builder: (context, ref, _) {
-            final entriesAsync = ref.watch(tradeJournalEntriesProvider);
-            return entriesAsync.when(
-              loading: () => const _LoadingTile(),
-              error: (e, _) => _ErrorCard(
-                title: l10n.incomePlannerRefreshFailedTitle,
-                message: '$e',
-              ),
-              data: (entries) {
-                if (entries.isEmpty) {
-                  return _EmptyCard(body: l10n.incomePlannerJournalEmpty);
-                }
-                return Column(
-                  children: [
-                    for (final entry in entries.take(3))
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.s4,
-                        ),
-                        child: SoftCard.flat(
-                          onPress: () => showTradeJournalSheet(
-                            context,
-                            existingId: entry.id,
-                          ),
-                          borderRadius: AppRadius.lg,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.s16,
-                              vertical: AppSpacing.s12,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '${entry.symbol} \u00b7 ${entry.optionSymbol}',
-                                        style: context.labelStyle,
-                                      ),
-                                      const SizedBox(height: AppSpacing.s2),
-                                      Text(
-                                        tradeJournalStatusLabel(
-                                          l10n,
-                                          entry.status,
-                                        ),
-                                        style: context.captionStyle,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Text(
-                                  '+${entry.entryCredit}',
-                                  style: context.labelStyle.copyWith(
-                                    color: colors.primary,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              },
+        const SizedBox(height: AppSpacing.s12),
+        SegmentedRow<_JournalFilter>(
+          options: _JournalFilter.values,
+          value: _filter,
+          labelOf: (filter) => switch (filter) {
+            _JournalFilter.all => l10n.incomePlannerJournalFilterAll,
+            _JournalFilter.open => l10n.incomePlannerJournalFilterOpen,
+            _JournalFilter.resolved => l10n.incomePlannerJournalFilterResolved,
+          },
+          onChanged: (filter) => setState(() => _filter = filter),
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        entriesAsync.when(
+          loading: () => const _LoadingTile(),
+          error: (error, _) => _ErrorCard(
+            title: l10n.incomePlannerRefreshFailedTitle,
+            message: userSafeErrorMessage(context, error),
+          ),
+          data: (entries) {
+            final visible = entries.where(_matchesFilter).toList();
+            if (visible.isEmpty) {
+              return _EmptyCard(
+                body: entries.isEmpty
+                    ? l10n.incomePlannerJournalEmpty
+                    : l10n.incomePlannerJournalFilterEmpty,
+              );
+            }
+            return Column(
+              children: [
+                for (final entry in visible)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+                    child: _JournalTile(entry: entry),
+                  ),
+              ],
             );
           },
         ),
       ],
+    );
+  }
+
+  bool _matchesFilter(TradeJournalEntry entry) => switch (_filter) {
+    _JournalFilter.all => true,
+    _JournalFilter.open => entry.status == TradeJournalStatus.open,
+    _JournalFilter.resolved => entry.status != TradeJournalStatus.open,
+  };
+}
+
+class _JournalTile extends StatelessWidget {
+  const _JournalTile({required this.entry});
+
+  final TradeJournalEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final pnl = entry.trackedNetPnl;
+    final subtitle = <String>[
+      tradeJournalStatusLabel(l10n, entry.status),
+      optionsStrategyKindShortLabel(l10n, entry.strategy),
+      if (entry.expirationAt != null)
+        l10n.incomePlannerJournalExpiresIn(_daysUntil(entry.expirationAt!)),
+    ].join(' · ');
+    return SoftCard.flat(
+      onPress: () => showTradeJournalSheet(context, existingId: entry.id),
+      padding: const EdgeInsets.all(AppSpacing.s14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${entry.symbol} · ${entry.optionSymbol}',
+                  style: context.rowTitleStyle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.s4),
+                Text(subtitle, style: context.captionStyle),
+                const SizedBox(height: AppSpacing.s4),
+                Text(
+                  l10n.incomePlannerJournalQuantitySummary(
+                    entry.contractQuantity,
+                    entry.effectiveContractSize,
+                  ),
+                  style: context.captionStyle,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                pnl == null
+                    ? l10n.incomePlannerJournalPremiumLabel
+                    : l10n.incomePlannerJournalNetPnlLabel,
+                style: context.captionStyle,
+              ),
+              const SizedBox(height: AppSpacing.s2),
+              MoneyText(
+                amount: (pnl ?? entry.grossEntryCredit).toDouble(),
+                currencyCode: entry.currency,
+                showSign: true,
+                style: context.labelStyle,
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

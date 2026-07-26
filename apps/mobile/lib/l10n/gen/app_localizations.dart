@@ -17976,7 +17976,7 @@ abstract class AppLocalizations {
   /// Body shown when a scan completed but every candidate was rejected
   ///
   /// In en, this message translates to:
-  /// **'No candidates passed your hard filters this scan. Loosen your preferences (e.g. lower yield floor, wider DTE) and try again.'**
+  /// **'No candidates passed your guardrails. Review the reasons below; keeping your current limits and checking again later is a valid outcome.'**
   String get incomePlannerOpportunitiesAllRejected;
 
   /// Title shown after a completed scan finds no qualifying option opportunities
@@ -18012,19 +18012,19 @@ abstract class AppLocalizations {
   /// Risk badge: low
   ///
   /// In en, this message translates to:
-  /// **'Low risk'**
+  /// **'Lower relative risk'**
   String get incomePlannerRiskLow;
 
   /// Risk badge: moderate
   ///
   /// In en, this message translates to:
-  /// **'Moderate'**
+  /// **'Moderate relative risk'**
   String get incomePlannerRiskModerate;
 
   /// Risk badge: elevated
   ///
   /// In en, this message translates to:
-  /// **'Elevated'**
+  /// **'Elevated relative risk'**
   String get incomePlannerRiskElevated;
 
   /// Card metric: annualized yield
@@ -18425,6 +18425,585 @@ abstract class AppLocalizations {
     String ago,
     String stale,
   );
+
+  /// Explicit checkbox acknowledgement in the OCC risk disclosure
+  ///
+  /// In en, this message translates to:
+  /// **'I understand that assignment can require buying or selling 100 shares per contract, and that this planner does not place orders or guarantee returns.'**
+  String get incomePlannerOccConfirmation;
+
+  /// Validation when both per-underlying strategy toggles are disabled
+  ///
+  /// In en, this message translates to:
+  /// **'Enable at least one strategy for this underlying.'**
+  String get incomePlannerUnderlyingStrategyRequired;
+
+  /// Confirmation title when deleting an approved underlying
+  ///
+  /// In en, this message translates to:
+  /// **'Remove approved underlying?'**
+  String get incomePlannerUnderlyingDeleteTitle;
+
+  /// Confirmation body when deleting an approved underlying
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} will no longer be included in option scans.'**
+  String incomePlannerUnderlyingDeleteBody(String symbol);
+
+  /// Supported-market helper in the approved-underlying form
+  ///
+  /// In en, this message translates to:
+  /// **'Current scans support US-listed stocks and ETFs.'**
+  String get incomePlannerSupportedMarketHelper;
+
+  /// Approved underlying maximum buy price label
+  ///
+  /// In en, this message translates to:
+  /// **'Highest acceptable assignment price'**
+  String get incomePlannerMaxBuyPriceLabel;
+
+  /// Approved underlying maximum buy price helper
+  ///
+  /// In en, this message translates to:
+  /// **'Put strikes above this price are rejected. Leave blank for no additional price ceiling.'**
+  String get incomePlannerMaxBuyPriceHelper;
+
+  /// Approved underlying minimum sell price label
+  ///
+  /// In en, this message translates to:
+  /// **'Lowest acceptable call-away price'**
+  String get incomePlannerMinSellPriceLabel;
+
+  /// Approved underlying minimum sell price helper
+  ///
+  /// In en, this message translates to:
+  /// **'Call strikes below this price are rejected. Leave blank for no additional price floor.'**
+  String get incomePlannerMinSellPriceHelper;
+
+  /// Approved underlying notes label
+  ///
+  /// In en, this message translates to:
+  /// **'Investment stance'**
+  String get incomePlannerUnderlyingNotesLabel;
+
+  /// Approved underlying notes helper
+  ///
+  /// In en, this message translates to:
+  /// **'Record why you are willing to own or sell this underlying.'**
+  String get incomePlannerUnderlyingNotesHelper;
+
+  /// Generic positive-number validation
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a number greater than zero.'**
+  String get incomePlannerPositiveNumberValidation;
+
+  /// Profile validation when no strategy is enabled
+  ///
+  /// In en, this message translates to:
+  /// **'Enable at least one options strategy.'**
+  String get incomePlannerProfileStrategyRequired;
+
+  /// Collapsed advanced-filter summary
+  ///
+  /// In en, this message translates to:
+  /// **'{minDte}–{maxDte} DTE · max {capital}% per trade'**
+  String incomePlannerProfileAdvancedSummary(
+    int minDte,
+    int maxDte,
+    String capital,
+  );
+
+  /// Maximum underlying concentration field label
+  ///
+  /// In en, this message translates to:
+  /// **'Max post-assignment underlying exposure'**
+  String get incomePlannerProfileMaxUnderlyingExposure;
+
+  /// Put absolute delta range label
+  ///
+  /// In en, this message translates to:
+  /// **'Put absolute delta range'**
+  String get incomePlannerProfilePutDeltaRange;
+
+  /// Call delta range label
+  ///
+  /// In en, this message translates to:
+  /// **'Call delta range'**
+  String get incomePlannerProfileCallDeltaRange;
+
+  /// Delta range lower bound label
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get incomePlannerProfileDeltaLow;
+
+  /// Delta range upper bound label
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get incomePlannerProfileDeltaHigh;
+
+  /// Delta value validation
+  ///
+  /// In en, this message translates to:
+  /// **'Use a decimal above 0 and at most 1.'**
+  String get incomePlannerProfileDeltaValidation;
+
+  /// Delta range order validation
+  ///
+  /// In en, this message translates to:
+  /// **'High delta must be at least the low delta.'**
+  String get incomePlannerProfileDeltaOrderValidation;
+
+  /// Income Planner workspace overview title
+  ///
+  /// In en, this message translates to:
+  /// **'Options cash-flow workspace'**
+  String get incomePlannerWorkspaceTitle;
+
+  /// Workspace opportunities tab
+  ///
+  /// In en, this message translates to:
+  /// **'Opportunities'**
+  String get incomePlannerWorkspaceOpportunities;
+
+  /// Workspace Wheel tab
+  ///
+  /// In en, this message translates to:
+  /// **'Wheel'**
+  String get incomePlannerWorkspaceWheel;
+
+  /// Workspace journal tab
+  ///
+  /// In en, this message translates to:
+  /// **'Journal'**
+  String get incomePlannerWorkspaceJournal;
+
+  /// Workspace candidate-count metric
+  ///
+  /// In en, this message translates to:
+  /// **'Candidates'**
+  String get incomePlannerWorkspaceCandidates;
+
+  /// Workspace open-position metric
+  ///
+  /// In en, this message translates to:
+  /// **'Open positions'**
+  String get incomePlannerWorkspaceOpenPositions;
+
+  /// Workspace approved-underlying metric
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get incomePlannerWorkspaceApproved;
+
+  /// Workspace scan freshness state
+  ///
+  /// In en, this message translates to:
+  /// **'not scanned yet'**
+  String get incomePlannerWorkspaceNeverScanned;
+
+  /// Workspace stale scan state
+  ///
+  /// In en, this message translates to:
+  /// **'scan is stale'**
+  String get incomePlannerWorkspaceScanStale;
+
+  /// Workspace fresh scan state
+  ///
+  /// In en, this message translates to:
+  /// **'scan is fresh'**
+  String get incomePlannerWorkspaceScanFresh;
+
+  /// Workspace profile and freshness summary
+  ///
+  /// In en, this message translates to:
+  /// **'{minDte}–{maxDte} DTE · max {capital} per trade · {scanState}'**
+  String incomePlannerWorkspaceProfileSummary(
+    int minDte,
+    int maxDte,
+    String capital,
+    String scanState,
+  );
+
+  /// Workspace action to reveal approved underlyings
+  ///
+  /// In en, this message translates to:
+  /// **'Manage underlyings'**
+  String get incomePlannerManageApprovedAction;
+
+  /// Collapsed approved-underlyings summary
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No approved symbols} =1{1 approved symbol} other{{count} approved symbols}}'**
+  String incomePlannerApprovedSummary(int count);
+
+  /// In-progress scan helper
+  ///
+  /// In en, this message translates to:
+  /// **'Keeping cached results visible while fresh option chains are checked. This can take up to 45 seconds.'**
+  String get incomePlannerScanProgressHint;
+
+  /// Successful scan toast
+  ///
+  /// In en, this message translates to:
+  /// **'Scan complete · {count} candidates'**
+  String incomePlannerScanCompletedToast(int count);
+
+  /// Opportunity filter: all strategies
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get incomePlannerOpportunityFilterAll;
+
+  /// Opportunity result count and ordering summary
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {visible} of {total}, ordered by fit score'**
+  String incomePlannerOpportunityCountSummary(int visible, int total);
+
+  /// Empty state after filtering opportunities
+  ///
+  /// In en, this message translates to:
+  /// **'No opportunities match this strategy filter.'**
+  String get incomePlannerOpportunityFilterEmpty;
+
+  /// Opportunity card expiration summary
+  ///
+  /// In en, this message translates to:
+  /// **'Expires {date} · {dte} DTE'**
+  String incomePlannerOpportunityExpirySummary(String date, int dte);
+
+  /// Per-contract total premium metric
+  ///
+  /// In en, this message translates to:
+  /// **'Total premium'**
+  String get incomePlannerMetricPremiumTotal;
+
+  /// Underlying spot price metric
+  ///
+  /// In en, this message translates to:
+  /// **'Underlying'**
+  String get incomePlannerMetricUnderlyingPrice;
+
+  /// Option expiration date metric
+  ///
+  /// In en, this message translates to:
+  /// **'Expiration'**
+  String get incomePlannerMetricExpiration;
+
+  /// Option delta metric
+  ///
+  /// In en, this message translates to:
+  /// **'Delta'**
+  String get incomePlannerMetricDelta;
+
+  /// Option implied-volatility metric
+  ///
+  /// In en, this message translates to:
+  /// **'Implied volatility'**
+  String get incomePlannerMetricIv;
+
+  /// Option open-interest metric
+  ///
+  /// In en, this message translates to:
+  /// **'Open interest'**
+  String get incomePlannerMetricOpenInterest;
+
+  /// Option volume metric
+  ///
+  /// In en, this message translates to:
+  /// **'Volume'**
+  String get incomePlannerMetricVolume;
+
+  /// Option bid/ask spread metric
+  ///
+  /// In en, this message translates to:
+  /// **'Bid/ask spread'**
+  String get incomePlannerMetricSpread;
+
+  /// Opportunity score dimension: yield
+  ///
+  /// In en, this message translates to:
+  /// **'Yield'**
+  String get incomePlannerScoreYield;
+
+  /// Opportunity score dimension: liquidity
+  ///
+  /// In en, this message translates to:
+  /// **'Liquidity'**
+  String get incomePlannerScoreLiquidity;
+
+  /// Opportunity score dimension: safety margin
+  ///
+  /// In en, this message translates to:
+  /// **'Safety margin'**
+  String get incomePlannerScoreSafetyMargin;
+
+  /// Opportunity score dimension: implied volatility
+  ///
+  /// In en, this message translates to:
+  /// **'Volatility fit'**
+  String get incomePlannerScoreIv;
+
+  /// Opportunity score dimension: portfolio fit
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio fit'**
+  String get incomePlannerScorePortfolioFit;
+
+  /// Opportunity score dimension: event safety
+  ///
+  /// In en, this message translates to:
+  /// **'Event safety'**
+  String get incomePlannerScoreEventSafety;
+
+  /// Zero-result rejection reason heading
+  ///
+  /// In en, this message translates to:
+  /// **'Main rejection reasons'**
+  String get incomePlannerRejectionReasonsTitle;
+
+  /// Aggregated rejection reason line
+  ///
+  /// In en, this message translates to:
+  /// **'{reason} · {count} contracts'**
+  String incomePlannerRejectionReasonSummary(String reason, int count);
+
+  /// No description provided for @incomePlannerRejectCapitalLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Capital limit'**
+  String get incomePlannerRejectCapitalLimit;
+
+  /// No description provided for @incomePlannerRejectLiquidity.
+  ///
+  /// In en, this message translates to:
+  /// **'Insufficient liquidity'**
+  String get incomePlannerRejectLiquidity;
+
+  /// No description provided for @incomePlannerRejectSpread.
+  ///
+  /// In en, this message translates to:
+  /// **'Spread too wide'**
+  String get incomePlannerRejectSpread;
+
+  /// No description provided for @incomePlannerRejectDte.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside DTE range'**
+  String get incomePlannerRejectDte;
+
+  /// No description provided for @incomePlannerRejectDelta.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside delta range'**
+  String get incomePlannerRejectDelta;
+
+  /// No description provided for @incomePlannerRejectPriceIntent.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside your acceptable price'**
+  String get incomePlannerRejectPriceIntent;
+
+  /// No description provided for @incomePlannerRejectEventRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Event-risk guard'**
+  String get incomePlannerRejectEventRisk;
+
+  /// No description provided for @incomePlannerRejectOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other hard filters'**
+  String get incomePlannerRejectOther;
+
+  /// No description provided for @incomePlannerApprovedPutNoLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Put enabled'**
+  String get incomePlannerApprovedPutNoLimit;
+
+  /// No description provided for @incomePlannerApprovedPutLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Put ≤ {price}'**
+  String incomePlannerApprovedPutLimit(String price);
+
+  /// No description provided for @incomePlannerApprovedCallNoLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Call enabled'**
+  String get incomePlannerApprovedCallNoLimit;
+
+  /// No description provided for @incomePlannerApprovedCallLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Call ≥ {price}'**
+  String incomePlannerApprovedCallLimit(String price);
+
+  /// No description provided for @incomePlannerJournalOpenedAtLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Opened on'**
+  String get incomePlannerJournalOpenedAtLabel;
+
+  /// No description provided for @incomePlannerJournalExpirationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiration'**
+  String get incomePlannerJournalExpirationLabel;
+
+  /// No description provided for @incomePlannerJournalClosedAtLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved on'**
+  String get incomePlannerJournalClosedAtLabel;
+
+  /// No description provided for @incomePlannerJournalContractQuantityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of contracts'**
+  String get incomePlannerJournalContractQuantityLabel;
+
+  /// No description provided for @incomePlannerJournalFeesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total fees'**
+  String get incomePlannerJournalFeesLabel;
+
+  /// No description provided for @incomePlannerJournalFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get incomePlannerJournalFilterAll;
+
+  /// No description provided for @incomePlannerJournalFilterOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get incomePlannerJournalFilterOpen;
+
+  /// No description provided for @incomePlannerJournalFilterResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get incomePlannerJournalFilterResolved;
+
+  /// No description provided for @incomePlannerJournalFilterEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No journal entries match this filter.'**
+  String get incomePlannerJournalFilterEmpty;
+
+  /// No description provided for @incomePlannerJournalExpiresIn.
+  ///
+  /// In en, this message translates to:
+  /// **'expires in {days}d'**
+  String incomePlannerJournalExpiresIn(int days);
+
+  /// No description provided for @incomePlannerJournalQuantitySummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{quantity} contract(s) · {size} shares each'**
+  String incomePlannerJournalQuantitySummary(int quantity, int size);
+
+  /// No description provided for @incomePlannerJournalPremiumLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium'**
+  String get incomePlannerJournalPremiumLabel;
+
+  /// No description provided for @incomePlannerJournalNetPnlLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Net P&L'**
+  String get incomePlannerJournalNetPnlLabel;
+
+  /// No description provided for @planWheelStageMixedOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Mixed open positions'**
+  String get planWheelStageMixedOpen;
+
+  /// No description provided for @incomePlannerWheelOpenCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No open positions} =1{1 open position} other{{count} open positions}}'**
+  String incomePlannerWheelOpenCount(int count);
+
+  /// No description provided for @incomePlannerWheelDueSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{position} · {days} days remaining'**
+  String incomePlannerWheelDueSummary(String position, int days);
+
+  /// No description provided for @incomePlannerWheelRealizedIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Realized net income'**
+  String get incomePlannerWheelRealizedIncome;
+
+  /// No description provided for @incomePlannerWheelNextActionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Next checkpoint'**
+  String get incomePlannerWheelNextActionTitle;
+
+  /// No description provided for @incomePlannerWheelOpenPositionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open positions'**
+  String get incomePlannerWheelOpenPositionsTitle;
+
+  /// No description provided for @incomePlannerWheelExpirationMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiration is missing · update this journal entry'**
+  String get incomePlannerWheelExpirationMissing;
+
+  /// No description provided for @incomePlannerWheelNextReviewOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Review overlapping open positions and verify total exposure.'**
+  String get incomePlannerWheelNextReviewOpen;
+
+  /// No description provided for @incomePlannerWheelNextWaitPut.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor the open put and record its outcome at expiration or close.'**
+  String get incomePlannerWheelNextWaitPut;
+
+  /// No description provided for @incomePlannerWheelNextRecordPut.
+  ///
+  /// In en, this message translates to:
+  /// **'Record the put outcome before starting the next leg.'**
+  String get incomePlannerWheelNextRecordPut;
+
+  /// No description provided for @incomePlannerWheelNextScanCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Shares are held; scan for a covered call only if you are willing to sell.'**
+  String get incomePlannerWheelNextScanCall;
+
+  /// No description provided for @incomePlannerWheelNextWaitCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor the covered call and record whether it expires, closes, or is assigned.'**
+  String get incomePlannerWheelNextWaitCall;
+
+  /// No description provided for @incomePlannerWheelNextRecordCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Record the call-away outcome and verify shares and cash.'**
+  String get incomePlannerWheelNextRecordCall;
+
+  /// No description provided for @incomePlannerWheelNextStartPut.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash is available; start a new put only for an approved underlying.'**
+  String get incomePlannerWheelNextStartPut;
 
   /// Onboarding heading shown at first launch
   ///

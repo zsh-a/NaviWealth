@@ -39,7 +39,10 @@ class ProposeOptionsJournalEntryTool implements DeviceTool {
       'underlying': <String, Object?>{'type': 'string'},
       'option_symbol': <String, Object?>{'type': 'string'},
       'opened_at_iso': <String, Object?>{'type': 'string'},
+      'expiration_at_iso': <String, Object?>{'type': 'string'},
       'entry_credit': <String, Object?>{'type': 'number', 'minimum': 0},
+      'fees': <String, Object?>{'type': 'number', 'minimum': 0},
+      'contract_quantity': <String, Object?>{'type': 'integer', 'minimum': 1},
       'currency': <String, Object?>{
         'type': 'string',
         'minLength': 3,
@@ -85,13 +88,36 @@ class ProposeOptionsJournalEntryTool implements DeviceTool {
     final statusRaw = proposalOptionalStr(input, 'status') ?? 'open';
     final status = parseTradeJournalStatus(statusRaw);
     final notes = proposalOptionalStr(input, 'notes');
+    final expirationAt = proposalOptionalStr(input, 'expiration_at_iso');
+    if (expirationAt != null && !isRfc3339(expirationAt)) {
+      return proposalBadRequest(
+        'propose_options_journal_entry: expiration_at_iso must be RFC3339',
+      );
+    }
+    final fees = proposalRequireNum(<String, Object?>{
+      'fees': input['fees'] ?? 0,
+    }, 'fees');
+    final quantityRaw = input['contract_quantity'];
+    final quantity = switch (quantityRaw) {
+      int value => value,
+      num value => value.toInt(),
+      _ => 1,
+    };
+    if (fees == null || fees < 0 || quantity < 1) {
+      return proposalBadRequest(
+        'propose_options_journal_entry: fees/contract_quantity are invalid',
+      );
+    }
 
     final payload = <String, Object?>{
       'strategy': strategy.wire,
       'underlying': underlying.toUpperCase(),
       'option_symbol': optionSymbol,
       'opened_at_iso': openedAt,
+      'expiration_at_iso': ?expirationAt,
       'entry_credit': credit,
+      'fees': fees,
+      'contract_quantity': quantity,
       'currency': currency,
       'status': status.wire,
       'notes': ?notes,

@@ -83,15 +83,18 @@ class GetWheelLifecycleTool implements DeviceTool {
     'holds_shares': cycle.holdsShares,
     'cumulative_income': cycle.cumulativeIncome.toString(),
     'entry_count': cycle.entries.length,
-    'open_position': cycle.openPosition == null
-        ? null
-        : <String, Object?>{
-            'id': cycle.openPosition!.id,
-            'strategy': cycle.openPosition!.strategy.wire,
-            'option_symbol': cycle.openPosition!.optionSymbol,
-            'opened_at': cycle.openPosition!.openedAt.toUtc().toIso8601String(),
-            'entry_credit': cycle.openPosition!.entryCredit.toString(),
-          },
+    'open_positions': [
+      for (final position in cycle.openPositions)
+        <String, Object?>{
+          'id': position.id,
+          'strategy': position.strategy.wire,
+          'option_symbol': position.optionSymbol,
+          'opened_at': position.openedAt.toUtc().toIso8601String(),
+          'expiration_at': position.expirationAt?.toUtc().toIso8601String(),
+          'entry_credit': position.entryCredit.toString(),
+          'contract_quantity': position.contractQuantity,
+        },
+    ],
   };
 
   static String _stageWire(WheelStage stage) => switch (stage) {
@@ -102,6 +105,7 @@ class GetWheelLifecycleTool implements DeviceTool {
     WheelStage.putAssigned => 'put_assigned',
     WheelStage.sharesHeld => 'shares_held',
     WheelStage.shortCall => 'short_call',
+    WheelStage.mixedOpen => 'mixed_open',
     WheelStage.callExpired => 'call_expired',
     WheelStage.callCalled => 'call_called',
   };

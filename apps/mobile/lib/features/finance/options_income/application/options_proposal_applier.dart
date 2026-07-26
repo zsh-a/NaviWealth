@@ -89,14 +89,7 @@ class OptionsProposalApplier {
       maxCapitalPerTradePct:
           _optionalDecimalRaw(payload['max_capital_per_trade_pct']) ??
           current.maxCapitalPerTradePct,
-      avoidEarnings:
-          _optionalBool(payload['avoid_earnings']) ?? current.avoidEarnings,
-      avoidMacroEvents:
-          _optionalBool(payload['avoid_macro_events']) ??
-          current.avoidMacroEvents,
-      onlyOnApprovedUnderlyings:
-          _optionalBool(payload['only_on_approved_underlyings']) ??
-          current.onlyOnApprovedUnderlyings,
+      onlyOnApprovedUnderlyings: true,
     );
   }
 
@@ -109,9 +102,6 @@ class OptionsProposalApplier {
         'min_open_interest': profile.minOpenInterest,
         'min_volume': profile.minVolume,
         'max_capital_per_trade_pct': profile.maxCapitalPerTradePct.toString(),
-        'avoid_earnings': profile.avoidEarnings,
-        'avoid_macro_events': profile.avoidMacroEvents,
-        'only_on_approved_underlyings': profile.onlyOnApprovedUnderlyings,
       };
 
   Future<ProposalApplyState> applyJournalEntry(
@@ -130,7 +120,9 @@ class OptionsProposalApplier {
       symbol: _requireString(plan, 'underlying').toUpperCase(),
       optionSymbol: _requireString(plan, 'option_symbol'),
       openedAt: openedAt,
+      expirationAt: _parseOptionalDate(plan, 'expiration_at_iso'),
       entryCredit: _requireDecimal(plan, 'entry_credit'),
+      fees: _optionalDecimalRaw(plan.payload['fees']),
       currency: (plan.get('currency') ?? 'USD').toUpperCase(),
       status: parseTradeJournalStatus(plan.get('status') ?? 'open'),
       notes: plan.get('notes'),
@@ -139,6 +131,7 @@ class OptionsProposalApplier {
       underlyingMarket: plan.get('underlying_market'),
       strikePrice: _optionalDecimal(plan, 'strike_price'),
       contractSize: _optionalInt(plan.payload['contract_size']),
+      contractQuantity: _optionalInt(plan.payload['contract_quantity']) ?? 1,
     );
     await ledgerService?.mirror(entry);
     return ProposalApplyState(
@@ -201,20 +194,18 @@ class OptionsProposalApplier {
     return null;
   }
 
-  bool? _optionalBool(Object? raw) {
-    if (raw is bool) return raw;
-    if (raw is String) {
-      return switch (raw) {
-        'true' => true,
-        'false' => false,
-        _ => null,
-      };
-    }
-    return null;
-  }
-
   DateTime _parseRequiredDate(ReadyProposalPlan plan, String key) {
     final raw = _requireString(plan, key);
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) {
+      throw ProposalApplyException('Field $key is not a valid date: $raw');
+    }
+    return parsed.toUtc();
+  }
+
+  DateTime? _parseOptionalDate(ReadyProposalPlan plan, String key) {
+    final raw = plan.get(key);
+    if (raw == null || raw.isEmpty) return null;
     final parsed = DateTime.tryParse(raw);
     if (parsed == null) {
       throw ProposalApplyException('Field $key is not a valid date: $raw');

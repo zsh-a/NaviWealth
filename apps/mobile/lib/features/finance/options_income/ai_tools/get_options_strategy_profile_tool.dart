@@ -59,9 +59,8 @@ class GetOptionsStrategyProfileTool implements DeviceTool {
       'min_open_interest': profile.minOpenInterest,
       'min_volume': profile.minVolume,
       'max_bid_ask_spread_pct': profile.maxBidAskSpreadPct.toString(),
-      'avoid_earnings': profile.avoidEarnings,
-      'avoid_macro_events': profile.avoidMacroEvents,
-      'only_on_approved_underlyings': profile.onlyOnApprovedUnderlyings,
+      'event_calendar_status': 'unavailable',
+      'only_on_approved_underlyings': true,
       'risk_disclosure_ack_at_iso': profile.riskDisclosureAckAt
           ?.toUtc()
           .toIso8601String(),

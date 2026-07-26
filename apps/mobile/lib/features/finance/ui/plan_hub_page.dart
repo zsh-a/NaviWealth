@@ -379,17 +379,18 @@ class _ExploreSectionState extends State<_ExploreSection> {
                     ),
                   ),
                 if (!kIsWeb) const Divider(height: AppSpacing.s16),
-                _PlanRow(
-                  spec: _PlanEntrySpec(
-                    icon: FLucideIcons.refreshCw,
-                    title: l10n.planWheelSectionTitle,
-                    subtitle: _wheelStatusLabel(l10n, widget.status),
-                    path: FinanceRoutes.planWheel,
-                    tone: activeOptions > 0
-                        ? AppBadgeTone.accent
-                        : AppBadgeTone.neutral,
+                if (!kIsWeb)
+                  _PlanRow(
+                    spec: _PlanEntrySpec(
+                      icon: FLucideIcons.refreshCw,
+                      title: l10n.planWheelSectionTitle,
+                      subtitle: _wheelStatusLabel(l10n, widget.status),
+                      path: FinanceRoutes.planWheel,
+                      tone: activeOptions > 0
+                          ? AppBadgeTone.accent
+                          : AppBadgeTone.neutral,
+                    ),
                   ),
-                ),
               ],
             ),
           ),

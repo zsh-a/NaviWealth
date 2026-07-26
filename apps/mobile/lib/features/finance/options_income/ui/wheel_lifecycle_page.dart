@@ -1,4 +1,5 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -22,6 +23,7 @@ class WheelLifecyclePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (kIsWeb) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
     final cyclesAsync = ref.watch(wheelLifecyclesProvider);
 
@@ -98,12 +100,35 @@ class _WheelTile extends StatelessWidget {
             color: colors.mutedForeground,
           ),
         ),
-        title: Text(cycle.symbol),
-        subtitle: Text(stageLabel),
-        suffix: MoneyText(
-          amount: cycle.cumulativeIncome.toDouble(),
-          currencyCode: cycle.currency,
-          showSign: true,
+        title: Row(
+          children: [
+            Expanded(child: Text(cycle.symbol)),
+            AppBadge(
+              label: stageLabel,
+              tone: cycle.hasOpenPosition
+                  ? AppBadgeTone.accent
+                  : AppBadgeTone.neutral,
+            ),
+          ],
+        ),
+        subtitle: Text(
+          '${_nextActionLabel(l10n, cycle.nextAction)} · '
+          '${l10n.incomePlannerWheelOpenCount(cycle.openPositions.length)}',
+          maxLines: 2,
+        ),
+        suffix: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              l10n.incomePlannerWheelRealizedIncome,
+              style: context.captionStyle,
+            ),
+            MoneyText(
+              amount: cycle.cumulativeIncome.toDouble(),
+              currencyCode: cycle.currency,
+              showSign: true,
+            ),
+          ],
         ),
       ),
     );
@@ -144,6 +169,40 @@ class _WheelCycleSheet extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          SoftCard.flat(
+            padding: const EdgeInsets.all(AppSpacing.s12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.incomePlannerWheelNextActionTitle,
+                  style: context.captionLabelStyle,
+                ),
+                const SizedBox(height: AppSpacing.s4),
+                Text(
+                  _nextActionLabel(l10n, cycle.nextAction),
+                  style: context.bodyCaptionStyle,
+                ),
+              ],
+            ),
+          ),
+          if (cycle.openPositions.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s16),
+            Text(
+              l10n.incomePlannerWheelOpenPositionsTitle,
+              style: context.mutedLabelStyle,
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            for (final entry in cycle.openPositions)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+                child: _OpenPositionTile(
+                  entry: entry,
+                  onPress: () => _openJournal(entry.id),
+                ),
+              ),
+          ],
+          const SizedBox(height: AppSpacing.s16),
           Text(l10n.planWheelHistoryTitle, style: context.mutedLabelStyle),
           const SizedBox(height: AppSpacing.s8),
           for (final entry in cycle.entries.reversed)
@@ -170,6 +229,57 @@ class _WheelCycleSheet extends StatelessWidget {
       if (!pageContext.mounted) return;
       showTradeJournalSheet(pageContext, existingId: existingId);
     });
+  }
+}
+
+class _OpenPositionTile extends StatelessWidget {
+  const _OpenPositionTile({required this.entry, required this.onPress});
+
+  final TradeJournalEntry entry;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final expiration = entry.expirationAt;
+    final due = expiration == null
+        ? l10n.incomePlannerWheelExpirationMissing
+        : l10n.incomePlannerWheelDueSummary(
+            MaterialLocalizations.of(
+              context,
+            ).formatShortDate(expiration.toLocal()),
+            expiration.toUtc().difference(DateTime.now().toUtc()).inDays,
+          );
+    return SoftCard.flat(
+      onPress: onPress,
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(entry.optionSymbol, style: context.labelStyle),
+              ),
+              AppBadge(
+                label: optionsStrategyKindShortLabel(l10n, entry.strategy),
+                tone: AppBadgeTone.accent,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s4),
+          Text(due, style: context.captionStyle),
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            l10n.incomePlannerJournalQuantitySummary(
+              entry.contractQuantity,
+              entry.effectiveContractSize,
+            ),
+            style: context.captionStyle,
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -215,6 +325,7 @@ IconData _stageIcon(WheelStage stage) => switch (stage) {
   WheelStage.putAssigned => FLucideIcons.logIn,
   WheelStage.sharesHeld => FLucideIcons.package,
   WheelStage.shortCall => FLucideIcons.arrowUpRight,
+  WheelStage.mixedOpen => FLucideIcons.layers3,
   WheelStage.callExpired => FLucideIcons.circleCheck,
   WheelStage.callCalled => FLucideIcons.logOut,
 };
@@ -230,6 +341,20 @@ String _stageLabel(AppLocalizations l10n, WheelStage stage) => switch (stage) {
   WheelStage.putAssigned => l10n.planWheelStagePutAssigned,
   WheelStage.sharesHeld => l10n.planWheelStageSharesHeld,
   WheelStage.shortCall => l10n.planWheelStageShortCall,
+  WheelStage.mixedOpen => l10n.planWheelStageMixedOpen,
   WheelStage.callExpired => l10n.planWheelStageCallExpired,
   WheelStage.callCalled => l10n.planWheelStageCallCalled,
+};
+
+String _nextActionLabel(
+  AppLocalizations l10n,
+  WheelNextAction action,
+) => switch (action) {
+  WheelNextAction.reviewOpenPositions => l10n.incomePlannerWheelNextReviewOpen,
+  WheelNextAction.waitForPut => l10n.incomePlannerWheelNextWaitPut,
+  WheelNextAction.recordPutOutcome => l10n.incomePlannerWheelNextRecordPut,
+  WheelNextAction.scanCoveredCall => l10n.incomePlannerWheelNextScanCall,
+  WheelNextAction.waitForCall => l10n.incomePlannerWheelNextWaitCall,
+  WheelNextAction.recordCallOutcome => l10n.incomePlannerWheelNextRecordCall,
+  WheelNextAction.startNewPut => l10n.incomePlannerWheelNextStartPut,
 };

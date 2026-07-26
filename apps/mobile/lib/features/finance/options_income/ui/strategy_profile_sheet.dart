@@ -36,8 +36,14 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
   late final TextEditingController _minVolumeCtrl;
   late final TextEditingController _maxSpreadCtrl;
   late final TextEditingController _maxCapitalCtrl;
+  late final TextEditingController _maxExposureCtrl;
+  late final TextEditingController _putDeltaLowCtrl;
+  late final TextEditingController _putDeltaHighCtrl;
+  late final TextEditingController _callDeltaLowCtrl;
+  late final TextEditingController _callDeltaHighCtrl;
   OptionsStrategyProfile? _draft;
   bool _busy = false;
+  bool _advancedOpen = false;
   bool _initialized = false;
   bool _controllersReady = false;
   bool _suppressControllerListeners = false;
@@ -56,6 +62,13 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
   }
 
   void _setMode(OptionsStrategyMode mode) {
+    if (mode == OptionsStrategyMode.custom) {
+      final draft = _draft;
+      if (draft != null) {
+        setState(() => _draft = draft.copyWith(mode: mode));
+      }
+      return;
+    }
     final next = defaultProfileForMode(mode).copyWith(
       // Preserve the disclosure ack across mode switches — re-presenting
       // the OCC ODD just because the user toggled Balanced → Aggressive
@@ -83,39 +96,6 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
     });
   }
 
-  void _toggleAvoidEarnings(bool value) {
-    final draft = _draft;
-    if (draft == null) return;
-    setState(() {
-      _draft = draft.copyWith(
-        avoidEarnings: value,
-        mode: OptionsStrategyMode.custom,
-      );
-    });
-  }
-
-  void _toggleAvoidMacroEvents(bool value) {
-    final draft = _draft;
-    if (draft == null) return;
-    setState(() {
-      _draft = draft.copyWith(
-        avoidMacroEvents: value,
-        mode: OptionsStrategyMode.custom,
-      );
-    });
-  }
-
-  void _toggleOnlyApproved(bool value) {
-    final draft = _draft;
-    if (draft == null) return;
-    setState(() {
-      _draft = draft.copyWith(
-        onlyOnApprovedUnderlyings: value,
-        mode: OptionsStrategyMode.custom,
-      );
-    });
-  }
-
   void _createControllers(OptionsStrategyProfile profile) {
     _minDteCtrl = TextEditingController();
     _maxDteCtrl = TextEditingController();
@@ -124,6 +104,11 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
     _minVolumeCtrl = TextEditingController();
     _maxSpreadCtrl = TextEditingController();
     _maxCapitalCtrl = TextEditingController();
+    _maxExposureCtrl = TextEditingController();
+    _putDeltaLowCtrl = TextEditingController();
+    _putDeltaHighCtrl = TextEditingController();
+    _callDeltaLowCtrl = TextEditingController();
+    _callDeltaHighCtrl = TextEditingController();
     for (final controller in [
       _minDteCtrl,
       _maxDteCtrl,
@@ -132,6 +117,11 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
       _minVolumeCtrl,
       _maxSpreadCtrl,
       _maxCapitalCtrl,
+      _maxExposureCtrl,
+      _putDeltaLowCtrl,
+      _putDeltaHighCtrl,
+      _callDeltaLowCtrl,
+      _callDeltaHighCtrl,
     ]) {
       controller.addListener(_markAdvancedCustom);
     }
@@ -149,6 +139,11 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
     _minVolumeCtrl.text = profile.minVolume.toString();
     _maxSpreadCtrl.text = _percentText(profile.maxBidAskSpreadPct);
     _maxCapitalCtrl.text = _percentText(profile.maxCapitalPerTradePct);
+    _maxExposureCtrl.text = _percentText(profile.maxUnderlyingExposurePct);
+    _putDeltaLowCtrl.text = profile.deltaPutMax.abs().toString();
+    _putDeltaHighCtrl.text = profile.deltaPutMin.abs().toString();
+    _callDeltaLowCtrl.text = profile.deltaCallMin.toString();
+    _callDeltaHighCtrl.text = profile.deltaCallMax.toString();
     _suppressControllerListeners = false;
   }
 
@@ -170,12 +165,27 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
       minVolume: int.parse(_minVolumeCtrl.text.trim()),
       maxBidAskSpreadPct: _parsePercent(_maxSpreadCtrl.text),
       maxCapitalPerTradePct: _parsePercent(_maxCapitalCtrl.text),
+      maxUnderlyingExposurePct: _parsePercent(_maxExposureCtrl.text),
+      deltaPutMin: -Decimal.parse(_putDeltaHighCtrl.text.trim()),
+      deltaPutMax: -Decimal.parse(_putDeltaLowCtrl.text.trim()),
+      deltaCallMin: Decimal.parse(_callDeltaLowCtrl.text.trim()),
+      deltaCallMax: Decimal.parse(_callDeltaHighCtrl.text.trim()),
+      onlyOnApprovedUnderlyings: true,
     );
   }
 
   Future<void> _save() async {
     final draft = _draft;
     if (draft == null) return;
+    final l10n = AppLocalizations.of(context);
+    if (draft.allowedStrategies.isEmpty) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.incomePlannerProfileStrategyRequired,
+      );
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
     final profile = _profileFromForm(draft);
     setState(() => _busy = true);
@@ -208,6 +218,11 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
       _minVolumeCtrl.dispose();
       _maxSpreadCtrl.dispose();
       _maxCapitalCtrl.dispose();
+      _maxExposureCtrl.dispose();
+      _putDeltaLowCtrl.dispose();
+      _putDeltaHighCtrl.dispose();
+      _callDeltaLowCtrl.dispose();
+      _callDeltaHighCtrl.dispose();
     }
     super.dispose();
   }
@@ -269,111 +284,138 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
               onChanged: (v) =>
                   _toggleAllowed(OptionsStrategyKind.coveredCall, v),
             ),
-            const SizedBox(height: AppSpacing.s12),
-            _SwitchRow(
-              label: l10n.incomePlannerProfileAvoidEarnings,
-              value: draft.avoidEarnings,
-              onChanged: _toggleAvoidEarnings,
-            ),
-            _SwitchRow(
-              label: l10n.incomePlannerProfileAvoidMacroEvents,
-              value: draft.avoidMacroEvents,
-              onChanged: _toggleAvoidMacroEvents,
-            ),
-            _SwitchRow(
-              label: l10n.incomePlannerProfileOnlyApproved,
-              value: draft.onlyOnApprovedUnderlyings,
-              onChanged: _toggleOnlyApproved,
-            ),
             const SizedBox(height: AppSpacing.s16),
-            _SectionLabel(l10n.incomePlannerProfileAdvancedFilters),
-            const SizedBox(height: AppSpacing.s8),
-            Row(
-              children: [
-                Expanded(
-                  child: _IntegerField(
-                    controller: _minDteCtrl,
-                    label: l10n.incomePlannerProfileMinDte,
-                    min: 0,
-                    max: 365,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s12),
-                Expanded(
-                  child: _IntegerField(
-                    controller: _maxDteCtrl,
-                    label: l10n.incomePlannerProfileMaxDte,
-                    min: 1,
-                    max: 365,
-                    validator: (value) {
-                      final base = _validateIntegerRange(
-                        value,
-                        l10n: l10n,
-                        min: 1,
-                        max: 365,
-                      );
-                      if (base != null) return base;
-                      final minDte = int.tryParse(_minDteCtrl.text.trim());
-                      final maxDte = int.tryParse((value ?? '').trim());
-                      if (minDte != null && maxDte != null && maxDte < minDte) {
-                        return l10n.incomePlannerProfileValidationDteOrder;
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-              ],
+            AppDisclosureHeader(
+              title: l10n.incomePlannerProfileAdvancedFilters,
+              subtitle: l10n.incomePlannerProfileAdvancedSummary(
+                draft.minDte,
+                draft.maxDte,
+                _percentText(draft.maxCapitalPerTradePct),
+              ),
+              expanded: _advancedOpen,
+              onToggle: () => setState(() => _advancedOpen = !_advancedOpen),
             ),
-            const SizedBox(height: AppSpacing.s12),
-            Row(
-              children: [
-                Expanded(
-                  child: _PercentField(
-                    controller: _minYieldCtrl,
-                    label: l10n.incomePlannerProfileMinYield,
-                    min: 0,
-                    max: 500,
-                  ),
+            AnimatedSizeFade(
+              visible: _advancedOpen,
+              child: Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.s12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _IntegerField(
+                            controller: _minDteCtrl,
+                            label: l10n.incomePlannerProfileMinDte,
+                            min: 0,
+                            max: 365,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.s12),
+                        Expanded(
+                          child: _IntegerField(
+                            controller: _maxDteCtrl,
+                            label: l10n.incomePlannerProfileMaxDte,
+                            min: 1,
+                            max: 365,
+                            validator: (value) {
+                              final base = _validateIntegerRange(
+                                value,
+                                l10n: l10n,
+                                min: 1,
+                                max: 365,
+                              );
+                              if (base != null) return base;
+                              final minDte = int.tryParse(
+                                _minDteCtrl.text.trim(),
+                              );
+                              final maxDte = int.tryParse((value ?? '').trim());
+                              if (minDte != null &&
+                                  maxDte != null &&
+                                  maxDte < minDte) {
+                                return l10n
+                                    .incomePlannerProfileValidationDteOrder;
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _PercentField(
+                            controller: _minYieldCtrl,
+                            label: l10n.incomePlannerProfileMinYield,
+                            min: 0,
+                            max: 500,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.s12),
+                        Expanded(
+                          child: _PercentField(
+                            controller: _maxSpreadCtrl,
+                            label: l10n.incomePlannerProfileMaxSpread,
+                            min: 0,
+                            max: 100,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _IntegerField(
+                            controller: _minOpenInterestCtrl,
+                            label: l10n.incomePlannerProfileMinOpenInterest,
+                            min: 0,
+                            max: 1000000,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.s12),
+                        Expanded(
+                          child: _IntegerField(
+                            controller: _minVolumeCtrl,
+                            label: l10n.incomePlannerProfileMinVolume,
+                            min: 0,
+                            max: 1000000,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    _PercentField(
+                      controller: _maxCapitalCtrl,
+                      label: l10n.incomePlannerProfileMaxCapitalPerTrade,
+                      min: 1,
+                      max: 100,
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    _PercentField(
+                      controller: _maxExposureCtrl,
+                      label: l10n.incomePlannerProfileMaxUnderlyingExposure,
+                      min: 1,
+                      max: 100,
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    _DeltaRangeRow(
+                      lowController: _putDeltaLowCtrl,
+                      highController: _putDeltaHighCtrl,
+                      label: l10n.incomePlannerProfilePutDeltaRange,
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    _DeltaRangeRow(
+                      lowController: _callDeltaLowCtrl,
+                      highController: _callDeltaHighCtrl,
+                      label: l10n.incomePlannerProfileCallDeltaRange,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: AppSpacing.s12),
-                Expanded(
-                  child: _PercentField(
-                    controller: _maxSpreadCtrl,
-                    label: l10n.incomePlannerProfileMaxSpread,
-                    min: 0,
-                    max: 100,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            Row(
-              children: [
-                Expanded(
-                  child: _IntegerField(
-                    controller: _minOpenInterestCtrl,
-                    label: l10n.incomePlannerProfileMinOpenInterest,
-                    min: 0,
-                    max: 1000000,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s12),
-                Expanded(
-                  child: _IntegerField(
-                    controller: _minVolumeCtrl,
-                    label: l10n.incomePlannerProfileMinVolume,
-                    min: 0,
-                    max: 1000000,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            _PercentField(
-              controller: _maxCapitalCtrl,
-              label: l10n.incomePlannerProfileMaxCapitalPerTrade,
-              min: 1,
-              max: 100,
+              ),
             ),
           ],
         ),
@@ -476,6 +518,85 @@ class _PercentField extends StatelessWidget {
       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
       validator: (value) =>
           _validatePercentRange(value, l10n: l10n, min: min, max: max),
+    );
+  }
+}
+
+class _DeltaRangeRow extends StatelessWidget {
+  const _DeltaRangeRow({
+    required this.lowController,
+    required this.highController,
+    required this.label,
+  });
+
+  final TextEditingController lowController;
+  final TextEditingController highController;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(label, style: context.captionLabelStyle),
+        const SizedBox(height: AppSpacing.s6),
+        Row(
+          children: [
+            Expanded(
+              child: _DecimalField(
+                controller: lowController,
+                label: l10n.incomePlannerProfileDeltaLow,
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s8),
+              child: Text('–'),
+            ),
+            Expanded(
+              child: _DecimalField(
+                controller: highController,
+                label: l10n.incomePlannerProfileDeltaHigh,
+                lowController: lowController,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _DecimalField extends StatelessWidget {
+  const _DecimalField({
+    required this.controller,
+    required this.label,
+    this.lowController,
+  });
+
+  final TextEditingController controller;
+  final TextEditingController? lowController;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return FTextFormField(
+      control: FTextFieldControl.managed(controller: controller),
+      label: Text(label),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+      validator: (value) {
+        final parsed = Decimal.tryParse((value ?? '').trim());
+        if (parsed == null || parsed <= Decimal.zero || parsed > Decimal.one) {
+          return l10n.incomePlannerProfileDeltaValidation;
+        }
+        final low = Decimal.tryParse(lowController?.text.trim() ?? '');
+        if (low != null && parsed < low) {
+          return l10n.incomePlannerProfileDeltaOrderValidation;
+        }
+        return null;
+      },
     );
   }
 }

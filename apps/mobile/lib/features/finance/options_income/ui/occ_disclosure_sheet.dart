@@ -35,6 +35,7 @@ class _OccDisclosureSheet extends ConsumerStatefulWidget {
 
 class _OccDisclosureSheetState extends ConsumerState<_OccDisclosureSheet> {
   bool _busy = false;
+  bool _understood = false;
 
   Future<void> _accept() async {
     setState(() => _busy = true);
@@ -90,6 +91,7 @@ class _OccDisclosureSheetState extends ConsumerState<_OccDisclosureSheet> {
         cancelLabel: l10n.incomePlannerOccCancel,
         onSubmit: _accept,
         busy: _busy,
+        enabled: _understood,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,6 +115,29 @@ class _OccDisclosureSheetState extends ConsumerState<_OccDisclosureSheet> {
                 const SizedBox(width: AppSpacing.s8),
                 Text(l10n.incomePlannerOccLearnMore),
               ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s16),
+          FTappable(
+            onPress: () => setState(() => _understood = !_understood),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  FCheckbox(
+                    value: _understood,
+                    onChange: (value) => setState(() => _understood = value),
+                  ),
+                  const SizedBox(width: AppSpacing.s10),
+                  Expanded(
+                    child: Text(
+                      l10n.incomePlannerOccConfirmation,
+                      style: context.bodyCaptionStyle.copyWith(height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

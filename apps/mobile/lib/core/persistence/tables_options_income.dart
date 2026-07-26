@@ -47,9 +47,11 @@ class OptionsTradeJournal extends Table with SyncableTable {
   TextColumn get symbol => text()();
   TextColumn get optionSymbol => text()();
   DateTimeColumn get openedAt => dateTime()();
+  DateTimeColumn get expirationAt => dateTime().nullable()();
   DateTimeColumn get closedAt => dateTime().nullable()();
   TextColumn get entryCredit => text().map(const DecimalConverter())();
   TextColumn get exitDebit => text().map(const DecimalConverter()).nullable()();
+  TextColumn get fees => text().map(const DecimalConverter()).nullable()();
   TextColumn get realizedPnl =>
       text().map(const DecimalConverter()).nullable()();
   TextColumn get currency => text().withLength(min: 3, max: 8)();
@@ -61,6 +63,7 @@ class OptionsTradeJournal extends Table with SyncableTable {
   TextColumn get strikePrice =>
       text().map(const DecimalConverter()).nullable()();
   IntColumn get contractSize => integer().nullable()();
+  IntColumn get contractQuantity => integer().withDefault(const Constant(1))();
 
   @override
   String? get tableName => 'options_trade_journal';

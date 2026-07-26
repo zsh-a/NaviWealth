@@ -187,7 +187,7 @@ void main() {
       expect(out['guidance'], contains('NVDA'));
     });
 
-    test('open position is serialised under open_position', () async {
+    test('open positions are serialised without collapsing exposure', () async {
       final c = _container([
         _entry(
           id: 'open-put',
@@ -202,7 +202,7 @@ void main() {
       final cycle = (out['cycles']! as List).single as Map;
       expect(cycle['has_open_position'], isTrue);
       expect(cycle['stage'], 'short_put');
-      final open = cycle['open_position']! as Map;
+      final open = (cycle['open_positions']! as List).single as Map;
       expect(open['id'], 'open-put');
       expect(open['strategy'], 'cash_secured_put');
       expect(open['entry_credit'], '120');

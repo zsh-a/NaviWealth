@@ -20,6 +20,7 @@ class ScanInputs {
     required this.availableCash,
     required this.upcomingEarningsSymbols,
     required this.upcomingMacroEvent,
+    this.eventDataAvailable = false,
   });
 
   final String ownerUserId;
@@ -37,6 +38,10 @@ class ScanInputs {
 
   final Set<String> upcomingEarningsSymbols;
   final bool upcomingMacroEvent;
+
+  /// Whether earnings and macro-event inputs came from a real, current
+  /// calendar. False keeps event filtering and scoring neutral.
+  final bool eventDataAvailable;
 }
 
 class ScanResult {

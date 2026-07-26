@@ -1,3 +1,5 @@
+import 'package:decimal/decimal.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -36,7 +38,11 @@ class _ApprovedUnderlyingFormSheet extends ConsumerStatefulWidget {
 
 class _ApprovedUnderlyingFormSheetState
     extends ConsumerState<_ApprovedUnderlyingFormSheet> {
+  final _formKey = GlobalKey<FormState>();
   LocalSecurityChoice? _choice;
+  late final TextEditingController _maxBuyPriceCtl;
+  late final TextEditingController _minSellPriceCtl;
+  late final TextEditingController _notesCtl;
   late bool _allowPut;
   late bool _allowCall;
   bool _busy = false;
@@ -60,9 +66,25 @@ class _ApprovedUnderlyingFormSheetState
     }
     _allowPut = existing?.allowPut ?? true;
     _allowCall = existing?.allowCall ?? true;
+    _maxBuyPriceCtl = TextEditingController(
+      text: existing?.maxBuyPrice?.toString() ?? '',
+    );
+    _minSellPriceCtl = TextEditingController(
+      text: existing?.minSellPrice?.toString() ?? '',
+    );
+    _notesCtl = TextEditingController(text: existing?.notes ?? '');
+  }
+
+  @override
+  void dispose() {
+    _maxBuyPriceCtl.dispose();
+    _minSellPriceCtl.dispose();
+    _notesCtl.dispose();
+    super.dispose();
   }
 
   Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
     final choice = _choice;
     if (choice == null) {
       AppMessenger.show(
@@ -72,6 +94,17 @@ class _ApprovedUnderlyingFormSheetState
       );
       return;
     }
+    if (!_allowPut && !_allowCall) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).incomePlannerUnderlyingStrategyRequired,
+      );
+      return;
+    }
+    final maxBuyPrice = _optionalPositiveDecimal(_maxBuyPriceCtl.text);
+    final minSellPrice = _optionalPositiveDecimal(_minSellPriceCtl.text);
+    final notes = _notesCtl.text.trim();
     setState(() => _busy = true);
     try {
       final repo = await ref.read(approvedUnderlyingsRepositoryProvider.future);
@@ -82,10 +115,19 @@ class _ApprovedUnderlyingFormSheetState
           market: choice.market,
           allowPut: _allowPut,
           allowCall: _allowCall,
+          maxBuyPrice: maxBuyPrice,
+          minSellPrice: minSellPrice,
+          notes: notes.isEmpty ? null : notes,
         );
       } else {
         await repo.update(
-          existing.copyWith(allowPut: _allowPut, allowCall: _allowCall),
+          existing.copyWith(
+            allowPut: _allowPut,
+            allowCall: _allowCall,
+            maxBuyPrice: maxBuyPrice,
+            minSellPrice: minSellPrice,
+            notes: notes.isEmpty ? null : notes,
+          ),
         );
       }
       ref.invalidate(approvedUnderlyingsProvider);
@@ -105,6 +147,19 @@ class _ApprovedUnderlyingFormSheetState
   Future<void> _delete() async {
     final existing = widget.existing;
     if (existing == null) return;
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: Text(l10n.incomePlannerUnderlyingDeleteTitle),
+      body: Text(
+        l10n.incomePlannerUnderlyingDeleteBody(existing.displaySymbol),
+      ),
+      cancelLabel: l10n.commonCancel,
+      confirmLabel: l10n.commonDelete,
+      destructive: true,
+      icon: FLucideIcons.trash2,
+    );
+    if (confirmed != true || !mounted) return;
     setState(() => _busy = true);
     try {
       final repo = await ref.read(approvedUnderlyingsRepositoryProvider.future);
@@ -136,45 +191,118 @@ class _ApprovedUnderlyingFormSheetState
         onSubmit: _save,
         busy: _busy,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SymbolField(
-            markets: const [
-              AssetMarket.usStock,
-              AssetMarket.hkStock,
-              AssetMarket.cnA,
-              AssetMarket.crypto,
-            ],
-            initialValue: _choice,
-            readOnly: _isEdit,
-            label: l10n.incomePlannerSymbolLabel,
-            hint: l10n.incomePlannerSymbolHint,
-            onChanged: (c) => setState(() => _choice = c),
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          _SwitchRow(
-            label: l10n.incomePlannerAllowPutLabel,
-            value: _allowPut,
-            onChanged: (v) => setState(() => _allowPut = v),
-          ),
-          _SwitchRow(
-            label: l10n.incomePlannerAllowCallLabel,
-            value: _allowCall,
-            onChanged: (v) => setState(() => _allowCall = v),
-          ),
-          if (_isEdit) ...[
-            const SizedBox(height: AppSpacing.s16),
-            FButton(
-              variant: FButtonVariant.destructive,
-              onPress: _busy ? null : _delete,
-              child: Text(l10n.incomePlannerDeleteAction),
+      child: Form(
+        key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SymbolField(
+              markets: const [AssetMarket.usStock],
+              initialValue: _choice,
+              readOnly: _isEdit,
+              label: l10n.incomePlannerSymbolLabel,
+              hint: l10n.incomePlannerSymbolHint,
+              onChanged: (c) => setState(() => _choice = c),
             ),
+            const SizedBox(height: AppSpacing.s4),
+            Text(
+              l10n.incomePlannerSupportedMarketHelper,
+              style: context.captionStyle,
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            _SwitchRow(
+              label: l10n.incomePlannerAllowPutLabel,
+              value: _allowPut,
+              onChanged: (v) => setState(() => _allowPut = v),
+            ),
+            AnimatedSizeFade(
+              visible: _allowPut,
+              child: Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.s8),
+                child: _PriceField(
+                  controller: _maxBuyPriceCtl,
+                  label: l10n.incomePlannerMaxBuyPriceLabel,
+                  description: l10n.incomePlannerMaxBuyPriceHelper,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            _SwitchRow(
+              label: l10n.incomePlannerAllowCallLabel,
+              value: _allowCall,
+              onChanged: (v) => setState(() => _allowCall = v),
+            ),
+            AnimatedSizeFade(
+              visible: _allowCall,
+              child: Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.s8),
+                child: _PriceField(
+                  controller: _minSellPriceCtl,
+                  label: l10n.incomePlannerMinSellPriceLabel,
+                  description: l10n.incomePlannerMinSellPriceHelper,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            FTextFormField(
+              control: FTextFieldControl.managed(controller: _notesCtl),
+              label: Text(l10n.incomePlannerUnderlyingNotesLabel),
+              description: Text(l10n.incomePlannerUnderlyingNotesHelper),
+              maxLines: 3,
+            ),
+            if (_isEdit) ...[
+              const SizedBox(height: AppSpacing.s24),
+              FButton(
+                variant: FButtonVariant.destructive,
+                onPress: _busy ? null : _delete,
+                child: Text(l10n.incomePlannerDeleteAction),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
+}
+
+class _PriceField extends StatelessWidget {
+  const _PriceField({
+    required this.controller,
+    required this.label,
+    required this.description,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return FTextFormField(
+      control: FTextFieldControl.managed(controller: controller),
+      label: Text(label),
+      description: Text(description),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+      validator: (value) {
+        final raw = (value ?? '').trim();
+        if (raw.isEmpty) return null;
+        final parsed = Decimal.tryParse(raw);
+        if (parsed == null || parsed <= Decimal.zero) {
+          return l10n.incomePlannerPositiveNumberValidation;
+        }
+        return null;
+      },
+    );
+  }
+}
+
+Decimal? _optionalPositiveDecimal(String value) {
+  final raw = value.trim();
+  if (raw.isEmpty) return null;
+  return Decimal.tryParse(raw);
 }
 
 class _SwitchRow extends StatelessWidget {

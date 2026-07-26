@@ -368,8 +368,8 @@ void main() {
     expect(saved.minDte, 14);
     expect(saved.maxDte, 60);
     expect(saved.minAnnualizedYield, Decimal.parse('0.18'));
-    expect(saved.avoidEarnings, isFalse);
-    expect(saved.onlyOnApprovedUnderlyings, isFalse);
+    expect(saved.avoidEarnings, isTrue);
+    expect(saved.onlyOnApprovedUnderlyings, isTrue);
 
     await applier.undo(state);
     final restored = await profileRepo.get('u-test');

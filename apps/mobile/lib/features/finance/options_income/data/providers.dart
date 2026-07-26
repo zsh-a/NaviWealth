@@ -199,6 +199,7 @@ final wheelLifecyclesProvider =
 int _stageRank(WheelStage stage) => switch (stage) {
   // Active (open) positions first — these are where the user is on
   // the hook.
+  WheelStage.mixedOpen => 0,
   WheelStage.shortPut => 0,
   WheelStage.shortCall => 0,
   // Resting between positions, but still holding either cash earmark

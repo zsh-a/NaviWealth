@@ -6,7 +6,7 @@ Future<void> _upsertOptionsPremium({
   required TradeJournalEntry entry,
   required String cashAccountId,
 }) async {
-  final amount = entry.entryCredit;
+  final amount = entry.grossEntryCredit - entry.effectiveFees;
   final id = _optionsLedgerEntryId(entry.id, _OptionsLedgerLeg.premium);
   if (amount <= Decimal.zero) {
     await _deleteOptionsLedgerIfPresent(
@@ -42,7 +42,7 @@ Future<void> _upsertOptionsCloseDebit({
   required String cashAccountId,
 }) async {
   final id = _optionsLedgerEntryId(entry.id, _OptionsLedgerLeg.closeDebit);
-  final debit = entry.exitDebit;
+  final debit = entry.grossExitDebit;
   if (entry.status == TradeJournalStatus.open ||
       debit == null ||
       debit <= Decimal.zero) {
@@ -119,7 +119,9 @@ Future<void> _upsertOptionsAssignment({
     securitiesAssetRepo: securitiesAssetRepo,
     entry: entry,
   );
-  final qty = Decimal.fromInt(entry.contractSize ?? defaultContractSize);
+  final qty = Decimal.fromInt(
+    (entry.contractSize ?? defaultContractSize) * entry.contractQuantity,
+  );
   final date = entry.closedAt ?? DateTime.now().toUtc();
   final JournalEntryBuild build;
   switch (entry.strategy) {

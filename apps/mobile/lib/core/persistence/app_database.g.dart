@@ -8966,6 +8966,17 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _expirationAtMeta = const VerificationMeta(
+    'expirationAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> expirationAt = GeneratedColumn<DateTime>(
+    'expiration_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _closedAtMeta = const VerificationMeta(
     'closedAt',
   );
@@ -8995,6 +9006,15 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       ).withConverter<Decimal?>($OptionsTradeJournalTable.$converterexitDebitn);
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> fees =
+      GeneratedColumn<String>(
+        'fees',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>($OptionsTradeJournalTable.$converterfeesn);
   @override
   late final GeneratedColumnWithTypeConverter<Decimal?, String> realizedPnl =
       GeneratedColumn<String>(
@@ -9094,6 +9114,18 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _contractQuantityMeta = const VerificationMeta(
+    'contractQuantity',
+  );
+  @override
+  late final GeneratedColumn<int> contractQuantity = GeneratedColumn<int>(
+    'contract_quantity',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
@@ -9106,9 +9138,11 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
     symbol,
     optionSymbol,
     openedAt,
+    expirationAt,
     closedAt,
     entryCredit,
     exitDebit,
+    fees,
     realizedPnl,
     currency,
     status,
@@ -9118,6 +9152,7 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
     underlyingMarket,
     strikePrice,
     contractSize,
+    contractQuantity,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -9207,6 +9242,15 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
     } else if (isInserting) {
       context.missing(_openedAtMeta);
     }
+    if (data.containsKey('expiration_at')) {
+      context.handle(
+        _expirationAtMeta,
+        expirationAt.isAcceptableOrUnknown(
+          data['expiration_at']!,
+          _expirationAtMeta,
+        ),
+      );
+    }
     if (data.containsKey('closed_at')) {
       context.handle(
         _closedAtMeta,
@@ -9271,6 +9315,15 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
         ),
       );
     }
+    if (data.containsKey('contract_quantity')) {
+      context.handle(
+        _contractQuantityMeta,
+        contractQuantity.isAcceptableOrUnknown(
+          data['contract_quantity']!,
+          _contractQuantityMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -9322,6 +9375,10 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
         DriftSqlType.dateTime,
         data['${effectivePrefix}opened_at'],
       )!,
+      expirationAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}expiration_at'],
+      ),
       closedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}closed_at'],
@@ -9336,6 +9393,12 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}exit_debit'],
+        ),
+      ),
+      fees: $OptionsTradeJournalTable.$converterfeesn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}fees'],
         ),
       ),
       realizedPnl: $OptionsTradeJournalTable.$converterrealizedPnln.fromSql(
@@ -9378,6 +9441,10 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
         DriftSqlType.int,
         data['${effectivePrefix}contract_size'],
       ),
+      contractQuantity: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}contract_quantity'],
+      )!,
     );
   }
 
@@ -9393,6 +9460,10 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
       const DecimalConverter();
   static TypeConverter<Decimal?, String?> $converterexitDebitn =
       NullAwareTypeConverter.wrap($converterexitDebit);
+  static TypeConverter<Decimal, String> $converterfees =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterfeesn =
+      NullAwareTypeConverter.wrap($converterfees);
   static TypeConverter<Decimal, String> $converterrealizedPnl =
       const DecimalConverter();
   static TypeConverter<Decimal?, String?> $converterrealizedPnln =
@@ -9431,9 +9502,11 @@ class OptionsTradeJournalRow extends DataClass
   final String symbol;
   final String optionSymbol;
   final DateTime openedAt;
+  final DateTime? expirationAt;
   final DateTime? closedAt;
   final Decimal entryCredit;
   final Decimal? exitDebit;
+  final Decimal? fees;
   final Decimal? realizedPnl;
   final String currency;
   final String status;
@@ -9443,6 +9516,7 @@ class OptionsTradeJournalRow extends DataClass
   final String? underlyingMarket;
   final Decimal? strikePrice;
   final int? contractSize;
+  final int contractQuantity;
   const OptionsTradeJournalRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -9454,9 +9528,11 @@ class OptionsTradeJournalRow extends DataClass
     required this.symbol,
     required this.optionSymbol,
     required this.openedAt,
+    this.expirationAt,
     this.closedAt,
     required this.entryCredit,
     this.exitDebit,
+    this.fees,
     this.realizedPnl,
     required this.currency,
     required this.status,
@@ -9466,6 +9542,7 @@ class OptionsTradeJournalRow extends DataClass
     this.underlyingMarket,
     this.strikePrice,
     this.contractSize,
+    required this.contractQuantity,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -9486,6 +9563,9 @@ class OptionsTradeJournalRow extends DataClass
     map['symbol'] = Variable<String>(symbol);
     map['option_symbol'] = Variable<String>(optionSymbol);
     map['opened_at'] = Variable<DateTime>(openedAt);
+    if (!nullToAbsent || expirationAt != null) {
+      map['expiration_at'] = Variable<DateTime>(expirationAt);
+    }
     if (!nullToAbsent || closedAt != null) {
       map['closed_at'] = Variable<DateTime>(closedAt);
     }
@@ -9497,6 +9577,11 @@ class OptionsTradeJournalRow extends DataClass
     if (!nullToAbsent || exitDebit != null) {
       map['exit_debit'] = Variable<String>(
         $OptionsTradeJournalTable.$converterexitDebitn.toSql(exitDebit),
+      );
+    }
+    if (!nullToAbsent || fees != null) {
+      map['fees'] = Variable<String>(
+        $OptionsTradeJournalTable.$converterfeesn.toSql(fees),
       );
     }
     if (!nullToAbsent || realizedPnl != null) {
@@ -9526,6 +9611,7 @@ class OptionsTradeJournalRow extends DataClass
     if (!nullToAbsent || contractSize != null) {
       map['contract_size'] = Variable<int>(contractSize);
     }
+    map['contract_quantity'] = Variable<int>(contractQuantity);
     return map;
   }
 
@@ -9543,6 +9629,9 @@ class OptionsTradeJournalRow extends DataClass
       symbol: Value(symbol),
       optionSymbol: Value(optionSymbol),
       openedAt: Value(openedAt),
+      expirationAt: expirationAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(expirationAt),
       closedAt: closedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(closedAt),
@@ -9550,6 +9639,7 @@ class OptionsTradeJournalRow extends DataClass
       exitDebit: exitDebit == null && nullToAbsent
           ? const Value.absent()
           : Value(exitDebit),
+      fees: fees == null && nullToAbsent ? const Value.absent() : Value(fees),
       realizedPnl: realizedPnl == null && nullToAbsent
           ? const Value.absent()
           : Value(realizedPnl),
@@ -9573,6 +9663,7 @@ class OptionsTradeJournalRow extends DataClass
       contractSize: contractSize == null && nullToAbsent
           ? const Value.absent()
           : Value(contractSize),
+      contractQuantity: Value(contractQuantity),
     );
   }
 
@@ -9592,9 +9683,11 @@ class OptionsTradeJournalRow extends DataClass
       symbol: serializer.fromJson<String>(json['symbol']),
       optionSymbol: serializer.fromJson<String>(json['optionSymbol']),
       openedAt: serializer.fromJson<DateTime>(json['openedAt']),
+      expirationAt: serializer.fromJson<DateTime?>(json['expirationAt']),
       closedAt: serializer.fromJson<DateTime?>(json['closedAt']),
       entryCredit: serializer.fromJson<Decimal>(json['entryCredit']),
       exitDebit: serializer.fromJson<Decimal?>(json['exitDebit']),
+      fees: serializer.fromJson<Decimal?>(json['fees']),
       realizedPnl: serializer.fromJson<Decimal?>(json['realizedPnl']),
       currency: serializer.fromJson<String>(json['currency']),
       status: serializer.fromJson<String>(json['status']),
@@ -9606,6 +9699,7 @@ class OptionsTradeJournalRow extends DataClass
       underlyingMarket: serializer.fromJson<String?>(json['underlyingMarket']),
       strikePrice: serializer.fromJson<Decimal?>(json['strikePrice']),
       contractSize: serializer.fromJson<int?>(json['contractSize']),
+      contractQuantity: serializer.fromJson<int>(json['contractQuantity']),
     );
   }
   @override
@@ -9622,9 +9716,11 @@ class OptionsTradeJournalRow extends DataClass
       'symbol': serializer.toJson<String>(symbol),
       'optionSymbol': serializer.toJson<String>(optionSymbol),
       'openedAt': serializer.toJson<DateTime>(openedAt),
+      'expirationAt': serializer.toJson<DateTime?>(expirationAt),
       'closedAt': serializer.toJson<DateTime?>(closedAt),
       'entryCredit': serializer.toJson<Decimal>(entryCredit),
       'exitDebit': serializer.toJson<Decimal?>(exitDebit),
+      'fees': serializer.toJson<Decimal?>(fees),
       'realizedPnl': serializer.toJson<Decimal?>(realizedPnl),
       'currency': serializer.toJson<String>(currency),
       'status': serializer.toJson<String>(status),
@@ -9634,6 +9730,7 @@ class OptionsTradeJournalRow extends DataClass
       'underlyingMarket': serializer.toJson<String?>(underlyingMarket),
       'strikePrice': serializer.toJson<Decimal?>(strikePrice),
       'contractSize': serializer.toJson<int?>(contractSize),
+      'contractQuantity': serializer.toJson<int>(contractQuantity),
     };
   }
 
@@ -9648,9 +9745,11 @@ class OptionsTradeJournalRow extends DataClass
     String? symbol,
     String? optionSymbol,
     DateTime? openedAt,
+    Value<DateTime?> expirationAt = const Value.absent(),
     Value<DateTime?> closedAt = const Value.absent(),
     Decimal? entryCredit,
     Value<Decimal?> exitDebit = const Value.absent(),
+    Value<Decimal?> fees = const Value.absent(),
     Value<Decimal?> realizedPnl = const Value.absent(),
     String? currency,
     String? status,
@@ -9660,6 +9759,7 @@ class OptionsTradeJournalRow extends DataClass
     Value<String?> underlyingMarket = const Value.absent(),
     Value<Decimal?> strikePrice = const Value.absent(),
     Value<int?> contractSize = const Value.absent(),
+    int? contractQuantity,
   }) => OptionsTradeJournalRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -9671,9 +9771,11 @@ class OptionsTradeJournalRow extends DataClass
     symbol: symbol ?? this.symbol,
     optionSymbol: optionSymbol ?? this.optionSymbol,
     openedAt: openedAt ?? this.openedAt,
+    expirationAt: expirationAt.present ? expirationAt.value : this.expirationAt,
     closedAt: closedAt.present ? closedAt.value : this.closedAt,
     entryCredit: entryCredit ?? this.entryCredit,
     exitDebit: exitDebit.present ? exitDebit.value : this.exitDebit,
+    fees: fees.present ? fees.value : this.fees,
     realizedPnl: realizedPnl.present ? realizedPnl.value : this.realizedPnl,
     currency: currency ?? this.currency,
     status: status ?? this.status,
@@ -9689,6 +9791,7 @@ class OptionsTradeJournalRow extends DataClass
         : this.underlyingMarket,
     strikePrice: strikePrice.present ? strikePrice.value : this.strikePrice,
     contractSize: contractSize.present ? contractSize.value : this.contractSize,
+    contractQuantity: contractQuantity ?? this.contractQuantity,
   );
   OptionsTradeJournalRow copyWithCompanion(OptionsTradeJournalCompanion data) {
     return OptionsTradeJournalRow(
@@ -9708,11 +9811,15 @@ class OptionsTradeJournalRow extends DataClass
           ? data.optionSymbol.value
           : this.optionSymbol,
       openedAt: data.openedAt.present ? data.openedAt.value : this.openedAt,
+      expirationAt: data.expirationAt.present
+          ? data.expirationAt.value
+          : this.expirationAt,
       closedAt: data.closedAt.present ? data.closedAt.value : this.closedAt,
       entryCredit: data.entryCredit.present
           ? data.entryCredit.value
           : this.entryCredit,
       exitDebit: data.exitDebit.present ? data.exitDebit.value : this.exitDebit,
+      fees: data.fees.present ? data.fees.value : this.fees,
       realizedPnl: data.realizedPnl.present
           ? data.realizedPnl.value
           : this.realizedPnl,
@@ -9734,6 +9841,9 @@ class OptionsTradeJournalRow extends DataClass
       contractSize: data.contractSize.present
           ? data.contractSize.value
           : this.contractSize,
+      contractQuantity: data.contractQuantity.present
+          ? data.contractQuantity.value
+          : this.contractQuantity,
     );
   }
 
@@ -9750,9 +9860,11 @@ class OptionsTradeJournalRow extends DataClass
           ..write('symbol: $symbol, ')
           ..write('optionSymbol: $optionSymbol, ')
           ..write('openedAt: $openedAt, ')
+          ..write('expirationAt: $expirationAt, ')
           ..write('closedAt: $closedAt, ')
           ..write('entryCredit: $entryCredit, ')
           ..write('exitDebit: $exitDebit, ')
+          ..write('fees: $fees, ')
           ..write('realizedPnl: $realizedPnl, ')
           ..write('currency: $currency, ')
           ..write('status: $status, ')
@@ -9761,7 +9873,8 @@ class OptionsTradeJournalRow extends DataClass
           ..write('cashAccountId: $cashAccountId, ')
           ..write('underlyingMarket: $underlyingMarket, ')
           ..write('strikePrice: $strikePrice, ')
-          ..write('contractSize: $contractSize')
+          ..write('contractSize: $contractSize, ')
+          ..write('contractQuantity: $contractQuantity')
           ..write(')'))
         .toString();
   }
@@ -9778,9 +9891,11 @@ class OptionsTradeJournalRow extends DataClass
     symbol,
     optionSymbol,
     openedAt,
+    expirationAt,
     closedAt,
     entryCredit,
     exitDebit,
+    fees,
     realizedPnl,
     currency,
     status,
@@ -9790,6 +9905,7 @@ class OptionsTradeJournalRow extends DataClass
     underlyingMarket,
     strikePrice,
     contractSize,
+    contractQuantity,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -9805,9 +9921,11 @@ class OptionsTradeJournalRow extends DataClass
           other.symbol == this.symbol &&
           other.optionSymbol == this.optionSymbol &&
           other.openedAt == this.openedAt &&
+          other.expirationAt == this.expirationAt &&
           other.closedAt == this.closedAt &&
           other.entryCredit == this.entryCredit &&
           other.exitDebit == this.exitDebit &&
+          other.fees == this.fees &&
           other.realizedPnl == this.realizedPnl &&
           other.currency == this.currency &&
           other.status == this.status &&
@@ -9816,7 +9934,8 @@ class OptionsTradeJournalRow extends DataClass
           other.cashAccountId == this.cashAccountId &&
           other.underlyingMarket == this.underlyingMarket &&
           other.strikePrice == this.strikePrice &&
-          other.contractSize == this.contractSize);
+          other.contractSize == this.contractSize &&
+          other.contractQuantity == this.contractQuantity);
 }
 
 class OptionsTradeJournalCompanion
@@ -9831,9 +9950,11 @@ class OptionsTradeJournalCompanion
   final Value<String> symbol;
   final Value<String> optionSymbol;
   final Value<DateTime> openedAt;
+  final Value<DateTime?> expirationAt;
   final Value<DateTime?> closedAt;
   final Value<Decimal> entryCredit;
   final Value<Decimal?> exitDebit;
+  final Value<Decimal?> fees;
   final Value<Decimal?> realizedPnl;
   final Value<String> currency;
   final Value<String> status;
@@ -9843,6 +9964,7 @@ class OptionsTradeJournalCompanion
   final Value<String?> underlyingMarket;
   final Value<Decimal?> strikePrice;
   final Value<int?> contractSize;
+  final Value<int> contractQuantity;
   final Value<int> rowid;
   const OptionsTradeJournalCompanion({
     this.ownerUserId = const Value.absent(),
@@ -9855,9 +9977,11 @@ class OptionsTradeJournalCompanion
     this.symbol = const Value.absent(),
     this.optionSymbol = const Value.absent(),
     this.openedAt = const Value.absent(),
+    this.expirationAt = const Value.absent(),
     this.closedAt = const Value.absent(),
     this.entryCredit = const Value.absent(),
     this.exitDebit = const Value.absent(),
+    this.fees = const Value.absent(),
     this.realizedPnl = const Value.absent(),
     this.currency = const Value.absent(),
     this.status = const Value.absent(),
@@ -9867,6 +9991,7 @@ class OptionsTradeJournalCompanion
     this.underlyingMarket = const Value.absent(),
     this.strikePrice = const Value.absent(),
     this.contractSize = const Value.absent(),
+    this.contractQuantity = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   OptionsTradeJournalCompanion.insert({
@@ -9880,9 +10005,11 @@ class OptionsTradeJournalCompanion
     required String symbol,
     required String optionSymbol,
     required DateTime openedAt,
+    this.expirationAt = const Value.absent(),
     this.closedAt = const Value.absent(),
     required Decimal entryCredit,
     this.exitDebit = const Value.absent(),
+    this.fees = const Value.absent(),
     this.realizedPnl = const Value.absent(),
     required String currency,
     required String status,
@@ -9892,6 +10019,7 @@ class OptionsTradeJournalCompanion
     this.underlyingMarket = const Value.absent(),
     this.strikePrice = const Value.absent(),
     this.contractSize = const Value.absent(),
+    this.contractQuantity = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -9916,9 +10044,11 @@ class OptionsTradeJournalCompanion
     Expression<String>? symbol,
     Expression<String>? optionSymbol,
     Expression<DateTime>? openedAt,
+    Expression<DateTime>? expirationAt,
     Expression<DateTime>? closedAt,
     Expression<String>? entryCredit,
     Expression<String>? exitDebit,
+    Expression<String>? fees,
     Expression<String>? realizedPnl,
     Expression<String>? currency,
     Expression<String>? status,
@@ -9928,6 +10058,7 @@ class OptionsTradeJournalCompanion
     Expression<String>? underlyingMarket,
     Expression<String>? strikePrice,
     Expression<int>? contractSize,
+    Expression<int>? contractQuantity,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -9941,9 +10072,11 @@ class OptionsTradeJournalCompanion
       if (symbol != null) 'symbol': symbol,
       if (optionSymbol != null) 'option_symbol': optionSymbol,
       if (openedAt != null) 'opened_at': openedAt,
+      if (expirationAt != null) 'expiration_at': expirationAt,
       if (closedAt != null) 'closed_at': closedAt,
       if (entryCredit != null) 'entry_credit': entryCredit,
       if (exitDebit != null) 'exit_debit': exitDebit,
+      if (fees != null) 'fees': fees,
       if (realizedPnl != null) 'realized_pnl': realizedPnl,
       if (currency != null) 'currency': currency,
       if (status != null) 'status': status,
@@ -9954,6 +10087,7 @@ class OptionsTradeJournalCompanion
       if (underlyingMarket != null) 'underlying_market': underlyingMarket,
       if (strikePrice != null) 'strike_price': strikePrice,
       if (contractSize != null) 'contract_size': contractSize,
+      if (contractQuantity != null) 'contract_quantity': contractQuantity,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -9969,9 +10103,11 @@ class OptionsTradeJournalCompanion
     Value<String>? symbol,
     Value<String>? optionSymbol,
     Value<DateTime>? openedAt,
+    Value<DateTime?>? expirationAt,
     Value<DateTime?>? closedAt,
     Value<Decimal>? entryCredit,
     Value<Decimal?>? exitDebit,
+    Value<Decimal?>? fees,
     Value<Decimal?>? realizedPnl,
     Value<String>? currency,
     Value<String>? status,
@@ -9981,6 +10117,7 @@ class OptionsTradeJournalCompanion
     Value<String?>? underlyingMarket,
     Value<Decimal?>? strikePrice,
     Value<int?>? contractSize,
+    Value<int>? contractQuantity,
     Value<int>? rowid,
   }) {
     return OptionsTradeJournalCompanion(
@@ -9994,9 +10131,11 @@ class OptionsTradeJournalCompanion
       symbol: symbol ?? this.symbol,
       optionSymbol: optionSymbol ?? this.optionSymbol,
       openedAt: openedAt ?? this.openedAt,
+      expirationAt: expirationAt ?? this.expirationAt,
       closedAt: closedAt ?? this.closedAt,
       entryCredit: entryCredit ?? this.entryCredit,
       exitDebit: exitDebit ?? this.exitDebit,
+      fees: fees ?? this.fees,
       realizedPnl: realizedPnl ?? this.realizedPnl,
       currency: currency ?? this.currency,
       status: status ?? this.status,
@@ -10006,6 +10145,7 @@ class OptionsTradeJournalCompanion
       underlyingMarket: underlyingMarket ?? this.underlyingMarket,
       strikePrice: strikePrice ?? this.strikePrice,
       contractSize: contractSize ?? this.contractSize,
+      contractQuantity: contractQuantity ?? this.contractQuantity,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -10045,6 +10185,9 @@ class OptionsTradeJournalCompanion
     if (openedAt.present) {
       map['opened_at'] = Variable<DateTime>(openedAt.value);
     }
+    if (expirationAt.present) {
+      map['expiration_at'] = Variable<DateTime>(expirationAt.value);
+    }
     if (closedAt.present) {
       map['closed_at'] = Variable<DateTime>(closedAt.value);
     }
@@ -10058,6 +10201,11 @@ class OptionsTradeJournalCompanion
     if (exitDebit.present) {
       map['exit_debit'] = Variable<String>(
         $OptionsTradeJournalTable.$converterexitDebitn.toSql(exitDebit.value),
+      );
+    }
+    if (fees.present) {
+      map['fees'] = Variable<String>(
+        $OptionsTradeJournalTable.$converterfeesn.toSql(fees.value),
       );
     }
     if (realizedPnl.present) {
@@ -10095,6 +10243,9 @@ class OptionsTradeJournalCompanion
     if (contractSize.present) {
       map['contract_size'] = Variable<int>(contractSize.value);
     }
+    if (contractQuantity.present) {
+      map['contract_quantity'] = Variable<int>(contractQuantity.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -10114,9 +10265,11 @@ class OptionsTradeJournalCompanion
           ..write('symbol: $symbol, ')
           ..write('optionSymbol: $optionSymbol, ')
           ..write('openedAt: $openedAt, ')
+          ..write('expirationAt: $expirationAt, ')
           ..write('closedAt: $closedAt, ')
           ..write('entryCredit: $entryCredit, ')
           ..write('exitDebit: $exitDebit, ')
+          ..write('fees: $fees, ')
           ..write('realizedPnl: $realizedPnl, ')
           ..write('currency: $currency, ')
           ..write('status: $status, ')
@@ -10126,6 +10279,7 @@ class OptionsTradeJournalCompanion
           ..write('underlyingMarket: $underlyingMarket, ')
           ..write('strikePrice: $strikePrice, ')
           ..write('contractSize: $contractSize, ')
+          ..write('contractQuantity: $contractQuantity, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -44215,9 +44369,11 @@ typedef $$OptionsTradeJournalTableCreateCompanionBuilder =
       required String symbol,
       required String optionSymbol,
       required DateTime openedAt,
+      Value<DateTime?> expirationAt,
       Value<DateTime?> closedAt,
       required Decimal entryCredit,
       Value<Decimal?> exitDebit,
+      Value<Decimal?> fees,
       Value<Decimal?> realizedPnl,
       required String currency,
       required String status,
@@ -44227,6 +44383,7 @@ typedef $$OptionsTradeJournalTableCreateCompanionBuilder =
       Value<String?> underlyingMarket,
       Value<Decimal?> strikePrice,
       Value<int?> contractSize,
+      Value<int> contractQuantity,
       Value<int> rowid,
     });
 typedef $$OptionsTradeJournalTableUpdateCompanionBuilder =
@@ -44241,9 +44398,11 @@ typedef $$OptionsTradeJournalTableUpdateCompanionBuilder =
       Value<String> symbol,
       Value<String> optionSymbol,
       Value<DateTime> openedAt,
+      Value<DateTime?> expirationAt,
       Value<DateTime?> closedAt,
       Value<Decimal> entryCredit,
       Value<Decimal?> exitDebit,
+      Value<Decimal?> fees,
       Value<Decimal?> realizedPnl,
       Value<String> currency,
       Value<String> status,
@@ -44253,6 +44412,7 @@ typedef $$OptionsTradeJournalTableUpdateCompanionBuilder =
       Value<String?> underlyingMarket,
       Value<Decimal?> strikePrice,
       Value<int?> contractSize,
+      Value<int> contractQuantity,
       Value<int> rowid,
     });
 
@@ -44316,6 +44476,11 @@ class $$OptionsTradeJournalTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<DateTime> get expirationAt => $composableBuilder(
+    column: $table.expirationAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<DateTime> get closedAt => $composableBuilder(
     column: $table.closedAt,
     builder: (column) => ColumnFilters(column),
@@ -44330,6 +44495,12 @@ class $$OptionsTradeJournalTableFilterComposer
   ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get exitDebit =>
       $composableBuilder(
         column: $table.exitDebit,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get fees =>
+      $composableBuilder(
+        column: $table.fees,
         builder: (column) => ColumnWithTypeConverterFilters(column),
       );
 
@@ -44377,6 +44548,11 @@ class $$OptionsTradeJournalTableFilterComposer
 
   ColumnFilters<int> get contractSize => $composableBuilder(
     column: $table.contractSize,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get contractQuantity => $composableBuilder(
+    column: $table.contractQuantity,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -44440,6 +44616,11 @@ class $$OptionsTradeJournalTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get expirationAt => $composableBuilder(
+    column: $table.expirationAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get closedAt => $composableBuilder(
     column: $table.closedAt,
     builder: (column) => ColumnOrderings(column),
@@ -44452,6 +44633,11 @@ class $$OptionsTradeJournalTableOrderingComposer
 
   ColumnOrderings<String> get exitDebit => $composableBuilder(
     column: $table.exitDebit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fees => $composableBuilder(
+    column: $table.fees,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -44497,6 +44683,11 @@ class $$OptionsTradeJournalTableOrderingComposer
 
   ColumnOrderings<int> get contractSize => $composableBuilder(
     column: $table.contractSize,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get contractQuantity => $composableBuilder(
+    column: $table.contractQuantity,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -44546,6 +44737,11 @@ class $$OptionsTradeJournalTableAnnotationComposer
   GeneratedColumn<DateTime> get openedAt =>
       $composableBuilder(column: $table.openedAt, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get expirationAt => $composableBuilder(
+    column: $table.expirationAt,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get closedAt =>
       $composableBuilder(column: $table.closedAt, builder: (column) => column);
 
@@ -44557,6 +44753,9 @@ class $$OptionsTradeJournalTableAnnotationComposer
 
   GeneratedColumnWithTypeConverter<Decimal?, String> get exitDebit =>
       $composableBuilder(column: $table.exitDebit, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get fees =>
+      $composableBuilder(column: $table.fees, builder: (column) => column);
 
   GeneratedColumnWithTypeConverter<Decimal?, String> get realizedPnl =>
       $composableBuilder(
@@ -44596,6 +44795,11 @@ class $$OptionsTradeJournalTableAnnotationComposer
 
   GeneratedColumn<int> get contractSize => $composableBuilder(
     column: $table.contractSize,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get contractQuantity => $composableBuilder(
+    column: $table.contractQuantity,
     builder: (column) => column,
   );
 }
@@ -44653,9 +44857,11 @@ class $$OptionsTradeJournalTableTableManager
                 Value<String> symbol = const Value.absent(),
                 Value<String> optionSymbol = const Value.absent(),
                 Value<DateTime> openedAt = const Value.absent(),
+                Value<DateTime?> expirationAt = const Value.absent(),
                 Value<DateTime?> closedAt = const Value.absent(),
                 Value<Decimal> entryCredit = const Value.absent(),
                 Value<Decimal?> exitDebit = const Value.absent(),
+                Value<Decimal?> fees = const Value.absent(),
                 Value<Decimal?> realizedPnl = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<String> status = const Value.absent(),
@@ -44665,6 +44871,7 @@ class $$OptionsTradeJournalTableTableManager
                 Value<String?> underlyingMarket = const Value.absent(),
                 Value<Decimal?> strikePrice = const Value.absent(),
                 Value<int?> contractSize = const Value.absent(),
+                Value<int> contractQuantity = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => OptionsTradeJournalCompanion(
                 ownerUserId: ownerUserId,
@@ -44677,9 +44884,11 @@ class $$OptionsTradeJournalTableTableManager
                 symbol: symbol,
                 optionSymbol: optionSymbol,
                 openedAt: openedAt,
+                expirationAt: expirationAt,
                 closedAt: closedAt,
                 entryCredit: entryCredit,
                 exitDebit: exitDebit,
+                fees: fees,
                 realizedPnl: realizedPnl,
                 currency: currency,
                 status: status,
@@ -44689,6 +44898,7 @@ class $$OptionsTradeJournalTableTableManager
                 underlyingMarket: underlyingMarket,
                 strikePrice: strikePrice,
                 contractSize: contractSize,
+                contractQuantity: contractQuantity,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -44703,9 +44913,11 @@ class $$OptionsTradeJournalTableTableManager
                 required String symbol,
                 required String optionSymbol,
                 required DateTime openedAt,
+                Value<DateTime?> expirationAt = const Value.absent(),
                 Value<DateTime?> closedAt = const Value.absent(),
                 required Decimal entryCredit,
                 Value<Decimal?> exitDebit = const Value.absent(),
+                Value<Decimal?> fees = const Value.absent(),
                 Value<Decimal?> realizedPnl = const Value.absent(),
                 required String currency,
                 required String status,
@@ -44715,6 +44927,7 @@ class $$OptionsTradeJournalTableTableManager
                 Value<String?> underlyingMarket = const Value.absent(),
                 Value<Decimal?> strikePrice = const Value.absent(),
                 Value<int?> contractSize = const Value.absent(),
+                Value<int> contractQuantity = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => OptionsTradeJournalCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -44727,9 +44940,11 @@ class $$OptionsTradeJournalTableTableManager
                 symbol: symbol,
                 optionSymbol: optionSymbol,
                 openedAt: openedAt,
+                expirationAt: expirationAt,
                 closedAt: closedAt,
                 entryCredit: entryCredit,
                 exitDebit: exitDebit,
+                fees: fees,
                 realizedPnl: realizedPnl,
                 currency: currency,
                 status: status,
@@ -44739,6 +44954,7 @@ class $$OptionsTradeJournalTableTableManager
                 underlyingMarket: underlyingMarket,
                 strikePrice: strikePrice,
                 contractSize: contractSize,
+                contractQuantity: contractQuantity,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

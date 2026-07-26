@@ -66,9 +66,9 @@ void main() {
 
     final usd = stats.byCurrency.singleWhere((s) => s.currency == 'USD');
     expect(usd.totalPremium, Decimal.parse('410'));
-    expect(usd.trackedRealizedPnl, Decimal.parse('140'));
-    expect(usd.trackedRealizedCount, 2);
-    expect(usd.winningCount, 2);
+    expect(usd.trackedRealizedPnl, Decimal.parse('340'));
+    expect(usd.trackedRealizedCount, 3);
+    expect(usd.winningCount, 3);
     expect(usd.winRate, 1);
     expect(usd.averageHoldingDays, 15);
 
@@ -83,7 +83,7 @@ void main() {
     final tsla = stats.bySymbol.singleWhere((s) => s.symbol == 'TSLA');
     expect(tsla.assignedCount, 1);
     expect(tsla.openCount, 1);
-    expect(tsla.trackedRealizedPnlByCurrency, isEmpty);
+    expect(tsla.trackedRealizedPnlByCurrency['USD'], Decimal.parse('200'));
   });
 }
 

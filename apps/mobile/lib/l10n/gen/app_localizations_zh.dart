@@ -10100,7 +10100,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get incomePlannerOpportunitiesAllRejected =>
-      '本次扫描没有候选通过你的硬条件。请放宽偏好(如降低收益下限、扩大 DTE 窗口)后重试。';
+      '本次没有候选通过你的风险边界。请先查看下方原因；保持当前限制并稍后再看也是合理结果。';
 
   @override
   String get incomePlannerNoMatchesTitle => '本次没有符合条件的机会';
@@ -10120,13 +10120,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerChipCoveredCall => '备兑看涨';
 
   @override
-  String get incomePlannerRiskLow => '低风险';
+  String get incomePlannerRiskLow => '相对较低';
 
   @override
-  String get incomePlannerRiskModerate => '中等';
+  String get incomePlannerRiskModerate => '相对中等';
 
   @override
-  String get incomePlannerRiskElevated => '偏高';
+  String get incomePlannerRiskElevated => '相对偏高';
 
   @override
   String get incomePlannerMetricAnnualized => '年化';
@@ -10354,6 +10354,331 @@ class AppLocalizationsZh extends AppLocalizations {
   ) {
     return '$label:$ago · $stale';
   }
+
+  @override
+  String get incomePlannerOccConfirmation =>
+      '我理解每张合约被行权时可能需要买入或卖出 100 股，且本规划器不会下单，也不保证收益。';
+
+  @override
+  String get incomePlannerUnderlyingStrategyRequired => '请至少为该标的启用一种策略。';
+
+  @override
+  String get incomePlannerUnderlyingDeleteTitle => '移除已批准标的？';
+
+  @override
+  String incomePlannerUnderlyingDeleteBody(String symbol) {
+    return '$symbol 将不再参与期权扫描。';
+  }
+
+  @override
+  String get incomePlannerSupportedMarketHelper => '当前扫描支持美国上市股票和 ETF。';
+
+  @override
+  String get incomePlannerMaxBuyPriceLabel => '可接受的最高接货价';
+
+  @override
+  String get incomePlannerMaxBuyPriceHelper =>
+      '高于该价格的 Put 行权价会被过滤；留空表示不增加价格上限。';
+
+  @override
+  String get incomePlannerMinSellPriceLabel => '可接受的最低卖出价';
+
+  @override
+  String get incomePlannerMinSellPriceHelper =>
+      '低于该价格的 Call 行权价会被过滤；留空表示不增加价格下限。';
+
+  @override
+  String get incomePlannerUnderlyingNotesLabel => '投资立场';
+
+  @override
+  String get incomePlannerUnderlyingNotesHelper => '记录你愿意持有或卖出该标的的理由。';
+
+  @override
+  String get incomePlannerPositiveNumberValidation => '请输入大于零的数字。';
+
+  @override
+  String get incomePlannerProfileStrategyRequired => '请至少启用一种期权策略。';
+
+  @override
+  String incomePlannerProfileAdvancedSummary(
+    int minDte,
+    int maxDte,
+    String capital,
+  ) {
+    return '$minDte–$maxDte DTE · 单笔最多 $capital%';
+  }
+
+  @override
+  String get incomePlannerProfileMaxUnderlyingExposure => '行权后单一标的最大占比';
+
+  @override
+  String get incomePlannerProfilePutDeltaRange => 'Put 绝对 Delta 范围';
+
+  @override
+  String get incomePlannerProfileCallDeltaRange => 'Call Delta 范围';
+
+  @override
+  String get incomePlannerProfileDeltaLow => '下限';
+
+  @override
+  String get incomePlannerProfileDeltaHigh => '上限';
+
+  @override
+  String get incomePlannerProfileDeltaValidation => '请输入大于 0 且不超过 1 的小数。';
+
+  @override
+  String get incomePlannerProfileDeltaOrderValidation => '上限必须大于或等于下限。';
+
+  @override
+  String get incomePlannerWorkspaceTitle => '期权现金流工作台';
+
+  @override
+  String get incomePlannerWorkspaceOpportunities => '机会';
+
+  @override
+  String get incomePlannerWorkspaceWheel => 'Wheel';
+
+  @override
+  String get incomePlannerWorkspaceJournal => '日志';
+
+  @override
+  String get incomePlannerWorkspaceCandidates => '候选';
+
+  @override
+  String get incomePlannerWorkspaceOpenPositions => '未平仓';
+
+  @override
+  String get incomePlannerWorkspaceApproved => '批准标的';
+
+  @override
+  String get incomePlannerWorkspaceNeverScanned => '尚未扫描';
+
+  @override
+  String get incomePlannerWorkspaceScanStale => '扫描已过期';
+
+  @override
+  String get incomePlannerWorkspaceScanFresh => '扫描较新';
+
+  @override
+  String incomePlannerWorkspaceProfileSummary(
+    int minDte,
+    int maxDte,
+    String capital,
+    String scanState,
+  ) {
+    return '$minDte–$maxDte DTE · 单笔最多 $capital · $scanState';
+  }
+
+  @override
+  String get incomePlannerManageApprovedAction => '管理标的';
+
+  @override
+  String incomePlannerApprovedSummary(int count) {
+    return '$count 个已批准标的';
+  }
+
+  @override
+  String get incomePlannerScanProgressHint => '检查最新期权链时会保留旧结果，扫描最长可能需要 45 秒。';
+
+  @override
+  String incomePlannerScanCompletedToast(int count) {
+    return '扫描完成 · $count 个候选';
+  }
+
+  @override
+  String get incomePlannerOpportunityFilterAll => '全部';
+
+  @override
+  String incomePlannerOpportunityCountSummary(int visible, int total) {
+    return '显示 $visible/$total，按适配评分排序';
+  }
+
+  @override
+  String get incomePlannerOpportunityFilterEmpty => '当前策略筛选下没有机会。';
+
+  @override
+  String incomePlannerOpportunityExpirySummary(String date, int dte) {
+    return '$date 到期 · $dte DTE';
+  }
+
+  @override
+  String get incomePlannerMetricPremiumTotal => '总权利金';
+
+  @override
+  String get incomePlannerMetricUnderlyingPrice => '标的现价';
+
+  @override
+  String get incomePlannerMetricExpiration => '到期日';
+
+  @override
+  String get incomePlannerMetricDelta => 'Delta';
+
+  @override
+  String get incomePlannerMetricIv => '隐含波动率';
+
+  @override
+  String get incomePlannerMetricOpenInterest => '未平仓量';
+
+  @override
+  String get incomePlannerMetricVolume => '成交量';
+
+  @override
+  String get incomePlannerMetricSpread => '买卖价差';
+
+  @override
+  String get incomePlannerScoreYield => '收益';
+
+  @override
+  String get incomePlannerScoreLiquidity => '流动性';
+
+  @override
+  String get incomePlannerScoreSafetyMargin => '安全边际';
+
+  @override
+  String get incomePlannerScoreIv => '波动率适配';
+
+  @override
+  String get incomePlannerScorePortfolioFit => '组合适配';
+
+  @override
+  String get incomePlannerScoreEventSafety => '事件安全';
+
+  @override
+  String get incomePlannerRejectionReasonsTitle => '主要拒绝原因';
+
+  @override
+  String incomePlannerRejectionReasonSummary(String reason, int count) {
+    return '$reason · $count 张合约';
+  }
+
+  @override
+  String get incomePlannerRejectCapitalLimit => '超过资金上限';
+
+  @override
+  String get incomePlannerRejectLiquidity => '流动性不足';
+
+  @override
+  String get incomePlannerRejectSpread => '价差过大';
+
+  @override
+  String get incomePlannerRejectDte => '不在 DTE 范围';
+
+  @override
+  String get incomePlannerRejectDelta => '不在 Delta 范围';
+
+  @override
+  String get incomePlannerRejectPriceIntent => '不符合你的价格意愿';
+
+  @override
+  String get incomePlannerRejectEventRisk => '事件风险保护';
+
+  @override
+  String get incomePlannerRejectOther => '其他硬性条件';
+
+  @override
+  String get incomePlannerApprovedPutNoLimit => '允许 Put';
+
+  @override
+  String incomePlannerApprovedPutLimit(String price) {
+    return 'Put ≤ $price';
+  }
+
+  @override
+  String get incomePlannerApprovedCallNoLimit => '允许 Call';
+
+  @override
+  String incomePlannerApprovedCallLimit(String price) {
+    return 'Call ≥ $price';
+  }
+
+  @override
+  String get incomePlannerJournalOpenedAtLabel => '开仓日期';
+
+  @override
+  String get incomePlannerJournalExpirationLabel => '到期日';
+
+  @override
+  String get incomePlannerJournalClosedAtLabel => '结算日期';
+
+  @override
+  String get incomePlannerJournalContractQuantityLabel => '合约数量';
+
+  @override
+  String get incomePlannerJournalFeesLabel => '总费用';
+
+  @override
+  String get incomePlannerJournalFilterAll => '全部';
+
+  @override
+  String get incomePlannerJournalFilterOpen => '未平仓';
+
+  @override
+  String get incomePlannerJournalFilterResolved => '已结算';
+
+  @override
+  String get incomePlannerJournalFilterEmpty => '当前筛选下没有交易日志。';
+
+  @override
+  String incomePlannerJournalExpiresIn(int days) {
+    return '$days 天后到期';
+  }
+
+  @override
+  String incomePlannerJournalQuantitySummary(int quantity, int size) {
+    return '$quantity 张 · 每张 $size 股';
+  }
+
+  @override
+  String get incomePlannerJournalPremiumLabel => '权利金';
+
+  @override
+  String get incomePlannerJournalNetPnlLabel => '净盈亏';
+
+  @override
+  String get planWheelStageMixedOpen => '多个混合未平仓头寸';
+
+  @override
+  String incomePlannerWheelOpenCount(int count) {
+    return '$count 个未平仓头寸';
+  }
+
+  @override
+  String incomePlannerWheelDueSummary(String position, int days) {
+    return '$position · 剩余 $days 天';
+  }
+
+  @override
+  String get incomePlannerWheelRealizedIncome => '已实现净收入';
+
+  @override
+  String get incomePlannerWheelNextActionTitle => '下一检查点';
+
+  @override
+  String get incomePlannerWheelOpenPositionsTitle => '未平仓头寸';
+
+  @override
+  String get incomePlannerWheelExpirationMissing => '缺少到期日 · 请更新该日志';
+
+  @override
+  String get incomePlannerWheelNextReviewOpen => '检查重叠的未平仓头寸，并核对总风险暴露。';
+
+  @override
+  String get incomePlannerWheelNextWaitPut => '关注未平仓 Put，并在到期或平仓时记录结果。';
+
+  @override
+  String get incomePlannerWheelNextRecordPut => '先记录 Put 结果，再进入下一阶段。';
+
+  @override
+  String get incomePlannerWheelNextScanCall => '当前持有正股；仅在愿意卖出时扫描备兑 Call。';
+
+  @override
+  String get incomePlannerWheelNextWaitCall => '关注备兑 Call，并记录到期、平仓或行权结果。';
+
+  @override
+  String get incomePlannerWheelNextRecordCall => '记录正股被行权卖出的结果，并核对持仓与现金。';
+
+  @override
+  String get incomePlannerWheelNextStartPut => '现金待命；仅对已批准且愿意持有的标的开始新 Put。';
 
   @override
   String get onboardingTitle => '欢迎使用 NaviWealth';

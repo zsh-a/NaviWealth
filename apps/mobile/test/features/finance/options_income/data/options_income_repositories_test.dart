@@ -1,9 +1,11 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/options_income/data/approved_underlyings_repository.dart';
 import 'package:naviwealth/features/finance/options_income/data/options_strategy_profile_repository.dart';
+import 'package:naviwealth/features/finance/options_income/data/trade_journal_repository.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
 
 import '../../../../core/persistence/test_database.dart';
@@ -15,6 +17,7 @@ void main() {
   late InMemoryOutboxStore outbox;
   late OptionsStrategyProfileRepository profileRepo;
   late ApprovedUnderlyingsRepository approvedRepo;
+  late TradeJournalRepository journalRepo;
 
   setUp(() {
     db = makeTestDatabase();
@@ -26,6 +29,11 @@ void main() {
       stamper: stamper,
     );
     approvedRepo = ApprovedUnderlyingsRepository(
+      db: db,
+      outbox: outbox,
+      stamper: stamper,
+    );
+    journalRepo = TradeJournalRepository(
       db: db,
       outbox: outbox,
       stamper: stamper,
@@ -167,6 +175,30 @@ void main() {
 
       expect(ownRows.map((row) => row.symbol), ['AAPL']);
       expect(otherRows, isEmpty);
+    });
+  });
+
+  group('TradeJournalRepository', () {
+    test('round-trips lifecycle, quantity, and fee fields', () async {
+      final expiration = DateTime.utc(2026, 8, 21);
+      final saved = await journalRepo.create(
+        strategy: OptionsStrategyKind.cashSecuredPut,
+        symbol: 'AAPL',
+        optionSymbol: 'AAPL260821P00200000',
+        openedAt: DateTime.utc(2026, 7, 20),
+        expirationAt: expiration,
+        entryCredit: Decimal.fromInt(125),
+        fees: Decimal.parse('2.50'),
+        contractQuantity: 3,
+        currency: 'USD',
+      );
+
+      final loaded = await journalRepo.get(saved.id);
+      expect(loaded, isNotNull);
+      expect(loaded!.expirationAt?.toUtc(), expiration);
+      expect(loaded.fees, Decimal.parse('2.50'));
+      expect(loaded.contractQuantity, 3);
+      expect(loaded.grossEntryCredit, Decimal.fromInt(375));
     });
   });
 }

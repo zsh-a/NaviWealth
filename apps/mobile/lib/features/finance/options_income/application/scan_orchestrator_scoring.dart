@@ -48,6 +48,7 @@ _PerSymbolResult _scoreSnapshot({
       ignoreOpenInterestFloor: ignoreOpenInterestFloor,
       hasUpcomingEarnings: hasEarnings,
       hasUpcomingMacroEvent: hasMacro,
+      eventDataAvailable: inputs.eventDataAvailable,
       now: now,
     );
     if (scored != null) {
@@ -64,6 +65,7 @@ _PerSymbolResult _scoreSnapshot({
         ignoreOpenInterestFloor: ignoreOpenInterestFloor,
         hasUpcomingEarnings: hasEarnings,
         hasUpcomingMacroEvent: hasMacro,
+        eventDataAvailable: inputs.eventDataAvailable,
       );
       if (rejection != null) rejs.add(rejection);
     }

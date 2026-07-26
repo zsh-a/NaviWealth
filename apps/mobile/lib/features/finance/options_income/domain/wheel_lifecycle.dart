@@ -39,11 +39,26 @@ enum WheelStage {
   /// A covered call is currently open.
   shortCall,
 
+  /// More than one open contract exists and the journal contains both puts
+  /// and calls. The UI must surface the positions individually instead of
+  /// pretending a single linear Wheel stage.
+  mixedOpen,
+
   /// A covered call expired worthless — user kept shares + income.
   callExpired,
 
   /// Shares were called away — cycle ends and rotates back to cash.
   callCalled,
+}
+
+enum WheelNextAction {
+  reviewOpenPositions,
+  waitForPut,
+  recordPutOutcome,
+  scanCoveredCall,
+  waitForCall,
+  recordCallOutcome,
+  startNewPut,
 }
 
 /// One Wheel lifecycle for a single underlying symbol.
@@ -56,9 +71,10 @@ class WheelLifecycle {
     required this.symbol,
     required this.currency,
     required this.stage,
-    required this.openPosition,
+    required this.openPositions,
     required this.cumulativeIncome,
     required this.entries,
+    required this.nextAction,
   });
 
   /// Empty lifecycle for [symbol] — a freshly-onboarded underlying with no
@@ -70,18 +86,20 @@ class WheelLifecycle {
     symbol: symbol,
     currency: currency,
     stage: WheelStage.between,
-    openPosition: null,
+    openPositions: const [],
     cumulativeIncome: Decimal.zero,
     entries: const [],
+    nextAction: WheelNextAction.startNewPut,
   );
 
   final String symbol;
   final String currency;
   final WheelStage stage;
 
-  /// The currently open journal entry, or `null` when the lifecycle is
-  /// resting between positions.
-  final TradeJournalEntry? openPosition;
+  /// Every currently open journal entry. A Wheel can have overlapping or
+  /// rolled positions; retaining the full list prevents the last row from
+  /// silently hiding earlier exposure.
+  final List<TradeJournalEntry> openPositions;
 
   /// Sum of `entryCredit - exitDebit` across every closed entry. Open
   /// entries do not contribute until they resolve.
@@ -91,9 +109,21 @@ class WheelLifecycle {
   /// in the lifecycle so the UI can render the cycle's full history
   /// without re-querying.
   final List<TradeJournalEntry> entries;
+  final WheelNextAction nextAction;
 
   /// True when a position is open on this underlying.
-  bool get hasOpenPosition => openPosition != null;
+  bool get hasOpenPosition => openPositions.isNotEmpty;
+
+  /// Compatibility accessor for consumers that only need the most recently
+  /// opened position. New lifecycle UI should render [openPositions].
+  TradeJournalEntry? get openPosition =>
+      openPositions.isEmpty ? null : openPositions.last;
+
+  TradeJournalEntry? get nearestExpiringPosition {
+    final dated = openPositions.where((e) => e.expirationAt != null).toList()
+      ..sort((a, b) => a.expirationAt!.compareTo(b.expirationAt!));
+    return dated.isEmpty ? null : dated.first;
+  }
 
   /// True when the lifecycle holds shares (assigned but not yet called).
   bool get holdsShares =>
@@ -126,41 +156,40 @@ WheelLifecycle buildWheelLifecycle({
   }
 
   var income = Decimal.zero;
-  TradeJournalEntry? openEntry;
+  final openEntries = <TradeJournalEntry>[];
   TradeJournalEntry? lastClosed;
   for (final entry in ours) {
     if (entry.status == TradeJournalStatus.open) {
-      openEntry = entry;
+      openEntries.add(entry);
       continue;
     }
     lastClosed = entry;
-    final realized = entry.realizedPnl;
+    final realized = entry.trackedNetPnl;
     if (realized != null) {
       income += realized;
-      continue;
     }
-    final credit = entry.entryCredit;
-    final debit = entry.exitDebit ?? Decimal.zero;
-    income += credit - debit;
   }
 
-  final stage = _stageFrom(openEntry: openEntry, lastClosed: lastClosed);
+  final stage = _stageFrom(openEntries: openEntries, lastClosed: lastClosed);
   return WheelLifecycle(
     symbol: symbol,
     currency: currency,
     stage: stage,
-    openPosition: openEntry,
+    openPositions: List.unmodifiable(openEntries),
     cumulativeIncome: income,
     entries: ours,
+    nextAction: _nextAction(stage),
   );
 }
 
 WheelStage _stageFrom({
-  required TradeJournalEntry? openEntry,
+  required List<TradeJournalEntry> openEntries,
   required TradeJournalEntry? lastClosed,
 }) {
-  if (openEntry != null) {
-    return switch (openEntry.strategy) {
+  if (openEntries.isNotEmpty) {
+    final strategies = openEntries.map((e) => e.strategy).toSet();
+    if (strategies.length > 1) return WheelStage.mixedOpen;
+    return switch (strategies.single) {
       OptionsStrategyKind.cashSecuredPut => WheelStage.shortPut,
       OptionsStrategyKind.coveredCall => WheelStage.shortCall,
     };
@@ -182,3 +211,15 @@ WheelStage _stageFrom({
     },
   };
 }
+
+WheelNextAction _nextAction(WheelStage stage) => switch (stage) {
+  WheelStage.mixedOpen => WheelNextAction.reviewOpenPositions,
+  WheelStage.shortPut => WheelNextAction.waitForPut,
+  WheelStage.putExpired => WheelNextAction.recordPutOutcome,
+  WheelStage.putAssigned ||
+  WheelStage.sharesHeld ||
+  WheelStage.callExpired => WheelNextAction.scanCoveredCall,
+  WheelStage.shortCall => WheelNextAction.waitForCall,
+  WheelStage.callCalled => WheelNextAction.recordCallOutcome,
+  WheelStage.between || WheelStage.cashWaiting => WheelNextAction.startNewPut,
+};

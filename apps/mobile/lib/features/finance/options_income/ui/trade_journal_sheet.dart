@@ -45,12 +45,15 @@ class _TradeJournalForm extends ConsumerStatefulWidget {
 }
 
 class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
+  final _formKey = GlobalKey<FormState>();
   late final TextEditingController _symbolCtl;
   late final TextEditingController _optionSymbolCtl;
   late final TextEditingController _creditCtl;
   late final TextEditingController _debitCtl;
   late final TextEditingController _strikeCtl;
   late final TextEditingController _contractSizeCtl;
+  late final TextEditingController _contractQuantityCtl;
+  late final TextEditingController _feesCtl;
   late final TextEditingController _notesCtl;
 
   OptionsStrategyKind _strategy = OptionsStrategyKind.cashSecuredPut;
@@ -61,6 +64,9 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
   bool _hydratedAccounts = false;
   bool _busy = false;
   TradeJournalEntry? _loaded;
+  late DateTime _openedAt;
+  DateTime? _expirationAt;
+  DateTime? _closedAt;
 
   @override
   void initState() {
@@ -78,7 +84,11 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
       text: pre == null ? '' : pre.contract.strike.amount.toString(),
     );
     _contractSizeCtl = TextEditingController(text: '100');
+    _contractQuantityCtl = TextEditingController(text: '1');
+    _feesCtl = TextEditingController(text: '0');
     _notesCtl = TextEditingController();
+    _openedAt = DateTime.now().toUtc();
+    _expirationAt = pre?.contract.expiration;
     if (pre != null) {
       _strategy = pre.strategy;
       _currency = pre.metrics.premium.currency;
@@ -100,12 +110,17 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
       _strategy = entry.strategy;
       _status = entry.status;
       _currency = entry.currency;
+      _openedAt = entry.openedAt;
+      _expirationAt = entry.expirationAt;
+      _closedAt = entry.closedAt;
       _symbolCtl.text = entry.symbol;
       _optionSymbolCtl.text = entry.optionSymbol;
       _creditCtl.text = entry.entryCredit.toString();
       _debitCtl.text = entry.exitDebit?.toString() ?? '';
       _strikeCtl.text = entry.strikePrice?.toString() ?? '';
       _contractSizeCtl.text = (entry.contractSize ?? 100).toString();
+      _contractQuantityCtl.text = entry.contractQuantity.toString();
+      _feesCtl.text = entry.effectiveFees.toString();
       _notesCtl.text = entry.notes ?? '';
       _brokerageAccountId = entry.brokerageAccountId;
       _cashAccountId = entry.cashAccountId;
@@ -120,56 +135,50 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
     _debitCtl.dispose();
     _strikeCtl.dispose();
     _contractSizeCtl.dispose();
+    _contractQuantityCtl.dispose();
+    _feesCtl.dispose();
     _notesCtl.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     final l10n = AppLocalizations.of(context);
+    if (!_formKey.currentState!.validate()) return;
     final symbol = _symbolCtl.text.trim().toUpperCase();
     final optionSymbol = _optionSymbolCtl.text.trim();
-    if (symbol.isEmpty || optionSymbol.isEmpty) {
-      AppMessenger.show(
-        context,
-        ToastKind.error,
-        l10n.incomePlannerSymbolRequired,
-      );
-      return;
-    }
-    final credit = Decimal.tryParse(_creditCtl.text.trim());
-    if (credit == null || credit < Decimal.zero) {
-      AppMessenger.show(context, ToastKind.error, l10n.formAmountFieldInvalid);
-      return;
-    }
+    final credit = Decimal.parse(_creditCtl.text.trim());
     final debit = _debitCtl.text.trim().isEmpty
         ? null
-        : Decimal.tryParse(_debitCtl.text.trim());
+        : Decimal.parse(_debitCtl.text.trim());
     final strike = _strikeCtl.text.trim().isEmpty
         ? null
-        : Decimal.tryParse(_strikeCtl.text.trim());
-    final contractSize = int.tryParse(_contractSizeCtl.text.trim()) ?? 100;
-    if (_status == TradeJournalStatus.closed && debit == null) {
-      AppMessenger.show(context, ToastKind.error, l10n.formAmountFieldInvalid);
-      return;
-    }
+        : Decimal.parse(_strikeCtl.text.trim());
+    final contractSize = int.parse(_contractSizeCtl.text.trim());
+    final contractQuantity = int.parse(_contractQuantityCtl.text.trim());
+    final fees = Decimal.parse(_feesCtl.text.trim());
     setState(() => _busy = true);
     try {
       final repo = await ref.read(tradeJournalRepositoryProvider.future);
       final ledger = await ref.read(optionsJournalLedgerServiceProvider.future);
       final market = widget.prefilled?.contract.market.wire;
       TradeJournalEntry saved;
-      final realized = (debit == null) ? null : credit - debit;
+      final realized = (debit == null)
+          ? null
+          : (credit - debit) * Decimal.fromInt(contractQuantity) - fees;
       final closedAt = _status == TradeJournalStatus.open
           ? null
-          : (_loaded?.closedAt ?? DateTime.now().toUtc());
+          : (_closedAt ?? DateTime.now().toUtc());
       if (_loaded != null) {
         saved = await repo.update(
           _loaded!.copyWith(
             strategy: _strategy,
             symbol: symbol,
             optionSymbol: optionSymbol,
+            openedAt: _openedAt,
+            expirationAt: _expirationAt,
             entryCredit: credit,
             exitDebit: debit,
+            fees: fees,
             realizedPnl: realized,
             currency: _currency,
             status: _status,
@@ -180,6 +189,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             underlyingMarket: _loaded!.underlyingMarket ?? market,
             strikePrice: strike,
             contractSize: contractSize,
+            contractQuantity: contractQuantity,
           ),
         );
       } else {
@@ -187,12 +197,14 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
           strategy: _strategy,
           symbol: symbol,
           optionSymbol: optionSymbol,
-          openedAt: DateTime.now().toUtc(),
+          openedAt: _openedAt,
+          expirationAt: _expirationAt,
           entryCredit: credit,
           currency: _currency,
           status: _status,
           closedAt: closedAt,
           exitDebit: debit,
+          fees: fees,
           realizedPnl: realized,
           notes: _notesCtl.text.trim().isEmpty ? null : _notesCtl.text.trim(),
           brokerageAccountId: _brokerageAccountId,
@@ -200,6 +212,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
           underlyingMarket: market,
           strikePrice: strike,
           contractSize: contractSize,
+          contractQuantity: contractQuantity,
         );
       }
       unawaited(
@@ -288,91 +301,186 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
               a.type == AccountCategory.broker,
         )
         .toList(growable: false);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _LabeledTextField(
-          label: l10n.incomePlannerSymbolLabel,
-          hint: l10n.incomePlannerSymbolHint,
-          controller: _symbolCtl,
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        _LabeledTextField(
-          label: l10n.incomePlannerJournalOptionSymbolLabel,
-          hint: l10n.incomePlannerJournalOptionSymbolHint,
-          controller: _optionSymbolCtl,
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        _StrategySelect(
-          value: _strategy,
-          onChanged: (v) => setState(() => _strategy = v),
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        if (accounts.isNotEmpty) ...[
-          AccountPicker(
-            label: l10n.incomePlannerJournalBrokerageAccountLabel,
-            accounts: brokerageAccounts.isEmpty ? accounts : brokerageAccounts,
-            value: _brokerageAccountId,
-            onChanged: (v) => setState(() => _brokerageAccountId = v),
+    return Form(
+      key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _LabeledTextField(
+            label: l10n.incomePlannerSymbolLabel,
+            hint: l10n.incomePlannerSymbolHint,
+            controller: _symbolCtl,
+            validator: (value) => _requiredText(value, l10n),
           ),
           const SizedBox(height: AppSpacing.s12),
-          AccountPicker(
-            label: l10n.incomePlannerJournalCashAccountLabel,
-            accounts: cashAccounts.isEmpty ? accounts : cashAccounts,
-            value: _cashAccountId,
-            onChanged: (v) => setState(() => _cashAccountId = v),
+          _LabeledTextField(
+            label: l10n.incomePlannerJournalOptionSymbolLabel,
+            hint: l10n.incomePlannerJournalOptionSymbolHint,
+            controller: _optionSymbolCtl,
+            validator: (value) => _requiredText(value, l10n),
           ),
           const SizedBox(height: AppSpacing.s12),
+          _StrategySelect(
+            value: _strategy,
+            onChanged: (v) => setState(() => _strategy = v),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          DateField(
+            label: l10n.incomePlannerJournalOpenedAtLabel,
+            initialValue: _openedAt,
+            required: true,
+            onChanged: (value) {
+              if (value != null) {
+                setState(() => _openedAt = value.toUtc());
+              }
+            },
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          DateField(
+            label: l10n.incomePlannerJournalExpirationLabel,
+            initialValue: _expirationAt,
+            required: true,
+            firstDate: _openedAt,
+            onChanged: (value) =>
+                setState(() => _expirationAt = value?.toUtc()),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          if (accounts.isNotEmpty) ...[
+            AccountPicker(
+              label: l10n.incomePlannerJournalBrokerageAccountLabel,
+              accounts: brokerageAccounts.isEmpty
+                  ? accounts
+                  : brokerageAccounts,
+              value: _brokerageAccountId,
+              onChanged: (v) => setState(() => _brokerageAccountId = v),
+            ),
+            const SizedBox(height: AppSpacing.s12),
+            AccountPicker(
+              label: l10n.incomePlannerJournalCashAccountLabel,
+              accounts: cashAccounts.isEmpty ? accounts : cashAccounts,
+              value: _cashAccountId,
+              onChanged: (v) => setState(() => _cashAccountId = v),
+            ),
+            const SizedBox(height: AppSpacing.s12),
+          ],
+          CurrencyPicker(
+            value: _currency,
+            label: l10n.formCurrencyPickerLabelDefault,
+            onChanged: (value) {
+              if (value != null) setState(() => _currency = value);
+            },
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _LabeledTextField(
+            label: l10n.incomePlannerJournalCreditLabel,
+            hint: l10n.incomePlannerJournalAmountHint,
+            controller: _creditCtl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            validator: (value) => _validateDecimal(
+              value,
+              l10n: l10n,
+              required: true,
+              allowZero: true,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _LabeledTextField(
+            label: l10n.incomePlannerJournalDebitLabel,
+            hint: l10n.incomePlannerJournalAmountHint,
+            controller: _debitCtl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            validator: (value) => _validateDecimal(
+              value,
+              l10n: l10n,
+              required: _status == TradeJournalStatus.closed,
+              allowZero: true,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _LabeledTextField(
+            label: l10n.incomePlannerJournalStrikeLabel,
+            hint: l10n.incomePlannerJournalAmountHint,
+            controller: _strikeCtl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            validator: (value) => _validateDecimal(
+              value,
+              l10n: l10n,
+              required: _status == TradeJournalStatus.assigned,
+              allowZero: false,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _LabeledTextField(
+            label: l10n.incomePlannerJournalContractSizeLabel,
+            hint: '100',
+            controller: _contractSizeCtl,
+            keyboardType: TextInputType.number,
+            validator: (value) => _validatePositiveInt(value, l10n),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _LabeledTextField(
+            label: l10n.incomePlannerJournalContractQuantityLabel,
+            hint: '1',
+            controller: _contractQuantityCtl,
+            keyboardType: TextInputType.number,
+            validator: (value) => _validatePositiveInt(value, l10n),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _LabeledTextField(
+            label: l10n.incomePlannerJournalFeesLabel,
+            hint: '0.00',
+            controller: _feesCtl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            validator: (value) => _validateDecimal(
+              value,
+              l10n: l10n,
+              required: true,
+              allowZero: true,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _StatusSelect(
+            value: _status,
+            onChanged: (v) => setState(() {
+              _status = v;
+              _closedAt = v == TradeJournalStatus.open
+                  ? null
+                  : (_closedAt ?? DateTime.now().toUtc());
+            }),
+          ),
+          AnimatedSizeFade(
+            visible: _status != TradeJournalStatus.open,
+            child: Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s12),
+              child: DateField(
+                label: l10n.incomePlannerJournalClosedAtLabel,
+                initialValue: _closedAt,
+                required: _status != TradeJournalStatus.open,
+                firstDate: _openedAt,
+                onChanged: (value) =>
+                    setState(() => _closedAt = value?.toUtc()),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _LabeledTextField(
+            label: l10n.incomePlannerJournalNotesLabel,
+            hint: '',
+            controller: _notesCtl,
+            maxLines: 3,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          if (_loaded != null) ...[
+            FButton(
+              variant: FButtonVariant.destructive,
+              onPress: _busy ? null : _delete,
+              child: Text(l10n.commonDelete),
+            ),
+            const SizedBox(height: AppSpacing.s12),
+          ],
         ],
-        _LabeledTextField(
-          label: l10n.incomePlannerJournalCreditLabel,
-          hint: l10n.incomePlannerJournalAmountHint,
-          controller: _creditCtl,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        _LabeledTextField(
-          label: l10n.incomePlannerJournalDebitLabel,
-          hint: l10n.incomePlannerJournalAmountHint,
-          controller: _debitCtl,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        _LabeledTextField(
-          label: l10n.incomePlannerJournalStrikeLabel,
-          hint: l10n.incomePlannerJournalAmountHint,
-          controller: _strikeCtl,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        _LabeledTextField(
-          label: l10n.incomePlannerJournalContractSizeLabel,
-          hint: '100',
-          controller: _contractSizeCtl,
-          keyboardType: TextInputType.number,
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        _StatusSelect(
-          value: _status,
-          onChanged: (v) => setState(() => _status = v),
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        _LabeledTextField(
-          label: l10n.incomePlannerJournalNotesLabel,
-          hint: '',
-          controller: _notesCtl,
-          maxLines: 3,
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        if (_loaded != null) ...[
-          FButton(
-            variant: FButtonVariant.destructive,
-            onPress: _busy ? null : _delete,
-            child: Text(l10n.commonDelete),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-        ],
-      ],
+      ),
     );
   }
 
@@ -412,6 +520,7 @@ class _LabeledTextField extends StatelessWidget {
     required this.controller,
     this.keyboardType,
     this.maxLines = 1,
+    this.validator,
   });
 
   final String label;
@@ -419,6 +528,7 @@ class _LabeledTextField extends StatelessWidget {
   final TextEditingController controller;
   final TextInputType? keyboardType;
   final int maxLines;
+  final FormFieldValidator<String>? validator;
 
   @override
   Widget build(BuildContext context) {
@@ -432,15 +542,46 @@ class _LabeledTextField extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.s4),
-        FTextField(
+        FTextFormField(
           control: FTextFieldControl.managed(controller: controller),
           hint: hint,
           keyboardType: keyboardType,
           maxLines: maxLines,
+          validator: validator,
         ),
       ],
     );
   }
+}
+
+String? _requiredText(String? value, AppLocalizations l10n) {
+  if ((value ?? '').trim().isEmpty) return l10n.commonRequiredField;
+  return null;
+}
+
+String? _validateDecimal(
+  String? value, {
+  required AppLocalizations l10n,
+  required bool required,
+  required bool allowZero,
+}) {
+  final raw = (value ?? '').trim();
+  if (raw.isEmpty) return required ? l10n.formAmountFieldInvalid : null;
+  final parsed = Decimal.tryParse(raw);
+  if (parsed == null ||
+      parsed < Decimal.zero ||
+      (!allowZero && parsed == Decimal.zero)) {
+    return l10n.formAmountFieldInvalid;
+  }
+  return null;
+}
+
+String? _validatePositiveInt(String? value, AppLocalizations l10n) {
+  final parsed = int.tryParse((value ?? '').trim());
+  if (parsed == null || parsed <= 0) {
+    return l10n.incomePlannerPositiveNumberValidation;
+  }
+  return null;
 }
 
 class _StrategySelect extends StatelessWidget {

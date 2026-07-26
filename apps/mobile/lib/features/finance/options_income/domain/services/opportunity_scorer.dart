@@ -38,6 +38,7 @@ class OpportunityScorer {
     bool ignoreOpenInterestFloor = false,
     bool hasUpcomingEarnings = false,
     bool hasUpcomingMacroEvent = false,
+    bool eventDataAvailable = false,
     DateTime? now,
   }) {
     final asOf = now ?? DateTime.now().toUtc();
@@ -52,6 +53,7 @@ class OpportunityScorer {
       ignoreOpenInterestFloor: ignoreOpenInterestFloor,
       hasUpcomingEarnings: hasUpcomingEarnings,
       hasUpcomingMacroEvent: hasUpcomingMacroEvent,
+      eventDataAvailable: eventDataAvailable,
     );
     if (rejection.isNotEmpty) {
       return null;
@@ -63,6 +65,7 @@ class OpportunityScorer {
       currentUnderlyingExposurePct: currentUnderlyingExposurePct,
       hasUpcomingEarnings: hasUpcomingEarnings,
       hasUpcomingMacroEvent: hasUpcomingMacroEvent,
+      eventDataAvailable: eventDataAvailable,
     );
     final composite = _composite(breakdown, weights);
     final metrics = _metrics(contract: contract, strategy: strategy);
@@ -72,6 +75,7 @@ class OpportunityScorer {
       profile: profile,
       breakdown: breakdown,
       metrics: metrics,
+      eventDataAvailable: eventDataAvailable,
     );
     final risk = _classifyRisk(metrics, breakdown);
     return ScoredCandidate(
@@ -102,6 +106,7 @@ class OpportunityScorer {
     bool ignoreOpenInterestFloor = false,
     bool hasUpcomingEarnings = false,
     bool hasUpcomingMacroEvent = false,
+    bool eventDataAvailable = false,
   }) {
     final reasons = _hardFilter(
       contract: contract,
@@ -113,6 +118,7 @@ class OpportunityScorer {
       ignoreOpenInterestFloor: ignoreOpenInterestFloor,
       hasUpcomingEarnings: hasUpcomingEarnings,
       hasUpcomingMacroEvent: hasUpcomingMacroEvent,
+      eventDataAvailable: eventDataAvailable,
     );
     if (reasons.isEmpty) return null;
     return RejectedCandidate(

@@ -16,7 +16,7 @@ class ProposeOptionsProfileUpdateTool implements DeviceTool {
   @override
   String get description =>
       '提议更新 Income Planner 偏好(mode / dte_min / dte_max / 收益阈值 / '
-      'open_interest 阈值 / 资金占比上限 / avoid_earnings / only_on_approved_underlyings 等)。'
+      'open_interest 阈值 / 资金占比上限等)。'
       '本工具不会立即写入,而是返回 plan,前端会展示 diff 并请用户确认。'
       '请只填写需要调整的字段;不要触碰 risk_disclosure_ack_at。';
 
@@ -50,9 +50,6 @@ class ProposeOptionsProfileUpdateTool implements DeviceTool {
         'minimum': 0,
         'maximum': 1,
       },
-      'avoid_earnings': <String, Object?>{'type': 'boolean'},
-      'avoid_macro_events': <String, Object?>{'type': 'boolean'},
-      'only_on_approved_underlyings': <String, Object?>{'type': 'boolean'},
       'note': <String, Object?>{'type': 'string'},
     },
   };
@@ -70,9 +67,6 @@ class ProposeOptionsProfileUpdateTool implements DeviceTool {
       'min_open_interest',
       'min_volume',
       'max_capital_per_trade_pct',
-      'avoid_earnings',
-      'avoid_macro_events',
-      'only_on_approved_underlyings',
     };
     final updates = <String, Object?>{};
     for (final field in knownFields) {
@@ -100,9 +94,6 @@ class ProposeOptionsProfileUpdateTool implements DeviceTool {
       'min_open_interest': current.minOpenInterest,
       'min_volume': current.minVolume,
       'max_capital_per_trade_pct': current.maxCapitalPerTradePct.toString(),
-      'avoid_earnings': current.avoidEarnings,
-      'avoid_macro_events': current.avoidMacroEvents,
-      'only_on_approved_underlyings': current.onlyOnApprovedUnderlyings,
     };
     return readyPlan(
       kind: 'options_profile_update',

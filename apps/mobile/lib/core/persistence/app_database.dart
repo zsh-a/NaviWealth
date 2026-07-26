@@ -147,7 +147,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 58;
+  int get schemaVersion => 59;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -855,6 +855,29 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 58) {
         await _createAgentFindings(this);
+      }
+      // v58 -> v59: make options journal rows sufficient for lifecycle and
+      // net-return review. Quantity is distinct from the contract multiplier;
+      // expiration drives due-state UI; fees keep reported P&L honest.
+      if (from < 59) {
+        await _addColumnIfMissing(
+          this,
+          table: 'options_trade_journal',
+          column: 'expiration_at',
+          definition: 'INTEGER',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'options_trade_journal',
+          column: 'fees',
+          definition: 'TEXT',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'options_trade_journal',
+          column: 'contract_quantity',
+          definition: 'INTEGER NOT NULL DEFAULT 1',
+        );
       }
     },
     beforeOpen: (details) async {

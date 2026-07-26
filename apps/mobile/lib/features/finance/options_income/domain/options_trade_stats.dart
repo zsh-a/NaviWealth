@@ -168,12 +168,7 @@ OptionsTradeStats buildOptionsTradeStats(Iterable<TradeJournalEntry> entries) {
 }
 
 Decimal? trackedRealizedPnl(TradeJournalEntry entry) {
-  final explicit = entry.realizedPnl;
-  if (explicit != null) return explicit;
-  final exitDebit = entry.exitDebit;
-  if (exitDebit != null) return entry.entryCredit - exitDebit;
-  if (entry.status == TradeJournalStatus.expired) return entry.entryCredit;
-  return null;
+  return entry.trackedNetPnl;
 }
 
 double? _holdingDays(TradeJournalEntry entry) {
@@ -203,7 +198,7 @@ class _CurrencyAccumulator {
     required double? holdingDays,
   }) {
     entryCount++;
-    totalPremium += entry.entryCredit;
+    totalPremium += entry.grossEntryCredit;
     if (realized != null) {
       trackedRealizedPnl += realized;
       trackedRealizedCount++;
@@ -255,7 +250,7 @@ class _StrategyAccumulator {
   }) {
     entryCount++;
     if (entry.status == TradeJournalStatus.open) openCount++;
-    _addMoney(totalPremiumByCurrency, currency, entry.entryCredit);
+    _addMoney(totalPremiumByCurrency, currency, entry.grossEntryCredit);
     if (realized != null) {
       _addMoney(trackedRealizedPnlByCurrency, currency, realized);
     }
@@ -301,7 +296,7 @@ class _SymbolAccumulator {
       case TradeJournalStatus.expired:
         expiredCount++;
     }
-    _addMoney(totalPremiumByCurrency, currency, entry.entryCredit);
+    _addMoney(totalPremiumByCurrency, currency, entry.grossEntryCredit);
     if (realized != null) {
       _addMoney(trackedRealizedPnlByCurrency, currency, realized);
     }

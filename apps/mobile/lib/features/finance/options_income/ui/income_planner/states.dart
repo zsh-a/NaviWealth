@@ -53,7 +53,7 @@ class _StartState extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.s20),
             FButton(
-              onPress: () => showOccDisclosureSheet(context),
+              onPress: () => _startSetup(context),
               child: Flexible(
                 child: Text(
                   l10n.incomePlannerStartCta,
@@ -66,5 +66,13 @@ class _StartState extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _startSetup(BuildContext context) async {
+    final accepted = await showOccDisclosureSheet(context);
+    if (!accepted || !context.mounted) return;
+    await showStrategyProfileSheet(context);
+    if (!context.mounted) return;
+    await showApprovedUnderlyingSheet(context);
   }
 }

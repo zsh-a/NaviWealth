@@ -24,12 +24,14 @@ TradeJournalEntry _entry({
   String entryCredit = '0',
   String? exitDebit,
   String? realizedPnl,
+  DateTime? expirationAt,
 }) => TradeJournalEntry(
   id: id,
   strategy: strategy,
   symbol: symbol,
   optionSymbol: '$symbol-OPT',
   openedAt: openedAt ?? DateTime.utc(2026, 5, 1),
+  expirationAt: expirationAt,
   closedAt: closedAt,
   entryCredit: Decimal.parse(entryCredit),
   exitDebit: exitDebit == null ? null : Decimal.parse(exitDebit),
@@ -72,6 +74,38 @@ void main() {
       expect(cycle.openPosition?.id, 'open-put');
       // Open positions don't add to realised income yet.
       expect(cycle.cumulativeIncome, Decimal.zero);
+    });
+
+    test('mixed open legs are retained and surfaced as mixedOpen', () {
+      final cycle = buildWheelLifecycle(
+        symbol: 'TSM',
+        currency: 'USD',
+        entries: [
+          _entry(
+            id: 'open-put',
+            strategy: OptionsStrategyKind.cashSecuredPut,
+            status: TradeJournalStatus.open,
+            expirationAt: DateTime.utc(2026, 6, 20),
+          ),
+          _entry(
+            id: 'open-call',
+            strategy: OptionsStrategyKind.coveredCall,
+            status: TradeJournalStatus.open,
+            expirationAt: DateTime.utc(2026, 6, 10),
+          ),
+        ],
+      );
+
+      expect(cycle.stage, WheelStage.mixedOpen);
+      expect(cycle.openPositions.map((entry) => entry.id), {
+        'open-put',
+        'open-call',
+      });
+      expect(
+        cycle.nearestExpiringPosition?.expirationAt,
+        DateTime.utc(2026, 6, 10),
+      );
+      expect(cycle.nextAction, WheelNextAction.reviewOpenPositions);
     });
 
     test('expired put with no follow-up returns to cashWaiting', () {

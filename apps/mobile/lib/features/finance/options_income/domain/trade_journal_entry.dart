@@ -17,9 +17,11 @@ class TradeJournalEntry {
     required this.symbol,
     required this.optionSymbol,
     required this.openedAt,
+    this.expirationAt,
     required this.closedAt,
     required this.entryCredit,
     required this.exitDebit,
+    this.fees,
     required this.realizedPnl,
     required this.currency,
     required this.status,
@@ -29,6 +31,7 @@ class TradeJournalEntry {
     this.underlyingMarket,
     this.strikePrice,
     this.contractSize,
+    this.contractQuantity = 1,
     required this.sync,
   });
 
@@ -37,6 +40,7 @@ class TradeJournalEntry {
   final String symbol;
   final String optionSymbol;
   final DateTime openedAt;
+  final DateTime? expirationAt;
   final DateTime? closedAt;
 
   /// Premium received when the position opened (per contract, USD = 100×
@@ -46,6 +50,9 @@ class TradeJournalEntry {
   /// Debit paid to close, or `null` if the position is still open / was
   /// assigned / expired worthless.
   final Decimal? exitDebit;
+
+  /// Total broker fees across open and close legs.
+  final Decimal? fees;
 
   /// Realised P&L stored explicitly instead of recomputed so a manual
   /// override (e.g. broker commission netting) survives a re-render.
@@ -59,16 +66,38 @@ class TradeJournalEntry {
   final String? underlyingMarket;
   final Decimal? strikePrice;
   final int? contractSize;
+  final int contractQuantity;
   final SyncMeta sync;
+
+  int get effectiveContractSize => contractSize ?? 100;
+  Decimal get effectiveFees => fees ?? Decimal.zero;
+  Decimal get grossEntryCredit =>
+      entryCredit * Decimal.fromInt(contractQuantity);
+  Decimal? get grossExitDebit =>
+      exitDebit == null ? null : exitDebit! * Decimal.fromInt(contractQuantity);
+
+  Decimal? get trackedNetPnl {
+    final explicit = realizedPnl;
+    if (explicit != null) return explicit;
+    final debit = grossExitDebit;
+    if (debit != null) return grossEntryCredit - debit - effectiveFees;
+    if (status == TradeJournalStatus.expired ||
+        status == TradeJournalStatus.assigned) {
+      return grossEntryCredit - effectiveFees;
+    }
+    return null;
+  }
 
   TradeJournalEntry copyWith({
     OptionsStrategyKind? strategy,
     String? symbol,
     String? optionSymbol,
     DateTime? openedAt,
+    Object? expirationAt = _unsetTradeJournalField,
     Object? closedAt = _unsetTradeJournalField,
     Decimal? entryCredit,
     Object? exitDebit = _unsetTradeJournalField,
+    Object? fees = _unsetTradeJournalField,
     Object? realizedPnl = _unsetTradeJournalField,
     String? currency,
     TradeJournalStatus? status,
@@ -78,6 +107,7 @@ class TradeJournalEntry {
     Object? underlyingMarket = _unsetTradeJournalField,
     Object? strikePrice = _unsetTradeJournalField,
     Object? contractSize = _unsetTradeJournalField,
+    int? contractQuantity,
     SyncMeta? sync,
   }) {
     return TradeJournalEntry(
@@ -86,6 +116,9 @@ class TradeJournalEntry {
       symbol: symbol ?? this.symbol,
       optionSymbol: optionSymbol ?? this.optionSymbol,
       openedAt: openedAt ?? this.openedAt,
+      expirationAt: identical(expirationAt, _unsetTradeJournalField)
+          ? this.expirationAt
+          : expirationAt as DateTime?,
       closedAt: identical(closedAt, _unsetTradeJournalField)
           ? this.closedAt
           : closedAt as DateTime?,
@@ -93,6 +126,9 @@ class TradeJournalEntry {
       exitDebit: identical(exitDebit, _unsetTradeJournalField)
           ? this.exitDebit
           : exitDebit as Decimal?,
+      fees: identical(fees, _unsetTradeJournalField)
+          ? this.fees
+          : fees as Decimal?,
       realizedPnl: identical(realizedPnl, _unsetTradeJournalField)
           ? this.realizedPnl
           : realizedPnl as Decimal?,
@@ -116,6 +152,7 @@ class TradeJournalEntry {
       contractSize: identical(contractSize, _unsetTradeJournalField)
           ? this.contractSize
           : contractSize as int?,
+      contractQuantity: contractQuantity ?? this.contractQuantity,
       sync: sync ?? this.sync,
     );
   }

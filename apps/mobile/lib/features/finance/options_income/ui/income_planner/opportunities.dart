@@ -1,5 +1,173 @@
 part of 'income_planner_page.dart';
 
+enum _OpportunityFilter { all, put, call }
+
+class _OpportunitiesHeader extends StatelessWidget {
+  const _OpportunitiesHeader({
+    required this.state,
+    required this.cacheState,
+    required this.onRefresh,
+  });
+
+  final ScanState state;
+  final ScanCacheState? cacheState;
+  final VoidCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final running = state is ScanRunning;
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.incomePlannerOpportunitiesSectionTitle,
+                style: context.titleLabelStyle,
+              ),
+              if (cacheState != null) ...[
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  _formatLastScan(l10n, cacheState!),
+                  style: context.captionStyle.copyWith(
+                    color: cacheState!.isStale
+                        ? SemanticColors.of(context).warning
+                        : context.theme.colors.mutedForeground,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(width: AppSpacing.s8),
+        FButton(
+          variant: FButtonVariant.outline,
+          onPress: running ? null : onRefresh,
+          child: Text(
+            running
+                ? l10n.incomePlannerRefreshRunning
+                : l10n.incomePlannerRefreshAction,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatLastScan(AppLocalizations l10n, ScanCacheState state) {
+    final delta = DateTime.now().toUtc().difference(state.scannedAt);
+    final ago = delta.inMinutes < 60
+        ? l10n.incomePlannerLastScanMinutes(delta.inMinutes)
+        : delta.inHours < 24
+        ? l10n.incomePlannerLastScanHours(delta.inHours)
+        : l10n.incomePlannerLastScanDays(delta.inDays);
+    if (state.isStale) {
+      return l10n.incomePlannerLastScanStaleSummary(
+        l10n.incomePlannerLastScanLabel,
+        ago,
+        l10n.incomePlannerLastScanStale,
+      );
+    }
+    return l10n.incomePlannerLastScanFresh(
+      l10n.incomePlannerLastScanLabel,
+      ago,
+      state.count,
+    );
+  }
+}
+
+class _OpportunitiesBody extends StatefulWidget {
+  const _OpportunitiesBody({
+    required this.state,
+    required this.opportunitiesAsync,
+  });
+
+  final ScanState state;
+  final AsyncValue<List<OptionsOpportunity>> opportunitiesAsync;
+
+  @override
+  State<_OpportunitiesBody> createState() => _OpportunitiesBodyState();
+}
+
+class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
+  _OpportunityFilter _filter = _OpportunityFilter.all;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (widget.state is ScanFailure) {
+      return _ErrorCard(
+        title: l10n.incomePlannerRefreshFailedTitle,
+        message: userSafeErrorMessage(
+          context,
+          (widget.state as ScanFailure).error,
+        ),
+      );
+    }
+    return widget.opportunitiesAsync.when(
+      loading: () => const _LoadingTile(),
+      error: (error, _) => _ErrorCard(
+        title: l10n.incomePlannerRefreshFailedTitle,
+        message: userSafeErrorMessage(context, error),
+      ),
+      data: (items) {
+        if (items.isEmpty) {
+          if (widget.state is ScanSuccess) {
+            return _ScanEmptyResultCard(
+              result: (widget.state as ScanSuccess).result,
+            );
+          }
+          return _EmptyCard(body: l10n.incomePlannerOpportunitiesEmpty);
+        }
+        final visible = items.where(_matchesFilter).toList()
+          ..sort((a, b) => b.score.compareTo(a.score));
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SegmentedRow<_OpportunityFilter>(
+              options: _OpportunityFilter.values,
+              value: _filter,
+              labelOf: (filter) => switch (filter) {
+                _OpportunityFilter.all =>
+                  l10n.incomePlannerOpportunityFilterAll,
+                _OpportunityFilter.put => l10n.incomePlannerChipCashSecuredPut,
+                _OpportunityFilter.call => l10n.incomePlannerChipCoveredCall,
+              },
+              onChanged: (filter) => setState(() => _filter = filter),
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            Text(
+              l10n.incomePlannerOpportunityCountSummary(
+                visible.length,
+                items.length,
+              ),
+              style: context.captionStyle,
+            ),
+            const SizedBox(height: AppSpacing.s4),
+            if (visible.isEmpty)
+              _EmptyCard(body: l10n.incomePlannerOpportunityFilterEmpty)
+            else
+              for (final opportunity in visible)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+                  child: _OpportunityCard(opportunity: opportunity),
+                ),
+          ],
+        );
+      },
+    );
+  }
+
+  bool _matchesFilter(OptionsOpportunity opportunity) => switch (_filter) {
+    _OpportunityFilter.all => true,
+    _OpportunityFilter.put =>
+      opportunity.strategy == OptionsStrategyKind.cashSecuredPut,
+    _OpportunityFilter.call =>
+      opportunity.strategy == OptionsStrategyKind.coveredCall,
+  };
+}
+
 class _OpportunityCard extends StatelessWidget {
   const _OpportunityCard({required this.opportunity});
 
@@ -9,119 +177,105 @@ class _OpportunityCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final metrics = opportunity.metrics;
     final contract = opportunity.contract;
+    final metrics = opportunity.metrics;
+    final expiry = MaterialLocalizations.of(
+      context,
+    ).formatShortDate(contract.expiration.toLocal());
     return SoftCard.flat(
       onPress: () => showOpportunityDetailSheet(context, opportunity),
       borderRadius: AppRadius.lg,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppBadge(
-                  label: optionsStrategyKindShortLabel(
-                    l10n,
-                    opportunity.strategy,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(contract.underlying, style: context.titleLabelStyle),
+                      const SizedBox(height: AppSpacing.s2),
+                      Text(
+                        l10n.incomePlannerOpportunityExpirySummary(
+                          expiry,
+                          contract.dte,
+                        ),
+                        style: context.captionStyle,
+                      ),
+                    ],
                   ),
-                  tone: AppBadgeTone.accent,
                 ),
                 const SizedBox(width: AppSpacing.s8),
-                AppBadge(
-                  label: _riskLabel(l10n, opportunity.risk),
-                  tone: _riskTone(opportunity.risk),
+                Wrap(
+                  spacing: AppSpacing.s6,
+                  runSpacing: AppSpacing.s4,
+                  alignment: WrapAlignment.end,
+                  children: [
+                    AppBadge(
+                      label: optionsStrategyKindShortLabel(
+                        l10n,
+                        opportunity.strategy,
+                      ),
+                      tone: AppBadgeTone.accent,
+                    ),
+                    AppBadge(
+                      label: _riskLabel(l10n, opportunity.risk),
+                      tone: _riskTone(opportunity.risk),
+                    ),
+                  ],
                 ),
-                const Spacer(),
-                Text(
-                  '${contract.underlying} ${contract.dte}DTE',
-                  style: context.labelStyle,
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s14),
+            AppMetricCluster(
+              dense: true,
+              items: [
+                AppMetricItem(
+                  label: l10n.incomePlannerMetricPremiumTotal,
+                  value: _moneyCompact(metrics.premium),
+                ),
+                AppMetricItem(
+                  label: l10n.incomePlannerMetricBreakeven,
+                  value: _moneyCompact(metrics.breakeven),
+                ),
+                AppMetricItem(
+                  label: l10n.incomePlannerMetricAnnualized,
+                  value: _pct(metrics.annualizedYield),
                 ),
               ],
             ),
             const SizedBox(height: AppSpacing.s12),
-            _MetricsRow(metrics: metrics, contract: contract),
-            const SizedBox(height: AppSpacing.s12),
+            Text(
+              opportunity.explanation.worstCase,
+              style: context.bodyCaptionStyle.copyWith(height: 1.45),
+            ),
             if (opportunity.explanation.whyGood.isNotEmpty) ...[
-              Text(
-                l10n.incomePlannerDetailWhyGood,
-                style: context.captionLabelStyle.copyWith(
-                  color: colors.mutedForeground,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.s2),
-              for (final line in opportunity.explanation.whyGood.take(2))
-                _BulletRow(line: line),
-            ],
-            if (opportunity.explanation.whyRisky.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.s8),
-              Text(
-                l10n.incomePlannerDetailWhyRisky,
-                style: context.captionLabelStyle.copyWith(
-                  color: colors.destructive,
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    FLucideIcons.circleCheck,
+                    size: AppIconSizes.sm,
+                    color: colors.primary,
+                  ),
+                  const SizedBox(width: AppSpacing.s6),
+                  Expanded(
+                    child: Text(
+                      opportunity.explanation.whyGood.first,
+                      style: context.captionStyle,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: AppSpacing.s2),
-              for (final line in opportunity.explanation.whyRisky.take(2))
-                _BulletRow(line: line),
             ],
           ],
         ),
       ),
-    );
-  }
-}
-
-class _MetricsRow extends StatelessWidget {
-  const _MetricsRow({required this.metrics, required this.contract});
-
-  final OpportunityMetrics metrics;
-  final OptionContract contract;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Wrap(
-      spacing: AppSpacing.s12,
-      runSpacing: AppSpacing.s8,
-      children: [
-        _Metric(
-          label: l10n.incomePlannerMetricStrike,
-          value: MoneyText(
-            amount: contract.strike.amount.toDouble(),
-            currencyCode: contract.strike.currency,
-            symbolStyle: MoneySymbolStyle.isoCode,
-            style: context.labelStyle,
-          ),
-        ),
-        _Metric(
-          label: l10n.incomePlannerMetricOptionPrice,
-          value: MoneyText(
-            amount: contract.mid.amount.toDouble(),
-            currencyCode: contract.mid.currency,
-            symbolStyle: MoneySymbolStyle.isoCode,
-            style: context.labelStyle,
-          ),
-        ),
-        _Metric(
-          label: l10n.incomePlannerMetricAnnualized,
-          value: Text(_pct(metrics.annualizedYield), style: context.labelStyle),
-        ),
-        _Metric(
-          label: l10n.incomePlannerMetricMargin,
-          value: Text(_pct(metrics.marginOfSafety), style: context.labelStyle),
-        ),
-        _Metric(
-          label: l10n.incomePlannerMetricCash,
-          value: MoneyText(
-            amount: metrics.cashRequired.amount.toDouble(),
-            currencyCode: metrics.cashRequired.currency,
-            symbolStyle: MoneySymbolStyle.isoCode,
-            style: context.labelStyle,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -134,20 +288,29 @@ class _ScanEmptyResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     final universeEmpty = result.universe.isEmpty;
-    final body = universeEmpty
-        ? l10n.incomePlannerRefreshUniverseEmpty
-        : l10n.incomePlannerOpportunitiesAllRejected;
+    final counts = <String, int>{};
+    for (final rejected in result.rejected) {
+      for (final reason in rejected.reasons) {
+        counts.update(reason, (value) => value + 1, ifAbsent: () => 1);
+      }
+    }
+    final topReasons = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     return SoftCard.flat(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(l10n.incomePlannerNoMatchesTitle, style: context.labelStyle),
             const SizedBox(height: AppSpacing.s4),
-            Text(body, style: context.bodyCaptionStyle.copyWith(height: 1.45)),
+            Text(
+              universeEmpty
+                  ? l10n.incomePlannerRefreshUniverseEmpty
+                  : l10n.incomePlannerOpportunitiesAllRejected,
+              style: context.bodyCaptionStyle.copyWith(height: 1.45),
+            ),
             const SizedBox(height: AppSpacing.s8),
             Text(
               l10n.incomePlannerScanSummary(
@@ -157,31 +320,24 @@ class _ScanEmptyResultCard extends StatelessWidget {
               ),
               style: context.captionStyle,
             ),
-            if (result.errors.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.s4),
+            if (topReasons.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.s12),
               Text(
-                result.errors.entries
-                    .take(2)
-                    .map((e) => '${e.key}: ${e.value}')
-                    .join('\n'),
-                style: context.captionStyle.copyWith(
-                  color: colors.destructive,
-                  height: 1.35,
-                ),
+                l10n.incomePlannerRejectionReasonsTitle,
+                style: context.captionLabelStyle,
               ),
-            ],
-            if (result.warnings.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.s4),
-              Text(
-                result.warnings.entries
-                    .take(2)
-                    .map((e) => '${e.key}: ${e.value}')
-                    .join('\n'),
-                style: context.captionStyle.copyWith(
-                  color: SemanticColors.of(context).warning,
-                  height: 1.35,
+              for (final reason in topReasons.take(3))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.s4),
+                  child: Text(
+                    l10n.incomePlannerRejectionReasonSummary(
+                      _rejectionReasonLabel(l10n, reason.key),
+                      reason.value,
+                    ),
+                    style: context.captionStyle,
+                  ),
                 ),
-              ),
             ],
             const SizedBox(height: AppSpacing.s12),
             Wrap(
@@ -207,42 +363,6 @@ class _ScanEmptyResultCard extends StatelessWidget {
   }
 }
 
-class _Metric extends StatelessWidget {
-  const _Metric({required this.label, required this.value});
-
-  final String label;
-  final Widget value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: context.captionStyle),
-        const SizedBox(height: AppSpacing.s2),
-        value,
-      ],
-    );
-  }
-}
-
-class _BulletRow extends StatelessWidget {
-  const _BulletRow({required this.line});
-
-  final String line;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: AppSpacing.s4, top: AppSpacing.s2),
-      child: Text(
-        '\u2022 $line',
-        style: context.captionStyle.copyWith(height: 1.4),
-      ),
-    );
-  }
-}
-
 String _riskLabel(AppLocalizations l10n, OpportunityRiskLevel risk) =>
     switch (risk) {
       OpportunityRiskLevel.low => l10n.incomePlannerRiskLow,
@@ -251,7 +371,7 @@ String _riskLabel(AppLocalizations l10n, OpportunityRiskLevel risk) =>
     };
 
 AppBadgeTone _riskTone(OpportunityRiskLevel risk) => switch (risk) {
-  OpportunityRiskLevel.low => AppBadgeTone.accent,
+  OpportunityRiskLevel.low => AppBadgeTone.neutral,
   OpportunityRiskLevel.moderate => AppBadgeTone.neutral,
   OpportunityRiskLevel.elevated => AppBadgeTone.error,
 };
@@ -260,3 +380,20 @@ String _pct(Decimal value) {
   final pct = (value * Decimal.fromInt(100)).toStringAsFixed(1);
   return '$pct%';
 }
+
+String _moneyCompact(Money money) => '${money.currency} ${money.amount}';
+
+String _rejectionReasonLabel(AppLocalizations l10n, String reason) =>
+    switch (reason) {
+      'cash_required_above_cap' => l10n.incomePlannerRejectCapitalLimit,
+      'open_interest_below_minimum' ||
+      'volume_below_minimum' => l10n.incomePlannerRejectLiquidity,
+      'bid_ask_spread_above_maximum' => l10n.incomePlannerRejectSpread,
+      'dte_outside_target_range' => l10n.incomePlannerRejectDte,
+      'delta_outside_target_range' => l10n.incomePlannerRejectDelta,
+      'strike_above_user_max_buy_price' ||
+      'strike_below_user_min_sell_price' => l10n.incomePlannerRejectPriceIntent,
+      'upcoming_earnings' ||
+      'upcoming_macro_event' => l10n.incomePlannerRejectEventRisk,
+      _ => l10n.incomePlannerRejectOther,
+    };

@@ -3,6 +3,8 @@ import 'package:decimal/decimal.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
+const Object _unsetApprovedUnderlyingField = Object();
+
 /// An underlying symbol the user has explicitly approved for options income
 /// strategies.
 ///
@@ -60,9 +62,9 @@ class ApprovedUnderlying {
   ApprovedUnderlying copyWith({
     bool? allowPut,
     bool? allowCall,
-    Decimal? maxBuyPrice,
-    Decimal? minSellPrice,
-    String? notes,
+    Object? maxBuyPrice = _unsetApprovedUnderlyingField,
+    Object? minSellPrice = _unsetApprovedUnderlyingField,
+    Object? notes = _unsetApprovedUnderlyingField,
     SyncMeta? sync,
   }) {
     return ApprovedUnderlying(
@@ -71,9 +73,15 @@ class ApprovedUnderlying {
       market: market,
       allowPut: allowPut ?? this.allowPut,
       allowCall: allowCall ?? this.allowCall,
-      maxBuyPrice: maxBuyPrice ?? this.maxBuyPrice,
-      minSellPrice: minSellPrice ?? this.minSellPrice,
-      notes: notes ?? this.notes,
+      maxBuyPrice: identical(maxBuyPrice, _unsetApprovedUnderlyingField)
+          ? this.maxBuyPrice
+          : maxBuyPrice as Decimal?,
+      minSellPrice: identical(minSellPrice, _unsetApprovedUnderlyingField)
+          ? this.minSellPrice
+          : minSellPrice as Decimal?,
+      notes: identical(notes, _unsetApprovedUnderlyingField)
+          ? this.notes
+          : notes as String?,
       sync: sync ?? this.sync,
     );
   }

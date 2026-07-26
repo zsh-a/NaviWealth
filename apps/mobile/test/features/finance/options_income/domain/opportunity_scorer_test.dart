@@ -26,6 +26,51 @@ void main() {
       expect(result!.reasons, contains('underlying_not_approved_for_put'));
     });
 
+    test('approved-underlying boundary cannot be disabled by profile', () {
+      const scorer = OpportunityScorer();
+      final result = scorer.filter(
+        contract: _putContract(strike: 190),
+        strategy: OptionsStrategyKind.cashSecuredPut,
+        profile: _profileBalanced().copyWith(onlyOnApprovedUnderlyings: false),
+        approved: null,
+        sharesOwned: 0,
+        availableCash: Money.parse('1000000', 'USD'),
+      );
+
+      expect(result?.reasons, contains('underlying_not_approved_for_put'));
+    });
+
+    test('event guard only filters when calendar data is available', () {
+      const scorer = OpportunityScorer();
+      final contract = _putContract(strike: 190);
+      final unavailable = scorer.filter(
+        contract: contract,
+        strategy: OptionsStrategyKind.cashSecuredPut,
+        profile: _profileBalanced(),
+        approved: _approved(symbol: 'AAPL'),
+        sharesOwned: 0,
+        availableCash: Money.parse('1000000', 'USD'),
+        hasUpcomingEarnings: true,
+        eventDataAvailable: false,
+      );
+      final available = scorer.filter(
+        contract: contract,
+        strategy: OptionsStrategyKind.cashSecuredPut,
+        profile: _profileBalanced(),
+        approved: _approved(symbol: 'AAPL'),
+        sharesOwned: 0,
+        availableCash: Money.parse('1000000', 'USD'),
+        hasUpcomingEarnings: true,
+        eventDataAvailable: true,
+      );
+
+      expect(
+        unavailable?.reasons ?? const <String>[],
+        isNot(contains('earnings_window')),
+      );
+      expect(available?.reasons, contains('earnings_window'));
+    });
+
     test('rejects covered call when shares < 100', () {
       const scorer = OpportunityScorer();
       final contract = _callContract(strike: 200);
@@ -121,6 +166,10 @@ void main() {
       expect(opp.metrics.premium.amount, greaterThan(Decimal.zero));
       expect(opp.explanation.whyGood, isNotEmpty);
       expect(opp.explanation.worstCase, contains('AAPL'));
+      expect(
+        opp.explanation.scoreBreakdown['event_safety'],
+        Decimal.parse('0.50'),
+      );
     });
 
     test('does not hard-filter an empty bid quote when mid is available', () {

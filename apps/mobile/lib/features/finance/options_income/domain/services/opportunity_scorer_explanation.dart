@@ -6,6 +6,7 @@ OpportunityExplanation _explanation({
   required OptionsStrategyProfile profile,
   required Map<String, Decimal> breakdown,
   required OpportunityMetrics metrics,
+  required bool eventDataAvailable,
 }) {
   final whyGood = <String>[];
   final whyRisky = <String>[];
@@ -14,10 +15,24 @@ OpportunityExplanation _explanation({
   final top3 = sortedAsc.reversed.take(3).toList();
   final bottom2 = sortedAsc.take(2).toList();
   for (final entry in top3) {
-    whyGood.add(_strengthBullet(entry, metrics, contract));
+    whyGood.add(
+      _strengthBullet(
+        entry,
+        metrics,
+        contract,
+        eventDataAvailable: eventDataAvailable,
+      ),
+    );
   }
   for (final entry in bottom2) {
-    whyRisky.add(_weaknessBullet(entry, metrics, contract));
+    whyRisky.add(
+      _weaknessBullet(
+        entry,
+        metrics,
+        contract,
+        eventDataAvailable: eventDataAvailable,
+      ),
+    );
   }
   final summary = _summary(
     strategy: strategy,
@@ -41,8 +56,9 @@ OpportunityExplanation _explanation({
 String _strengthBullet(
   MapEntry<String, Decimal> entry,
   OpportunityMetrics metrics,
-  OptionContract contract,
-) {
+  OptionContract contract, {
+  required bool eventDataAvailable,
+}) {
   final pct = _pct(entry.value);
   switch (entry.key) {
     case 'yield':
@@ -61,6 +77,9 @@ String _strengthBullet(
     case 'portfolio_fit':
       return 'Fits current positions (score $pct)';
     case 'event_safety':
+      if (!eventDataAvailable) {
+        return 'Event calendar unavailable; event risk is not scored';
+      }
       return 'No earnings or macro event in the next 7 days (score $pct)';
     default:
       return '${entry.key} score $pct';
@@ -70,8 +89,9 @@ String _strengthBullet(
 String _weaknessBullet(
   MapEntry<String, Decimal> entry,
   OpportunityMetrics metrics,
-  OptionContract contract,
-) {
+  OptionContract contract, {
+  required bool eventDataAvailable,
+}) {
   final pct = _pct(entry.value);
   switch (entry.key) {
     case 'yield':
@@ -88,6 +108,9 @@ String _weaknessBullet(
     case 'portfolio_fit':
       return 'Only a moderate fit with current positions (score $pct)';
     case 'event_safety':
+      if (!eventDataAvailable) {
+        return 'Check earnings and macro dates before placing the trade';
+      }
       return 'Execution needs caution inside the event window (score $pct)';
     default:
       return '${entry.key} score $pct';

@@ -10634,7 +10634,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get incomePlannerOpportunitiesAllRejected =>
-      'No candidates passed your hard filters this scan. Loosen your preferences (e.g. lower yield floor, wider DTE) and try again.';
+      'No candidates passed your guardrails. Review the reasons below; keeping your current limits and checking again later is a valid outcome.';
 
   @override
   String get incomePlannerNoMatchesTitle =>
@@ -10656,13 +10656,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incomePlannerChipCoveredCall => 'Covered call';
 
   @override
-  String get incomePlannerRiskLow => 'Low risk';
+  String get incomePlannerRiskLow => 'Lower relative risk';
 
   @override
-  String get incomePlannerRiskModerate => 'Moderate';
+  String get incomePlannerRiskModerate => 'Moderate relative risk';
 
   @override
-  String get incomePlannerRiskElevated => 'Elevated';
+  String get incomePlannerRiskElevated => 'Elevated relative risk';
 
   @override
   String get incomePlannerMetricAnnualized => 'Annualized';
@@ -10893,6 +10893,367 @@ class AppLocalizationsEn extends AppLocalizations {
   ) {
     return '$label: $ago · $stale';
   }
+
+  @override
+  String get incomePlannerOccConfirmation =>
+      'I understand that assignment can require buying or selling 100 shares per contract, and that this planner does not place orders or guarantee returns.';
+
+  @override
+  String get incomePlannerUnderlyingStrategyRequired =>
+      'Enable at least one strategy for this underlying.';
+
+  @override
+  String get incomePlannerUnderlyingDeleteTitle =>
+      'Remove approved underlying?';
+
+  @override
+  String incomePlannerUnderlyingDeleteBody(String symbol) {
+    return '$symbol will no longer be included in option scans.';
+  }
+
+  @override
+  String get incomePlannerSupportedMarketHelper =>
+      'Current scans support US-listed stocks and ETFs.';
+
+  @override
+  String get incomePlannerMaxBuyPriceLabel =>
+      'Highest acceptable assignment price';
+
+  @override
+  String get incomePlannerMaxBuyPriceHelper =>
+      'Put strikes above this price are rejected. Leave blank for no additional price ceiling.';
+
+  @override
+  String get incomePlannerMinSellPriceLabel =>
+      'Lowest acceptable call-away price';
+
+  @override
+  String get incomePlannerMinSellPriceHelper =>
+      'Call strikes below this price are rejected. Leave blank for no additional price floor.';
+
+  @override
+  String get incomePlannerUnderlyingNotesLabel => 'Investment stance';
+
+  @override
+  String get incomePlannerUnderlyingNotesHelper =>
+      'Record why you are willing to own or sell this underlying.';
+
+  @override
+  String get incomePlannerPositiveNumberValidation =>
+      'Enter a number greater than zero.';
+
+  @override
+  String get incomePlannerProfileStrategyRequired =>
+      'Enable at least one options strategy.';
+
+  @override
+  String incomePlannerProfileAdvancedSummary(
+    int minDte,
+    int maxDte,
+    String capital,
+  ) {
+    return '$minDte–$maxDte DTE · max $capital% per trade';
+  }
+
+  @override
+  String get incomePlannerProfileMaxUnderlyingExposure =>
+      'Max post-assignment underlying exposure';
+
+  @override
+  String get incomePlannerProfilePutDeltaRange => 'Put absolute delta range';
+
+  @override
+  String get incomePlannerProfileCallDeltaRange => 'Call delta range';
+
+  @override
+  String get incomePlannerProfileDeltaLow => 'Low';
+
+  @override
+  String get incomePlannerProfileDeltaHigh => 'High';
+
+  @override
+  String get incomePlannerProfileDeltaValidation =>
+      'Use a decimal above 0 and at most 1.';
+
+  @override
+  String get incomePlannerProfileDeltaOrderValidation =>
+      'High delta must be at least the low delta.';
+
+  @override
+  String get incomePlannerWorkspaceTitle => 'Options cash-flow workspace';
+
+  @override
+  String get incomePlannerWorkspaceOpportunities => 'Opportunities';
+
+  @override
+  String get incomePlannerWorkspaceWheel => 'Wheel';
+
+  @override
+  String get incomePlannerWorkspaceJournal => 'Journal';
+
+  @override
+  String get incomePlannerWorkspaceCandidates => 'Candidates';
+
+  @override
+  String get incomePlannerWorkspaceOpenPositions => 'Open positions';
+
+  @override
+  String get incomePlannerWorkspaceApproved => 'Approved';
+
+  @override
+  String get incomePlannerWorkspaceNeverScanned => 'not scanned yet';
+
+  @override
+  String get incomePlannerWorkspaceScanStale => 'scan is stale';
+
+  @override
+  String get incomePlannerWorkspaceScanFresh => 'scan is fresh';
+
+  @override
+  String incomePlannerWorkspaceProfileSummary(
+    int minDte,
+    int maxDte,
+    String capital,
+    String scanState,
+  ) {
+    return '$minDte–$maxDte DTE · max $capital per trade · $scanState';
+  }
+
+  @override
+  String get incomePlannerManageApprovedAction => 'Manage underlyings';
+
+  @override
+  String incomePlannerApprovedSummary(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count approved symbols',
+      one: '1 approved symbol',
+      zero: 'No approved symbols',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get incomePlannerScanProgressHint =>
+      'Keeping cached results visible while fresh option chains are checked. This can take up to 45 seconds.';
+
+  @override
+  String incomePlannerScanCompletedToast(int count) {
+    return 'Scan complete · $count candidates';
+  }
+
+  @override
+  String get incomePlannerOpportunityFilterAll => 'All';
+
+  @override
+  String incomePlannerOpportunityCountSummary(int visible, int total) {
+    return 'Showing $visible of $total, ordered by fit score';
+  }
+
+  @override
+  String get incomePlannerOpportunityFilterEmpty =>
+      'No opportunities match this strategy filter.';
+
+  @override
+  String incomePlannerOpportunityExpirySummary(String date, int dte) {
+    return 'Expires $date · $dte DTE';
+  }
+
+  @override
+  String get incomePlannerMetricPremiumTotal => 'Total premium';
+
+  @override
+  String get incomePlannerMetricUnderlyingPrice => 'Underlying';
+
+  @override
+  String get incomePlannerMetricExpiration => 'Expiration';
+
+  @override
+  String get incomePlannerMetricDelta => 'Delta';
+
+  @override
+  String get incomePlannerMetricIv => 'Implied volatility';
+
+  @override
+  String get incomePlannerMetricOpenInterest => 'Open interest';
+
+  @override
+  String get incomePlannerMetricVolume => 'Volume';
+
+  @override
+  String get incomePlannerMetricSpread => 'Bid/ask spread';
+
+  @override
+  String get incomePlannerScoreYield => 'Yield';
+
+  @override
+  String get incomePlannerScoreLiquidity => 'Liquidity';
+
+  @override
+  String get incomePlannerScoreSafetyMargin => 'Safety margin';
+
+  @override
+  String get incomePlannerScoreIv => 'Volatility fit';
+
+  @override
+  String get incomePlannerScorePortfolioFit => 'Portfolio fit';
+
+  @override
+  String get incomePlannerScoreEventSafety => 'Event safety';
+
+  @override
+  String get incomePlannerRejectionReasonsTitle => 'Main rejection reasons';
+
+  @override
+  String incomePlannerRejectionReasonSummary(String reason, int count) {
+    return '$reason · $count contracts';
+  }
+
+  @override
+  String get incomePlannerRejectCapitalLimit => 'Capital limit';
+
+  @override
+  String get incomePlannerRejectLiquidity => 'Insufficient liquidity';
+
+  @override
+  String get incomePlannerRejectSpread => 'Spread too wide';
+
+  @override
+  String get incomePlannerRejectDte => 'Outside DTE range';
+
+  @override
+  String get incomePlannerRejectDelta => 'Outside delta range';
+
+  @override
+  String get incomePlannerRejectPriceIntent => 'Outside your acceptable price';
+
+  @override
+  String get incomePlannerRejectEventRisk => 'Event-risk guard';
+
+  @override
+  String get incomePlannerRejectOther => 'Other hard filters';
+
+  @override
+  String get incomePlannerApprovedPutNoLimit => 'Put enabled';
+
+  @override
+  String incomePlannerApprovedPutLimit(String price) {
+    return 'Put ≤ $price';
+  }
+
+  @override
+  String get incomePlannerApprovedCallNoLimit => 'Call enabled';
+
+  @override
+  String incomePlannerApprovedCallLimit(String price) {
+    return 'Call ≥ $price';
+  }
+
+  @override
+  String get incomePlannerJournalOpenedAtLabel => 'Opened on';
+
+  @override
+  String get incomePlannerJournalExpirationLabel => 'Expiration';
+
+  @override
+  String get incomePlannerJournalClosedAtLabel => 'Resolved on';
+
+  @override
+  String get incomePlannerJournalContractQuantityLabel => 'Number of contracts';
+
+  @override
+  String get incomePlannerJournalFeesLabel => 'Total fees';
+
+  @override
+  String get incomePlannerJournalFilterAll => 'All';
+
+  @override
+  String get incomePlannerJournalFilterOpen => 'Open';
+
+  @override
+  String get incomePlannerJournalFilterResolved => 'Resolved';
+
+  @override
+  String get incomePlannerJournalFilterEmpty =>
+      'No journal entries match this filter.';
+
+  @override
+  String incomePlannerJournalExpiresIn(int days) {
+    return 'expires in ${days}d';
+  }
+
+  @override
+  String incomePlannerJournalQuantitySummary(int quantity, int size) {
+    return '$quantity contract(s) · $size shares each';
+  }
+
+  @override
+  String get incomePlannerJournalPremiumLabel => 'Premium';
+
+  @override
+  String get incomePlannerJournalNetPnlLabel => 'Net P&L';
+
+  @override
+  String get planWheelStageMixedOpen => 'Mixed open positions';
+
+  @override
+  String incomePlannerWheelOpenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count open positions',
+      one: '1 open position',
+      zero: 'No open positions',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String incomePlannerWheelDueSummary(String position, int days) {
+    return '$position · $days days remaining';
+  }
+
+  @override
+  String get incomePlannerWheelRealizedIncome => 'Realized net income';
+
+  @override
+  String get incomePlannerWheelNextActionTitle => 'Next checkpoint';
+
+  @override
+  String get incomePlannerWheelOpenPositionsTitle => 'Open positions';
+
+  @override
+  String get incomePlannerWheelExpirationMissing =>
+      'Expiration is missing · update this journal entry';
+
+  @override
+  String get incomePlannerWheelNextReviewOpen =>
+      'Review overlapping open positions and verify total exposure.';
+
+  @override
+  String get incomePlannerWheelNextWaitPut =>
+      'Monitor the open put and record its outcome at expiration or close.';
+
+  @override
+  String get incomePlannerWheelNextRecordPut =>
+      'Record the put outcome before starting the next leg.';
+
+  @override
+  String get incomePlannerWheelNextScanCall =>
+      'Shares are held; scan for a covered call only if you are willing to sell.';
+
+  @override
+  String get incomePlannerWheelNextWaitCall =>
+      'Monitor the covered call and record whether it expires, closes, or is assigned.';
+
+  @override
+  String get incomePlannerWheelNextRecordCall =>
+      'Record the call-away outcome and verify shares and cash.';
+
+  @override
+  String get incomePlannerWheelNextStartPut =>
+      'Cash is available; start a new put only for an approved underlying.';
 
   @override
   String get onboardingTitle => 'Welcome to NaviWealth';

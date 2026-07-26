@@ -68,6 +68,7 @@ class ScanController extends StateNotifier<ScanState> {
         availableCash: sideInputs.availableCash,
         upcomingEarningsSymbols: const {},
         upcomingMacroEvent: false,
+        eventDataAvailable: false,
       );
       final result = await orchestrator.run(inputs);
       logger.i(

@@ -119,10 +119,10 @@ Future<void> _pump(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('opportunity card shows option mid price', (tester) async {
+  testWidgets('opportunity card shows total premium', (tester) async {
     await _pump(tester);
 
-    expect(find.text('Option price'), findsOneWidget);
-    expect(find.text('USD 2.55'), findsOneWidget);
+    expect(find.text('Total premium'), findsOneWidget);
+    expect(find.text('USD 255'), findsOneWidget);
   });
 }
