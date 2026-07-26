@@ -262,7 +262,9 @@ StatefulShellRoute financeShellRoute() {
               GoRoute(
                 path: 'new/cash',
                 name: FinanceRouteNames.wealthNewCash,
-                builder: (context, state) => const CashFormPage(),
+                builder: (context, state) => CashFormPage(
+                  initialAccountId: state.uri.queryParameters['accountId'],
+                ),
               ),
               GoRoute(
                 path: 'new/deposit',

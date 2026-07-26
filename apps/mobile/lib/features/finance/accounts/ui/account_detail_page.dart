@@ -189,12 +189,26 @@ class _BalanceCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
+    // With an existing cash asset the button edits it; without one it
+    // opens the cash form preselected on this account, so a fresh
+    // account is never a dead end for its first balance.
     Widget adjustBalanceButton() => FButton(
       key: const Key('account-adjust-cash-balance'),
       variant: FButtonVariant.secondary,
-      onPress: () => context.push(FinanceRoutes.wealthAssetEdit(cashAssetId!)),
-      prefix: const Icon(FLucideIcons.pencil, size: AppIconSizes.sm),
-      child: Text(l10n.accountDetailAdjustBalanceAction),
+      onPress: () => context.push(
+        cashAssetId == null
+            ? FinanceRoutes.wealthNewCashForAccount(account.id)
+            : FinanceRoutes.wealthAssetEdit(cashAssetId!),
+      ),
+      prefix: Icon(
+        cashAssetId == null ? FLucideIcons.plus : FLucideIcons.pencil,
+        size: AppIconSizes.sm,
+      ),
+      child: Text(
+        cashAssetId == null
+            ? l10n.accountDetailAddBalanceAction
+            : l10n.accountDetailAdjustBalanceAction,
+      ),
     );
     Widget transferButton() => FButton(
       variant: FButtonVariant.primary,
@@ -235,12 +249,6 @@ class _BalanceCard extends ConsumerWidget {
             const SizedBox(height: AppSpacing.s16),
             LayoutBuilder(
               builder: (context, constraints) {
-                if (cashAssetId == null) {
-                  return Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: transferButton(),
-                  );
-                }
                 if (constraints.maxWidth < 520) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -50,6 +50,16 @@ Future<void> showWealthActionPanel(BuildContext context) {
           title: l10n.wealthActionPanelFinancialGroup,
           actions: [
             _WealthAction(
+              icon: FLucideIcons.wallet,
+              title: l10n.assetsAddCashTitle,
+              subtitle: l10n.assetsAddCashSubtitle,
+              onPress: () => _closeAndPush(
+                sheetContext,
+                context,
+                FinanceRoutes.wealthNewCash,
+              ),
+            ),
+            _WealthAction(
               icon: FLucideIcons.piggyBank,
               title: l10n.assetsAddDepositTitle,
               subtitle: l10n.assetsAddDepositSubtitle,

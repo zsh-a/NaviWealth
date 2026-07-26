@@ -20,9 +20,13 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 /// Create / edit form for a cash balance asset.
 class CashFormPage extends ConsumerStatefulWidget {
-  const CashFormPage({super.key, this.assetId});
+  const CashFormPage({super.key, this.assetId, this.initialAccountId});
 
   final String? assetId;
+
+  /// Preselects the owning account when opened from an account detail
+  /// page that has no cash balance yet.
+  final String? initialAccountId;
 
   bool get isEdit => assetId != null;
 
@@ -69,7 +73,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
       unawaited(_loadInitial());
     } else {
       final defaults = ref.read(formDefaultsProvider);
-      _accountId = defaults.assetAccountId;
+      _accountId = widget.initialAccountId ?? defaults.assetAccountId;
       if (defaults.assetCurrency != null &&
           defaults.assetCurrency!.isNotEmpty) {
         _currency = defaults.assetCurrency;
