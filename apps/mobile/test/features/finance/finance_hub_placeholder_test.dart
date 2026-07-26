@@ -14,7 +14,9 @@ import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
-  testWidgets('Plan hub shows FIRE plus compact next steps', (tester) async {
+  testWidgets('Plan hub shows the action-first planning workspace', (
+    tester,
+  ) async {
     await _setDesktopSurface(tester);
     await tester.pumpWidget(
       _wrap(
@@ -31,12 +33,15 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('FIRE'), findsOneWidget);
-    expect(find.text('Next steps'), findsOneWidget);
+    expect(find.text('Needs attention'), findsOneWidget);
+    expect(find.text('Planning overview'), findsOneWidget);
+    expect(find.text('Financial independence'), findsOneWidget);
+    expect(find.text('My plans'), findsOneWidget);
     expect(find.text('Rebalance'), findsOneWidget);
     expect(find.text('Budget'), findsOneWidget);
-    // Strategy tools stay collapsed.
-    expect(find.text('DCA simulator'), findsNothing);
+    expect(find.text('Recurring investment plan'), findsOneWidget);
+    // Optional strategy tools stay collapsed.
+    expect(find.text('Income Planner'), findsNothing);
     expect(find.text('Scenario analytics'), findsNothing);
     expect(find.text('Scenarios'), findsNothing);
     expect(find.text('Goals'), findsNothing);

@@ -723,11 +723,10 @@ class PlanPageObject {
   final WidgetTester tester;
 
   Future<void> openFireReport() async {
-    final configure = find.text('Set up plan');
-    final action = configure.evaluate().isNotEmpty
-        ? configure
-        : find.text('See plan');
+    final action = find.text('Financial independence');
     expect(action, findsOneWidget, reason: 'FIRE planning action missing');
+    await tester.ensureVisible(action);
+    await settle(tester);
     await tester.tap(action);
     await settle(tester);
   }
@@ -735,7 +734,9 @@ class PlanPageObject {
   Future<void> openRebalance() async {
     final action = find.text('Rebalance');
     expect(action, findsWidgets, reason: 'rebalance planning action missing');
-    await tester.tap(action.first);
+    await tester.ensureVisible(action.last);
+    await settle(tester);
+    await tester.tap(action.last);
     await settle(tester);
   }
 
@@ -747,17 +748,33 @@ class PlanPageObject {
   }
 
   Future<void> openIncomeStrategy() async {
-    var action = find.text('Income strategy');
+    var action = find.text('Income Planner');
     if (action.evaluate().isEmpty) {
-      final strategies = find.text('Strategies');
+      final strategies = find.text('Simulations & advanced strategies');
+      if (strategies.evaluate().isEmpty) {
+        await tester.scrollUntilVisible(
+          strategies,
+          160,
+          scrollable: find.byType(Scrollable).last,
+        );
+      }
       expect(
         strategies,
         findsOneWidget,
         reason: 'strategy tools disclosure missing',
       );
+      await tester.ensureVisible(strategies);
+      await settle(tester);
       await tester.tap(strategies);
       await settle(tester);
-      action = find.text('Income strategy');
+      action = find.text('Income Planner');
+    }
+    if (action.evaluate().isEmpty) {
+      await tester.scrollUntilVisible(
+        action,
+        160,
+        scrollable: find.byType(Scrollable).last,
+      );
     }
     expect(action, findsWidgets, reason: 'income strategy action missing');
     await tester.ensureVisible(action.first);

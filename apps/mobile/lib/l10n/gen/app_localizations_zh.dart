@@ -107,7 +107,81 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planBudgetSectionSubtitle => '按月按类别设定上限';
 
   @override
+  String get planAttentionTitle => '需要关注';
+
+  @override
+  String planAttentionCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 项',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planAttentionAllClearBadge => '状态良好';
+
+  @override
+  String get planAttentionAllClearBody => '当前没有到期事项，进行中的计划均在轨道上。';
+
+  @override
+  String get planOverviewTitle => '规划概览';
+
+  @override
+  String get planMyPlansTitle => '我的计划';
+
+  @override
+  String get planExploreTitle => '模拟与高级策略';
+
+  @override
+  String get planExploreSubtitle => '比较情景，探索可选的投资方法';
+
+  @override
+  String planExploreActiveOptions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '有 $count 个期权持仓',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planDcaPlanTitle => '定投计划';
+
+  @override
+  String get planFireGoalTitle => '财务自由';
+
+  @override
+  String get planFireGoalNotConfigured => '需要时再设定长期目标';
+
+  @override
   String get planStatusNeedsSetup => '待设置';
+
+  @override
+  String get planStatusLoading => '正在读取状态…';
+
+  @override
+  String get planStatusUnavailable => '状态暂不可用';
+
+  @override
+  String get planStatusPartiallyUnavailable => '部分规划状态暂不可用。';
+
+  @override
+  String get planStatusView => '查看';
+
+  @override
+  String get planStatusInProgress => '进行中';
+
+  @override
+  String get planStatusOnTrack => '正常';
+
+  @override
+  String get planStatusNeedsAttention => '待复盘';
+
+  @override
+  String get planStatusActionRequired => '需处理';
 
   @override
   String get planStatusNoPendingReviews => '暂无待复盘项';
@@ -141,6 +215,25 @@ class AppLocalizationsZh extends AppLocalizations {
       other: '$count 个类别上限',
     );
     return '$_temp0';
+  }
+
+  @override
+  String get planStatusBudgetComfortable => '本月支出在计划内';
+
+  @override
+  String planStatusBudgetUsed(String percent) {
+    return '本月已使用 $percent%';
+  }
+
+  @override
+  String get planStatusBudgetStrained => '本月预算接近上限';
+
+  @override
+  String get planStatusBudgetOver => '本月预算已超支';
+
+  @override
+  String planStatusFireProgress(String percent) {
+    return '已完成目标的 $percent%';
   }
 
   @override

@@ -290,11 +290,131 @@ abstract class AppLocalizations {
   /// **'Monthly category caps'**
   String get planBudgetSectionSubtitle;
 
+  /// No description provided for @planAttentionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs attention'**
+  String get planAttentionTitle;
+
+  /// No description provided for @planAttentionCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item} other{{count} items}}'**
+  String planAttentionCount(int count);
+
+  /// No description provided for @planAttentionAllClearBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'On track'**
+  String get planAttentionAllClearBadge;
+
+  /// No description provided for @planAttentionAllClearBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is due right now. Your active plans are on track.'**
+  String get planAttentionAllClearBody;
+
+  /// No description provided for @planOverviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Planning overview'**
+  String get planOverviewTitle;
+
+  /// No description provided for @planMyPlansTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My plans'**
+  String get planMyPlansTitle;
+
+  /// No description provided for @planExploreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulations & advanced strategies'**
+  String get planExploreTitle;
+
+  /// No description provided for @planExploreSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore scenarios and optional investing approaches'**
+  String get planExploreSubtitle;
+
+  /// No description provided for @planExploreActiveOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 options position active} other{{count} options positions active}}'**
+  String planExploreActiveOptions(int count);
+
+  /// No description provided for @planDcaPlanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring investment plan'**
+  String get planDcaPlanTitle;
+
+  /// No description provided for @planFireGoalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial independence'**
+  String get planFireGoalTitle;
+
+  /// No description provided for @planFireGoalNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a long-term target when it becomes useful'**
+  String get planFireGoalNotConfigured;
+
   /// No description provided for @planStatusNeedsSetup.
   ///
   /// In en, this message translates to:
   /// **'Needs setup'**
   String get planStatusNeedsSetup;
+
+  /// No description provided for @planStatusLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading status…'**
+  String get planStatusLoading;
+
+  /// No description provided for @planStatusUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Status unavailable'**
+  String get planStatusUnavailable;
+
+  /// No description provided for @planStatusPartiallyUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Some plan statuses are temporarily unavailable.'**
+  String get planStatusPartiallyUnavailable;
+
+  /// No description provided for @planStatusView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get planStatusView;
+
+  /// No description provided for @planStatusInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get planStatusInProgress;
+
+  /// No description provided for @planStatusOnTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'On track'**
+  String get planStatusOnTrack;
+
+  /// No description provided for @planStatusNeedsAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get planStatusNeedsAttention;
+
+  /// No description provided for @planStatusActionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Action needed'**
+  String get planStatusActionRequired;
 
   /// No description provided for @planStatusNoPendingReviews.
   ///
@@ -331,6 +451,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 category cap} other{{count} category caps}}'**
   String planStatusBudgetCount(int count);
+
+  /// No description provided for @planStatusBudgetComfortable.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending is within plan'**
+  String get planStatusBudgetComfortable;
+
+  /// No description provided for @planStatusBudgetUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% used this month'**
+  String planStatusBudgetUsed(String percent);
+
+  /// No description provided for @planStatusBudgetStrained.
+  ///
+  /// In en, this message translates to:
+  /// **'Approaching the monthly limit'**
+  String get planStatusBudgetStrained;
+
+  /// No description provided for @planStatusBudgetOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly budget exceeded'**
+  String get planStatusBudgetOver;
+
+  /// No description provided for @planStatusFireProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% toward target'**
+  String planStatusFireProgress(String percent);
 
   /// No description provided for @planStatusDcaDue.
   ///

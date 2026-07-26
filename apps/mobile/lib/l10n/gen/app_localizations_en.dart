@@ -110,7 +110,87 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planBudgetSectionSubtitle => 'Monthly category caps';
 
   @override
+  String get planAttentionTitle => 'Needs attention';
+
+  @override
+  String planAttentionCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planAttentionAllClearBadge => 'On track';
+
+  @override
+  String get planAttentionAllClearBody =>
+      'Nothing is due right now. Your active plans are on track.';
+
+  @override
+  String get planOverviewTitle => 'Planning overview';
+
+  @override
+  String get planMyPlansTitle => 'My plans';
+
+  @override
+  String get planExploreTitle => 'Simulations & advanced strategies';
+
+  @override
+  String get planExploreSubtitle =>
+      'Explore scenarios and optional investing approaches';
+
+  @override
+  String planExploreActiveOptions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count options positions active',
+      one: '1 options position active',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planDcaPlanTitle => 'Recurring investment plan';
+
+  @override
+  String get planFireGoalTitle => 'Financial independence';
+
+  @override
+  String get planFireGoalNotConfigured =>
+      'Set a long-term target when it becomes useful';
+
+  @override
   String get planStatusNeedsSetup => 'Needs setup';
+
+  @override
+  String get planStatusLoading => 'Loading status…';
+
+  @override
+  String get planStatusUnavailable => 'Status unavailable';
+
+  @override
+  String get planStatusPartiallyUnavailable =>
+      'Some plan statuses are temporarily unavailable.';
+
+  @override
+  String get planStatusView => 'View';
+
+  @override
+  String get planStatusInProgress => 'In progress';
+
+  @override
+  String get planStatusOnTrack => 'On track';
+
+  @override
+  String get planStatusNeedsAttention => 'Review';
+
+  @override
+  String get planStatusActionRequired => 'Action needed';
 
   @override
   String get planStatusNoPendingReviews => 'No reviews due';
@@ -146,6 +226,25 @@ class AppLocalizationsEn extends AppLocalizations {
       one: '1 category cap',
     );
     return '$_temp0';
+  }
+
+  @override
+  String get planStatusBudgetComfortable => 'Spending is within plan';
+
+  @override
+  String planStatusBudgetUsed(String percent) {
+    return '$percent% used this month';
+  }
+
+  @override
+  String get planStatusBudgetStrained => 'Approaching the monthly limit';
+
+  @override
+  String get planStatusBudgetOver => 'Monthly budget exceeded';
+
+  @override
+  String planStatusFireProgress(String percent) {
+    return '$percent% toward target';
   }
 
   @override

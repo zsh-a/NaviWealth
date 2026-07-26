@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/application/planning_hub_status.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/budget_signal.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_calculator.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_goal.dart';
@@ -41,9 +43,7 @@ Widget _wrapAsync(
 Widget _wrapRouter(FireDashboardView view) => ProviderScope(
   overrides: [
     fireDashboardViewProvider.overrideWith((ref) => AsyncValue.data(view)),
-    planningHubStatusProvider.overrideWith(
-      (ref) => const PlanningHubStatus.loading(),
-    ),
+    planningHubStatusProvider.overrideWith((ref) => _settledStatus()),
   ],
   child: MaterialApp.router(
     theme: AppTheme.light(),
@@ -64,6 +64,14 @@ Widget _wrapRouter(FireDashboardView view) => ProviderScope(
         GoRoute(
           path: AppRoutes.planBudget,
           builder: (_, _) => const Text('budget-route'),
+        ),
+        GoRoute(
+          path: FinanceRoutes.planRunway,
+          builder: (_, _) => const Text('runway-route'),
+        ),
+        GoRoute(
+          path: FinanceRoutes.planLifeEvents,
+          builder: (_, _) => const Text('life-events-route'),
         ),
         GoRoute(
           path: AppRoutes.planDca,
@@ -92,15 +100,14 @@ void main() {
     await tester.pump();
 
     expect(find.byType(PlanHubPage), findsOneWidget);
-    expect(find.text('FIRE'), findsOneWidget);
-    expect(find.byType(SkeletonBox), findsNWidgets(2));
-    expect(find.text(l10n.planCoreSectionTitle), findsOneWidget);
-    expect(find.text(l10n.planFireSectionTitle), findsOneWidget);
+    expect(find.text(l10n.planAttentionTitle), findsOneWidget);
+    expect(find.byType(SkeletonBox), findsWidgets);
+    expect(find.text(l10n.planOverviewTitle), findsOneWidget);
     expect(find.text(l10n.planRebalanceSectionTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
   });
 
-  testWidgets('falls back to empty FIRE hero when FIRE view errors', (
+  testWidgets('keeps the workspace usable when FIRE status errors', (
     tester,
   ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
@@ -111,13 +118,14 @@ void main() {
     await tester.pump();
 
     expect(find.byType(PlanHubPage), findsOneWidget);
-    expect(find.text(l10n.commonLoadFailed), findsOneWidget);
-    expect(find.text(l10n.commonSafeErrorMessage), findsOneWidget);
+    expect(find.text(l10n.planStatusUnavailable), findsOneWidget);
     expect(find.text('Bad state: fire failed'), findsNothing);
-    expect(find.text(l10n.commonRetry), findsOneWidget);
+    expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
   });
 
-  testWidgets('renders empty FIRE summary and next-step tiles', (tester) async {
+  testWidgets('keeps unconfigured FIRE secondary to the planning workspace', (
+    tester,
+  ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
     await tester.pumpWidget(_wrap(_view(FireGoal.unset())));
@@ -125,16 +133,16 @@ void main() {
 
     expect(find.byType(PlanHubPage), findsOneWidget);
     expect(find.text(l10n.planHubTitle), findsWidgets);
-    expect(find.text(l10n.planHeroEmpty), findsOneWidget);
-    expect(find.text(l10n.planHeroConfigure), findsOneWidget);
-    expect(find.text(l10n.planFireSectionTitle), findsOneWidget);
+    expect(find.text(l10n.planAttentionTitle), findsOneWidget);
+    expect(find.text(l10n.planFireGoalNotConfigured), findsOneWidget);
+    expect(find.text(l10n.planFireGoalTitle), findsOneWidget);
     expect(find.text(l10n.planRebalanceSectionTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
-    // Strategy tools stay collapsed until expanded.
-    expect(find.text(l10n.planDcaSectionTitle), findsNothing);
+    expect(find.text(l10n.planDcaPlanTitle), findsOneWidget);
+    expect(find.text(l10n.incomePlannerTitle), findsNothing);
   });
 
-  testWidgets('renders configured FIRE progress in the hero card', (
+  testWidgets('renders configured FIRE progress in the overview', (
     tester,
   ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
@@ -150,14 +158,15 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text(l10n.planFireSectionTitle), findsWidgets);
-    expect(find.text('${l10n.planHeroProgressLabel} 25%'), findsOneWidget);
-    expect(find.text(l10n.planHeroSeePlan), findsOneWidget);
+    expect(find.text(l10n.planFireGoalTitle), findsOneWidget);
+    expect(find.text('25%'), findsOneWidget);
   });
 
   testWidgets('surfaces live planning status on workflow tiles', (
     tester,
   ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
     await tester.pumpWidget(
       _wrapAsync(
         AsyncValue.data(_view(FireGoal.unset())),
@@ -167,27 +176,31 @@ void main() {
           rebalance: PlanningRebalanceStatus.attention,
           rebalanceDriftPct: 0.075,
           budgetCount: 3,
+          budgetSignal: BudgetSignal.comfortable,
+          budgetProgress: 0.62,
           dcaPlanCount: 1,
           dcaNextDueAt: DateTime.now().add(const Duration(days: 5)),
           dcaDue: false,
           wheelCycleCount: 2,
           wheelOpenPositionCount: 1,
+          isLoading: false,
+          hasError: false,
         ),
       ),
     );
     await tester.pump();
 
-    expect(find.text('On track'), findsOneWidget);
-    expect(find.text('2 reviews due'), findsOneWidget);
-    expect(find.text('7.5% drift'), findsOneWidget);
-    expect(find.text('3 category caps'), findsOneWidget);
+    expect(find.text('On track'), findsWidgets);
+    expect(find.text('2 reviews due'), findsWidgets);
+    expect(find.text('7.5% drift'), findsWidgets);
+    expect(find.text('62% used this month'), findsOneWidget);
 
     await tester.scrollUntilVisible(
-      find.text('Strategies'),
+      find.text(l10n.planExploreTitle),
       160,
       scrollable: find.byType(Scrollable).last,
     );
-    await tester.tap(find.text('Strategies'));
+    await tester.tap(find.text(l10n.planExploreTitle));
     await tester.pumpAndSettle();
     expect(find.text('1 open position'), findsOneWidget);
   });
@@ -200,18 +213,57 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(
-      _wrapAsync(AsyncValue.data(_view(FireGoal.unset())), textScale: 1.5),
+      _wrapAsync(
+        AsyncValue.data(_view(FireGoal.unset())),
+        textScale: 1.5,
+        status: _settledStatus(),
+      ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
 
-    expect(find.text('Next steps'), findsOneWidget);
+    expect(find.text('Needs attention'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Strategies'),
+      find.text('Simulations & advanced strategies'),
       160,
       scrollable: find.byType(Scrollable).last,
     );
-    expect(find.text('Strategies'), findsOneWidget);
+    expect(find.text('Simulations & advanced strategies'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('promotes urgent work ahead of lower-priority reviews', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await tester.pumpWidget(
+      _wrapAsync(
+        AsyncValue.data(_view(FireGoal.unset())),
+        status: _settledStatus(
+          runway: PlanningRunwayStatus.shortfall,
+          budgetSignal: BudgetSignal.overBudget,
+          dcaDue: true,
+          pendingLifeEventReviews: 2,
+          rebalance: PlanningRebalanceStatus.attention,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text(l10n.planAttentionCount(5)), findsOneWidget);
+    final shortfallY = tester
+        .getTopLeft(find.text(l10n.moneyRunwayStatusShortfall).first)
+        .dy;
+    final budgetY = tester
+        .getTopLeft(find.text(l10n.planStatusBudgetOver).first)
+        .dy;
+    final dcaY = tester.getTopLeft(find.text(l10n.planStatusDcaDue).first).dy;
+    expect(shortfallY, lessThan(budgetY));
+    expect(budgetY, lessThan(dcaY));
+    expect(
+      find.text(l10n.planStatusPendingReviews(2)),
+      findsOneWidget,
+      reason: 'Lower-priority items stay available in My plans.',
+    );
   });
 
   testWidgets('expands more tools and navigates to feature routes', (
@@ -222,16 +274,19 @@ void main() {
     await tester.pumpWidget(_wrapRouter(_view(FireGoal.unset())));
     await tester.pump();
 
-    await tester.ensureVisible(find.text(l10n.planStrategyToolsSectionTitle));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.planStrategyToolsSectionTitle));
+    await tester.scrollUntilVisible(
+      find.text(l10n.planExploreTitle),
+      160,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text(l10n.planExploreTitle));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text(l10n.planDcaSectionTitle));
+    await tester.ensureVisible(find.text(l10n.incomePlannerTitle));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.planDcaSectionTitle));
+    await tester.tap(find.text(l10n.incomePlannerTitle));
     await tester.pumpAndSettle();
-    expect(find.text('dca-route'), findsOneWidget);
+    expect(find.text('income-route'), findsOneWidget);
   });
 
   testWidgets('budget action navigates to budget route', (tester) async {
@@ -266,7 +321,7 @@ void main() {
     await tester.pumpWidget(_wrapRouter(_view(FireGoal.unset())));
     await tester.pump();
 
-    await tester.tap(find.text(l10n.planHeroConfigure));
+    await tester.tap(find.text(l10n.planFireGoalTitle));
     await tester.pumpAndSettle();
 
     expect(find.text('fire-route'), findsOneWidget);
@@ -280,3 +335,26 @@ FireDashboardView _view(FireGoal goal, {Decimal? currentNetWorth}) =>
       baseCurrency: 'CNY',
       start: DateTime(2026, 6, 20),
     );
+
+PlanningHubStatus _settledStatus({
+  PlanningRunwayStatus runway = PlanningRunwayStatus.healthy,
+  int pendingLifeEventReviews = 0,
+  PlanningRebalanceStatus rebalance = PlanningRebalanceStatus.balanced,
+  BudgetSignal budgetSignal = BudgetSignal.comfortable,
+  bool dcaDue = false,
+}) => PlanningHubStatus(
+  runway: runway,
+  pendingLifeEventReviews: pendingLifeEventReviews,
+  rebalance: rebalance,
+  rebalanceDriftPct: rebalance == PlanningRebalanceStatus.attention ? 0.08 : 0,
+  budgetCount: 3,
+  budgetSignal: budgetSignal,
+  budgetProgress: 0.62,
+  dcaPlanCount: 1,
+  dcaNextDueAt: DateTime.now().add(Duration(days: dcaDue ? -1 : 5)),
+  dcaDue: dcaDue,
+  wheelCycleCount: 0,
+  wheelOpenPositionCount: 0,
+  isLoading: false,
+  hasError: false,
+);
