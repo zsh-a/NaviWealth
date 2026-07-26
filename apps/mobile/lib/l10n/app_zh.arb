@@ -870,6 +870,10 @@
   "settingsAboutSubtitle": "v{version}",
 
   "settingsAppearanceSection": "外观",
+  "settingsSurfaceStyleTitle": "界面风格",
+  "surfaceStyleStandard": "标准",
+  "surfaceStyleOled": "OLED 纯黑",
+  "surfaceStyleHighContrast": "高对比",
   "settingsThemeModeTitle": "主题模式",
   "themeModeSystem": "跟随系统",
   "themeModeLight": "浅色",

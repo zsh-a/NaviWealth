@@ -25,6 +25,20 @@ class _AppearanceSection extends ConsumerWidget {
           },
         ),
         const AppGradientDivider(),
+        InlineSettingRow<AppSurfaceStyle>(
+          icon: FLucideIcons.palette,
+          label: l10n.settingsSurfaceStyleTitle,
+          value: ref.watch(surfaceStyleProvider),
+          options: {
+            for (final s in AppSurfaceStyle.values)
+              _surfaceStyleLabel(l10n, s): s,
+          },
+          onChanged: (s) {
+            Haptics.selection();
+            ref.read(surfaceStyleProvider.notifier).set(s);
+          },
+        ),
+        const AppGradientDivider(),
         InlineSettingRow<MarketColorMode>(
           icon: FLucideIcons.arrowUpDown,
           label: l10n.settingsMarketColorTitle,
@@ -78,6 +92,13 @@ class _AppearanceSection extends ConsumerWidget {
         MarketColorMode.redUpGreenDown => l10n.marketColorRedUpGreenDown,
         MarketColorMode.greenUpRedDown => l10n.marketColorGreenUpRedDown,
         MarketColorMode.colorblind => l10n.marketColorColorblind,
+      };
+
+  String _surfaceStyleLabel(AppLocalizations l10n, AppSurfaceStyle style) =>
+      switch (style) {
+        AppSurfaceStyle.standard => l10n.surfaceStyleStandard,
+        AppSurfaceStyle.oled => l10n.surfaceStyleOled,
+        AppSurfaceStyle.highContrast => l10n.surfaceStyleHighContrast,
       };
 }
 

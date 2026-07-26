@@ -2911,6 +2911,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAppearanceSection => 'Appearance';
 
   @override
+  String get settingsSurfaceStyleTitle => 'Surface style';
+
+  @override
+  String get surfaceStyleStandard => 'Standard';
+
+  @override
+  String get surfaceStyleOled => 'OLED black';
+
+  @override
+  String get surfaceStyleHighContrast => 'High contrast';
+
+  @override
   String get settingsThemeModeTitle => 'Theme';
 
   @override

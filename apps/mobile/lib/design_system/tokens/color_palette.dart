@@ -45,6 +45,14 @@ class ColorPalette {
   static const Color navyHero = Color(0xFF1B3542);
   static const Color navySoftBorder = Color(0xFFCAD7DA);
 
+  // ── OLED surfaces (AppSurfaceStyle.oled, dark only) ────────────────────
+  // True-black canvas with the card ladder pulled down two steps so the
+  // elevation rhythm survives on pitch black. Hues stay in the navy family.
+  static const Color oledCanvas = Color(0xFF000000);
+  static const Color oledCard = Color(0xFF0A121A);
+  static const Color oledRaised = Color(0xFF0F1B26);
+  static const Color oledHero = Color(0xFF152532);
+
   // ── Neutral grayscale ───────────────────────────────────────────────────
   static const Color neutral0 = Color(0xFFFFFFFF);
   static const Color neutral50 = Color(0xFFF7F8FA);

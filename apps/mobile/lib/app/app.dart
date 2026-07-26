@@ -75,17 +75,20 @@ class NaviWealthApp extends ConsumerWidget {
             (defaultTargetPlatform == TargetPlatform.iOS ||
                 defaultTargetPlatform == TargetPlatform.android);
         final brightness = isDark ? Brightness.dark : Brightness.light;
+        final surfaceStyle = ref.watch(surfaceStyleProvider);
         final fTheme = buildAppForuiTheme(
           brightness: brightness,
           touch: isTouch,
+          surfaceStyle: surfaceStyle,
         );
         // Resolve the app theme once for the whole tree (blueprint doc 15,
         // §3.3) — the single source for every color role, including the
-        // market direction preference.
+        // market direction and surface style preferences.
         final appTheme = resolveAppTheme(
           ThemeInputs(
             brightness: brightness,
             marketMode: ref.watch(marketColorModeProvider),
+            surfaceStyle: surfaceStyle,
             density: isTouch ? AppDensity.touch : AppDensity.desktop,
           ),
         );

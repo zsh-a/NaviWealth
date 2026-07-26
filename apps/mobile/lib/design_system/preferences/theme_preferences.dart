@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../theme/app_surface_style.dart';
 import '../theme/market_color_mode.dart';
 
 /// Riverpod-injected [SharedPreferences] handle.
@@ -29,6 +30,12 @@ final themeModeProvider = StateNotifierProvider<ThemeModeController, ThemeMode>(
   },
 );
 
+/// User preference: surface style (standard / OLED black / high contrast).
+final surfaceStyleProvider =
+    StateNotifierProvider<SurfaceStyleController, AppSurfaceStyle>((ref) {
+      return SurfaceStyleController(ref.watch(sharedPreferencesProvider));
+    });
+
 class MarketColorModeController extends StateNotifier<MarketColorMode> {
   MarketColorModeController(this._prefs) : super(_load(_prefs));
 
@@ -42,6 +49,22 @@ class MarketColorModeController extends StateNotifier<MarketColorMode> {
     if (mode == state) return;
     state = mode;
     await _prefs.setString(_key, mode.persistedKey);
+  }
+}
+
+class SurfaceStyleController extends StateNotifier<AppSurfaceStyle> {
+  SurfaceStyleController(this._prefs) : super(_load(_prefs));
+
+  static const String _key = 'naviwealth.theme.surface_style';
+  final SharedPreferences _prefs;
+
+  static AppSurfaceStyle _load(SharedPreferences p) =>
+      AppSurfaceStyle.fromKey(p.getString(_key));
+
+  Future<void> set(AppSurfaceStyle style) async {
+    if (style == state) return;
+    state = style;
+    await _prefs.setString(_key, style.persistedKey);
   }
 }
 

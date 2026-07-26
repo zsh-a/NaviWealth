@@ -5013,6 +5013,30 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get settingsAppearanceSection;
 
+  /// No description provided for @settingsSurfaceStyleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Surface style'**
+  String get settingsSurfaceStyleTitle;
+
+  /// No description provided for @surfaceStyleStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get surfaceStyleStandard;
+
+  /// No description provided for @surfaceStyleOled.
+  ///
+  /// In en, this message translates to:
+  /// **'OLED black'**
+  String get surfaceStyleOled;
+
+  /// No description provided for @surfaceStyleHighContrast.
+  ///
+  /// In en, this message translates to:
+  /// **'High contrast'**
+  String get surfaceStyleHighContrast;
+
   /// No description provided for @settingsThemeModeTitle.
   ///
   /// In en, this message translates to:

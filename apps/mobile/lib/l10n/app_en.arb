@@ -1542,6 +1542,10 @@
   },
 
   "settingsAppearanceSection": "Appearance",
+  "settingsSurfaceStyleTitle": "Surface style",
+  "surfaceStyleStandard": "Standard",
+  "surfaceStyleOled": "OLED black",
+  "surfaceStyleHighContrast": "High contrast",
   "settingsThemeModeTitle": "Theme",
   "themeModeSystem": "Follow system",
   "themeModeLight": "Light",

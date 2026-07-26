@@ -11,6 +11,7 @@ export 'charts/charts.dart';
 export 'preferences/theme_preferences.dart';
 export 'theme/accent_colors.dart';
 export 'theme/app_forui_theme.dart';
+export 'theme/app_surface_style.dart';
 export 'theme/app_theme.dart';
 export 'theme/app_theme_data.dart';
 export 'theme/app_theme_scope.dart';

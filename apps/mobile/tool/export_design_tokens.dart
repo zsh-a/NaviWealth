@@ -203,6 +203,14 @@ Map<String, Object> _colorGroup() => {
     '950': _color(ColorPalette.neutral950),
     '1000': _color(ColorPalette.neutral1000),
   },
+  'oled': {
+    r'$description':
+        'True-black surfaces — ColorPalette.oled* (AppSurfaceStyle.oled).',
+    'canvas': _color(ColorPalette.oledCanvas),
+    'card': _color(ColorPalette.oledCard),
+    'raised': _color(ColorPalette.oledRaised),
+    'hero': _color(ColorPalette.oledHero),
+  },
   'surface': {
     r'$description': 'Light-mode surfaces — ColorPalette.surface*.',
     'background': _color(ColorPalette.surfaceBackground),

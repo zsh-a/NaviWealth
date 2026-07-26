@@ -5,6 +5,7 @@ import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'accent_colors.dart';
+import 'app_surface_style.dart';
 
 /// Builds the production Forui theme for NaviWealth.
 ///
@@ -14,18 +15,31 @@ import 'accent_colors.dart';
 FThemeData buildAppForuiTheme({
   required Brightness brightness,
   required bool touch,
+  AppSurfaceStyle surfaceStyle = AppSurfaceStyle.standard,
 }) {
   final isDark = brightness == Brightness.dark;
+  // Keep these in lockstep with resolveAppTheme's surface/content tables —
+  // forui widgets must sit on the same canvas as design-system components.
+  final oled = surfaceStyle == AppSurfaceStyle.oled && isDark;
+  final highContrast = surfaceStyle == AppSurfaceStyle.highContrast;
   final platform = isDark ? FThemes.slate.dark : FThemes.slate.light;
   final base = touch ? platform.touch : platform.desktop;
   final colors = base.colors.copyWith(
     primary: AccentColors.primary(brightness),
     primaryForeground: AccentColors.onPrimary(brightness),
-    background: isDark ? ColorPalette.navy950 : ColorPalette.surfaceBackground,
+    background: isDark
+        ? (oled ? ColorPalette.oledCanvas : ColorPalette.navy950)
+        : ColorPalette.surfaceBackground,
     foreground: isDark ? ColorPalette.navy50 : ColorPalette.navy900,
-    mutedForeground: isDark ? ColorPalette.navy300 : ColorPalette.navy500,
-    card: isDark ? ColorPalette.navyGlass : ColorPalette.surface,
-    border: isDark ? ColorPalette.navy800 : ColorPalette.surfaceHairline,
+    mutedForeground: isDark
+        ? (highContrast ? ColorPalette.navy100 : ColorPalette.navy300)
+        : (highContrast ? ColorPalette.navy700 : ColorPalette.navy500),
+    card: isDark
+        ? (oled ? ColorPalette.oledCard : ColorPalette.navyGlass)
+        : ColorPalette.surface,
+    border: isDark
+        ? (highContrast ? ColorPalette.navy500 : ColorPalette.navy800)
+        : (highContrast ? ColorPalette.navy400 : ColorPalette.surfaceHairline),
     // Muted fills stay cooler than pure slate so SoftCard modules lift cleanly.
     muted: isDark
         ? Color.alphaBlend(

@@ -2793,6 +2793,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAppearanceSection => '外观';
 
   @override
+  String get settingsSurfaceStyleTitle => '界面风格';
+
+  @override
+  String get surfaceStyleStandard => '标准';
+
+  @override
+  String get surfaceStyleOled => 'OLED 纯黑';
+
+  @override
+  String get surfaceStyleHighContrast => '高对比';
+
+  @override
   String get settingsThemeModeTitle => '主题模式';
 
   @override
