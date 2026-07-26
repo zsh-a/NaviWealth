@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,8 +6,13 @@ import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/features/finance/income_strategy/application/income_strategy_asset_resolver.dart';
+import 'package:naviwealth/features/finance/income_strategy/application/leaps_income_sleeve_adapter.dart';
+import 'package:naviwealth/features/finance/income_strategy/application/wheel_income_sleeve_adapter.dart';
+import 'package:naviwealth/features/finance/income_strategy/application/wheel_strategy_view.dart';
+import 'package:naviwealth/features/finance/income_strategy/data/providers.dart';
+import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy_assembler.dart';
 import 'package:naviwealth/features/finance/options_income/ai_tools/get_wheel_lifecycle_tool.dart';
-import 'package:naviwealth/features/finance/options_income/data/providers.dart';
 import 'package:naviwealth/features/finance/options_income/domain/leaps_call_position.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
 import 'package:naviwealth/features/finance/options_income/domain/trade_journal_entry.dart';
@@ -52,14 +55,34 @@ ProviderContainer _container(
   List<LeapsCallPosition> leaps = const [],
 }) => ProviderContainer(
   overrides: [
-    tradeJournalEntriesProvider.overrideWith((ref) async* {
-      yield entries;
-    }),
-    leapsCallPositionsProvider.overrideWith((ref) async* {
-      yield leaps;
-    }),
+    wheelStrategyViewsProvider.overrideWith(
+      (ref) => AsyncData(_views(entries, leaps)),
+    ),
   ],
 );
+
+List<WheelStrategyView> _views(
+  List<TradeJournalEntry> entries,
+  List<LeapsCallPosition> leaps,
+) {
+  final assets = IncomeStrategyAssetResolver(const []);
+  return buildWheelStrategyViews(
+    const IncomeStrategyAssembler().assemble(
+      baseCurrency: 'USD',
+      plans: const [],
+      contributions: [
+        ...const WheelIncomeSleeveAdapter().buildFromEntries(
+          entries: entries,
+          assets: assets,
+        ),
+        ...const LeapsIncomeSleeveAdapter().build(
+          positions: leaps,
+          assets: assets,
+        ),
+      ],
+    ),
+  );
+}
 
 /// Runs [body] inside a probe so it gets a real Riverpod [Ref].
 Future<T> _withRef<T>(ProviderContainer c, Future<T> Function(Ref ref) body) {
@@ -69,22 +92,13 @@ Future<T> _withRef<T>(ProviderContainer c, Future<T> Function(Ref ref) body) {
 }
 
 /// Run [tool.invoke] with a real [Ref] sourced from [container]. Awaits
-/// the upstream journal stream's first emission so the derived
-/// [wheelLifecyclesProvider] has data before the tool reads it.
 Future<Map<String, Object?>> _invoke(
   GetWheelLifecycleTool tool,
   ProviderContainer container,
   Map<String, Object?> input, {
   bool drainStream = true,
 }) async {
-  if (drainStream) {
-    // Subscribe so autoDispose providers stay mounted across the read.
-    container.listen(tradeJournalEntriesProvider, (_, _) {});
-    container.listen(leapsCallPositionsProvider, (_, _) {});
-    await container.read(tradeJournalEntriesProvider.future);
-    await container.read(leapsCallPositionsProvider.future);
-    container.read(wheelLeapsOverlaysProvider);
-  }
+  if (drainStream) container.read(wheelStrategyViewsProvider);
   return _withRef(container, (ref) async {
     final out = await tool.invoke(
       DeviceToolContext(
@@ -108,18 +122,11 @@ void main() {
     });
 
     test('returns guidance when the journal hasn\'t loaded yet', () async {
-      // Override with a stream that never emits — the derived
-      // wheelLifecyclesProvider stays in AsyncLoading and `.value` is
-      // null, exercising the guidance branch.
       final c = ProviderContainer(
         overrides: [
-          tradeJournalEntriesProvider.overrideWith((ref) async* {
-            // Never emits — pause indefinitely.
-            await Completer<void>().future;
-          }),
-          leapsCallPositionsProvider.overrideWith((ref) async* {
-            yield const [];
-          }),
+          wheelStrategyViewsProvider.overrideWith(
+            (ref) => const AsyncLoading<List<WheelStrategyView>>(),
+          ),
         ],
       );
       addTearDown(c.dispose);

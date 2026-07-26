@@ -62,6 +62,8 @@ class LeapsCallPositionRepository {
     Decimal? currentDelta,
     DateTime? markedAt,
     String? brokerageAccountId,
+    String? cashAccountId,
+    String? underlyingMarket,
     String? notes,
   }) async {
     final stamp = await _stamper.stamp();
@@ -85,6 +87,8 @@ class LeapsCallPositionRepository {
       currentDelta: currentDelta,
       markedAt: markedAt?.toUtc(),
       brokerageAccountId: brokerageAccountId,
+      cashAccountId: cashAccountId,
+      underlyingMarket: underlyingMarket,
       notes: notes,
       sync: SyncMeta(
         ownerUserId: stamp.ownerUserId,
@@ -158,6 +162,8 @@ class LeapsCallPositionRepository {
         currentDelta: Value(position.currentDelta),
         markedAt: Value(position.markedAt),
         brokerageAccountId: Value(position.brokerageAccountId),
+        cashAccountId: Value(position.cashAccountId),
+        underlyingMarket: Value(position.underlyingMarket),
         notes: Value(position.notes),
         ownerUserId: position.sync.ownerUserId,
         updatedAt: position.sync.updatedAt,
@@ -187,6 +193,8 @@ LeapsCallPosition _rowToDomain(OptionsLeapsCallPositionRow row) =>
       currentDelta: row.currentDelta,
       markedAt: row.markedAt,
       brokerageAccountId: row.brokerageAccountId,
+      cashAccountId: row.cashAccountId,
+      underlyingMarket: row.underlyingMarket,
       notes: row.notes,
       sync: SyncMeta(
         ownerUserId: row.ownerUserId,

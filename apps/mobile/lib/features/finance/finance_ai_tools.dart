@@ -28,6 +28,7 @@ import 'fire/ai_tools/get_fire_stress_tests_tool.dart';
 import 'fire/ai_tools/propose_fire_plan_update_tool.dart';
 import 'fire/ai_tools/simulate_fire_plan_tool.dart';
 import 'home/ai_tools/get_net_worth_summary_tool.dart';
+import 'income_strategy/ai_tools/get_income_strategy_portfolio_tool.dart';
 import 'investment/ai_tools/breakdown_tools.dart';
 import 'investment/ai_tools/get_asset_allocation_tool.dart';
 import 'investment/ai_tools/get_holdings_tool.dart';
@@ -117,6 +118,10 @@ kFinanceToolRegistrations = <RegisteredDeviceTool>[
   ),
   // Options Income (`docs/domains/options-income.md` §8 + Wheel lifecycle).
   _financeTool.read(
+    const GetIncomeStrategyPortfolioTool(),
+    tier: BudgetTier.standard,
+  ),
+  _financeTool.read(
     const GetOptionsIncomeOpportunitiesTool(),
     risk: RiskLevel.suggest,
     tier: BudgetTier.standard,
@@ -149,6 +154,8 @@ final Map<String, ToolDescriptor> kFinanceToolDescriptors =
 /// today). Keeps domain-specific tool guidance out of the shell prompt.
 const String kFinanceSystemPromptBlock =
     '[FinanceOS 域]\n'
+    '- 股息、Wheel、LEAPS 的整体策略与同标的风险先调用 get_income_strategy_portfolio；'
+    '不要把预计现金、实际现金与已实现结果混为一谈。\n'
     '- 录入财务数据时调用 propose_* 工具，工具返回「待确认计划」，由前端确认页落库：\n'
     '  • propose_trade（证券、加密买卖 / 转入转出）\n'
     '  • propose_expense（日常消费 / 支出）\n'

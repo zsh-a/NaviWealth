@@ -9,6 +9,7 @@ import 'package:naviwealth/features/finance/application/read_models/dashboard_pr
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/options_income/data/providers.dart';
+import 'package:naviwealth/features/finance/options_income/domain/leaps_call_position.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
 import 'package:naviwealth/features/finance/options_income/domain/trade_journal_entry.dart';
 
@@ -279,5 +280,159 @@ void main() {
         isEmpty,
       );
     }, tags: 'integration');
+
+    test(
+      'LEAPS open and close mirror one option lot and cash legs',
+      () async {
+        final env = await IntegrationEnv.create();
+        final accountRepo = await env.container.read(
+          accountRepositoryProvider.future,
+        );
+        final broker = await accountRepo.create(
+          type: AccountCategory.broker,
+          name: 'Broker',
+          currency: 'USD',
+        );
+        final cash = await accountRepo.create(
+          type: AccountCategory.cash,
+          name: 'Options Cash',
+          currency: 'USD',
+        );
+        final repo = await env.container.read(
+          leapsCallPositionRepositoryProvider.future,
+        );
+        final ledger = await env.container.read(
+          optionsJournalLedgerServiceProvider.future,
+        );
+        final opened = await repo.create(
+          symbol: 'AAPL',
+          optionSymbol: 'AAPL280120C00200000',
+          openedAt: DateTime.utc(2026, 7, 1),
+          expirationAt: DateTime.utc(2028, 1, 20),
+          strikePrice: Decimal.fromInt(200),
+          entryDebit: Decimal.fromInt(25),
+          fees: Decimal.one,
+          contractQuantity: 2,
+          brokerageAccountId: broker.id,
+          cashAccountId: cash.id,
+          underlyingMarket: 'us_stock',
+        );
+        await ledger.mirrorLeaps(opened);
+
+        final openRows = await env.db
+            .customSelect(
+              '''
+            SELECT units, unit FROM postings
+            WHERE journal_entry_id = ? AND deleted_at IS NULL
+            ORDER BY position
+            ''',
+              variables: [
+                Variable.withString('options:${opened.id}:leapsOpen'),
+              ],
+            )
+            .get();
+        expect(openRows.map((row) => row.read<String>('units')), ['2', '-51']);
+        expect(openRows.first.read<String>('unit'), 'option:${opened.id}');
+
+        final closed = await repo.update(
+          opened.copyWith(
+            status: LeapsCallStatus.closed,
+            closedAt: DateTime.utc(2027, 7, 1),
+            exitCredit: Decimal.fromInt(40),
+          ),
+        );
+        await ledger.mirrorLeaps(closed);
+        final closeRows = await env.db
+            .customSelect(
+              '''
+            SELECT units, unit FROM postings
+            WHERE journal_entry_id = ? AND deleted_at IS NULL
+            ORDER BY position
+            ''',
+              variables: [
+                Variable.withString('options:${opened.id}:leapsClose'),
+              ],
+            )
+            .get();
+      expect(closeRows.map((row) => row.read<String>('units')), [
+        '-2',
+        '-29',
+        '80',
+      ]);
+      },
+      tags: 'integration',
+    );
+
+    test(
+      'LEAPS exercise rolls premium into underlying share basis',
+      () async {
+        final env = await IntegrationEnv.create();
+        final accountRepo = await env.container.read(
+          accountRepositoryProvider.future,
+        );
+        final broker = await accountRepo.create(
+          type: AccountCategory.broker,
+          name: 'Broker',
+          currency: 'USD',
+        );
+        final cash = await accountRepo.create(
+          type: AccountCategory.cash,
+          name: 'Options Cash',
+          currency: 'USD',
+        );
+        final repo = await env.container.read(
+          leapsCallPositionRepositoryProvider.future,
+        );
+        final ledger = await env.container.read(
+          optionsJournalLedgerServiceProvider.future,
+        );
+        final opened = await repo.create(
+          symbol: 'AAPL',
+          optionSymbol: 'AAPL280120C00200000',
+          openedAt: DateTime.utc(2026, 7, 1),
+          expirationAt: DateTime.utc(2028, 1, 20),
+          strikePrice: Decimal.fromInt(200),
+          entryDebit: Decimal.fromInt(25),
+          contractQuantity: 1,
+          contractSize: 100,
+          brokerageAccountId: broker.id,
+          cashAccountId: cash.id,
+          underlyingMarket: 'us_stock',
+        );
+        await ledger.mirrorLeaps(opened);
+        await ledger.mirrorLeaps(
+          await repo.update(
+            opened.copyWith(
+              status: LeapsCallStatus.exercised,
+              closedAt: DateTime.utc(2028, 1, 10),
+            ),
+          ),
+        );
+
+        final rows = await env.db
+            .customSelect(
+              '''
+            SELECT units, unit FROM postings
+            WHERE journal_entry_id = ? AND deleted_at IS NULL
+            ORDER BY position
+            ''',
+              variables: [
+                Variable.withString('options:${opened.id}:leapsClose'),
+              ],
+            )
+            .get();
+        expect(rows.map((row) => row.read<String>('unit')), [
+          'option:${opened.id}',
+          'us_stock:AAPL',
+          'USD',
+        ]);
+        expect(rows.map((row) => row.read<String>('units')), [
+          '-1',
+          '100',
+          '-20000',
+        ]);
+      },
+      tags: 'integration',
+    );
   });
 }

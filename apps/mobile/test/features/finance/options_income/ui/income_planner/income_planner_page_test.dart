@@ -6,6 +6,8 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
+import 'package:naviwealth/features/finance/income_strategy/application/wheel_strategy_view.dart';
+import 'package:naviwealth/features/finance/income_strategy/data/providers.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/options_income/data/providers.dart';
 import 'package:naviwealth/features/finance/options_income/domain/approved_underlying.dart';
@@ -110,6 +112,9 @@ Future<void> _pump(WidgetTester tester) async {
         leapsCallPositionsProvider.overrideWith((ref) async* {
           yield const [];
         }),
+        wheelStrategyViewsProvider.overrideWith(
+          (ref) => const AsyncData(<WheelStrategyView>[]),
+        ),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),

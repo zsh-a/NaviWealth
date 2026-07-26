@@ -1,8 +1,8 @@
 import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
-import 'package:naviwealth/features/finance/options_income/data/providers.dart';
+import 'package:naviwealth/features/finance/income_strategy/application/wheel_strategy_view.dart';
+import 'package:naviwealth/features/finance/income_strategy/data/providers.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
-import 'package:naviwealth/features/finance/options_income/domain/wheel_leaps_overlay.dart';
 import 'package:naviwealth/features/finance/options_income/domain/wheel_lifecycle.dart';
 
 /// `get_wheel_lifecycle` — return the per-underlying Wheel cycle posture
@@ -41,7 +41,7 @@ class GetWheelLifecycleTool implements DeviceTool {
     DeviceToolContext ctx,
     Map<String, Object?> input,
   ) async {
-    final overlaysAsync = ctx.ref.read(wheelLeapsOverlaysProvider);
+    final overlaysAsync = ctx.ref.read(wheelStrategyViewsProvider);
     final overlays = overlaysAsync.value;
     if (overlays == null) {
       return <String, Object?>{
@@ -83,7 +83,7 @@ class GetWheelLifecycleTool implements DeviceTool {
     );
   }
 
-  Map<String, Object?> _cycleToWire(WheelLeapsOverlay overlay) {
+  Map<String, Object?> _cycleToWire(WheelStrategyView overlay) {
     final cycle = overlay.wheel;
     return <String, Object?>{
       'symbol': cycle.symbol,
@@ -109,11 +109,12 @@ class GetWheelLifecycleTool implements DeviceTool {
         'open_position_count': overlay.openPositions.length,
         'open_premium_at_risk': overlay.openLeapsCost.toString(),
         'realized_leaps_pnl': overlay.realizedLeapsPnl.toString(),
-        'combined_realized_pnl': overlay.combinedRealizedPnl.toString(),
+        'underlying_realized_result': overlay.underlyingRealizedResult
+            .toString(),
         'wheel_income_coverage_ratio': overlay.wheelIncomeCoverageRatio
             ?.toString(),
         'delta_equivalent_shares': overlay.deltaEquivalentShares?.toString(),
-        'warnings': [for (final warning in overlay.warnings) warning.name],
+        'warnings': [for (final risk in overlay.risks) risk.code.name],
         'positions': [
           for (final position in overlay.openPositions)
             <String, Object?>{

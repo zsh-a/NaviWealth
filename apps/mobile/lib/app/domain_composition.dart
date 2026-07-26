@@ -226,6 +226,7 @@ String? appEntityRouteResolver(EntityRouteRef ref) {
     ),
     EntityRouteTables.optionsTradeJournal => FinanceRoutes.planIncome,
     EntityRouteTables.optionsLeapsCallPositions => FinanceRoutes.planWheel,
+    EntityRouteTables.incomeStrategyPlans => FinanceRoutes.planIncome,
     'budgets' => FinanceRoutes.planBudget,
     'agent_artifacts' => AgentArtifactRoutes.detail(ref.entityId),
     'health_metrics' => HealthRoutes.trend,

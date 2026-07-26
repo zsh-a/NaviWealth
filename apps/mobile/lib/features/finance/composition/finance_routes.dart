@@ -26,6 +26,8 @@ import 'package:naviwealth/features/finance/expense/ui/spending_page.dart';
 import 'package:naviwealth/features/finance/fire/ui/fire_page.dart'
     deferred as fire_lib;
 import 'package:naviwealth/features/finance/home/ui/home_page.dart';
+import 'package:naviwealth/features/finance/income_strategy/ui/income_strategy_page.dart'
+    deferred as income_strategy_lib;
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart'
     show TradeType;
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_prefill.dart';
@@ -415,6 +417,14 @@ StatefulShellRoute financeShellRoute() {
                 path: 'income',
                 name: FinanceRouteNames.planIncome,
                 builder: (context, state) => DeferredRoute(
+                  load: income_strategy_lib.loadLibrary,
+                  builder: (_) => income_strategy_lib.IncomeStrategyPage(),
+                ),
+              ),
+              GoRoute(
+                path: 'income/options',
+                name: FinanceRouteNames.planIncomeOptions,
+                builder: (context, state) => DeferredRoute(
                   load: income_planner_lib.loadLibrary,
                   builder: (_) => income_planner_lib.IncomePlannerPage(),
                 ),
@@ -476,6 +486,7 @@ StatefulShellRoute financeShellRoute() {
 Future<void> preloadFinanceDeferredRoutesForTest() async {
   await Future.wait<void>(<Future<void>>[
     fire_lib.loadLibrary(),
+    income_strategy_lib.loadLibrary(),
     income_planner_lib.loadLibrary(),
     options_stats_lib.loadLibrary(),
     liabilities_lib.loadLibrary(),

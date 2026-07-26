@@ -99,10 +99,48 @@ class OptionsLeapsCallPositions extends Table with SyncableTable {
       text().map(const DecimalConverter()).nullable()();
   DateTimeColumn get markedAt => dateTime().nullable()();
   TextColumn get brokerageAccountId => text().nullable()();
+  TextColumn get cashAccountId => text().nullable()();
+  TextColumn get underlyingMarket => text().nullable()();
   TextColumn get notes => text().nullable()();
 
   @override
   String? get tableName => 'options_leaps_call_positions';
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// User intent and guardrails for composing income sleeves on one asset.
+///
+/// Live positions and derived metrics stay in their owning source tables;
+/// this synced row only records which sleeves the user wants and the limits
+/// that the deterministic coordinator should enforce.
+@DataClassName('IncomeStrategyPlanRow')
+class IncomeStrategyPlans extends Table with SyncableTable {
+  TextColumn get id => text()(); // canonical `<market>:<symbol>` asset id
+  TextColumn get symbol => text()();
+  TextColumn get market => text()();
+  TextColumn get currency => text().withLength(min: 3, max: 8)();
+  TextColumn get enabledSleevesJson =>
+      text().withDefault(const Constant('[]'))();
+  TextColumn get capitalBudget =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get annualIncomeTarget =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get maxPositionWeight =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get maxLeapsCost =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get maxAssignmentValue =>
+      text().map(const DecimalConverter()).nullable()();
+  BoolColumn get preserveDividend =>
+      boolean().withDefault(const Constant(true))();
+  BoolColumn get allowSharesCalledAway =>
+      boolean().withDefault(const Constant(false))();
+  TextColumn get notes => text().nullable()();
+
+  @override
+  String? get tableName => 'income_strategy_plans';
 
   @override
   Set<Column<Object>> get primaryKey => {id};

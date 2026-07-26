@@ -4,11 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/income_strategy/application/wheel_strategy_view.dart';
+import 'package:naviwealth/features/finance/income_strategy/data/providers.dart';
+import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
-import '../data/providers.dart';
 import '../domain/leaps_call_position.dart';
 import '../domain/trade_journal_entry.dart';
-import '../domain/wheel_leaps_overlay.dart';
 import '../domain/wheel_lifecycle.dart';
 import 'income_planner_labels.dart';
 import 'leaps_call_position_sheet.dart';
@@ -17,8 +18,8 @@ import 'trade_journal_sheet.dart';
 /// `/plan/wheel` — per-underlying Wheel cycle review
 /// (`docs/domains/options-income.md` §12 P4).
 ///
-/// Reads [wheelLifecyclesProvider] which derives cycles from the
-/// existing trade journal stream — no new sync table, no extra IO.
+/// Reads the generic FinanceOS income strategy composition and projects its
+/// Wheel/LEAPS sleeves into a dedicated lifecycle drill-down.
 /// Each underlying renders as one tile showing the current stage,
 /// cumulative income, and whether a position is open.
 class WheelLifecyclePage extends ConsumerWidget {
@@ -28,7 +29,7 @@ class WheelLifecyclePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (kIsWeb) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
-    final overlaysAsync = ref.watch(wheelLeapsOverlaysProvider);
+    final overlaysAsync = ref.watch(wheelStrategyViewsProvider);
 
     return AppPageScaffold(
       title: l10n.planWheelTitle,
@@ -88,7 +89,7 @@ class WheelLifecyclePage extends ConsumerWidget {
 class _WheelTile extends StatelessWidget {
   const _WheelTile({required this.overlay, required this.onPress});
 
-  final WheelLeapsOverlay overlay;
+  final WheelStrategyView overlay;
   final VoidCallback onPress;
 
   @override
@@ -139,7 +140,7 @@ class _WheelTile extends StatelessWidget {
               style: context.captionStyle,
             ),
             MoneyText(
-              amount: overlay.combinedRealizedPnl.toDouble(),
+              amount: overlay.underlyingRealizedResult.toDouble(),
               currencyCode: cycle.currency,
               showSign: true,
             ),
@@ -152,7 +153,7 @@ class _WheelTile extends StatelessWidget {
 
 Future<void> _showWheelCycleSheet(
   BuildContext pageContext,
-  WheelLeapsOverlay overlay,
+  WheelStrategyView overlay,
 ) {
   return showAppFormSheet<void>(
     context: pageContext,
@@ -173,7 +174,7 @@ class _WheelCycleSheet extends StatelessWidget {
 
   final BuildContext pageContext;
   final BuildContext sheetContext;
-  final WheelLeapsOverlay overlay;
+  final WheelStrategyView overlay;
 
   WheelLifecycle get cycle => overlay.wheel;
 
@@ -267,10 +268,9 @@ class _WheelCycleSheet extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
               child: Text(l10n.leapsOverlayEmpty, style: context.captionStyle),
             ),
-          if (overlay.warnings.isNotEmpty ||
-              overlay.openPositions.isNotEmpty) ...[
+          if (overlay.risks.isNotEmpty || overlay.openPositions.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.s8),
-            _OverlayWarnings(warnings: overlay.warnings),
+            _OverlayWarnings(risks: overlay.risks),
           ],
           const SizedBox(height: AppSpacing.s16),
           Text(l10n.planWheelHistoryTitle, style: context.mutedLabelStyle),
@@ -319,7 +319,7 @@ class _WheelCycleSheet extends StatelessWidget {
 class _OverlayMetrics extends StatelessWidget {
   const _OverlayMetrics({required this.overlay});
 
-  final WheelLeapsOverlay overlay;
+  final WheelStrategyView overlay;
 
   @override
   Widget build(BuildContext context) {
@@ -351,7 +351,8 @@ class _OverlayMetrics extends StatelessWidget {
           ),
           _Metric(
             label: l10n.leapsOverlayCombinedRealized,
-            value: '${overlay.wheel.currency} ${overlay.combinedRealizedPnl}',
+            value:
+                '${overlay.wheel.currency} ${overlay.underlyingRealizedResult}',
           ),
         ],
       ),
@@ -444,9 +445,9 @@ String _leapsStatusLabel(AppLocalizations l10n, LeapsCallStatus status) =>
     };
 
 class _OverlayWarnings extends StatelessWidget {
-  const _OverlayWarnings({required this.warnings});
+  const _OverlayWarnings({required this.risks});
 
-  final Set<WheelLeapsWarning> warnings;
+  final List<IncomeStrategyRisk> risks;
 
   @override
   Widget build(BuildContext context) {
@@ -456,7 +457,7 @@ class _OverlayWarnings extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final warning in warnings)
+          for (final risk in risks)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.s8),
               child: Row(
@@ -466,7 +467,7 @@ class _OverlayWarnings extends StatelessWidget {
                   const SizedBox(width: AppSpacing.s8),
                   Expanded(
                     child: Text(
-                      _warningLabel(l10n, warning),
+                      _warningLabel(l10n, risk.code),
                       style: context.bodyCaptionStyle,
                     ),
                   ),
@@ -480,13 +481,25 @@ class _OverlayWarnings extends StatelessWidget {
   }
 }
 
-String _warningLabel(AppLocalizations l10n, WheelLeapsWarning warning) =>
+String _warningLabel(AppLocalizations l10n, IncomeStrategyRiskCode warning) =>
     switch (warning) {
-      WheelLeapsWarning.stackedDownside => l10n.leapsOverlayRiskStacked,
-      WheelLeapsWarning.costNotCovered => l10n.leapsOverlayRiskCost,
-      WheelLeapsWarning.deltaUnavailable => l10n.leapsOverlayRiskDelta,
-      WheelLeapsWarning.markUnavailable => l10n.leapsOverlayRiskMark,
-      WheelLeapsWarning.expirationNear => l10n.leapsOverlayRiskExpiry,
+      IncomeStrategyRiskCode.stackedDownside => l10n.leapsOverlayRiskStacked,
+      IncomeStrategyRiskCode.leapsCostNotCovered => l10n.leapsOverlayRiskCost,
+      IncomeStrategyRiskCode.missingDelta => l10n.leapsOverlayRiskDelta,
+      IncomeStrategyRiskCode.missingMarketValue => l10n.leapsOverlayRiskMark,
+      IncomeStrategyRiskCode.expirationNear => l10n.leapsOverlayRiskExpiry,
+      IncomeStrategyRiskCode.unplannedSleeve =>
+        l10n.incomeStrategyRiskUnplanned,
+      IncomeStrategyRiskCode.capitalBudgetExceeded =>
+        l10n.incomeStrategyRiskCapitalBudget,
+      IncomeStrategyRiskCode.assignmentBudgetExceeded =>
+        l10n.incomeStrategyRiskAssignment,
+      IncomeStrategyRiskCode.concentrationExceeded =>
+        l10n.incomeStrategyRiskConcentration,
+      IncomeStrategyRiskCode.dividendInterruption =>
+        l10n.incomeStrategyRiskDividend,
+      IncomeStrategyRiskCode.leapsBudgetExceeded =>
+        l10n.incomeStrategyRiskLeapsBudget,
     };
 
 class _OpenPositionTile extends StatelessWidget {

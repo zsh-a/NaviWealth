@@ -98,7 +98,7 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
     ),
     CommandPaletteEntry(
       id: 'nav.incomePlanner',
-      label: l10n.incomePlannerTitle,
+      label: l10n.incomeStrategyTitle,
       icon: FLucideIcons.candlestickChart,
       keywords: <String>[
         FinanceRoutes.planIncome,

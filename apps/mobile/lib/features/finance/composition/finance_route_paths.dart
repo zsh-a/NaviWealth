@@ -34,6 +34,7 @@ abstract final class FinanceRoutes {
   static const planRebalance = '/plan/rebalance';
   static const planRebalanceExecution = '/plan/rebalance/execution/:sessionId';
   static const planIncome = '/plan/income';
+  static const planIncomeOptions = '/plan/income/options';
   static const planIncomeStats = '/plan/income/stats';
   static const planDca = '/plan/dca';
   static const planBudget = '/plan/budget';
@@ -137,6 +138,7 @@ abstract final class FinanceRouteNames {
   static const planRebalance = 'plan-rebalance';
   static const planRebalanceExecution = 'plan-rebalance-execution';
   static const planIncome = 'plan-income';
+  static const planIncomeOptions = 'plan-income-options';
   static const planIncomeStats = 'plan-income-stats';
   static const planDca = 'plan-dca';
   static const planBudget = 'plan-budget';

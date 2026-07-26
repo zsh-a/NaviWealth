@@ -24,6 +24,30 @@ Future<Asset> _ensureOptionsUnderlyingAsset({
   );
 }
 
+Future<Asset> _ensureLeapsUnderlyingAsset({
+  required SecuritiesAssetRepository securitiesAssetRepo,
+  required LeapsCallPosition position,
+}) async {
+  final market =
+      assetMarketFromWire(position.underlyingMarket) ??
+      inferAssetMarket(position.symbol);
+  final effectiveMarket = market == AssetMarket.unknown
+      ? AssetMarket.usStock
+      : market;
+  final existing = await securitiesAssetRepo.findBySymbolAndMarket(
+    position.symbol,
+    effectiveMarket,
+  );
+  if (existing != null) return existing;
+  return securitiesAssetRepo.upsertSecurity(
+    symbol: position.symbol,
+    market: effectiveMarket,
+    type: AssetType.stock,
+    currency: position.currency,
+    name: position.symbol,
+  );
+}
+
 Future<void> _ensureOptionsCashAsset({
   required ManualAssetRepository manualAssetRepo,
   required String accountId,

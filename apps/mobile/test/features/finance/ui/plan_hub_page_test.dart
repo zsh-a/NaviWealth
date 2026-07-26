@@ -282,9 +282,9 @@ void main() {
     await tester.tap(find.text(l10n.planExploreTitle));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text(l10n.incomePlannerTitle));
+    await tester.ensureVisible(find.text(l10n.incomeStrategyTitle));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.incomePlannerTitle));
+    await tester.tap(find.text(l10n.incomeStrategyTitle));
     await tester.pumpAndSettle();
     expect(find.text('income-route'), findsOneWidget);
   });

@@ -41,6 +41,9 @@ class ProposeLeapsCallPositionTool implements DeviceTool {
       'contract_quantity': <String, Object?>{'type': 'integer', 'minimum': 1},
       'contract_size': <String, Object?>{'type': 'integer', 'minimum': 1},
       'currency': <String, Object?>{'type': 'string'},
+      'brokerage_account_id': <String, Object?>{'type': 'string'},
+      'cash_account_id': <String, Object?>{'type': 'string'},
+      'underlying_market': <String, Object?>{'type': 'string'},
       'current_mark': <String, Object?>{'type': 'number', 'minimum': 0},
       'current_delta': <String, Object?>{
         'type': 'number',
@@ -120,6 +123,12 @@ class ProposeLeapsCallPositionTool implements DeviceTool {
         'contract_quantity': quantity,
         'contract_size': size,
         'currency': currency,
+        'brokerage_account_id': ?proposalOptionalStr(
+          input,
+          'brokerage_account_id',
+        ),
+        'cash_account_id': ?proposalOptionalStr(input, 'cash_account_id'),
+        'underlying_market': ?proposalOptionalStr(input, 'underlying_market'),
         'status': LeapsCallStatus.open.wire,
         'current_mark': ?mark,
         'current_delta': ?delta,

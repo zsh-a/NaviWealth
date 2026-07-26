@@ -29,6 +29,7 @@ nav:
       - LifeOS Shell: architecture/lifeos-shell.md
       - Agent Runtime: architecture/agent-runtime-current.md
   - Domains:
+      - Income Strategy: domains/income-strategy.md
       - HealthOS: domains/healthos-domain.md
       - KnowledgeOS: domains/knowledgeos-domain.md
       - ExecutionOS: domains/executionos-domain.md

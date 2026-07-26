@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -56,6 +59,8 @@ class _LeapsCallPositionFormState
   DateTime? _closedAt;
   DateTime? _markedAt;
   String _currency = 'USD';
+  String? _brokerageAccountId;
+  String? _cashAccountId;
   bool _busy = false;
 
   @override
@@ -98,6 +103,8 @@ class _LeapsCallPositionFormState
       _closedAt = value.closedAt;
       _markedAt = value.markedAt;
       _currency = value.currency;
+      _brokerageAccountId = value.brokerageAccountId;
+      _cashAccountId = value.cashAccountId;
     });
   }
 
@@ -142,8 +149,9 @@ class _LeapsCallPositionFormState
       final mark = _optionalDecimal(_mark);
       final delta = _optionalDecimal(_delta);
       final notes = _notes.text.trim();
+      final LeapsCallPosition saved;
       if (_loaded == null) {
-        await repo.create(
+        saved = await repo.create(
           symbol: _symbol.text,
           optionSymbol: _optionSymbol.text,
           openedAt: _openedAt,
@@ -160,10 +168,12 @@ class _LeapsCallPositionFormState
           currentMark: mark,
           currentDelta: delta,
           markedAt: mark == null ? null : (_markedAt ?? DateTime.now().toUtc()),
+          brokerageAccountId: _brokerageAccountId,
+          cashAccountId: _cashAccountId,
           notes: notes.isEmpty ? null : notes,
         );
       } else {
-        await repo.update(
+        saved = await repo.update(
           _loaded!.copyWith(
             symbol: _symbol.text.trim().toUpperCase(),
             optionSymbol: _optionSymbol.text.trim(),
@@ -183,10 +193,14 @@ class _LeapsCallPositionFormState
             markedAt: mark == null
                 ? null
                 : (_markedAt ?? DateTime.now().toUtc()),
+            brokerageAccountId: _brokerageAccountId,
+            cashAccountId: _cashAccountId,
             notes: notes.isEmpty ? null : notes,
           ),
         );
       }
+      final ledger = await ref.read(optionsJournalLedgerServiceProvider.future);
+      await ledger.mirrorLeaps(saved);
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
@@ -214,6 +228,8 @@ class _LeapsCallPositionFormState
     setState(() => _busy = true);
     try {
       final repo = await ref.read(leapsCallPositionRepositoryProvider.future);
+      final ledger = await ref.read(optionsJournalLedgerServiceProvider.future);
+      await ledger.removeMirrors(value.id);
       await repo.remove(value);
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
@@ -228,6 +244,7 @@ class _LeapsCallPositionFormState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final accountsAsync = ref.watch(accountsStreamProvider);
     return AppSheet(
       title: _loaded == null ? l10n.leapsOverlayAdd : l10n.leapsOverlayEdit,
       subtitle: l10n.leapsOverlaySubtitle,
@@ -237,158 +254,201 @@ class _LeapsCallPositionFormState
         onSubmit: _save,
         busy: _busy,
       ),
-      child: Form(
-        key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _Field(
-              label: l10n.incomePlannerSymbolLabel,
-              controller: _symbol,
-              validator: _required,
+      child: accountsAsync.whenOrLoading(
+        context: context,
+        error: (_, _) => _buildForm(l10n, const <Account>[]),
+        data: (accounts) => _buildForm(l10n, accounts),
+      ),
+    );
+  }
+
+  Widget _buildForm(AppLocalizations l10n, List<Account> accounts) {
+    final brokerageAccounts = accounts
+        .where((account) => account.type == AccountCategory.broker)
+        .toList(growable: false);
+    final cashAccounts = accounts
+        .where(
+          (account) =>
+              account.type == AccountCategory.bank ||
+              account.type == AccountCategory.cash ||
+              account.type == AccountCategory.broker,
+        )
+        .toList(growable: false);
+    if (_brokerageAccountId == null && brokerageAccounts.isNotEmpty) {
+      _brokerageAccountId = brokerageAccounts.first.id;
+    }
+    if (_cashAccountId == null && cashAccounts.isNotEmpty) {
+      _cashAccountId = cashAccounts.first.id;
+    }
+    return Form(
+      key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _Field(
+            label: l10n.incomePlannerSymbolLabel,
+            controller: _symbol,
+            validator: _required,
+          ),
+          _gap,
+          _Field(
+            label: l10n.leapsOverlayOptionSymbol,
+            controller: _optionSymbol,
+            validator: _required,
+          ),
+          _gap,
+          DateField(
+            label: l10n.leapsOverlayOpenedAt,
+            initialValue: _openedAt,
+            required: true,
+            onChanged: (value) {
+              if (value != null) setState(() => _openedAt = value.toUtc());
+            },
+          ),
+          _gap,
+          DateField(
+            label: l10n.leapsOverlayExpiration,
+            initialValue: _expirationAt,
+            required: true,
+            firstDate: _openedAt,
+            onChanged: (value) {
+              if (value != null) {
+                setState(() => _expirationAt = value.toUtc());
+              }
+            },
+          ),
+          const SizedBox(height: AppSpacing.s4),
+          Text(l10n.leapsOverlayDurationHint, style: context.captionStyle),
+          _gap,
+          CurrencyPicker(
+            value: _currency,
+            label: l10n.formCurrencyPickerLabelDefault,
+            onChanged: (value) {
+              if (value != null) setState(() => _currency = value);
+            },
+          ),
+          _gap,
+          if (accounts.isNotEmpty) ...[
+            AccountPicker(
+              label: l10n.incomePlannerJournalBrokerageAccountLabel,
+              accounts: brokerageAccounts.isEmpty
+                  ? accounts
+                  : brokerageAccounts,
+              value: _brokerageAccountId,
+              onChanged: (value) => setState(() => _brokerageAccountId = value),
             ),
             _gap,
-            _Field(
-              label: l10n.leapsOverlayOptionSymbol,
-              controller: _optionSymbol,
-              validator: _required,
+            AccountPicker(
+              label: l10n.incomePlannerJournalCashAccountLabel,
+              accounts: cashAccounts.isEmpty ? accounts : cashAccounts,
+              value: _cashAccountId,
+              onChanged: (value) => setState(() => _cashAccountId = value),
             ),
             _gap,
-            DateField(
-              label: l10n.leapsOverlayOpenedAt,
-              initialValue: _openedAt,
-              required: true,
-              onChanged: (value) {
-                if (value != null) setState(() => _openedAt = value.toUtc());
-              },
-            ),
-            _gap,
-            DateField(
-              label: l10n.leapsOverlayExpiration,
-              initialValue: _expirationAt,
-              required: true,
-              firstDate: _openedAt,
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _expirationAt = value.toUtc());
-                }
-              },
-            ),
-            const SizedBox(height: AppSpacing.s4),
-            Text(l10n.leapsOverlayDurationHint, style: context.captionStyle),
-            _gap,
-            CurrencyPicker(
-              value: _currency,
-              label: l10n.formCurrencyPickerLabelDefault,
-              onChanged: (value) {
-                if (value != null) setState(() => _currency = value);
-              },
-            ),
-            _gap,
-            _Field(
-              label: l10n.leapsOverlayStrike,
-              controller: _strike,
-              numeric: true,
-              validator: _positiveDecimal,
-            ),
-            _gap,
-            _Field(
-              label: l10n.leapsOverlayEntryDebit,
-              controller: _entryDebit,
-              numeric: true,
-              validator: _positiveDecimal,
-            ),
-            _gap,
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _Field(
-                    label: l10n.incomePlannerJournalContractQuantityLabel,
-                    controller: _quantity,
-                    numeric: true,
-                    validator: _positiveInt,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s8),
-                Expanded(
-                  child: _Field(
-                    label: l10n.incomePlannerJournalContractSizeLabel,
-                    controller: _multiplier,
-                    numeric: true,
-                    validator: _positiveInt,
-                  ),
-                ),
-              ],
-            ),
-            _gap,
-            _Field(
-              label: l10n.incomePlannerJournalFeesLabel,
-              controller: _fees,
-              numeric: true,
-              validator: _nonNegativeDecimal,
-            ),
-            _gap,
-            Text(l10n.leapsOverlayStatus, style: context.captionLabelStyle),
-            const SizedBox(height: AppSpacing.s4),
-            SegmentedRow<LeapsCallStatus>(
-              options: LeapsCallStatus.values,
-              value: _status,
-              labelOf: (value) => _statusLabel(l10n, value),
-              onChanged: (value) => setState(() {
-                _status = value;
-                _closedAt = value == LeapsCallStatus.open
-                    ? null
-                    : (_closedAt ?? DateTime.now().toUtc());
-              }),
-            ),
-            AnimatedSizeFade(
-              visible: _status != LeapsCallStatus.open,
-              child: Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.s12),
+          ],
+          _Field(
+            label: l10n.leapsOverlayStrike,
+            controller: _strike,
+            numeric: true,
+            validator: _positiveDecimal,
+          ),
+          _gap,
+          _Field(
+            label: l10n.leapsOverlayEntryDebit,
+            controller: _entryDebit,
+            numeric: true,
+            validator: _positiveDecimal,
+          ),
+          _gap,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
                 child: _Field(
-                  label: l10n.leapsOverlayExitCredit,
-                  controller: _exitCredit,
+                  label: l10n.incomePlannerJournalContractQuantityLabel,
+                  controller: _quantity,
                   numeric: true,
-                  validator: _status == LeapsCallStatus.closed
-                      ? _nonNegativeDecimal
-                      : null,
+                  validator: _positiveInt,
                 ),
               ),
-            ),
-            _gap,
-            _Field(
-              label: l10n.leapsOverlayCurrentMark,
-              controller: _mark,
-              numeric: true,
-              validator: _optionalNonNegativeDecimal,
-            ),
-            _gap,
-            _Field(
-              label: l10n.leapsOverlayCurrentDelta,
-              controller: _delta,
-              numeric: true,
-              validator: _optionalDelta,
-            ),
-            const SizedBox(height: AppSpacing.s4),
-            Text(l10n.leapsOverlayDeltaHint, style: context.captionStyle),
-            _gap,
-            _Field(
-              label: l10n.incomePlannerJournalNotesLabel,
-              controller: _notes,
-              maxLines: 3,
-            ),
-            if (_loaded != null) ...[
-              _gap,
-              FButton(
-                variant: FButtonVariant.destructive,
-                onPress: _busy ? null : _delete,
-                child: Text(l10n.commonDelete),
+              const SizedBox(width: AppSpacing.s8),
+              Expanded(
+                child: _Field(
+                  label: l10n.incomePlannerJournalContractSizeLabel,
+                  controller: _multiplier,
+                  numeric: true,
+                  validator: _positiveInt,
+                ),
               ),
             ],
+          ),
+          _gap,
+          _Field(
+            label: l10n.incomePlannerJournalFeesLabel,
+            controller: _fees,
+            numeric: true,
+            validator: _nonNegativeDecimal,
+          ),
+          _gap,
+          Text(l10n.leapsOverlayStatus, style: context.captionLabelStyle),
+          const SizedBox(height: AppSpacing.s4),
+          SegmentedRow<LeapsCallStatus>(
+            options: LeapsCallStatus.values,
+            value: _status,
+            labelOf: (value) => _statusLabel(l10n, value),
+            onChanged: (value) => setState(() {
+              _status = value;
+              _closedAt = value == LeapsCallStatus.open
+                  ? null
+                  : (_closedAt ?? DateTime.now().toUtc());
+            }),
+          ),
+          AnimatedSizeFade(
+            visible: _status != LeapsCallStatus.open,
+            child: Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s12),
+              child: _Field(
+                label: l10n.leapsOverlayExitCredit,
+                controller: _exitCredit,
+                numeric: true,
+                validator: _status == LeapsCallStatus.closed
+                    ? _nonNegativeDecimal
+                    : null,
+              ),
+            ),
+          ),
+          _gap,
+          _Field(
+            label: l10n.leapsOverlayCurrentMark,
+            controller: _mark,
+            numeric: true,
+            validator: _optionalNonNegativeDecimal,
+          ),
+          _gap,
+          _Field(
+            label: l10n.leapsOverlayCurrentDelta,
+            controller: _delta,
+            numeric: true,
+            validator: _optionalDelta,
+          ),
+          const SizedBox(height: AppSpacing.s4),
+          Text(l10n.leapsOverlayDeltaHint, style: context.captionStyle),
+          _gap,
+          _Field(
+            label: l10n.incomePlannerJournalNotesLabel,
+            controller: _notes,
+            maxLines: 3,
+          ),
+          if (_loaded != null) ...[
+            _gap,
+            FButton(
+              variant: FButtonVariant.destructive,
+              onPress: _busy ? null : _delete,
+              child: Text(l10n.commonDelete),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

@@ -23,7 +23,7 @@ class _ConfiguredBodyState extends ConsumerState<_ConfiguredBody> {
     final cacheState = ref.watch(latestScanStateProvider);
     final opportunitiesAsync = ref.watch(cachedOpportunitiesProvider);
     final journalAsync = ref.watch(tradeJournalEntriesProvider);
-    final overlaysAsync = ref.watch(wheelLeapsOverlaysProvider);
+    final overlaysAsync = ref.watch(wheelStrategyViewsProvider);
     final approvedCount = approvedAsync.value?.length ?? 0;
     final opportunityCount = opportunitiesAsync.value?.length ?? 0;
     final openCount =
@@ -325,7 +325,7 @@ class _PlannerOverviewCard extends StatelessWidget {
 class _WheelWorkspace extends StatelessWidget {
   const _WheelWorkspace({required this.overlaysAsync});
 
-  final AsyncValue<List<WheelLeapsOverlay>> overlaysAsync;
+  final AsyncValue<List<WheelStrategyView>> overlaysAsync;
 
   @override
   Widget build(BuildContext context) {
@@ -376,7 +376,7 @@ class _WheelWorkspace extends StatelessWidget {
 class _WheelWorkspaceTile extends StatelessWidget {
   const _WheelWorkspaceTile({required this.overlay});
 
-  final WheelLeapsOverlay overlay;
+  final WheelStrategyView overlay;
 
   @override
   Widget build(BuildContext context) {
@@ -433,7 +433,7 @@ class _WheelWorkspaceTile extends StatelessWidget {
                 ),
               ),
               MoneyText(
-                amount: overlay.combinedRealizedPnl.toDouble(),
+                amount: overlay.underlyingRealizedResult.toDouble(),
                 currencyCode: cycle.currency,
                 showSign: true,
                 style: context.labelStyle,

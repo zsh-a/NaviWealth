@@ -176,8 +176,12 @@ class OptionsProposalApplier {
       markedAt: mark == null
           ? null
           : _parseOptionalDate(plan, 'marked_at_iso') ?? at,
+      brokerageAccountId: plan.get('brokerage_account_id'),
+      cashAccountId: plan.get('cash_account_id'),
+      underlyingMarket: plan.get('underlying_market'),
       notes: plan.get('notes'),
     );
+    await ledgerService?.mirrorLeaps(position);
     return ProposalApplyState(
       status: ProposalApplyStatus.applied,
       appliedEntityId: position.id,
@@ -189,7 +193,9 @@ class OptionsProposalApplier {
 
   Future<void> undoLeapsCallPosition(String id) async {
     final position = await leapsCallRepo.get(id);
-    if (position != null) await leapsCallRepo.remove(position);
+    if (position == null) return;
+    await ledgerService?.removeMirrors(position.id);
+    await leapsCallRepo.remove(position);
   }
 
   String _requireString(ReadyProposalPlan plan, String key) {

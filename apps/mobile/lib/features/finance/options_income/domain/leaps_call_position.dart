@@ -29,6 +29,8 @@ class LeapsCallPosition {
     required this.currentDelta,
     required this.markedAt,
     required this.brokerageAccountId,
+    this.cashAccountId,
+    this.underlyingMarket,
     required this.notes,
     required this.sync,
   });
@@ -51,6 +53,8 @@ class LeapsCallPosition {
   final Decimal? currentDelta;
   final DateTime? markedAt;
   final String? brokerageAccountId;
+  final String? cashAccountId;
+  final String? underlyingMarket;
   final String? notes;
   final SyncMeta sync;
 
@@ -96,6 +100,8 @@ class LeapsCallPosition {
     Object? currentDelta = _unsetLeapsField,
     Object? markedAt = _unsetLeapsField,
     Object? brokerageAccountId = _unsetLeapsField,
+    Object? cashAccountId = _unsetLeapsField,
+    Object? underlyingMarket = _unsetLeapsField,
     Object? notes = _unsetLeapsField,
     SyncMeta? sync,
   }) => LeapsCallPosition(
@@ -129,6 +135,12 @@ class LeapsCallPosition {
     brokerageAccountId: identical(brokerageAccountId, _unsetLeapsField)
         ? this.brokerageAccountId
         : brokerageAccountId as String?,
+    cashAccountId: identical(cashAccountId, _unsetLeapsField)
+        ? this.cashAccountId
+        : cashAccountId as String?,
+    underlyingMarket: identical(underlyingMarket, _unsetLeapsField)
+        ? this.underlyingMarket
+        : underlyingMarket as String?,
     notes: identical(notes, _unsetLeapsField) ? this.notes : notes as String?,
     sync: sync ?? this.sync,
   );

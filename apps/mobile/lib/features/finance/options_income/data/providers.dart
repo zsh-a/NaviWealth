@@ -16,7 +16,6 @@ import '../domain/options_strategy_profile.dart';
 import '../domain/options_trade_stats.dart';
 import '../domain/services/opportunity_scorer.dart';
 import '../domain/trade_journal_entry.dart';
-import '../domain/wheel_leaps_overlay.dart';
 import '../domain/wheel_lifecycle.dart';
 import 'approved_underlyings_repository.dart';
 import 'leaps_call_position_repository.dart';
@@ -216,52 +215,6 @@ final wheelLifecyclesProvider =
         });
         return cycles;
       });
-    });
-
-final wheelLeapsOverlaysProvider =
-    Provider.autoDispose<AsyncValue<List<WheelLeapsOverlay>>>((ref) {
-      final wheels = ref.watch(wheelLifecyclesProvider);
-      final leaps = ref.watch(leapsCallPositionsProvider);
-      return wheels.when(
-        data: (cycles) => leaps.when(
-          data: (positions) {
-            final bySymbol = <String, WheelLifecycle>{
-              for (final cycle in cycles) cycle.symbol: cycle,
-            };
-            for (final position in positions) {
-              bySymbol.putIfAbsent(
-                position.symbol,
-                () => WheelLifecycle.empty(
-                  symbol: position.symbol,
-                  currency: position.currency,
-                ),
-              );
-            }
-            final overlays =
-                bySymbol.values
-                    .map(
-                      (wheel) => buildWheelLeapsOverlay(
-                        wheel: wheel,
-                        positions: positions,
-                      ),
-                    )
-                    .toList(growable: false)
-                  ..sort((a, b) {
-                    final aActive =
-                        a.wheel.hasOpenPosition || a.openPositions.isNotEmpty;
-                    final bActive =
-                        b.wheel.hasOpenPosition || b.openPositions.isNotEmpty;
-                    if (aActive != bActive) return aActive ? -1 : 1;
-                    return a.wheel.symbol.compareTo(b.wheel.symbol);
-                  });
-            return AsyncData(overlays);
-          },
-          error: AsyncError.new,
-          loading: AsyncLoading.new,
-        ),
-        error: AsyncError.new,
-        loading: AsyncLoading.new,
-      );
     });
 
 int _stageRank(WheelStage stage) => switch (stage) {

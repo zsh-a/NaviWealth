@@ -92,7 +92,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planIncomeSectionTitle => '收入策略';
 
   @override
-  String get planIncomeSectionSubtitle => '备兑认购与现金担保认沽';
+  String get planIncomeSectionSubtitle => '股息、Wheel 与 LEAPS';
 
   @override
   String get planDcaSectionTitle => 'DCA 模拟';
@@ -14773,4 +14773,186 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiChatProposalKindLeapsCall => 'LEAPS Call 持仓';
+
+  @override
+  String get incomeStrategyTitle => '收益策略';
+
+  @override
+  String get incomeStrategyTabOverview => '总览';
+
+  @override
+  String get incomeStrategyTabUnderlyings => '标的';
+
+  @override
+  String get incomeStrategyTabActivity => '动态';
+
+  @override
+  String get incomeStrategyEmptyTitle => '尚未形成收益策略';
+
+  @override
+  String get incomeStrategyEmptyBody =>
+      '围绕同一标的自由组合股息、Wheel 和 LEAPS。即使某个实际仓位不在计划中，也会继续显示其风险。';
+
+  @override
+  String get incomeStrategyRealizedResult => '已实现结果';
+
+  @override
+  String get incomeStrategyProjectedCash => '预计现金';
+
+  @override
+  String get incomeStrategyCapitalAtRisk => '风险资本';
+
+  @override
+  String get incomeStrategyRiskCount => '待复核风险';
+
+  @override
+  String get incomeStrategyRisksTitle => '组合协调风险';
+
+  @override
+  String get incomeStrategyUnderlyingsTitle => '标的策略轨道';
+
+  @override
+  String incomeStrategyRiskSummary(int count) {
+    return '$count 项风险';
+  }
+
+  @override
+  String get incomeStrategyPlanAligned => '符合计划';
+
+  @override
+  String get incomeStrategyEnabled => '已启用';
+
+  @override
+  String get incomeStrategyDisabled => '未启用';
+
+  @override
+  String get incomeStrategyNoPosition => '暂无实际仓位';
+
+  @override
+  String get incomeStrategyActivityEmpty => '暂无策略动态';
+
+  @override
+  String get incomeStrategyOpenDividendCenter => '股息中心';
+
+  @override
+  String get incomeStrategyOpenOptionsPlanner => '期权工作区';
+
+  @override
+  String get incomeStrategySleeveDividends => '股息';
+
+  @override
+  String get incomeStrategySleeveWheel => 'Wheel';
+
+  @override
+  String get incomeStrategySleeveLeaps => 'LEAPS Call';
+
+  @override
+  String get incomeStrategyCashFlowDividend => '股息税前收入';
+
+  @override
+  String get incomeStrategyCashFlowWithholding => '股息预扣税';
+
+  @override
+  String get incomeStrategyCashFlowWheel => 'Wheel 已实现结果';
+
+  @override
+  String get incomeStrategyCashFlowLeapsPurchase => '买入 LEAPS';
+
+  @override
+  String get incomeStrategyCashFlowLeapsSale => '卖出 LEAPS';
+
+  @override
+  String get incomeStrategyCashFlowLeapsExercise => 'LEAPS 行权现金';
+
+  @override
+  String get incomeStrategyRiskUnplanned => '存在不在当前策略计划内的实际仓位；应复核该敞口，而不是将它隐藏。';
+
+  @override
+  String get incomeStrategyRiskCapitalBudget => '组合策略资金占用已超过计划预算。';
+
+  @override
+  String get incomeStrategyRiskAssignment => '开放 Put 的潜在行权金额超过设定上限。';
+
+  @override
+  String get incomeStrategyRiskConcentration => '该标的仓位超过设定的组合权重上限。';
+
+  @override
+  String get incomeStrategyRiskDividend =>
+      '当前存在 Covered Call，但计划要求保留股息收入；股票可能在未来被行权卖出。';
+
+  @override
+  String get incomeStrategyRiskStacked =>
+      'Wheel Short Put 与 LEAPS Call 在同一标的上叠加了对下跌敏感的资本。';
+
+  @override
+  String get incomeStrategyRiskLeapsBudget => '未平仓 LEAPS 成本超过设定预算。';
+
+  @override
+  String get incomeStrategyRiskLeapsCoverage => '已实现收入尚未覆盖未平仓 LEAPS 成本。';
+
+  @override
+  String get incomeStrategyRiskMissingMark => 'LEAPS 缺少当前市值，组合估值不完整。';
+
+  @override
+  String get incomeStrategyRiskMissingDelta => 'LEAPS 缺少 Delta，等效股数敞口不完整。';
+
+  @override
+  String get incomeStrategyRiskExpiration => '有期权临近到期，需要复核。';
+
+  @override
+  String get incomeStrategyPlanAdd => '添加策略计划';
+
+  @override
+  String get incomeStrategyPlanEdit => '编辑策略计划';
+
+  @override
+  String get incomeStrategyPlanSubtitle => '自由选择策略组合，并统一设置风险边界。';
+
+  @override
+  String get incomeStrategyPlanAsset => '标的';
+
+  @override
+  String get incomeStrategyPlanSleeves => '启用的策略模块';
+
+  @override
+  String get incomeStrategyPlanPreserveDividend => '优先保留股息收入';
+
+  @override
+  String get incomeStrategyPlanAllowCalledAway => '允许股票被行权卖出';
+
+  @override
+  String get incomeStrategyPlanLimits => '统一限制';
+
+  @override
+  String get incomeStrategyPlanLimitsHint => '可选的组合与策略边界';
+
+  @override
+  String get incomeStrategyPlanCapitalBudget => '总资本预算';
+
+  @override
+  String get incomeStrategyPlanAnnualTarget => '年度收入目标';
+
+  @override
+  String get incomeStrategyPlanMaxWeight => '最大组合权重（%）';
+
+  @override
+  String get incomeStrategyPlanMaxLeapsCost => 'LEAPS 最大未平仓成本';
+
+  @override
+  String get incomeStrategyPlanMaxAssignment => 'Put 最大潜在行权金额';
+
+  @override
+  String get incomeStrategyPlanAssetRequired => '请选择标的。';
+
+  @override
+  String get incomeStrategyPlanSleeveRequired => '请至少启用一个策略模块。';
+
+  @override
+  String get incomeStrategyPlanNumberInvalid => '限制必须为非负数，组合权重必须在 0 到 100 之间。';
+
+  @override
+  String get incomeStrategyPlanDeleteTitle => '删除策略计划？';
+
+  @override
+  String get incomeStrategyPlanDeleteBody => '实际持仓和交易仍会显示，但该标的的组合设置与限制将被移除。';
 }

@@ -6,7 +6,12 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/finance/options_income/data/providers.dart';
+import 'package:naviwealth/features/finance/income_strategy/application/income_strategy_asset_resolver.dart';
+import 'package:naviwealth/features/finance/income_strategy/application/leaps_income_sleeve_adapter.dart';
+import 'package:naviwealth/features/finance/income_strategy/application/wheel_income_sleeve_adapter.dart';
+import 'package:naviwealth/features/finance/income_strategy/application/wheel_strategy_view.dart';
+import 'package:naviwealth/features/finance/income_strategy/data/providers.dart';
+import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy_assembler.dart';
 import 'package:naviwealth/features/finance/options_income/domain/leaps_call_position.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
 import 'package:naviwealth/features/finance/options_income/domain/trade_journal_entry.dart';
@@ -19,6 +24,29 @@ SyncMeta _meta() => SyncMeta(
   updatedByDevice: 'd',
   hlc: const Hlc(wallMillis: 1, counter: 0, nodeId: 'd'),
 );
+
+List<WheelStrategyView> _views(
+  List<TradeJournalEntry> entries,
+  List<LeapsCallPosition> leaps,
+) {
+  final assets = IncomeStrategyAssetResolver(const []);
+  return buildWheelStrategyViews(
+    const IncomeStrategyAssembler().assemble(
+      baseCurrency: 'USD',
+      plans: const [],
+      contributions: [
+        ...const WheelIncomeSleeveAdapter().buildFromEntries(
+          entries: entries,
+          assets: assets,
+        ),
+        ...const LeapsIncomeSleeveAdapter().build(
+          positions: leaps,
+          assets: assets,
+        ),
+      ],
+    ),
+  );
+}
 
 TradeJournalEntry _entry({
   String id = 'e',
@@ -53,14 +81,9 @@ Future<void> _pump(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        // Inject the journal stream — wheelLifecyclesProvider derives
-        // from it without touching the database.
-        tradeJournalEntriesProvider.overrideWith((ref) async* {
-          yield entries;
-        }),
-        leapsCallPositionsProvider.overrideWith((ref) async* {
-          yield leaps;
-        }),
+        wheelStrategyViewsProvider.overrideWith(
+          (ref) => AsyncData(_views(entries, leaps)),
+        ),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),

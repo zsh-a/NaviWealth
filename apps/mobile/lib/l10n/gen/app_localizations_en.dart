@@ -95,7 +95,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planIncomeSectionTitle => 'Income strategy';
 
   @override
-  String get planIncomeSectionSubtitle => 'Covered calls & cash-secured puts';
+  String get planIncomeSectionSubtitle => 'Dividends, Wheel & LEAPS';
 
   @override
   String get planDcaSectionTitle => 'DCA simulator';
@@ -15545,4 +15545,200 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiChatProposalKindLeapsCall => 'LEAPS call position';
+
+  @override
+  String get incomeStrategyTitle => 'Income strategy';
+
+  @override
+  String get incomeStrategyTabOverview => 'Overview';
+
+  @override
+  String get incomeStrategyTabUnderlyings => 'Underlyings';
+
+  @override
+  String get incomeStrategyTabActivity => 'Activity';
+
+  @override
+  String get incomeStrategyEmptyTitle => 'No income strategy yet';
+
+  @override
+  String get incomeStrategyEmptyBody =>
+      'Compose dividends, Wheel and LEAPS sleeves around an underlying. Existing positions remain visible even when they are outside the plan.';
+
+  @override
+  String get incomeStrategyRealizedResult => 'Realized result';
+
+  @override
+  String get incomeStrategyProjectedCash => 'Projected cash';
+
+  @override
+  String get incomeStrategyCapitalAtRisk => 'Capital at risk';
+
+  @override
+  String get incomeStrategyRiskCount => 'Risks to review';
+
+  @override
+  String get incomeStrategyRisksTitle => 'Coordination risks';
+
+  @override
+  String get incomeStrategyUnderlyingsTitle => 'Strategy tracks';
+
+  @override
+  String incomeStrategyRiskSummary(int count) {
+    return '$count risks';
+  }
+
+  @override
+  String get incomeStrategyPlanAligned => 'Aligned';
+
+  @override
+  String get incomeStrategyEnabled => 'On';
+
+  @override
+  String get incomeStrategyDisabled => 'Off';
+
+  @override
+  String get incomeStrategyNoPosition => 'No current position';
+
+  @override
+  String get incomeStrategyActivityEmpty => 'No strategy activity yet';
+
+  @override
+  String get incomeStrategyOpenDividendCenter => 'Dividend center';
+
+  @override
+  String get incomeStrategyOpenOptionsPlanner => 'Options workspace';
+
+  @override
+  String get incomeStrategySleeveDividends => 'Dividends';
+
+  @override
+  String get incomeStrategySleeveWheel => 'Wheel';
+
+  @override
+  String get incomeStrategySleeveLeaps => 'LEAPS call';
+
+  @override
+  String get incomeStrategyCashFlowDividend => 'Gross dividend';
+
+  @override
+  String get incomeStrategyCashFlowWithholding => 'Dividend withholding';
+
+  @override
+  String get incomeStrategyCashFlowWheel => 'Wheel realized result';
+
+  @override
+  String get incomeStrategyCashFlowLeapsPurchase => 'LEAPS purchase';
+
+  @override
+  String get incomeStrategyCashFlowLeapsSale => 'LEAPS sale';
+
+  @override
+  String get incomeStrategyCashFlowLeapsExercise => 'LEAPS exercise cash';
+
+  @override
+  String get incomeStrategyRiskUnplanned =>
+      'A live sleeve is outside the current strategy plan. Review it instead of hiding the exposure.';
+
+  @override
+  String get incomeStrategyRiskCapitalBudget =>
+      'Combined sleeve capital exceeds the plan budget.';
+
+  @override
+  String get incomeStrategyRiskAssignment =>
+      'Open put assignment value exceeds the configured limit.';
+
+  @override
+  String get incomeStrategyRiskConcentration =>
+      'The underlying exceeds the configured portfolio weight.';
+
+  @override
+  String get incomeStrategyRiskDividend =>
+      'An open covered call may remove shares while the plan is configured to preserve dividend income.';
+
+  @override
+  String get incomeStrategyRiskStacked =>
+      'The Wheel short put and LEAPS call stack downside-sensitive capital on the same underlying.';
+
+  @override
+  String get incomeStrategyRiskLeapsBudget =>
+      'Open LEAPS cost exceeds the configured budget.';
+
+  @override
+  String get incomeStrategyRiskLeapsCoverage =>
+      'Realized income does not yet cover the open LEAPS cost.';
+
+  @override
+  String get incomeStrategyRiskMissingMark =>
+      'A LEAPS position has no current mark, so market value is incomplete.';
+
+  @override
+  String get incomeStrategyRiskMissingDelta =>
+      'A LEAPS position has no delta, so equivalent-share exposure is incomplete.';
+
+  @override
+  String get incomeStrategyRiskExpiration =>
+      'An option is near expiration and needs review.';
+
+  @override
+  String get incomeStrategyPlanAdd => 'Add strategy plan';
+
+  @override
+  String get incomeStrategyPlanEdit => 'Edit strategy plan';
+
+  @override
+  String get incomeStrategyPlanSubtitle =>
+      'Choose any combination of sleeves and set shared risk limits.';
+
+  @override
+  String get incomeStrategyPlanAsset => 'Underlying';
+
+  @override
+  String get incomeStrategyPlanSleeves => 'Enabled sleeves';
+
+  @override
+  String get incomeStrategyPlanPreserveDividend => 'Preserve dividend income';
+
+  @override
+  String get incomeStrategyPlanAllowCalledAway =>
+      'Allow shares to be called away';
+
+  @override
+  String get incomeStrategyPlanLimits => 'Shared limits';
+
+  @override
+  String get incomeStrategyPlanLimitsHint =>
+      'Optional portfolio and sleeve guardrails';
+
+  @override
+  String get incomeStrategyPlanCapitalBudget => 'Total capital budget';
+
+  @override
+  String get incomeStrategyPlanAnnualTarget => 'Annual income target';
+
+  @override
+  String get incomeStrategyPlanMaxWeight => 'Maximum portfolio weight (%)';
+
+  @override
+  String get incomeStrategyPlanMaxLeapsCost => 'Maximum open LEAPS cost';
+
+  @override
+  String get incomeStrategyPlanMaxAssignment => 'Maximum put assignment value';
+
+  @override
+  String get incomeStrategyPlanAssetRequired => 'Choose an underlying.';
+
+  @override
+  String get incomeStrategyPlanSleeveRequired => 'Enable at least one sleeve.';
+
+  @override
+  String get incomeStrategyPlanNumberInvalid =>
+      'Enter non-negative limits and a portfolio weight from 0 to 100.';
+
+  @override
+  String get incomeStrategyPlanDeleteTitle => 'Delete strategy plan?';
+
+  @override
+  String get incomeStrategyPlanDeleteBody =>
+      'Live holdings and trades remain visible, but the shared sleeve settings and limits will be removed.';
 }

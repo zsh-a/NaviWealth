@@ -195,6 +195,194 @@ Future<void> _upsertOptionsAssignment({
   );
 }
 
+Future<void> _upsertLeapsOpen({
+  required JournalEntryRepository journalEntryRepo,
+  required LeapsCallPosition position,
+  required String brokerageAccountId,
+  required String cashAccountId,
+}) async {
+  final quantity = Decimal.fromInt(position.contractQuantity);
+  final build = JournalEntryBuilders.buy(
+    date: position.openedAt,
+    accountId: brokerageAccountId,
+    cashAccountId: cashAccountId,
+    assetUnit: _leapsAssetUnit(position),
+    qty: quantity,
+    price: position.entryDebit,
+    quoteCurrency: position.currency,
+    lotId: _leapsLotId(position),
+    acquiredOn: position.openedAt,
+    capitalizeFeeIntoLot: true,
+    feeAmount: position.fees,
+    narration: 'LEAPS open ${position.optionSymbol}',
+    tagIds: _leapsLedgerTags(position),
+  );
+  await _upsertOptionsLedgerBuild(
+    journalEntryRepo: journalEntryRepo,
+    build: _withLedgerId(
+      build,
+      _optionsLedgerEntryId(position.id, _OptionsLedgerLeg.leapsOpen),
+    ),
+  );
+}
+
+Future<void> _upsertLeapsClose({
+  required JournalEntryRepository journalEntryRepo,
+  required SecuritiesAssetRepository securitiesAssetRepo,
+  required Future<String> Function() currentUserId,
+  required LeapsCallPosition position,
+  required String brokerageAccountId,
+  required String cashAccountId,
+}) async {
+  final id = _optionsLedgerEntryId(position.id, _OptionsLedgerLeg.leapsClose);
+  if (position.status == LeapsCallStatus.open) {
+    await _deleteOptionsLedgerIfPresent(
+      journalEntryRepo: journalEntryRepo,
+      id: id,
+    );
+    return;
+  }
+
+  final quantity = Decimal.fromInt(position.contractQuantity);
+  final basisPerContract = (position.grossEntryCost / quantity).toDecimal(
+    scaleOnInfinitePrecision: 16,
+  );
+  final closedAt = position.closedAt ?? position.expirationAt;
+  final JournalEntryBuild build;
+  if (position.status == LeapsCallStatus.closed &&
+      position.exitCredit != null &&
+      position.exitCredit! > Decimal.zero) {
+    build = JournalEntryBuilders.sell(
+      date: closedAt,
+      accountId: brokerageAccountId,
+      cashAccountId: cashAccountId,
+      capitalGainsAccountId: AccountRepository.systemAccountIdForPath(
+        'income:capitalGains',
+        ownerUserId: await currentUserId(),
+      ),
+      assetUnit: _leapsAssetUnit(position),
+      qty: quantity,
+      price: position.exitCredit!,
+      quoteCurrency: position.currency,
+      costPerUnit: basisPerContract,
+      costCurrency: position.currency,
+      lotId: _leapsLotId(position),
+      acquiredOn: position.openedAt,
+      narration: 'LEAPS close ${position.optionSymbol}',
+      tagIds: _leapsLedgerTags(position),
+    );
+  } else if (position.status == LeapsCallStatus.exercised) {
+    final underlying = await _ensureLeapsUnderlyingAsset(
+      securitiesAssetRepo: securitiesAssetRepo,
+      position: position,
+    );
+    final shares = Decimal.fromInt(
+      position.contractQuantity * position.contractSize,
+    );
+    final strikeCash = position.strikePrice * shares;
+    final shareCost = ((strikeCash + position.grossEntryCost) / shares)
+        .toDecimal(scaleOnInfinitePrecision: 16);
+    build = JournalEntryBuild(
+      entry: JournalEntryDraft(
+        date: closedAt,
+        narration: 'LEAPS exercise ${position.optionSymbol}',
+        tagIds: _leapsLedgerTags(position),
+      ),
+      postings: <PostingDraft>[
+        PostingDraft(
+          position: 0,
+          accountId: brokerageAccountId,
+          units: -quantity,
+          unit: _leapsAssetUnit(position),
+          cost: Cost(
+            perUnit: basisPerContract,
+            currency: position.currency,
+            lotId: _leapsLotId(position),
+            acquiredOn: position.openedAt,
+          ),
+        ),
+        PostingDraft(
+          position: 1,
+          accountId: brokerageAccountId,
+          units: shares,
+          unit: underlying.id,
+          cost: Cost(
+            perUnit: shareCost,
+            currency: position.currency,
+            lotId: 'leaps:${position.id}:exercise',
+            acquiredOn: closedAt,
+          ),
+        ),
+        PostingDraft(
+          position: 2,
+          accountId: cashAccountId,
+          units: -strikeCash,
+          unit: position.currency,
+        ),
+      ],
+    );
+  } else {
+    build = JournalEntryBuild(
+      entry: JournalEntryDraft(
+        date: closedAt,
+        narration: 'LEAPS expired ${position.optionSymbol}',
+        tagIds: _leapsLedgerTags(position),
+      ),
+      postings: <PostingDraft>[
+        PostingDraft(
+          position: 0,
+          accountId: brokerageAccountId,
+          units: -quantity,
+          unit: _leapsAssetUnit(position),
+          cost: Cost(
+            perUnit: basisPerContract,
+            currency: position.currency,
+            lotId: _leapsLotId(position),
+            acquiredOn: position.openedAt,
+          ),
+        ),
+        PostingDraft(
+          position: 1,
+          accountId: AccountRepository.systemAccountIdForPath(
+            'income:capitalGains',
+            ownerUserId: await currentUserId(),
+          ),
+          units: position.grossEntryCost,
+          unit: position.currency,
+        ),
+      ],
+    );
+  }
+  await _upsertOptionsLedgerBuild(
+    journalEntryRepo: journalEntryRepo,
+    build: _withLedgerId(build, id),
+  );
+}
+
+JournalEntryBuild _withLedgerId(JournalEntryBuild build, String id) =>
+    JournalEntryBuild(
+      entry: JournalEntryDraft(
+        id: id,
+        date: build.entry.date,
+        settledOn: build.entry.settledOn,
+        narration: build.entry.narration,
+        payee: build.entry.payee,
+        tagIds: build.entry.tagIds,
+        flag: build.entry.flag,
+      ),
+      postings: build.postings,
+    );
+
+String _leapsAssetUnit(LeapsCallPosition position) => 'option:${position.id}';
+
+String _leapsLotId(LeapsCallPosition position) => 'leaps:${position.id}';
+
+List<String> _leapsLedgerTags(LeapsCallPosition position) => <String>[
+  'leaps:${position.id}',
+  'option:${position.optionSymbol}',
+  'underlying:${position.symbol}',
+];
+
 JournalEntryBuild _cashIncomeBuild({
   required String id,
   required DateTime date,

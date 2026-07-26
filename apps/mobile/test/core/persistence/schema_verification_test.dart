@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 60', () {
-      expect(db.schemaVersion, 60);
+    test('is 61', () {
+      expect(db.schemaVersion, 61);
     });
   });
 
@@ -604,6 +604,33 @@ void main() {
   });
 
   group('SyncableTable mixin columns', () {
+    test('income strategy plans persist composition and guardrails', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(income_strategy_plans)')
+          .get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll([
+          'id',
+          'symbol',
+          'market',
+          'currency',
+          'enabled_sleeves_json',
+          'capital_budget',
+          'annual_income_target',
+          'max_position_weight',
+          'max_leaps_cost',
+          'max_assignment_value',
+          'preserve_dividend',
+          'allow_shares_called_away',
+          'owner_user_id',
+          'deleted_at',
+          'hlc',
+        ]),
+      );
+    });
+
     test('LEAPS overlay positions are synced and retain risk inputs', () async {
       final result = await db
           .customSelect('PRAGMA table_info(options_leaps_call_positions)')
@@ -619,6 +646,9 @@ void main() {
           'entry_debit',
           'current_mark',
           'current_delta',
+          'brokerage_account_id',
+          'cash_account_id',
+          'underlying_market',
           'owner_user_id',
           'deleted_at',
           'hlc',

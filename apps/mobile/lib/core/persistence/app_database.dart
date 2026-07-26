@@ -78,6 +78,7 @@ final class AppDatabaseTransactionScope {
     OptionsStrategyProfileTable,
     OptionsTradeJournal,
     OptionsLeapsCallPositions,
+    IncomeStrategyPlans,
     ApprovedUnderlyings,
     RecurringTransactions,
     Liabilities,
@@ -148,7 +149,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 60;
+  int get schemaVersion => 61;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -886,6 +887,27 @@ class AppDatabase extends _$AppDatabase {
         await customStatement(
           'CREATE INDEX IF NOT EXISTS idx_options_leaps_owner_opened '
           'ON options_leaps_call_positions(owner_user_id, opened_at DESC) '
+          'WHERE deleted_at IS NULL',
+        );
+      }
+      // v60 -> v61: composable per-asset income strategy intent.
+      if (from < 61) {
+        await _addColumnIfMissing(
+          this,
+          table: 'options_leaps_call_positions',
+          column: 'cash_account_id',
+          definition: 'TEXT',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'options_leaps_call_positions',
+          column: 'underlying_market',
+          definition: 'TEXT',
+        );
+        await m.createTable(incomeStrategyPlans);
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_income_strategy_plans_owner '
+          'ON income_strategy_plans(owner_user_id, symbol) '
           'WHERE deleted_at IS NULL',
         );
       }

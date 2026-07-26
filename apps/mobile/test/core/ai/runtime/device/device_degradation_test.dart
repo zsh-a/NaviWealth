@@ -258,6 +258,7 @@ void main() {
         'get_geo_breakdown',
         'get_holdings',
         'get_hrv_trend',
+        'get_income_strategy_portfolio',
         'get_industry_breakdown',
         'get_investment_performance',
         'get_market_cap_breakdown',

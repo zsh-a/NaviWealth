@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
+import 'package:naviwealth/features/finance/income_strategy/application/wheel_strategy_view.dart';
+import 'package:naviwealth/features/finance/income_strategy/data/providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../application/scan_controller.dart';
@@ -17,7 +19,6 @@ import '../../domain/approved_underlying.dart';
 import '../../domain/options_opportunity.dart';
 import '../../domain/options_strategy_profile.dart';
 import '../../domain/trade_journal_entry.dart';
-import '../../domain/wheel_leaps_overlay.dart';
 import '../../domain/wheel_lifecycle.dart';
 import '../approved_underlying_form_sheet.dart';
 import '../income_planner_labels.dart';

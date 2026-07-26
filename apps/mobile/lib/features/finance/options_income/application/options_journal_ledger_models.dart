@@ -1,6 +1,12 @@
 part of 'options_journal_ledger_service.dart';
 
-enum _OptionsLedgerLeg { premium, closeDebit, assignment }
+enum _OptionsLedgerLeg {
+  premium,
+  closeDebit,
+  assignment,
+  leapsOpen,
+  leapsClose,
+}
 
 class _CostBasis {
   const _CostBasis({

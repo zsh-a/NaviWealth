@@ -4,7 +4,7 @@
 > 关联：[`ai-architecture.md`](../ai/ai-architecture.md)、[`ai-protocol.md`](../ai/ai-protocol.md)、[`roadmap-finance.md`](../roadmap/roadmap-finance.md)、[`market-data-providers.md`](./market-data-providers.md)、[`sync-v3.md`](../sync/sync-v3.md)
 > 定位：在 NaviWealth 已有的"持仓 + 现金 + FIRE 现金桶 + 风险偏好"之上，新增一个**低频期权现金流规划器**。
 >
-> 状态（2026-07-26）：P0–P4 已实现。Income Planner 采用 Opportunities / Wheel / Journal 三工作区；交易日志记录到期日、合约数量和总费用。Wheel 工作区还支持独立的 LEAPS Long Call 上涨敞口；LEAPS 不属于 Wheel 阶段，也不是 PMCC。MVP 行情源锁定 yfinance；AI tool **只读 cache**，不触发实时扫描。P5（Tradier OAuth 接入）是触发式工作，尚未排期。
+> 状态（2026-07-26）：P0–P4 已实现。Income Planner 采用 Opportunities / Wheel / Journal 三工作区；交易日志记录到期日、合约数量和总费用。Wheel 与 LEAPS 通过 [Income Strategy Framework](income-strategy.md) 和股息 sleeve 组合；LEAPS 不属于 Wheel 阶段，也不是 PMCC。MVP 行情源锁定 yfinance；AI tool **只读 cache**，不触发实时扫描。P5（Tradier OAuth 接入）是触发式工作，尚未排期。
 
 ---
 
@@ -359,9 +359,10 @@ class OptionsTradeJournalTable extends Table {
 状态，以及可选的人工 `currentMark` / `currentDelta` / `markedAt` 快照。
 行情和 Delta 缺失时保持 `null`，不得用推测值补齐。
 
-组合视图 `WheelLeapsOverlay` 是纯派生模型，计算 Wheel 收入、LEAPS
-已实现损益、未平仓权利金风险、Wheel 收入覆盖率和（数据完整时）Delta
-等效股数，并提示同时下跌暴露、成本未覆盖、行情/Delta 缺失和临近到期。
+组合视图来自通用 `IncomeStrategyAssembler`；Wheel 与 LEAPS adapter 分别贡献
+独立 sleeve snapshot，再由 `WheelStrategyView` 提供专用钻取投影。统一快照计算
+Wheel 收入、LEAPS 已实现损益、未平仓权利金风险、收益覆盖率和（数据完整时）
+Delta 等效股数，并提示同时下跌暴露、成本未覆盖、行情/Delta 缺失和临近到期。
 它不会修改 `WheelStage`。Long Call 不能对冲现金担保 Put 被行权的下跌风险，
 也不自动获得股息。
 
@@ -563,6 +564,8 @@ Journal         日志：开放/已结算筛选、数量、费用、到期日与
 LEAPS 使用独立表单和字段语义。表单对日期顺序、正数金额、合约数量、乘数和
 0–1 Delta 做就地校验；当前市值和 Delta 是可选人工快照。Wheel 详情展示
 未平仓成本、收益覆盖率、Delta 等效股数、组合已实现损益和文字风险提示。
+选择券商与现金账户后，开仓、平仓、到期和行权会镜像到 FinanceOS 复式账本；
+行权时权利金进入标的股票成本。
 不能把 LEAPS 命名为“Wheel 新阶段”、备兑 Call 或 PMCC。
 
 ### 9.2 偏好设置
@@ -693,7 +696,6 @@ apps/mobile/lib/features/finance/options_income/
 │   ├── options_opportunity.dart        # P1 — Opportunity / Metrics / RiskLevel
 │   ├── options_strategy_profile.dart
 │   ├── leaps_call_position.dart         # independent long-call source row
-│   ├── wheel_leaps_overlay.dart         # Wheel + LEAPS pure derivation
 │   ├── opportunity_explanation.dart    # P1 — UI ⇄ AI shared explanation struct
 │   ├── services/opportunity_scorer.dart# P1/P2 — pure-Dart scorer
 │   └── trade_journal_entry.dart        # P3

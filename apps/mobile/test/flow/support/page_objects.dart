@@ -748,7 +748,7 @@ class PlanPageObject {
   }
 
   Future<void> openIncomeStrategy() async {
-    var action = find.text('Income Planner');
+    var action = find.text('Income strategy');
     if (action.evaluate().isEmpty) {
       final strategies = find.text('Simulations & advanced strategies');
       if (strategies.evaluate().isEmpty) {
@@ -767,7 +767,7 @@ class PlanPageObject {
       await settle(tester);
       await tester.tap(strategies);
       await settle(tester);
-      action = find.text('Income Planner');
+      action = find.text('Income strategy');
     }
     if (action.evaluate().isEmpty) {
       await tester.scrollUntilVisible(

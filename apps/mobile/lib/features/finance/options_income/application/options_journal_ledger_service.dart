@@ -7,10 +7,12 @@ import 'package:naviwealth/features/finance/data/repositories/price_repository.d
 import 'package:naviwealth/features/finance/data/repositories/securities_asset_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/posting.dart';
 import 'package:naviwealth/features/finance/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
+import '../domain/leaps_call_position.dart';
 import '../domain/options_strategy_profile.dart';
 import '../domain/trade_journal_entry.dart';
 
@@ -88,6 +90,41 @@ class OptionsJournalLedgerService {
     await _removeOptionsLedgerMirrors(
       journalEntryRepo: _journalEntryRepo,
       entryId: entryId,
+    );
+  }
+
+  /// Mirrors a long-call position as an option lot plus its cash movement.
+  ///
+  /// The strategy position remains the source of truth. Deterministic journal
+  /// IDs make edits idempotent and let deletion remove every mirrored leg.
+  Future<void> mirrorLeaps(LeapsCallPosition position) async {
+    final brokerageAccountId = position.brokerageAccountId;
+    final cashAccountId = position.cashAccountId ?? brokerageAccountId;
+    if (brokerageAccountId == null ||
+        brokerageAccountId.isEmpty ||
+        cashAccountId == null ||
+        cashAccountId.isEmpty) {
+      await removeMirrors(position.id);
+      return;
+    }
+    await _ensureOptionsCashAsset(
+      manualAssetRepo: _manualAssetRepo,
+      accountId: cashAccountId,
+      currency: position.currency,
+    );
+    await _upsertLeapsOpen(
+      journalEntryRepo: _journalEntryRepo,
+      position: position,
+      brokerageAccountId: brokerageAccountId,
+      cashAccountId: cashAccountId,
+    );
+    await _upsertLeapsClose(
+      journalEntryRepo: _journalEntryRepo,
+      securitiesAssetRepo: _securitiesAssetRepo,
+      currentUserId: _currentUserId,
+      position: position,
+      brokerageAccountId: brokerageAccountId,
+      cashAccountId: cashAccountId,
     );
   }
 }

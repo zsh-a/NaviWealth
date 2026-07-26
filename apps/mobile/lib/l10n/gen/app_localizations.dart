@@ -263,7 +263,7 @@ abstract class AppLocalizations {
   /// Plan hub: options-income section subtitle
   ///
   /// In en, this message translates to:
-  /// **'Covered calls & cash-secured puts'**
+  /// **'Dividends, Wheel & LEAPS'**
   String get planIncomeSectionSubtitle;
 
   /// Plan hub: DCA simulator section title
@@ -26241,6 +26241,360 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'LEAPS call position'**
   String get aiChatProposalKindLeapsCall;
+
+  /// No description provided for @incomeStrategyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Income strategy'**
+  String get incomeStrategyTitle;
+
+  /// No description provided for @incomeStrategyTabOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get incomeStrategyTabOverview;
+
+  /// No description provided for @incomeStrategyTabUnderlyings.
+  ///
+  /// In en, this message translates to:
+  /// **'Underlyings'**
+  String get incomeStrategyTabUnderlyings;
+
+  /// No description provided for @incomeStrategyTabActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get incomeStrategyTabActivity;
+
+  /// No description provided for @incomeStrategyEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No income strategy yet'**
+  String get incomeStrategyEmptyTitle;
+
+  /// No description provided for @incomeStrategyEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Compose dividends, Wheel and LEAPS sleeves around an underlying. Existing positions remain visible even when they are outside the plan.'**
+  String get incomeStrategyEmptyBody;
+
+  /// No description provided for @incomeStrategyRealizedResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Realized result'**
+  String get incomeStrategyRealizedResult;
+
+  /// No description provided for @incomeStrategyProjectedCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Projected cash'**
+  String get incomeStrategyProjectedCash;
+
+  /// No description provided for @incomeStrategyCapitalAtRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Capital at risk'**
+  String get incomeStrategyCapitalAtRisk;
+
+  /// No description provided for @incomeStrategyRiskCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Risks to review'**
+  String get incomeStrategyRiskCount;
+
+  /// No description provided for @incomeStrategyRisksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Coordination risks'**
+  String get incomeStrategyRisksTitle;
+
+  /// No description provided for @incomeStrategyUnderlyingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Strategy tracks'**
+  String get incomeStrategyUnderlyingsTitle;
+
+  /// No description provided for @incomeStrategyRiskSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} risks'**
+  String incomeStrategyRiskSummary(int count);
+
+  /// No description provided for @incomeStrategyPlanAligned.
+  ///
+  /// In en, this message translates to:
+  /// **'Aligned'**
+  String get incomeStrategyPlanAligned;
+
+  /// No description provided for @incomeStrategyEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get incomeStrategyEnabled;
+
+  /// No description provided for @incomeStrategyDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get incomeStrategyDisabled;
+
+  /// No description provided for @incomeStrategyNoPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'No current position'**
+  String get incomeStrategyNoPosition;
+
+  /// No description provided for @incomeStrategyActivityEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No strategy activity yet'**
+  String get incomeStrategyActivityEmpty;
+
+  /// No description provided for @incomeStrategyOpenDividendCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend center'**
+  String get incomeStrategyOpenDividendCenter;
+
+  /// No description provided for @incomeStrategyOpenOptionsPlanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Options workspace'**
+  String get incomeStrategyOpenOptionsPlanner;
+
+  /// No description provided for @incomeStrategySleeveDividends.
+  ///
+  /// In en, this message translates to:
+  /// **'Dividends'**
+  String get incomeStrategySleeveDividends;
+
+  /// No description provided for @incomeStrategySleeveWheel.
+  ///
+  /// In en, this message translates to:
+  /// **'Wheel'**
+  String get incomeStrategySleeveWheel;
+
+  /// No description provided for @incomeStrategySleeveLeaps.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS call'**
+  String get incomeStrategySleeveLeaps;
+
+  /// No description provided for @incomeStrategyCashFlowDividend.
+  ///
+  /// In en, this message translates to:
+  /// **'Gross dividend'**
+  String get incomeStrategyCashFlowDividend;
+
+  /// No description provided for @incomeStrategyCashFlowWithholding.
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend withholding'**
+  String get incomeStrategyCashFlowWithholding;
+
+  /// No description provided for @incomeStrategyCashFlowWheel.
+  ///
+  /// In en, this message translates to:
+  /// **'Wheel realized result'**
+  String get incomeStrategyCashFlowWheel;
+
+  /// No description provided for @incomeStrategyCashFlowLeapsPurchase.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS purchase'**
+  String get incomeStrategyCashFlowLeapsPurchase;
+
+  /// No description provided for @incomeStrategyCashFlowLeapsSale.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS sale'**
+  String get incomeStrategyCashFlowLeapsSale;
+
+  /// No description provided for @incomeStrategyCashFlowLeapsExercise.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS exercise cash'**
+  String get incomeStrategyCashFlowLeapsExercise;
+
+  /// No description provided for @incomeStrategyRiskUnplanned.
+  ///
+  /// In en, this message translates to:
+  /// **'A live sleeve is outside the current strategy plan. Review it instead of hiding the exposure.'**
+  String get incomeStrategyRiskUnplanned;
+
+  /// No description provided for @incomeStrategyRiskCapitalBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Combined sleeve capital exceeds the plan budget.'**
+  String get incomeStrategyRiskCapitalBudget;
+
+  /// No description provided for @incomeStrategyRiskAssignment.
+  ///
+  /// In en, this message translates to:
+  /// **'Open put assignment value exceeds the configured limit.'**
+  String get incomeStrategyRiskAssignment;
+
+  /// No description provided for @incomeStrategyRiskConcentration.
+  ///
+  /// In en, this message translates to:
+  /// **'The underlying exceeds the configured portfolio weight.'**
+  String get incomeStrategyRiskConcentration;
+
+  /// No description provided for @incomeStrategyRiskDividend.
+  ///
+  /// In en, this message translates to:
+  /// **'An open covered call may remove shares while the plan is configured to preserve dividend income.'**
+  String get incomeStrategyRiskDividend;
+
+  /// No description provided for @incomeStrategyRiskStacked.
+  ///
+  /// In en, this message translates to:
+  /// **'The Wheel short put and LEAPS call stack downside-sensitive capital on the same underlying.'**
+  String get incomeStrategyRiskStacked;
+
+  /// No description provided for @incomeStrategyRiskLeapsBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Open LEAPS cost exceeds the configured budget.'**
+  String get incomeStrategyRiskLeapsBudget;
+
+  /// No description provided for @incomeStrategyRiskLeapsCoverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Realized income does not yet cover the open LEAPS cost.'**
+  String get incomeStrategyRiskLeapsCoverage;
+
+  /// No description provided for @incomeStrategyRiskMissingMark.
+  ///
+  /// In en, this message translates to:
+  /// **'A LEAPS position has no current mark, so market value is incomplete.'**
+  String get incomeStrategyRiskMissingMark;
+
+  /// No description provided for @incomeStrategyRiskMissingDelta.
+  ///
+  /// In en, this message translates to:
+  /// **'A LEAPS position has no delta, so equivalent-share exposure is incomplete.'**
+  String get incomeStrategyRiskMissingDelta;
+
+  /// No description provided for @incomeStrategyRiskExpiration.
+  ///
+  /// In en, this message translates to:
+  /// **'An option is near expiration and needs review.'**
+  String get incomeStrategyRiskExpiration;
+
+  /// No description provided for @incomeStrategyPlanAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add strategy plan'**
+  String get incomeStrategyPlanAdd;
+
+  /// No description provided for @incomeStrategyPlanEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit strategy plan'**
+  String get incomeStrategyPlanEdit;
+
+  /// No description provided for @incomeStrategyPlanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose any combination of sleeves and set shared risk limits.'**
+  String get incomeStrategyPlanSubtitle;
+
+  /// No description provided for @incomeStrategyPlanAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Underlying'**
+  String get incomeStrategyPlanAsset;
+
+  /// No description provided for @incomeStrategyPlanSleeves.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled sleeves'**
+  String get incomeStrategyPlanSleeves;
+
+  /// No description provided for @incomeStrategyPlanPreserveDividend.
+  ///
+  /// In en, this message translates to:
+  /// **'Preserve dividend income'**
+  String get incomeStrategyPlanPreserveDividend;
+
+  /// No description provided for @incomeStrategyPlanAllowCalledAway.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow shares to be called away'**
+  String get incomeStrategyPlanAllowCalledAway;
+
+  /// No description provided for @incomeStrategyPlanLimits.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared limits'**
+  String get incomeStrategyPlanLimits;
+
+  /// No description provided for @incomeStrategyPlanLimitsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional portfolio and sleeve guardrails'**
+  String get incomeStrategyPlanLimitsHint;
+
+  /// No description provided for @incomeStrategyPlanCapitalBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Total capital budget'**
+  String get incomeStrategyPlanCapitalBudget;
+
+  /// No description provided for @incomeStrategyPlanAnnualTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual income target'**
+  String get incomeStrategyPlanAnnualTarget;
+
+  /// No description provided for @incomeStrategyPlanMaxWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum portfolio weight (%)'**
+  String get incomeStrategyPlanMaxWeight;
+
+  /// No description provided for @incomeStrategyPlanMaxLeapsCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum open LEAPS cost'**
+  String get incomeStrategyPlanMaxLeapsCost;
+
+  /// No description provided for @incomeStrategyPlanMaxAssignment.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum put assignment value'**
+  String get incomeStrategyPlanMaxAssignment;
+
+  /// No description provided for @incomeStrategyPlanAssetRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an underlying.'**
+  String get incomeStrategyPlanAssetRequired;
+
+  /// No description provided for @incomeStrategyPlanSleeveRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable at least one sleeve.'**
+  String get incomeStrategyPlanSleeveRequired;
+
+  /// No description provided for @incomeStrategyPlanNumberInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter non-negative limits and a portfolio weight from 0 to 100.'**
+  String get incomeStrategyPlanNumberInvalid;
+
+  /// No description provided for @incomeStrategyPlanDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete strategy plan?'**
+  String get incomeStrategyPlanDeleteTitle;
+
+  /// No description provided for @incomeStrategyPlanDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Live holdings and trades remain visible, but the shared sleeve settings and limits will be removed.'**
+  String get incomeStrategyPlanDeleteBody;
 }
 
 class _AppLocalizationsDelegate

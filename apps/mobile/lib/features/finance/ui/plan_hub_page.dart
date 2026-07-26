@@ -372,7 +372,7 @@ class _ExploreSectionState extends State<_ExploreSection> {
                   _PlanRow(
                     spec: _PlanEntrySpec(
                       icon: FLucideIcons.candlestickChart,
-                      title: l10n.incomePlannerTitle,
+                      title: l10n.incomeStrategyTitle,
                       subtitle: l10n.planIncomeSectionSubtitle,
                       path: FinanceRoutes.planIncome,
                       tone: AppBadgeTone.neutral,
