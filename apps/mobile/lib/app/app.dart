@@ -79,18 +79,9 @@ class NaviWealthApp extends ConsumerWidget {
           brightness: brightness,
           touch: isTouch,
         );
-        // Sync brightnessProvider so marketColorsProvider derives correctly.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          final current = ref.read(brightnessProvider);
-          final resolved = isDark ? Brightness.dark : Brightness.light;
-          if (current != resolved) {
-            ref.read(brightnessProvider.notifier).state = resolved;
-          }
-        });
-        final marketColors = ref.watch(marketColorsProvider);
         // Resolve the app theme once for the whole tree (blueprint doc 15,
-        // §3.3). MarketColorsScope stays alongside during the migration —
-        // both derive from the same inputs so they can never disagree.
+        // §3.3) — the single source for every color role, including the
+        // market direction preference.
         final appTheme = resolveAppTheme(
           ThemeInputs(
             brightness: brightness,
@@ -103,81 +94,76 @@ class NaviWealthApp extends ConsumerWidget {
             data: fTheme,
             child: AppThemeScope(
               data: appTheme,
-              child: MarketColorsScope(
-                colors: marketColors,
-                child: AppMessenger.init(
-                  child: GlobalShortcutsScope(
-                    onSwitchPrimaryTab: (int index) {
-                      // Cmd/Ctrl-1..N switches tabs within the CURRENT
-                      // domain rather than always jumping to Finance.
-                      final paths = domainTabPathsForLocation(
-                        ref.read(activeDomainPacksProvider),
-                        router.routeInformationProvider.value.uri.path,
-                      );
-                      if (index < 0 || index >= paths.length) return;
-                      router.go(paths[index]);
-                    },
-                    onOpenCommandPalette: (BuildContext invokeCtx) {
-                      showCommandPalette(
-                        invokeCtx,
-                        commands: defaultCommandPaletteEntries(
+              child: AppMessenger.init(
+                child: GlobalShortcutsScope(
+                  onSwitchPrimaryTab: (int index) {
+                    // Cmd/Ctrl-1..N switches tabs within the CURRENT
+                    // domain rather than always jumping to Finance.
+                    final paths = domainTabPathsForLocation(
+                      ref.read(activeDomainPacksProvider),
+                      router.routeInformationProvider.value.uri.path,
+                    );
+                    if (index < 0 || index >= paths.length) return;
+                    router.go(paths[index]);
+                  },
+                  onOpenCommandPalette: (BuildContext invokeCtx) {
+                    showCommandPalette(
+                      invokeCtx,
+                      commands: defaultCommandPaletteEntries(
+                        AppLocalizations.of(invokeCtx),
+                        homePath: AppRoutes.life,
+                        settingsPath: AppRoutes.settings,
+                        aiHistoryPath: AppRoutes.settingsAiHistory,
+                        onToggleTheme: () {
+                          final current = ref.read(themeModeProvider);
+                          final next = current == ThemeMode.dark
+                              ? ThemeMode.light
+                              : ThemeMode.dark;
+                          ref.read(themeModeProvider.notifier).set(next);
+                        },
+                        onToggleColorMode: () {
+                          final current = ref.read(marketColorModeProvider);
+                          final next =
+                              MarketColorMode.values[(MarketColorMode.values
+                                          .indexOf(current) +
+                                      1) %
+                                  MarketColorMode.values.length];
+                          ref.read(marketColorModeProvider.notifier).set(next);
+                        },
+                        onToggleLanguage: () {
+                          ref.read(localeProvider.notifier).cycle();
+                        },
+                        onAskAi: (BuildContext ctx) => askAi(ctx, ref),
+                        // Every active domain contributes its palette
+                        // entries, merged in domain order — the same
+                        // aggregation pattern as device tools / prompt
+                        // blocks (`activeDomainPacksProvider`). HealthOS /
+                        // KnowledgeOS used to be Cmd-K dead zones; this
+                        // wires them in alongside Finance automatically.
+                        domainEntries: domainCommandPaletteEntries(
+                          ref.read(activeDomainPacksProvider),
                           AppLocalizations.of(invokeCtx),
-                          homePath: AppRoutes.life,
-                          settingsPath: AppRoutes.settings,
-                          aiHistoryPath: AppRoutes.settingsAiHistory,
-                          onToggleTheme: () {
-                            final current = ref.read(themeModeProvider);
-                            final next = current == ThemeMode.dark
-                                ? ThemeMode.light
-                                : ThemeMode.dark;
-                            ref.read(themeModeProvider.notifier).set(next);
-                          },
-                          onToggleColorMode: () {
-                            final current = ref.read(marketColorModeProvider);
-                            final next =
-                                MarketColorMode.values[(MarketColorMode.values
-                                            .indexOf(current) +
-                                        1) %
-                                    MarketColorMode.values.length];
-                            ref
-                                .read(marketColorModeProvider.notifier)
-                                .set(next);
-                          },
-                          onToggleLanguage: () {
-                            ref.read(localeProvider.notifier).cycle();
-                          },
-                          onAskAi: (BuildContext ctx) => askAi(ctx, ref),
-                          // Every active domain contributes its palette
-                          // entries, merged in domain order — the same
-                          // aggregation pattern as device tools / prompt
-                          // blocks (`activeDomainPacksProvider`). HealthOS /
-                          // KnowledgeOS used to be Cmd-K dead zones; this
-                          // wires them in alongside Finance automatically.
-                          domainEntries: domainCommandPaletteEntries(
-                            ref.read(activeDomainPacksProvider),
-                            AppLocalizations.of(invokeCtx),
-                          ),
                         ),
-                        onAskAi: (String query) =>
-                            askAi(invokeCtx, ref, prefill: query),
-                      );
-                    },
-                    onToggleSidebar: () =>
-                        ref.read(sidebarCollapsedProvider.notifier).toggle(),
-                    onOpenAiChat: (BuildContext invokeCtx) =>
-                        askAi(invokeCtx, ref),
-                    onVimGoto: (String target) {
-                      final path = _kVimGotoRoutes[target];
-                      if (path != null) router.go(path);
-                    },
-                    child: BiometricLockGate(
-                      child: DatabaseUnlockGate(
-                        child: NativeUpdateBanner(
-                          child: PwaUpdateBanner(
-                            child: NotificationPayloadRouteListener(
-                              router: router,
-                              child: child ?? const SizedBox.shrink(),
-                            ),
+                      ),
+                      onAskAi: (String query) =>
+                          askAi(invokeCtx, ref, prefill: query),
+                    );
+                  },
+                  onToggleSidebar: () =>
+                      ref.read(sidebarCollapsedProvider.notifier).toggle(),
+                  onOpenAiChat: (BuildContext invokeCtx) =>
+                      askAi(invokeCtx, ref),
+                  onVimGoto: (String target) {
+                    final path = _kVimGotoRoutes[target];
+                    if (path != null) router.go(path);
+                  },
+                  child: BiometricLockGate(
+                    child: DatabaseUnlockGate(
+                      child: NativeUpdateBanner(
+                        child: PwaUpdateBanner(
+                          child: NotificationPayloadRouteListener(
+                            router: router,
+                            child: child ?? const SizedBox.shrink(),
                           ),
                         ),
                       ),

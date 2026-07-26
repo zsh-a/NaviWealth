@@ -7,13 +7,9 @@ import 'market_color_mode.dart';
 /// Direction-sensitive color tokens (gain / loss / flat).
 ///
 /// The actual colors swap when the user changes [MarketColorMode] in
-/// settings. Widgets read `MarketColors.of(context).up` rather than
-/// hard-coding "green" or "red" — the whole point of this object is that
-/// "up" is wired to the user's preferred convention.
-///
-/// Carried through the tree by [MarketColorsScope] (sourced from the
-/// `marketColorsProvider` at the root). Forui owns the rest of the visual
-/// system; this is the one set of color tokens forui doesn't model.
+/// settings. This table now feeds `resolveAppTheme` exclusively — UI code
+/// reads `context.appTheme.market` roles; the old inherited scope and
+/// `MarketColors.of` lookup are retired (doc 15 P5).
 @immutable
 class MarketColors {
   const MarketColors({
@@ -88,18 +84,6 @@ class MarketColors {
     return delta > 0 ? onUpContainer : onDownContainer;
   }
 
-  /// Reads the active [MarketColors] from the nearest [MarketColorsScope].
-  /// Returns a fallback (red-up, light brightness) if none is found.
-  static MarketColors of(BuildContext context) {
-    final scope = context
-        .dependOnInheritedWidgetOfExactType<MarketColorsScope>();
-    return scope?.colors ??
-        MarketColors.fromMode(
-          MarketColorMode.redUpGreenDown,
-          brightness: Brightness.light,
-        );
-  }
-
   /// Build a [MarketColors] for a given user mode + theme brightness.
   factory MarketColors.fromMode(
     MarketColorMode mode, {
@@ -172,24 +156,6 @@ class MarketColors {
         );
     }
   }
-}
-
-/// Inherited scope that carries the active [MarketColors] for the subtree.
-///
-/// Installed once at the root by `lib/app/app.dart`, sourced from the
-/// `marketColorsProvider` in `market_colors_provider.dart`.
-class MarketColorsScope extends InheritedWidget {
-  const MarketColorsScope({
-    required this.colors,
-    required super.child,
-    super.key,
-  });
-
-  final MarketColors colors;
-
-  @override
-  bool updateShouldNotify(MarketColorsScope oldWidget) =>
-      oldWidget.colors != colors;
 }
 
 class _ToneSet {

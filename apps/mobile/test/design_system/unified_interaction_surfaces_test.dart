@@ -73,37 +73,4 @@ void main() {
     expect(selected, 'bank');
   });
 
-  testWidgets('desktop side panel owns geometry and barrier dismissal', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(1200, 800));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(
-      _wrap(
-        Builder(
-          builder: (context) => TextButton(
-            onPressed: () => showAppSidePanel<void>(
-              context: context,
-              barrierLabel: 'details',
-              builder: (_) => const Text('Inspector body'),
-            ),
-            child: const Text('Open inspector'),
-          ),
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('Open inspector'));
-    await tester.pumpAndSettle();
-    expect(find.text('Inspector body'), findsOneWidget);
-    final panel = find.ancestor(
-      of: find.text('Inspector body'),
-      matching: find.byType(Container),
-    );
-    expect(tester.getSize(panel.first).width, 430);
-
-    await tester.tapAt(const Offset(10, 10));
-    await tester.pumpAndSettle();
-    expect(find.text('Inspector body'), findsNothing);
-  });
 }

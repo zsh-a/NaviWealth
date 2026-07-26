@@ -36,24 +36,26 @@ void main() {
     });
   });
 
-  testWidgets('SemanticColors.of / MarketColors.of resolve from context', (
+  testWidgets('SemanticColors.of / context.appTheme resolve from context', (
     tester,
   ) async {
     SemanticColors? semantic;
-    MarketColors? market;
+    AppMarket? market;
 
     await tester.pumpWidget(
-      MarketColorsScope(
-        colors: MarketColors.fromMode(
-          MarketColorMode.redUpGreenDown,
-          brightness: Brightness.light,
+      AppThemeScope(
+        data: resolveAppTheme(
+          const ThemeInputs(
+            brightness: Brightness.light,
+            marketMode: MarketColorMode.redUpGreenDown,
+          ),
         ),
         child: MaterialApp(
           theme: AppTheme.light(),
           home: Builder(
             builder: (context) {
               semantic = SemanticColors.of(context);
-              market = MarketColors.of(context);
+              market = context.appTheme.market;
               return const SizedBox.shrink();
             },
           ),

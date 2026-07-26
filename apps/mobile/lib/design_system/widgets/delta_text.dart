@@ -2,8 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../theme/market_color_mode.dart';
-import '../theme/market_colors.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'amount_privacy_placeholder.dart';
@@ -101,12 +101,12 @@ class DeltaText extends StatelessWidget {
         semanticsLabel: AmountPrivacyScope.hiddenSemanticsLabelOf(context),
       );
     }
-    final market = MarketColors.of(context);
-    // An explicit [color] wins (DeltaChip passes onUpContainer /
-    // onDownContainer for contrast on tinted fills); the market tone is
-    // only the default for bare, on-surface deltas. Colors baked into
-    // [style] presets are intentionally still overridden by the tone.
-    final tone = color ?? market.forDelta(value);
+    final market = context.appTheme.market;
+    // An explicit [color] wins (DeltaChip passes the on-container pairing
+    // for contrast on tinted fills); the market tone is only the default
+    // for bare, on-surface deltas. Colors baked into [style] presets are
+    // intentionally still overridden by the tone.
+    final tone = color ?? market.roleForDelta(value).fg;
     final effectiveStyle = baseStyle.copyWith(color: tone);
 
     return Semantics(

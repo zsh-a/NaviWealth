@@ -11,7 +11,6 @@ Widget _wrap(
   final theme = brightness == Brightness.dark
       ? AppTheme.dark()
       : AppTheme.light();
-  final marketColors = MarketColors.fromMode(mode, brightness: brightness);
   final baseFTheme = brightness == Brightness.dark
       ? FThemes.slate.dark.desktop
       : FThemes.slate.light.desktop;
@@ -31,8 +30,10 @@ Widget _wrap(
       data: MediaQueryData(platformBrightness: brightness),
       child: FTheme(
         data: fTheme,
-        child: MarketColorsScope(
-          colors: marketColors,
+        child: AppThemeScope(
+          data: resolveAppTheme(
+            ThemeInputs(brightness: brightness, marketMode: mode),
+          ),
           child: Scaffold(body: Builder(builder: (_) => child)),
         ),
       ),

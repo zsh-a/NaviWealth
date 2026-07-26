@@ -1,6 +1,8 @@
 /// Public API for NaviWealth's design system.
 ///
-/// Mirrors the Figma token file at `apps/mobile/design_tokens/tokens.json`.
+/// The Dart tokens in this library are the single source of truth;
+/// `apps/mobile/design_tokens/tokens.json` is generated from them by
+/// `tool/export_design_tokens.dart` for design-tool handoff.
 /// See `apps/mobile/design_tokens/README.md` for the contract.
 library;
 
@@ -14,7 +16,6 @@ export 'theme/app_theme_data.dart';
 export 'theme/app_theme_scope.dart';
 export 'theme/market_color_mode.dart';
 export 'theme/market_colors.dart';
-export 'theme/market_colors_provider.dart';
 export 'theme/semantic_colors.dart';
 export 'theme/theme_resolver.dart';
 export 'tokens/app_motion_policy.dart';
@@ -36,7 +37,6 @@ export 'widgets/app_async_helpers.dart';
 export 'widgets/app_badge.dart';
 export 'widgets/app_busy_button.dart';
 export 'widgets/app_canvas_scaffold.dart';
-export 'widgets/app_close_page_scaffold.dart';
 export 'widgets/app_collapsing_stage.dart';
 export 'widgets/app_disclosure_header.dart';
 export 'widgets/app_divider.dart';
@@ -59,7 +59,6 @@ export 'widgets/app_quiet_button.dart';
 export 'widgets/app_reveal_control.dart';
 export 'widgets/app_section.dart';
 export 'widgets/app_sheet.dart';
-export 'widgets/app_side_panel.dart';
 export 'widgets/app_status_banner.dart';
 export 'widgets/app_task_scaffold.dart';
 export 'widgets/app_toast.dart';

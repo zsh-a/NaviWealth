@@ -178,21 +178,4 @@ void main() {
     expect(find.byKey(const ValueKey('app.back')), findsNothing);
   });
 
-  testWidgets('AppClosePageScaffold renders a close action', (tester) async {
-    var closed = false;
-    await tester.pumpWidget(
-      _wrap(
-        AppClosePageScaffold(
-          title: 'Chart',
-          onClose: () => closed = true,
-          child: const Text('Full'),
-        ),
-      ),
-    );
-
-    expect(find.text('Chart'), findsOneWidget);
-    await tester.tap(find.byIcon(FLucideIcons.x));
-    await tester.pump(const Duration(milliseconds: 120));
-    expect(closed, isTrue);
-  });
 }

@@ -29,10 +29,10 @@ fi
 # ── Rule 2: legacy theme entry points are frozen (ratchet) ─────────────────
 # design_system/theme/ is exempt: resolveAppTheme() is the facade that
 # legitimately folds the legacy tables into AppThemeData during migration.
-# Remaining 8 = 6 MarketColors.of (preference-critical delta widgets, to be
-# retired together with MarketColorsScope) + 2 AccentColors.series chart
-# constants. Everything else reads context.appTheme.
-LEGACY_BASELINE=8
+# Remaining 2 = AccentColors.series chart constants (brightness-independent).
+# MarketColorsScope and MarketColors.of are fully retired; everything else
+# reads context.appTheme.
+LEGACY_BASELINE=2
 legacy_count="$({ grep -RhoE --include='*.dart' \
   --exclude-dir=theme \
   "SemanticColors\.of\(|MarketColors\.of\(|AccentColors\." \

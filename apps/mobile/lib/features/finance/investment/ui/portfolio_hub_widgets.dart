@@ -230,7 +230,7 @@ class _HoldingRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final pnl = holding.unrealizedPnlInBase;
-    final pnlColor = MarketColors.of(context).forDelta(pnl.toDouble());
+    final pnlColor = context.appTheme.market.roleForDelta(pnl.toDouble()).fg;
     final subtitle = _holdingSubtitle(l10n, holding);
     return Semantics(
       button: true,

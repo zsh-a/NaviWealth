@@ -27,10 +27,12 @@ Widget _wrap(Widget child, {Brightness brightness = Brightness.light}) {
     locale: const Locale('en', 'US'),
     home: FTheme(
       data: fTheme,
-      child: MarketColorsScope(
-        colors: MarketColors.fromMode(
-          MarketColorMode.redUpGreenDown,
-          brightness: brightness,
+      child: AppThemeScope(
+        data: resolveAppTheme(
+          ThemeInputs(
+            brightness: brightness,
+            marketMode: MarketColorMode.redUpGreenDown,
+          ),
         ),
         child: Scaffold(body: SizedBox(width: 400, height: 250, child: child)),
       ),

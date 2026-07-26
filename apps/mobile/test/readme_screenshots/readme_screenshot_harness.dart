@@ -79,8 +79,8 @@ Future<void> pumpReadmeScreenshot(
   await tester.pumpWidget(
     ProviderScope(
       overrides: overrides,
-      child: MarketColorsScope(
-        colors: GoldenTheme.dark.marketColors,
+      child: AppThemeScope(
+        data: GoldenTheme.dark.appThemeData,
         child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
           theme: AppTheme.dark(

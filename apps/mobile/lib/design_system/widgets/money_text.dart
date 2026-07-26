@@ -4,7 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/format/formatters.dart';
-import '../theme/market_colors.dart';
+import '../theme/app_theme_scope.dart';
 import '../tokens/typography_tokens.dart';
 import 'amount_privacy_placeholder.dart';
 import 'amount_privacy_scope.dart';
@@ -332,7 +332,9 @@ class SignedMoneyText extends StatelessWidget {
     // user's up/down convention (and colorblind mode) applies here exactly
     // as it does in DeltaText — previously this used SemanticColors and
     // disagreed with adjacent deltas under 红涨绿跌.
-    return MarketColors.of(context).forDelta(value.compareTo(Decimal.zero));
+    return context.appTheme.market
+        .roleForDelta(value.compareTo(Decimal.zero))
+        .fg;
   }
 
   AmountPrivacyPlaceholderDensity _placeholderDensity(TextStyle style) {

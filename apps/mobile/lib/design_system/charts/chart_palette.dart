@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
-import '../theme/market_colors.dart';
+import '../theme/app_theme_scope.dart';
 import '../tokens/color_palette.dart';
 
 /// Chart-only color sequence and theme-derived palette helpers.
@@ -129,7 +129,7 @@ Color resolveSeriesColor(
   if (override != null) return override;
   final colors = context.theme.colors;
   final palette = ChartPalette.of(context);
-  final market = MarketColors.of(context);
+  final market = context.appTheme.market;
   switch (intent) {
     case SeriesIntent.primary:
       return colors.primary;
@@ -140,8 +140,8 @@ Color resolveSeriesColor(
     case SeriesIntent.muted:
       return colors.mutedForeground;
     case SeriesIntent.up:
-      return market.up;
+      return market.up.fg;
     case SeriesIntent.down:
-      return market.down;
+      return market.down.fg;
   }
 }

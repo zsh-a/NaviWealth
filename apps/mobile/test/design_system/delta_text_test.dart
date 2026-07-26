@@ -16,10 +16,12 @@ Widget _wrap(Widget child, {MarketColorMode? mode}) {
     ],
     supportedLocales: const [Locale('en', 'US'), Locale('zh', 'CN')],
     locale: const Locale('en', 'US'),
-    home: MarketColorsScope(
-      colors: MarketColors.fromMode(
-        mode ?? MarketColorMode.redUpGreenDown,
-        brightness: Brightness.light,
+    home: AppThemeScope(
+      data: resolveAppTheme(
+        ThemeInputs(
+          brightness: Brightness.light,
+          marketMode: mode ?? MarketColorMode.redUpGreenDown,
+        ),
       ),
       child: Scaffold(body: Center(child: child)),
     ),
@@ -39,8 +41,8 @@ void main() {
       expect(icon.icon, FLucideIcons.chevronUp);
 
       final ctx = tester.element(find.byType(DeltaText));
-      final market = MarketColors.of(ctx);
-      expect(icon.color, market.up);
+      final market = ctx.appTheme.market;
+      expect(icon.color, market.up.fg);
     },
   );
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
-import '../theme/market_colors.dart';
+import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
 import 'amount_privacy_scope.dart';
 import 'delta_text.dart';
@@ -32,14 +32,18 @@ class DeltaChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final market = MarketColors.of(context);
+    final market = context.appTheme.market;
     final hidden = value != null && AmountPrivacyScope.isHiddenOf(context);
     final colors = context.theme.colors;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: hidden
             ? colors.muted.withValues(alpha: AppOpacity.subtle)
-            : market.containerForDelta(value),
+            : value == null || value == 0
+            // Flat deltas keep the legacy translucent fill rather than a
+            // solid container so zero rows stay quiet.
+            ? market.flat.fg.withValues(alpha: AppOpacity.light)
+            : market.roleForDelta(value).container,
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Padding(
@@ -52,7 +56,7 @@ class DeltaChip extends StatelessWidget {
           style: style,
           color: hidden
               ? colors.mutedForeground
-              : market.onContainerForDelta(value),
+              : market.roleForDelta(value).onContainer,
         ),
       ),
     );
