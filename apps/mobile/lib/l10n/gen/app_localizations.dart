@@ -17991,6 +17991,30 @@ abstract class AppLocalizations {
   /// **'LEAPS call'**
   String get incomePlannerChipLeaps;
 
+  /// No description provided for @incomePlannerLaneSellSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Income (puts & calls)'**
+  String get incomePlannerLaneSellSection;
+
+  /// No description provided for @incomePlannerLaneLeapsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAPS calls'**
+  String get incomePlannerLaneLeapsSection;
+
+  /// No description provided for @incomePlannerAdjustLeapsBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust LEAPS budget'**
+  String get incomePlannerAdjustLeapsBudget;
+
+  /// No description provided for @incomePlannerScanLeapsCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan candidates'**
+  String get incomePlannerScanLeapsCta;
+
   /// No description provided for @incomePlannerMetricLeapsCost.
   ///
   /// In en, this message translates to:
@@ -18610,6 +18634,12 @@ abstract class AppLocalizations {
   /// **'Wide bid/ask spread {spread} — LEAPS liquidity is thin, use limit orders'**
   String optionsExplainLeapsSpreadBullet(String spread);
 
+  /// No description provided for @optionsExplainLeapsDeltaEstimated.
+  ///
+  /// In en, this message translates to:
+  /// **'Delta is estimated from implied volatility — the data source provides no greeks'**
+  String get optionsExplainLeapsDeltaEstimated;
+
   /// No description provided for @optionsExplainLeapsThetaBullet.
   ///
   /// In en, this message translates to:
@@ -18874,6 +18904,23 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'LEAPS scan'**
   String get incomePlannerProfileLeapsSection;
+
+  /// No description provided for @incomePlannerProfileSellFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell-side filters'**
+  String get incomePlannerProfileSellFilters;
+
+  /// No description provided for @incomePlannerProfileLeapsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{minDte}–{maxDte} DTE · delta {low}–{high}'**
+  String incomePlannerProfileLeapsSummary(
+    int minDte,
+    int maxDte,
+    String low,
+    String high,
+  );
 
   /// No description provided for @incomePlannerProfileLeapsMinDte.
   ///

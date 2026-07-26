@@ -166,15 +166,47 @@ class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
                       compact: true,
                     )
             else
-              for (final opportunity in visible)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-                  child: _OpportunityCard(opportunity: opportunity),
-                ),
+              ..._laneSections(context, l10n, visible),
           ],
         );
       },
     );
+  }
+
+  /// The "all" view keeps the two lanes apart: sell-side yield scores
+  /// and LEAPS cost-efficiency scores are not comparable, so a merged
+  /// sort would let LEAPS (typically 0.95+) bury every sell candidate.
+  List<Widget> _laneSections(
+    BuildContext context,
+    AppLocalizations l10n,
+    List<OptionsOpportunity> visible,
+  ) {
+    Widget card(OptionsOpportunity opportunity) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+      child: _OpportunityCard(opportunity: opportunity),
+    );
+    if (_filter != _OpportunityFilter.all) {
+      return [for (final opportunity in visible) card(opportunity)];
+    }
+    final sell = visible
+        .where((o) => o.strategy != OpportunityStrategy.leapsCall)
+        .toList(growable: false);
+    final leaps = visible
+        .where((o) => o.strategy == OpportunityStrategy.leapsCall)
+        .toList(growable: false);
+    if (sell.isEmpty || leaps.isEmpty) {
+      return [for (final opportunity in visible) card(opportunity)];
+    }
+    Widget header(String title) => SectionHeader(
+      title: title,
+      padding: const EdgeInsets.fromLTRB(0, AppSpacing.s12, 0, AppSpacing.s4),
+    );
+    return [
+      header(l10n.incomePlannerLaneSellSection),
+      for (final opportunity in sell) card(opportunity),
+      header(l10n.incomePlannerLaneLeapsSection),
+      for (final opportunity in leaps) card(opportunity),
+    ];
   }
 
   OpportunityStrategy? get _laneStrategy => switch (_filter) {
@@ -339,7 +371,7 @@ class _OpportunityCard extends ConsumerWidget {
   }
 }
 
-class _ScanEmptyResultCard extends StatelessWidget {
+class _ScanEmptyResultCard extends ConsumerWidget {
   const _ScanEmptyResultCard({required this.result, this.lane});
 
   final ScanResult result;
@@ -349,7 +381,7 @@ class _ScanEmptyResultCard extends StatelessWidget {
   final OpportunityStrategy? lane;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final universeEmpty = result.universe.isEmpty;
     final rejectedInLane = lane == null
@@ -422,12 +454,38 @@ class _ScanEmptyResultCard extends StatelessWidget {
                   onPress: () => showIncomeStrategyPlanSheet(context),
                   child: Text(l10n.incomePlannerAddApprovedCta),
                 ),
+                if (lane == OpportunityStrategy.leapsCall)
+                  // The dominant LEAPS rejections (budget, delta band)
+                  // are fixed in the plan, not the profile — link there.
+                  FButton(
+                    variant: FButtonVariant.outline,
+                    onPress: () => _openLeapsBudget(context, ref),
+                    child: Text(l10n.incomePlannerAdjustLeapsBudget),
+                  ),
               ],
             ),
           ],
         ),
       ),
     );
+  }
+}
+
+/// Route "adjust LEAPS budget" to the one LEAPS-enabled plan when it is
+/// unambiguous, otherwise to the strategy page where the user picks the
+/// underlying.
+void _openLeapsBudget(BuildContext context, WidgetRef ref) {
+  final plans = ref.read(incomeStrategyPlansProvider).value ?? const [];
+  final leapsPlans = plans
+      .where(
+        (plan) =>
+            plan.enabledSleeves.contains(IncomeStrategySleeveKind.leapsCall),
+      )
+      .toList(growable: false);
+  if (leapsPlans.length == 1) {
+    showIncomeStrategyPlanSheet(context, existing: leapsPlans.single);
+  } else {
+    context.push(FinanceRoutes.planIncome);
   }
 }
 

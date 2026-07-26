@@ -10111,6 +10111,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerChipLeaps => 'LEAPS 看涨';
 
   @override
+  String get incomePlannerLaneSellSection => '卖方收入（Put / Call）';
+
+  @override
+  String get incomePlannerLaneLeapsSection => 'LEAPS 看涨';
+
+  @override
+  String get incomePlannerAdjustLeapsBudget => '调整 LEAPS 预算';
+
+  @override
+  String get incomePlannerScanLeapsCta => '扫描机会';
+
+  @override
   String get incomePlannerMetricLeapsCost => '成本（最大亏损）';
 
   @override
@@ -10491,6 +10503,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get optionsExplainLeapsDeltaEstimated => 'delta 由隐含波动率推算——数据源未提供希腊值';
+
+  @override
   String optionsExplainLeapsThetaBullet(String extrinsic) {
     return '$extrinsic 的时间价值将在到期前衰减殆尽';
   }
@@ -10675,6 +10690,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get incomePlannerProfileLeapsSection => 'LEAPS 扫描';
+
+  @override
+  String get incomePlannerProfileSellFilters => '卖方筛选';
+
+  @override
+  String incomePlannerProfileLeapsSummary(
+    int minDte,
+    int maxDte,
+    String low,
+    String high,
+  ) {
+    return '$minDte–$maxDte DTE · delta $low–$high';
+  }
 
   @override
   String get incomePlannerProfileLeapsMinDte => 'LEAPS 最小 DTE';

@@ -198,4 +198,7 @@ class LocalizedOpportunityExplanationTexts
   @override
   String leapsFundingBullet(String coverage) =>
       _l10n.optionsExplainLeapsFundingBullet(coverage);
+
+  @override
+  String leapsDeltaEstimatedBullet() => _l10n.optionsExplainLeapsDeltaEstimated;
 }
