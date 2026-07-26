@@ -396,6 +396,12 @@ Future<void> _createKnowledgeInboxTriage(AppDatabase db) async {
   }
 }
 
+Future<void> _createAgentFindings(AppDatabase db) async {
+  for (final stmt in agentFindingDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
 const List<String> _securitiesCatalogFtsStmts = [
   '''
 CREATE VIRTUAL TABLE IF NOT EXISTS securities_catalog_fts USING fts5(

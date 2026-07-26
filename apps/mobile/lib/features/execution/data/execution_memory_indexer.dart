@@ -20,10 +20,12 @@ import 'providers.dart';
 const String kExecutionActionMemorySource = 'execution:actions';
 const String kExecutionProjectMemorySource = 'execution:projects';
 const String kExecutionCommitmentMemorySource = 'execution:commitments';
+const String kExecutionProgressMemorySource = 'execution:progress';
 
 const String kExecutionActionEventType = 'execution_action_state';
 const String kExecutionProjectEventType = 'execution_project_state';
 const String kExecutionCommitmentEventType = 'execution_commitment_state';
+const String kExecutionProgressEventType = 'execution_progress_recorded';
 
 class ExecutionMemoryIndexer {
   const ExecutionMemoryIndexer();
@@ -62,6 +64,19 @@ class ExecutionMemoryIndexer {
     var events = 0;
     for (final commitment in commitments) {
       await runtime.recordEvent(_commitmentEvent(commitment, ownerUserId));
+      events++;
+    }
+    return events;
+  }
+
+  Future<int> reindexProgress(
+    MemoryRuntime runtime,
+    Iterable<ExecutionProgressEntry> entries, {
+    required String ownerUserId,
+  }) async {
+    var events = 0;
+    for (final entry in entries) {
+      await runtime.recordEvent(_progressEvent(entry, ownerUserId));
       events++;
     }
     return events;
@@ -179,6 +194,43 @@ class ExecutionMemoryIndexer {
         ..._sourceEntities(commitment.source),
       },
       importance: _commitmentImportance(commitment),
+    );
+  }
+
+  EventRecord _progressEvent(ExecutionProgressEntry entry, String ownerUserId) {
+    final highSignal =
+        entry.kind == ExecutionProgressKind.blocker ||
+        entry.kind == ExecutionProgressKind.scopeChange ||
+        entry.kind == ExecutionProgressKind.completion;
+    return EventRecord(
+      id: '$kExecutionProgressMemorySource:${entry.id}',
+      type: kExecutionProgressEventType,
+      timestamp: entry.createdAt.toUtc(),
+      source: kExecutionProgressMemorySource,
+      ownerUserId: ownerUserId,
+      title: 'Execution progress: ${entry.kind.wire}',
+      summary: entry.note.trim().isEmpty
+          ? 'Recorded ${entry.kind.wire} progress.'
+          : entry.note.trim(),
+      payload: <String, Object?>{
+        'id': entry.id,
+        'kind': entry.kind.wire,
+        'note': entry.note,
+        if (entry.actionId != null) 'action_id': entry.actionId,
+        if (entry.projectId != null) 'project_id': entry.projectId,
+        if (entry.commitmentId != null) 'commitment_id': entry.commitmentId,
+      },
+      entities: <String>{
+        'execution',
+        'execution_progress',
+        'execution_progress:${entry.id}',
+        'progress_kind:${entry.kind.wire}',
+        if (entry.actionId != null) 'execution_action:${entry.actionId}',
+        if (entry.projectId != null) 'execution_project:${entry.projectId}',
+        if (entry.commitmentId != null)
+          'execution_commitment:${entry.commitmentId}',
+      },
+      importance: highSignal ? 0.82 : 0.5,
     );
   }
 }
@@ -315,6 +367,12 @@ final executionMemoryIndexerProvider = Provider<void>((ref) {
       stream: repo.watchCommitmentsForMemoryIndex(ownerUserId: userId),
       reindex: (rows) =>
           indexer.reindexCommitments(runtime, rows, ownerUserId: userId),
+    );
+    _subscribeExecutionIndexer<ExecutionProgressEntry>(
+      ref,
+      stream: repo.watchProgressForMemoryIndex(ownerUserId: userId),
+      reindex: (rows) =>
+          indexer.reindexProgress(runtime, rows, ownerUserId: userId),
     );
   }();
 });

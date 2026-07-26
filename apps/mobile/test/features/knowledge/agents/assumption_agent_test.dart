@@ -16,6 +16,7 @@ import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/knowledge/agents/assumption_agent.dart';
+import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/agent_runtime_effect_plan_test_harness.dart';
@@ -215,7 +216,7 @@ void main() {
             AssumptionReviewItem(
               id: 'assumption-stale',
               statement: 'Rates stay high',
-              daysSinceVerify: kAssumptionStaleDays,
+              daysSinceVerify: kKnowledgeAssumptionStaleDays,
             ),
             AssumptionReviewItem(
               id: 'assumption-fresh',

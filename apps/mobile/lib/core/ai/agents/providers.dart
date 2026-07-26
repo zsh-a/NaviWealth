@@ -11,6 +11,7 @@ import '../../persistence/providers.dart';
 import 'agent_artifact.dart';
 import 'agent_artifact_store.dart';
 import 'agent_evidence_navigation_store.dart';
+import 'agent_finding_store.dart';
 import 'agent_preference_store.dart';
 import 'agent_presentation.dart';
 import 'agent_quality_report.dart';
@@ -36,6 +37,13 @@ final agentArtifactStoreProvider = FutureProvider<AgentArtifactStore>((
 ) async {
   final db = await ref.watch(appDatabaseProvider.future);
   return SqliteAgentArtifactStore(db: db);
+});
+
+final agentFindingStoreProvider = FutureProvider<AgentFindingStore>((
+  ref,
+) async {
+  final db = await ref.watch(appDatabaseProvider.future);
+  return SqliteAgentFindingStore(db: db);
 });
 
 final agentEvidenceNavigationStoreProvider =

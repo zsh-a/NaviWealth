@@ -18,8 +18,8 @@ import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
-import 'package:naviwealth/features/knowledge/agents/assumption_agent.dart';
 import 'package:naviwealth/features/knowledge/agents/review_agent.dart';
+import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/agent_runtime_effect_plan_test_harness.dart';
@@ -225,7 +225,7 @@ void main() {
                       <String, Object?>{
                         'id': 'assumption_stale',
                         'statement': 'Rates stay high',
-                        'days_since_verify': kAssumptionStaleDays,
+                        'days_since_verify': kKnowledgeAssumptionStaleDays,
                       },
                       <String, Object?>{
                         'id': 'assumption_fresh',
@@ -499,7 +499,7 @@ class _ReviewDispatcher implements DeviceToolDispatcher {
           <String, Object?>{
             'id': 'assumption_stale',
             'statement': 'Rates stay high',
-            'days_since_verify': kAssumptionStaleDays + 1,
+            'days_since_verify': kKnowledgeAssumptionStaleDays + 1,
           },
           <String, Object?>{
             'id': 'assumption_fresh',

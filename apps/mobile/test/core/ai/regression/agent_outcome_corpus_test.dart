@@ -214,6 +214,7 @@ void main() {
       () {
         const allowedActionKinds = <String>{
           'review',
+          'proposal',
           'open_object',
           'open_route',
         };
@@ -296,8 +297,11 @@ void main() {
             isTrue,
             reason: c.id,
           );
-          expect(c.expectedActionRoutes.every((route) => route.startsWith('/')),
-              isTrue, reason: c.id);
+          expect(
+            c.expectedActionRoutes.every((route) => route.startsWith('/')),
+            isTrue,
+            reason: c.id,
+          );
           expect(c.expectedProposalKinds, isEmpty, reason: c.id);
         }
       },

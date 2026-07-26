@@ -1424,7 +1424,7 @@ void main() {
     expect(rows.last.read<String>('turn_id'), 'turn-interaction');
     expect(rows.last.read<String>('status'), 'requires_interaction');
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 56);
+    expect(version.read<int>('user_version'), 58);
   });
 
   test('migrates v23 options journal rows through v26 additions', () async {
@@ -2044,7 +2044,7 @@ void main() {
       ]),
     );
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 56);
+    expect(version.read<int>('user_version'), 58);
   });
 
   test('v54 upgrade creates memory candidate staging', () async {
@@ -2073,6 +2073,6 @@ void main() {
       containsAll(['id', 'proposal_id', 'operation', 'status', 'payload_json']),
     );
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 56);
+    expect(version.read<int>('user_version'), 58);
   });
 }

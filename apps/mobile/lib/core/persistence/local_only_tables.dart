@@ -281,6 +281,38 @@ const List<String> agentArtifactDdl = [
   createAgentArtifactsDomainCreatedIndex,
 ];
 
+const String createAgentFindings = '''
+CREATE TABLE IF NOT EXISTS agent_findings (
+  owner_user_id       TEXT NOT NULL,
+  id                  TEXT NOT NULL,
+  agent_id            TEXT NOT NULL,
+  domain              TEXT NOT NULL,
+  kind                TEXT NOT NULL,
+  status              TEXT NOT NULL CHECK (
+    status IN ('open', 'resolved', 'ignored', 'snoozed')
+  ),
+  severity            TEXT NOT NULL,
+  confidence          REAL NOT NULL,
+  evidence_fingerprint TEXT NOT NULL,
+  payload_json        TEXT NOT NULL,
+  first_seen_at       INTEGER NOT NULL,
+  last_seen_at        INTEGER NOT NULL,
+  resolved_at         INTEGER,
+  snoozed_until       INTEGER,
+  PRIMARY KEY (owner_user_id, id)
+)
+''';
+
+const String createAgentFindingsAgentStatusIndex = '''
+CREATE INDEX IF NOT EXISTS idx_agent_findings_agent_status
+  ON agent_findings(owner_user_id, agent_id, status, last_seen_at DESC)
+''';
+
+const List<String> agentFindingDdl = <String>[
+  createAgentFindings,
+  createAgentFindingsAgentStatusIndex,
+];
+
 const String createAgentPreferences = '''
 CREATE TABLE IF NOT EXISTS agent_preferences (
   owner_user_id         TEXT NOT NULL,
@@ -535,10 +567,11 @@ const List<String> memoryRuntimeDdl = [
 // they re-materialise from the note itself on any device.
 const String createKnowledgeInboxTriage = '''
 CREATE TABLE IF NOT EXISTS knowledge_inbox_triage (
-  note_id         TEXT PRIMARY KEY,
-  owner_user_id   TEXT NOT NULL,
-  last_triaged_at INTEGER NOT NULL,        -- millis since epoch (UTC)
-  proposals_json  TEXT NOT NULL            -- JSON array of envelopes (+status)
+  note_id            TEXT PRIMARY KEY,
+  owner_user_id      TEXT NOT NULL,
+  source_fingerprint TEXT NOT NULL,
+  last_triaged_at    INTEGER NOT NULL,        -- millis since epoch (UTC)
+  proposals_json     TEXT NOT NULL            -- JSON array of envelopes (+status)
 )
 ''';
 

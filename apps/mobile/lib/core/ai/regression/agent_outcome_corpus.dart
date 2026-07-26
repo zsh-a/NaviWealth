@@ -516,8 +516,11 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'execution_project': '/execution/commitments',
       'execution_commitment': '/execution/commitments/*',
     },
-    expectedActionKinds: <String>{'review'},
-    expectedActionIntents: <String>{kAgentExplainResultIntent},
+    expectedActionKinds: <String>{'review', 'proposal'},
+    expectedActionIntents: <String>{
+      kAgentExplainResultIntent,
+      kAgentCreatePlanFromResultIntent,
+    },
     expectedActionRoutes: <String>{'/execution/review'},
   ),
   AgentOutcomeRegressionCase(

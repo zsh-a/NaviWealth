@@ -33,7 +33,6 @@ const String kKnowledgeAssumptionMemorySource = 'agent:knowledge_assumption';
 /// Threshold beyond which an active assumption is considered "stale" —
 /// surfaced into the Review tab so the user gets nudged to either
 /// re-verify it or change its status.
-const int kAssumptionStaleDays = 90;
 
 class AssumptionAgent implements Agent {
   const AssumptionAgent({
@@ -64,7 +63,7 @@ class AssumptionAgent implements Agent {
     final snapshot = await assumptionReader.listOpen(ctx);
     final open = snapshot.open;
     final stale = open
-        .where((a) => a.daysSinceVerify >= kAssumptionStaleDays)
+        .where((a) => a.daysSinceVerify >= kKnowledgeAssumptionStaleDays)
         .toList(growable: false);
     final finished = DateTime.now().toUtc();
 
@@ -91,7 +90,7 @@ class AssumptionAgent implements Agent {
       summary: summary,
       payload: <String, Object?>{
         'stale_assumption_ids': stale.map((a) => a.id).toList(growable: false),
-        'threshold_days': kAssumptionStaleDays,
+        'threshold_days': kKnowledgeAssumptionStaleDays,
         'artifact_id': artifactId,
         if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
       },
@@ -165,14 +164,14 @@ class AssumptionAgent implements Agent {
           body: l10n.knowledgeAgentAssumptionInsightBody(
             stale.length,
             stale.length == 1 ? '' : 's',
-            kAssumptionStaleDays,
+            kKnowledgeAssumptionStaleDays,
           ),
           severity: AgentArtifactSeverity.attention,
           evidenceIds: <String>[for (final item in stale) item.id],
           route: KnowledgeRoutes.review,
           payload: <String, Object?>{
             'count': stale.length,
-            'threshold_days': kAssumptionStaleDays,
+            'threshold_days': kKnowledgeAssumptionStaleDays,
             'first_id': stale.first.id,
           },
         ),
@@ -214,13 +213,13 @@ class AssumptionAgent implements Agent {
   String _summarize(AppLocalizations l10n, int count, String first) {
     if (count == 1) {
       return l10n.knowledgeAgentAssumptionSummaryOne(
-        kAssumptionStaleDays,
+        kKnowledgeAssumptionStaleDays,
         first,
       );
     }
     return l10n.knowledgeAgentAssumptionSummaryMany(
       count,
-      kAssumptionStaleDays,
+      kKnowledgeAssumptionStaleDays,
       first,
     );
   }

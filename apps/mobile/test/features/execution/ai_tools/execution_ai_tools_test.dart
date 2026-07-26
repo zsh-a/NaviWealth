@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
 import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
@@ -130,6 +131,25 @@ void main() {
     expect(payload['priority'], 'high');
     expect(payload['source_row_family'], 'fin:budgets');
   });
+
+  test(
+    'propose_action rejects incomplete cross-domain source identity',
+    () async {
+      final out = await _withRef(
+        container,
+        (ref) => const ProposeActionTool().invoke(
+          DeviceToolContext(ref: ref, session: _session()),
+          const <String, Object?>{
+            'title': 'Review the signal',
+            'reason': 'A source was provided',
+            'source_domain': 'finance',
+          },
+        ),
+      );
+
+      expect((out as Map)['code'], 'bad_request');
+    },
+  );
 
   test('propose_project returns a ready proposal envelope', () async {
     final out = await _withRef(
@@ -265,6 +285,14 @@ void main() {
     expect(action.source.rowId, 'cashflow-2026-06');
     expect(action.source.labelSnapshot, 'June cashflow plan');
     expect(state.appliedTable, 'execution_actions');
+
+    final applier = await container.read(
+      executionProposalApplierProvider.future,
+    );
+    await expectLater(
+      applier.apply(plan as ReadyProposalPlan),
+      throwsA(isA<ProposalApplyException>()),
+    );
   });
 
   test(

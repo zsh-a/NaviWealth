@@ -9,7 +9,9 @@ library;
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
+import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
+import '../domain/knowledge_models.dart';
 import '../domain/knowledge_text.dart';
 import '_tool_support.dart';
 
@@ -71,11 +73,22 @@ class SummarizeTopicEvolutionTool implements DeviceTool {
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
 
-    final notes = await repo.listNotes(ownerUserId: ownerUserId, limit: 1000);
-    final decisions = await repo.listDecisions(
+    final notes = await _allNotes(repo, ownerUserId);
+    final decisions = await _allDecisions(repo, ownerUserId);
+    final concepts = await repo.listConcepts(
       ownerUserId: ownerUserId,
       limit: 1000,
     );
+    final terms = <String>{topic};
+    for (final concept in concepts) {
+      final names = <String>[concept.name, ...concept.aliases]
+          .map((value) => value.trim().toLowerCase())
+          .where((value) => value.isNotEmpty)
+          .toSet();
+      if (names.any((name) => name.contains(topic) || topic.contains(name))) {
+        terms.addAll(names);
+      }
+    }
 
     bool inWindow(DateTime ts) {
       if (from != null && ts.isBefore(from)) return false;
@@ -91,7 +104,7 @@ class SummarizeTopicEvolutionTool implements DeviceTool {
           '${n.title} ${n.bodyMd} ${n.tags.join(' ')} '
                   '${n.projectTag ?? ''}'
               .toLowerCase();
-      if (!hay.contains(topic)) continue;
+      if (!terms.any(hay.contains)) continue;
       events.add(<String, Object?>{
         'ts': n.createdAt.toUtc().toIso8601String(),
         'source': 'note',
@@ -105,10 +118,12 @@ class SummarizeTopicEvolutionTool implements DeviceTool {
       if (!inWindow(d.decidedAt)) continue;
       final hay = '${d.question} ${d.rationaleMd} ${d.selectedLabel}'
           .toLowerCase();
-      if (!hay.contains(topic)) continue;
+      if (!terms.any(hay.contains)) continue;
       final isSuperseded = d.supersededByDecisionId != null;
       events.add(<String, Object?>{
-        'ts': d.decidedAt.toUtc().toIso8601String(),
+        'ts': (isSuperseded ? d.sync.updatedAt : d.decidedAt)
+            .toUtc()
+            .toIso8601String(),
         'source': isSuperseded ? 'decision_superseded' : 'decision',
         'id': d.id,
         'title': d.question,
@@ -120,6 +135,45 @@ class SummarizeTopicEvolutionTool implements DeviceTool {
 
     events.sort((a, b) => (a['ts'] as String).compareTo(b['ts'] as String));
     final out = events.take(limit).toList(growable: false);
-    return <String, Object?>{'timeline': out};
+    return <String, Object?>{
+      'timeline': out,
+      'matched_count': events.length,
+      'is_truncated': events.length > out.length,
+      'expanded_terms': terms.toList(growable: false)..sort(),
+    };
+  }
+}
+
+Future<List<KnowledgeNote>> _allNotes(
+  KnowledgeRepository repo,
+  String ownerUserId,
+) async {
+  const pageSize = 500;
+  final out = <KnowledgeNote>[];
+  for (var offset = 0; ; offset += pageSize) {
+    final page = await repo.listNotes(
+      ownerUserId: ownerUserId,
+      limit: pageSize,
+      offset: offset,
+    );
+    out.addAll(page);
+    if (page.length < pageSize) return out;
+  }
+}
+
+Future<List<KnowledgeDecision>> _allDecisions(
+  KnowledgeRepository repo,
+  String ownerUserId,
+) async {
+  const pageSize = 500;
+  final out = <KnowledgeDecision>[];
+  for (var offset = 0; ; offset += pageSize) {
+    final page = await repo.listDecisions(
+      ownerUserId: ownerUserId,
+      limit: pageSize,
+      offset: offset,
+    );
+    out.addAll(page);
+    if (page.length < pageSize) return out;
   }
 }

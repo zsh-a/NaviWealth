@@ -9,6 +9,8 @@ import 'dart:convert';
 
 import 'package:naviwealth/core/sync/sync_meta.dart';
 
+const int kKnowledgeAssumptionStaleDays = 90;
+
 /// Shared enum parser: returns the member whose [Enum.name] matches [s],
 /// else [fallback]. Tolerates legacy / unknown wire values without
 /// throwing. Every KnowledgeOS status enum routes its `parse` through

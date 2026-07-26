@@ -143,6 +143,17 @@ class DataMaintenanceService {
             ),
           ],
         );
+        counts['agent_findings'] = await _database.customUpdate(
+          'DELETE FROM agent_findings WHERE owner_user_id = ? '
+          "AND status = 'resolved' AND resolved_at IS NOT NULL "
+          'AND resolved_at < ?',
+          variables: <Variable<Object>>[
+            Variable<Object>(_ownerUserId),
+            Variable<Object>(
+              started.subtract(const Duration(days: 90)).millisecondsSinceEpoch,
+            ),
+          ],
+        );
         counts['events'] = await _deleteMillisBefore(
           table: 'events',
           column: 'timestamp',

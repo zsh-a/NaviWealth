@@ -82,7 +82,7 @@ boundary.
 |---|---|
 | Today | Today's open actions, blockers, and high-priority follow-through |
 | Commitments | Active projects, commitments, and open actions |
-| Review | Recent progress, blockers, completion notes, and recently closed actions |
+| Review | Focus, stalled/blocked work, missing next actions, overdue targets, repeated blockers, throughput, source outcomes, and recently closed actions |
 
 Key files:
 
@@ -149,3 +149,24 @@ Rules:
 - Existing Action status changes must use `propose_action_status_update`
   after identifying the target Action. Do not create a duplicate Action just
   to represent completion, blocking, resuming, or dropping an existing one.
+- Cross-domain source identity is atomic: `source_domain`,
+  `source_row_family`, and `source_row_id` must be supplied together.
+  Applying a proposal rejects a near-identical open Action tied to the same
+  concrete source.
+
+## Review Agent And Memory
+
+The weekly Review agent reads complete bounded snapshots of open Actions,
+active Projects/Commitments, the last seven days of progress and closed
+Actions, and observational source-outcome summaries. It emits stable local
+findings for blocked/due/stalled Actions, Projects or Commitments without a
+next Action, overdue targets, repeated blocker entries, and Today overload.
+Findings resolve when the signal disappears; dismiss/snooze applies only while
+the evidence fingerprint remains unchanged.
+
+Review artifacts preserve human-readable titles, recommend a Top 3 focus set,
+show weekly completed/dropped throughput, and expose a proposal action for
+turning diagnostics into concrete next Actions. Progress entries are also
+indexed into local Memory/Event storage; blockers and completion/scope changes
+receive higher event importance. Derived findings and memory indexes do not
+sync.

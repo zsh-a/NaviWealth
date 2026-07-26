@@ -3,7 +3,6 @@ import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
 import '../data/providers.dart';
-import '../domain/execution_models.dart';
 import '_read_support.dart';
 
 class ListOpenActionsTool implements DeviceTool {
@@ -47,7 +46,7 @@ class ListOpenActionsTool implements DeviceTool {
       result: <String, Object?>{
         'actions': actions
             .map(
-              (action) => _actionJson(
+              (action) => executionActionJson(
                 action,
                 projects: projects,
                 commitments: commitments,
@@ -67,26 +66,3 @@ class ListOpenActionsTool implements DeviceTool {
     );
   }
 }
-
-Map<String, Object?> _actionJson(
-  ExecutionAction a, {
-  required List<ExecutionProject> projects,
-  required List<ExecutionCommitment> commitments,
-}) => <String, Object?>{
-  'id': a.id,
-  'title': a.title,
-  'note': a.note,
-  'status': a.status.wire,
-  'priority': a.priority.wire,
-  'due_at': a.dueAt?.toUtc().toIso8601String(),
-  'scheduled_for': a.scheduledFor?.toUtc().toIso8601String(),
-  'project_id': a.projectId,
-  'project_title': executionProjectTitle(projects, a.projectId),
-  'commitment_id': a.commitmentId,
-  'commitment_title': executionCommitmentTitle(commitments, a.commitmentId),
-  'source_domain': a.source.domain,
-  'source_row_family': a.source.rowFamily,
-  'source_row_id': a.source.rowId,
-  'source_label': a.source.labelSnapshot,
-  'created_at': a.createdAt.toUtc().toIso8601String(),
-};

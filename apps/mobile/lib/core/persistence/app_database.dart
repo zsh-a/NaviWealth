@@ -147,7 +147,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 56;
+  int get schemaVersion => 58;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -173,6 +173,7 @@ class AppDatabase extends _$AppDatabase {
       await _createAgentRuntimeCheckpoints(this);
       await _createAgentRuntimeChatSnapshots(this);
       await _createAgentArtifacts(this);
+      await _createAgentFindings(this);
       await _createDataMaintenanceRuns(this);
       await _createAgentPreferences(this);
       await _createRebalanceExecutionTables(this);
@@ -844,6 +845,16 @@ class AppDatabase extends _$AppDatabase {
       // interaction envelope without retaining pending tool dispatches.
       if (from < 56) {
         await _upgradeAgentRuntimeChatSnapshotsForInteractions(this);
+      }
+      if (from < 57) {
+        // Triage suggestions are derived local state. Rebuild the table
+        // instead of preserving proposals produced from an unknown note
+        // revision.
+        await customStatement('DROP TABLE IF EXISTS knowledge_inbox_triage');
+        await _createKnowledgeInboxTriage(this);
+      }
+      if (from < 58) {
+        await _createAgentFindings(this);
       }
     },
     beforeOpen: (details) async {

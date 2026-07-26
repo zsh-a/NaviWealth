@@ -113,6 +113,7 @@ class InboxTriageAgent implements Agent {
           InboxTriageRecord(
             noteId: note.id,
             ownerUserId: ownerUserId,
+            sourceFingerprint: knowledgeNoteTriageFingerprint(note),
             lastTriagedAt: DateTime.now().toUtc(),
             proposals: const <InboxProposal>[],
           ),
@@ -123,6 +124,7 @@ class InboxTriageAgent implements Agent {
         InboxTriageRecord(
           noteId: note.id,
           ownerUserId: ownerUserId,
+          sourceFingerprint: knowledgeNoteTriageFingerprint(note),
           lastTriagedAt: DateTime.now().toUtc(),
           proposals: proposals,
         ),
@@ -305,9 +307,14 @@ class RepositoryInboxTriageSourceReader implements InboxTriageSourceReader {
     final triage = await ctx.ref.read(inboxTriageRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final notes = await repo.listNotes(ownerUserId: ownerUserId, limit: 200);
-    final triagedIds = await triage.triagedNoteIds(ownerUserId: ownerUserId);
+    final fingerprints = await triage.triagedNoteFingerprints(
+      ownerUserId: ownerUserId,
+    );
     final untriaged = notes
-        .where((n) => !triagedIds.contains(n.id))
+        .where(
+          (note) =>
+              fingerprints[note.id] != knowledgeNoteTriageFingerprint(note),
+        )
         .take(kInboxTriageMaxNotesPerRun)
         .toList(growable: false);
     final decisions = await repo.listDecisions(

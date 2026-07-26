@@ -68,6 +68,28 @@ mixin KnowledgeRelationsRepositoryMixin {
             .get();
     return rows.map(knowledgeRelationFromRow).toList(growable: false);
   }
+
+  /// Returns ids of objects of [kind] that participate in any live relation.
+  ///
+  /// This intentionally checks both directions: a Note linked *to* a
+  /// Decision is just as non-orphaned as a Note linking *from* itself.
+  Future<Set<String>> listRelatedObjectIds({
+    required String ownerUserId,
+    required String kind,
+  }) async {
+    final rows =
+        await (_db.select(_db.knowledgeRelations)..where(
+              (table) =>
+                  table.ownerUserId.equals(ownerUserId) &
+                  table.deletedAt.isNull() &
+                  (table.fromKind.equals(kind) | table.toKind.equals(kind)),
+            ))
+            .get();
+    return <String>{
+      for (final row in rows)
+        if (row.fromKind == kind) row.fromId else row.toId,
+    };
+  }
 }
 
 String knowledgeRelationId({

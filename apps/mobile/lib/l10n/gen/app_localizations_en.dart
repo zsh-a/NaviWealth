@@ -13743,6 +13743,85 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get executionAgentReviewInsightStalledTitle => 'Stalled work';
+
+  @override
+  String executionAgentReviewInsightStalledBody(Object count) {
+    return '$count in-progress actions have not changed for at least 7 days.';
+  }
+
+  @override
+  String get executionAgentReviewInsightNoNextActionTitle =>
+      'Missing next actions';
+
+  @override
+  String executionAgentReviewInsightNoNextActionBody(
+    Object commitmentCount,
+    Object projectCount,
+  ) {
+    return '$projectCount active projects and $commitmentCount active commitments have no open next action.';
+  }
+
+  @override
+  String get executionAgentReviewInsightOverdueTargetsTitle =>
+      'Overdue targets';
+
+  @override
+  String executionAgentReviewInsightOverdueTargetsBody(
+    Object commitmentCount,
+    Object projectCount,
+  ) {
+    return '$projectCount projects and $commitmentCount commitments are past their target date.';
+  }
+
+  @override
+  String get executionAgentReviewInsightRepeatedBlockerTitle =>
+      'Repeated blockers';
+
+  @override
+  String executionAgentReviewInsightRepeatedBlockerBody(Object count) {
+    return '$count actions recorded blockers more than once this week.';
+  }
+
+  @override
+  String get executionAgentReviewInsightOverloadTitle => 'Today is overloaded';
+
+  @override
+  String executionAgentReviewInsightOverloadBody(Object count, Object limit) {
+    return '$count actions compete for today. Narrow the focus to about $limit.';
+  }
+
+  @override
+  String get executionAgentReviewInsightThroughputTitle => 'Weekly throughput';
+
+  @override
+  String executionAgentReviewInsightThroughputBody(
+    Object completedCount,
+    Object droppedCount,
+  ) {
+    return '$completedCount actions completed and $droppedCount dropped this week.';
+  }
+
+  @override
+  String get executionAgentReviewInsightOutcomeTitle =>
+      'Source signals after completion';
+
+  @override
+  String executionAgentReviewInsightOutcomeBody(
+    Object activeCount,
+    Object clearedCount,
+  ) {
+    return '$clearedCount source signals are no longer detected and $activeCount are still detected after their actions closed.';
+  }
+
+  @override
+  String get executionAgentReviewPlanAction => 'Create a recovery plan';
+
+  @override
+  String get executionAgentReviewPlanActionBody =>
+      'Review stalled and unowned work, then propose concrete next actions or status updates for confirmation.';
+
+  @override
   String get executionAgentReviewAction => 'Review execution';
 
   @override

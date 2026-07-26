@@ -80,13 +80,24 @@ void main() {
         sync: _sync(3),
       ),
     ], ownerUserId: _userId);
+    await indexer.reindexProgress(runtime, [
+      ExecutionProgressEntry(
+        id: 'progress-blocker',
+        actionId: 'act-finance',
+        projectId: 'project-health',
+        kind: ExecutionProgressKind.blocker,
+        note: 'Waiting for a verified budget snapshot.',
+        createdAt: DateTime.utc(2026, 6, 2),
+        sync: _sync(4),
+      ),
+    ], ownerUserId: _userId);
 
     final events = await runtime.recentEvents(
       ownerUserId: _userId,
       window: const Duration(days: 9999),
     );
 
-    expect(events, hasLength(3));
+    expect(events, hasLength(4));
     final action = events.firstWhere(
       (event) => event.source == kExecutionActionMemorySource,
     );
@@ -106,6 +117,14 @@ void main() {
       (event) => event.source == kExecutionCommitmentMemorySource,
     );
     expect(commitment.entities, contains('execution_project:project-health'));
+
+    final progress = events.firstWhere(
+      (event) => event.source == kExecutionProgressMemorySource,
+    );
+    expect(progress.type, kExecutionProgressEventType);
+    expect(progress.payload['kind'], 'blocker');
+    expect(progress.entities, contains('execution_action:act-finance'));
+    expect(progress.importance, greaterThan(0.8));
   });
 
   test('event ids are stable across repeated reindex', () async {

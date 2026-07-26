@@ -13076,6 +13076,81 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get executionAgentReviewInsightStalledTitle => '停滞事项';
+
+  @override
+  String executionAgentReviewInsightStalledBody(Object count) {
+    return '$count 个进行中行动至少 7 天没有变化。';
+  }
+
+  @override
+  String get executionAgentReviewInsightNoNextActionTitle => '缺少下一步';
+
+  @override
+  String executionAgentReviewInsightNoNextActionBody(
+    Object commitmentCount,
+    Object projectCount,
+  ) {
+    return '$projectCount 个活跃项目和 $commitmentCount 个活跃承诺没有未完成的下一步行动。';
+  }
+
+  @override
+  String get executionAgentReviewInsightOverdueTargetsTitle => '目标日期已过';
+
+  @override
+  String executionAgentReviewInsightOverdueTargetsBody(
+    Object commitmentCount,
+    Object projectCount,
+  ) {
+    return '$projectCount 个项目和 $commitmentCount 个承诺已超过目标日期。';
+  }
+
+  @override
+  String get executionAgentReviewInsightRepeatedBlockerTitle => '重复阻塞';
+
+  @override
+  String executionAgentReviewInsightRepeatedBlockerBody(Object count) {
+    return '本周有 $count 个行动多次记录阻塞。';
+  }
+
+  @override
+  String get executionAgentReviewInsightOverloadTitle => '今日负载过高';
+
+  @override
+  String executionAgentReviewInsightOverloadBody(Object count, Object limit) {
+    return '今天有 $count 个行动争夺注意力，建议聚焦约 $limit 个。';
+  }
+
+  @override
+  String get executionAgentReviewInsightThroughputTitle => '每周吞吐';
+
+  @override
+  String executionAgentReviewInsightThroughputBody(
+    Object completedCount,
+    Object droppedCount,
+  ) {
+    return '本周完成 $completedCount 个行动，放弃 $droppedCount 个。';
+  }
+
+  @override
+  String get executionAgentReviewInsightOutcomeTitle => '行动关闭后的来源信号';
+
+  @override
+  String executionAgentReviewInsightOutcomeBody(
+    Object activeCount,
+    Object clearedCount,
+  ) {
+    return '行动关闭后，有 $clearedCount 个来源信号已未检测到，$activeCount 个仍被检测到。';
+  }
+
+  @override
+  String get executionAgentReviewPlanAction => '生成恢复计划';
+
+  @override
+  String get executionAgentReviewPlanActionBody =>
+      '复盘停滞和缺少归属的工作，并为用户确认生成具体下一步或状态更新。';
+
+  @override
   String get executionAgentReviewAction => '查看执行复盘';
 
   @override

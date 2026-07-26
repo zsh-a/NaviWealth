@@ -21,7 +21,7 @@ void main() {
 
   group('Schema version', () {
     test('is 56', () {
-      expect(db.schemaVersion, 56);
+      expect(db.schemaVersion, 58);
     });
   });
 

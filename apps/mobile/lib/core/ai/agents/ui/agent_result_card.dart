@@ -1393,6 +1393,14 @@ Future<void> _snoozeAgentArtifact(
     id: artifact.id,
     until: DateTime.now().toUtc().add(const Duration(days: 1)),
   );
+  final findingStore = await ref.read(
+    agent_providers.agentFindingStoreProvider.future,
+  );
+  await findingStore.snoozeOpenForAgent(
+    ownerUserId: ownerUserId,
+    agentId: artifact.agentId,
+    until: DateTime.now().toUtc().add(const Duration(days: 1)),
+  );
   await onVisibilityChanged?.call();
   if (context.mounted && Navigator.of(context).canPop()) {
     Navigator.of(context).pop();
@@ -1413,6 +1421,14 @@ Future<void> _dismissAgentArtifact(
     ownerUserId: ownerUserId,
     id: artifact.id,
     dismissedAt: DateTime.now().toUtc(),
+  );
+  final findingStore = await ref.read(
+    agent_providers.agentFindingStoreProvider.future,
+  );
+  await findingStore.ignoreOpenForAgent(
+    ownerUserId: ownerUserId,
+    agentId: artifact.agentId,
+    at: DateTime.now().toUtc(),
   );
   await onVisibilityChanged?.call();
   if (context.mounted && Navigator.of(context).canPop()) {

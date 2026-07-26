@@ -31,6 +31,7 @@ import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_pl
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
@@ -251,6 +252,7 @@ void main() {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(_prefs),
         currentUserIdProvider.overrideWithValue(() async => _owner),
+        appDatabaseProvider.overrideWith((ref) async => db),
         knowledgeRepositoryProvider.overrideWith((ref) async => repo),
         memoryRuntimeProvider.overrideWith((ref) async => runtime),
         agent_providers.agentArtifactStoreProvider.overrideWith(
@@ -287,7 +289,12 @@ void main() {
     // prove check-1 never consults it.
     final repo = _FakeRepo(
       decisions: [
-        _decision('d1', question: 'Hold NASDAQ?', assumptionIds: ['a-stale']),
+        _decision(
+          'd1',
+          question: 'Hold NASDAQ?',
+          assumptionIds: ['a-stale'],
+          decidedAt: _now.subtract(const Duration(days: 500)),
+        ),
       ],
       openAssumptions: [_assumption('a-open', 'Other still-open')],
     );

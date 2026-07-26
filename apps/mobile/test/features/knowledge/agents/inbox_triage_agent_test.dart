@@ -299,6 +299,46 @@ void main() {
       expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
     });
 
+    test('edited note invalidates old triage fingerprint', () async {
+      final c = container();
+      final original = _note(id: 'edited', title: 'Draft', body: 'short');
+      await repo.upsertNote(original);
+      const agent = InboxTriageAgent(
+        classifier: HeuristicInboxTriageClassifier(),
+      );
+
+      await runAgent(c, agent);
+      final first = await triage.findForNote('edited');
+      expect(first, isNotNull);
+
+      await repo.upsertNote(
+        KnowledgeNote(
+          id: original.id,
+          title: 'Choose QQQ or BOXX?',
+          bodyMd:
+              'This is now a concrete decision with alternatives. '
+                      'Compare liquidity, volatility, tax treatment, expected return, '
+                      'downside protection, and opportunity cost.'
+                  .padRight(300, 'x'),
+          tags: original.tags,
+          createdAt: original.createdAt,
+          sync: _meta(),
+        ),
+      );
+      final secondRun = await runAgent(c, agent);
+      final second = await triage.findForNote('edited');
+
+      expect(secondRun.status, AgentRunStatus.completed);
+      expect(second, isNotNull);
+      expect(second!.sourceFingerprint, isNot(first!.sourceFingerprint));
+      expect(
+        second.proposals.any(
+          (proposal) => proposal.kind == InboxProposalKind.classification,
+        ),
+        isTrue,
+      );
+    });
+
     test('persists source trace id onto result and artifact', () async {
       final c = container();
       final agent = InboxTriageAgent(
@@ -348,6 +388,7 @@ void main() {
           InboxTriageRecord(
             noteId: 'n1',
             ownerUserId: _owner,
+            sourceFingerprint: 'test-fingerprint',
             lastTriagedAt: _created,
             proposals: <InboxProposal>[
               InboxProposal(
@@ -443,8 +484,10 @@ void main() {
       final res = await runAgent(c, agent);
       expect(res.payload['scanned_notes'], kInboxTriageMaxNotesPerRun);
 
-      final triagedIds = await triage.triagedNoteIds(ownerUserId: _owner);
-      expect(triagedIds, hasLength(kInboxTriageMaxNotesPerRun));
+      final fingerprints = await triage.triagedNoteFingerprints(
+        ownerUserId: _owner,
+      );
+      expect(fingerprints, hasLength(kInboxTriageMaxNotesPerRun));
     });
 
     test('reads triage source through FRB effect loop', () async {
@@ -515,6 +558,9 @@ void main() {
         InboxTriageRecord(
           noteId: 'n1',
           ownerUserId: _owner,
+          sourceFingerprint: knowledgeNoteTriageFingerprint(
+            _note(id: 'n1', title: 'edge-first', body: 'short'),
+          ),
           lastTriagedAt: _created,
           proposals: <InboxProposal>[
             InboxProposal(

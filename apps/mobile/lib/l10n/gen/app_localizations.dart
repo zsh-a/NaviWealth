@@ -23231,6 +23231,114 @@ abstract class AppLocalizations {
     Object projectCount,
   );
 
+  /// No description provided for @executionAgentReviewInsightStalledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stalled work'**
+  String get executionAgentReviewInsightStalledTitle;
+
+  /// No description provided for @executionAgentReviewInsightStalledBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} in-progress actions have not changed for at least 7 days.'**
+  String executionAgentReviewInsightStalledBody(Object count);
+
+  /// No description provided for @executionAgentReviewInsightNoNextActionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing next actions'**
+  String get executionAgentReviewInsightNoNextActionTitle;
+
+  /// No description provided for @executionAgentReviewInsightNoNextActionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{projectCount} active projects and {commitmentCount} active commitments have no open next action.'**
+  String executionAgentReviewInsightNoNextActionBody(
+    Object commitmentCount,
+    Object projectCount,
+  );
+
+  /// No description provided for @executionAgentReviewInsightOverdueTargetsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue targets'**
+  String get executionAgentReviewInsightOverdueTargetsTitle;
+
+  /// No description provided for @executionAgentReviewInsightOverdueTargetsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{projectCount} projects and {commitmentCount} commitments are past their target date.'**
+  String executionAgentReviewInsightOverdueTargetsBody(
+    Object commitmentCount,
+    Object projectCount,
+  );
+
+  /// No description provided for @executionAgentReviewInsightRepeatedBlockerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeated blockers'**
+  String get executionAgentReviewInsightRepeatedBlockerTitle;
+
+  /// No description provided for @executionAgentReviewInsightRepeatedBlockerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} actions recorded blockers more than once this week.'**
+  String executionAgentReviewInsightRepeatedBlockerBody(Object count);
+
+  /// No description provided for @executionAgentReviewInsightOverloadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today is overloaded'**
+  String get executionAgentReviewInsightOverloadTitle;
+
+  /// No description provided for @executionAgentReviewInsightOverloadBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} actions compete for today. Narrow the focus to about {limit}.'**
+  String executionAgentReviewInsightOverloadBody(Object count, Object limit);
+
+  /// No description provided for @executionAgentReviewInsightThroughputTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly throughput'**
+  String get executionAgentReviewInsightThroughputTitle;
+
+  /// No description provided for @executionAgentReviewInsightThroughputBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{completedCount} actions completed and {droppedCount} dropped this week.'**
+  String executionAgentReviewInsightThroughputBody(
+    Object completedCount,
+    Object droppedCount,
+  );
+
+  /// No description provided for @executionAgentReviewInsightOutcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Source signals after completion'**
+  String get executionAgentReviewInsightOutcomeTitle;
+
+  /// No description provided for @executionAgentReviewInsightOutcomeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{clearedCount} source signals are no longer detected and {activeCount} are still detected after their actions closed.'**
+  String executionAgentReviewInsightOutcomeBody(
+    Object activeCount,
+    Object clearedCount,
+  );
+
+  /// No description provided for @executionAgentReviewPlanAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a recovery plan'**
+  String get executionAgentReviewPlanAction;
+
+  /// No description provided for @executionAgentReviewPlanActionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Review stalled and unowned work, then propose concrete next actions or status updates for confirmation.'**
+  String get executionAgentReviewPlanActionBody;
+
   /// No description provided for @executionAgentReviewAction.
   ///
   /// In en, this message translates to:

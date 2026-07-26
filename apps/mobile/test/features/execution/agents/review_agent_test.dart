@@ -109,6 +109,24 @@ void main() {
         sync: _sync(2),
       ),
     );
+    await repo.upsertProject(
+      ExecutionProject(
+        id: 'project-no-next',
+        title: 'Project without a next action',
+        targetDate: DateTime.utc(2026, 5, 20),
+        createdAt: DateTime.utc(2026, 5, 1),
+        sync: _sync(2),
+      ),
+    );
+    await repo.upsertCommitment(
+      ExecutionCommitment(
+        id: 'commit-no-next',
+        title: 'Commitment without a next action',
+        targetDate: DateTime.utc(2026, 5, 20),
+        createdAt: DateTime.utc(2026, 5, 1),
+        sync: _sync(2),
+      ),
+    );
     await repo.upsertAction(
       ExecutionAction(
         id: 'action-review',
@@ -133,6 +151,48 @@ void main() {
         sync: _sync(4),
       ),
     );
+    for (var i = 0; i < 2; i++) {
+      await repo.upsertProgress(
+        ExecutionProgressEntry(
+          id: 'progress-blocker-$i',
+          actionId: 'action-review',
+          projectId: 'project-review',
+          commitmentId: 'commit-review',
+          kind: ExecutionProgressKind.blocker,
+          note: 'The same dependency is still blocked.',
+          createdAt: DateTime.utc(2026, 6, 3 + i),
+          sync: _sync(5 + i),
+        ),
+      );
+    }
+    await repo.upsertAction(
+      ExecutionAction(
+        id: 'action-stalled',
+        title: 'Stalled implementation',
+        status: ExecutionActionStatus.doing,
+        createdAt: DateTime.utc(2026, 5, 1),
+        sync: SyncMeta(
+          ownerUserId: _userId,
+          updatedAt: DateTime.utc(2026, 5, 1),
+          updatedByDevice: _deviceId,
+          hlc: Hlc(
+            wallMillis: DateTime.utc(2026, 5, 1).millisecondsSinceEpoch,
+            counter: 0,
+            nodeId: _deviceId,
+          ),
+        ),
+      ),
+    );
+    await repo.upsertAction(
+      ExecutionAction(
+        id: 'action-completed',
+        title: 'Completed this week',
+        status: ExecutionActionStatus.done,
+        createdAt: DateTime.utc(2026, 6, 1),
+        completedAt: DateTime.utc(2026, 6, 4),
+        sync: _sync(4),
+      ),
+    );
 
     final result = await _withRef(
       container,
@@ -145,7 +205,7 @@ void main() {
     expect(result.memoryId, '$kExecutionReviewMemorySource:2026-06-05');
     expect(result.artifactId, '$kExecutionReviewAgentId:2026-06-05');
     expect(result.summary, contains('1 blocked'));
-    expect(result.summary, contains('1 active commitments'));
+    expect(result.summary, contains('2 active commitments'));
 
     final runtime = await container.read(memoryRuntimeProvider.future);
     final hits = await runtime.recall(
@@ -174,13 +234,25 @@ void main() {
     expect(artifact.summary, result.summary);
     expect(
       artifact.insights.map((insight) => insight.title),
-      containsAll(['Today focus', 'Blocked work', 'Due work']),
+      containsAll([
+        'Today focus',
+        'Blocked work',
+        'Due work',
+        'Stalled work',
+        'Missing next actions',
+        'Overdue targets',
+        'Repeated blockers',
+        'Weekly throughput',
+      ]),
     );
     expect(
       artifact.evidence.map((evidence) => evidence.id),
       contains('action-review'),
     );
-    expect(artifact.actions.single.kind, 'review');
+    expect(artifact.actions.map((action) => action.kind), [
+      'review',
+      'proposal',
+    ]);
     final outcomeFailures = evaluateAgentOutcomeCase(
       regressionCase: agentOutcomeRegressionCaseById('execution.review.ready'),
       result: result,

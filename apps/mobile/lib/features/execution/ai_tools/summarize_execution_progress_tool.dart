@@ -44,6 +44,12 @@ class SummarizeExecutionProgressTool implements DeviceTool {
       ownerUserId: ownerUserId,
       limit: limit,
     );
+    final since = DateTime.now().toUtc().subtract(const Duration(days: 7));
+    final closedActions = await repo.listClosedActions(
+      ownerUserId: ownerUserId,
+      since: since,
+      limit: 500,
+    );
     return withEvidence(
       result: <String, Object?>{
         'open_action_count': actions.length,
@@ -52,6 +58,15 @@ class SummarizeExecutionProgressTool implements DeviceTool {
             .length,
         'active_project_count': projects.length,
         'active_commitment_count': commitments.length,
+        'recent_closed_actions': closedActions
+            .map(
+              (action) => executionActionJson(
+                action,
+                projects: projects,
+                commitments: commitments,
+              ),
+            )
+            .toList(growable: false),
         'active_projects': projects
             .map(executionProjectJson)
             .take(20)

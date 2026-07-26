@@ -165,6 +165,7 @@ void main() {
       InboxTriageRecord(
         noteId: 'n1',
         ownerUserId: _owner,
+        sourceFingerprint: knowledgeNoteTriageFingerprint(note()),
         lastTriagedAt: created,
         proposals: <InboxProposal>[
           classification,

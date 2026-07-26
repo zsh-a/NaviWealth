@@ -21,7 +21,6 @@ import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../agents/assumption_agent.dart';
 import '../agents/providers.dart' as knowledge_agent_providers;
 import '../agents/routine_due_agent.dart';
 import '../composition/knowledge_route_paths.dart';
@@ -303,7 +302,9 @@ class _ReviewActionsFab extends ConsumerWidget {
               AppMessenger.show(
                 context,
                 ToastKind.info,
-                l10n.knowledgeReviewAssumptionsEmpty(kAssumptionStaleDays),
+                l10n.knowledgeReviewAssumptionsEmpty(
+                  kKnowledgeAssumptionStaleDays,
+                ),
               );
               return;
             }
@@ -357,7 +358,7 @@ Future<List<KnowledgeAssumption>> _loadReviewAssumptions(WidgetRef ref) async {
   final now = DateTime.now().toUtc();
   final all = await repo.listOpenAssumptions(ownerUserId: owner);
   return all
-      .where((a) => a.daysSinceVerify(now) >= kAssumptionStaleDays)
+      .where((a) => a.daysSinceVerify(now) >= kKnowledgeAssumptionStaleDays)
       .toList(growable: false);
 }
 

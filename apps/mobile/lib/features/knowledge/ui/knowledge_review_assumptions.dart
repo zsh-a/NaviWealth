@@ -107,7 +107,9 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                 final now = DateTime.now().toUtc();
                 final stale = all
                     .where(
-                      (a) => a.daysSinceVerify(now) >= kAssumptionStaleDays,
+                      (a) =>
+                          a.daysSinceVerify(now) >=
+                          kKnowledgeAssumptionStaleDays,
                     )
                     .toList();
                 if (stale.isEmpty) return const SizedBox.shrink();

@@ -174,7 +174,8 @@ class DataManagementService {
     final agentRows =
         await _countOwnerRows('agent_runs') +
         await _countOwnerRows('agent_runtime_checkpoints') +
-        await _countOwnerRows('agent_artifacts');
+        await _countOwnerRows('agent_artifacts') +
+        await _countOwnerRows('agent_findings');
     final pageCount = await _pragmaInt('page_count');
     final pageSize = await _pragmaInt('page_size');
     final freePages = await _pragmaInt('freelist_count');
@@ -203,6 +204,7 @@ class DataManagementService {
         'ai_traces',
         'agent_runtime_checkpoints',
         'agent_artifacts',
+        'agent_findings',
         'agent_runs',
         'memory_candidates',
         'memories',
@@ -308,6 +310,11 @@ class DataManagementService {
       );
       affected += await _deleteWhere(
         'agent_artifacts',
+        'owner_user_id = ? AND domain = ?',
+        <Object?>[_ownerUserId, scope.wire],
+      );
+      affected += await _deleteWhere(
+        'agent_findings',
         'owner_user_id = ? AND domain = ?',
         <Object?>[_ownerUserId, scope.wire],
       );

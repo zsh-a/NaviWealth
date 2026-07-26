@@ -12,6 +12,7 @@ import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
@@ -158,6 +159,7 @@ void main() {
       }
       final c = ProviderContainer(
         overrides: [
+          appDatabaseProvider.overrideWith((ref) async => db),
           sharedPreferencesProvider.overrideWithValue(_prefs),
           memoryRuntimeProvider.overrideWith((ref) async => rt),
           knowledgeRepositoryProvider.overrideWith((ref) async => repo),
@@ -379,6 +381,7 @@ void main() {
       await seed(repo);
       final c = ProviderContainer(
         overrides: [
+          appDatabaseProvider.overrideWith((ref) async => db),
           sharedPreferencesProvider.overrideWithValue(_prefs),
           knowledgeRepositoryProvider.overrideWith((ref) async => repo),
           currentUserIdProvider.overrideWithValue(() async => _owner),
@@ -470,6 +473,64 @@ void main() {
         expect(byKey['orphan_notes'], 1);
       },
     );
+
+    test('new assumptions and related notes are not unhealthy', () async {
+      final now = DateTime.now().toUtc();
+      final old = now.subtract(const Duration(days: 10));
+      final c = await seededRepo((repo) async {
+        await repo.upsertAssumption(
+          KnowledgeAssumption(
+            id: 'fresh',
+            statement: 'A fresh hypothesis',
+            confidence: 0.5,
+            scope: '*',
+            evidenceIds: const <String>[],
+            status: AssumptionStatus.active,
+            declaredAt: now,
+            sync: meta(),
+          ),
+        );
+        await repo.upsertNote(
+          KnowledgeNote(
+            id: 'linked-note',
+            title: 'Linked note',
+            bodyMd: '',
+            tags: const <String>[],
+            createdAt: old,
+            sync: meta(),
+          ),
+        );
+        await repo.upsertDecision(
+          KnowledgeDecision(
+            id: 'linked-decision',
+            question: 'Linked decision',
+            options: const <DecisionOption>[],
+            selectedLabel: '',
+            rationaleMd: '',
+            principleIds: const <String>[],
+            assumptionIds: const <String>[],
+            status: DecisionStatus.active,
+            decidedAt: now,
+            sync: meta(),
+          ),
+        );
+        await repo.upsertRelation(
+          KnowledgeRelation(
+            id: 'relation-1',
+            fromKind: KnowledgeEntryKind.note.name,
+            fromId: 'linked-note',
+            relation: KnowledgeRelationType.relatedTo,
+            toKind: KnowledgeEntryKind.decision.name,
+            toId: 'linked-decision',
+            createdAt: now,
+            sync: meta(),
+          ),
+        );
+      });
+
+      final out = await _invoke(c, tool, const <String, Object?>{});
+      expect(out['total_items'], 0);
+    });
 
     test('empty knowledge base reports zero with a note', () async {
       final c = await seededRepo((_) async {});

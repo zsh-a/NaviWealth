@@ -53,6 +53,12 @@ Future<void> persistEnvelope({
   required Map<String, Object?> payload,
 }) async {
   final triage = await ctx.ref.read(inboxTriageRepositoryProvider.future);
+  final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
+  final note = await repo.findNote(ownerUserId: ownerUserId, id: noteId);
+  if (note == null) {
+    throw StateError('note $noteId no longer exists');
+  }
+  final sourceFingerprint = knowledgeNoteTriageFingerprint(note);
   final now = DateTime.now().toUtc();
   final existing = await triage.findForNote(noteId);
   final fresh = InboxProposal(
@@ -64,7 +70,10 @@ Future<void> persistEnvelope({
 
   final merged = <InboxProposal>[];
   var replaced = false;
-  for (final p in existing?.proposals ?? const <InboxProposal>[]) {
+  final existingProposals = existing?.sourceFingerprint == sourceFingerprint
+      ? existing!.proposals
+      : const <InboxProposal>[];
+  for (final p in existingProposals) {
     if (p.kind == kind) {
       if (p.status == InboxProposalStatus.dismissed) {
         // §7: dismissed 提议不再重提 — keep the user's verdict.
@@ -85,6 +94,7 @@ Future<void> persistEnvelope({
     InboxTriageRecord(
       noteId: noteId,
       ownerUserId: ownerUserId,
+      sourceFingerprint: sourceFingerprint,
       lastTriagedAt: now,
       proposals: merged,
     ),

@@ -88,8 +88,13 @@ Synced tables use `SyncableTable` and the `know:` row-family prefix:
 Local-only:
 
 - `knowledge_inbox_triage`
+- `agent_findings` rows with `domain = knowledge`
 
-Local-only triage stores AI suggestions and dismissal state. It does not sync because it is derived workflow state.
+Local-only triage stores AI suggestions, the source-note fingerprint, and
+dismissal state. A material Note edit changes the fingerprint and makes the
+Note eligible for triage again; dismissed suggestions are preserved only while
+the source fingerprint is unchanged. It does not sync because it is derived
+workflow state.
 
 ## UI
 
@@ -142,6 +147,12 @@ Rules:
 - `queue_*` inbox triage tools persist derived envelopes to `knowledge_inbox_triage` for the Review tab; they are not chat proposal-card apply kinds.
 - Before creating new knowledge, prefer search or similarity tools to avoid duplicates.
 - The model must not invent decisions, principles, assumptions, or outcomes. User confirmation is required.
+- `review_knowledge_health` uses the same 90-day stale-assumption threshold as
+  Review agents/UI. Orphan Notes must be older than 24 hours and have neither
+  tags, project membership, nor incoming/outgoing Knowledge relations.
+- Topic evolution expands the query through matched Concept aliases, paginates
+  Notes and Decisions, and reports truncation metadata instead of silently
+  treating a bounded page as the full history.
 
 ## Proposal Application
 
@@ -197,8 +208,8 @@ Current agents:
 |---|---|
 | ReviewAgent | Surfaces decisions due for review and stale assumptions |
 | AssumptionAgent | Finds assumptions that need verification |
-| ContradictionAgent | Detects conflicts against active principles, assumptions, and recent memories |
-| InboxTriageAgent | Produces async proposals for captured notes |
+| ContradictionAgent | Detects structural and semantic conflicts against active principles, assumptions, Notes, and all active Decisions |
+| InboxTriageAgent | Produces async proposals for new or materially edited captured notes |
 | RoutineDueAgent | Surfaces routines due soon and sends review notifications |
 
 Location:
@@ -211,6 +222,9 @@ Rules:
 - Agents must not modify user-authored source content without a proposal and confirmation.
 - Agents must skip cleanly when no LLM profile exists if the task requires LLM judgment.
 - Agents must not call other agents.
+- Durable findings use stable subject/reference identities and reconcile
+  `open -> resolved`; dismiss and snooze suppress unchanged evidence, while
+  materially changed evidence reopens the finding.
 
 ## Inbox Triage Flow
 

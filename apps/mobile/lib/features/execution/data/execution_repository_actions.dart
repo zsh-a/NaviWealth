@@ -80,7 +80,7 @@ mixin ExecutionActionRepositoryMixin {
 
   Stream<List<ExecutionAction>> watchClosedActions({
     required String ownerUserId,
-    int limit = 100,
+    int? limit,
   }) {
     final q = _db.select(_db.executionActions)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
@@ -94,8 +94,8 @@ mixin ExecutionActionRepositoryMixin {
       ..orderBy([
         (t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc),
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
+      ]);
+    if (limit != null) q.limit(limit);
     return q.watch().map((rows) => rows.map(executionActionFromRow).toList());
   }
 
@@ -185,6 +185,32 @@ mixin ExecutionActionRepositoryMixin {
       ..limit(limit);
     final rows = await q.get();
     return rows.map(executionActionFromRow).toList();
+  }
+
+  Future<List<ExecutionAction>> listClosedActions({
+    required String ownerUserId,
+    DateTime? since,
+    int limit = 500,
+  }) async {
+    final q = _db.select(_db.executionActions)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..where(
+        (t) => t.status.isIn(<String>[
+          ExecutionActionStatus.done.wire,
+          ExecutionActionStatus.dropped.wire,
+        ]),
+      );
+    if (since != null) {
+      q.where((t) => t.completedAt.isBiggerOrEqualValue(since.toUtc()));
+    }
+    q
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    final rows = await q.get();
+    return rows.map(executionActionFromRow).toList(growable: false);
   }
 
   Stream<List<ExecutionAction>> watchActionsForMemoryIndex({

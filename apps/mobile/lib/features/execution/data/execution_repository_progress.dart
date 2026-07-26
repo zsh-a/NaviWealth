@@ -51,15 +51,15 @@ mixin ExecutionProgressRepositoryMixin {
 
   Stream<List<ExecutionProgressEntry>> watchRecentProgress({
     required String ownerUserId,
-    int limit = 100,
+    int? limit,
   }) {
     final q = _db.select(_db.executionProgressEntries)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
+      ]);
+    if (limit != null) q.limit(limit);
     return q.watch().map((rows) => rows.map(executionProgressFromRow).toList());
   }
 
@@ -124,6 +124,22 @@ mixin ExecutionProgressRepositoryMixin {
       ..limit(limit);
     final rows = await q.get();
     return rows.map(executionProgressFromRow).toList();
+  }
+
+  Stream<List<ExecutionProgressEntry>> watchProgressForMemoryIndex({
+    required String ownerUserId,
+    int limit = 500,
+  }) {
+    final q = _db.select(_db.executionProgressEntries)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    return q.watch().map(
+      (rows) => rows.map(executionProgressFromRow).toList(growable: false),
+    );
   }
 
   Future<void> upsertProgress(ExecutionProgressEntry progress) {

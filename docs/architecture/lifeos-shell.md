@@ -182,6 +182,9 @@ Rules:
 
 - Agents are named use cases, not a general automation platform.
 - Agents read through repositories, tools, or Memory Runtime and write events/memories/proposals/notifications according to domain SSOTs.
+- Cross-run diagnostics are stored as local-only stable findings. Agents
+  reconcile open findings by stable identity; disappeared signals resolve, and
+  ignored/snoozed findings reopen only when evidence changes or snooze expires.
 - Agents must not call other agents.
 - Background isolate callbacks remain lightweight. Heavy work runs in the foreground path where Riverpod, memory, LLM, and notification services are available.
 
@@ -208,6 +211,8 @@ Indexers:
 - Options trade journal to trade events and episodic memories.
 - Health metrics to health events and selected sleep episodic memories.
 - Knowledge objects and decisions to `know:*` memories.
+- Execution actions, commitments, projects, and progress to `execution:*`
+  memories/events.
 
 Rules:
 

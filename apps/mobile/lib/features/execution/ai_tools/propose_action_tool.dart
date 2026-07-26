@@ -52,6 +52,17 @@ class ProposeActionTool implements DeviceTool {
     if (title.isEmpty || reason.isEmpty) {
       return badRequest('title / reason 必填。');
     }
+    final sourceValues = <String>[
+      optionalString(input['source_domain']) ?? '',
+      optionalString(input['source_row_family']) ?? '',
+      optionalString(input['source_row_id']) ?? '',
+    ];
+    final hasAnySource = sourceValues.any((value) => value.isNotEmpty);
+    if (hasAnySource && sourceValues.any((value) => value.isEmpty)) {
+      return badRequest(
+        '跨域来源必须同时提供 source_domain / source_row_family / source_row_id。',
+      );
+    }
     final priorityRaw = (input['priority'] as String?)?.trim() ?? 'normal';
     final priority = ExecutionPriority.parse(priorityRaw);
     final dueAt = optionalIsoDate(input['due_at']);

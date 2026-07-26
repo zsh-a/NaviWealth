@@ -138,6 +138,18 @@ class ExecutionProposalApplier implements ProposalApplier {
     final title = _require(plan, 'title');
     final meta = await stamp();
     final repo = await ref.read(executionRepositoryProvider.future);
+    final source = _sourceRef(plan);
+    final openActions = await repo.listOpenActions(
+      ownerUserId: ownerUserId,
+      limit: 500,
+    );
+    for (final existing in openActions) {
+      if (!_sameConcreteSource(existing.source, source)) continue;
+      if (_titleSimilarity(existing.title, title) < 0.85) continue;
+      throw ProposalApplyException(
+        'similar open action already exists: ${existing.id}',
+      );
+    }
     final action = ExecutionAction(
       id: kExecutionUuid.v4(),
       title: title,
@@ -147,7 +159,7 @@ class ExecutionProposalApplier implements ProposalApplier {
       scheduledFor: _parseOptionalUtc(plan.get('scheduled_for')),
       projectId: plan.get('project_id'),
       commitmentId: plan.get('commitment_id'),
-      source: _sourceRef(plan),
+      source: source,
       createdAt: meta.updatedAt,
       sync: meta,
     );
@@ -159,6 +171,29 @@ class ExecutionProposalApplier implements ProposalApplier {
       appliedAt: _now(),
       shortLabel: '已创建 Action：${action.title}',
     );
+  }
+
+  bool _sameConcreteSource(ExecutionSourceRef a, ExecutionSourceRef b) {
+    if (a.isEmpty || b.isEmpty) return false;
+    return a.domain == b.domain &&
+        a.rowFamily == b.rowFamily &&
+        a.rowId == b.rowId;
+  }
+
+  double _titleSimilarity(String a, String b) {
+    Set<String> tokens(String value) => value
+        .toLowerCase()
+        .split(RegExp(r'[^a-z0-9\u4e00-\u9fff]+'))
+        .where((part) => part.isNotEmpty)
+        .toSet();
+    final left = tokens(a);
+    final right = tokens(b);
+    if (left.isEmpty || right.isEmpty) {
+      return a.trim().toLowerCase() == b.trim().toLowerCase() ? 1 : 0;
+    }
+    final intersection = left.where(right.contains).length;
+    final union = <String>{...left, ...right}.length;
+    return intersection / union;
   }
 
   Future<ProposalApplyState> _applyActionStatusUpdate(

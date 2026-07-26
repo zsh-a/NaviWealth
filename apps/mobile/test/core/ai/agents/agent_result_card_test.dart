@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_evidence_navigation_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_finding_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_intents.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart';
@@ -19,6 +20,8 @@ import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
+import '../../persistence/test_database.dart';
 
 Widget _wrap(Widget child, {List<Override> overrides = const <Override>[]}) {
   return ProviderScope(
@@ -652,6 +655,8 @@ void main() {
     tester,
   ) async {
     final store = _FakeArtifactStore();
+    final db = makeTestDatabase();
+    addTearDown(db.close);
     var visibilityChanges = 0;
     await tester.pumpWidget(
       _wrap(
@@ -664,6 +669,9 @@ void main() {
         overrides: [
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           agentArtifactStoreProvider.overrideWith((ref) async => store),
+          agentFindingStoreProvider.overrideWith(
+            (ref) async => SqliteAgentFindingStore(db: db),
+          ),
         ],
       ),
     );

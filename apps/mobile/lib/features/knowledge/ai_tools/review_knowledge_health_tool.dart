@@ -11,9 +11,12 @@
 /// items into `propose_*` actions. Backs the Inbox「本周建议」chip.
 library;
 
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
+import '../agents/contradiction_agent.dart' show kKnowledgeContradictionAgentId;
+import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 
@@ -21,8 +24,6 @@ class ReviewKnowledgeHealthTool implements DeviceTool {
   const ReviewKnowledgeHealthTool();
 
   /// Assumptions unverified for longer than this count as stale.
-  static const int kStaleAssumptionDays = 90;
-
   @override
   String get name => 'review_knowledge_health';
 
@@ -82,23 +83,69 @@ class ReviewKnowledgeHealthTool implements DeviceTool {
       ownerUserId: ownerUserId,
     );
     final staleAssumptions = assumptions
-        .where((a) {
-          final v = a.lastVerifiedAt;
-          if (v == null) return true;
-          return now.difference(v.toUtc()).inDays > kStaleAssumptionDays;
-        })
+        .where((a) => a.daysSinceVerify(now) >= kKnowledgeAssumptionStaleDays)
         .toList(growable: false);
-    final notes = await repo.listNotes(ownerUserId: ownerUserId, limit: 500);
+    final notes = await _listAllNotes(repo, ownerUserId);
+    final relatedNoteIds = await repo.listRelatedObjectIds(
+      ownerUserId: ownerUserId,
+      kind: KnowledgeEntryKind.note.name,
+    );
+    final orphanGraceStart = now.subtract(const Duration(hours: 24));
     final orphans = notes
-        .where((n) => n.tags.isEmpty && (n.projectTag == null))
+        .where(
+          (note) =>
+              note.createdAt.toUtc().isBefore(orphanGraceStart) &&
+              note.tags.isEmpty &&
+              (note.projectTag == null || note.projectTag!.trim().isEmpty) &&
+              !relatedNoteIds.contains(note.id),
+        )
         .toList(growable: false);
+    final triage = await ctx.ref.read(inboxTriageRepositoryProvider.future);
+    final pendingTriage = await triage.listPending(
+      ownerUserId: ownerUserId,
+      limit: 100,
+    );
+    final findingStore = await ctx.ref.read(
+      agent_providers.agentFindingStoreProvider.future,
+    );
+    final contradictions = await findingStore.listOpen(
+      ownerUserId: ownerUserId,
+      domain: 'knowledge',
+      agentId: kKnowledgeContradictionAgentId,
+      limit: 100,
+    );
 
     final sections = <Map<String, Object?>>[
+      _section(
+        'contradictions',
+        '待处理的知识矛盾',
+        contradictions.length,
+        contradictions
+            .take(sample)
+            .map(
+              (finding) => _item(
+                finding.id,
+                '${finding.payload['subject_kind']} '
+                '${finding.payload['subject_id']} ↔ '
+                '${finding.payload['reference_id']}',
+              ),
+            ),
+      ),
       _section(
         'due_reviews',
         '到期复盘的决策',
         dueReviews.length,
         dueReviews.take(sample).map((d) => _item(d.id, d.question)),
+      ),
+      _section(
+        'inbox_triage',
+        '待确认的 Inbox 建议',
+        pendingTriage.length,
+        pendingTriage
+            .take(sample)
+            .map(
+              (record) => _item(record.noteId, 'Inbox note ${record.noteId}'),
+            ),
       ),
       _section(
         'due_routines',
@@ -125,9 +172,14 @@ class ReviewKnowledgeHealthTool implements DeviceTool {
     return <String, Object?>{
       'as_of': now.toIso8601String(),
       'total_items': total,
-      // Highest-count, most-actionable first so the model leads with it.
+      // Risk order is deliberate: one overdue decision matters more than a
+      // large low-risk cleanup backlog.
       'sections': sections.where((s) => (s['count'] as int) > 0).toList()
-        ..sort((a, b) => (b['count'] as int).compareTo(a['count'] as int)),
+        ..sort(
+          (a, b) => _sectionPriority(
+            a['key'] as String,
+          ).compareTo(_sectionPriority(b['key'] as String)),
+        ),
       if (total == 0) 'note': '知识库当前没有待办事项 —— 一切都在掌控中。',
     };
   }
@@ -146,6 +198,35 @@ class ReviewKnowledgeHealthTool implements DeviceTool {
 
   static Map<String, Object?> _item(String id, String label) =>
       <String, Object?>{'id': id, 'label': label};
+}
+
+int _sectionPriority(String key) => switch (key) {
+  'contradictions' => 0,
+  'due_reviews' => 1,
+  'stale_assumptions' => 2,
+  'due_routines' => 3,
+  'inbox_triage' => 4,
+  'orphan_notes' => 5,
+  _ => 99,
+};
+
+Future<List<KnowledgeNote>> _listAllNotes(
+  KnowledgeRepository repo,
+  String ownerUserId,
+) async {
+  const pageSize = 500;
+  final out = <KnowledgeNote>[];
+  var offset = 0;
+  while (true) {
+    final page = await repo.listNotes(
+      ownerUserId: ownerUserId,
+      limit: pageSize,
+      offset: offset,
+    );
+    out.addAll(page);
+    if (page.length < pageSize) return out;
+    offset += page.length;
+  }
 }
 
 DateTime _startOfLocalDay(DateTime value) {

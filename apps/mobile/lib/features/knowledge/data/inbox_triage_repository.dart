@@ -15,9 +15,22 @@ library;
 
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
 
 import '../../../core/persistence/app_database.dart';
+import '../domain/knowledge_models.dart';
+
+String knowledgeNoteTriageFingerprint(KnowledgeNote note) {
+  final normalized = jsonEncode(<String, Object?>{
+    'title': note.title.trim(),
+    'body_md': note.bodyMd.trim(),
+    'source_url': note.sourceUrl?.trim(),
+    'tags': note.tags.map((tag) => tag.trim().toLowerCase()).toList()..sort(),
+    'project_tag': note.projectTag?.trim(),
+  });
+  return sha256.convert(utf8.encode(normalized)).toString();
+}
 
 /// What an inbox proposal recommends. Matches §4 / §7 trio.
 enum InboxProposalKind {
@@ -155,12 +168,14 @@ class InboxTriageRecord {
   InboxTriageRecord({
     required this.noteId,
     required this.ownerUserId,
+    required this.sourceFingerprint,
     required this.lastTriagedAt,
     required this.proposals,
   });
 
   final String noteId;
   final String ownerUserId;
+  final String sourceFingerprint;
   final DateTime lastTriagedAt;
   final List<InboxProposal> proposals;
 
@@ -185,7 +200,8 @@ class InboxTriageRepository {
   Future<InboxTriageRecord?> findForNote(String noteId) async {
     final row = await _db
         .customSelect(
-          'SELECT note_id, owner_user_id, last_triaged_at, proposals_json '
+          'SELECT note_id, owner_user_id, source_fingerprint, '
+          'last_triaged_at, proposals_json '
           'FROM knowledge_inbox_triage WHERE note_id = ?',
           variables: [Variable.withString(noteId)],
         )
@@ -205,7 +221,8 @@ class InboxTriageRepository {
     final now = DateTime.now().toUtc();
     final rows = await _db
         .customSelect(
-          'SELECT note_id, owner_user_id, last_triaged_at, proposals_json '
+          'SELECT note_id, owner_user_id, source_fingerprint, '
+          'last_triaged_at, proposals_json '
           'FROM knowledge_inbox_triage WHERE owner_user_id = ? '
           'ORDER BY last_triaged_at DESC LIMIT ?',
           variables: [
@@ -231,11 +248,13 @@ class InboxTriageRepository {
     final json = jsonEncode(rec.proposals.map((p) => p.toJson()).toList());
     await _db.customStatement(
       'INSERT OR REPLACE INTO knowledge_inbox_triage ('
-      '  note_id, owner_user_id, last_triaged_at, proposals_json'
-      ') VALUES (?, ?, ?, ?)',
+      '  note_id, owner_user_id, source_fingerprint, last_triaged_at, '
+      '  proposals_json'
+      ') VALUES (?, ?, ?, ?, ?)',
       <Object?>[
         rec.noteId,
         rec.ownerUserId,
+        rec.sourceFingerprint,
         rec.lastTriagedAt.toUtc().millisecondsSinceEpoch,
         json,
       ],
@@ -264,6 +283,7 @@ class InboxTriageRepository {
       InboxTriageRecord(
         noteId: existing.noteId,
         ownerUserId: existing.ownerUserId,
+        sourceFingerprint: existing.sourceFingerprint,
         lastTriagedAt: existing.lastTriagedAt,
         proposals: updated,
       ),
@@ -294,6 +314,7 @@ class InboxTriageRepository {
       InboxTriageRecord(
         noteId: existing.noteId,
         ownerUserId: existing.ownerUserId,
+        sourceFingerprint: existing.sourceFingerprint,
         lastTriagedAt: existing.lastTriagedAt,
         proposals: updated,
       ),
@@ -338,6 +359,7 @@ class InboxTriageRepository {
       InboxTriageRecord(
         noteId: existing.noteId,
         ownerUserId: existing.ownerUserId,
+        sourceFingerprint: existing.sourceFingerprint,
         lastTriagedAt: existing.lastTriagedAt,
         proposals: updated,
       ),
@@ -346,14 +368,20 @@ class InboxTriageRepository {
 
   /// Note ids that already have a triage row — used by the agent to
   /// skip already-proposed notes without per-note point lookups.
-  Future<Set<String>> triagedNoteIds({required String ownerUserId}) async {
+  Future<Map<String, String>> triagedNoteFingerprints({
+    required String ownerUserId,
+  }) async {
     final rows = await _db
         .customSelect(
-          'SELECT note_id FROM knowledge_inbox_triage WHERE owner_user_id = ?',
+          'SELECT note_id, source_fingerprint FROM knowledge_inbox_triage '
+          'WHERE owner_user_id = ?',
           variables: [Variable.withString(ownerUserId)],
         )
         .get();
-    return rows.map((r) => r.data['note_id'] as String).toSet();
+    return <String, String>{
+      for (final row in rows)
+        row.data['note_id'] as String: row.data['source_fingerprint'] as String,
+    };
   }
 
   InboxTriageRecord _rowToRecord(Map<String, Object?> r) {
@@ -368,6 +396,7 @@ class InboxTriageRepository {
     return InboxTriageRecord(
       noteId: r['note_id'] as String,
       ownerUserId: r['owner_user_id'] as String,
+      sourceFingerprint: r['source_fingerprint'] as String,
       lastTriagedAt: DateTime.fromMillisecondsSinceEpoch(
         r['last_triaged_at'] as int,
         isUtc: true,

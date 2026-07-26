@@ -11,6 +11,7 @@ import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
+import '../data/inbox_triage_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '../domain/knowledge_text.dart';
@@ -60,9 +61,14 @@ class ListInboxTriageCandidatesTool implements DeviceTool {
       ownerUserId: ownerUserId,
       limit: scanLimit,
     );
-    final triagedIds = await triage.triagedNoteIds(ownerUserId: ownerUserId);
+    final fingerprints = await triage.triagedNoteFingerprints(
+      ownerUserId: ownerUserId,
+    );
     final candidateNotes = notes
-        .where((note) => !triagedIds.contains(note.id))
+        .where(
+          (note) =>
+              fingerprints[note.id] != knowledgeNoteTriageFingerprint(note),
+        )
         .take(limit)
         .toList(growable: false);
 

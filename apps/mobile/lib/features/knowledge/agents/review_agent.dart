@@ -3,7 +3,7 @@
 ///
 /// Runs Sunday 09:00 local. Surfaces "what needs review this week" —
 /// both Decisions whose `review_date` has passed **and** active
-/// Assumptions left unverified past [kAssumptionStaleDays]. Writes one episodic
+/// Assumptions left unverified past [kKnowledgeAssumptionStaleDays]. Writes one episodic
 /// memory; the Review tab reads the same repo, so the memory is a recall
 /// affordance for AI chat, not a UI primary path.
 library;
@@ -26,7 +26,6 @@ import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_agent_l10n.dart';
 import '_agent_memory.dart';
-import 'assumption_agent.dart' show kAssumptionStaleDays;
 
 const String kKnowledgeReviewAgentId = 'knowledge_review';
 const String kKnowledgeReviewMemorySource = 'agent:knowledge_review';
@@ -92,7 +91,7 @@ class ReviewAgent implements Agent {
         'stale_assumption_ids': staleAssumptions
             .map((a) => a.id)
             .toList(growable: false),
-        'assumption_threshold_days': kAssumptionStaleDays,
+        'assumption_threshold_days': kKnowledgeAssumptionStaleDays,
         if (dueSnapshot.traceId != null) 'trace_id': dueSnapshot.traceId,
       },
       entities: <String>{'knowledge_review', 'weekly_review'},
@@ -195,14 +194,14 @@ class ReviewAgent implements Agent {
             body: l10n.knowledgeAgentReviewInsightAssumptionsBody(
               staleAssumptions.length,
               staleAssumptions.length == 1 ? '' : 's',
-              kAssumptionStaleDays,
+              kKnowledgeAssumptionStaleDays,
             ),
             severity: AgentArtifactSeverity.attention,
             evidenceIds: <String>[for (final item in staleAssumptions) item.id],
             route: KnowledgeRoutes.review,
             payload: <String, Object?>{
               'count': staleAssumptions.length,
-              'threshold_days': kAssumptionStaleDays,
+              'threshold_days': kKnowledgeAssumptionStaleDays,
               'first_id': staleAssumptions.first.id,
             },
           ),
@@ -265,12 +264,12 @@ class ReviewAgent implements Agent {
       parts.add(
         staleCount == 1
             ? l10n.knowledgeAgentReviewAssumptionOne(
-                kAssumptionStaleDays,
+                kKnowledgeAssumptionStaleDays,
                 firstStale ?? '',
               )
             : l10n.knowledgeAgentReviewAssumptionMany(
                 staleCount,
-                kAssumptionStaleDays,
+                kKnowledgeAssumptionStaleDays,
                 firstStale ?? '',
               ),
       );
@@ -296,7 +295,9 @@ class RepositoryReviewDueReader implements ReviewDueReader {
     );
     final open = await repo.listOpenAssumptions(ownerUserId: ownerUserId);
     final staleAssumptions = open
-        .where((a) => a.daysSinceVerify(ctx.now) >= kAssumptionStaleDays)
+        .where(
+          (a) => a.daysSinceVerify(ctx.now) >= kKnowledgeAssumptionStaleDays,
+        )
         .map(ReviewAssumptionItem.fromAssumption)
         .toList(growable: false);
     return ReviewDueSnapshot(
@@ -392,7 +393,7 @@ ReviewDueSnapshot? reviewDueSnapshotFromTerminalStep(
   );
   if (reviews == null || openAssumptions == null) return null;
   final staleAssumptions = openAssumptions
-      .where((a) => a.daysSinceVerify >= kAssumptionStaleDays)
+      .where((a) => a.daysSinceVerify >= kKnowledgeAssumptionStaleDays)
       .map((a) => ReviewAssumptionItem(id: a.id, statement: a.statement))
       .toList(growable: false);
   return ReviewDueSnapshot(
