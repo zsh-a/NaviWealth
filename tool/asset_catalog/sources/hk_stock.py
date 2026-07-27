@@ -32,11 +32,18 @@ from __future__ import annotations
 import argparse
 import logging
 import pathlib
+import re
 import sys
+from collections.abc import Callable, Mapping
+from typing import Any
 
 from tool.asset_catalog.common import make_row, to_simplified, write_rows
 
 LOG = logging.getLogger("asset_catalog.hk_stock")
+
+MIN_HK_STOCK_ROWS = 1_500
+YFINANCE_PAGE_SIZE = 250
+YFINANCE_MAX_RESULTS = 20_000
 
 HKEX_URL = (
     "https://www.hkex.com.hk/eng/services/trading/securities/"
@@ -93,7 +100,10 @@ def parse_hkex_row(
         LOG.debug("hkex: unknown category %r for %s (%s)", cat, code_str, name_str)
         return None
 
-    padded = code_str.zfill(4)
+    # HKEX currently emits five-character strings such as ``00700`` while
+    # Yahoo/Sina use ``0700.HK``. Removing leading zeroes before padding keeps
+    # ordinary listings canonical while preserving real five-digit products.
+    padded = str(int(code_str)).zfill(4)
     symbol = f"{padded}.HK"
     name_cn = to_simplified(name_str)
     return make_row(
@@ -134,7 +144,10 @@ def fetch_hkex(url: str = HKEX_URL, timeout: int = 60) -> bytes:
     except ImportError as exc:
         raise FetchError("requests not installed; run pip install -r requirements.txt") from exc
     headers = {"User-Agent": "NaviWealth-CatalogBuilder/1.0"}
-    resp = requests.get(url, timeout=timeout, headers=headers)
+    try:
+        resp = requests.get(url, timeout=timeout, headers=headers)
+    except requests.RequestException as exc:
+        raise FetchError(f"HKEX request failed for {url}: {exc}") from exc
     if resp.status_code != 200:
         raise FetchError(f"HKEX HTTP {resp.status_code} for {url}")
     return resp.content
@@ -147,7 +160,10 @@ def parse_workbook(blob: bytes) -> list[dict[str, str]]:
         raise FetchError("openpyxl not installed; run pip install -r requirements.txt") from exc
     import io
 
-    wb = load_workbook(io.BytesIO(blob), read_only=True, data_only=True)
+    try:
+        wb = load_workbook(io.BytesIO(blob), read_only=True, data_only=True)
+    except Exception as exc:
+        raise FetchError(f"HKEX: invalid workbook: {exc}") from exc
     sheet = wb.worksheets[0]
 
     rows = sheet.iter_rows(values_only=True)
@@ -186,9 +202,180 @@ def parse_workbook(blob: bytes) -> list[dict[str, str]]:
     return out
 
 
+def parse_yfinance_quote(
+    quote: Mapping[str, Any],
+    *,
+    type_name: str,
+) -> dict[str, str] | None:
+    """Translate one Yahoo screener quote into a catalog row.
+
+    Yahoo reports derivative warrants, CBBCs, and ordinary shares alike as
+    ``EQUITY``. The fallback therefore keeps only the 0001-9999 ordinary/GEM
+    code space for equities. ETFs are obtained from Yahoo's separate ETF
+    screener.
+    """
+    expected_quote_type = "ETF" if type_name == "etf" else "EQUITY"
+    if str(quote.get("quoteType") or "").upper() != expected_quote_type:
+        return None
+    if str(quote.get("exchange") or "").upper() != "HKG":
+        return None
+    if str(quote.get("currency") or "").upper() != "HKD":
+        return None
+
+    match = re.fullmatch(r"(\d{4,5})\.HK", str(quote.get("symbol") or "").upper())
+    if match is None:
+        return None
+    code = int(match.group(1))
+    if code <= 0 or code > 9_999:
+        return None
+
+    name = str(quote.get("shortName") or quote.get("longName") or "").strip()
+    if not name:
+        return None
+
+    symbol = f"{code:04d}.HK"
+    name_cn = to_simplified(name)
+    return make_row(
+        symbol=symbol,
+        market="hk_stock",
+        type_name=type_name,
+        currency="HKD",
+        name_en=name if _looks_latin(name) else "",
+        name_cn=name_cn if not _looks_latin(name_cn) else "",
+    )
+
+
+def _fetch_yfinance_screen(
+    screen: Callable[..., Mapping[str, Any]],
+    query: object,
+) -> list[Mapping[str, Any]]:
+    """Fetch every page for one Yahoo screener query."""
+
+    def fetch_page(offset: int) -> Mapping[str, Any]:
+        result = screen(
+            query,
+            offset=offset,
+            size=YFINANCE_PAGE_SIZE,
+            sortField="ticker",
+            sortAsc=True,
+        )
+        if not isinstance(result, Mapping):
+            raise FetchError(
+                f"yfinance screener returned {type(result)!r}, expected a mapping"
+            )
+        return result
+
+    first = fetch_page(0)
+    total = first.get("total")
+    if not isinstance(total, int) or total < 0 or total > YFINANCE_MAX_RESULTS:
+        raise FetchError(f"yfinance screener returned invalid total: {total!r}")
+
+    first_quotes = first.get("quotes")
+    if not isinstance(first_quotes, list):
+        raise FetchError("yfinance screener response has no quotes list")
+    quotes: list[Mapping[str, Any]] = [
+        quote for quote in first_quotes if isinstance(quote, Mapping)
+    ]
+
+    for offset in range(YFINANCE_PAGE_SIZE, total, YFINANCE_PAGE_SIZE):
+        page = fetch_page(offset)
+        page_quotes = page.get("quotes")
+        if not isinstance(page_quotes, list):
+            raise FetchError(
+                f"yfinance screener page at offset {offset} has no quotes list"
+            )
+        if not page_quotes:
+            raise FetchError(
+                f"yfinance screener stopped at offset {offset} before total {total}"
+            )
+        quotes.extend(quote for quote in page_quotes if isinstance(quote, Mapping))
+
+    if len(quotes) != total:
+        raise FetchError(
+            f"yfinance screener returned {len(quotes)} quotes, expected {total}"
+        )
+    symbols = [quote.get("symbol") for quote in quotes]
+    if any(not isinstance(symbol, str) or not symbol for symbol in symbols):
+        raise FetchError("yfinance screener returned a quote without a symbol")
+    if len(set(symbols)) != len(symbols):
+        raise FetchError("yfinance screener returned duplicate symbols across pages")
+    return quotes
+
+
+def fetch_yfinance() -> list[dict[str, str]]:
+    """Fetch a conservative HK stock + ETF universe from Yahoo Finance."""
+    try:
+        import yfinance as yf  # type: ignore
+    except ImportError as exc:
+        raise FetchError(
+            "yfinance not installed; run pip install -r requirements.txt"
+        ) from exc
+
+    try:
+        equity_query = yf.EquityQuery(
+            "and",
+            [
+                yf.EquityQuery("eq", ["region", "hk"]),
+                yf.EquityQuery("eq", ["exchange", "HKG"]),
+            ],
+        )
+        etf_query = yf.ETFQuery(
+            "and",
+            [
+                yf.ETFQuery("eq", ["region", "hk"]),
+                yf.ETFQuery("eq", ["exchange", "HKG"]),
+            ],
+        )
+        equity_quotes = _fetch_yfinance_screen(yf.screen, equity_query)
+        etf_quotes = _fetch_yfinance_screen(yf.screen, etf_query)
+    except FetchError:
+        raise
+    except Exception as exc:
+        raise FetchError(f"yfinance HK screener failed: {exc}") from exc
+
+    by_symbol: dict[str, dict[str, str]] = {}
+    for quote in equity_quotes:
+        parsed = parse_yfinance_quote(quote, type_name="stock")
+        if parsed is not None:
+            by_symbol[parsed["symbol"]] = parsed
+    for quote in etf_quotes:
+        parsed = parse_yfinance_quote(quote, type_name="etf")
+        if parsed is not None:
+            # Prefer the more specific ETF classification if Yahoo returns a
+            # symbol from both screeners.
+            by_symbol[parsed["symbol"]] = parsed
+
+    rows = [by_symbol[symbol] for symbol in sorted(by_symbol)]
+    LOG.info(
+        "yfinance: %d catalog rows (equity quotes=%d, ETF quotes=%d)",
+        len(rows),
+        len(equity_quotes),
+        len(etf_quotes),
+    )
+    return rows
+
+
 def fetch_hk_stock() -> list[dict[str, str]]:
-    blob = fetch_hkex()
-    return parse_workbook(blob)
+    try:
+        rows = parse_workbook(fetch_hkex())
+    except FetchError as exc:
+        LOG.warning("HKEX unavailable (%s); falling back to yfinance", exc)
+    else:
+        if len(rows) >= MIN_HK_STOCK_ROWS:
+            return rows
+        LOG.warning(
+            "HKEX returned only %d rows (minimum %d); falling back to yfinance",
+            len(rows),
+            MIN_HK_STOCK_ROWS,
+        )
+
+    rows = fetch_yfinance()
+    if len(rows) < MIN_HK_STOCK_ROWS:
+        raise FetchError(
+            f"yfinance returned only {len(rows)} HK rows "
+            f"(minimum {MIN_HK_STOCK_ROWS})"
+        )
+    return rows
 
 
 # ---------------------------------------------------------------------------

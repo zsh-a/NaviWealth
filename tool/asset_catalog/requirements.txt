@@ -10,6 +10,9 @@ mootdx==0.11.7
 # HKEX xlsx parsing.
 openpyxl==3.1.5
 
+# HK fallback — Yahoo Finance screener pagination.
+yfinance==1.5.2
+
 # HTTP fetcher (CoinGecko, NASDAQ Trader, SEC, HKEX).
 requests==2.32.3
 

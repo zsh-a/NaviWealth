@@ -9,12 +9,12 @@
 #                    the stub set during development.
 #
 #   --full           full ingest. Runs every source adapter (BaoStock +
-#                    mootdx for A-share, HKEX xlsx, NASDAQ Trader +
-#                    SEC for US, CoinGecko for crypto), regenerates
-#                    each source CSV, then bakes the NDJSON. Requires
-#                    network access to the upstream feeds — currently
-#                    only reliable from a runner inside mainland China
-#                    because BaoStock and mootdx geo-restrict.
+#                    mootdx for A-share, HKEX xlsx with yfinance fallback,
+#                    NASDAQ Trader + SEC for US, CoinGecko for crypto),
+#                    regenerates each source CSV, then bakes the NDJSON.
+#                    Requires network access to the upstream feeds —
+#                    currently only reliable from a runner inside mainland
+#                    China because BaoStock and mootdx geo-restrict.
 #
 #   --allow-degraded  with --full, do not fail if a single source is
 #                     unreachable (the previous CSV for that source is
