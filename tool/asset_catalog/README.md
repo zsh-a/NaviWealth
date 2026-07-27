@@ -58,12 +58,13 @@ Environment knobs:
 
 ### Runner constraints
 
-BaoStock and mootdx are **mainland-China services**: hosted-CI runners in
-the US/EU connect intermittently or not at all. The default workflow is
-to invoke `--full` from a developer machine inside CN, or from a
-self-hosted CN runner; GitHub-hosted runners are not supported and a
-follow-up ticket tracks adding a proxy. HKEX, NASDAQ Trader, SEC and
-CoinGecko are all reachable globally.
+BaoStock and mootdx are **mainland-China services** and can be less reliable
+from GitHub-hosted runners in the US/EU. The automated refresh workflow still
+uses `ubuntu-latest`, but runs the full ingest fail-closed: it never passes
+`--allow-degraded`, so an unreachable source fails the run instead of
+publishing a partial catalog. The workflow can be retried manually after a
+transient outage. HKEX, NASDAQ Trader, SEC and CoinGecko are globally
+reachable.
 
 When BaoStock fails, the cn_a adapter automatically falls back to a
 mootdx-only pass. The build script also runs an opt-in cross-check pass
@@ -75,6 +76,45 @@ than 1% — this catches BaoStock data lag and mootdx protocol drift.
 Releases package the committed catalog without fetching mutable upstream data.
 Refresh the desired sources, run the offline tests and stub bake, then commit
 the CSVs and generated NDJSON before creating a release tag.
+
+The release workflow runs the following gate before Flutter setup:
+
+```bash
+python3 -m tool.asset_catalog.validate_release
+```
+
+It verifies the NDJSON count, canonical order, uniqueness and checksum; rejects
+catalogs older than 45 days; and requires conservative minimum populations for
+every production market. The current release floors are:
+
+| Market | Minimum rows |
+|---|---:|
+| A-share | 4,000 |
+| Hong Kong | 1,500 |
+| US | 5,000 |
+| Crypto | 400 |
+
+After building, the same command compares the committed file byte-for-byte
+with the copy in the APK, AAB, and Flutter web output. A release therefore
+fails both when a full refresh was forgotten and when Flutter stopped packaging
+the declared asset.
+
+Catalog refresh remains separate from release creation so rebuilding the same
+tag is deterministic and upstream outages cannot mutate or partially degrade a
+published catalog.
+
+`.github/workflows/securities-catalog-refresh.yml` runs every Monday at 02:00
+Asia/Shanghai on a GitHub-hosted `ubuntu-latest` runner and also supports manual
+dispatch. It performs a full refresh, runs the catalog test suite and release
+validator, uploads the generated files for diagnostics, and creates or updates
+the `automation/securities-catalog-refresh` PR when data changed. The PR is
+never auto-merged.
+
+The workflow uses `CATALOG_PR_TOKEN` when configured and otherwise falls back
+to `github.token`. Repository settings must allow GitHub Actions to create pull
+requests. Use a fine-grained PAT or GitHub App token for `CATALOG_PR_TOKEN` when
+the created PR must trigger other workflows; events created by the default
+`GITHUB_TOKEN` do not start new workflow runs.
 
 ## Output
 

@@ -1,0 +1,98 @@
+name: securities catalog refresh
+
+on:
+  schedule:
+    # Monday 02:00 Asia/Shanghai (Sunday 18:00 UTC).
+    - cron: '0 18 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: securities-catalog-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: refresh catalog and open PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+      COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: tool/asset_catalog/requirements.txt
+
+      - name: Refresh all catalog sources
+        run: |
+          export CATALOG_VERSION="v1.$(date -u +%Y%m%d)"
+          ./tool/build-asset-catalog.sh --full
+
+      - name: Install catalog test dependency
+        run: tool/asset_catalog/.venv/bin/python -m pip install 'pytest>=8,<10'
+
+      - name: Run catalog tests
+        run: tool/asset_catalog/.venv/bin/python -m pytest tool/asset_catalog/tests
+
+      - name: Validate refreshed release catalog
+        run: tool/asset_catalog/.venv/bin/python -m tool.asset_catalog.validate_release
+
+      - name: Detect catalog changes
+        id: changes
+        run: |
+          if git diff --quiet -- \
+            tool/asset_catalog/sources/*.csv \
+            apps/mobile/assets/catalog/securities.v1.ndjson; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Catalog is already current."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --stat -- \
+              tool/asset_catalog/sources/*.csv \
+              apps/mobile/assets/catalog/securities.v1.ndjson
+          fi
+
+      - name: Upload refreshed catalog for diagnostics
+        if: failure() || steps.changes.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: securities-catalog-${{ github.run_id }}
+          path: |
+            tool/asset_catalog/sources/*.csv
+            apps/mobile/assets/catalog/securities.v1.ndjson
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Create or update catalog refresh PR
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.CATALOG_PR_TOKEN || github.token }}
+          branch: automation/securities-catalog-refresh
+          delete-branch: true
+          add-paths: |
+            tool/asset_catalog/sources/*.csv
+            apps/mobile/assets/catalog/securities.v1.ndjson
+          commit-message: 'chore(catalog): refresh securities catalog'
+          title: 'chore(catalog): refresh securities catalog'
+          body: |
+            Automated full securities catalog refresh from the GitHub-hosted
+            runner.
+
+            - Refreshed A-share, Hong Kong, US, and crypto sources
+            - Rebuilt the bundled NDJSON catalog
+            - Passed all catalog tests and release validation
+
+            Review the generated diff before merging. This workflow never uses
+            `--allow-degraded`; an unavailable or incomplete source fails the
+            run instead of creating a partial refresh PR.

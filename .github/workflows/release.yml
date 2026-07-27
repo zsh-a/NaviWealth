@@ -90,6 +90,12 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Validate committed securities catalog
+        working-directory: ${{ github.workspace }}
+        run: python3 -m tool.asset_catalog.validate_release
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -150,6 +156,13 @@ jobs:
           ../../tool/check-android-native-libs.sh build/app/outputs/bundle/release/app-release.aab
       - name: Build release web PWA
         run: flutter build web --release --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
+      - name: Verify securities catalog in release artifacts
+        working-directory: ${{ github.workspace }}
+        run: |
+          python3 -m tool.asset_catalog.validate_release \
+            --archive apps/mobile/build/app/outputs/flutter-apk/app-release.apk \
+            --archive apps/mobile/build/app/outputs/bundle/release/app-release.aab \
+            --web-root apps/mobile/build/web
       - name: Normalize APK filename
         run: |
           mv build/app/outputs/flutter-apk/app-release.apk \
