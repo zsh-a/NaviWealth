@@ -55,10 +55,13 @@ class _KpiGrid extends ConsumerWidget {
       ),
     );
     // Intrinsic-height metric cards: never overflow a fixed aspect ratio
-    // under large text-scale. Four across on wide, 2x2 below 760dp.
+    // under large text-scale. Four across on wide, 2x2 below the
+    // three-column threshold.
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth >= 760) return rowOf(cards);
+        if (constraints.maxWidth >= Breakpoints.contentThreeColumn) {
+          return rowOf(cards);
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

@@ -38,8 +38,7 @@ class AgentArtifactPage extends ConsumerWidget {
         error: (error, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.s16),
-            child: AppEmptyState(
-              icon: FLucideIcons.circleX,
+            child: AppEmptyState.error(
               title: l10n.commonError,
               message: userSafeErrorMessage(
                 context,
@@ -47,6 +46,8 @@ class AgentArtifactPage extends ConsumerWidget {
                 operation: 'load agent result',
               ),
               compact: true,
+              retryLabel: l10n.commonRetry,
+              onRetry: () => ref.invalidate(agentArtifactProvider(artifactId)),
             ),
           ),
         ),
@@ -60,6 +61,11 @@ class AgentArtifactPage extends ConsumerWidget {
                   title: l10n.agentArtifactMissingTitle,
                   message: l10n.agentArtifactMissingBody,
                   compact: true,
+                  action: FButton(
+                    variant: FButtonVariant.outline,
+                    onPress: () => Navigator.of(context).maybePop(),
+                    child: Text(l10n.commonClose),
+                  ),
                 ),
               ),
             );

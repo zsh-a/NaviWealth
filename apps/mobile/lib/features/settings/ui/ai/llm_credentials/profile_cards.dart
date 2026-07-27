@@ -146,7 +146,7 @@ mixin _AiLlmCredentialsProfileCardsMixin on _AiLlmCredentialsPageStateBase {
     BuildContext context,
     IconData icon,
     VoidCallback onPress,
-  ) => FTappable(
+  ) => AppTappable(
     onPress: onPress,
     child: Padding(
       padding: const EdgeInsets.all(AppSpacing.s8),

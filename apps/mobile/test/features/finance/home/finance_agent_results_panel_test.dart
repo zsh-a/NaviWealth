@@ -141,7 +141,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Loading financial insights'), findsOneWidget);
+    expect(find.text('Assistant is checking in'), findsOneWidget);
     expect(find.byType(FCircularProgress), findsOneWidget);
   });
 
@@ -158,9 +158,9 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('No financial insights yet'), findsOneWidget);
+    expect(find.text('No agent results yet'), findsOneWidget);
     expect(
-      find.text('New planning review results will appear here.'),
+      find.text('Run the agent to get a fresh readout of this domain.'),
       findsOneWidget,
     );
   });

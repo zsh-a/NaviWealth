@@ -108,7 +108,9 @@ void main() {
         ),
       ),
     );
-    final ring = tester.widget<Container>(find.byType(Container).first);
+    final ring = tester.widget<AnimatedContainer>(
+      find.byType(AnimatedContainer).first,
+    );
     final ringDeco = ring.decoration! as BoxDecoration;
     expect(ringDeco.border, isNotNull);
     expect(ringDeco.borderRadius, BorderRadius.circular(AppRadius.full));
@@ -122,7 +124,9 @@ void main() {
         ),
       ),
     );
-    final tile = tester.widget<Container>(find.byType(Container).first);
+    final tile = tester.widget<AnimatedContainer>(
+      find.byType(AnimatedContainer).first,
+    );
     final tileDeco = tile.decoration! as BoxDecoration;
     expect(tileDeco.border, isNotNull);
     expect(tileDeco.borderRadius, BorderRadius.circular(AppRadius.sm));

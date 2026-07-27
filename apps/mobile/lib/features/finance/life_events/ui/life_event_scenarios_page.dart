@@ -187,7 +187,7 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
           LayoutBuilder(
             builder: (context, constraints) {
               final stacked =
-                  constraints.maxWidth < 360 ||
+                  constraints.maxWidth < Breakpoints.compactContent ||
                   MediaQuery.textScalerOf(context).scale(1) > 1.3;
               if (stacked) {
                 return Column(

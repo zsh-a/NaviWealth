@@ -99,7 +99,7 @@ class _LifeRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final iconColor = selected ? colors.primary : colors.foreground;
-    return FTappable(
+    return AppTappable(
       onPress: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -150,7 +150,7 @@ class _DomainRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final iconColor = selected ? colors.primary : colors.foreground;
-    return FTappable(
+    return AppTappable(
       onPress: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(

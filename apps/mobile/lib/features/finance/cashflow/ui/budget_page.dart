@@ -435,7 +435,7 @@ class _BudgetTile extends StatelessWidget {
     final money = Money(row.amount, row.currency);
     final remaining = status?.remaining;
     return SoftCard.flat(
-      child: FTappable(
+      child: AppTappable(
         onPress: onEdit,
         child: Padding(
           padding: const EdgeInsets.symmetric(

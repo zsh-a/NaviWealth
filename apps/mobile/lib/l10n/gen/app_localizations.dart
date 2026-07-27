@@ -16678,6 +16678,132 @@ abstract class AppLocalizations {
   /// **'Recorded'**
   String get ingestRecorded;
 
+  /// Import summary sheet: headline with recorded count
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 entry recorded} other{{count} entries recorded}}'**
+  String ingestSummaryTitle(num count);
+
+  /// Import summary sheet: failed/needs-review line
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item needs review} other{{count} items need review}}'**
+  String ingestSummaryFailures(num count);
+
+  /// Import summary sheet: supporting body
+  ///
+  /// In en, this message translates to:
+  /// **'Entries are in your activity feed and already reflected in balances.'**
+  String get ingestSummaryBody;
+
+  /// Import summary sheet: CTA to the activity feed
+  ///
+  /// In en, this message translates to:
+  /// **'View activity'**
+  String get ingestSummaryViewActivity;
+
+  /// FIRE milestone celebration overlay caption
+  ///
+  /// In en, this message translates to:
+  /// **'You have crossed {milestone}% of your FIRE goal'**
+  String fireMilestoneReached(Object milestone);
+
+  /// Agent results panel: loading title (all domains)
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant is checking in'**
+  String get agentResultsLoadingTitle;
+
+  /// Agent results panel: loading body
+  ///
+  /// In en, this message translates to:
+  /// **'Fetching the latest agent results…'**
+  String get agentResultsLoadingBody;
+
+  /// Agent results panel: load error title
+  ///
+  /// In en, this message translates to:
+  /// **'Agent results unavailable'**
+  String get agentResultsErrorTitle;
+
+  /// Agent results panel: empty title
+  ///
+  /// In en, this message translates to:
+  /// **'No agent results yet'**
+  String get agentResultsEmptyTitle;
+
+  /// Agent results panel: empty body
+  ///
+  /// In en, this message translates to:
+  /// **'Run the agent to get a fresh readout of this domain.'**
+  String get agentResultsEmptyBody;
+
+  /// Agent results panel: empty-state run CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Generate'**
+  String get agentResultsGenerateAction;
+
+  /// Knowledge object status label
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get knowledgeStatusActive;
+
+  /// Knowledge object status label
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get knowledgeStatusPaused;
+
+  /// Knowledge object status label
+  ///
+  /// In en, this message translates to:
+  /// **'Retired'**
+  String get knowledgeStatusRetired;
+
+  /// Knowledge assumption status label
+  ///
+  /// In en, this message translates to:
+  /// **'Weakened'**
+  String get knowledgeStatusWeakened;
+
+  /// Knowledge assumption status label
+  ///
+  /// In en, this message translates to:
+  /// **'Falsified'**
+  String get knowledgeStatusFalsified;
+
+  /// Knowledge experiment status label
+  ///
+  /// In en, this message translates to:
+  /// **'Planned'**
+  String get knowledgeStatusPlanned;
+
+  /// Knowledge experiment status label
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get knowledgeStatusRunning;
+
+  /// Knowledge experiment status label
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get knowledgeStatusDone;
+
+  /// Knowledge experiment status label
+  ///
+  /// In en, this message translates to:
+  /// **'Abandoned'**
+  String get knowledgeStatusAbandoned;
+
+  /// Knowledge routine status label
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get knowledgeStatusArchived;
+
   /// Ingest review: batch confirm success toast
   ///
   /// In en, this message translates to:
@@ -16809,6 +16935,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paste statement text before parsing.'**
   String get ingestPasteRequired;
+
+  /// Ingest review empty state: open the paste dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get ingestEmptyPasteCta;
 
   /// Ingest paste dialog confirm button
   ///

@@ -124,7 +124,7 @@ class _DatabaseFailureSurface extends StatelessWidget {
       child: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
+            constraints: const BoxConstraints(maxWidth: Breakpoints.formColumn),
             child: AppEmptyState.error(
               icon: FLucideIcons.databaseZap,
               title: presentation.title,

@@ -206,7 +206,7 @@ class _WeeklySummaryMetricsCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _HealthPanelHeader(
+              AppMetricHeader(
                 icon: FLucideIcons.calendarDays,
                 title: l10n.healthWeeklySummaryTitle,
                 subtitle: l10n.healthWeeklySummarySubtitle,

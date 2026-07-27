@@ -287,7 +287,7 @@ class _RecurringRow extends ConsumerWidget {
               child: Semantics(
                 button: true,
                 label: l10n.recurringRowActionsTitle,
-                child: FTappable(
+                child: AppTappable(
                   onPress: openMenu,
                   child: Padding(
                     padding: const EdgeInsets.all(AppSpacing.s8),

@@ -88,7 +88,7 @@ class _BriefingPanelState extends ConsumerState<_BriefingPanel> {
         // Empty: compact generate CTA only — no large empty shell.
         final record = memoryAsync.value;
         body = record == null
-            ? _BriefingEmpty(running: _running, onRun: _run)
+            ? AgentEmptyStateCard(onGenerate: _run, generating: _running)
             : _BriefingCard(record: record, running: _running, onRun: _run);
       }
     }
@@ -133,7 +133,7 @@ class _BriefingArtifactCard extends StatelessWidget {
 
     return AgentResultCard(
       artifact: artifact,
-      metaLabel: l10n.healthBriefingUpdated(_ago(l10n, artifact.createdAt)),
+      metaLabel: agentResultMetaLabel(l10n, artifact.createdAt),
       onOpen: openArtifact,
       summaryMaxLines: 8,
       footer: Align(
@@ -166,7 +166,9 @@ class _BriefingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final r = record;
-    if (r == null) return _BriefingEmpty(running: running, onRun: onRun);
+    if (r == null) {
+      return AgentEmptyStateCard(onGenerate: onRun, generating: running);
+    }
     final outcome = r.payload['outcome'];
     final source = outcome is Map<String, Object?>
         ? outcome['synthesis_source']
@@ -180,10 +182,10 @@ class _BriefingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _HealthPanelHeader(
+          AppMetricHeader(
             icon: FLucideIcons.sun,
             title: l10n.healthBriefingTitle,
-            subtitle: l10n.healthBriefingUpdated(_ago(l10n, r.updatedAt)),
+            subtitle: agentResultMetaLabel(l10n, r.updatedAt),
             color: colors.primary,
             trailing: source is String && source.isNotEmpty
                 ? AppBadge(
@@ -230,47 +232,3 @@ class _BriefingCard extends StatelessWidget {
 }
 
 /// Compact generate affordance — no marketing empty shell on Today.
-class _BriefingEmpty extends StatelessWidget {
-  const _BriefingEmpty({required this.running, required this.onRun});
-
-  final bool running;
-  final VoidCallback onRun;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return SoftCard(
-      level: SoftCardLevel.flat,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s14,
-        vertical: AppSpacing.s12,
-      ),
-      child: Row(
-        children: [
-          Icon(
-            FLucideIcons.sparkles,
-            size: AppIconSizes.sm,
-            color: context.theme.colors.primary,
-          ),
-          const SizedBox(width: AppSpacing.s10),
-          Expanded(
-            child: Text(
-              l10n.healthBriefingEmpty,
-              style: context.bodyCaptionStyle,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          AppQuietButton(
-            label: running
-                ? l10n.healthBriefingGenerating
-                : l10n.healthBriefingGenerate,
-            onPress: running ? null : onRun,
-            busy: running,
-          ),
-        ],
-      ),
-    );
-  }
-}

@@ -62,7 +62,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            FTappable(
+            AppTappable(
               key: const Key('tool-invocation-card-header'),
               onPress: () => setState(() => _expanded = !_expanded),
               child: Padding(
@@ -212,7 +212,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
             Text(l10n.aiChatToolOutputLabel, style: context.microCaptionStyle),
             const Spacer(),
             if (body != null)
-              FTappable(
+              AppTappable(
                 onPress: () => setState(() => _showRawJson = true),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -230,7 +230,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
             else if (_showRawJson &&
                 renderToolOutput(context, invocation.name, invocation.output) !=
                     null)
-              FTappable(
+              AppTappable(
                 onPress: () => setState(() => _showRawJson = false),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(

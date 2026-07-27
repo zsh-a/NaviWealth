@@ -187,7 +187,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
     final l10n = AppLocalizations.of(context);
     return showAppContentDialog<SymbolInfo>(
       context: context,
-      maxWidth: 520,
+      maxWidth: Breakpoints.dialogMax,
       child: FDialog.raw(
         builder: (innerCtx, _) => Padding(
           padding: const EdgeInsets.all(AppSpacing.s16),

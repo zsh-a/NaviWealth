@@ -167,7 +167,7 @@ class _WaterfallRow extends StatelessWidget {
     final span = row.span;
     final tone = _kindTone(context, span);
     final label = _shortName(span);
-    return FTappable(
+    return AppTappable(
       onPress: onTap,
       child: Container(
         decoration: BoxDecoration(

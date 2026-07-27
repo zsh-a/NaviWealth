@@ -14,15 +14,23 @@ class AppMetricHeader extends StatelessWidget {
     super.key,
     required this.icon,
     required this.title,
+    this.subtitle,
     this.color,
+    this.trailing,
     this.showChevron = true,
   });
 
   final IconData icon;
   final String title;
 
+  /// Optional secondary line under the title (panel headers).
+  final String? subtitle;
+
   /// Accent for the icon tile. Defaults to the brand primary.
   final Color? color;
+
+  /// Optional trailing widget; replaces the chevron when provided.
+  final Widget? trailing;
 
   /// Trailing chevron for drill-in surfaces. Hide on non-navigable cards.
   final bool showChevron;
@@ -44,14 +52,35 @@ class AppMetricHeader extends StatelessWidget {
         ),
         const SizedBox(width: AppSpacing.s10),
         Expanded(
-          child: Text(
-            title,
-            style: context.mutedLabelStyle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          child: subtitle == null
+              ? Text(
+                  title,
+                  style: context.mutedLabelStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: context.labelStyle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(
+                      subtitle!,
+                      style: context.captionStyle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
         ),
-        if (showChevron)
+        if (trailing != null)
+          trailing!
+        else if (showChevron)
           Icon(
             FLucideIcons.chevronRight,
             size: AppIconSizes.h18,

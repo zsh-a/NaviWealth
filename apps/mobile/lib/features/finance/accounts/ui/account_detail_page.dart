@@ -249,7 +249,7 @@ class _BalanceCard extends ConsumerWidget {
             const SizedBox(height: AppSpacing.s16),
             LayoutBuilder(
               builder: (context, constraints) {
-                if (constraints.maxWidth < 520) {
+                if (constraints.maxWidth < Breakpoints.dialogMax) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -369,7 +369,7 @@ class _ActivityRow extends StatelessWidget {
     final posting = entry.postings
         .where((item) => item.accountId == account.id)
         .firstOrNull;
-    return FTappable(
+    return AppTappable(
       onPress: () => context.push(
         FinanceRoutes.activityEntry(entry.entry.id),
         extra: ActivityEntryDetailArgs(

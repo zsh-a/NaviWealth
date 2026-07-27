@@ -221,7 +221,7 @@ class _KpiGrid extends StatelessWidget {
     // overflows under large text-scale or intermediate widths.
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth >= 720) {
+        if (constraints.maxWidth >= Breakpoints.contentThreeColumn) {
           return IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -235,7 +235,8 @@ class _KpiGrid extends StatelessWidget {
           );
         }
         final textScale = MediaQuery.textScalerOf(context).scale(1);
-        if (constraints.maxWidth >= 320 && textScale <= 1.3) {
+        if (constraints.maxWidth >= Breakpoints.compactModule &&
+            textScale <= 1.3) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

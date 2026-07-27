@@ -300,7 +300,7 @@ class _ContinueInChatLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FTappable(
+    return AppTappable(
       onPress: onTap,
       child: Text(
         label,

@@ -39,6 +39,7 @@ import '../data/providers.dart';
 import '../domain/ingest_models.dart';
 import '../domain/ingest_quality_report.dart';
 import 'ingest_capture_presentation.dart';
+import 'ingest_summary_sheet.dart';
 
 part 'ingest_review/draft_card.dart';
 part 'ingest_review/empty.dart';
@@ -268,7 +269,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
                     ),
                   Expanded(
                     child: data.items.isEmpty
-                        ? const _EmptyState()
+                        ? _EmptyState(onPaste: _openPasteDialog)
                         : ListView.builder(
                             padding: const EdgeInsets.fromLTRB(
                               AppSpacing.s12,
@@ -494,7 +495,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         SliverFillRemaining(
           hasScrollBody: false,
           child: _busy == null
-              ? const _EmptyState()
+              ? _EmptyState(onPaste: _openPasteDialog)
               : _ProcessingState(state: _busy!),
         ),
       ];
@@ -769,13 +770,24 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
           _pendingFinalize.remove(id);
         }
       });
-      AppMessenger.show(
-        context,
-        result.failures.isEmpty ? ToastKind.success : ToastKind.warning,
-        result.failures.isEmpty
-            ? l10n.ingestRecorded
-            : l10n.ingestRecordNeedsReview,
-      );
+      // A multi-entry commit earns a deliberate completion moment; single
+      // confirms keep the lightweight toast (doc 11 "完成大型操作").
+      if (result.succeeded.length >= 2) {
+        AppInteraction.signal(AppInteractionIntent.success);
+        await showIngestSummarySheet(
+          context,
+          recorded: result.succeeded.length,
+          needsReview: result.failures.length,
+        );
+      } else {
+        AppMessenger.show(
+          context,
+          result.failures.isEmpty ? ToastKind.success : ToastKind.warning,
+          result.failures.isEmpty
+              ? l10n.ingestRecorded
+              : l10n.ingestRecordNeedsReview,
+        );
+      }
     } finally {
       if (mounted) setState(() => _busy = null);
     }
@@ -1726,7 +1738,7 @@ class _CaptureOption extends StatelessWidget {
       label: label,
       onTap: onPress,
       excludeSemantics: true,
-      child: FTappable(
+      child: AppTappable(
         onPress: onPress,
         child: Padding(
           padding: const EdgeInsets.symmetric(

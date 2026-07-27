@@ -22,6 +22,7 @@ import '../domain/knowledge_models.dart';
 import '_decision_lifecycle_sheet.dart';
 import '_decision_writer.dart';
 import '_widgets.dart';
+import 'knowledge_status_labels.dart';
 
 class KnowledgeDecisionDetailPage extends ConsumerWidget {
   const KnowledgeDecisionDetailPage({super.key, required this.decisionId});
@@ -209,7 +210,7 @@ class _BodyState extends ConsumerState<_Body> {
           color: colors.primary,
           typeLabel: l10n.knowledgeDecisionDetailTitle,
           title: d.question,
-          status: d.status.wire,
+          status: decisionStatusLabelOf(l10n, d.status),
           updatedAt: d.sync.updatedAt,
         ),
         const SizedBox(height: AppSpacing.s12),
@@ -292,7 +293,10 @@ class _BodyState extends ConsumerState<_Body> {
               for (final p in _principles)
                 _RelatedKnowledgeLink(
                   label: p.statement,
-                  status: p.status.wire,
+                  status: principleStatusLabel(
+                    AppLocalizations.of(context),
+                    p.status,
+                  ),
                   icon: FLucideIcons.badgeCheck,
                   iconColor: context.appTheme.categorical.adapt(
                     KnowledgeTypeColors.principle,
@@ -314,7 +318,8 @@ class _BodyState extends ConsumerState<_Body> {
                 _RelatedKnowledgeLink(
                   label: a.statement,
                   status:
-                      '${a.status.wire} · ${a.confidence.toStringAsFixed(2)}',
+                      '${assumptionStatusLabel(AppLocalizations.of(context), a.status)}'
+                      ' · ${a.confidence.toStringAsFixed(2)}',
                   icon: FLucideIcons.lightbulb,
                   iconColor: context.appTheme.categorical.adapt(
                     KnowledgeTypeColors.assumption,
@@ -335,7 +340,10 @@ class _BodyState extends ConsumerState<_Body> {
               for (final linked in _linkedDecisions)
                 _RelatedKnowledgeLink(
                   label: linked.question,
-                  status: linked.status.wire,
+                  status: decisionStatusLabelOf(
+                    AppLocalizations.of(context),
+                    linked.status,
+                  ),
                   icon: FLucideIcons.gitBranch,
                   iconColor: colors.primary,
                   onPress: () => context.pushNamed(
@@ -393,7 +401,8 @@ class _BodyState extends ConsumerState<_Body> {
                       const SizedBox(width: AppSpacing.s8),
                       Expanded(
                         child: Text(
-                          '${_chain[i].question}（${_chain[i].status.wire}）',
+                          '${_chain[i].question}'
+                          '（${decisionStatusLabelOf(AppLocalizations.of(context), _chain[i].status)}）',
                           style: typography.body.sm,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -429,7 +438,7 @@ class _RelatedKnowledgeLink extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
-    return FTappable(
+    return AppTappable(
       onPress: onPress,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),

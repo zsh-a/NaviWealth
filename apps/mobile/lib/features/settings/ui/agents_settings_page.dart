@@ -604,7 +604,13 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
       context: context,
       title: l10n.agentSettingsHistoryTitle(_agentLabel(widget.row, l10n)),
       maxHeightFactor: 0.88,
-      builder: (sheetContext) => _AgentRunHistoryList(runs: runs),
+      builder: (sheetContext) => _AgentRunHistoryList(
+        runs: runs,
+        onRunNow: () {
+          Navigator.of(sheetContext).maybePop();
+          _runNow();
+        },
+      ),
     );
   }
 
@@ -649,7 +655,7 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
       child: Row(
         children: [
           Expanded(
-            child: FTappable(
+            child: AppTappable(
               onPress: _showDetails,
               child: Row(
                 children: [
@@ -1113,7 +1119,9 @@ class _AgentRunStatusDot extends StatelessWidget {
 }
 
 class _AgentRunHistoryList extends ConsumerWidget {
-  const _AgentRunHistoryList({required this.runs});
+  const _AgentRunHistoryList({required this.runs, required this.onRunNow});
+
+  final VoidCallback onRunNow;
 
   final List<AgentRunRecord> runs;
 
@@ -1126,6 +1134,12 @@ class _AgentRunHistoryList extends ConsumerWidget {
         icon: FLucideIcons.history,
         title: l10n.agentSettingsHistoryEmptyTitle,
         message: l10n.agentSettingsHistoryEmptyMessage,
+        action: FButton(
+          variant: FButtonVariant.outline,
+          onPress: onRunNow,
+          prefix: const Icon(FLucideIcons.play, size: AppIconSizes.sm),
+          child: Text(l10n.agentSettingsRunNow),
+        ),
       );
     }
     return Column(

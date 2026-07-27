@@ -102,7 +102,7 @@ class _ModeRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final isSelected = mode == selected;
-    return FTappable(
+    return AppTappable(
       onPress: () => onSelect(mode),
       child: Padding(
         padding: const EdgeInsets.symmetric(

@@ -66,26 +66,6 @@ void main() {
     expect(title.style?.color, context.theme.colors.foreground);
   });
 
-  testWidgets('AppFloatingActionSurface owns the shared primary action', (
-    tester,
-  ) async {
-    var pressed = false;
-    await tester.pumpWidget(
-      _wrap(
-        AppFloatingActionSurface(
-          icon: FLucideIcons.plus,
-          tooltip: 'Create',
-          onPress: () => pressed = true,
-        ),
-      ),
-    );
-
-    expect(find.bySemanticsLabel('Create'), findsOneWidget);
-    await tester.tap(find.byIcon(FLucideIcons.plus));
-    await tester.pumpAndSettle();
-    expect(pressed, isTrue);
-  });
-
   testWidgets('AppSection renders title, trailing and children', (
     tester,
   ) async {

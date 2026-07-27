@@ -101,7 +101,7 @@ class _HomeQuickActionData {
 class _AdaptiveQuickActions extends StatelessWidget {
   const _AdaptiveQuickActions({required this.actions});
 
-  static const _stackedBreakpoint = 320.0;
+  static const _stackedBreakpoint = Breakpoints.compactModule;
 
   final List<_HomeQuickActionData> actions;
 
@@ -158,7 +158,7 @@ class _CompactHomeQuickAction extends StatelessWidget {
     return Semantics(
       button: true,
       label: action.label,
-      child: FTappable(
+      child: AppTappable(
         onPress: action.onPress,
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 52),
@@ -215,7 +215,7 @@ class _HomeQuickAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FTappable(
+    return AppTappable(
       onPress: onPress,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 52),

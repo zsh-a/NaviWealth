@@ -32,7 +32,7 @@ class _SessionTile extends StatelessWidget {
     final preview = _previewText(session.preview);
     final title = _displayTitle(session.title, preview);
 
-    final tile = FTappable(
+    final tile = AppTappable(
       onPress: onTap,
       child: AnimatedContainer(
         duration: AppMotionPolicy.duration(context, Motion.fast),
@@ -166,26 +166,12 @@ class _SessionTile extends StatelessWidget {
       ),
     );
 
-    return Dismissible(
-      key: ValueKey('session-${session.id}'),
-      direction: DismissDirection.endToStart,
-      confirmDismiss: (_) async {
-        onDelete();
-        return false;
-      },
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: AppSpacing.s16),
-        decoration: BoxDecoration(
-          color: colors.destructive.withValues(alpha: AppOpacity.subtle),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-        child: Icon(
-          FLucideIcons.trash2,
-          size: AppIconSizes.h18,
-          color: colors.destructive,
-        ),
-      ),
+    return AppDismissible(
+      itemKey: ValueKey('session-${session.id}'),
+      // Deletion re-flows the sessions list via its own provider; the row
+      // snaps back and the confirm dialog owns the mutation.
+      removeRow: false,
+      onTrigger: onDelete,
       child: tile,
     );
   }

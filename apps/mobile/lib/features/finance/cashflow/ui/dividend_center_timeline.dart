@@ -109,7 +109,7 @@ class _TimelineRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final muted = context.theme.colors.mutedForeground;
-    return FTappable(
+    return AppTappable(
       onPress: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),

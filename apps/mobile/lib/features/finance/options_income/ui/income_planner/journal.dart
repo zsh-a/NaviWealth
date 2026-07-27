@@ -66,6 +66,15 @@ class _TradeJournalSectionState extends ConsumerState<_TradeJournalSection> {
                     ? l10n.incomePlannerJournalEmpty
                     : l10n.incomePlannerJournalFilterEmpty,
                 compact: true,
+                // The journal fills itself from recorded trades; the only
+                // recoverable dead end here is an over-narrow filter.
+                action: entries.isEmpty
+                    ? null
+                    : FButton(
+                        variant: FButtonVariant.outline,
+                        onPress: _resetFilter,
+                        child: Text(l10n.incomePlannerOpportunityFilterAll),
+                      ),
               );
             }
             return Column(
@@ -82,6 +91,8 @@ class _TradeJournalSectionState extends ConsumerState<_TradeJournalSection> {
       ],
     );
   }
+
+  void _resetFilter() => setState(() => _filter = _JournalFilter.all);
 
   bool _matchesFilter(TradeJournalEntry entry) => switch (_filter) {
     _JournalFilter.all => true,

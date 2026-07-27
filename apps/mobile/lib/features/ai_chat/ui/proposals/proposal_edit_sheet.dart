@@ -143,7 +143,7 @@ class _ProposalEditSheetState extends ConsumerState<ProposalEditSheet> {
           if (showToggle)
             Align(
               alignment: Alignment.centerLeft,
-              child: FTappable(
+              child: AppTappable(
                 onPress: () => setState(() => _fullMode = !_fullMode),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(

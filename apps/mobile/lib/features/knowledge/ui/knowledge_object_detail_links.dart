@@ -96,7 +96,10 @@ class _DecisionLinksSection extends StatelessWidget {
         for (final decision in decisions)
           _RelatedObjectLink(
             label: decision.question,
-            meta: decision.status.wire,
+            meta: decisionStatusLabelOf(
+              AppLocalizations.of(context),
+              decision.status,
+            ),
             icon: FLucideIcons.gitBranch,
             iconColor: context.theme.colors.primary,
             onPress: () => context.pushNamed(
@@ -185,6 +188,6 @@ class _RelatedObjectLink extends StatelessWidget {
       ),
     );
     final press = onPress;
-    return press == null ? row : FTappable(onPress: press, child: row);
+    return press == null ? row : AppTappable(onPress: press, child: row);
   }
 }

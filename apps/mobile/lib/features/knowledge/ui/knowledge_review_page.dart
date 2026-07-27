@@ -13,8 +13,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/agents/agent_artifact_routes.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
-import '../../../core/ai/agents/ui/agent_result_card.dart';
-import '../../../core/format/formatters.dart';
+import '../../../core/ai/agents/ui/agent_results_panel.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../core/sync/mutation_context.dart';
@@ -107,52 +106,42 @@ class KnowledgeReviewPage extends ConsumerStatefulWidget {
       _KnowledgeReviewPageState();
 }
 
-class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
-    with KnowledgeFabScrollHideMixin {
+class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // Blueprint §8.2: creation/bulk entry points live in the page header —
+    // the Knowledge-only FAB is retired app-wide.
     return ShellTabScaffold(
       title: l10n.knowledgeReviewTitle,
+      actions: [
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.checkCheck,
+          label: l10n.knowledgeReviewTitle,
+          onPress: () => _showReviewActionsSheet(context, ref),
+        ),
+      ],
       child: ShellTabPause(
         routePath: KnowledgeRoutes.review,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: NotificationListener<ScrollUpdateNotification>(
-                onNotification: onScrollUpdate,
-                child: AppRefreshIndicator(
-                  onRefresh: () => _refreshReview(ref),
-                  child: ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: shellTabContentPadding(
-                      context,
-                      bottom: AppSpacing.s64 + AppSpacing.s16,
-                    ),
-                    children: const <Widget>[
-                      _KnowledgeReviewAgentResultPanel(),
-                      SizedBox(height: AppSpacing.s16),
-                      KnowledgeAiSuggestionsCard(),
-                      SizedBox(height: AppSpacing.s16),
-                      _DueRoutinesCard(),
-                      SizedBox(height: AppSpacing.s16),
-                      _DueReviewsCard(),
-                      SizedBox(height: AppSpacing.s16),
-                      _StaleAssumptionsCard(),
-                    ],
-                  ),
-                ),
-              ),
+        child: AppAtmosphere(
+          child: AppRefreshIndicator(
+            onRefresh: () => _refreshReview(ref),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: shellTabContentPadding(context, top: AppSpacing.s8),
+              children: const <Widget>[
+                _KnowledgeReviewAgentResultPanel(),
+                SizedBox(height: AppPageRhythm.module),
+                KnowledgeAiSuggestionsCard(),
+                SizedBox(height: AppPageRhythm.module),
+                _DueRoutinesCard(),
+                SizedBox(height: AppPageRhythm.module),
+                _DueReviewsCard(),
+                SizedBox(height: AppPageRhythm.module),
+                _StaleAssumptionsCard(),
+              ],
             ),
-            Positioned(
-              right: AppSpacing.s16,
-              bottom: shellTabFloatingActionBottom(context),
-              child: KnowledgeFloatingActionMotion(
-                hidden: fabHidden,
-                child: const _ReviewActionsFab(),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -182,35 +171,17 @@ class _KnowledgeReviewAgentResultPanel extends ConsumerWidget {
     final resultsAsync = ref.watch(
       knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
     );
-    final l10n = AppLocalizations.of(context);
-    // Quiet while loading — no status shells on Review.
-    if (resultsAsync.isLoading && !resultsAsync.hasValue) {
-      return const SizedBox.shrink();
-    }
-    if (resultsAsync.hasError && !resultsAsync.hasValue) {
-      return _KnowledgeAgentPanelFrame(
-        child: AgentResultPanelStateCard(
-          icon: FLucideIcons.triangleAlert,
-          title: l10n.commonError,
-          message: userSafeErrorMessage(context, resultsAsync.error!),
-          error: true,
-          onRetry: () => ref.invalidate(
-            knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
-          ),
-        ),
-      );
-    }
-
-    final bundle = resultsAsync.value;
-    if (bundle == null || bundle.visibleEntries.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return AgentResultsSection(
-      bundle: bundle,
-      metaLabelBuilder: (at) => _knowledgeAgentArtifactUpdated(l10n, at),
+    // Signal-first Review surface: quiet while loading and when empty.
+    return AgentResultsPanel(
+      resultsAsync: resultsAsync,
+      showPlaceholderStates: false,
+      bottomGap: AppSpacing.s0,
+      onReload: () => ref.invalidate(
+        knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
+      ),
       onOpen: (artifact) =>
           context.push(AgentArtifactRoutes.detail(artifact.id)),
-      onRetry: (agentId) => _retryKnowledgeAgent(ref, agentId),
+      onRunAgain: (agentId) => _retryKnowledgeAgent(ref, agentId),
     );
   }
 }
@@ -223,109 +194,101 @@ Future<void> _retryKnowledgeAgent(WidgetRef ref, String agentId) async {
   );
 }
 
-class _KnowledgeAgentPanelFrame extends StatelessWidget {
-  const _KnowledgeAgentPanelFrame({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [child],
-    );
-  }
+/// Icon-only FAB that opens the adaptive review batch-actions menu.
+Future<void> _showReviewActionsSheet(BuildContext context, WidgetRef ref) {
+  final l10n = AppLocalizations.of(context);
+  return showAppSheet<void>(
+    context: context,
+    title: l10n.knowledgeReviewTitle,
+    builder: (sheetContext) {
+      final actions = _reviewBulkActions(context, ref, l10n);
+      return AppActionSheetList(
+        children: [
+          for (final action in actions)
+            AppActionSheetTile(
+              icon: action.icon,
+              title: action.title,
+              subtitle: action.subtitle,
+              onPress: () {
+                Navigator.of(sheetContext).pop();
+                action.onPress();
+              },
+            ),
+        ],
+      );
+    },
+  );
 }
 
-/// Icon-only FAB that opens the adaptive review batch-actions menu.
-class _ReviewActionsFab extends ConsumerWidget {
-  const _ReviewActionsFab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    return AppAdaptiveActionMenu(
-      title: l10n.knowledgeReviewTitle,
-      actions: <AppAdaptiveAction>[
-        AppAdaptiveAction(
-          icon: FLucideIcons.checkCheck,
-          title: l10n.knowledgeReviewMarkAllDone,
-          subtitle: l10n.knowledgeReviewRoutinesTitle,
-          onPress: () async {
-            final routines = await _loadReviewRoutines(ref);
-            if (!context.mounted) return;
-            if (routines.isEmpty) {
-              AppMessenger.show(
-                context,
-                ToastKind.info,
-                l10n.knowledgeReviewRoutinesEmpty,
-              );
-              return;
-            }
-            await _markRoutinesDone(
-              context: context,
-              ref: ref,
-              routines: routines,
-            );
-          },
-        ),
-        AppAdaptiveAction(
-          icon: FLucideIcons.calendarCheck,
-          title: l10n.knowledgeReviewMarkAllDecisionsReviewed,
-          subtitle: l10n.knowledgeReviewDecisionsTitle,
-          onPress: () async {
-            final decisions = await _loadReviewDecisions(ref);
-            if (!context.mounted) return;
-            if (decisions.isEmpty) {
-              AppMessenger.show(
-                context,
-                ToastKind.info,
-                l10n.knowledgeReviewDecisionsEmpty,
-              );
-              return;
-            }
-            await _markDecisionsReviewed(
-              context: context,
-              ref: ref,
-              decisions: decisions,
-            );
-          },
-        ),
-        AppAdaptiveAction(
-          icon: FLucideIcons.badgeCheck,
-          title: l10n.knowledgeReviewVerifyAllAssumptions,
-          subtitle: l10n.knowledgeReviewAssumptionsTitle,
-          onPress: () async {
-            final assumptions = await _loadReviewAssumptions(ref);
-            if (!context.mounted) return;
-            if (assumptions.isEmpty) {
-              AppMessenger.show(
-                context,
-                ToastKind.info,
-                l10n.knowledgeReviewAssumptionsEmpty(
-                  kKnowledgeAssumptionStaleDays,
-                ),
-              );
-              return;
-            }
-            await _verifyAssumptions(
-              context: context,
-              ref: ref,
-              assumptions: assumptions,
-            );
-          },
-        ),
-      ],
-      triggerBuilder: (context, openMenu, focusNode) => Focus(
-        focusNode: focusNode,
-        child: AppFloatingActionSurface(
-          icon: FLucideIcons.listChecks,
-          tooltip: l10n.knowledgeReviewBatchActions,
-          onPress: openMenu,
-        ),
-      ),
-    );
-  }
+List<AppAdaptiveAction> _reviewBulkActions(
+  BuildContext context,
+  WidgetRef ref,
+  AppLocalizations l10n,
+) {
+  return <AppAdaptiveAction>[
+    AppAdaptiveAction(
+      icon: FLucideIcons.checkCheck,
+      title: l10n.knowledgeReviewMarkAllDone,
+      subtitle: l10n.knowledgeReviewRoutinesTitle,
+      onPress: () async {
+        final routines = await _loadReviewRoutines(ref);
+        if (!context.mounted) return;
+        if (routines.isEmpty) {
+          AppMessenger.show(
+            context,
+            ToastKind.info,
+            l10n.knowledgeReviewRoutinesEmpty,
+          );
+          return;
+        }
+        await _markRoutinesDone(context: context, ref: ref, routines: routines);
+      },
+    ),
+    AppAdaptiveAction(
+      icon: FLucideIcons.calendarCheck,
+      title: l10n.knowledgeReviewMarkAllDecisionsReviewed,
+      subtitle: l10n.knowledgeReviewDecisionsTitle,
+      onPress: () async {
+        final decisions = await _loadReviewDecisions(ref);
+        if (!context.mounted) return;
+        if (decisions.isEmpty) {
+          AppMessenger.show(
+            context,
+            ToastKind.info,
+            l10n.knowledgeReviewDecisionsEmpty,
+          );
+          return;
+        }
+        await _markDecisionsReviewed(
+          context: context,
+          ref: ref,
+          decisions: decisions,
+        );
+      },
+    ),
+    AppAdaptiveAction(
+      icon: FLucideIcons.badgeCheck,
+      title: l10n.knowledgeReviewVerifyAllAssumptions,
+      subtitle: l10n.knowledgeReviewAssumptionsTitle,
+      onPress: () async {
+        final assumptions = await _loadReviewAssumptions(ref);
+        if (!context.mounted) return;
+        if (assumptions.isEmpty) {
+          AppMessenger.show(
+            context,
+            ToastKind.info,
+            l10n.knowledgeReviewAssumptionsEmpty(kKnowledgeAssumptionStaleDays),
+          );
+          return;
+        }
+        await _verifyAssumptions(
+          context: context,
+          ref: ref,
+          assumptions: assumptions,
+        );
+      },
+    ),
+  ];
 }
 
 Future<String> _reviewOwner(WidgetRef ref) => ref.read(currentUserIdProvider)();
@@ -364,19 +327,4 @@ Future<List<KnowledgeAssumption>> _loadReviewAssumptions(WidgetRef ref) async {
 
 void _toggleReviewSelection(Set<String> selectedIds, String id) {
   if (!selectedIds.add(id)) selectedIds.remove(id);
-}
-
-String _knowledgeAgentArtifactUpdated(AppLocalizations l10n, DateTime when) {
-  return AppFormatters.relativeTime(
-    when,
-    justNow: l10n.aiChatRelativeJustNow,
-    minutesAgo: l10n.aiChatRelativeMinutesAgo,
-    hoursAgo: l10n.aiChatRelativeHoursAgo,
-    daysAgo: l10n.aiChatRelativeDaysAgo,
-    dateFallback: (d) {
-      final mm = d.month.toString().padLeft(2, '0');
-      final dd = d.day.toString().padLeft(2, '0');
-      return '$mm-$dd';
-    },
-  );
 }

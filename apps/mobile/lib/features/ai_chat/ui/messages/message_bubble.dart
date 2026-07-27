@@ -133,7 +133,9 @@ class _UserBubble extends ConsumerWidget {
             children: [
               Flexible(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 640),
+                  constraints: const BoxConstraints(
+                    maxWidth: AdaptiveMaxWidth.narrow,
+                  ),
                   child: Semantics(
                     container: true,
                     label: l10n.aiChatSemanticsUserMessage,

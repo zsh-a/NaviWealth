@@ -230,7 +230,7 @@ class _OptionTile extends StatelessWidget {
 
     return Opacity(
       opacity: opacity,
-      child: FTappable(
+      child: AppTappable(
         onPress: onTap,
         child: AnimatedContainer(
           duration: AppMotionPolicy.duration(context, Motion.fast),

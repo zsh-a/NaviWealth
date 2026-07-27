@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
-import '../tokens/color_palette.dart';
+import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
 
 /// The one pull-to-refresh affordance for every domain.
@@ -29,10 +29,11 @@ class AppRefreshIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
+    final surfaces = context.appTheme.surfaces;
     return RefreshIndicator(
       onRefresh: onRefresh,
       color: colors.primary,
-      backgroundColor: isDark ? ColorPalette.navyRaised : ColorPalette.surface,
+      backgroundColor: isDark ? surfaces.raised : surfaces.card,
       strokeWidth: AppStroke.sparkline,
       displacement: AppSpacing.s40,
       edgeOffset: edgeOffset,

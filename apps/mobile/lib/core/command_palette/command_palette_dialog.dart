@@ -207,7 +207,9 @@ class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
     final Size mediaSize = media.size;
     final double keyboardInset = media.viewInsets.bottom;
 
-    final double maxWidth = mediaSize.width < 560 ? mediaSize.width - 48 : 520;
+    final double maxWidth = mediaSize.width < Breakpoints.dialogWide
+        ? mediaSize.width - AppSpacing.s48
+        : Breakpoints.dialogMax;
     final double maxHeight = mediaSize.height * 0.6;
 
     final localQueryResultPaneBuilder = ref.watch(
@@ -336,7 +338,7 @@ class _CommandRow extends StatelessWidget {
     return MouseRegion(
       onEnter: (_) => onHover(true),
       cursor: SystemMouseCursors.click,
-      child: FTappable(
+      child: AppTappable(
         onPress: onTap,
         child: Container(
           color: background,

@@ -90,7 +90,7 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
           if (picked != widget.value) widget.onChanged(picked);
         },
       ),
-      child: FTappable(
+      child: AppTappable(
         onPress: () {
           AppInteraction.signal(AppInteractionIntent.select);
           _popover.toggle();
@@ -247,7 +247,7 @@ class _OptionRow<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FTappable(
+    return AppTappable(
       onPress: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -403,7 +403,7 @@ class InlineLinkRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FTappable(
+    return AppTappable(
       onPress: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(

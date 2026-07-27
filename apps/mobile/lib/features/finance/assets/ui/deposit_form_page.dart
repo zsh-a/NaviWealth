@@ -604,7 +604,7 @@ class _DepositKindChip extends StatelessWidget {
       selected: selected,
       label: label,
       child: ExcludeSemantics(
-        child: FTappable(
+        child: AppTappable(
           onPress: onTap,
           child: Container(
             padding: const EdgeInsets.symmetric(

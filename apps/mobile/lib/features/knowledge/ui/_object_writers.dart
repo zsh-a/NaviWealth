@@ -15,6 +15,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_widgets.dart';
+import 'knowledge_status_labels.dart';
 
 part 'knowledge_principle_writer.dart';
 part 'knowledge_assumption_writer.dart';

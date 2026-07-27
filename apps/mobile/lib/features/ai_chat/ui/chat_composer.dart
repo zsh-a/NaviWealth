@@ -329,7 +329,7 @@ class _EditBanner extends StatelessWidget {
                 ),
               ),
             ),
-            FTappable(
+            AppTappable(
               onPress: onCancel,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -367,7 +367,7 @@ class _ProfileCaption extends ConsumerWidget {
         alignment: Alignment.centerLeft,
         child: FTooltip(
           tipBuilder: (_, _) => Text(l10n.aiChatProfileChipTooltip),
-          child: FTappable(
+          child: AppTappable(
             onPress: () => pushFromAiSurface(context, SettingsRoutes.aiLlm),
             child: Row(
               mainAxisSize: MainAxisSize.min,

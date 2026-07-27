@@ -173,7 +173,7 @@ class _IconChip extends StatelessWidget {
     final colors = context.theme.colors;
     return FTooltip(
       tipBuilder: (_, _) => Text(tooltip),
-      child: FTappable(
+      child: AppTappable(
         onPress: onTap,
         child: Container(
           width: 48,
@@ -270,7 +270,7 @@ class _ColorSwatch extends StatelessWidget {
   Widget build(BuildContext context) {
     return FTooltip(
       tipBuilder: (_, _) => Text(tooltip),
-      child: FTappable(
+      child: AppTappable(
         onPress: onTap,
         child: Container(
           width: 32,

@@ -129,7 +129,10 @@ class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
             title: l10n.knowledgeWriterPlanningSectionTitle,
             children: [
               FSelect<ExperimentStatus>(
-                items: {for (final s in ExperimentStatus.values) s.wire: s},
+                items: {
+                  for (final s in ExperimentStatus.values)
+                    experimentStatusLabel(l10n, s): s,
+                },
                 control: FSelectControl<ExperimentStatus>.managed(
                   initial: _status,
                   onChange: (next) {

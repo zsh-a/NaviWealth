@@ -122,14 +122,6 @@ EdgeInsets shellTabContentPadding(
   );
 }
 
-/// Bottom offset for floating controls inside a top-level domain tab.
-double shellTabFloatingActionBottom(
-  BuildContext context, {
-  double margin = AppSpacing.s16,
-}) {
-  return margin + MediaQuery.paddingOf(context).bottom;
-}
-
 /// Top-level tab / hub scaffold *with* the injected cross-domain chrome.
 ///
 /// Wraps [DomainTabScaffold] and appends the app-provided leading widget and

@@ -1,13 +1,24 @@
 part of '../ai_transparency_page.dart';
 
-class _EmptyState extends StatelessWidget {
+class _EmptyState extends ConsumerWidget {
   const _EmptyState();
 
   @override
-  Widget build(BuildContext context) => AppEmptyState(
-    icon: FLucideIcons.eye,
-    title: AppLocalizations.of(context).aiTransparencyEmpty,
-  );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final assistantAction = ref.watch(domainTabsAssistantActionProvider);
+    return AppEmptyState(
+      icon: FLucideIcons.eye,
+      title: AppLocalizations.of(context).aiTransparencyEmpty,
+      action: assistantAction == null
+          ? null
+          : FButton(
+              variant: FButtonVariant.outline,
+              onPress: () => assistantAction(context, ref),
+              prefix: const Icon(FLucideIcons.sparkles, size: AppIconSizes.sm),
+              child: Text(AppLocalizations.of(context).navAskAi),
+            ),
+    );
+  }
 }
 
 class _TraceRow extends StatelessWidget {
@@ -21,7 +32,7 @@ class _TraceRow extends StatelessWidget {
     final title = _displayTitle(trace, l10n);
     final source = _displaySource(trace);
     final isError = trace.terminalReason != TerminalReason.done;
-    return FTappable(
+    return AppTappable(
       onPress: () => context.goNamed(
         SettingsRouteNames.aiTransparencyDetail,
         pathParameters: <String, String>{'requestId': trace.requestId},

@@ -34,7 +34,7 @@ class _DraftMasterRow extends StatelessWidget {
       selected: focused,
       enabled: !busy,
       onTap: busy ? null : onFocus,
-      child: FTappable(
+      child: AppTappable(
         onPress: busy ? null : onFocus,
         child: AnimatedContainer(
           duration: AppMotionPolicy.duration(context, Motion.fast),

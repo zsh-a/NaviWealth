@@ -308,33 +308,15 @@ class _SwipeReviewAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Dismissible(
-      key: dismissKey,
-      direction: DismissDirection.endToStart,
-      confirmDismiss: (_) => onComplete(),
-      background: const SizedBox.shrink(),
-      secondaryBackground: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
-        decoration: BoxDecoration(
-          color: colors.primary,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Text(
-              label,
-              style: context.labelStyle.copyWith(
-                color: colors.primaryForeground,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s8),
-            Icon(icon, size: AppIconSizes.sm, color: colors.primaryForeground),
-          ],
-        ),
-      ),
+    return AppDismissible(
+      itemKey: dismissKey,
+      tone: AppDismissibleTone.primary,
+      icon: icon,
+      label: label,
+      borderRadius: AppRadius.sm,
+      confirm: onComplete,
+      // The review flow re-flows its own list after completion.
+      removeRow: false,
       child: child,
     );
   }

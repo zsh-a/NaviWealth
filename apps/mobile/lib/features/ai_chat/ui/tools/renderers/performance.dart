@@ -245,7 +245,7 @@ class _NetWorthSparklineState extends State<_NetWorthSparkline> {
           const SizedBox(height: AppSpacing.s8),
           Align(
             alignment: Alignment.centerLeft,
-            child: FTappable(
+            child: AppTappable(
               onPress: () {
                 // Wealth hub is the full net-worth surface; path is stable
                 // App route contract (avoid cross-feature import).
@@ -290,7 +290,7 @@ class _CurrencyChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FTappable(
+    return AppTappable(
       onPress: onTap,
       child: AnimatedContainer(
         duration: AppMotionPolicy.duration(context, Motion.fast),

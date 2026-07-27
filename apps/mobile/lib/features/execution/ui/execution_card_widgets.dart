@@ -40,13 +40,8 @@ class ExecutionSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return SectionHeader(
+    return SectionHeader.module(
       title: title,
-      padding: const EdgeInsets.only(
-        left: AppSpacing.s4,
-        top: AppSpacing.s4,
-        bottom: AppSpacing.s10,
-      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -76,7 +71,7 @@ class _CardOpenRegion extends StatelessWidget {
     if (onOpen == null) return child;
     return Semantics(
       button: true,
-      child: FTappable(onPress: onOpen, child: child),
+      child: AppTappable(onPress: onOpen, child: child),
     );
   }
 }

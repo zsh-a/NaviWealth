@@ -22,9 +22,9 @@ class _RankingSection extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s12),
           LayoutBuilder(
             builder: (context, constraints) {
-              // Five numeric columns need room; below ~520dp fall back to
+              // Five numeric columns need room; below the dialog cap fall back to
               // a two-line row instead of crushing every column.
-              final compact = constraints.maxWidth < 520;
+              final compact = constraints.maxWidth < Breakpoints.dialogMax;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -129,7 +129,7 @@ class _RankRow extends StatelessWidget {
       );
       return onPress == null
           ? content
-          : FTappable(onPress: onPress, child: content);
+          : AppTappable(onPress: onPress, child: content);
     }
     Widget cell(String text, int flex, {Color? color}) => Expanded(
       flex: flex,
@@ -173,6 +173,6 @@ class _RankRow extends StatelessWidget {
     );
     return onPress == null
         ? content
-        : FTappable(onPress: onPress, child: content);
+        : AppTappable(onPress: onPress, child: content);
   }
 }

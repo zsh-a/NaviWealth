@@ -172,7 +172,7 @@ class _KnowledgeWriterSectionState extends State<KnowledgeWriterSection> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (widget.collapsible)
-            FTappable(
+            AppTappable(
               onPress: () => setState(() => _expanded = !_expanded),
               child: header,
             )

@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/core/shell/domain_shell.dart';
+import 'package:naviwealth/core/shell/domain_switcher.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
@@ -250,13 +252,7 @@ class _WorkspaceChips extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionHeader(
-          title: l10n.lifeWorkbenchTitle,
-          padding: const EdgeInsets.only(
-            left: AppSpacing.s4,
-            bottom: AppPageRhythm.row,
-          ),
-        ),
+        SectionHeader.module(title: l10n.lifeWorkbenchTitle),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -381,12 +377,23 @@ class _AttentionSectionState extends State<_AttentionSection> {
     if (events.isEmpty) {
       return SoftCard.raised(
         padding: AppPageRhythm.cardPadding,
-        child: AppEmptyState(
-          icon: FLucideIcons.sparkles,
-          title: l10n.lifeTimelineEmptyTitle,
-          message: l10n.lifeTimelineEmpty,
-          compact: true,
-          iconSize: AppIconSizes.lg,
+        child: Consumer(
+          builder: (context, ref, _) => AppEmptyState(
+            icon: FLucideIcons.sparkles,
+            title: l10n.lifeTimelineEmptyTitle,
+            message: l10n.lifeTimelineEmpty,
+            compact: true,
+            iconSize: AppIconSizes.lg,
+            action: FButton(
+              variant: FButtonVariant.outline,
+              onPress: () => showDomainSwitcherSheet(
+                context,
+                ref.read(activeDomainShellsProvider),
+                ref.read<String?>(domainSwitcherHomePathProvider),
+              ),
+              child: Text(l10n.shellSwitchDomainTitle),
+            ),
+          ),
         ),
       );
     }
@@ -419,13 +426,7 @@ class _AttentionSectionState extends State<_AttentionSection> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (shownHigh.isNotEmpty) ...[
-          SectionHeader(
-            title: l10n.lifeTimelinePriorityTitle,
-            padding: const EdgeInsets.only(
-              left: AppSpacing.s4,
-              bottom: AppPageRhythm.row,
-            ),
-          ),
+          SectionHeader.module(title: l10n.lifeTimelinePriorityTitle),
           LifeTimeline(
             items: [
               for (final e in shownHigh)
@@ -448,13 +449,7 @@ class _AttentionSectionState extends State<_AttentionSection> {
             const SizedBox(height: AppPageRhythm.section),
         ],
         if (shownNormal.isNotEmpty) ...[
-          SectionHeader(
-            title: l10n.lifeTimelineTitle,
-            padding: const EdgeInsets.only(
-              left: AppSpacing.s4,
-              bottom: AppPageRhythm.row,
-            ),
-          ),
+          SectionHeader.module(title: l10n.lifeTimelineTitle),
           LifeTimeline(
             items: [
               for (final e in shownNormal)

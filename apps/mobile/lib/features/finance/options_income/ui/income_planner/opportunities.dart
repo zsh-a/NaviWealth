@@ -81,10 +81,12 @@ class _OpportunitiesBody extends StatefulWidget {
   const _OpportunitiesBody({
     required this.state,
     required this.opportunitiesAsync,
+    required this.onScan,
   });
 
   final ScanState state;
   final AsyncValue<List<OptionsOpportunity>> opportunitiesAsync;
+  final VoidCallback onScan;
 
   @override
   State<_OpportunitiesBody> createState() => _OpportunitiesBodyState();
@@ -124,6 +126,15 @@ class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
             icon: FLucideIcons.scanSearch,
             title: l10n.incomePlannerOpportunitiesEmpty,
             compact: true,
+            action: FButton(
+              variant: FButtonVariant.outline,
+              onPress: widget.onScan,
+              prefix: const Icon(
+                FLucideIcons.scanSearch,
+                size: AppIconSizes.sm,
+              ),
+              child: Text(l10n.incomePlannerRefreshAction),
+            ),
           );
         }
         final visible = items.where(_matchesFilter).toList()
@@ -164,6 +175,12 @@ class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
                       icon: FLucideIcons.scanSearch,
                       title: l10n.incomePlannerOpportunityFilterEmpty,
                       compact: true,
+                      action: FButton(
+                        variant: FButtonVariant.outline,
+                        onPress: () =>
+                            setState(() => _filter = _OpportunityFilter.all),
+                        child: Text(l10n.incomePlannerOpportunityFilterAll),
+                      ),
                     )
             else
               ..._laneSections(context, l10n, visible),
@@ -197,13 +214,7 @@ class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
     if (sell.isEmpty || leaps.isEmpty) {
       return [for (final opportunity in visible) card(opportunity)];
     }
-    Widget header(String title) => SectionHeader(
-      title: title,
-      padding: const EdgeInsets.only(
-        top: AppSpacing.s12,
-        bottom: AppSpacing.s4,
-      ),
-    );
+    Widget header(String title) => SectionHeader.module(title: title);
     return [
       header(l10n.incomePlannerLaneSellSection),
       for (final opportunity in sell) card(opportunity),

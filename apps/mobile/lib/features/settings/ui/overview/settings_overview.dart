@@ -40,7 +40,7 @@ part 'settings_overview_sections.dart';
 class SettingsOverview extends ConsumerWidget {
   const SettingsOverview({super.key});
 
-  static const double _twoColumnBreakpoint = 760;
+  static const double _twoColumnBreakpoint = Breakpoints.contentThreeColumn;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

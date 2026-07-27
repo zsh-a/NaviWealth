@@ -426,7 +426,7 @@ class _JumpToBottomChip extends StatelessWidget {
         : l10n.aiChatJumpToLatest;
     return FTooltip(
       tipBuilder: (_, _) => Text(l10n.aiChatJumpToLatestTooltip),
-      child: FTappable(
+      child: AppTappable(
         onPress: onPressed,
         child: Container(
           padding: const EdgeInsets.symmetric(

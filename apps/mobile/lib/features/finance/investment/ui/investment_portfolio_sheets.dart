@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/forms/form_dirty_guard.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/investment_portfolio_providers.dart';
@@ -73,6 +75,11 @@ class _InvestmentPortfolioManager extends ConsumerWidget {
               return AppEmptyState(
                 icon: FLucideIcons.layers,
                 title: l10n.portfolioNoPortfolios,
+                action: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => showInvestmentPortfolioFormSheet(context),
+                  child: Text(l10n.portfolioCreateTitle),
+                ),
               );
             }
             return AppGroupedSurface(
@@ -461,6 +468,14 @@ class _PortfolioLotAssignmentFormState
       return AppEmptyState(
         icon: FLucideIcons.packageOpen,
         title: l10n.portfolioHubEmpty,
+        action: FButton(
+          variant: FButtonVariant.outline,
+          onPress: () {
+            Navigator.of(context).maybePop();
+            context.push(FinanceRoutes.tradeEntry);
+          },
+          child: Text(l10n.tradeEntryAppBarTitle),
+        ),
       );
     }
     final labels = {

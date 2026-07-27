@@ -5,7 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_controller.dart';
-import 'package:naviwealth/core/ai/agents/ui/agent_result_card.dart';
+import 'package:naviwealth/core/ai/agents/ui/agent_results_panel.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/core/product/product_metrics.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';

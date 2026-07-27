@@ -46,6 +46,11 @@ class OptionsTradeStatsPage extends ConsumerWidget {
                 icon: FLucideIcons.chartNoAxesColumnIncreasing,
                 title: l10n.incomePlannerStatsEmptyTitle,
                 message: l10n.incomePlannerStatsEmptyBody,
+                action: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(context).maybePop(),
+                  child: Text(l10n.commonClose),
+                ),
               ),
             );
           }
@@ -60,28 +65,16 @@ class OptionsTradeStatsPage extends ConsumerWidget {
               _OverviewCard(stats: stats),
               const SizedBox(height: AppSpacing.s16),
               _PremiumBySymbolChart(stats: stats),
-              SectionHeader(
+              SectionHeader.module(
                 title: l10n.incomePlannerStatsStrategySectionTitle,
-                padding: const EdgeInsets.fromLTRB(
-                  0,
-                  AppSpacing.s16,
-                  0,
-                  AppSpacing.s8,
-                ),
               ),
               for (final item in stats.byStrategy)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
                   child: _StrategyTile(item: item),
                 ),
-              SectionHeader(
+              SectionHeader.module(
                 title: l10n.incomePlannerStatsSymbolSectionTitle,
-                padding: const EdgeInsets.fromLTRB(
-                  0,
-                  AppSpacing.s16,
-                  0,
-                  AppSpacing.s8,
-                ),
               ),
               for (final item in stats.bySymbol.take(12))
                 Padding(

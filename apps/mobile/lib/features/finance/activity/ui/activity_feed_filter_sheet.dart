@@ -262,7 +262,7 @@ class _HeaderTextAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FTappable(
+    return AppTappable(
       onPress: onPress,
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -296,7 +296,7 @@ class _AccountFilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FTappable(
+    return AppTappable(
       onPress: () {
         AppInteraction.signal(AppInteractionIntent.select);
         onToggle();

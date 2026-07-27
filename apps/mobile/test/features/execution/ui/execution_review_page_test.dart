@@ -157,10 +157,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Generate review'), findsOneWidget);
+    expect(find.text('Generate'), findsOneWidget);
     expect(
       tester.getTopLeft(find.text('All')).dy,
-      lessThan(tester.getTopLeft(find.text('Generate review')).dy),
+      lessThan(tester.getTopLeft(find.text('Generate')).dy),
     );
     expect(find.text('Recent execution progress'), findsOneWidget);
     expect(find.text('Old execution blocker'), findsNothing);

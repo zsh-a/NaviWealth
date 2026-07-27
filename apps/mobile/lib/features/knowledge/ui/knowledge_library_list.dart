@@ -92,7 +92,7 @@ class _LibraryList extends ConsumerWidget {
               emptyIcon: FLucideIcons.gitBranch,
               emptyTitle: l10n.knowledgeLibraryEmptyDecisionsTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyDecisionsBody,
-              statusOf: (d) => d.status.wire,
+              statusOf: (d) => decisionStatusLabelOf(l10n, d.status),
               tileBuilder: (context, d, query) => _buildDecisionTile(
                 context,
                 d,
@@ -122,7 +122,7 @@ class _LibraryList extends ConsumerWidget {
               emptyIcon: FLucideIcons.badgeCheck,
               emptyTitle: l10n.knowledgeLibraryEmptyPrinciplesTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyPrinciplesBody,
-              statusOf: (p) => p.status.wire,
+              statusOf: (p) => principleStatusLabel(l10n, p.status),
               tileBuilder: (context, p, query) => _buildPrincipleTile(
                 context,
                 p,
@@ -155,7 +155,7 @@ class _LibraryList extends ConsumerWidget {
               emptyIcon: FLucideIcons.lightbulb,
               emptyTitle: l10n.knowledgeLibraryEmptyAssumptionsTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyAssumptionsBody,
-              statusOf: (a) => a.status.wire,
+              statusOf: (a) => assumptionStatusLabel(l10n, a.status),
               tileBuilder: (context, a, query) => _buildAssumptionTile(
                 context,
                 a,
@@ -247,7 +247,7 @@ class _LibraryList extends ConsumerWidget {
               emptyIcon: FLucideIcons.flaskConical,
               emptyTitle: l10n.knowledgeLibraryEmptyExperimentsTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyExperimentsBody,
-              statusOf: (e) => e.status.wire,
+              statusOf: (e) => experimentStatusLabel(l10n, e.status),
               tileBuilder: (context, e, query) => _buildExperimentTile(
                 context,
                 e,
@@ -272,7 +272,7 @@ class _LibraryList extends ConsumerWidget {
               emptyIcon: FLucideIcons.calendarClock,
               emptyTitle: l10n.knowledgeLibraryEmptyRoutinesTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyRoutinesBody,
-              statusOf: (r) => r.status.wire,
+              statusOf: (r) => routineStatusLabel(l10n, r.status),
               tileBuilder: (context, r, query) => _buildRoutineTile(
                 context,
                 r,

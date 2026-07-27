@@ -222,7 +222,7 @@ class _ManualAssetFacts extends ConsumerWidget {
         child: Column(
           children: [
             if (linkedAccount != null) ...[
-              FTappable(
+              AppTappable(
                 onPress: () => context.push(
                   FinanceRoutes.wealthAccount(linkedAccount!.id),
                 ),

@@ -9,6 +9,7 @@ import '../../../../core/format/formatters.dart';
 import '../data/fire_providers.dart';
 import '../domain/fire_projection.dart';
 import 'fire_goal_form.dart';
+import 'fire_milestone_celebration.dart';
 import 'fire_scenarios_chart.dart';
 import 'fire_simulations_card.dart';
 import 'fire_state_hero_card.dart';
@@ -36,13 +37,54 @@ class FireUnconfiguredBody extends StatelessWidget {
 }
 
 /// Slim FIRE workspace: hero story, projection, collapsible resilience.
-class FireConfiguredBody extends ConsumerWidget {
+class FireConfiguredBody extends ConsumerStatefulWidget {
   const FireConfiguredBody({super.key, required this.view});
 
   final FireDashboardView view;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FireConfiguredBody> createState() => _FireConfiguredBodyState();
+}
+
+class _FireConfiguredBodyState extends ConsumerState<FireConfiguredBody> {
+  bool _celebrationInFlight = false;
+
+  FireDashboardView get view => widget.view;
+
+  @override
+  void initState() {
+    super.initState();
+    _scheduleMilestoneCheck();
+  }
+
+  @override
+  void didUpdateWidget(covariant FireConfiguredBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.view.progressRatio != widget.view.progressRatio) {
+      _scheduleMilestoneCheck();
+    }
+  }
+
+  void _scheduleMilestoneCheck() {
+    final progress = widget.view.progressRatio;
+    if (progress == null || _celebrationInFlight) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted || _celebrationInFlight) return;
+      _celebrationInFlight = true;
+      try {
+        await maybeCelebrateFireMilestone(
+          context,
+          progress: progress,
+          controller: ref.read(fireMilestoneProvider.notifier),
+        );
+      } finally {
+        _celebrationInFlight = false;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final primary = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

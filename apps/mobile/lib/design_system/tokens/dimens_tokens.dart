@@ -71,16 +71,12 @@ class AppStroke {
 class AppRadius {
   const AppRadius._();
 
-  static const double none = 0;
   static const double sm = 8;
   static const double md = 12;
   static const double lg = 16;
 
   /// Hero cards, large glass docks, and marquee surfaces.
   static const double xl = 20;
-
-  /// Sheets and full-bleed panels that need a softer outer clip.
-  static const double xxl = 24;
 
   static const double full = 9999;
 }
@@ -126,9 +122,6 @@ class AppOpacity {
   /// Highlight -- accent bars, subtle emphasis. (~0.20)
   static const double highlight = 0.20;
 
-  /// Active/focus outline. (~0.24)
-  static const double focusRing = 0.24;
-
   /// Hover/hero-dot halo. (~0.25)
   static const double halo = 0.25;
 
@@ -140,9 +133,6 @@ class AppOpacity {
 
   /// Scrim / overlay backdrop. (~0.50)
   static const double scrim = 0.50;
-
-  /// Softer scrim / light glass highlight. (~0.55)
-  static const double softScrim = 0.55;
 
   /// Prominent -- emphasized text, active states. (~0.60)
   static const double prominent = 0.60;
@@ -217,12 +207,6 @@ class AppBlur {
 
   /// Standard sheet / dialog blur.
   static const double sheet = 18;
-
-  /// Floating glass nav bar blur.
-  static const double nav = 12;
-
-  /// Collapsed hero sticky residual (lighter than nav — sits under headers).
-  static const double sticky = 14;
 }
 
 /// Canonical shadow sets keyed by surface role.
@@ -400,9 +384,6 @@ class AppControlWidths {
   /// AI chat sessions side panel width.
   static const double aiSessionsPanel = 320;
 
-  /// Compact desktop dialog for focused financial configuration forms.
-  static const double financeConfigDialog = 420;
-
   /// Horizontal AI action card width.
   static const double aiActionCard = 240;
 
@@ -414,9 +395,6 @@ class AppControlWidths {
 
   /// Compact value/skeleton column in dense financial rows.
   static const double compactValue = 80;
-
-  /// Center label column inside donut allocation charts.
-  static const double donutCenterLabel = 132;
 
   /// Compact AI result label/value column.
   static const double aiCompactColumn = AppSpacing.s64;
