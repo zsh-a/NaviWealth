@@ -16,7 +16,8 @@ import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/investment/data/investment_portfolio_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/investment_portfolio_repository.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
-import 'package:naviwealth/features/finance/investment/domain/models/investment_portfolio.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/portfolio_capital_assignment.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../design_system/preferences/theme_preferences.dart';
@@ -24,6 +25,8 @@ import '../application/rebalance_execution_coordinator.dart';
 import '../application/rebalance_execution_workspace_gateway.dart';
 import '../application/rebalance_trade_validation.dart';
 import '../domain/allocation_schemes.dart';
+import '../domain/hierarchical_rebalance_engine.dart';
+import '../domain/portfolio_rebalance_group.dart';
 import '../domain/rebalance_engine.dart';
 import '../domain/rebalance_execution.dart';
 import '../domain/rebalance_models.dart';
@@ -174,22 +177,59 @@ RiskAppetite appetiteForScheme(AllocationSchemePreset preset) =>
       AllocationSchemePreset.custom => RiskAppetite.custom,
     };
 
-/// Target allocation for the currently selected logical portfolio.
+/// Explicit group selection within the selected real portfolio.
+final selectedPortfolioRebalanceGroupIdProvider = StateProvider<String?>(
+  (ref) => null,
+);
+
+final effectiveSelectedPortfolioRebalanceGroupIdProvider = Provider<String?>((
+  ref,
+) {
+  final selectedPortfolioId = ref.watch(
+    effectiveSelectedInvestmentPortfolioIdProvider,
+  );
+  if (selectedPortfolioId == null ||
+      selectedPortfolioId == kUnassignedInvestmentPortfolioId) {
+    return null;
+  }
+  final groups = ref.watch(selectedPortfolioRebalanceGroupsProvider);
+  if (!groups.hasValue || groups.requireValue.isEmpty) return null;
+  final requested = ref.watch(selectedPortfolioRebalanceGroupIdProvider);
+  if (requested != null &&
+      groups.requireValue.any((group) => group.id == requested)) {
+    return requested;
+  }
+  return groups.requireValue.first.id;
+});
+
+final selectedPortfolioRebalanceGroupProvider =
+    Provider<AsyncValue<PortfolioRebalanceGroup?>>((ref) {
+      final selectedId = ref.watch(
+        effectiveSelectedPortfolioRebalanceGroupIdProvider,
+      );
+      return ref
+          .watch(selectedPortfolioRebalanceGroupsProvider)
+          .whenData(
+            (groups) =>
+                groups.where((group) => group.id == selectedId).firstOrNull,
+          );
+    });
+
+/// Internal target allocation for the selected capital-owning group.
 ///
-/// Persisted targets live on `investment_portfolios` for real portfolios.
-/// The virtual all-holdings and unassigned views have no database row, so
-/// their targets use user-scoped preferences instead.
+/// Virtual all-holdings and unassigned views have no group row, so those two
+/// read-only scopes continue to use user-scoped preferences.
 final targetAllocationProvider =
     StateNotifierProvider<TargetAllocationController, TargetAllocation>((ref) {
       final scheme = ref.read(selectedSchemeProvider);
       final selectedId = ref.watch(
         effectiveSelectedInvestmentPortfolioIdProvider,
       );
-      final portfolio = ref.watch(selectedInvestmentPortfolioProvider).value;
+      final group = ref.watch(selectedPortfolioRebalanceGroupProvider).value;
       final ownerUserId = ref.watch(activeUserIdProvider);
       return TargetAllocationController(
         scheme: scheme,
-        portfolio: portfolio,
+        group: group,
         repository: ref.watch(investmentPortfolioRepositoryProvider.future),
         preferences: ref.watch(sharedPreferencesProvider),
         virtualStorageKey: _virtualTargetAllocationStorageKey(
@@ -216,34 +256,33 @@ String? _virtualTargetAllocationStorageKey({
 class TargetAllocationController extends StateNotifier<TargetAllocation> {
   TargetAllocationController({
     required AllocationSchemePreset scheme,
-    required InvestmentPortfolio? portfolio,
+    required PortfolioRebalanceGroup? group,
     required Future<InvestmentPortfolioRepository> repository,
     SharedPreferences? preferences,
     String? virtualStorageKey,
   }) : _scheme = scheme,
-       _portfolio = portfolio,
+       _group = group,
        _repository = repository,
        _preferences = preferences,
        _virtualStorageKey = virtualStorageKey,
-       super(_load(portfolio, scheme, preferences, virtualStorageKey));
+       super(_load(group, scheme, preferences, virtualStorageKey));
 
   final AllocationSchemePreset _scheme;
-  InvestmentPortfolio? _portfolio;
+  PortfolioRebalanceGroup? _group;
   final Future<InvestmentPortfolioRepository> _repository;
   final SharedPreferences? _preferences;
   final String? _virtualStorageKey;
 
   static TargetAllocation _load(
-    InvestmentPortfolio? portfolio,
+    PortfolioRebalanceGroup? group,
     AllocationSchemePreset scheme,
     SharedPreferences? preferences,
     String? virtualStorageKey,
   ) {
-    final raw =
-        portfolio?.targetAllocationJson ??
-        (virtualStorageKey == null
-            ? null
-            : preferences?.getString(virtualStorageKey));
+    if (group != null) return group.internalTarget;
+    final raw = virtualStorageKey == null
+        ? null
+        : preferences?.getString(virtualStorageKey);
     if (raw != null) {
       try {
         final map = jsonDecode(raw) as Map<String, dynamic>;
@@ -268,8 +307,8 @@ class TargetAllocationController extends StateNotifier<TargetAllocation> {
   }
 
   Future<void> _persist(TargetAllocation allocation) async {
-    final portfolio = _portfolio;
-    if (portfolio == null) {
+    final group = _group;
+    if (group == null) {
       final preferences = _preferences;
       final storageKey = _virtualStorageKey;
       if (preferences != null && storageKey != null) {
@@ -280,10 +319,9 @@ class TargetAllocationController extends StateNotifier<TargetAllocation> {
       }
       return;
     }
-    final updated = portfolio.copyWith(
-      targetAllocationJson: jsonEncode(allocation.toJson()),
+    _group = await (await _repository).updateGroup(
+      group.copyWith(internalTarget: allocation),
     );
-    _portfolio = await (await _repository).update(updated);
   }
 }
 
@@ -324,8 +362,47 @@ class ThresholdController extends StateNotifier<double> {
   }
 }
 
-/// The computed rebalance plan. Reactively recomputes when the dashboard
-/// snapshot or target allocation changes.
+final hierarchicalRebalanceEngineProvider =
+    Provider<HierarchicalRebalanceEngine>((ref) {
+      return HierarchicalRebalanceEngine(
+        internalEngine: ref.watch(rebalanceEngineProvider),
+      );
+    });
+
+/// Per-group snapshots preserve exclusive capital ownership. Cash assignments
+/// are valued from the dashboard account item and never copied into overlays.
+final rebalancePortfolioGroupSnapshotsProvider =
+    FutureProvider.autoDispose<Map<String, DashboardSnapshot>>((ref) async {
+      final selectedId = ref.watch(
+        effectiveSelectedInvestmentPortfolioIdProvider,
+      );
+      if (selectedId == null ||
+          selectedId == kUnassignedInvestmentPortfolioId) {
+        return const {};
+      }
+      final scoped = await ref.watch(scopedPortfolioHoldingsProvider.future);
+      final allGroups = await ref.watch(
+        portfolioRebalanceGroupsProvider.future,
+      );
+      final groups = allGroups
+          .where((group) => group.portfolioId == selectedId)
+          .toList(growable: false);
+      final assets = await ref.watch(allAssetsStreamProvider.future);
+      final dashboard = await ref.watch(dashboardSnapshotProvider.future);
+      return Map.unmodifiable({
+        for (final group in groups)
+          group.id: _buildRebalanceSnapshot(
+            holdings: scoped.snapshotsByGroup[group.id] ?? const {},
+            cashAssignments: scoped.cashAssignments
+                .where((assignment) => assignment.rebalanceGroupId == group.id)
+                .toList(growable: false),
+            assets: assets,
+            dashboard: dashboard,
+          ),
+      });
+    });
+
+/// Snapshot used by the existing single-group execution workspace.
 final rebalancePortfolioSnapshotProvider =
     FutureProvider.autoDispose<DashboardSnapshot>((ref) async {
       final selectedId = ref.watch(
@@ -334,64 +411,63 @@ final rebalancePortfolioSnapshotProvider =
       if (selectedId == null) {
         return ref.watch(dashboardSnapshotProvider.future);
       }
+      if (selectedId != kUnassignedInvestmentPortfolioId) {
+        final groupId = ref.watch(
+          effectiveSelectedPortfolioRebalanceGroupIdProvider,
+        );
+        final snapshots = await ref.watch(
+          rebalancePortfolioGroupSnapshotsProvider.future,
+        );
+        final dashboard = await ref.watch(dashboardSnapshotProvider.future);
+        return snapshots[groupId] ?? _emptySnapshot(dashboard);
+      }
       final scopedFuture = ref.watch(scopedPortfolioHoldingsProvider.future);
       final assetsFuture = ref.watch(allAssetsStreamProvider.future);
       final dashboardFuture = ref.watch(dashboardSnapshotProvider.future);
       final scoped = await scopedFuture;
       final assets = await assetsFuture;
       final dashboard = await dashboardFuture;
-      final assetById = {for (final asset in assets) asset.id: asset};
-      final itemsByCategory = <AssetCategory, List<CategoryItem>>{};
-      for (final holding in scoped.snapshots.values) {
-        final asset = assetById[holding.assetId];
-        if (asset == null) continue;
-        final category = categoryForAssetType(asset.type);
-        itemsByCategory
-            .putIfAbsent(category, () => <CategoryItem>[])
-            .add(
-              CategoryItem(
-                id: holding.assetId,
-                name: asset.name?.trim().isNotEmpty == true
-                    ? asset.name!.trim()
-                    : asset.symbol,
-                subtitle: asset.symbol,
-                valueInBase: Money(
-                  holding.marketValueInBase,
-                  dashboard.baseCurrency,
-                ),
-                nativeAmount: holding.marketValueInAssetCurrency,
-                nativeCurrency: holding.assetCurrency,
-              ),
-            );
-      }
-      final allocations = <CategoryAllocation>[];
-      var total = Decimal.zero;
-      for (final entry in itemsByCategory.entries) {
-        final categoryTotal = entry.value.fold<Decimal>(
-          Decimal.zero,
-          (sum, item) => sum + item.valueInBase.amount,
-        );
-        total += categoryTotal;
-        allocations.add(
-          CategoryAllocation(
-            category: entry.key,
-            totalInBase: Money(categoryTotal, dashboard.baseCurrency),
-            items: List.unmodifiable(entry.value),
-          ),
-        );
-      }
-      final totalMoney = Money(total, dashboard.baseCurrency);
-      return DashboardSnapshot(
-        asOf: DateTime.now().toUtc(),
-        baseCurrency: dashboard.baseCurrency,
-        allocations: List.unmodifiable(allocations),
-        totalAssets: totalMoney,
-        totalLiabilities: Money.zero(dashboard.baseCurrency),
-        netWorth: totalMoney,
+      return _buildRebalanceSnapshot(
+        holdings: scoped.snapshots,
+        cashAssignments: const [],
+        assets: assets,
+        dashboard: dashboard,
       );
     });
 
+final hierarchicalRebalancePlanProvider = Provider<PortfolioRebalancePlan?>((
+  ref,
+) {
+  final selectedId = ref.watch(effectiveSelectedInvestmentPortfolioIdProvider);
+  if (selectedId == null || selectedId == kUnassignedInvestmentPortfolioId) {
+    return null;
+  }
+  final groups = ref.watch(selectedPortfolioRebalanceGroupsProvider).value;
+  final snapshots = ref.watch(rebalancePortfolioGroupSnapshotsProvider).value;
+  final dashboard = ref.watch(dashboardSnapshotProvider).value;
+  if (groups == null || snapshots == null || dashboard == null) return null;
+  return ref
+      .watch(hierarchicalRebalanceEngineProvider)
+      .compute(
+        target: PortfolioRebalanceTarget(groups: groups),
+        snapshotsByGroup: snapshots,
+        baseCurrency: dashboard.baseCurrency,
+      );
+});
+
 final rebalancePlanProvider = Provider<RebalancePlan?>((ref) {
+  final selectedId = ref.watch(effectiveSelectedInvestmentPortfolioIdProvider);
+  if (selectedId != null && selectedId != kUnassignedInvestmentPortfolioId) {
+    final groupId = ref.watch(
+      effectiveSelectedPortfolioRebalanceGroupIdProvider,
+    );
+    return ref
+        .watch(hierarchicalRebalancePlanProvider)
+        ?.groups
+        .where((group) => group.group.id == groupId)
+        .firstOrNull
+        ?.internalPlan;
+  }
   final snapshotAsync = ref.watch(rebalancePortfolioSnapshotProvider);
   final target = ref.watch(targetAllocationProvider);
   final engine = ref.watch(rebalanceEngineProvider);
@@ -401,3 +477,118 @@ final rebalancePlanProvider = Provider<RebalancePlan?>((ref) {
 
   return engine.compute(snapshot: snapshot, target: target);
 });
+
+DashboardSnapshot _buildRebalanceSnapshot({
+  required Map<String, HoldingSnapshot> holdings,
+  required List<PortfolioCapitalAssignment> cashAssignments,
+  required List<Asset> assets,
+  required DashboardSnapshot dashboard,
+}) {
+  final assetById = {for (final asset in assets) asset.id: asset};
+  final dashboardItemById = {
+    for (final allocation in dashboard.allocations)
+      for (final item in allocation.items) item.id: item,
+  };
+  final itemsByCategory = <AssetCategory, List<CategoryItem>>{};
+  for (final holding in holdings.values) {
+    final asset = assetById[holding.assetId];
+    if (asset == null) continue;
+    final category = categoryForAssetType(asset.type);
+    itemsByCategory
+        .putIfAbsent(category, () => <CategoryItem>[])
+        .add(
+          CategoryItem(
+            id: holding.assetId,
+            name: asset.name?.trim().isNotEmpty == true
+                ? asset.name!.trim()
+                : asset.symbol,
+            subtitle: asset.symbol,
+            valueInBase: Money(
+              holding.marketValueInBase,
+              dashboard.baseCurrency,
+            ),
+            nativeAmount: holding.marketValueInAssetCurrency,
+            nativeCurrency: holding.assetCurrency,
+          ),
+        );
+  }
+  for (final assignment in cashAssignments) {
+    final amount = assignment.amount!;
+    final currency = assignment.currency!;
+    final accountItem = dashboardItemById[assignment.sourceId];
+    final amountInBase = _cashValueInBase(
+      amount: amount,
+      currency: currency,
+      accountItem: accountItem,
+      baseCurrency: dashboard.baseCurrency,
+    );
+    if (amountInBase == null) continue;
+    itemsByCategory
+        .putIfAbsent(AssetCategory.cash, () => <CategoryItem>[])
+        .add(
+          CategoryItem(
+            id: assignment.id,
+            name: accountItem?.name ?? currency,
+            subtitle: accountItem?.subtitle,
+            valueInBase: Money(amountInBase, dashboard.baseCurrency),
+            nativeAmount: amount,
+            nativeCurrency: currency,
+          ),
+        );
+  }
+  final allocations = <CategoryAllocation>[];
+  var total = Decimal.zero;
+  for (final entry in itemsByCategory.entries) {
+    final categoryTotal = entry.value.fold<Decimal>(
+      Decimal.zero,
+      (sum, item) => sum + item.valueInBase.amount,
+    );
+    total += categoryTotal;
+    allocations.add(
+      CategoryAllocation(
+        category: entry.key,
+        totalInBase: Money(categoryTotal, dashboard.baseCurrency),
+        items: List.unmodifiable(entry.value),
+      ),
+    );
+  }
+  final totalMoney = Money(total, dashboard.baseCurrency);
+  return DashboardSnapshot(
+    asOf: DateTime.now().toUtc(),
+    baseCurrency: dashboard.baseCurrency,
+    allocations: List.unmodifiable(allocations),
+    totalAssets: totalMoney,
+    totalLiabilities: Money.zero(dashboard.baseCurrency),
+    netWorth: totalMoney,
+  );
+}
+
+Decimal? _cashValueInBase({
+  required Decimal amount,
+  required String currency,
+  required CategoryItem? accountItem,
+  required String baseCurrency,
+}) {
+  if (currency == baseCurrency) return amount;
+  final nativeAmount = accountItem?.nativeAmount;
+  if (nativeAmount == null ||
+      nativeAmount == Decimal.zero ||
+      accountItem == null) {
+    return null;
+  }
+  return (amount * accountItem.valueInBase.amount / nativeAmount).toDecimal(
+    scaleOnInfinitePrecision: 8,
+  );
+}
+
+DashboardSnapshot _emptySnapshot(DashboardSnapshot source) {
+  final zero = Money.zero(source.baseCurrency);
+  return DashboardSnapshot(
+    asOf: DateTime.now().toUtc(),
+    baseCurrency: source.baseCurrency,
+    allocations: const [],
+    totalAssets: zero,
+    totalLiabilities: zero,
+    netWorth: zero,
+  );
+}

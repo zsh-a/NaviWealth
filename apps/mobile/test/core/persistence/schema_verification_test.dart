@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 65', () {
-      expect(db.schemaVersion, 65);
+    test('is 66', () {
+      expect(db.schemaVersion, 66);
     });
   });
 
@@ -80,7 +80,9 @@ void main() {
   group('Investment portfolio tables exist', () {
     for (final table in const [
       'investment_portfolios',
-      'portfolio_lot_memberships',
+      'portfolio_strategy_configs',
+      'portfolio_rebalance_groups',
+      'portfolio_capital_assignments',
     ]) {
       test('$table has sync columns', () async {
         final result = await db.customSelect('PRAGMA table_info($table)').get();

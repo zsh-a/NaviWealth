@@ -20285,17 +20285,6 @@ class $InvestmentPortfoliosTable extends InvestmentPortfolios
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _strategyMeta = const VerificationMeta(
-    'strategy',
-  );
-  @override
-  late final GeneratedColumn<String> strategy = GeneratedColumn<String>(
-    'strategy',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
   static const VerificationMeta _baseCurrencyMeta = const VerificationMeta(
     'baseCurrency',
   );
@@ -20320,29 +20309,6 @@ class $InvestmentPortfoliosTable extends InvestmentPortfolios
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _targetAllocationJsonMeta =
-      const VerificationMeta('targetAllocationJson');
-  @override
-  late final GeneratedColumn<String> targetAllocationJson =
-      GeneratedColumn<String>(
-        'target_allocation_json',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
-  @override
-  late final GeneratedColumnWithTypeConverter<Decimal?, String>
-  targetAnnualIncome =
-      GeneratedColumn<String>(
-        'target_annual_income',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      ).withConverter<Decimal?>(
-        $InvestmentPortfoliosTable.$convertertargetAnnualIncomen,
-      );
   static const VerificationMeta _colorMeta = const VerificationMeta('color');
   @override
   late final GeneratedColumn<String> color = GeneratedColumn<String>(
@@ -20387,11 +20353,8 @@ class $InvestmentPortfoliosTable extends InvestmentPortfolios
     deletedAt,
     id,
     name,
-    strategy,
     baseCurrency,
     goalId,
-    targetAllocationJson,
-    targetAnnualIncome,
     color,
     createdAt,
     archived,
@@ -20457,14 +20420,6 @@ class $InvestmentPortfoliosTable extends InvestmentPortfolios
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
-    if (data.containsKey('strategy')) {
-      context.handle(
-        _strategyMeta,
-        strategy.isAcceptableOrUnknown(data['strategy']!, _strategyMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_strategyMeta);
-    }
     if (data.containsKey('base_currency')) {
       context.handle(
         _baseCurrencyMeta,
@@ -20478,15 +20433,6 @@ class $InvestmentPortfoliosTable extends InvestmentPortfolios
       context.handle(
         _goalIdMeta,
         goalId.isAcceptableOrUnknown(data['goal_id']!, _goalIdMeta),
-      );
-    }
-    if (data.containsKey('target_allocation_json')) {
-      context.handle(
-        _targetAllocationJsonMeta,
-        targetAllocationJson.isAcceptableOrUnknown(
-          data['target_allocation_json']!,
-          _targetAllocationJsonMeta,
-        ),
       );
     }
     if (data.containsKey('color')) {
@@ -20548,10 +20494,6 @@ class $InvestmentPortfoliosTable extends InvestmentPortfolios
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
-      strategy: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}strategy'],
-      )!,
       baseCurrency: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}base_currency'],
@@ -20560,18 +20502,6 @@ class $InvestmentPortfoliosTable extends InvestmentPortfolios
         DriftSqlType.string,
         data['${effectivePrefix}goal_id'],
       ),
-      targetAllocationJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}target_allocation_json'],
-      ),
-      targetAnnualIncome: $InvestmentPortfoliosTable
-          .$convertertargetAnnualIncomen
-          .fromSql(
-            attachedDatabase.typeMapping.read(
-              DriftSqlType.string,
-              data['${effectivePrefix}target_annual_income'],
-            ),
-          ),
       color: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}color'],
@@ -20593,10 +20523,6 @@ class $InvestmentPortfoliosTable extends InvestmentPortfolios
   }
 
   static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
-  static TypeConverter<Decimal, String> $convertertargetAnnualIncome =
-      const DecimalConverter();
-  static TypeConverter<Decimal?, String?> $convertertargetAnnualIncomen =
-      NullAwareTypeConverter.wrap($convertertargetAnnualIncome);
 }
 
 class InvestmentPortfolioRow extends DataClass
@@ -20624,11 +20550,8 @@ class InvestmentPortfolioRow extends DataClass
   final DateTime? deletedAt;
   final String id;
   final String name;
-  final String strategy;
   final String? baseCurrency;
   final String? goalId;
-  final String? targetAllocationJson;
-  final Decimal? targetAnnualIncome;
   final String? color;
   final DateTime createdAt;
   final bool archived;
@@ -20640,11 +20563,8 @@ class InvestmentPortfolioRow extends DataClass
     this.deletedAt,
     required this.id,
     required this.name,
-    required this.strategy,
     this.baseCurrency,
     this.goalId,
-    this.targetAllocationJson,
-    this.targetAnnualIncome,
     this.color,
     required this.createdAt,
     required this.archived,
@@ -20665,22 +20585,11 @@ class InvestmentPortfolioRow extends DataClass
     }
     map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
-    map['strategy'] = Variable<String>(strategy);
     if (!nullToAbsent || baseCurrency != null) {
       map['base_currency'] = Variable<String>(baseCurrency);
     }
     if (!nullToAbsent || goalId != null) {
       map['goal_id'] = Variable<String>(goalId);
-    }
-    if (!nullToAbsent || targetAllocationJson != null) {
-      map['target_allocation_json'] = Variable<String>(targetAllocationJson);
-    }
-    if (!nullToAbsent || targetAnnualIncome != null) {
-      map['target_annual_income'] = Variable<String>(
-        $InvestmentPortfoliosTable.$convertertargetAnnualIncomen.toSql(
-          targetAnnualIncome,
-        ),
-      );
     }
     if (!nullToAbsent || color != null) {
       map['color'] = Variable<String>(color);
@@ -20701,19 +20610,12 @@ class InvestmentPortfolioRow extends DataClass
           : Value(deletedAt),
       id: Value(id),
       name: Value(name),
-      strategy: Value(strategy),
       baseCurrency: baseCurrency == null && nullToAbsent
           ? const Value.absent()
           : Value(baseCurrency),
       goalId: goalId == null && nullToAbsent
           ? const Value.absent()
           : Value(goalId),
-      targetAllocationJson: targetAllocationJson == null && nullToAbsent
-          ? const Value.absent()
-          : Value(targetAllocationJson),
-      targetAnnualIncome: targetAnnualIncome == null && nullToAbsent
-          ? const Value.absent()
-          : Value(targetAnnualIncome),
       color: color == null && nullToAbsent
           ? const Value.absent()
           : Value(color),
@@ -20735,15 +20637,8 @@ class InvestmentPortfolioRow extends DataClass
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
-      strategy: serializer.fromJson<String>(json['strategy']),
       baseCurrency: serializer.fromJson<String?>(json['baseCurrency']),
       goalId: serializer.fromJson<String?>(json['goalId']),
-      targetAllocationJson: serializer.fromJson<String?>(
-        json['targetAllocationJson'],
-      ),
-      targetAnnualIncome: serializer.fromJson<Decimal?>(
-        json['targetAnnualIncome'],
-      ),
       color: serializer.fromJson<String?>(json['color']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       archived: serializer.fromJson<bool>(json['archived']),
@@ -20760,11 +20655,8 @@ class InvestmentPortfolioRow extends DataClass
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
-      'strategy': serializer.toJson<String>(strategy),
       'baseCurrency': serializer.toJson<String?>(baseCurrency),
       'goalId': serializer.toJson<String?>(goalId),
-      'targetAllocationJson': serializer.toJson<String?>(targetAllocationJson),
-      'targetAnnualIncome': serializer.toJson<Decimal?>(targetAnnualIncome),
       'color': serializer.toJson<String?>(color),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'archived': serializer.toJson<bool>(archived),
@@ -20779,11 +20671,8 @@ class InvestmentPortfolioRow extends DataClass
     Value<DateTime?> deletedAt = const Value.absent(),
     String? id,
     String? name,
-    String? strategy,
     Value<String?> baseCurrency = const Value.absent(),
     Value<String?> goalId = const Value.absent(),
-    Value<String?> targetAllocationJson = const Value.absent(),
-    Value<Decimal?> targetAnnualIncome = const Value.absent(),
     Value<String?> color = const Value.absent(),
     DateTime? createdAt,
     bool? archived,
@@ -20795,15 +20684,8 @@ class InvestmentPortfolioRow extends DataClass
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     id: id ?? this.id,
     name: name ?? this.name,
-    strategy: strategy ?? this.strategy,
     baseCurrency: baseCurrency.present ? baseCurrency.value : this.baseCurrency,
     goalId: goalId.present ? goalId.value : this.goalId,
-    targetAllocationJson: targetAllocationJson.present
-        ? targetAllocationJson.value
-        : this.targetAllocationJson,
-    targetAnnualIncome: targetAnnualIncome.present
-        ? targetAnnualIncome.value
-        : this.targetAnnualIncome,
     color: color.present ? color.value : this.color,
     createdAt: createdAt ?? this.createdAt,
     archived: archived ?? this.archived,
@@ -20821,17 +20703,10 @@ class InvestmentPortfolioRow extends DataClass
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
-      strategy: data.strategy.present ? data.strategy.value : this.strategy,
       baseCurrency: data.baseCurrency.present
           ? data.baseCurrency.value
           : this.baseCurrency,
       goalId: data.goalId.present ? data.goalId.value : this.goalId,
-      targetAllocationJson: data.targetAllocationJson.present
-          ? data.targetAllocationJson.value
-          : this.targetAllocationJson,
-      targetAnnualIncome: data.targetAnnualIncome.present
-          ? data.targetAnnualIncome.value
-          : this.targetAnnualIncome,
       color: data.color.present ? data.color.value : this.color,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       archived: data.archived.present ? data.archived.value : this.archived,
@@ -20848,11 +20723,8 @@ class InvestmentPortfolioRow extends DataClass
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('strategy: $strategy, ')
           ..write('baseCurrency: $baseCurrency, ')
           ..write('goalId: $goalId, ')
-          ..write('targetAllocationJson: $targetAllocationJson, ')
-          ..write('targetAnnualIncome: $targetAnnualIncome, ')
           ..write('color: $color, ')
           ..write('createdAt: $createdAt, ')
           ..write('archived: $archived')
@@ -20869,11 +20741,8 @@ class InvestmentPortfolioRow extends DataClass
     deletedAt,
     id,
     name,
-    strategy,
     baseCurrency,
     goalId,
-    targetAllocationJson,
-    targetAnnualIncome,
     color,
     createdAt,
     archived,
@@ -20889,11 +20758,8 @@ class InvestmentPortfolioRow extends DataClass
           other.deletedAt == this.deletedAt &&
           other.id == this.id &&
           other.name == this.name &&
-          other.strategy == this.strategy &&
           other.baseCurrency == this.baseCurrency &&
           other.goalId == this.goalId &&
-          other.targetAllocationJson == this.targetAllocationJson &&
-          other.targetAnnualIncome == this.targetAnnualIncome &&
           other.color == this.color &&
           other.createdAt == this.createdAt &&
           other.archived == this.archived);
@@ -20908,11 +20774,8 @@ class InvestmentPortfoliosCompanion
   final Value<DateTime?> deletedAt;
   final Value<String> id;
   final Value<String> name;
-  final Value<String> strategy;
   final Value<String?> baseCurrency;
   final Value<String?> goalId;
-  final Value<String?> targetAllocationJson;
-  final Value<Decimal?> targetAnnualIncome;
   final Value<String?> color;
   final Value<DateTime> createdAt;
   final Value<bool> archived;
@@ -20925,11 +20788,8 @@ class InvestmentPortfoliosCompanion
     this.deletedAt = const Value.absent(),
     this.id = const Value.absent(),
     this.name = const Value.absent(),
-    this.strategy = const Value.absent(),
     this.baseCurrency = const Value.absent(),
     this.goalId = const Value.absent(),
-    this.targetAllocationJson = const Value.absent(),
-    this.targetAnnualIncome = const Value.absent(),
     this.color = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.archived = const Value.absent(),
@@ -20943,11 +20803,8 @@ class InvestmentPortfoliosCompanion
     this.deletedAt = const Value.absent(),
     required String id,
     required String name,
-    required String strategy,
     this.baseCurrency = const Value.absent(),
     this.goalId = const Value.absent(),
-    this.targetAllocationJson = const Value.absent(),
-    this.targetAnnualIncome = const Value.absent(),
     this.color = const Value.absent(),
     required DateTime createdAt,
     this.archived = const Value.absent(),
@@ -20958,7 +20815,6 @@ class InvestmentPortfoliosCompanion
        hlc = Value(hlc),
        id = Value(id),
        name = Value(name),
-       strategy = Value(strategy),
        createdAt = Value(createdAt);
   static Insertable<InvestmentPortfolioRow> custom({
     Expression<String>? ownerUserId,
@@ -20968,11 +20824,8 @@ class InvestmentPortfoliosCompanion
     Expression<DateTime>? deletedAt,
     Expression<String>? id,
     Expression<String>? name,
-    Expression<String>? strategy,
     Expression<String>? baseCurrency,
     Expression<String>? goalId,
-    Expression<String>? targetAllocationJson,
-    Expression<String>? targetAnnualIncome,
     Expression<String>? color,
     Expression<DateTime>? createdAt,
     Expression<bool>? archived,
@@ -20986,13 +20839,8 @@ class InvestmentPortfoliosCompanion
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (id != null) 'id': id,
       if (name != null) 'name': name,
-      if (strategy != null) 'strategy': strategy,
       if (baseCurrency != null) 'base_currency': baseCurrency,
       if (goalId != null) 'goal_id': goalId,
-      if (targetAllocationJson != null)
-        'target_allocation_json': targetAllocationJson,
-      if (targetAnnualIncome != null)
-        'target_annual_income': targetAnnualIncome,
       if (color != null) 'color': color,
       if (createdAt != null) 'created_at': createdAt,
       if (archived != null) 'archived': archived,
@@ -21008,11 +20856,8 @@ class InvestmentPortfoliosCompanion
     Value<DateTime?>? deletedAt,
     Value<String>? id,
     Value<String>? name,
-    Value<String>? strategy,
     Value<String?>? baseCurrency,
     Value<String?>? goalId,
-    Value<String?>? targetAllocationJson,
-    Value<Decimal?>? targetAnnualIncome,
     Value<String?>? color,
     Value<DateTime>? createdAt,
     Value<bool>? archived,
@@ -21026,11 +20871,8 @@ class InvestmentPortfoliosCompanion
       deletedAt: deletedAt ?? this.deletedAt,
       id: id ?? this.id,
       name: name ?? this.name,
-      strategy: strategy ?? this.strategy,
       baseCurrency: baseCurrency ?? this.baseCurrency,
       goalId: goalId ?? this.goalId,
-      targetAllocationJson: targetAllocationJson ?? this.targetAllocationJson,
-      targetAnnualIncome: targetAnnualIncome ?? this.targetAnnualIncome,
       color: color ?? this.color,
       createdAt: createdAt ?? this.createdAt,
       archived: archived ?? this.archived,
@@ -21064,26 +20906,11 @@ class InvestmentPortfoliosCompanion
     if (name.present) {
       map['name'] = Variable<String>(name.value);
     }
-    if (strategy.present) {
-      map['strategy'] = Variable<String>(strategy.value);
-    }
     if (baseCurrency.present) {
       map['base_currency'] = Variable<String>(baseCurrency.value);
     }
     if (goalId.present) {
       map['goal_id'] = Variable<String>(goalId.value);
-    }
-    if (targetAllocationJson.present) {
-      map['target_allocation_json'] = Variable<String>(
-        targetAllocationJson.value,
-      );
-    }
-    if (targetAnnualIncome.present) {
-      map['target_annual_income'] = Variable<String>(
-        $InvestmentPortfoliosTable.$convertertargetAnnualIncomen.toSql(
-          targetAnnualIncome.value,
-        ),
-      );
     }
     if (color.present) {
       map['color'] = Variable<String>(color.value);
@@ -21110,11 +20937,8 @@ class InvestmentPortfoliosCompanion
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('strategy: $strategy, ')
           ..write('baseCurrency: $baseCurrency, ')
           ..write('goalId: $goalId, ')
-          ..write('targetAllocationJson: $targetAllocationJson, ')
-          ..write('targetAnnualIncome: $targetAnnualIncome, ')
           ..write('color: $color, ')
           ..write('createdAt: $createdAt, ')
           ..write('archived: $archived, ')
@@ -21124,12 +20948,12 @@ class InvestmentPortfoliosCompanion
   }
 }
 
-class $PortfolioLotMembershipsTable extends PortfolioLotMemberships
-    with TableInfo<$PortfolioLotMembershipsTable, PortfolioLotMembershipRow> {
+class $PortfolioStrategyConfigsTable extends PortfolioStrategyConfigs
+    with TableInfo<$PortfolioStrategyConfigsTable, PortfolioStrategyConfigRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $PortfolioLotMembershipsTable(this.attachedDatabase, [this._alias]);
+  $PortfolioStrategyConfigsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
     'ownerUserId',
   );
@@ -21171,7 +20995,7 @@ class $PortfolioLotMembershipsTable extends PortfolioLotMemberships
         false,
         type: DriftSqlType.string,
         requiredDuringInsert: true,
-      ).withConverter<Hlc>($PortfolioLotMembershipsTable.$converterhlc);
+      ).withConverter<Hlc>($PortfolioStrategyConfigsTable.$converterhlc);
   static const VerificationMeta _deletedAtMeta = const VerificationMeta(
     'deletedAt',
   );
@@ -21203,15 +21027,72 @@ class $PortfolioLotMembershipsTable extends PortfolioLotMemberships
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _assignedAtMeta = const VerificationMeta(
-    'assignedAt',
-  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
   @override
-  late final GeneratedColumn<DateTime> assignedAt = GeneratedColumn<DateTime>(
-    'assigned_at',
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
     aliasedName,
     false,
-    type: DriftSqlType.dateTime,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _schemaVersionMeta = const VerificationMeta(
+    'schemaVersion',
+  );
+  @override
+  late final GeneratedColumn<int> schemaVersion = GeneratedColumn<int>(
+    'schema_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _capitalRoleMeta = const VerificationMeta(
+    'capitalRole',
+  );
+  @override
+  late final GeneratedColumn<String> capitalRole = GeneratedColumn<String>(
+    'capital_role',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rebalanceGroupIdMeta = const VerificationMeta(
+    'rebalanceGroupId',
+  );
+  @override
+  late final GeneratedColumn<String> rebalanceGroupId = GeneratedColumn<String>(
+    'rebalance_group_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _configJsonMeta = const VerificationMeta(
+    'configJson',
+  );
+  @override
+  late final GeneratedColumn<String> configJson = GeneratedColumn<String>(
+    'config_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
   @override
@@ -21223,16 +21104,21 @@ class $PortfolioLotMembershipsTable extends PortfolioLotMemberships
     deletedAt,
     id,
     portfolioId,
-    assignedAt,
+    kind,
+    schemaVersion,
+    enabled,
+    capitalRole,
+    rebalanceGroupId,
+    configJson,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'portfolio_lot_memberships';
+  static const String $name = 'portfolio_strategy_configs';
   @override
   VerificationContext validateIntegrity(
-    Insertable<PortfolioLotMembershipRow> instance, {
+    Insertable<PortfolioStrategyConfigRow> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -21289,13 +21175,58 @@ class $PortfolioLotMembershipsTable extends PortfolioLotMemberships
     } else if (isInserting) {
       context.missing(_portfolioIdMeta);
     }
-    if (data.containsKey('assigned_at')) {
+    if (data.containsKey('kind')) {
       context.handle(
-        _assignedAtMeta,
-        assignedAt.isAcceptableOrUnknown(data['assigned_at']!, _assignedAtMeta),
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
       );
     } else if (isInserting) {
-      context.missing(_assignedAtMeta);
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('schema_version')) {
+      context.handle(
+        _schemaVersionMeta,
+        schemaVersion.isAcceptableOrUnknown(
+          data['schema_version']!,
+          _schemaVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_schemaVersionMeta);
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    }
+    if (data.containsKey('capital_role')) {
+      context.handle(
+        _capitalRoleMeta,
+        capitalRole.isAcceptableOrUnknown(
+          data['capital_role']!,
+          _capitalRoleMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_capitalRoleMeta);
+    }
+    if (data.containsKey('rebalance_group_id')) {
+      context.handle(
+        _rebalanceGroupIdMeta,
+        rebalanceGroupId.isAcceptableOrUnknown(
+          data['rebalance_group_id']!,
+          _rebalanceGroupIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('config_json')) {
+      context.handle(
+        _configJsonMeta,
+        configJson.isAcceptableOrUnknown(data['config_json']!, _configJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_configJsonMeta);
     }
     return context;
   }
@@ -21303,12 +21234,12 @@ class $PortfolioLotMembershipsTable extends PortfolioLotMemberships
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  PortfolioLotMembershipRow map(
+  PortfolioStrategyConfigRow map(
     Map<String, dynamic> data, {
     String? tablePrefix,
   }) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return PortfolioLotMembershipRow(
+    return PortfolioStrategyConfigRow(
       ownerUserId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}owner_user_id'],
@@ -21321,7 +21252,7 @@ class $PortfolioLotMembershipsTable extends PortfolioLotMemberships
         DriftSqlType.string,
         data['${effectivePrefix}updated_by_device'],
       )!,
-      hlc: $PortfolioLotMembershipsTable.$converterhlc.fromSql(
+      hlc: $PortfolioStrategyConfigsTable.$converterhlc.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}hlc'],
@@ -21339,23 +21270,43 @@ class $PortfolioLotMembershipsTable extends PortfolioLotMemberships
         DriftSqlType.string,
         data['${effectivePrefix}portfolio_id'],
       )!,
-      assignedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}assigned_at'],
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      schemaVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}schema_version'],
+      )!,
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+      capitalRole: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}capital_role'],
+      )!,
+      rebalanceGroupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rebalance_group_id'],
+      ),
+      configJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}config_json'],
       )!,
     );
   }
 
   @override
-  $PortfolioLotMembershipsTable createAlias(String alias) {
-    return $PortfolioLotMembershipsTable(attachedDatabase, alias);
+  $PortfolioStrategyConfigsTable createAlias(String alias) {
+    return $PortfolioStrategyConfigsTable(attachedDatabase, alias);
   }
 
   static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
 }
 
-class PortfolioLotMembershipRow extends DataClass
-    implements Insertable<PortfolioLotMembershipRow> {
+class PortfolioStrategyConfigRow extends DataClass
+    implements Insertable<PortfolioStrategyConfigRow> {
   /// Owner partition. Sync filters every read by the active user id, so
   /// even multi-account installs never leak rows across boundaries.
   final String ownerUserId;
@@ -21379,8 +21330,13 @@ class PortfolioLotMembershipRow extends DataClass
   final DateTime? deletedAt;
   final String id;
   final String portfolioId;
-  final DateTime assignedAt;
-  const PortfolioLotMembershipRow({
+  final String kind;
+  final int schemaVersion;
+  final bool enabled;
+  final String capitalRole;
+  final String? rebalanceGroupId;
+  final String configJson;
+  const PortfolioStrategyConfigRow({
     required this.ownerUserId,
     required this.updatedAt,
     required this.updatedByDevice,
@@ -21388,6 +21344,1759 @@ class PortfolioLotMembershipRow extends DataClass
     this.deletedAt,
     required this.id,
     required this.portfolioId,
+    required this.kind,
+    required this.schemaVersion,
+    required this.enabled,
+    required this.capitalRole,
+    this.rebalanceGroupId,
+    required this.configJson,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $PortfolioStrategyConfigsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['portfolio_id'] = Variable<String>(portfolioId);
+    map['kind'] = Variable<String>(kind);
+    map['schema_version'] = Variable<int>(schemaVersion);
+    map['enabled'] = Variable<bool>(enabled);
+    map['capital_role'] = Variable<String>(capitalRole);
+    if (!nullToAbsent || rebalanceGroupId != null) {
+      map['rebalance_group_id'] = Variable<String>(rebalanceGroupId);
+    }
+    map['config_json'] = Variable<String>(configJson);
+    return map;
+  }
+
+  PortfolioStrategyConfigsCompanion toCompanion(bool nullToAbsent) {
+    return PortfolioStrategyConfigsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      portfolioId: Value(portfolioId),
+      kind: Value(kind),
+      schemaVersion: Value(schemaVersion),
+      enabled: Value(enabled),
+      capitalRole: Value(capitalRole),
+      rebalanceGroupId: rebalanceGroupId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rebalanceGroupId),
+      configJson: Value(configJson),
+    );
+  }
+
+  factory PortfolioStrategyConfigRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PortfolioStrategyConfigRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      portfolioId: serializer.fromJson<String>(json['portfolioId']),
+      kind: serializer.fromJson<String>(json['kind']),
+      schemaVersion: serializer.fromJson<int>(json['schemaVersion']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      capitalRole: serializer.fromJson<String>(json['capitalRole']),
+      rebalanceGroupId: serializer.fromJson<String?>(json['rebalanceGroupId']),
+      configJson: serializer.fromJson<String>(json['configJson']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'portfolioId': serializer.toJson<String>(portfolioId),
+      'kind': serializer.toJson<String>(kind),
+      'schemaVersion': serializer.toJson<int>(schemaVersion),
+      'enabled': serializer.toJson<bool>(enabled),
+      'capitalRole': serializer.toJson<String>(capitalRole),
+      'rebalanceGroupId': serializer.toJson<String?>(rebalanceGroupId),
+      'configJson': serializer.toJson<String>(configJson),
+    };
+  }
+
+  PortfolioStrategyConfigRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? portfolioId,
+    String? kind,
+    int? schemaVersion,
+    bool? enabled,
+    String? capitalRole,
+    Value<String?> rebalanceGroupId = const Value.absent(),
+    String? configJson,
+  }) => PortfolioStrategyConfigRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    portfolioId: portfolioId ?? this.portfolioId,
+    kind: kind ?? this.kind,
+    schemaVersion: schemaVersion ?? this.schemaVersion,
+    enabled: enabled ?? this.enabled,
+    capitalRole: capitalRole ?? this.capitalRole,
+    rebalanceGroupId: rebalanceGroupId.present
+        ? rebalanceGroupId.value
+        : this.rebalanceGroupId,
+    configJson: configJson ?? this.configJson,
+  );
+  PortfolioStrategyConfigRow copyWithCompanion(
+    PortfolioStrategyConfigsCompanion data,
+  ) {
+    return PortfolioStrategyConfigRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      portfolioId: data.portfolioId.present
+          ? data.portfolioId.value
+          : this.portfolioId,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      schemaVersion: data.schemaVersion.present
+          ? data.schemaVersion.value
+          : this.schemaVersion,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      capitalRole: data.capitalRole.present
+          ? data.capitalRole.value
+          : this.capitalRole,
+      rebalanceGroupId: data.rebalanceGroupId.present
+          ? data.rebalanceGroupId.value
+          : this.rebalanceGroupId,
+      configJson: data.configJson.present
+          ? data.configJson.value
+          : this.configJson,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PortfolioStrategyConfigRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('portfolioId: $portfolioId, ')
+          ..write('kind: $kind, ')
+          ..write('schemaVersion: $schemaVersion, ')
+          ..write('enabled: $enabled, ')
+          ..write('capitalRole: $capitalRole, ')
+          ..write('rebalanceGroupId: $rebalanceGroupId, ')
+          ..write('configJson: $configJson')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    portfolioId,
+    kind,
+    schemaVersion,
+    enabled,
+    capitalRole,
+    rebalanceGroupId,
+    configJson,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PortfolioStrategyConfigRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.portfolioId == this.portfolioId &&
+          other.kind == this.kind &&
+          other.schemaVersion == this.schemaVersion &&
+          other.enabled == this.enabled &&
+          other.capitalRole == this.capitalRole &&
+          other.rebalanceGroupId == this.rebalanceGroupId &&
+          other.configJson == this.configJson);
+}
+
+class PortfolioStrategyConfigsCompanion
+    extends UpdateCompanion<PortfolioStrategyConfigRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> portfolioId;
+  final Value<String> kind;
+  final Value<int> schemaVersion;
+  final Value<bool> enabled;
+  final Value<String> capitalRole;
+  final Value<String?> rebalanceGroupId;
+  final Value<String> configJson;
+  final Value<int> rowid;
+  const PortfolioStrategyConfigsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.portfolioId = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.schemaVersion = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.capitalRole = const Value.absent(),
+    this.rebalanceGroupId = const Value.absent(),
+    this.configJson = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PortfolioStrategyConfigsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String portfolioId,
+    required String kind,
+    required int schemaVersion,
+    this.enabled = const Value.absent(),
+    required String capitalRole,
+    this.rebalanceGroupId = const Value.absent(),
+    required String configJson,
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       portfolioId = Value(portfolioId),
+       kind = Value(kind),
+       schemaVersion = Value(schemaVersion),
+       capitalRole = Value(capitalRole),
+       configJson = Value(configJson);
+  static Insertable<PortfolioStrategyConfigRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? portfolioId,
+    Expression<String>? kind,
+    Expression<int>? schemaVersion,
+    Expression<bool>? enabled,
+    Expression<String>? capitalRole,
+    Expression<String>? rebalanceGroupId,
+    Expression<String>? configJson,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (portfolioId != null) 'portfolio_id': portfolioId,
+      if (kind != null) 'kind': kind,
+      if (schemaVersion != null) 'schema_version': schemaVersion,
+      if (enabled != null) 'enabled': enabled,
+      if (capitalRole != null) 'capital_role': capitalRole,
+      if (rebalanceGroupId != null) 'rebalance_group_id': rebalanceGroupId,
+      if (configJson != null) 'config_json': configJson,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PortfolioStrategyConfigsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? portfolioId,
+    Value<String>? kind,
+    Value<int>? schemaVersion,
+    Value<bool>? enabled,
+    Value<String>? capitalRole,
+    Value<String?>? rebalanceGroupId,
+    Value<String>? configJson,
+    Value<int>? rowid,
+  }) {
+    return PortfolioStrategyConfigsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      portfolioId: portfolioId ?? this.portfolioId,
+      kind: kind ?? this.kind,
+      schemaVersion: schemaVersion ?? this.schemaVersion,
+      enabled: enabled ?? this.enabled,
+      capitalRole: capitalRole ?? this.capitalRole,
+      rebalanceGroupId: rebalanceGroupId ?? this.rebalanceGroupId,
+      configJson: configJson ?? this.configJson,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $PortfolioStrategyConfigsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (portfolioId.present) {
+      map['portfolio_id'] = Variable<String>(portfolioId.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (schemaVersion.present) {
+      map['schema_version'] = Variable<int>(schemaVersion.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (capitalRole.present) {
+      map['capital_role'] = Variable<String>(capitalRole.value);
+    }
+    if (rebalanceGroupId.present) {
+      map['rebalance_group_id'] = Variable<String>(rebalanceGroupId.value);
+    }
+    if (configJson.present) {
+      map['config_json'] = Variable<String>(configJson.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PortfolioStrategyConfigsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('portfolioId: $portfolioId, ')
+          ..write('kind: $kind, ')
+          ..write('schemaVersion: $schemaVersion, ')
+          ..write('enabled: $enabled, ')
+          ..write('capitalRole: $capitalRole, ')
+          ..write('rebalanceGroupId: $rebalanceGroupId, ')
+          ..write('configJson: $configJson, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PortfolioRebalanceGroupsTable extends PortfolioRebalanceGroups
+    with TableInfo<$PortfolioRebalanceGroupsTable, PortfolioRebalanceGroupRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PortfolioRebalanceGroupsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($PortfolioRebalanceGroupsTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _portfolioIdMeta = const VerificationMeta(
+    'portfolioId',
+  );
+  @override
+  late final GeneratedColumn<String> portfolioId = GeneratedColumn<String>(
+    'portfolio_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _strategyKindMeta = const VerificationMeta(
+    'strategyKind',
+  );
+  @override
+  late final GeneratedColumn<String> strategyKind = GeneratedColumn<String>(
+    'strategy_kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _targetWeightBpsMeta = const VerificationMeta(
+    'targetWeightBps',
+  );
+  @override
+  late final GeneratedColumn<int> targetWeightBps = GeneratedColumn<int>(
+    'target_weight_bps',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _driftBandBpsMeta = const VerificationMeta(
+    'driftBandBps',
+  );
+  @override
+  late final GeneratedColumn<int> driftBandBps = GeneratedColumn<int>(
+    'drift_band_bps',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _transferPolicyMeta = const VerificationMeta(
+    'transferPolicy',
+  );
+  @override
+  late final GeneratedColumn<String> transferPolicy = GeneratedColumn<String>(
+    'transfer_policy',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _internalTargetJsonMeta =
+      const VerificationMeta('internalTargetJson');
+  @override
+  late final GeneratedColumn<String> internalTargetJson =
+      GeneratedColumn<String>(
+        'internal_target_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _archivedMeta = const VerificationMeta(
+    'archived',
+  );
+  @override
+  late final GeneratedColumn<bool> archived = GeneratedColumn<bool>(
+    'archived',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("archived" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    portfolioId,
+    name,
+    strategyKind,
+    targetWeightBps,
+    driftBandBps,
+    transferPolicy,
+    internalTargetJson,
+    createdAt,
+    archived,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'portfolio_rebalance_groups';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PortfolioRebalanceGroupRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('portfolio_id')) {
+      context.handle(
+        _portfolioIdMeta,
+        portfolioId.isAcceptableOrUnknown(
+          data['portfolio_id']!,
+          _portfolioIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_portfolioIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('strategy_kind')) {
+      context.handle(
+        _strategyKindMeta,
+        strategyKind.isAcceptableOrUnknown(
+          data['strategy_kind']!,
+          _strategyKindMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_strategyKindMeta);
+    }
+    if (data.containsKey('target_weight_bps')) {
+      context.handle(
+        _targetWeightBpsMeta,
+        targetWeightBps.isAcceptableOrUnknown(
+          data['target_weight_bps']!,
+          _targetWeightBpsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_targetWeightBpsMeta);
+    }
+    if (data.containsKey('drift_band_bps')) {
+      context.handle(
+        _driftBandBpsMeta,
+        driftBandBps.isAcceptableOrUnknown(
+          data['drift_band_bps']!,
+          _driftBandBpsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_driftBandBpsMeta);
+    }
+    if (data.containsKey('transfer_policy')) {
+      context.handle(
+        _transferPolicyMeta,
+        transferPolicy.isAcceptableOrUnknown(
+          data['transfer_policy']!,
+          _transferPolicyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_transferPolicyMeta);
+    }
+    if (data.containsKey('internal_target_json')) {
+      context.handle(
+        _internalTargetJsonMeta,
+        internalTargetJson.isAcceptableOrUnknown(
+          data['internal_target_json']!,
+          _internalTargetJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_internalTargetJsonMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('archived')) {
+      context.handle(
+        _archivedMeta,
+        archived.isAcceptableOrUnknown(data['archived']!, _archivedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PortfolioRebalanceGroupRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PortfolioRebalanceGroupRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $PortfolioRebalanceGroupsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      portfolioId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}portfolio_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      strategyKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}strategy_kind'],
+      )!,
+      targetWeightBps: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}target_weight_bps'],
+      )!,
+      driftBandBps: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}drift_band_bps'],
+      )!,
+      transferPolicy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transfer_policy'],
+      )!,
+      internalTargetJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}internal_target_json'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      archived: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}archived'],
+      )!,
+    );
+  }
+
+  @override
+  $PortfolioRebalanceGroupsTable createAlias(String alias) {
+    return $PortfolioRebalanceGroupsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+}
+
+class PortfolioRebalanceGroupRow extends DataClass
+    implements Insertable<PortfolioRebalanceGroupRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String portfolioId;
+  final String name;
+  final String strategyKind;
+  final int targetWeightBps;
+  final int driftBandBps;
+  final String transferPolicy;
+  final String internalTargetJson;
+  final DateTime createdAt;
+  final bool archived;
+  const PortfolioRebalanceGroupRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.portfolioId,
+    required this.name,
+    required this.strategyKind,
+    required this.targetWeightBps,
+    required this.driftBandBps,
+    required this.transferPolicy,
+    required this.internalTargetJson,
+    required this.createdAt,
+    required this.archived,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $PortfolioRebalanceGroupsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['portfolio_id'] = Variable<String>(portfolioId);
+    map['name'] = Variable<String>(name);
+    map['strategy_kind'] = Variable<String>(strategyKind);
+    map['target_weight_bps'] = Variable<int>(targetWeightBps);
+    map['drift_band_bps'] = Variable<int>(driftBandBps);
+    map['transfer_policy'] = Variable<String>(transferPolicy);
+    map['internal_target_json'] = Variable<String>(internalTargetJson);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['archived'] = Variable<bool>(archived);
+    return map;
+  }
+
+  PortfolioRebalanceGroupsCompanion toCompanion(bool nullToAbsent) {
+    return PortfolioRebalanceGroupsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      portfolioId: Value(portfolioId),
+      name: Value(name),
+      strategyKind: Value(strategyKind),
+      targetWeightBps: Value(targetWeightBps),
+      driftBandBps: Value(driftBandBps),
+      transferPolicy: Value(transferPolicy),
+      internalTargetJson: Value(internalTargetJson),
+      createdAt: Value(createdAt),
+      archived: Value(archived),
+    );
+  }
+
+  factory PortfolioRebalanceGroupRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PortfolioRebalanceGroupRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      portfolioId: serializer.fromJson<String>(json['portfolioId']),
+      name: serializer.fromJson<String>(json['name']),
+      strategyKind: serializer.fromJson<String>(json['strategyKind']),
+      targetWeightBps: serializer.fromJson<int>(json['targetWeightBps']),
+      driftBandBps: serializer.fromJson<int>(json['driftBandBps']),
+      transferPolicy: serializer.fromJson<String>(json['transferPolicy']),
+      internalTargetJson: serializer.fromJson<String>(
+        json['internalTargetJson'],
+      ),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      archived: serializer.fromJson<bool>(json['archived']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'portfolioId': serializer.toJson<String>(portfolioId),
+      'name': serializer.toJson<String>(name),
+      'strategyKind': serializer.toJson<String>(strategyKind),
+      'targetWeightBps': serializer.toJson<int>(targetWeightBps),
+      'driftBandBps': serializer.toJson<int>(driftBandBps),
+      'transferPolicy': serializer.toJson<String>(transferPolicy),
+      'internalTargetJson': serializer.toJson<String>(internalTargetJson),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'archived': serializer.toJson<bool>(archived),
+    };
+  }
+
+  PortfolioRebalanceGroupRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? portfolioId,
+    String? name,
+    String? strategyKind,
+    int? targetWeightBps,
+    int? driftBandBps,
+    String? transferPolicy,
+    String? internalTargetJson,
+    DateTime? createdAt,
+    bool? archived,
+  }) => PortfolioRebalanceGroupRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    portfolioId: portfolioId ?? this.portfolioId,
+    name: name ?? this.name,
+    strategyKind: strategyKind ?? this.strategyKind,
+    targetWeightBps: targetWeightBps ?? this.targetWeightBps,
+    driftBandBps: driftBandBps ?? this.driftBandBps,
+    transferPolicy: transferPolicy ?? this.transferPolicy,
+    internalTargetJson: internalTargetJson ?? this.internalTargetJson,
+    createdAt: createdAt ?? this.createdAt,
+    archived: archived ?? this.archived,
+  );
+  PortfolioRebalanceGroupRow copyWithCompanion(
+    PortfolioRebalanceGroupsCompanion data,
+  ) {
+    return PortfolioRebalanceGroupRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      portfolioId: data.portfolioId.present
+          ? data.portfolioId.value
+          : this.portfolioId,
+      name: data.name.present ? data.name.value : this.name,
+      strategyKind: data.strategyKind.present
+          ? data.strategyKind.value
+          : this.strategyKind,
+      targetWeightBps: data.targetWeightBps.present
+          ? data.targetWeightBps.value
+          : this.targetWeightBps,
+      driftBandBps: data.driftBandBps.present
+          ? data.driftBandBps.value
+          : this.driftBandBps,
+      transferPolicy: data.transferPolicy.present
+          ? data.transferPolicy.value
+          : this.transferPolicy,
+      internalTargetJson: data.internalTargetJson.present
+          ? data.internalTargetJson.value
+          : this.internalTargetJson,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      archived: data.archived.present ? data.archived.value : this.archived,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PortfolioRebalanceGroupRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('portfolioId: $portfolioId, ')
+          ..write('name: $name, ')
+          ..write('strategyKind: $strategyKind, ')
+          ..write('targetWeightBps: $targetWeightBps, ')
+          ..write('driftBandBps: $driftBandBps, ')
+          ..write('transferPolicy: $transferPolicy, ')
+          ..write('internalTargetJson: $internalTargetJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('archived: $archived')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    portfolioId,
+    name,
+    strategyKind,
+    targetWeightBps,
+    driftBandBps,
+    transferPolicy,
+    internalTargetJson,
+    createdAt,
+    archived,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PortfolioRebalanceGroupRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.portfolioId == this.portfolioId &&
+          other.name == this.name &&
+          other.strategyKind == this.strategyKind &&
+          other.targetWeightBps == this.targetWeightBps &&
+          other.driftBandBps == this.driftBandBps &&
+          other.transferPolicy == this.transferPolicy &&
+          other.internalTargetJson == this.internalTargetJson &&
+          other.createdAt == this.createdAt &&
+          other.archived == this.archived);
+}
+
+class PortfolioRebalanceGroupsCompanion
+    extends UpdateCompanion<PortfolioRebalanceGroupRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> portfolioId;
+  final Value<String> name;
+  final Value<String> strategyKind;
+  final Value<int> targetWeightBps;
+  final Value<int> driftBandBps;
+  final Value<String> transferPolicy;
+  final Value<String> internalTargetJson;
+  final Value<DateTime> createdAt;
+  final Value<bool> archived;
+  final Value<int> rowid;
+  const PortfolioRebalanceGroupsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.portfolioId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.strategyKind = const Value.absent(),
+    this.targetWeightBps = const Value.absent(),
+    this.driftBandBps = const Value.absent(),
+    this.transferPolicy = const Value.absent(),
+    this.internalTargetJson = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.archived = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PortfolioRebalanceGroupsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String portfolioId,
+    required String name,
+    required String strategyKind,
+    required int targetWeightBps,
+    required int driftBandBps,
+    required String transferPolicy,
+    required String internalTargetJson,
+    required DateTime createdAt,
+    this.archived = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       portfolioId = Value(portfolioId),
+       name = Value(name),
+       strategyKind = Value(strategyKind),
+       targetWeightBps = Value(targetWeightBps),
+       driftBandBps = Value(driftBandBps),
+       transferPolicy = Value(transferPolicy),
+       internalTargetJson = Value(internalTargetJson),
+       createdAt = Value(createdAt);
+  static Insertable<PortfolioRebalanceGroupRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? portfolioId,
+    Expression<String>? name,
+    Expression<String>? strategyKind,
+    Expression<int>? targetWeightBps,
+    Expression<int>? driftBandBps,
+    Expression<String>? transferPolicy,
+    Expression<String>? internalTargetJson,
+    Expression<DateTime>? createdAt,
+    Expression<bool>? archived,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (portfolioId != null) 'portfolio_id': portfolioId,
+      if (name != null) 'name': name,
+      if (strategyKind != null) 'strategy_kind': strategyKind,
+      if (targetWeightBps != null) 'target_weight_bps': targetWeightBps,
+      if (driftBandBps != null) 'drift_band_bps': driftBandBps,
+      if (transferPolicy != null) 'transfer_policy': transferPolicy,
+      if (internalTargetJson != null)
+        'internal_target_json': internalTargetJson,
+      if (createdAt != null) 'created_at': createdAt,
+      if (archived != null) 'archived': archived,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PortfolioRebalanceGroupsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? portfolioId,
+    Value<String>? name,
+    Value<String>? strategyKind,
+    Value<int>? targetWeightBps,
+    Value<int>? driftBandBps,
+    Value<String>? transferPolicy,
+    Value<String>? internalTargetJson,
+    Value<DateTime>? createdAt,
+    Value<bool>? archived,
+    Value<int>? rowid,
+  }) {
+    return PortfolioRebalanceGroupsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      portfolioId: portfolioId ?? this.portfolioId,
+      name: name ?? this.name,
+      strategyKind: strategyKind ?? this.strategyKind,
+      targetWeightBps: targetWeightBps ?? this.targetWeightBps,
+      driftBandBps: driftBandBps ?? this.driftBandBps,
+      transferPolicy: transferPolicy ?? this.transferPolicy,
+      internalTargetJson: internalTargetJson ?? this.internalTargetJson,
+      createdAt: createdAt ?? this.createdAt,
+      archived: archived ?? this.archived,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $PortfolioRebalanceGroupsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (portfolioId.present) {
+      map['portfolio_id'] = Variable<String>(portfolioId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (strategyKind.present) {
+      map['strategy_kind'] = Variable<String>(strategyKind.value);
+    }
+    if (targetWeightBps.present) {
+      map['target_weight_bps'] = Variable<int>(targetWeightBps.value);
+    }
+    if (driftBandBps.present) {
+      map['drift_band_bps'] = Variable<int>(driftBandBps.value);
+    }
+    if (transferPolicy.present) {
+      map['transfer_policy'] = Variable<String>(transferPolicy.value);
+    }
+    if (internalTargetJson.present) {
+      map['internal_target_json'] = Variable<String>(internalTargetJson.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (archived.present) {
+      map['archived'] = Variable<bool>(archived.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PortfolioRebalanceGroupsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('portfolioId: $portfolioId, ')
+          ..write('name: $name, ')
+          ..write('strategyKind: $strategyKind, ')
+          ..write('targetWeightBps: $targetWeightBps, ')
+          ..write('driftBandBps: $driftBandBps, ')
+          ..write('transferPolicy: $transferPolicy, ')
+          ..write('internalTargetJson: $internalTargetJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('archived: $archived, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PortfolioCapitalAssignmentsTable extends PortfolioCapitalAssignments
+    with
+        TableInfo<
+          $PortfolioCapitalAssignmentsTable,
+          PortfolioCapitalAssignmentRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PortfolioCapitalAssignmentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($PortfolioCapitalAssignmentsTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _portfolioIdMeta = const VerificationMeta(
+    'portfolioId',
+  );
+  @override
+  late final GeneratedColumn<String> portfolioId = GeneratedColumn<String>(
+    'portfolio_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rebalanceGroupIdMeta = const VerificationMeta(
+    'rebalanceGroupId',
+  );
+  @override
+  late final GeneratedColumn<String> rebalanceGroupId = GeneratedColumn<String>(
+    'rebalance_group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceKindMeta = const VerificationMeta(
+    'sourceKind',
+  );
+  @override
+  late final GeneratedColumn<String> sourceKind = GeneratedColumn<String>(
+    'source_kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceId = GeneratedColumn<String>(
+    'source_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> quantity =
+      GeneratedColumn<String>(
+        'quantity',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $PortfolioCapitalAssignmentsTable.$converterquantityn,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> amount =
+      GeneratedColumn<String>(
+        'amount',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $PortfolioCapitalAssignmentsTable.$converteramountn,
+      );
+  static const VerificationMeta _currencyMeta = const VerificationMeta(
+    'currency',
+  );
+  @override
+  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
+    'currency',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 3,
+      maxTextLength: 8,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _assignedAtMeta = const VerificationMeta(
+    'assignedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> assignedAt = GeneratedColumn<DateTime>(
+    'assigned_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    portfolioId,
+    rebalanceGroupId,
+    sourceKind,
+    sourceId,
+    quantity,
+    amount,
+    currency,
+    assignedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'portfolio_capital_assignments';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PortfolioCapitalAssignmentRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('portfolio_id')) {
+      context.handle(
+        _portfolioIdMeta,
+        portfolioId.isAcceptableOrUnknown(
+          data['portfolio_id']!,
+          _portfolioIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_portfolioIdMeta);
+    }
+    if (data.containsKey('rebalance_group_id')) {
+      context.handle(
+        _rebalanceGroupIdMeta,
+        rebalanceGroupId.isAcceptableOrUnknown(
+          data['rebalance_group_id']!,
+          _rebalanceGroupIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_rebalanceGroupIdMeta);
+    }
+    if (data.containsKey('source_kind')) {
+      context.handle(
+        _sourceKindMeta,
+        sourceKind.isAcceptableOrUnknown(data['source_kind']!, _sourceKindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceKindMeta);
+    }
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceIdMeta);
+    }
+    if (data.containsKey('currency')) {
+      context.handle(
+        _currencyMeta,
+        currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta),
+      );
+    }
+    if (data.containsKey('assigned_at')) {
+      context.handle(
+        _assignedAtMeta,
+        assignedAt.isAcceptableOrUnknown(data['assigned_at']!, _assignedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_assignedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PortfolioCapitalAssignmentRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PortfolioCapitalAssignmentRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $PortfolioCapitalAssignmentsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      portfolioId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}portfolio_id'],
+      )!,
+      rebalanceGroupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rebalance_group_id'],
+      )!,
+      sourceKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_kind'],
+      )!,
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_id'],
+      )!,
+      quantity: $PortfolioCapitalAssignmentsTable.$converterquantityn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}quantity'],
+        ),
+      ),
+      amount: $PortfolioCapitalAssignmentsTable.$converteramountn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}amount'],
+        ),
+      ),
+      currency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency'],
+      ),
+      assignedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}assigned_at'],
+      )!,
+    );
+  }
+
+  @override
+  $PortfolioCapitalAssignmentsTable createAlias(String alias) {
+    return $PortfolioCapitalAssignmentsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+  static TypeConverter<Decimal, String> $converterquantity =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterquantityn =
+      NullAwareTypeConverter.wrap($converterquantity);
+  static TypeConverter<Decimal, String> $converteramount =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converteramountn =
+      NullAwareTypeConverter.wrap($converteramount);
+}
+
+class PortfolioCapitalAssignmentRow extends DataClass
+    implements Insertable<PortfolioCapitalAssignmentRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String portfolioId;
+  final String rebalanceGroupId;
+  final String sourceKind;
+  final String sourceId;
+  final Decimal? quantity;
+  final Decimal? amount;
+  final String? currency;
+  final DateTime assignedAt;
+  const PortfolioCapitalAssignmentRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.portfolioId,
+    required this.rebalanceGroupId,
+    required this.sourceKind,
+    required this.sourceId,
+    this.quantity,
+    this.amount,
+    this.currency,
     required this.assignedAt,
   });
   @override
@@ -21398,7 +23107,7 @@ class PortfolioLotMembershipRow extends DataClass
     map['updated_by_device'] = Variable<String>(updatedByDevice);
     {
       map['hlc'] = Variable<String>(
-        $PortfolioLotMembershipsTable.$converterhlc.toSql(hlc),
+        $PortfolioCapitalAssignmentsTable.$converterhlc.toSql(hlc),
       );
     }
     if (!nullToAbsent || deletedAt != null) {
@@ -21406,12 +23115,28 @@ class PortfolioLotMembershipRow extends DataClass
     }
     map['id'] = Variable<String>(id);
     map['portfolio_id'] = Variable<String>(portfolioId);
+    map['rebalance_group_id'] = Variable<String>(rebalanceGroupId);
+    map['source_kind'] = Variable<String>(sourceKind);
+    map['source_id'] = Variable<String>(sourceId);
+    if (!nullToAbsent || quantity != null) {
+      map['quantity'] = Variable<String>(
+        $PortfolioCapitalAssignmentsTable.$converterquantityn.toSql(quantity),
+      );
+    }
+    if (!nullToAbsent || amount != null) {
+      map['amount'] = Variable<String>(
+        $PortfolioCapitalAssignmentsTable.$converteramountn.toSql(amount),
+      );
+    }
+    if (!nullToAbsent || currency != null) {
+      map['currency'] = Variable<String>(currency);
+    }
     map['assigned_at'] = Variable<DateTime>(assignedAt);
     return map;
   }
 
-  PortfolioLotMembershipsCompanion toCompanion(bool nullToAbsent) {
-    return PortfolioLotMembershipsCompanion(
+  PortfolioCapitalAssignmentsCompanion toCompanion(bool nullToAbsent) {
+    return PortfolioCapitalAssignmentsCompanion(
       ownerUserId: Value(ownerUserId),
       updatedAt: Value(updatedAt),
       updatedByDevice: Value(updatedByDevice),
@@ -21421,16 +23146,28 @@ class PortfolioLotMembershipRow extends DataClass
           : Value(deletedAt),
       id: Value(id),
       portfolioId: Value(portfolioId),
+      rebalanceGroupId: Value(rebalanceGroupId),
+      sourceKind: Value(sourceKind),
+      sourceId: Value(sourceId),
+      quantity: quantity == null && nullToAbsent
+          ? const Value.absent()
+          : Value(quantity),
+      amount: amount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amount),
+      currency: currency == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currency),
       assignedAt: Value(assignedAt),
     );
   }
 
-  factory PortfolioLotMembershipRow.fromJson(
+  factory PortfolioCapitalAssignmentRow.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return PortfolioLotMembershipRow(
+    return PortfolioCapitalAssignmentRow(
       ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
@@ -21438,6 +23175,12 @@ class PortfolioLotMembershipRow extends DataClass
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       id: serializer.fromJson<String>(json['id']),
       portfolioId: serializer.fromJson<String>(json['portfolioId']),
+      rebalanceGroupId: serializer.fromJson<String>(json['rebalanceGroupId']),
+      sourceKind: serializer.fromJson<String>(json['sourceKind']),
+      sourceId: serializer.fromJson<String>(json['sourceId']),
+      quantity: serializer.fromJson<Decimal?>(json['quantity']),
+      amount: serializer.fromJson<Decimal?>(json['amount']),
+      currency: serializer.fromJson<String?>(json['currency']),
       assignedAt: serializer.fromJson<DateTime>(json['assignedAt']),
     );
   }
@@ -21452,11 +23195,17 @@ class PortfolioLotMembershipRow extends DataClass
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'id': serializer.toJson<String>(id),
       'portfolioId': serializer.toJson<String>(portfolioId),
+      'rebalanceGroupId': serializer.toJson<String>(rebalanceGroupId),
+      'sourceKind': serializer.toJson<String>(sourceKind),
+      'sourceId': serializer.toJson<String>(sourceId),
+      'quantity': serializer.toJson<Decimal?>(quantity),
+      'amount': serializer.toJson<Decimal?>(amount),
+      'currency': serializer.toJson<String?>(currency),
       'assignedAt': serializer.toJson<DateTime>(assignedAt),
     };
   }
 
-  PortfolioLotMembershipRow copyWith({
+  PortfolioCapitalAssignmentRow copyWith({
     String? ownerUserId,
     DateTime? updatedAt,
     String? updatedByDevice,
@@ -21464,8 +23213,14 @@ class PortfolioLotMembershipRow extends DataClass
     Value<DateTime?> deletedAt = const Value.absent(),
     String? id,
     String? portfolioId,
+    String? rebalanceGroupId,
+    String? sourceKind,
+    String? sourceId,
+    Value<Decimal?> quantity = const Value.absent(),
+    Value<Decimal?> amount = const Value.absent(),
+    Value<String?> currency = const Value.absent(),
     DateTime? assignedAt,
-  }) => PortfolioLotMembershipRow(
+  }) => PortfolioCapitalAssignmentRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
     updatedByDevice: updatedByDevice ?? this.updatedByDevice,
@@ -21473,12 +23228,18 @@ class PortfolioLotMembershipRow extends DataClass
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     id: id ?? this.id,
     portfolioId: portfolioId ?? this.portfolioId,
+    rebalanceGroupId: rebalanceGroupId ?? this.rebalanceGroupId,
+    sourceKind: sourceKind ?? this.sourceKind,
+    sourceId: sourceId ?? this.sourceId,
+    quantity: quantity.present ? quantity.value : this.quantity,
+    amount: amount.present ? amount.value : this.amount,
+    currency: currency.present ? currency.value : this.currency,
     assignedAt: assignedAt ?? this.assignedAt,
   );
-  PortfolioLotMembershipRow copyWithCompanion(
-    PortfolioLotMembershipsCompanion data,
+  PortfolioCapitalAssignmentRow copyWithCompanion(
+    PortfolioCapitalAssignmentsCompanion data,
   ) {
-    return PortfolioLotMembershipRow(
+    return PortfolioCapitalAssignmentRow(
       ownerUserId: data.ownerUserId.present
           ? data.ownerUserId.value
           : this.ownerUserId,
@@ -21492,6 +23253,16 @@ class PortfolioLotMembershipRow extends DataClass
       portfolioId: data.portfolioId.present
           ? data.portfolioId.value
           : this.portfolioId,
+      rebalanceGroupId: data.rebalanceGroupId.present
+          ? data.rebalanceGroupId.value
+          : this.rebalanceGroupId,
+      sourceKind: data.sourceKind.present
+          ? data.sourceKind.value
+          : this.sourceKind,
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      currency: data.currency.present ? data.currency.value : this.currency,
       assignedAt: data.assignedAt.present
           ? data.assignedAt.value
           : this.assignedAt,
@@ -21500,7 +23271,7 @@ class PortfolioLotMembershipRow extends DataClass
 
   @override
   String toString() {
-    return (StringBuffer('PortfolioLotMembershipRow(')
+    return (StringBuffer('PortfolioCapitalAssignmentRow(')
           ..write('ownerUserId: $ownerUserId, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('updatedByDevice: $updatedByDevice, ')
@@ -21508,6 +23279,12 @@ class PortfolioLotMembershipRow extends DataClass
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
           ..write('portfolioId: $portfolioId, ')
+          ..write('rebalanceGroupId: $rebalanceGroupId, ')
+          ..write('sourceKind: $sourceKind, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('quantity: $quantity, ')
+          ..write('amount: $amount, ')
+          ..write('currency: $currency, ')
           ..write('assignedAt: $assignedAt')
           ..write(')'))
         .toString();
@@ -21522,12 +23299,18 @@ class PortfolioLotMembershipRow extends DataClass
     deletedAt,
     id,
     portfolioId,
+    rebalanceGroupId,
+    sourceKind,
+    sourceId,
+    quantity,
+    amount,
+    currency,
     assignedAt,
   );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is PortfolioLotMembershipRow &&
+      (other is PortfolioCapitalAssignmentRow &&
           other.ownerUserId == this.ownerUserId &&
           other.updatedAt == this.updatedAt &&
           other.updatedByDevice == this.updatedByDevice &&
@@ -21535,11 +23318,17 @@ class PortfolioLotMembershipRow extends DataClass
           other.deletedAt == this.deletedAt &&
           other.id == this.id &&
           other.portfolioId == this.portfolioId &&
+          other.rebalanceGroupId == this.rebalanceGroupId &&
+          other.sourceKind == this.sourceKind &&
+          other.sourceId == this.sourceId &&
+          other.quantity == this.quantity &&
+          other.amount == this.amount &&
+          other.currency == this.currency &&
           other.assignedAt == this.assignedAt);
 }
 
-class PortfolioLotMembershipsCompanion
-    extends UpdateCompanion<PortfolioLotMembershipRow> {
+class PortfolioCapitalAssignmentsCompanion
+    extends UpdateCompanion<PortfolioCapitalAssignmentRow> {
   final Value<String> ownerUserId;
   final Value<DateTime> updatedAt;
   final Value<String> updatedByDevice;
@@ -21547,9 +23336,15 @@ class PortfolioLotMembershipsCompanion
   final Value<DateTime?> deletedAt;
   final Value<String> id;
   final Value<String> portfolioId;
+  final Value<String> rebalanceGroupId;
+  final Value<String> sourceKind;
+  final Value<String> sourceId;
+  final Value<Decimal?> quantity;
+  final Value<Decimal?> amount;
+  final Value<String?> currency;
   final Value<DateTime> assignedAt;
   final Value<int> rowid;
-  const PortfolioLotMembershipsCompanion({
+  const PortfolioCapitalAssignmentsCompanion({
     this.ownerUserId = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.updatedByDevice = const Value.absent(),
@@ -21557,10 +23352,16 @@ class PortfolioLotMembershipsCompanion
     this.deletedAt = const Value.absent(),
     this.id = const Value.absent(),
     this.portfolioId = const Value.absent(),
+    this.rebalanceGroupId = const Value.absent(),
+    this.sourceKind = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.currency = const Value.absent(),
     this.assignedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  PortfolioLotMembershipsCompanion.insert({
+  PortfolioCapitalAssignmentsCompanion.insert({
     required String ownerUserId,
     required DateTime updatedAt,
     required String updatedByDevice,
@@ -21568,6 +23369,12 @@ class PortfolioLotMembershipsCompanion
     this.deletedAt = const Value.absent(),
     required String id,
     required String portfolioId,
+    required String rebalanceGroupId,
+    required String sourceKind,
+    required String sourceId,
+    this.quantity = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.currency = const Value.absent(),
     required DateTime assignedAt,
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
@@ -21576,8 +23383,11 @@ class PortfolioLotMembershipsCompanion
        hlc = Value(hlc),
        id = Value(id),
        portfolioId = Value(portfolioId),
+       rebalanceGroupId = Value(rebalanceGroupId),
+       sourceKind = Value(sourceKind),
+       sourceId = Value(sourceId),
        assignedAt = Value(assignedAt);
-  static Insertable<PortfolioLotMembershipRow> custom({
+  static Insertable<PortfolioCapitalAssignmentRow> custom({
     Expression<String>? ownerUserId,
     Expression<DateTime>? updatedAt,
     Expression<String>? updatedByDevice,
@@ -21585,6 +23395,12 @@ class PortfolioLotMembershipsCompanion
     Expression<DateTime>? deletedAt,
     Expression<String>? id,
     Expression<String>? portfolioId,
+    Expression<String>? rebalanceGroupId,
+    Expression<String>? sourceKind,
+    Expression<String>? sourceId,
+    Expression<String>? quantity,
+    Expression<String>? amount,
+    Expression<String>? currency,
     Expression<DateTime>? assignedAt,
     Expression<int>? rowid,
   }) {
@@ -21596,12 +23412,18 @@ class PortfolioLotMembershipsCompanion
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (id != null) 'id': id,
       if (portfolioId != null) 'portfolio_id': portfolioId,
+      if (rebalanceGroupId != null) 'rebalance_group_id': rebalanceGroupId,
+      if (sourceKind != null) 'source_kind': sourceKind,
+      if (sourceId != null) 'source_id': sourceId,
+      if (quantity != null) 'quantity': quantity,
+      if (amount != null) 'amount': amount,
+      if (currency != null) 'currency': currency,
       if (assignedAt != null) 'assigned_at': assignedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
-  PortfolioLotMembershipsCompanion copyWith({
+  PortfolioCapitalAssignmentsCompanion copyWith({
     Value<String>? ownerUserId,
     Value<DateTime>? updatedAt,
     Value<String>? updatedByDevice,
@@ -21609,10 +23431,16 @@ class PortfolioLotMembershipsCompanion
     Value<DateTime?>? deletedAt,
     Value<String>? id,
     Value<String>? portfolioId,
+    Value<String>? rebalanceGroupId,
+    Value<String>? sourceKind,
+    Value<String>? sourceId,
+    Value<Decimal?>? quantity,
+    Value<Decimal?>? amount,
+    Value<String?>? currency,
     Value<DateTime>? assignedAt,
     Value<int>? rowid,
   }) {
-    return PortfolioLotMembershipsCompanion(
+    return PortfolioCapitalAssignmentsCompanion(
       ownerUserId: ownerUserId ?? this.ownerUserId,
       updatedAt: updatedAt ?? this.updatedAt,
       updatedByDevice: updatedByDevice ?? this.updatedByDevice,
@@ -21620,6 +23448,12 @@ class PortfolioLotMembershipsCompanion
       deletedAt: deletedAt ?? this.deletedAt,
       id: id ?? this.id,
       portfolioId: portfolioId ?? this.portfolioId,
+      rebalanceGroupId: rebalanceGroupId ?? this.rebalanceGroupId,
+      sourceKind: sourceKind ?? this.sourceKind,
+      sourceId: sourceId ?? this.sourceId,
+      quantity: quantity ?? this.quantity,
+      amount: amount ?? this.amount,
+      currency: currency ?? this.currency,
       assignedAt: assignedAt ?? this.assignedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -21639,7 +23473,7 @@ class PortfolioLotMembershipsCompanion
     }
     if (hlc.present) {
       map['hlc'] = Variable<String>(
-        $PortfolioLotMembershipsTable.$converterhlc.toSql(hlc.value),
+        $PortfolioCapitalAssignmentsTable.$converterhlc.toSql(hlc.value),
       );
     }
     if (deletedAt.present) {
@@ -21650,6 +23484,30 @@ class PortfolioLotMembershipsCompanion
     }
     if (portfolioId.present) {
       map['portfolio_id'] = Variable<String>(portfolioId.value);
+    }
+    if (rebalanceGroupId.present) {
+      map['rebalance_group_id'] = Variable<String>(rebalanceGroupId.value);
+    }
+    if (sourceKind.present) {
+      map['source_kind'] = Variable<String>(sourceKind.value);
+    }
+    if (sourceId.present) {
+      map['source_id'] = Variable<String>(sourceId.value);
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<String>(
+        $PortfolioCapitalAssignmentsTable.$converterquantityn.toSql(
+          quantity.value,
+        ),
+      );
+    }
+    if (amount.present) {
+      map['amount'] = Variable<String>(
+        $PortfolioCapitalAssignmentsTable.$converteramountn.toSql(amount.value),
+      );
+    }
+    if (currency.present) {
+      map['currency'] = Variable<String>(currency.value);
     }
     if (assignedAt.present) {
       map['assigned_at'] = Variable<DateTime>(assignedAt.value);
@@ -21662,7 +23520,7 @@ class PortfolioLotMembershipsCompanion
 
   @override
   String toString() {
-    return (StringBuffer('PortfolioLotMembershipsCompanion(')
+    return (StringBuffer('PortfolioCapitalAssignmentsCompanion(')
           ..write('ownerUserId: $ownerUserId, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('updatedByDevice: $updatedByDevice, ')
@@ -21670,6 +23528,12 @@ class PortfolioLotMembershipsCompanion
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
           ..write('portfolioId: $portfolioId, ')
+          ..write('rebalanceGroupId: $rebalanceGroupId, ')
+          ..write('sourceKind: $sourceKind, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('quantity: $quantity, ')
+          ..write('amount: $amount, ')
+          ..write('currency: $currency, ')
           ..write('assignedAt: $assignedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -42315,8 +44179,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $GoalsTable goals = $GoalsTable(this);
   late final $InvestmentPortfoliosTable investmentPortfolios =
       $InvestmentPortfoliosTable(this);
-  late final $PortfolioLotMembershipsTable portfolioLotMemberships =
-      $PortfolioLotMembershipsTable(this);
+  late final $PortfolioStrategyConfigsTable portfolioStrategyConfigs =
+      $PortfolioStrategyConfigsTable(this);
+  late final $PortfolioRebalanceGroupsTable portfolioRebalanceGroups =
+      $PortfolioRebalanceGroupsTable(this);
+  late final $PortfolioCapitalAssignmentsTable portfolioCapitalAssignments =
+      $PortfolioCapitalAssignmentsTable(this);
   late final $FinancialDecisionsTable financialDecisions =
       $FinancialDecisionsTable(this);
   late final $DcaPlansTable dcaPlans = $DcaPlansTable(this);
@@ -42392,7 +44260,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     budgets,
     goals,
     investmentPortfolios,
-    portfolioLotMemberships,
+    portfolioStrategyConfigs,
+    portfolioRebalanceGroups,
+    portfolioCapitalAssignments,
     financialDecisions,
     dcaPlans,
     financialSignals,
@@ -51614,11 +53484,8 @@ typedef $$InvestmentPortfoliosTableCreateCompanionBuilder =
       Value<DateTime?> deletedAt,
       required String id,
       required String name,
-      required String strategy,
       Value<String?> baseCurrency,
       Value<String?> goalId,
-      Value<String?> targetAllocationJson,
-      Value<Decimal?> targetAnnualIncome,
       Value<String?> color,
       required DateTime createdAt,
       Value<bool> archived,
@@ -51633,11 +53500,8 @@ typedef $$InvestmentPortfoliosTableUpdateCompanionBuilder =
       Value<DateTime?> deletedAt,
       Value<String> id,
       Value<String> name,
-      Value<String> strategy,
       Value<String?> baseCurrency,
       Value<String?> goalId,
-      Value<String?> targetAllocationJson,
-      Value<Decimal?> targetAnnualIncome,
       Value<String?> color,
       Value<DateTime> createdAt,
       Value<bool> archived,
@@ -51689,11 +53553,6 @@ class $$InvestmentPortfoliosTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get strategy => $composableBuilder(
-    column: $table.strategy,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnFilters<String> get baseCurrency => $composableBuilder(
     column: $table.baseCurrency,
     builder: (column) => ColumnFilters(column),
@@ -51702,17 +53561,6 @@ class $$InvestmentPortfoliosTableFilterComposer
   ColumnFilters<String> get goalId => $composableBuilder(
     column: $table.goalId,
     builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get targetAllocationJson => $composableBuilder(
-    column: $table.targetAllocationJson,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Decimal?, Decimal, String>
-  get targetAnnualIncome => $composableBuilder(
-    column: $table.targetAnnualIncome,
-    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnFilters<String> get color => $composableBuilder(
@@ -51775,11 +53623,6 @@ class $$InvestmentPortfoliosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get strategy => $composableBuilder(
-    column: $table.strategy,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get baseCurrency => $composableBuilder(
     column: $table.baseCurrency,
     builder: (column) => ColumnOrderings(column),
@@ -51787,16 +53630,6 @@ class $$InvestmentPortfoliosTableOrderingComposer
 
   ColumnOrderings<String> get goalId => $composableBuilder(
     column: $table.goalId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get targetAllocationJson => $composableBuilder(
-    column: $table.targetAllocationJson,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get targetAnnualIncome => $composableBuilder(
-    column: $table.targetAnnualIncome,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -51850,9 +53683,6 @@ class $$InvestmentPortfoliosTableAnnotationComposer
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
 
-  GeneratedColumn<String> get strategy =>
-      $composableBuilder(column: $table.strategy, builder: (column) => column);
-
   GeneratedColumn<String> get baseCurrency => $composableBuilder(
     column: $table.baseCurrency,
     builder: (column) => column,
@@ -51860,17 +53690,6 @@ class $$InvestmentPortfoliosTableAnnotationComposer
 
   GeneratedColumn<String> get goalId =>
       $composableBuilder(column: $table.goalId, builder: (column) => column);
-
-  GeneratedColumn<String> get targetAllocationJson => $composableBuilder(
-    column: $table.targetAllocationJson,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<Decimal?, String> get targetAnnualIncome =>
-      $composableBuilder(
-        column: $table.targetAnnualIncome,
-        builder: (column) => column,
-      );
 
   GeneratedColumn<String> get color =>
       $composableBuilder(column: $table.color, builder: (column) => column);
@@ -51932,11 +53751,8 @@ class $$InvestmentPortfoliosTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
-                Value<String> strategy = const Value.absent(),
                 Value<String?> baseCurrency = const Value.absent(),
                 Value<String?> goalId = const Value.absent(),
-                Value<String?> targetAllocationJson = const Value.absent(),
-                Value<Decimal?> targetAnnualIncome = const Value.absent(),
                 Value<String?> color = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<bool> archived = const Value.absent(),
@@ -51949,11 +53765,8 @@ class $$InvestmentPortfoliosTableTableManager
                 deletedAt: deletedAt,
                 id: id,
                 name: name,
-                strategy: strategy,
                 baseCurrency: baseCurrency,
                 goalId: goalId,
-                targetAllocationJson: targetAllocationJson,
-                targetAnnualIncome: targetAnnualIncome,
                 color: color,
                 createdAt: createdAt,
                 archived: archived,
@@ -51968,11 +53781,8 @@ class $$InvestmentPortfoliosTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 required String id,
                 required String name,
-                required String strategy,
                 Value<String?> baseCurrency = const Value.absent(),
                 Value<String?> goalId = const Value.absent(),
-                Value<String?> targetAllocationJson = const Value.absent(),
-                Value<Decimal?> targetAnnualIncome = const Value.absent(),
                 Value<String?> color = const Value.absent(),
                 required DateTime createdAt,
                 Value<bool> archived = const Value.absent(),
@@ -51985,11 +53795,8 @@ class $$InvestmentPortfoliosTableTableManager
                 deletedAt: deletedAt,
                 id: id,
                 name: name,
-                strategy: strategy,
                 baseCurrency: baseCurrency,
                 goalId: goalId,
-                targetAllocationJson: targetAllocationJson,
-                targetAnnualIncome: targetAnnualIncome,
                 color: color,
                 createdAt: createdAt,
                 archived: archived,
@@ -52024,8 +53831,8 @@ typedef $$InvestmentPortfoliosTableProcessedTableManager =
       InvestmentPortfolioRow,
       PrefetchHooks Function()
     >;
-typedef $$PortfolioLotMembershipsTableCreateCompanionBuilder =
-    PortfolioLotMembershipsCompanion Function({
+typedef $$PortfolioStrategyConfigsTableCreateCompanionBuilder =
+    PortfolioStrategyConfigsCompanion Function({
       required String ownerUserId,
       required DateTime updatedAt,
       required String updatedByDevice,
@@ -52033,11 +53840,16 @@ typedef $$PortfolioLotMembershipsTableCreateCompanionBuilder =
       Value<DateTime?> deletedAt,
       required String id,
       required String portfolioId,
-      required DateTime assignedAt,
+      required String kind,
+      required int schemaVersion,
+      Value<bool> enabled,
+      required String capitalRole,
+      Value<String?> rebalanceGroupId,
+      required String configJson,
       Value<int> rowid,
     });
-typedef $$PortfolioLotMembershipsTableUpdateCompanionBuilder =
-    PortfolioLotMembershipsCompanion Function({
+typedef $$PortfolioStrategyConfigsTableUpdateCompanionBuilder =
+    PortfolioStrategyConfigsCompanion Function({
       Value<String> ownerUserId,
       Value<DateTime> updatedAt,
       Value<String> updatedByDevice,
@@ -52045,13 +53857,18 @@ typedef $$PortfolioLotMembershipsTableUpdateCompanionBuilder =
       Value<DateTime?> deletedAt,
       Value<String> id,
       Value<String> portfolioId,
-      Value<DateTime> assignedAt,
+      Value<String> kind,
+      Value<int> schemaVersion,
+      Value<bool> enabled,
+      Value<String> capitalRole,
+      Value<String?> rebalanceGroupId,
+      Value<String> configJson,
       Value<int> rowid,
     });
 
-class $$PortfolioLotMembershipsTableFilterComposer
-    extends Composer<_$AppDatabase, $PortfolioLotMembershipsTable> {
-  $$PortfolioLotMembershipsTableFilterComposer({
+class $$PortfolioStrategyConfigsTableFilterComposer
+    extends Composer<_$AppDatabase, $PortfolioStrategyConfigsTable> {
+  $$PortfolioStrategyConfigsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -52094,15 +53911,40 @@ class $$PortfolioLotMembershipsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<DateTime> get assignedAt => $composableBuilder(
-    column: $table.assignedAt,
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get schemaVersion => $composableBuilder(
+    column: $table.schemaVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get capitalRole => $composableBuilder(
+    column: $table.capitalRole,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rebalanceGroupId => $composableBuilder(
+    column: $table.rebalanceGroupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get configJson => $composableBuilder(
+    column: $table.configJson,
     builder: (column) => ColumnFilters(column),
   );
 }
 
-class $$PortfolioLotMembershipsTableOrderingComposer
-    extends Composer<_$AppDatabase, $PortfolioLotMembershipsTable> {
-  $$PortfolioLotMembershipsTableOrderingComposer({
+class $$PortfolioStrategyConfigsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PortfolioStrategyConfigsTable> {
+  $$PortfolioStrategyConfigsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -52144,15 +53986,40 @@ class $$PortfolioLotMembershipsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<DateTime> get assignedAt => $composableBuilder(
-    column: $table.assignedAt,
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get schemaVersion => $composableBuilder(
+    column: $table.schemaVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get capitalRole => $composableBuilder(
+    column: $table.capitalRole,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rebalanceGroupId => $composableBuilder(
+    column: $table.rebalanceGroupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get configJson => $composableBuilder(
+    column: $table.configJson,
     builder: (column) => ColumnOrderings(column),
   );
 }
 
-class $$PortfolioLotMembershipsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $PortfolioLotMembershipsTable> {
-  $$PortfolioLotMembershipsTableAnnotationComposer({
+class $$PortfolioStrategyConfigsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PortfolioStrategyConfigsTable> {
+  $$PortfolioStrategyConfigsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -52186,53 +54053,74 @@ class $$PortfolioLotMembershipsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<DateTime> get assignedAt => $composableBuilder(
-    column: $table.assignedAt,
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<int> get schemaVersion => $composableBuilder(
+    column: $table.schemaVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<String> get capitalRole => $composableBuilder(
+    column: $table.capitalRole,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get rebalanceGroupId => $composableBuilder(
+    column: $table.rebalanceGroupId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get configJson => $composableBuilder(
+    column: $table.configJson,
     builder: (column) => column,
   );
 }
 
-class $$PortfolioLotMembershipsTableTableManager
+class $$PortfolioStrategyConfigsTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $PortfolioLotMembershipsTable,
-          PortfolioLotMembershipRow,
-          $$PortfolioLotMembershipsTableFilterComposer,
-          $$PortfolioLotMembershipsTableOrderingComposer,
-          $$PortfolioLotMembershipsTableAnnotationComposer,
-          $$PortfolioLotMembershipsTableCreateCompanionBuilder,
-          $$PortfolioLotMembershipsTableUpdateCompanionBuilder,
+          $PortfolioStrategyConfigsTable,
+          PortfolioStrategyConfigRow,
+          $$PortfolioStrategyConfigsTableFilterComposer,
+          $$PortfolioStrategyConfigsTableOrderingComposer,
+          $$PortfolioStrategyConfigsTableAnnotationComposer,
+          $$PortfolioStrategyConfigsTableCreateCompanionBuilder,
+          $$PortfolioStrategyConfigsTableUpdateCompanionBuilder,
           (
-            PortfolioLotMembershipRow,
+            PortfolioStrategyConfigRow,
             BaseReferences<
               _$AppDatabase,
-              $PortfolioLotMembershipsTable,
-              PortfolioLotMembershipRow
+              $PortfolioStrategyConfigsTable,
+              PortfolioStrategyConfigRow
             >,
           ),
-          PortfolioLotMembershipRow,
+          PortfolioStrategyConfigRow,
           PrefetchHooks Function()
         > {
-  $$PortfolioLotMembershipsTableTableManager(
+  $$PortfolioStrategyConfigsTableTableManager(
     _$AppDatabase db,
-    $PortfolioLotMembershipsTable table,
+    $PortfolioStrategyConfigsTable table,
   ) : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$PortfolioLotMembershipsTableFilterComposer(
+              $$PortfolioStrategyConfigsTableFilterComposer(
                 $db: db,
                 $table: table,
               ),
           createOrderingComposer: () =>
-              $$PortfolioLotMembershipsTableOrderingComposer(
+              $$PortfolioStrategyConfigsTableOrderingComposer(
                 $db: db,
                 $table: table,
               ),
           createComputedFieldComposer: () =>
-              $$PortfolioLotMembershipsTableAnnotationComposer(
+              $$PortfolioStrategyConfigsTableAnnotationComposer(
                 $db: db,
                 $table: table,
               ),
@@ -52245,9 +54133,14 @@ class $$PortfolioLotMembershipsTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String> id = const Value.absent(),
                 Value<String> portfolioId = const Value.absent(),
-                Value<DateTime> assignedAt = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<int> schemaVersion = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<String> capitalRole = const Value.absent(),
+                Value<String?> rebalanceGroupId = const Value.absent(),
+                Value<String> configJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => PortfolioLotMembershipsCompanion(
+              }) => PortfolioStrategyConfigsCompanion(
                 ownerUserId: ownerUserId,
                 updatedAt: updatedAt,
                 updatedByDevice: updatedByDevice,
@@ -52255,6 +54148,840 @@ class $$PortfolioLotMembershipsTableTableManager
                 deletedAt: deletedAt,
                 id: id,
                 portfolioId: portfolioId,
+                kind: kind,
+                schemaVersion: schemaVersion,
+                enabled: enabled,
+                capitalRole: capitalRole,
+                rebalanceGroupId: rebalanceGroupId,
+                configJson: configJson,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String portfolioId,
+                required String kind,
+                required int schemaVersion,
+                Value<bool> enabled = const Value.absent(),
+                required String capitalRole,
+                Value<String?> rebalanceGroupId = const Value.absent(),
+                required String configJson,
+                Value<int> rowid = const Value.absent(),
+              }) => PortfolioStrategyConfigsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                portfolioId: portfolioId,
+                kind: kind,
+                schemaVersion: schemaVersion,
+                enabled: enabled,
+                capitalRole: capitalRole,
+                rebalanceGroupId: rebalanceGroupId,
+                configJson: configJson,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PortfolioStrategyConfigsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PortfolioStrategyConfigsTable,
+      PortfolioStrategyConfigRow,
+      $$PortfolioStrategyConfigsTableFilterComposer,
+      $$PortfolioStrategyConfigsTableOrderingComposer,
+      $$PortfolioStrategyConfigsTableAnnotationComposer,
+      $$PortfolioStrategyConfigsTableCreateCompanionBuilder,
+      $$PortfolioStrategyConfigsTableUpdateCompanionBuilder,
+      (
+        PortfolioStrategyConfigRow,
+        BaseReferences<
+          _$AppDatabase,
+          $PortfolioStrategyConfigsTable,
+          PortfolioStrategyConfigRow
+        >,
+      ),
+      PortfolioStrategyConfigRow,
+      PrefetchHooks Function()
+    >;
+typedef $$PortfolioRebalanceGroupsTableCreateCompanionBuilder =
+    PortfolioRebalanceGroupsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String portfolioId,
+      required String name,
+      required String strategyKind,
+      required int targetWeightBps,
+      required int driftBandBps,
+      required String transferPolicy,
+      required String internalTargetJson,
+      required DateTime createdAt,
+      Value<bool> archived,
+      Value<int> rowid,
+    });
+typedef $$PortfolioRebalanceGroupsTableUpdateCompanionBuilder =
+    PortfolioRebalanceGroupsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> portfolioId,
+      Value<String> name,
+      Value<String> strategyKind,
+      Value<int> targetWeightBps,
+      Value<int> driftBandBps,
+      Value<String> transferPolicy,
+      Value<String> internalTargetJson,
+      Value<DateTime> createdAt,
+      Value<bool> archived,
+      Value<int> rowid,
+    });
+
+class $$PortfolioRebalanceGroupsTableFilterComposer
+    extends Composer<_$AppDatabase, $PortfolioRebalanceGroupsTable> {
+  $$PortfolioRebalanceGroupsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get portfolioId => $composableBuilder(
+    column: $table.portfolioId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get strategyKind => $composableBuilder(
+    column: $table.strategyKind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get targetWeightBps => $composableBuilder(
+    column: $table.targetWeightBps,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get driftBandBps => $composableBuilder(
+    column: $table.driftBandBps,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get transferPolicy => $composableBuilder(
+    column: $table.transferPolicy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get internalTargetJson => $composableBuilder(
+    column: $table.internalTargetJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get archived => $composableBuilder(
+    column: $table.archived,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PortfolioRebalanceGroupsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PortfolioRebalanceGroupsTable> {
+  $$PortfolioRebalanceGroupsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get portfolioId => $composableBuilder(
+    column: $table.portfolioId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get strategyKind => $composableBuilder(
+    column: $table.strategyKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get targetWeightBps => $composableBuilder(
+    column: $table.targetWeightBps,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get driftBandBps => $composableBuilder(
+    column: $table.driftBandBps,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get transferPolicy => $composableBuilder(
+    column: $table.transferPolicy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get internalTargetJson => $composableBuilder(
+    column: $table.internalTargetJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get archived => $composableBuilder(
+    column: $table.archived,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PortfolioRebalanceGroupsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PortfolioRebalanceGroupsTable> {
+  $$PortfolioRebalanceGroupsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get portfolioId => $composableBuilder(
+    column: $table.portfolioId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get strategyKind => $composableBuilder(
+    column: $table.strategyKind,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get targetWeightBps => $composableBuilder(
+    column: $table.targetWeightBps,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get driftBandBps => $composableBuilder(
+    column: $table.driftBandBps,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get transferPolicy => $composableBuilder(
+    column: $table.transferPolicy,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get internalTargetJson => $composableBuilder(
+    column: $table.internalTargetJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get archived =>
+      $composableBuilder(column: $table.archived, builder: (column) => column);
+}
+
+class $$PortfolioRebalanceGroupsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PortfolioRebalanceGroupsTable,
+          PortfolioRebalanceGroupRow,
+          $$PortfolioRebalanceGroupsTableFilterComposer,
+          $$PortfolioRebalanceGroupsTableOrderingComposer,
+          $$PortfolioRebalanceGroupsTableAnnotationComposer,
+          $$PortfolioRebalanceGroupsTableCreateCompanionBuilder,
+          $$PortfolioRebalanceGroupsTableUpdateCompanionBuilder,
+          (
+            PortfolioRebalanceGroupRow,
+            BaseReferences<
+              _$AppDatabase,
+              $PortfolioRebalanceGroupsTable,
+              PortfolioRebalanceGroupRow
+            >,
+          ),
+          PortfolioRebalanceGroupRow,
+          PrefetchHooks Function()
+        > {
+  $$PortfolioRebalanceGroupsTableTableManager(
+    _$AppDatabase db,
+    $PortfolioRebalanceGroupsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PortfolioRebalanceGroupsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$PortfolioRebalanceGroupsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$PortfolioRebalanceGroupsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> portfolioId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> strategyKind = const Value.absent(),
+                Value<int> targetWeightBps = const Value.absent(),
+                Value<int> driftBandBps = const Value.absent(),
+                Value<String> transferPolicy = const Value.absent(),
+                Value<String> internalTargetJson = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> archived = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PortfolioRebalanceGroupsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                portfolioId: portfolioId,
+                name: name,
+                strategyKind: strategyKind,
+                targetWeightBps: targetWeightBps,
+                driftBandBps: driftBandBps,
+                transferPolicy: transferPolicy,
+                internalTargetJson: internalTargetJson,
+                createdAt: createdAt,
+                archived: archived,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String portfolioId,
+                required String name,
+                required String strategyKind,
+                required int targetWeightBps,
+                required int driftBandBps,
+                required String transferPolicy,
+                required String internalTargetJson,
+                required DateTime createdAt,
+                Value<bool> archived = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PortfolioRebalanceGroupsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                portfolioId: portfolioId,
+                name: name,
+                strategyKind: strategyKind,
+                targetWeightBps: targetWeightBps,
+                driftBandBps: driftBandBps,
+                transferPolicy: transferPolicy,
+                internalTargetJson: internalTargetJson,
+                createdAt: createdAt,
+                archived: archived,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PortfolioRebalanceGroupsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PortfolioRebalanceGroupsTable,
+      PortfolioRebalanceGroupRow,
+      $$PortfolioRebalanceGroupsTableFilterComposer,
+      $$PortfolioRebalanceGroupsTableOrderingComposer,
+      $$PortfolioRebalanceGroupsTableAnnotationComposer,
+      $$PortfolioRebalanceGroupsTableCreateCompanionBuilder,
+      $$PortfolioRebalanceGroupsTableUpdateCompanionBuilder,
+      (
+        PortfolioRebalanceGroupRow,
+        BaseReferences<
+          _$AppDatabase,
+          $PortfolioRebalanceGroupsTable,
+          PortfolioRebalanceGroupRow
+        >,
+      ),
+      PortfolioRebalanceGroupRow,
+      PrefetchHooks Function()
+    >;
+typedef $$PortfolioCapitalAssignmentsTableCreateCompanionBuilder =
+    PortfolioCapitalAssignmentsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String portfolioId,
+      required String rebalanceGroupId,
+      required String sourceKind,
+      required String sourceId,
+      Value<Decimal?> quantity,
+      Value<Decimal?> amount,
+      Value<String?> currency,
+      required DateTime assignedAt,
+      Value<int> rowid,
+    });
+typedef $$PortfolioCapitalAssignmentsTableUpdateCompanionBuilder =
+    PortfolioCapitalAssignmentsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> portfolioId,
+      Value<String> rebalanceGroupId,
+      Value<String> sourceKind,
+      Value<String> sourceId,
+      Value<Decimal?> quantity,
+      Value<Decimal?> amount,
+      Value<String?> currency,
+      Value<DateTime> assignedAt,
+      Value<int> rowid,
+    });
+
+class $$PortfolioCapitalAssignmentsTableFilterComposer
+    extends Composer<_$AppDatabase, $PortfolioCapitalAssignmentsTable> {
+  $$PortfolioCapitalAssignmentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get portfolioId => $composableBuilder(
+    column: $table.portfolioId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rebalanceGroupId => $composableBuilder(
+    column: $table.rebalanceGroupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceKind => $composableBuilder(
+    column: $table.sourceKind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get quantity =>
+      $composableBuilder(
+        column: $table.quantity,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get amount =>
+      $composableBuilder(
+        column: $table.amount,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get assignedAt => $composableBuilder(
+    column: $table.assignedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PortfolioCapitalAssignmentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PortfolioCapitalAssignmentsTable> {
+  $$PortfolioCapitalAssignmentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get portfolioId => $composableBuilder(
+    column: $table.portfolioId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rebalanceGroupId => $composableBuilder(
+    column: $table.rebalanceGroupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceKind => $composableBuilder(
+    column: $table.sourceKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get quantity => $composableBuilder(
+    column: $table.quantity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get assignedAt => $composableBuilder(
+    column: $table.assignedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PortfolioCapitalAssignmentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PortfolioCapitalAssignmentsTable> {
+  $$PortfolioCapitalAssignmentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get portfolioId => $composableBuilder(
+    column: $table.portfolioId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get rebalanceGroupId => $composableBuilder(
+    column: $table.rebalanceGroupId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceKind => $composableBuilder(
+    column: $table.sourceKind,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceId =>
+      $composableBuilder(column: $table.sourceId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<String> get currency =>
+      $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get assignedAt => $composableBuilder(
+    column: $table.assignedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$PortfolioCapitalAssignmentsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PortfolioCapitalAssignmentsTable,
+          PortfolioCapitalAssignmentRow,
+          $$PortfolioCapitalAssignmentsTableFilterComposer,
+          $$PortfolioCapitalAssignmentsTableOrderingComposer,
+          $$PortfolioCapitalAssignmentsTableAnnotationComposer,
+          $$PortfolioCapitalAssignmentsTableCreateCompanionBuilder,
+          $$PortfolioCapitalAssignmentsTableUpdateCompanionBuilder,
+          (
+            PortfolioCapitalAssignmentRow,
+            BaseReferences<
+              _$AppDatabase,
+              $PortfolioCapitalAssignmentsTable,
+              PortfolioCapitalAssignmentRow
+            >,
+          ),
+          PortfolioCapitalAssignmentRow,
+          PrefetchHooks Function()
+        > {
+  $$PortfolioCapitalAssignmentsTableTableManager(
+    _$AppDatabase db,
+    $PortfolioCapitalAssignmentsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PortfolioCapitalAssignmentsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$PortfolioCapitalAssignmentsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$PortfolioCapitalAssignmentsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> portfolioId = const Value.absent(),
+                Value<String> rebalanceGroupId = const Value.absent(),
+                Value<String> sourceKind = const Value.absent(),
+                Value<String> sourceId = const Value.absent(),
+                Value<Decimal?> quantity = const Value.absent(),
+                Value<Decimal?> amount = const Value.absent(),
+                Value<String?> currency = const Value.absent(),
+                Value<DateTime> assignedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PortfolioCapitalAssignmentsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                portfolioId: portfolioId,
+                rebalanceGroupId: rebalanceGroupId,
+                sourceKind: sourceKind,
+                sourceId: sourceId,
+                quantity: quantity,
+                amount: amount,
+                currency: currency,
                 assignedAt: assignedAt,
                 rowid: rowid,
               ),
@@ -52267,9 +54994,15 @@ class $$PortfolioLotMembershipsTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 required String id,
                 required String portfolioId,
+                required String rebalanceGroupId,
+                required String sourceKind,
+                required String sourceId,
+                Value<Decimal?> quantity = const Value.absent(),
+                Value<Decimal?> amount = const Value.absent(),
+                Value<String?> currency = const Value.absent(),
                 required DateTime assignedAt,
                 Value<int> rowid = const Value.absent(),
-              }) => PortfolioLotMembershipsCompanion.insert(
+              }) => PortfolioCapitalAssignmentsCompanion.insert(
                 ownerUserId: ownerUserId,
                 updatedAt: updatedAt,
                 updatedByDevice: updatedByDevice,
@@ -52277,6 +55010,12 @@ class $$PortfolioLotMembershipsTableTableManager
                 deletedAt: deletedAt,
                 id: id,
                 portfolioId: portfolioId,
+                rebalanceGroupId: rebalanceGroupId,
+                sourceKind: sourceKind,
+                sourceId: sourceId,
+                quantity: quantity,
+                amount: amount,
+                currency: currency,
                 assignedAt: assignedAt,
                 rowid: rowid,
               ),
@@ -52288,25 +55027,25 @@ class $$PortfolioLotMembershipsTableTableManager
       );
 }
 
-typedef $$PortfolioLotMembershipsTableProcessedTableManager =
+typedef $$PortfolioCapitalAssignmentsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $PortfolioLotMembershipsTable,
-      PortfolioLotMembershipRow,
-      $$PortfolioLotMembershipsTableFilterComposer,
-      $$PortfolioLotMembershipsTableOrderingComposer,
-      $$PortfolioLotMembershipsTableAnnotationComposer,
-      $$PortfolioLotMembershipsTableCreateCompanionBuilder,
-      $$PortfolioLotMembershipsTableUpdateCompanionBuilder,
+      $PortfolioCapitalAssignmentsTable,
+      PortfolioCapitalAssignmentRow,
+      $$PortfolioCapitalAssignmentsTableFilterComposer,
+      $$PortfolioCapitalAssignmentsTableOrderingComposer,
+      $$PortfolioCapitalAssignmentsTableAnnotationComposer,
+      $$PortfolioCapitalAssignmentsTableCreateCompanionBuilder,
+      $$PortfolioCapitalAssignmentsTableUpdateCompanionBuilder,
       (
-        PortfolioLotMembershipRow,
+        PortfolioCapitalAssignmentRow,
         BaseReferences<
           _$AppDatabase,
-          $PortfolioLotMembershipsTable,
-          PortfolioLotMembershipRow
+          $PortfolioCapitalAssignmentsTable,
+          PortfolioCapitalAssignmentRow
         >,
       ),
-      PortfolioLotMembershipRow,
+      PortfolioCapitalAssignmentRow,
       PrefetchHooks Function()
     >;
 typedef $$FinancialDecisionsTableCreateCompanionBuilder =
@@ -62019,10 +64758,21 @@ class $AppDatabaseManager {
       $$GoalsTableTableManager(_db, _db.goals);
   $$InvestmentPortfoliosTableTableManager get investmentPortfolios =>
       $$InvestmentPortfoliosTableTableManager(_db, _db.investmentPortfolios);
-  $$PortfolioLotMembershipsTableTableManager get portfolioLotMemberships =>
-      $$PortfolioLotMembershipsTableTableManager(
+  $$PortfolioStrategyConfigsTableTableManager get portfolioStrategyConfigs =>
+      $$PortfolioStrategyConfigsTableTableManager(
         _db,
-        _db.portfolioLotMemberships,
+        _db.portfolioStrategyConfigs,
+      );
+  $$PortfolioRebalanceGroupsTableTableManager get portfolioRebalanceGroups =>
+      $$PortfolioRebalanceGroupsTableTableManager(
+        _db,
+        _db.portfolioRebalanceGroups,
+      );
+  $$PortfolioCapitalAssignmentsTableTableManager
+  get portfolioCapitalAssignments =>
+      $$PortfolioCapitalAssignmentsTableTableManager(
+        _db,
+        _db.portfolioCapitalAssignments,
       );
   $$FinancialDecisionsTableTableManager get financialDecisions =>
       $$FinancialDecisionsTableTableManager(_db, _db.financialDecisions);

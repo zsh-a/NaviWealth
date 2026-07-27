@@ -177,18 +177,13 @@ class Goals extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-/// A user-defined logical investment sleeve. Portfolios classify capital by
-/// purpose without changing the accounting account or the underlying ledger.
+/// Identity boundary for a user-defined logical investment portfolio.
 @DataClassName('InvestmentPortfolioRow')
 class InvestmentPortfolios extends Table with SyncableTable {
   TextColumn get id => text()();
   TextColumn get name => text()();
-  TextColumn get strategy => text()();
   TextColumn get baseCurrency => text().withLength(min: 3, max: 8).nullable()();
   TextColumn get goalId => text().nullable()();
-  TextColumn get targetAllocationJson => text().nullable()();
-  TextColumn get targetAnnualIncome =>
-      text().map(const DecimalConverter()).nullable()();
   TextColumn get color => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   BoolColumn get archived => boolean().withDefault(const Constant(false))();
@@ -197,17 +192,77 @@ class InvestmentPortfolios extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-/// Assigns one derived investment lot to exactly one logical portfolio.
-///
-/// The row id is the lot id, so moving a lot between portfolios updates the
-/// same synced row and concurrent devices converge through the normal LWW
-/// protocol. Lots without an active row remain in the virtual "Unassigned"
-/// portfolio.
-@DataClassName('PortfolioLotMembershipRow')
-class PortfolioLotMemberships extends Table with SyncableTable {
+/// Open, independently versioned strategy modules attached to a portfolio.
+@DataClassName('PortfolioStrategyConfigRow')
+class PortfolioStrategyConfigs extends Table with SyncableTable {
   TextColumn get id => text()();
   TextColumn get portfolioId => text()();
+  TextColumn get kind => text()();
+  IntColumn get schemaVersion => integer()();
+  BoolColumn get enabled => boolean().withDefault(const Constant(true))();
+  TextColumn get capitalRole => text()();
+  TextColumn get rebalanceGroupId => text().nullable()();
+  TextColumn get configJson => text()();
+
+  @override
+  List<String> get customConstraints => [
+    'UNIQUE(owner_user_id, portfolio_id, kind)',
+  ];
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// A capital-owning partition inside one logical portfolio.
+@DataClassName('PortfolioRebalanceGroupRow')
+class PortfolioRebalanceGroups extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get portfolioId => text()();
+  TextColumn get name => text()();
+  TextColumn get strategyKind => text()();
+  IntColumn get targetWeightBps => integer()();
+  IntColumn get driftBandBps => integer()();
+  TextColumn get transferPolicy => text()();
+  TextColumn get internalTargetJson => text()();
+  DateTimeColumn get createdAt => dateTime()();
+  BoolColumn get archived => boolean().withDefault(const Constant(false))();
+
+  @override
+  List<String> get customConstraints => [
+    'CHECK (target_weight_bps >= 0 AND target_weight_bps <= 10000)',
+    'CHECK (drift_band_bps >= 0 AND drift_band_bps <= 10000)',
+  ];
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Exclusive ownership of capital by a rebalance group.
+///
+/// A lot row carries either an optional positive quantity or NULL for the
+/// whole remaining lot. A cash-account row carries a positive amount and
+/// currency. The table is intentionally limited to these two real sources.
+@DataClassName('PortfolioCapitalAssignmentRow')
+class PortfolioCapitalAssignments extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get portfolioId => text()();
+  TextColumn get rebalanceGroupId => text()();
+  TextColumn get sourceKind => text()();
+  TextColumn get sourceId => text()();
+  TextColumn get quantity => text().map(const DecimalConverter()).nullable()();
+  TextColumn get amount => text().map(const DecimalConverter()).nullable()();
+  TextColumn get currency => text().withLength(min: 3, max: 8).nullable()();
   DateTimeColumn get assignedAt => dateTime()();
+
+  @override
+  List<String> get customConstraints => [
+    'CHECK ((source_kind = \'lot\' AND amount IS NULL AND currency IS NULL '
+        'AND (quantity IS NULL OR CAST(quantity AS REAL) > 0)) OR '
+        '(source_kind = \'cashAccount\' AND quantity IS NULL '
+        'AND amount IS NOT NULL AND CAST(amount AS REAL) > 0 '
+        'AND currency IS NOT NULL))',
+    'UNIQUE(owner_user_id, rebalance_group_id, source_kind, source_id)',
+  ];
 
   @override
   Set<Column<Object>> get primaryKey => {id};

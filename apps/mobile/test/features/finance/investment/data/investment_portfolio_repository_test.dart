@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
@@ -9,8 +7,9 @@ import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/investment/data/investment_portfolio_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/investment_portfolio_repository.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
-import 'package:naviwealth/features/finance/investment/domain/models/investment_portfolio.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/portfolio_capital_assignment.dart';
+import 'package:naviwealth/features/finance/investment/domain/strategy/portfolio_strategy.dart';
 import 'package:naviwealth/features/finance/rebalance/data/rebalance_providers.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/allocation_schemes.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/rebalance_models.dart';
@@ -22,51 +21,158 @@ import '../../data/repositories/_stub_stamper.dart';
 
 void main() {
   group('InvestmentPortfolioRepository', () {
-    test('creates portfolios and moves one lot between them', () async {
+    test(
+      'creates a complete aggregate and enforces whole-lot ownership',
+      () async {
+        final db = makeTestDatabase();
+        final outbox = InMemoryOutboxStore();
+        final repository = InvestmentPortfolioRepository(
+          db: db,
+          outbox: outbox,
+          stamper: makeStubStamper(),
+        );
+        addTearDown(db.close);
+
+        final income = await repository.create(
+          name: ' Dividend income ',
+          initialStrategyKind: PortfolioStrategyKind.dividendIncome,
+        );
+        final growth = await repository.create(
+          name: 'Growth',
+          initialStrategyKind: PortfolioStrategyKind.indexCore,
+        );
+        expect(income.name, 'Dividend income');
+        expect(await repository.watchActive('u-test').first, hasLength(2));
+
+        final groups = await repository.watchGroups('u-test').first;
+        final incomeGroup = groups.singleWhere(
+          (group) => group.portfolioId == income.id,
+        );
+        final growthGroup = groups.singleWhere(
+          (group) => group.portfolioId == growth.id,
+        );
+        expect(incomeGroup.targetWeightBps, 10000);
+        expect(
+          (await repository.watchStrategies('u-test').first).every(
+            (strategy) => strategy.capitalRole == StrategyCapitalRole.owner,
+          ),
+          isTrue,
+        );
+
+        await repository.assignWholeLot(
+          lotId: 'lot-1',
+          portfolioId: income.id,
+          rebalanceGroupId: incomeGroup.id,
+        );
+        await expectLater(
+          repository.assignWholeLot(
+            lotId: 'lot-1',
+            portfolioId: growth.id,
+            rebalanceGroupId: growthGroup.id,
+          ),
+          throwsStateError,
+        );
+        final assigned =
+            (await repository.watchAssignments('u-test').first).single;
+        await repository.unassignCapital(assigned);
+        await repository.assignWholeLot(
+          lotId: 'lot-1',
+          portfolioId: growth.id,
+          rebalanceGroupId: growthGroup.id,
+        );
+        expect(
+          (await repository.watchAssignments('u-test').first)
+              .single
+              .portfolioId,
+          growth.id,
+        );
+
+        await repository.remove(growth);
+        expect(
+          (await repository.watchActive('u-test').first).single.id,
+          income.id,
+        );
+        expect(await repository.watchAssignments('u-test').first, isEmpty);
+        expect(
+          outbox.queued.map((operation) => operation.table),
+          containsAll([
+            InvestmentPortfolioRepository.portfoliosTable,
+            InvestmentPortfolioRepository.groupsTable,
+            InvestmentPortfolioRepository.strategiesTable,
+            InvestmentPortfolioRepository.assignmentsTable,
+          ]),
+        );
+      },
+    );
+
+    test('adds strategy groups and keeps aggregate weights at 100%', () async {
       final db = makeTestDatabase();
-      final outbox = InMemoryOutboxStore();
       final repository = InvestmentPortfolioRepository(
         db: db,
-        outbox: outbox,
+        outbox: InMemoryOutboxStore(),
         stamper: makeStubStamper(),
       );
       addTearDown(db.close);
-
-      final income = await repository.create(
-        name: ' Dividend income ',
-        strategy: InvestmentPortfolioStrategy.income,
-        targetAnnualIncome: Decimal.parse('12000'),
+      final portfolio = await repository.create(
+        name: 'Layered',
+        initialStrategyKind: PortfolioStrategyKind.indexCore,
       );
-      final growth = await repository.create(
-        name: 'Growth',
-        strategy: InvestmentPortfolioStrategy.growth,
+
+      final dividend = await repository.addCapitalStrategy(
+        portfolioId: portfolio.id,
+        kind: PortfolioStrategyKind.dividendIncome,
       );
-      expect(income.name, 'Dividend income');
-      expect(await repository.watchActive('u-test').first, hasLength(2));
+      var groups = await repository.watchGroups('u-test').first;
+      expect(groups.map((group) => group.targetWeightBps), [5000, 5000]);
 
-      await repository.assignLot(lotId: 'lot-1', portfolioId: income.id);
-      var memberships = await repository.watchMemberships('u-test').first;
-      expect(memberships.single.portfolioId, income.id);
-
-      await repository.assignLot(lotId: 'lot-1', portfolioId: growth.id);
-      memberships = await repository.watchMemberships('u-test').first;
-      expect(memberships, hasLength(1));
-      expect(memberships.single.portfolioId, growth.id);
-
-      await repository.remove(growth);
-      final remaining = await repository.watchActive('u-test').first;
-      expect(remaining.single.id, income.id);
-      expect(await repository.watchMemberships('u-test').first, isEmpty);
+      await repository.setGroupTargetWeight(
+        portfolioId: portfolio.id,
+        groupId: dividend.id,
+        targetWeightBps: 3000,
+      );
+      groups = await repository.watchGroups('u-test').first;
       expect(
-        outbox.queued.map((operation) => operation.table),
-        containsAll([
-          InvestmentPortfolioRepository.portfoliosTable,
-          InvestmentPortfolioRepository.membershipsTable,
-        ]),
+        groups.fold<int>(0, (sum, group) => sum + group.targetWeightBps),
+        10000,
+      );
+      expect(
+        groups.singleWhere((group) => group.id == dividend.id).targetWeightBps,
+        3000,
       );
     });
 
-    test('persists target allocation on the selected portfolio', () async {
+    test('assigns cash directly to a capital-owning group', () async {
+      final db = makeTestDatabase();
+      final repository = InvestmentPortfolioRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+      final portfolio = await repository.create(
+        name: 'Options',
+        initialStrategyKind: PortfolioStrategyKind.optionsIncome,
+      );
+      final group = (await repository.watchGroups('u-test').first).single;
+
+      await repository.assignCash(
+        accountId: 'broker-cash',
+        amount: Decimal.parse('25000'),
+        currency: 'usd',
+        portfolioId: portfolio.id,
+        rebalanceGroupId: group.id,
+      );
+
+      final assignment =
+          (await repository.watchAssignments('u-test').first).single;
+      expect(assignment.sourceKind, PortfolioCapitalSourceKind.cashAccount);
+      expect(assignment.sourceId, 'broker-cash');
+      expect(assignment.amount, Decimal.parse('25000'));
+      expect(assignment.currency, 'USD');
+      expect(assignment.rebalanceGroupId, group.id);
+    });
+
+    test('persists target allocation on the selected group', () async {
       final db = makeTestDatabase();
       final repository = InvestmentPortfolioRepository(
         db: db,
@@ -76,11 +182,12 @@ void main() {
       addTearDown(db.close);
       final portfolio = await repository.create(
         name: 'Income',
-        strategy: InvestmentPortfolioStrategy.income,
+        initialStrategyKind: PortfolioStrategyKind.dividendIncome,
       );
+      final group = (await repository.watchGroups('u-test').first).single;
       final controller = TargetAllocationController(
         scheme: AllocationSchemePreset.balanced,
-        portfolio: portfolio,
+        group: group,
         repository: Future.value(repository),
       );
       addTearDown(controller.dispose);
@@ -95,11 +202,10 @@ void main() {
 
       await controller.update(target);
 
-      final saved = (await repository.watchActive('u-test').first).single;
-      final decoded = TargetAllocation.fromJson(
-        jsonDecode(saved.targetAllocationJson!) as Map<String, dynamic>,
+      final saved = (await repository.watchGroups('u-test').first).singleWhere(
+        (candidate) => candidate.portfolioId == portfolio.id,
       );
-      expect(decoded.weights, target.weights);
+      expect(saved.internalTarget.weights, target.weights);
     });
 
     test('persists target allocation for a virtual portfolio', () async {
@@ -123,7 +229,7 @@ void main() {
       );
       final firstController = TargetAllocationController(
         scheme: AllocationSchemePreset.balanced,
-        portfolio: null,
+        group: null,
         repository: Future.value(repository),
         preferences: preferences,
         virtualStorageKey: storageKey,
@@ -134,7 +240,7 @@ void main() {
 
       final restartedController = TargetAllocationController(
         scheme: AllocationSchemePreset.custom,
-        portfolio: null,
+        group: null,
         repository: Future.value(repository),
         preferences: preferences,
         virtualStorageKey: storageKey,
@@ -145,53 +251,88 @@ void main() {
   });
 
   group('scopePortfolioHoldings', () {
-    test('uses lot quantity and cost proportions for one portfolio', () {
+    test('uses lot cost proportions instead of quantity for cost basis', () {
+      final scoped = scopePortfolioHoldings(
+        snapshots: {
+          'aapl': _holding(
+            assetId: 'aapl',
+            quantity: '10',
+            cost: '1040',
+            market: '1500',
+          ),
+        },
+        lots: [
+          _lot(id: 'cheap', assetId: 'aapl', quantity: '4', cost: '80'),
+          _lot(id: 'expensive', assetId: 'aapl', quantity: '6', cost: '120'),
+        ],
+        assignments: [
+          _assignment(
+            id: 'a1',
+            lotId: 'cheap',
+            portfolioId: 'portfolio',
+            groupId: 'income',
+          ),
+        ],
+        selectedPortfolioId: 'portfolio',
+      );
+
+      expect(scoped.snapshots['aapl']!.quantity, Decimal.parse('4'));
+      expect(
+        scoped.snapshots['aapl']!.costBasisInBase.toDouble(),
+        closeTo(320, 0.000001),
+      );
+      expect(
+        scoped.snapshots['aapl']!.marketValueInBase,
+        Decimal.parse('600.0'),
+      );
+    });
+
+    test('partitions whole and partial lots by group', () {
       final aapl = _holding(
         assetId: 'aapl',
         quantity: '10',
         cost: '1000',
         market: '1500',
       );
-      final bond = _holding(
-        assetId: 'bond',
-        quantity: '5',
-        cost: '500',
-        market: '550',
-      );
       final lots = [
-        _lot(id: 'aapl-income', assetId: 'aapl', quantity: '4', cost: '100'),
-        _lot(id: 'aapl-growth', assetId: 'aapl', quantity: '6', cost: '100'),
-        _lot(id: 'bond-income', assetId: 'bond', quantity: '5', cost: '100'),
+        _lot(id: 'aapl-lot', assetId: 'aapl', quantity: '10', cost: '100'),
       ];
-      final memberships = [
-        _membership(lotId: 'aapl-income', portfolioId: 'income'),
-        _membership(lotId: 'bond-income', portfolioId: 'income'),
+      final assignments = [
+        _assignment(
+          id: 'a1',
+          lotId: 'aapl-lot',
+          portfolioId: 'portfolio',
+          groupId: 'income',
+          quantity: '4',
+        ),
+        _assignment(
+          id: 'a2',
+          lotId: 'aapl-lot',
+          portfolioId: 'portfolio',
+          groupId: 'growth',
+          quantity: '6',
+        ),
       ];
 
       final scoped = scopePortfolioHoldings(
-        snapshots: {'aapl': aapl, 'bond': bond},
+        snapshots: {'aapl': aapl},
         lots: lots,
-        memberships: memberships,
-        selectedPortfolioId: 'income',
+        assignments: assignments,
+        selectedPortfolioId: 'portfolio',
       );
 
-      expect(scoped.lots.map((lot) => lot.id), ['aapl-income', 'bond-income']);
-      expect(scoped.snapshots['aapl']!.quantity, Decimal.parse('4'));
+      expect(scoped.snapshots['aapl']!.quantity, Decimal.parse('10'));
       expect(
-        scoped.snapshots['aapl']!.marketValueInBase,
+        scoped.snapshotsByGroup['income']!['aapl']!.marketValueInBase,
         Decimal.parse('600.0'),
       );
-      expect(scoped.snapshots['aapl']!.costBasisInBase, Decimal.parse('400'));
-      expect(scoped.snapshots['bond']!.marketValueInBase, Decimal.parse('550'));
       expect(
-        scoped.snapshots.values
-            .fold<Decimal>(Decimal.zero, (sum, holding) => sum + holding.weight)
-            .toDouble(),
-        closeTo(1, 0.00000002),
+        scoped.snapshotsByGroup['growth']!['aapl']!.marketValueInBase,
+        Decimal.parse('900.0'),
       );
     });
 
-    test('unassigned view excludes every assigned lot', () {
+    test('unassigned view retains the unowned partial-lot remainder', () {
       final scoped = scopePortfolioHoldings(
         snapshots: {
           'aapl': _holding(
@@ -202,14 +343,21 @@ void main() {
           ),
         },
         lots: [
-          _lot(id: 'assigned', assetId: 'aapl', quantity: '4', cost: '100'),
-          _lot(id: 'free', assetId: 'aapl', quantity: '6', cost: '100'),
+          _lot(id: 'aapl-lot', assetId: 'aapl', quantity: '10', cost: '100'),
         ],
-        memberships: [_membership(lotId: 'assigned', portfolioId: 'income')],
+        assignments: [
+          _assignment(
+            id: 'a1',
+            lotId: 'aapl-lot',
+            portfolioId: 'income',
+            groupId: 'dividends',
+            quantity: '4',
+          ),
+        ],
         selectedPortfolioId: kUnassignedInvestmentPortfolioId,
       );
 
-      expect(scoped.lots.single.id, 'free');
+      expect(scoped.lots.single.remainingQuantity, Decimal.parse('6'));
       expect(scoped.snapshots['aapl']!.quantity, Decimal.parse('6'));
       expect(
         scoped.snapshots['aapl']!.marketValueInBase,
@@ -261,13 +409,22 @@ Lot _lot({
   );
 }
 
-PortfolioLotMembership _membership({
+PortfolioCapitalAssignment _assignment({
+  required String id,
   required String lotId,
   required String portfolioId,
+  required String groupId,
+  String? quantity,
 }) {
-  return PortfolioLotMembership(
-    lotId: lotId,
+  return PortfolioCapitalAssignment(
+    id: id,
     portfolioId: portfolioId,
+    rebalanceGroupId: groupId,
+    sourceKind: PortfolioCapitalSourceKind.lot,
+    sourceId: lotId,
+    quantity: quantity == null ? null : Decimal.parse(quantity),
+    amount: null,
+    currency: null,
     assignedAt: DateTime.utc(2026, 7, 20),
     sync: SyncMeta(
       ownerUserId: 'u-test',

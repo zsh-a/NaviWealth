@@ -2205,6 +2205,24 @@ abstract class AppLocalizations {
   /// **'Strategy'**
   String get portfolioStrategyLabel;
 
+  /// No description provided for @portfolioStrategyIndexCore.
+  ///
+  /// In en, this message translates to:
+  /// **'Index core'**
+  String get portfolioStrategyIndexCore;
+
+  /// No description provided for @portfolioStrategyDividendIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend income'**
+  String get portfolioStrategyDividendIncome;
+
+  /// No description provided for @portfolioStrategyOptionsIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Options income'**
+  String get portfolioStrategyOptionsIncome;
+
   /// No description provided for @portfolioStrategyIncome.
   ///
   /// In en, this message translates to:
@@ -2256,14 +2274,168 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioAssignLotsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Each purchase lot belongs to at most one portfolio.'**
+  /// **'Assign each purchase lot to one portfolio group.'**
   String get portfolioAssignLotsSubtitle;
+
+  /// No description provided for @portfolioAssignCashTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign cash'**
+  String get portfolioAssignCashTitle;
+
+  /// No description provided for @portfolioAssignCashSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reserve cash from an asset account for one strategy group.'**
+  String get portfolioAssignCashSubtitle;
+
+  /// No description provided for @portfolioAssignCashAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign cash'**
+  String get portfolioAssignCashAction;
+
+  /// No description provided for @portfolioCashAssignmentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash assignments'**
+  String get portfolioCashAssignmentsTitle;
+
+  /// No description provided for @portfolioCashAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset account'**
+  String get portfolioCashAccountLabel;
+
+  /// No description provided for @portfolioCashAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned amount'**
+  String get portfolioCashAmountLabel;
+
+  /// No description provided for @portfolioCashAmountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount greater than zero.'**
+  String get portfolioCashAmountInvalid;
+
+  /// No description provided for @portfolioCashNoAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an asset account before assigning cash.'**
+  String get portfolioCashNoAccounts;
+
+  /// No description provided for @portfolioCashAssignmentSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} {currency} · {group}'**
+  String portfolioCashAssignmentSummary(
+    String amount,
+    String currency,
+    String group,
+  );
 
   /// No description provided for @portfolioAssignmentSaved.
   ///
   /// In en, this message translates to:
   /// **'Portfolio assignments saved.'**
   String get portfolioAssignmentSaved;
+
+  /// No description provided for @rebalanceGroupsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance groups'**
+  String get rebalanceGroupsTitle;
+
+  /// No description provided for @rebalanceGroupWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Target {percent}'**
+  String rebalanceGroupWeight(String percent);
+
+  /// No description provided for @rebalanceGroupTransfersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Capital transfers'**
+  String get rebalanceGroupTransfersTitle;
+
+  /// No description provided for @rebalanceGroupTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} → {to}: {amount}'**
+  String rebalanceGroupTransfer(String from, String to, String amount);
+
+  /// No description provided for @portfolioGroupsSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Strategy groups'**
+  String get portfolioGroupsSectionTitle;
+
+  /// No description provided for @portfolioGroupAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add strategy group'**
+  String get portfolioGroupAddAction;
+
+  /// No description provided for @portfolioGroupEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit strategy group'**
+  String get portfolioGroupEditTitle;
+
+  /// No description provided for @portfolioGroupNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Group name'**
+  String get portfolioGroupNameLabel;
+
+  /// No description provided for @portfolioGroupTargetWeightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio target (%)'**
+  String get portfolioGroupTargetWeightLabel;
+
+  /// No description provided for @portfolioGroupDriftBandLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Drift band (%)'**
+  String get portfolioGroupDriftBandLabel;
+
+  /// No description provided for @portfolioGroupTransferPolicyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Capital transfer policy'**
+  String get portfolioGroupTransferPolicyLabel;
+
+  /// No description provided for @portfolioGroupTransferBidirectional.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow inflows and outflows'**
+  String get portfolioGroupTransferBidirectional;
+
+  /// No description provided for @portfolioGroupTransferInflowsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Inflows only'**
+  String get portfolioGroupTransferInflowsOnly;
+
+  /// No description provided for @portfolioGroupTransferIsolated.
+  ///
+  /// In en, this message translates to:
+  /// **'Isolated'**
+  String get portfolioGroupTransferIsolated;
+
+  /// No description provided for @portfolioGroupWeightSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{weight}% target · {policy}'**
+  String portfolioGroupWeightSummary(String weight, String policy);
+
+  /// No description provided for @portfolioGroupNoTemplates.
+  ///
+  /// In en, this message translates to:
+  /// **'All built-in strategy groups are already configured.'**
+  String get portfolioGroupNoTemplates;
 
   /// No description provided for @portfolioSaveFailed.
   ///

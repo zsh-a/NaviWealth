@@ -1,18 +1,24 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/forms/form_dirty_guard.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../rebalance/domain/portfolio_rebalance_group.dart';
 import '../data/investment_portfolio_providers.dart';
 import '../data/providers.dart';
 import '../domain/models/investment_portfolio.dart';
 import '../domain/models/lot.dart';
+import '../domain/models/portfolio_capital_assignment.dart';
+import '../domain/strategy/portfolio_strategy.dart';
+import 'portfolio_group_sheets.dart';
 
 Future<void> showInvestmentPortfolioManager(BuildContext context) {
   final l10n = AppLocalizations.of(context);
@@ -51,6 +57,16 @@ Future<void> showPortfolioLotAssignmentSheet(BuildContext context) {
   );
 }
 
+Future<void> showPortfolioCashAssignmentSheet(BuildContext context) {
+  final l10n = AppLocalizations.of(context);
+  return showAppSheet<void>(
+    context: context,
+    title: l10n.portfolioAssignCashTitle,
+    subtitle: l10n.portfolioAssignCashSubtitle,
+    builder: (_) => const _PortfolioCashAssignmentLoader(),
+  );
+}
+
 class _InvestmentPortfolioManager extends ConsumerWidget {
   const _InvestmentPortfolioManager();
 
@@ -58,6 +74,7 @@ class _InvestmentPortfolioManager extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final portfolios = ref.watch(investmentPortfoliosProvider);
+    final strategies = ref.watch(portfolioStrategyConfigsProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -66,60 +83,112 @@ class _InvestmentPortfolioManager extends ConsumerWidget {
           prefix: const Icon(FLucideIcons.plus),
           child: Text(l10n.portfolioCreateTitle),
         ),
-        const SizedBox(height: AppSpacing.s16),
-        portfolios.whenOrLoading(
-          context: context,
-          onRetry: () => ref.invalidate(investmentPortfoliosProvider),
-          data: (items) {
-            if (items.isEmpty) {
-              return AppEmptyState(
-                icon: FLucideIcons.layers,
-                title: l10n.portfolioNoPortfolios,
-                action: FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => showInvestmentPortfolioFormSheet(context),
-                  child: Text(l10n.portfolioCreateTitle),
-                ),
-              );
-            }
-            return AppGroupedSurface(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  for (var index = 0; index < items.length; index++) ...[
-                    FTile(
-                      prefix: Icon(
-                        _strategyIcon(items[index].strategy),
-                        color: context.theme.colors.mutedForeground,
-                      ),
-                      title: Text(items[index].name),
-                      subtitle: Text(
-                        _strategyLabel(l10n, items[index].strategy),
-                      ),
-                      suffix: Icon(
-                        FLucideIcons.chevronRight,
-                        size: AppIconSizes.sm,
-                        color: context.theme.colors.mutedForeground.withValues(
-                          alpha: AppOpacity.disabled,
-                        ),
-                      ),
-                      onPress: () => showInvestmentPortfolioFormSheet(
-                        context,
-                        existing: items[index],
-                      ),
-                    ),
-                    if (index != items.length - 1)
-                      const AppGroupedDivider(
-                        indent: AppSpacing.s12,
-                        endIndent: AppSpacing.s12,
-                      ),
-                  ],
-                ],
-              ),
-            );
-          },
+        const SizedBox(height: AppSpacing.s8),
+        FButton(
+          variant: FButtonVariant.outline,
+          onPress: () => showPortfolioCashAssignmentSheet(context),
+          prefix: const Icon(FLucideIcons.walletCards),
+          child: Text(l10n.portfolioAssignCashAction),
         ),
+        const SizedBox(height: AppSpacing.s16),
+        switch ((portfolios, strategies)) {
+          (AsyncData(value: final items), AsyncData(value: final configs)) =>
+            _PortfolioList(portfolios: items, strategies: configs),
+          (AsyncError(:final error, :final stackTrace), _) ||
+          (
+            _,
+            AsyncError(:final error, :final stackTrace),
+          ) => AppEmptyState.error(
+            title: userSafeErrorMessage(
+              context,
+              error,
+              stackTrace: stackTrace,
+              operation: 'load investment portfolios',
+            ),
+            action: FButton(
+              variant: FButtonVariant.outline,
+              onPress: () {
+                ref.invalidate(investmentPortfoliosProvider);
+                ref.invalidate(portfolioStrategyConfigsProvider);
+              },
+              child: Text(l10n.commonRetry),
+            ),
+          ),
+          _ => const Center(child: FCircularProgress()),
+        },
       ],
+    );
+  }
+}
+
+class _PortfolioList extends StatelessWidget {
+  const _PortfolioList({required this.portfolios, required this.strategies});
+
+  final List<InvestmentPortfolio> portfolios;
+  final List<PortfolioStrategyConfig> strategies;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (portfolios.isEmpty) {
+      return AppEmptyState(
+        icon: FLucideIcons.layers,
+        title: l10n.portfolioNoPortfolios,
+        action: FButton(
+          variant: FButtonVariant.outline,
+          onPress: () => showInvestmentPortfolioFormSheet(context),
+          child: Text(l10n.portfolioCreateTitle),
+        ),
+      );
+    }
+    return AppGroupedSurface(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          for (var index = 0; index < portfolios.length; index++) ...[
+            Builder(
+              builder: (context) {
+                final portfolio = portfolios[index];
+                final primaryStrategy = strategies
+                    .where(
+                      (strategy) =>
+                          strategy.portfolioId == portfolio.id &&
+                          strategy.enabled,
+                    )
+                    .firstOrNull;
+                return FTile(
+                  prefix: Icon(
+                    _strategyIcon(primaryStrategy?.kind),
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                  title: Text(portfolio.name),
+                  subtitle: Text(
+                    primaryStrategy == null
+                        ? l10n.portfolioStrategyCustom
+                        : _strategyLabel(l10n, primaryStrategy.kind),
+                  ),
+                  suffix: Icon(
+                    FLucideIcons.chevronRight,
+                    size: AppIconSizes.sm,
+                    color: context.theme.colors.mutedForeground.withValues(
+                      alpha: AppOpacity.disabled,
+                    ),
+                  ),
+                  onPress: () => showInvestmentPortfolioFormSheet(
+                    context,
+                    existing: portfolio,
+                  ),
+                );
+              },
+            ),
+            if (index != portfolios.length - 1)
+              const AppGroupedDivider(
+                indent: AppSpacing.s12,
+                endIndent: AppSpacing.s12,
+              ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -139,25 +208,19 @@ class _InvestmentPortfolioFormState
     extends ConsumerState<_InvestmentPortfolioForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
-  late final TextEditingController _annualIncome;
-  late InvestmentPortfolioStrategy _strategy;
+  PortfolioStrategyKind _strategy = PortfolioStrategyKind.indexCore;
   bool _busy = false;
 
   @override
   void initState() {
     super.initState();
     _name = TextEditingController(text: widget.existing?.name ?? '');
-    _annualIncome = TextEditingController(
-      text: widget.existing?.targetAnnualIncome?.toString() ?? '',
-    );
-    _strategy = widget.existing?.strategy ?? InvestmentPortfolioStrategy.income;
-    widget.dirty.bindTextControllers([_name, _annualIncome]);
+    widget.dirty.bindTextControllers([_name]);
   }
 
   @override
   void dispose() {
     _name.dispose();
-    _annualIncome.dispose();
     super.dispose();
   }
 
@@ -169,32 +232,14 @@ class _InvestmentPortfolioFormState
       final repository = await ref.read(
         investmentPortfolioRepositoryProvider.future,
       );
-      final targetIncome = _annualIncome.text.trim().isEmpty
-          ? null
-          : Decimal.parse(_annualIncome.text.trim());
       final existing = widget.existing;
       if (existing == null) {
         await repository.create(
           name: _name.text,
-          strategy: _strategy,
-          targetAnnualIncome: targetIncome,
+          initialStrategyKind: _strategy,
         );
       } else {
-        await repository.update(
-          InvestmentPortfolio(
-            id: existing.id,
-            name: _name.text,
-            strategy: _strategy,
-            baseCurrency: existing.baseCurrency,
-            goalId: existing.goalId,
-            targetAllocationJson: existing.targetAllocationJson,
-            targetAnnualIncome: targetIncome,
-            color: existing.color,
-            createdAt: existing.createdAt,
-            archived: existing.archived,
-            sync: existing.sync,
-          ),
-        );
+        await repository.update(existing.copyWith(name: _name.text));
       }
       widget.dirty.markPristine();
       if (!mounted) return;
@@ -272,45 +317,31 @@ class _InvestmentPortfolioFormState
                   : null,
             ),
             const SizedBox(height: AppSpacing.s16),
-            FSelect<InvestmentPortfolioStrategy>.rich(
-              format: (value) => _strategyLabel(l10n, value),
-              control: FSelectControl<InvestmentPortfolioStrategy>.lifted(
-                value: _strategy,
-                onChange: (value) {
-                  if (value == null) return;
-                  setState(() => _strategy = value);
-                  widget.dirty.markDirty();
-                },
+            if (widget.existing == null) ...[
+              FSelect<PortfolioStrategyKind>.rich(
+                format: (value) => _strategyLabel(l10n, value),
+                control: FSelectControl<PortfolioStrategyKind>.lifted(
+                  value: _strategy,
+                  onChange: (value) {
+                    if (value == null) return;
+                    setState(() => _strategy = value);
+                    widget.dirty.markDirty();
+                  },
+                ),
+                label: Text(l10n.portfolioStrategyLabel),
+                children: [
+                  for (final value in _builtInStrategyKinds)
+                    FSelectItem<PortfolioStrategyKind>(
+                      value: value,
+                      title: Text(_strategyLabel(l10n, value)),
+                    ),
+                ],
               ),
-              label: Text(l10n.portfolioStrategyLabel),
-              children: [
-                for (final value in InvestmentPortfolioStrategy.values)
-                  FSelectItem<InvestmentPortfolioStrategy>(
-                    value: value,
-                    title: Text(_strategyLabel(l10n, value)),
-                  ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s16),
-            FTextFormField(
-              control: FTextFieldControl.managed(controller: _annualIncome),
-              label: Text(l10n.portfolioAnnualIncomeTargetLabel),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-              ],
-              validator: (value) {
-                final raw = value?.trim() ?? '';
-                if (raw.isEmpty) return null;
-                final parsed = Decimal.tryParse(raw);
-                return parsed == null || parsed.sign < 0
-                    ? l10n.portfolioAnnualIncomeTargetLabel
-                    : null;
-              },
-            ),
+              const SizedBox(height: AppSpacing.s16),
+            ],
             if (widget.existing != null) ...[
+              const SizedBox(height: AppSpacing.s24),
+              PortfolioGroupsSection(portfolioId: widget.existing!.id),
               const SizedBox(height: AppSpacing.s24),
               FButton(
                 variant: FButtonVariant.destructive,
@@ -331,16 +362,19 @@ class _PortfolioLotAssignmentLoader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final portfolios = ref.watch(investmentPortfoliosProvider);
-    final memberships = ref.watch(portfolioLotMembershipsProvider);
+    final assignments = ref.watch(portfolioCapitalAssignmentsProvider);
+    final groups = ref.watch(portfolioRebalanceGroupsProvider);
     final lots = ref.watch(allInvestmentLotsProvider);
     final assets = ref.watch(allAssetsStreamProvider);
     if (portfolios.hasError ||
-        memberships.hasError ||
+        assignments.hasError ||
+        groups.hasError ||
         lots.hasError ||
         assets.hasError) {
       final failed = [
         portfolios,
-        memberships,
+        assignments,
+        groups,
         lots,
         assets,
       ].firstWhere((value) => value.hasError);
@@ -354,7 +388,8 @@ class _PortfolioLotAssignmentLoader extends ConsumerWidget {
       );
     }
     if (!portfolios.hasValue ||
-        !memberships.hasValue ||
+        !assignments.hasValue ||
+        !groups.hasValue ||
         !lots.hasValue ||
         !assets.hasValue) {
       return const Center(child: FCircularProgress());
@@ -363,13 +398,15 @@ class _PortfolioLotAssignmentLoader extends ConsumerWidget {
       key: ValueKey(
         Object.hash(
           portfolios.value,
-          memberships.value,
+          assignments.value,
+          groups.value,
           lots.value,
           assets.value,
         ),
       ),
       portfolios: portfolios.requireValue,
-      memberships: memberships.requireValue,
+      assignments: assignments.requireValue,
+      groups: groups.requireValue.where((group) => !group.archived).toList(),
       lots: lots.requireValue.where((lot) => !lot.isClosed).toList(),
       assetLabels: {
         for (final asset in assets.requireValue)
@@ -385,13 +422,15 @@ class _PortfolioLotAssignmentForm extends ConsumerStatefulWidget {
   const _PortfolioLotAssignmentForm({
     super.key,
     required this.portfolios,
-    required this.memberships,
+    required this.assignments,
+    required this.groups,
     required this.lots,
     required this.assetLabels,
   });
 
   final List<InvestmentPortfolio> portfolios;
-  final List<PortfolioLotMembership> memberships;
+  final List<PortfolioCapitalAssignment> assignments;
+  final List<PortfolioRebalanceGroup> groups;
   final List<Lot> lots;
   final Map<String, String> assetLabels;
 
@@ -410,8 +449,10 @@ class _PortfolioLotAssignmentFormState
   void initState() {
     super.initState();
     _initial = {
-      for (final membership in widget.memberships)
-        membership.lotId: membership.portfolioId,
+      for (final assignment in widget.assignments)
+        if (assignment.sourceKind == PortfolioCapitalSourceKind.lot &&
+            assignment.isWholeLot)
+          assignment.sourceId: assignment.rebalanceGroupId,
     };
     _selected = {for (final lot in widget.lots) lot.id: _initial[lot.id] ?? ''};
   }
@@ -424,12 +465,25 @@ class _PortfolioLotAssignmentFormState
       );
       for (final entry in _selected.entries) {
         if (entry.value == (_initial[entry.key] ?? '')) continue;
-        if (entry.value.isEmpty) {
-          await repository.unassignLot(entry.key);
-        } else {
-          await repository.assignLot(
+        final prior = widget.assignments
+            .where(
+              (assignment) =>
+                  assignment.sourceKind == PortfolioCapitalSourceKind.lot &&
+                  assignment.sourceId == entry.key &&
+                  assignment.isWholeLot,
+            )
+            .firstOrNull;
+        if (prior != null) {
+          await repository.unassignCapital(prior);
+        }
+        if (entry.value.isNotEmpty) {
+          final group = widget.groups.firstWhere(
+            (candidate) => candidate.id == entry.value,
+          );
+          await repository.assignWholeLot(
             lotId: entry.key,
-            portfolioId: entry.value,
+            portfolioId: group.portfolioId,
+            rebalanceGroupId: group.id,
           );
         }
       }
@@ -478,8 +532,19 @@ class _PortfolioLotAssignmentFormState
         ),
       );
     }
-    final labels = {
+    final portfolioNames = {
       for (final portfolio in widget.portfolios) portfolio.id: portfolio.name,
+    };
+    final labels = {
+      for (final group in widget.groups)
+        group.id:
+            '${portfolioNames[group.portfolioId] ?? group.portfolioId} · ${group.name}',
+    };
+    final partialLotIds = {
+      for (final assignment in widget.assignments)
+        if (assignment.sourceKind == PortfolioCapitalSourceKind.lot &&
+            !assignment.isWholeLot)
+          assignment.sourceId,
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -496,7 +561,7 @@ class _PortfolioLotAssignmentFormState
                 setState(() => _selected[lot.id] = value ?? '');
               },
             ),
-            enabled: !_busy,
+            enabled: !_busy && !partialLotIds.contains(lot.id),
             label: Text(widget.assetLabels[lot.assetId] ?? lot.assetId),
             description: Text(
               '${lot.remainingQuantity} · ${lot.openedAt.toLocal().toIso8601String().substring(0, 10)}',
@@ -506,10 +571,10 @@ class _PortfolioLotAssignmentFormState
                 value: '',
                 title: Text(l10n.portfolioUnassigned),
               ),
-              for (final portfolio in widget.portfolios)
+              for (final group in widget.groups)
                 FSelectItem<String>(
-                  value: portfolio.id,
-                  title: Text(portfolio.name),
+                  value: group.id,
+                  title: Text(labels[group.id]!),
                 ),
             ],
           ),
@@ -522,26 +587,339 @@ class _PortfolioLotAssignmentFormState
   }
 }
 
-String _strategyLabel(
-  AppLocalizations l10n,
-  InvestmentPortfolioStrategy strategy,
-) {
-  return switch (strategy) {
-    InvestmentPortfolioStrategy.income => l10n.portfolioStrategyIncome,
-    InvestmentPortfolioStrategy.growth => l10n.portfolioStrategyGrowth,
-    InvestmentPortfolioStrategy.preservation =>
-      l10n.portfolioStrategyPreservation,
-    InvestmentPortfolioStrategy.goalLinked => l10n.portfolioStrategyGoalLinked,
-    InvestmentPortfolioStrategy.custom => l10n.portfolioStrategyCustom,
-  };
+class _PortfolioCashAssignmentLoader extends ConsumerWidget {
+  const _PortfolioCashAssignmentLoader();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final portfolios = ref.watch(investmentPortfoliosProvider);
+    final assignments = ref.watch(portfolioCapitalAssignmentsProvider);
+    final groups = ref.watch(portfolioRebalanceGroupsProvider);
+    final accounts = ref.watch(accountsStreamProvider);
+    if (portfolios.hasError ||
+        assignments.hasError ||
+        groups.hasError ||
+        accounts.hasError) {
+      final failed = [
+        portfolios,
+        assignments,
+        groups,
+        accounts,
+      ].firstWhere((value) => value.hasError);
+      return AppEmptyState.error(
+        title: userSafeErrorMessage(
+          context,
+          failed.error!,
+          stackTrace: failed.stackTrace,
+          operation: 'load portfolio cash assignments',
+        ),
+      );
+    }
+    if (!portfolios.hasValue ||
+        !assignments.hasValue ||
+        !groups.hasValue ||
+        !accounts.hasValue) {
+      return const Center(child: FCircularProgress());
+    }
+    return _PortfolioCashAssignmentForm(
+      portfolios: portfolios.requireValue,
+      assignments: assignments.requireValue
+          .where(
+            (assignment) =>
+                assignment.sourceKind == PortfolioCapitalSourceKind.cashAccount,
+          )
+          .toList(growable: false),
+      groups: groups.requireValue
+          .where((group) => !group.archived)
+          .toList(growable: false),
+      accounts: accounts.requireValue
+          .where((account) => account.category == AccountSide.asset)
+          .toList(growable: false),
+    );
+  }
 }
 
-IconData _strategyIcon(InvestmentPortfolioStrategy strategy) {
-  return switch (strategy) {
-    InvestmentPortfolioStrategy.income => FLucideIcons.handCoins,
-    InvestmentPortfolioStrategy.growth => FLucideIcons.trendingUp,
-    InvestmentPortfolioStrategy.preservation => FLucideIcons.shield,
-    InvestmentPortfolioStrategy.goalLinked => FLucideIcons.target,
-    InvestmentPortfolioStrategy.custom => FLucideIcons.layers,
-  };
+class _PortfolioCashAssignmentForm extends ConsumerStatefulWidget {
+  const _PortfolioCashAssignmentForm({
+    required this.portfolios,
+    required this.assignments,
+    required this.groups,
+    required this.accounts,
+  });
+
+  final List<InvestmentPortfolio> portfolios;
+  final List<PortfolioCapitalAssignment> assignments;
+  final List<PortfolioRebalanceGroup> groups;
+  final List<Account> accounts;
+
+  @override
+  ConsumerState<_PortfolioCashAssignmentForm> createState() =>
+      _PortfolioCashAssignmentFormState();
 }
+
+class _PortfolioCashAssignmentFormState
+    extends ConsumerState<_PortfolioCashAssignmentForm> {
+  final _formKey = GlobalKey<FormState>();
+  final _amount = TextEditingController();
+  String? _accountId;
+  String? _groupId;
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _amount.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (widget.portfolios.isEmpty) {
+      return AppEmptyState(
+        icon: FLucideIcons.layers,
+        title: l10n.portfolioNoPortfolios,
+        action: FButton(
+          onPress: () => showInvestmentPortfolioFormSheet(context),
+          child: Text(l10n.portfolioCreateTitle),
+        ),
+      );
+    }
+    if (widget.accounts.isEmpty) {
+      return AppEmptyState(
+        icon: FLucideIcons.walletCards,
+        title: l10n.portfolioCashNoAccounts,
+        action: FButton(
+          variant: FButtonVariant.outline,
+          onPress: () {
+            Navigator.of(context).maybePop();
+            context.push(FinanceRoutes.wealthAccounts);
+          },
+          child: Text(l10n.accountsHubManageBankAccounts),
+        ),
+      );
+    }
+
+    final portfolioNames = {
+      for (final portfolio in widget.portfolios) portfolio.id: portfolio.name,
+    };
+    final groupLabels = {
+      for (final group in widget.groups)
+        group.id:
+            '${portfolioNames[group.portfolioId] ?? group.portfolioId} · ${group.name}',
+    };
+    final accountById = {
+      for (final account in widget.accounts) account.id: account,
+    };
+    final selectedAccount =
+        accountById[_accountId] ?? widget.accounts.firstOrNull;
+    final selectedGroupId = groupLabels.containsKey(_groupId)
+        ? _groupId
+        : widget.groups.firstOrNull?.id;
+
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (widget.assignments.isNotEmpty) ...[
+            Text(
+              l10n.portfolioCashAssignmentsTitle,
+              style: context.theme.typography.body.sm,
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            AppGroupedSurface(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  for (
+                    var index = 0;
+                    index < widget.assignments.length;
+                    index++
+                  ) ...[
+                    Builder(
+                      builder: (context) {
+                        final assignment = widget.assignments[index];
+                        final account = accountById[assignment.sourceId];
+                        return FTile(
+                          prefix: const Icon(FLucideIcons.banknote),
+                          title: Text(account?.name ?? assignment.sourceId),
+                          subtitle: Text(
+                            l10n.portfolioCashAssignmentSummary(
+                              assignment.amount.toString(),
+                              assignment.currency ?? '',
+                              groupLabels[assignment.rebalanceGroupId] ??
+                                  assignment.rebalanceGroupId,
+                            ),
+                          ),
+                          suffix: FButton.icon(
+                            variant: FButtonVariant.ghost,
+                            onPress: _busy ? null : () => _remove(assignment),
+                            child: const Icon(FLucideIcons.x),
+                          ),
+                        );
+                      },
+                    ),
+                    if (index != widget.assignments.length - 1)
+                      const AppGroupedDivider(
+                        indent: AppSpacing.s12,
+                        endIndent: AppSpacing.s12,
+                      ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s20),
+          ],
+          FSelect<String>.rich(
+            enabled: !_busy,
+            format: (id) => accountById[id]?.name ?? id,
+            control: FSelectControl<String>.lifted(
+              value: selectedAccount?.id,
+              onChange: (value) => setState(() => _accountId = value),
+            ),
+            label: Text(l10n.portfolioCashAccountLabel),
+            children: [
+              for (final account in widget.accounts)
+                FSelectItem<String>(
+                  value: account.id,
+                  title: Text(account.name),
+                  subtitle: Text(account.currency),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FSelect<String>.rich(
+            enabled: !_busy,
+            format: (id) => groupLabels[id] ?? id,
+            control: FSelectControl<String>.lifted(
+              value: selectedGroupId,
+              onChange: (value) => setState(() => _groupId = value),
+            ),
+            label: Text(l10n.portfolioGroupNameLabel),
+            children: [
+              for (final group in widget.groups)
+                FSelectItem<String>(
+                  value: group.id,
+                  title: Text(groupLabels[group.id]!),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _amount),
+            label: Text(
+              selectedAccount == null
+                  ? l10n.portfolioCashAmountLabel
+                  : '${l10n.portfolioCashAmountLabel} (${selectedAccount.currency})',
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            validator: (value) {
+              final amount = Decimal.tryParse(value?.trim() ?? '');
+              return amount == null || amount <= Decimal.zero
+                  ? l10n.portfolioCashAmountInvalid
+                  : null;
+            },
+          ),
+          const SizedBox(height: AppSpacing.s16),
+          AppBusyButton(
+            onPress: selectedAccount == null || selectedGroupId == null
+                ? null
+                : () => _assign(
+                    account: selectedAccount,
+                    groupId: selectedGroupId,
+                  ),
+            busy: _busy,
+            label: l10n.portfolioAssignCashAction,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _assign({
+    required Account account,
+    required String groupId,
+  }) async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final group = widget.groups.firstWhere((item) => item.id == groupId);
+    setState(() => _busy = true);
+    try {
+      final repository = await ref.read(
+        investmentPortfolioRepositoryProvider.future,
+      );
+      await repository.assignCash(
+        accountId: account.id,
+        amount: Decimal.parse(_amount.text.trim()),
+        currency: account.currency,
+        portfolioId: group.portfolioId,
+        rebalanceGroupId: group.id,
+      );
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.success,
+        AppLocalizations.of(context).portfolioAssignmentSaved,
+      );
+      Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).portfolioSaveFailed,
+      );
+    }
+  }
+
+  Future<void> _remove(PortfolioCapitalAssignment assignment) async {
+    setState(() => _busy = true);
+    try {
+      final repository = await ref.read(
+        investmentPortfolioRepositoryProvider.future,
+      );
+      await repository.unassignCapital(assignment);
+    } catch (_) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).portfolioSaveFailed,
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+}
+
+String _strategyLabel(AppLocalizations l10n, PortfolioStrategyKind strategy) {
+  if (strategy == PortfolioStrategyKind.indexCore) {
+    return l10n.portfolioStrategyIndexCore;
+  }
+  if (strategy == PortfolioStrategyKind.dividendIncome) {
+    return l10n.portfolioStrategyDividendIncome;
+  }
+  if (strategy == PortfolioStrategyKind.optionsIncome) {
+    return l10n.portfolioStrategyOptionsIncome;
+  }
+  return strategy.wire;
+}
+
+IconData _strategyIcon(PortfolioStrategyKind? strategy) {
+  if (strategy == PortfolioStrategyKind.indexCore) {
+    return FLucideIcons.chartNoAxesCombined;
+  }
+  if (strategy == PortfolioStrategyKind.dividendIncome) {
+    return FLucideIcons.handCoins;
+  }
+  if (strategy == PortfolioStrategyKind.optionsIncome) {
+    return FLucideIcons.shieldCheck;
+  }
+  return FLucideIcons.layers;
+}
+
+const _builtInStrategyKinds = [
+  PortfolioStrategyKind.indexCore,
+  PortfolioStrategyKind.dividendIncome,
+  PortfolioStrategyKind.optionsIncome,
+];

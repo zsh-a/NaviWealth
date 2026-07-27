@@ -216,7 +216,6 @@ class PortfolioHubInsightsNotifier
       dividendCenterSnapshotProvider.future,
     );
     final corporateActions = ref.watch(dividendForecastDeclaredActionsProvider);
-    final membershipsFuture = ref.watch(portfolioLotMembershipsProvider.future);
     final scopedHoldingsFuture = ref.watch(
       scopedPortfolioHoldingsProvider.future,
     );
@@ -227,19 +226,12 @@ class PortfolioHubInsightsNotifier
     final realized = await realizedFuture;
     final dividendForecast = await dividendForecastFuture;
     final dividendCenter = await dividendCenterFuture;
-    final memberships = await membershipsFuture;
     final scopedHoldings = await scopedHoldingsFuture;
     final scopedAssetIds = scopedHoldings.snapshots.keys.toSet();
-    final portfolioByLot = <String, String>{
-      for (final membership in memberships)
-        membership.lotId: membership.portfolioId,
-    };
+    final scopedLotIds = scopedHoldings.lots.map((lot) => lot.id).toSet();
     bool includesLot(String lotId) {
       if (selectedPortfolioId == null) return true;
-      final assigned = portfolioByLot[lotId];
-      return selectedPortfolioId == kUnassignedInvestmentPortfolioId
-          ? assigned == null
-          : assigned == selectedPortfolioId;
+      return scopedLotIds.contains(lotId);
     }
 
     return PortfolioHubInsightsState(

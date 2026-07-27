@@ -33,7 +33,7 @@ This documentation uses a docs-as-code structure:
 
 | Domain | Status | Code root | Sync prefix | SSOT |
 |---|---|---|---|---|
-| FinanceOS | Always on | `apps/mobile/lib/features/finance/` | `fin:` | [Income Strategy](domains/income-strategy.md), [FinanceOS Roadmap](roadmap/roadmap-finance.md) |
+| FinanceOS | Always on | `apps/mobile/lib/features/finance/` | `fin:` | [Portfolio Strategy Groups](domains/portfolio-strategy-groups.md), [Income Strategy](domains/income-strategy.md), [FinanceOS Roadmap](roadmap/roadmap-finance.md) |
 | HealthOS | User opt-in | `apps/mobile/lib/features/health/` | `health:` | [HealthOS](domains/healthos-domain.md) |
 | KnowledgeOS | User opt-in | `apps/mobile/lib/features/knowledge/` | `know:` | [KnowledgeOS](domains/knowledgeos-domain.md) |
 | ExecutionOS | User opt-in | `apps/mobile/lib/features/execution/` | `exec:` | [ExecutionOS](domains/executionos-domain.md) |

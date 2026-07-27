@@ -5,10 +5,13 @@ import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance_group.dart';
 
 import '../domain/models/holding_snapshot.dart';
 import '../domain/models/investment_portfolio.dart';
 import '../domain/models/lot.dart';
+import '../domain/models/portfolio_capital_assignment.dart';
+import '../domain/strategy/portfolio_strategy.dart';
 import 'investment_portfolio_repository.dart';
 import 'providers.dart';
 
@@ -39,8 +42,8 @@ final investmentPortfoliosProvider =
       yield* repository.watchActive(ownerUserId);
     });
 
-final portfolioLotMembershipsProvider =
-    StreamProvider.autoDispose<List<PortfolioLotMembership>>((ref) async* {
+final portfolioStrategyConfigsProvider =
+    StreamProvider.autoDispose<List<PortfolioStrategyConfig>>((ref) async* {
       final ownerUserId = ref.watch(activeUserIdProvider);
       if (ownerUserId == null) {
         yield const [];
@@ -49,7 +52,33 @@ final portfolioLotMembershipsProvider =
       final repository = await ref.watch(
         investmentPortfolioRepositoryProvider.future,
       );
-      yield* repository.watchMemberships(ownerUserId);
+      yield* repository.watchStrategies(ownerUserId);
+    });
+
+final portfolioRebalanceGroupsProvider =
+    StreamProvider.autoDispose<List<PortfolioRebalanceGroup>>((ref) async* {
+      final ownerUserId = ref.watch(activeUserIdProvider);
+      if (ownerUserId == null) {
+        yield const [];
+        return;
+      }
+      final repository = await ref.watch(
+        investmentPortfolioRepositoryProvider.future,
+      );
+      yield* repository.watchGroups(ownerUserId);
+    });
+
+final portfolioCapitalAssignmentsProvider =
+    StreamProvider.autoDispose<List<PortfolioCapitalAssignment>>((ref) async* {
+      final ownerUserId = ref.watch(activeUserIdProvider);
+      if (ownerUserId == null) {
+        yield const [];
+        return;
+      }
+      final repository = await ref.watch(
+        investmentPortfolioRepositoryProvider.future,
+      );
+      yield* repository.watchAssignments(ownerUserId);
     });
 
 /// Null selects the virtual all-holdings portfolio.
@@ -83,34 +112,76 @@ final selectedInvestmentPortfolioProvider =
       });
     });
 
+final selectedPortfolioStrategiesProvider =
+    Provider<AsyncValue<List<PortfolioStrategyConfig>>>((ref) {
+      final selectedId = ref.watch(
+        effectiveSelectedInvestmentPortfolioIdProvider,
+      );
+      return ref
+          .watch(portfolioStrategyConfigsProvider)
+          .whenData(
+            (strategies) => selectedId == null
+                ? const []
+                : strategies
+                      .where((strategy) => strategy.portfolioId == selectedId)
+                      .toList(growable: false),
+          );
+    });
+
+final selectedPortfolioRebalanceGroupsProvider =
+    Provider<AsyncValue<List<PortfolioRebalanceGroup>>>((ref) {
+      final selectedId = ref.watch(
+        effectiveSelectedInvestmentPortfolioIdProvider,
+      );
+      return ref
+          .watch(portfolioRebalanceGroupsProvider)
+          .whenData(
+            (groups) => selectedId == null
+                ? const []
+                : groups
+                      .where((group) => group.portfolioId == selectedId)
+                      .toList(growable: false),
+          );
+    });
+
 class ScopedPortfolioHoldings {
-  const ScopedPortfolioHoldings({required this.snapshots, required this.lots});
+  const ScopedPortfolioHoldings({
+    required this.snapshots,
+    required this.lots,
+    required this.snapshotsByGroup,
+    required this.cashAssignments,
+  });
 
   final Map<String, HoldingSnapshot> snapshots;
   final List<Lot> lots;
+  final Map<String, Map<String, HoldingSnapshot>> snapshotsByGroup;
+  final List<PortfolioCapitalAssignment> cashAssignments;
 }
 
-/// Holdings narrowed to the selected logical portfolio. Null keeps the
-/// virtual all-holdings view; [kUnassignedInvestmentPortfolioId] selects lots
-/// without a membership row.
+/// Holdings narrowed to authored capital assignments.
+///
+/// A selected portfolio may own whole or partial lots. Group snapshots retain
+/// the exclusive capital partition for hierarchical rebalancing. Cash remains
+/// an explicit assignment and is resolved against account balances by the
+/// rebalance snapshot provider.
 final scopedPortfolioHoldingsProvider =
     FutureProvider.autoDispose<ScopedPortfolioHoldings>((ref) async {
       final snapshotsFuture = ref.watch(holdingsSnapshotProvider.future);
       final holdingServiceFuture = ref.watch(holdingServiceProvider.future);
-      final membershipsFuture = ref.watch(
-        portfolioLotMembershipsProvider.future,
+      final assignmentsFuture = ref.watch(
+        portfolioCapitalAssignmentsProvider.future,
       );
       final selectedId = ref.watch(
         effectiveSelectedInvestmentPortfolioIdProvider,
       );
       final snapshots = await snapshotsFuture;
       final holdingService = await holdingServiceFuture;
-      final memberships = await membershipsFuture;
+      final assignments = await assignmentsFuture;
       final lots = await holdingService.lotsAt(DateTime.now().toUtc());
       return scopePortfolioHoldings(
         snapshots: snapshots,
         lots: lots,
-        memberships: memberships,
+        assignments: assignments,
         selectedPortfolioId: selectedId,
       );
     });
@@ -125,56 +196,161 @@ final allInvestmentLotsProvider = FutureProvider.autoDispose<List<Lot>>((
 ScopedPortfolioHoldings scopePortfolioHoldings({
   required Map<String, HoldingSnapshot> snapshots,
   required List<Lot> lots,
-  required List<PortfolioLotMembership> memberships,
+  required List<PortfolioCapitalAssignment> assignments,
   required String? selectedPortfolioId,
 }) {
   if (selectedPortfolioId == null) {
     return ScopedPortfolioHoldings(
       snapshots: Map.unmodifiable(snapshots),
       lots: List.unmodifiable(lots),
+      snapshotsByGroup: const {},
+      cashAssignments: const [],
     );
   }
 
-  final portfolioByLot = <String, String>{
-    for (final membership in memberships)
-      membership.lotId: membership.portfolioId,
-  };
-  final selectedLots = lots
-      .where((lot) {
-        final assignedPortfolio = portfolioByLot[lot.id];
-        if (selectedPortfolioId == kUnassignedInvestmentPortfolioId) {
-          return assignedPortfolio == null;
-        }
-        return assignedPortfolio == selectedPortfolioId;
-      })
+  final lotById = {for (final lot in lots) lot.id: lot};
+  _validateAssignments(lotById, assignments);
+  final lotAssignments = assignments
+      .where(
+        (assignment) => assignment.sourceKind == PortfolioCapitalSourceKind.lot,
+      )
       .toList(growable: false);
+  final selectedSlices = <Lot>[];
+  final slicesByGroup = <String, List<Lot>>{};
 
+  if (selectedPortfolioId == kUnassignedInvestmentPortfolioId) {
+    final assignedByLot = <String, Decimal>{};
+    for (final assignment in lotAssignments) {
+      final lot = lotById[assignment.sourceId];
+      if (lot == null || lot.isClosed) continue;
+      final quantity = assignment.quantity ?? lot.remainingQuantity;
+      assignedByLot.update(
+        lot.id,
+        (value) => value + quantity,
+        ifAbsent: () => quantity,
+      );
+    }
+    for (final lot in lots.where((lot) => !lot.isClosed)) {
+      final quantity =
+          lot.remainingQuantity - (assignedByLot[lot.id] ?? Decimal.zero);
+      if (quantity > Decimal.zero) {
+        selectedSlices.add(_sliceLot(lot, quantity));
+      }
+    }
+  } else {
+    final selectedAssignments = lotAssignments.where(
+      (assignment) => assignment.portfolioId == selectedPortfolioId,
+    );
+    final quantityByLot = <String, Decimal>{};
+    for (final assignment in selectedAssignments) {
+      final lot = lotById[assignment.sourceId];
+      if (lot == null || lot.isClosed) continue;
+      final quantity = assignment.quantity ?? lot.remainingQuantity;
+      final slice = _sliceLot(lot, quantity);
+      slicesByGroup
+          .putIfAbsent(assignment.rebalanceGroupId, () => [])
+          .add(slice);
+      quantityByLot.update(
+        lot.id,
+        (value) => value + quantity,
+        ifAbsent: () => quantity,
+      );
+    }
+    for (final entry in quantityByLot.entries) {
+      selectedSlices.add(_sliceLot(lotById[entry.key]!, entry.value));
+    }
+  }
+
+  final scoped = _scopeSnapshots(
+    snapshots: snapshots,
+    allLots: lots,
+    slices: selectedSlices,
+  );
+  final snapshotsByGroup = <String, Map<String, HoldingSnapshot>>{
+    for (final entry in slicesByGroup.entries)
+      entry.key: _scopeSnapshots(
+        snapshots: snapshots,
+        allLots: lots,
+        slices: entry.value,
+      ),
+  };
+  final cashAssignments = assignments
+      .where(
+        (assignment) =>
+            assignment.sourceKind == PortfolioCapitalSourceKind.cashAccount &&
+            assignment.portfolioId == selectedPortfolioId,
+      )
+      .toList(growable: false);
+  return ScopedPortfolioHoldings(
+    snapshots: Map.unmodifiable(scoped),
+    lots: List.unmodifiable(selectedSlices),
+    snapshotsByGroup: Map.unmodifiable(snapshotsByGroup),
+    cashAssignments: List.unmodifiable(cashAssignments),
+  );
+}
+
+void _validateAssignments(
+  Map<String, Lot> lotById,
+  List<PortfolioCapitalAssignment> assignments,
+) {
+  final assignedByLot = <String, Decimal>{};
+  final wholeLotOwners = <String>{};
+  for (final assignment in assignments) {
+    assignment.validate();
+    if (assignment.sourceKind != PortfolioCapitalSourceKind.lot) continue;
+    final lot = lotById[assignment.sourceId];
+    if (lot == null || lot.isClosed) continue;
+    if (assignment.quantity == null) {
+      if (!wholeLotOwners.add(lot.id) || assignedByLot.containsKey(lot.id)) {
+        throw StateError('Lot ${lot.id} has more than one capital owner.');
+      }
+      assignedByLot[lot.id] = lot.remainingQuantity;
+      continue;
+    }
+    if (wholeLotOwners.contains(lot.id)) {
+      throw StateError('Lot ${lot.id} has more than one capital owner.');
+    }
+    final assigned =
+        (assignedByLot[lot.id] ?? Decimal.zero) + assignment.quantity!;
+    if (assigned > lot.remainingQuantity) {
+      throw StateError('Lot ${lot.id} is assigned beyond its open quantity.');
+    }
+    assignedByLot[lot.id] = assigned;
+  }
+}
+
+Lot _sliceLot(Lot lot, Decimal quantity) =>
+    lot.copyWith(originalQuantity: quantity, remainingQuantity: quantity);
+
+Map<String, HoldingSnapshot> _scopeSnapshots({
+  required Map<String, HoldingSnapshot> snapshots,
+  required List<Lot> allLots,
+  required List<Lot> slices,
+}) {
   final allQuantity = <String, Decimal>{};
-  final allCost = <String, Decimal>{};
   final selectedQuantity = <String, Decimal>{};
+  final allCost = <String, Decimal>{};
   final selectedCost = <String, Decimal>{};
-  for (final lot in lots.where((lot) => !lot.isClosed)) {
+  for (final lot in allLots.where((lot) => !lot.isClosed)) {
     allQuantity.update(
       lot.assetId,
       (value) => value + lot.remainingQuantity,
       ifAbsent: () => lot.remainingQuantity,
     );
-    allCost.update(
-      lot.assetId,
-      (value) => value + lot.remainingCost,
-      ifAbsent: () => lot.remainingCost,
-    );
+    final cost = lot.remainingQuantity * lot.costPerUnit;
+    allCost.update(lot.assetId, (value) => value + cost, ifAbsent: () => cost);
   }
-  for (final lot in selectedLots.where((lot) => !lot.isClosed)) {
+  for (final lot in slices.where((lot) => !lot.isClosed)) {
     selectedQuantity.update(
       lot.assetId,
       (value) => value + lot.remainingQuantity,
       ifAbsent: () => lot.remainingQuantity,
     );
+    final cost = lot.remainingQuantity * lot.costPerUnit;
     selectedCost.update(
       lot.assetId,
-      (value) => value + lot.remainingCost,
-      ifAbsent: () => lot.remainingCost,
+      (value) => value + cost,
+      ifAbsent: () => cost,
     );
   }
 
@@ -184,18 +360,19 @@ ScopedPortfolioHoldings scopePortfolioHoldings({
     final source = entry.value;
     final quantity = selectedQuantity[entry.key] ?? Decimal.zero;
     final totalQuantity = allQuantity[entry.key] ?? Decimal.zero;
-    if (quantity.sign <= 0 || totalQuantity.sign <= 0) continue;
-    final quantityRatio = (quantity / totalQuantity).toDecimal(
+    if (quantity <= Decimal.zero || totalQuantity <= Decimal.zero) continue;
+    final ratio = (quantity / totalQuantity).toDecimal(
       scaleOnInfinitePrecision: 12,
     );
-    final cost = selectedCost[entry.key] ?? Decimal.zero;
     final totalCost = allCost[entry.key] ?? Decimal.zero;
-    final costRatio = totalCost.sign <= 0
-        ? quantityRatio
-        : (cost / totalCost).toDecimal(scaleOnInfinitePrecision: 12);
+    final costRatio = totalCost <= Decimal.zero
+        ? ratio
+        : ((selectedCost[entry.key] ?? Decimal.zero) / totalCost).toDecimal(
+            scaleOnInfinitePrecision: 12,
+          );
     final marketValueInAssetCurrency =
-        source.marketValueInAssetCurrency * quantityRatio;
-    final marketValueInBase = source.marketValueInBase * quantityRatio;
+        source.marketValueInAssetCurrency * ratio;
+    final marketValueInBase = source.marketValueInBase * ratio;
     final costBasisInAssetCurrency =
         source.costBasisInAssetCurrency * costRatio;
     final costBasisInBase = source.costBasisInBase * costRatio;
@@ -219,7 +396,7 @@ ScopedPortfolioHoldings scopePortfolioHoldings({
     );
   }
 
-  if (totalMarketValue.sign > 0) {
+  if (totalMarketValue > Decimal.zero) {
     for (final entry in scoped.entries.toList(growable: false)) {
       scoped[entry.key] = entry.value.copyWith(
         weight: (entry.value.marketValueInBase / totalMarketValue).toDecimal(
@@ -228,8 +405,5 @@ ScopedPortfolioHoldings scopePortfolioHoldings({
       );
     }
   }
-  return ScopedPortfolioHoldings(
-    snapshots: Map.unmodifiable(scoped),
-    lots: List.unmodifiable(selectedLots),
-  );
+  return scoped;
 }

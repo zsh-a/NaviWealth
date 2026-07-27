@@ -1253,6 +1253,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioStrategyLabel => 'Strategy';
 
   @override
+  String get portfolioStrategyIndexCore => 'Index core';
+
+  @override
+  String get portfolioStrategyDividendIncome => 'Dividend income';
+
+  @override
+  String get portfolioStrategyOptionsIncome => 'Options income';
+
+  @override
   String get portfolioStrategyIncome => 'Dividend income';
 
   @override
@@ -1280,10 +1289,101 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get portfolioAssignLotsSubtitle =>
-      'Each purchase lot belongs to at most one portfolio.';
+      'Assign each purchase lot to one portfolio group.';
+
+  @override
+  String get portfolioAssignCashTitle => 'Assign cash';
+
+  @override
+  String get portfolioAssignCashSubtitle =>
+      'Reserve cash from an asset account for one strategy group.';
+
+  @override
+  String get portfolioAssignCashAction => 'Assign cash';
+
+  @override
+  String get portfolioCashAssignmentsTitle => 'Cash assignments';
+
+  @override
+  String get portfolioCashAccountLabel => 'Asset account';
+
+  @override
+  String get portfolioCashAmountLabel => 'Assigned amount';
+
+  @override
+  String get portfolioCashAmountInvalid => 'Enter an amount greater than zero.';
+
+  @override
+  String get portfolioCashNoAccounts =>
+      'Create an asset account before assigning cash.';
+
+  @override
+  String portfolioCashAssignmentSummary(
+    String amount,
+    String currency,
+    String group,
+  ) {
+    return '$amount $currency · $group';
+  }
 
   @override
   String get portfolioAssignmentSaved => 'Portfolio assignments saved.';
+
+  @override
+  String get rebalanceGroupsTitle => 'Rebalance groups';
+
+  @override
+  String rebalanceGroupWeight(String percent) {
+    return 'Target $percent';
+  }
+
+  @override
+  String get rebalanceGroupTransfersTitle => 'Capital transfers';
+
+  @override
+  String rebalanceGroupTransfer(String from, String to, String amount) {
+    return '$from → $to: $amount';
+  }
+
+  @override
+  String get portfolioGroupsSectionTitle => 'Strategy groups';
+
+  @override
+  String get portfolioGroupAddAction => 'Add strategy group';
+
+  @override
+  String get portfolioGroupEditTitle => 'Edit strategy group';
+
+  @override
+  String get portfolioGroupNameLabel => 'Group name';
+
+  @override
+  String get portfolioGroupTargetWeightLabel => 'Portfolio target (%)';
+
+  @override
+  String get portfolioGroupDriftBandLabel => 'Drift band (%)';
+
+  @override
+  String get portfolioGroupTransferPolicyLabel => 'Capital transfer policy';
+
+  @override
+  String get portfolioGroupTransferBidirectional =>
+      'Allow inflows and outflows';
+
+  @override
+  String get portfolioGroupTransferInflowsOnly => 'Inflows only';
+
+  @override
+  String get portfolioGroupTransferIsolated => 'Isolated';
+
+  @override
+  String portfolioGroupWeightSummary(String weight, String policy) {
+    return '$weight% target · $policy';
+  }
+
+  @override
+  String get portfolioGroupNoTemplates =>
+      'All built-in strategy groups are already configured.';
 
   @override
   String get portfolioSaveFailed => 'Couldn\'t save the portfolio. Try again.';

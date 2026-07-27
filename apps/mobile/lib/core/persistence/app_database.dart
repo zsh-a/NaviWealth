@@ -90,7 +90,9 @@ final class AppDatabaseTransactionScope {
     Budgets,
     Goals,
     InvestmentPortfolios,
-    PortfolioLotMemberships,
+    PortfolioStrategyConfigs,
+    PortfolioRebalanceGroups,
+    PortfolioCapitalAssignments,
     FinancialDecisions,
     DcaPlans,
     FinancialSignals,
@@ -148,13 +150,14 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 65;
+  int get schemaVersion => 66;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
       await _createIndexes(this);
+      await _createPortfolioIndexes(this);
       await _createSyncTables(this);
       await _createChatTables(this);
       await _createConversationCheckpoints(this);
@@ -763,17 +766,7 @@ class AppDatabase extends _$AppDatabase {
         await _createForecastSnapshots(this);
       }
       if (from < 49) {
-        await m.createTable(investmentPortfolios);
-        await m.createTable(portfolioLotMemberships);
-        await customStatement(
-          'CREATE INDEX IF NOT EXISTS idx_investment_portfolios_owner_hlc '
-          'ON investment_portfolios(owner_user_id, hlc)',
-        );
-        await customStatement(
-          'CREATE INDEX IF NOT EXISTS idx_portfolio_lot_memberships_owner_portfolio '
-          'ON portfolio_lot_memberships(owner_user_id, portfolio_id) '
-          'WHERE deleted_at IS NULL',
-        );
+        // Portfolio architecture is created by the forward-only v66 reset.
       }
       if (from < 50) {
         await _addColumnIfMissing(
@@ -972,9 +965,53 @@ class AppDatabase extends _$AppDatabase {
         await customStatement('DROP TABLE IF EXISTS options_opportunity_cache');
         await _createOptionsOpportunityCache(this);
       }
+      // v65 -> v66: replace the closed portfolio strategy fields and
+      // lot-only membership with open strategy modules, capital-owning
+      // rebalance groups, and typed lot/cash capital assignments. This is an
+      // intentional forward-only reset of the experimental portfolio model.
+      if (from < 66) {
+        await customStatement(
+          'DROP TABLE IF EXISTS portfolio_capital_assignments',
+        );
+        await customStatement(
+          'DROP TABLE IF EXISTS portfolio_strategy_configs',
+        );
+        await customStatement(
+          'DROP TABLE IF EXISTS portfolio_rebalance_groups',
+        );
+        await customStatement('DROP TABLE IF EXISTS portfolio_lot_memberships');
+        await customStatement('DROP TABLE IF EXISTS investment_portfolios');
+        await m.createTable(investmentPortfolios);
+        await m.createTable(portfolioStrategyConfigs);
+        await m.createTable(portfolioRebalanceGroups);
+        await m.createTable(portfolioCapitalAssignments);
+        await _createPortfolioIndexes(this);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
+  );
+}
+
+Future<void> _createPortfolioIndexes(AppDatabase db) async {
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_investment_portfolios_owner_hlc '
+    'ON investment_portfolios(owner_user_id, hlc)',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_portfolio_strategy_configs_owner '
+    'ON portfolio_strategy_configs(owner_user_id, portfolio_id) '
+    'WHERE deleted_at IS NULL',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_portfolio_rebalance_groups_owner '
+    'ON portfolio_rebalance_groups(owner_user_id, portfolio_id) '
+    'WHERE deleted_at IS NULL',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_portfolio_capital_assignments_group '
+    'ON portfolio_capital_assignments(owner_user_id, rebalance_group_id) '
+    'WHERE deleted_at IS NULL',
   );
 }

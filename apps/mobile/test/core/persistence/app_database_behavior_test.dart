@@ -1981,7 +1981,9 @@ void main() {
         .get();
     final tableNames = tables.map((row) => row.read<String>('name')).toSet();
     expect(tableNames, contains('investment_portfolios'));
-    expect(tableNames, contains('portfolio_lot_memberships'));
+    expect(tableNames, contains('portfolio_strategy_configs'));
+    expect(tableNames, contains('portfolio_rebalance_groups'));
+    expect(tableNames, contains('portfolio_capital_assignments'));
     final version = await db.customSelect('PRAGMA user_version').getSingle();
     expect(version.read<int>('user_version'), db.schemaVersion);
   });

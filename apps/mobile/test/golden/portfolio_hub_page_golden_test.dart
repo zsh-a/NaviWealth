@@ -292,7 +292,9 @@ List<Override> _portfolioOverrides(SharedPreferences prefs) => [
     (_) async => _GoldenHoldingService(_lots),
   ),
   investmentPortfoliosProvider.overrideWith((_) => Stream.value(const [])),
-  portfolioLotMembershipsProvider.overrideWith((_) => Stream.value(const [])),
+  portfolioCapitalAssignmentsProvider.overrideWith(
+    (_) => Stream.value(const []),
+  ),
   portfolioReturnServiceProvider.overrideWith(
     (_) async => const _GoldenReturnService(),
   ),

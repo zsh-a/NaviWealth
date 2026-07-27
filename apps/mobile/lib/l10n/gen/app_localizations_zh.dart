@@ -1206,6 +1206,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioStrategyLabel => '策略';
 
   @override
+  String get portfolioStrategyIndexCore => '指数核心';
+
+  @override
+  String get portfolioStrategyDividendIncome => '股息组合';
+
+  @override
+  String get portfolioStrategyOptionsIncome => '期权收益';
+
+  @override
   String get portfolioStrategyIncome => '股息收入';
 
   @override
@@ -1230,10 +1239,97 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioAssignLotsTitle => '分配批次';
 
   @override
-  String get portfolioAssignLotsSubtitle => '每个买入批次最多归属一个组合。';
+  String get portfolioAssignLotsSubtitle => '将每个买入批次归属到一个组合分组。';
+
+  @override
+  String get portfolioAssignCashTitle => '分配现金';
+
+  @override
+  String get portfolioAssignCashSubtitle => '从资产账户中划分现金，归属到一个策略分组。';
+
+  @override
+  String get portfolioAssignCashAction => '分配现金';
+
+  @override
+  String get portfolioCashAssignmentsTitle => '现金归属';
+
+  @override
+  String get portfolioCashAccountLabel => '资产账户';
+
+  @override
+  String get portfolioCashAmountLabel => '分配金额';
+
+  @override
+  String get portfolioCashAmountInvalid => '请输入大于零的金额。';
+
+  @override
+  String get portfolioCashNoAccounts => '请先创建资产账户，再分配现金。';
+
+  @override
+  String portfolioCashAssignmentSummary(
+    String amount,
+    String currency,
+    String group,
+  ) {
+    return '$amount $currency · $group';
+  }
 
   @override
   String get portfolioAssignmentSaved => '组合归属已保存。';
+
+  @override
+  String get rebalanceGroupsTitle => '再平衡分组';
+
+  @override
+  String rebalanceGroupWeight(String percent) {
+    return '目标 $percent';
+  }
+
+  @override
+  String get rebalanceGroupTransfersTitle => '组间资金调拨';
+
+  @override
+  String rebalanceGroupTransfer(String from, String to, String amount) {
+    return '$from → $to：$amount';
+  }
+
+  @override
+  String get portfolioGroupsSectionTitle => '策略分组';
+
+  @override
+  String get portfolioGroupAddAction => '添加策略分组';
+
+  @override
+  String get portfolioGroupEditTitle => '编辑策略分组';
+
+  @override
+  String get portfolioGroupNameLabel => '分组名称';
+
+  @override
+  String get portfolioGroupTargetWeightLabel => '组合目标占比（%）';
+
+  @override
+  String get portfolioGroupDriftBandLabel => '漂移带宽（%）';
+
+  @override
+  String get portfolioGroupTransferPolicyLabel => '资金调拨策略';
+
+  @override
+  String get portfolioGroupTransferBidirectional => '允许流入与流出';
+
+  @override
+  String get portfolioGroupTransferInflowsOnly => '只允许流入';
+
+  @override
+  String get portfolioGroupTransferIsolated => '隔离';
+
+  @override
+  String portfolioGroupWeightSummary(String weight, String policy) {
+    return '目标 $weight% · $policy';
+  }
+
+  @override
+  String get portfolioGroupNoTemplates => '所有内置策略分组均已配置。';
 
   @override
   String get portfolioSaveFailed => '组合保存失败，请重试。';

@@ -12,6 +12,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../data/rebalance_execution_codecs.dart';
 import '../data/rebalance_providers.dart';
 import '../domain/allocation_schemes.dart';
+import '../domain/hierarchical_rebalance_engine.dart';
 import '../domain/rebalance_execution.dart';
 import '../domain/rebalance_models.dart';
 import 'deviation_bar.dart';
@@ -26,6 +27,7 @@ class RebalancePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final plan = ref.watch(rebalancePlanProvider);
+    final portfolioPlan = ref.watch(hierarchicalRebalancePlanProvider);
     final scheme = ref.watch(selectedSchemeProvider);
     final active = ref.watch(activeRebalanceExecutionProvider).value;
 
@@ -40,8 +42,13 @@ class RebalancePage extends ConsumerWidget {
       ],
       childPad: false,
       child: plan == null
-          ? _EmptyState(active: active)
-          : _RebalanceBody(plan: plan, scheme: scheme, active: active),
+          ? _EmptyState(active: active, portfolioPlan: portfolioPlan)
+          : _RebalanceBody(
+              plan: plan,
+              portfolioPlan: portfolioPlan,
+              scheme: scheme,
+              active: active,
+            ),
     );
   }
 
@@ -117,27 +124,40 @@ Future<void> _openExecution({
 }
 
 class _EmptyState extends ConsumerWidget {
-  const _EmptyState({required this.active});
+  const _EmptyState({required this.active, required this.portfolioPlan});
 
   final RebalanceExecutionSession? active;
+  final PortfolioRebalancePlan? portfolioPlan;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return AppEmptyState(
-      icon: FLucideIcons.scale,
-      title: l10n.rebalanceEmptyTitle,
-      message: l10n.rebalanceEmptyHint,
-      action: active == null
-          ? FButton(
-              onPress: () => context.push(FinanceRoutes.wealthPortfolio),
-              child: Text(l10n.portfolioHubTitle),
-            )
-          : FButton(
-              onPress: () =>
-                  _openExecution(context: context, ref: ref, active: active),
-              child: Text(l10n.rebalanceExecutionResumeAction),
-            ),
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      children: [
+        if (portfolioPlan != null) ...[
+          _PortfolioGroupSelector(plan: portfolioPlan!),
+          const SizedBox(height: AppSpacing.s16),
+        ],
+        AppEmptyState(
+          icon: FLucideIcons.scale,
+          title: l10n.rebalanceEmptyTitle,
+          message: l10n.rebalanceEmptyHint,
+          action: active == null
+              ? FButton(
+                  onPress: () => context.push(FinanceRoutes.wealthPortfolio),
+                  child: Text(l10n.portfolioHubTitle),
+                )
+              : FButton(
+                  onPress: () => _openExecution(
+                    context: context,
+                    ref: ref,
+                    active: active,
+                  ),
+                  child: Text(l10n.rebalanceExecutionResumeAction),
+                ),
+        ),
+      ],
     );
   }
 }
@@ -145,11 +165,13 @@ class _EmptyState extends ConsumerWidget {
 class _RebalanceBody extends StatelessWidget {
   const _RebalanceBody({
     required this.plan,
+    required this.portfolioPlan,
     required this.scheme,
     required this.active,
   });
 
   final RebalancePlan plan;
+  final PortfolioRebalancePlan? portfolioPlan;
   final AllocationSchemePreset scheme;
   final RebalanceExecutionSession? active;
 
@@ -164,6 +186,10 @@ class _RebalanceBody extends StatelessWidget {
         return ListView(
           padding: padding,
           children: [
+            if (portfolioPlan != null) ...[
+              _PortfolioGroupSelector(plan: portfolioPlan!),
+              SizedBox(height: isMobile ? AppSpacing.s12 : AppSpacing.s16),
+            ],
             _SchemeSelector(current: scheme),
             SizedBox(height: isMobile ? AppSpacing.s12 : AppSpacing.s16),
             ResponsiveTwoColumn(
@@ -173,6 +199,100 @@ class _RebalanceBody extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _PortfolioGroupSelector extends ConsumerWidget {
+  const _PortfolioGroupSelector({required this.plan});
+
+  final PortfolioRebalancePlan plan;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
+    final selectedId = ref.watch(
+      effectiveSelectedPortfolioRebalanceGroupIdProvider,
+    );
+    final groupNameById = {
+      for (final groupPlan in plan.groups)
+        groupPlan.group.id: groupPlan.group.name,
+    };
+    return SoftCard.raised(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.rebalanceGroupsTitle,
+              style: context.theme.typography.body.sm,
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            Wrap(
+              spacing: AppSpacing.s8,
+              runSpacing: AppSpacing.s8,
+              children: [
+                for (final groupPlan in plan.groups)
+                  FButton(
+                    variant: groupPlan.group.id == selectedId
+                        ? FButtonVariant.primary
+                        : FButtonVariant.outline,
+                    onPress: () {
+                      ref
+                          .read(
+                            selectedPortfolioRebalanceGroupIdProvider.notifier,
+                          )
+                          .state = groupPlan
+                          .group
+                          .id;
+                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(groupPlan.group.name),
+                        Text(
+                          l10n.rebalanceGroupWeight(
+                            formatters.percent(
+                              groupPlan.capitalDecision.targetWeight,
+                              decimalDigits: 0,
+                            ),
+                          ),
+                          style: context.microLabelStyle,
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            if (plan.transfers.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.s16),
+              Text(
+                l10n.rebalanceGroupTransfersTitle,
+                style: context.theme.typography.body.sm,
+              ),
+              const SizedBox(height: AppSpacing.s6),
+              for (final transfer in plan.transfers)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.s4),
+                  child: Text(
+                    l10n.rebalanceGroupTransfer(
+                      groupNameById[transfer.fromGroupId] ??
+                          transfer.fromGroupId,
+                      groupNameById[transfer.toGroupId] ?? transfer.toGroupId,
+                      formatters.currency(
+                        transfer.amount.amount,
+                        code: transfer.amount.currency,
+                      ),
+                    ),
+                    style: context.captionStyle,
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
