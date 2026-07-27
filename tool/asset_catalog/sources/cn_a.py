@@ -25,12 +25,15 @@ Optional flags:
     --use-mootdx-only  skip BaoStock entirely (smoke testing the fallback)
     --date YYYY-MM-DD  override the BaoStock universe trading date
 """
+
 from __future__ import annotations
 
 import argparse
 import logging
 import pathlib
 import sys
+from collections.abc import Callable
+from typing import Any, Protocol
 
 from tool.asset_catalog.classify import (
     MARKET_BJ,
@@ -129,6 +132,18 @@ class FetchError(RuntimeError):
     """Raised when an upstream source fails after exhausting retries."""
 
 
+class _MootdxTransport(Protocol):
+    def get_security_list(self, *, market: int, start: int) -> Any: ...
+
+
+class _MootdxClient(Protocol):
+    client: _MootdxTransport
+
+    def stock_count(self, *, market: int) -> int: ...
+
+    def close(self) -> None: ...
+
+
 def fetch_baostock_universe(date: str | None = None) -> list[dict[str, str]]:
     """Fetch the SH+SZ universe from BaoStock.
 
@@ -139,7 +154,9 @@ def fetch_baostock_universe(date: str | None = None) -> list[dict[str, str]]:
     try:
         import baostock as bs  # type: ignore
     except ImportError as exc:
-        raise FetchError("baostock not installed; run pip install -r requirements.txt") from exc
+        raise FetchError(
+            "baostock not installed; run pip install -r requirements.txt"
+        ) from exc
 
     login = bs.login()
     if str(getattr(login, "error_code", "0")) != "0":
@@ -189,42 +206,74 @@ def fetch_baostock_universe(date: str | None = None) -> list[dict[str, str]]:
         bs.logout()
 
 
-def fetch_mootdx_market(market_id: int) -> list[dict[str, str]]:
+def fetch_mootdx_market(
+    market_id: int,
+    *,
+    _client_factory: Callable[[], _MootdxClient] | None = None,
+) -> list[dict[str, str]]:
     """Fetch one market from mootdx (TCP fan-out under the hood).
 
     ``market_id``: 0=Shenzhen, 1=Shanghai, 2=Beijing.
+
+    mootdx 0.11.7's high-level ``StdQuotes.stocks`` accepts only
+    ``market`` and rejects Beijing entirely. Use the underlying tdxpy
+    pagination API instead; it is also what ``stocks`` uses internally
+    for Shanghai and Shenzhen.
     """
-    try:
-        from mootdx.quotes import Quotes  # type: ignore
-    except ImportError as exc:
-        raise FetchError("mootdx not installed; run pip install -r requirements.txt") from exc
-
-    client = Quotes.factory(market="std")
-    try:
-        count = client.stock_count(market=market_id)
-    except Exception as exc:  # pragma: no cover - upstream API surface
-        raise FetchError(f"mootdx stock_count(market={market_id}) failed: {exc}") from exc
-
-    rows: list[dict[str, str]] = []
-    page = 1000
-    for offset in range(0, int(count), page):
+    client_factory = _client_factory
+    if client_factory is None:
         try:
-            chunk = client.stocks(market=market_id, start=offset)
+            from mootdx.quotes import Quotes  # type: ignore
+        except ImportError as exc:
+            raise FetchError(
+                "mootdx not installed; run pip install -r requirements.txt"
+            ) from exc
+        client_factory = lambda: Quotes.factory(market="std")
+
+    try:
+        client = client_factory()
+    except Exception as exc:  # pragma: no cover - upstream API surface
+        raise FetchError(f"mootdx client setup failed: {exc}") from exc
+
+    try:
+        try:
+            count = int(client.stock_count(market=market_id))
         except Exception as exc:  # pragma: no cover - upstream API surface
             raise FetchError(
-                f"mootdx stocks(market={market_id}, start={offset}) failed: {exc}"
+                f"mootdx stock_count(market={market_id}) failed: {exc}"
             ) from exc
-        if chunk is None:
-            continue
-        # mootdx may return a pandas DataFrame or list[dict] depending on
-        # version. Normalise to dict iteration.
-        records = chunk.to_dict("records") if hasattr(chunk, "to_dict") else list(chunk)
-        for raw in records:
-            parsed = parse_mootdx_row(market_id, dict(raw))
-            if parsed:
-                rows.append(parsed)
-    LOG.info("mootdx market=%d: %d catalog rows", market_id, len(rows))
-    return rows
+
+        rows: list[dict[str, str]] = []
+        page = 1000
+        for offset in range(0, count, page):
+            try:
+                chunk = client.client.get_security_list(
+                    market=market_id,
+                    start=offset,
+                )
+            except Exception as exc:  # pragma: no cover - upstream API surface
+                raise FetchError(
+                    "mootdx get_security_list"
+                    f"(market={market_id}, start={offset}) failed: {exc}"
+                ) from exc
+            if chunk is None:
+                continue
+            # tdxpy normally returns list[dict], but preserve DataFrame
+            # compatibility for dependency-version drift.
+            records = (
+                chunk.to_dict("records") if hasattr(chunk, "to_dict") else list(chunk)
+            )
+            for raw in records:
+                parsed = parse_mootdx_row(market_id, dict(raw))
+                if parsed:
+                    rows.append(parsed)
+        LOG.info("mootdx market=%d: %d catalog rows", market_id, len(rows))
+        return rows
+    finally:
+        try:
+            client.close()
+        except Exception as exc:  # noqa: BLE001  # pragma: no cover
+            LOG.warning("mootdx client close failed: %s", exc)
 
 
 def fetch_cn_a(
@@ -275,7 +324,9 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         default=pathlib.Path("tool/asset_catalog/sources/cn_a.csv"),
         help="output CSV path (use '-' for stdout)",
     )
-    parser.add_argument("--date", default=None, help="BaoStock universe trading date (YYYY-MM-DD)")
+    parser.add_argument(
+        "--date", default=None, help="BaoStock universe trading date (YYYY-MM-DD)"
+    )
     parser.add_argument("--no-fallback", action="store_true")
     parser.add_argument("--use-mootdx-only", action="store_true")
     parser.add_argument("-v", "--verbose", action="store_true")

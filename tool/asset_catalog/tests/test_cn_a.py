@@ -1,4 +1,10 @@
+import inspect
+
+import pytest
+
 from tool.asset_catalog.sources.cn_a import (
+    FetchError,
+    fetch_mootdx_market,
     parse_baostock_basic,
     parse_mootdx_row,
 )
@@ -99,3 +105,72 @@ class TestParseMootdxRow:
         assert parse_mootdx_row(1, {}) is None
         assert parse_mootdx_row(1, {"code": "", "name": "x"}) is None
         assert parse_mootdx_row(1, {"code": "600519", "name": ""}) is None
+
+
+class _FakeMootdxTransport:
+    def __init__(self, pages):
+        self.pages = pages
+        self.calls = []
+
+    def get_security_list(self, *, market, start):
+        self.calls.append((market, start))
+        page = self.pages.get(start)
+        if isinstance(page, Exception):
+            raise page
+        return page
+
+
+class _FakeMootdxClient:
+    def __init__(self, *, count, pages):
+        self.count = count
+        self.client = _FakeMootdxTransport(pages)
+        self.closed = False
+
+    def stock_count(self, *, market):
+        return self.count
+
+    def close(self):
+        self.closed = True
+
+
+class TestFetchMootdxMarket:
+    @pytest.mark.parametrize(
+        ("market", "symbol"),
+        [
+            (0, "000001"),
+            (1, "600519"),
+            (2, "830799"),
+        ],
+    )
+    def test_uses_low_level_pagination_for_every_market(self, market, symbol):
+        fake = _FakeMootdxClient(
+            count=2001,
+            pages={
+                0: [{"code": symbol, "name": "测试证券"}],
+                1000: [{"code": "399001", "name": "过滤指数"}],
+                2000: [],
+            },
+        )
+
+        rows = fetch_mootdx_market(market, _client_factory=lambda: fake)
+
+        assert [row["symbol"] for row in rows] == [symbol]
+        assert fake.client.calls == [(market, 0), (market, 1000), (market, 2000)]
+        assert fake.closed is True
+
+    def test_wraps_transport_failure_and_closes_client(self):
+        fake = _FakeMootdxClient(
+            count=1,
+            pages={0: RuntimeError("connection reset")},
+        )
+
+        with pytest.raises(FetchError, match="get_security_list.*connection reset"):
+            fetch_mootdx_market(0, _client_factory=lambda: fake)
+
+        assert fake.closed is True
+
+    def test_pinned_tdxpy_exposes_paginated_transport_contract(self):
+        hq = pytest.importorskip("tdxpy.hq")
+        parameters = inspect.signature(hq.TdxHq_API.get_security_list).parameters
+
+        assert {"market", "start"}.issubset(parameters)
