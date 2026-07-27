@@ -11,6 +11,11 @@ class _EmptyState extends StatelessWidget {
       title: l10n.cashFlowEmptyTitle,
       message: l10n.cashFlowEmptyBody,
       iconSize: AppIconSizes.heroLg,
+      action: FButton(
+        onPress: () => context.push(FinanceRoutes.expenseNew),
+        prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+        child: Text(l10n.expenseFormCreateTitle),
+      ),
     );
   }
 }

@@ -67,7 +67,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
               ),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 440),
+                  constraints: const BoxConstraints(
+                    maxWidth: Breakpoints.formColumn,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [

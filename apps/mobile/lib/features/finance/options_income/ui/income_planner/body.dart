@@ -128,7 +128,7 @@ class _ConfiguredBodyState extends ConsumerState<_ConfiguredBody> {
                     onRetry: () => ref.invalidate(approvedUnderlyingsProvider),
                   ),
                   data: (items) => items.isEmpty
-                      ? const _ApprovedEmpty()
+                      ? _ApprovedEmpty(onScan: () => _runScan(context))
                       : _ApprovedList(items: items),
                 ),
               ],
@@ -145,6 +145,7 @@ class _ConfiguredBodyState extends ConsumerState<_ConfiguredBody> {
         _OpportunitiesBody(
           state: scanState,
           opportunitiesAsync: opportunitiesAsync,
+          onScan: () => _runScan(context),
         ),
       ],
     );

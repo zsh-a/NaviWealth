@@ -1330,7 +1330,7 @@ class _FooterActionButton extends StatelessWidget {
 
     return Semantics(
       button: true,
-      child: FTappable(
+      child: AppTappable(
         onPress: busy || disabled ? null : onPress,
         child: DecoratedBox(
           decoration: BoxDecoration(
@@ -1641,7 +1641,7 @@ class _VisibilityActionButton extends StatelessWidget {
     final colors = context.theme.colors;
     return Semantics(
       button: true,
-      child: FTappable(
+      child: AppTappable(
         onPress: onPress,
         child: DecoratedBox(
           decoration: BoxDecoration(
@@ -2143,7 +2143,7 @@ class _DetailTile extends StatelessWidget {
     if (onPress == null) return content;
     return Semantics(
       button: true,
-      child: FTappable(onPress: onPress, child: content),
+      child: AppTappable(onPress: onPress, child: content),
     );
   }
 }

@@ -24,7 +24,7 @@ if (( pct_count > PCT_BASELINE )); then
 fi
 
 # ── Rule 2: wire enums rendered in UI (ratchet) ────────────────────────────
-WIRE_BASELINE=66
+WIRE_BASELINE=43
 wire_count="$({ find "$FEATURES" -type d -name ui -prune -print0 \
   | xargs -0 grep -RhoE --include='*.dart' '\.wire\b' 2>/dev/null \
   || true; } | wc -l | tr -d ' ')"

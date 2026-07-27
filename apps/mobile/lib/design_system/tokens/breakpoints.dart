@@ -32,6 +32,30 @@ class Breakpoints {
   /// Used by health metric grids and similar dense layouts.
   static const double contentThreeColumn = 720;
 
+  // ── Sub-mobile module thresholds & overlay caps (blueprint §7.1) ────────
+  // Collapse of the ad-hoc 320/360/390/420/520/560 literals scattered
+  // through feature files: pick from this ladder, never a new number.
+
+  /// Below this a horizontal module row stacks vertically (quick actions,
+  /// dense form rows on very narrow phones / split-screen).
+  static const double compactModule = 320;
+
+  /// Below this compact cards drop secondary columns / captions.
+  static const double compactContent = 360;
+
+  /// Single form column cap, and the threshold under which form layouts
+  /// tighten (auth pages, unlock gates, narrow editors).
+  static const double formColumn = 420;
+
+  /// Default max width for centered dialogs / detail sheets.
+  static const double dialogMax = 520;
+
+  /// Wide dialog cap (command palette, rich pickers).
+  static const double dialogWide = 560;
+
+  /// Reading column for long-form content (chat panes, article bodies).
+  static const double readingColumn = 960;
+
   static bool isMobile(double width) => width < mobile;
   static bool isTablet(double width) => width >= mobile && width < desktop;
   static bool isDesktop(double width) => width >= desktop;

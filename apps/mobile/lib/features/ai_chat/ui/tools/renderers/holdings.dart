@@ -96,7 +96,7 @@ class _HoldingsTable extends StatelessWidget {
     final qtyText = NumberFormat.decimalPattern().format(row.quantity);
     final primary = row.symbol ?? row.name ?? row.assetId;
     final secondary = row.symbol != null && row.name != null ? row.name! : null;
-    return FTappable(
+    return AppTappable(
       onPress: () {
         // Stable App route for asset detail (avoid cross-feature import).
         pushFromAiSurface(

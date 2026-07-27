@@ -28,15 +28,10 @@ class HomeSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionHeader(
+        SectionHeader.module(
           title: title,
-          padding: const EdgeInsets.only(
-            left: AppSpacing.s4,
-            top: AppSpacing.s8,
-            bottom: AppSpacing.s10,
-          ),
           trailing: actionLabel != null && onAction != null
-              ? FTappable(
+              ? AppTappable(
                   onPress: onAction,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(

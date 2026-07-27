@@ -2,8 +2,10 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
@@ -65,6 +67,11 @@ class _EmptyJournal extends StatelessWidget {
     return AppEmptyState(
       icon: FLucideIcons.history,
       title: l10n.journalEmptyHint,
+      action: FButton(
+        onPress: () => context.push(FinanceRoutes.tradeEntry),
+        prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+        child: Text(l10n.tradeEntryAppBarTitle),
+      ),
     );
   }
 }

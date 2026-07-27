@@ -723,6 +723,11 @@ class _WorkspaceBody extends StatelessWidget {
                 child: AppEmptyState(
                   icon: FLucideIcons.listChecks,
                   title: l10n.rebalanceExecutionEmptyQueue,
+                  action: FButton(
+                    variant: FButtonVariant.outline,
+                    onPress: () => Navigator.of(context).maybePop(),
+                    child: Text(l10n.commonClose),
+                  ),
                 ),
               ),
             ]
@@ -1083,7 +1088,7 @@ class _ExecutionMasterRow extends StatelessWidget {
       selected: focused,
       enabled: !busy,
       onTap: busy ? null : onFocus,
-      child: FTappable(
+      child: AppTappable(
         onPress: busy ? null : onFocus,
         child: AnimatedContainer(
           duration: AppMotionPolicy.duration(context, Motion.fast),

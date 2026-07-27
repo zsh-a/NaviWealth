@@ -435,6 +435,11 @@ class _Activity extends StatelessWidget {
         child: AppEmptyState(
           icon: FLucideIcons.listTree,
           title: l10n.incomeStrategyActivityEmpty,
+          action: FButton(
+            variant: FButtonVariant.outline,
+            onPress: () => showIncomeStrategyPlanSheet(context),
+            child: Text(l10n.incomeStrategyPlanAdd),
+          ),
         ),
       );
     }

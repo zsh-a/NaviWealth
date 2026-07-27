@@ -451,7 +451,8 @@ class _ProposalDetailsPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${l10n.knowledgeAiSuggestionPayloadTitle} · ${proposal.kind.wire}',
+            '${l10n.knowledgeAiSuggestionPayloadTitle} · '
+            '${_proposalKindLabel(l10n, proposal.kind)}',
             style: context.captionLabelStyle,
           ),
           if (entries.isNotEmpty) const SizedBox(height: AppSpacing.s6),

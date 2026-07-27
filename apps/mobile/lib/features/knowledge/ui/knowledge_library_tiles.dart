@@ -13,26 +13,12 @@ Widget _buildLibraryTile(
   List<Widget> subtitle = const <Widget>[],
 }) {
   final colors = context.theme.colors;
-  return Dismissible(
-    key: ValueKey<String>('lib-tile-${itemKey ?? title}'),
-    direction: DismissDirection.endToStart,
-    confirmDismiss: (_) async {
-      onDelete();
-      return false;
-    },
-    background: Container(
-      alignment: Alignment.centerRight,
-      padding: const EdgeInsets.only(right: AppSpacing.s16),
-      decoration: BoxDecoration(
-        color: colors.destructive.withValues(alpha: AppOpacity.subtle),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Icon(
-        FLucideIcons.trash2,
-        size: AppIconSizes.sm,
-        color: colors.destructive,
-      ),
-    ),
+  return AppDismissible(
+    itemKey: ValueKey<String>('lib-tile-${itemKey ?? title}'),
+    // The delete dialog owns the mutation; the row snaps back.
+    removeRow: false,
+    onTrigger: onDelete,
+    borderRadius: AppRadius.sm,
     child: Semantics(
       button: true,
       label: [
@@ -173,7 +159,7 @@ Widget _buildDecisionTile(
     title: d.question,
     query: query,
     itemKey: itemKey,
-    statusBadge: d.status.wire,
+    statusBadge: decisionStatusLabelOf(AppLocalizations.of(context), d.status),
     typeIcon: FLucideIcons.gitBranch,
     typeColor: colors.primary,
     onPress: () => context.pushNamed(
@@ -242,7 +228,7 @@ Widget _buildPrincipleTile(
     title: p.statement,
     query: query,
     itemKey: itemKey,
-    statusBadge: p.status.wire,
+    statusBadge: principleStatusLabel(AppLocalizations.of(context), p.status),
     typeIcon: FLucideIcons.badgeCheck,
     typeColor: context.appTheme.categorical.adapt(
       KnowledgeTypeColors.principle,
@@ -278,7 +264,7 @@ Widget _buildAssumptionTile(
     title: a.statement,
     query: query,
     itemKey: itemKey,
-    statusBadge: a.status.wire,
+    statusBadge: assumptionStatusLabel(AppLocalizations.of(context), a.status),
     typeIcon: FLucideIcons.lightbulb,
     typeColor: context.appTheme.categorical.adapt(
       KnowledgeTypeColors.assumption,
@@ -335,7 +321,7 @@ Widget _buildExperimentTile(
     title: e.hypothesis,
     query: query,
     itemKey: itemKey,
-    statusBadge: e.status.wire,
+    statusBadge: experimentStatusLabel(AppLocalizations.of(context), e.status),
     typeIcon: FLucideIcons.flaskConical,
     typeColor: context.appTheme.categorical.adapt(
       KnowledgeTypeColors.experiment,
@@ -376,7 +362,7 @@ Widget _buildRoutineTile(
     title: r.statement,
     query: query,
     itemKey: itemKey,
-    statusBadge: r.status.wire,
+    statusBadge: routineStatusLabel(AppLocalizations.of(context), r.status),
     typeIcon: FLucideIcons.calendarClock,
     typeColor: context.appTheme.categorical.adapt(KnowledgeTypeColors.routine),
     onPress: () => context.pushNamed(

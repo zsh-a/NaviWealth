@@ -86,7 +86,7 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
                     const SizedBox(height: AppSpacing.s8),
                     Row(
                       children: [
-                        FTappable(
+                        AppTappable(
                           onPress: () =>
                               setState(() => _showArchived = !_showArchived),
                           child: Padding(
@@ -119,7 +119,7 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
                         ),
                         if (_showArchived) ...[
                           const Spacer(),
-                          FTappable(
+                          AppTappable(
                             onPress: () =>
                                 _confirmClearArchive(context, ref, userId),
                             child: Padding(

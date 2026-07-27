@@ -495,12 +495,10 @@ Map<String, Object> _strokeGroup() => {
 
 Map<String, Object> _radiusGroup() => {
   r'$description': 'Corner radii — AppRadius.',
-  'none': _dimension(AppRadius.none),
   'sm': _dimension(AppRadius.sm),
   'md': _dimension(AppRadius.md),
   'lg': _dimension(AppRadius.lg),
   'xl': _dimension(AppRadius.xl, 'Hero cards'),
-  'xxl': _dimension(AppRadius.xxl, 'Sheets / large panels'),
   'full': _dimension(AppRadius.full),
 };
 
@@ -517,12 +515,10 @@ Map<String, Object> _opacityGroup() => {
   'medium': _number(AppOpacity.medium),
   'accentContainer': _number(AppOpacity.accentContainer),
   'highlight': _number(AppOpacity.highlight),
-  'focusRing': _number(AppOpacity.focusRing),
   'halo': _number(AppOpacity.halo),
   'muted': _number(AppOpacity.muted),
   'disabled': _number(AppOpacity.disabled),
   'scrim': _number(AppOpacity.scrim),
-  'softScrim': _number(AppOpacity.softScrim),
   'prominent': _number(AppOpacity.prominent),
   'strong': _number(AppOpacity.strong),
   'emphasis': _number(AppOpacity.emphasis),
@@ -550,8 +546,6 @@ Map<String, Object> _iconSizeGroup() => {
 Map<String, Object> _blurGroup() => {
   r'$description': 'Backdrop blur sigmas — AppBlur.',
   'sheet': _dimension(AppBlur.sheet),
-  'nav': _dimension(AppBlur.nav),
-  'sticky': _dimension(AppBlur.sticky),
 };
 
 Map<String, Object> _shadowGroup() => {

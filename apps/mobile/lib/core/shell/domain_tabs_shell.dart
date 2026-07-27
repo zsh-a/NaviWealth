@@ -10,6 +10,7 @@ import 'desktop_sidebar.dart';
 import 'domain_shell.dart';
 import 'domain_switcher.dart';
 import 'shell_visibility.dart';
+import 'sync_activity_strip.dart';
 
 const double _kMobileDockHorizontalPadding = AppSpacing.s16;
 const double _kMobileDockTopPadding = AppSpacing.s4;
@@ -93,11 +94,15 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell> {
             ),
           );
         }
-        return _MobileLayout(
-          tabs: tabs,
-          selectedIndex: index,
-          onDestinationSelected: _onSelected,
-          child: shellChild,
+        // Mobile mounts its own undo banner above the floating dock.
+        return _withGlobalOverlays(
+          undoBanner: false,
+          _MobileLayout(
+            tabs: tabs,
+            selectedIndex: index,
+            onDestinationSelected: _onSelected,
+            child: shellChild,
+          ),
         );
       },
     );
@@ -108,15 +113,24 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell> {
 /// undo" banner previously lived inside [_MobileLayout] alone, so every
 /// tablet/desktop viewport silently lost the undo affordance (blueprint
 /// doc 15 §7.3). Mobile keeps its own copy stacked above the floating dock.
-Widget _withGlobalOverlays(Widget layout) {
+Widget _withGlobalOverlays(Widget layout, {bool undoBanner = true}) {
   return Stack(
     children: [
       Positioned.fill(child: layout),
+      if (undoBanner)
+        const Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: SafeArea(top: false, child: PersistentUndoBanner()),
+        ),
+      // Shell-level sync activity: a hairline strip at the very top of
+      // every layout (doc 11 "完成同步" trigger).
       const Positioned(
         left: 0,
         right: 0,
-        bottom: 0,
-        child: SafeArea(top: false, child: PersistentUndoBanner()),
+        top: 0,
+        child: SafeArea(bottom: false, child: SyncActivityStrip()),
       ),
     ],
   );
@@ -361,7 +375,7 @@ class _TabletRailAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FTappable(
+    return AppTappable(
       onPress: onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(
@@ -405,7 +419,7 @@ class _TabletRailItem extends StatelessWidget {
     final colors = context.theme.colors;
     final iconColor = selected ? colors.primary : colors.mutedForeground;
     final fill = selected ? colors.muted : Colors.transparent;
-    return FTappable(
+    return AppTappable(
       onPress: onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(

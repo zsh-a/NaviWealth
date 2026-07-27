@@ -293,6 +293,11 @@ class _PickerListState extends State<_PickerList> {
               ? AppEmptyState(
                   icon: FLucideIcons.searchX,
                   title: l10n.executionPickerSearchEmpty,
+                  action: FButton(
+                    variant: FButtonVariant.outline,
+                    onPress: _query.clear,
+                    child: Text(l10n.aiChatSessionsSearchClear),
+                  ),
                 )
               : ListView.builder(
                   shrinkWrap: true,

@@ -164,7 +164,7 @@ class _GroupRow extends StatelessWidget {
     return Semantics(
       button: true,
       label: group.title,
-      child: FTappable(
+      child: AppTappable(
         onPress: onPressed,
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s12),
@@ -234,7 +234,7 @@ class _HoldingRow extends StatelessWidget {
     return Semantics(
       button: true,
       container: true,
-      child: FTappable(
+      child: AppTappable(
         onPress:
             onPressed ??
             () => context.push(FinanceRoutes.wealthAsset(holding.assetId)),
@@ -408,7 +408,17 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppEmptyState(icon: FLucideIcons.chartPie, title: message);
+    final l10n = AppLocalizations.of(context);
+    return AppEmptyState(
+      icon: FLucideIcons.chartPie,
+      title: message,
+      action: FButton(
+        variant: FButtonVariant.outline,
+        onPress: () => context.push(FinanceRoutes.tradeEntry),
+        prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+        child: Text(l10n.tradeEntryAppBarTitle),
+      ),
+    );
   }
 }
 

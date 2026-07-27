@@ -220,7 +220,7 @@ void main() {
       ),
     );
 
-    expect(find.textContaining('Focus'), findsOneWidget);
+    expect(find.textContaining('Focus'), findsNWidgets(2));
     expect(find.textContaining('Open'), findsOneWidget);
     expect(find.textContaining('Blocked'), findsOneWidget);
     expect(find.textContaining('7d progress'), findsOneWidget);
@@ -266,7 +266,7 @@ void main() {
     expect(find.text('Projects'), findsNothing);
     expect(find.text('Commitments'), findsNothing);
     expect(find.textContaining('7d progress'), findsNothing);
-    expect(find.textContaining('Focus'), findsOneWidget);
+    expect(find.textContaining('Focus'), findsNWidgets(2));
     expect(find.textContaining('Due'), findsNothing);
   });
 

@@ -240,7 +240,7 @@ class _AttributionRow extends ConsumerWidget {
             impact(row.localCombinedImpact),
             impact(row.fxImpact),
           );
-    return FTappable(
+    return AppTappable(
       key: ValueKey('dividend-attribution-${row.assetId}'),
       onPress: () => context.push(FinanceRoutes.wealthAsset(row.assetId)),
       child: Container(

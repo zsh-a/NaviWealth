@@ -39,7 +39,9 @@ class DesktopSidebar extends ConsumerWidget {
       curve: Motion.standardDecelerate,
       width: collapsed ? kSidebarCollapsedWidth : kSidebarExpandedWidth,
       decoration: BoxDecoration(
-        color: colors.background,
+        // Same navigation material as the mobile glass dock, pre-blended
+        // opaque for a full-height panel (see appGlassPanelColor).
+        color: appGlassPanelColor(context),
         border: Border(
           right: BorderSide(color: colors.border, width: AppStroke.hairline),
         ),
@@ -174,7 +176,7 @@ class _SidebarItem extends StatelessWidget {
       ],
     );
 
-    final tap = FTappable(onPress: onTap, child: content);
+    final tap = AppTappable(onPress: onTap, child: content);
 
     if (collapsed) {
       return FTooltip(
@@ -229,7 +231,7 @@ class _SettingsPinnedRow extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: row,
     );
-    final tap = FTappable(
+    final tap = AppTappable(
       onPress: () => context.push(SettingsRoutes.root),
       child: tile,
     );
@@ -264,7 +266,7 @@ class _CollapseToggle extends StatelessWidget {
               ? l10n.shellExpandSidebarShortcut
               : l10n.shellCollapseSidebarShortcut,
         ),
-        child: FTappable(
+        child: AppTappable(
           onPress: onToggle,
           child: SizedBox(
             height: AppControlHeights.sidebarToggle,

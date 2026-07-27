@@ -8,6 +8,7 @@ import '../tokens/typography_tokens.dart';
 import 'accent_colors.dart';
 import 'accent_seed.dart';
 import 'app_page_transitions.dart';
+import 'app_surface_style.dart';
 
 bool useCompactDensity(TargetPlatform platform, bool isWeb) {
   if (isWeb) return true;
@@ -31,28 +32,42 @@ class AppTheme {
   static ThemeData light({
     bool compact = false,
     AppAccentSeed accentSeed = AppAccentSeed.cyan,
-  }) => _build(Brightness.light, compact, accentSeed);
+    AppSurfaceStyle surfaceStyle = AppSurfaceStyle.standard,
+  }) => _build(Brightness.light, compact, accentSeed, surfaceStyle);
 
   static ThemeData dark({
     bool compact = false,
     AppAccentSeed accentSeed = AppAccentSeed.cyan,
-  }) => _build(Brightness.dark, compact, accentSeed);
+    AppSurfaceStyle surfaceStyle = AppSurfaceStyle.standard,
+  }) => _build(Brightness.dark, compact, accentSeed, surfaceStyle);
 
   static ThemeData _build(
     Brightness brightness,
     bool compact,
     AppAccentSeed accentSeed,
+    AppSurfaceStyle surfaceStyle,
   ) {
     final isDark = brightness == Brightness.dark;
+    // Keep in lockstep with resolveAppTheme's surface/content tables so
+    // widgets that fall through to Material chrome (Scaffold backgrounds,
+    // overlays) sit on the same canvas as the design system.
+    final oled = surfaceStyle == AppSurfaceStyle.oled && isDark;
+    final highContrast = surfaceStyle == AppSurfaceStyle.highContrast;
     final f = isDark ? FColors.slateDark : FColors.slateLight;
     final accent = AccentColors.primary(brightness, seed: accentSeed);
     final onAccent = AccentColors.onPrimary(brightness);
     final pageBackground = isDark
-        ? ColorPalette.navy950
+        ? (oled ? ColorPalette.oledCanvas : ColorPalette.navy950)
         : ColorPalette.surfaceBackground;
+    final cardSurface = isDark
+        ? (oled ? ColorPalette.oledCard : ColorPalette.navyGlass)
+        : ColorPalette.surface;
     final mutedForeground = isDark
-        ? ColorPalette.navy300
-        : ColorPalette.navy500;
+        ? (highContrast ? ColorPalette.navy100 : ColorPalette.navy300)
+        : (highContrast ? ColorPalette.navy700 : ColorPalette.navy500);
+    final outline = isDark
+        ? (highContrast ? ColorPalette.navy500 : ColorPalette.navy800)
+        : (highContrast ? ColorPalette.navy400 : ColorPalette.surfaceHairline);
     final scheme = ColorScheme(
       brightness: brightness,
       primary: accent,
@@ -66,19 +81,13 @@ class AppTheme {
       surface: pageBackground,
       onSurface: isDark ? ColorPalette.navy50 : ColorPalette.navy900,
       surfaceContainerLowest: pageBackground,
-      surfaceContainerLow: isDark
-          ? ColorPalette.navyGlass
-          : ColorPalette.surface,
-      surfaceContainer: isDark
-          ? ColorPalette.navyGlass
-          : ColorPalette.surfaceOverlay,
+      surfaceContainerLow: cardSurface,
+      surfaceContainer: isDark ? cardSurface : ColorPalette.surfaceOverlay,
       surfaceContainerHigh: f.muted,
       surfaceContainerHighest: f.secondary,
       onSurfaceVariant: mutedForeground,
-      outline: isDark ? ColorPalette.navy800 : ColorPalette.surfaceHairline,
-      outlineVariant: isDark
-          ? ColorPalette.navy800
-          : ColorPalette.surfaceHairline,
+      outline: outline,
+      outlineVariant: outline,
       inverseSurface: isDark ? ColorPalette.navy50 : ColorPalette.navy900,
       onInverseSurface: pageBackground,
       shadow: ColorPalette.shadowMedium,

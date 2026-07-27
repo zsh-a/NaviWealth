@@ -94,7 +94,7 @@ class _ContinueButton extends StatelessWidget {
     final color = enabled
         ? context.theme.colors.primary
         : context.theme.colors.mutedForeground;
-    return FTappable(
+    return AppTappable(
       onPress: enabled ? onPressed : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -237,7 +237,7 @@ class _CopyIconActionState extends State<_CopyIconAction> {
     return FTooltip(
       tipBuilder: (_, _) =>
           Text(_copied ? widget.copiedTooltip : widget.tooltip),
-      child: FTappable(
+      child: AppTappable(
         onPress: _copy,
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s6),
@@ -277,7 +277,7 @@ class _IconAction extends StatelessWidget {
           );
     return FTooltip(
       tipBuilder: (_, _) => Text(tooltip),
-      child: FTappable(
+      child: AppTappable(
         onPress: onPressed,
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s6),

@@ -312,7 +312,7 @@ class _SheetEmptyConversation extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s16),
           for (var i = 0; i < suggestions.length; i++) ...[
             if (i > 0) const SizedBox(height: AppSpacing.s8),
-            FTappable(
+            AppTappable(
               onPress: () => send(suggestions[i].$1),
               child: SoftCard.flat(
                 padding: const EdgeInsets.symmetric(

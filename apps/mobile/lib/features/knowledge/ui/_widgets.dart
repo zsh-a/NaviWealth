@@ -35,7 +35,6 @@ export '../domain/knowledge_text.dart';
 part 'knowledge_create_widgets.dart';
 part 'knowledge_editor_widgets.dart';
 part 'knowledge_markdown.dart';
-part 'knowledge_motion_widgets.dart';
 part 'knowledge_section_widgets.dart';
 part 'knowledge_state_widgets.dart';
 

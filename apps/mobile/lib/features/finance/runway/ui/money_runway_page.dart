@@ -291,7 +291,7 @@ class _RunwayHorizonGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final textScale = MediaQuery.textScalerOf(context).scale(1);
-        if (constraints.maxWidth < 420 || textScale > 1.3) {
+        if (constraints.maxWidth < Breakpoints.formColumn || textScale > 1.3) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

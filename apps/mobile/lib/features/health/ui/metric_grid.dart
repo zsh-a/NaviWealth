@@ -103,7 +103,7 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
         final maxWidth = constraints.maxWidth;
         final columns = maxWidth >= Breakpoints.contentThreeColumn
             ? 3
-            : maxWidth < 360
+            : maxWidth < Breakpoints.compactContent
             ? 1
             : 2;
         const gap = AppPageRhythm.row;
@@ -295,7 +295,7 @@ class _MetricCompactRow extends StatelessWidget {
     return Semantics(
       button: true,
       label: '$label $value${unit == null ? '' : ' $unit'}',
-      child: FTappable(
+      child: AppTappable(
         onPress: onPress,
         child: Padding(
           padding: const EdgeInsets.symmetric(

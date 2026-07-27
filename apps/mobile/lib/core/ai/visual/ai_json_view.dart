@@ -46,7 +46,7 @@ class AiJsonView extends StatelessWidget {
               )
             else
               const Spacer(),
-            FTappable(
+            AppTappable(
               onPress: () =>
                   Clipboard.setData(ClipboardData(text: _pretty(value))),
               child: Padding(
@@ -165,7 +165,7 @@ class _JsonNodeState extends State<_JsonNode> {
     required List<Widget> children,
   }) {
     final keyPrefix = widget.propertyKey;
-    final header = FTappable(
+    final header = AppTappable(
       onPress: () => setState(() => _expanded = !_expanded),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),

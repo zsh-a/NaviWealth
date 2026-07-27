@@ -316,7 +316,7 @@ class _BucketRow extends StatelessWidget {
         if (showShare) formattedShare,
       ].join(', '),
       child: ExcludeSemantics(
-        child: FTappable(
+        child: AppTappable(
           onPress: onPressed,
           child: Row(
             key: ValueKey('allocation-bucket-${bucket.key}'),
@@ -515,7 +515,7 @@ class _WealthBucketItemRow extends StatelessWidget {
     if (onPressed == null) return content;
     return Semantics(
       button: true,
-      child: FTappable(onPress: onPressed, child: content),
+      child: AppTappable(onPress: onPressed, child: content),
     );
   }
 }

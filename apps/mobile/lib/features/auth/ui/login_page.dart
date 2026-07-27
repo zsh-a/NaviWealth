@@ -148,7 +148,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             Expanded(
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
+                  constraints: const BoxConstraints(
+                    maxWidth: Breakpoints.formColumn,
+                  ),
                   child: SingleChildScrollView(
                     keyboardDismissBehavior:
                         ScrollViewKeyboardDismissBehavior.onDrag,
@@ -276,7 +278,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             AppFormActionBar(
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
+                  constraints: const BoxConstraints(
+                    maxWidth: Breakpoints.formColumn,
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,

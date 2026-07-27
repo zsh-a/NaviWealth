@@ -199,7 +199,7 @@ List<Widget> _experimentSections(
     _ObjectHeader(
       kind: KnowledgeObjectKind.experiment,
       title: e.hypothesis,
-      status: e.status.wire,
+      status: experimentStatusLabel(AppLocalizations.of(context), e.status),
       updatedAt: e.sync.updatedAt,
     ),
     const SizedBox(height: AppSpacing.s12),
@@ -230,7 +230,8 @@ List<Widget> _experimentSections(
           _RelatedObjectLink(
             label: targetAssumption.statement,
             meta:
-                '${targetAssumption.status.wire} · ${targetAssumption.confidence.toStringAsFixed(2)}',
+                '${assumptionStatusLabel(AppLocalizations.of(context), targetAssumption.status)}'
+                ' · ${targetAssumption.confidence.toStringAsFixed(2)}',
             icon: FLucideIcons.lightbulb,
             iconColor: context.appTheme.categorical.adapt(
               KnowledgeTypeColors.assumption,
@@ -283,7 +284,7 @@ List<Widget> _principleSections(
     _ObjectHeader(
       kind: KnowledgeObjectKind.principle,
       title: p.statement,
-      status: p.status.wire,
+      status: principleStatusLabel(AppLocalizations.of(context), p.status),
       updatedAt: p.sync.updatedAt,
     ),
     const SizedBox(height: AppSpacing.s12),
@@ -328,7 +329,7 @@ List<Widget> _assumptionSections(
     _ObjectHeader(
       kind: KnowledgeObjectKind.assumption,
       title: a.statement,
-      status: a.status.wire,
+      status: assumptionStatusLabel(AppLocalizations.of(context), a.status),
       updatedAt: a.sync.updatedAt,
     ),
     const SizedBox(height: AppSpacing.s12),
@@ -394,7 +395,10 @@ List<Widget> _assumptionSections(
           for (final experiment in targetingExperiments)
             _RelatedObjectLink(
               label: experiment.hypothesis,
-              meta: experiment.status.wire,
+              meta: experimentStatusLabel(
+                AppLocalizations.of(context),
+                experiment.status,
+              ),
               icon: FLucideIcons.flaskConical,
               iconColor: context.appTheme.categorical.adapt(
                 KnowledgeTypeColors.experiment,
@@ -423,7 +427,7 @@ List<Widget> _routineSections(BuildContext context, KnowledgeRoutine r) {
     _ObjectHeader(
       kind: KnowledgeObjectKind.routine,
       title: r.statement,
-      status: r.status.wire,
+      status: routineStatusLabel(AppLocalizations.of(context), r.status),
       updatedAt: r.sync.updatedAt,
     ),
     const SizedBox(height: AppSpacing.s12),

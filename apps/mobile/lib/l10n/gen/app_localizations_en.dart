@@ -9885,6 +9885,89 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ingestRecorded => 'Recorded';
 
   @override
+  String ingestSummaryTitle(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries recorded',
+      one: '1 entry recorded',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ingestSummaryFailures(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items need review',
+      one: '1 item needs review',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ingestSummaryBody =>
+      'Entries are in your activity feed and already reflected in balances.';
+
+  @override
+  String get ingestSummaryViewActivity => 'View activity';
+
+  @override
+  String fireMilestoneReached(Object milestone) {
+    return 'You have crossed $milestone% of your FIRE goal';
+  }
+
+  @override
+  String get agentResultsLoadingTitle => 'Assistant is checking in';
+
+  @override
+  String get agentResultsLoadingBody => 'Fetching the latest agent results…';
+
+  @override
+  String get agentResultsErrorTitle => 'Agent results unavailable';
+
+  @override
+  String get agentResultsEmptyTitle => 'No agent results yet';
+
+  @override
+  String get agentResultsEmptyBody =>
+      'Run the agent to get a fresh readout of this domain.';
+
+  @override
+  String get agentResultsGenerateAction => 'Generate';
+
+  @override
+  String get knowledgeStatusActive => 'Active';
+
+  @override
+  String get knowledgeStatusPaused => 'Paused';
+
+  @override
+  String get knowledgeStatusRetired => 'Retired';
+
+  @override
+  String get knowledgeStatusWeakened => 'Weakened';
+
+  @override
+  String get knowledgeStatusFalsified => 'Falsified';
+
+  @override
+  String get knowledgeStatusPlanned => 'Planned';
+
+  @override
+  String get knowledgeStatusRunning => 'Running';
+
+  @override
+  String get knowledgeStatusDone => 'Done';
+
+  @override
+  String get knowledgeStatusAbandoned => 'Abandoned';
+
+  @override
+  String get knowledgeStatusArchived => 'Archived';
+
+  @override
   String ingestRecordedN(int count) {
     return 'Recorded $count';
   }
@@ -9964,6 +10047,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ingestPasteRequired => 'Paste statement text before parsing.';
+
+  @override
+  String get ingestEmptyPasteCta => 'Paste';
 
   @override
   String get ingestParseAction => 'Parse';

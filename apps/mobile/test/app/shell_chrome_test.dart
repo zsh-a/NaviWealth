@@ -6,7 +6,6 @@ import 'package:naviwealth/design_system/design_system.dart';
 void main() {
   testWidgets('shell tab spacing consumes bottom dock padding', (tester) async {
     late EdgeInsets contentPadding;
-    late double floatingActionBottom;
 
     await tester.pumpWidget(
       MediaQuery(
@@ -18,7 +17,6 @@ void main() {
               top: AppSpacing.s8,
               bottom: AppSpacing.s64,
             );
-            floatingActionBottom = shellTabFloatingActionBottom(context);
             return const SizedBox.shrink();
           },
         ),
@@ -34,6 +32,5 @@ void main() {
         AppSpacing.s64 + 84,
       ),
     );
-    expect(floatingActionBottom, AppSpacing.s16 + 84);
   });
 }

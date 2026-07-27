@@ -1,7 +1,9 @@
 part of '../ingest_review_page.dart';
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+  const _EmptyState({required this.onPaste});
+
+  final VoidCallback onPaste;
 
   @override
   Widget build(BuildContext context) {
@@ -11,6 +13,11 @@ class _EmptyState extends StatelessWidget {
       title: l10n.ingestEmptyTitle,
       message: l10n.ingestEmptyBody,
       iconSize: AppIconSizes.xxl,
+      action: FButton(
+        variant: FButtonVariant.outline,
+        onPress: onPaste,
+        child: Text(l10n.ingestEmptyPasteCta),
+      ),
     );
   }
 }

@@ -9,6 +9,7 @@ import '../../../../core/format/formatters.dart';
 import '../../../../core/shell/shell_chrome.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../data/repositories/journal_entry_providers.dart';
 import '../data/activity_feed_provider.dart';
 import 'activity_action_panel.dart';
 import 'activity_feed_filter_sheet.dart';
@@ -276,7 +277,7 @@ class _FeedFooterItem extends _FeedItem {
 
 /// One entry row with grouped-surface chrome that stitches adjacent rows
 /// of the same day into a continuous card without building the whole day.
-class _VirtualizedDayEntry extends StatelessWidget {
+class _VirtualizedDayEntry extends ConsumerWidget {
   const _VirtualizedDayEntry({
     required this.entry,
     required this.isFirstInDay,
@@ -291,8 +292,27 @@ class _VirtualizedDayEntry extends StatelessWidget {
   final Map<String, Account> accountsById;
   final AppFormatters formatter;
 
+  /// Swipe-to-delete on the highest-traffic list (audit §1): same confirm
+  /// dialog + soft-delete + undo toast as the detail page.
+  Future<bool> _confirmAndDelete(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: Text(l10n.activityEntryDeleteTitle),
+      body: Text(l10n.activityEntryDeleteBody),
+      cancelLabel: l10n.commonCancel,
+      confirmLabel: l10n.commonDelete,
+      destructive: true,
+    );
+    if (confirmed != true || !context.mounted) return false;
+    final repo = await ref.read(journalEntryRepositoryProvider.future);
+    await repo.softDelete(entry.entry.id);
+    ref.invalidate(activityFeedProvider);
+    return true;
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final surface = colors.brightness == Brightness.dark
         ? colors.card.withValues(alpha: AppOpacity.muted)
@@ -306,17 +326,24 @@ class _VirtualizedDayEntry extends StatelessWidget {
       padding: EdgeInsets.only(
         bottom: isLastInDay ? AppSpacing.s12 : AppSpacing.s0,
       ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(color: surface, borderRadius: radius),
-        child: Column(
-          children: [
-            ActivityFeedEntryRow(
-              entry: entry,
-              accountsById: accountsById,
-              formatter: formatter,
-            ),
-            if (!isLastInDay) const AppGroupedDivider(indent: AppSpacing.s56),
-          ],
+      child: AppDismissible(
+        itemKey: ValueKey('activity-entry-${entry.entry.id}'),
+        borderRadius: AppRadius.lg,
+        confirm: () => _confirmAndDelete(context, ref),
+        // The feed re-flows via provider invalidation; no row animation.
+        removeRow: false,
+        child: DecoratedBox(
+          decoration: BoxDecoration(color: surface, borderRadius: radius),
+          child: Column(
+            children: [
+              ActivityFeedEntryRow(
+                entry: entry,
+                accountsById: accountsById,
+                formatter: formatter,
+              ),
+              if (!isLastInDay) const AppGroupedDivider(indent: AppSpacing.s56),
+            ],
+          ),
         ),
       ),
     );

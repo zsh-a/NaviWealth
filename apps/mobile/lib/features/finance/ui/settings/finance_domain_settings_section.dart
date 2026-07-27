@@ -254,7 +254,7 @@ class _SettingsChoicePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FTappable(
+    return AppTappable(
       onPress: onTap,
       child: AnimatedContainer(
         duration: AppMotionPolicy.duration(context, Motion.medium),

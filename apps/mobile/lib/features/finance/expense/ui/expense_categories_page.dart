@@ -56,6 +56,12 @@ class _CategoryList extends ConsumerWidget {
       return AppEmptyState(
         icon: FLucideIcons.tags,
         title: l10n.expenseCategoriesEmpty,
+        action: FButton(
+          onPress: () =>
+              _showCategorySheet(context, ref, categories: categories),
+          prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+          child: Text(l10n.expenseCategoriesAdd),
+        ),
       );
     }
     return ListView.separated(
@@ -84,7 +90,7 @@ class _CategoryList extends ConsumerWidget {
               start: item.depth * AppSpacing.s16,
             ),
             child: SoftCard.flat(
-              child: FTappable(
+              child: AppTappable(
                 onPress: () => _showCategorySheet(
                   context,
                   ref,

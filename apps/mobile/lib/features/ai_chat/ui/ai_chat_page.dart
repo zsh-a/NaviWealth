@@ -211,7 +211,7 @@ class _ChatPane extends ConsumerWidget {
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 960),
+        constraints: const BoxConstraints(maxWidth: Breakpoints.readingColumn),
         child: Column(
           children: [
             Expanded(
@@ -282,7 +282,9 @@ class _EmptyConversation extends ConsumerWidget {
           padding: outerPadding,
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
+              constraints: const BoxConstraints(
+                maxWidth: Breakpoints.formColumn,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -369,7 +371,7 @@ class _SuggestionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FTappable(
+    return AppTappable(
       onPress: onTap,
       child: SoftCard.flat(
         padding: const EdgeInsets.symmetric(

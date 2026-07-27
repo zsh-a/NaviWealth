@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_theme_data.dart';
 import '../theme/app_theme_scope.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/color_palette.dart';
@@ -228,8 +229,7 @@ class _SoftCardState extends State<SoftCard> {
 
     final baseFill = widget.tinted
         ? _surfaceFill(
-            card: colors.card,
-            foreground: colors.foreground,
+            surfaces: context.appTheme.surfaces,
             primary: colors.primary,
             isDark: isDark,
           )
@@ -288,26 +288,27 @@ class _SoftCardState extends State<SoftCard> {
   }
 
   Color _surfaceFill({
-    required Color card,
-    required Color foreground,
+    required AppSurfaces surfaces,
     required Color primary,
     required bool isDark,
   }) {
     if (!isDark) {
-      // Cool canvas (#F3F6F7) + white modules. Flat dissolves; raised/hero
-      // lift with shadow + hairline rather than stacking greys.
+      // Cool canvas + white modules. Flat dissolves; raised/hero lift with
+      // shadow rather than stacking greys.
       return switch (widget.level) {
-        SoftCardLevel.flat => ColorPalette.surface,
-        SoftCardLevel.raised => ColorPalette.surface,
-        SoftCardLevel.hero => ColorPalette.surface,
+        SoftCardLevel.flat => surfaces.card,
+        SoftCardLevel.raised => surfaces.raised,
+        SoftCardLevel.hero => surfaces.hero,
       };
     }
+    // Resolved surfaces carry the surface-style preference (OLED pulls the
+    // whole ladder down) — never reach for palette constants here.
     return switch (widget.level) {
-      SoftCardLevel.flat => card,
-      SoftCardLevel.raised => ColorPalette.navyRaised,
+      SoftCardLevel.flat => surfaces.card,
+      SoftCardLevel.raised => surfaces.raised,
       SoftCardLevel.hero => Color.alphaBlend(
         primary.withValues(alpha: AppOpacity.faint),
-        ColorPalette.navyHero,
+        surfaces.hero,
       ),
     };
   }

@@ -138,7 +138,7 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
                   labelOf: (w) => '${w.days}d',
                   onChanged: (value) => _go(context, window: value),
                 );
-                if (constraints.maxWidth < 560) {
+                if (constraints.maxWidth < Breakpoints.dialogWide) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [

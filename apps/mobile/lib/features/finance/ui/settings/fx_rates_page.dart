@@ -83,7 +83,6 @@ class _RateList extends ConsumerWidget {
     final formatters = context.formatters(ref);
     // Most-recent first.
     final ordered = [...rates]..sort((a, b) => b.date.compareTo(a.date));
-    final status = context.appTheme.status;
     final colors = context.theme.colors;
     return ListView.separated(
       padding: const EdgeInsets.all(AppSpacing.s16),
@@ -91,19 +90,10 @@ class _RateList extends ConsumerWidget {
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s6),
       itemBuilder: (ctx, i) {
         final r = ordered[i];
-        return Dismissible(
-          key: ValueKey('${r.base}-${r.quote}-${r.date.toIso8601String()}'),
-          direction: DismissDirection.endToStart,
-          background: Container(
-            decoration: BoxDecoration(
-              color: status.danger.container,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            alignment: AlignmentDirectional.centerEnd,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
-            child: Icon(FLucideIcons.trash2, color: status.danger.fg),
-          ),
-          confirmDismiss: (_) async {
+        return AppDismissible(
+          itemKey: ValueKey('${r.base}-${r.quote}-${r.date.toIso8601String()}'),
+          borderRadius: AppRadius.sm,
+          confirm: () async {
             final confirmed = await showConfirmDialog(
               context: ctx,
               title: Text(l10n.fxRatesDeleteConfirmTitle),
@@ -120,7 +110,6 @@ class _RateList extends ConsumerWidget {
               quote: r.quote,
               date: r.date,
             );
-            AppInteraction.signal(AppInteractionIntent.destroy);
             return true;
           },
           child: SoftCard.raised(

@@ -24,6 +24,7 @@ import '../../../core/ai/agents/agent_artifact_routes.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/ui/agent_result_card.dart';
+import '../../../core/ai/agents/ui/agent_results_panel.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
@@ -222,7 +223,7 @@ class _DataSourcePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < 720) {
+        if (constraints.maxWidth < Breakpoints.contentThreeColumn) {
           return const Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -295,7 +296,7 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final compactAction = constraints.maxWidth < 360;
+        final compactAction = constraints.maxWidth < Breakpoints.compactContent;
         return SoftCard(
           level: SoftCardLevel.raised,
           padding: const EdgeInsets.all(AppSpacing.s12),
@@ -385,62 +386,5 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
       return l10n.healthSyncResult('${result.unchanged}', '${result.upserted}');
     }
     return result.errorMessage ?? l10n.healthSyncFailed;
-  }
-}
-
-class _HealthPanelHeader extends StatelessWidget {
-  const _HealthPanelHeader({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    this.trailing,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        AppIconTile(
-          icon: icon,
-          color: color,
-          size: 36,
-          iconSize: AppIconSizes.h18,
-          backgroundOpacity: AppOpacity.medium,
-          foregroundOpacity: 1,
-        ),
-        const SizedBox(width: AppSpacing.s10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: context.labelStyle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: AppSpacing.s2),
-              Text(
-                subtitle,
-                style: context.captionStyle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-        if (trailing != null) ...[
-          const SizedBox(width: AppSpacing.s8),
-          trailing!,
-        ],
-      ],
-    );
   }
 }

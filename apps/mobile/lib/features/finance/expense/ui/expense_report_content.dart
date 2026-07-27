@@ -261,7 +261,7 @@ class _SummaryCard extends StatelessWidget {
             LayoutBuilder(
               builder: (context, constraints) {
                 final stacked =
-                    constraints.maxWidth < 360 ||
+                    constraints.maxWidth < Breakpoints.compactContent ||
                     MediaQuery.textScalerOf(context).scale(1) > 1.3;
                 return AppMetricCluster(
                   axis: stacked ? Axis.vertical : Axis.horizontal,

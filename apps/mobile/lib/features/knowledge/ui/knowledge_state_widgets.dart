@@ -106,7 +106,7 @@ class KnowledgeSelectableRow extends StatelessWidget {
         semanticsLabel: label,
       ),
     };
-    return FTappable(
+    return AppTappable(
       onPress: enabled ? onPress : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/app_motion_policy.dart';
-import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/typography_tokens.dart';
+import 'app_glass.dart';
 import 'app_interaction.dart';
 
 const double kFloatingGlassNavBarHeight = AppSpacing.s64;
@@ -61,19 +61,15 @@ class FloatingGlassNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = FTheme.of(context);
-    final colors = theme.colors;
-    final isDark = colors.brightness == Brightness.dark;
-
-    // One restrained frosted layer. Tonal contrast and a hairline border do
-    // the hierarchy work; extra highlight gradients would make the dock read
-    // glossier than the rest of the app.
-    final glassColor = isDark
-        ? ColorPalette.navyGlass.withValues(alpha: AppOpacity.emphasis)
-        : ColorPalette.neutral0.withValues(alpha: AppOpacity.nearOpaque);
-    final borderColor = isDark
-        ? colors.border.withValues(alpha: AppOpacity.emphasis)
-        : ColorPalette.navySoftBorder.withValues(alpha: AppOpacity.strong);
+    // One restrained frosted layer (shared glass tone — see appGlassDecoration
+    // for the no-BackdropFilter rationale). Tonal contrast and a hairline
+    // border do the hierarchy work; extra highlight gradients would make the
+    // dock read glossier than the rest of the app.
+    final glass = appGlassDecoration(
+      context,
+      borderRadius: BorderRadius.circular(AppRadius.full),
+      boxShadow: AppShadow.nav,
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -83,16 +79,13 @@ class FloatingGlassNavBar extends StatelessWidget {
           child: Container(
             height: kFloatingGlassNavBarHeight,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.full),
-              border: Border.all(color: borderColor, width: AppStroke.hairline),
-              boxShadow: AppShadow.nav,
+              borderRadius: glass.borderRadius,
+              border: glass.border,
+              boxShadow: glass.boxShadow,
             ),
             clipBehavior: Clip.antiAlias,
-            // Keep the glass tone but avoid BackdropFilter. A live backdrop
-            // blur must resample the routed page while it changes and was a
-            // major raster cost during tab navigation.
             child: ColoredBox(
-              color: glassColor,
+              color: glass.color!,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.s8,

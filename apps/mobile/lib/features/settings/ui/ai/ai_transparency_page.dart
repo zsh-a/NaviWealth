@@ -25,6 +25,7 @@ import '../../../../core/ai/visual/visual.dart';
 import '../../../../core/ai/write/drift_undo_stack.dart';
 import '../../../../core/ai/write/persisted_undo_dispatcher.dart';
 import '../../../../core/ai/write/providers.dart';
+import '../../../../core/shell/domain_tabs_shell.dart';
 import '../../../../core/shell/settings_route_paths.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';

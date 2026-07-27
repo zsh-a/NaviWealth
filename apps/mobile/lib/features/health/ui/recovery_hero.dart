@@ -79,7 +79,9 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
                     if (score != null)
                       Text(
                         scoreText,
-                        style: TypographyTokens.numericTitle.copyWith(
+                        // Hero rule (§8.1): the recovery score is the
+                        // stage's display-scale number.
+                        style: TypographyTokens.numericDisplay.copyWith(
                           color: color,
                         ),
                       ),

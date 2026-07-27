@@ -249,7 +249,9 @@ class _DateTimeField extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final scaledBodySize = MediaQuery.textScalerOf(context).scale(16);
-        final stackFields = scaledBodySize >= 24 || constraints.maxWidth < 320;
+        final stackFields =
+            scaledBodySize >= 24 ||
+            constraints.maxWidth < Breakpoints.compactModule;
         if (stackFields) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

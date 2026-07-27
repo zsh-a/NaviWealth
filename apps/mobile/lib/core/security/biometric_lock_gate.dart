@@ -93,7 +93,9 @@ class _LockedSurface extends StatelessWidget {
       child: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360),
+            constraints: const BoxConstraints(
+              maxWidth: Breakpoints.compactContent,
+            ),
             child: AppEmptyState(
               icon: FLucideIcons.fingerprint,
               title: l10n.biometricUnlockTitle,

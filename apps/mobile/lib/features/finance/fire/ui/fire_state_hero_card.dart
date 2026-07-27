@@ -305,7 +305,7 @@ class _NextAction extends StatelessWidget {
     if (onPress == null) return content;
     return Semantics(
       button: true,
-      child: FTappable(
+      child: AppTappable(
         onPress: onPress,
         child: Padding(
           padding: const EdgeInsets.symmetric(

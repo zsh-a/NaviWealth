@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/agents/agent_artifact_routes.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
-import '../../../core/ai/agents/ui/agent_result_card.dart';
+import '../../../core/ai/agents/ui/agent_results_panel.dart';
 import '../../../core/lifeos/action_outcome.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
@@ -281,76 +281,18 @@ class _ExecutionReviewAgentPanelState
     final resultsAsync = ref.watch(
       execution_agent_providers.latestExecutionReviewResultsProvider,
     );
-    final l10n = AppLocalizations.of(context);
-    // Quiet while loading — no status shells on Review.
-    if (resultsAsync.isLoading && !resultsAsync.hasValue) {
-      return const SizedBox.shrink();
-    }
-    if (resultsAsync.hasError && !resultsAsync.hasValue) {
-      return _ExecutionReviewAgentPanelFrame(
-        child: AgentResultPanelStateCard(
-          icon: FLucideIcons.triangleAlert,
-          title: l10n.commonError,
-          message: userSafeErrorMessage(context, resultsAsync.error!),
-          error: true,
-          onRetry: () => ref.invalidate(
-            execution_agent_providers.latestExecutionReviewResultsProvider,
-          ),
-        ),
-      );
-    }
-    final bundle = resultsAsync.value;
-    if (bundle == null || bundle.visibleEntries.isEmpty) {
-      return _ExecutionReviewAgentPanelFrame(
-        child: SoftCard.flat(
-          padding: const EdgeInsets.all(AppSpacing.s12),
-          child: Row(
-            children: [
-              AppIconTile(
-                icon: FLucideIcons.sparkles,
-                color: context.theme.colors.primary,
-                size: 34,
-                iconSize: AppIconSizes.sm,
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.executionReviewGenerateTitle,
-                      style: context.rowTitleStyle,
-                    ),
-                    const SizedBox(height: AppSpacing.s4),
-                    Text(
-                      l10n.executionReviewGenerateBody,
-                      style: context.captionStyle,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              FButton(
-                onPress: _running ? null : _runReview,
-                child: _running
-                    ? const FCircularProgress(
-                        size: FCircularProgressSizeVariant.xs,
-                      )
-                    : Text(l10n.executionReviewGenerateAction),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-    return _ExecutionReviewAgentPanelFrame(
-      child: AgentResultsSection(
-        bundle: bundle,
-        metaLabelBuilder: (at) => _executionAgentMetaLabel(context, at),
-        onOpen: (artifact) =>
-            context.push(AgentArtifactRoutes.detail(artifact.id)),
-        onRetry: (_) => _retryExecutionReview(ref),
+    // Signal-first Review surface: quiet while loading, CTA when empty.
+    return AgentResultsPanel(
+      resultsAsync: resultsAsync,
+      showPlaceholderStates: false,
+      onReload: () => ref.invalidate(
+        execution_agent_providers.latestExecutionReviewResultsProvider,
       ),
+      onOpen: (artifact) =>
+          context.push(AgentArtifactRoutes.detail(artifact.id)),
+      onRunAgain: (_) => _retryExecutionReview(ref),
+      onGenerate: _running ? null : _runReview,
+      generating: _running,
     );
   }
 
@@ -372,37 +314,12 @@ class _ExecutionReviewAgentPanelState
   }
 }
 
-class _ExecutionReviewAgentPanelFrame extends StatelessWidget {
-  const _ExecutionReviewAgentPanelFrame({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        child,
-        const SizedBox(height: AppSpacing.s16),
-      ],
-    );
-  }
-}
-
 Future<void> _retryExecutionReview(WidgetRef ref) async {
   final controller = await ref.read(agentRunControllerProvider.future);
   await controller.runOnceById(kExecutionReviewAgentId);
   ref.invalidate(
     execution_agent_providers.latestExecutionReviewResultsProvider,
   );
-}
-
-String _executionAgentMetaLabel(BuildContext context, DateTime at) {
-  final l10n = AppLocalizations.of(context);
-  final local = at.toLocal();
-  final mm = local.month.toString().padLeft(2, '0');
-  final dd = local.day.toString().padLeft(2, '0');
-  return '${l10n.executionReviewTitle} · $mm-$dd';
 }
 
 String? _fallbackRelationLabel(String? id) {

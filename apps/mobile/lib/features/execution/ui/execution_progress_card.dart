@@ -167,7 +167,7 @@ class _ProgressRelationBadge extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
-      child: FTappable(onPress: onPress, child: badge),
+      child: AppTappable(onPress: onPress, child: badge),
     );
   }
 }

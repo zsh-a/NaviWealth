@@ -120,7 +120,9 @@ void main() {
       'lib/features/finance/home/ui/home_dashboard_body.dart',
     ).readAsStringSync();
     expect(ambientPanel, contains('class FinanceAgentResultsPanel'));
-    expect(ambientPanel, contains('AgentResultsSection('));
+    // The ambient surface now mounts the legislated cross-domain panel
+    // (blueprint §8.5), which renders AgentResultsSection internally.
+    expect(ambientPanel, contains('AgentResultsPanel('));
 
     final agentArtifactRail = File(
       'lib/features/finance/home/composition/finance_chat_rail_provider.dart',

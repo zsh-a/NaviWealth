@@ -1,10 +1,9 @@
 import 'dart:ui' as ui show lerpDouble;
 
 import 'package:flutter/widgets.dart';
-import 'package:forui/forui.dart';
 
-import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
+import 'app_glass.dart';
 
 /// Default scroll distance (logical px) from rest to fully collapsed stage.
 const double kAppCollapseExtent = 88;
@@ -229,20 +228,10 @@ class _StickyGlassChrome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final isDark = colors.brightness == Brightness.dark;
-    final glassColor = isDark
-        ? ColorPalette.navyGlass.withValues(alpha: AppOpacity.emphasis)
-        : ColorPalette.neutral0.withValues(alpha: AppOpacity.nearOpaque);
-    final borderColor = isDark
-        ? colors.border.withValues(alpha: AppOpacity.emphasis)
-        : ColorPalette.navySoftBorder.withValues(alpha: AppOpacity.strong);
-
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: glassColor,
+      decoration: appGlassDecoration(
+        context,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: borderColor, width: AppStroke.hairline),
         boxShadow: AppShadow.elevation2,
       ),
       child: Padding(padding: padding, child: child),

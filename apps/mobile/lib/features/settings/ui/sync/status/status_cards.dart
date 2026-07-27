@@ -117,7 +117,7 @@ class _StatGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, c) {
-        final wide = c.maxWidth >= 360;
+        final wide = c.maxWidth >= Breakpoints.compactContent;
         const gap = AppSpacing.s8;
         Widget tile(Widget w) => SizedBox(
           width: wide ? (c.maxWidth - gap * 2) / 3 : c.maxWidth,
@@ -392,7 +392,7 @@ class _StabilityCard extends StatelessWidget {
                         size: AppIconSizes.xs,
                       ),
                     );
-                    if (constraints.maxWidth < 420) {
+                    if (constraints.maxWidth < Breakpoints.formColumn) {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

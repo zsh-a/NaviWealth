@@ -27,7 +27,7 @@ class _ProcessingState extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s24),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
+          constraints: const BoxConstraints(maxWidth: Breakpoints.formColumn),
           child: _ProcessingPanel(state: state),
         ),
       ),

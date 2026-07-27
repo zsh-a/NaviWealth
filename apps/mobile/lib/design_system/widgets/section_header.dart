@@ -6,6 +6,12 @@ import '../tokens/typography_tokens.dart';
 
 /// Neutral section header used above grouped cards / lists.
 ///
+/// Two legal rhythms (audit §2 — six ad-hoc padding overrides collapsed):
+///
+/// * default — page-level sections that own their horizontal inset;
+/// * [SectionHeader.module] — sections inside an already-padded module
+///   column (Today briefs, tab bodies).
+///
 /// [titleColor] remains available for the rare semantic section that needs
 /// emphasis; interactive trailing actions should carry the accent by default.
 class SectionHeader extends StatelessWidget {
@@ -22,6 +28,26 @@ class SectionHeader extends StatelessWidget {
       AppSpacing.s10,
     ),
   });
+
+  /// Section header inside an already-padded module column.
+  const SectionHeader.module({
+    Key? key,
+    required String title,
+    String? subtitle,
+    Color? titleColor,
+    Widget? trailing,
+  }) : this(
+         key: key,
+         title: title,
+         subtitle: subtitle,
+         titleColor: titleColor,
+         trailing: trailing,
+         padding: const EdgeInsets.only(
+           left: AppSpacing.s4,
+           top: AppSpacing.s8,
+           bottom: AppSpacing.s10,
+         ),
+       );
 
   final String title;
   final String? subtitle;

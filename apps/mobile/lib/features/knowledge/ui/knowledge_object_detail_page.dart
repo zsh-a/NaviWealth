@@ -25,6 +25,7 @@ import '../domain/knowledge_models.dart';
 import '_object_writers.dart';
 import '_routine_writer.dart';
 import '_widgets.dart';
+import 'knowledge_status_labels.dart';
 
 part 'knowledge_object_detail_graph.dart';
 part 'knowledge_object_detail_links.dart';

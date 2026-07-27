@@ -238,7 +238,7 @@ class _CategoryRow extends StatelessWidget {
     final percent = total == Decimal.zero
         ? 0
         : (category.amount / total).toDouble();
-    return FTappable(
+    return AppTappable(
       onPress: onPress,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),

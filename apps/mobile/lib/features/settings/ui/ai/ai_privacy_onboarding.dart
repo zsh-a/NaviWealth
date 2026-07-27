@@ -161,7 +161,7 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
               onPress: () => Navigator.of(context).pop(),
               child: Text(l10n.aiPrivacyOnboardingConfirm),
             );
-            if (constraints.maxWidth < 360) {
+            if (constraints.maxWidth < Breakpoints.compactContent) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[

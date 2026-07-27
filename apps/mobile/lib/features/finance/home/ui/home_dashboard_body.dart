@@ -201,85 +201,22 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
     final resultsAsync = ref.watch(
       finance_agent_providers.latestFinanceAgentResultsProvider,
     );
-    final l10n = AppLocalizations.of(context);
-    if (resultsAsync.isLoading && !resultsAsync.hasValue) {
-      if (!showPlaceholderStates) return const SizedBox.shrink();
-      return _FinanceAgentPanelFrame(
-        child: AgentResultPanelStateCard(
-          icon: FLucideIcons.loaderCircle,
-          title: l10n.financeAgentResultsLoading,
-          message: l10n.financeAgentResultsLoadingBody,
-          loading: true,
-        ),
-      );
-    }
-    if (resultsAsync.hasError && !resultsAsync.hasValue) {
-      if (!showPlaceholderStates) return const SizedBox.shrink();
-      return _FinanceAgentPanelFrame(
-        child: AgentResultPanelStateCard(
-          icon: FLucideIcons.triangleAlert,
-          title: l10n.financeAgentResultsErrorTitle,
-          message: userSafeErrorMessage(context, resultsAsync.error!),
-          error: true,
-          onRetry: () => ref.invalidate(
-            finance_agent_providers.latestFinanceAgentResultsProvider,
-          ),
-        ),
-      );
-    }
-
-    final bundle = resultsAsync.value;
-    if (bundle == null || bundle.visibleEntries.isEmpty) {
-      if (!showPlaceholderStates) return const SizedBox.shrink();
-      return _FinanceAgentPanelFrame(
-        child: AgentResultPanelStateCard(
-          icon: FLucideIcons.sparkles,
-          title: l10n.financeAgentResultsEmptyTitle,
-          message: l10n.financeAgentResultsEmptyBody,
-        ),
-      );
-    }
-
-    return _FinanceAgentPanelFrame(
-      child: AgentResultsSection(
-        bundle: bundle,
-        metaLabelBuilder: (at) => _financeAgentMetaLabel(context, ref, at),
-        onOpen: (artifact) =>
-            context.push(AgentArtifactRoutes.detail(artifact.id)),
-        onRetry: (agentId) async {
-          final controller = await ref.read(agentRunControllerProvider.future);
-          await controller.runOnceById(agentId);
-          ref.invalidate(
-            finance_agent_providers.latestFinanceAgentResultsProvider,
-          );
-        },
+    return AgentResultsPanel(
+      resultsAsync: resultsAsync,
+      showPlaceholderStates: showPlaceholderStates,
+      bottomGap: AppSpacing.s20,
+      onReload: () => ref.invalidate(
+        finance_agent_providers.latestFinanceAgentResultsProvider,
       ),
+      onOpen: (artifact) =>
+          context.push(AgentArtifactRoutes.detail(artifact.id)),
+      onRunAgain: (agentId) async {
+        final controller = await ref.read(agentRunControllerProvider.future);
+        await controller.runOnceById(agentId);
+        ref.invalidate(
+          finance_agent_providers.latestFinanceAgentResultsProvider,
+        );
+      },
     );
   }
-}
-
-class _FinanceAgentPanelFrame extends StatelessWidget {
-  const _FinanceAgentPanelFrame({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        child,
-        const SizedBox(height: AppSpacing.s20),
-      ],
-    );
-  }
-}
-
-String _financeAgentMetaLabel(
-  BuildContext context,
-  WidgetRef ref,
-  DateTime at,
-) {
-  final formatters = context.formatters(ref);
-  return formatters.date(at.toLocal());
 }

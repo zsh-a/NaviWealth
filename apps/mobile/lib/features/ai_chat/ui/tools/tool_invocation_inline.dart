@@ -114,7 +114,7 @@ class _ToolInvocationInlineState extends State<ToolInvocationInline> {
           GestureDetector(
             onLongPress: () => _openDebugSheet(context),
             behavior: HitTestBehavior.opaque,
-            child: FTappable(
+            child: AppTappable(
               onPress: hasBody && !pending
                   ? () => setState(() => _expanded = !_expanded)
                   : null,

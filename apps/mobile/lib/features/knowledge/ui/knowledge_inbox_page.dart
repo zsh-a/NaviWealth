@@ -123,7 +123,7 @@ class _AiAssistantBar extends ConsumerWidget {
               child: Semantics(
                 button: true,
                 label: l10n.knowledgeAiPromptHint,
-                child: FTappable(
+                child: AppTappable(
                   onPress: () {
                     chrome.openAi(context, ref, prefill: '');
                   },

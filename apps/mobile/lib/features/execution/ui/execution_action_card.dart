@@ -233,7 +233,7 @@ class _ActionSourceBadge extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
-      child: FTappable(onPress: callback, child: badge),
+      child: AppTappable(onPress: callback, child: badge),
     );
   }
 }

@@ -36,7 +36,7 @@ class AiTransparencyIndicator extends ConsumerWidget {
       padding: const EdgeInsets.only(top: AppSpacing.s6),
       child: FTooltip(
         tipBuilder: (_, _) => Text(l10n.aiChatTransparencyOpenDetail),
-        child: FTappable(
+        child: AppTappable(
           onPress: () => pushFromAiSurface(
             context,
             SettingsRoutes.aiTransparencyDetail(messageId),

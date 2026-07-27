@@ -33,6 +33,11 @@ class FinancialInboxPage extends ConsumerWidget {
               icon: FLucideIcons.circleCheckBig,
               title: l10n.financialInboxEmptyTitle,
               message: l10n.financialInboxEmptyBody,
+              action: FButton(
+                variant: FButtonVariant.outline,
+                onPress: () => context.go(FinanceRoutes.activity),
+                child: Text(l10n.ingestSummaryViewActivity),
+              ),
             );
           }
           final important = rows

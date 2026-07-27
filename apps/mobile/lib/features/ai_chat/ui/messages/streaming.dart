@@ -264,7 +264,7 @@ class _ReasoningPanelState extends State<_ReasoningPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FTappable(
+        AppTappable(
           onPress: () => setState(() => _expanded = !_expanded),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),

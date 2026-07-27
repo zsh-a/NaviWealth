@@ -142,7 +142,9 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
                 left: _isError ? AppSpacing.s10 : AppSpacing.s0,
               ),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 720),
+                constraints: const BoxConstraints(
+                  maxWidth: Breakpoints.contentThreeColumn,
+                ),
                 child: RepaintBoundary(child: body),
               ),
             ),
@@ -432,7 +434,7 @@ class _ToolStepsGroup extends StatelessWidget {
             showAsPrimary: true,
           ),
         if (secondary.isNotEmpty) ...[
-          FTappable(
+          AppTappable(
             onPress: onToggle,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
@@ -583,7 +585,7 @@ class _FollowUpChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FTappable(
+    return AppTappable(
       onPress: onPressed,
       child: AnimatedContainer(
         duration: AppMotionPolicy.duration(context, Motion.fast),

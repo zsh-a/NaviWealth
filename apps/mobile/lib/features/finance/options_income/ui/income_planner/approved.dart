@@ -1,7 +1,9 @@
 part of 'income_planner_page.dart';
 
 class _ApprovedEmpty extends StatelessWidget {
-  const _ApprovedEmpty();
+  const _ApprovedEmpty({required this.onScan});
+
+  final VoidCallback onScan;
 
   @override
   Widget build(BuildContext context) {
@@ -11,6 +13,12 @@ class _ApprovedEmpty extends StatelessWidget {
       title: l10n.incomePlannerNoApprovedTitle,
       message: l10n.incomePlannerNoApprovedBody,
       compact: true,
+      action: FButton(
+        variant: FButtonVariant.outline,
+        onPress: onScan,
+        prefix: const Icon(FLucideIcons.scanSearch, size: AppIconSizes.sm),
+        child: Text(l10n.incomePlannerRefreshAction),
+      ),
     );
   }
 }

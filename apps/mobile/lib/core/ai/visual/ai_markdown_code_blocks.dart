@@ -269,7 +269,7 @@ class _CopyButtonState extends State<_CopyButton> {
     return Semantics(
       button: true,
       label: widget.tooltip,
-      child: FTappable(
+      child: AppTappable(
         onPress: () async {
           await Clipboard.setData(ClipboardData(text: widget.text));
           if (!mounted) return;

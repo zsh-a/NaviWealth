@@ -90,7 +90,7 @@ Future<void> showKnowledgeCreateSheet(
     subtitle: l10n.knowledgeNewChooserSubtitle,
     builder: (sheetContext) {
       final width = MediaQuery.sizeOf(sheetContext).width;
-      final cols = width >= 360 ? 2 : 1;
+      final cols = width >= Breakpoints.compactContent ? 2 : 1;
       const gap = AppSpacing.s8;
       final itemWidth = cols == 1
           ? width

@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 
@@ -40,7 +41,12 @@ class AppAtmosphere extends StatelessWidget {
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
     final period = this.period ?? atmospherePeriodForHour(DateTime.now().hour);
-    final wash = _wash(period: period, isDark: isDark, primary: colors.primary);
+    final wash = _wash(
+      period: period,
+      isDark: isDark,
+      primary: colors.primary,
+      cardSurface: context.appTheme.surfaces.card,
+    );
     final top = wash.$1.withValues(alpha: wash.$1.a * intensity.clamp(0, 1));
     final mid = wash.$2.withValues(alpha: wash.$2.a * intensity.clamp(0, 1));
 
@@ -95,16 +101,17 @@ class AppAtmosphere extends StatelessWidget {
     required AtmospherePeriod period,
     required bool isDark,
     required Color primary,
+    required Color cardSurface,
   }) {
     if (isDark) {
       return switch (period) {
         AtmospherePeriod.morning => (
           ColorPalette.cyanBrand800.withValues(alpha: AppOpacity.medium),
-          ColorPalette.navyGlass.withValues(alpha: AppOpacity.subtle),
+          cardSurface.withValues(alpha: AppOpacity.subtle),
         ),
         AtmospherePeriod.day => (
           primary.withValues(alpha: AppOpacity.subtle),
-          ColorPalette.navyGlass.withValues(alpha: AppOpacity.whisper),
+          cardSurface.withValues(alpha: AppOpacity.whisper),
         ),
         AtmospherePeriod.evening => (
           ColorPalette.amber950.withValues(alpha: AppOpacity.disabled),
@@ -112,7 +119,7 @@ class AppAtmosphere extends StatelessWidget {
         ),
         AtmospherePeriod.night => (
           ColorPalette.navy800.withValues(alpha: AppOpacity.highlight),
-          ColorPalette.navyGlass.withValues(alpha: AppOpacity.subtle),
+          cardSurface.withValues(alpha: AppOpacity.subtle),
         ),
       };
     }

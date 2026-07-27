@@ -9384,6 +9384,85 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ingestRecorded => '已记录';
 
   @override
+  String ingestSummaryTitle(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '已记录 $count 笔',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ingestSummaryFailures(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 笔待复核',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ingestSummaryBody => '条目已进入活动流,余额已同步更新。';
+
+  @override
+  String get ingestSummaryViewActivity => '查看活动';
+
+  @override
+  String fireMilestoneReached(Object milestone) {
+    return '已跨越 FIRE 目标的 $milestone%';
+  }
+
+  @override
+  String get agentResultsLoadingTitle => '助手正在整理';
+
+  @override
+  String get agentResultsLoadingBody => '正在获取最新的 Agent 结果…';
+
+  @override
+  String get agentResultsErrorTitle => 'Agent 结果暂不可用';
+
+  @override
+  String get agentResultsEmptyTitle => '还没有 Agent 结果';
+
+  @override
+  String get agentResultsEmptyBody => '运行一次 Agent,获取该领域的最新解读。';
+
+  @override
+  String get agentResultsGenerateAction => '生成';
+
+  @override
+  String get knowledgeStatusActive => '生效中';
+
+  @override
+  String get knowledgeStatusPaused => '已暂停';
+
+  @override
+  String get knowledgeStatusRetired => '已退役';
+
+  @override
+  String get knowledgeStatusWeakened => '已削弱';
+
+  @override
+  String get knowledgeStatusFalsified => '已证伪';
+
+  @override
+  String get knowledgeStatusPlanned => '已计划';
+
+  @override
+  String get knowledgeStatusRunning => '进行中';
+
+  @override
+  String get knowledgeStatusDone => '已完成';
+
+  @override
+  String get knowledgeStatusAbandoned => '已放弃';
+
+  @override
+  String get knowledgeStatusArchived => '已归档';
+
+  @override
   String ingestRecordedN(int count) {
     return '已记录 $count 笔';
   }
@@ -9457,6 +9536,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ingestPasteRequired => '请先粘贴账单文本再解析。';
+
+  @override
+  String get ingestEmptyPasteCta => '粘贴';
 
   @override
   String get ingestParseAction => '解析';

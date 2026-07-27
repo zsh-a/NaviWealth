@@ -118,7 +118,7 @@ class _OccDisclosureSheetState extends ConsumerState<_OccDisclosureSheet> {
             ),
           ),
           const SizedBox(height: AppSpacing.s16),
-          FTappable(
+          AppTappable(
             onPress: () => setState(() => _understood = !_understood),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),

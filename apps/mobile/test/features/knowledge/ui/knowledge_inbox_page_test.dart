@@ -54,6 +54,5 @@ void main() {
     await pumpInbox(tester);
 
     expect(find.byIcon(FLucideIcons.plus), findsOneWidget);
-    expect(find.byType(AppFloatingActionSurface), findsNothing);
   });
 }

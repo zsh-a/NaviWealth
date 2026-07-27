@@ -237,7 +237,7 @@ class _AccountRowState extends State<_AccountRow> {
                   child: Semantics(
                     button: true,
                     label: accountName,
-                    child: FTappable(
+                    child: AppTappable(
                       onPress: () => widget.onAccountPressed(context, account),
                       child: Row(
                         children: [
@@ -294,7 +294,7 @@ class _AccountRowState extends State<_AccountRow> {
                     padding: const EdgeInsetsDirectional.only(
                       start: AppSpacing.s4,
                     ),
-                    child: FTappable(
+                    child: AppTappable(
                       onPress: () => setState(() => _expanded = !_expanded),
                       child: SizedBox(
                         width: AppSpacing.s32,

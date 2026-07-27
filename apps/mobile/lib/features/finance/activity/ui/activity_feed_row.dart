@@ -60,7 +60,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
     final padH = compact ? AppSpacing.s14 : AppSpacing.s12;
     final padV = compact ? AppSpacing.s10 : AppSpacing.s12;
 
-    return FTappable(
+    return AppTappable(
       onPress: () => _openDetail(context),
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: padH, vertical: padV),
