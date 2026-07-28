@@ -12,7 +12,6 @@ import 'package:naviwealth/features/finance/investment/domain/models/portfolio_c
 import 'package:naviwealth/features/finance/investment/domain/strategy/portfolio_strategy.dart';
 import 'package:naviwealth/features/finance/investment/domain/strategy/portfolio_strategy_template.dart';
 import 'package:naviwealth/features/finance/rebalance/data/rebalance_providers.dart';
-import 'package:naviwealth/features/finance/rebalance/domain/allocation_schemes.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance_group.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/rebalance_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -55,16 +54,30 @@ void main() {
             .watchPortfolioTargets('u-test')
             .first;
         expect(universe.baseCurrency, 'USD');
-        expect(portfolioTargets.map((target) => target.targetWeightBps), [
-          5000,
-          5000,
-        ]);
+        expect(
+          portfolioTargets
+              .singleWhere((target) => target.portfolioId == income.id)
+              .targetWeightBps,
+          10000,
+        );
+        expect(
+          portfolioTargets
+              .singleWhere((target) => target.portfolioId == growth.id)
+              .targetWeightBps,
+          0,
+        );
         final incomeTarget = portfolioTargets.singleWhere(
           (target) => target.portfolioId == income.id,
         );
-        await repository.updatePortfolioTargetConfiguration(
-          target: incomeTarget,
-          targetWeightBps: 7000,
+        final growthTarget = portfolioTargets.singleWhere(
+          (target) => target.portfolioId == growth.id,
+        );
+        await repository.updatePortfolioPlan(
+          universeId: universe.id,
+          targets: [
+            incomeTarget.copyWith(targetWeightBps: 7000),
+            growthTarget.copyWith(targetWeightBps: 3000),
+          ],
         );
         final updatedTargets = await repository
             .watchPortfolioTargets('u-test')
@@ -125,6 +138,17 @@ void main() {
           growth.id,
         );
 
+        await repository.updatePortfolioPlan(
+          universeId: universe.id,
+          targets: [
+            updatedTargets
+                .singleWhere((target) => target.portfolioId == income.id)
+                .copyWith(targetWeightBps: 10000),
+            updatedTargets
+                .singleWhere((target) => target.portfolioId == growth.id)
+                .copyWith(targetWeightBps: 0),
+          ],
+        );
         await repository.remove(growth);
         expect(
           (await repository.watchActive('u-test').first).single.id,
@@ -176,10 +200,27 @@ void main() {
               .single;
       expect(persisted.kind, template.kind);
       expect(persisted.displayName('en'), 'Quality');
+      final updated = await repository.updateCustomStrategyTemplate(
+        template: persisted,
+        name: 'Quality growth',
+        languageCode: 'en',
+        defaultInternalTarget: const TargetAllocation(
+          weights: {AssetCategory.stock: 0.8, AssetCategory.cash: 0.2},
+        ),
+        defaultDriftBandBps: 400,
+        defaultTransferPolicy: GroupTransferPolicy.bidirectional,
+      );
+      expect(updated.displayName('en'), 'Quality growth');
+      expect(
+        (await repository.watchCustomStrategyTemplates('u-test').first)
+            .single
+            .defaultDriftBandBps,
+        400,
+      );
 
       final portfolio = await repository.create(
         name: 'Quality portfolio',
-        initialStrategy: persisted,
+        initialStrategy: updated,
         baseCurrency: 'USD',
         languageCode: 'en',
       );
@@ -188,9 +229,15 @@ void main() {
           (await repository.watchStrategies('u-test').first).single;
       expect(group.portfolioId, portfolio.id);
       expect(group.strategyKind, persisted.kind);
-      expect(group.driftBandBps, 300);
-      expect(group.transferPolicy, GroupTransferPolicy.inflowsOnly);
+      expect(group.driftBandBps, 400);
+      expect(group.transferPolicy, GroupTransferPolicy.bidirectional);
       expect(strategy.settings, isA<OpaquePortfolioStrategySettings>());
+
+      await repository.archiveCustomStrategyTemplate(updated);
+      expect(
+        await repository.watchCustomStrategyTemplates('u-test').first,
+        isEmpty,
+      );
     });
 
     test('adds strategy groups and keeps aggregate weights at 100%', () async {
@@ -208,29 +255,31 @@ void main() {
         languageCode: 'en',
       );
       final onlyGroup = (await repository.watchGroups('u-test').first).single;
-      await expectLater(
-        repository.updateGroupConfiguration(
-          group: onlyGroup.copyWith(name: 'Must not partially save'),
-          targetWeightBps: 5000,
-        ),
-        throwsStateError,
-      );
-      expect(
-        (await repository.watchGroups('u-test').first).single.name,
-        isNot('Must not partially save'),
-      );
 
       final dividend = await repository.addCapitalStrategy(
         portfolioId: portfolio.id,
         template: kDividendIncomeStrategyTemplate,
       );
       var groups = await repository.watchGroups('u-test').first;
-      expect(groups.map((group) => group.targetWeightBps), [5000, 5000]);
+      expect(
+        groups.singleWhere((group) => group.id == onlyGroup.id).targetWeightBps,
+        10000,
+      );
+      expect(
+        groups.singleWhere((group) => group.id == dividend.id).targetWeightBps,
+        0,
+      );
 
-      await repository.setGroupTargetWeight(
+      await repository.updateStrategyPlan(
         portfolioId: portfolio.id,
-        groupId: dividend.id,
-        targetWeightBps: 3000,
+        groups: [
+          groups
+              .singleWhere((group) => group.id == onlyGroup.id)
+              .copyWith(targetWeightBps: 7000),
+          groups
+              .singleWhere((group) => group.id == dividend.id)
+              .copyWith(targetWeightBps: 3000),
+        ],
       );
       groups = await repository.watchGroups('u-test').first;
       expect(
@@ -241,14 +290,35 @@ void main() {
         groups.singleWhere((group) => group.id == dividend.id).targetWeightBps,
         3000,
       );
+      await expectLater(
+        repository.updateStrategyPlan(
+          portfolioId: portfolio.id,
+          groups: [
+            groups
+                .singleWhere((group) => group.id == onlyGroup.id)
+                .copyWith(targetWeightBps: 5000),
+            groups
+                .singleWhere((group) => group.id == dividend.id)
+                .copyWith(targetWeightBps: 3000),
+          ],
+        ),
+        throwsArgumentError,
+      );
 
       final configured = groups.singleWhere((group) => group.id == dividend.id);
-      await repository.updateGroupConfiguration(
-        group: configured.copyWith(
-          name: 'Income target',
-          transferPolicy: GroupTransferPolicy.isolated,
-        ),
-        targetWeightBps: 5000,
+      await repository.updateGroup(configured.copyWith(name: 'Income target'));
+      await repository.updateStrategyPlan(
+        portfolioId: portfolio.id,
+        groups: [
+          groups
+              .singleWhere((group) => group.id == onlyGroup.id)
+              .copyWith(targetWeightBps: 5000),
+          configured.copyWith(
+            name: 'Income target',
+            targetWeightBps: 5000,
+            transferPolicy: GroupTransferPolicy.isolated,
+          ),
+        ],
       );
       groups = await repository.watchGroups('u-test').first;
       expect(groups.map((group) => group.targetWeightBps), [5000, 5000]);
@@ -313,7 +383,6 @@ void main() {
       );
       final group = (await repository.watchGroups('u-test').first).single;
       final controller = TargetAllocationController(
-        scheme: AllocationSchemePreset.balanced,
         group: group,
         repository: Future.value(repository),
       );
@@ -355,7 +424,6 @@ void main() {
         },
       );
       final firstController = TargetAllocationController(
-        scheme: AllocationSchemePreset.balanced,
         group: null,
         repository: Future.value(repository),
         preferences: preferences,
@@ -366,7 +434,6 @@ void main() {
       firstController.dispose();
 
       final restartedController = TargetAllocationController(
-        scheme: AllocationSchemePreset.custom,
         group: null,
         repository: Future.value(repository),
         preferences: preferences,

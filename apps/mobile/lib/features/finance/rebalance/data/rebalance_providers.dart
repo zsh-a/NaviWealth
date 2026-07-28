@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
-import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
@@ -33,9 +32,6 @@ import '../domain/rebalance_models.dart';
 import '../domain/rebalance_universe.dart';
 import '../domain/universe_rebalance_engine.dart';
 import 'rebalance_execution_store.dart';
-
-const _kWarningThresholdKey = 'naviwealth.rebalance.warning_threshold';
-const _kCriticalThresholdKey = 'naviwealth.rebalance.critical_threshold';
 
 final rebalanceExecutionStoreProvider = FutureProvider<RebalanceExecutionStore>(
   (ref) async {
@@ -134,50 +130,13 @@ final rebalanceOwnedSecuritiesProvider =
       );
     });
 
-/// The rebalance engine instance. Thresholds are user-configurable via
-/// [warningThresholdProvider] / [criticalThresholdProvider].
-final rebalanceEngineProvider = Provider<RebalanceEngine>((ref) {
-  final warning = ref.watch(warningThresholdProvider);
-  final critical = ref.watch(criticalThresholdProvider);
-  return RebalanceEngine(
-    warningThreshold: warning,
-    criticalThreshold: critical,
-  );
-});
-
-/// User-selected allocation scheme preset.
+/// Default engine for virtual all-holdings and unassigned scopes.
 ///
-/// **Derived** from [riskAppetiteProvider] — there is one user-facing
-/// "risk appetite" dial in Settings, and the rebalance preset is just
-/// its projection onto allocation space. Callers who want to *change*
-/// the selection must write to `riskAppetiteProvider`; this provider
-/// is read-only by design.
-final selectedSchemeProvider = Provider<AllocationSchemePreset>((ref) {
-  return schemePresetFor(ref.watch(riskAppetiteProvider));
-});
-
-/// Map [RiskAppetite] → [AllocationSchemePreset]. The two domains are
-/// 1:1 (with `moderate` ↔ `balanced` being the only name divergence)
-/// so the inverse can be done cheaply in either direction.
-AllocationSchemePreset schemePresetFor(RiskAppetite appetite) =>
-    switch (appetite) {
-      RiskAppetite.conservative => AllocationSchemePreset.conservative,
-      RiskAppetite.moderate => AllocationSchemePreset.balanced,
-      RiskAppetite.aggressive => AllocationSchemePreset.aggressive,
-      RiskAppetite.custom => AllocationSchemePreset.custom,
-    };
-
-/// Inverse of [schemePresetFor] — useful for UI surfaces that still
-/// think in terms of presets (e.g. the Rebalance page's
-/// `_SchemeSelector`) but ultimately want to write the canonical
-/// appetite.
-RiskAppetite appetiteForScheme(AllocationSchemePreset preset) =>
-    switch (preset) {
-      AllocationSchemePreset.conservative => RiskAppetite.conservative,
-      AllocationSchemePreset.balanced => RiskAppetite.moderate,
-      AllocationSchemePreset.aggressive => RiskAppetite.aggressive,
-      AllocationSchemePreset.custom => RiskAppetite.custom,
-    };
+/// Real strategy groups derive their thresholds from the group's own
+/// tolerance in [HierarchicalRebalanceEngine].
+final rebalanceEngineProvider = Provider<RebalanceEngine>(
+  (ref) => const RebalanceEngine(),
+);
 
 /// Explicit group selection within the selected real portfolio.
 final selectedPortfolioRebalanceGroupIdProvider = StateProvider<String?>(
@@ -223,14 +182,12 @@ final selectedPortfolioRebalanceGroupProvider =
 /// read-only scopes continue to use user-scoped preferences.
 final targetAllocationProvider =
     StateNotifierProvider<TargetAllocationController, TargetAllocation>((ref) {
-      final scheme = ref.read(selectedSchemeProvider);
       final selectedId = ref.watch(
         effectiveSelectedInvestmentPortfolioIdProvider,
       );
       final group = ref.watch(selectedPortfolioRebalanceGroupProvider).value;
       final ownerUserId = ref.watch(activeUserIdProvider);
       return TargetAllocationController(
-        scheme: scheme,
         group: group,
         repository: ref.watch(investmentPortfolioRepositoryProvider.future),
         preferences: ref.watch(sharedPreferencesProvider),
@@ -257,19 +214,16 @@ String? _virtualTargetAllocationStorageKey({
 
 class TargetAllocationController extends StateNotifier<TargetAllocation> {
   TargetAllocationController({
-    required AllocationSchemePreset scheme,
     required PortfolioRebalanceGroup? group,
     required Future<InvestmentPortfolioRepository> repository,
     SharedPreferences? preferences,
     String? virtualStorageKey,
-  }) : _scheme = scheme,
-       _group = group,
+  }) : _group = group,
        _repository = repository,
        _preferences = preferences,
        _virtualStorageKey = virtualStorageKey,
-       super(_load(group, scheme, preferences, virtualStorageKey));
+       super(_load(group, preferences, virtualStorageKey));
 
-  final AllocationSchemePreset _scheme;
   PortfolioRebalanceGroup? _group;
   final Future<InvestmentPortfolioRepository> _repository;
   final SharedPreferences? _preferences;
@@ -277,7 +231,6 @@ class TargetAllocationController extends StateNotifier<TargetAllocation> {
 
   static TargetAllocation _load(
     PortfolioRebalanceGroup? group,
-    AllocationSchemePreset scheme,
     SharedPreferences? preferences,
     String? virtualStorageKey,
   ) {
@@ -290,22 +243,15 @@ class TargetAllocationController extends StateNotifier<TargetAllocation> {
         final map = jsonDecode(raw) as Map<String, dynamic>;
         return TargetAllocation.fromJson(map);
       } catch (_) {
-        // Fall through to preset.
+        // Fall through to the neutral virtual-scope default.
       }
     }
-    return allocationScheme(scheme);
+    return allocationScheme(AllocationSchemePreset.balanced);
   }
 
   Future<void> update(TargetAllocation allocation) async {
     state = allocation;
     await _persist(allocation);
-  }
-
-  /// Reset to the current scheme's default weights.
-  Future<void> resetToScheme() async {
-    final preset = allocationScheme(_scheme);
-    state = preset;
-    await _persist(preset);
   }
 
   Future<void> _persist(TargetAllocation allocation) async {
@@ -324,43 +270,6 @@ class TargetAllocationController extends StateNotifier<TargetAllocation> {
     _group = await (await _repository).updateGroup(
       group.copyWith(internalTarget: allocation),
     );
-  }
-}
-
-/// Warning threshold (default 5%).
-final warningThresholdProvider =
-    StateNotifierProvider<ThresholdController, double>((ref) {
-      return ThresholdController(
-        ref.watch(sharedPreferencesProvider),
-        key: _kWarningThresholdKey,
-        defaultValue: 0.05,
-      );
-    });
-
-/// Critical threshold (default 10%).
-final criticalThresholdProvider =
-    StateNotifierProvider<ThresholdController, double>((ref) {
-      return ThresholdController(
-        ref.watch(sharedPreferencesProvider),
-        key: _kCriticalThresholdKey,
-        defaultValue: 0.10,
-      );
-    });
-
-class ThresholdController extends StateNotifier<double> {
-  ThresholdController(
-    this._prefs, {
-    required this.key,
-    required this.defaultValue,
-  }) : super(_prefs.getDouble(key) ?? defaultValue);
-
-  final SharedPreferences _prefs;
-  final String key;
-  final double defaultValue;
-
-  Future<void> set(double value) async {
-    state = value;
-    await _prefs.setDouble(key, value);
   }
 }
 

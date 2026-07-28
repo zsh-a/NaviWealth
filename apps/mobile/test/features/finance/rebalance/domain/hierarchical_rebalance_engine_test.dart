@@ -99,6 +99,33 @@ void main() {
     );
   });
 
+  test('uses each strategy allowed deviation for its internal plan', () {
+    final strategy = _group(
+      id: 'tolerant',
+      weightBps: 10000,
+      driftBandBps: 1000,
+      policy: GroupTransferPolicy.bidirectional,
+      target: const TargetAllocation(
+        weights: {AssetCategory.etf: 0.95, AssetCategory.cash: 0.05},
+      ),
+    );
+
+    final plan = engine.compute(
+      target: PortfolioRebalanceTarget(groups: [strategy]),
+      snapshotsByGroup: {
+        strategy.id: _snapshot(
+          amount: '1000',
+          category: AssetCategory.etf,
+          itemId: 'spy',
+        ),
+      },
+      baseCurrency: 'USD',
+    );
+
+    expect(plan.groups.single.internalPlan, isNotNull);
+    expect(plan.groups.single.internalPlan!.trades, isEmpty);
+  });
+
   test('rejects group targets that do not sum to 100%', () {
     final invalid = _group(
       id: 'invalid',
@@ -121,6 +148,7 @@ void main() {
 PortfolioRebalanceGroup _group({
   required String id,
   required int weightBps,
+  int driftBandBps = 500,
   required GroupTransferPolicy policy,
   required TargetAllocation target,
 }) {
@@ -130,7 +158,7 @@ PortfolioRebalanceGroup _group({
     name: id,
     strategyKind: PortfolioStrategyKind.indexCore,
     targetWeightBps: weightBps,
-    driftBandBps: 500,
+    driftBandBps: driftBandBps,
     transferPolicy: policy,
     internalTarget: target,
     createdAt: DateTime.utc(2026, 7, 20),

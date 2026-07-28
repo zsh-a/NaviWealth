@@ -2386,7 +2386,7 @@ abstract class AppLocalizations {
   /// No description provided for @rebalanceCapitalTreeHint.
   ///
   /// In en, this message translates to:
-  /// **'Portfolio transfers → strategy-group transfers → internal asset allocation'**
+  /// **'Portfolio transfers → strategy allocation → assets inside each strategy'**
   String get rebalanceCapitalTreeHint;
 
   /// No description provided for @rebalancePortfolioWeightPair.
@@ -2428,7 +2428,7 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioGroupsSectionTitle.
   ///
   /// In en, this message translates to:
-  /// **'Strategy groups'**
+  /// **'Strategies'**
   String get portfolioGroupsSectionTitle;
 
   /// No description provided for @portfolioAllocationSectionTitle.
@@ -2449,6 +2449,12 @@ abstract class AppLocalizations {
   /// **'Edit portfolio allocation'**
   String get portfolioAllocationEditTitle;
 
+  /// No description provided for @portfolioAllocationPlanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set every portfolio together. The total must equal 100%.'**
+  String get portfolioAllocationPlanSubtitle;
+
   /// No description provided for @portfolioAllocationTargetWeightLabel.
   ///
   /// In en, this message translates to:
@@ -2464,8 +2470,20 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioGroupAddAction.
   ///
   /// In en, this message translates to:
-  /// **'Add strategy group'**
+  /// **'Add strategy'**
   String get portfolioGroupAddAction;
+
+  /// No description provided for @portfolioStrategyAllocationEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit strategy allocation'**
+  String get portfolioStrategyAllocationEditTitle;
+
+  /// No description provided for @portfolioStrategyAllocationPlanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set every capital-owning strategy together. The total must equal 100%.'**
+  String get portfolioStrategyAllocationPlanSubtitle;
 
   /// No description provided for @portfolioOverlayAddAction.
   ///
@@ -2488,13 +2506,13 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioGroupEditTitle.
   ///
   /// In en, this message translates to:
-  /// **'Edit strategy group'**
+  /// **'Edit strategy'**
   String get portfolioGroupEditTitle;
 
   /// No description provided for @portfolioGroupNameLabel.
   ///
   /// In en, this message translates to:
-  /// **'Group name'**
+  /// **'Strategy name'**
   String get portfolioGroupNameLabel;
 
   /// No description provided for @portfolioGroupTargetWeightLabel.
@@ -2506,38 +2524,116 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioGroupSingleTargetHint.
   ///
   /// In en, this message translates to:
-  /// **'A portfolio with one strategy group must remain at 100%. Add another group before changing its target.'**
+  /// **'A portfolio with one strategy must remain at 100%. Add another strategy before changing its target.'**
   String get portfolioGroupSingleTargetHint;
 
   /// No description provided for @portfolioGroupDriftBandLabel.
   ///
   /// In en, this message translates to:
-  /// **'Drift band (%)'**
+  /// **'Allowed deviation (%)'**
   String get portfolioGroupDriftBandLabel;
 
   /// No description provided for @portfolioGroupTransferPolicyLabel.
   ///
   /// In en, this message translates to:
-  /// **'Capital transfer policy'**
+  /// **'Capital transfer rule'**
   String get portfolioGroupTransferPolicyLabel;
 
   /// No description provided for @portfolioGroupTransferBidirectional.
   ///
   /// In en, this message translates to:
-  /// **'Allow inflows and outflows'**
+  /// **'Free transfer'**
   String get portfolioGroupTransferBidirectional;
 
   /// No description provided for @portfolioGroupTransferInflowsOnly.
   ///
   /// In en, this message translates to:
-  /// **'Inflows only'**
+  /// **'Receive funds only'**
   String get portfolioGroupTransferInflowsOnly;
 
   /// No description provided for @portfolioGroupTransferIsolated.
   ///
   /// In en, this message translates to:
-  /// **'Isolated'**
+  /// **'Manage independently'**
   String get portfolioGroupTransferIsolated;
+
+  /// No description provided for @capitalAllocationTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total allocation'**
+  String get capitalAllocationTotalLabel;
+
+  /// No description provided for @capitalAllocationEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get capitalAllocationEditAction;
+
+  /// No description provided for @capitalAllocationTotalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocation is {total}%. Adjust all items until the total is 100%.'**
+  String capitalAllocationTotalHint(String total);
+
+  /// No description provided for @capitalAllocationAdvancedAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Funding rules and tolerance'**
+  String get capitalAllocationAdvancedAction;
+
+  /// No description provided for @capitalAllocationToleranceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed deviation (%)'**
+  String get capitalAllocationToleranceLabel;
+
+  /// No description provided for @capitalAllocationRuleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Funding rule'**
+  String get capitalAllocationRuleLabel;
+
+  /// No description provided for @capitalAllocationRuleBidirectional.
+  ///
+  /// In en, this message translates to:
+  /// **'Flexible transfers'**
+  String get capitalAllocationRuleBidirectional;
+
+  /// No description provided for @capitalAllocationRuleBidirectionalDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Capital may move into or out of this item.'**
+  String get capitalAllocationRuleBidirectionalDescription;
+
+  /// No description provided for @capitalAllocationRuleInflowsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive funds only'**
+  String get capitalAllocationRuleInflowsOnly;
+
+  /// No description provided for @capitalAllocationRuleInflowsOnlyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Capital may move in but existing capital will not be moved out.'**
+  String get capitalAllocationRuleInflowsOnlyDescription;
+
+  /// No description provided for @capitalAllocationRuleIsolated.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage independently'**
+  String get capitalAllocationRuleIsolated;
+
+  /// No description provided for @capitalAllocationRuleIsolatedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No automatic capital transfers in either direction.'**
+  String get capitalAllocationRuleIsolatedDescription;
+
+  /// No description provided for @capitalAllocationSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the allocation plan. Try again.'**
+  String get capitalAllocationSaveFailed;
 
   /// No description provided for @portfolioGroupWeightSummary.
   ///
@@ -2548,7 +2644,7 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioGroupNoTemplates.
   ///
   /// In en, this message translates to:
-  /// **'All built-in strategy groups are already configured.'**
+  /// **'All built-in strategy types are already configured.'**
   String get portfolioGroupNoTemplates;
 
   /// No description provided for @portfolioSaveFailed.
@@ -27541,6 +27637,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Live holdings and trades remain visible, but the shared sleeve settings and limits will be removed.'**
   String get incomeStrategyPlanDeleteBody;
+
+  /// No description provided for @rebalanceStagePortfolioTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'1 · Move capital between portfolios'**
+  String get rebalanceStagePortfolioTitle;
+
+  /// No description provided for @rebalanceStageStrategyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'2 · Allocate capital between strategies'**
+  String get rebalanceStageStrategyTitle;
+
+  /// No description provided for @rebalanceStageAssetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'3 · Rebalance assets inside the strategy'**
+  String get rebalanceStageAssetTitle;
+
+  /// No description provided for @rebalanceDecisionPolicyBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is outside its allowed deviation, but its transfer rule blocks the required movement.'**
+  String rebalanceDecisionPolicyBlocked(String name);
+
+  /// No description provided for @rebalanceDecisionNoCounterparty.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is outside its allowed deviation, but there is no eligible source or destination.'**
+  String rebalanceDecisionNoCounterparty(String name);
+
+  /// No description provided for @rebalanceCapitalBlockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs attention'**
+  String get rebalanceCapitalBlockedTitle;
+
+  /// No description provided for @rebalanceConfigurePlanAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit allocation plan'**
+  String get rebalanceConfigurePlanAction;
+
+  /// No description provided for @portfolioCapitalAssignmentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset assignment'**
+  String get portfolioCapitalAssignmentTitle;
+
+  /// No description provided for @portfolioCapitalAssignmentSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign positions and cash to exactly one portfolio and strategy.'**
+  String get portfolioCapitalAssignmentSubtitle;
+
+  /// No description provided for @portfolioCapitalAssignmentLotsAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign positions'**
+  String get portfolioCapitalAssignmentLotsAction;
+
+  /// No description provided for @portfolioCapitalAssignmentLotsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Place whole or partial tax lots under a strategy.'**
+  String get portfolioCapitalAssignmentLotsHint;
+
+  /// No description provided for @portfolioCapitalAssignmentCashAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign cash'**
+  String get portfolioCapitalAssignmentCashAction;
+
+  /// No description provided for @portfolioCapitalAssignmentCashHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reserve account cash for a strategy.'**
+  String get portfolioCapitalAssignmentCashHint;
+
+  /// No description provided for @portfolioStrategyLibraryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Strategy library'**
+  String get portfolioStrategyLibraryTitle;
+
+  /// No description provided for @portfolioStrategyLibrarySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in and custom strategy types used when adding a strategy.'**
+  String get portfolioStrategyLibrarySubtitle;
+
+  /// No description provided for @portfolioStrategyBuiltInBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in'**
+  String get portfolioStrategyBuiltInBadge;
+
+  /// No description provided for @portfolioStrategyCustomBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get portfolioStrategyCustomBadge;
+
+  /// No description provided for @portfolioStrategyEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get portfolioStrategyEditAction;
+
+  /// No description provided for @portfolioStrategyArchiveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get portfolioStrategyArchiveAction;
+
+  /// No description provided for @portfolioStrategyArchiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive this strategy type?'**
+  String get portfolioStrategyArchiveTitle;
+
+  /// No description provided for @portfolioStrategyArchiveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing strategies keep their current configuration. This type will no longer appear when adding a strategy.'**
+  String get portfolioStrategyArchiveBody;
+
+  /// No description provided for @portfolioStrategyArchiveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t archive this strategy type.'**
+  String get portfolioStrategyArchiveFailed;
+
+  /// No description provided for @rebalanceCapitalFirstHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete the capital movements above by updating asset assignment. Asset trades unlock after the portfolio and strategy balances are within tolerance.'**
+  String get rebalanceCapitalFirstHint;
+
+  /// No description provided for @rebalanceCapitalFirstAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve capital movements first'**
+  String get rebalanceCapitalFirstAction;
 }
 
 class _AppLocalizationsDelegate

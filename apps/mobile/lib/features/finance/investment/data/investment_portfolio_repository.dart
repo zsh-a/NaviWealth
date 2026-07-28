@@ -211,19 +211,11 @@ class InvestmentPortfolioRepository {
         stamp: stamp,
       );
       final existingTargets = await _activePortfolioTargetRows(universe.id);
-      final weights = _equalWeights(existingTargets.length + 1);
-      for (var index = 0; index < existingTargets.length; index++) {
-        await _writePortfolioTargetWeight(
-          existingTargets[index].id,
-          weights[index],
-          stamp,
-        );
-      }
       final portfolioTarget = PortfolioAllocationTarget(
         id: portfolioAllocationTargetId(universe.id, portfolioId),
         universeId: universe.id,
         portfolioId: portfolioId,
-        targetWeightBps: weights.last,
+        targetWeightBps: existingTargets.isEmpty ? 10000 : 0,
         driftBandBps: 500,
         transferPolicy: GroupTransferPolicy.bidirectional,
         sync: _syncFromStamp(stamp),
@@ -295,6 +287,71 @@ class InvestmentPortfolioRepository {
     return template;
   }
 
+  Future<PortfolioStrategyTemplate> updateCustomStrategyTemplate({
+    required PortfolioStrategyTemplate template,
+    required String name,
+    required String languageCode,
+    required TargetAllocation defaultInternalTarget,
+    required int defaultDriftBandBps,
+    required GroupTransferPolicy defaultTransferPolicy,
+  }) async {
+    if (template.isBuiltIn) {
+      throw ArgumentError.value(template, 'template', 'must be custom');
+    }
+    final normalizedName = name.trim();
+    if (normalizedName.isEmpty) {
+      throw ArgumentError.value(name, 'name', 'must not be empty');
+    }
+    final stamp = await _stamper.stamp();
+    final updated = template.copyWith(
+      localizedNames: {
+        ...template.localizedNames,
+        (languageCode.trim().isEmpty ? 'en' : languageCode.trim()):
+            normalizedName,
+      },
+      defaultInternalTarget: defaultInternalTarget,
+      defaultDriftBandBps: defaultDriftBandBps,
+      defaultTransferPolicy: defaultTransferPolicy,
+      sync: _syncFromStamp(stamp),
+    );
+    updated.validate();
+    await _db.transaction(() async {
+      await (_db.update(_db.portfolioStrategyTemplates)
+            ..where((table) => table.id.equals(template.kind.wire)))
+          .write(_strategyTemplateCompanion(updated));
+      await _outbox.enqueue(
+        table: strategyTemplatesTable,
+        rowId: updated.kind.wire,
+      );
+    });
+    return updated;
+  }
+
+  Future<void> archiveCustomStrategyTemplate(
+    PortfolioStrategyTemplate template,
+  ) async {
+    if (template.isBuiltIn) {
+      throw ArgumentError.value(template, 'template', 'must be custom');
+    }
+    final stamp = await _stamper.stamp();
+    await _db.transaction(() async {
+      await (_db.update(
+        _db.portfolioStrategyTemplates,
+      )..where((table) => table.id.equals(template.kind.wire))).write(
+        PortfolioStrategyTemplatesCompanion(
+          archived: const Value(true),
+          updatedAt: Value(stamp.now),
+          updatedByDevice: Value(stamp.deviceId),
+          hlc: Value(stamp.hlc),
+        ),
+      );
+      await _outbox.enqueue(
+        table: strategyTemplatesTable,
+        rowId: template.kind.wire,
+      );
+    });
+  }
+
   Future<InvestmentPortfolio> update(InvestmentPortfolio portfolio) async {
     final normalizedName = portfolio.name.trim();
     if (normalizedName.isEmpty) {
@@ -345,8 +402,8 @@ class InvestmentPortfolioRepository {
 
   /// Adds a capital-owning strategy module and its group atomically.
   ///
-  /// Existing group weights are redistributed evenly with the new group so
-  /// the aggregate remains valid at every observable database state.
+  /// New groups start at 0% so adding one never silently changes the existing
+  /// plan. The collection editor is the only place that redistributes capital.
   Future<PortfolioRebalanceGroup> addCapitalStrategy({
     required String portfolioId,
     required PortfolioStrategyTemplate template,
@@ -370,16 +427,12 @@ class InvestmentPortfolioRepository {
       if (existing.any((row) => row.id == groupId)) {
         throw StateError('${kind.wire} is already a capital strategy.');
       }
-      final weights = _equalWeights(existing.length + 1);
-      for (var index = 0; index < existing.length; index++) {
-        await _writeGroupWeight(existing[index].id, weights[index], stamp);
-      }
       created = PortfolioRebalanceGroup(
         id: groupId,
         portfolioId: portfolioId,
         name: _nullableTrimmed(groupName) ?? template.displayName('en'),
         strategyKind: kind,
-        targetWeightBps: weights.last,
+        targetWeightBps: existing.isEmpty ? 10000 : 0,
         driftBandBps: template.defaultDriftBandBps,
         transferPolicy: template.defaultTransferPolicy,
         internalTarget: template.defaultInternalTarget,
@@ -440,141 +493,93 @@ class InvestmentPortfolioRepository {
     return strategy;
   }
 
-  /// Updates one portfolio policy and preserves the universe's 100% total.
-  Future<PortfolioAllocationTarget> updatePortfolioTargetConfiguration({
-    required PortfolioAllocationTarget target,
-    required int targetWeightBps,
+  /// Replaces every active portfolio target in one universe atomically.
+  ///
+  /// Callers must submit the complete sibling set. This keeps redistribution
+  /// explicit in the UI instead of mutating hidden rows as a side effect of
+  /// editing one percentage.
+  Future<List<PortfolioAllocationTarget>> updatePortfolioPlan({
+    required String universeId,
+    required List<PortfolioAllocationTarget> targets,
   }) async {
-    final candidate = target.copyWith(targetWeightBps: targetWeightBps);
-    if (!candidate.isValid) {
-      throw ArgumentError.value(target, 'target', 'contains invalid values');
+    if (targets.isEmpty ||
+        targets.any(
+          (target) => target.universeId != universeId || !target.isValid,
+        ) ||
+        targets.fold<int>(0, (sum, target) => sum + target.targetWeightBps) !=
+            10000) {
+      throw ArgumentError.value(
+        targets,
+        'targets',
+        'must be the complete valid 100% universe allocation',
+      );
     }
     final stamp = await _stamper.stamp();
-    late final PortfolioAllocationTarget updated;
+    final updated = [
+      for (final target in targets)
+        target.copyWith(sync: _syncFromStamp(stamp)),
+    ];
     await _db.transaction(() async {
-      final rows = await _activePortfolioTargetRows(target.universeId);
-      final selectedIndex = rows.indexWhere((row) => row.id == target.id);
-      if (selectedIndex < 0) {
-        throw StateError(
-          'Portfolio target ${target.id} is not active in '
-          '${target.universeId}.',
-        );
+      final rows = await _activePortfolioTargetRows(universeId);
+      final activeIds = {for (final row in rows) row.id};
+      final submittedIds = {for (final target in targets) target.id};
+      if (activeIds.length != submittedIds.length ||
+          !activeIds.containsAll(submittedIds)) {
+        throw StateError('Portfolio plan changed while it was being edited.');
       }
-      if (rows.length == 1 && targetWeightBps != 10000) {
-        throw StateError(
-          'A single portfolio must own 100% of universe capital.',
-        );
-      }
-      final weights = _redistributeWeights(
-        currentWeights: [for (final row in rows) row.targetWeightBps],
-        selectedIndex: selectedIndex,
-        selectedWeight: targetWeightBps,
-      );
-      updated = candidate.copyWith(sync: _syncFromStamp(stamp));
-      for (var index = 0; index < rows.length; index++) {
-        if (index == selectedIndex) {
-          await (_db.update(_db.portfolioAllocationTargets)
-                ..where((table) => table.id.equals(target.id)))
-              .write(_portfolioTargetCompanion(updated));
-          await _outbox.enqueue(table: portfolioTargetsTable, rowId: target.id);
-        } else {
-          await _writePortfolioTargetWeight(
-            rows[index].id,
-            weights[index],
-            stamp,
-          );
-        }
+      for (final target in updated) {
+        await (_db.update(_db.portfolioAllocationTargets)
+              ..where((table) => table.id.equals(target.id)))
+            .write(_portfolioTargetCompanion(target));
+        await _outbox.enqueue(table: portfolioTargetsTable, rowId: target.id);
       }
     });
-    return updated;
+    return List.unmodifiable(updated);
   }
 
-  /// Changes one group target and proportionally redistributes the remainder.
-  Future<void> setGroupTargetWeight({
+  /// Replaces every active capital-owning strategy in one portfolio
+  /// atomically. The sibling weights must total exactly 100%.
+  Future<List<PortfolioRebalanceGroup>> updateStrategyPlan({
     required String portfolioId,
-    required String groupId,
-    required int targetWeightBps,
+    required List<PortfolioRebalanceGroup> groups,
   }) async {
-    if (targetWeightBps < 0 || targetWeightBps > 10000) {
+    if (groups.isEmpty ||
+        groups.any(
+          (group) =>
+              group.portfolioId != portfolioId ||
+              group.name.trim().isEmpty ||
+              !group.hasValidWeight ||
+              !group.internalTarget.isValid,
+        ) ||
+        groups.fold<int>(0, (sum, group) => sum + group.targetWeightBps) !=
+            10000) {
       throw ArgumentError.value(
-        targetWeightBps,
-        'targetWeightBps',
-        'must be between 0 and 10000',
+        groups,
+        'groups',
+        'must be the complete valid 100% strategy allocation',
       );
     }
     final stamp = await _stamper.stamp();
+    final updated = [
+      for (final group in groups)
+        group.copyWith(name: group.name.trim(), sync: _syncFromStamp(stamp)),
+    ];
     await _db.transaction(() async {
       final rows = await _activeGroupRows(portfolioId);
-      final selectedIndex = rows.indexWhere((row) => row.id == groupId);
-      if (selectedIndex < 0) {
-        throw StateError('Group $groupId is not active in $portfolioId.');
+      final activeIds = {for (final row in rows) row.id};
+      final submittedIds = {for (final group in groups) group.id};
+      if (activeIds.length != submittedIds.length ||
+          !activeIds.containsAll(submittedIds)) {
+        throw StateError('Strategy plan changed while it was being edited.');
       }
-      if (rows.length == 1 && targetWeightBps != 10000) {
-        throw StateError('A single group must own 100% of portfolio capital.');
-      }
-      final weights = _redistributeWeights(
-        currentWeights: [for (final row in rows) row.targetWeightBps],
-        selectedIndex: selectedIndex,
-        selectedWeight: targetWeightBps,
-      );
-      for (var index = 0; index < rows.length; index++) {
-        await _writeGroupWeight(rows[index].id, weights[index], stamp);
+      for (final group in updated) {
+        await (_db.update(_db.portfolioRebalanceGroups)
+              ..where((table) => table.id.equals(group.id)))
+            .write(_groupCompanion(group));
+        await _outbox.enqueue(table: groupsTable, rowId: group.id);
       }
     });
-  }
-
-  /// Updates one group and redistributes portfolio weights atomically.
-  ///
-  /// This is the UI-facing aggregate mutation: either the selected group's
-  /// configuration and every affected target weight are committed together,
-  /// or none of them are.
-  Future<PortfolioRebalanceGroup> updateGroupConfiguration({
-    required PortfolioRebalanceGroup group,
-    required int targetWeightBps,
-  }) async {
-    final normalizedName = group.name.trim();
-    final candidate = group.copyWith(
-      name: normalizedName,
-      targetWeightBps: targetWeightBps,
-    );
-    if (normalizedName.isEmpty ||
-        !candidate.hasValidWeight ||
-        !candidate.internalTarget.isValid) {
-      throw ArgumentError.value(group, 'group', 'contains invalid values');
-    }
-
-    final stamp = await _stamper.stamp();
-    late final PortfolioRebalanceGroup updated;
-    await _db.transaction(() async {
-      final rows = await _activeGroupRows(group.portfolioId);
-      final selectedIndex = rows.indexWhere((row) => row.id == group.id);
-      if (selectedIndex < 0) {
-        throw StateError(
-          'Group ${group.id} is not active in ${group.portfolioId}.',
-        );
-      }
-      if (rows.length == 1 && targetWeightBps != 10000) {
-        throw StateError('A single group must own 100% of portfolio capital.');
-      }
-
-      final weights = _redistributeWeights(
-        currentWeights: [for (final row in rows) row.targetWeightBps],
-        selectedIndex: selectedIndex,
-        selectedWeight: targetWeightBps,
-      );
-      updated = candidate.copyWith(sync: _syncFromStamp(stamp));
-      for (var index = 0; index < rows.length; index++) {
-        if (index == selectedIndex) {
-          await (_db.update(_db.portfolioRebalanceGroups)
-                ..where((table) => table.id.equals(group.id)))
-              .write(_groupCompanion(updated));
-          await _outbox.enqueue(table: groupsTable, rowId: group.id);
-        } else {
-          await _writeGroupWeight(rows[index].id, weights[index], stamp);
-        }
-      }
-    });
-    return updated;
+    return List.unmodifiable(updated);
   }
 
   Future<PortfolioRebalanceGroup> updateGroup(
@@ -594,7 +599,7 @@ class InvestmentPortfolioRepository {
       throw ArgumentError.value(
         group.targetWeightBps,
         'targetWeightBps',
-        'use setGroupTargetWeight to preserve the 100% aggregate',
+        'use updateStrategyPlan to save the complete 100% allocation',
       );
     }
     final stamp = await _stamper.stamp();
@@ -611,6 +616,34 @@ class InvestmentPortfolioRepository {
   Future<void> remove(InvestmentPortfolio portfolio) async {
     final stamp = await _stamper.stamp();
     await _db.transaction(() async {
+      final activeTargets =
+          await (_db.select(_db.portfolioAllocationTargets)..where(
+                (table) =>
+                    table.portfolioId.equals(portfolio.id) &
+                    table.deletedAt.isNull(),
+              ))
+              .get();
+      for (final target in activeTargets) {
+        final siblingCount =
+            await (_db.selectOnly(_db.portfolioAllocationTargets)
+                  ..addColumns([_db.portfolioAllocationTargets.id.count()])
+                  ..where(
+                    _db.portfolioAllocationTargets.universeId.equals(
+                          target.universeId,
+                        ) &
+                        _db.portfolioAllocationTargets.deletedAt.isNull(),
+                  ))
+                .map(
+                  (row) =>
+                      row.read(_db.portfolioAllocationTargets.id.count()) ?? 0,
+                )
+                .getSingle();
+        if (siblingCount > 1 && target.targetWeightBps != 0) {
+          throw StateError(
+            'Set the portfolio allocation to 0% before removing it.',
+          );
+        }
+      }
       final affectedUniverseIds = await _tombstonePortfolioTargets(
         portfolio.id,
         stamp,
@@ -619,8 +652,8 @@ class InvestmentPortfolioRepository {
       await _tombstoneStrategies(portfolio.id, stamp);
       await _tombstoneGroups(portfolio.id, stamp);
       await _tombstoneAssignments(portfolio.id, stamp);
-      for (final universeId in affectedUniverseIds) {
-        await _normalizePortfolioTargets(universeId, stamp);
+      if (affectedUniverseIds.isEmpty) {
+        throw StateError('Portfolio is not active in an allocation universe.');
       }
       await _outbox.enqueue(table: portfoliosTable, rowId: portfolio.id);
     });
@@ -892,23 +925,6 @@ class InvestmentPortfolioRepository {
         .get();
   }
 
-  Future<void> _normalizePortfolioTargets(
-    String universeId,
-    MutationStamp stamp,
-  ) async {
-    final rows = await _activePortfolioTargetRows(universeId);
-    if (rows.isEmpty) return;
-    final total = rows.fold<int>(0, (sum, row) => sum + row.targetWeightBps);
-    final weights = total == 0
-        ? _equalWeights(rows.length)
-        : _scaleWeightsToTotal([
-            for (final row in rows) row.targetWeightBps,
-          ], 10000);
-    for (var index = 0; index < rows.length; index++) {
-      await _writePortfolioTargetWeight(rows[index].id, weights[index], stamp);
-    }
-  }
-
   Future<List<PortfolioRebalanceGroupRow>> _activeGroupRows(
     String portfolioId,
   ) {
@@ -936,42 +952,6 @@ class InvestmentPortfolioRepository {
     if (row == null) {
       throw StateError('Group $groupId is not active in $portfolioId.');
     }
-  }
-
-  Future<void> _writeGroupWeight(
-    String groupId,
-    int targetWeightBps,
-    MutationStamp stamp,
-  ) async {
-    await (_db.update(
-      _db.portfolioRebalanceGroups,
-    )..where((table) => table.id.equals(groupId))).write(
-      PortfolioRebalanceGroupsCompanion(
-        targetWeightBps: Value(targetWeightBps),
-        updatedAt: Value(stamp.now),
-        updatedByDevice: Value(stamp.deviceId),
-        hlc: Value(stamp.hlc),
-      ),
-    );
-    await _outbox.enqueue(table: groupsTable, rowId: groupId);
-  }
-
-  Future<void> _writePortfolioTargetWeight(
-    String targetId,
-    int targetWeightBps,
-    MutationStamp stamp,
-  ) async {
-    await (_db.update(
-      _db.portfolioAllocationTargets,
-    )..where((table) => table.id.equals(targetId))).write(
-      PortfolioAllocationTargetsCompanion(
-        targetWeightBps: Value(targetWeightBps),
-        updatedAt: Value(stamp.now),
-        updatedByDevice: Value(stamp.deviceId),
-        hlc: Value(stamp.hlc),
-      ),
-    );
-    await _outbox.enqueue(table: portfolioTargetsTable, rowId: targetId);
   }
 
   InvestmentPortfoliosCompanion _portfolioCompanion(
@@ -1344,72 +1324,4 @@ SyncMeta _syncFromRow({
 String? _nullableTrimmed(String? value) {
   final trimmed = value?.trim();
   return trimmed == null || trimmed.isEmpty ? null : trimmed;
-}
-
-List<int> _equalWeights(int count) {
-  if (count <= 0) throw ArgumentError.value(count, 'count', 'must be positive');
-  final base = 10000 ~/ count;
-  var remainder = 10000 - base * count;
-  return List<int>.generate(count, (_) {
-    if (remainder == 0) return base;
-    remainder -= 1;
-    return base + 1;
-  }, growable: false);
-}
-
-List<int> _redistributeWeights({
-  required List<int> currentWeights,
-  required int selectedIndex,
-  required int selectedWeight,
-}) {
-  final result = List<int>.filled(currentWeights.length, 0);
-  result[selectedIndex] = selectedWeight;
-  final remainder = 10000 - selectedWeight;
-  final otherIndexes = [
-    for (var index = 0; index < currentWeights.length; index++)
-      if (index != selectedIndex) index,
-  ];
-  if (otherIndexes.isEmpty) return result;
-  final currentOtherTotal = otherIndexes.fold<int>(
-    0,
-    (sum, index) => sum + currentWeights[index],
-  );
-  if (currentOtherTotal == 0) {
-    final equal = _equalWeights(otherIndexes.length);
-    var assigned = 0;
-    for (var index = 0; index < otherIndexes.length; index++) {
-      final weight = index == otherIndexes.length - 1
-          ? remainder - assigned
-          : (equal[index] * remainder / 10000).floor();
-      result[otherIndexes[index]] = weight;
-      assigned += weight;
-    }
-    return result;
-  }
-  var assigned = 0;
-  for (var index = 0; index < otherIndexes.length; index++) {
-    final rowIndex = otherIndexes[index];
-    final weight = index == otherIndexes.length - 1
-        ? remainder - assigned
-        : (remainder * currentWeights[rowIndex] / currentOtherTotal).floor();
-    result[rowIndex] = weight;
-    assigned += weight;
-  }
-  return result;
-}
-
-List<int> _scaleWeightsToTotal(List<int> weights, int targetTotal) {
-  if (weights.isEmpty) return const [];
-  final currentTotal = weights.fold<int>(0, (sum, weight) => sum + weight);
-  if (currentTotal <= 0) return _equalWeights(weights.length);
-  final result = List<int>.filled(weights.length, 0);
-  var assigned = 0;
-  for (var index = 0; index < weights.length; index++) {
-    final scaled = index == weights.length - 1
-        ? targetTotal - assigned
-        : (targetTotal * weights[index] / currentTotal).floor();
-    result[index] = scaled;
-    assigned += scaled;
-  }
-  return result;
 }

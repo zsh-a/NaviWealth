@@ -1353,7 +1353,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rebalanceCapitalTreeHint =>
-      'Portfolio transfers → strategy-group transfers → internal asset allocation';
+      'Portfolio transfers → strategy allocation → assets inside each strategy';
 
   @override
   String rebalancePortfolioWeightPair(String actual, String target) {
@@ -1380,7 +1380,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get portfolioGroupsSectionTitle => 'Strategy groups';
+  String get portfolioGroupsSectionTitle => 'Strategies';
 
   @override
   String get portfolioAllocationSectionTitle => 'Portfolio capital allocation';
@@ -1394,6 +1394,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioAllocationEditTitle => 'Edit portfolio allocation';
 
   @override
+  String get portfolioAllocationPlanSubtitle =>
+      'Set every portfolio together. The total must equal 100%.';
+
+  @override
   String get portfolioAllocationTargetWeightLabel => 'Universe target (%)';
 
   @override
@@ -1401,7 +1405,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'A universe with one portfolio must remain at 100%. Add another portfolio before changing its target.';
 
   @override
-  String get portfolioGroupAddAction => 'Add strategy group';
+  String get portfolioGroupAddAction => 'Add strategy';
+
+  @override
+  String get portfolioStrategyAllocationEditTitle => 'Edit strategy allocation';
+
+  @override
+  String get portfolioStrategyAllocationPlanSubtitle =>
+      'Set every capital-owning strategy together. The total must equal 100%.';
 
   @override
   String get portfolioOverlayAddAction => 'Add overlay strategy';
@@ -1414,33 +1425,77 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioOverlayHostGroupLabel => 'Host strategy group';
 
   @override
-  String get portfolioGroupEditTitle => 'Edit strategy group';
+  String get portfolioGroupEditTitle => 'Edit strategy';
 
   @override
-  String get portfolioGroupNameLabel => 'Group name';
+  String get portfolioGroupNameLabel => 'Strategy name';
 
   @override
   String get portfolioGroupTargetWeightLabel => 'Portfolio target (%)';
 
   @override
   String get portfolioGroupSingleTargetHint =>
-      'A portfolio with one strategy group must remain at 100%. Add another group before changing its target.';
+      'A portfolio with one strategy must remain at 100%. Add another strategy before changing its target.';
 
   @override
-  String get portfolioGroupDriftBandLabel => 'Drift band (%)';
+  String get portfolioGroupDriftBandLabel => 'Allowed deviation (%)';
 
   @override
-  String get portfolioGroupTransferPolicyLabel => 'Capital transfer policy';
+  String get portfolioGroupTransferPolicyLabel => 'Capital transfer rule';
 
   @override
-  String get portfolioGroupTransferBidirectional =>
-      'Allow inflows and outflows';
+  String get portfolioGroupTransferBidirectional => 'Free transfer';
 
   @override
-  String get portfolioGroupTransferInflowsOnly => 'Inflows only';
+  String get portfolioGroupTransferInflowsOnly => 'Receive funds only';
 
   @override
-  String get portfolioGroupTransferIsolated => 'Isolated';
+  String get portfolioGroupTransferIsolated => 'Manage independently';
+
+  @override
+  String get capitalAllocationTotalLabel => 'Total allocation';
+
+  @override
+  String get capitalAllocationEditAction => 'Edit';
+
+  @override
+  String capitalAllocationTotalHint(String total) {
+    return 'Allocation is $total%. Adjust all items until the total is 100%.';
+  }
+
+  @override
+  String get capitalAllocationAdvancedAction => 'Funding rules and tolerance';
+
+  @override
+  String get capitalAllocationToleranceLabel => 'Allowed deviation (%)';
+
+  @override
+  String get capitalAllocationRuleLabel => 'Funding rule';
+
+  @override
+  String get capitalAllocationRuleBidirectional => 'Flexible transfers';
+
+  @override
+  String get capitalAllocationRuleBidirectionalDescription =>
+      'Capital may move into or out of this item.';
+
+  @override
+  String get capitalAllocationRuleInflowsOnly => 'Receive funds only';
+
+  @override
+  String get capitalAllocationRuleInflowsOnlyDescription =>
+      'Capital may move in but existing capital will not be moved out.';
+
+  @override
+  String get capitalAllocationRuleIsolated => 'Manage independently';
+
+  @override
+  String get capitalAllocationRuleIsolatedDescription =>
+      'No automatic capital transfers in either direction.';
+
+  @override
+  String get capitalAllocationSaveFailed =>
+      'Could not save the allocation plan. Try again.';
 
   @override
   String portfolioGroupWeightSummary(String weight, String policy) {
@@ -1449,7 +1504,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get portfolioGroupNoTemplates =>
-      'All built-in strategy groups are already configured.';
+      'All built-in strategy types are already configured.';
 
   @override
   String get portfolioSaveFailed => 'Couldn\'t save the portfolio. Try again.';
@@ -16363,4 +16418,90 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get incomeStrategyPlanDeleteBody =>
       'Live holdings and trades remain visible, but the shared sleeve settings and limits will be removed.';
+
+  @override
+  String get rebalanceStagePortfolioTitle =>
+      '1 · Move capital between portfolios';
+
+  @override
+  String get rebalanceStageStrategyTitle =>
+      '2 · Allocate capital between strategies';
+
+  @override
+  String get rebalanceStageAssetTitle =>
+      '3 · Rebalance assets inside the strategy';
+
+  @override
+  String rebalanceDecisionPolicyBlocked(String name) {
+    return '$name is outside its allowed deviation, but its transfer rule blocks the required movement.';
+  }
+
+  @override
+  String rebalanceDecisionNoCounterparty(String name) {
+    return '$name is outside its allowed deviation, but there is no eligible source or destination.';
+  }
+
+  @override
+  String get rebalanceCapitalBlockedTitle => 'Needs attention';
+
+  @override
+  String get rebalanceConfigurePlanAction => 'Edit allocation plan';
+
+  @override
+  String get portfolioCapitalAssignmentTitle => 'Asset assignment';
+
+  @override
+  String get portfolioCapitalAssignmentSubtitle =>
+      'Assign positions and cash to exactly one portfolio and strategy.';
+
+  @override
+  String get portfolioCapitalAssignmentLotsAction => 'Assign positions';
+
+  @override
+  String get portfolioCapitalAssignmentLotsHint =>
+      'Place whole or partial tax lots under a strategy.';
+
+  @override
+  String get portfolioCapitalAssignmentCashAction => 'Assign cash';
+
+  @override
+  String get portfolioCapitalAssignmentCashHint =>
+      'Reserve account cash for a strategy.';
+
+  @override
+  String get portfolioStrategyLibraryTitle => 'Strategy library';
+
+  @override
+  String get portfolioStrategyLibrarySubtitle =>
+      'Built-in and custom strategy types used when adding a strategy.';
+
+  @override
+  String get portfolioStrategyBuiltInBadge => 'Built-in';
+
+  @override
+  String get portfolioStrategyCustomBadge => 'Custom';
+
+  @override
+  String get portfolioStrategyEditAction => 'Edit';
+
+  @override
+  String get portfolioStrategyArchiveAction => 'Archive';
+
+  @override
+  String get portfolioStrategyArchiveTitle => 'Archive this strategy type?';
+
+  @override
+  String get portfolioStrategyArchiveBody =>
+      'Existing strategies keep their current configuration. This type will no longer appear when adding a strategy.';
+
+  @override
+  String get portfolioStrategyArchiveFailed =>
+      'Couldn\'t archive this strategy type.';
+
+  @override
+  String get rebalanceCapitalFirstHint =>
+      'Complete the capital movements above by updating asset assignment. Asset trades unlock after the portfolio and strategy balances are within tolerance.';
+
+  @override
+  String get rebalanceCapitalFirstAction => 'Resolve capital movements first';
 }

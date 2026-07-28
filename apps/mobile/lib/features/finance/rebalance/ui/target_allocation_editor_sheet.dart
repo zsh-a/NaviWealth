@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
-import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/home/ui/asset_category_visuals.dart';
 
@@ -30,18 +29,26 @@ const _editableCategories = <AssetCategory>[
 
 Future<void> showTargetAllocationEditorSheet({
   required BuildContext context,
+  TargetAllocation? initialAllocation,
+  Future<void> Function(TargetAllocation allocation)? onSave,
+  String? title,
+  String? subtitle,
 }) async {
   final l10n = AppLocalizations.of(context);
   final dirty = FormDirtyController();
   try {
     await showAppSheet<void>(
       context: context,
-      title: l10n.targetAllocationEditorTitle,
-      subtitle: l10n.targetAllocationEditorSubtitle,
+      title: title ?? l10n.targetAllocationEditorTitle,
+      subtitle: subtitle ?? l10n.targetAllocationEditorSubtitle,
       maxHeightFactor: 0.94,
       dirtyGuard: dirty,
       confirmDismiss: () => confirmDiscardIfDirty(context, dirty),
-      builder: (_) => TargetAllocationEditorSheet(dirty: dirty),
+      builder: (_) => TargetAllocationEditorSheet(
+        dirty: dirty,
+        initialAllocation: initialAllocation,
+        onSave: onSave,
+      ),
     );
   } finally {
     dirty.dispose();
@@ -49,9 +56,16 @@ Future<void> showTargetAllocationEditorSheet({
 }
 
 class TargetAllocationEditorSheet extends ConsumerStatefulWidget {
-  const TargetAllocationEditorSheet({super.key, required this.dirty});
+  const TargetAllocationEditorSheet({
+    super.key,
+    required this.dirty,
+    this.initialAllocation,
+    this.onSave,
+  });
 
   final FormDirtyController dirty;
+  final TargetAllocation? initialAllocation;
+  final Future<void> Function(TargetAllocation allocation)? onSave;
 
   @override
   ConsumerState<TargetAllocationEditorSheet> createState() =>
@@ -73,7 +87,8 @@ class _TargetAllocationEditorSheetState
   @override
   void initState() {
     super.initState();
-    final initial = ref.read(targetAllocationProvider);
+    final TargetAllocation initial =
+        widget.initialAllocation ?? ref.read(targetAllocationProvider);
     final optionById = {
       for (final option in _assetOptions(
         ref.read(dashboardSnapshotProvider).value,
@@ -292,11 +307,12 @@ class _TargetAllocationEditorSheetState
 
     widget.dirty.busy = true;
     try {
-      await ref.read(targetAllocationProvider.notifier).update(allocation);
-      // Saving a hand-edited set of weights is what makes the user
-      // "custom" — write through the SSOT so Settings + Rebalance both
-      // reflect the new state instantly.
-      await ref.read(riskAppetiteProvider.notifier).set(RiskAppetite.custom);
+      final save = widget.onSave;
+      if (save == null) {
+        await ref.read(targetAllocationProvider.notifier).update(allocation);
+      } else {
+        await save(allocation);
+      }
       widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
     } finally {

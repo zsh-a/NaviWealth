@@ -8,9 +8,6 @@ import 'package:naviwealth/features/finance/application/read_models/dashboard_pr
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/rebalance/data/rebalance_providers.dart';
-import 'package:naviwealth/features/finance/rebalance/domain/allocation_schemes.dart';
-import 'package:naviwealth/features/finance/rebalance/domain/rebalance_models.dart';
-import 'package:naviwealth/features/finance/rebalance/ui/rebalance_page.dart';
 import 'package:naviwealth/features/finance/rebalance/ui/target_allocation_editor_sheet.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,7 +19,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('saves a valid custom target and selects the custom preset', (
+  testWidgets('saves a valid target without changing global preferences', (
     tester,
   ) async {
     final prefs = await SharedPreferences.getInstance();
@@ -49,10 +46,6 @@ void main() {
     await _tapSave(tester);
     await tester.pumpAndSettle();
 
-    expect(
-      container.read(selectedSchemeProvider),
-      AllocationSchemePreset.custom,
-    );
     final saved = container.read(targetAllocationProvider);
     expect(saved[AssetCategory.stock], closeTo(0.34, 0.001));
     expect(saved[AssetCategory.etf], closeTo(0.16, 0.001));
@@ -89,10 +82,7 @@ void main() {
       find.text('Total must be 100%. Current total: 115.0%.'),
       findsOneWidget,
     );
-    expect(
-      container.read(selectedSchemeProvider),
-      AllocationSchemePreset.balanced,
-    );
+    expect(container.read(targetAllocationProvider).isValid, isTrue);
   });
 
   testWidgets('adds and saves a single asset target', (tester) async {
@@ -144,9 +134,7 @@ void main() {
     expect(saved.assetTargets['qqq']?.weight, 0.5);
   });
 
-  testWidgets('opens from Rebalance and guards dirty dismissals', (
-    tester,
-  ) async {
+  testWidgets('guards dirty dismissals', (tester) async {
     final prefs = await SharedPreferences.getInstance();
     final db = makeTestDatabase();
     addTearDown(db.close);
@@ -154,16 +142,24 @@ void main() {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         appDatabaseProvider.overrideWith((_) async => db),
-        rebalancePlanProvider.overrideWithValue(_plan),
       ],
     );
     addTearDown(container.dispose);
 
-    await _pumpWithContainer(tester, container, const RebalancePage());
+    await _pumpWithContainer(
+      tester,
+      container,
+      Builder(
+        builder: (context) => TextButton(
+          onPressed: () => showTargetAllocationEditorSheet(context: context),
+          child: const Text('Open editor'),
+        ),
+      ),
+    );
 
-    await tester.tap(find.text('Custom target'));
+    await tester.tap(find.text('Open editor'));
     await tester.pumpAndSettle();
-    expect(find.text('Custom target'), findsWidgets);
+    expect(find.text('Custom target'), findsOneWidget);
 
     await _enterAllocation(tester, AssetCategory.stock, '34');
     await tester.binding.handlePopRoute();
@@ -235,45 +231,6 @@ Future<void> _tapSave(WidgetTester tester) async {
   await tester.pumpAndSettle();
   await tester.tap(save);
 }
-
-final _plan = RebalancePlan(
-  target: allocationScheme(AllocationSchemePreset.balanced),
-  actualWeights: const {
-    AssetCategory.stock: 0.50,
-    AssetCategory.etf: 0.10,
-    AssetCategory.bondsAndFunds: 0.10,
-    AssetCategory.cash: 0.15,
-    AssetCategory.crypto: 0.05,
-    AssetCategory.realEstate: 0.05,
-    AssetCategory.vehicle: 0.05,
-  },
-  drifts: const [
-    Drift(
-      category: AssetCategory.stock,
-      actualWeight: 0.50,
-      targetWeight: 0.35,
-      severity: DriftSeverity.critical,
-    ),
-    Drift(
-      category: AssetCategory.bondsAndFunds,
-      actualWeight: 0.10,
-      targetWeight: 0.20,
-      severity: DriftSeverity.critical,
-    ),
-  ],
-  trades: [
-    SuggestedTrade(
-      category: AssetCategory.stock,
-      direction: TradeDirection.sell,
-      amount: Money(Decimal.parse('1500'), 'USD'),
-    ),
-  ],
-  estimatedFees: Money(Decimal.parse('1.5'), 'USD'),
-  estimatedTaxes: Money(Decimal.parse('1.5'), 'USD'),
-  driftBeforePct: 0.25,
-  driftAfterPct: 0.01,
-  totalAssets: Money(Decimal.parse('10000'), 'USD'),
-);
 
 DashboardSnapshot _snapshotWithQqq() {
   return DashboardSnapshot(

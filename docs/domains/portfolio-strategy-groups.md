@@ -18,10 +18,10 @@ Portfolio planning is one capital tree with seven independent concepts:
 5. `PortfolioStrategyConfig` is an instantiated, open, versioned module
    configuration. Capital-owning modules point to a group; overlays point to
    a group but have no target weight.
-6. `PortfolioRebalanceGroup` owns strategy-level capital policy. Its portfolio
-   weight is
-   stored in basis points, its internal allocation is normalized to 100%, and
-   its transfer policy is bidirectional, inflows-only, or isolated.
+6. `PortfolioRebalanceGroup` is the persisted capital owner behind a
+   user-visible strategy. Its portfolio weight is stored in basis points, its
+   internal allocation is normalized to 100%, and its transfer rule is free
+   transfer, receive-funds-only, or independently managed.
 7. `PortfolioCapitalAssignment` gives a whole/partial lot or a fixed cash
    amount exactly one capital-owning group. Strategy overlays reference a
    group and never own the same capital again.
@@ -35,7 +35,7 @@ This separation keeps goals as “why”, strategies as “how”, and groups as
   points.
 - Active portfolio target weights for a universe sum to exactly 10,000 basis
   points.
-- A single portfolio in a universe and a single group in a portfolio are
+- A single portfolio in a universe and a single strategy in a portfolio are
   fixed at 100%; partial targets become meaningful only after adding a peer.
 - Every group internal target sums to 100%.
 - A whole-lot assignment cannot overlap another assignment. Partial lot
@@ -45,8 +45,12 @@ This separation keeps goals as “why”, strategies as “how”, and groups as
 - Strategy payloads are decoded by their registered versioned codec. Unknown
   strategy identifiers remain lossless opaque values.
 
-The repository changes portfolio or group weights and all redistributed peers
-inside one transaction and emits one sync row per changed aggregate member.
+Portfolio and strategy shares are edited as complete sibling sets. The
+repository validates that the submitted set exactly matches the active set,
+totals 10,000 basis points, saves every member in one transaction, and emits
+one sync row per member. A newly added peer starts at 0% so creation never
+silently changes existing targets. A non-zero portfolio must be set to 0% in
+the complete plan before it can be removed.
 
 ## Rebalance flow
 
@@ -54,18 +58,22 @@ Rebalancing is deliberately three-stage:
 
 1. Sum each portfolio's exclusive capital, compare portfolio actual weights
    with universe targets, and recommend eligible inter-portfolio transfers.
-2. Sum the exclusive group snapshots, compare each group’s actual portfolio
-   weight with its target and drift band, then match eligible surplus groups
-   with eligible deficit groups. Transfer policies are applied at this stage.
-3. Run the existing allocation engine independently inside every group using
-   only that group’s securities and assigned cash.
+2. Sum the exclusive strategy snapshots, compare each strategy’s actual
+   portfolio weight with its target and allowed deviation, then match eligible
+   surplus strategies with eligible deficit strategies. Transfer rules are
+   applied at this stage.
+3. Run the allocation engine independently inside every strategy using only
+   that strategy’s securities and assigned cash. The strategy’s allowed
+   deviation is also the warning threshold for its internal asset plan.
 
 Both capital levels use the same policy-aware `CapitalAllocationEngine`.
-The result contains explicit portfolio and group decisions, blocked-policy
+The result contains explicit portfolio and strategy decisions, blocked-policy
 explanations, capital-transfer recommendations, and one executable internal
-plan per group.
-Execution continues to consume one internal plan at a time, so group
-coordination does not leak into trade-entry contracts.
+plan per strategy. Capital movements are resolved first through the asset
+assignment center, because an amount alone cannot safely choose which tax lots
+or cash accounts move. Internal trade execution remains locked while an
+eligible portfolio or strategy transfer is pending; it unlocks after
+assignments bring both capital levels inside tolerance.
 
 ## Persistence and sync
 

@@ -1299,7 +1299,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rebalancePortfoliosTitle => '组合资金配置';
 
   @override
-  String get rebalanceCapitalTreeHint => '组合间调拨 → 策略组间调拨 → 组内资产配置';
+  String get rebalanceCapitalTreeHint => '组合间资金调拨 → 组合内策略配置 → 策略内资产配置';
 
   @override
   String rebalancePortfolioWeightPair(String actual, String target) {
@@ -1326,7 +1326,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get portfolioGroupsSectionTitle => '策略分组';
+  String get portfolioGroupsSectionTitle => '策略';
 
   @override
   String get portfolioAllocationSectionTitle => '组合资金占比';
@@ -1340,6 +1340,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioAllocationEditTitle => '编辑组合资金配置';
 
   @override
+  String get portfolioAllocationPlanSubtitle => '统一设置所有组合的比例，合计必须为 100%。';
+
+  @override
   String get portfolioAllocationTargetWeightLabel => '全局目标占比（%）';
 
   @override
@@ -1347,7 +1350,14 @@ class AppLocalizationsZh extends AppLocalizations {
       '只有一个组合时必须保持 100%。请先添加另一个组合，再调整目标占比。';
 
   @override
-  String get portfolioGroupAddAction => '添加策略分组';
+  String get portfolioGroupAddAction => '添加策略';
+
+  @override
+  String get portfolioStrategyAllocationEditTitle => '编辑策略比例';
+
+  @override
+  String get portfolioStrategyAllocationPlanSubtitle =>
+      '统一设置所有资金策略的比例，合计必须为 100%。';
 
   @override
   String get portfolioOverlayAddAction => '添加叠加策略';
@@ -1359,32 +1369,75 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioOverlayHostGroupLabel => '挂载策略分组';
 
   @override
-  String get portfolioGroupEditTitle => '编辑策略分组';
+  String get portfolioGroupEditTitle => '编辑策略';
 
   @override
-  String get portfolioGroupNameLabel => '分组名称';
+  String get portfolioGroupNameLabel => '策略名称';
 
   @override
   String get portfolioGroupTargetWeightLabel => '组合目标占比（%）';
 
   @override
   String get portfolioGroupSingleTargetHint =>
-      '只有一个策略分组时必须保持 100%。请先添加另一个分组，再调整目标占比。';
+      '只有一个策略时必须保持 100%。请先添加另一个策略，再调整目标占比。';
 
   @override
-  String get portfolioGroupDriftBandLabel => '漂移带宽（%）';
+  String get portfolioGroupDriftBandLabel => '允许偏差（%）';
 
   @override
-  String get portfolioGroupTransferPolicyLabel => '资金调拨策略';
+  String get portfolioGroupTransferPolicyLabel => '资金调拨规则';
 
   @override
-  String get portfolioGroupTransferBidirectional => '允许流入与流出';
+  String get portfolioGroupTransferBidirectional => '自由调拨';
 
   @override
-  String get portfolioGroupTransferInflowsOnly => '只允许流入';
+  String get portfolioGroupTransferInflowsOnly => '只接收资金';
 
   @override
-  String get portfolioGroupTransferIsolated => '隔离';
+  String get portfolioGroupTransferIsolated => '独立管理';
+
+  @override
+  String get capitalAllocationTotalLabel => '配置合计';
+
+  @override
+  String get capitalAllocationEditAction => '编辑';
+
+  @override
+  String capitalAllocationTotalHint(String total) {
+    return '当前合计 $total%。请调整所有项目，使合计为 100%。';
+  }
+
+  @override
+  String get capitalAllocationAdvancedAction => '资金规则与允许偏差';
+
+  @override
+  String get capitalAllocationToleranceLabel => '允许偏差（%）';
+
+  @override
+  String get capitalAllocationRuleLabel => '资金规则';
+
+  @override
+  String get capitalAllocationRuleBidirectional => '自由调拨';
+
+  @override
+  String get capitalAllocationRuleBidirectionalDescription =>
+      '资金可以流入，也可以从这里调出。';
+
+  @override
+  String get capitalAllocationRuleInflowsOnly => '只接收资金';
+
+  @override
+  String get capitalAllocationRuleInflowsOnlyDescription =>
+      '允许补充资金，但不会自动调出现有资金。';
+
+  @override
+  String get capitalAllocationRuleIsolated => '独立管理';
+
+  @override
+  String get capitalAllocationRuleIsolatedDescription => '不参与任何方向的自动资金调拨。';
+
+  @override
+  String get capitalAllocationSaveFailed => '无法保存配置计划，请重试。';
 
   @override
   String portfolioGroupWeightSummary(String weight, String policy) {
@@ -1392,7 +1445,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get portfolioGroupNoTemplates => '所有内置策略分组均已配置。';
+  String get portfolioGroupNoTemplates => '所有内置策略类型均已配置。';
 
   @override
   String get portfolioSaveFailed => '组合保存失败，请重试。';
@@ -15553,4 +15606,81 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get incomeStrategyPlanDeleteBody => '实际持仓和交易仍会显示，但该标的的组合设置与限制将被移除。';
+
+  @override
+  String get rebalanceStagePortfolioTitle => '1 · 组间资金调拨';
+
+  @override
+  String get rebalanceStageStrategyTitle => '2 · 组内策略配置';
+
+  @override
+  String get rebalanceStageAssetTitle => '3 · 策略内资产配置';
+
+  @override
+  String rebalanceDecisionPolicyBlocked(String name) {
+    return '$name 已超出允许偏差，但当前调拨规则阻止了所需资金移动。';
+  }
+
+  @override
+  String rebalanceDecisionNoCounterparty(String name) {
+    return '$name 已超出允许偏差，但目前没有符合条件的资金来源或去向。';
+  }
+
+  @override
+  String get rebalanceCapitalBlockedTitle => '需要处理';
+
+  @override
+  String get rebalanceConfigurePlanAction => '修改配置方案';
+
+  @override
+  String get portfolioCapitalAssignmentTitle => '资产归属';
+
+  @override
+  String get portfolioCapitalAssignmentSubtitle => '将持仓与现金唯一归属到一个组合和策略。';
+
+  @override
+  String get portfolioCapitalAssignmentLotsAction => '分配持仓';
+
+  @override
+  String get portfolioCapitalAssignmentLotsHint => '按整笔或部分批次将持仓归属到策略。';
+
+  @override
+  String get portfolioCapitalAssignmentCashAction => '分配现金';
+
+  @override
+  String get portfolioCapitalAssignmentCashHint => '将账户现金预留给指定策略。';
+
+  @override
+  String get portfolioStrategyLibraryTitle => '策略类型库';
+
+  @override
+  String get portfolioStrategyLibrarySubtitle => '集中管理添加策略时可用的内置与自定义类型。';
+
+  @override
+  String get portfolioStrategyBuiltInBadge => '内置';
+
+  @override
+  String get portfolioStrategyCustomBadge => '自定义';
+
+  @override
+  String get portfolioStrategyEditAction => '编辑';
+
+  @override
+  String get portfolioStrategyArchiveAction => '归档';
+
+  @override
+  String get portfolioStrategyArchiveTitle => '归档此策略类型？';
+
+  @override
+  String get portfolioStrategyArchiveBody => '已有策略保留当前配置，但以后添加策略时将不再显示此类型。';
+
+  @override
+  String get portfolioStrategyArchiveFailed => '无法归档此策略类型。';
+
+  @override
+  String get rebalanceCapitalFirstHint =>
+      '请先通过资产归属完成上方资金调拨；组合与策略进入允许偏差后，才可执行策略内资产交易。';
+
+  @override
+  String get rebalanceCapitalFirstAction => '请先处理资金调拨';
 }

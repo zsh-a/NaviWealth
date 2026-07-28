@@ -141,6 +141,7 @@ class HierarchicalRebalanceEngine {
             internalPlan: _internalPlan(
               snapshotsByGroup[group.id],
               group.internalTarget,
+              group.driftBandBps,
             ),
           ),
       ]),
@@ -150,9 +151,17 @@ class HierarchicalRebalanceEngine {
   RebalancePlan? _internalPlan(
     DashboardSnapshot? snapshot,
     TargetAllocation target,
+    int driftBandBps,
   ) {
     if (snapshot == null || snapshot.isEmpty) return null;
-    return internalEngine.compute(snapshot: snapshot, target: target);
+    final warningThreshold = driftBandBps / 10000;
+    final groupEngine = RebalanceEngine(
+      warningThreshold: warningThreshold,
+      criticalThreshold: (warningThreshold * 2).clamp(0, 1),
+      estimatedFeeRate: internalEngine.estimatedFeeRate,
+      estimatedTaxRate: internalEngine.estimatedTaxRate,
+    );
+    return groupEngine.compute(snapshot: snapshot, target: target);
   }
 
   GroupCapitalDecision _groupDecision(CapitalAllocationDecision decision) {

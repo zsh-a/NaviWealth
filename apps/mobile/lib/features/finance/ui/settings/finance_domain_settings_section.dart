@@ -14,9 +14,6 @@ import '../../../../core/shell/settings_route_paths.dart';
 import '../../../../core/shell/settings_ui/inline_setting_row.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../rebalance/data/rebalance_providers.dart';
-import '../../rebalance/domain/allocation_schemes.dart';
-import '../../rebalance/ui/target_allocation_editor_sheet.dart';
 
 /// FinanceOS-specific settings shown inside LifeOS domain management.
 ///
@@ -37,10 +34,6 @@ class FinanceDomainSettingsSection extends ConsumerWidget {
           const _NumbersAndMoneyRows(),
           const AppGradientDivider(),
           const _RiskAppetiteRow(),
-          const AppGradientDivider(),
-          _TargetAllocationLink(
-            onTap: () => showTargetAllocationEditorSheet(context: context),
-          ),
           const AppGradientDivider(),
           _MonthlyExpenseLink(
             onTap: () => context.goNamed(SettingsRouteNames.monthlyExpense),
@@ -218,11 +211,6 @@ class _RiskAppetiteRow extends ConsumerWidget {
     }
     final priorThresholds = ref.read(concentrationThresholdsProvider);
     await ref.read(riskAppetiteProvider.notifier).set(next);
-    if (next != RiskAppetite.custom) {
-      await ref
-          .read(targetAllocationProvider.notifier)
-          .update(allocationScheme(schemePresetFor(next)));
-    }
     if (isAtAnyAppetitePreset(priorThresholds)) {
       await ref
           .read(concentrationThresholdsProvider.notifier)
@@ -308,33 +296,6 @@ List<_AppetiteOption> _appetiteOptionsForChips(AppLocalizations l10n) {
     ),
     _AppetiteOption(RiskAppetite.custom, l10n.settingsRiskAppetiteCustom),
   ];
-}
-
-class _TargetAllocationLink extends ConsumerWidget {
-  const _TargetAllocationLink({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final appetite = ref.watch(riskAppetiteProvider);
-    final subtitle = switch (appetite) {
-      RiskAppetite.conservative => l10n.settingsRiskAppetiteConservative,
-      RiskAppetite.moderate => l10n.settingsRiskAppetiteModerate,
-      RiskAppetite.aggressive => l10n.settingsRiskAppetiteAggressive,
-      RiskAppetite.custom => l10n.settingsRiskAppetiteCustom,
-    };
-    return InlineLinkRow(
-      icon: FLucideIcons.chartPie,
-      label: l10n.settingsTargetAllocationLabel,
-      subtitle: subtitle,
-      trailingBadge: appetite == RiskAppetite.custom
-          ? l10n.settingsBadgeCustom
-          : l10n.settingsBadgeAuto,
-      onTap: onTap,
-    );
-  }
 }
 
 class _RiskThresholdsLink extends ConsumerWidget {

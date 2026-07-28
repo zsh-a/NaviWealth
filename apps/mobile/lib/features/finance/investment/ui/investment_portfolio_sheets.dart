@@ -71,6 +71,42 @@ Future<void> showPortfolioCashAssignmentSheet(BuildContext context) {
   );
 }
 
+Future<void> showPortfolioCapitalAssignmentCenter(BuildContext context) {
+  final l10n = AppLocalizations.of(context);
+  return showAppSheet<void>(
+    context: context,
+    title: l10n.portfolioCapitalAssignmentTitle,
+    subtitle: l10n.portfolioCapitalAssignmentSubtitle,
+    builder: (_) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FButton(
+          onPress: () => showPortfolioLotAssignmentSheet(context),
+          prefix: const Icon(FLucideIcons.briefcaseBusiness),
+          child: Text(l10n.portfolioCapitalAssignmentLotsAction),
+        ),
+        const SizedBox(height: AppSpacing.s4),
+        Text(
+          l10n.portfolioCapitalAssignmentLotsHint,
+          style: context.captionStyle,
+        ),
+        const SizedBox(height: AppSpacing.s16),
+        FButton(
+          variant: FButtonVariant.outline,
+          onPress: () => showPortfolioCashAssignmentSheet(context),
+          prefix: const Icon(FLucideIcons.walletCards),
+          child: Text(l10n.portfolioCapitalAssignmentCashAction),
+        ),
+        const SizedBox(height: AppSpacing.s4),
+        Text(
+          l10n.portfolioCapitalAssignmentCashHint,
+          style: context.captionStyle,
+        ),
+      ],
+    ),
+  );
+}
+
 class _InvestmentPortfolioManager extends ConsumerWidget {
   const _InvestmentPortfolioManager();
 
@@ -91,17 +127,19 @@ class _InvestmentPortfolioManager extends ConsumerWidget {
         const SizedBox(height: AppSpacing.s8),
         FButton(
           variant: FButtonVariant.outline,
-          onPress: () => showCustomPortfolioStrategyTemplateSheet(context),
+          onPress: () => showPortfolioStrategyLibrarySheet(context),
           prefix: const Icon(FLucideIcons.settings2),
-          child: Text(l10n.portfolioStrategyCustomCreateAction),
+          child: Text(l10n.portfolioStrategyLibraryTitle),
         ),
         const SizedBox(height: AppSpacing.s8),
         FButton(
           variant: FButtonVariant.outline,
-          onPress: () => showPortfolioCashAssignmentSheet(context),
+          onPress: () => showPortfolioCapitalAssignmentCenter(context),
           prefix: const Icon(FLucideIcons.walletCards),
-          child: Text(l10n.portfolioAssignCashAction),
+          child: Text(l10n.portfolioCapitalAssignmentTitle),
         ),
+        const SizedBox(height: AppSpacing.s16),
+        const PortfolioAllocationPlanSection(),
         const SizedBox(height: AppSpacing.s16),
         switch ((portfolios, strategies, templates)) {
           (
@@ -400,8 +438,6 @@ class _InvestmentPortfolioFormState
               const SizedBox(height: AppSpacing.s16),
             ],
             if (widget.existing != null) ...[
-              const SizedBox(height: AppSpacing.s24),
-              PortfolioAllocationSection(portfolioId: widget.existing!.id),
               const SizedBox(height: AppSpacing.s24),
               PortfolioGroupsSection(portfolioId: widget.existing!.id),
               const SizedBox(height: AppSpacing.s24),
