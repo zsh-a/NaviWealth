@@ -42,7 +42,7 @@ mobile_file="apps/mobile/pubspec.yaml"
 sed -i.bak -E "s/^version: .*/version: ${semver}+1/" "$mobile_file"
 rm "${mobile_file}.bak"
 
-# Stamp backend version (only the first `version = ...` line).
+# Stamp backend manifest version (only the first `version = ...` line).
 backend_file="apps/backend/Cargo.toml"
 awk -v v="$semver" '
   BEGIN { done = 0 }
@@ -50,7 +50,20 @@ awk -v v="$semver" '
   { print }
 ' "$backend_file" > "${backend_file}.tmp" && mv "${backend_file}.tmp" "$backend_file"
 
-git add "$mobile_file" "$backend_file"
+# Keep the root package entry in Cargo.lock aligned with Cargo.toml. Without
+# this, the first Cargo command after a release dirties the tagged checkout.
+backend_lock_file="apps/backend/Cargo.lock"
+awk -v v="$semver" '
+  $0 == "name = \"naviwealth-backend\"" { in_backend = 1 }
+  in_backend && /^version = "/ {
+    sub(/"[^"]*"/, "\"" v "\"")
+    in_backend = 0
+  }
+  { print }
+' "$backend_lock_file" > "${backend_lock_file}.tmp" \
+  && mv "${backend_lock_file}.tmp" "$backend_lock_file"
+
+git add "$mobile_file" "$backend_file" "$backend_lock_file"
 
 if git diff --cached --quiet; then
   echo "error: version $semver is already set — nothing to commit." >&2
