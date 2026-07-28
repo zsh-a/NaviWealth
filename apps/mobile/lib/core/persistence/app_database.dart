@@ -90,6 +90,9 @@ final class AppDatabaseTransactionScope {
     Budgets,
     Goals,
     InvestmentPortfolios,
+    PortfolioStrategyTemplates,
+    RebalanceUniverses,
+    PortfolioAllocationTargets,
     PortfolioStrategyConfigs,
     PortfolioRebalanceGroups,
     PortfolioCapitalAssignments,
@@ -150,7 +153,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 66;
+  int get schemaVersion => 67;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -985,6 +988,35 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(portfolioStrategyConfigs);
         await m.createTable(portfolioRebalanceGroups);
         await m.createTable(portfolioCapitalAssignments);
+      }
+      // v66 -> v67: unified strategy catalog and three-level capital tree.
+      // Portfolio planning is intentionally reset instead of carrying a
+      // compatibility layer for the short-lived v66 model.
+      if (from < 67) {
+        await customStatement(
+          'DROP TABLE IF EXISTS portfolio_capital_assignments',
+        );
+        await customStatement(
+          'DROP TABLE IF EXISTS portfolio_strategy_configs',
+        );
+        await customStatement(
+          'DROP TABLE IF EXISTS portfolio_rebalance_groups',
+        );
+        await customStatement(
+          'DROP TABLE IF EXISTS portfolio_allocation_targets',
+        );
+        await customStatement('DROP TABLE IF EXISTS rebalance_universes');
+        await customStatement(
+          'DROP TABLE IF EXISTS portfolio_strategy_templates',
+        );
+        await customStatement('DROP TABLE IF EXISTS investment_portfolios');
+        await m.createTable(investmentPortfolios);
+        await m.createTable(portfolioStrategyTemplates);
+        await m.createTable(rebalanceUniverses);
+        await m.createTable(portfolioAllocationTargets);
+        await m.createTable(portfolioStrategyConfigs);
+        await m.createTable(portfolioRebalanceGroups);
+        await m.createTable(portfolioCapitalAssignments);
         await _createPortfolioIndexes(this);
       }
     },
@@ -998,6 +1030,21 @@ Future<void> _createPortfolioIndexes(AppDatabase db) async {
   await db.customStatement(
     'CREATE INDEX IF NOT EXISTS idx_investment_portfolios_owner_hlc '
     'ON investment_portfolios(owner_user_id, hlc)',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_portfolio_strategy_templates_owner '
+    'ON portfolio_strategy_templates(owner_user_id, created_at) '
+    'WHERE deleted_at IS NULL',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_rebalance_universes_owner '
+    'ON rebalance_universes(owner_user_id, created_at) '
+    'WHERE deleted_at IS NULL',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_portfolio_allocation_targets_universe '
+    'ON portfolio_allocation_targets(owner_user_id, universe_id) '
+    'WHERE deleted_at IS NULL',
   );
   await db.customStatement(
     'CREATE INDEX IF NOT EXISTS idx_portfolio_strategy_configs_owner '

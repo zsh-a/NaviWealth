@@ -6,12 +6,14 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance_group.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/rebalance_universe.dart';
 
 import '../domain/models/holding_snapshot.dart';
 import '../domain/models/investment_portfolio.dart';
 import '../domain/models/lot.dart';
 import '../domain/models/portfolio_capital_assignment.dart';
 import '../domain/strategy/portfolio_strategy.dart';
+import '../domain/strategy/portfolio_strategy_template.dart';
 import 'investment_portfolio_repository.dart';
 import 'providers.dart';
 
@@ -53,6 +55,81 @@ final portfolioStrategyConfigsProvider =
         investmentPortfolioRepositoryProvider.future,
       );
       yield* repository.watchStrategies(ownerUserId);
+    });
+
+final customPortfolioStrategyTemplatesProvider =
+    StreamProvider.autoDispose<List<PortfolioStrategyTemplate>>((ref) async* {
+      final ownerUserId = ref.watch(activeUserIdProvider);
+      if (ownerUserId == null) {
+        yield const [];
+        return;
+      }
+      final repository = await ref.watch(
+        investmentPortfolioRepositoryProvider.future,
+      );
+      yield* repository.watchCustomStrategyTemplates(ownerUserId);
+    });
+
+final portfolioStrategyTemplatesProvider =
+    Provider<AsyncValue<List<PortfolioStrategyTemplate>>>((ref) {
+      return ref
+          .watch(customPortfolioStrategyTemplatesProvider)
+          .whenData(
+            (custom) => List.unmodifiable([
+              ...kBuiltInPortfolioStrategyTemplates,
+              ...custom,
+            ]),
+          );
+    });
+
+final rebalanceUniversesProvider =
+    StreamProvider.autoDispose<List<RebalanceUniverse>>((ref) async* {
+      final ownerUserId = ref.watch(activeUserIdProvider);
+      if (ownerUserId == null) {
+        yield const [];
+        return;
+      }
+      final repository = await ref.watch(
+        investmentPortfolioRepositoryProvider.future,
+      );
+      yield* repository.watchUniverses(ownerUserId);
+    });
+
+final portfolioAllocationTargetsProvider =
+    StreamProvider.autoDispose<List<PortfolioAllocationTarget>>((ref) async* {
+      final ownerUserId = ref.watch(activeUserIdProvider);
+      if (ownerUserId == null) {
+        yield const [];
+        return;
+      }
+      final repository = await ref.watch(
+        investmentPortfolioRepositoryProvider.future,
+      );
+      yield* repository.watchPortfolioTargets(ownerUserId);
+    });
+
+final activeRebalanceUniverseProvider =
+    Provider<AsyncValue<RebalanceUniverse?>>((ref) {
+      return ref
+          .watch(rebalanceUniversesProvider)
+          .whenData((universes) => universes.firstOrNull);
+    });
+
+final activeUniversePortfolioTargetsProvider =
+    Provider<AsyncValue<List<PortfolioAllocationTarget>>>((ref) {
+      final universe = ref.watch(activeRebalanceUniverseProvider);
+      final targets = ref.watch(portfolioAllocationTargetsProvider);
+      return universe.when(
+        data: (value) => targets.whenData(
+          (items) => value == null
+              ? const []
+              : items
+                    .where((target) => target.universeId == value.id)
+                    .toList(growable: false),
+        ),
+        loading: () => const AsyncLoading(),
+        error: AsyncError.new,
+      );
     });
 
 final portfolioRebalanceGroupsProvider =
@@ -184,6 +261,28 @@ final scopedPortfolioHoldingsProvider =
         assignments: assignments,
         selectedPortfolioId: selectedId,
       );
+    });
+
+final allPortfolioScopedHoldingsProvider =
+    FutureProvider.autoDispose<Map<String, ScopedPortfolioHoldings>>((
+      ref,
+    ) async {
+      final snapshots = await ref.watch(holdingsSnapshotProvider.future);
+      final holdingService = await ref.watch(holdingServiceProvider.future);
+      final assignments = await ref.watch(
+        portfolioCapitalAssignmentsProvider.future,
+      );
+      final portfolios = await ref.watch(investmentPortfoliosProvider.future);
+      final lots = await holdingService.lotsAt(DateTime.now().toUtc());
+      return Map.unmodifiable({
+        for (final portfolio in portfolios)
+          portfolio.id: scopePortfolioHoldings(
+            snapshots: snapshots,
+            lots: lots,
+            assignments: assignments,
+            selectedPortfolioId: portfolio.id,
+          ),
+      });
     });
 
 final allInvestmentLotsProvider = FutureProvider.autoDispose<List<Lot>>((

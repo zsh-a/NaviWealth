@@ -74,6 +74,18 @@ kSyncTableRegistrations = <SyncTableRegistration>[
     domainPrefix: kFinanceDomainPrefix,
   ),
   SyncTableRegistration(
+    'portfolio_strategy_templates',
+    domainPrefix: kFinanceDomainPrefix,
+  ),
+  SyncTableRegistration(
+    'rebalance_universes',
+    domainPrefix: kFinanceDomainPrefix,
+  ),
+  SyncTableRegistration(
+    'portfolio_allocation_targets',
+    domainPrefix: kFinanceDomainPrefix,
+  ),
+  SyncTableRegistration(
     'portfolio_strategy_configs',
     domainPrefix: kFinanceDomainPrefix,
   ),

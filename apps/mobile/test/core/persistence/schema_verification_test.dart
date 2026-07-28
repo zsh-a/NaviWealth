@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 66', () {
-      expect(db.schemaVersion, 66);
+    test('is 67', () {
+      expect(db.schemaVersion, 67);
     });
   });
 
@@ -80,6 +80,9 @@ void main() {
   group('Investment portfolio tables exist', () {
     for (final table in const [
       'investment_portfolios',
+      'portfolio_strategy_templates',
+      'rebalance_universes',
+      'portfolio_allocation_targets',
       'portfolio_strategy_configs',
       'portfolio_rebalance_groups',
       'portfolio_capital_assignments',

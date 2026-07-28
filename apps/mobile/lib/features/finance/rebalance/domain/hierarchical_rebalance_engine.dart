@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 
+import 'capital_allocation_engine.dart';
 import 'portfolio_rebalance_group.dart';
 import 'rebalance_engine.dart';
 import 'rebalance_models.dart';
@@ -87,9 +88,13 @@ class PortfolioRebalancePlan {
 }
 
 class HierarchicalRebalanceEngine {
-  const HierarchicalRebalanceEngine({required this.internalEngine});
+  const HierarchicalRebalanceEngine({
+    required this.internalEngine,
+    this.capitalEngine = const CapitalAllocationEngine(),
+  });
 
   final RebalanceEngine internalEngine;
+  final CapitalAllocationEngine capitalEngine;
 
   PortfolioRebalancePlan compute({
     required PortfolioRebalanceTarget target,
@@ -101,40 +106,41 @@ class HierarchicalRebalanceEngine {
         'Portfolio rebalance group weights must sum to 10000 basis points.',
       );
     }
-    final total = target.groups.fold<Decimal>(
-      Decimal.zero,
-      (sum, group) =>
-          sum +
-          (snapshotsByGroup[group.id]?.totalAssets.amount ?? Decimal.zero),
+    final capitalPlan = capitalEngine.compute(
+      baseCurrency: baseCurrency,
+      nodes: [
+        for (final group in target.groups)
+          CapitalAllocationNode(
+            id: group.id,
+            name: group.name,
+            targetWeightBps: group.targetWeightBps,
+            driftBandBps: group.driftBandBps,
+            transferPolicy: group.transferPolicy,
+            actualAmount:
+                snapshotsByGroup[group.id]?.totalAssets.amount ?? Decimal.zero,
+          ),
+      ],
     );
-    final totalAssets = Money(total, baseCurrency);
-    final states = [
-      for (final group in target.groups)
-        _GroupState(
-          group: group,
-          actual:
-              snapshotsByGroup[group.id]?.totalAssets.amount ?? Decimal.zero,
-          portfolioTotal: total,
-          target:
-              (total *
-                      Decimal.fromInt(group.targetWeightBps) /
-                      Decimal.fromInt(10000))
-                  .toDecimal(scaleOnInfinitePrecision: 8),
+    final transfers = [
+      for (final transfer in capitalPlan.transfers)
+        GroupCapitalTransfer(
+          fromGroupId: transfer.fromNodeId,
+          toGroupId: transfer.toNodeId,
+          amount: transfer.amount,
+          explanation: transfer.explanation,
         ),
     ];
-    final transfers = _matchTransfers(states, baseCurrency);
-    final decisions = _decisions(states, transfers, totalAssets);
     return PortfolioRebalancePlan(
-      totalAssets: totalAssets,
+      totalAssets: capitalPlan.totalAssets,
       transfers: List.unmodifiable(transfers),
       groups: List.unmodifiable([
-        for (final state in states)
+        for (final group in target.groups)
           GroupRebalancePlan(
-            group: state.group,
-            capitalDecision: decisions[state.group.id]!,
+            group: group,
+            capitalDecision: _groupDecision(capitalPlan.decisions[group.id]!),
             internalPlan: _internalPlan(
-              snapshotsByGroup[state.group.id],
-              state.group.internalTarget,
+              snapshotsByGroup[group.id],
+              group.internalTarget,
             ),
           ),
       ]),
@@ -149,159 +155,16 @@ class HierarchicalRebalanceEngine {
     return internalEngine.compute(snapshot: snapshot, target: target);
   }
 
-  List<GroupCapitalTransfer> _matchTransfers(
-    List<_GroupState> states,
-    String currency,
-  ) {
-    final sources = [
-      for (final state in states)
-        if (state.transferableSurplus > Decimal.zero)
-          _MutableAmount(state, state.transferableSurplus),
-    ];
-    final destinations = [
-      for (final state in states)
-        if (state.acceptableDeficit > Decimal.zero)
-          _MutableAmount(state, state.acceptableDeficit),
-    ];
-    final transfers = <GroupCapitalTransfer>[];
-    var sourceIndex = 0;
-    var destinationIndex = 0;
-    while (sourceIndex < sources.length &&
-        destinationIndex < destinations.length) {
-      final source = sources[sourceIndex];
-      final destination = destinations[destinationIndex];
-      final amount = source.remaining < destination.remaining
-          ? source.remaining
-          : destination.remaining;
-      if (amount > Decimal.zero) {
-        transfers.add(
-          GroupCapitalTransfer(
-            fromGroupId: source.state.group.id,
-            toGroupId: destination.state.group.id,
-            amount: Money(amount, currency),
-            explanation:
-                '${source.state.group.name} exceeds its target outside the '
-                'drift band; ${destination.state.group.name} is below target.',
-          ),
-        );
-        source.remaining -= amount;
-        destination.remaining -= amount;
-      }
-      if (source.remaining <= Decimal.zero) sourceIndex += 1;
-      if (destination.remaining <= Decimal.zero) destinationIndex += 1;
-    }
-    return transfers;
-  }
-
-  Map<String, GroupCapitalDecision> _decisions(
-    List<_GroupState> states,
-    List<GroupCapitalTransfer> transfers,
-    Money totalAssets,
-  ) {
-    return {
-      for (final state in states)
-        state.group.id: _decision(state, transfers, totalAssets),
-    };
-  }
-
-  GroupCapitalDecision _decision(
-    _GroupState state,
-    List<GroupCapitalTransfer> transfers,
-    Money totalAssets,
-  ) {
-    final outgoing = transfers.any(
-      (transfer) => transfer.fromGroupId == state.group.id,
-    );
-    final incoming = transfers.any(
-      (transfer) => transfer.toGroupId == state.group.id,
-    );
-    final action = switch ((outgoing, incoming)) {
-      (true, _) => GroupCapitalAction.transferOut,
-      (_, true) => GroupCapitalAction.transferIn,
-      _ when state.withinBand => GroupCapitalAction.withinBand,
-      _ when state.policyBlocksRequiredTransfer =>
-        GroupCapitalAction.policyBlocked,
-      _ => GroupCapitalAction.noCounterparty,
-    };
-    final explanation = switch (action) {
-      GroupCapitalAction.transferOut =>
-        'Above target; policy allows capital to leave this group.',
-      GroupCapitalAction.transferIn =>
-        'Below target; policy allows capital to enter this group.',
-      GroupCapitalAction.withinBand =>
-        'Group weight is inside its configured drift band.',
-      GroupCapitalAction.policyBlocked =>
-        'The transfer policy intentionally blocks the required movement.',
-      GroupCapitalAction.noCounterparty =>
-        'Outside the drift band, but no eligible counterparty can fund it.',
-    };
-    final total = totalAssets.amount.toDouble();
+  GroupCapitalDecision _groupDecision(CapitalAllocationDecision decision) {
     return GroupCapitalDecision(
-      groupId: state.group.id,
-      groupName: state.group.name,
-      actualWeight: total <= 0 ? 0 : state.actual.toDouble() / total,
-      targetWeight: state.group.targetWeightBps / 10000,
-      actualAmount: Money(state.actual, totalAssets.currency),
-      targetAmount: Money(state.target, totalAssets.currency),
-      action: action,
-      explanation: explanation,
+      groupId: decision.nodeId,
+      groupName: decision.nodeName,
+      actualWeight: decision.actualWeight,
+      targetWeight: decision.targetWeight,
+      actualAmount: decision.actualAmount,
+      targetAmount: decision.targetAmount,
+      action: GroupCapitalAction.values.byName(decision.action.name),
+      explanation: decision.explanation,
     );
   }
-}
-
-class _GroupState {
-  const _GroupState({
-    required this.group,
-    required this.actual,
-    required this.portfolioTotal,
-    required this.target,
-  });
-
-  final PortfolioRebalanceGroup group;
-  final Decimal actual;
-  final Decimal portfolioTotal;
-  final Decimal target;
-
-  Decimal get deviation => actual - target;
-
-  Decimal get bandAmount =>
-      (portfolioTotal *
-              Decimal.fromInt(group.driftBandBps) /
-              Decimal.fromInt(10000))
-          .toDecimal(scaleOnInfinitePrecision: 8);
-
-  bool get withinBand => deviation.abs() <= bandAmount;
-
-  Decimal get transferableSurplus {
-    if (withinBand ||
-        deviation <= Decimal.zero ||
-        group.transferPolicy != GroupTransferPolicy.bidirectional) {
-      return Decimal.zero;
-    }
-    return deviation;
-  }
-
-  Decimal get acceptableDeficit {
-    if (withinBand ||
-        deviation >= Decimal.zero ||
-        group.transferPolicy == GroupTransferPolicy.isolated) {
-      return Decimal.zero;
-    }
-    return -deviation;
-  }
-
-  bool get policyBlocksRequiredTransfer {
-    if (withinBand) return false;
-    if (deviation > Decimal.zero) {
-      return group.transferPolicy != GroupTransferPolicy.bidirectional;
-    }
-    return group.transferPolicy == GroupTransferPolicy.isolated;
-  }
-}
-
-class _MutableAmount {
-  _MutableAmount(this.state, this.remaining);
-
-  final _GroupState state;
-  Decimal remaining;
 }

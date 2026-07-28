@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
 import 'package:naviwealth/features/finance/home/ui/asset_category_visuals.dart';
+import 'package:naviwealth/features/finance/investment/data/investment_portfolio_providers.dart';
 
 import '../../../../core/format/formatters.dart';
 import '../../../../design_system/design_system.dart';
@@ -15,6 +16,7 @@ import '../domain/allocation_schemes.dart';
 import '../domain/hierarchical_rebalance_engine.dart';
 import '../domain/rebalance_execution.dart';
 import '../domain/rebalance_models.dart';
+import '../domain/universe_rebalance_engine.dart';
 import 'deviation_bar.dart';
 import 'target_allocation_editor_sheet.dart';
 
@@ -28,6 +30,7 @@ class RebalancePage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final plan = ref.watch(rebalancePlanProvider);
     final portfolioPlan = ref.watch(hierarchicalRebalancePlanProvider);
+    final universePlan = ref.watch(universeRebalancePlanProvider);
     final scheme = ref.watch(selectedSchemeProvider);
     final active = ref.watch(activeRebalanceExecutionProvider).value;
 
@@ -42,10 +45,15 @@ class RebalancePage extends ConsumerWidget {
       ],
       childPad: false,
       child: plan == null
-          ? _EmptyState(active: active, portfolioPlan: portfolioPlan)
+          ? _EmptyState(
+              active: active,
+              portfolioPlan: portfolioPlan,
+              universePlan: universePlan,
+            )
           : _RebalanceBody(
               plan: plan,
               portfolioPlan: portfolioPlan,
+              universePlan: universePlan,
               scheme: scheme,
               active: active,
             ),
@@ -124,10 +132,15 @@ Future<void> _openExecution({
 }
 
 class _EmptyState extends ConsumerWidget {
-  const _EmptyState({required this.active, required this.portfolioPlan});
+  const _EmptyState({
+    required this.active,
+    required this.portfolioPlan,
+    required this.universePlan,
+  });
 
   final RebalanceExecutionSession? active;
   final PortfolioRebalancePlan? portfolioPlan;
+  final UniverseRebalancePlan? universePlan;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -135,6 +148,10 @@ class _EmptyState extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s16),
       children: [
+        if (universePlan != null) ...[
+          _UniversePortfolioAllocation(plan: universePlan!),
+          const SizedBox(height: AppSpacing.s16),
+        ],
         if (portfolioPlan != null) ...[
           _PortfolioGroupSelector(plan: portfolioPlan!),
           const SizedBox(height: AppSpacing.s16),
@@ -166,12 +183,14 @@ class _RebalanceBody extends StatelessWidget {
   const _RebalanceBody({
     required this.plan,
     required this.portfolioPlan,
+    required this.universePlan,
     required this.scheme,
     required this.active,
   });
 
   final RebalancePlan plan;
   final PortfolioRebalancePlan? portfolioPlan;
+  final UniverseRebalancePlan? universePlan;
   final AllocationSchemePreset scheme;
   final RebalanceExecutionSession? active;
 
@@ -186,6 +205,10 @@ class _RebalanceBody extends StatelessWidget {
         return ListView(
           padding: padding,
           children: [
+            if (universePlan != null) ...[
+              _UniversePortfolioAllocation(plan: universePlan!),
+              SizedBox(height: isMobile ? AppSpacing.s12 : AppSpacing.s16),
+            ],
             if (portfolioPlan != null) ...[
               _PortfolioGroupSelector(plan: portfolioPlan!),
               SizedBox(height: isMobile ? AppSpacing.s12 : AppSpacing.s16),
@@ -199,6 +222,103 @@ class _RebalanceBody extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _UniversePortfolioAllocation extends ConsumerWidget {
+  const _UniversePortfolioAllocation({required this.plan});
+
+  final UniverseRebalancePlan plan;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
+    final selectedId = ref.watch(
+      effectiveSelectedInvestmentPortfolioIdProvider,
+    );
+    final nameById = {
+      for (final item in plan.portfolios)
+        item.portfolio.id: item.portfolio.name,
+    };
+    return SoftCard.raised(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.rebalancePortfoliosTitle,
+              style: context.theme.typography.body.sm,
+            ),
+            const SizedBox(height: AppSpacing.s4),
+            Text(l10n.rebalanceCapitalTreeHint, style: context.captionStyle),
+            const SizedBox(height: AppSpacing.s8),
+            Wrap(
+              spacing: AppSpacing.s8,
+              runSpacing: AppSpacing.s8,
+              children: [
+                for (final item in plan.portfolios)
+                  FButton(
+                    variant: item.portfolio.id == selectedId
+                        ? FButtonVariant.primary
+                        : FButtonVariant.outline,
+                    onPress: () {
+                      ref
+                          .read(selectedInvestmentPortfolioIdProvider.notifier)
+                          .state = item
+                          .portfolio
+                          .id;
+                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(item.portfolio.name),
+                        Text(
+                          l10n.rebalancePortfolioWeightPair(
+                            formatters.percent(
+                              item.capitalDecision.actualWeight,
+                              decimalDigits: 0,
+                            ),
+                            formatters.percent(
+                              item.capitalDecision.targetWeight,
+                              decimalDigits: 0,
+                            ),
+                          ),
+                          style: context.microLabelStyle,
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            if (plan.capitalPlan.transfers.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.s16),
+              Text(
+                l10n.rebalancePortfolioTransfersTitle,
+                style: context.theme.typography.body.sm,
+              ),
+              const SizedBox(height: AppSpacing.s6),
+              for (final transfer in plan.capitalPlan.transfers)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.s4),
+                  child: Text(
+                    l10n.rebalanceGroupTransfer(
+                      nameById[transfer.fromNodeId] ?? transfer.fromNodeId,
+                      nameById[transfer.toNodeId] ?? transfer.toNodeId,
+                      formatters.currency(
+                        transfer.amount.amount,
+                        code: transfer.amount.currency,
+                      ),
+                    ),
+                    style: context.captionStyle,
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

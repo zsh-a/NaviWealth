@@ -20948,6 +20948,2364 @@ class InvestmentPortfoliosCompanion
   }
 }
 
+class $PortfolioStrategyTemplatesTable extends PortfolioStrategyTemplates
+    with
+        TableInfo<
+          $PortfolioStrategyTemplatesTable,
+          PortfolioStrategyTemplateRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PortfolioStrategyTemplatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($PortfolioStrategyTemplatesTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _localizedNamesJsonMeta =
+      const VerificationMeta('localizedNamesJson');
+  @override
+  late final GeneratedColumn<String> localizedNamesJson =
+      GeneratedColumn<String>(
+        'localized_names_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _iconTokenMeta = const VerificationMeta(
+    'iconToken',
+  );
+  @override
+  late final GeneratedColumn<String> iconToken = GeneratedColumn<String>(
+    'icon_token',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _schemaVersionMeta = const VerificationMeta(
+    'schemaVersion',
+  );
+  @override
+  late final GeneratedColumn<int> schemaVersion = GeneratedColumn<int>(
+    'schema_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _capitalRoleMeta = const VerificationMeta(
+    'capitalRole',
+  );
+  @override
+  late final GeneratedColumn<String> capitalRole = GeneratedColumn<String>(
+    'capital_role',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _defaultSettingsJsonMeta =
+      const VerificationMeta('defaultSettingsJson');
+  @override
+  late final GeneratedColumn<String> defaultSettingsJson =
+      GeneratedColumn<String>(
+        'default_settings_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _defaultInternalTargetJsonMeta =
+      const VerificationMeta('defaultInternalTargetJson');
+  @override
+  late final GeneratedColumn<String> defaultInternalTargetJson =
+      GeneratedColumn<String>(
+        'default_internal_target_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _defaultDriftBandBpsMeta =
+      const VerificationMeta('defaultDriftBandBps');
+  @override
+  late final GeneratedColumn<int> defaultDriftBandBps = GeneratedColumn<int>(
+    'default_drift_band_bps',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _defaultTransferPolicyMeta =
+      const VerificationMeta('defaultTransferPolicy');
+  @override
+  late final GeneratedColumn<String> defaultTransferPolicy =
+      GeneratedColumn<String>(
+        'default_transfer_policy',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _archivedMeta = const VerificationMeta(
+    'archived',
+  );
+  @override
+  late final GeneratedColumn<bool> archived = GeneratedColumn<bool>(
+    'archived',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("archived" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    localizedNamesJson,
+    iconToken,
+    schemaVersion,
+    capitalRole,
+    defaultSettingsJson,
+    defaultInternalTargetJson,
+    defaultDriftBandBps,
+    defaultTransferPolicy,
+    createdAt,
+    archived,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'portfolio_strategy_templates';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PortfolioStrategyTemplateRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('localized_names_json')) {
+      context.handle(
+        _localizedNamesJsonMeta,
+        localizedNamesJson.isAcceptableOrUnknown(
+          data['localized_names_json']!,
+          _localizedNamesJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_localizedNamesJsonMeta);
+    }
+    if (data.containsKey('icon_token')) {
+      context.handle(
+        _iconTokenMeta,
+        iconToken.isAcceptableOrUnknown(data['icon_token']!, _iconTokenMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_iconTokenMeta);
+    }
+    if (data.containsKey('schema_version')) {
+      context.handle(
+        _schemaVersionMeta,
+        schemaVersion.isAcceptableOrUnknown(
+          data['schema_version']!,
+          _schemaVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_schemaVersionMeta);
+    }
+    if (data.containsKey('capital_role')) {
+      context.handle(
+        _capitalRoleMeta,
+        capitalRole.isAcceptableOrUnknown(
+          data['capital_role']!,
+          _capitalRoleMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_capitalRoleMeta);
+    }
+    if (data.containsKey('default_settings_json')) {
+      context.handle(
+        _defaultSettingsJsonMeta,
+        defaultSettingsJson.isAcceptableOrUnknown(
+          data['default_settings_json']!,
+          _defaultSettingsJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_defaultSettingsJsonMeta);
+    }
+    if (data.containsKey('default_internal_target_json')) {
+      context.handle(
+        _defaultInternalTargetJsonMeta,
+        defaultInternalTargetJson.isAcceptableOrUnknown(
+          data['default_internal_target_json']!,
+          _defaultInternalTargetJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_defaultInternalTargetJsonMeta);
+    }
+    if (data.containsKey('default_drift_band_bps')) {
+      context.handle(
+        _defaultDriftBandBpsMeta,
+        defaultDriftBandBps.isAcceptableOrUnknown(
+          data['default_drift_band_bps']!,
+          _defaultDriftBandBpsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_defaultDriftBandBpsMeta);
+    }
+    if (data.containsKey('default_transfer_policy')) {
+      context.handle(
+        _defaultTransferPolicyMeta,
+        defaultTransferPolicy.isAcceptableOrUnknown(
+          data['default_transfer_policy']!,
+          _defaultTransferPolicyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_defaultTransferPolicyMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('archived')) {
+      context.handle(
+        _archivedMeta,
+        archived.isAcceptableOrUnknown(data['archived']!, _archivedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PortfolioStrategyTemplateRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PortfolioStrategyTemplateRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $PortfolioStrategyTemplatesTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      localizedNamesJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}localized_names_json'],
+      )!,
+      iconToken: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}icon_token'],
+      )!,
+      schemaVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}schema_version'],
+      )!,
+      capitalRole: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}capital_role'],
+      )!,
+      defaultSettingsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}default_settings_json'],
+      )!,
+      defaultInternalTargetJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}default_internal_target_json'],
+      )!,
+      defaultDriftBandBps: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}default_drift_band_bps'],
+      )!,
+      defaultTransferPolicy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}default_transfer_policy'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      archived: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}archived'],
+      )!,
+    );
+  }
+
+  @override
+  $PortfolioStrategyTemplatesTable createAlias(String alias) {
+    return $PortfolioStrategyTemplatesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+}
+
+class PortfolioStrategyTemplateRow extends DataClass
+    implements Insertable<PortfolioStrategyTemplateRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String localizedNamesJson;
+  final String iconToken;
+  final int schemaVersion;
+  final String capitalRole;
+  final String defaultSettingsJson;
+  final String defaultInternalTargetJson;
+  final int defaultDriftBandBps;
+  final String defaultTransferPolicy;
+  final DateTime createdAt;
+  final bool archived;
+  const PortfolioStrategyTemplateRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.localizedNamesJson,
+    required this.iconToken,
+    required this.schemaVersion,
+    required this.capitalRole,
+    required this.defaultSettingsJson,
+    required this.defaultInternalTargetJson,
+    required this.defaultDriftBandBps,
+    required this.defaultTransferPolicy,
+    required this.createdAt,
+    required this.archived,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $PortfolioStrategyTemplatesTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['localized_names_json'] = Variable<String>(localizedNamesJson);
+    map['icon_token'] = Variable<String>(iconToken);
+    map['schema_version'] = Variable<int>(schemaVersion);
+    map['capital_role'] = Variable<String>(capitalRole);
+    map['default_settings_json'] = Variable<String>(defaultSettingsJson);
+    map['default_internal_target_json'] = Variable<String>(
+      defaultInternalTargetJson,
+    );
+    map['default_drift_band_bps'] = Variable<int>(defaultDriftBandBps);
+    map['default_transfer_policy'] = Variable<String>(defaultTransferPolicy);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['archived'] = Variable<bool>(archived);
+    return map;
+  }
+
+  PortfolioStrategyTemplatesCompanion toCompanion(bool nullToAbsent) {
+    return PortfolioStrategyTemplatesCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      localizedNamesJson: Value(localizedNamesJson),
+      iconToken: Value(iconToken),
+      schemaVersion: Value(schemaVersion),
+      capitalRole: Value(capitalRole),
+      defaultSettingsJson: Value(defaultSettingsJson),
+      defaultInternalTargetJson: Value(defaultInternalTargetJson),
+      defaultDriftBandBps: Value(defaultDriftBandBps),
+      defaultTransferPolicy: Value(defaultTransferPolicy),
+      createdAt: Value(createdAt),
+      archived: Value(archived),
+    );
+  }
+
+  factory PortfolioStrategyTemplateRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PortfolioStrategyTemplateRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      localizedNamesJson: serializer.fromJson<String>(
+        json['localizedNamesJson'],
+      ),
+      iconToken: serializer.fromJson<String>(json['iconToken']),
+      schemaVersion: serializer.fromJson<int>(json['schemaVersion']),
+      capitalRole: serializer.fromJson<String>(json['capitalRole']),
+      defaultSettingsJson: serializer.fromJson<String>(
+        json['defaultSettingsJson'],
+      ),
+      defaultInternalTargetJson: serializer.fromJson<String>(
+        json['defaultInternalTargetJson'],
+      ),
+      defaultDriftBandBps: serializer.fromJson<int>(
+        json['defaultDriftBandBps'],
+      ),
+      defaultTransferPolicy: serializer.fromJson<String>(
+        json['defaultTransferPolicy'],
+      ),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      archived: serializer.fromJson<bool>(json['archived']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'localizedNamesJson': serializer.toJson<String>(localizedNamesJson),
+      'iconToken': serializer.toJson<String>(iconToken),
+      'schemaVersion': serializer.toJson<int>(schemaVersion),
+      'capitalRole': serializer.toJson<String>(capitalRole),
+      'defaultSettingsJson': serializer.toJson<String>(defaultSettingsJson),
+      'defaultInternalTargetJson': serializer.toJson<String>(
+        defaultInternalTargetJson,
+      ),
+      'defaultDriftBandBps': serializer.toJson<int>(defaultDriftBandBps),
+      'defaultTransferPolicy': serializer.toJson<String>(defaultTransferPolicy),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'archived': serializer.toJson<bool>(archived),
+    };
+  }
+
+  PortfolioStrategyTemplateRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? localizedNamesJson,
+    String? iconToken,
+    int? schemaVersion,
+    String? capitalRole,
+    String? defaultSettingsJson,
+    String? defaultInternalTargetJson,
+    int? defaultDriftBandBps,
+    String? defaultTransferPolicy,
+    DateTime? createdAt,
+    bool? archived,
+  }) => PortfolioStrategyTemplateRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    localizedNamesJson: localizedNamesJson ?? this.localizedNamesJson,
+    iconToken: iconToken ?? this.iconToken,
+    schemaVersion: schemaVersion ?? this.schemaVersion,
+    capitalRole: capitalRole ?? this.capitalRole,
+    defaultSettingsJson: defaultSettingsJson ?? this.defaultSettingsJson,
+    defaultInternalTargetJson:
+        defaultInternalTargetJson ?? this.defaultInternalTargetJson,
+    defaultDriftBandBps: defaultDriftBandBps ?? this.defaultDriftBandBps,
+    defaultTransferPolicy: defaultTransferPolicy ?? this.defaultTransferPolicy,
+    createdAt: createdAt ?? this.createdAt,
+    archived: archived ?? this.archived,
+  );
+  PortfolioStrategyTemplateRow copyWithCompanion(
+    PortfolioStrategyTemplatesCompanion data,
+  ) {
+    return PortfolioStrategyTemplateRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      localizedNamesJson: data.localizedNamesJson.present
+          ? data.localizedNamesJson.value
+          : this.localizedNamesJson,
+      iconToken: data.iconToken.present ? data.iconToken.value : this.iconToken,
+      schemaVersion: data.schemaVersion.present
+          ? data.schemaVersion.value
+          : this.schemaVersion,
+      capitalRole: data.capitalRole.present
+          ? data.capitalRole.value
+          : this.capitalRole,
+      defaultSettingsJson: data.defaultSettingsJson.present
+          ? data.defaultSettingsJson.value
+          : this.defaultSettingsJson,
+      defaultInternalTargetJson: data.defaultInternalTargetJson.present
+          ? data.defaultInternalTargetJson.value
+          : this.defaultInternalTargetJson,
+      defaultDriftBandBps: data.defaultDriftBandBps.present
+          ? data.defaultDriftBandBps.value
+          : this.defaultDriftBandBps,
+      defaultTransferPolicy: data.defaultTransferPolicy.present
+          ? data.defaultTransferPolicy.value
+          : this.defaultTransferPolicy,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      archived: data.archived.present ? data.archived.value : this.archived,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PortfolioStrategyTemplateRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('localizedNamesJson: $localizedNamesJson, ')
+          ..write('iconToken: $iconToken, ')
+          ..write('schemaVersion: $schemaVersion, ')
+          ..write('capitalRole: $capitalRole, ')
+          ..write('defaultSettingsJson: $defaultSettingsJson, ')
+          ..write('defaultInternalTargetJson: $defaultInternalTargetJson, ')
+          ..write('defaultDriftBandBps: $defaultDriftBandBps, ')
+          ..write('defaultTransferPolicy: $defaultTransferPolicy, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('archived: $archived')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    localizedNamesJson,
+    iconToken,
+    schemaVersion,
+    capitalRole,
+    defaultSettingsJson,
+    defaultInternalTargetJson,
+    defaultDriftBandBps,
+    defaultTransferPolicy,
+    createdAt,
+    archived,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PortfolioStrategyTemplateRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.localizedNamesJson == this.localizedNamesJson &&
+          other.iconToken == this.iconToken &&
+          other.schemaVersion == this.schemaVersion &&
+          other.capitalRole == this.capitalRole &&
+          other.defaultSettingsJson == this.defaultSettingsJson &&
+          other.defaultInternalTargetJson == this.defaultInternalTargetJson &&
+          other.defaultDriftBandBps == this.defaultDriftBandBps &&
+          other.defaultTransferPolicy == this.defaultTransferPolicy &&
+          other.createdAt == this.createdAt &&
+          other.archived == this.archived);
+}
+
+class PortfolioStrategyTemplatesCompanion
+    extends UpdateCompanion<PortfolioStrategyTemplateRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> localizedNamesJson;
+  final Value<String> iconToken;
+  final Value<int> schemaVersion;
+  final Value<String> capitalRole;
+  final Value<String> defaultSettingsJson;
+  final Value<String> defaultInternalTargetJson;
+  final Value<int> defaultDriftBandBps;
+  final Value<String> defaultTransferPolicy;
+  final Value<DateTime> createdAt;
+  final Value<bool> archived;
+  final Value<int> rowid;
+  const PortfolioStrategyTemplatesCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.localizedNamesJson = const Value.absent(),
+    this.iconToken = const Value.absent(),
+    this.schemaVersion = const Value.absent(),
+    this.capitalRole = const Value.absent(),
+    this.defaultSettingsJson = const Value.absent(),
+    this.defaultInternalTargetJson = const Value.absent(),
+    this.defaultDriftBandBps = const Value.absent(),
+    this.defaultTransferPolicy = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.archived = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PortfolioStrategyTemplatesCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String localizedNamesJson,
+    required String iconToken,
+    required int schemaVersion,
+    required String capitalRole,
+    required String defaultSettingsJson,
+    required String defaultInternalTargetJson,
+    required int defaultDriftBandBps,
+    required String defaultTransferPolicy,
+    required DateTime createdAt,
+    this.archived = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       localizedNamesJson = Value(localizedNamesJson),
+       iconToken = Value(iconToken),
+       schemaVersion = Value(schemaVersion),
+       capitalRole = Value(capitalRole),
+       defaultSettingsJson = Value(defaultSettingsJson),
+       defaultInternalTargetJson = Value(defaultInternalTargetJson),
+       defaultDriftBandBps = Value(defaultDriftBandBps),
+       defaultTransferPolicy = Value(defaultTransferPolicy),
+       createdAt = Value(createdAt);
+  static Insertable<PortfolioStrategyTemplateRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? localizedNamesJson,
+    Expression<String>? iconToken,
+    Expression<int>? schemaVersion,
+    Expression<String>? capitalRole,
+    Expression<String>? defaultSettingsJson,
+    Expression<String>? defaultInternalTargetJson,
+    Expression<int>? defaultDriftBandBps,
+    Expression<String>? defaultTransferPolicy,
+    Expression<DateTime>? createdAt,
+    Expression<bool>? archived,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (localizedNamesJson != null)
+        'localized_names_json': localizedNamesJson,
+      if (iconToken != null) 'icon_token': iconToken,
+      if (schemaVersion != null) 'schema_version': schemaVersion,
+      if (capitalRole != null) 'capital_role': capitalRole,
+      if (defaultSettingsJson != null)
+        'default_settings_json': defaultSettingsJson,
+      if (defaultInternalTargetJson != null)
+        'default_internal_target_json': defaultInternalTargetJson,
+      if (defaultDriftBandBps != null)
+        'default_drift_band_bps': defaultDriftBandBps,
+      if (defaultTransferPolicy != null)
+        'default_transfer_policy': defaultTransferPolicy,
+      if (createdAt != null) 'created_at': createdAt,
+      if (archived != null) 'archived': archived,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PortfolioStrategyTemplatesCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? localizedNamesJson,
+    Value<String>? iconToken,
+    Value<int>? schemaVersion,
+    Value<String>? capitalRole,
+    Value<String>? defaultSettingsJson,
+    Value<String>? defaultInternalTargetJson,
+    Value<int>? defaultDriftBandBps,
+    Value<String>? defaultTransferPolicy,
+    Value<DateTime>? createdAt,
+    Value<bool>? archived,
+    Value<int>? rowid,
+  }) {
+    return PortfolioStrategyTemplatesCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      localizedNamesJson: localizedNamesJson ?? this.localizedNamesJson,
+      iconToken: iconToken ?? this.iconToken,
+      schemaVersion: schemaVersion ?? this.schemaVersion,
+      capitalRole: capitalRole ?? this.capitalRole,
+      defaultSettingsJson: defaultSettingsJson ?? this.defaultSettingsJson,
+      defaultInternalTargetJson:
+          defaultInternalTargetJson ?? this.defaultInternalTargetJson,
+      defaultDriftBandBps: defaultDriftBandBps ?? this.defaultDriftBandBps,
+      defaultTransferPolicy:
+          defaultTransferPolicy ?? this.defaultTransferPolicy,
+      createdAt: createdAt ?? this.createdAt,
+      archived: archived ?? this.archived,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $PortfolioStrategyTemplatesTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (localizedNamesJson.present) {
+      map['localized_names_json'] = Variable<String>(localizedNamesJson.value);
+    }
+    if (iconToken.present) {
+      map['icon_token'] = Variable<String>(iconToken.value);
+    }
+    if (schemaVersion.present) {
+      map['schema_version'] = Variable<int>(schemaVersion.value);
+    }
+    if (capitalRole.present) {
+      map['capital_role'] = Variable<String>(capitalRole.value);
+    }
+    if (defaultSettingsJson.present) {
+      map['default_settings_json'] = Variable<String>(
+        defaultSettingsJson.value,
+      );
+    }
+    if (defaultInternalTargetJson.present) {
+      map['default_internal_target_json'] = Variable<String>(
+        defaultInternalTargetJson.value,
+      );
+    }
+    if (defaultDriftBandBps.present) {
+      map['default_drift_band_bps'] = Variable<int>(defaultDriftBandBps.value);
+    }
+    if (defaultTransferPolicy.present) {
+      map['default_transfer_policy'] = Variable<String>(
+        defaultTransferPolicy.value,
+      );
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (archived.present) {
+      map['archived'] = Variable<bool>(archived.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PortfolioStrategyTemplatesCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('localizedNamesJson: $localizedNamesJson, ')
+          ..write('iconToken: $iconToken, ')
+          ..write('schemaVersion: $schemaVersion, ')
+          ..write('capitalRole: $capitalRole, ')
+          ..write('defaultSettingsJson: $defaultSettingsJson, ')
+          ..write('defaultInternalTargetJson: $defaultInternalTargetJson, ')
+          ..write('defaultDriftBandBps: $defaultDriftBandBps, ')
+          ..write('defaultTransferPolicy: $defaultTransferPolicy, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('archived: $archived, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RebalanceUniversesTable extends RebalanceUniverses
+    with TableInfo<$RebalanceUniversesTable, RebalanceUniverseRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RebalanceUniversesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($RebalanceUniversesTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _baseCurrencyMeta = const VerificationMeta(
+    'baseCurrency',
+  );
+  @override
+  late final GeneratedColumn<String> baseCurrency = GeneratedColumn<String>(
+    'base_currency',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 3,
+      maxTextLength: 8,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _archivedMeta = const VerificationMeta(
+    'archived',
+  );
+  @override
+  late final GeneratedColumn<bool> archived = GeneratedColumn<bool>(
+    'archived',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("archived" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    name,
+    baseCurrency,
+    createdAt,
+    archived,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'rebalance_universes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RebalanceUniverseRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('base_currency')) {
+      context.handle(
+        _baseCurrencyMeta,
+        baseCurrency.isAcceptableOrUnknown(
+          data['base_currency']!,
+          _baseCurrencyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_baseCurrencyMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('archived')) {
+      context.handle(
+        _archivedMeta,
+        archived.isAcceptableOrUnknown(data['archived']!, _archivedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RebalanceUniverseRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RebalanceUniverseRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $RebalanceUniversesTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      baseCurrency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}base_currency'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      archived: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}archived'],
+      )!,
+    );
+  }
+
+  @override
+  $RebalanceUniversesTable createAlias(String alias) {
+    return $RebalanceUniversesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+}
+
+class RebalanceUniverseRow extends DataClass
+    implements Insertable<RebalanceUniverseRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String name;
+  final String baseCurrency;
+  final DateTime createdAt;
+  final bool archived;
+  const RebalanceUniverseRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.name,
+    required this.baseCurrency,
+    required this.createdAt,
+    required this.archived,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $RebalanceUniversesTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['base_currency'] = Variable<String>(baseCurrency);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['archived'] = Variable<bool>(archived);
+    return map;
+  }
+
+  RebalanceUniversesCompanion toCompanion(bool nullToAbsent) {
+    return RebalanceUniversesCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      name: Value(name),
+      baseCurrency: Value(baseCurrency),
+      createdAt: Value(createdAt),
+      archived: Value(archived),
+    );
+  }
+
+  factory RebalanceUniverseRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RebalanceUniverseRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      baseCurrency: serializer.fromJson<String>(json['baseCurrency']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      archived: serializer.fromJson<bool>(json['archived']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'baseCurrency': serializer.toJson<String>(baseCurrency),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'archived': serializer.toJson<bool>(archived),
+    };
+  }
+
+  RebalanceUniverseRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? name,
+    String? baseCurrency,
+    DateTime? createdAt,
+    bool? archived,
+  }) => RebalanceUniverseRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    name: name ?? this.name,
+    baseCurrency: baseCurrency ?? this.baseCurrency,
+    createdAt: createdAt ?? this.createdAt,
+    archived: archived ?? this.archived,
+  );
+  RebalanceUniverseRow copyWithCompanion(RebalanceUniversesCompanion data) {
+    return RebalanceUniverseRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      baseCurrency: data.baseCurrency.present
+          ? data.baseCurrency.value
+          : this.baseCurrency,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      archived: data.archived.present ? data.archived.value : this.archived,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RebalanceUniverseRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('baseCurrency: $baseCurrency, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('archived: $archived')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    name,
+    baseCurrency,
+    createdAt,
+    archived,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RebalanceUniverseRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.baseCurrency == this.baseCurrency &&
+          other.createdAt == this.createdAt &&
+          other.archived == this.archived);
+}
+
+class RebalanceUniversesCompanion
+    extends UpdateCompanion<RebalanceUniverseRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String> baseCurrency;
+  final Value<DateTime> createdAt;
+  final Value<bool> archived;
+  final Value<int> rowid;
+  const RebalanceUniversesCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.baseCurrency = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.archived = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RebalanceUniversesCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String name,
+    required String baseCurrency,
+    required DateTime createdAt,
+    this.archived = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       name = Value(name),
+       baseCurrency = Value(baseCurrency),
+       createdAt = Value(createdAt);
+  static Insertable<RebalanceUniverseRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? baseCurrency,
+    Expression<DateTime>? createdAt,
+    Expression<bool>? archived,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (baseCurrency != null) 'base_currency': baseCurrency,
+      if (createdAt != null) 'created_at': createdAt,
+      if (archived != null) 'archived': archived,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RebalanceUniversesCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? name,
+    Value<String>? baseCurrency,
+    Value<DateTime>? createdAt,
+    Value<bool>? archived,
+    Value<int>? rowid,
+  }) {
+    return RebalanceUniversesCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      baseCurrency: baseCurrency ?? this.baseCurrency,
+      createdAt: createdAt ?? this.createdAt,
+      archived: archived ?? this.archived,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $RebalanceUniversesTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (baseCurrency.present) {
+      map['base_currency'] = Variable<String>(baseCurrency.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (archived.present) {
+      map['archived'] = Variable<bool>(archived.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RebalanceUniversesCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('baseCurrency: $baseCurrency, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('archived: $archived, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PortfolioAllocationTargetsTable extends PortfolioAllocationTargets
+    with
+        TableInfo<
+          $PortfolioAllocationTargetsTable,
+          PortfolioAllocationTargetRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PortfolioAllocationTargetsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($PortfolioAllocationTargetsTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _universeIdMeta = const VerificationMeta(
+    'universeId',
+  );
+  @override
+  late final GeneratedColumn<String> universeId = GeneratedColumn<String>(
+    'universe_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _portfolioIdMeta = const VerificationMeta(
+    'portfolioId',
+  );
+  @override
+  late final GeneratedColumn<String> portfolioId = GeneratedColumn<String>(
+    'portfolio_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _targetWeightBpsMeta = const VerificationMeta(
+    'targetWeightBps',
+  );
+  @override
+  late final GeneratedColumn<int> targetWeightBps = GeneratedColumn<int>(
+    'target_weight_bps',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _driftBandBpsMeta = const VerificationMeta(
+    'driftBandBps',
+  );
+  @override
+  late final GeneratedColumn<int> driftBandBps = GeneratedColumn<int>(
+    'drift_band_bps',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _transferPolicyMeta = const VerificationMeta(
+    'transferPolicy',
+  );
+  @override
+  late final GeneratedColumn<String> transferPolicy = GeneratedColumn<String>(
+    'transfer_policy',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    universeId,
+    portfolioId,
+    targetWeightBps,
+    driftBandBps,
+    transferPolicy,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'portfolio_allocation_targets';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PortfolioAllocationTargetRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('universe_id')) {
+      context.handle(
+        _universeIdMeta,
+        universeId.isAcceptableOrUnknown(data['universe_id']!, _universeIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_universeIdMeta);
+    }
+    if (data.containsKey('portfolio_id')) {
+      context.handle(
+        _portfolioIdMeta,
+        portfolioId.isAcceptableOrUnknown(
+          data['portfolio_id']!,
+          _portfolioIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_portfolioIdMeta);
+    }
+    if (data.containsKey('target_weight_bps')) {
+      context.handle(
+        _targetWeightBpsMeta,
+        targetWeightBps.isAcceptableOrUnknown(
+          data['target_weight_bps']!,
+          _targetWeightBpsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_targetWeightBpsMeta);
+    }
+    if (data.containsKey('drift_band_bps')) {
+      context.handle(
+        _driftBandBpsMeta,
+        driftBandBps.isAcceptableOrUnknown(
+          data['drift_band_bps']!,
+          _driftBandBpsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_driftBandBpsMeta);
+    }
+    if (data.containsKey('transfer_policy')) {
+      context.handle(
+        _transferPolicyMeta,
+        transferPolicy.isAcceptableOrUnknown(
+          data['transfer_policy']!,
+          _transferPolicyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_transferPolicyMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PortfolioAllocationTargetRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PortfolioAllocationTargetRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $PortfolioAllocationTargetsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      universeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}universe_id'],
+      )!,
+      portfolioId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}portfolio_id'],
+      )!,
+      targetWeightBps: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}target_weight_bps'],
+      )!,
+      driftBandBps: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}drift_band_bps'],
+      )!,
+      transferPolicy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transfer_policy'],
+      )!,
+    );
+  }
+
+  @override
+  $PortfolioAllocationTargetsTable createAlias(String alias) {
+    return $PortfolioAllocationTargetsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+}
+
+class PortfolioAllocationTargetRow extends DataClass
+    implements Insertable<PortfolioAllocationTargetRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String universeId;
+  final String portfolioId;
+  final int targetWeightBps;
+  final int driftBandBps;
+  final String transferPolicy;
+  const PortfolioAllocationTargetRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.universeId,
+    required this.portfolioId,
+    required this.targetWeightBps,
+    required this.driftBandBps,
+    required this.transferPolicy,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $PortfolioAllocationTargetsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['universe_id'] = Variable<String>(universeId);
+    map['portfolio_id'] = Variable<String>(portfolioId);
+    map['target_weight_bps'] = Variable<int>(targetWeightBps);
+    map['drift_band_bps'] = Variable<int>(driftBandBps);
+    map['transfer_policy'] = Variable<String>(transferPolicy);
+    return map;
+  }
+
+  PortfolioAllocationTargetsCompanion toCompanion(bool nullToAbsent) {
+    return PortfolioAllocationTargetsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      universeId: Value(universeId),
+      portfolioId: Value(portfolioId),
+      targetWeightBps: Value(targetWeightBps),
+      driftBandBps: Value(driftBandBps),
+      transferPolicy: Value(transferPolicy),
+    );
+  }
+
+  factory PortfolioAllocationTargetRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PortfolioAllocationTargetRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      universeId: serializer.fromJson<String>(json['universeId']),
+      portfolioId: serializer.fromJson<String>(json['portfolioId']),
+      targetWeightBps: serializer.fromJson<int>(json['targetWeightBps']),
+      driftBandBps: serializer.fromJson<int>(json['driftBandBps']),
+      transferPolicy: serializer.fromJson<String>(json['transferPolicy']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'universeId': serializer.toJson<String>(universeId),
+      'portfolioId': serializer.toJson<String>(portfolioId),
+      'targetWeightBps': serializer.toJson<int>(targetWeightBps),
+      'driftBandBps': serializer.toJson<int>(driftBandBps),
+      'transferPolicy': serializer.toJson<String>(transferPolicy),
+    };
+  }
+
+  PortfolioAllocationTargetRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? universeId,
+    String? portfolioId,
+    int? targetWeightBps,
+    int? driftBandBps,
+    String? transferPolicy,
+  }) => PortfolioAllocationTargetRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    universeId: universeId ?? this.universeId,
+    portfolioId: portfolioId ?? this.portfolioId,
+    targetWeightBps: targetWeightBps ?? this.targetWeightBps,
+    driftBandBps: driftBandBps ?? this.driftBandBps,
+    transferPolicy: transferPolicy ?? this.transferPolicy,
+  );
+  PortfolioAllocationTargetRow copyWithCompanion(
+    PortfolioAllocationTargetsCompanion data,
+  ) {
+    return PortfolioAllocationTargetRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      universeId: data.universeId.present
+          ? data.universeId.value
+          : this.universeId,
+      portfolioId: data.portfolioId.present
+          ? data.portfolioId.value
+          : this.portfolioId,
+      targetWeightBps: data.targetWeightBps.present
+          ? data.targetWeightBps.value
+          : this.targetWeightBps,
+      driftBandBps: data.driftBandBps.present
+          ? data.driftBandBps.value
+          : this.driftBandBps,
+      transferPolicy: data.transferPolicy.present
+          ? data.transferPolicy.value
+          : this.transferPolicy,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PortfolioAllocationTargetRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('universeId: $universeId, ')
+          ..write('portfolioId: $portfolioId, ')
+          ..write('targetWeightBps: $targetWeightBps, ')
+          ..write('driftBandBps: $driftBandBps, ')
+          ..write('transferPolicy: $transferPolicy')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    universeId,
+    portfolioId,
+    targetWeightBps,
+    driftBandBps,
+    transferPolicy,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PortfolioAllocationTargetRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.universeId == this.universeId &&
+          other.portfolioId == this.portfolioId &&
+          other.targetWeightBps == this.targetWeightBps &&
+          other.driftBandBps == this.driftBandBps &&
+          other.transferPolicy == this.transferPolicy);
+}
+
+class PortfolioAllocationTargetsCompanion
+    extends UpdateCompanion<PortfolioAllocationTargetRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> universeId;
+  final Value<String> portfolioId;
+  final Value<int> targetWeightBps;
+  final Value<int> driftBandBps;
+  final Value<String> transferPolicy;
+  final Value<int> rowid;
+  const PortfolioAllocationTargetsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.universeId = const Value.absent(),
+    this.portfolioId = const Value.absent(),
+    this.targetWeightBps = const Value.absent(),
+    this.driftBandBps = const Value.absent(),
+    this.transferPolicy = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PortfolioAllocationTargetsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String universeId,
+    required String portfolioId,
+    required int targetWeightBps,
+    required int driftBandBps,
+    required String transferPolicy,
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       universeId = Value(universeId),
+       portfolioId = Value(portfolioId),
+       targetWeightBps = Value(targetWeightBps),
+       driftBandBps = Value(driftBandBps),
+       transferPolicy = Value(transferPolicy);
+  static Insertable<PortfolioAllocationTargetRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? universeId,
+    Expression<String>? portfolioId,
+    Expression<int>? targetWeightBps,
+    Expression<int>? driftBandBps,
+    Expression<String>? transferPolicy,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (universeId != null) 'universe_id': universeId,
+      if (portfolioId != null) 'portfolio_id': portfolioId,
+      if (targetWeightBps != null) 'target_weight_bps': targetWeightBps,
+      if (driftBandBps != null) 'drift_band_bps': driftBandBps,
+      if (transferPolicy != null) 'transfer_policy': transferPolicy,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PortfolioAllocationTargetsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? universeId,
+    Value<String>? portfolioId,
+    Value<int>? targetWeightBps,
+    Value<int>? driftBandBps,
+    Value<String>? transferPolicy,
+    Value<int>? rowid,
+  }) {
+    return PortfolioAllocationTargetsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      universeId: universeId ?? this.universeId,
+      portfolioId: portfolioId ?? this.portfolioId,
+      targetWeightBps: targetWeightBps ?? this.targetWeightBps,
+      driftBandBps: driftBandBps ?? this.driftBandBps,
+      transferPolicy: transferPolicy ?? this.transferPolicy,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $PortfolioAllocationTargetsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (universeId.present) {
+      map['universe_id'] = Variable<String>(universeId.value);
+    }
+    if (portfolioId.present) {
+      map['portfolio_id'] = Variable<String>(portfolioId.value);
+    }
+    if (targetWeightBps.present) {
+      map['target_weight_bps'] = Variable<int>(targetWeightBps.value);
+    }
+    if (driftBandBps.present) {
+      map['drift_band_bps'] = Variable<int>(driftBandBps.value);
+    }
+    if (transferPolicy.present) {
+      map['transfer_policy'] = Variable<String>(transferPolicy.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PortfolioAllocationTargetsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('universeId: $universeId, ')
+          ..write('portfolioId: $portfolioId, ')
+          ..write('targetWeightBps: $targetWeightBps, ')
+          ..write('driftBandBps: $driftBandBps, ')
+          ..write('transferPolicy: $transferPolicy, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $PortfolioStrategyConfigsTable extends PortfolioStrategyConfigs
     with TableInfo<$PortfolioStrategyConfigsTable, PortfolioStrategyConfigRow> {
   @override
@@ -44179,6 +46537,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $GoalsTable goals = $GoalsTable(this);
   late final $InvestmentPortfoliosTable investmentPortfolios =
       $InvestmentPortfoliosTable(this);
+  late final $PortfolioStrategyTemplatesTable portfolioStrategyTemplates =
+      $PortfolioStrategyTemplatesTable(this);
+  late final $RebalanceUniversesTable rebalanceUniverses =
+      $RebalanceUniversesTable(this);
+  late final $PortfolioAllocationTargetsTable portfolioAllocationTargets =
+      $PortfolioAllocationTargetsTable(this);
   late final $PortfolioStrategyConfigsTable portfolioStrategyConfigs =
       $PortfolioStrategyConfigsTable(this);
   late final $PortfolioRebalanceGroupsTable portfolioRebalanceGroups =
@@ -44260,6 +46624,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     budgets,
     goals,
     investmentPortfolios,
+    portfolioStrategyTemplates,
+    rebalanceUniverses,
+    portfolioAllocationTargets,
     portfolioStrategyConfigs,
     portfolioRebalanceGroups,
     portfolioCapitalAssignments,
@@ -53829,6 +56196,1116 @@ typedef $$InvestmentPortfoliosTableProcessedTableManager =
         >,
       ),
       InvestmentPortfolioRow,
+      PrefetchHooks Function()
+    >;
+typedef $$PortfolioStrategyTemplatesTableCreateCompanionBuilder =
+    PortfolioStrategyTemplatesCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String localizedNamesJson,
+      required String iconToken,
+      required int schemaVersion,
+      required String capitalRole,
+      required String defaultSettingsJson,
+      required String defaultInternalTargetJson,
+      required int defaultDriftBandBps,
+      required String defaultTransferPolicy,
+      required DateTime createdAt,
+      Value<bool> archived,
+      Value<int> rowid,
+    });
+typedef $$PortfolioStrategyTemplatesTableUpdateCompanionBuilder =
+    PortfolioStrategyTemplatesCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> localizedNamesJson,
+      Value<String> iconToken,
+      Value<int> schemaVersion,
+      Value<String> capitalRole,
+      Value<String> defaultSettingsJson,
+      Value<String> defaultInternalTargetJson,
+      Value<int> defaultDriftBandBps,
+      Value<String> defaultTransferPolicy,
+      Value<DateTime> createdAt,
+      Value<bool> archived,
+      Value<int> rowid,
+    });
+
+class $$PortfolioStrategyTemplatesTableFilterComposer
+    extends Composer<_$AppDatabase, $PortfolioStrategyTemplatesTable> {
+  $$PortfolioStrategyTemplatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get localizedNamesJson => $composableBuilder(
+    column: $table.localizedNamesJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get iconToken => $composableBuilder(
+    column: $table.iconToken,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get schemaVersion => $composableBuilder(
+    column: $table.schemaVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get capitalRole => $composableBuilder(
+    column: $table.capitalRole,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get defaultSettingsJson => $composableBuilder(
+    column: $table.defaultSettingsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get defaultInternalTargetJson => $composableBuilder(
+    column: $table.defaultInternalTargetJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get defaultDriftBandBps => $composableBuilder(
+    column: $table.defaultDriftBandBps,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get defaultTransferPolicy => $composableBuilder(
+    column: $table.defaultTransferPolicy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get archived => $composableBuilder(
+    column: $table.archived,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PortfolioStrategyTemplatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $PortfolioStrategyTemplatesTable> {
+  $$PortfolioStrategyTemplatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get localizedNamesJson => $composableBuilder(
+    column: $table.localizedNamesJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get iconToken => $composableBuilder(
+    column: $table.iconToken,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get schemaVersion => $composableBuilder(
+    column: $table.schemaVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get capitalRole => $composableBuilder(
+    column: $table.capitalRole,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get defaultSettingsJson => $composableBuilder(
+    column: $table.defaultSettingsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get defaultInternalTargetJson => $composableBuilder(
+    column: $table.defaultInternalTargetJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get defaultDriftBandBps => $composableBuilder(
+    column: $table.defaultDriftBandBps,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get defaultTransferPolicy => $composableBuilder(
+    column: $table.defaultTransferPolicy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get archived => $composableBuilder(
+    column: $table.archived,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PortfolioStrategyTemplatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PortfolioStrategyTemplatesTable> {
+  $$PortfolioStrategyTemplatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get localizedNamesJson => $composableBuilder(
+    column: $table.localizedNamesJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get iconToken =>
+      $composableBuilder(column: $table.iconToken, builder: (column) => column);
+
+  GeneratedColumn<int> get schemaVersion => $composableBuilder(
+    column: $table.schemaVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get capitalRole => $composableBuilder(
+    column: $table.capitalRole,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get defaultSettingsJson => $composableBuilder(
+    column: $table.defaultSettingsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get defaultInternalTargetJson => $composableBuilder(
+    column: $table.defaultInternalTargetJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get defaultDriftBandBps => $composableBuilder(
+    column: $table.defaultDriftBandBps,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get defaultTransferPolicy => $composableBuilder(
+    column: $table.defaultTransferPolicy,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get archived =>
+      $composableBuilder(column: $table.archived, builder: (column) => column);
+}
+
+class $$PortfolioStrategyTemplatesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PortfolioStrategyTemplatesTable,
+          PortfolioStrategyTemplateRow,
+          $$PortfolioStrategyTemplatesTableFilterComposer,
+          $$PortfolioStrategyTemplatesTableOrderingComposer,
+          $$PortfolioStrategyTemplatesTableAnnotationComposer,
+          $$PortfolioStrategyTemplatesTableCreateCompanionBuilder,
+          $$PortfolioStrategyTemplatesTableUpdateCompanionBuilder,
+          (
+            PortfolioStrategyTemplateRow,
+            BaseReferences<
+              _$AppDatabase,
+              $PortfolioStrategyTemplatesTable,
+              PortfolioStrategyTemplateRow
+            >,
+          ),
+          PortfolioStrategyTemplateRow,
+          PrefetchHooks Function()
+        > {
+  $$PortfolioStrategyTemplatesTableTableManager(
+    _$AppDatabase db,
+    $PortfolioStrategyTemplatesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PortfolioStrategyTemplatesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$PortfolioStrategyTemplatesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$PortfolioStrategyTemplatesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> localizedNamesJson = const Value.absent(),
+                Value<String> iconToken = const Value.absent(),
+                Value<int> schemaVersion = const Value.absent(),
+                Value<String> capitalRole = const Value.absent(),
+                Value<String> defaultSettingsJson = const Value.absent(),
+                Value<String> defaultInternalTargetJson = const Value.absent(),
+                Value<int> defaultDriftBandBps = const Value.absent(),
+                Value<String> defaultTransferPolicy = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> archived = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PortfolioStrategyTemplatesCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                localizedNamesJson: localizedNamesJson,
+                iconToken: iconToken,
+                schemaVersion: schemaVersion,
+                capitalRole: capitalRole,
+                defaultSettingsJson: defaultSettingsJson,
+                defaultInternalTargetJson: defaultInternalTargetJson,
+                defaultDriftBandBps: defaultDriftBandBps,
+                defaultTransferPolicy: defaultTransferPolicy,
+                createdAt: createdAt,
+                archived: archived,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String localizedNamesJson,
+                required String iconToken,
+                required int schemaVersion,
+                required String capitalRole,
+                required String defaultSettingsJson,
+                required String defaultInternalTargetJson,
+                required int defaultDriftBandBps,
+                required String defaultTransferPolicy,
+                required DateTime createdAt,
+                Value<bool> archived = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PortfolioStrategyTemplatesCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                localizedNamesJson: localizedNamesJson,
+                iconToken: iconToken,
+                schemaVersion: schemaVersion,
+                capitalRole: capitalRole,
+                defaultSettingsJson: defaultSettingsJson,
+                defaultInternalTargetJson: defaultInternalTargetJson,
+                defaultDriftBandBps: defaultDriftBandBps,
+                defaultTransferPolicy: defaultTransferPolicy,
+                createdAt: createdAt,
+                archived: archived,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PortfolioStrategyTemplatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PortfolioStrategyTemplatesTable,
+      PortfolioStrategyTemplateRow,
+      $$PortfolioStrategyTemplatesTableFilterComposer,
+      $$PortfolioStrategyTemplatesTableOrderingComposer,
+      $$PortfolioStrategyTemplatesTableAnnotationComposer,
+      $$PortfolioStrategyTemplatesTableCreateCompanionBuilder,
+      $$PortfolioStrategyTemplatesTableUpdateCompanionBuilder,
+      (
+        PortfolioStrategyTemplateRow,
+        BaseReferences<
+          _$AppDatabase,
+          $PortfolioStrategyTemplatesTable,
+          PortfolioStrategyTemplateRow
+        >,
+      ),
+      PortfolioStrategyTemplateRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RebalanceUniversesTableCreateCompanionBuilder =
+    RebalanceUniversesCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String name,
+      required String baseCurrency,
+      required DateTime createdAt,
+      Value<bool> archived,
+      Value<int> rowid,
+    });
+typedef $$RebalanceUniversesTableUpdateCompanionBuilder =
+    RebalanceUniversesCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> name,
+      Value<String> baseCurrency,
+      Value<DateTime> createdAt,
+      Value<bool> archived,
+      Value<int> rowid,
+    });
+
+class $$RebalanceUniversesTableFilterComposer
+    extends Composer<_$AppDatabase, $RebalanceUniversesTable> {
+  $$RebalanceUniversesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get baseCurrency => $composableBuilder(
+    column: $table.baseCurrency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get archived => $composableBuilder(
+    column: $table.archived,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RebalanceUniversesTableOrderingComposer
+    extends Composer<_$AppDatabase, $RebalanceUniversesTable> {
+  $$RebalanceUniversesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get baseCurrency => $composableBuilder(
+    column: $table.baseCurrency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get archived => $composableBuilder(
+    column: $table.archived,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RebalanceUniversesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RebalanceUniversesTable> {
+  $$RebalanceUniversesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get baseCurrency => $composableBuilder(
+    column: $table.baseCurrency,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get archived =>
+      $composableBuilder(column: $table.archived, builder: (column) => column);
+}
+
+class $$RebalanceUniversesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RebalanceUniversesTable,
+          RebalanceUniverseRow,
+          $$RebalanceUniversesTableFilterComposer,
+          $$RebalanceUniversesTableOrderingComposer,
+          $$RebalanceUniversesTableAnnotationComposer,
+          $$RebalanceUniversesTableCreateCompanionBuilder,
+          $$RebalanceUniversesTableUpdateCompanionBuilder,
+          (
+            RebalanceUniverseRow,
+            BaseReferences<
+              _$AppDatabase,
+              $RebalanceUniversesTable,
+              RebalanceUniverseRow
+            >,
+          ),
+          RebalanceUniverseRow,
+          PrefetchHooks Function()
+        > {
+  $$RebalanceUniversesTableTableManager(
+    _$AppDatabase db,
+    $RebalanceUniversesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RebalanceUniversesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RebalanceUniversesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RebalanceUniversesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> baseCurrency = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> archived = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RebalanceUniversesCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                name: name,
+                baseCurrency: baseCurrency,
+                createdAt: createdAt,
+                archived: archived,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String name,
+                required String baseCurrency,
+                required DateTime createdAt,
+                Value<bool> archived = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RebalanceUniversesCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                name: name,
+                baseCurrency: baseCurrency,
+                createdAt: createdAt,
+                archived: archived,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RebalanceUniversesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RebalanceUniversesTable,
+      RebalanceUniverseRow,
+      $$RebalanceUniversesTableFilterComposer,
+      $$RebalanceUniversesTableOrderingComposer,
+      $$RebalanceUniversesTableAnnotationComposer,
+      $$RebalanceUniversesTableCreateCompanionBuilder,
+      $$RebalanceUniversesTableUpdateCompanionBuilder,
+      (
+        RebalanceUniverseRow,
+        BaseReferences<
+          _$AppDatabase,
+          $RebalanceUniversesTable,
+          RebalanceUniverseRow
+        >,
+      ),
+      RebalanceUniverseRow,
+      PrefetchHooks Function()
+    >;
+typedef $$PortfolioAllocationTargetsTableCreateCompanionBuilder =
+    PortfolioAllocationTargetsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String universeId,
+      required String portfolioId,
+      required int targetWeightBps,
+      required int driftBandBps,
+      required String transferPolicy,
+      Value<int> rowid,
+    });
+typedef $$PortfolioAllocationTargetsTableUpdateCompanionBuilder =
+    PortfolioAllocationTargetsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> universeId,
+      Value<String> portfolioId,
+      Value<int> targetWeightBps,
+      Value<int> driftBandBps,
+      Value<String> transferPolicy,
+      Value<int> rowid,
+    });
+
+class $$PortfolioAllocationTargetsTableFilterComposer
+    extends Composer<_$AppDatabase, $PortfolioAllocationTargetsTable> {
+  $$PortfolioAllocationTargetsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get universeId => $composableBuilder(
+    column: $table.universeId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get portfolioId => $composableBuilder(
+    column: $table.portfolioId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get targetWeightBps => $composableBuilder(
+    column: $table.targetWeightBps,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get driftBandBps => $composableBuilder(
+    column: $table.driftBandBps,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get transferPolicy => $composableBuilder(
+    column: $table.transferPolicy,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PortfolioAllocationTargetsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PortfolioAllocationTargetsTable> {
+  $$PortfolioAllocationTargetsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get universeId => $composableBuilder(
+    column: $table.universeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get portfolioId => $composableBuilder(
+    column: $table.portfolioId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get targetWeightBps => $composableBuilder(
+    column: $table.targetWeightBps,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get driftBandBps => $composableBuilder(
+    column: $table.driftBandBps,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get transferPolicy => $composableBuilder(
+    column: $table.transferPolicy,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PortfolioAllocationTargetsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PortfolioAllocationTargetsTable> {
+  $$PortfolioAllocationTargetsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get universeId => $composableBuilder(
+    column: $table.universeId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get portfolioId => $composableBuilder(
+    column: $table.portfolioId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get targetWeightBps => $composableBuilder(
+    column: $table.targetWeightBps,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get driftBandBps => $composableBuilder(
+    column: $table.driftBandBps,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get transferPolicy => $composableBuilder(
+    column: $table.transferPolicy,
+    builder: (column) => column,
+  );
+}
+
+class $$PortfolioAllocationTargetsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PortfolioAllocationTargetsTable,
+          PortfolioAllocationTargetRow,
+          $$PortfolioAllocationTargetsTableFilterComposer,
+          $$PortfolioAllocationTargetsTableOrderingComposer,
+          $$PortfolioAllocationTargetsTableAnnotationComposer,
+          $$PortfolioAllocationTargetsTableCreateCompanionBuilder,
+          $$PortfolioAllocationTargetsTableUpdateCompanionBuilder,
+          (
+            PortfolioAllocationTargetRow,
+            BaseReferences<
+              _$AppDatabase,
+              $PortfolioAllocationTargetsTable,
+              PortfolioAllocationTargetRow
+            >,
+          ),
+          PortfolioAllocationTargetRow,
+          PrefetchHooks Function()
+        > {
+  $$PortfolioAllocationTargetsTableTableManager(
+    _$AppDatabase db,
+    $PortfolioAllocationTargetsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PortfolioAllocationTargetsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$PortfolioAllocationTargetsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$PortfolioAllocationTargetsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> universeId = const Value.absent(),
+                Value<String> portfolioId = const Value.absent(),
+                Value<int> targetWeightBps = const Value.absent(),
+                Value<int> driftBandBps = const Value.absent(),
+                Value<String> transferPolicy = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PortfolioAllocationTargetsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                universeId: universeId,
+                portfolioId: portfolioId,
+                targetWeightBps: targetWeightBps,
+                driftBandBps: driftBandBps,
+                transferPolicy: transferPolicy,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String universeId,
+                required String portfolioId,
+                required int targetWeightBps,
+                required int driftBandBps,
+                required String transferPolicy,
+                Value<int> rowid = const Value.absent(),
+              }) => PortfolioAllocationTargetsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                universeId: universeId,
+                portfolioId: portfolioId,
+                targetWeightBps: targetWeightBps,
+                driftBandBps: driftBandBps,
+                transferPolicy: transferPolicy,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PortfolioAllocationTargetsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PortfolioAllocationTargetsTable,
+      PortfolioAllocationTargetRow,
+      $$PortfolioAllocationTargetsTableFilterComposer,
+      $$PortfolioAllocationTargetsTableOrderingComposer,
+      $$PortfolioAllocationTargetsTableAnnotationComposer,
+      $$PortfolioAllocationTargetsTableCreateCompanionBuilder,
+      $$PortfolioAllocationTargetsTableUpdateCompanionBuilder,
+      (
+        PortfolioAllocationTargetRow,
+        BaseReferences<
+          _$AppDatabase,
+          $PortfolioAllocationTargetsTable,
+          PortfolioAllocationTargetRow
+        >,
+      ),
+      PortfolioAllocationTargetRow,
       PrefetchHooks Function()
     >;
 typedef $$PortfolioStrategyConfigsTableCreateCompanionBuilder =
@@ -64758,6 +68235,20 @@ class $AppDatabaseManager {
       $$GoalsTableTableManager(_db, _db.goals);
   $$InvestmentPortfoliosTableTableManager get investmentPortfolios =>
       $$InvestmentPortfoliosTableTableManager(_db, _db.investmentPortfolios);
+  $$PortfolioStrategyTemplatesTableTableManager
+  get portfolioStrategyTemplates =>
+      $$PortfolioStrategyTemplatesTableTableManager(
+        _db,
+        _db.portfolioStrategyTemplates,
+      );
+  $$RebalanceUniversesTableTableManager get rebalanceUniverses =>
+      $$RebalanceUniversesTableTableManager(_db, _db.rebalanceUniverses);
+  $$PortfolioAllocationTargetsTableTableManager
+  get portfolioAllocationTargets =>
+      $$PortfolioAllocationTargetsTableTableManager(
+        _db,
+        _db.portfolioAllocationTargets,
+      );
   $$PortfolioStrategyConfigsTableTableManager get portfolioStrategyConfigs =>
       $$PortfolioStrategyConfigsTableTableManager(
         _db,

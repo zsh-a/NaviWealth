@@ -10,8 +10,10 @@ import 'package:naviwealth/features/finance/investment/domain/models/holding_sna
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/portfolio_capital_assignment.dart';
 import 'package:naviwealth/features/finance/investment/domain/strategy/portfolio_strategy.dart';
+import 'package:naviwealth/features/finance/investment/domain/strategy/portfolio_strategy_template.dart';
 import 'package:naviwealth/features/finance/rebalance/data/rebalance_providers.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/allocation_schemes.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance_group.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/rebalance_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -35,14 +37,50 @@ void main() {
 
         final income = await repository.create(
           name: ' Dividend income ',
-          initialStrategyKind: PortfolioStrategyKind.dividendIncome,
+          initialStrategy: kDividendIncomeStrategyTemplate,
+          baseCurrency: 'USD',
+          languageCode: 'en',
         );
         final growth = await repository.create(
           name: 'Growth',
-          initialStrategyKind: PortfolioStrategyKind.indexCore,
+          initialStrategy: kIndexCoreStrategyTemplate,
+          baseCurrency: 'USD',
+          languageCode: 'en',
         );
         expect(income.name, 'Dividend income');
         expect(await repository.watchActive('u-test').first, hasLength(2));
+        final universe =
+            (await repository.watchUniverses('u-test').first).single;
+        final portfolioTargets = await repository
+            .watchPortfolioTargets('u-test')
+            .first;
+        expect(universe.baseCurrency, 'USD');
+        expect(portfolioTargets.map((target) => target.targetWeightBps), [
+          5000,
+          5000,
+        ]);
+        final incomeTarget = portfolioTargets.singleWhere(
+          (target) => target.portfolioId == income.id,
+        );
+        await repository.updatePortfolioTargetConfiguration(
+          target: incomeTarget,
+          targetWeightBps: 7000,
+        );
+        final updatedTargets = await repository
+            .watchPortfolioTargets('u-test')
+            .first;
+        expect(
+          updatedTargets
+              .singleWhere((target) => target.portfolioId == income.id)
+              .targetWeightBps,
+          7000,
+        );
+        expect(
+          updatedTargets
+              .singleWhere((target) => target.portfolioId == growth.id)
+              .targetWeightBps,
+          3000,
+        );
 
         final groups = await repository.watchGroups('u-test').first;
         final incomeGroup = groups.singleWhere(
@@ -92,11 +130,19 @@ void main() {
           (await repository.watchActive('u-test').first).single.id,
           income.id,
         );
+        expect(
+          (await repository.watchPortfolioTargets('u-test').first)
+              .single
+              .targetWeightBps,
+          10000,
+        );
         expect(await repository.watchAssignments('u-test').first, isEmpty);
         expect(
           outbox.queued.map((operation) => operation.table),
           containsAll([
             InvestmentPortfolioRepository.portfoliosTable,
+            InvestmentPortfolioRepository.universesTable,
+            InvestmentPortfolioRepository.portfolioTargetsTable,
             InvestmentPortfolioRepository.groupsTable,
             InvestmentPortfolioRepository.strategiesTable,
             InvestmentPortfolioRepository.assignmentsTable,
@@ -104,6 +150,48 @@ void main() {
         );
       },
     );
+
+    test('persists and instantiates a custom strategy template', () async {
+      final db = makeTestDatabase();
+      final repository = InvestmentPortfolioRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+
+      final template = await repository.createCustomStrategyTemplate(
+        name: 'Quality',
+        languageCode: 'en',
+        iconToken: 'sparkles',
+        capitalRole: StrategyCapitalRole.owner,
+        defaultInternalTarget: const TargetAllocation(
+          weights: {AssetCategory.stock: 1},
+        ),
+        defaultDriftBandBps: 300,
+        defaultTransferPolicy: GroupTransferPolicy.inflowsOnly,
+      );
+      final persisted =
+          (await repository.watchCustomStrategyTemplates('u-test').first)
+              .single;
+      expect(persisted.kind, template.kind);
+      expect(persisted.displayName('en'), 'Quality');
+
+      final portfolio = await repository.create(
+        name: 'Quality portfolio',
+        initialStrategy: persisted,
+        baseCurrency: 'USD',
+        languageCode: 'en',
+      );
+      final group = (await repository.watchGroups('u-test').first).single;
+      final strategy =
+          (await repository.watchStrategies('u-test').first).single;
+      expect(group.portfolioId, portfolio.id);
+      expect(group.strategyKind, persisted.kind);
+      expect(group.driftBandBps, 300);
+      expect(group.transferPolicy, GroupTransferPolicy.inflowsOnly);
+      expect(strategy.settings, isA<OpaquePortfolioStrategySettings>());
+    });
 
     test('adds strategy groups and keeps aggregate weights at 100%', () async {
       final db = makeTestDatabase();
@@ -115,12 +203,26 @@ void main() {
       addTearDown(db.close);
       final portfolio = await repository.create(
         name: 'Layered',
-        initialStrategyKind: PortfolioStrategyKind.indexCore,
+        initialStrategy: kIndexCoreStrategyTemplate,
+        baseCurrency: 'USD',
+        languageCode: 'en',
+      );
+      final onlyGroup = (await repository.watchGroups('u-test').first).single;
+      await expectLater(
+        repository.updateGroupConfiguration(
+          group: onlyGroup.copyWith(name: 'Must not partially save'),
+          targetWeightBps: 5000,
+        ),
+        throwsStateError,
+      );
+      expect(
+        (await repository.watchGroups('u-test').first).single.name,
+        isNot('Must not partially save'),
       );
 
       final dividend = await repository.addCapitalStrategy(
         portfolioId: portfolio.id,
-        kind: PortfolioStrategyKind.dividendIncome,
+        template: kDividendIncomeStrategyTemplate,
       );
       var groups = await repository.watchGroups('u-test').first;
       expect(groups.map((group) => group.targetWeightBps), [5000, 5000]);
@@ -139,6 +241,27 @@ void main() {
         groups.singleWhere((group) => group.id == dividend.id).targetWeightBps,
         3000,
       );
+
+      final configured = groups.singleWhere((group) => group.id == dividend.id);
+      await repository.updateGroupConfiguration(
+        group: configured.copyWith(
+          name: 'Income target',
+          transferPolicy: GroupTransferPolicy.isolated,
+        ),
+        targetWeightBps: 5000,
+      );
+      groups = await repository.watchGroups('u-test').first;
+      expect(groups.map((group) => group.targetWeightBps), [5000, 5000]);
+      expect(
+        groups.singleWhere((group) => group.id == dividend.id),
+        isA<PortfolioRebalanceGroup>()
+            .having((group) => group.name, 'name', 'Income target')
+            .having(
+              (group) => group.transferPolicy,
+              'transferPolicy',
+              GroupTransferPolicy.isolated,
+            ),
+      );
     });
 
     test('assigns cash directly to a capital-owning group', () async {
@@ -151,7 +274,9 @@ void main() {
       addTearDown(db.close);
       final portfolio = await repository.create(
         name: 'Options',
-        initialStrategyKind: PortfolioStrategyKind.optionsIncome,
+        initialStrategy: kOptionsIncomeStrategyTemplate,
+        baseCurrency: 'USD',
+        languageCode: 'en',
       );
       final group = (await repository.watchGroups('u-test').first).single;
 
@@ -182,7 +307,9 @@ void main() {
       addTearDown(db.close);
       final portfolio = await repository.create(
         name: 'Income',
-        initialStrategyKind: PortfolioStrategyKind.dividendIncome,
+        initialStrategy: kDividendIncomeStrategyTemplate,
+        baseCurrency: 'USD',
+        languageCode: 'en',
       );
       final group = (await repository.watchGroups('u-test').first).single;
       final controller = TargetAllocationController(

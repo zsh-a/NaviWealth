@@ -1230,6 +1230,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioStrategyCustom => '自定义';
 
   @override
+  String get portfolioStrategyCustomCreateAction => '创建策略类型';
+
+  @override
+  String get portfolioStrategyCustomNameLabel => '策略类型名称';
+
+  @override
+  String get portfolioStrategyCapitalRoleLabel => '资本角色';
+
+  @override
+  String get portfolioStrategyCapitalOwner => '拥有独立资金占比';
+
+  @override
+  String get portfolioStrategyCapitalOverlay => '叠加策略（不占资金比例）';
+
+  @override
+  String get portfolioStrategyDefaultAssetLabel => '默认资产类别';
+
+  @override
   String get portfolioAnnualIncomeTargetLabel => '年度收入目标（可选）';
 
   @override
@@ -1278,6 +1296,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioAssignmentSaved => '组合归属已保存。';
 
   @override
+  String get rebalancePortfoliosTitle => '组合资金配置';
+
+  @override
+  String get rebalanceCapitalTreeHint => '组合间调拨 → 策略组间调拨 → 组内资产配置';
+
+  @override
+  String rebalancePortfolioWeightPair(String actual, String target) {
+    return '当前 $actual · 目标 $target';
+  }
+
+  @override
+  String get rebalancePortfolioTransfersTitle => '组合间资金调拨';
+
+  @override
   String get rebalanceGroupsTitle => '再平衡分组';
 
   @override
@@ -1297,7 +1329,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioGroupsSectionTitle => '策略分组';
 
   @override
+  String get portfolioAllocationSectionTitle => '组合资金占比';
+
+  @override
+  String portfolioAllocationWeightSummary(String weight) {
+    return '全局目标 $weight%';
+  }
+
+  @override
+  String get portfolioAllocationEditTitle => '编辑组合资金配置';
+
+  @override
+  String get portfolioAllocationTargetWeightLabel => '全局目标占比（%）';
+
+  @override
+  String get portfolioAllocationSingleTargetHint =>
+      '只有一个组合时必须保持 100%。请先添加另一个组合，再调整目标占比。';
+
+  @override
   String get portfolioGroupAddAction => '添加策略分组';
+
+  @override
+  String get portfolioOverlayAddAction => '添加叠加策略';
+
+  @override
+  String get portfolioOverlayNoTemplates => '请先创建一个叠加策略类型，再将其附加到策略分组。';
+
+  @override
+  String get portfolioOverlayHostGroupLabel => '挂载策略分组';
 
   @override
   String get portfolioGroupEditTitle => '编辑策略分组';
@@ -1307,6 +1366,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get portfolioGroupTargetWeightLabel => '组合目标占比（%）';
+
+  @override
+  String get portfolioGroupSingleTargetHint =>
+      '只有一个策略分组时必须保持 100%。请先添加另一个分组，再调整目标占比。';
 
   @override
   String get portfolioGroupDriftBandLabel => '漂移带宽（%）';

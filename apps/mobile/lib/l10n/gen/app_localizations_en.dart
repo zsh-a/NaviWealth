@@ -1277,6 +1277,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioStrategyCustom => 'Custom';
 
   @override
+  String get portfolioStrategyCustomCreateAction => 'Create strategy type';
+
+  @override
+  String get portfolioStrategyCustomNameLabel => 'Strategy type name';
+
+  @override
+  String get portfolioStrategyCapitalRoleLabel => 'Capital role';
+
+  @override
+  String get portfolioStrategyCapitalOwner => 'Owns a capital allocation';
+
+  @override
+  String get portfolioStrategyCapitalOverlay =>
+      'Overlay without a capital weight';
+
+  @override
+  String get portfolioStrategyDefaultAssetLabel => 'Default asset category';
+
+  @override
   String get portfolioAnnualIncomeTargetLabel =>
       'Annual income target (optional)';
 
@@ -1330,6 +1349,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioAssignmentSaved => 'Portfolio assignments saved.';
 
   @override
+  String get rebalancePortfoliosTitle => 'Portfolio allocation';
+
+  @override
+  String get rebalanceCapitalTreeHint =>
+      'Portfolio transfers → strategy-group transfers → internal asset allocation';
+
+  @override
+  String rebalancePortfolioWeightPair(String actual, String target) {
+    return 'Actual $actual · target $target';
+  }
+
+  @override
+  String get rebalancePortfolioTransfersTitle => 'Inter-portfolio transfers';
+
+  @override
   String get rebalanceGroupsTitle => 'Rebalance groups';
 
   @override
@@ -1349,7 +1383,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioGroupsSectionTitle => 'Strategy groups';
 
   @override
+  String get portfolioAllocationSectionTitle => 'Portfolio capital allocation';
+
+  @override
+  String portfolioAllocationWeightSummary(String weight) {
+    return 'Universe target $weight%';
+  }
+
+  @override
+  String get portfolioAllocationEditTitle => 'Edit portfolio allocation';
+
+  @override
+  String get portfolioAllocationTargetWeightLabel => 'Universe target (%)';
+
+  @override
+  String get portfolioAllocationSingleTargetHint =>
+      'A universe with one portfolio must remain at 100%. Add another portfolio before changing its target.';
+
+  @override
   String get portfolioGroupAddAction => 'Add strategy group';
+
+  @override
+  String get portfolioOverlayAddAction => 'Add overlay strategy';
+
+  @override
+  String get portfolioOverlayNoTemplates =>
+      'Create an overlay strategy type before attaching one.';
+
+  @override
+  String get portfolioOverlayHostGroupLabel => 'Host strategy group';
 
   @override
   String get portfolioGroupEditTitle => 'Edit strategy group';
@@ -1359,6 +1421,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get portfolioGroupTargetWeightLabel => 'Portfolio target (%)';
+
+  @override
+  String get portfolioGroupSingleTargetHint =>
+      'A portfolio with one strategy group must remain at 100%. Add another group before changing its target.';
 
   @override
   String get portfolioGroupDriftBandLabel => 'Drift band (%)';

@@ -3,11 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
+import 'package:naviwealth/features/finance/home/ui/asset_category_visuals.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance_group.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/rebalance_models.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/investment_portfolio_providers.dart';
 import '../domain/strategy/portfolio_strategy.dart';
+import '../domain/strategy/portfolio_strategy_template.dart';
+import 'portfolio_strategy_visuals.dart';
 
 class PortfolioGroupsSection extends ConsumerWidget {
   const PortfolioGroupsSection({super.key, required this.portfolioId});
@@ -75,6 +80,14 @@ class PortfolioGroupsSection extends ConsumerWidget {
                   _showAddGroupSheet(context, portfolioId: portfolioId),
               child: Text(l10n.portfolioGroupAddAction),
             ),
+            const SizedBox(height: AppSpacing.s8),
+            FButton(
+              variant: FButtonVariant.outline,
+              prefix: const Icon(FLucideIcons.combine),
+              onPress: () =>
+                  _showAddOverlaySheet(context, portfolioId: portfolioId),
+              child: Text(l10n.portfolioOverlayAddAction),
+            ),
           ],
         );
       },
@@ -113,63 +126,101 @@ class _AddPortfolioGroupFormState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final strategies = ref.watch(portfolioStrategyConfigsProvider);
-    return strategies.whenOrLoading(
-      context: context,
-      onRetry: () => ref.invalidate(portfolioStrategyConfigsProvider),
-      data: (allStrategies) {
-        final configured = allStrategies
-            .where((strategy) => strategy.portfolioId == widget.portfolioId)
-            .map((strategy) => strategy.kind)
-            .toSet();
-        final available = _builtInStrategyKinds
-            .where((kind) => !configured.contains(kind))
-            .toList(growable: false);
-        if (available.isEmpty) {
-          return AppEmptyState(
-            icon: FLucideIcons.layers,
-            title: l10n.portfolioGroupNoTemplates,
-            action: FButton(
-              variant: FButtonVariant.outline,
-              onPress: () => Navigator.of(context).pop(),
-              child: Text(l10n.commonDone),
-            ),
-          );
-        }
-        final selected = _kind ?? available.first;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            FSelect<PortfolioStrategyKind>.rich(
-              enabled: !_busy,
-              format: (kind) => _strategyLabel(l10n, kind),
-              control: FSelectControl<PortfolioStrategyKind>.lifted(
-                value: selected,
-                onChange: (value) {
-                  if (!_busy) setState(() => _kind = value);
-                },
-              ),
-              label: Text(l10n.portfolioStrategyLabel),
+    final templates = ref.watch(portfolioStrategyTemplatesProvider);
+    return switch ((strategies, templates)) {
+      (
+        AsyncData(value: final allStrategies),
+        AsyncData(value: final catalog),
+      ) =>
+        Builder(
+          builder: (context) {
+            final configured = allStrategies
+                .where((strategy) => strategy.portfolioId == widget.portfolioId)
+                .map((strategy) => strategy.kind)
+                .toSet();
+            final available = catalog
+                .where(
+                  (template) =>
+                      template.defaultCapitalRole ==
+                          StrategyCapitalRole.owner &&
+                      !configured.contains(template.kind),
+                )
+                .toList(growable: false);
+            if (available.isEmpty) {
+              return AppEmptyState(
+                icon: FLucideIcons.layers,
+                title: l10n.portfolioGroupNoTemplates,
+                action: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(context).pop(),
+                  child: Text(l10n.commonDone),
+                ),
+              );
+            }
+            final selectedKind = _kind ?? available.first.kind;
+            final selected = strategyTemplateForKind(available, selectedKind)!;
+            final locale = Localizations.localeOf(context);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (final kind in available)
-                  FSelectItem<PortfolioStrategyKind>(
-                    value: kind,
-                    title: Text(_strategyLabel(l10n, kind)),
+                FSelect<PortfolioStrategyKind>.rich(
+                  enabled: !_busy,
+                  format: (kind) =>
+                      strategyTemplateForKind(
+                        available,
+                        kind,
+                      )?.displayName(locale.languageCode) ??
+                      kind.wire,
+                  control: FSelectControl<PortfolioStrategyKind>.lifted(
+                    value: selectedKind,
+                    onChange: (value) {
+                      if (!_busy) setState(() => _kind = value);
+                    },
                   ),
+                  label: Text(l10n.portfolioStrategyLabel),
+                  children: [
+                    for (final template in available)
+                      FSelectItem<PortfolioStrategyKind>(
+                        value: template.kind,
+                        title: Text(template.displayName(locale.languageCode)),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.s16),
+                AppBusyButton(
+                  onPress: () => _add(selected),
+                  busy: _busy,
+                  label: l10n.portfolioGroupAddAction,
+                ),
               ],
-            ),
-            const SizedBox(height: AppSpacing.s16),
-            AppBusyButton(
-              onPress: () => _add(selected),
-              busy: _busy,
-              label: l10n.portfolioGroupAddAction,
-            ),
-          ],
-        );
-      },
-    );
+            );
+          },
+        ),
+      (AsyncError(:final error, :final stackTrace), _) ||
+      (_, AsyncError(:final error, :final stackTrace)) => AppEmptyState.error(
+        title: userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'load portfolio strategy templates',
+        ),
+        action: FButton(
+          variant: FButtonVariant.outline,
+          onPress: () {
+            ref.invalidate(portfolioStrategyConfigsProvider);
+            ref.invalidate(customPortfolioStrategyTemplatesProvider);
+          },
+          child: Text(l10n.commonRetry),
+        ),
+      ),
+      _ => const Center(child: FCircularProgress()),
+    };
   }
 
-  Future<void> _add(PortfolioStrategyKind kind) async {
+  Future<void> _add(PortfolioStrategyTemplate template) async {
+    final groupName = template.displayName(
+      Localizations.localeOf(context).languageCode,
+    );
     setState(() => _busy = true);
     try {
       final repository = await ref.read(
@@ -177,7 +228,350 @@ class _AddPortfolioGroupFormState
       );
       await repository.addCapitalStrategy(
         portfolioId: widget.portfolioId,
-        kind: kind,
+        template: template,
+        groupName: groupName,
+      );
+      if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).portfolioSaveFailed,
+      );
+    }
+  }
+}
+
+Future<void> showCustomPortfolioStrategyTemplateSheet(BuildContext context) {
+  final l10n = AppLocalizations.of(context);
+  return showAppSheet<void>(
+    context: context,
+    title: l10n.portfolioStrategyCustomCreateAction,
+    builder: (_) => const _CustomStrategyTemplateForm(),
+  );
+}
+
+class _CustomStrategyTemplateForm extends ConsumerStatefulWidget {
+  const _CustomStrategyTemplateForm();
+
+  @override
+  ConsumerState<_CustomStrategyTemplateForm> createState() =>
+      _CustomStrategyTemplateFormState();
+}
+
+class _CustomStrategyTemplateFormState
+    extends ConsumerState<_CustomStrategyTemplateForm> {
+  final _formKey = GlobalKey<FormState>();
+  final _name = TextEditingController();
+  final _band = TextEditingController(text: '5');
+  StrategyCapitalRole _role = StrategyCapitalRole.owner;
+  AssetCategory _category = AssetCategory.etf;
+  GroupTransferPolicy _policy = GroupTransferPolicy.bidirectional;
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _band.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _name),
+            label: Text(l10n.portfolioStrategyCustomNameLabel),
+            validator: (value) => value?.trim().isEmpty ?? true
+                ? l10n.portfolioNameRequired
+                : null,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FSelect<StrategyCapitalRole>.rich(
+            enabled: !_busy,
+            format: (role) => role == StrategyCapitalRole.owner
+                ? l10n.portfolioStrategyCapitalOwner
+                : l10n.portfolioStrategyCapitalOverlay,
+            control: FSelectControl<StrategyCapitalRole>.lifted(
+              value: _role,
+              onChange: (value) {
+                if (value != null) setState(() => _role = value);
+              },
+            ),
+            label: Text(l10n.portfolioStrategyCapitalRoleLabel),
+            children: [
+              for (final role in StrategyCapitalRole.values)
+                FSelectItem<StrategyCapitalRole>(
+                  value: role,
+                  title: Text(
+                    role == StrategyCapitalRole.owner
+                        ? l10n.portfolioStrategyCapitalOwner
+                        : l10n.portfolioStrategyCapitalOverlay,
+                  ),
+                ),
+            ],
+          ),
+          if (_role == StrategyCapitalRole.owner) ...[
+            const SizedBox(height: AppSpacing.s12),
+            FSelect<AssetCategory>.rich(
+              enabled: !_busy,
+              format: (category) => _assetCategoryLabel(l10n, category),
+              control: FSelectControl<AssetCategory>.lifted(
+                value: _category,
+                onChange: (value) {
+                  if (value != null) setState(() => _category = value);
+                },
+              ),
+              label: Text(l10n.portfolioStrategyDefaultAssetLabel),
+              children: [
+                for (final category in AssetCategory.values)
+                  FSelectItem<AssetCategory>(
+                    value: category,
+                    title: Text(_assetCategoryLabel(l10n, category)),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s12),
+            FTextFormField(
+              control: FTextFieldControl.managed(controller: _band),
+              label: Text(l10n.portfolioGroupDriftBandLabel),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              inputFormatters: [_percentFormatter],
+              validator: (value) => _validatePercent(value, l10n),
+            ),
+            const SizedBox(height: AppSpacing.s12),
+            FSelect<GroupTransferPolicy>.rich(
+              enabled: !_busy,
+              format: (policy) => _transferPolicyLabel(l10n, policy),
+              control: FSelectControl<GroupTransferPolicy>.lifted(
+                value: _policy,
+                onChange: (value) {
+                  if (value != null) setState(() => _policy = value);
+                },
+              ),
+              label: Text(l10n.portfolioGroupTransferPolicyLabel),
+              children: [
+                for (final policy in GroupTransferPolicy.values)
+                  FSelectItem<GroupTransferPolicy>(
+                    value: policy,
+                    title: Text(_transferPolicyLabel(l10n, policy)),
+                  ),
+              ],
+            ),
+          ],
+          const SizedBox(height: AppSpacing.s16),
+          AppBusyButton(onPress: _save, busy: _busy, label: l10n.commonSave),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _save() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final languageCode = Localizations.localeOf(context).languageCode;
+    setState(() => _busy = true);
+    try {
+      final repository = await ref.read(
+        investmentPortfolioRepositoryProvider.future,
+      );
+      await repository.createCustomStrategyTemplate(
+        name: _name.text,
+        languageCode: languageCode,
+        iconToken: 'layers',
+        capitalRole: _role,
+        defaultInternalTarget: TargetAllocation(weights: {_category: 1}),
+        defaultDriftBandBps: _bpsFromPercent(_band.text),
+        defaultTransferPolicy: _policy,
+      );
+      if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).portfolioSaveFailed,
+      );
+    }
+  }
+}
+
+Future<void> _showAddOverlaySheet(
+  BuildContext context, {
+  required String portfolioId,
+}) {
+  final l10n = AppLocalizations.of(context);
+  return showAppSheet<void>(
+    context: context,
+    title: l10n.portfolioOverlayAddAction,
+    builder: (_) => _AddPortfolioOverlayForm(portfolioId: portfolioId),
+  );
+}
+
+class _AddPortfolioOverlayForm extends ConsumerStatefulWidget {
+  const _AddPortfolioOverlayForm({required this.portfolioId});
+
+  final String portfolioId;
+
+  @override
+  ConsumerState<_AddPortfolioOverlayForm> createState() =>
+      _AddPortfolioOverlayFormState();
+}
+
+class _AddPortfolioOverlayFormState
+    extends ConsumerState<_AddPortfolioOverlayForm> {
+  PortfolioStrategyKind? _kind;
+  String? _groupId;
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final strategies = ref.watch(portfolioStrategyConfigsProvider);
+    final templates = ref.watch(portfolioStrategyTemplatesProvider);
+    final groups = ref.watch(portfolioRebalanceGroupsProvider);
+    return switch ((strategies, templates, groups)) {
+      (
+        AsyncData(value: final allStrategies),
+        AsyncData(value: final catalog),
+        AsyncData(value: final allGroups),
+      ) =>
+        Builder(
+          builder: (context) {
+            final configured = allStrategies
+                .where((strategy) => strategy.portfolioId == widget.portfolioId)
+                .map((strategy) => strategy.kind)
+                .toSet();
+            final available = catalog
+                .where(
+                  (template) =>
+                      template.defaultCapitalRole ==
+                          StrategyCapitalRole.overlay &&
+                      !configured.contains(template.kind),
+                )
+                .toList(growable: false);
+            final portfolioGroups = allGroups
+                .where((group) => group.portfolioId == widget.portfolioId)
+                .toList(growable: false);
+            if (available.isEmpty || portfolioGroups.isEmpty) {
+              return AppEmptyState(
+                icon: FLucideIcons.combine,
+                title: l10n.portfolioOverlayNoTemplates,
+                action: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(context).pop(),
+                  child: Text(l10n.commonDone),
+                ),
+              );
+            }
+            final locale = Localizations.localeOf(context);
+            final selectedKind = _kind ?? available.first.kind;
+            final selectedTemplate = strategyTemplateForKind(
+              available,
+              selectedKind,
+            )!;
+            final selectedGroupId = _groupId ?? portfolioGroups.first.id;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FSelect<PortfolioStrategyKind>.rich(
+                  enabled: !_busy,
+                  format: (kind) =>
+                      strategyTemplateForKind(
+                        available,
+                        kind,
+                      )?.displayName(locale.languageCode) ??
+                      kind.wire,
+                  control: FSelectControl<PortfolioStrategyKind>.lifted(
+                    value: selectedKind,
+                    onChange: (value) {
+                      if (value != null) setState(() => _kind = value);
+                    },
+                  ),
+                  label: Text(l10n.portfolioStrategyLabel),
+                  children: [
+                    for (final template in available)
+                      FSelectItem<PortfolioStrategyKind>(
+                        value: template.kind,
+                        title: Text(template.displayName(locale.languageCode)),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.s12),
+                FSelect<String>.rich(
+                  enabled: !_busy,
+                  format: (id) => portfolioGroups
+                      .where((group) => group.id == id)
+                      .first
+                      .name,
+                  control: FSelectControl<String>.lifted(
+                    value: selectedGroupId,
+                    onChange: (value) {
+                      if (value != null) setState(() => _groupId = value);
+                    },
+                  ),
+                  label: Text(l10n.portfolioOverlayHostGroupLabel),
+                  children: [
+                    for (final group in portfolioGroups)
+                      FSelectItem<String>(
+                        value: group.id,
+                        title: Text(group.name),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.s16),
+                AppBusyButton(
+                  onPress: () => _add(
+                    template: selectedTemplate,
+                    groupId: selectedGroupId,
+                  ),
+                  busy: _busy,
+                  label: l10n.portfolioOverlayAddAction,
+                ),
+              ],
+            );
+          },
+        ),
+      (AsyncError(:final error, :final stackTrace), _, _) ||
+      (_, AsyncError(:final error, :final stackTrace), _) ||
+      (
+        _,
+        _,
+        AsyncError(:final error, :final stackTrace),
+      ) => AppEmptyState.error(
+        title: userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'load portfolio overlays',
+        ),
+      ),
+      _ => const Center(child: FCircularProgress()),
+    };
+  }
+
+  Future<void> _add({
+    required PortfolioStrategyTemplate template,
+    required String groupId,
+  }) async {
+    setState(() => _busy = true);
+    try {
+      final repository = await ref.read(
+        investmentPortfolioRepositoryProvider.future,
+      );
+      await repository.addStrategyOverlay(
+        portfolioId: widget.portfolioId,
+        rebalanceGroupId: groupId,
+        template: template,
       );
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
@@ -247,6 +641,12 @@ class _EditPortfolioGroupFormState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final allGroups = ref.watch(portfolioRebalanceGroupsProvider).value;
+    final portfolioGroupCount = allGroups
+        ?.where((group) => group.portfolioId == widget.group.portfolioId)
+        .length;
+    final canChangeTarget =
+        portfolioGroupCount != null && portfolioGroupCount > 1;
     return Form(
       key: _formKey,
       child: Column(
@@ -262,11 +662,19 @@ class _EditPortfolioGroupFormState
           const SizedBox(height: AppSpacing.s12),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _target),
+            enabled: !_busy && canChangeTarget,
             label: Text(l10n.portfolioGroupTargetWeightLabel),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [_percentFormatter],
             validator: (value) => _validatePercent(value, l10n),
           ),
+          if (portfolioGroupCount == 1) ...[
+            const SizedBox(height: AppSpacing.s6),
+            Text(
+              l10n.portfolioGroupSingleTargetHint,
+              style: context.captionStyle,
+            ),
+          ],
           const SizedBox(height: AppSpacing.s12),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _band),
@@ -309,19 +717,18 @@ class _EditPortfolioGroupFormState
         investmentPortfolioRepositoryProvider.future,
       );
       final targetBps = _bpsFromPercent(_target.text);
-      await repository.updateGroup(
-        widget.group.copyWith(
-          name: _name.text.trim(),
-          driftBandBps: _bpsFromPercent(_band.text),
-          transferPolicy: _policy,
-        ),
+      final updated = widget.group.copyWith(
+        name: _name.text.trim(),
+        driftBandBps: _bpsFromPercent(_band.text),
+        transferPolicy: _policy,
       );
       if (targetBps != widget.group.targetWeightBps) {
-        await repository.setGroupTargetWeight(
-          portfolioId: widget.group.portfolioId,
-          groupId: widget.group.id,
+        await repository.updateGroupConfiguration(
+          group: updated,
           targetWeightBps: targetBps,
         );
+      } else {
+        await repository.updateGroup(updated);
       }
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
@@ -365,21 +772,5 @@ String _transferPolicyLabel(AppLocalizations l10n, GroupTransferPolicy policy) {
   };
 }
 
-String _strategyLabel(AppLocalizations l10n, PortfolioStrategyKind strategy) {
-  if (strategy == PortfolioStrategyKind.indexCore) {
-    return l10n.portfolioStrategyIndexCore;
-  }
-  if (strategy == PortfolioStrategyKind.dividendIncome) {
-    return l10n.portfolioStrategyDividendIncome;
-  }
-  if (strategy == PortfolioStrategyKind.optionsIncome) {
-    return l10n.portfolioStrategyOptionsIncome;
-  }
-  return strategy.wire;
-}
-
-const _builtInStrategyKinds = [
-  PortfolioStrategyKind.indexCore,
-  PortfolioStrategyKind.dividendIncome,
-  PortfolioStrategyKind.optionsIncome,
-];
+String _assetCategoryLabel(AppLocalizations l10n, AssetCategory category) =>
+    AssetCategoryVisuals.label(l10n, category);

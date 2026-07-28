@@ -192,6 +192,66 @@ class InvestmentPortfolios extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Synced user-authored strategy types. Built-in templates live in code and
+/// merge with these rows through the FinanceOS strategy catalog.
+@DataClassName('PortfolioStrategyTemplateRow')
+class PortfolioStrategyTemplates extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get localizedNamesJson => text()();
+  TextColumn get iconToken => text()();
+  IntColumn get schemaVersion => integer()();
+  TextColumn get capitalRole => text()();
+  TextColumn get defaultSettingsJson => text()();
+  TextColumn get defaultInternalTargetJson => text()();
+  IntColumn get defaultDriftBandBps => integer()();
+  TextColumn get defaultTransferPolicy => text()();
+  DateTimeColumn get createdAt => dateTime()();
+  BoolColumn get archived => boolean().withDefault(const Constant(false))();
+
+  @override
+  List<String> get customConstraints => [
+    'CHECK (default_drift_band_bps >= 0 '
+        'AND default_drift_band_bps <= 10000)',
+  ];
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Denominator for portfolio-level target allocation.
+@DataClassName('RebalanceUniverseRow')
+class RebalanceUniverses extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get baseCurrency => text().withLength(min: 3, max: 8)();
+  DateTimeColumn get createdAt => dateTime()();
+  BoolColumn get archived => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Portfolio target weights inside a rebalance universe.
+@DataClassName('PortfolioAllocationTargetRow')
+class PortfolioAllocationTargets extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get universeId => text()();
+  TextColumn get portfolioId => text()();
+  IntColumn get targetWeightBps => integer()();
+  IntColumn get driftBandBps => integer()();
+  TextColumn get transferPolicy => text()();
+
+  @override
+  List<String> get customConstraints => [
+    'CHECK (target_weight_bps >= 0 AND target_weight_bps <= 10000)',
+    'CHECK (drift_band_bps >= 0 AND drift_band_bps <= 10000)',
+    'UNIQUE(owner_user_id, universe_id, portfolio_id)',
+  ];
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 /// Open, independently versioned strategy modules attached to a portfolio.
 @DataClassName('PortfolioStrategyConfigRow')
 class PortfolioStrategyConfigs extends Table with SyncableTable {

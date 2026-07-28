@@ -2253,6 +2253,42 @@ abstract class AppLocalizations {
   /// **'Custom'**
   String get portfolioStrategyCustom;
 
+  /// No description provided for @portfolioStrategyCustomCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create strategy type'**
+  String get portfolioStrategyCustomCreateAction;
+
+  /// No description provided for @portfolioStrategyCustomNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Strategy type name'**
+  String get portfolioStrategyCustomNameLabel;
+
+  /// No description provided for @portfolioStrategyCapitalRoleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Capital role'**
+  String get portfolioStrategyCapitalRoleLabel;
+
+  /// No description provided for @portfolioStrategyCapitalOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owns a capital allocation'**
+  String get portfolioStrategyCapitalOwner;
+
+  /// No description provided for @portfolioStrategyCapitalOverlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Overlay without a capital weight'**
+  String get portfolioStrategyCapitalOverlay;
+
+  /// No description provided for @portfolioStrategyDefaultAssetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Default asset category'**
+  String get portfolioStrategyDefaultAssetLabel;
+
   /// No description provided for @portfolioAnnualIncomeTargetLabel.
   ///
   /// In en, this message translates to:
@@ -2341,6 +2377,30 @@ abstract class AppLocalizations {
   /// **'Portfolio assignments saved.'**
   String get portfolioAssignmentSaved;
 
+  /// No description provided for @rebalancePortfoliosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio allocation'**
+  String get rebalancePortfoliosTitle;
+
+  /// No description provided for @rebalanceCapitalTreeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio transfers → strategy-group transfers → internal asset allocation'**
+  String get rebalanceCapitalTreeHint;
+
+  /// No description provided for @rebalancePortfolioWeightPair.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual {actual} · target {target}'**
+  String rebalancePortfolioWeightPair(String actual, String target);
+
+  /// No description provided for @rebalancePortfolioTransfersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Inter-portfolio transfers'**
+  String get rebalancePortfolioTransfersTitle;
+
   /// No description provided for @rebalanceGroupsTitle.
   ///
   /// In en, this message translates to:
@@ -2371,11 +2431,59 @@ abstract class AppLocalizations {
   /// **'Strategy groups'**
   String get portfolioGroupsSectionTitle;
 
+  /// No description provided for @portfolioAllocationSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio capital allocation'**
+  String get portfolioAllocationSectionTitle;
+
+  /// No description provided for @portfolioAllocationWeightSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Universe target {weight}%'**
+  String portfolioAllocationWeightSummary(String weight);
+
+  /// No description provided for @portfolioAllocationEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit portfolio allocation'**
+  String get portfolioAllocationEditTitle;
+
+  /// No description provided for @portfolioAllocationTargetWeightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Universe target (%)'**
+  String get portfolioAllocationTargetWeightLabel;
+
+  /// No description provided for @portfolioAllocationSingleTargetHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A universe with one portfolio must remain at 100%. Add another portfolio before changing its target.'**
+  String get portfolioAllocationSingleTargetHint;
+
   /// No description provided for @portfolioGroupAddAction.
   ///
   /// In en, this message translates to:
   /// **'Add strategy group'**
   String get portfolioGroupAddAction;
+
+  /// No description provided for @portfolioOverlayAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add overlay strategy'**
+  String get portfolioOverlayAddAction;
+
+  /// No description provided for @portfolioOverlayNoTemplates.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an overlay strategy type before attaching one.'**
+  String get portfolioOverlayNoTemplates;
+
+  /// No description provided for @portfolioOverlayHostGroupLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Host strategy group'**
+  String get portfolioOverlayHostGroupLabel;
 
   /// No description provided for @portfolioGroupEditTitle.
   ///
@@ -2394,6 +2502,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Portfolio target (%)'**
   String get portfolioGroupTargetWeightLabel;
+
+  /// No description provided for @portfolioGroupSingleTargetHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A portfolio with one strategy group must remain at 100%. Add another group before changing its target.'**
+  String get portfolioGroupSingleTargetHint;
 
   /// No description provided for @portfolioGroupDriftBandLabel.
   ///

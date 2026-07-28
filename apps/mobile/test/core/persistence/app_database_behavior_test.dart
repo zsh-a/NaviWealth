@@ -1981,6 +1981,9 @@ void main() {
         .get();
     final tableNames = tables.map((row) => row.read<String>('name')).toSet();
     expect(tableNames, contains('investment_portfolios'));
+    expect(tableNames, contains('portfolio_strategy_templates'));
+    expect(tableNames, contains('rebalance_universes'));
+    expect(tableNames, contains('portfolio_allocation_targets'));
     expect(tableNames, contains('portfolio_strategy_configs'));
     expect(tableNames, contains('portfolio_rebalance_groups'));
     expect(tableNames, contains('portfolio_capital_assignments'));

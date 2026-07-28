@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/forms/form_dirty_guard.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
@@ -18,7 +19,10 @@ import '../domain/models/investment_portfolio.dart';
 import '../domain/models/lot.dart';
 import '../domain/models/portfolio_capital_assignment.dart';
 import '../domain/strategy/portfolio_strategy.dart';
+import '../domain/strategy/portfolio_strategy_template.dart';
+import 'portfolio_allocation_sheets.dart';
 import 'portfolio_group_sheets.dart';
+import 'portfolio_strategy_visuals.dart';
 
 Future<void> showInvestmentPortfolioManager(BuildContext context) {
   final l10n = AppLocalizations.of(context);
@@ -75,6 +79,7 @@ class _InvestmentPortfolioManager extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final portfolios = ref.watch(investmentPortfoliosProvider);
     final strategies = ref.watch(portfolioStrategyConfigsProvider);
+    final templates = ref.watch(portfolioStrategyTemplatesProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -86,16 +91,33 @@ class _InvestmentPortfolioManager extends ConsumerWidget {
         const SizedBox(height: AppSpacing.s8),
         FButton(
           variant: FButtonVariant.outline,
+          onPress: () => showCustomPortfolioStrategyTemplateSheet(context),
+          prefix: const Icon(FLucideIcons.settings2),
+          child: Text(l10n.portfolioStrategyCustomCreateAction),
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        FButton(
+          variant: FButtonVariant.outline,
           onPress: () => showPortfolioCashAssignmentSheet(context),
           prefix: const Icon(FLucideIcons.walletCards),
           child: Text(l10n.portfolioAssignCashAction),
         ),
         const SizedBox(height: AppSpacing.s16),
-        switch ((portfolios, strategies)) {
-          (AsyncData(value: final items), AsyncData(value: final configs)) =>
-            _PortfolioList(portfolios: items, strategies: configs),
-          (AsyncError(:final error, :final stackTrace), _) ||
+        switch ((portfolios, strategies, templates)) {
           (
+            AsyncData(value: final items),
+            AsyncData(value: final configs),
+            AsyncData(value: final catalog),
+          ) =>
+            _PortfolioList(
+              portfolios: items,
+              strategies: configs,
+              templates: catalog,
+            ),
+          (AsyncError(:final error, :final stackTrace), _, _) ||
+          (_, AsyncError(:final error, :final stackTrace), _) ||
+          (
+            _,
             _,
             AsyncError(:final error, :final stackTrace),
           ) => AppEmptyState.error(
@@ -110,6 +132,7 @@ class _InvestmentPortfolioManager extends ConsumerWidget {
               onPress: () {
                 ref.invalidate(investmentPortfoliosProvider);
                 ref.invalidate(portfolioStrategyConfigsProvider);
+                ref.invalidate(customPortfolioStrategyTemplatesProvider);
               },
               child: Text(l10n.commonRetry),
             ),
@@ -122,10 +145,15 @@ class _InvestmentPortfolioManager extends ConsumerWidget {
 }
 
 class _PortfolioList extends StatelessWidget {
-  const _PortfolioList({required this.portfolios, required this.strategies});
+  const _PortfolioList({
+    required this.portfolios,
+    required this.strategies,
+    required this.templates,
+  });
 
   final List<InvestmentPortfolio> portfolios;
   final List<PortfolioStrategyConfig> strategies;
+  final List<PortfolioStrategyTemplate> templates;
 
   @override
   Widget build(BuildContext context) {
@@ -156,16 +184,22 @@ class _PortfolioList extends StatelessWidget {
                           strategy.enabled,
                     )
                     .firstOrNull;
+                final template = primaryStrategy == null
+                    ? null
+                    : strategyTemplateForKind(templates, primaryStrategy.kind);
                 return FTile(
                   prefix: Icon(
-                    _strategyIcon(primaryStrategy?.kind),
+                    strategyTemplateIcon(template),
                     color: context.theme.colors.mutedForeground,
                   ),
                   title: Text(portfolio.name),
                   subtitle: Text(
                     primaryStrategy == null
                         ? l10n.portfolioStrategyCustom
-                        : _strategyLabel(l10n, primaryStrategy.kind),
+                        : template?.displayName(
+                                Localizations.localeOf(context).languageCode,
+                              ) ??
+                              primaryStrategy.kind.wire,
                   ),
                   suffix: Icon(
                     FLucideIcons.chevronRight,
@@ -226,6 +260,8 @@ class _InvestmentPortfolioFormState
 
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final languageCode = Localizations.localeOf(context).languageCode;
+    final baseCurrency = ref.read(baseCurrencyProvider);
     setState(() => _busy = true);
     widget.dirty.busy = true;
     try {
@@ -234,9 +270,18 @@ class _InvestmentPortfolioFormState
       );
       final existing = widget.existing;
       if (existing == null) {
+        final templates =
+            ref.read(portfolioStrategyTemplatesProvider).value ??
+            kBuiltInPortfolioStrategyTemplates;
+        final initialStrategy = templates.firstWhere(
+          (template) => template.kind == _strategy,
+          orElse: () => kIndexCoreStrategyTemplate,
+        );
         await repository.create(
           name: _name.text,
-          initialStrategyKind: _strategy,
+          initialStrategy: initialStrategy,
+          baseCurrency: baseCurrency,
+          languageCode: languageCode,
         );
       } else {
         await repository.update(existing.copyWith(name: _name.text));
@@ -294,6 +339,16 @@ class _InvestmentPortfolioFormState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final templates =
+        ref.watch(portfolioStrategyTemplatesProvider).value ??
+        kBuiltInPortfolioStrategyTemplates;
+    final ownerTemplates = templates
+        .where(
+          (template) =>
+              template.defaultCapitalRole == StrategyCapitalRole.owner,
+        )
+        .toList(growable: false);
+    final locale = Localizations.localeOf(context);
     return AppSheet(
       title: widget.existing == null
           ? l10n.portfolioCreateTitle
@@ -319,7 +374,12 @@ class _InvestmentPortfolioFormState
             const SizedBox(height: AppSpacing.s16),
             if (widget.existing == null) ...[
               FSelect<PortfolioStrategyKind>.rich(
-                format: (value) => _strategyLabel(l10n, value),
+                format: (value) =>
+                    strategyTemplateForKind(
+                      ownerTemplates,
+                      value,
+                    )?.displayName(locale.languageCode) ??
+                    value.wire,
                 control: FSelectControl<PortfolioStrategyKind>.lifted(
                   value: _strategy,
                   onChange: (value) {
@@ -330,16 +390,18 @@ class _InvestmentPortfolioFormState
                 ),
                 label: Text(l10n.portfolioStrategyLabel),
                 children: [
-                  for (final value in _builtInStrategyKinds)
+                  for (final template in ownerTemplates)
                     FSelectItem<PortfolioStrategyKind>(
-                      value: value,
-                      title: Text(_strategyLabel(l10n, value)),
+                      value: template.kind,
+                      title: Text(template.displayName(locale.languageCode)),
                     ),
                 ],
               ),
               const SizedBox(height: AppSpacing.s16),
             ],
             if (widget.existing != null) ...[
+              const SizedBox(height: AppSpacing.s24),
+              PortfolioAllocationSection(portfolioId: widget.existing!.id),
               const SizedBox(height: AppSpacing.s24),
               PortfolioGroupsSection(portfolioId: widget.existing!.id),
               const SizedBox(height: AppSpacing.s24),
@@ -891,35 +953,3 @@ class _PortfolioCashAssignmentFormState
     }
   }
 }
-
-String _strategyLabel(AppLocalizations l10n, PortfolioStrategyKind strategy) {
-  if (strategy == PortfolioStrategyKind.indexCore) {
-    return l10n.portfolioStrategyIndexCore;
-  }
-  if (strategy == PortfolioStrategyKind.dividendIncome) {
-    return l10n.portfolioStrategyDividendIncome;
-  }
-  if (strategy == PortfolioStrategyKind.optionsIncome) {
-    return l10n.portfolioStrategyOptionsIncome;
-  }
-  return strategy.wire;
-}
-
-IconData _strategyIcon(PortfolioStrategyKind? strategy) {
-  if (strategy == PortfolioStrategyKind.indexCore) {
-    return FLucideIcons.chartNoAxesCombined;
-  }
-  if (strategy == PortfolioStrategyKind.dividendIncome) {
-    return FLucideIcons.handCoins;
-  }
-  if (strategy == PortfolioStrategyKind.optionsIncome) {
-    return FLucideIcons.shieldCheck;
-  }
-  return FLucideIcons.layers;
-}
-
-const _builtInStrategyKinds = [
-  PortfolioStrategyKind.indexCore,
-  PortfolioStrategyKind.dividendIncome,
-  PortfolioStrategyKind.optionsIncome,
-];

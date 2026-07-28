@@ -30,6 +30,8 @@ import '../domain/portfolio_rebalance_group.dart';
 import '../domain/rebalance_engine.dart';
 import '../domain/rebalance_execution.dart';
 import '../domain/rebalance_models.dart';
+import '../domain/rebalance_universe.dart';
+import '../domain/universe_rebalance_engine.dart';
 import 'rebalance_execution_store.dart';
 
 const _kWarningThresholdKey = 'naviwealth.rebalance.warning_threshold';
@@ -369,6 +371,43 @@ final hierarchicalRebalanceEngineProvider =
       );
     });
 
+final universeRebalanceEngineProvider = Provider<UniverseRebalanceEngine>((
+  ref,
+) {
+  return UniverseRebalanceEngine(
+    portfolioEngine: ref.watch(hierarchicalRebalanceEngineProvider),
+  );
+});
+
+final allPortfolioGroupSnapshotsProvider =
+    FutureProvider.autoDispose<Map<String, Map<String, DashboardSnapshot>>>((
+      ref,
+    ) async {
+      final scopes = await ref.watch(allPortfolioScopedHoldingsProvider.future);
+      final groups = await ref.watch(portfolioRebalanceGroupsProvider.future);
+      final assets = await ref.watch(allAssetsStreamProvider.future);
+      final dashboard = await ref.watch(dashboardSnapshotProvider.future);
+      return Map<String, Map<String, DashboardSnapshot>>.unmodifiable({
+        for (final portfolioEntry in scopes.entries)
+          portfolioEntry.key: Map<String, DashboardSnapshot>.unmodifiable({
+            for (final group in groups.where(
+              (item) => item.portfolioId == portfolioEntry.key,
+            ))
+              group.id: _buildRebalanceSnapshot(
+                holdings:
+                    portfolioEntry.value.snapshotsByGroup[group.id] ?? const {},
+                cashAssignments: portfolioEntry.value.cashAssignments
+                    .where(
+                      (assignment) => assignment.rebalanceGroupId == group.id,
+                    )
+                    .toList(growable: false),
+                assets: assets,
+                dashboard: dashboard,
+              ),
+          }),
+      });
+    });
+
 /// Per-group snapshots preserve exclusive capital ownership. Cash assignments
 /// are valued from the dashboard account item and never copied into overlays.
 final rebalancePortfolioGroupSnapshotsProvider =
@@ -380,26 +419,10 @@ final rebalancePortfolioGroupSnapshotsProvider =
           selectedId == kUnassignedInvestmentPortfolioId) {
         return const {};
       }
-      final scoped = await ref.watch(scopedPortfolioHoldingsProvider.future);
-      final allGroups = await ref.watch(
-        portfolioRebalanceGroupsProvider.future,
+      final allSnapshots = await ref.watch(
+        allPortfolioGroupSnapshotsProvider.future,
       );
-      final groups = allGroups
-          .where((group) => group.portfolioId == selectedId)
-          .toList(growable: false);
-      final assets = await ref.watch(allAssetsStreamProvider.future);
-      final dashboard = await ref.watch(dashboardSnapshotProvider.future);
-      return Map.unmodifiable({
-        for (final group in groups)
-          group.id: _buildRebalanceSnapshot(
-            holdings: scoped.snapshotsByGroup[group.id] ?? const {},
-            cashAssignments: scoped.cashAssignments
-                .where((assignment) => assignment.rebalanceGroupId == group.id)
-                .toList(growable: false),
-            assets: assets,
-            dashboard: dashboard,
-          ),
-      });
+      return allSnapshots[selectedId] ?? const {};
     });
 
 /// Snapshot used by the existing single-group execution workspace.
@@ -452,6 +475,47 @@ final hierarchicalRebalancePlanProvider = Provider<PortfolioRebalancePlan?>((
         target: PortfolioRebalanceTarget(groups: groups),
         snapshotsByGroup: snapshots,
         baseCurrency: dashboard.baseCurrency,
+      );
+});
+
+final universeRebalancePlanProvider = Provider<UniverseRebalancePlan?>((ref) {
+  final universe = ref.watch(activeRebalanceUniverseProvider).value;
+  final targets = ref.watch(activeUniversePortfolioTargetsProvider).value;
+  final portfolios = ref.watch(investmentPortfoliosProvider).value;
+  final groups = ref.watch(portfolioRebalanceGroupsProvider).value;
+  final snapshots = ref.watch(allPortfolioGroupSnapshotsProvider).value;
+  if (universe == null ||
+      targets == null ||
+      targets.isEmpty ||
+      portfolios == null ||
+      groups == null ||
+      snapshots == null) {
+    return null;
+  }
+  final portfoliosById = {
+    for (final portfolio in portfolios) portfolio.id: portfolio,
+  };
+  if (targets.any(
+    (target) => !portfoliosById.containsKey(target.portfolioId),
+  )) {
+    return null;
+  }
+  final groupsByPortfolio = {
+    for (final portfolio in portfolios)
+      portfolio.id: groups
+          .where((group) => group.portfolioId == portfolio.id)
+          .toList(growable: false),
+  };
+  return ref
+      .watch(universeRebalanceEngineProvider)
+      .compute(
+        target: UniverseAllocationTarget(
+          universe: universe,
+          portfolios: targets,
+        ),
+        portfoliosById: portfoliosById,
+        groupsByPortfolio: groupsByPortfolio,
+        snapshotsByPortfolioGroup: snapshots,
       );
 });
 
