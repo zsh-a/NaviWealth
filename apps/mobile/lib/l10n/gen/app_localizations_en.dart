@@ -1425,10 +1425,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioOverlayHostGroupLabel => 'Host strategy group';
 
   @override
+  String get portfolioOverlaySectionTitle => 'Overlay strategies';
+
+  @override
+  String get portfolioOverlayDeleteAction => 'Delete overlay strategy';
+
+  @override
+  String get portfolioOverlayDeleteConfirmation =>
+      'This overlay will be removed from its capital strategy. Asset assignments and the accounting ledger will not change.';
+
+  @override
   String get portfolioGroupEditTitle => 'Edit strategy';
 
   @override
   String get portfolioGroupNameLabel => 'Strategy name';
+
+  @override
+  String get portfolioStrategyDeleteAction => 'Delete strategy';
+
+  @override
+  String get portfolioStrategyDeleteLastBlocked =>
+      'A portfolio must keep at least one capital strategy. Delete the portfolio instead if it is no longer needed.';
+
+  @override
+  String get portfolioStrategyDeleteFailed =>
+      'Couldn\'t delete the strategy. Try again.';
+
+  @override
+  String portfolioStrategyDeleteTransferDescription(
+    String weight,
+    int assignmentCount,
+    int overlayCount,
+  ) {
+    return 'The $weight% target and $assignmentCount asset or cash assignments will move to the selected strategy. $overlayCount attached overlays will be deleted.';
+  }
 
   @override
   String get portfolioGroupTargetWeightLabel => 'Portfolio target (%)';
@@ -1465,6 +1495,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get capitalAllocationAdvancedAction => 'Funding rules and tolerance';
+
+  @override
+  String get capitalAllocationBalanceEvenlyAction => 'Distribute evenly';
+
+  @override
+  String get capitalAllocationFillRemainderAction => 'Fill remainder';
 
   @override
   String get capitalAllocationToleranceLabel => 'Allowed deviation (%)';
@@ -1504,7 +1540,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get portfolioGroupNoTemplates =>
-      'All built-in strategy types are already configured.';
+      'No capital strategy types are available.';
 
   @override
   String get portfolioSaveFailed => 'Couldn\'t save the portfolio. Try again.';
@@ -1518,7 +1554,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get portfolioDeleteConfirmation =>
-      'Lots in this portfolio will become unassigned. The accounting ledger will not change.';
+      'Asset and cash assignments will be cleared, and strategy configuration will also be deleted. The accounting ledger will not change.';
+
+  @override
+  String portfolioDeleteTransferDescription(
+    String weight,
+    int assignmentCount,
+  ) {
+    return 'The $weight% target and $assignmentCount asset or cash assignments will move to the selected strategy. The original portfolio and its strategy configuration will be deleted.';
+  }
+
+  @override
+  String get portfolioRemovalTransferHint =>
+      'Targets and assignments move in one transaction. The accounting ledger does not change.';
+
+  @override
+  String get portfolioRemovalTransferTargetLabel => 'Transfer to';
+
+  @override
+  String get portfolioRemovalTransferAction => 'Transfer and delete';
+
+  @override
+  String portfolioStrategyCountSummary(String strategy, int count) {
+    return '$strategy · $count capital strategies';
+  }
 
   @override
   String portfolioLotsCount(int count) {
@@ -5017,6 +5076,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get targetAllocationEditorCategoryTargets => 'Category targets';
+
+  @override
+  String get targetAllocationEditorAddCategory => 'Add asset class';
+
+  @override
+  String get targetAllocationEditorNoCategoriesAvailable =>
+      'All asset classes are added';
 
   @override
   String get targetAllocationEditorAssetTargets => 'Asset targets';

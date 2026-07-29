@@ -1369,10 +1369,39 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioOverlayHostGroupLabel => '挂载策略分组';
 
   @override
+  String get portfolioOverlaySectionTitle => '叠加策略';
+
+  @override
+  String get portfolioOverlayDeleteAction => '删除叠加策略';
+
+  @override
+  String get portfolioOverlayDeleteConfirmation =>
+      '该叠加策略将从当前资金策略中移除，不会影响资产归属和会计账本。';
+
+  @override
   String get portfolioGroupEditTitle => '编辑策略';
 
   @override
   String get portfolioGroupNameLabel => '策略名称';
+
+  @override
+  String get portfolioStrategyDeleteAction => '删除策略';
+
+  @override
+  String get portfolioStrategyDeleteLastBlocked =>
+      '组合至少需要保留一个资金策略；若不再需要，请删除整个组合。';
+
+  @override
+  String get portfolioStrategyDeleteFailed => '策略删除失败，请重试。';
+
+  @override
+  String portfolioStrategyDeleteTransferDescription(
+    String weight,
+    int assignmentCount,
+    int overlayCount,
+  ) {
+    return '当前 $weight% 目标比例和 $assignmentCount 项资产或现金归属将转移到所选策略；$overlayCount 个叠加策略会一并删除。';
+  }
 
   @override
   String get portfolioGroupTargetWeightLabel => '组合目标占比（%）';
@@ -1411,6 +1440,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get capitalAllocationAdvancedAction => '资金规则与允许偏差';
 
   @override
+  String get capitalAllocationBalanceEvenlyAction => '平均分配';
+
+  @override
+  String get capitalAllocationFillRemainderAction => '自动补足';
+
+  @override
   String get capitalAllocationToleranceLabel => '允许偏差（%）';
 
   @override
@@ -1445,7 +1480,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get portfolioGroupNoTemplates => '所有内置策略类型均已配置。';
+  String get portfolioGroupNoTemplates => '暂无可用的资金策略类型。';
 
   @override
   String get portfolioSaveFailed => '组合保存失败，请重试。';
@@ -1457,7 +1492,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioDeleteAction => '删除组合';
 
   @override
-  String get portfolioDeleteConfirmation => '该组合中的批次将变为未分类，会计账本不会改变。';
+  String get portfolioDeleteConfirmation =>
+      '该组合中的资产与现金归属将被清除，策略配置也会一并删除；会计账本不会改变。';
+
+  @override
+  String portfolioDeleteTransferDescription(
+    String weight,
+    int assignmentCount,
+  ) {
+    return '当前 $weight% 目标比例和 $assignmentCount 项资产或现金归属将转移到所选策略，原组合及其策略配置会一并删除。';
+  }
+
+  @override
+  String get portfolioRemovalTransferHint => '目标比例和资产归属会在同一事务中转移，不会改变会计账本。';
+
+  @override
+  String get portfolioRemovalTransferTargetLabel => '转移至';
+
+  @override
+  String get portfolioRemovalTransferAction => '转移并删除';
+
+  @override
+  String portfolioStrategyCountSummary(String strategy, int count) {
+    return '$strategy · $count 个资金策略';
+  }
 
   @override
   String portfolioLotsCount(int count) {
@@ -4796,6 +4854,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get targetAllocationEditorCategoryTargets => '类别目标';
+
+  @override
+  String get targetAllocationEditorAddCategory => '添加资产类别';
+
+  @override
+  String get targetAllocationEditorNoCategoriesAvailable => '所有资产类别均已添加';
 
   @override
   String get targetAllocationEditorAssetTargets => '资产目标';

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
@@ -8,6 +7,7 @@ import 'package:naviwealth/features/finance/home/ui/asset_category_visuals.dart'
 
 import '../../../../core/format/formatters.dart';
 import '../../../../core/forms/form_dirty_guard.dart';
+import '../../../../core/forms/percent_input_formatter.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../data/rebalance_providers.dart';
@@ -78,6 +78,7 @@ class _TargetAllocationEditorSheetState
   final _assetControllers = <String, TextEditingController>{};
   final _disposedAssetControllers = <TextEditingController>[];
   late Map<AssetCategory, double> _categoryWeights;
+  late Set<AssetCategory> _visibleCategories;
   late Map<String, _AssetTargetDraft> _assetTargets;
   final _categoryErrors = <AssetCategory, String>{};
   final _assetErrors = <String, String>{};
@@ -99,6 +100,13 @@ class _TargetAllocationEditorSheetState
       for (final category in _editableCategories)
         category: _roundPercent(initial[category] * 100),
     };
+    _visibleCategories = {
+      for (final entry in _categoryWeights.entries)
+        if (entry.value > 0) entry.key,
+    };
+    if (_visibleCategories.isEmpty) {
+      _visibleCategories = {AssetCategory.stock};
+    }
     _assetTargets = {
       for (final target in initial.assetTargets.values)
         target.assetId: _AssetTargetDraft(
@@ -250,6 +258,51 @@ class _TargetAllocationEditorSheetState
     widget.dirty.markDirty();
   }
 
+  void _removeCategory(AssetCategory category) {
+    if (_visibleCategories.length == 1) return;
+    _writingController = true;
+    try {
+      _categoryControllers[category]!.text = '0';
+    } finally {
+      _writingController = false;
+    }
+    setState(() {
+      _categoryWeights = {..._categoryWeights, category: 0};
+      _visibleCategories = {..._visibleCategories}..remove(category);
+      _categoryErrors.remove(category);
+      _showTotalError = false;
+    });
+    widget.dirty.markDirty();
+  }
+
+  Future<void> _addCategory() async {
+    final l10n = AppLocalizations.of(context);
+    final available = _editableCategories
+        .where((category) => !_visibleCategories.contains(category))
+        .toList(growable: false);
+    if (available.isEmpty) return;
+    final selected = await showAppSheet<AssetCategory>(
+      context: context,
+      title: l10n.targetAllocationEditorAddCategory,
+      builder: (_) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final category in available)
+            FTile(
+              prefix: Icon(AssetCategoryVisuals.icon(category)),
+              title: Text(AssetCategoryVisuals.label(l10n, category)),
+              onPress: () => Navigator.of(context).pop(category),
+            ),
+        ],
+      ),
+    );
+    if (selected == null || !mounted) return;
+    setState(() {
+      _visibleCategories = {..._visibleCategories, selected};
+    });
+    widget.dirty.markDirty();
+  }
+
   Future<void> _addAssetTarget(List<_AssetOption> options) async {
     final l10n = AppLocalizations.of(context);
     final available = options
@@ -359,6 +412,12 @@ class _TargetAllocationEditorSheetState
     final hasAvailableAssets = assetOptions.any(
       (option) => !_assetTargets.containsKey(option.assetId),
     );
+    final hasAvailableCategories = _editableCategories.any(
+      (category) => !_visibleCategories.contains(category),
+    );
+    final firstVisibleCategory = _editableCategories.firstWhere(
+      _visibleCategories.contains,
+    );
     final totalValid = _allocation.isValid;
     final totalColor = totalValid
         ? context.theme.colors.primary
@@ -378,24 +437,39 @@ class _TargetAllocationEditorSheetState
               padding: EdgeInsets.zero,
               children: [
                 for (final category in _editableCategories) ...[
-                  if (category == _editableCategories.first) ...[
-                    _SectionLabel(
-                      label: l10n.targetAllocationEditorCategoryTargets,
+                  if (_visibleCategories.contains(category)) ...[
+                    if (category == firstVisibleCategory) ...[
+                      _SectionLabel(
+                        label: l10n.targetAllocationEditorCategoryTargets,
+                      ),
+                      const SizedBox(height: AppSpacing.s6),
+                    ],
+                    _AllocationRow(
+                      rowKey: 'category-${category.name}',
+                      label: AssetCategoryVisuals.label(l10n, category),
+                      icon: AssetCategoryVisuals.icon(category),
+                      value: _categoryWeights[category] ?? 0,
+                      errorText: _categoryErrors[category],
+                      controller: _categoryControllers[category]!,
+                      onSliderChanged: (value) =>
+                          _setCategoryWeight(category, value),
+                      onRemove: _visibleCategories.length == 1
+                          ? null
+                          : () => _removeCategory(category),
                     ),
-                    const SizedBox(height: AppSpacing.s6),
+                    const SizedBox(height: AppSpacing.s8),
                   ],
-                  _AllocationRow(
-                    rowKey: 'category-${category.name}',
-                    label: AssetCategoryVisuals.label(l10n, category),
-                    icon: AssetCategoryVisuals.icon(category),
-                    value: _categoryWeights[category] ?? 0,
-                    errorText: _categoryErrors[category],
-                    controller: _categoryControllers[category]!,
-                    onSliderChanged: (value) =>
-                        _setCategoryWeight(category, value),
-                  ),
-                  const SizedBox(height: AppSpacing.s8),
                 ],
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: hasAvailableCategories ? _addCategory : null,
+                  prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+                  child: Text(
+                    hasAvailableCategories
+                        ? l10n.targetAllocationEditorAddCategory
+                        : l10n.targetAllocationEditorNoCategoriesAvailable,
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.s4),
                 _SectionLabel(label: l10n.targetAllocationEditorAssetTargets),
                 const SizedBox(height: AppSpacing.s6),

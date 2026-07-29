@@ -13,6 +13,7 @@ import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../rebalance/domain/portfolio_rebalance_group.dart';
+import '../../rebalance/domain/rebalance_universe.dart';
 import '../data/investment_portfolio_providers.dart';
 import '../data/providers.dart';
 import '../domain/models/investment_portfolio.dart';
@@ -22,7 +23,9 @@ import '../domain/strategy/portfolio_strategy.dart';
 import '../domain/strategy/portfolio_strategy_template.dart';
 import 'portfolio_allocation_sheets.dart';
 import 'portfolio_group_sheets.dart';
+import 'portfolio_removal_feedback.dart';
 import 'portfolio_strategy_visuals.dart';
+import 'removal_transfer_sheet.dart';
 
 Future<void> showInvestmentPortfolioManager(BuildContext context) {
   final l10n = AppLocalizations.of(context);
@@ -215,13 +218,15 @@ class _PortfolioList extends StatelessWidget {
             Builder(
               builder: (context) {
                 final portfolio = portfolios[index];
-                final primaryStrategy = strategies
+                final ownerStrategies = strategies
                     .where(
                       (strategy) =>
                           strategy.portfolioId == portfolio.id &&
-                          strategy.enabled,
+                          strategy.enabled &&
+                          strategy.capitalRole == StrategyCapitalRole.owner,
                     )
-                    .firstOrNull;
+                    .toList(growable: false);
+                final primaryStrategy = ownerStrategies.firstOrNull;
                 final template = primaryStrategy == null
                     ? null
                     : strategyTemplateForKind(templates, primaryStrategy.kind);
@@ -234,10 +239,18 @@ class _PortfolioList extends StatelessWidget {
                   subtitle: Text(
                     primaryStrategy == null
                         ? l10n.portfolioStrategyCustom
-                        : template?.displayName(
+                        : ownerStrategies.length == 1
+                        ? template?.displayName(
                                 Localizations.localeOf(context).languageCode,
                               ) ??
-                              primaryStrategy.kind.wire,
+                              primaryStrategy.kind.wire
+                        : l10n.portfolioStrategyCountSummary(
+                            template?.displayName(
+                                  Localizations.localeOf(context).languageCode,
+                                ) ??
+                                primaryStrategy.kind.wire,
+                            ownerStrategies.length,
+                          ),
                   ),
                   suffix: Icon(
                     FLucideIcons.chevronRight,
@@ -343,34 +356,100 @@ class _InvestmentPortfolioFormState
     final existing = widget.existing;
     if (existing == null) return;
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showConfirmDialog(
-      context: context,
-      title: Text(l10n.portfolioDeleteAction),
-      body: Text(l10n.portfolioDeleteConfirmation),
-      confirmLabel: l10n.commonDelete,
-      cancelLabel: l10n.commonCancel,
-      destructive: true,
-      icon: FLucideIcons.trash2,
-    );
-    if (confirmed != true || !mounted) return;
+    final portfolios =
+        ref.read(investmentPortfoliosProvider).value ??
+        const <InvestmentPortfolio>[];
+    final groups =
+        ref.read(portfolioRebalanceGroupsProvider).value ??
+        const <PortfolioRebalanceGroup>[];
+    final assignments =
+        ref.read(portfolioCapitalAssignmentsProvider).value ??
+        const <PortfolioCapitalAssignment>[];
+    final targets =
+        ref.read(activeUniversePortfolioTargetsProvider).value ??
+        const <PortfolioAllocationTarget>[];
+    final portfolioById = {
+      for (final portfolio in portfolios) portfolio.id: portfolio,
+    };
+    final destinations = groups
+        .where((group) => group.portfolioId != existing.id)
+        .toList(growable: false);
+    String? destinationGroupId;
+    if (destinations.isEmpty) {
+      final confirmed = await showConfirmDialog(
+        context: context,
+        title: Text(l10n.portfolioDeleteAction),
+        body: Text(l10n.portfolioDeleteConfirmation),
+        confirmLabel: l10n.commonDelete,
+        cancelLabel: l10n.commonCancel,
+        destructive: true,
+        icon: FLucideIcons.trash2,
+      );
+      if (confirmed != true || !mounted) return;
+    } else {
+      destinationGroupId = await showRemovalTransferSheet(
+        context: context,
+        title: l10n.portfolioDeleteAction,
+        description: l10n.portfolioDeleteTransferDescription(
+          _percentFromBps(
+            targets
+                    .where((target) => target.portfolioId == existing.id)
+                    .firstOrNull
+                    ?.targetWeightBps ??
+                0,
+          ),
+          assignments
+              .where((assignment) => assignment.portfolioId == existing.id)
+              .length,
+        ),
+        options: [
+          for (final destination in destinations)
+            RemovalTransferOption(
+              id: destination.id,
+              title:
+                  '${portfolioById[destination.portfolioId]?.name ?? destination.portfolioId} · ${destination.name}',
+              subtitle: l10n.portfolioGroupWeightSummary(
+                _percentFromBps(destination.targetWeightBps),
+                _transferPolicyLabel(l10n, destination.transferPolicy),
+              ),
+            ),
+        ],
+      );
+      if (destinationGroupId == null || !mounted) return;
+    }
     setState(() => _busy = true);
     widget.dirty.busy = true;
     try {
       final repository = await ref.read(
         investmentPortfolioRepositoryProvider.future,
       );
-      await repository.remove(existing);
+      final destinationGroup = destinationGroupId == null
+          ? null
+          : destinations.firstWhere((group) => group.id == destinationGroupId);
+      await repository.remove(
+        existing,
+        destinationPortfolioId: destinationGroup?.portfolioId,
+        destinationGroupId: destinationGroup?.id,
+      );
       if (ref.read(selectedInvestmentPortfolioIdProvider) == existing.id) {
         ref.read(selectedInvestmentPortfolioIdProvider.notifier).state = null;
       }
       widget.dirty.markPristine();
       if (!mounted) return;
       Navigator.of(context).pop(true);
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
       widget.dirty.busy = false;
-      AppMessenger.show(context, ToastKind.error, l10n.portfolioDeleteFailed);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        portfolioRemovalErrorMessage(
+          l10n,
+          error,
+          fallback: l10n.portfolioDeleteFailed,
+        ),
+      );
     }
   }
 
@@ -387,6 +466,11 @@ class _InvestmentPortfolioFormState
         )
         .toList(growable: false);
     final locale = Localizations.localeOf(context);
+    final removalDataReady =
+        ref.watch(investmentPortfoliosProvider).hasValue &&
+        ref.watch(portfolioRebalanceGroupsProvider).hasValue &&
+        ref.watch(portfolioCapitalAssignmentsProvider).hasValue &&
+        ref.watch(activeUniversePortfolioTargetsProvider).hasValue;
     return AppSheet(
       title: widget.existing == null
           ? l10n.portfolioCreateTitle
@@ -443,7 +527,7 @@ class _InvestmentPortfolioFormState
               const SizedBox(height: AppSpacing.s24),
               FButton(
                 variant: FButtonVariant.destructive,
-                onPress: _busy ? null : _delete,
+                onPress: _busy || !removalDataReady ? null : _delete,
                 child: Text(l10n.portfolioDeleteAction),
               ),
             ],
@@ -988,4 +1072,20 @@ class _PortfolioCashAssignmentFormState
       if (mounted) setState(() => _busy = false);
     }
   }
+}
+
+String _percentFromBps(int value) {
+  final percent = value / 100;
+  return percent == percent.roundToDouble()
+      ? percent.toStringAsFixed(0)
+      : percent.toStringAsFixed(2);
+}
+
+String _transferPolicyLabel(AppLocalizations l10n, GroupTransferPolicy policy) {
+  return switch (policy) {
+    GroupTransferPolicy.bidirectional =>
+      l10n.portfolioGroupTransferBidirectional,
+    GroupTransferPolicy.inflowsOnly => l10n.portfolioGroupTransferInflowsOnly,
+    GroupTransferPolicy.isolated => l10n.portfolioGroupTransferIsolated,
+  };
 }

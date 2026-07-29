@@ -49,8 +49,20 @@ Portfolio and strategy shares are edited as complete sibling sets. The
 repository validates that the submitted set exactly matches the active set,
 totals 10,000 basis points, saves every member in one transaction, and emits
 one sync row per member. A newly added peer starts at 0% so creation never
-silently changes existing targets. A non-zero portfolio must be set to 0% in
-the complete plan before it can be removed.
+silently changes existing targets.
+
+Strategy configs and capital groups are independent instances with UUID
+identities; `kind` identifies their reusable template and is not an instance
+key. A portfolio may therefore contain several instances of the same
+strategy kind.
+
+Removal is a transfer operation rather than a manual zero-weight precondition.
+The user chooses a receiving portfolio strategy, then the repository moves the
+source target weight and capital assignments before tombstoning the source
+aggregate in the same transaction. Removing a capital strategy also
+tombstones its mounted overlays. Every portfolio must retain at least one
+capital-owning strategy. An overlay may be removed independently because it
+owns no capital. Accounting records are never rewritten by these operations.
 
 ## Rebalance flow
 

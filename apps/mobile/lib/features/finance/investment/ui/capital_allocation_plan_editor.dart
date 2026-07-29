@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/forms/percent_input_formatter.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance_group.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -85,6 +85,7 @@ class _CapitalAllocationPlanEditorState
   bool _showAdvanced = false;
   bool _showTotalError = false;
   bool _busy = false;
+  bool _writingControllers = false;
 
   @override
   void initState() {
@@ -159,20 +160,59 @@ class _CapitalAllocationPlanEditorState
           SoftCard.flat(
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.s12),
-              child: Row(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: Text(
-                      l10n.capitalAllocationTotalLabel,
-                      style: context.theme.typography.body.sm,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.capitalAllocationTotalLabel,
+                          style: context.theme.typography.body.sm,
+                        ),
+                      ),
+                      Text(
+                        '${_percentFromBps(_totalBps)}%',
+                        style: context.theme.typography.body.sm.copyWith(
+                          color: totalColor,
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    '${_percentFromBps(_totalBps)}%',
-                    style: context.theme.typography.body.sm.copyWith(
-                      color: totalColor,
+                  const SizedBox(height: AppSpacing.s10),
+                  _AllocationBar(drafts: _drafts, valid: _totalBps == 10000),
+                  if (_drafts.length > 1) ...[
+                    const SizedBox(height: AppSpacing.s8),
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: AppSpacing.s4,
+                      children: [
+                        FButton(
+                          variant: FButtonVariant.ghost,
+                          onPress: _busy ? null : _balanceEvenly,
+                          prefix: const Icon(
+                            FLucideIcons.columns3,
+                            size: AppIconSizes.sm,
+                          ),
+                          child: Text(
+                            l10n.capitalAllocationBalanceEvenlyAction,
+                          ),
+                        ),
+                        FButton(
+                          variant: FButtonVariant.ghost,
+                          onPress: _busy || _totalBps == 10000
+                              ? null
+                              : _fillRemainder,
+                          prefix: const Icon(
+                            FLucideIcons.sparkles,
+                            size: AppIconSizes.sm,
+                          ),
+                          child: Text(
+                            l10n.capitalAllocationFillRemainderAction,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -241,7 +281,7 @@ class _CapitalAllocationPlanEditorState
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              inputFormatters: [_percentFormatter],
+              inputFormatters: const [percentInputFormatter],
               forceErrorText: _errors['weight:${draft.id}'],
             ),
             if (_showAdvanced) ...[
@@ -255,7 +295,7 @@ class _CapitalAllocationPlanEditorState
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                inputFormatters: [_percentFormatter],
+                inputFormatters: const [percentInputFormatter],
                 forceErrorText: _errors['band:${draft.id}'],
               ),
               const SizedBox(height: AppSpacing.s12),
@@ -289,6 +329,7 @@ class _CapitalAllocationPlanEditorState
   }
 
   void _updateWeight(int index, String value) {
+    if (_writingControllers) return;
     final draft = _drafts[index];
     final parsed = double.tryParse(value.trim());
     setState(() {
@@ -307,6 +348,7 @@ class _CapitalAllocationPlanEditorState
   }
 
   void _updateBand(int index, String value) {
+    if (_writingControllers) return;
     final draft = _drafts[index];
     final parsed = double.tryParse(value.trim());
     setState(() {
@@ -340,11 +382,103 @@ class _CapitalAllocationPlanEditorState
       );
     }
   }
+
+  void _balanceEvenly() {
+    final base = 10000 ~/ _drafts.length;
+    var remainder = 10000 - (base * _drafts.length);
+    _setWeights([
+      for (var index = 0; index < _drafts.length; index++)
+        base + (remainder-- > 0 ? 1 : 0),
+    ]);
+  }
+
+  void _fillRemainder() {
+    final delta = 10000 - _totalBps;
+    final candidateIndex = _drafts.lastIndexWhere((draft) {
+      final next = draft.targetWeightBps + delta;
+      return next >= 0 && next <= 10000;
+    });
+    if (candidateIndex < 0) return;
+    _setWeights([
+      for (var index = 0; index < _drafts.length; index++)
+        index == candidateIndex
+            ? _drafts[index].targetWeightBps + delta
+            : _drafts[index].targetWeightBps,
+    ]);
+  }
+
+  void _setWeights(List<int> weights) {
+    _writingControllers = true;
+    try {
+      setState(() {
+        _errors.removeWhere((key, _) => key.startsWith('weight:'));
+        _showTotalError = false;
+        _drafts = [
+          for (var index = 0; index < _drafts.length; index++)
+            _drafts[index].copyWith(targetWeightBps: weights[index]),
+        ];
+        for (var index = 0; index < _drafts.length; index++) {
+          _weightControllers[_drafts[index].id]!.text = _percentFromBps(
+            weights[index],
+          );
+        }
+      });
+    } finally {
+      _writingControllers = false;
+    }
+  }
 }
 
-final _percentFormatter = FilteringTextInputFormatter.allow(
-  RegExp(r'^\d{0,3}(\.\d{0,2})?'),
-);
+class _AllocationBar extends StatelessWidget {
+  const _AllocationBar({required this.drafts, required this.valid});
+
+  final List<CapitalAllocationDraft> drafts;
+  final bool valid;
+
+  @override
+  Widget build(BuildContext context) {
+    final positive = drafts
+        .where((draft) => draft.targetWeightBps > 0)
+        .toList(growable: false);
+    final total = positive.fold<int>(
+      0,
+      (sum, draft) => sum + draft.targetWeightBps,
+    );
+    final remaining = (10000 - total).clamp(0, 10000);
+    final colors = context.theme.colors;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.full),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: valid ? colors.primary : colors.destructive,
+          ),
+        ),
+        child: SizedBox(
+          height: AppSpacing.s8,
+          child: Row(
+            children: [
+              for (var index = 0; index < positive.length; index++)
+                Expanded(
+                  flex: positive[index].targetWeightBps,
+                  child: ColoredBox(
+                    color: colors.primary.withValues(
+                      alpha: 1 - (index % 5) * 0.13,
+                    ),
+                  ),
+                ),
+              if (remaining > 0)
+                Expanded(
+                  flex: remaining,
+                  child: ColoredBox(color: colors.muted),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 String _percentFromBps(int value) {
   final percent = value / 100;

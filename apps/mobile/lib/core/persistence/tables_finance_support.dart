@@ -265,11 +265,6 @@ class PortfolioStrategyConfigs extends Table with SyncableTable {
   TextColumn get configJson => text()();
 
   @override
-  List<String> get customConstraints => [
-    'UNIQUE(owner_user_id, portfolio_id, kind)',
-  ];
-
-  @override
   Set<Column<Object>> get primaryKey => {id};
 }
 
@@ -321,7 +316,6 @@ class PortfolioCapitalAssignments extends Table with SyncableTable {
         '(source_kind = \'cashAccount\' AND quantity IS NULL '
         'AND amount IS NOT NULL AND CAST(amount AS REAL) > 0 '
         'AND currency IS NOT NULL))',
-    'UNIQUE(owner_user_id, rebalance_group_id, source_kind, source_id)',
   ];
 
   @override

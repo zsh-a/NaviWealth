@@ -2503,6 +2503,24 @@ abstract class AppLocalizations {
   /// **'Host strategy group'**
   String get portfolioOverlayHostGroupLabel;
 
+  /// No description provided for @portfolioOverlaySectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Overlay strategies'**
+  String get portfolioOverlaySectionTitle;
+
+  /// No description provided for @portfolioOverlayDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete overlay strategy'**
+  String get portfolioOverlayDeleteAction;
+
+  /// No description provided for @portfolioOverlayDeleteConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'This overlay will be removed from its capital strategy. Asset assignments and the accounting ledger will not change.'**
+  String get portfolioOverlayDeleteConfirmation;
+
   /// No description provided for @portfolioGroupEditTitle.
   ///
   /// In en, this message translates to:
@@ -2514,6 +2532,34 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Strategy name'**
   String get portfolioGroupNameLabel;
+
+  /// No description provided for @portfolioStrategyDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete strategy'**
+  String get portfolioStrategyDeleteAction;
+
+  /// No description provided for @portfolioStrategyDeleteLastBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'A portfolio must keep at least one capital strategy. Delete the portfolio instead if it is no longer needed.'**
+  String get portfolioStrategyDeleteLastBlocked;
+
+  /// No description provided for @portfolioStrategyDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete the strategy. Try again.'**
+  String get portfolioStrategyDeleteFailed;
+
+  /// No description provided for @portfolioStrategyDeleteTransferDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The {weight}% target and {assignmentCount} asset or cash assignments will move to the selected strategy. {overlayCount} attached overlays will be deleted.'**
+  String portfolioStrategyDeleteTransferDescription(
+    String weight,
+    int assignmentCount,
+    int overlayCount,
+  );
 
   /// No description provided for @portfolioGroupTargetWeightLabel.
   ///
@@ -2581,6 +2627,18 @@ abstract class AppLocalizations {
   /// **'Funding rules and tolerance'**
   String get capitalAllocationAdvancedAction;
 
+  /// No description provided for @capitalAllocationBalanceEvenlyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribute evenly'**
+  String get capitalAllocationBalanceEvenlyAction;
+
+  /// No description provided for @capitalAllocationFillRemainderAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill remainder'**
+  String get capitalAllocationFillRemainderAction;
+
   /// No description provided for @capitalAllocationToleranceLabel.
   ///
   /// In en, this message translates to:
@@ -2644,7 +2702,7 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioGroupNoTemplates.
   ///
   /// In en, this message translates to:
-  /// **'All built-in strategy types are already configured.'**
+  /// **'No capital strategy types are available.'**
   String get portfolioGroupNoTemplates;
 
   /// No description provided for @portfolioSaveFailed.
@@ -2668,8 +2726,38 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioDeleteConfirmation.
   ///
   /// In en, this message translates to:
-  /// **'Lots in this portfolio will become unassigned. The accounting ledger will not change.'**
+  /// **'Asset and cash assignments will be cleared, and strategy configuration will also be deleted. The accounting ledger will not change.'**
   String get portfolioDeleteConfirmation;
+
+  /// No description provided for @portfolioDeleteTransferDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The {weight}% target and {assignmentCount} asset or cash assignments will move to the selected strategy. The original portfolio and its strategy configuration will be deleted.'**
+  String portfolioDeleteTransferDescription(String weight, int assignmentCount);
+
+  /// No description provided for @portfolioRemovalTransferHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Targets and assignments move in one transaction. The accounting ledger does not change.'**
+  String get portfolioRemovalTransferHint;
+
+  /// No description provided for @portfolioRemovalTransferTargetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer to'**
+  String get portfolioRemovalTransferTargetLabel;
+
+  /// No description provided for @portfolioRemovalTransferAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer and delete'**
+  String get portfolioRemovalTransferAction;
+
+  /// No description provided for @portfolioStrategyCountSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{strategy} · {count} capital strategies'**
+  String portfolioStrategyCountSummary(String strategy, int count);
 
   /// No description provided for @portfolioLotsCount.
   ///
@@ -8572,6 +8660,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Category targets'**
   String get targetAllocationEditorCategoryTargets;
+
+  /// No description provided for @targetAllocationEditorAddCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Add asset class'**
+  String get targetAllocationEditorAddCategory;
+
+  /// No description provided for @targetAllocationEditorNoCategoriesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'All asset classes are added'**
+  String get targetAllocationEditorNoCategoriesAvailable;
 
   /// No description provided for @targetAllocationEditorAssetTargets.
   ///

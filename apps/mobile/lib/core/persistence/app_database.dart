@@ -153,7 +153,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 67;
+  int get schemaVersion => 68;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1018,6 +1018,13 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(portfolioRebalanceGroups);
         await m.createTable(portfolioCapitalAssignments);
         await _createPortfolioIndexes(this);
+      }
+      // v67 -> v68: strategy kinds are templates, not instance identities.
+      // Rebuild the two tables whose uniqueness constraints previously made
+      // tombstoned rows block repeated strategy and assignment instances.
+      if (from >= 67 && from < 68) {
+        await m.alterTable(TableMigration(portfolioStrategyConfigs));
+        await m.alterTable(TableMigration(portfolioCapitalAssignments));
       }
     },
     beforeOpen: (details) async {

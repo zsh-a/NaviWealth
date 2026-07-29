@@ -9,6 +9,7 @@ import 'package:naviwealth/features/finance/investment/data/investment_portfolio
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/portfolio_capital_assignment.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/portfolio_removal_failure.dart';
 import 'package:naviwealth/features/finance/investment/domain/strategy/portfolio_strategy.dart';
 import 'package:naviwealth/features/finance/investment/domain/strategy/portfolio_strategy_template.dart';
 import 'package:naviwealth/features/finance/rebalance/data/rebalance_providers.dart';
@@ -138,18 +139,21 @@ void main() {
           growth.id,
         );
 
-        await repository.updatePortfolioPlan(
-          universeId: universe.id,
-          targets: [
-            updatedTargets
-                .singleWhere((target) => target.portfolioId == income.id)
-                .copyWith(targetWeightBps: 10000),
-            updatedTargets
-                .singleWhere((target) => target.portfolioId == growth.id)
-                .copyWith(targetWeightBps: 0),
-          ],
+        await expectLater(
+          repository.remove(growth),
+          throwsA(
+            isA<PortfolioRemovalException>().having(
+              (error) => error.reason,
+              'reason',
+              PortfolioRemovalFailureReason.transferTargetRequired,
+            ),
+          ),
         );
-        await repository.remove(growth);
+        await repository.remove(
+          growth,
+          destinationPortfolioId: income.id,
+          destinationGroupId: incomeGroup.id,
+        );
         expect(
           (await repository.watchActive('u-test').first).single.id,
           income.id,
@@ -160,7 +164,20 @@ void main() {
               .targetWeightBps,
           10000,
         );
-        expect(await repository.watchAssignments('u-test').first, isEmpty);
+        expect(
+          (await repository.watchAssignments('u-test').first).single,
+          isA<PortfolioCapitalAssignment>()
+              .having(
+                (assignment) => assignment.portfolioId,
+                'portfolioId',
+                income.id,
+              )
+              .having(
+                (assignment) => assignment.rebalanceGroupId,
+                'rebalanceGroupId',
+                incomeGroup.id,
+              ),
+        );
         expect(
           outbox.queued.map((operation) => operation.table),
           containsAll([
@@ -332,6 +349,183 @@ void main() {
               GroupTransferPolicy.isolated,
             ),
       );
+    });
+
+    test(
+      'transfers and removes a strategy aggregate while protecting valid plans',
+      () async {
+        final db = makeTestDatabase();
+        final outbox = InMemoryOutboxStore();
+        final repository = InvestmentPortfolioRepository(
+          db: db,
+          outbox: outbox,
+          stamper: makeStubStamper(),
+        );
+        addTearDown(db.close);
+        final portfolio = await repository.create(
+          name: 'Layered',
+          initialStrategy: kIndexCoreStrategyTemplate,
+          baseCurrency: 'USD',
+          languageCode: 'en',
+        );
+        final initialGroup =
+            (await repository.watchGroups('u-test').first).single;
+
+        await expectLater(
+          repository.removeCapitalStrategy(initialGroup),
+          throwsA(
+            isA<PortfolioRemovalException>().having(
+              (error) => error.reason,
+              'reason',
+              PortfolioRemovalFailureReason.lastCapitalStrategy,
+            ),
+          ),
+        );
+
+        final removableGroup = await repository.addCapitalStrategy(
+          portfolioId: portfolio.id,
+          template: kDividendIncomeStrategyTemplate,
+        );
+        var groups = await repository.watchGroups('u-test').first;
+        await repository.updateStrategyPlan(
+          portfolioId: portfolio.id,
+          groups: [
+            groups
+                .singleWhere((group) => group.id == initialGroup.id)
+                .copyWith(targetWeightBps: 5000),
+            groups
+                .singleWhere((group) => group.id == removableGroup.id)
+                .copyWith(targetWeightBps: 5000),
+          ],
+        );
+        await expectLater(
+          repository.removeCapitalStrategy(removableGroup),
+          throwsA(
+            isA<PortfolioRemovalException>().having(
+              (error) => error.reason,
+              'reason',
+              PortfolioRemovalFailureReason.transferTargetRequired,
+            ),
+          ),
+        );
+
+        final overlayTemplate = await repository.createCustomStrategyTemplate(
+          name: 'Risk guard',
+          languageCode: 'en',
+          iconToken: 'shield',
+          capitalRole: StrategyCapitalRole.overlay,
+          defaultInternalTarget: const TargetAllocation(
+            weights: {AssetCategory.cash: 1},
+          ),
+          defaultDriftBandBps: 500,
+          defaultTransferPolicy: GroupTransferPolicy.isolated,
+        );
+        await repository.addStrategyOverlay(
+          portfolioId: portfolio.id,
+          rebalanceGroupId: removableGroup.id,
+          template: overlayTemplate,
+        );
+        await repository.assignCash(
+          accountId: 'broker-cash',
+          amount: Decimal.parse('1000'),
+          currency: 'USD',
+          portfolioId: portfolio.id,
+          rebalanceGroupId: removableGroup.id,
+        );
+
+        await repository.removeCapitalStrategy(
+          removableGroup,
+          destinationGroupId: initialGroup.id,
+        );
+
+        final remainingGroup =
+            (await repository.watchGroups('u-test').first).single;
+        expect(remainingGroup.id, initialGroup.id);
+        expect(remainingGroup.targetWeightBps, 10000);
+        expect(
+          (await repository.watchStrategies('u-test').first).map(
+            (strategy) => strategy.kind,
+          ),
+          [PortfolioStrategyKind.indexCore],
+        );
+        expect(
+          (await repository.watchAssignments('u-test').first)
+              .single
+              .rebalanceGroupId,
+          initialGroup.id,
+        );
+        expect(
+          outbox.queued.map((operation) => operation.table),
+          containsAll([
+            InvestmentPortfolioRepository.groupsTable,
+            InvestmentPortfolioRepository.strategiesTable,
+            InvestmentPortfolioRepository.assignmentsTable,
+          ]),
+        );
+
+        final readded = await repository.addCapitalStrategy(
+          portfolioId: portfolio.id,
+          template: kDividendIncomeStrategyTemplate,
+        );
+        final duplicate = await repository.addCapitalStrategy(
+          portfolioId: portfolio.id,
+          template: kDividendIncomeStrategyTemplate,
+        );
+        expect(readded.id, isNot(removableGroup.id));
+        expect(duplicate.id, isNot(readded.id));
+        expect(await repository.watchGroups('u-test').first, hasLength(3));
+      },
+    );
+
+    test('removes an overlay without changing its host strategy', () async {
+      final db = makeTestDatabase();
+      final repository = InvestmentPortfolioRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+      final portfolio = await repository.create(
+        name: 'Core',
+        initialStrategy: kIndexCoreStrategyTemplate,
+        baseCurrency: 'USD',
+        languageCode: 'en',
+      );
+      final group = (await repository.watchGroups('u-test').first).single;
+      final overlayTemplate = await repository.createCustomStrategyTemplate(
+        name: 'Guard',
+        languageCode: 'en',
+        iconToken: 'shield',
+        capitalRole: StrategyCapitalRole.overlay,
+        defaultInternalTarget: const TargetAllocation(
+          weights: {AssetCategory.cash: 1},
+        ),
+        defaultDriftBandBps: 500,
+        defaultTransferPolicy: GroupTransferPolicy.isolated,
+      );
+      final overlay = await repository.addStrategyOverlay(
+        portfolioId: portfolio.id,
+        rebalanceGroupId: group.id,
+        template: overlayTemplate,
+      );
+
+      await repository.removeStrategyOverlay(overlay);
+      final readded = await repository.addStrategyOverlay(
+        portfolioId: portfolio.id,
+        rebalanceGroupId: group.id,
+        template: overlayTemplate,
+      );
+
+      final strategies = await repository.watchStrategies('u-test').first;
+      expect(strategies, hasLength(2));
+      expect(readded.id, isNot(overlay.id));
+      expect(
+        strategies.where(
+          (strategy) => strategy.capitalRole == StrategyCapitalRole.owner,
+        ),
+        hasLength(1),
+      );
+      expect(await repository.watchGroups('u-test').first, hasLength(1));
     });
 
     test('assigns cash directly to a capital-owning group', () async {

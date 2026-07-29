@@ -156,9 +156,7 @@ class _AllocationRow extends StatelessWidget {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                    ],
+                    inputFormatters: const [percentInputFormatter],
                     suffixBuilder: (_, style, variants) => Padding(
                       padding: const EdgeInsets.only(right: AppSpacing.s8),
                       child: Text(
@@ -210,6 +208,17 @@ class _TargetPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final activeCategories = [
+      for (final category in _editableCategories)
+        if ((categoryWeights[category] ?? 0) > 0) category,
+    ];
+    final activeAssets = assetTargets.values
+        .where((target) => target.weight > 0)
+        .toList(growable: false);
+    final weights = [
+      for (final category in activeCategories) categoryWeights[category] ?? 0,
+      for (final target in activeAssets) target.weight,
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -219,8 +228,10 @@ class _TargetPreview extends StatelessWidget {
             color: context.theme.colors.mutedForeground,
           ),
         ),
-        const SizedBox(height: AppSpacing.s4),
-        for (final category in _editableCategories)
+        const SizedBox(height: AppSpacing.s8),
+        _AllocationPreviewBar(weights: weights),
+        const SizedBox(height: AppSpacing.s8),
+        for (final category in activeCategories)
           SizedBox(
             width: double.infinity,
             child: DeviationBar(
@@ -231,7 +242,7 @@ class _TargetPreview extends StatelessWidget {
               severity: DriftSeverity.ok,
             ),
           ),
-        for (final target in assetTargets.values)
+        for (final target in activeAssets)
           SizedBox(
             width: double.infinity,
             child: DeviationBar(
@@ -243,6 +254,41 @@ class _TargetPreview extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _AllocationPreviewBar extends StatelessWidget {
+  const _AllocationPreviewBar({required this.weights});
+
+  final List<double> weights;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.full),
+      child: SizedBox(
+        height: AppSpacing.s10,
+        child: weights.isEmpty
+            ? ColoredBox(color: colors.muted)
+            : Row(
+                children: [
+                  for (var index = 0; index < weights.length; index++)
+                    Expanded(
+                      flex: (weights[index] * 10)
+                          .round()
+                          .clamp(1, 1000)
+                          .toInt(),
+                      child: ColoredBox(
+                        color: colors.primary.withValues(
+                          alpha: 1 - (index % 5) * 0.13,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+      ),
     );
   }
 }
