@@ -10,13 +10,17 @@ import 'package:naviwealth/features/finance/analytics/data/providers.dart';
 import 'package:naviwealth/features/finance/analytics/domain/concentration_risk.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/investment/data/investment_portfolio_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/domain/allocation/portfolio_allocation_tree.dart';
 import 'package:naviwealth/features/finance/investment/domain/fx_pnl/fx_pnl_breakdown.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/investment_portfolio.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/domain/reporting/holding_report.dart';
 import 'package:naviwealth/features/finance/investment/domain/returns/portfolio_return.dart';
 import 'package:naviwealth/features/finance/investment/domain/returns/xirr_engine.dart';
 import 'package:naviwealth/features/finance/investment/ui/portfolio_hub_page.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance_group.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:naviwealth/l10n/gen/app_localizations_en.dart';
 
@@ -74,6 +78,89 @@ Lot _lot({
 }
 
 void main() {
+  testWidgets('portfolio studio presents one four-section workspace', (
+    tester,
+  ) async {
+    final portfolio = InvestmentPortfolio(
+      id: 'portfolio',
+      name: 'Long term',
+      baseCurrency: 'USD',
+      goalId: null,
+      color: null,
+      createdAt: DateTime.utc(2026, 7, 30),
+      archived: false,
+      sync: _meta(),
+    );
+    const root = AllocationNode(
+      id: 'plan',
+      parentId: null,
+      type: AllocationNodeType.plan,
+      name: 'Investment plan',
+      targetWeightBps: 10000,
+      driftBandBps: 0,
+      transferPolicy: GroupTransferPolicy.bidirectional,
+    );
+    const portfolioNode = AllocationNode(
+      id: 'portfolio:portfolio',
+      parentId: 'plan',
+      type: AllocationNodeType.portfolio,
+      name: 'Long term',
+      targetWeightBps: 10000,
+      driftBandBps: 500,
+      transferPolicy: GroupTransferPolicy.bidirectional,
+      referenceId: 'portfolio',
+    );
+    const sleeveNode = AllocationNode(
+      id: 'sleeve:core',
+      parentId: 'portfolio:portfolio',
+      type: AllocationNodeType.sleeve,
+      name: 'Index core',
+      targetWeightBps: 10000,
+      driftBandBps: 500,
+      transferPolicy: GroupTransferPolicy.bidirectional,
+      referenceId: 'core',
+    );
+    const tree = PortfolioAllocationTree(
+      root: root,
+      nodes: [root, portfolioNode, sleeveNode],
+      attachments: [],
+      inclusions: [],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          investmentPortfoliosProvider.overrideWith(
+            (ref) => Stream.value([portfolio]),
+          ),
+          portfolioAllocationTreeProvider.overrideWithValue(
+            const AsyncData(tree),
+          ),
+        ],
+        child: FTheme(
+          data: FThemes.slate.light.desktop,
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en', 'US'),
+            home: const PortfolioStudioPage(portfolioId: 'portfolio'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Long term'), findsWidgets);
+    expect(find.text('Overview'), findsOneWidget);
+    expect(find.text('Structure'), findsOneWidget);
+    expect(find.text('Assets'), findsOneWidget);
+    expect(find.text('Rules'), findsWidgets);
+    expect(find.text('Capital path'), findsOneWidget);
+    expect(find.text('Index core'), findsOneWidget);
+    expect(find.text('Check rebalance'), findsOneWidget);
+  });
+
   testWidgets('portfolio hub renders retryable error state', (tester) async {
     final notifier = _FailingPortfolioHubNotifier();
     await tester.pumpWidget(

@@ -1,33 +1,46 @@
-# Portfolio Strategy Groups
+# Portfolio Allocation Tree
 
 Status: active FinanceOS architecture.
 
 ## Model
 
-Portfolio planning is one capital tree with seven independent concepts:
+Portfolio planning is presented as one allocation tree:
 
-1. `RebalanceUniverse` is the explicit denominator for a set of portfolios.
-   The initial product surface creates one default universe per owner.
-2. `PortfolioAllocationTarget` controls a portfolio's target weight, drift
-   band, and transfer policy inside that universe.
-3. `InvestmentPortfolio` is the identity and ownership scope. It can link to a
-   goal, but does not contain strategy-specific fields.
-4. `PortfolioStrategyTemplate` is the catalog SSOT for creation and
-   presentation defaults. Built-in and user-authored templates use the same
-   contract; custom kinds have stable `user:<uuid>` identifiers.
-5. `PortfolioStrategyConfig` is an instantiated, open, versioned module
-   configuration. Capital-owning modules point to a group; overlays point to
-   a group but have no target weight.
-6. `PortfolioRebalanceGroup` is the persisted capital owner behind a
-   user-visible strategy. Its portfolio weight is stored in basis points, its
-   internal allocation is normalized to 100%, and its transfer rule is free
-   transfer, receive-funds-only, or independently managed.
-7. `PortfolioCapitalAssignment` gives a whole/partial lot or a fixed cash
-   amount exactly one capital-owning group. Strategy overlays reference a
-   group and never own the same capital again.
+1. **Investment plan** is the 100% denominator across portfolios.
+2. **Portfolio** expresses one investment purpose and its share of the plan.
+3. **Strategy sleeve** owns a share of one portfolio, an allowed drift, a
+   transfer policy, and an internal asset target.
+4. **Asset target** is a category or concrete security inside a sleeve.
+5. **Rule** is versioned behavior attached to a sleeve. It never owns capital.
+6. **Included asset** gives a whole/partial lot or fixed cash amount exactly
+   one sleeve.
 
-This separation keeps goals as “why”, strategies as “how”, and groups as
-“which capital and under what movement policy”.
+The application exposes these concepts through `PortfolioAllocationTree`,
+`AllocationNode`, `StrategyAttachment`, and `CapitalInclusion`. Persistence
+entities are implementation details joined by the tree provider; UI and
+workflow code must not independently reconstruct universes, targets, groups,
+strategy configs, and assignments.
+
+The terminology is intentional: goals are “why”, portfolios are “for what”,
+sleeves are “how capital is allocated”, rules are “additional behavior”, and
+included assets are “what the sleeve currently owns”.
+
+## Interaction contract
+
+- `/wealth/portfolio` is the state-first investment plan overview. Each
+  portfolio card shows actual versus target weight and drift state.
+- `/wealth/portfolio/:portfolioId/studio` is the only deep configuration
+  surface. It has Overview, Structure, Assets, and Rules sections.
+- Creating a portfolio or sleeve is a short modal action. Configuration,
+  inspection, and navigation remain on full pages.
+- Portfolio and sleeve weights use the same complete-sibling allocation
+  editor. Advanced drift and transfer policy controls remain progressive
+  disclosure.
+- Rebalancing is entered from the plan overview or portfolio studio and is
+  shown in order: portfolio transfers, sleeve allocation, sleeve assets, then
+  executable trades.
+- UI copy says “included assets” and “rules”; it does not expose
+  “assignments”, “rebalance groups”, “capital owners”, or “overlays”.
 
 ## Aggregate invariants
 
@@ -66,26 +79,26 @@ owns no capital. Accounting records are never rewritten by these operations.
 
 ## Rebalance flow
 
-Rebalancing is deliberately three-stage:
+Rebalancing is deliberately three-stage before execution:
 
 1. Sum each portfolio's exclusive capital, compare portfolio actual weights
    with universe targets, and recommend eligible inter-portfolio transfers.
-2. Sum the exclusive strategy snapshots, compare each strategy’s actual
-   portfolio weight with its target and allowed deviation, then match eligible
-   surplus strategies with eligible deficit strategies. Transfer rules are
+2. Sum the exclusive sleeve snapshots, compare each sleeve’s actual portfolio
+   weight with its target and allowed deviation, then match eligible surplus
+   sleeves with eligible deficit sleeves. Transfer rules are
    applied at this stage.
-3. Run the allocation engine independently inside every strategy using only
-   that strategy’s securities and assigned cash. The strategy’s allowed
+3. Run the allocation engine independently inside every sleeve using only
+   that sleeve’s securities and included cash. The sleeve’s allowed
    deviation is also the warning threshold for its internal asset plan.
 
 Both capital levels use the same policy-aware `CapitalAllocationEngine`.
 The result contains explicit portfolio and strategy decisions, blocked-policy
 explanations, capital-transfer recommendations, and one executable internal
-plan per strategy. Capital movements are resolved first through the asset
-assignment center, because an amount alone cannot safely choose which tax lots
-or cash accounts move. Internal trade execution remains locked while an
-eligible portfolio or strategy transfer is pending; it unlocks after
-assignments bring both capital levels inside tolerance.
+plan per sleeve. Capital movements are resolved by changing included assets,
+because an amount alone cannot safely choose which tax lots or cash accounts
+move. Internal trade execution remains locked while an eligible portfolio or
+sleeve transfer is pending; it unlocks after inclusions bring both capital
+levels inside tolerance.
 
 ## Persistence and sync
 

@@ -8,6 +8,7 @@ import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance_group.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/rebalance_universe.dart';
 
+import '../domain/allocation/portfolio_allocation_tree.dart';
 import '../domain/models/holding_snapshot.dart';
 import '../domain/models/investment_portfolio.dart';
 import '../domain/models/lot.dart';
@@ -156,6 +157,57 @@ final portfolioCapitalAssignmentsProvider =
         investmentPortfolioRepositoryProvider.future,
       );
       yield* repository.watchAssignments(ownerUserId);
+    });
+
+/// One coherent allocation tree for portfolio setup, inspection, and
+/// rebalancing. Consumers no longer need to join five persistence streams.
+final portfolioAllocationTreeProvider =
+    Provider<AsyncValue<PortfolioAllocationTree?>>((ref) {
+      final universe = ref.watch(activeRebalanceUniverseProvider);
+      final portfolios = ref.watch(investmentPortfoliosProvider);
+      final targets = ref.watch(activeUniversePortfolioTargetsProvider);
+      final groups = ref.watch(portfolioRebalanceGroupsProvider);
+      final strategies = ref.watch(portfolioStrategyConfigsProvider);
+      final assignments = ref.watch(portfolioCapitalAssignmentsProvider);
+
+      if (universe.hasError) {
+        return AsyncError(universe.error!, universe.stackTrace!);
+      }
+      if (portfolios.hasError) {
+        return AsyncError(portfolios.error!, portfolios.stackTrace!);
+      }
+      if (targets.hasError) {
+        return AsyncError(targets.error!, targets.stackTrace!);
+      }
+      if (groups.hasError) {
+        return AsyncError(groups.error!, groups.stackTrace!);
+      }
+      if (strategies.hasError) {
+        return AsyncError(strategies.error!, strategies.stackTrace!);
+      }
+      if (assignments.hasError) {
+        return AsyncError(assignments.error!, assignments.stackTrace!);
+      }
+      if (!universe.hasValue ||
+          !portfolios.hasValue ||
+          !targets.hasValue ||
+          !groups.hasValue ||
+          !strategies.hasValue ||
+          !assignments.hasValue) {
+        return const AsyncLoading();
+      }
+      final root = universe.requireValue;
+      if (root == null) return const AsyncData(null);
+      return AsyncData(
+        PortfolioAllocationTree.compose(
+          universe: root,
+          portfolios: portfolios.requireValue,
+          portfolioTargets: targets.requireValue,
+          groups: groups.requireValue,
+          strategies: strategies.requireValue,
+          assignments: assignments.requireValue,
+        ),
+      );
     });
 
 /// Null selects the virtual all-holdings portfolio.

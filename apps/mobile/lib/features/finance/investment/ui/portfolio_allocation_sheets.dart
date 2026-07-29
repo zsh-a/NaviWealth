@@ -48,6 +48,57 @@ class PortfolioAllocationPlanSection extends ConsumerWidget {
   }
 }
 
+Future<void> showPortfolioAllocationEditor(
+  BuildContext context,
+  WidgetRef ref, {
+  required List<InvestmentPortfolio> portfolios,
+  required List<PortfolioAllocationTarget> targets,
+}) {
+  final l10n = AppLocalizations.of(context);
+  final portfolioById = {
+    for (final portfolio in portfolios) portfolio.id: portfolio,
+  };
+  final visibleTargets = [
+    for (final target in targets)
+      if (portfolioById.containsKey(target.portfolioId)) target,
+  ];
+  if (visibleTargets.isEmpty) return Future.value();
+  final targetById = {for (final target in visibleTargets) target.id: target};
+  return showCapitalAllocationPlanEditor(
+    context: context,
+    title: l10n.portfolioAllocationEditTitle,
+    subtitle: l10n.portfolioAllocationPlanSubtitle,
+    weightLabel: l10n.portfolioAllocationTargetWeightLabel,
+    singleItemHint: l10n.portfolioAllocationSingleTargetHint,
+    drafts: [
+      for (final target in visibleTargets)
+        CapitalAllocationDraft(
+          id: target.id,
+          name: portfolioById[target.portfolioId]!.name,
+          targetWeightBps: target.targetWeightBps,
+          driftBandBps: target.driftBandBps,
+          transferPolicy: target.transferPolicy,
+        ),
+    ],
+    onSave: (drafts) async {
+      final repository = await ref.read(
+        investmentPortfolioRepositoryProvider.future,
+      );
+      await repository.updatePortfolioPlan(
+        universeId: visibleTargets.first.universeId,
+        targets: [
+          for (final draft in drafts)
+            targetById[draft.id]!.copyWith(
+              targetWeightBps: draft.targetWeightBps,
+              driftBandBps: draft.driftBandBps,
+              transferPolicy: draft.transferPolicy,
+            ),
+        ],
+      );
+    },
+  );
+}
+
 class _PortfolioAllocationPlanContent extends ConsumerWidget {
   const _PortfolioAllocationPlanContent({
     required this.portfolios,
@@ -81,11 +132,11 @@ class _PortfolioAllocationPlanContent extends ConsumerWidget {
             ),
             FButton(
               variant: FButtonVariant.ghost,
-              onPress: () => _edit(
+              onPress: () => showPortfolioAllocationEditor(
                 context,
                 ref,
+                portfolios: portfolios,
                 targets: visibleTargets,
-                portfolioById: portfolioById,
               ),
               child: Text(l10n.capitalAllocationEditAction),
             ),
@@ -111,11 +162,11 @@ class _PortfolioAllocationPlanContent extends ConsumerWidget {
                     '${_percentFromBps(visibleTargets[index].targetWeightBps)}%',
                     style: context.captionLabelStyle,
                   ),
-                  onPress: () => _edit(
+                  onPress: () => showPortfolioAllocationEditor(
                     context,
                     ref,
+                    portfolios: portfolios,
                     targets: visibleTargets,
-                    portfolioById: portfolioById,
                   ),
                 ),
                 if (index != visibleTargets.length - 1)
@@ -128,49 +179,6 @@ class _PortfolioAllocationPlanContent extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Future<void> _edit(
-    BuildContext context,
-    WidgetRef ref, {
-    required List<PortfolioAllocationTarget> targets,
-    required Map<String, InvestmentPortfolio> portfolioById,
-  }) {
-    final l10n = AppLocalizations.of(context);
-    final targetById = {for (final target in targets) target.id: target};
-    return showCapitalAllocationPlanEditor(
-      context: context,
-      title: l10n.portfolioAllocationEditTitle,
-      subtitle: l10n.portfolioAllocationPlanSubtitle,
-      weightLabel: l10n.portfolioAllocationTargetWeightLabel,
-      singleItemHint: l10n.portfolioAllocationSingleTargetHint,
-      drafts: [
-        for (final target in targets)
-          CapitalAllocationDraft(
-            id: target.id,
-            name: portfolioById[target.portfolioId]!.name,
-            targetWeightBps: target.targetWeightBps,
-            driftBandBps: target.driftBandBps,
-            transferPolicy: target.transferPolicy,
-          ),
-      ],
-      onSave: (drafts) async {
-        final repository = await ref.read(
-          investmentPortfolioRepositoryProvider.future,
-        );
-        await repository.updatePortfolioPlan(
-          universeId: targets.first.universeId,
-          targets: [
-            for (final draft in drafts)
-              targetById[draft.id]!.copyWith(
-                targetWeightBps: draft.targetWeightBps,
-                driftBandBps: draft.driftBandBps,
-                transferPolicy: draft.transferPolicy,
-              ),
-          ],
-        );
-      },
     );
   }
 }

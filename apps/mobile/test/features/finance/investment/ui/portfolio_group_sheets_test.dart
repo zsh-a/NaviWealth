@@ -15,7 +15,7 @@ import 'package:naviwealth/features/finance/rebalance/domain/rebalance_models.da
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
-  testWidgets('strategy editor exposes owner and overlay delete actions', (
+  testWidgets('sleeve editor exposes sleeve and rule delete actions', (
     tester,
   ) async {
     final sync = SyncMeta(
@@ -113,12 +113,12 @@ void main() {
     await tester.tap(find.text('Core'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Overlay strategies'), findsOneWidget);
+    expect(find.text('Rules and enhancements'), findsOneWidget);
     expect(find.text('Risk guard'), findsOneWidget);
     expect(find.text('Delete'), findsOneWidget);
-    expect(find.text('Delete strategy'), findsOneWidget);
+    expect(find.text('Delete sleeve'), findsOneWidget);
 
-    await tester.tap(find.text('Delete strategy'));
+    await tester.tap(find.text('Delete sleeve'));
     await tester.pumpAndSettle();
 
     expect(find.text('Transfer to'), findsOneWidget);

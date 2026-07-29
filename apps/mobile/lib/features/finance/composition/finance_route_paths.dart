@@ -28,6 +28,7 @@ abstract final class FinanceRoutes {
   static const wealthLiabilities = '/wealth/liabilities';
   static const wealthLiabilityNew = '/wealth/liabilities/new';
   static const wealthPortfolio = '/wealth/portfolio';
+  static const wealthPortfolioStudio = '/wealth/portfolio/:portfolioId/studio';
   static const wealthWatchlist = '/wealth/watchlist';
 
   static const planFire = '/plan/fire';
@@ -45,6 +46,9 @@ abstract final class FinanceRoutes {
 
   static String wealthAsset(String id) =>
       '/wealth/assets/${Uri.encodeComponent(id)}';
+
+  static String wealthPortfolioStudioFor(String portfolioId) =>
+      '/wealth/portfolio/${Uri.encodeComponent(portfolioId)}/studio';
 
   static String wealthAssetEdit(String id) =>
       '/wealth/assets/${Uri.encodeComponent(id)}/edit';
@@ -134,6 +138,7 @@ abstract final class FinanceRouteNames {
   static const wealthLiabilityNew = 'wealth-liability-new';
   static const wealthLiabilityDetail = 'wealth-liability-detail';
   static const wealthPortfolio = 'wealth-portfolio';
+  static const wealthPortfolioStudio = 'wealth-portfolio-studio';
   static const wealthWatchlist = 'wealth-watchlist';
 
   static const plan = 'plan';

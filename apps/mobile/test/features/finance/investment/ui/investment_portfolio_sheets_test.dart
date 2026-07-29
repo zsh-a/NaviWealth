@@ -18,115 +18,6 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
   testWidgets(
-    'portfolio summary counts capital strategies and ignores overlays',
-    (tester) async {
-      final sync = SyncMeta(
-        ownerUserId: 'u-test',
-        updatedAt: DateTime.utc(2026, 7, 29),
-        updatedByDevice: 'test',
-        hlc: Hlc.zero('test'),
-      );
-      final portfolio = InvestmentPortfolio(
-        id: 'portfolio',
-        name: 'Long term',
-        baseCurrency: 'USD',
-        goalId: null,
-        color: null,
-        createdAt: DateTime.utc(2026, 7, 29),
-        archived: false,
-        sync: sync,
-      );
-      PortfolioStrategyConfig config({
-        required String id,
-        required PortfolioStrategyKind kind,
-        required StrategyCapitalRole role,
-      }) {
-        return PortfolioStrategyConfig(
-          id: id,
-          portfolioId: portfolio.id,
-          kind: kind,
-          schemaVersion: 1,
-          enabled: true,
-          capitalRole: role,
-          rebalanceGroupId: 'group',
-          settings: const OpaquePortfolioStrategySettings({}),
-          sync: sync,
-        );
-      }
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            investmentPortfoliosProvider.overrideWith(
-              (ref) => Stream.value([portfolio]),
-            ),
-            portfolioStrategyConfigsProvider.overrideWith(
-              (ref) => Stream.value([
-                config(
-                  id: 'overlay',
-                  kind: const PortfolioStrategyKind('a-overlay'),
-                  role: StrategyCapitalRole.overlay,
-                ),
-                config(
-                  id: 'core',
-                  kind: PortfolioStrategyKind.indexCore,
-                  role: StrategyCapitalRole.owner,
-                ),
-                config(
-                  id: 'income',
-                  kind: PortfolioStrategyKind.dividendIncome,
-                  role: StrategyCapitalRole.owner,
-                ),
-              ]),
-            ),
-            portfolioStrategyTemplatesProvider.overrideWithValue(
-              const AsyncData(kBuiltInPortfolioStrategyTemplates),
-            ),
-            activeUniversePortfolioTargetsProvider.overrideWithValue(
-              AsyncData([
-                PortfolioAllocationTarget(
-                  id: 'target',
-                  universeId: 'universe',
-                  portfolioId: portfolio.id,
-                  targetWeightBps: 10000,
-                  driftBandBps: 500,
-                  transferPolicy: GroupTransferPolicy.bidirectional,
-                  sync: sync,
-                ),
-              ]),
-            ),
-          ],
-          child: FTheme(
-            data: FThemes.slate.light.desktop,
-            child: MaterialApp(
-              theme: AppTheme.light(),
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-              locale: const Locale('en'),
-              home: Builder(
-                builder: (context) => Scaffold(
-                  body: Center(
-                    child: FButton(
-                      onPress: () => showInvestmentPortfolioManager(context),
-                      child: const Text('Open'),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Index core · 2 capital strategies'), findsOneWidget);
-      expect(find.text('a-overlay'), findsNothing);
-    },
-  );
-
-  testWidgets(
     'portfolio deletion asks where to transfer target and assignments',
     (tester) async {
       final sync = SyncMeta(
@@ -240,7 +131,10 @@ void main() {
                 builder: (context) => Scaffold(
                   body: Center(
                     child: FButton(
-                      onPress: () => showInvestmentPortfolioManager(context),
+                      onPress: () => showInvestmentPortfolioFormSheet(
+                        context,
+                        existing: source,
+                      ),
                       child: const Text('Open'),
                     ),
                   ),
@@ -252,12 +146,6 @@ void main() {
       );
 
       await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
-      await tester.tap(
-        find
-            .ancestor(of: find.text('Long term'), matching: find.byType(FTile))
-            .last,
-      );
       await tester.pumpAndSettle();
       final deleteButton = find.text('Delete portfolio');
       expect(deleteButton, findsOneWidget);

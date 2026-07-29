@@ -2172,7 +2172,7 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioManageTitle.
   ///
   /// In en, this message translates to:
-  /// **'Manage portfolios'**
+  /// **'Portfolio settings'**
   String get portfolioManageTitle;
 
   /// No description provided for @portfolioCreateTitle.
@@ -2304,37 +2304,37 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioAssignLotsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Assign lots'**
+  /// **'Include positions'**
   String get portfolioAssignLotsTitle;
 
   /// No description provided for @portfolioAssignLotsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Assign each purchase lot to one portfolio group.'**
+  /// **'Choose purchase lots to include in a portfolio sleeve.'**
   String get portfolioAssignLotsSubtitle;
 
   /// No description provided for @portfolioAssignCashTitle.
   ///
   /// In en, this message translates to:
-  /// **'Assign cash'**
+  /// **'Include cash'**
   String get portfolioAssignCashTitle;
 
   /// No description provided for @portfolioAssignCashSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Reserve cash from an asset account for one strategy group.'**
+  /// **'Reserve cash from an asset account for one sleeve.'**
   String get portfolioAssignCashSubtitle;
 
   /// No description provided for @portfolioAssignCashAction.
   ///
   /// In en, this message translates to:
-  /// **'Assign cash'**
+  /// **'Include cash'**
   String get portfolioAssignCashAction;
 
   /// No description provided for @portfolioCashAssignmentsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Cash assignments'**
+  /// **'Included cash'**
   String get portfolioCashAssignmentsTitle;
 
   /// No description provided for @portfolioCashAccountLabel.
@@ -2374,8 +2374,206 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioAssignmentSaved.
   ///
   /// In en, this message translates to:
-  /// **'Portfolio assignments saved.'**
+  /// **'Included assets saved.'**
   String get portfolioAssignmentSaved;
+
+  /// No description provided for @portfolioStudioTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio studio'**
+  String get portfolioStudioTitle;
+
+  /// No description provided for @portfolioStudioNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This portfolio no longer exists.'**
+  String get portfolioStudioNotFound;
+
+  /// No description provided for @portfolioStudioPlanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Investment plan'**
+  String get portfolioStudioPlanTitle;
+
+  /// No description provided for @portfolioStudioPlanHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Review targets and drift here, then open a portfolio to adjust sleeves, assets, and rules.'**
+  String get portfolioStudioPlanHint;
+
+  /// No description provided for @portfolioStudioPlanEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your first portfolio to define how capital should be used and rebalanced.'**
+  String get portfolioStudioPlanEmptyHint;
+
+  /// No description provided for @portfolioStudioPlanTargetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan target'**
+  String get portfolioStudioPlanTargetLabel;
+
+  /// No description provided for @portfolioStudioTargetSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{target}% plan target · {count} sleeves'**
+  String portfolioStudioTargetSummary(String target, int count);
+
+  /// No description provided for @portfolioStudioConfiguredStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Configured'**
+  String get portfolioStudioConfiguredStatus;
+
+  /// No description provided for @portfolioStudioSleevesMetric.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleeves'**
+  String get portfolioStudioSleevesMetric;
+
+  /// No description provided for @portfolioStudioAssetsMetric.
+  ///
+  /// In en, this message translates to:
+  /// **'Included assets'**
+  String get portfolioStudioAssetsMetric;
+
+  /// No description provided for @portfolioStudioRulesMetric.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules'**
+  String get portfolioStudioRulesMetric;
+
+  /// No description provided for @portfolioStudioRebalanceAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Check rebalance'**
+  String get portfolioStudioRebalanceAction;
+
+  /// No description provided for @portfolioStudioOverviewTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get portfolioStudioOverviewTab;
+
+  /// No description provided for @portfolioStudioStructureTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Structure'**
+  String get portfolioStudioStructureTab;
+
+  /// No description provided for @portfolioStudioAssetsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Assets'**
+  String get portfolioStudioAssetsTab;
+
+  /// No description provided for @portfolioStudioRulesTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules'**
+  String get portfolioStudioRulesTab;
+
+  /// No description provided for @portfolioStudioAllocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Capital path'**
+  String get portfolioStudioAllocationTitle;
+
+  /// No description provided for @portfolioStudioAllocationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan → portfolio → sleeve → asset target, configured in one path.'**
+  String get portfolioStudioAllocationHint;
+
+  /// No description provided for @portfolioStudioNextActionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Next step'**
+  String get portfolioStudioNextActionTitle;
+
+  /// No description provided for @portfolioStudioNextActionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust sleeve weights together and always keep the total at 100%.'**
+  String get portfolioStudioNextActionHint;
+
+  /// No description provided for @portfolioStudioStructureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Strategy sleeves'**
+  String get portfolioStudioStructureTitle;
+
+  /// No description provided for @portfolioStudioStructureHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Each sleeve owns a capital target and its internal asset allocation.'**
+  String get portfolioStudioStructureHint;
+
+  /// No description provided for @portfolioStudioSleeveSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{target}% target · {count} asset targets · {policy}'**
+  String portfolioStudioSleeveSummary(String target, int count, String policy);
+
+  /// No description provided for @portfolioStudioIncludedAssetsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Included assets'**
+  String get portfolioStudioIncludedAssetsTitle;
+
+  /// No description provided for @portfolioStudioIncludedAssetsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose positions and cash for this portfolio and the sleeve that owns them.'**
+  String get portfolioStudioIncludedAssetsHint;
+
+  /// No description provided for @portfolioStudioNoIncludedAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'No positions or cash are included yet.'**
+  String get portfolioStudioNoIncludedAssets;
+
+  /// No description provided for @portfolioStudioIncludedPositionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Position lot'**
+  String get portfolioStudioIncludedPositionLabel;
+
+  /// No description provided for @portfolioStudioIncludePositionAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Include positions'**
+  String get portfolioStudioIncludePositionAction;
+
+  /// No description provided for @portfolioStudioIncludeCashAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Include cash'**
+  String get portfolioStudioIncludeCashAction;
+
+  /// No description provided for @portfolioStudioRulesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules and enhancements'**
+  String get portfolioStudioRulesTitle;
+
+  /// No description provided for @portfolioStudioRulesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules attach to a sleeve without owning a separate capital weight.'**
+  String get portfolioStudioRulesHint;
+
+  /// No description provided for @portfolioStudioNoRules.
+  ///
+  /// In en, this message translates to:
+  /// **'No extra rules. Sleeves still run with their own targets.'**
+  String get portfolioStudioNoRules;
+
+  /// No description provided for @portfolioStudioAssetTargetCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} asset targets'**
+  String portfolioStudioAssetTargetCount(int count);
 
   /// No description provided for @rebalancePortfoliosTitle.
   ///
@@ -2428,7 +2626,7 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioGroupsSectionTitle.
   ///
   /// In en, this message translates to:
-  /// **'Strategies'**
+  /// **'Strategy sleeves'**
   String get portfolioGroupsSectionTitle;
 
   /// No description provided for @portfolioAllocationSectionTitle.
@@ -2470,73 +2668,73 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioGroupAddAction.
   ///
   /// In en, this message translates to:
-  /// **'Add strategy'**
+  /// **'Add sleeve'**
   String get portfolioGroupAddAction;
 
   /// No description provided for @portfolioStrategyAllocationEditTitle.
   ///
   /// In en, this message translates to:
-  /// **'Edit strategy allocation'**
+  /// **'Edit sleeve allocation'**
   String get portfolioStrategyAllocationEditTitle;
 
   /// No description provided for @portfolioStrategyAllocationPlanSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Set every capital-owning strategy together. The total must equal 100%.'**
+  /// **'Set every sleeve together. The total must equal 100%.'**
   String get portfolioStrategyAllocationPlanSubtitle;
 
   /// No description provided for @portfolioOverlayAddAction.
   ///
   /// In en, this message translates to:
-  /// **'Add overlay strategy'**
+  /// **'Add rule'**
   String get portfolioOverlayAddAction;
 
   /// No description provided for @portfolioOverlayNoTemplates.
   ///
   /// In en, this message translates to:
-  /// **'Create an overlay strategy type before attaching one.'**
+  /// **'Create a rule type before attaching one to a sleeve.'**
   String get portfolioOverlayNoTemplates;
 
   /// No description provided for @portfolioOverlayHostGroupLabel.
   ///
   /// In en, this message translates to:
-  /// **'Host strategy group'**
+  /// **'Apply to sleeve'**
   String get portfolioOverlayHostGroupLabel;
 
   /// No description provided for @portfolioOverlaySectionTitle.
   ///
   /// In en, this message translates to:
-  /// **'Overlay strategies'**
+  /// **'Rules and enhancements'**
   String get portfolioOverlaySectionTitle;
 
   /// No description provided for @portfolioOverlayDeleteAction.
   ///
   /// In en, this message translates to:
-  /// **'Delete overlay strategy'**
+  /// **'Delete rule'**
   String get portfolioOverlayDeleteAction;
 
   /// No description provided for @portfolioOverlayDeleteConfirmation.
   ///
   /// In en, this message translates to:
-  /// **'This overlay will be removed from its capital strategy. Asset assignments and the accounting ledger will not change.'**
+  /// **'This rule will be removed from its sleeve. Included assets and the accounting ledger will not change.'**
   String get portfolioOverlayDeleteConfirmation;
 
   /// No description provided for @portfolioGroupEditTitle.
   ///
   /// In en, this message translates to:
-  /// **'Edit strategy'**
+  /// **'Edit sleeve'**
   String get portfolioGroupEditTitle;
 
   /// No description provided for @portfolioGroupNameLabel.
   ///
   /// In en, this message translates to:
-  /// **'Strategy name'**
+  /// **'Sleeve name'**
   String get portfolioGroupNameLabel;
 
   /// No description provided for @portfolioStrategyDeleteAction.
   ///
   /// In en, this message translates to:
-  /// **'Delete strategy'**
+  /// **'Delete sleeve'**
   String get portfolioStrategyDeleteAction;
 
   /// No description provided for @portfolioStrategyDeleteLastBlocked.
@@ -27747,13 +27945,13 @@ abstract class AppLocalizations {
   /// No description provided for @rebalanceStageStrategyTitle.
   ///
   /// In en, this message translates to:
-  /// **'2 · Allocate capital between strategies'**
+  /// **'2 · Allocate capital between sleeves'**
   String get rebalanceStageStrategyTitle;
 
   /// No description provided for @rebalanceStageAssetTitle.
   ///
   /// In en, this message translates to:
-  /// **'3 · Rebalance assets inside the strategy'**
+  /// **'3 · Rebalance assets inside the sleeve'**
   String get rebalanceStageAssetTitle;
 
   /// No description provided for @rebalanceDecisionPolicyBlocked.

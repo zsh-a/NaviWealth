@@ -1235,7 +1235,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioUnassigned => 'Unassigned';
 
   @override
-  String get portfolioManageTitle => 'Manage portfolios';
+  String get portfolioManageTitle => 'Portfolio settings';
 
   @override
   String get portfolioCreateTitle => 'New portfolio';
@@ -1304,24 +1304,24 @@ class AppLocalizationsEn extends AppLocalizations {
       'Create a portfolio to classify holdings by purpose.';
 
   @override
-  String get portfolioAssignLotsTitle => 'Assign lots';
+  String get portfolioAssignLotsTitle => 'Include positions';
 
   @override
   String get portfolioAssignLotsSubtitle =>
-      'Assign each purchase lot to one portfolio group.';
+      'Choose purchase lots to include in a portfolio sleeve.';
 
   @override
-  String get portfolioAssignCashTitle => 'Assign cash';
+  String get portfolioAssignCashTitle => 'Include cash';
 
   @override
   String get portfolioAssignCashSubtitle =>
-      'Reserve cash from an asset account for one strategy group.';
+      'Reserve cash from an asset account for one sleeve.';
 
   @override
-  String get portfolioAssignCashAction => 'Assign cash';
+  String get portfolioAssignCashAction => 'Include cash';
 
   @override
-  String get portfolioCashAssignmentsTitle => 'Cash assignments';
+  String get portfolioCashAssignmentsTitle => 'Included cash';
 
   @override
   String get portfolioCashAccountLabel => 'Asset account';
@@ -1346,7 +1346,121 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get portfolioAssignmentSaved => 'Portfolio assignments saved.';
+  String get portfolioAssignmentSaved => 'Included assets saved.';
+
+  @override
+  String get portfolioStudioTitle => 'Portfolio studio';
+
+  @override
+  String get portfolioStudioNotFound => 'This portfolio no longer exists.';
+
+  @override
+  String get portfolioStudioPlanTitle => 'Investment plan';
+
+  @override
+  String get portfolioStudioPlanHint =>
+      'Review targets and drift here, then open a portfolio to adjust sleeves, assets, and rules.';
+
+  @override
+  String get portfolioStudioPlanEmptyHint =>
+      'Create your first portfolio to define how capital should be used and rebalanced.';
+
+  @override
+  String get portfolioStudioPlanTargetLabel => 'Plan target';
+
+  @override
+  String portfolioStudioTargetSummary(String target, int count) {
+    return '$target% plan target · $count sleeves';
+  }
+
+  @override
+  String get portfolioStudioConfiguredStatus => 'Configured';
+
+  @override
+  String get portfolioStudioSleevesMetric => 'Sleeves';
+
+  @override
+  String get portfolioStudioAssetsMetric => 'Included assets';
+
+  @override
+  String get portfolioStudioRulesMetric => 'Rules';
+
+  @override
+  String get portfolioStudioRebalanceAction => 'Check rebalance';
+
+  @override
+  String get portfolioStudioOverviewTab => 'Overview';
+
+  @override
+  String get portfolioStudioStructureTab => 'Structure';
+
+  @override
+  String get portfolioStudioAssetsTab => 'Assets';
+
+  @override
+  String get portfolioStudioRulesTab => 'Rules';
+
+  @override
+  String get portfolioStudioAllocationTitle => 'Capital path';
+
+  @override
+  String get portfolioStudioAllocationHint =>
+      'Plan → portfolio → sleeve → asset target, configured in one path.';
+
+  @override
+  String get portfolioStudioNextActionTitle => 'Next step';
+
+  @override
+  String get portfolioStudioNextActionHint =>
+      'Adjust sleeve weights together and always keep the total at 100%.';
+
+  @override
+  String get portfolioStudioStructureTitle => 'Strategy sleeves';
+
+  @override
+  String get portfolioStudioStructureHint =>
+      'Each sleeve owns a capital target and its internal asset allocation.';
+
+  @override
+  String portfolioStudioSleeveSummary(String target, int count, String policy) {
+    return '$target% target · $count asset targets · $policy';
+  }
+
+  @override
+  String get portfolioStudioIncludedAssetsTitle => 'Included assets';
+
+  @override
+  String get portfolioStudioIncludedAssetsHint =>
+      'Choose positions and cash for this portfolio and the sleeve that owns them.';
+
+  @override
+  String get portfolioStudioNoIncludedAssets =>
+      'No positions or cash are included yet.';
+
+  @override
+  String get portfolioStudioIncludedPositionLabel => 'Position lot';
+
+  @override
+  String get portfolioStudioIncludePositionAction => 'Include positions';
+
+  @override
+  String get portfolioStudioIncludeCashAction => 'Include cash';
+
+  @override
+  String get portfolioStudioRulesTitle => 'Rules and enhancements';
+
+  @override
+  String get portfolioStudioRulesHint =>
+      'Rules attach to a sleeve without owning a separate capital weight.';
+
+  @override
+  String get portfolioStudioNoRules =>
+      'No extra rules. Sleeves still run with their own targets.';
+
+  @override
+  String portfolioStudioAssetTargetCount(int count) {
+    return '$count asset targets';
+  }
 
   @override
   String get rebalancePortfoliosTitle => 'Portfolio allocation';
@@ -1380,7 +1494,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get portfolioGroupsSectionTitle => 'Strategies';
+  String get portfolioGroupsSectionTitle => 'Strategy sleeves';
 
   @override
   String get portfolioAllocationSectionTitle => 'Portfolio capital allocation';
@@ -1405,43 +1519,43 @@ class AppLocalizationsEn extends AppLocalizations {
       'A universe with one portfolio must remain at 100%. Add another portfolio before changing its target.';
 
   @override
-  String get portfolioGroupAddAction => 'Add strategy';
+  String get portfolioGroupAddAction => 'Add sleeve';
 
   @override
-  String get portfolioStrategyAllocationEditTitle => 'Edit strategy allocation';
+  String get portfolioStrategyAllocationEditTitle => 'Edit sleeve allocation';
 
   @override
   String get portfolioStrategyAllocationPlanSubtitle =>
-      'Set every capital-owning strategy together. The total must equal 100%.';
+      'Set every sleeve together. The total must equal 100%.';
 
   @override
-  String get portfolioOverlayAddAction => 'Add overlay strategy';
+  String get portfolioOverlayAddAction => 'Add rule';
 
   @override
   String get portfolioOverlayNoTemplates =>
-      'Create an overlay strategy type before attaching one.';
+      'Create a rule type before attaching one to a sleeve.';
 
   @override
-  String get portfolioOverlayHostGroupLabel => 'Host strategy group';
+  String get portfolioOverlayHostGroupLabel => 'Apply to sleeve';
 
   @override
-  String get portfolioOverlaySectionTitle => 'Overlay strategies';
+  String get portfolioOverlaySectionTitle => 'Rules and enhancements';
 
   @override
-  String get portfolioOverlayDeleteAction => 'Delete overlay strategy';
+  String get portfolioOverlayDeleteAction => 'Delete rule';
 
   @override
   String get portfolioOverlayDeleteConfirmation =>
-      'This overlay will be removed from its capital strategy. Asset assignments and the accounting ledger will not change.';
+      'This rule will be removed from its sleeve. Included assets and the accounting ledger will not change.';
 
   @override
-  String get portfolioGroupEditTitle => 'Edit strategy';
+  String get portfolioGroupEditTitle => 'Edit sleeve';
 
   @override
-  String get portfolioGroupNameLabel => 'Strategy name';
+  String get portfolioGroupNameLabel => 'Sleeve name';
 
   @override
-  String get portfolioStrategyDeleteAction => 'Delete strategy';
+  String get portfolioStrategyDeleteAction => 'Delete sleeve';
 
   @override
   String get portfolioStrategyDeleteLastBlocked =>
@@ -16491,11 +16605,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rebalanceStageStrategyTitle =>
-      '2 · Allocate capital between strategies';
+      '2 · Allocate capital between sleeves';
 
   @override
   String get rebalanceStageAssetTitle =>
-      '3 · Rebalance assets inside the strategy';
+      '3 · Rebalance assets inside the sleeve';
 
   @override
   String rebalanceDecisionPolicyBlocked(String name) {

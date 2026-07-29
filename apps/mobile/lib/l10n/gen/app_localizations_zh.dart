@@ -1188,7 +1188,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioUnassigned => '未分类';
 
   @override
-  String get portfolioManageTitle => '管理组合';
+  String get portfolioManageTitle => '组合设置';
 
   @override
   String get portfolioCreateTitle => '新建组合';
@@ -1254,22 +1254,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioNoPortfolios => '创建组合，按投资目的分类持仓。';
 
   @override
-  String get portfolioAssignLotsTitle => '分配批次';
+  String get portfolioAssignLotsTitle => '纳入持仓';
 
   @override
-  String get portfolioAssignLotsSubtitle => '将每个买入批次归属到一个组合分组。';
+  String get portfolioAssignLotsSubtitle => '选择要纳入组合策略仓的买入批次。';
 
   @override
-  String get portfolioAssignCashTitle => '分配现金';
+  String get portfolioAssignCashTitle => '纳入现金';
 
   @override
-  String get portfolioAssignCashSubtitle => '从资产账户中划分现金，归属到一个策略分组。';
+  String get portfolioAssignCashSubtitle => '从资产账户中划分现金，纳入一个策略仓。';
 
   @override
-  String get portfolioAssignCashAction => '分配现金';
+  String get portfolioAssignCashAction => '纳入现金';
 
   @override
-  String get portfolioCashAssignmentsTitle => '现金归属';
+  String get portfolioCashAssignmentsTitle => '已纳入现金';
 
   @override
   String get portfolioCashAccountLabel => '资产账户';
@@ -1293,7 +1293,112 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get portfolioAssignmentSaved => '组合归属已保存。';
+  String get portfolioAssignmentSaved => '纳入资产已保存。';
+
+  @override
+  String get portfolioStudioTitle => '组合工作台';
+
+  @override
+  String get portfolioStudioNotFound => '该组合不存在或已删除。';
+
+  @override
+  String get portfolioStudioPlanTitle => '投资计划';
+
+  @override
+  String get portfolioStudioPlanHint => '目标与实际偏离会在这里汇总；进入组合可调整策略仓、资产和规则。';
+
+  @override
+  String get portfolioStudioPlanEmptyHint => '创建第一个组合，开始定义资金用途与再平衡目标。';
+
+  @override
+  String get portfolioStudioPlanTargetLabel => '计划目标';
+
+  @override
+  String portfolioStudioTargetSummary(String target, int count) {
+    return '计划目标 $target% · $count 个策略仓';
+  }
+
+  @override
+  String get portfolioStudioConfiguredStatus => '已配置';
+
+  @override
+  String get portfolioStudioSleevesMetric => '策略仓';
+
+  @override
+  String get portfolioStudioAssetsMetric => '纳入资产';
+
+  @override
+  String get portfolioStudioRulesMetric => '规则';
+
+  @override
+  String get portfolioStudioRebalanceAction => '检查再平衡';
+
+  @override
+  String get portfolioStudioOverviewTab => '概览';
+
+  @override
+  String get portfolioStudioStructureTab => '结构';
+
+  @override
+  String get portfolioStudioAssetsTab => '资产';
+
+  @override
+  String get portfolioStudioRulesTab => '规则';
+
+  @override
+  String get portfolioStudioAllocationTitle => '资金路径';
+
+  @override
+  String get portfolioStudioAllocationHint => '计划 → 组合 → 策略仓 → 资产目标，一条路径完成配置。';
+
+  @override
+  String get portfolioStudioNextActionTitle => '下一步';
+
+  @override
+  String get portfolioStudioNextActionHint => '统一调整策略仓比例，合计始终保持 100%。';
+
+  @override
+  String get portfolioStudioStructureTitle => '策略仓';
+
+  @override
+  String get portfolioStudioStructureHint => '每个策略仓拥有独立资金目标与仓内资产配置。';
+
+  @override
+  String portfolioStudioSleeveSummary(String target, int count, String policy) {
+    return '目标 $target% · $count 项资产目标 · $policy';
+  }
+
+  @override
+  String get portfolioStudioIncludedAssetsTitle => '纳入资产';
+
+  @override
+  String get portfolioStudioIncludedAssetsHint => '在当前组合中选择持仓与现金，并明确归属的策略仓。';
+
+  @override
+  String get portfolioStudioNoIncludedAssets => '尚未纳入持仓或现金。';
+
+  @override
+  String get portfolioStudioIncludedPositionLabel => '持仓批次';
+
+  @override
+  String get portfolioStudioIncludePositionAction => '纳入持仓';
+
+  @override
+  String get portfolioStudioIncludeCashAction => '纳入现金';
+
+  @override
+  String get portfolioStudioRulesTitle => '规则与增强';
+
+  @override
+  String get portfolioStudioRulesHint => '规则附着在策略仓上，不单独占用资金比例。';
+
+  @override
+  String get portfolioStudioNoRules => '暂无额外规则；策略仓仍按自身目标运行。';
+
+  @override
+  String portfolioStudioAssetTargetCount(int count) {
+    return '$count 项资产目标';
+  }
 
   @override
   String get rebalancePortfoliosTitle => '组合资金配置';
@@ -1326,7 +1431,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get portfolioGroupsSectionTitle => '策略';
+  String get portfolioGroupsSectionTitle => '策略仓';
 
   @override
   String get portfolioAllocationSectionTitle => '组合资金占比';
@@ -1350,42 +1455,42 @@ class AppLocalizationsZh extends AppLocalizations {
       '只有一个组合时必须保持 100%。请先添加另一个组合，再调整目标占比。';
 
   @override
-  String get portfolioGroupAddAction => '添加策略';
+  String get portfolioGroupAddAction => '添加策略仓';
 
   @override
-  String get portfolioStrategyAllocationEditTitle => '编辑策略比例';
+  String get portfolioStrategyAllocationEditTitle => '编辑策略仓比例';
 
   @override
   String get portfolioStrategyAllocationPlanSubtitle =>
-      '统一设置所有资金策略的比例，合计必须为 100%。';
+      '统一设置所有策略仓的比例，合计必须为 100%。';
 
   @override
-  String get portfolioOverlayAddAction => '添加叠加策略';
+  String get portfolioOverlayAddAction => '添加规则';
 
   @override
-  String get portfolioOverlayNoTemplates => '请先创建一个叠加策略类型，再将其附加到策略分组。';
+  String get portfolioOverlayNoTemplates => '请先创建规则类型，再将其附加到策略仓。';
 
   @override
-  String get portfolioOverlayHostGroupLabel => '挂载策略分组';
+  String get portfolioOverlayHostGroupLabel => '应用到策略仓';
 
   @override
-  String get portfolioOverlaySectionTitle => '叠加策略';
+  String get portfolioOverlaySectionTitle => '规则与增强';
 
   @override
-  String get portfolioOverlayDeleteAction => '删除叠加策略';
+  String get portfolioOverlayDeleteAction => '删除规则';
 
   @override
   String get portfolioOverlayDeleteConfirmation =>
-      '该叠加策略将从当前资金策略中移除，不会影响资产归属和会计账本。';
+      '该规则将从当前策略仓移除，不会影响纳入资产和会计账本。';
 
   @override
-  String get portfolioGroupEditTitle => '编辑策略';
+  String get portfolioGroupEditTitle => '编辑策略仓';
 
   @override
-  String get portfolioGroupNameLabel => '策略名称';
+  String get portfolioGroupNameLabel => '策略仓名称';
 
   @override
-  String get portfolioStrategyDeleteAction => '删除策略';
+  String get portfolioStrategyDeleteAction => '删除策略仓';
 
   @override
   String get portfolioStrategyDeleteLastBlocked =>
@@ -15672,13 +15777,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomeStrategyPlanDeleteBody => '实际持仓和交易仍会显示，但该标的的组合设置与限制将被移除。';
 
   @override
-  String get rebalanceStagePortfolioTitle => '1 · 组间资金调拨';
+  String get rebalanceStagePortfolioTitle => '1 · 组合间资金调拨';
 
   @override
-  String get rebalanceStageStrategyTitle => '2 · 组内策略配置';
+  String get rebalanceStageStrategyTitle => '2 · 组合内策略仓配置';
 
   @override
-  String get rebalanceStageAssetTitle => '3 · 策略内资产配置';
+  String get rebalanceStageAssetTitle => '3 · 策略仓内资产配置';
 
   @override
   String rebalanceDecisionPolicyBlocked(String name) {

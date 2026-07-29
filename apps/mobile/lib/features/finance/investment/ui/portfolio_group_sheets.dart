@@ -51,7 +51,7 @@ class PortfolioGroupsSection extends ConsumerWidget {
                   FButton(
                     variant: FButtonVariant.ghost,
                     onPress: () =>
-                        _showStrategyAllocationEditor(context, ref, items),
+                        showStrategySleeveAllocationEditor(context, ref, items),
                     child: Text(l10n.capitalAllocationEditAction),
                   ),
               ],
@@ -79,8 +79,10 @@ class PortfolioGroupsSection extends ConsumerWidget {
                           FLucideIcons.chevronRight,
                           size: AppIconSizes.sm,
                         ),
-                        onPress: () =>
-                            _showEditGroupSheet(context, group: items[index]),
+                        onPress: () => showEditStrategySleeve(
+                          context,
+                          group: items[index],
+                        ),
                       ),
                       if (index != items.length - 1)
                         const AppGroupedDivider(
@@ -96,7 +98,7 @@ class PortfolioGroupsSection extends ConsumerWidget {
               variant: FButtonVariant.outline,
               prefix: const Icon(FLucideIcons.plus),
               onPress: () =>
-                  _showAddGroupSheet(context, portfolioId: portfolioId),
+                  showAddStrategySleeve(context, portfolioId: portfolioId),
               child: Text(l10n.portfolioGroupAddAction),
             ),
             const SizedBox(height: AppSpacing.s8),
@@ -104,7 +106,7 @@ class PortfolioGroupsSection extends ConsumerWidget {
               variant: FButtonVariant.outline,
               prefix: const Icon(FLucideIcons.combine),
               onPress: () =>
-                  _showAddOverlaySheet(context, portfolioId: portfolioId),
+                  showAddStrategyRule(context, portfolioId: portfolioId),
               child: Text(l10n.portfolioOverlayAddAction),
             ),
           ],
@@ -114,7 +116,7 @@ class PortfolioGroupsSection extends ConsumerWidget {
   }
 }
 
-Future<void> _showStrategyAllocationEditor(
+Future<void> showStrategySleeveAllocationEditor(
   BuildContext context,
   WidgetRef ref,
   List<PortfolioRebalanceGroup> groups,
@@ -156,7 +158,7 @@ Future<void> _showStrategyAllocationEditor(
   );
 }
 
-Future<void> _showAddGroupSheet(
+Future<void> showAddStrategySleeve(
   BuildContext context, {
   required String portfolioId,
 }) {
@@ -625,7 +627,7 @@ class _CustomStrategyTemplateFormState
   }
 }
 
-Future<void> _showAddOverlaySheet(
+Future<void> showAddStrategyRule(
   BuildContext context, {
   required String portfolioId,
 }) {
@@ -794,7 +796,7 @@ class _AddPortfolioOverlayFormState
   }
 }
 
-Future<void> _showEditGroupSheet(
+Future<void> showEditStrategySleeve(
   BuildContext context, {
   required PortfolioRebalanceGroup group,
 }) async {

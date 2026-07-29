@@ -289,6 +289,16 @@ StatefulShellRoute financeShellRoute() {
                       focusAssetId: state.uri.queryParameters['assetId'],
                     ),
                   ),
+                  GoRoute(
+                    path: ':portfolioId/studio',
+                    name: FinanceRouteNames.wealthPortfolioStudio,
+                    builder: (context, state) => DeferredRoute(
+                      load: portfolio_hub_lib.loadLibrary,
+                      builder: (_) => portfolio_hub_lib.PortfolioStudioPage(
+                        portfolioId: state.pathParameters['portfolioId']!,
+                      ),
+                    ),
+                  ),
                 ],
               ),
               GoRoute(

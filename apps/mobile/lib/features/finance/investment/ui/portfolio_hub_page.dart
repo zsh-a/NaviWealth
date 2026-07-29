@@ -23,21 +23,31 @@ import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../rebalance/data/rebalance_providers.dart';
+import '../../rebalance/domain/portfolio_rebalance_group.dart';
+import '../../rebalance/domain/rebalance_universe.dart';
 import '../data/investment_portfolio_providers.dart';
 import '../data/providers.dart';
+import '../domain/allocation/portfolio_allocation_tree.dart';
 import '../domain/dividend_forecast.dart';
 import '../domain/models/corporate_actions.dart';
 import '../domain/models/holding_snapshot.dart';
 import '../domain/models/investment_portfolio.dart';
 import '../domain/models/lot.dart';
+import '../domain/models/portfolio_capital_assignment.dart';
 import '../domain/models/realized_pnl.dart';
 import '../domain/returns/portfolio_return.dart';
+import '../domain/strategy/portfolio_strategy_template.dart';
 import 'investment_portfolio_sheets.dart';
+import 'portfolio_allocation_sheets.dart';
+import 'portfolio_group_sheets.dart';
+import 'portfolio_strategy_visuals.dart';
 
 part 'portfolio_hub_engine_cards.dart';
 part 'portfolio_hub_group_detail.dart';
 part 'portfolio_hub_state.dart';
 part 'portfolio_hub_widgets.dart';
+part 'portfolio_studio_page.dart';
 
 class PortfolioHubPage extends ConsumerStatefulWidget {
   const PortfolioHubPage({super.key});
@@ -56,6 +66,14 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
     final state = ref.watch(portfolioHubCoreProvider);
     final portfolios =
         ref.watch(investmentPortfoliosProvider).value ?? const [];
+    final allocationTree = ref.watch(portfolioAllocationTreeProvider).value;
+    final universePlan = ref.watch(universeRebalancePlanProvider);
+    final actualPortfolioWeights = universePlan == null
+        ? const <String, double>{}
+        : <String, double>{
+            for (final item in universePlan.portfolios)
+              item.portfolio.id: item.capitalDecision.actualWeight,
+          };
     final selectedPortfolioId = ref.watch(
       effectiveSelectedInvestmentPortfolioIdProvider,
     );
@@ -63,6 +81,11 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
     return AppPageScaffold(
       title: l10n.portfolioHubTitle,
       actions: [
+        AppHeaderAction(
+          semanticsLabel: l10n.portfolioStudioRebalanceAction,
+          icon: const Icon(FLucideIcons.scale),
+          onPress: () => context.push(FinanceRoutes.planRebalance),
+        ),
         AppHeaderAction(
           semanticsLabel: l10n.tradeEntryAppBarTitle,
           icon: const Icon(FLucideIcons.plus),
@@ -72,14 +95,9 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
           title: l10n.shellMoreActions,
           actions: [
             AppAdaptiveAction(
-              icon: FLucideIcons.layers,
-              title: l10n.portfolioManageTitle,
-              onPress: () => showInvestmentPortfolioManager(context),
-            ),
-            AppAdaptiveAction(
-              icon: FLucideIcons.listChecks,
-              title: l10n.portfolioAssignLotsTitle,
-              onPress: () => showPortfolioLotAssignmentSheet(context),
+              icon: FLucideIcons.plus,
+              title: l10n.portfolioCreateTitle,
+              onPress: () => showInvestmentPortfolioFormSheet(context),
             ),
             AppAdaptiveAction(
               icon: FLucideIcons.bellRing,
@@ -121,6 +139,8 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
           view: _view,
           section: _section,
           portfolios: portfolios,
+          allocationTree: allocationTree,
+          actualPortfolioWeights: actualPortfolioWeights,
           selectedPortfolioId: selectedPortfolioId,
           onPortfolioChanged: (id) {
             ref.read(selectedInvestmentPortfolioIdProvider.notifier).state = id;
@@ -141,6 +161,8 @@ class _PortfolioHubBody extends StatefulWidget {
     required this.onViewChanged,
     required this.onSectionChanged,
     required this.portfolios,
+    required this.allocationTree,
+    required this.actualPortfolioWeights,
     required this.selectedPortfolioId,
     required this.onPortfolioChanged,
   });
@@ -151,6 +173,8 @@ class _PortfolioHubBody extends StatefulWidget {
   final ValueChanged<PortfolioHubView> onViewChanged;
   final ValueChanged<_PortfolioSection> onSectionChanged;
   final List<InvestmentPortfolio> portfolios;
+  final PortfolioAllocationTree? allocationTree;
+  final Map<String, double> actualPortfolioWeights;
   final String? selectedPortfolioId;
   final ValueChanged<String?> onPortfolioChanged;
 
@@ -206,6 +230,14 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (widget.allocationTree case final tree?) ...[
+                  _PortfolioPlanStrip(
+                    portfolios: widget.portfolios,
+                    tree: tree,
+                    actualWeights: widget.actualPortfolioWeights,
+                  ),
+                  const SizedBox(height: AppSpacing.s16),
+                ],
                 _PortfolioSelector(
                   portfolios: widget.portfolios,
                   value: widget.selectedPortfolioId,
