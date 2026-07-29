@@ -36,8 +36,10 @@ Future<T?> showAppContentDialog<T>({
 
 /// Show a compact, calm confirmation dialog.
 ///
-/// Returns `true` when the user taps the confirm action, `false` for
-/// cancel, `null` if the barrier was dismissed.
+/// Returns `true` when the user taps the confirm action, `false` for cancel,
+/// and `null` when they tap outside. Barrier dismissal is intentionally
+/// equivalent to cancel: it keeps destructive actions safe without trapping
+/// users inside a routine decision.
 Future<bool?> showConfirmDialog({
   required BuildContext context,
   required Widget title,
@@ -49,7 +51,7 @@ Future<bool?> showConfirmDialog({
 }) {
   return showFDialog<bool>(
     context: context,
-    barrierDismissible: false,
+    barrierDismissible: true,
     builder: (ctx, style, animation) => _DialogFrame(
       child: _AppDialog(
         accentColor: destructive

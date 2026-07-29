@@ -62,33 +62,21 @@ Future<T?> showAppSheet<T>({
   FormDirtyController? dirtyGuard,
   Future<bool> Function()? confirmDismiss,
 }) async {
-  final guarded = dirtyGuard != null;
   _beginAppSheetOverlay();
   try {
-    return await showFSheet<T>(
+    return await _showAppModalSheet<T>(
       context: context,
-      side: FLayout.btt,
       mainAxisMaxRatio: maxHeightFactor,
-      // When the sheet is guarding unsaved input the barrier-tap and
-      // swipe-down vectors must be closed: forui dismisses both with a
-      // direct `Navigator.pop`, which bypasses [PopScope]. The footer
-      // Cancel and system back (both guarded) remain the only way out.
-      barrierDismissible: !guarded,
-      draggable: !guarded,
+      dirtyGuard: dirtyGuard,
+      confirmDismiss: confirmDismiss,
       builder: (sheetContext) {
-        final sheet = AppSheet(
+        return AppSheet(
           title: title,
           subtitle: subtitle,
           actions: actions,
           footer: footer,
           scrollable: scrollable,
           child: Builder(builder: builder),
-        );
-        if (!guarded) return sheet;
-        return _GuardedSheet(
-          controller: dirtyGuard,
-          confirmDismiss: confirmDismiss,
-          child: sheet,
         );
       },
     );
@@ -111,29 +99,138 @@ Future<T?> showAppFormSheet<T>({
   FormDirtyController? dirtyGuard,
   Future<bool> Function()? confirmDismiss,
 }) async {
-  final guarded = dirtyGuard != null;
   _beginAppSheetOverlay();
   try {
-    return await showFSheet<T>(
+    return await _showAppModalSheet<T>(
       context: context,
-      side: FLayout.btt,
       mainAxisMaxRatio: maxHeightFactor,
-      // See [showAppSheet]: barrier-tap / swipe-down bypass PopScope, so
-      // they are disabled while the form holds unsaved input.
-      barrierDismissible: !guarded,
-      draggable: !guarded,
-      builder: guarded
-          ? (sheetContext) => AppSheetSurface(
-              child: _GuardedSheet(
-                controller: dirtyGuard,
-                confirmDismiss: confirmDismiss,
-                child: Builder(builder: builder),
-              ),
-            )
-          : (sheetContext) => AppSheetSurface(child: Builder(builder: builder)),
+      dirtyGuard: dirtyGuard,
+      confirmDismiss: confirmDismiss,
+      builder: (sheetContext) =>
+          AppSheetSurface(child: Builder(builder: builder)),
     );
   } finally {
     _endAppSheetOverlay();
+  }
+}
+
+/// Presents the canonical bottom sheet with route-level dismissal protection.
+///
+/// Forui dismisses barrier taps and drag gestures with a direct
+/// `Navigator.pop`, so a widget-level [PopScope] cannot guard unsaved input.
+/// [_AppModalSheetRoute] intercepts those pops instead. The route stays fully
+/// interactive while the form is pristine, springs back and asks before
+/// discarding dirty input, and only locks while a save is in flight.
+Future<T?> _showAppModalSheet<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+  required double? mainAxisMaxRatio,
+  required FormDirtyController? dirtyGuard,
+  required Future<bool> Function()? confirmDismiss,
+}) {
+  if (dirtyGuard == null) {
+    return showFSheet<T>(
+      context: context,
+      side: FLayout.btt,
+      mainAxisMaxRatio: mainAxisMaxRatio,
+      builder: builder,
+    );
+  }
+
+  final navigator = Navigator.of(context);
+  final localizations = FLocalizations.of(context) ?? FDefaultLocalizations();
+  return navigator.push(
+    _AppModalSheetRoute<T>(
+      style: context.theme.modalSheetStyle,
+      builder: builder,
+      mainAxisMaxRatio: mainAxisMaxRatio,
+      capturedThemes: InheritedTheme.capture(
+        from: context,
+        to: navigator.context,
+      ),
+      barrierLabel: localizations.barrierLabel,
+      barrierOnTapHint: localizations.barrierOnTapHint(
+        localizations.sheetSemanticsLabel,
+      ),
+      dirtyGuard: dirtyGuard,
+      confirmDismiss: confirmDismiss,
+    ),
+  );
+}
+
+class _AppModalSheetRoute<T> extends FModalSheetRoute<T> {
+  _AppModalSheetRoute({
+    required super.style,
+    required super.builder,
+    required super.mainAxisMaxRatio,
+    required super.capturedThemes,
+    required super.barrierLabel,
+    required super.barrierOnTapHint,
+    required this.dirtyGuard,
+    required this.confirmDismiss,
+  }) : super(side: FLayout.btt, barrierDismissible: true, draggable: true);
+
+  final FormDirtyController dirtyGuard;
+  final Future<bool> Function()? confirmDismiss;
+
+  bool _allowNextPop = false;
+  bool _confirming = false;
+  bool _dismissScheduled = false;
+
+  bool get _blocksDismissal =>
+      !_allowNextPop && (dirtyGuard.isDirty || dirtyGuard.busy);
+
+  @override
+  RoutePopDisposition get popDisposition =>
+      _blocksDismissal ? RoutePopDisposition.doNotPop : super.popDisposition;
+
+  @override
+  bool didPop(T? result) {
+    if (!_blocksDismissal) return super.didPop(result);
+    _restoreDraggedSheet();
+    _scheduleDismiss(result);
+    return false;
+  }
+
+  @override
+  void onPopInvokedWithResult(bool didPop, T? result) {
+    super.onPopInvokedWithResult(didPop, result);
+    if (!didPop && _blocksDismissal) _scheduleDismiss(result);
+  }
+
+  void _scheduleDismiss(T? result) {
+    if (_dismissScheduled || _confirming) return;
+    _dismissScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _dismissScheduled = false;
+      unawaited(_requestDismiss(result));
+    });
+  }
+
+  Future<void> _requestDismiss(T? result) async {
+    if (!isCurrent || _confirming || dirtyGuard.busy) return;
+    if (!dirtyGuard.isDirty) {
+      _allowNextPop = true;
+      navigator?.pop(result);
+      return;
+    }
+
+    _confirming = true;
+    try {
+      final approved = confirmDismiss == null || await confirmDismiss!();
+      if (!approved || !isCurrent) return;
+      _allowNextPop = true;
+      navigator?.pop(result);
+    } finally {
+      _confirming = false;
+    }
+  }
+
+  void _restoreDraggedSheet() {
+    final sheetController = controller;
+    if (sheetController != null && sheetController.value < 1) {
+      unawaited(sheetController.forward());
+    }
   }
 }
 
@@ -449,43 +546,6 @@ class AppSheetSectionLabel extends StatelessWidget {
           color: context.theme.colors.mutedForeground,
         ),
       ),
-    );
-  }
-}
-
-/// Wraps a guarded sheet body in a [PopScope] so system / predictive
-/// back and the footer Cancel funnel through [confirmDismiss]. Barrier
-/// tap and swipe-down are disabled by the caller (they bypass PopScope),
-/// so this plus the footer Cancel are the only exits. While
-/// [FormDirtyController.busy] every dismissal is swallowed so a
-/// half-written record can't be abandoned mid-submit.
-class _GuardedSheet extends StatelessWidget {
-  const _GuardedSheet({
-    required this.controller,
-    required this.confirmDismiss,
-    required this.child,
-  });
-
-  final FormDirtyController controller;
-  final Future<bool> Function()? confirmDismiss;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      child: child,
-      builder: (context, child) {
-        return PopScope(
-          canPop: !controller.isDirty && !controller.busy,
-          onPopInvokedWithResult: (didPop, _) async {
-            if (didPop || controller.busy) return;
-            final ok = confirmDismiss == null ? true : await confirmDismiss!();
-            if (ok && context.mounted) Navigator.of(context).pop();
-          },
-          child: child!,
-        );
-      },
     );
   }
 }

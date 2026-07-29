@@ -976,6 +976,7 @@ class _EditPortfolioGroupFormState
         ),
       );
       widget.dirty.markPristine();
+      widget.dirty.busy = false;
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (!mounted) return;

@@ -208,6 +208,7 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
       await repo.upsert(profile);
       ref.invalidate(optionsStrategyProfileProvider);
       widget.dirty.markPristine();
+      widget.dirty.busy = false;
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (_) {

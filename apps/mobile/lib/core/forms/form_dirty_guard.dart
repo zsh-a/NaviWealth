@@ -31,9 +31,10 @@ Future<bool> confirmDiscardIfDirty(
 }
 
 /// Opens a guarded form sheet: creates a [FormDirtyController], wires it
-/// into `showAppFormSheet` (which disables barrier-tap / swipe-down and
-/// routes system back + footer Cancel through [confirmDiscardIfDirty]),
-/// and disposes the controller when the sheet closes.
+/// into `showAppFormSheet` (which keeps barrier-tap / swipe-down available
+/// while routing every dirty dismissal through [confirmDiscardIfDirty]),
+/// and disposes the controller when the sheet closes. Dismissal is locked only
+/// while a submission is in flight.
 ///
 /// The sheet body receives the controller — bind its
 /// [TextEditingController]s with [FormDirtyController.bindTextControllers],

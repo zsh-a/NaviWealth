@@ -11,7 +11,7 @@ Widget _wrap(Widget child) {
 }
 
 void main() {
-  testWidgets('confirm dialog ignores barrier taps', (tester) async {
+  testWidgets('confirm dialog treats a barrier tap as cancel', (tester) async {
     await tester.pumpWidget(
       _wrap(
         Builder(
@@ -37,10 +37,6 @@ void main() {
     expect(find.text('Discard changes?'), findsOneWidget);
 
     await tester.tapAt(const Offset(4, 4));
-    await tester.pumpAndSettle();
-    expect(find.text('Discard changes?'), findsOneWidget);
-
-    await tester.tap(find.text('Keep editing'));
     await tester.pumpAndSettle();
     expect(find.text('Discard changes?'), findsNothing);
   });

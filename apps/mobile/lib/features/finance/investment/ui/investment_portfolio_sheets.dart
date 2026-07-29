@@ -123,6 +123,7 @@ class _InvestmentPortfolioFormState
         await repository.update(existing.copyWith(name: _name.text));
       }
       widget.dirty.markPristine();
+      widget.dirty.busy = false;
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (_) {
@@ -220,6 +221,7 @@ class _InvestmentPortfolioFormState
         ref.read(selectedInvestmentPortfolioIdProvider.notifier).state = null;
       }
       widget.dirty.markPristine();
+      widget.dirty.busy = false;
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (error) {
