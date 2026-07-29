@@ -2527,6 +2527,12 @@ abstract class AppLocalizations {
   /// **'Choose positions and cash for this portfolio and the sleeve that owns them.'**
   String get portfolioStudioIncludedAssetsHint;
 
+  /// No description provided for @portfolioStudioAssetTargetsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The asset classes and specific securities planned inside each sleeve.'**
+  String get portfolioStudioAssetTargetsHint;
+
   /// No description provided for @portfolioStudioNoIncludedAssets.
   ///
   /// In en, this message translates to:

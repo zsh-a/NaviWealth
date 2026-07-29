@@ -1375,6 +1375,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioStudioIncludedAssetsHint => '在当前组合中选择持仓与现金，并明确归属的策略仓。';
 
   @override
+  String get portfolioStudioAssetTargetsHint => '每个策略仓计划配置的资产类别与具体标的。';
+
+  @override
   String get portfolioStudioNoIncludedAssets => '尚未纳入持仓或现金。';
 
   @override

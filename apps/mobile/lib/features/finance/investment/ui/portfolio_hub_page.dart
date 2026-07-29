@@ -21,6 +21,7 @@ import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/home/ui/asset_category_visuals.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../rebalance/data/rebalance_providers.dart';

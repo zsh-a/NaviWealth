@@ -443,6 +443,7 @@
   "@portfolioStudioSleeveSummary": { "placeholders": { "target": { "type": "String" }, "count": { "type": "int" }, "policy": { "type": "String" } } },
   "portfolioStudioIncludedAssetsTitle": "纳入资产",
   "portfolioStudioIncludedAssetsHint": "在当前组合中选择持仓与现金，并明确归属的策略仓。",
+  "portfolioStudioAssetTargetsHint": "每个策略仓计划配置的资产类别与具体标的。",
   "portfolioStudioNoIncludedAssets": "尚未纳入持仓或现金。",
   "portfolioStudioIncludedPositionLabel": "持仓批次",
   "portfolioStudioIncludePositionAction": "纳入持仓",

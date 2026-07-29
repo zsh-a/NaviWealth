@@ -739,6 +739,7 @@
   "@portfolioStudioSleeveSummary": { "placeholders": { "target": { "type": "String" }, "count": { "type": "int" }, "policy": { "type": "String" } } },
   "portfolioStudioIncludedAssetsTitle": "Included assets",
   "portfolioStudioIncludedAssetsHint": "Choose positions and cash for this portfolio and the sleeve that owns them.",
+  "portfolioStudioAssetTargetsHint": "The asset classes and specific securities planned inside each sleeve.",
   "portfolioStudioNoIncludedAssets": "No positions or cash are included yet.",
   "portfolioStudioIncludedPositionLabel": "Position lot",
   "portfolioStudioIncludePositionAction": "Include positions",

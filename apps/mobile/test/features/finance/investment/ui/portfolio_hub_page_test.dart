@@ -8,14 +8,18 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/analytics/data/providers.dart';
 import 'package:naviwealth/features/finance/analytics/domain/concentration_risk.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/investment/data/investment_portfolio_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/allocation/portfolio_allocation_tree.dart';
 import 'package:naviwealth/features/finance/investment/domain/fx_pnl/fx_pnl_breakdown.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/investment_portfolio.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/portfolio_capital_assignment.dart';
 import 'package:naviwealth/features/finance/investment/domain/reporting/holding_report.dart';
 import 'package:naviwealth/features/finance/investment/domain/returns/portfolio_return.dart';
 import 'package:naviwealth/features/finance/investment/domain/returns/xirr_engine.dart';
@@ -159,6 +163,148 @@ void main() {
     expect(find.text('Capital path'), findsOneWidget);
     expect(find.text('Index core'), findsOneWidget);
     expect(find.text('Check rebalance'), findsOneWidget);
+  });
+
+  testWidgets('portfolio studio resolves target and included asset details', (
+    tester,
+  ) async {
+    final portfolio = InvestmentPortfolio(
+      id: 'portfolio',
+      name: 'Long term',
+      baseCurrency: 'USD',
+      goalId: null,
+      color: null,
+      createdAt: DateTime.utc(2026, 7, 30),
+      archived: false,
+      sync: _meta(),
+    );
+    const root = AllocationNode(
+      id: 'plan',
+      parentId: null,
+      type: AllocationNodeType.plan,
+      name: 'Investment plan',
+      targetWeightBps: 10000,
+      driftBandBps: 0,
+      transferPolicy: GroupTransferPolicy.bidirectional,
+    );
+    const portfolioNode = AllocationNode(
+      id: 'portfolio:portfolio',
+      parentId: 'plan',
+      type: AllocationNodeType.portfolio,
+      name: 'Long term',
+      targetWeightBps: 10000,
+      driftBandBps: 500,
+      transferPolicy: GroupTransferPolicy.bidirectional,
+      referenceId: 'portfolio',
+    );
+    const sleeveNode = AllocationNode(
+      id: 'sleeve:core',
+      parentId: 'portfolio:portfolio',
+      type: AllocationNodeType.sleeve,
+      name: 'Index core',
+      targetWeightBps: 10000,
+      driftBandBps: 500,
+      transferPolicy: GroupTransferPolicy.bidirectional,
+      referenceId: 'core',
+    );
+    const assetTarget = AllocationNode(
+      id: 'sleeve:core:asset:us:AAPL',
+      parentId: 'sleeve:core',
+      type: AllocationNodeType.asset,
+      name: 'Apple target',
+      targetWeightBps: 6000,
+      driftBandBps: 500,
+      transferPolicy: GroupTransferPolicy.isolated,
+      referenceId: 'us:AAPL',
+      assetKind: AllocationAssetKind.security,
+      assetCategory: AssetCategory.stock,
+    );
+    final assignment = PortfolioCapitalAssignment(
+      id: 'assignment',
+      portfolioId: 'portfolio',
+      rebalanceGroupId: 'core',
+      sourceKind: PortfolioCapitalSourceKind.lot,
+      sourceId: 'lot-aapl',
+      quantity: null,
+      amount: null,
+      currency: null,
+      assignedAt: DateTime.utc(2026, 7, 30),
+      sync: _meta(),
+    );
+    final tree = PortfolioAllocationTree(
+      root: root,
+      nodes: const [root, portfolioNode, sleeveNode, assetTarget],
+      attachments: const [],
+      inclusions: [
+        CapitalInclusion(
+          id: assignment.id,
+          sleeveId: sleeveNode.id,
+          assignment: assignment,
+        ),
+      ],
+    );
+    final lot = _lot(
+      id: 'lot-aapl',
+      accountId: 'broker-a',
+      assetId: 'us:AAPL',
+      quantity: '10',
+      costPerUnit: '100',
+    );
+    final asset = Asset(
+      id: 'us:AAPL',
+      type: AssetType.stock,
+      symbol: 'AAPL',
+      currency: 'USD',
+      name: 'Apple Inc.',
+      sync: _meta(),
+    );
+    final account = Account(
+      id: 'broker-a',
+      type: AccountCategory.broker,
+      name: 'Broker A',
+      currency: 'USD',
+      sync: _meta(),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          investmentPortfoliosProvider.overrideWith(
+            (ref) => Stream.value([portfolio]),
+          ),
+          portfolioAllocationTreeProvider.overrideWithValue(AsyncData(tree)),
+          allInvestmentLotsProvider.overrideWith((ref) async => [lot]),
+          allAssetsStreamProvider.overrideWith((ref) => Stream.value([asset])),
+          accountsStreamProvider.overrideWith((ref) => Stream.value([account])),
+        ],
+        child: FTheme(
+          data: FThemes.slate.light.desktop,
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en', 'US'),
+            home: const PortfolioStudioPage(portfolioId: 'portfolio'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Assets'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Asset targets'), findsOneWidget);
+    expect(find.text('Apple target'), findsOneWidget);
+    expect(find.text('60%'), findsOneWidget);
+    expect(find.text('AAPL'), findsOneWidget);
+    expect(
+      find.text('Apple Inc. · Index core · Quantity 10 · Broker A'),
+      findsOneWidget,
+    );
+    expect(find.text(r'$1,000.00'), findsOneWidget);
+    expect(find.text('Cost basis'), findsOneWidget);
+    expect(find.text('Position lot'), findsNothing);
   });
 
   testWidgets('portfolio hub renders retryable error state', (tester) async {

@@ -1434,6 +1434,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose positions and cash for this portfolio and the sleeve that owns them.';
 
   @override
+  String get portfolioStudioAssetTargetsHint =>
+      'The asset classes and specific securities planned inside each sleeve.';
+
+  @override
   String get portfolioStudioNoIncludedAssets =>
       'No positions or cash are included yet.';
 
