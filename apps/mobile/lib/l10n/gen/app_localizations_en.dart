@@ -1467,6 +1467,47 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get portfolioTrendTitle => 'Portfolio trend';
+
+  @override
+  String get portfolioTrendHint =>
+      'Track value separately from capital flows, then switch to cash-flow-adjusted performance.';
+
+  @override
+  String get portfolioTrendMarketValue => 'Market value';
+
+  @override
+  String get portfolioTrendPerformance => 'Performance';
+
+  @override
+  String get portfolioTrendCurrentValue => 'Current value';
+
+  @override
+  String get portfolioTrendPeriodPerformance => 'Period return';
+
+  @override
+  String get portfolioTrendNetFlow => 'Net capital flow';
+
+  @override
+  String get portfolioTrendAwaitingData =>
+      'A trend appears after assets or cash are included.';
+
+  @override
+  String get portfolioTrendEstimatedDisclosure =>
+      'Some points use estimated prices or incomplete FX history.';
+
+  @override
+  String get portfolioTrendChartSemantics =>
+      'Portfolio value and performance trend';
+
+  @override
+  String get portfolioTrendMonthSemantics =>
+      'Portfolio performance over the last month';
+
+  @override
+  String get portfolioTrendRangeYtd => 'YTD';
+
+  @override
   String get rebalancePortfoliosTitle => 'Portfolio allocation';
 
   @override

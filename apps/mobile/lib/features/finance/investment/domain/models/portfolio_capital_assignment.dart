@@ -28,6 +28,7 @@ class PortfolioCapitalAssignment {
     required this.amount,
     required this.currency,
     required this.assignedAt,
+    this.unassignedAt,
     required this.sync,
   });
 
@@ -40,10 +41,19 @@ class PortfolioCapitalAssignment {
   final Decimal? amount;
   final String? currency;
   final DateTime assignedAt;
+  final DateTime? unassignedAt;
   final SyncMeta sync;
 
   bool get isWholeLot =>
       sourceKind == PortfolioCapitalSourceKind.lot && quantity == null;
+
+  bool get isActive => unassignedAt == null;
+
+  bool isActiveAt(DateTime instant) {
+    final at = instant.toUtc();
+    return !assignedAt.toUtc().isAfter(at) &&
+        (unassignedAt == null || unassignedAt!.toUtc().isAfter(at));
+  }
 
   void validate() {
     if (portfolioId.trim().isEmpty ||
@@ -51,6 +61,12 @@ class PortfolioCapitalAssignment {
         sourceId.trim().isEmpty) {
       throw const FormatException(
         'Capital assignment identifiers must not be empty.',
+      );
+    }
+    if (unassignedAt != null &&
+        unassignedAt!.toUtc().isBefore(assignedAt.toUtc())) {
+      throw const FormatException(
+        'Capital assignment cannot end before it starts.',
       );
     }
     switch (sourceKind) {

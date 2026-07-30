@@ -138,6 +138,21 @@ void main() {
               .portfolioId,
           growth.id,
         );
+        final reassignmentHistory = await repository
+            .watchAssignmentHistory('u-test')
+            .first;
+        expect(reassignmentHistory, hasLength(2));
+        expect(
+          reassignmentHistory.where((item) => item.isActive),
+          hasLength(1),
+        );
+        expect(
+          reassignmentHistory
+              .where((item) => !item.isActive)
+              .single
+              .portfolioId,
+          income.id,
+        );
 
         await expectLater(
           repository.remove(growth),
@@ -177,6 +192,15 @@ void main() {
                 'rebalanceGroupId',
                 incomeGroup.id,
               ),
+        );
+        final transferHistory = await repository
+            .watchAssignmentHistory('u-test')
+            .first;
+        expect(transferHistory, hasLength(3));
+        expect(transferHistory.where((item) => item.isActive), hasLength(1));
+        expect(
+          transferHistory.where((item) => item.isActive).single.portfolioId,
+          income.id,
         );
         expect(
           outbox.queued.map((operation) => operation.table),

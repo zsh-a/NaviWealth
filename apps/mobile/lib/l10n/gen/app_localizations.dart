@@ -2581,6 +2581,78 @@ abstract class AppLocalizations {
   /// **'{count} asset targets'**
   String portfolioStudioAssetTargetCount(int count);
 
+  /// No description provided for @portfolioTrendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio trend'**
+  String get portfolioTrendTitle;
+
+  /// No description provided for @portfolioTrendHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Track value separately from capital flows, then switch to cash-flow-adjusted performance.'**
+  String get portfolioTrendHint;
+
+  /// No description provided for @portfolioTrendMarketValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Market value'**
+  String get portfolioTrendMarketValue;
+
+  /// No description provided for @portfolioTrendPerformance.
+  ///
+  /// In en, this message translates to:
+  /// **'Performance'**
+  String get portfolioTrendPerformance;
+
+  /// No description provided for @portfolioTrendCurrentValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Current value'**
+  String get portfolioTrendCurrentValue;
+
+  /// No description provided for @portfolioTrendPeriodPerformance.
+  ///
+  /// In en, this message translates to:
+  /// **'Period return'**
+  String get portfolioTrendPeriodPerformance;
+
+  /// No description provided for @portfolioTrendNetFlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Net capital flow'**
+  String get portfolioTrendNetFlow;
+
+  /// No description provided for @portfolioTrendAwaitingData.
+  ///
+  /// In en, this message translates to:
+  /// **'A trend appears after assets or cash are included.'**
+  String get portfolioTrendAwaitingData;
+
+  /// No description provided for @portfolioTrendEstimatedDisclosure.
+  ///
+  /// In en, this message translates to:
+  /// **'Some points use estimated prices or incomplete FX history.'**
+  String get portfolioTrendEstimatedDisclosure;
+
+  /// No description provided for @portfolioTrendChartSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio value and performance trend'**
+  String get portfolioTrendChartSemantics;
+
+  /// No description provided for @portfolioTrendMonthSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio performance over the last month'**
+  String get portfolioTrendMonthSemantics;
+
+  /// No description provided for @portfolioTrendRangeYtd.
+  ///
+  /// In en, this message translates to:
+  /// **'YTD'**
+  String get portfolioTrendRangeYtd;
+
   /// No description provided for @rebalancePortfoliosTitle.
   ///
   /// In en, this message translates to:

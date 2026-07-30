@@ -210,6 +210,7 @@ class _LedgerHoldingService implements SampledHoldingService {
     return HoldingSample(
       asOf: asOf,
       snapshots: Map.unmodifiable(weighted),
+      lots: List.unmodifiable(lots),
       issues: List.unmodifiable(issues),
     );
   }

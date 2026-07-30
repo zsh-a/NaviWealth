@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 68', () {
-      expect(db.schemaVersion, 68);
+    test('is 69', () {
+      expect(db.schemaVersion, 69);
     });
   });
 
@@ -96,6 +96,24 @@ void main() {
         );
       });
     }
+
+    test('capital assignments retain effective-dated history', () async {
+      final columns = await db
+          .customSelect('PRAGMA table_info(portfolio_capital_assignments)')
+          .get();
+      expect(
+        columns.map((row) => row.read<String>('name')).toSet(),
+        containsAll(['assigned_at', 'unassigned_at']),
+      );
+
+      final indexes = await db
+          .customSelect('PRAGMA index_list(portfolio_capital_assignments)')
+          .get();
+      expect(
+        indexes.map((row) => row.read<String>('name')).toSet(),
+        contains('idx_portfolio_capital_assignments_history'),
+      );
+    });
   });
 
   group('Finance planning tables exist', () {

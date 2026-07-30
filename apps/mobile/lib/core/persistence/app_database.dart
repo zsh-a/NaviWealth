@@ -153,7 +153,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 68;
+  int get schemaVersion => 69;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1026,6 +1026,21 @@ class AppDatabase extends _$AppDatabase {
         await m.alterTable(TableMigration(portfolioStrategyConfigs));
         await m.alterTable(TableMigration(portfolioCapitalAssignments));
       }
+      // v68 -> v69: capital ownership is an effective-dated interval.
+      // Closing and transferring assignments now preserves historical
+      // portfolio membership instead of rewriting the past.
+      if (from >= 68 && from < 69) {
+        await m.addColumn(
+          portfolioCapitalAssignments,
+          portfolioCapitalAssignments.unassignedAt,
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_portfolio_capital_assignments_history '
+          'ON portfolio_capital_assignments('
+          'owner_user_id, portfolio_id, assigned_at, unassigned_at'
+          ') WHERE deleted_at IS NULL',
+        );
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -1067,5 +1082,11 @@ Future<void> _createPortfolioIndexes(AppDatabase db) async {
     'CREATE INDEX IF NOT EXISTS idx_portfolio_capital_assignments_group '
     'ON portfolio_capital_assignments(owner_user_id, rebalance_group_id) '
     'WHERE deleted_at IS NULL',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_portfolio_capital_assignments_history '
+    'ON portfolio_capital_assignments('
+    'owner_user_id, portfolio_id, assigned_at, unassigned_at'
+    ') WHERE deleted_at IS NULL',
   );
 }

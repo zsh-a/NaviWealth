@@ -159,6 +159,19 @@ final portfolioCapitalAssignmentsProvider =
       yield* repository.watchAssignments(ownerUserId);
     });
 
+final portfolioCapitalAssignmentHistoryProvider =
+    StreamProvider.autoDispose<List<PortfolioCapitalAssignment>>((ref) async* {
+      final ownerUserId = ref.watch(activeUserIdProvider);
+      if (ownerUserId == null) {
+        yield const [];
+        return;
+      }
+      final repository = await ref.watch(
+        investmentPortfolioRepositoryProvider.future,
+      );
+      yield* repository.watchAssignmentHistory(ownerUserId);
+    });
+
 /// One coherent allocation tree for portfolio setup, inspection, and
 /// rebalancing. Consumers no longer need to join five persistence streams.
 final portfolioAllocationTreeProvider =

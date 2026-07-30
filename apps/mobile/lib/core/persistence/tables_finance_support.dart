@@ -308,6 +308,7 @@ class PortfolioCapitalAssignments extends Table with SyncableTable {
   TextColumn get amount => text().map(const DecimalConverter()).nullable()();
   TextColumn get currency => text().withLength(min: 3, max: 8).nullable()();
   DateTimeColumn get assignedAt => dateTime()();
+  DateTimeColumn get unassignedAt => dateTime().nullable()();
 
   @override
   List<String> get customConstraints => [
@@ -316,6 +317,7 @@ class PortfolioCapitalAssignments extends Table with SyncableTable {
         '(source_kind = \'cashAccount\' AND quantity IS NULL '
         'AND amount IS NOT NULL AND CAST(amount AS REAL) > 0 '
         'AND currency IS NOT NULL))',
+    'CHECK (unassigned_at IS NULL OR unassigned_at >= assigned_at)',
   ];
 
   @override

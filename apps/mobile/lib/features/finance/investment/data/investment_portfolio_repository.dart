@@ -127,7 +127,23 @@ class InvestmentPortfolioRepository {
   ) {
     final query = _db.select(_db.portfolioCapitalAssignments)
       ..where((table) => table.ownerUserId.equals(ownerUserId))
-      ..where((table) => table.deletedAt.isNull());
+      ..where((table) => table.deletedAt.isNull())
+      ..where((table) => table.unassignedAt.isNull());
+    return query.watch().map(
+      (rows) => rows.map(_assignmentFromRow).toList(growable: false),
+    );
+  }
+
+  Stream<List<PortfolioCapitalAssignment>> watchAssignmentHistory(
+    String ownerUserId,
+  ) {
+    final query = _db.select(_db.portfolioCapitalAssignments)
+      ..where((table) => table.ownerUserId.equals(ownerUserId))
+      ..where((table) => table.deletedAt.isNull())
+      ..orderBy([
+        (table) => OrderingTerm.asc(table.assignedAt),
+        (table) => OrderingTerm.asc(table.id),
+      ]);
     return query.watch().map(
       (rows) => rows.map(_assignmentFromRow).toList(growable: false),
     );
@@ -875,7 +891,8 @@ class InvestmentPortfolioRepository {
                         PortfolioCapitalSourceKind.lot.name,
                       ) &
                       table.sourceId.equals(normalizedSourceId) &
-                      table.deletedAt.isNull(),
+                      table.deletedAt.isNull() &
+                      table.unassignedAt.isNull(),
                 ))
                 .get();
         if (quantity == null && existing.isNotEmpty ||
@@ -899,7 +916,7 @@ class InvestmentPortfolioRepository {
         _db.portfolioCapitalAssignments,
       )..where((table) => table.id.equals(assignment.id))).write(
         PortfolioCapitalAssignmentsCompanion(
-          deletedAt: Value(stamp.now),
+          unassignedAt: Value(stamp.now),
           updatedAt: Value(stamp.now),
           updatedByDevice: Value(stamp.deviceId),
           hlc: Value(stamp.hlc),
@@ -1080,6 +1097,7 @@ class InvestmentPortfolioRepository {
               (table) =>
                   table.portfolioId.equals(sourcePortfolioId) &
                   table.deletedAt.isNull() &
+                  table.unassignedAt.isNull() &
                   (sourceGroupId == null
                       ? const Constant(true)
                       : table.rebalanceGroupId.equals(sourceGroupId)),
@@ -1090,14 +1108,29 @@ class InvestmentPortfolioRepository {
         _db.portfolioCapitalAssignments,
       )..where((table) => table.id.equals(row.id))).write(
         PortfolioCapitalAssignmentsCompanion(
-          portfolioId: Value(destinationPortfolioId),
-          rebalanceGroupId: Value(destinationGroupId),
+          unassignedAt: Value(stamp.now),
           updatedAt: Value(stamp.now),
           updatedByDevice: Value(stamp.deviceId),
           hlc: Value(stamp.hlc),
         ),
       );
       await _outbox.enqueue(table: assignmentsTable, rowId: row.id);
+      final transferred = PortfolioCapitalAssignment(
+        id: _uuid.v4(),
+        portfolioId: destinationPortfolioId,
+        rebalanceGroupId: destinationGroupId,
+        sourceKind: portfolioCapitalSourceKindFromWire(row.sourceKind),
+        sourceId: row.sourceId,
+        quantity: row.quantity,
+        amount: row.amount,
+        currency: row.currency,
+        assignedAt: stamp.now,
+        sync: _syncFromStamp(stamp),
+      );
+      await _db
+          .into(_db.portfolioCapitalAssignments)
+          .insert(_assignmentCompanion(transferred));
+      await _outbox.enqueue(table: assignmentsTable, rowId: transferred.id);
     }
   }
 
@@ -1313,6 +1346,7 @@ class InvestmentPortfolioRepository {
       amount: Value(assignment.amount),
       currency: Value(assignment.currency),
       assignedAt: assignment.assignedAt,
+      unassignedAt: Value(assignment.unassignedAt),
       ownerUserId: assignment.sync.ownerUserId,
       updatedAt: assignment.sync.updatedAt,
       updatedByDevice: assignment.sync.updatedByDevice,
@@ -1488,6 +1522,7 @@ class InvestmentPortfolioRepository {
       amount: row.amount,
       currency: row.currency,
       assignedAt: row.assignedAt,
+      unassignedAt: row.unassignedAt,
       sync: _syncFromRow(
         ownerUserId: row.ownerUserId,
         updatedAt: row.updatedAt,

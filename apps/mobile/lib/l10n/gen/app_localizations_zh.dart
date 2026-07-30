@@ -1404,6 +1404,42 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get portfolioTrendTitle => '组合趋势';
+
+  @override
+  String get portfolioTrendHint => '区分市值变化与资金进出，并可切换查看现金流调整后的组合表现。';
+
+  @override
+  String get portfolioTrendMarketValue => '市值';
+
+  @override
+  String get portfolioTrendPerformance => '收益';
+
+  @override
+  String get portfolioTrendCurrentValue => '当前市值';
+
+  @override
+  String get portfolioTrendPeriodPerformance => '期间收益';
+
+  @override
+  String get portfolioTrendNetFlow => '净资金流';
+
+  @override
+  String get portfolioTrendAwaitingData => '纳入资产或现金后，将在这里生成趋势。';
+
+  @override
+  String get portfolioTrendEstimatedDisclosure => '部分时点使用了估算价格或不完整的汇率历史。';
+
+  @override
+  String get portfolioTrendChartSemantics => '组合市值与收益趋势';
+
+  @override
+  String get portfolioTrendMonthSemantics => '组合近一个月收益趋势';
+
+  @override
+  String get portfolioTrendRangeYtd => '年初';
+
+  @override
   String get rebalancePortfoliosTitle => '组合资金配置';
 
   @override

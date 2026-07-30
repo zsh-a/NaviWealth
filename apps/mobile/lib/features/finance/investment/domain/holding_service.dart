@@ -19,11 +19,13 @@ class HoldingSample {
   const HoldingSample({
     required this.asOf,
     required this.snapshots,
+    this.lots = const [],
     this.issues = const [],
   });
 
   final DateTime asOf;
   final Map<String, HoldingSnapshot> snapshots;
+  final List<Lot> lots;
   final List<HoldingValuationIssue> issues;
 }
 

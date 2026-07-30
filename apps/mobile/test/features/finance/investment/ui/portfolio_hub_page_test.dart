@@ -14,12 +14,14 @@ import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/investment/data/investment_portfolio_providers.dart';
+import 'package:naviwealth/features/finance/investment/data/portfolio_trend_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/allocation/portfolio_allocation_tree.dart';
 import 'package:naviwealth/features/finance/investment/domain/fx_pnl/fx_pnl_breakdown.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/investment_portfolio.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/portfolio_capital_assignment.dart';
+import 'package:naviwealth/features/finance/investment/domain/portfolio_trend.dart';
 import 'package:naviwealth/features/finance/investment/domain/reporting/holding_report.dart';
 import 'package:naviwealth/features/finance/investment/domain/returns/portfolio_return.dart';
 import 'package:naviwealth/features/finance/investment/domain/returns/xirr_engine.dart';
@@ -140,6 +142,12 @@ void main() {
           portfolioAllocationTreeProvider.overrideWithValue(
             const AsyncData(tree),
           ),
+          portfolioTrendProvider(
+            const PortfolioTrendRequest(
+              portfolioId: 'portfolio',
+              range: PortfolioTrendRange.month,
+            ),
+          ).overrideWith((ref) async => null),
         ],
         child: FTheme(
           data: FThemes.slate.light.desktop,
@@ -163,6 +171,144 @@ void main() {
     expect(find.text('Capital path'), findsOneWidget);
     expect(find.text('Index core'), findsOneWidget);
     expect(find.text('Check rebalance'), findsOneWidget);
+  });
+
+  testWidgets('portfolio studio switches between value and performance trend', (
+    tester,
+  ) async {
+    final portfolio = InvestmentPortfolio(
+      id: 'portfolio',
+      name: 'Long term',
+      baseCurrency: 'USD',
+      goalId: null,
+      color: null,
+      createdAt: DateTime.utc(2026, 6, 1),
+      archived: false,
+      sync: _meta(),
+    );
+    const root = AllocationNode(
+      id: 'plan',
+      parentId: null,
+      type: AllocationNodeType.plan,
+      name: 'Investment plan',
+      targetWeightBps: 10000,
+      driftBandBps: 0,
+      transferPolicy: GroupTransferPolicy.bidirectional,
+    );
+    const portfolioNode = AllocationNode(
+      id: 'portfolio:portfolio',
+      parentId: 'plan',
+      type: AllocationNodeType.portfolio,
+      name: 'Long term',
+      targetWeightBps: 10000,
+      driftBandBps: 500,
+      transferPolicy: GroupTransferPolicy.bidirectional,
+      referenceId: 'portfolio',
+    );
+    const sleeveNode = AllocationNode(
+      id: 'sleeve:core',
+      parentId: 'portfolio:portfolio',
+      type: AllocationNodeType.sleeve,
+      name: 'Index core',
+      targetWeightBps: 10000,
+      driftBandBps: 500,
+      transferPolicy: GroupTransferPolicy.bidirectional,
+      referenceId: 'core',
+    );
+    const tree = PortfolioAllocationTree(
+      root: root,
+      nodes: [root, portfolioNode, sleeveNode],
+      attachments: [],
+      inclusions: [],
+    );
+    final trend = PortfolioTrendSeries(
+      portfolioId: 'portfolio',
+      baseCurrency: 'USD',
+      range: PortfolioTrendRange.month,
+      points: [
+        PortfolioTrendPoint(
+          asOf: DateTime.utc(2026, 7, 1),
+          marketValueInBase: _d('1000'),
+          costBasisInBase: _d('900'),
+          cashValueInBase: Decimal.zero,
+          netFlowInBase: Decimal.zero,
+          performanceRatio: 0,
+          quality: PortfolioTrendQuality.complete,
+        ),
+        PortfolioTrendPoint(
+          asOf: DateTime.utc(2026, 7, 30),
+          marketValueInBase: _d('1100'),
+          costBasisInBase: _d('900'),
+          cashValueInBase: Decimal.zero,
+          netFlowInBase: Decimal.zero,
+          performanceRatio: 0.1,
+          quality: PortfolioTrendQuality.complete,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          investmentPortfoliosProvider.overrideWith(
+            (ref) => Stream.value([portfolio]),
+          ),
+          portfolioAllocationTreeProvider.overrideWithValue(
+            const AsyncData(tree),
+          ),
+          portfolioTrendProvider(
+            const PortfolioTrendRequest(
+              portfolioId: 'portfolio',
+              range: PortfolioTrendRange.month,
+            ),
+          ).overrideWith((ref) async => trend),
+        ],
+        child: FTheme(
+          data: FThemes.slate.light.desktop,
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en', 'US'),
+            home: const PortfolioStudioPage(portfolioId: 'portfolio'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Portfolio trend'), findsOneWidget);
+    expect(find.text('Current value'), findsOneWidget);
+    expect(find.text('Period return'), findsOneWidget);
+    expect(find.text('Net capital flow'), findsOneWidget);
+    expect(
+      tester
+          .widget<NwLineChart>(
+            find.descendant(
+              of: find.byKey(const ValueKey('portfolio-trend-chart')),
+              matching: find.byType(NwLineChart),
+            ),
+          )
+          .yAxis
+          .format,
+      ValueAxisFormat.currency,
+    );
+
+    await tester.tap(find.text('Performance'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<NwLineChart>(
+            find.descendant(
+              of: find.byKey(const ValueKey('portfolio-trend-chart')),
+              matching: find.byType(NwLineChart),
+            ),
+          )
+          .yAxis
+          .format,
+      ValueAxisFormat.percent,
+    );
   });
 
   testWidgets('portfolio studio resolves target and included asset details', (
@@ -276,6 +422,12 @@ void main() {
           allInvestmentLotsProvider.overrideWith((ref) async => [lot]),
           allAssetsStreamProvider.overrideWith((ref) => Stream.value([asset])),
           accountsStreamProvider.overrideWith((ref) => Stream.value([account])),
+          portfolioTrendProvider(
+            const PortfolioTrendRequest(
+              portfolioId: 'portfolio',
+              range: PortfolioTrendRange.month,
+            ),
+          ).overrideWith((ref) async => null),
         ],
         child: FTheme(
           data: FThemes.slate.light.desktop,

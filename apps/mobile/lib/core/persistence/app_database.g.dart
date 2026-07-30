@@ -25194,6 +25194,17 @@ class $PortfolioCapitalAssignmentsTable extends PortfolioCapitalAssignments
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _unassignedAtMeta = const VerificationMeta(
+    'unassignedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> unassignedAt = GeneratedColumn<DateTime>(
+    'unassigned_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
@@ -25210,6 +25221,7 @@ class $PortfolioCapitalAssignmentsTable extends PortfolioCapitalAssignments
     amount,
     currency,
     assignedAt,
+    unassignedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -25316,6 +25328,15 @@ class $PortfolioCapitalAssignmentsTable extends PortfolioCapitalAssignments
     } else if (isInserting) {
       context.missing(_assignedAtMeta);
     }
+    if (data.containsKey('unassigned_at')) {
+      context.handle(
+        _unassignedAtMeta,
+        unassignedAt.isAcceptableOrUnknown(
+          data['unassigned_at']!,
+          _unassignedAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -25390,6 +25411,10 @@ class $PortfolioCapitalAssignmentsTable extends PortfolioCapitalAssignments
         DriftSqlType.dateTime,
         data['${effectivePrefix}assigned_at'],
       )!,
+      unassignedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}unassigned_at'],
+      ),
     );
   }
 
@@ -25441,6 +25466,7 @@ class PortfolioCapitalAssignmentRow extends DataClass
   final Decimal? amount;
   final String? currency;
   final DateTime assignedAt;
+  final DateTime? unassignedAt;
   const PortfolioCapitalAssignmentRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -25456,6 +25482,7 @@ class PortfolioCapitalAssignmentRow extends DataClass
     this.amount,
     this.currency,
     required this.assignedAt,
+    this.unassignedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -25490,6 +25517,9 @@ class PortfolioCapitalAssignmentRow extends DataClass
       map['currency'] = Variable<String>(currency);
     }
     map['assigned_at'] = Variable<DateTime>(assignedAt);
+    if (!nullToAbsent || unassignedAt != null) {
+      map['unassigned_at'] = Variable<DateTime>(unassignedAt);
+    }
     return map;
   }
 
@@ -25517,6 +25547,9 @@ class PortfolioCapitalAssignmentRow extends DataClass
           ? const Value.absent()
           : Value(currency),
       assignedAt: Value(assignedAt),
+      unassignedAt: unassignedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(unassignedAt),
     );
   }
 
@@ -25540,6 +25573,7 @@ class PortfolioCapitalAssignmentRow extends DataClass
       amount: serializer.fromJson<Decimal?>(json['amount']),
       currency: serializer.fromJson<String?>(json['currency']),
       assignedAt: serializer.fromJson<DateTime>(json['assignedAt']),
+      unassignedAt: serializer.fromJson<DateTime?>(json['unassignedAt']),
     );
   }
   @override
@@ -25560,6 +25594,7 @@ class PortfolioCapitalAssignmentRow extends DataClass
       'amount': serializer.toJson<Decimal?>(amount),
       'currency': serializer.toJson<String?>(currency),
       'assignedAt': serializer.toJson<DateTime>(assignedAt),
+      'unassignedAt': serializer.toJson<DateTime?>(unassignedAt),
     };
   }
 
@@ -25578,6 +25613,7 @@ class PortfolioCapitalAssignmentRow extends DataClass
     Value<Decimal?> amount = const Value.absent(),
     Value<String?> currency = const Value.absent(),
     DateTime? assignedAt,
+    Value<DateTime?> unassignedAt = const Value.absent(),
   }) => PortfolioCapitalAssignmentRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -25593,6 +25629,7 @@ class PortfolioCapitalAssignmentRow extends DataClass
     amount: amount.present ? amount.value : this.amount,
     currency: currency.present ? currency.value : this.currency,
     assignedAt: assignedAt ?? this.assignedAt,
+    unassignedAt: unassignedAt.present ? unassignedAt.value : this.unassignedAt,
   );
   PortfolioCapitalAssignmentRow copyWithCompanion(
     PortfolioCapitalAssignmentsCompanion data,
@@ -25624,6 +25661,9 @@ class PortfolioCapitalAssignmentRow extends DataClass
       assignedAt: data.assignedAt.present
           ? data.assignedAt.value
           : this.assignedAt,
+      unassignedAt: data.unassignedAt.present
+          ? data.unassignedAt.value
+          : this.unassignedAt,
     );
   }
 
@@ -25643,7 +25683,8 @@ class PortfolioCapitalAssignmentRow extends DataClass
           ..write('quantity: $quantity, ')
           ..write('amount: $amount, ')
           ..write('currency: $currency, ')
-          ..write('assignedAt: $assignedAt')
+          ..write('assignedAt: $assignedAt, ')
+          ..write('unassignedAt: $unassignedAt')
           ..write(')'))
         .toString();
   }
@@ -25664,6 +25705,7 @@ class PortfolioCapitalAssignmentRow extends DataClass
     amount,
     currency,
     assignedAt,
+    unassignedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -25682,7 +25724,8 @@ class PortfolioCapitalAssignmentRow extends DataClass
           other.quantity == this.quantity &&
           other.amount == this.amount &&
           other.currency == this.currency &&
-          other.assignedAt == this.assignedAt);
+          other.assignedAt == this.assignedAt &&
+          other.unassignedAt == this.unassignedAt);
 }
 
 class PortfolioCapitalAssignmentsCompanion
@@ -25701,6 +25744,7 @@ class PortfolioCapitalAssignmentsCompanion
   final Value<Decimal?> amount;
   final Value<String?> currency;
   final Value<DateTime> assignedAt;
+  final Value<DateTime?> unassignedAt;
   final Value<int> rowid;
   const PortfolioCapitalAssignmentsCompanion({
     this.ownerUserId = const Value.absent(),
@@ -25717,6 +25761,7 @@ class PortfolioCapitalAssignmentsCompanion
     this.amount = const Value.absent(),
     this.currency = const Value.absent(),
     this.assignedAt = const Value.absent(),
+    this.unassignedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PortfolioCapitalAssignmentsCompanion.insert({
@@ -25734,6 +25779,7 @@ class PortfolioCapitalAssignmentsCompanion
     this.amount = const Value.absent(),
     this.currency = const Value.absent(),
     required DateTime assignedAt,
+    this.unassignedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -25760,6 +25806,7 @@ class PortfolioCapitalAssignmentsCompanion
     Expression<String>? amount,
     Expression<String>? currency,
     Expression<DateTime>? assignedAt,
+    Expression<DateTime>? unassignedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -25777,6 +25824,7 @@ class PortfolioCapitalAssignmentsCompanion
       if (amount != null) 'amount': amount,
       if (currency != null) 'currency': currency,
       if (assignedAt != null) 'assigned_at': assignedAt,
+      if (unassignedAt != null) 'unassigned_at': unassignedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -25796,6 +25844,7 @@ class PortfolioCapitalAssignmentsCompanion
     Value<Decimal?>? amount,
     Value<String?>? currency,
     Value<DateTime>? assignedAt,
+    Value<DateTime?>? unassignedAt,
     Value<int>? rowid,
   }) {
     return PortfolioCapitalAssignmentsCompanion(
@@ -25813,6 +25862,7 @@ class PortfolioCapitalAssignmentsCompanion
       amount: amount ?? this.amount,
       currency: currency ?? this.currency,
       assignedAt: assignedAt ?? this.assignedAt,
+      unassignedAt: unassignedAt ?? this.unassignedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -25870,6 +25920,9 @@ class PortfolioCapitalAssignmentsCompanion
     if (assignedAt.present) {
       map['assigned_at'] = Variable<DateTime>(assignedAt.value);
     }
+    if (unassignedAt.present) {
+      map['unassigned_at'] = Variable<DateTime>(unassignedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -25893,6 +25946,7 @@ class PortfolioCapitalAssignmentsCompanion
           ..write('amount: $amount, ')
           ..write('currency: $currency, ')
           ..write('assignedAt: $assignedAt, ')
+          ..write('unassignedAt: $unassignedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -58136,6 +58190,7 @@ typedef $$PortfolioCapitalAssignmentsTableCreateCompanionBuilder =
       Value<Decimal?> amount,
       Value<String?> currency,
       required DateTime assignedAt,
+      Value<DateTime?> unassignedAt,
       Value<int> rowid,
     });
 typedef $$PortfolioCapitalAssignmentsTableUpdateCompanionBuilder =
@@ -58154,6 +58209,7 @@ typedef $$PortfolioCapitalAssignmentsTableUpdateCompanionBuilder =
       Value<Decimal?> amount,
       Value<String?> currency,
       Value<DateTime> assignedAt,
+      Value<DateTime?> unassignedAt,
       Value<int> rowid,
     });
 
@@ -58238,6 +58294,11 @@ class $$PortfolioCapitalAssignmentsTableFilterComposer
     column: $table.assignedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<DateTime> get unassignedAt => $composableBuilder(
+    column: $table.unassignedAt,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$PortfolioCapitalAssignmentsTableOrderingComposer
@@ -58318,6 +58379,11 @@ class $$PortfolioCapitalAssignmentsTableOrderingComposer
     column: $table.assignedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get unassignedAt => $composableBuilder(
+    column: $table.unassignedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PortfolioCapitalAssignmentsTableAnnotationComposer
@@ -58382,6 +58448,11 @@ class $$PortfolioCapitalAssignmentsTableAnnotationComposer
     column: $table.assignedAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<DateTime> get unassignedAt => $composableBuilder(
+    column: $table.unassignedAt,
+    builder: (column) => column,
+  );
 }
 
 class $$PortfolioCapitalAssignmentsTableTableManager
@@ -58444,6 +58515,7 @@ class $$PortfolioCapitalAssignmentsTableTableManager
                 Value<Decimal?> amount = const Value.absent(),
                 Value<String?> currency = const Value.absent(),
                 Value<DateTime> assignedAt = const Value.absent(),
+                Value<DateTime?> unassignedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PortfolioCapitalAssignmentsCompanion(
                 ownerUserId: ownerUserId,
@@ -58460,6 +58532,7 @@ class $$PortfolioCapitalAssignmentsTableTableManager
                 amount: amount,
                 currency: currency,
                 assignedAt: assignedAt,
+                unassignedAt: unassignedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -58478,6 +58551,7 @@ class $$PortfolioCapitalAssignmentsTableTableManager
                 Value<Decimal?> amount = const Value.absent(),
                 Value<String?> currency = const Value.absent(),
                 required DateTime assignedAt,
+                Value<DateTime?> unassignedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PortfolioCapitalAssignmentsCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -58494,6 +58568,7 @@ class $$PortfolioCapitalAssignmentsTableTableManager
                 amount: amount,
                 currency: currency,
                 assignedAt: assignedAt,
+                unassignedAt: unassignedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
