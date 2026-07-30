@@ -28,6 +28,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
     required this.accountsById,
     required this.formatter,
     this.compact = false,
+    this.showTime = true,
   });
 
   final JournalEntryWithPostings entry;
@@ -36,6 +37,10 @@ class ActivityFeedEntryRow extends StatelessWidget {
 
   /// Tighter padding for home preview.
   final bool compact;
+
+  /// Journal-style surfaces already group rows by date and can omit the
+  /// redundant time line while keeping the same row hierarchy.
+  final bool showTime;
 
   @override
   Widget build(BuildContext context) {
@@ -106,8 +111,10 @@ class ActivityFeedEntryRow extends StatelessWidget {
                         ? context.labelStyle
                         : context.strongLabelStyle,
                   ),
-                const SizedBox(height: AppSpacing.s2),
-                Text(timeStr, style: context.captionStyle),
+                if (showTime) ...[
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(timeStr, style: context.captionStyle),
+                ],
               ],
             ),
           ],
@@ -138,6 +145,55 @@ class ActivityFeedEntryRow extends StatelessWidget {
           entry: args.entry,
           accountsById: args.accountsById,
         ),
+      ),
+    );
+  }
+}
+
+/// Grouped-surface chrome shared by Activity and raw journal timelines.
+///
+/// Adjacent rows stitch into one neutral surface; callers keep each entry as
+/// a top-level sliver/list item so large trading days remain virtualized.
+class ActivityFeedEntrySurface extends StatelessWidget {
+  const ActivityFeedEntrySurface({
+    super.key,
+    required this.entry,
+    required this.accountsById,
+    required this.formatter,
+    required this.isFirstInGroup,
+    required this.isLastInGroup,
+    this.showTime = true,
+  });
+
+  final JournalEntryWithPostings entry;
+  final Map<String, Account> accountsById;
+  final AppFormatters formatter;
+  final bool isFirstInGroup;
+  final bool isLastInGroup;
+  final bool showTime;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.vertical(
+      top: isFirstInGroup ? const Radius.circular(AppRadius.lg) : Radius.zero,
+      bottom: isLastInGroup ? const Radius.circular(AppRadius.lg) : Radius.zero,
+    );
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: appGroupedSurfaceFill(context),
+        borderRadius: radius,
+      ),
+      child: Column(
+        children: [
+          ActivityFeedEntryRow(
+            entry: entry,
+            accountsById: accountsById,
+            formatter: formatter,
+            showTime: showTime,
+          ),
+          if (!isLastInGroup) const AppGroupedDivider(indent: AppSpacing.s56),
+        ],
       ),
     );
   }

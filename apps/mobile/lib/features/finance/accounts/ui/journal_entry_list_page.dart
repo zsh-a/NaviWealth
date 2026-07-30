@@ -1,4 +1,3 @@
-import 'package:decimal/decimal.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -10,13 +9,10 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_prov
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
-import 'package:naviwealth/features/finance/domain/models/entry_kind.dart';
-import 'package:naviwealth/features/finance/domain/models/enums.dart';
-import 'package:naviwealth/features/finance/domain/models/posting.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-import '../../shared/ui/entry_kind_badge.dart';
-import '../../shared/ui/postings_preview.dart';
+import '../../activity/ui/activity_feed_grouping.dart';
+import '../../activity/ui/activity_feed_row.dart';
 
 /// Read surface for the `journal_entries` / `postings` stack.
 /// Lists every JE the user has written through any ledger form
@@ -40,7 +36,11 @@ class JournalEntryListPage extends ConsumerWidget {
           final accountsById = <String, Account>{
             for (final a in accountsAsync.value ?? const <Account>[]) a.id: a,
           };
-          return _JournalList(entries: entries, accountsById: accountsById);
+          return AdaptiveContentFrame(
+            maxWidth: AdaptiveMaxWidth.page,
+            expandSinglePrimary: true,
+            primary: _JournalList(entries: entries, accountsById: accountsById),
+          );
         },
         error: (_, _) => Center(
           child: AppEmptyState.error(
@@ -85,137 +85,91 @@ class _JournalList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
-    return ListView.separated(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      itemCount: entries.length,
-      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
+    final groups = groupActivityEntriesByDay(
+      entries,
+      accountsById: accountsById,
+    );
+    final items = _flattenJournalItems(groups);
+    return ListView.builder(
+      padding: EdgeInsets.zero,
+      itemCount: items.length,
       itemBuilder: (context, index) {
-        final je = entries[index];
-        return _JournalEntryRow(
-          entry: je,
-          accountsById: accountsById,
-          formatter: formatter,
-          dateLabel: formatter.date(je.entry.date),
-        );
+        return switch (items[index]) {
+          _JournalDayItem(:final day, :final isFirst) => Padding(
+            padding: EdgeInsets.only(
+              top: isFirst ? AppSpacing.s0 : AppSpacing.s8,
+              bottom: AppSpacing.s8,
+            ),
+            child: SectionHeader(
+              title: formatter.date(day),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s4,
+                vertical: AppSpacing.s4,
+              ),
+            ),
+          ),
+          _JournalEntryItem(
+            :final entry,
+            :final isFirstInDay,
+            :final isLastInDay,
+          ) =>
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: isLastInDay ? AppSpacing.s12 : AppSpacing.s0,
+              ),
+              child: ActivityFeedEntrySurface(
+                key: ValueKey('journal-entry-${entry.entry.id}'),
+                entry: entry,
+                accountsById: accountsById,
+                formatter: formatter,
+                isFirstInGroup: isFirstInDay,
+                isLastInGroup: isLastInDay,
+                showTime: false,
+              ),
+            ),
+        };
       },
     );
   }
 }
 
-class _JournalEntryRow extends StatelessWidget {
-  const _JournalEntryRow({
+List<_JournalListItem> _flattenJournalItems(List<ActivityDaySection> groups) {
+  final items = <_JournalListItem>[];
+  for (var groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+    final group = groups[groupIndex];
+    items.add(_JournalDayItem(day: group.day, isFirst: groupIndex == 0));
+    for (var entryIndex = 0; entryIndex < group.entries.length; entryIndex++) {
+      items.add(
+        _JournalEntryItem(
+          entry: group.entries[entryIndex],
+          isFirstInDay: entryIndex == 0,
+          isLastInDay: entryIndex == group.entries.length - 1,
+        ),
+      );
+    }
+  }
+  return items;
+}
+
+sealed class _JournalListItem {
+  const _JournalListItem();
+}
+
+class _JournalDayItem extends _JournalListItem {
+  const _JournalDayItem({required this.day, required this.isFirst});
+
+  final DateTime day;
+  final bool isFirst;
+}
+
+class _JournalEntryItem extends _JournalListItem {
+  const _JournalEntryItem({
     required this.entry,
-    required this.accountsById,
-    required this.formatter,
-    required this.dateLabel,
+    required this.isFirstInDay,
+    required this.isLastInDay,
   });
 
   final JournalEntryWithPostings entry;
-  final Map<String, Account> accountsById;
-  final AppFormatters formatter;
-  final String dateLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final classification = classifyEntryKind(
-      postings: entry.postings,
-      resolveCategory: (id) => accountsById[id]?.category,
-    );
-    final headline = _headlinePosting(entry.postings, accountsById);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: context.theme.colors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: context.theme.colors.border),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: FAccordion(
-        children: [
-          FAccordionItem(
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        entry.entry.narration,
-                        style: context.theme.typography.body.sm,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (headline != null)
-                      Padding(
-                        padding: const EdgeInsets.only(left: AppSpacing.s8),
-                        child: SignedMoneyText(
-                          amount: headline.units,
-                          unit: headline.unit,
-                          formatters: formatter,
-                          style: context.mediumLabelStyle,
-                        ),
-                      ),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: AppSpacing.s4),
-                  child: Row(
-                    children: [
-                      EntryKindIndicator(
-                        classification: classification,
-                        compact: true,
-                      ),
-                      const SizedBox(width: AppSpacing.s8),
-                      Text(dateLabel, style: context.microCaptionStyle),
-                      if (entry.entry.payee != null) ...[
-                        const SizedBox(width: AppSpacing.s8),
-                        Flexible(
-                          child: Text(
-                            '· ${entry.entry.payee}',
-                            style: context.microCaptionStyle,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            child: PostingsPreview(
-              postings: entry.postings,
-              accounts: accountsById,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Pick a single "headline amount" for the collapsed row. We use
-  /// the largest |units| posting on an asset / cash account, which
-  /// matches the "what changed for me" intuition for transfers,
-  /// trades, expenses and dividends alike. Returns `null` when no
-  /// posting matches (e.g. unit-self-balanced split with no cash leg).
-  Posting? _headlinePosting(
-    List<Posting> postings,
-    Map<String, Account> accounts,
-  ) {
-    Posting? headline;
-    Decimal? best;
-    for (final p in postings) {
-      final account = accounts[p.accountId];
-      if (account == null) continue;
-      if (account.category != AccountSide.asset &&
-          account.category != AccountSide.liability) {
-        continue;
-      }
-      final magnitude = p.units.abs();
-      if (best == null || magnitude > best) {
-        best = magnitude;
-        headline = p;
-      }
-    }
-    return headline;
-  }
+  final bool isFirstInDay;
+  final bool isLastInDay;
 }

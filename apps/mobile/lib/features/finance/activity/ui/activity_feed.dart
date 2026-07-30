@@ -313,15 +313,6 @@ class _VirtualizedDayEntry extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.theme.colors;
-    final surface = colors.brightness == Brightness.dark
-        ? colors.card.withValues(alpha: AppOpacity.muted)
-        : ColorPalette.surfaceRaised;
-    final radius = BorderRadius.vertical(
-      top: isFirstInDay ? const Radius.circular(AppRadius.lg) : Radius.zero,
-      bottom: isLastInDay ? const Radius.circular(AppRadius.lg) : Radius.zero,
-    );
-
     return Padding(
       padding: EdgeInsets.only(
         bottom: isLastInDay ? AppSpacing.s12 : AppSpacing.s0,
@@ -332,18 +323,12 @@ class _VirtualizedDayEntry extends ConsumerWidget {
         confirm: () => _confirmAndDelete(context, ref),
         // The feed re-flows via provider invalidation; no row animation.
         removeRow: false,
-        child: DecoratedBox(
-          decoration: BoxDecoration(color: surface, borderRadius: radius),
-          child: Column(
-            children: [
-              ActivityFeedEntryRow(
-                entry: entry,
-                accountsById: accountsById,
-                formatter: formatter,
-              ),
-              if (!isLastInDay) const AppGroupedDivider(indent: AppSpacing.s56),
-            ],
-          ),
+        child: ActivityFeedEntrySurface(
+          entry: entry,
+          accountsById: accountsById,
+          formatter: formatter,
+          isFirstInGroup: isFirstInDay,
+          isLastInGroup: isLastInDay,
         ),
       ),
     );

@@ -7,6 +7,7 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/accounts/ui/journal_entry_list_page.dart';
+import 'package:naviwealth/features/finance/activity/ui/activity_feed_row.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
@@ -107,7 +108,7 @@ void main() {
     expect(find.textContaining('No journal entries yet'), findsOneWidget);
   });
 
-  testWidgets('renders one collapsed row per JE with badge + amount', (
+  testWidgets('renders one dense grouped timeline row per journal entry', (
     tester,
   ) async {
     await _enlarge(tester);
@@ -144,20 +145,59 @@ void main() {
     await tester.pumpWidget(_wrap(entries: entries, accounts: accounts));
     await tester.pumpAndSettle();
 
-    // Title + headline amount visible while collapsed.
+    // The journal shares the modern Activity row and grouped-surface chrome.
     expect(find.text('Monthly transfer'), findsOneWidget);
-    expect(find.textContaining('¥1,000'), findsAtLeastNWidgets(1));
-
-    // Transfer-classified badge surfaces.
+    expect(find.text('-¥1,000'), findsOneWidget);
     expect(find.byIcon(FLucideIcons.arrowLeftRight), findsOneWidget);
-
-    // PostingsPreview is still hidden — its Σ-balance check icon
-    // doesn't render in the collapsed row.
-    expect(find.byIcon(FLucideIcons.circleCheck), findsNothing);
-    expect(find.byIcon(FLucideIcons.circleAlert), findsNothing);
+    expect(find.byType(ActivityFeedEntrySurface), findsOneWidget);
+    expect(find.byType(SectionHeader), findsOneWidget);
+    expect(find.byType(FAccordion), findsNothing);
   });
 
-  testWidgets('tapping a row expands it to reveal PostingsPreview', (
+  testWidgets('keeps the journal timeline readable on wide desktop windows', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1600, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final accounts = [
+      _account(id: 'a-bank-a', name: 'Bank A'),
+      _account(id: 'a-bank-b', name: 'Bank B'),
+    ];
+    final entries = [
+      _entry(
+        id: 'je-wide',
+        date: DateTime.utc(2026, 4, 1),
+        narration: 'Desktop transfer',
+        postings: [
+          _p(
+            id: 'p-1',
+            journalEntryId: 'je-wide',
+            accountId: 'a-bank-a',
+            units: '-1000',
+            unit: 'CNY',
+          ),
+          _p(
+            id: 'p-2',
+            journalEntryId: 'je-wide',
+            accountId: 'a-bank-b',
+            units: '1000',
+            unit: 'CNY',
+            position: 1,
+          ),
+        ],
+      ),
+    ];
+
+    await tester.pumpWidget(_wrap(entries: entries, accounts: accounts));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getSize(find.byType(ActivityFeedEntrySurface)).width,
+      lessThanOrEqualTo(AdaptiveMaxWidth.page),
+    );
+  });
+
+  testWidgets('tapping a row opens the complete journal entry detail', (
     tester,
   ) async {
     await _enlarge(tester);
@@ -193,16 +233,14 @@ void main() {
     await tester.pumpWidget(_wrap(entries: entries, accounts: accounts));
     await tester.pumpAndSettle();
 
-    // The row headline and the preview tree can both be present in
-    // the widget tree before expansion. The positive leg is unique to
-    // PostingsPreview and proves the posting details are available.
-    expect(find.text('-¥1,000'), findsNWidgets(2));
-    expect(find.text('+¥1,000'), findsOneWidget);
+    expect(find.text('-¥1,000'), findsOneWidget);
+    expect(find.text('+¥1,000'), findsNothing);
 
     await tester.tap(find.text('Monthly transfer'));
     await tester.pumpAndSettle();
 
-    // After expansion the preview remains visible.
+    // Detail owns the posting tree instead of expanding a second card style
+    // inline in the timeline.
     expect(find.text('+¥1,000'), findsOneWidget);
   });
 
@@ -243,20 +281,13 @@ void main() {
     await tester.pumpWidget(_wrap(entries: entries, accounts: accounts));
     await tester.pumpAndSettle();
 
-    expect(find.text('· Blue Bottle'), findsOneWidget);
-    // Expense-classified badge.
-    expect(find.byIcon(FLucideIcons.arrowUpRight), findsOneWidget);
+    expect(find.textContaining('Blue Bottle'), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.shoppingBag), findsOneWidget);
   });
 
-  testWidgets('no headline amount renders when no asset/liability legs', (
+  testWidgets('uses a representative fallback amount for unusual entries', (
     tester,
   ) async {
-    // A pure adjustment JE — say a stock split where every leg is on
-    // an asset account but the unit is a commodity, not currency.
-    // The summary picks the largest |units| asset/liability leg, so
-    // this still renders something. To exercise the "no headline"
-    // path we feed only equity / income legs (rare but possible for
-    // padding entries).
     await _enlarge(tester);
     final accounts = [
       _account(id: 'a-equity', name: 'Equity', category: AccountSide.equity),
@@ -290,9 +321,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Edge case'), findsOneWidget);
-    // No asset/liability headline is added. The only rendered amounts are
-    // the two posting-preview legs.
     expect(find.text(r'-$10'), findsOneWidget);
-    expect(find.text(r'+$10'), findsOneWidget);
+    expect(find.text(r'+$10'), findsNothing);
   });
 }
