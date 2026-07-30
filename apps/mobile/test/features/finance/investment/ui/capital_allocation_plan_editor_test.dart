@@ -67,4 +67,70 @@ void main() {
     expect(saved, isNotNull);
     expect(saved!.map((draft) => draft.targetWeightBps), [6000, 4000]);
   });
+
+  testWidgets('expands advanced settings for only one sleeve on mobile', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      FTheme(
+        data: FThemes.slate.light.desktop,
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: FButton(
+                  onPress: () => showCapitalAllocationPlanEditor(
+                    context: context,
+                    title: 'Allocation',
+                    subtitle: 'Set targets',
+                    weightLabel: 'Target',
+                    singleItemHint: 'Fixed',
+                    drafts: const [
+                      CapitalAllocationDraft(
+                        id: 'a',
+                        name: 'Core',
+                        targetWeightBps: 6000,
+                        driftBandBps: 500,
+                        transferPolicy: GroupTransferPolicy.bidirectional,
+                      ),
+                      CapitalAllocationDraft(
+                        id: 'b',
+                        name: 'Income',
+                        targetWeightBps: 4000,
+                        driftBandBps: 500,
+                        transferPolicy: GroupTransferPolicy.inflowsOnly,
+                      ),
+                    ],
+                    onSave: (_) async {},
+                  ),
+                  child: const Text('Open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    expect(find.text('Allowed deviation (%)'), findsNothing);
+
+    await tester.tap(find.byIcon(FLucideIcons.settings2).first);
+    await tester.pumpAndSettle();
+    expect(find.text('Allowed deviation (%)'), findsOneWidget);
+
+    await tester.tap(find.byIcon(FLucideIcons.settings2).last);
+    await tester.pumpAndSettle();
+    expect(find.text('Allowed deviation (%)'), findsOneWidget);
+  });
 }

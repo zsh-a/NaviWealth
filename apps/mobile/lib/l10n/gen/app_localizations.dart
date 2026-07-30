@@ -28157,6 +28157,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Resolve capital movements first'**
   String get rebalanceCapitalFirstAction;
+
+  /// No description provided for @rebalanceResolveTransferAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve transfer'**
+  String get rebalanceResolveTransferAction;
 }
 
 class _AppLocalizationsDelegate

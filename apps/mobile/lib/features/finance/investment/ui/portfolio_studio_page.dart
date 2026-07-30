@@ -272,9 +272,14 @@ class _PortfolioTrendSparkline extends StatelessWidget {
 }
 
 class PortfolioStudioPage extends ConsumerStatefulWidget {
-  const PortfolioStudioPage({super.key, required this.portfolioId});
+  const PortfolioStudioPage({
+    super.key,
+    required this.portfolioId,
+    this.initialSection = 'overview',
+  });
 
   final String portfolioId;
+  final String initialSection;
 
   @override
   ConsumerState<PortfolioStudioPage> createState() =>
@@ -282,7 +287,16 @@ class PortfolioStudioPage extends ConsumerStatefulWidget {
 }
 
 class _PortfolioStudioPageState extends ConsumerState<PortfolioStudioPage> {
-  _PortfolioStudioSection _section = _PortfolioStudioSection.overview;
+  late _PortfolioStudioSection _section;
+
+  @override
+  void initState() {
+    super.initState();
+    _section = _PortfolioStudioSection.values.firstWhere(
+      (section) => section.name == widget.initialSection,
+      orElse: () => _PortfolioStudioSection.overview,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1164,25 +1178,38 @@ class _StudioAssets extends ConsumerWidget {
             ),
           ),
         const SizedBox(height: AppSpacing.s12),
-        Row(
-          children: [
-            Expanded(
-              child: FButton(
-                onPress: () => showPortfolioLotAssignmentSheet(context),
-                prefix: const Icon(FLucideIcons.briefcaseBusiness),
-                child: Text(l10n.portfolioStudioIncludePositionAction),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s8),
-            Expanded(
-              child: FButton(
-                variant: FButtonVariant.outline,
-                onPress: () => showPortfolioCashAssignmentSheet(context),
-                prefix: const Icon(FLucideIcons.walletCards),
-                child: Text(l10n.portfolioStudioIncludeCashAction),
-              ),
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final stacked = constraints.maxWidth < Breakpoints.formColumn;
+            final positions = FButton(
+              onPress: () => showPortfolioLotAssignmentSheet(context),
+              prefix: const Icon(FLucideIcons.briefcaseBusiness),
+              child: Text(l10n.portfolioStudioIncludePositionAction),
+            );
+            final cash = FButton(
+              variant: FButtonVariant.outline,
+              onPress: () => showPortfolioCashAssignmentSheet(context),
+              prefix: const Icon(FLucideIcons.walletCards),
+              child: Text(l10n.portfolioStudioIncludeCashAction),
+            );
+            if (stacked) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  positions,
+                  const SizedBox(height: AppSpacing.s8),
+                  cash,
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: positions),
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(child: cash),
+              ],
+            );
+          },
         ),
       ],
     );

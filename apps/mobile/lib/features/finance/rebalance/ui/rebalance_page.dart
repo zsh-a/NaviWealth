@@ -192,16 +192,22 @@ class _RebalanceBody extends StatelessWidget {
               _PortfolioGroupSelector(plan: portfolioPlan!),
               SizedBox(height: isMobile ? AppSpacing.s12 : AppSpacing.s16),
             ],
-            ResponsiveTwoColumn(
-              left: _DriftOverview(plan: plan),
-              right: _TradeList(
-                plan: plan,
-                active: active,
-                capitalTransfersPending:
-                    (universePlan?.capitalPlan.transfers.isNotEmpty ?? false) ||
-                    (portfolioPlan?.transfers.isNotEmpty ?? false),
+            if (isMobile &&
+                ((universePlan?.capitalPlan.transfers.isNotEmpty ?? false) ||
+                    (portfolioPlan?.transfers.isNotEmpty ?? false)))
+              const _MobileCapitalGate()
+            else
+              ResponsiveTwoColumn(
+                left: _DriftOverview(plan: plan),
+                right: _TradeList(
+                  plan: plan,
+                  active: active,
+                  capitalTransfersPending:
+                      (universePlan?.capitalPlan.transfers.isNotEmpty ??
+                          false) ||
+                      (portfolioPlan?.transfers.isNotEmpty ?? false),
+                ),
               ),
-            ),
           ],
         );
       },
@@ -244,40 +250,34 @@ class _UniversePortfolioAllocation extends ConsumerWidget {
               child: Text(l10n.rebalanceConfigurePlanAction),
             ),
             const SizedBox(height: AppSpacing.s8),
-            Wrap(
-              spacing: AppSpacing.s8,
-              runSpacing: AppSpacing.s8,
+            FSelect<String>.rich(
+              format: (id) => nameById[id] ?? id,
+              control: FSelectControl<String>.lifted(
+                value: selectedId,
+                onChange: (value) {
+                  if (value == null) return;
+                  ref
+                          .read(selectedInvestmentPortfolioIdProvider.notifier)
+                          .state =
+                      value;
+                },
+              ),
               children: [
                 for (final item in plan.portfolios)
-                  FButton(
-                    variant: item.portfolio.id == selectedId
-                        ? FButtonVariant.primary
-                        : FButtonVariant.outline,
-                    onPress: () {
-                      ref
-                          .read(selectedInvestmentPortfolioIdProvider.notifier)
-                          .state = item
-                          .portfolio
-                          .id;
-                    },
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(item.portfolio.name),
-                        Text(
-                          l10n.rebalancePortfolioWeightPair(
-                            formatters.percent(
-                              item.capitalDecision.actualWeight,
-                              decimalDigits: 0,
-                            ),
-                            formatters.percent(
-                              item.capitalDecision.targetWeight,
-                              decimalDigits: 0,
-                            ),
-                          ),
-                          style: context.microLabelStyle,
+                  FSelectItem<String>(
+                    value: item.portfolio.id,
+                    title: Text(item.portfolio.name),
+                    subtitle: Text(
+                      l10n.rebalancePortfolioWeightPair(
+                        formatters.percent(
+                          item.capitalDecision.actualWeight,
+                          decimalDigits: 0,
                         ),
-                      ],
+                        formatters.percent(
+                          item.capitalDecision.targetWeight,
+                          decimalDigits: 0,
+                        ),
+                      ),
                     ),
                   ),
               ],
@@ -288,20 +288,24 @@ class _UniversePortfolioAllocation extends ConsumerWidget {
                 l10n.rebalancePortfolioTransfersTitle,
                 style: context.theme.typography.body.sm,
               ),
-              const SizedBox(height: AppSpacing.s6),
+              const SizedBox(height: AppSpacing.s8),
               for (final transfer in plan.capitalPlan.transfers)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.s4),
-                  child: Text(
-                    l10n.rebalanceGroupTransfer(
-                      nameById[transfer.fromNodeId] ?? transfer.fromNodeId,
-                      nameById[transfer.toNodeId] ?? transfer.toNodeId,
-                      formatters.currency(
-                        transfer.amount.amount,
-                        code: transfer.amount.currency,
+                  padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+                  child: _CapitalTransferTile(
+                    fromName:
+                        nameById[transfer.fromNodeId] ?? transfer.fromNodeId,
+                    toName: nameById[transfer.toNodeId] ?? transfer.toNodeId,
+                    amount: formatters.currency(
+                      transfer.amount.amount,
+                      code: transfer.amount.currency,
+                    ),
+                    onResolve: () => context.push(
+                      FinanceRoutes.wealthPortfolioStudioFor(
+                        transfer.fromNodeId,
+                        section: 'assets',
                       ),
                     ),
-                    style: context.captionStyle,
                   ),
                 ),
             ],
@@ -358,38 +362,36 @@ class _PortfolioGroupSelector extends ConsumerWidget {
               style: context.theme.typography.body.sm,
             ),
             const SizedBox(height: AppSpacing.s8),
-            Wrap(
-              spacing: AppSpacing.s8,
-              runSpacing: AppSpacing.s8,
-              children: [
-                for (final groupPlan in plan.groups)
-                  FButton(
-                    variant: groupPlan.group.id == selectedId
-                        ? FButtonVariant.primary
-                        : FButtonVariant.outline,
-                    onPress: () {
-                      ref
+            FSelect<String>.rich(
+              format: (id) => groupNameById[id] ?? id,
+              control: FSelectControl<String>.lifted(
+                value: selectedId,
+                onChange: (value) {
+                  if (value == null) return;
+                  ref
                           .read(
                             selectedPortfolioRebalanceGroupIdProvider.notifier,
                           )
-                          .state = groupPlan
-                          .group
-                          .id;
-                    },
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(groupPlan.group.name),
-                        Text(
-                          l10n.rebalanceGroupWeight(
-                            formatters.percent(
-                              groupPlan.capitalDecision.targetWeight,
-                              decimalDigits: 0,
-                            ),
-                          ),
-                          style: context.microLabelStyle,
+                          .state =
+                      value;
+                },
+              ),
+              children: [
+                for (final groupPlan in plan.groups)
+                  FSelectItem<String>(
+                    value: groupPlan.group.id,
+                    title: Text(groupPlan.group.name),
+                    subtitle: Text(
+                      l10n.rebalancePortfolioWeightPair(
+                        formatters.percent(
+                          groupPlan.capitalDecision.actualWeight,
+                          decimalDigits: 0,
                         ),
-                      ],
+                        formatters.percent(
+                          groupPlan.capitalDecision.targetWeight,
+                          decimalDigits: 0,
+                        ),
+                      ),
                     ),
                   ),
               ],
@@ -400,21 +402,28 @@ class _PortfolioGroupSelector extends ConsumerWidget {
                 l10n.rebalanceGroupTransfersTitle,
                 style: context.theme.typography.body.sm,
               ),
-              const SizedBox(height: AppSpacing.s6),
+              const SizedBox(height: AppSpacing.s8),
               for (final transfer in plan.transfers)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.s4),
-                  child: Text(
-                    l10n.rebalanceGroupTransfer(
-                      groupNameById[transfer.fromGroupId] ??
-                          transfer.fromGroupId,
-                      groupNameById[transfer.toGroupId] ?? transfer.toGroupId,
-                      formatters.currency(
-                        transfer.amount.amount,
-                        code: transfer.amount.currency,
-                      ),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+                  child: _CapitalTransferTile(
+                    fromName:
+                        groupNameById[transfer.fromGroupId] ??
+                        transfer.fromGroupId,
+                    toName:
+                        groupNameById[transfer.toGroupId] ?? transfer.toGroupId,
+                    amount: formatters.currency(
+                      transfer.amount.amount,
+                      code: transfer.amount.currency,
                     ),
-                    style: context.captionStyle,
+                    onResolve: plan.groups.isNotEmpty
+                        ? () => context.push(
+                            FinanceRoutes.wealthPortfolioStudioFor(
+                              plan.groups.first.group.portfolioId,
+                              section: 'assets',
+                            ),
+                          )
+                        : null,
                   ),
                 ),
             ],
@@ -439,6 +448,123 @@ class _PortfolioGroupSelector extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CapitalTransferTile extends StatelessWidget {
+  const _CapitalTransferTile({
+    required this.fromName,
+    required this.toName,
+    required this.amount,
+    this.onResolve,
+  });
+
+  final String fromName;
+  final String toName;
+  final String amount;
+  final VoidCallback? onResolve;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      decoration: BoxDecoration(
+        color: context.theme.colors.primary.withValues(
+          alpha: AppOpacity.whisper,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  fromName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.theme.typography.body.sm,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
+                child: Icon(
+                  FLucideIcons.arrowRight,
+                  size: AppIconSizes.sm,
+                  color: context.theme.colors.primary,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  toName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: context.theme.typography.body.sm,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          Text(
+            amount,
+            textAlign: TextAlign.center,
+            style: TypographyTokens.numericTitleStrong.copyWith(
+              color: context.theme.colors.primary,
+            ),
+          ),
+          if (onResolve != null) ...[
+            const SizedBox(height: AppSpacing.s10),
+            FButton(
+              variant: FButtonVariant.primary,
+              onPress: onResolve,
+              prefix: const Icon(
+                FLucideIcons.arrowRightLeft,
+                size: AppIconSizes.sm,
+              ),
+              child: Text(l10n.rebalanceResolveTransferAction),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MobileCapitalGate extends StatelessWidget {
+  const _MobileCapitalGate();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      decoration: BoxDecoration(
+        color: context.theme.colors.destructive.withValues(
+          alpha: AppOpacity.whisper,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            FLucideIcons.circleAlert,
+            size: AppIconSizes.md,
+            color: context.theme.colors.destructive,
+          ),
+          const SizedBox(width: AppSpacing.s10),
+          Expanded(
+            child: Text(
+              l10n.rebalanceCapitalFirstHint,
+              style: context.captionStyle,
+            ),
+          ),
+        ],
       ),
     );
   }

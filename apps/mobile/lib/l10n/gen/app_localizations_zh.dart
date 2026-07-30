@@ -15891,4 +15891,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get rebalanceCapitalFirstAction => '请先处理资金调拨';
+
+  @override
+  String get rebalanceResolveTransferAction => '处理调拨';
 }

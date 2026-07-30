@@ -47,8 +47,14 @@ abstract final class FinanceRoutes {
   static String wealthAsset(String id) =>
       '/wealth/assets/${Uri.encodeComponent(id)}';
 
-  static String wealthPortfolioStudioFor(String portfolioId) =>
-      '/wealth/portfolio/${Uri.encodeComponent(portfolioId)}/studio';
+  static String wealthPortfolioStudioFor(
+    String portfolioId, {
+    String? section,
+  }) {
+    final path = '/wealth/portfolio/${Uri.encodeComponent(portfolioId)}/studio';
+    if (section == null || section.isEmpty) return path;
+    return '$path?section=${Uri.encodeQueryComponent(section)}';
+  }
 
   static String wealthAssetEdit(String id) =>
       '/wealth/assets/${Uri.encodeComponent(id)}/edit';

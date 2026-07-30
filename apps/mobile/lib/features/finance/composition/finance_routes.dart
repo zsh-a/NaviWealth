@@ -296,6 +296,8 @@ StatefulShellRoute financeShellRoute() {
                       load: portfolio_hub_lib.loadLibrary,
                       builder: (_) => portfolio_hub_lib.PortfolioStudioPage(
                         portfolioId: state.pathParameters['portfolioId']!,
+                        initialSection:
+                            state.uri.queryParameters['section'] ?? 'overview',
                       ),
                     ),
                   ),

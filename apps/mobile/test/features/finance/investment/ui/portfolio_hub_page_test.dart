@@ -436,14 +436,14 @@ void main() {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('en', 'US'),
-            home: const PortfolioStudioPage(portfolioId: 'portfolio'),
+            home: const PortfolioStudioPage(
+              portfolioId: 'portfolio',
+              initialSection: 'assets',
+            ),
           ),
         ),
       ),
     );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Assets'));
     await tester.pumpAndSettle();
 
     expect(find.text('Asset targets'), findsOneWidget);

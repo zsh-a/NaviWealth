@@ -7934,5 +7934,6 @@
   "portfolioStrategyArchiveBody": "Existing strategies keep their current configuration. This type will no longer appear when adding a strategy.",
   "portfolioStrategyArchiveFailed": "Couldn't archive this strategy type.",
   "rebalanceCapitalFirstHint": "Complete the capital movements above by updating asset assignment. Asset trades unlock after the portfolio and strategy balances are within tolerance.",
-  "rebalanceCapitalFirstAction": "Resolve capital movements first"
+  "rebalanceCapitalFirstAction": "Resolve capital movements first",
+  "rebalanceResolveTransferAction": "Resolve transfer"
 }

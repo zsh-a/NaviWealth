@@ -16729,4 +16729,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rebalanceCapitalFirstAction => 'Resolve capital movements first';
+
+  @override
+  String get rebalanceResolveTransferAction => 'Resolve transfer';
 }

@@ -48,7 +48,7 @@ Future<void> showCapitalAllocationPlanEditor({
     context: context,
     title: title,
     subtitle: subtitle,
-    maxHeightFactor: 0.94,
+    maxHeightFactor: 0.98,
     builder: (_) => _CapitalAllocationPlanEditor(
       weightLabel: weightLabel,
       singleItemHint: singleItemHint,
@@ -82,7 +82,7 @@ class _CapitalAllocationPlanEditorState
   late final Map<String, TextEditingController> _weightControllers;
   late final Map<String, TextEditingController> _bandControllers;
   final _errors = <String, String>{};
-  bool _showAdvanced = false;
+  String? _expandedAdvancedId;
   bool _showTotalError = false;
   bool _busy = false;
   bool _writingControllers = false;
@@ -149,11 +149,12 @@ class _CapitalAllocationPlanEditorState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final isMobile = Breakpoints.isMobile(MediaQuery.sizeOf(context).width);
     final totalColor = _totalBps == 10000
         ? context.theme.colors.primary
         : context.theme.colors.destructive;
     return SizedBox(
-      height: MediaQuery.sizeOf(context).height * 0.72,
+      height: MediaQuery.sizeOf(context).height * (isMobile ? 0.84 : 0.72),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -230,17 +231,6 @@ class _CapitalAllocationPlanEditorState
             const SizedBox(height: AppSpacing.s8),
             Text(widget.singleItemHint, style: context.captionStyle),
           ],
-          const SizedBox(height: AppSpacing.s8),
-          FButton(
-            variant: FButtonVariant.ghost,
-            onPress: _busy
-                ? null
-                : () => setState(() => _showAdvanced = !_showAdvanced),
-            prefix: Icon(
-              _showAdvanced ? FLucideIcons.chevronUp : FLucideIcons.settings2,
-            ),
-            child: Text(l10n.capitalAllocationAdvancedAction),
-          ),
           if (_showTotalError || _totalBps != 10000)
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.s8),
@@ -251,12 +241,15 @@ class _CapitalAllocationPlanEditorState
               ),
             ),
           const SizedBox(height: AppSpacing.s12),
-          AppSheetFooter(
-            cancelLabel: l10n.commonCancel,
-            submitLabel: l10n.commonSave,
-            busy: _busy,
-            onSubmit: _save,
-          ),
+          if (isMobile)
+            AppBusyButton(onPress: _save, busy: _busy, label: l10n.commonSave)
+          else
+            AppSheetFooter(
+              cancelLabel: l10n.commonCancel,
+              submitLabel: l10n.commonSave,
+              busy: _busy,
+              onSubmit: _save,
+            ),
         ],
       ),
     );
@@ -264,13 +257,51 @@ class _CapitalAllocationPlanEditorState
 
   Widget _buildRow(BuildContext context, AppLocalizations l10n, int index) {
     final draft = _drafts[index];
+    final advancedExpanded = _expandedAdvancedId == draft.id;
     return SoftCard.raised(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(draft.name, style: context.theme.typography.body.sm),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        draft.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.theme.typography.body.sm,
+                      ),
+                      const SizedBox(height: AppSpacing.s2),
+                      Text(
+                        _policyLabel(l10n, draft.transferPolicy),
+                        style: context.microCaptionStyle,
+                      ),
+                    ],
+                  ),
+                ),
+                FButton.icon(
+                  variant: FButtonVariant.ghost,
+                  onPress: _busy
+                      ? null
+                      : () => setState(() {
+                          _expandedAdvancedId = advancedExpanded
+                              ? null
+                              : draft.id;
+                        }),
+                  child: Icon(
+                    advancedExpanded
+                        ? FLucideIcons.chevronUp
+                        : FLucideIcons.settings2,
+                    size: AppIconSizes.sm,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: AppSpacing.s8),
             FTextFormField(
               control: FTextFieldControl.managed(
@@ -284,7 +315,7 @@ class _CapitalAllocationPlanEditorState
               inputFormatters: const [percentInputFormatter],
               forceErrorText: _errors['weight:${draft.id}'],
             ),
-            if (_showAdvanced) ...[
+            if (advancedExpanded) ...[
               const SizedBox(height: AppSpacing.s12),
               FTextFormField(
                 control: FTextFieldControl.managed(
