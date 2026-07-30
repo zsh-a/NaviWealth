@@ -244,6 +244,7 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
                 _PortfolioSelector(
                   portfolios: widget.portfolios,
                   value: widget.selectedPortfolioId,
+                  holdingCount: data.holdings.length,
                   onChanged: widget.onPortfolioChanged,
                 ),
                 const SizedBox(height: AppSpacing.s12),
@@ -397,11 +398,13 @@ class _PortfolioSelector extends StatelessWidget {
   const _PortfolioSelector({
     required this.portfolios,
     required this.value,
+    required this.holdingCount,
     required this.onChanged,
   });
 
   final List<InvestmentPortfolio> portfolios;
   final String? value;
+  final int holdingCount;
   final ValueChanged<String?> onChanged;
 
   @override
@@ -411,27 +414,97 @@ class _PortfolioSelector extends StatelessWidget {
       for (final portfolio in portfolios) portfolio.id: portfolio.name,
       kUnassignedInvestmentPortfolioId: l10n.portfolioUnassigned,
     };
-    return FSelect<String>.rich(
-      format: (id) => id.isEmpty
-          ? l10n.portfolioAllHoldings
-          : labels[id] ?? l10n.portfolioAllHoldings,
-      control: FSelectControl<String>.lifted(
-        value: value ?? '',
-        onChange: (id) {
+    final selectedValue = value ?? '';
+    final selectedLabel = selectedValue.isEmpty
+        ? l10n.portfolioAllHoldings
+        : labels[selectedValue] ?? l10n.portfolioAllHoldings;
+    final holdingSummary = l10n.portfolioHubHoldingCount(holdingCount);
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: AppAdaptiveSelectionMenu<String>(
+        title: l10n.portfolioHubTitle,
+        subtitle: holdingSummary,
+        value: selectedValue,
+        onChanged: (id) {
           AppInteraction.signal(AppInteractionIntent.select);
-          onChanged(id == null || id.isEmpty ? null : id);
+          onChanged(id.isEmpty ? null : id);
+        },
+        options: [
+          AppAdaptiveSelection<String>(
+            value: '',
+            title: l10n.portfolioAllHoldings,
+            icon: FLucideIcons.layers,
+          ),
+          for (final portfolio in portfolios)
+            AppAdaptiveSelection<String>(
+              value: portfolio.id,
+              title: portfolio.name,
+              icon: FLucideIcons.briefcaseBusiness,
+            ),
+          AppAdaptiveSelection<String>(
+            value: kUnassignedInvestmentPortfolioId,
+            title: l10n.portfolioUnassigned,
+            icon: FLucideIcons.circle,
+          ),
+        ],
+        triggerBuilder: (context, openMenu, focusNode) {
+          final colors = context.theme.colors;
+          return Focus(
+            focusNode: focusNode,
+            child: Semantics(
+              button: true,
+              label: '${l10n.portfolioHubTitle}: $selectedLabel',
+              child: AppTappable(
+                onPress: openMenu,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: AppSpacing.s48),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s4,
+                      vertical: AppSpacing.s4,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                selectedLabel,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.titleLabelStyle.copyWith(
+                                  color: colors.foreground,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.s2),
+                              Text(
+                                holdingSummary,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.captionStyle,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.s8),
+                        Icon(
+                          FLucideIcons.chevronsUpDown,
+                          size: AppIconSizes.sm,
+                          color: colors.mutedForeground,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
         },
       ),
-      label: Text(l10n.portfolioHubTitle),
-      children: [
-        FSelectItem<String>(value: '', title: Text(l10n.portfolioAllHoldings)),
-        for (final portfolio in portfolios)
-          FSelectItem<String>(value: portfolio.id, title: Text(portfolio.name)),
-        FSelectItem<String>(
-          value: kUnassignedInvestmentPortfolioId,
-          title: Text(l10n.portfolioUnassigned),
-        ),
-      ],
     );
   }
 }

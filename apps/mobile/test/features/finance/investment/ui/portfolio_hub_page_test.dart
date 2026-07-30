@@ -564,6 +564,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(AdaptiveContentFrame), findsOneWidget);
+    expect(find.byType(AppAdaptiveSelectionMenu<String>), findsOneWidget);
+    expect(find.byType(FSelect<String>), findsNothing);
+    expect(find.bySemanticsLabel('Portfolio: All holdings'), findsOneWidget);
     expect(find.text('All holdings'), findsOneWidget);
     // Positions use a virtualized DecoratedSliver group surface.
     expect(find.byType(DecoratedSliver), findsOneWidget);

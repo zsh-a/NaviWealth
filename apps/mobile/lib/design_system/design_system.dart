@@ -39,6 +39,7 @@ export 'widgets/animated_size_fade.dart';
 export 'widgets/app_action_sheet_tile.dart';
 export 'widgets/app_actions.dart';
 export 'widgets/app_adaptive_action_menu.dart';
+export 'widgets/app_adaptive_selection_menu.dart';
 export 'widgets/app_async_helpers.dart';
 export 'widgets/app_badge.dart';
 export 'widgets/app_busy_button.dart';
