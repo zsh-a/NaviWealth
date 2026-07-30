@@ -372,6 +372,9 @@ class AppControlHeights {
 
   /// Compact loading placeholder that keeps cards from collapsing.
   static const double compactLoadingState = 96;
+
+  /// Portfolio overview rail containing compact allocation cards.
+  static const double portfolioOverviewRail = 164;
 }
 
 /// Canonical widths for fixed-format controls and chart side panels.
@@ -386,6 +389,12 @@ class AppControlWidths {
 
   /// Horizontal AI action card width.
   static const double aiActionCard = 240;
+
+  /// Compact create action at the end of the portfolio overview rail.
+  static const double portfolioCreateCard = 128;
+
+  /// Portfolio summary card in the horizontal overview rail.
+  static const double portfolioOverviewCard = 224;
 
   /// Markdown ordered-list marker column.
   static const double markdownMarker = AppIconSizes.h18;

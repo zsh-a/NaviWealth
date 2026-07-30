@@ -73,7 +73,7 @@ class _PortfolioPlanStrip extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.s8),
         SizedBox(
-          height: 164,
+          height: AppControlHeights.portfolioOverviewRail,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: nodes.length + 1,
@@ -81,7 +81,7 @@ class _PortfolioPlanStrip extends ConsumerWidget {
             itemBuilder: (context, index) {
               if (index == nodes.length) {
                 return SizedBox(
-                  width: 128,
+                  width: AppControlWidths.portfolioCreateCard,
                   child: FButton(
                     variant: FButtonVariant.outline,
                     onPress: () => showInvestmentPortfolioFormSheet(context),
@@ -107,7 +107,7 @@ class _PortfolioPlanStrip extends ConsumerWidget {
                   : trends.value?[portfolio.id];
               final trendPending = trends.isLoading && !trends.hasValue;
               return SizedBox(
-                width: 224,
+                width: AppControlWidths.portfolioOverviewCard,
                 child: AppTappable(
                   onPress: portfolio == null
                       ? null
@@ -966,6 +966,12 @@ class _StudioStructure extends StatelessWidget {
           AppEmptyState(
             icon: FLucideIcons.layers3,
             title: l10n.portfolioGroupNoTemplates,
+            action: FButton(
+              onPress: () =>
+                  showAddStrategySleeve(context, portfolioId: portfolio.id),
+              prefix: const Icon(FLucideIcons.plus),
+              child: Text(l10n.portfolioGroupAddAction),
+            ),
           )
         else
           AppGroupedSurface(
@@ -1065,6 +1071,31 @@ class _StudioAssets extends ConsumerWidget {
           AppEmptyState(
             icon: FLucideIcons.crosshair,
             title: l10n.targetAllocationEditorNoAssetTargets,
+            action: FButton(
+              onPress: () async {
+                if (sleeves.isEmpty) {
+                  await showAddStrategySleeve(
+                    context,
+                    portfolioId: portfolio.id,
+                  );
+                  return;
+                }
+                final groups = await ref.read(
+                  portfolioRebalanceGroupsProvider.future,
+                );
+                final scoped = groups
+                    .where((group) => group.portfolioId == portfolio.id)
+                    .toList(growable: false);
+                if (!context.mounted || scoped.isEmpty) return;
+                await showStrategySleeveAllocationEditor(context, ref, scoped);
+              },
+              prefix: const Icon(FLucideIcons.slidersHorizontal),
+              child: Text(
+                sleeves.isEmpty
+                    ? l10n.portfolioGroupAddAction
+                    : l10n.portfolioStrategyAllocationEditTitle,
+              ),
+            ),
           )
         else
           AppGroupedSurface(
@@ -1092,6 +1123,24 @@ class _StudioAssets extends ConsumerWidget {
           AppEmptyState(
             icon: FLucideIcons.listChecks,
             title: l10n.portfolioStudioNoIncludedAssets,
+            action: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FButton(
+                  onPress: () => showPortfolioLotAssignmentSheet(context),
+                  prefix: const Icon(FLucideIcons.briefcaseBusiness),
+                  child: Text(l10n.portfolioStudioIncludePositionAction),
+                ),
+                const SizedBox(height: AppSpacing.s8),
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => showPortfolioCashAssignmentSheet(context),
+                  prefix: const Icon(FLucideIcons.walletCards),
+                  child: Text(l10n.portfolioStudioIncludeCashAction),
+                ),
+              ],
+            ),
           )
         else
           AppGroupedSurface(
@@ -1311,6 +1360,12 @@ class _StudioRules extends ConsumerWidget {
           AppEmptyState(
             icon: FLucideIcons.sparkles,
             title: l10n.portfolioStudioNoRules,
+            action: FButton(
+              onPress: () =>
+                  showAddStrategyRule(context, portfolioId: portfolio.id),
+              prefix: const Icon(FLucideIcons.plus),
+              child: Text(l10n.portfolioOverlayAddAction),
+            ),
           )
         else
           AppGroupedSurface(
@@ -1417,7 +1472,7 @@ class _AllocationPathRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(left: inset ? AppSpacing.s16 : 0),
+      padding: EdgeInsets.only(left: inset ? AppSpacing.s16 : AppSpacing.s0),
       child: Row(
         children: [
           AppIconTile(icon: icon, color: context.theme.colors.primary),
@@ -1501,7 +1556,7 @@ class _StudioStatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.theme.colors.primary.withValues(alpha: 0.12),
+        color: context.theme.colors.primary.withValues(alpha: AppOpacity.light),
         borderRadius: context.theme.style.borderRadius.pill,
       ),
       child: Padding(

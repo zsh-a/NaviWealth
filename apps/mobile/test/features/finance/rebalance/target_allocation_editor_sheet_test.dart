@@ -162,7 +162,9 @@ void main() {
     expect(find.text('Custom target'), findsOneWidget);
 
     await _enterAllocation(tester, AssetCategory.stock, '34');
-    await tester.binding.handlePopRoute();
+    tester.testTextInput.hide();
+    await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(4, 4));
     await tester.pumpAndSettle();
 
     expect(find.text('Discard changes?'), findsOneWidget);
