@@ -86,6 +86,13 @@ pub async fn garmin_init(stored_token_json: Option<String>, is_cn: bool) -> Resu
 
     let client = GarminClient::new(token_store, is_cn).await?;
 
+    // Restored sessions are proactively refreshed when they are close to
+    // expiry. A refresh failure is represented by the returned auth state so
+    // Dart can fall back to securely saved credentials.
+    if client.export_session().await?.is_some() {
+        let _ = client.fresh_access_token().await;
+    }
+
     // If restored from stored token, cache the session for future export.
     if let Ok(Some(session)) = client.export_session().await {
         cache_session_json(&session).await;
@@ -232,12 +239,18 @@ pub async fn garmin_sync_range_stream(
             });
         }
         Err(e) => {
-            let _ = sink.add(GarminSyncProgress {
-                phase: "done".to_string(),
-                current: 0,
-                total: total_days as i32,
-                metrics_count: 0,
-                errors: vec![garmin_sync_issue(
+            let issue = if is_auth_error(&e) {
+                garmin_sync_issue(
+                    "auth_expired",
+                    "error",
+                    None,
+                    "Garmin session expired",
+                    Some(e.to_string()),
+                    false,
+                    "reconnect",
+                )
+            } else {
+                garmin_sync_issue(
                     "sync_failed",
                     "error",
                     None,
@@ -245,7 +258,14 @@ pub async fn garmin_sync_range_stream(
                     Some(e.to_string()),
                     true,
                     "retry",
-                )],
+                )
+            };
+            let _ = sink.add(GarminSyncProgress {
+                phase: "done".to_string(),
+                current: 0,
+                total: total_days as i32,
+                metrics_count: 0,
+                errors: vec![issue],
                 snapshot_json: None,
             });
         }
@@ -802,6 +822,9 @@ fn is_auth_error(error: &anyhow::Error) -> bool {
     msg.contains("401 unauthorized")
         || msg.contains("token may be expired")
         || msg.contains("token expired")
+        || msg.contains("token refresh failed")
+        || msg.contains("no refresh token")
+        || msg.contains("not authenticated")
 }
 
 fn is_not_found_error(error: &anyhow::Error) -> bool {
@@ -866,5 +889,6 @@ pub async fn garmin_logout() -> Result<()> {
     if let Some(client) = global.as_ref() {
         client.logout().await?;
     }
+    *LAST_SESSION_JSON.lock().await = None;
     Ok(())
 }

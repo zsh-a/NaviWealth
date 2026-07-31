@@ -38,11 +38,16 @@ class GarminSyncController extends Notifier<GarminSyncState>
         GarminSyncControllerSyncMixin {
   @override
   GarminSyncState build() {
+    final ownerUserId = ref.watch(activeUserIdProvider);
+    _initialized = false;
+    _initializedRegion = null;
+    _pendingCredentials = null;
+    _pendingRememberPassword = false;
     // Kick off async restore after the route's first build burst. Restoring
     // may touch secure storage and the Rust bridge; doing it in a microtask
     // competes with the Health Today first frame during domain switches.
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      if (!ref.mounted) return;
+      if (!ref.mounted || ownerUserId == null) return;
       unawaited(_restoreSession());
     });
     return const GarminInitial();
@@ -58,6 +63,10 @@ class GarminSyncController extends Notifier<GarminSyncState>
   GarminRegion? _initializedRegion;
   @override
   StreamSubscription<GarminSyncProgress>? _syncSub;
+  @override
+  GarminSavedCredentials? _pendingCredentials;
+  @override
+  bool _pendingRememberPassword = false;
 }
 
 /// Provider for the Garmin sync controller.

@@ -26,6 +26,11 @@ const DI_TOKEN_PATH: &str = "/di-oauth2-service/oauth/token";
 /// DI grant type for service tickets.
 const DI_GRANT_TYPE: &str =
     "https://connectapi.garmin.com/di-oauth2-service/oauth/grant/service_ticket";
+/// Standard OAuth refresh-token grant.
+const DI_REFRESH_GRANT_TYPE: &str = "refresh_token";
+/// Refresh before the access token expires so a multi-day sync never starts
+/// with a token that will expire mid-flight.
+const TOKEN_REFRESH_WINDOW_MINUTES: i64 = 5;
 /// DI client IDs to try in order.
 const DI_CLIENT_IDS: &[&str] = &[
     "GARMIN_CONNECT_MOBILE_ANDROID_DI_2025Q2",
@@ -78,6 +83,7 @@ pub struct GarminClient {
     domain: String,
     di_session: Arc<Mutex<Option<DiSession>>>,
     mfa_state: Arc<Mutex<Option<MfaState>>>,
+    refresh_lock: Arc<Mutex<()>>,
 }
 
 impl Clone for GarminClient {
@@ -91,6 +97,7 @@ impl Clone for GarminClient {
             domain: self.domain.clone(),
             di_session: Arc::clone(&self.di_session),
             mfa_state: Arc::clone(&self.mfa_state),
+            refresh_lock: Arc::clone(&self.refresh_lock),
         }
     }
 }
@@ -139,6 +146,7 @@ impl GarminClient {
             domain: domain.to_string(),
             di_session: Arc::new(Mutex::new(di_session)),
             mfa_state: Arc::new(Mutex::new(None)),
+            refresh_lock: Arc::new(Mutex::new(())),
         })
     }
 
@@ -238,9 +246,7 @@ impl GarminClient {
                 "CAPTCHA required — try again later".to_string(),
             )),
             _ => Ok(AuthResult::Failed(format!(
-                "Unexpected login response ({}): {}",
-                status,
-                serde_json::to_string(&body).unwrap_or_default()
+                "Unexpected login response ({status}, type={status_type})"
             ))),
         }
     }
@@ -374,6 +380,82 @@ impl GarminClient {
         Err(anyhow!("All DI client IDs failed for ticket exchange"))
     }
 
+    /// Exchange the persisted refresh token for a new DI access token.
+    ///
+    /// Garmin's DI endpoint follows the OAuth refresh-token grant. The
+    /// refresh token may rotate; when the response omits it we retain the
+    /// previous value.
+    async fn refresh_access_token(&self) -> Result<String> {
+        // Cloned providers share this guard. Re-check the token after acquiring
+        // it so concurrent sync paths cannot both spend a rotating refresh
+        // token.
+        let _refresh_guard = self.refresh_lock.lock().await;
+        let current = self
+            .di_session
+            .lock()
+            .await
+            .clone()
+            .ok_or_else(|| anyhow!("Not authenticated"))?;
+        if matches!(
+            parse_session_expiry(&current.expires_at),
+            Some(expires_at)
+                if expires_at
+                    > chrono::Utc::now()
+                        + chrono::Duration::minutes(TOKEN_REFRESH_WINDOW_MINUTES)
+        ) {
+            return Ok(current.access_token);
+        }
+        if current.refresh_token.trim().is_empty() {
+            return Err(anyhow!("Garmin DI session has no refresh token"));
+        }
+
+        {
+            let mut state = self.auth_state.lock().await;
+            *state = GarminAuthState::Refreshing;
+        }
+
+        let token_url = format!("{}{}", self.diauth_base(), DI_TOKEN_PATH);
+        let basic =
+            base64::engine::general_purpose::STANDARD.encode(format!("{}:", current.client_id));
+        let form = [
+            ("client_id", current.client_id.as_str()),
+            ("refresh_token", current.refresh_token.as_str()),
+            ("grant_type", DI_REFRESH_GRANT_TYPE),
+        ];
+        let response = self
+            .http
+            .post(&token_url)
+            .header("User-Agent", NATIVE_USER_AGENT)
+            .header("X-Garmin-User-Agent", NATIVE_X_GARMIN_UA)
+            .header("X-Garmin-Paired-App-Version", "10861")
+            .header("X-Garmin-Client-Platform", "Android")
+            .header("X-App-Ver", "10861")
+            .header("X-Lang", "en")
+            .header("X-GCExperience", "GC5")
+            .header("Accept-Language", "en-US,en;q=0.9")
+            .header("Authorization", format!("Basic {}", basic))
+            .header("Accept", "application/json")
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .header("Cache-Control", "no-cache")
+            .form(&form)
+            .send()
+            .await?;
+        let status = response.status();
+        if !status.is_success() {
+            return Err(anyhow!("Garmin DI token refresh failed ({status})"));
+        }
+        let body: serde_json::Value = response.json().await?;
+        let refreshed = refreshed_di_session(&current, &body)?;
+        let access_token = refreshed.access_token.clone();
+        let expires_at = parse_session_expiry(&refreshed.expires_at)
+            .ok_or_else(|| anyhow!("Garmin DI refresh returned invalid expiry"))?;
+
+        *self.di_session.lock().await = Some(refreshed);
+        self.save_session().await?;
+        *self.auth_state.lock().await = GarminAuthState::Authenticated { expires_at };
+        Ok(access_token)
+    }
+
     // -----------------------------------------------------------------------
     // Session persistence
     // -----------------------------------------------------------------------
@@ -412,7 +494,8 @@ impl GarminClient {
         self.auth_state.try_lock().ok().map(|s| s.clone())
     }
 
-    /// Get the DI access token (for API calls).
+    /// Get the current DI access token without network refresh.
+    #[cfg(test)]
     pub async fn access_token(&self) -> Result<String> {
         let session = self.di_session.lock().await;
         let session = session
@@ -431,9 +514,39 @@ impl GarminClient {
         }
     }
 
-    /// Get an access token, failing fast when the stored token is expired.
+    /// Get a usable access token, refreshing it before expiry.
+    ///
+    /// If a proactive refresh fails while the old token is still valid, the
+    /// current token is used for this request and a later call can retry.
     pub async fn fresh_access_token(&self) -> Result<String> {
-        self.access_token().await
+        let current = self
+            .di_session
+            .lock()
+            .await
+            .clone()
+            .ok_or_else(|| anyhow!("Not authenticated"))?;
+        let expires_at = parse_session_expiry(&current.expires_at);
+        let refresh_at =
+            chrono::Utc::now() + chrono::Duration::minutes(TOKEN_REFRESH_WINDOW_MINUTES);
+        if matches!(expires_at, Some(value) if value > refresh_at) {
+            return Ok(current.access_token);
+        }
+
+        match self.refresh_access_token().await {
+            Ok(token) => Ok(token),
+            Err(error) => {
+                if let Some(expires_at) = expires_at
+                    && expires_at > chrono::Utc::now()
+                {
+                    *self.auth_state.lock().await = GarminAuthState::Authenticated { expires_at };
+                    return Ok(current.access_token);
+                }
+                *self.auth_state.lock().await = GarminAuthState::Error {
+                    message: error.to_string(),
+                };
+                Err(error)
+            }
+        }
     }
 
     pub fn http(&self) -> &Client {
@@ -473,6 +586,32 @@ fn parse_session_expiry(expires_at: &str) -> Option<chrono::DateTime<chrono::Utc
     chrono::DateTime::parse_from_rfc3339(expires_at)
         .map(|dt| dt.with_timezone(&chrono::Utc))
         .ok()
+}
+
+fn refreshed_di_session(current: &DiSession, body: &serde_json::Value) -> Result<DiSession> {
+    let access_token = body
+        .get("access_token")
+        .and_then(|value| value.as_str())
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| anyhow!("Garmin DI refresh response missing access_token"))?;
+    let refresh_token = body
+        .get("refresh_token")
+        .and_then(|value| value.as_str())
+        .filter(|value| !value.is_empty())
+        .unwrap_or(&current.refresh_token);
+    let expires_at = decode_jwt_expiry(access_token).or_else(|| {
+        body.get("expires_in")
+            .and_then(|value| value.as_i64())
+            .map(|seconds| (chrono::Utc::now() + chrono::Duration::seconds(seconds)).to_rfc3339())
+    });
+
+    Ok(DiSession {
+        access_token: access_token.to_string(),
+        refresh_token: refresh_token.to_string(),
+        client_id: current.client_id.clone(),
+        expires_at: expires_at
+            .unwrap_or_else(|| (chrono::Utc::now() + chrono::Duration::hours(1)).to_rfc3339()),
+    })
 }
 
 #[cfg(test)]
@@ -551,5 +690,48 @@ mod tests {
             client.auth_state().await,
             GarminAuthState::Authenticated { .. },
         ));
+    }
+
+    #[test]
+    fn refresh_response_rotates_tokens_and_uses_expires_in() {
+        let current = DiSession {
+            access_token: "old-access".to_string(),
+            refresh_token: "old-refresh".to_string(),
+            client_id: "client".to_string(),
+            expires_at: chrono::Utc::now().to_rfc3339(),
+        };
+        let refreshed = refreshed_di_session(
+            &current,
+            &serde_json::json!({
+                "access_token": "new-access",
+                "refresh_token": "new-refresh",
+                "expires_in": 3600,
+            }),
+        )
+        .unwrap();
+
+        assert_eq!(refreshed.access_token, "new-access");
+        assert_eq!(refreshed.refresh_token, "new-refresh");
+        assert!(parse_session_expiry(&refreshed.expires_at).unwrap() > chrono::Utc::now());
+    }
+
+    #[test]
+    fn refresh_response_keeps_existing_refresh_token_when_not_rotated() {
+        let current = DiSession {
+            access_token: "old-access".to_string(),
+            refresh_token: "old-refresh".to_string(),
+            client_id: "client".to_string(),
+            expires_at: chrono::Utc::now().to_rfc3339(),
+        };
+        let refreshed = refreshed_di_session(
+            &current,
+            &serde_json::json!({
+                "access_token": "new-access",
+                "expires_in": 3600,
+            }),
+        )
+        .unwrap();
+
+        assert_eq!(refreshed.refresh_token, "old-refresh");
     }
 }

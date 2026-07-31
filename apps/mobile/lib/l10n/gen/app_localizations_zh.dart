@@ -13045,6 +13045,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthGarminPasswordLabel => '密码';
 
   @override
+  String get healthGarminRememberPassword => '安全保存密码';
+
+  @override
+  String get healthGarminRememberPasswordHint =>
+      '仅加密保存在本机 Keychain 或 Keystore，不会同步。';
+
+  @override
+  String get healthGarminAutoRenewEnabled => '会话自动续期已开启';
+
+  @override
   String get healthGarminRegionLabel => '地区';
 
   @override
@@ -13101,6 +13111,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthGarminErrorAuthExpired => 'Garmin 会话已过期，请重新连接账号。';
+
+  @override
+  String get healthGarminErrorCredentialsInvalid =>
+      '已保存的 Garmin 密码已失效，请重新输入密码连接。';
 
   @override
   String get healthGarminErrorRateLimited => 'Garmin 暂时限制了请求，请稍后再试。';

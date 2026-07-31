@@ -1,8 +1,7 @@
 //! Garmin Connect authentication state machine.
 //!
 //! Models the SSO flow: Unauthenticated → PendingMfa → Authenticated
-//! (or Error at any step). Expired DI tokens are not refreshed; callers must
-//! reconnect.
+//! (or Error at any step). DI tokens are refreshed shortly before expiry.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -42,11 +41,10 @@ impl GarminAuthState {
         matches!(self, GarminAuthState::Authenticated { .. })
     }
 
-    /// Legacy FRB compatibility method. Refresh is no longer supported; this
-    /// only reports whether the token is already expired.
+    /// Whether the access token is inside the proactive refresh window.
     pub fn needs_refresh(&self) -> bool {
         if let GarminAuthState::Authenticated { expires_at } = self {
-            *expires_at <= Utc::now()
+            *expires_at <= Utc::now() + chrono::Duration::minutes(5)
         } else {
             false
         }
@@ -106,11 +104,11 @@ mod tests {
     }
 
     #[test]
-    fn authenticated_near_expiry_does_not_need_refresh() {
+    fn authenticated_near_expiry_needs_refresh() {
         let state = GarminAuthState::Authenticated {
             expires_at: Utc::now() + chrono::Duration::minutes(2),
         };
-        assert!(!state.needs_refresh());
+        assert!(state.needs_refresh());
     }
 
     #[test]

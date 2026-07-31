@@ -13734,6 +13734,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthGarminPasswordLabel => 'Password';
 
   @override
+  String get healthGarminRememberPassword => 'Securely save password';
+
+  @override
+  String get healthGarminRememberPasswordHint =>
+      'Encrypted in this device’s Keychain or Keystore. Never synced.';
+
+  @override
+  String get healthGarminAutoRenewEnabled => 'Session auto-renewal is on';
+
+  @override
   String get healthGarminRegionLabel => 'Region';
 
   @override
@@ -13792,6 +13802,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get healthGarminErrorAuthExpired =>
       'Garmin session expired. Please reconnect your account.';
+
+  @override
+  String get healthGarminErrorCredentialsInvalid =>
+      'Your saved Garmin password no longer works. Enter it again to reconnect.';
 
   @override
   String get healthGarminErrorRateLimited =>

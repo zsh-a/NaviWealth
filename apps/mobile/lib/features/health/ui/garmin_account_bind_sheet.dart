@@ -3,6 +3,9 @@
 /// Modal form for email/password login with MFA support.
 library;
 
+import 'dart:async';
+
+import 'package:flutter/services.dart' show TextInputAction;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -33,6 +36,13 @@ class _GarminAccountBindSheetState
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _mfaCtrl = TextEditingController();
+  bool _rememberPassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_prefillSavedCredentials());
+  }
 
   @override
   void dispose() {
@@ -65,6 +75,11 @@ class _GarminAccountBindSheetState
                 control: FTextFieldControl.managed(controller: _mfaCtrl),
                 hint: '123456',
                 label: Text(l10n.healthGarminMfaCodeLabel),
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                autofillHints: const [AutofillHints.oneTimeCode],
+                enabled: !busy,
+                onSubmit: (_) => _submitMfa(),
               ),
               const SizedBox(height: AppSpacing.s16),
               AppBusyButton(
@@ -84,12 +99,52 @@ class _GarminAccountBindSheetState
                 control: FTextFieldControl.managed(controller: _emailCtrl),
                 hint: l10n.healthGarminEmailHint,
                 label: Text(l10n.healthGarminEmailLabel),
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                autofillHints: const [
+                  AutofillHints.username,
+                  AutofillHints.email,
+                ],
+                enabled: !busy,
               ),
               const SizedBox(height: AppSpacing.s12),
               FTextFormField(
                 control: FTextFieldControl.managed(controller: _passwordCtrl),
                 label: Text(l10n.healthGarminPasswordLabel),
                 obscureText: true,
+                textInputAction: TextInputAction.done,
+                autofillHints: const [AutofillHints.password],
+                enabled: !busy,
+                onSubmit: (_) => _connect(),
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.healthGarminRememberPassword,
+                          style: context.bodyCaptionStyle,
+                        ),
+                        const SizedBox(height: AppSpacing.s2),
+                        Text(
+                          l10n.healthGarminRememberPasswordHint,
+                          style: context.captionStyle,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s12),
+                  FSwitch(
+                    value: _rememberPassword,
+                    onChange: busy
+                        ? null
+                        : (value) => setState(() => _rememberPassword = value),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.s16),
               AppBusyButton(
@@ -127,7 +182,11 @@ class _GarminAccountBindSheetState
     if (email.isEmpty || password.isEmpty) return;
     await ref
         .read(health_data.garminSyncControllerProvider.notifier)
-        .connect(email, password);
+        .connect(email, password, rememberPassword: _rememberPassword);
+    if (mounted &&
+        ref.read(health_data.garminSyncControllerProvider) is GarminConnected) {
+      Navigator.of(context).pop();
+    }
   }
 
   Future<void> _submitMfa() async {
@@ -136,6 +195,26 @@ class _GarminAccountBindSheetState
     await ref
         .read(health_data.garminSyncControllerProvider.notifier)
         .submitMfa(code);
+    if (mounted &&
+        ref.read(health_data.garminSyncControllerProvider) is GarminConnected) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  Future<void> _prefillSavedCredentials() async {
+    final credentials = await ref
+        .read(health_data.garminSyncControllerProvider.notifier)
+        .loadSavedCredentials();
+    if (!mounted || credentials == null) return;
+    _emailCtrl.text = credentials.email;
+    _passwordCtrl.text = credentials.password;
+    _rememberPassword = true;
+    if (ref.read(health_data.garminRegionProvider) != credentials.region) {
+      await ref
+          .read(health_data.garminRegionProvider.notifier)
+          .set(credentials.region);
+    }
+    if (mounted) setState(() {});
   }
 }
 

@@ -72,7 +72,7 @@ impl HealthProvider for GarminProvider {
     async fn sync_daily_range(&self, from: NaiveDate, to: NaiveDate) -> Result<HealthSnapshot> {
         let http = self.client.http();
         let rl = self.client.rate_limiter();
-        let token = self.client.access_token().await?;
+        let token = self.client.fresh_access_token().await?;
         let cn = self.is_cn;
         let days = (to - from).num_days() + 1;
         let display_name = endpoints::fetch_social_profile(http, rl, &token, cn)
@@ -230,7 +230,7 @@ impl HealthProvider for GarminProvider {
     ) -> Result<Vec<ActivityRecord>> {
         let http = self.client.http();
         let rl = self.client.rate_limiter();
-        let token = self.client.access_token().await?;
+        let token = self.client.fresh_access_token().await?;
         let cn = self.is_cn;
 
         // Paginate through activities until we get an empty page or

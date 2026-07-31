@@ -51,6 +51,22 @@ in one action. The last platform-sync attempt and its fetched/upserted/unchanged
 counts are persisted locally by `health_sync_status.dart` and restored in
 Health Settings; this operational state does not sync.
 
+### Garmin session lifecycle
+
+- Garmin access tokens are refreshed by the native runtime shortly before
+  expiry. Rotated refresh tokens are exported back to Dart and persisted in
+  platform secure storage.
+- A user may explicitly enable secure password saving. The email, password,
+  selected Garmin region, and session are encrypted by the device
+  Keychain/Keystore and partitioned by the active NaviWealth owner.
+- Saved passwords are device-local secrets: they never enter Drift, sync,
+  memory, analytics, or application logs.
+- If token refresh fails, HealthOS attempts one automatic login with the saved
+  credentials. An MFA challenge pauses recovery and asks the user for the
+  current verification code.
+- Disconnect clears Garmin sessions for all regions and the saved password.
+  Previously imported health metrics remain.
+
 ## Persistence
 
 Table:

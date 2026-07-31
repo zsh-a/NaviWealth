@@ -14,7 +14,13 @@ mixin GarminSyncControllerSyncMixin
   set _syncSub(StreamSubscription<GarminSyncProgress>? value);
 
   /// Sync recent data with streaming progress updates.
-  Future<void> syncNow({Duration window = const Duration(days: 30)}) async {
+  Future<void> syncNow({Duration window = const Duration(days: 30)}) =>
+      _syncNow(window: window, allowCredentialRecovery: true);
+
+  Future<void> _syncNow({
+    required Duration window,
+    required bool allowCredentialRecovery,
+  }) async {
     final now = DateTime.now().toUtc();
     state = GarminSyncing(startedAt: now);
     final logger = AppLogger.instance;
@@ -60,6 +66,17 @@ mixin GarminSyncControllerSyncMixin
           if (fatalIssues.requiresReconnect) {
             await _clearStaleSession();
             logger.w('HealthOS Garmin stale session cleared after auth error');
+            if (allowCredentialRecovery) {
+              final recovered = await _recoverWithSavedCredentials(
+                logger: logger,
+              );
+              if (recovered) {
+                await _syncNow(window: window, allowCredentialRecovery: false);
+                return;
+              }
+              if (state is GarminPendingMfa) return;
+              if (state is GarminError) return;
+            }
           }
           logger.w(
             'HealthOS Garmin sync failed: ${fatalIssues.first.logLabel}',
@@ -69,6 +86,7 @@ mixin GarminSyncControllerSyncMixin
         }
       }
 
+      await _persistSession();
       logger.i('HealthOS Garmin sync success: totalMetrics=$totalPersisted');
       state = GarminConnected(lastSyncAt: now, totalMetrics: totalPersisted);
     } catch (e) {
@@ -76,6 +94,15 @@ mixin GarminSyncControllerSyncMixin
       final issue = GarminSyncIssue.fromLegacyMessage(e.toString());
       if (issue.requiresReconnect) {
         await _clearStaleSession();
+        if (allowCredentialRecovery) {
+          final recovered = await _recoverWithSavedCredentials(logger: logger);
+          if (recovered) {
+            await _syncNow(window: window, allowCredentialRecovery: false);
+            return;
+          }
+          if (state is GarminPendingMfa) return;
+          if (state is GarminError) return;
+        }
       }
       state = GarminError(issue);
     }

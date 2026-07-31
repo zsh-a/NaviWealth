@@ -218,6 +218,23 @@ class _Connected extends StatelessWidget {
               ),
           ],
         ),
+        const SizedBox(height: AppSpacing.s4),
+        Row(
+          children: [
+            Icon(
+              FLucideIcons.refreshCw,
+              size: AppIconSizes.xs,
+              color: context.theme.colors.foreground,
+            ),
+            const SizedBox(width: AppSpacing.s6),
+            Expanded(
+              child: Text(
+                l10n.healthGarminAutoRenewEnabled,
+                style: context.captionStyle,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: AppSpacing.s8),
         Row(
           children: [
@@ -420,6 +437,8 @@ String _issueMessage(AppLocalizations l10n, GarminSyncIssue issue) {
   switch (issue.code) {
     case 'auth_expired':
       return l10n.healthGarminErrorAuthExpired;
+    case 'credentials_invalid':
+      return l10n.healthGarminErrorCredentialsInvalid;
     case 'rate_limited':
       return l10n.healthGarminErrorRateLimited;
     case 'endpoint_unavailable':

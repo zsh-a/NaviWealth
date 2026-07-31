@@ -23141,6 +23141,24 @@ abstract class AppLocalizations {
   /// **'Password'**
   String get healthGarminPasswordLabel;
 
+  /// No description provided for @healthGarminRememberPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Securely save password'**
+  String get healthGarminRememberPassword;
+
+  /// No description provided for @healthGarminRememberPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted in this device’s Keychain or Keystore. Never synced.'**
+  String get healthGarminRememberPasswordHint;
+
+  /// No description provided for @healthGarminAutoRenewEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Session auto-renewal is on'**
+  String get healthGarminAutoRenewEnabled;
+
   /// No description provided for @healthGarminRegionLabel.
   ///
   /// In en, this message translates to:
@@ -23248,6 +23266,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Garmin session expired. Please reconnect your account.'**
   String get healthGarminErrorAuthExpired;
+
+  /// No description provided for @healthGarminErrorCredentialsInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Your saved Garmin password no longer works. Enter it again to reconnect.'**
+  String get healthGarminErrorCredentialsInvalid;
 
   /// No description provided for @healthGarminErrorRateLimited.
   ///
