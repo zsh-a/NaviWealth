@@ -22,12 +22,20 @@ class FinanceTradeProposalApplier {
     required this.journalEntryRepo,
     required this.priceRepo,
     required this.currentUserId,
+    this.openLotsReader,
   });
 
   final TradeEntryService tradeEntryService;
   final JournalEntryRepository journalEntryRepo;
   final PriceRepository priceRepo;
   final Future<String> Function() currentUserId;
+  final Future<List<Lot>> Function(
+    String ownerUserId,
+    String accountId,
+    String assetId,
+    DateTime asOf,
+  )?
+  openLotsReader;
 
   Future<ProposalApplyState> applyTrade(
     ReadyProposalPlan plan,
@@ -43,6 +51,7 @@ class FinanceTradeProposalApplier {
     final tradeDate = _parseDate(plan.get('trade_date')) ?? DateTime.now();
     final note = plan.get('note');
     final type = _parseTradeType(plan.get('type'));
+    final uid = await currentUserId();
 
     final asset = Asset(
       id: assetId,
@@ -64,14 +73,22 @@ class FinanceTradeProposalApplier {
       tradeDate: tradeDate,
       note: note,
     );
+    final openLots = type == TradeType.sell
+        ? await (openLotsReader?.call(
+                uid,
+                accountId,
+                assetId,
+                tradeDate.toUtc(),
+              ) ??
+              Future.value(const <Lot>[]))
+        : const <Lot>[];
     final tradePlan = await tradeEntryService.buildPlan(
       draft,
-      openLots: const <Lot>[],
+      openLots: openLots,
     );
     final tx = tradePlan.trade;
 
     if (type == TradeType.buy || type == TradeType.sell) {
-      final uid = await currentUserId();
       final cashAccountId = plan.get('counter_account_id') ?? accountId;
       final feeAccountId = AccountRepository.systemAccountIdForPath(
         'expense:trading:fee',
@@ -124,38 +141,26 @@ class FinanceTradeProposalApplier {
           'income:capitalGains',
           ownerUserId: uid,
         );
-        final pnl = tradePlan.realizedPnL;
-        Decimal costPerUnit;
-        String costCurrency;
-        String? sellLotId;
-        DateTime? sellAcquiredOn;
-        if (pnl.isNotEmpty) {
-          final first = pnl.first;
-          costPerUnit = first.quantity.sign != 0
-              ? (first.costBasis / first.quantity).toDecimal(
-                  scaleOnInfinitePrecision: 16,
-                )
-              : tx.price;
-          costCurrency = first.currency;
-          sellLotId = first.lotId;
-          sellAcquiredOn = first.lotOpenedAt;
-        } else {
-          costPerUnit = tx.price;
-          costCurrency = currency;
-        }
-        final build = JournalEntryBuilders.sell(
+        final build = JournalEntryBuilders.sellLots(
           date: tx.tradeDate,
           accountId: accountId,
           cashAccountId: cashAccountId,
           capitalGainsAccountId: capGainsAccountId,
           assetUnit: tx.assetId,
-          qty: tx.quantity,
+          allocations: [
+            for (final pnl in tradePlan.realizedPnL)
+              SellLotAllocation(
+                quantity: pnl.quantity,
+                costPerUnit: (pnl.costBasisInCostCurrency / pnl.quantity)
+                    .toDecimal(scaleOnInfinitePrecision: 16),
+                costCurrency: pnl.costCurrency,
+                costToQuoteRate: pnl.costToQuoteRate,
+                lotId: pnl.lotId,
+                acquiredOn: pnl.lotOpenedAt,
+              ),
+          ],
           price: tx.price,
           quoteCurrency: currency,
-          costPerUnit: costPerUnit,
-          costCurrency: costCurrency,
-          lotId: sellLotId,
-          acquiredOn: sellAcquiredOn,
           feeAmount: tx.fee,
           feeAccountId: tx.fee != null ? feeAccountId : null,
           feeCurrency: tx.fee != null ? currency : null,
@@ -185,7 +190,6 @@ class FinanceTradeProposalApplier {
       }
     }
 
-    final uid = await currentUserId();
     final equityAccountId = AccountRepository.systemAccountIdForPath(
       'equity:adjustments',
       ownerUserId: uid,

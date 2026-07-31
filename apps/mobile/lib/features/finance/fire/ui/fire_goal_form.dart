@@ -7,16 +7,14 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-import '../data/fire_goal_preferences.dart';
-import '../data/fire_plan_preferences.dart';
-import '../domain/fire_goal.dart';
+import '../data/fire_providers.dart';
 import '../domain/fire_plan.dart';
 
 /// Bottom-sheet form for the FIRE goal inputs.
 ///
 /// Open with [showFireGoalSheet] — the sheet pulls the current goal from
-/// [fireGoalProvider], lets the user edit it, and persists via
-/// [FireGoalController.save] on submit. Cancellation discards changes.
+/// [firePlanProvider], lets the user edit it, and persists the complete synced
+/// plan on submit. Cancellation discards changes.
 Future<void> showFireGoalSheet(BuildContext context) {
   return showGuardedFormSheet<void>(
     context: context,
@@ -47,23 +45,22 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
   @override
   void initState() {
     super.initState();
-    final goal = ref.read(fireGoalProvider);
-    final extras = ref.read(firePlanExtrasProvider);
+    final plan = ref.read(firePlanProvider);
     _targetCtrl = TextEditingController(
-      text: _decimalToText(goal.targetAmount),
+      text: _decimalToText(plan.targetNetWorth),
     );
     _expensesCtrl = TextEditingController(
-      text: _decimalToText(goal.monthlyExpenses),
+      text: _decimalToText(plan.monthlyExpenses),
     );
     _surplusCtrl = TextEditingController(
-      text: _decimalToText(goal.monthlySurplus),
+      text: _decimalToText(plan.monthlySurplus),
     );
     _cashBucketCtrl = TextEditingController(
-      text: extras.targetCashBucketMonths.toString(),
+      text: plan.targetCashBucketMonths.toString(),
     );
-    _inflation = goal.inflationRate;
-    _swr = extras.safeWithdrawalRate;
-    _lifestyleMode = extras.lifestyleMode;
+    _inflation = plan.inflationRate;
+    _swr = plan.safeWithdrawalRate;
+    _lifestyleMode = plan.lifestyleMode;
     // Controllers were just seeded from the saved goal — that baseline
     // is not a user edit.
     widget.dirty.bindTextControllers([
@@ -228,23 +225,20 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
     setState(() => _saving = true);
     widget.dirty.busy = true;
     try {
-      final goal = FireGoal(
-        targetAmount: _parseDecimal(_targetCtrl.text),
-        monthlyExpenses: _parseDecimal(_expensesCtrl.text),
-        monthlySurplus: _parseDecimal(_surplusCtrl.text),
-        inflationRate: _inflation,
-      );
-      final extras = ref.read(firePlanExtrasProvider);
+      final current = ref.read(firePlanProvider);
       final cashMonths =
           int.tryParse(_cashBucketCtrl.text.trim()) ??
           FirePlan.defaultCashBucketMonths;
-      final updatedExtras = extras.copyWith(
+      final updated = current.copyWith(
+        targetNetWorth: _parseDecimal(_targetCtrl.text),
+        monthlyExpenses: _parseDecimal(_expensesCtrl.text),
+        monthlySurplus: _parseDecimal(_surplusCtrl.text),
+        inflationRate: _inflation,
         safeWithdrawalRate: _swr,
         targetCashBucketMonths: cashMonths,
         lifestyleMode: _lifestyleMode,
       );
-      await ref.read(fireGoalProvider.notifier).save(goal);
-      await ref.read(firePlanExtrasProvider.notifier).save(updatedExtras);
+      await saveFirePlan(ref, updated);
       if (!mounted) return;
       widget.dirty.markPristine();
       AppInteraction.signal(AppInteractionIntent.success);

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
@@ -17,7 +18,7 @@ import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
-import 'package:naviwealth/features/finance/fire/data/fire_goal_preferences.dart';
+import 'package:naviwealth/features/finance/fire/data/fire_plan_repository.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_calculator.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_goal.dart';
@@ -32,6 +33,9 @@ import 'package:naviwealth/features/finance/investment/domain/models/holding_sna
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../core/persistence/test_database.dart';
+import '../../data/repositories/_stub_stamper.dart';
 
 SyncMeta _meta() => SyncMeta(
   ownerUserId: 'u',
@@ -85,6 +89,9 @@ Future<Widget> _wrap({
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
+      firePlanProvider.overrideWith(
+        (ref) => FirePlan.fromGoal(resolvedGoal, baseCurrency: 'CNY'),
+      ),
       fireDashboardViewProvider.overrideWith(
         (ref) => AsyncValue.data(_view(resolvedGoal, currentNetWorth: nw)),
       ),
@@ -209,11 +216,21 @@ void main() {
 
   testWidgets('saves a goal entered in the goal sheet', (tester) async {
     final prefs = await SharedPreferences.getInstance();
-    late ProviderContainer container;
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final repo = FirePlanRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+      stamper: makeStubStamper(userId: 'u-fire'),
+    );
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
+          firePlanRepositoryProvider.overrideWith((ref) async => repo),
+          persistedFirePlanProvider.overrideWith(
+            (ref) => Stream<FirePlan?>.value(null),
+          ),
           fireDashboardViewProvider.overrideWith(
             (ref) => AsyncValue.data(_view(FireGoal.unset())),
           ),
@@ -247,12 +264,7 @@ void main() {
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: Consumer(
-            builder: (context, ref, _) {
-              container = ProviderScope.containerOf(context, listen: false);
-              return const FirePage();
-            },
-          ),
+          home: const FirePage(),
         ),
       ),
     );
@@ -268,10 +280,12 @@ void main() {
     await tester.tap(find.text('Save'));
     await _pumpFrames(tester);
 
-    final saved = container.read(fireGoalProvider);
+    final saved = (await repo.get('u-fire'))!.toGoal();
     expect(saved.isConfigured, isTrue);
     expect(saved.targetAmount, Decimal.parse('500000'));
     expect(saved, isNot(equals(FireGoal.unset())));
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
   });
 }
 

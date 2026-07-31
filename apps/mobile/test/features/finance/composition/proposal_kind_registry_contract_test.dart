@@ -14,6 +14,10 @@ void main() {
       'propose_expense',
     );
     expect(kFinanceProposalKinds.metaFor('income')!.toolName, 'propose_income');
+    expect(
+      kFinanceProposalKinds.metaFor('transfer')!.toolName,
+      'propose_transfer',
+    );
     expect(kFinanceProposalKinds.metaFor('trade')!.toolName, 'propose_trade');
     expect(
       kFinanceProposalKinds.metaFor('options_journal_entry')!.toolName,

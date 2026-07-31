@@ -4,26 +4,26 @@ import 'package:naviwealth/features/finance/activation/domain/finance_activation
 import 'package:naviwealth/features/finance/runway/domain/money_runway.dart';
 
 void main() {
-  test('activation follows real import, review, and runway evidence', () {
+  test('activation follows ledger, review, and runway evidence', () {
     expect(
       buildFinanceActivation(
-        confirmedImportCount: 0,
+        hasLedgerData: false,
         pendingReviewCount: 0,
         runway: null,
       ).stage,
-      FinanceActivationStage.importData,
+      FinanceActivationStage.addData,
     );
     expect(
       buildFinanceActivation(
-        confirmedImportCount: 0,
+        hasLedgerData: false,
         pendingReviewCount: 2,
         runway: null,
       ).stage,
-      FinanceActivationStage.reviewImport,
+      FinanceActivationStage.reviewData,
     );
     expect(
       buildFinanceActivation(
-        confirmedImportCount: 2,
+        hasLedgerData: true,
         pendingReviewCount: 0,
         runway: null,
       ).stage,
@@ -31,12 +31,23 @@ void main() {
     );
 
     final completed = buildFinanceActivation(
-      confirmedImportCount: 2,
+      hasLedgerData: true,
       pendingReviewCount: 0,
       runway: _runway(),
     );
     expect(completed.stage, FinanceActivationStage.complete);
     expect(completed.completedSteps, FinanceActivationSnapshot.totalSteps);
+  });
+
+  test('manual ledger data satisfies the first activation step', () {
+    final snapshot = buildFinanceActivation(
+      hasLedgerData: true,
+      pendingReviewCount: 0,
+      runway: null,
+    );
+
+    expect(snapshot.stage, FinanceActivationStage.reviewRunway);
+    expect(snapshot.completedSteps, 2);
   });
 }
 

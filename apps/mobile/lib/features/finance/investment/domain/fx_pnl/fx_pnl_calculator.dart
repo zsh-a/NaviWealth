@@ -66,16 +66,16 @@ class FxPnLCalculator {
 
   /// Realized P&L decomposition for one [RealizedPnL] record.
   ///
-  /// The market leg is `(proceeds - fees - cost)` (all in asset currency)
-  /// converted at the sell-day FX. The FX leg revalues the cost basis from
-  /// the lot's open day to the sell day. Together they sum to
-  /// `proceeds_at_sell_fx - cost_at_open_fx - fees_at_sell_fx` in base.
+  /// The market leg converts the quote-currency gain at sell-day FX. The FX
+  /// leg revalues the original cost-currency basis from lot open to sell.
+  /// This also handles a lot bought in one currency and sold in another.
   FxPnLBreakdown realized(RealizedPnL r) {
-    final fxOpened = _rateAssetToBase(r.currency, on: r.lotOpenedAt);
-    final fxRealized = _rateAssetToBase(r.currency, on: r.realizedAt);
-    final marketGainAsset = r.gain; // proceeds - fees - cost
-    final marketPnLInBase = marketGainAsset * fxRealized;
-    final fxPnLInBase = r.costBasis * (fxRealized - fxOpened);
+    final costFxOpened = _rateAssetToBase(r.costCurrency, on: r.lotOpenedAt);
+    final costFxRealized = _rateAssetToBase(r.costCurrency, on: r.realizedAt);
+    final quoteFxRealized = _rateAssetToBase(r.currency, on: r.realizedAt);
+    final marketPnLInBase = r.gain * quoteFxRealized;
+    final fxPnLInBase =
+        r.costBasisInCostCurrency * (costFxRealized - costFxOpened);
     return FxPnLBreakdown(
       marketPnLInBase: marketPnLInBase,
       fxPnLInBase: fxPnLInBase,

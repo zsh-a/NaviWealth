@@ -10,6 +10,7 @@ library;
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/finance/application/finance_core_proposal_applier.dart';
 import 'package:naviwealth/features/finance/application/finance_trade_proposal_applier.dart';
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
@@ -21,7 +22,9 @@ import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/expense/data/expense_category_providers.dart';
 import 'package:naviwealth/features/finance/expense/data/expense_category_repository.dart';
 import 'package:naviwealth/features/finance/fire/application/fire_proposal_applier.dart';
+import 'package:naviwealth/features/finance/investment/data/ledger_lot_reader.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_service.dart';
 import 'package:naviwealth/features/finance/liabilities/data/liability_repository.dart';
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
@@ -59,6 +62,7 @@ class FinanceProposalApplier implements ProposalApplier {
     required this.optionsApplier,
     required this.fireApplier,
     required this.currentUserId,
+    this.openLotsReader,
     this.aiTouchedStore,
   }) : coreApplier = FinanceCoreProposalApplier(
          journalEntryRepo: journalEntryRepo,
@@ -73,6 +77,7 @@ class FinanceProposalApplier implements ProposalApplier {
          journalEntryRepo: journalEntryRepo,
          priceRepo: priceRepo,
          currentUserId: currentUserId,
+         openLotsReader: openLotsReader,
        );
 
   final JournalEntryRepository journalEntryRepo;
@@ -97,6 +102,13 @@ class FinanceProposalApplier implements ProposalApplier {
   /// to that lookup so the applier never disagrees with the repo
   /// about the active user.
   final Future<String> Function() currentUserId;
+  final Future<List<Lot>> Function(
+    String ownerUserId,
+    String accountId,
+    String assetId,
+    DateTime asOf,
+  )?
+  openLotsReader;
 
   /// Run the compensating write encoded in [state]. No-op if [state] isn't
   /// in the `applied` status.
@@ -146,6 +158,7 @@ class FinanceProposalApplier implements ProposalApplier {
         'trade' => await tradeApplier.applyTrade(plan, at),
         'expense' => await coreApplier.applyExpense(plan, at),
         'income' => await coreApplier.applyIncome(plan, at),
+        'transfer' => await coreApplier.applyTransfer(plan, at),
         'liability_payment' => await coreApplier.applyLiabilityPayment(
           plan,
           at,
@@ -216,6 +229,8 @@ final financeProposalApplierProvider = FutureProvider<ProposalApplier>((
   ref,
 ) async {
   final tradeService = await ref.watch(tradeEntryServiceProvider.future);
+  final db = await ref.watch(appDatabaseProvider.future);
+  final lotReader = LedgerLotReader(db);
   final journalEntryRepo = await ref.watch(
     journalEntryRepositoryProvider.future,
   );
@@ -259,6 +274,12 @@ final financeProposalApplierProvider = FutureProvider<ProposalApplier>((
     ),
     fireApplier: fireApplier,
     currentUserId: currentUserId,
+    openLotsReader: (ownerUserId, accountId, assetId, asOf) => lotReader.lotsAt(
+      ownerUserId: ownerUserId,
+      accountId: accountId,
+      assetId: assetId,
+      asOf: asOf,
+    ),
     aiTouchedStore: touched,
   );
 });

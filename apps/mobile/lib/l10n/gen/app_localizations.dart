@@ -5741,6 +5741,94 @@ abstract class AppLocalizations {
   /// **'Holdings excluded from totals'**
   String get dashboardCurrencyMismatchSheetTitle;
 
+  /// No description provided for @dashboardValuationTrustMissingFx.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 holding excluded — missing FX to {currency}} other{{count} holdings excluded — missing FX to {currency}}}'**
+  String dashboardValuationTrustMissingFx(int count, String currency);
+
+  /// No description provided for @dashboardValuationTrustWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'{staleCount, plural, =0{{quality} valuation · as of {asOf}} one{1 stale holding · {quality} · as of {asOf}} other{{staleCount} stale holdings · {quality} · as of {asOf}}}'**
+  String dashboardValuationTrustWarning(
+    int staleCount,
+    String quality,
+    String asOf,
+  );
+
+  /// No description provided for @dashboardValuationTrustReady.
+  ///
+  /// In en, this message translates to:
+  /// **'{quality} valuation · as of {asOf}'**
+  String dashboardValuationTrustReady(String quality, String asOf);
+
+  /// No description provided for @dashboardValuationTrustAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get dashboardValuationTrustAction;
+
+  /// No description provided for @dashboardValuationTrustSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Valuation confidence'**
+  String get dashboardValuationTrustSheetTitle;
+
+  /// No description provided for @dashboardValuationTrustQuality.
+  ///
+  /// In en, this message translates to:
+  /// **'Quality: {quality}'**
+  String dashboardValuationTrustQuality(String quality);
+
+  /// No description provided for @dashboardValuationTrustAsOf.
+  ///
+  /// In en, this message translates to:
+  /// **'As of {asOf}'**
+  String dashboardValuationTrustAsOf(String asOf);
+
+  /// No description provided for @dashboardValuationTrustStale.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 holding has a stale price} other{{count} holdings have stale prices}}'**
+  String dashboardValuationTrustStale(int count);
+
+  /// No description provided for @dashboardValuationQualityRealTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Real-time'**
+  String get dashboardValuationQualityRealTime;
+
+  /// No description provided for @dashboardValuationQualityDelayed.
+  ///
+  /// In en, this message translates to:
+  /// **'Delayed'**
+  String get dashboardValuationQualityDelayed;
+
+  /// No description provided for @dashboardValuationQualityDailyClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily close'**
+  String get dashboardValuationQualityDailyClose;
+
+  /// No description provided for @dashboardValuationQualityManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get dashboardValuationQualityManual;
+
+  /// No description provided for @dashboardValuationQualityEstimated.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated'**
+  String get dashboardValuationQualityEstimated;
+
+  /// No description provided for @dashboardValuationQualityStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Stale'**
+  String get dashboardValuationQualityStale;
+
   /// No description provided for @settingsAboutTitle.
   ///
   /// In en, this message translates to:
@@ -10887,6 +10975,12 @@ abstract class AppLocalizations {
   /// **'Income'**
   String get aiChatProposalKindIncome;
 
+  /// No description provided for @aiChatProposalKindTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get aiChatProposalKindTransfer;
+
   /// No description provided for @aiChatProposalKindLiabilityPayment.
   ///
   /// In en, this message translates to:
@@ -11145,6 +11239,12 @@ abstract class AppLocalizations {
   /// **'Amount'**
   String get aiChatFieldAmount;
 
+  /// No description provided for @aiChatFieldDestinationAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination amount'**
+  String get aiChatFieldDestinationAmount;
+
   /// No description provided for @aiChatFieldDate.
   ///
   /// In en, this message translates to:
@@ -11192,6 +11292,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Account'**
   String get aiChatRowAccount;
+
+  /// No description provided for @aiChatRowFromAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'From account'**
+  String get aiChatRowFromAccount;
+
+  /// No description provided for @aiChatRowToAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'To account'**
+  String get aiChatRowToAccount;
+
+  /// No description provided for @aiChatRowDestinationAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination amount'**
+  String get aiChatRowDestinationAmount;
 
   /// No description provided for @aiChatRowQuantity.
   ///
@@ -26970,23 +27088,23 @@ abstract class AppLocalizations {
   /// **'{completed}/{total}'**
   String financeActivationProgress(int completed, int total);
 
-  /// No description provided for @financeActivationImportTitle.
+  /// No description provided for @financeActivationDataTitle.
   ///
   /// In en, this message translates to:
   /// **'Start with real activity'**
-  String get financeActivationImportTitle;
+  String get financeActivationDataTitle;
 
-  /// No description provided for @financeActivationImportBody.
+  /// No description provided for @financeActivationDataBody.
   ///
   /// In en, this message translates to:
-  /// **'Import a statement so the result is grounded in your own data.'**
-  String get financeActivationImportBody;
+  /// **'Add an entry manually or import a statement so the result is grounded in your own data.'**
+  String get financeActivationDataBody;
 
-  /// No description provided for @financeActivationImportAction.
+  /// No description provided for @financeActivationDataAction.
   ///
   /// In en, this message translates to:
-  /// **'Import statement'**
-  String get financeActivationImportAction;
+  /// **'Add financial data'**
+  String get financeActivationDataAction;
 
   /// No description provided for @financeActivationReviewTitle.
   ///
@@ -27015,7 +27133,7 @@ abstract class AppLocalizations {
   /// No description provided for @financeActivationRunwayBody.
   ///
   /// In en, this message translates to:
-  /// **'Your reviewed entries are ready. Verify the resulting cash runway and its missing data.'**
+  /// **'Your entries are ready. Verify the resulting cash runway and its missing data.'**
   String get financeActivationRunwayBody;
 
   /// No description provided for @financeActivationRunwayAction.

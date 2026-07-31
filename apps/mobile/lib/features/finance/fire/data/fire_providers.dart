@@ -1,6 +1,9 @@
 import 'package:collection/collection.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
+import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/budget_signal.dart';
@@ -19,9 +22,25 @@ import '../domain/fire_state.dart';
 import '../domain/fire_state_service.dart';
 import '../domain/fire_stress_test.dart';
 import '../domain/fire_stress_test_engine.dart';
-import 'fire_goal_preferences.dart';
-import 'fire_plan_preferences.dart';
+import 'fire_plan_repository.dart';
 import 'fire_review_cache.dart';
+
+final firePlanRepositoryProvider = FutureProvider<FirePlanRepository>((
+  ref,
+) async {
+  final db = await ref.watch(appDatabaseProvider.future);
+  final outbox = await ref.watch(outboxStoreProvider.future);
+  final stamper = await ref.watch(mutationStamperProvider.future);
+  return FirePlanRepository(db: db, outbox: outbox, stamper: stamper);
+});
+
+final persistedFirePlanProvider = StreamProvider.autoDispose<FirePlan?>((
+  ref,
+) async* {
+  final repo = await ref.watch(firePlanRepositoryProvider.future);
+  final ownerUserId = await ref.watch(currentUserIdProvider)();
+  yield* repo.watch(ownerUserId);
+});
 
 /// User's actual annualized return, sourced from the portfolio XIRR engine
 /// when the production wiring lands. Keeping it as a stand-alone provider lets
@@ -85,23 +104,24 @@ final fireDashboardViewProvider = Provider<AsyncValue<FireDashboardView>>((
   );
 });
 
-/// Composed [FirePlan] = legacy `FireGoal` fields + FIRE-OS extras +
-/// active base currency. Watching this provider gives a single
-/// source-of-truth for FIRE planning input across the UI and AI tools.
+/// Synchronous projection of the recoverable plan stream.
+///
+/// Consumers keep the established ergonomic contract while the first Drift
+/// read resolves; an unset plan is shown during that short window.
 final firePlanProvider = Provider<FirePlan>((ref) {
-  final goal = ref.watch(fireGoalProvider);
-  final extras = ref.watch(firePlanExtrasProvider);
   final baseCurrency = ref.watch(dashboardBaseCurrencyProvider);
-  return FirePlan.fromGoal(
-    goal,
-    baseCurrency: baseCurrency,
-    safeWithdrawalRate: extras.safeWithdrawalRate,
-    targetCashBucketMonths: extras.targetCashBucketMonths,
-    lifestyleMode: extras.lifestyleMode,
-    reserves: extras.reserves,
-    riskSettings: extras.riskSettings,
-  );
+  final persisted = ref.watch(persistedFirePlanProvider).value;
+  if (persisted == null) return FirePlan.unset(baseCurrency: baseCurrency);
+  return persisted.baseCurrency == baseCurrency
+      ? persisted
+      : persisted.copyWith(baseCurrency: baseCurrency);
 });
+
+/// Legacy calculator input remains a derived view, not a second persisted
+/// source of truth.
+final fireGoalProvider = Provider(
+  (ref) => ref.watch(firePlanProvider).toGoal(),
+);
 
 /// The FIRE OS read model. Recomputes whenever the plan, the dashboard
 /// snapshot, the trailing cashflow summary, or the projection changes.
@@ -243,41 +263,17 @@ Future<void> saveLiveReviewWithRef(Ref ref, FireReviewKind kind) async {
   await ref.read(fireReviewCacheProvider.notifier).upsert(review);
 }
 
-/// Save a full [FirePlan] across the two storage halves: the shared
-/// `FireGoal` fields go through [FireGoalController]; the FIRE-OS extras
-/// through [FirePlanExtrasController]. AI propose-and-apply (Phase 5)
-/// funnels through this helper so the diff that lands matches the diff
-/// the user confirmed.
+/// Save the complete user-authored plan through the synced singleton.
 Future<void> saveFirePlan(WidgetRef ref, FirePlan plan) async {
-  await ref.read(fireGoalProvider.notifier).save(plan.toGoal());
-  await ref
-      .read(firePlanExtrasProvider.notifier)
-      .save(
-        FirePlanExtras(
-          safeWithdrawalRate: plan.safeWithdrawalRate,
-          targetCashBucketMonths: plan.targetCashBucketMonths,
-          lifestyleMode: plan.lifestyleMode,
-          reserves: plan.reserves,
-          riskSettings: plan.riskSettings,
-        ),
-      );
+  final repo = await ref.read(firePlanRepositoryProvider.future);
+  await repo.upsert(plan);
 }
 
 /// Variant of [saveFirePlan] for code paths that only hold a [Ref]
 /// (Riverpod listeners, AI tool dispatch). Has the same semantics.
 Future<void> saveFirePlanWithRef(Ref ref, FirePlan plan) async {
-  await ref.read(fireGoalProvider.notifier).save(plan.toGoal());
-  await ref
-      .read(firePlanExtrasProvider.notifier)
-      .save(
-        FirePlanExtras(
-          safeWithdrawalRate: plan.safeWithdrawalRate,
-          targetCashBucketMonths: plan.targetCashBucketMonths,
-          lifestyleMode: plan.lifestyleMode,
-          reserves: plan.reserves,
-          riskSettings: plan.riskSettings,
-        ),
-      );
+  final repo = await ref.read(firePlanRepositoryProvider.future);
+  await repo.upsert(plan);
 }
 
 // =====================================================================

@@ -1,7 +1,7 @@
 /// Advanced sub-page for tuning the FIRE stress-test parameters.
 ///
 /// Until this page existed, `FireRiskSettings` was an orphan: persisted
-/// through `firePlanExtrasProvider`, JSON-encoded, consumed by the
+/// through `firePlanProvider`, consumed by the
 /// stress-test engine — yet nowhere in the UI could the user actually
 /// change its four knobs. The FIRE stress card shipped showing
 /// "drawdown 35% · expense +20% · fx 10%" without ever letting the
@@ -16,7 +16,6 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/features/finance/fire/data/fire_plan_preferences.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_plan.dart';
 
@@ -55,14 +54,12 @@ class FireStressSettings extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final extras = ref.watch(firePlanExtrasProvider);
-    final risk = extras.riskSettings;
-    final baseCurrency = ref.watch(firePlanProvider).baseCurrency;
+    final plan = ref.watch(firePlanProvider);
+    final risk = plan.riskSettings;
+    final baseCurrency = plan.baseCurrency;
 
     void update(FireRiskSettings next) {
-      ref
-          .read(firePlanExtrasProvider.notifier)
-          .save(extras.copyWith(riskSettings: next));
+      saveFirePlan(ref, plan.copyWith(riskSettings: next));
     }
 
     return Column(

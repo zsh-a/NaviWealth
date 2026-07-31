@@ -6,7 +6,7 @@ import 'package:naviwealth/features/finance/analytics/data/risk_threshold_prefer
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
 import 'package:naviwealth/features/finance/expense/data/expense_report_providers.dart';
-import 'package:naviwealth/features/finance/fire/data/fire_plan_preferences.dart';
+import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_plan.dart';
 
 import '../../../../core/forms/currency_picker.dart';
@@ -327,7 +327,7 @@ class _StressTestLink extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final risk = ref.watch(firePlanExtrasProvider).riskSettings;
+    final risk = ref.watch(firePlanProvider).riskSettings;
     final isCustom = risk != const FireRiskSettings();
     return InlineLinkRow(
       icon: FLucideIcons.flaskConical,

@@ -1,5 +1,27 @@
 part of 'tables.dart';
 
+/// Recoverable per-user FIRE planning input.
+///
+/// Derived projections, stress-test results and reviews remain read models;
+/// only user-authored assumptions are synced and included in backups.
+@DataClassName('FirePlanRow')
+class FirePlans extends Table with SyncableTable {
+  TextColumn get userId => text()();
+  TextColumn get baseCurrency => text()();
+  TextColumn get monthlyExpenses => text().map(const DecimalConverter())();
+  TextColumn get monthlySurplus => text().map(const DecimalConverter())();
+  RealColumn get inflationRate => real()();
+  TextColumn get targetNetWorth => text().map(const DecimalConverter())();
+  RealColumn get safeWithdrawalRate => real()();
+  IntColumn get targetCashBucketMonths => integer()();
+  TextColumn get lifestyleMode => text()();
+  TextColumn get reservesJson => text().withDefault(const Constant('[]'))();
+  TextColumn get riskSettingsJson => text().withDefault(const Constant('{}'))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {userId};
+}
+
 /// A durable decision envelope. Domain-specific inputs and deterministic
 /// outputs stay versioned JSON so adding a scenario template does not require
 /// widening the table.

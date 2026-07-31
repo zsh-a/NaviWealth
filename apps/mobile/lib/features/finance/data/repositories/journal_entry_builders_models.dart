@@ -19,6 +19,7 @@ final class SellLotAllocation {
     required this.quantity,
     required this.costPerUnit,
     required this.costCurrency,
+    this.costToQuoteRate,
     this.lotId,
     this.acquiredOn,
   });
@@ -26,6 +27,10 @@ final class SellLotAllocation {
   final Decimal quantity;
   final Decimal costPerUnit;
   final String costCurrency;
+
+  /// Sell-date conversion for one [costCurrency] unit into the sale quote
+  /// currency. Required only when the lot and sale use different currencies.
+  final Decimal? costToQuoteRate;
   final String? lotId;
   final DateTime? acquiredOn;
 }

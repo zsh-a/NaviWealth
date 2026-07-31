@@ -96,6 +96,7 @@ final class AppDatabaseTransactionScope {
     PortfolioStrategyConfigs,
     PortfolioRebalanceGroups,
     PortfolioCapitalAssignments,
+    FirePlans,
     FinancialDecisions,
     DcaPlans,
     FinancialSignals,
@@ -153,7 +154,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 69;
+  int get schemaVersion => 70;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1040,6 +1041,13 @@ class AppDatabase extends _$AppDatabase {
           'owner_user_id, portfolio_id, assigned_at, unassigned_at'
           ') WHERE deleted_at IS NULL',
         );
+      }
+      // v69 -> v70: FIRE assumptions become a recoverable, synced singleton
+      // instead of two unrelated SharedPreferences payloads. Compatibility
+      // migration is intentionally omitted; the new row is the only source
+      // of truth.
+      if (from < 70) {
+        await m.createTable(firePlans);
       }
     },
     beforeOpen: (details) async {

@@ -25953,6 +25953,976 @@ class PortfolioCapitalAssignmentsCompanion
   }
 }
 
+class $FirePlansTable extends FirePlans
+    with TableInfo<$FirePlansTable, FirePlanRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FirePlansTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($FirePlansTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _baseCurrencyMeta = const VerificationMeta(
+    'baseCurrency',
+  );
+  @override
+  late final GeneratedColumn<String> baseCurrency = GeneratedColumn<String>(
+    'base_currency',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> monthlyExpenses =
+      GeneratedColumn<String>(
+        'monthly_expenses',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>($FirePlansTable.$convertermonthlyExpenses);
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> monthlySurplus =
+      GeneratedColumn<String>(
+        'monthly_surplus',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>($FirePlansTable.$convertermonthlySurplus);
+  static const VerificationMeta _inflationRateMeta = const VerificationMeta(
+    'inflationRate',
+  );
+  @override
+  late final GeneratedColumn<double> inflationRate = GeneratedColumn<double>(
+    'inflation_rate',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> targetNetWorth =
+      GeneratedColumn<String>(
+        'target_net_worth',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>($FirePlansTable.$convertertargetNetWorth);
+  static const VerificationMeta _safeWithdrawalRateMeta =
+      const VerificationMeta('safeWithdrawalRate');
+  @override
+  late final GeneratedColumn<double> safeWithdrawalRate =
+      GeneratedColumn<double>(
+        'safe_withdrawal_rate',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _targetCashBucketMonthsMeta =
+      const VerificationMeta('targetCashBucketMonths');
+  @override
+  late final GeneratedColumn<int> targetCashBucketMonths = GeneratedColumn<int>(
+    'target_cash_bucket_months',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lifestyleModeMeta = const VerificationMeta(
+    'lifestyleMode',
+  );
+  @override
+  late final GeneratedColumn<String> lifestyleMode = GeneratedColumn<String>(
+    'lifestyle_mode',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _reservesJsonMeta = const VerificationMeta(
+    'reservesJson',
+  );
+  @override
+  late final GeneratedColumn<String> reservesJson = GeneratedColumn<String>(
+    'reserves_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _riskSettingsJsonMeta = const VerificationMeta(
+    'riskSettingsJson',
+  );
+  @override
+  late final GeneratedColumn<String> riskSettingsJson = GeneratedColumn<String>(
+    'risk_settings_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    userId,
+    baseCurrency,
+    monthlyExpenses,
+    monthlySurplus,
+    inflationRate,
+    targetNetWorth,
+    safeWithdrawalRate,
+    targetCashBucketMonths,
+    lifestyleMode,
+    reservesJson,
+    riskSettingsJson,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'fire_plans';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FirePlanRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('base_currency')) {
+      context.handle(
+        _baseCurrencyMeta,
+        baseCurrency.isAcceptableOrUnknown(
+          data['base_currency']!,
+          _baseCurrencyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_baseCurrencyMeta);
+    }
+    if (data.containsKey('inflation_rate')) {
+      context.handle(
+        _inflationRateMeta,
+        inflationRate.isAcceptableOrUnknown(
+          data['inflation_rate']!,
+          _inflationRateMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_inflationRateMeta);
+    }
+    if (data.containsKey('safe_withdrawal_rate')) {
+      context.handle(
+        _safeWithdrawalRateMeta,
+        safeWithdrawalRate.isAcceptableOrUnknown(
+          data['safe_withdrawal_rate']!,
+          _safeWithdrawalRateMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_safeWithdrawalRateMeta);
+    }
+    if (data.containsKey('target_cash_bucket_months')) {
+      context.handle(
+        _targetCashBucketMonthsMeta,
+        targetCashBucketMonths.isAcceptableOrUnknown(
+          data['target_cash_bucket_months']!,
+          _targetCashBucketMonthsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_targetCashBucketMonthsMeta);
+    }
+    if (data.containsKey('lifestyle_mode')) {
+      context.handle(
+        _lifestyleModeMeta,
+        lifestyleMode.isAcceptableOrUnknown(
+          data['lifestyle_mode']!,
+          _lifestyleModeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_lifestyleModeMeta);
+    }
+    if (data.containsKey('reserves_json')) {
+      context.handle(
+        _reservesJsonMeta,
+        reservesJson.isAcceptableOrUnknown(
+          data['reserves_json']!,
+          _reservesJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('risk_settings_json')) {
+      context.handle(
+        _riskSettingsJsonMeta,
+        riskSettingsJson.isAcceptableOrUnknown(
+          data['risk_settings_json']!,
+          _riskSettingsJsonMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {userId};
+  @override
+  FirePlanRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FirePlanRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $FirePlansTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      baseCurrency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}base_currency'],
+      )!,
+      monthlyExpenses: $FirePlansTable.$convertermonthlyExpenses.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}monthly_expenses'],
+        )!,
+      ),
+      monthlySurplus: $FirePlansTable.$convertermonthlySurplus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}monthly_surplus'],
+        )!,
+      ),
+      inflationRate: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}inflation_rate'],
+      )!,
+      targetNetWorth: $FirePlansTable.$convertertargetNetWorth.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}target_net_worth'],
+        )!,
+      ),
+      safeWithdrawalRate: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}safe_withdrawal_rate'],
+      )!,
+      targetCashBucketMonths: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}target_cash_bucket_months'],
+      )!,
+      lifestyleMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}lifestyle_mode'],
+      )!,
+      reservesJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reserves_json'],
+      )!,
+      riskSettingsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}risk_settings_json'],
+      )!,
+    );
+  }
+
+  @override
+  $FirePlansTable createAlias(String alias) {
+    return $FirePlansTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+  static TypeConverter<Decimal, String> $convertermonthlyExpenses =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $convertermonthlySurplus =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $convertertargetNetWorth =
+      const DecimalConverter();
+}
+
+class FirePlanRow extends DataClass implements Insertable<FirePlanRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String userId;
+  final String baseCurrency;
+  final Decimal monthlyExpenses;
+  final Decimal monthlySurplus;
+  final double inflationRate;
+  final Decimal targetNetWorth;
+  final double safeWithdrawalRate;
+  final int targetCashBucketMonths;
+  final String lifestyleMode;
+  final String reservesJson;
+  final String riskSettingsJson;
+  const FirePlanRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.userId,
+    required this.baseCurrency,
+    required this.monthlyExpenses,
+    required this.monthlySurplus,
+    required this.inflationRate,
+    required this.targetNetWorth,
+    required this.safeWithdrawalRate,
+    required this.targetCashBucketMonths,
+    required this.lifestyleMode,
+    required this.reservesJson,
+    required this.riskSettingsJson,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>($FirePlansTable.$converterhlc.toSql(hlc));
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['user_id'] = Variable<String>(userId);
+    map['base_currency'] = Variable<String>(baseCurrency);
+    {
+      map['monthly_expenses'] = Variable<String>(
+        $FirePlansTable.$convertermonthlyExpenses.toSql(monthlyExpenses),
+      );
+    }
+    {
+      map['monthly_surplus'] = Variable<String>(
+        $FirePlansTable.$convertermonthlySurplus.toSql(monthlySurplus),
+      );
+    }
+    map['inflation_rate'] = Variable<double>(inflationRate);
+    {
+      map['target_net_worth'] = Variable<String>(
+        $FirePlansTable.$convertertargetNetWorth.toSql(targetNetWorth),
+      );
+    }
+    map['safe_withdrawal_rate'] = Variable<double>(safeWithdrawalRate);
+    map['target_cash_bucket_months'] = Variable<int>(targetCashBucketMonths);
+    map['lifestyle_mode'] = Variable<String>(lifestyleMode);
+    map['reserves_json'] = Variable<String>(reservesJson);
+    map['risk_settings_json'] = Variable<String>(riskSettingsJson);
+    return map;
+  }
+
+  FirePlansCompanion toCompanion(bool nullToAbsent) {
+    return FirePlansCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      userId: Value(userId),
+      baseCurrency: Value(baseCurrency),
+      monthlyExpenses: Value(monthlyExpenses),
+      monthlySurplus: Value(monthlySurplus),
+      inflationRate: Value(inflationRate),
+      targetNetWorth: Value(targetNetWorth),
+      safeWithdrawalRate: Value(safeWithdrawalRate),
+      targetCashBucketMonths: Value(targetCashBucketMonths),
+      lifestyleMode: Value(lifestyleMode),
+      reservesJson: Value(reservesJson),
+      riskSettingsJson: Value(riskSettingsJson),
+    );
+  }
+
+  factory FirePlanRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FirePlanRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      userId: serializer.fromJson<String>(json['userId']),
+      baseCurrency: serializer.fromJson<String>(json['baseCurrency']),
+      monthlyExpenses: serializer.fromJson<Decimal>(json['monthlyExpenses']),
+      monthlySurplus: serializer.fromJson<Decimal>(json['monthlySurplus']),
+      inflationRate: serializer.fromJson<double>(json['inflationRate']),
+      targetNetWorth: serializer.fromJson<Decimal>(json['targetNetWorth']),
+      safeWithdrawalRate: serializer.fromJson<double>(
+        json['safeWithdrawalRate'],
+      ),
+      targetCashBucketMonths: serializer.fromJson<int>(
+        json['targetCashBucketMonths'],
+      ),
+      lifestyleMode: serializer.fromJson<String>(json['lifestyleMode']),
+      reservesJson: serializer.fromJson<String>(json['reservesJson']),
+      riskSettingsJson: serializer.fromJson<String>(json['riskSettingsJson']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'userId': serializer.toJson<String>(userId),
+      'baseCurrency': serializer.toJson<String>(baseCurrency),
+      'monthlyExpenses': serializer.toJson<Decimal>(monthlyExpenses),
+      'monthlySurplus': serializer.toJson<Decimal>(monthlySurplus),
+      'inflationRate': serializer.toJson<double>(inflationRate),
+      'targetNetWorth': serializer.toJson<Decimal>(targetNetWorth),
+      'safeWithdrawalRate': serializer.toJson<double>(safeWithdrawalRate),
+      'targetCashBucketMonths': serializer.toJson<int>(targetCashBucketMonths),
+      'lifestyleMode': serializer.toJson<String>(lifestyleMode),
+      'reservesJson': serializer.toJson<String>(reservesJson),
+      'riskSettingsJson': serializer.toJson<String>(riskSettingsJson),
+    };
+  }
+
+  FirePlanRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? userId,
+    String? baseCurrency,
+    Decimal? monthlyExpenses,
+    Decimal? monthlySurplus,
+    double? inflationRate,
+    Decimal? targetNetWorth,
+    double? safeWithdrawalRate,
+    int? targetCashBucketMonths,
+    String? lifestyleMode,
+    String? reservesJson,
+    String? riskSettingsJson,
+  }) => FirePlanRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    userId: userId ?? this.userId,
+    baseCurrency: baseCurrency ?? this.baseCurrency,
+    monthlyExpenses: monthlyExpenses ?? this.monthlyExpenses,
+    monthlySurplus: monthlySurplus ?? this.monthlySurplus,
+    inflationRate: inflationRate ?? this.inflationRate,
+    targetNetWorth: targetNetWorth ?? this.targetNetWorth,
+    safeWithdrawalRate: safeWithdrawalRate ?? this.safeWithdrawalRate,
+    targetCashBucketMonths:
+        targetCashBucketMonths ?? this.targetCashBucketMonths,
+    lifestyleMode: lifestyleMode ?? this.lifestyleMode,
+    reservesJson: reservesJson ?? this.reservesJson,
+    riskSettingsJson: riskSettingsJson ?? this.riskSettingsJson,
+  );
+  FirePlanRow copyWithCompanion(FirePlansCompanion data) {
+    return FirePlanRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      baseCurrency: data.baseCurrency.present
+          ? data.baseCurrency.value
+          : this.baseCurrency,
+      monthlyExpenses: data.monthlyExpenses.present
+          ? data.monthlyExpenses.value
+          : this.monthlyExpenses,
+      monthlySurplus: data.monthlySurplus.present
+          ? data.monthlySurplus.value
+          : this.monthlySurplus,
+      inflationRate: data.inflationRate.present
+          ? data.inflationRate.value
+          : this.inflationRate,
+      targetNetWorth: data.targetNetWorth.present
+          ? data.targetNetWorth.value
+          : this.targetNetWorth,
+      safeWithdrawalRate: data.safeWithdrawalRate.present
+          ? data.safeWithdrawalRate.value
+          : this.safeWithdrawalRate,
+      targetCashBucketMonths: data.targetCashBucketMonths.present
+          ? data.targetCashBucketMonths.value
+          : this.targetCashBucketMonths,
+      lifestyleMode: data.lifestyleMode.present
+          ? data.lifestyleMode.value
+          : this.lifestyleMode,
+      reservesJson: data.reservesJson.present
+          ? data.reservesJson.value
+          : this.reservesJson,
+      riskSettingsJson: data.riskSettingsJson.present
+          ? data.riskSettingsJson.value
+          : this.riskSettingsJson,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FirePlanRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('userId: $userId, ')
+          ..write('baseCurrency: $baseCurrency, ')
+          ..write('monthlyExpenses: $monthlyExpenses, ')
+          ..write('monthlySurplus: $monthlySurplus, ')
+          ..write('inflationRate: $inflationRate, ')
+          ..write('targetNetWorth: $targetNetWorth, ')
+          ..write('safeWithdrawalRate: $safeWithdrawalRate, ')
+          ..write('targetCashBucketMonths: $targetCashBucketMonths, ')
+          ..write('lifestyleMode: $lifestyleMode, ')
+          ..write('reservesJson: $reservesJson, ')
+          ..write('riskSettingsJson: $riskSettingsJson')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    userId,
+    baseCurrency,
+    monthlyExpenses,
+    monthlySurplus,
+    inflationRate,
+    targetNetWorth,
+    safeWithdrawalRate,
+    targetCashBucketMonths,
+    lifestyleMode,
+    reservesJson,
+    riskSettingsJson,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FirePlanRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.userId == this.userId &&
+          other.baseCurrency == this.baseCurrency &&
+          other.monthlyExpenses == this.monthlyExpenses &&
+          other.monthlySurplus == this.monthlySurplus &&
+          other.inflationRate == this.inflationRate &&
+          other.targetNetWorth == this.targetNetWorth &&
+          other.safeWithdrawalRate == this.safeWithdrawalRate &&
+          other.targetCashBucketMonths == this.targetCashBucketMonths &&
+          other.lifestyleMode == this.lifestyleMode &&
+          other.reservesJson == this.reservesJson &&
+          other.riskSettingsJson == this.riskSettingsJson);
+}
+
+class FirePlansCompanion extends UpdateCompanion<FirePlanRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> userId;
+  final Value<String> baseCurrency;
+  final Value<Decimal> monthlyExpenses;
+  final Value<Decimal> monthlySurplus;
+  final Value<double> inflationRate;
+  final Value<Decimal> targetNetWorth;
+  final Value<double> safeWithdrawalRate;
+  final Value<int> targetCashBucketMonths;
+  final Value<String> lifestyleMode;
+  final Value<String> reservesJson;
+  final Value<String> riskSettingsJson;
+  final Value<int> rowid;
+  const FirePlansCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.baseCurrency = const Value.absent(),
+    this.monthlyExpenses = const Value.absent(),
+    this.monthlySurplus = const Value.absent(),
+    this.inflationRate = const Value.absent(),
+    this.targetNetWorth = const Value.absent(),
+    this.safeWithdrawalRate = const Value.absent(),
+    this.targetCashBucketMonths = const Value.absent(),
+    this.lifestyleMode = const Value.absent(),
+    this.reservesJson = const Value.absent(),
+    this.riskSettingsJson = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  FirePlansCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String userId,
+    required String baseCurrency,
+    required Decimal monthlyExpenses,
+    required Decimal monthlySurplus,
+    required double inflationRate,
+    required Decimal targetNetWorth,
+    required double safeWithdrawalRate,
+    required int targetCashBucketMonths,
+    required String lifestyleMode,
+    this.reservesJson = const Value.absent(),
+    this.riskSettingsJson = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       userId = Value(userId),
+       baseCurrency = Value(baseCurrency),
+       monthlyExpenses = Value(monthlyExpenses),
+       monthlySurplus = Value(monthlySurplus),
+       inflationRate = Value(inflationRate),
+       targetNetWorth = Value(targetNetWorth),
+       safeWithdrawalRate = Value(safeWithdrawalRate),
+       targetCashBucketMonths = Value(targetCashBucketMonths),
+       lifestyleMode = Value(lifestyleMode);
+  static Insertable<FirePlanRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? userId,
+    Expression<String>? baseCurrency,
+    Expression<String>? monthlyExpenses,
+    Expression<String>? monthlySurplus,
+    Expression<double>? inflationRate,
+    Expression<String>? targetNetWorth,
+    Expression<double>? safeWithdrawalRate,
+    Expression<int>? targetCashBucketMonths,
+    Expression<String>? lifestyleMode,
+    Expression<String>? reservesJson,
+    Expression<String>? riskSettingsJson,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (userId != null) 'user_id': userId,
+      if (baseCurrency != null) 'base_currency': baseCurrency,
+      if (monthlyExpenses != null) 'monthly_expenses': monthlyExpenses,
+      if (monthlySurplus != null) 'monthly_surplus': monthlySurplus,
+      if (inflationRate != null) 'inflation_rate': inflationRate,
+      if (targetNetWorth != null) 'target_net_worth': targetNetWorth,
+      if (safeWithdrawalRate != null)
+        'safe_withdrawal_rate': safeWithdrawalRate,
+      if (targetCashBucketMonths != null)
+        'target_cash_bucket_months': targetCashBucketMonths,
+      if (lifestyleMode != null) 'lifestyle_mode': lifestyleMode,
+      if (reservesJson != null) 'reserves_json': reservesJson,
+      if (riskSettingsJson != null) 'risk_settings_json': riskSettingsJson,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  FirePlansCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? userId,
+    Value<String>? baseCurrency,
+    Value<Decimal>? monthlyExpenses,
+    Value<Decimal>? monthlySurplus,
+    Value<double>? inflationRate,
+    Value<Decimal>? targetNetWorth,
+    Value<double>? safeWithdrawalRate,
+    Value<int>? targetCashBucketMonths,
+    Value<String>? lifestyleMode,
+    Value<String>? reservesJson,
+    Value<String>? riskSettingsJson,
+    Value<int>? rowid,
+  }) {
+    return FirePlansCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      userId: userId ?? this.userId,
+      baseCurrency: baseCurrency ?? this.baseCurrency,
+      monthlyExpenses: monthlyExpenses ?? this.monthlyExpenses,
+      monthlySurplus: monthlySurplus ?? this.monthlySurplus,
+      inflationRate: inflationRate ?? this.inflationRate,
+      targetNetWorth: targetNetWorth ?? this.targetNetWorth,
+      safeWithdrawalRate: safeWithdrawalRate ?? this.safeWithdrawalRate,
+      targetCashBucketMonths:
+          targetCashBucketMonths ?? this.targetCashBucketMonths,
+      lifestyleMode: lifestyleMode ?? this.lifestyleMode,
+      reservesJson: reservesJson ?? this.reservesJson,
+      riskSettingsJson: riskSettingsJson ?? this.riskSettingsJson,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $FirePlansTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (baseCurrency.present) {
+      map['base_currency'] = Variable<String>(baseCurrency.value);
+    }
+    if (monthlyExpenses.present) {
+      map['monthly_expenses'] = Variable<String>(
+        $FirePlansTable.$convertermonthlyExpenses.toSql(monthlyExpenses.value),
+      );
+    }
+    if (monthlySurplus.present) {
+      map['monthly_surplus'] = Variable<String>(
+        $FirePlansTable.$convertermonthlySurplus.toSql(monthlySurplus.value),
+      );
+    }
+    if (inflationRate.present) {
+      map['inflation_rate'] = Variable<double>(inflationRate.value);
+    }
+    if (targetNetWorth.present) {
+      map['target_net_worth'] = Variable<String>(
+        $FirePlansTable.$convertertargetNetWorth.toSql(targetNetWorth.value),
+      );
+    }
+    if (safeWithdrawalRate.present) {
+      map['safe_withdrawal_rate'] = Variable<double>(safeWithdrawalRate.value);
+    }
+    if (targetCashBucketMonths.present) {
+      map['target_cash_bucket_months'] = Variable<int>(
+        targetCashBucketMonths.value,
+      );
+    }
+    if (lifestyleMode.present) {
+      map['lifestyle_mode'] = Variable<String>(lifestyleMode.value);
+    }
+    if (reservesJson.present) {
+      map['reserves_json'] = Variable<String>(reservesJson.value);
+    }
+    if (riskSettingsJson.present) {
+      map['risk_settings_json'] = Variable<String>(riskSettingsJson.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FirePlansCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('userId: $userId, ')
+          ..write('baseCurrency: $baseCurrency, ')
+          ..write('monthlyExpenses: $monthlyExpenses, ')
+          ..write('monthlySurplus: $monthlySurplus, ')
+          ..write('inflationRate: $inflationRate, ')
+          ..write('targetNetWorth: $targetNetWorth, ')
+          ..write('safeWithdrawalRate: $safeWithdrawalRate, ')
+          ..write('targetCashBucketMonths: $targetCashBucketMonths, ')
+          ..write('lifestyleMode: $lifestyleMode, ')
+          ..write('reservesJson: $reservesJson, ')
+          ..write('riskSettingsJson: $riskSettingsJson, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $FinancialDecisionsTable extends FinancialDecisions
     with TableInfo<$FinancialDecisionsTable, FinancialDecisionRow> {
   @override
@@ -46603,6 +47573,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $PortfolioRebalanceGroupsTable(this);
   late final $PortfolioCapitalAssignmentsTable portfolioCapitalAssignments =
       $PortfolioCapitalAssignmentsTable(this);
+  late final $FirePlansTable firePlans = $FirePlansTable(this);
   late final $FinancialDecisionsTable financialDecisions =
       $FinancialDecisionsTable(this);
   late final $DcaPlansTable dcaPlans = $DcaPlansTable(this);
@@ -46684,6 +47655,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     portfolioStrategyConfigs,
     portfolioRebalanceGroups,
     portfolioCapitalAssignments,
+    firePlans,
     financialDecisions,
     dcaPlans,
     financialSignals,
@@ -58600,6 +59572,446 @@ typedef $$PortfolioCapitalAssignmentsTableProcessedTableManager =
       PortfolioCapitalAssignmentRow,
       PrefetchHooks Function()
     >;
+typedef $$FirePlansTableCreateCompanionBuilder =
+    FirePlansCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String userId,
+      required String baseCurrency,
+      required Decimal monthlyExpenses,
+      required Decimal monthlySurplus,
+      required double inflationRate,
+      required Decimal targetNetWorth,
+      required double safeWithdrawalRate,
+      required int targetCashBucketMonths,
+      required String lifestyleMode,
+      Value<String> reservesJson,
+      Value<String> riskSettingsJson,
+      Value<int> rowid,
+    });
+typedef $$FirePlansTableUpdateCompanionBuilder =
+    FirePlansCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> userId,
+      Value<String> baseCurrency,
+      Value<Decimal> monthlyExpenses,
+      Value<Decimal> monthlySurplus,
+      Value<double> inflationRate,
+      Value<Decimal> targetNetWorth,
+      Value<double> safeWithdrawalRate,
+      Value<int> targetCashBucketMonths,
+      Value<String> lifestyleMode,
+      Value<String> reservesJson,
+      Value<String> riskSettingsJson,
+      Value<int> rowid,
+    });
+
+class $$FirePlansTableFilterComposer
+    extends Composer<_$AppDatabase, $FirePlansTable> {
+  $$FirePlansTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get baseCurrency => $composableBuilder(
+    column: $table.baseCurrency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String>
+  get monthlyExpenses => $composableBuilder(
+    column: $table.monthlyExpenses,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get monthlySurplus =>
+      $composableBuilder(
+        column: $table.monthlySurplus,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<double> get inflationRate => $composableBuilder(
+    column: $table.inflationRate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get targetNetWorth =>
+      $composableBuilder(
+        column: $table.targetNetWorth,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<double> get safeWithdrawalRate => $composableBuilder(
+    column: $table.safeWithdrawalRate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get targetCashBucketMonths => $composableBuilder(
+    column: $table.targetCashBucketMonths,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lifestyleMode => $composableBuilder(
+    column: $table.lifestyleMode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get reservesJson => $composableBuilder(
+    column: $table.reservesJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get riskSettingsJson => $composableBuilder(
+    column: $table.riskSettingsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FirePlansTableOrderingComposer
+    extends Composer<_$AppDatabase, $FirePlansTable> {
+  $$FirePlansTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get baseCurrency => $composableBuilder(
+    column: $table.baseCurrency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get monthlyExpenses => $composableBuilder(
+    column: $table.monthlyExpenses,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get monthlySurplus => $composableBuilder(
+    column: $table.monthlySurplus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get inflationRate => $composableBuilder(
+    column: $table.inflationRate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetNetWorth => $composableBuilder(
+    column: $table.targetNetWorth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get safeWithdrawalRate => $composableBuilder(
+    column: $table.safeWithdrawalRate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get targetCashBucketMonths => $composableBuilder(
+    column: $table.targetCashBucketMonths,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lifestyleMode => $composableBuilder(
+    column: $table.lifestyleMode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get reservesJson => $composableBuilder(
+    column: $table.reservesJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get riskSettingsJson => $composableBuilder(
+    column: $table.riskSettingsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FirePlansTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FirePlansTable> {
+  $$FirePlansTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get baseCurrency => $composableBuilder(
+    column: $table.baseCurrency,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get monthlyExpenses =>
+      $composableBuilder(
+        column: $table.monthlyExpenses,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get monthlySurplus =>
+      $composableBuilder(
+        column: $table.monthlySurplus,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<double> get inflationRate => $composableBuilder(
+    column: $table.inflationRate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get targetNetWorth =>
+      $composableBuilder(
+        column: $table.targetNetWorth,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<double> get safeWithdrawalRate => $composableBuilder(
+    column: $table.safeWithdrawalRate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get targetCashBucketMonths => $composableBuilder(
+    column: $table.targetCashBucketMonths,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get lifestyleMode => $composableBuilder(
+    column: $table.lifestyleMode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get reservesJson => $composableBuilder(
+    column: $table.reservesJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get riskSettingsJson => $composableBuilder(
+    column: $table.riskSettingsJson,
+    builder: (column) => column,
+  );
+}
+
+class $$FirePlansTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FirePlansTable,
+          FirePlanRow,
+          $$FirePlansTableFilterComposer,
+          $$FirePlansTableOrderingComposer,
+          $$FirePlansTableAnnotationComposer,
+          $$FirePlansTableCreateCompanionBuilder,
+          $$FirePlansTableUpdateCompanionBuilder,
+          (
+            FirePlanRow,
+            BaseReferences<_$AppDatabase, $FirePlansTable, FirePlanRow>,
+          ),
+          FirePlanRow,
+          PrefetchHooks Function()
+        > {
+  $$FirePlansTableTableManager(_$AppDatabase db, $FirePlansTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FirePlansTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FirePlansTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FirePlansTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> baseCurrency = const Value.absent(),
+                Value<Decimal> monthlyExpenses = const Value.absent(),
+                Value<Decimal> monthlySurplus = const Value.absent(),
+                Value<double> inflationRate = const Value.absent(),
+                Value<Decimal> targetNetWorth = const Value.absent(),
+                Value<double> safeWithdrawalRate = const Value.absent(),
+                Value<int> targetCashBucketMonths = const Value.absent(),
+                Value<String> lifestyleMode = const Value.absent(),
+                Value<String> reservesJson = const Value.absent(),
+                Value<String> riskSettingsJson = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FirePlansCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                userId: userId,
+                baseCurrency: baseCurrency,
+                monthlyExpenses: monthlyExpenses,
+                monthlySurplus: monthlySurplus,
+                inflationRate: inflationRate,
+                targetNetWorth: targetNetWorth,
+                safeWithdrawalRate: safeWithdrawalRate,
+                targetCashBucketMonths: targetCashBucketMonths,
+                lifestyleMode: lifestyleMode,
+                reservesJson: reservesJson,
+                riskSettingsJson: riskSettingsJson,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String userId,
+                required String baseCurrency,
+                required Decimal monthlyExpenses,
+                required Decimal monthlySurplus,
+                required double inflationRate,
+                required Decimal targetNetWorth,
+                required double safeWithdrawalRate,
+                required int targetCashBucketMonths,
+                required String lifestyleMode,
+                Value<String> reservesJson = const Value.absent(),
+                Value<String> riskSettingsJson = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FirePlansCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                userId: userId,
+                baseCurrency: baseCurrency,
+                monthlyExpenses: monthlyExpenses,
+                monthlySurplus: monthlySurplus,
+                inflationRate: inflationRate,
+                targetNetWorth: targetNetWorth,
+                safeWithdrawalRate: safeWithdrawalRate,
+                targetCashBucketMonths: targetCashBucketMonths,
+                lifestyleMode: lifestyleMode,
+                reservesJson: reservesJson,
+                riskSettingsJson: riskSettingsJson,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FirePlansTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FirePlansTable,
+      FirePlanRow,
+      $$FirePlansTableFilterComposer,
+      $$FirePlansTableOrderingComposer,
+      $$FirePlansTableAnnotationComposer,
+      $$FirePlansTableCreateCompanionBuilder,
+      $$FirePlansTableUpdateCompanionBuilder,
+      (
+        FirePlanRow,
+        BaseReferences<_$AppDatabase, $FirePlansTable, FirePlanRow>,
+      ),
+      FirePlanRow,
+      PrefetchHooks Function()
+    >;
 typedef $$FinancialDecisionsTableCreateCompanionBuilder =
     FinancialDecisionsCompanion Function({
       required String ownerUserId,
@@ -68340,6 +69752,8 @@ class $AppDatabaseManager {
         _db,
         _db.portfolioCapitalAssignments,
       );
+  $$FirePlansTableTableManager get firePlans =>
+      $$FirePlansTableTableManager(_db, _db.firePlans);
   $$FinancialDecisionsTableTableManager get financialDecisions =>
       $$FinancialDecisionsTableTableManager(_db, _db.financialDecisions);
   $$DcaPlansTableTableManager get dcaPlans =>

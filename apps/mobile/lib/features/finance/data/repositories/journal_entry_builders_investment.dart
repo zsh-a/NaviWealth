@@ -188,11 +188,24 @@ JournalEntryBuild _buildSellLotsJournalEntry({
         'must be >= 0',
       );
     }
-    if (allocation.costCurrency != quoteCurrency) {
-      throw ArgumentError(
-        'sell currently requires costCurrency '
-        '(${allocation.costCurrency}) to match quoteCurrency '
-        '($quoteCurrency); cross-currency lot closure is unsupported.',
+    final crossCurrency =
+        allocation.costCurrency.toUpperCase() != quoteCurrency.toUpperCase();
+    if (crossCurrency &&
+        (allocation.costToQuoteRate == null ||
+            allocation.costToQuoteRate! <= Decimal.zero)) {
+      throw ArgumentError.value(
+        allocation.costToQuoteRate,
+        'allocations[$index].costToQuoteRate',
+        'must be > 0 when costCurrency differs from quoteCurrency',
+      );
+    }
+    if (!crossCurrency &&
+        allocation.costToQuoteRate != null &&
+        allocation.costToQuoteRate != Decimal.one) {
+      throw ArgumentError.value(
+        allocation.costToQuoteRate,
+        'allocations[$index].costToQuoteRate',
+        'must be 1 when costCurrency matches quoteCurrency',
       );
     }
   }
@@ -204,11 +217,17 @@ JournalEntryBuild _buildSellLotsJournalEntry({
     (sum, allocation) => sum + allocation.quantity,
   );
   final grossProceeds = qty * price;
-  final realisedPnl = allocations.fold<Decimal>(
-    Decimal.zero,
-    (sum, allocation) =>
-        sum + (price - allocation.costPerUnit) * allocation.quantity,
-  );
+  final costBasisInQuote = allocations.fold<Decimal>(Decimal.zero, (
+    sum,
+    allocation,
+  ) {
+    final rate =
+        allocation.costCurrency.toUpperCase() == quoteCurrency.toUpperCase()
+        ? Decimal.one
+        : allocation.costToQuoteRate!;
+    return sum + allocation.quantity * allocation.costPerUnit * rate;
+  });
+  final realisedPnl = grossProceeds - costBasisInQuote;
 
   final feeCcy = feeCurrency ?? quoteCurrency;
   final taxCcy = taxCurrency ?? quoteCurrency;

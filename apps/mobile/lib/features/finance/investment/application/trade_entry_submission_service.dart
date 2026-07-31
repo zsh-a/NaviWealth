@@ -346,16 +346,6 @@ class TradeEntrySubmissionService {
       assetId: assetId,
       asOf: tradeAt,
     );
-    if (lots.any(
-      (lot) =>
-          !lot.isClosed &&
-          lot.currency.toUpperCase() != request.currency.toUpperCase(),
-    )) {
-      throw const TradeSubmissionContractError(
-        TradeSubmissionContractErrorCode.lotCurrencyMismatch,
-        'Open lots must match the trade currency before they can be closed.',
-      );
-    }
     final lotBalance = lots
         .where((lot) => !lot.isClosed)
         .fold<Decimal>(Decimal.zero, (sum, lot) => sum + lot.remainingQuantity);
@@ -575,9 +565,14 @@ class TradeEntrySubmissionService {
           pnl.accountId != tx.accountId ||
           pnl.assetId != tx.assetId ||
           pnl.currency != tx.currency ||
+          pnl.costCurrency != lot.currency ||
           pnl.realizedAt != tx.tradeDate ||
           pnl.lotOpenedAt != lot.openedAt ||
-          pnl.costBasis != lot.costPerUnit * pnl.quantity ||
+          pnl.costBasisInCostCurrency != lot.costPerUnit * pnl.quantity ||
+          pnl.costToQuoteRate <= Decimal.zero ||
+          pnl.costBasis != pnl.costBasisInCostCurrency * pnl.costToQuoteRate ||
+          (pnl.costCurrency == pnl.currency &&
+              pnl.costToQuoteRate != Decimal.one) ||
           pnl.proceeds != tx.price * pnl.quantity ||
           pnl.fees < Decimal.zero) {
         _throwPlanMismatch(
@@ -731,10 +726,11 @@ class TradeEntrySubmissionService {
         for (final pnl in plan.realizedPnL)
           SellLotAllocation(
             quantity: pnl.quantity,
-            costPerUnit: (pnl.costBasis / pnl.quantity).toDecimal(
+            costPerUnit: (pnl.costBasisInCostCurrency / pnl.quantity).toDecimal(
               scaleOnInfinitePrecision: 16,
             ),
-            costCurrency: pnl.currency,
+            costCurrency: pnl.costCurrency,
+            costToQuoteRate: pnl.costToQuoteRate,
             lotId: pnl.lotId,
             acquiredOn: pnl.lotOpenedAt,
           ),
@@ -819,7 +815,6 @@ enum TradeSubmissionContractErrorCode {
   accountInvalid,
   cashAccountInvalid,
   assetInvalid,
-  lotCurrencyMismatch,
   insufficientFreshHoldings,
   backdatedSell,
   externalResolutionInTransaction,

@@ -3196,6 +3196,80 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dashboardCurrencyMismatchSheetTitle => '未计入合计的资产';
 
   @override
+  String dashboardValuationTrustMissingFx(int count, String currency) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '有 $count 项资产因缺少到 $currency 的汇率而未计入',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String dashboardValuationTrustWarning(
+    int staleCount,
+    String quality,
+    String asOf,
+  ) {
+    String _temp0 = intl.Intl.pluralLogic(
+      staleCount,
+      locale: localeName,
+      other: '有 $staleCount 项价格陈旧 · $quality · 截至 $asOf',
+      zero: '$quality估值 · 截至 $asOf',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String dashboardValuationTrustReady(String quality, String asOf) {
+    return '$quality估值 · 截至 $asOf';
+  }
+
+  @override
+  String get dashboardValuationTrustAction => '详情';
+
+  @override
+  String get dashboardValuationTrustSheetTitle => '估值可信度';
+
+  @override
+  String dashboardValuationTrustQuality(String quality) {
+    return '质量：$quality';
+  }
+
+  @override
+  String dashboardValuationTrustAsOf(String asOf) {
+    return '截至 $asOf';
+  }
+
+  @override
+  String dashboardValuationTrustStale(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '有 $count 项资产价格已陈旧',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dashboardValuationQualityRealTime => '实时';
+
+  @override
+  String get dashboardValuationQualityDelayed => '延迟';
+
+  @override
+  String get dashboardValuationQualityDailyClose => '日收盘';
+
+  @override
+  String get dashboardValuationQualityManual => '手工';
+
+  @override
+  String get dashboardValuationQualityEstimated => '估算';
+
+  @override
+  String get dashboardValuationQualityStale => '陈旧';
+
+  @override
   String get settingsAboutTitle => '关于 NaviWealth';
 
   @override
@@ -6120,6 +6194,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatProposalKindIncome => '收入';
 
   @override
+  String get aiChatProposalKindTransfer => '转账';
+
+  @override
   String get aiChatProposalKindLiabilityPayment => '还款';
 
   @override
@@ -6295,6 +6372,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatFieldAmount => '金额';
 
   @override
+  String get aiChatFieldDestinationAmount => '到账金额';
+
+  @override
   String get aiChatFieldDate => '日期 (RFC3339)';
 
   @override
@@ -6317,6 +6397,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiChatRowAccount => '账户';
+
+  @override
+  String get aiChatRowFromAccount => '转出账户';
+
+  @override
+  String get aiChatRowToAccount => '转入账户';
+
+  @override
+  String get aiChatRowDestinationAmount => '到账金额';
 
   @override
   String get aiChatRowQuantity => '数量';
@@ -15267,13 +15356,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get financeActivationImportTitle => '从真实流水开始';
+  String get financeActivationDataTitle => '从真实流水开始';
 
   @override
-  String get financeActivationImportBody => '导入一份账单，让结果建立在你自己的数据上。';
+  String get financeActivationDataBody => '手工记一笔或导入账单，让结果建立在你自己的数据上。';
 
   @override
-  String get financeActivationImportAction => '导入账单';
+  String get financeActivationDataAction => '添加财务数据';
 
   @override
   String get financeActivationReviewTitle => '只处理例外项';
@@ -15290,7 +15379,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get financeActivationRunwayTitle => '检查未来 90 天';
 
   @override
-  String get financeActivationRunwayBody => '流水已完成复核，请确认资金续航结果及其缺失数据。';
+  String get financeActivationRunwayBody => '流水已就绪，请确认资金续航结果及其缺失数据。';
 
   @override
   String get financeActivationRunwayAction => '查看资金续航';

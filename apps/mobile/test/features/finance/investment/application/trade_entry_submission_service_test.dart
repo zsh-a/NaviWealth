@@ -13,6 +13,7 @@ import 'package:naviwealth/features/finance/data/repositories/price_mutation_rec
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/securities_asset_repository.dart';
 import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
+import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/invariants.dart';
 import 'package:naviwealth/features/finance/investment/application/trade_entry_submission_service.dart';
@@ -30,6 +31,23 @@ import 'package:naviwealth/features/finance/market/domain/symbol_info.dart';
 
 import '../../../../core/persistence/test_database.dart';
 import '../../data/repositories/_stub_stamper.dart';
+
+class _FixedFxRateSource implements FxRateSource {
+  const _FixedFxRateSource(this.cnyToUsd);
+
+  final Decimal cnyToUsd;
+
+  @override
+  Decimal? rate({
+    required String from,
+    required String to,
+    required DateTime asOf,
+  }) {
+    if (from == to) return Decimal.one;
+    if (from == 'CNY' && to == 'USD') return cnyToUsd;
+    return null;
+  }
+}
 
 void main() {
   late AppDatabase db;
@@ -708,7 +726,14 @@ void main() {
     expect(await journalEntryRepo.getById('metadata-enrichment'), isNotNull);
   });
 
-  test('sell rejects an otherwise eligible lot in another currency', () async {
+  test('sell closes an eligible lot in another currency', () async {
+    final fxRate = FxRate(
+      base: 'CNY',
+      quote: 'USD',
+      date: DateTime.utc(2026, 5, 2),
+      rate: Decimal.parse('0.14'),
+      source: 'test',
+    );
     final cnyJournal = JournalEntryRepository(
       db: db,
       outbox: outbox,
@@ -727,11 +752,22 @@ void main() {
       priceRepo: priceRepo,
       currentUserId: () async => 'u-test',
     );
-    final strict = makeService(
-      trades: DefaultTradeEntryService(
+    final strict = TradeEntrySubmissionService(
+      db: db,
+      securitiesRepo: securitiesRepo,
+      tradeService: DefaultTradeEntryService(
         market: _CountingMarket(),
-        fx: FxRateCurrencyConverter(InMemoryFxRateLookup(const [])),
+        fx: FxRateCurrencyConverter(InMemoryFxRateLookup([fxRate])),
       ),
+      journalEntryRepo: JournalEntryRepository(
+        db: db,
+        outbox: outbox,
+        stamper: stamper,
+        fxRateSource: _FixedFxRateSource(Decimal.parse('0.14')),
+        baseCurrency: 'USD',
+      ),
+      priceRepo: priceRepo,
+      currentUserId: () async => 'u-test',
     );
     await cnyService.submit(
       _buyRequest(
@@ -747,19 +783,14 @@ void main() {
         tradeDate: DateTime.utc(2026, 5, 2),
       ),
     );
-    final before = await _snapshot(db);
+    final receipt = await strict.commit(prepared);
 
-    await expectLater(
-      strict.commit(prepared),
-      throwsA(
-        isA<TradeSubmissionContractError>().having(
-          (error) => error.code,
-          'code',
-          TradeSubmissionContractErrorCode.lotCurrencyMismatch,
-        ),
-      ),
-    );
-    expect(await _snapshot(db), before);
+    expect(receipt.transactionId, 'usd-close');
+    final postingRows = await (db.select(
+      db.postings,
+    )..where((row) => row.journalEntryId.equals('usd-close'))).get();
+    expect(postingRows.first.costCurrency, 'CNY');
+    expect(postingRows.first.costPerUnit, Decimal.parse('150'));
   });
 
   test('final plan mutations fail before any write', () async {

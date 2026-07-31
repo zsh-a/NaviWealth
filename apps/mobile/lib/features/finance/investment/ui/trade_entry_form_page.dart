@@ -271,8 +271,6 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             return l10n.tradeEntryBrokerAccountRequiredMessage;
           case TradeSubmissionContractErrorCode.cashAccountInvalid:
             return l10n.tradeEntryCashAccountInvalid;
-          case TradeSubmissionContractErrorCode.lotCurrencyMismatch:
-            return l10n.tradeEntryLotCurrencyMismatch;
           default:
             break;
         }

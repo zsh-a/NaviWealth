@@ -165,9 +165,8 @@ class FireRiskSettings {
 /// existing math and golden tests stay bit-compatible; the extra fields
 /// drive the state engine, buckets, stress tests and reviews.
 ///
-/// Per `docs/roadmap-fire-os.md` §7.1 the MVP keeps this in local
-/// preferences (no sync-protocol change); Phase 6 migrates it to a synced
-/// Drift table.
+/// User-authored inputs are persisted as a synced `fire_plans` singleton.
+/// Projections and stress-test results remain derived and local.
 @immutable
 class FirePlan {
   const FirePlan({

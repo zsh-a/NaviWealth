@@ -41,6 +41,14 @@ const List<ProposalKindMeta> kFinanceProposalKinds = [
     previewRows: _expenseRows,
   ),
   ProposalKindMeta(
+    kind: 'transfer',
+    icon: FLucideIcons.arrowLeftRight,
+    label: _transferLabel,
+    toolName: 'propose_transfer',
+    editableFields: _transferFields,
+    previewRows: _transferRows,
+  ),
+  ProposalKindMeta(
     kind: 'liability_payment',
     icon: FLucideIcons.banknote,
     label: _liabilityPaymentLabel,
@@ -108,6 +116,7 @@ Set<String> get kFinanceProposalAppliedKinds =>
 String _tradeLabel(AppLocalizations l) => l.aiChatProposalKindTrade;
 String _expenseLabel(AppLocalizations l) => l.aiChatProposalKindExpense;
 String _incomeLabel(AppLocalizations l) => l.aiChatProposalKindIncome;
+String _transferLabel(AppLocalizations l) => l.aiChatProposalKindTransfer;
 String _liabilityPaymentLabel(AppLocalizations l) =>
     l.aiChatProposalKindLiabilityPayment;
 String _accountCreateLabel(AppLocalizations l) =>
@@ -153,6 +162,25 @@ List<ProposalKindEditField> _expenseFields(AppLocalizations l) => [
   ProposalKindEditField(
     payloadKey: 'amount',
     label: l.aiChatFieldAmount,
+    numeric: true,
+  ),
+  ProposalKindEditField(
+    payloadKey: 'date',
+    label: l.aiChatFieldDate,
+    hint: l.aiChatFieldDateHint,
+  ),
+  ProposalKindEditField(payloadKey: 'note', label: l.aiChatFieldNote),
+];
+
+List<ProposalKindEditField> _transferFields(AppLocalizations l) => [
+  ProposalKindEditField(
+    payloadKey: 'amount',
+    label: l.aiChatFieldAmount,
+    numeric: true,
+  ),
+  ProposalKindEditField(
+    payloadKey: 'to_amount',
+    label: l.aiChatFieldDestinationAmount,
     numeric: true,
   ),
   ProposalKindEditField(
@@ -290,6 +318,32 @@ List<ProposalKindRow> _expenseRows(
       ProposalKindRow(l10n.aiChatRowCategory, r('category')!),
     if (r('account_name') != null)
       ProposalKindRow(l10n.aiChatRowAccount, r('account_name')!),
+    if (r('date') != null) ProposalKindRow(l10n.aiChatRowDate, r('date')!),
+    if (r('note') != null) ProposalKindRow(l10n.aiChatRowNote, r('note')!),
+  ];
+}
+
+List<ProposalKindRow> _transferRows(
+  AppLocalizations l10n,
+  ReadyProposalPlan plan,
+  Map<String, Object?>? overrides,
+) {
+  String? r(String k) => _read(plan, overrides, k);
+  return [
+    if (r('from_account_name') != null)
+      ProposalKindRow(l10n.aiChatRowFromAccount, r('from_account_name')!),
+    if (r('to_account_name') != null)
+      ProposalKindRow(l10n.aiChatRowToAccount, r('to_account_name')!),
+    if (r('amount') != null)
+      ProposalKindRow(
+        l10n.aiChatRowAmount,
+        '${r('amount')} ${r('from_currency') ?? ''}'.trim(),
+      ),
+    if (r('to_amount') != null)
+      ProposalKindRow(
+        l10n.aiChatRowDestinationAmount,
+        '${r('to_amount')} ${r('to_currency') ?? ''}'.trim(),
+      ),
     if (r('date') != null) ProposalKindRow(l10n.aiChatRowDate, r('date')!),
     if (r('note') != null) ProposalKindRow(l10n.aiChatRowNote, r('note')!),
   ];

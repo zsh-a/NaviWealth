@@ -88,8 +88,7 @@ ClassifiedRebalanceExecutionIssue classifyRebalanceExecutionIssue(
       ),
       TradeSubmissionContractErrorCode.accountInvalid ||
       TradeSubmissionContractErrorCode.cashAccountInvalid ||
-      TradeSubmissionContractErrorCode.assetInvalid ||
-      TradeSubmissionContractErrorCode.lotCurrencyMismatch => _classified(
+      TradeSubmissionContractErrorCode.assetInvalid => _classified(
         RebalanceExecutionIssueCode.invalidReview,
         error,
       ),

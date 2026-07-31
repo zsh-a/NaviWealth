@@ -3339,6 +3339,83 @@ class AppLocalizationsEn extends AppLocalizations {
       'Holdings excluded from totals';
 
   @override
+  String dashboardValuationTrustMissingFx(int count, String currency) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count holdings excluded — missing FX to $currency',
+      one: '1 holding excluded — missing FX to $currency',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String dashboardValuationTrustWarning(
+    int staleCount,
+    String quality,
+    String asOf,
+  ) {
+    String _temp0 = intl.Intl.pluralLogic(
+      staleCount,
+      locale: localeName,
+      other: '$staleCount stale holdings · $quality · as of $asOf',
+      one: '1 stale holding · $quality · as of $asOf',
+      zero: '$quality valuation · as of $asOf',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String dashboardValuationTrustReady(String quality, String asOf) {
+    return '$quality valuation · as of $asOf';
+  }
+
+  @override
+  String get dashboardValuationTrustAction => 'Details';
+
+  @override
+  String get dashboardValuationTrustSheetTitle => 'Valuation confidence';
+
+  @override
+  String dashboardValuationTrustQuality(String quality) {
+    return 'Quality: $quality';
+  }
+
+  @override
+  String dashboardValuationTrustAsOf(String asOf) {
+    return 'As of $asOf';
+  }
+
+  @override
+  String dashboardValuationTrustStale(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count holdings have stale prices',
+      one: '1 holding has a stale price',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dashboardValuationQualityRealTime => 'Real-time';
+
+  @override
+  String get dashboardValuationQualityDelayed => 'Delayed';
+
+  @override
+  String get dashboardValuationQualityDailyClose => 'Daily close';
+
+  @override
+  String get dashboardValuationQualityManual => 'Manual';
+
+  @override
+  String get dashboardValuationQualityEstimated => 'Estimated';
+
+  @override
+  String get dashboardValuationQualityStale => 'Stale';
+
+  @override
   String get settingsAboutTitle => 'About NaviWealth';
 
   @override
@@ -6468,6 +6545,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatProposalKindIncome => 'Income';
 
   @override
+  String get aiChatProposalKindTransfer => 'Transfer';
+
+  @override
   String get aiChatProposalKindLiabilityPayment => 'Repayment';
 
   @override
@@ -6653,6 +6733,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatFieldAmount => 'Amount';
 
   @override
+  String get aiChatFieldDestinationAmount => 'Destination amount';
+
+  @override
   String get aiChatFieldDate => 'Date (RFC3339)';
 
   @override
@@ -6675,6 +6758,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiChatRowAccount => 'Account';
+
+  @override
+  String get aiChatRowFromAccount => 'From account';
+
+  @override
+  String get aiChatRowToAccount => 'To account';
+
+  @override
+  String get aiChatRowDestinationAmount => 'Destination amount';
 
   @override
   String get aiChatRowQuantity => 'Quantity';
@@ -16065,14 +16157,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get financeActivationImportTitle => 'Start with real activity';
+  String get financeActivationDataTitle => 'Start with real activity';
 
   @override
-  String get financeActivationImportBody =>
-      'Import a statement so the result is grounded in your own data.';
+  String get financeActivationDataBody =>
+      'Add an entry manually or import a statement so the result is grounded in your own data.';
 
   @override
-  String get financeActivationImportAction => 'Import statement';
+  String get financeActivationDataAction => 'Add financial data';
 
   @override
   String get financeActivationReviewTitle => 'Review only the exceptions';
@@ -16090,7 +16182,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get financeActivationRunwayBody =>
-      'Your reviewed entries are ready. Verify the resulting cash runway and its missing data.';
+      'Your entries are ready. Verify the resulting cash runway and its missing data.';
 
   @override
   String get financeActivationRunwayAction => 'Review runway';

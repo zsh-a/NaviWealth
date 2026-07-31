@@ -795,33 +795,6 @@ void main() {
     );
   });
 
-  testWidgets('lot currency mismatch is localized and actionable', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(900, 1600));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final db = makeTestDatabase();
-    addTearDown(db.close);
-    await _pumpReadyTradeForm(
-      tester,
-      db: db,
-      service: _submissionService(
-        db,
-        tradeService: const _LotMismatchUiTradeService(),
-      ),
-    );
-
-    await tester.tap(find.byKey(const Key('trade-entry-submit')));
-    await tester.pumpAndSettle();
-    expect(
-      find.textContaining('Change the visible Currency field'),
-      findsWidgets,
-    );
-    expect(find.textContaining('repair or split the holding'), findsWidgets);
-    expect(find.textContaining('lotCurrencyMismatch'), findsNothing);
-    await tester.pump(const Duration(seconds: 7));
-  });
-
   testWidgets('successful trade offers Undo for journal and price', (
     tester,
   ) async {
@@ -1022,21 +995,6 @@ class _UiTradeEntryService implements TradeEntryService {
         note: draft.note,
       ),
       pricing: PriceProvenance.userSupplied,
-    );
-  }
-}
-
-final class _LotMismatchUiTradeService extends _UiTradeEntryService {
-  const _LotMismatchUiTradeService();
-
-  @override
-  Future<TradeEntryPlan> buildPlan(
-    TradeDraft draft, {
-    required List<Lot> openLots,
-  }) async {
-    throw const TradeSubmissionContractError(
-      TradeSubmissionContractErrorCode.lotCurrencyMismatch,
-      'technical lot currency details must stay private',
     );
   }
 }

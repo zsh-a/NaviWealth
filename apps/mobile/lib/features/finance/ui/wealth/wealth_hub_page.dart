@@ -11,6 +11,8 @@ import '../../../../core/shell/shell_visibility.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../composition/finance_route_paths.dart';
+import '../../home/domain/dashboard_models.dart';
+import '../../home/ui/currency_mismatch_banner.dart';
 import 'wealth_action_panel.dart';
 import 'wealth_perspective_section.dart';
 import 'wealth_trend_section.dart';
@@ -68,35 +70,26 @@ class _WealthLiveBody extends ConsumerWidget {
       data: (snapshot) => PageSkeletonShell<Object>(
         isLoading: false,
         skeleton: const WealthHubSkeleton(),
-        child: _WealthHubBody(
-          baseCurrency: snapshot.baseCurrency,
-          netWorth: snapshot.netWorth.amount,
-          totalAssets: snapshot.totalAssets.amount,
-          totalLiabilities: snapshot.totalLiabilities.amount,
-        ),
+        child: _WealthHubBody(snapshot: snapshot),
       ),
     );
   }
 }
 
 class _WealthHubBody extends ConsumerWidget {
-  const _WealthHubBody({
-    required this.baseCurrency,
-    required this.netWorth,
-    required this.totalAssets,
-    required this.totalLiabilities,
-  });
+  const _WealthHubBody({required this.snapshot});
 
-  final String baseCurrency;
-  final Decimal netWorth;
-  final Decimal totalAssets;
-  final Decimal totalLiabilities;
+  final DashboardSnapshot snapshot;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final width = MediaQuery.sizeOf(context).width;
     final hPad = Breakpoints.isMobile(width) ? AppSpacing.s16 : AppSpacing.s24;
+    final baseCurrency = snapshot.baseCurrency;
+    final netWorth = snapshot.netWorth.amount;
+    final totalAssets = snapshot.totalAssets.amount;
+    final totalLiabilities = snapshot.totalLiabilities.amount;
     final isEmpty =
         totalAssets == Decimal.zero && totalLiabilities == Decimal.zero;
     // The shared cross-domain brief shell (blueprint §8.1) — this page used
@@ -148,6 +141,7 @@ class _WealthHubBody extends ConsumerWidget {
         ),
       ),
       modules: [
+        ValuationTrustNotice(snapshot: snapshot),
         if (!isEmpty) const WealthTrendSection(),
         const _WealthDestinations(),
         if (isEmpty)

@@ -12,6 +12,7 @@ import 'package:uuid/uuid.dart';
 import '../cost_basis/fifo_strategy.dart';
 import '../cost_basis_engine.dart';
 import '../models/lot.dart';
+import '../models/realized_pnl.dart';
 import '../models/trade_events.dart';
 import 'decimal_precision.dart';
 import 'trade_draft.dart';
@@ -360,13 +361,45 @@ class DefaultTradeEntryService implements TradeEntryService {
       );
     }
 
+    final realized = <RealizedPnL>[
+      for (final pnl in result.realizedPnL) _convertCostBasis(pnl, trade),
+    ];
     return TradeEntryPlan(
       trade: trade,
       updatedLots: _onlyChanged(openLots, result.updatedLots),
-      realizedPnL: result.realizedPnL,
+      realizedPnL: realized,
       unfulfilledQuantity: result.unfulfilledQuantity,
       pricing: pricing,
     );
+  }
+
+  RealizedPnL _convertCostBasis(RealizedPnL pnl, PlannedTrade trade) {
+    if (pnl.costCurrency.toUpperCase() == trade.currency.toUpperCase()) {
+      return pnl.copyWith(
+        costBasis: pnl.costBasisInCostCurrency,
+        costToQuoteRate: Decimal.one,
+      );
+    }
+    try {
+      final rate = _fx
+          .convert(
+            Money(Decimal.one, pnl.costCurrency),
+            trade.currency,
+            on: trade.tradeDate,
+          )
+          .amount;
+      return pnl.copyWith(
+        costBasis: pnl.costBasisInCostCurrency * rate,
+        costToQuoteRate: rate,
+      );
+    } on FxRateNotFoundError catch (error) {
+      throw TradeEntryException(
+        TradeEntryErrorCode.currencyMismatch,
+        'No FX rate for ${pnl.costCurrency}→${trade.currency} on sell date',
+        field: 'currency',
+        cause: error,
+      );
+    }
   }
 
   List<Lot> _onlyChanged(List<Lot> before, List<Lot> after) {

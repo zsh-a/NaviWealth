@@ -12,6 +12,7 @@ import '../../core/ai/runtime/device/tools/device_tool.dart';
 import '../../core/ai/runtime/device/tools/registered_device_tool.dart';
 import 'accounts/ai_tools/list_payment_accounts_tool.dart';
 import 'accounts/ai_tools/propose_account_create_tool.dart';
+import 'accounts/ai_tools/propose_transfer_tool.dart';
 import 'accounts/ai_tools/read_account_window_tool.dart';
 import 'cashflow/ai_tools/get_cashflow_buckets_tool.dart';
 import 'cashflow/ai_tools/get_refund_links_tool.dart';
@@ -27,6 +28,7 @@ import 'fire/ai_tools/get_fire_state_tool.dart';
 import 'fire/ai_tools/get_fire_stress_tests_tool.dart';
 import 'fire/ai_tools/propose_fire_plan_update_tool.dart';
 import 'fire/ai_tools/simulate_fire_plan_tool.dart';
+import 'home/ai_tools/get_finance_brief_tool.dart';
 import 'home/ai_tools/get_net_worth_summary_tool.dart';
 import 'income_strategy/ai_tools/get_income_strategy_portfolio_tool.dart';
 import 'investment/ai_tools/breakdown_tools.dart';
@@ -58,6 +60,7 @@ kFinanceToolRegistrations = <RegisteredDeviceTool>[
     const ProposeAccountCreateTool(),
     tier: BudgetTier.standard,
   ),
+  _financeTool.propose(const ProposeTransferTool()),
   _financeTool.read(const ReadAccountWindowTool(), tier: BudgetTier.standard),
   // Cashflow
   _financeTool.read(const GetCashflowBucketsTool()),
@@ -91,6 +94,7 @@ kFinanceToolRegistrations = <RegisteredDeviceTool>[
     tier: BudgetTier.standard,
   ),
   // Home / net worth
+  _financeTool.read(const GetFinanceBriefTool(), tier: BudgetTier.standard),
   _financeTool.read(const GetNetWorthSummaryTool()),
   // Investment
   _financeTool.read(const GetHoldingsTool()),
@@ -160,6 +164,7 @@ const String kFinanceSystemPromptBlock =
     '  • propose_trade（证券、加密买卖 / 转入转出）\n'
     '  • propose_expense（日常消费 / 支出）\n'
     '  • propose_income（工资 / 股息 / 利息 / 其它现金收入）\n'
+    '  • propose_transfer（账户间转账；跨币种需明确实际到账金额）\n'
     '  • propose_liability_payment（房贷 / 信用卡 / 消费贷还款）\n'
     '  • propose_account_create（新建账户）\n'
     '  • propose_asset_valuation（房产 / 车 / 存款等手工估值资产更新）\n'
@@ -167,4 +172,5 @@ const String kFinanceSystemPromptBlock =
     '  • propose_options_journal_entry / propose_options_profile_update（期权 wheel 流水与策略画像）\n'
     '  • propose_leaps_call_position（独立于 Wheel 阶段的长期 Long Call 上涨敞口）\n'
     '- 记录支出或收入时，若用户没有指定账户，先调用 list_payment_accounts 看候选；只有工具返回空时才提示「没有可用账户，是否新建」。\n'
+    '- 用户问“今天该关注什么”或综合财务状态时先调用 get_finance_brief。\n'
     '- 期权 / 投资类问题优先用 get_holdings / get_asset_allocation / get_investment_performance，不要凭印象推断仓位与收益。';

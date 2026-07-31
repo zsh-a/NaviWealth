@@ -113,6 +113,61 @@ class FinanceCoreProposalApplier {
     );
   }
 
+  Future<ProposalApplyState> applyTransfer(
+    ReadyProposalPlan plan,
+    DateTime at,
+  ) async {
+    final fromAccountId = _requireString(plan, 'from_account_id');
+    final toAccountId = _requireString(plan, 'to_account_id');
+    if (fromAccountId == toAccountId) {
+      throw ProposalApplyException(
+        'Transfer source and destination accounts must differ',
+      );
+    }
+    final from = await accountRepo.findById(fromAccountId);
+    final to = await accountRepo.findById(toAccountId);
+    if (from == null || from.archived || from.sync.deletedAt != null) {
+      throw ProposalApplyException('Source account is unavailable');
+    }
+    if (to == null || to.archived || to.sync.deletedAt != null) {
+      throw ProposalApplyException('Destination account is unavailable');
+    }
+    final amount = _requireDecimal(plan, 'amount');
+    if (amount <= Decimal.zero) {
+      throw ProposalApplyException('Transfer amount must be positive');
+    }
+    final crossCurrency =
+        from.currency.toUpperCase() != to.currency.toUpperCase();
+    final toAmount = crossCurrency ? _requireDecimal(plan, 'to_amount') : null;
+    if (toAmount != null && toAmount <= Decimal.zero) {
+      throw ProposalApplyException(
+        'Cross-currency destination amount must be positive',
+      );
+    }
+    final date = _parseDate(plan.get('date')) ?? DateTime.now();
+    final build = JournalEntryBuilders.transfer(
+      date: date,
+      fromAccountId: from.id,
+      toAccountId: to.id,
+      amount: amount,
+      currency: from.currency,
+      toAmount: toAmount,
+      toCurrency: crossCurrency ? to.currency : null,
+      narration: plan.get('note') ?? plan.summaryZh,
+    );
+    final stored = await journalEntryRepo.create(
+      entry: build.entry,
+      postings: build.postings,
+    );
+    return ProposalApplyState(
+      status: ProposalApplyStatus.applied,
+      appliedEntityId: stored.entry.id,
+      appliedTable: 'journal_entries',
+      appliedAt: at,
+      shortLabel: 'Recorded ${plan.summaryZh}',
+    );
+  }
+
   Future<ProposalApplyState> applyLiabilityPayment(
     ReadyProposalPlan plan,
     DateTime at,

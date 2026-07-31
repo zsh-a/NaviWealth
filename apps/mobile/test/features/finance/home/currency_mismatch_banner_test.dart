@@ -1,14 +1,22 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/home/ui/currency_mismatch_banner.dart';
+import 'package:naviwealth/features/finance/market/domain/price_confidence.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap({
   required List<CurrencyMismatch> mismatches,
+  PriceConfidence? confidence = PriceConfidence.dailyClose,
+  int staleHoldingCount = 0,
+  bool empty = false,
   String baseCurrency = 'CNY',
 }) {
+  final zero = Money.zero(baseCurrency);
   return MaterialApp(
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
@@ -16,9 +24,28 @@ Widget _wrap({
     home: FTheme(
       data: FThemes.slate.light.desktop,
       child: Scaffold(
-        body: CurrencyMismatchNotice(
-          mismatches: mismatches,
-          baseCurrency: baseCurrency,
+        body: ValuationTrustNotice(
+          snapshot: DashboardSnapshot(
+            asOf: DateTime.utc(2026, 7, 31, 8),
+            baseCurrency: baseCurrency,
+            allocations: empty
+                ? const []
+                : [
+                    CategoryAllocation(
+                      category: AssetCategory.stock,
+                      totalInBase: Money(Decimal.fromInt(100), baseCurrency),
+                      items: const [],
+                    ),
+                  ],
+            totalAssets: empty
+                ? zero
+                : Money(Decimal.fromInt(100), baseCurrency),
+            totalLiabilities: zero,
+            netWorth: empty ? zero : Money(Decimal.fromInt(100), baseCurrency),
+            currencyMismatches: mismatches,
+            staleHoldingCount: staleHoldingCount,
+            confidenceFloor: confidence,
+          ),
         ),
       ),
     ),
@@ -26,11 +53,21 @@ Widget _wrap({
 }
 
 void main() {
-  testWidgets('renders nothing when there are no mismatches', (tester) async {
+  testWidgets('renders nothing for an empty snapshot', (tester) async {
+    await tester.pumpWidget(_wrap(mismatches: const [], empty: true));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppStatusBanner), findsNothing);
+  });
+
+  testWidgets('shows quality and as-of for a trusted valuation', (
+    tester,
+  ) async {
     await tester.pumpWidget(_wrap(mismatches: const []));
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(FLucideIcons.triangleAlert), findsNothing);
+    expect(find.byType(AppStatusBanner), findsOneWidget);
+    expect(find.textContaining('Daily close'), findsOneWidget);
   });
 
   testWidgets('renders warning when mismatches are present', (tester) async {
@@ -44,10 +81,23 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(FLucideIcons.triangleAlert), findsOneWidget);
+    expect(find.byType(AppStatusBanner), findsOneWidget);
     // Banner copy mentions the base currency code so the user knows what
     // the totals were expected to convert into.
     expect(find.textContaining('CNY'), findsOneWidget);
+  });
+
+  testWidgets('renders warning for stale valuations', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        mismatches: const [],
+        confidence: PriceConfidence.stale,
+        staleHoldingCount: 2,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('2 stale'), findsOneWidget);
   });
 
   testWidgets('tapping the banner opens the details sheet', (tester) async {
@@ -58,7 +108,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(FLucideIcons.triangleAlert));
+    await tester.tap(find.byType(AppStatusBanner));
     await tester.pumpAndSettle();
 
     // The sheet renders the offending holding's id + the conversion arrow.

@@ -398,22 +398,32 @@ void main() {
       expect(build.postings[4].units, Decimal.fromInt(745));
     });
 
-    test('cross-currency sell is rejected (FIR-132)', () {
-      expect(
-        () => JournalEntryBuilders.sell(
-          date: DateTime.utc(2026),
-          accountId: 'a',
-          cashAccountId: 'c',
-          capitalGainsAccountId: 'cg',
-          assetUnit: 'X',
-          qty: Decimal.one,
-          price: Decimal.one,
-          quoteCurrency: 'USD',
-          costPerUnit: Decimal.one,
-          costCurrency: 'CNY',
-        ),
-        throwsA(isA<ArgumentError>()),
+    test('cross-currency sell converts lot cost at the sell-date rate', () {
+      final build = JournalEntryBuilders.sell(
+        date: DateTime.utc(2026),
+        accountId: 'a',
+        cashAccountId: 'c',
+        capitalGainsAccountId: 'cg',
+        assetUnit: 'X',
+        qty: Decimal.one,
+        price: Decimal.fromInt(20),
+        quoteCurrency: 'USD',
+        costPerUnit: Decimal.fromInt(100),
+        costCurrency: 'CNY',
+        costToQuoteRate: Decimal.parse('0.14'),
       );
+
+      expect(
+        _checkBalance(
+          build,
+          baseCurrency: 'USD',
+          fx: _MapFxRateSource({'CNY:USD': Decimal.parse('0.14')}),
+        ).isBalanced,
+        isTrue,
+      );
+      expect(build.postings[0].cost!.currency, 'CNY');
+      expect(build.postings[1].units, Decimal.fromInt(-6));
+      expect(build.postings[2].units, Decimal.fromInt(20));
     });
   });
 

@@ -102,6 +102,11 @@ kSyncTableRegistrations = <SyncTableRegistration>[
     domainPrefix: kFinanceDomainPrefix,
   ),
   SyncTableRegistration(
+    'fire_plans',
+    domainPrefix: kFinanceDomainPrefix,
+    primaryKey: 'user_id',
+  ),
+  SyncTableRegistration(
     'financial_signals',
     domainPrefix: kFinanceDomainPrefix,
   ),

@@ -83,10 +83,7 @@ class _HomeLiveBody extends ConsumerWidget {
           data: (snapshot) => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              CurrencyMismatchNotice(
-                mismatches: snapshot.currencyMismatches,
-                baseCurrency: snapshot.baseCurrency,
-              ),
+              ValuationTrustNotice(snapshot: snapshot),
               Expanded(child: _DashboardBody(snapshot: snapshot)),
             ],
           ),

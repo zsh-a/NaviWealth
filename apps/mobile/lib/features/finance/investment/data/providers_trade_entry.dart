@@ -1,7 +1,7 @@
 part of 'providers.dart';
 
 final _tradeCurrencyConverterProvider = Provider<CurrencyConverter>((ref) {
-  return FxRateCurrencyConverter(InMemoryFxRateLookup(const []));
+  return FxRateCurrencyConverter(ref.watch(currentFxLookupProvider));
 });
 
 /// Deadline for dependency resolution and optional market-price backfill

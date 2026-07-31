@@ -47,13 +47,13 @@ class _FinanceActivationCardState extends ConsumerState<FinanceActivationCard> {
     }
     final l10n = AppLocalizations.of(context);
     final (title, body, action, route) = switch (snapshot.stage) {
-      FinanceActivationStage.importData => (
-        l10n.financeActivationImportTitle,
-        l10n.financeActivationImportBody,
-        l10n.financeActivationImportAction,
-        FinanceRoutes.activityIngest,
+      FinanceActivationStage.addData => (
+        l10n.financeActivationDataTitle,
+        l10n.financeActivationDataBody,
+        l10n.financeActivationDataAction,
+        FinanceRoutes.activity,
       ),
-      FinanceActivationStage.reviewImport => (
+      FinanceActivationStage.reviewData => (
         l10n.financeActivationReviewTitle,
         l10n.financeActivationReviewBody(snapshot.pendingReviewCount),
         l10n.financeActivationReviewAction,
