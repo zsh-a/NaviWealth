@@ -1,10 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
+
+final manualAssetByIdProvider = FutureProvider.autoDispose
+    .family<Asset?, String>((ref, assetId) async {
+      final repository = await ref.watch(manualAssetRepositoryProvider.future);
+      return repository.findById(assetId);
+    });
 
 /// Snapshot of [assetId] from the portfolio's holding pipeline at "now".
 ///

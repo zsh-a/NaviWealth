@@ -11,6 +11,7 @@ import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/shell/domain_shell.dart';
 import 'package:naviwealth/core/shell/domain_switcher.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
+import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/life/data/life_events_provider.dart';
@@ -41,6 +42,9 @@ class LifePage extends ConsumerWidget {
           // The Life hub is the initial route: it must be refreshable and
           // width-capped like every domain Today surface (doc 15 §7.3).
           onRefresh: () async {
+            final sync = await ref.read(syncSchedulerProvider.future);
+            await sync?.triggerNow();
+            ref.invalidate(lifeSignalSnapshotProvider);
             ref.invalidate(lifeEventsProvider);
             ref.invalidate(lifeHeroSummaryProvider);
           },

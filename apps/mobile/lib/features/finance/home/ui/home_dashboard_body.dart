@@ -10,13 +10,28 @@ class _DashboardBody extends StatelessWidget {
       _DashboardBodyContent(snapshot: snapshot);
 }
 
-class _DashboardBodyContent extends ConsumerWidget {
+class _DashboardBodyContent extends ConsumerStatefulWidget {
   const _DashboardBodyContent({required this.snapshot});
 
   final DashboardSnapshot snapshot;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_DashboardBodyContent> createState() =>
+      _DashboardBodyContentState();
+}
+
+class _DashboardBodyContentState extends ConsumerState<_DashboardBodyContent> {
+  final _primaryScrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _primaryScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final snapshot = widget.snapshot;
     final amountsHidden = ref.watch(_financeAmountsHiddenProvider);
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -45,9 +60,11 @@ class _DashboardBodyContent extends ConsumerWidget {
 
         Future<void> onRefresh() async {
           final sync = await ref.read(syncSchedulerProvider.future);
-          await sync?.triggerNow();
           final prices = await ref.read(priceSyncCoordinatorProvider.future);
-          await prices.triggerNow(reason: PriceSyncReason.manual);
+          await Future.wait<void>([
+            if (sync != null) sync.triggerNow(),
+            prices.triggerNow(reason: PriceSyncReason.manual),
+          ]);
           ref.invalidate(dashboardSnapshotProvider);
           ref.invalidate(dashboardHeaderMetricsProvider);
           await ref.read(dashboardSnapshotProvider.future);
@@ -85,6 +102,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                   onRefresh: onRefresh,
                   child: AppAtmosphere(
                     child: AppCollapsingScrollHost(
+                      primaryController: _primaryScrollController,
                       padding: EdgeInsets.fromLTRB(
                         padding.left,
                         AppSpacing.s4,
@@ -107,6 +125,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                               children: [
                                 Expanded(
                                   child: ListView(
+                                    controller: _primaryScrollController,
                                     physics:
                                         const AlwaysScrollableScrollPhysics(),
                                     padding: EdgeInsets.zero,

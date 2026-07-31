@@ -70,6 +70,32 @@ void main() {
       expect(find.byType(LineChart), findsOneWidget);
     });
 
+    testWidgets('provides fallback semantics and adjustable actions', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          const NwLineChart(
+            series: [
+              ChartSeries(
+                name: 'Net worth',
+                points: [ChartPoint(x: 0, y: 10), ChartPoint(x: 1, y: 12)],
+              ),
+            ],
+          ),
+        ),
+      );
+
+      final chartSemantics = find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics && widget.properties.label == 'Net worth: 12.0',
+      );
+      expect(chartSemantics, findsOneWidget);
+      final semanticsWidget = tester.widget<Semantics>(chartSemantics);
+      expect(semanticsWidget.properties.onIncrease, isNotNull);
+      expect(semanticsWidget.properties.onDecrease, isNotNull);
+    });
+
     testWidgets('can hide resting data-point dots for dense trend charts', (
       tester,
     ) async {
@@ -231,6 +257,39 @@ void main() {
       );
       final chart = tester.widget<LineChart>(find.byType(LineChart));
       expect(chart.data.lineBarsData.first.isCurved, isFalse);
+    });
+
+    testWidgets('rebuilds cached chart data when presentation changes', (
+      tester,
+    ) async {
+      const series = [
+        ChartSeries(
+          name: 'main',
+          points: [ChartPoint(x: 0, y: 0), ChartPoint(x: 1, y: 1)],
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrap(
+          const NwLineChart(
+            interpolation: ChartInterpolation.linear,
+            series: series,
+          ),
+        ),
+      );
+      var chart = tester.widget<LineChart>(find.byType(LineChart));
+      expect(chart.data.lineBarsData.first.isCurved, isFalse);
+
+      await tester.pumpWidget(
+        _wrap(
+          const NwLineChart(
+            interpolation: ChartInterpolation.curved,
+            series: series,
+          ),
+        ),
+      );
+      chart = tester.widget<LineChart>(find.byType(LineChart));
+      expect(chart.data.lineBarsData.first.isCurved, isTrue);
     });
 
     testWidgets('curved shorthand overrides interpolation', (tester) async {
@@ -536,6 +595,30 @@ void main() {
       );
       final pie = tester.widget<PieChart>(find.byType(PieChart));
       expect(pie.data.sections.length, 3);
+    });
+
+    testWidgets('describes slices when no semantic label is supplied', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          const NwPieChart(
+            slices: [
+              Slice(label: 'Stocks', value: 75),
+              Slice(label: 'Cash', value: 25),
+            ],
+          ),
+        ),
+      );
+
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.label == 'Stocks: 75.0%, Cash: 25.0%',
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('hides label on slices below minLabelPercent', (tester) async {

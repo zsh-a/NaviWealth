@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/assets/data/asset_detail_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
-import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -25,6 +25,7 @@ class AssetDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final repoAsync = ref.watch(manualAssetRepositoryProvider);
+    final assetAsync = ref.watch(manualAssetByIdProvider(assetId));
     return repoAsync.when(
       loading: () => AppPageScaffold(
         title: l10n.assetDetailUnknown,
@@ -41,78 +42,72 @@ class AssetDetailPage extends ConsumerWidget {
           onRetry: () => ref.invalidate(manualAssetRepositoryProvider),
         ),
       ),
-      data: (repo) {
-        return FutureBuilder<Asset?>(
-          future: repo.findById(assetId),
-          builder: (context, snap) {
-            if (snap.connectionState != ConnectionState.done) {
-              return AppPageScaffold(
-                title: l10n.assetDetailUnknown,
-                childPad: false,
-                child: const AssetDetailSkeleton(),
-              );
-            }
-            if (snap.hasError) {
-              return AppPageScaffold(
-                title: l10n.assetDetailUnknown,
-                childPad: false,
-                child: AppEmptyState.error(
-                  title: l10n.commonLoadFailed,
-                  message: userSafeErrorMessage(
-                    context,
-                    snap.error!,
-                    stackTrace: snap.stackTrace,
-                  ),
-                  retryLabel: l10n.commonRetry,
-                  onRetry: () => ref.invalidate(manualAssetRepositoryProvider),
-                ),
-              );
-            }
-            final asset = snap.data;
-            if (asset == null) {
-              return AppPageScaffold(
-                title: l10n.assetDetailUnknown,
-                childPad: false,
-                child: AppEmptyState(
-                  icon: FLucideIcons.box,
-                  title: l10n.assetDetailNotFound,
-                  action: FButton(
-                    variant: FButtonVariant.outline,
-                    onPress: () => Navigator.of(context).maybePop(),
-                    child: Text(l10n.commonClose),
-                  ),
-                ),
-              );
-            }
-            return switch (asset.type) {
-              AssetType.cash ||
-              AssetType.bankDepositTerm ||
-              AssetType.bankDepositDemand ||
-              AssetType.wealthProduct => ManualAssetDetailPage(
-                asset: asset,
-                repository: repo,
+      data: (repo) => assetAsync.when(
+        loading: () => AppPageScaffold(
+          title: l10n.assetDetailUnknown,
+          childPad: false,
+          child: const AssetDetailSkeleton(),
+        ),
+        error: (error, stackTrace) {
+          return AppPageScaffold(
+            title: l10n.assetDetailUnknown,
+            childPad: false,
+            child: AppEmptyState.error(
+              title: l10n.commonLoadFailed,
+              message: userSafeErrorMessage(
+                context,
+                error,
+                stackTrace: stackTrace,
               ),
-              AssetType.stock ||
-              AssetType.etf ||
-              AssetType.crypto ||
-              AssetType.mutualFund => EquityAssetDetailPage(assetId: asset.id),
-              _ => AppPageScaffold(
-                title: asset.name ?? asset.symbol,
-                childPad: false,
-                child: AppEmptyState(
-                  icon: FLucideIcons.circleX,
-                  title: l10n.assetDetailUnsupportedType,
-                  action: FButton(
-                    variant: FButtonVariant.outline,
-                    onPress: () => Navigator.of(context).maybePop(),
-                    child: Text(l10n.commonClose),
-                  ),
+              retryLabel: l10n.commonRetry,
+              onRetry: () => ref.invalidate(manualAssetByIdProvider(assetId)),
+            ),
+          );
+        },
+        data: (asset) {
+          if (asset == null) {
+            return AppPageScaffold(
+              title: l10n.assetDetailUnknown,
+              childPad: false,
+              child: AppEmptyState(
+                icon: FLucideIcons.box,
+                title: l10n.assetDetailNotFound,
+                action: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(context).maybePop(),
+                  child: Text(l10n.commonClose),
                 ),
               ),
-            };
-          },
-        );
-      },
+            );
+          }
+          return switch (asset.type) {
+            AssetType.cash ||
+            AssetType.bankDepositTerm ||
+            AssetType.bankDepositDemand ||
+            AssetType.wealthProduct => ManualAssetDetailPage(
+              asset: asset,
+              repository: repo,
+            ),
+            AssetType.stock ||
+            AssetType.etf ||
+            AssetType.crypto ||
+            AssetType.mutualFund => EquityAssetDetailPage(assetId: asset.id),
+            _ => AppPageScaffold(
+              title: asset.name ?? asset.symbol,
+              childPad: false,
+              child: AppEmptyState(
+                icon: FLucideIcons.circleX,
+                title: l10n.assetDetailUnsupportedType,
+                action: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(context).maybePop(),
+                  child: Text(l10n.commonClose),
+                ),
+              ),
+            ),
+          };
+        },
+      ),
     );
   }
 }

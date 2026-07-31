@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/scheduler.dart';
 
 import 'frame_timing_collector.dart';
@@ -22,9 +24,16 @@ class PerfTraceRecorder {
   final Duration Function() _frameClock;
 
   _PendingTrace? _active;
+  final ListQueue<PerfTrace> _recent = ListQueue<PerfTrace>();
+
+  static const int _historyLimit = 20;
 
   /// Returns the currently running trace name, if any.
   String? get activeName => _active?.name;
+
+  Iterable<PerfTrace> get recentTraces => List<PerfTrace>.unmodifiable(_recent);
+
+  void clearHistory() => _recent.clear();
 
   /// Begins a new trace. Throws if one is already active — explicit
   /// teardown forces callers to think about overlap rather than silently
@@ -55,12 +64,15 @@ class PerfTraceRecorder {
       from: pending.frameStart,
       to: frameEnd,
     );
-    return PerfTrace(
+    final trace = PerfTrace(
       name: pending.name,
       startedAt: pending.startedAt,
       endedAt: wallEnd,
       stats: stats,
     );
+    _recent.addLast(trace);
+    if (_recent.length > _historyLimit) _recent.removeFirst();
+    return trace;
   }
 
   /// Convenience: run [body] under a trace and return both the trace and

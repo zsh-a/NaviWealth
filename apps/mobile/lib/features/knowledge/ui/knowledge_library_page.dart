@@ -53,6 +53,8 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   final _searchFocus = FocusNode();
   final List<String> _searchHistory = <String>[];
   late String _searchHistoryOwner;
+  Timer? _searchDebounce;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -64,6 +66,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchCtrl
       ..removeListener(_onSearchChanged)
       ..dispose();
@@ -72,7 +75,18 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   }
 
   void _onSearchChanged() {
-    if (mounted) setState(() {});
+    _searchDebounce?.cancel();
+    final next = _searchCtrl.text;
+    if (next.isEmpty) {
+      if (_searchQuery.isNotEmpty && mounted) {
+        setState(() => _searchQuery = '');
+      }
+      return;
+    }
+    _searchDebounce = Timer(const Duration(milliseconds: 150), () {
+      if (!mounted || next == _searchQuery) return;
+      setState(() => _searchQuery = next);
+    });
   }
 
   void _loadSearchHistory() {
@@ -101,7 +115,9 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   void _commitSearch([String? raw]) {
     final query = (raw ?? _searchCtrl.text).trim();
     if (query.length < 2) return;
+    _searchDebounce?.cancel();
     setState(() {
+      _searchQuery = query;
       _searchHistory
         ..clear()
         ..addAll(_normalizedSearchHistory(<String>[query, ..._searchHistory]));
@@ -220,7 +236,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                         : _createForSegment(context, ref, _segment),
                     onSegmentChanged: (segment) =>
                         setState(() => _segment = segment),
-                    query: _searchCtrl.text,
+                    query: _searchQuery,
                     searchHistory: _searchHistory,
                     onSearchSelected: _applySearch,
                     onSearchHistoryClear: _clearSearchHistory,

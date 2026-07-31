@@ -4,7 +4,7 @@ extension _NwLineChartData on _NwLineChartState {
   _PreparedLineData _prepare(List<ChartSeries> nonEmpty) {
     final cached = _prepared;
     if (cached != null &&
-        identical(_preparedSource, widget.series) &&
+        _sameSeriesData(_preparedSource, widget.series) &&
         _preparedDownsample == widget.downsample &&
         _preparedDownsampleTarget == widget.downsampleTarget) {
       return cached;
@@ -57,5 +57,34 @@ extension _NwLineChartData on _NwLineChartState {
     _preparedDownsample = widget.downsample;
     _preparedDownsampleTarget = widget.downsampleTarget;
     return prepared;
+  }
+
+  bool _sameSeriesData(List<ChartSeries>? previous, List<ChartSeries> next) {
+    if (previous == null || previous.length != next.length) return false;
+    if (identical(previous, next)) return true;
+    for (var seriesIndex = 0; seriesIndex < next.length; seriesIndex++) {
+      final left = previous[seriesIndex];
+      final right = next[seriesIndex];
+      if (left.name != right.name ||
+          left.intent != right.intent ||
+          left.emphasis != right.emphasis ||
+          left.colorOverride != right.colorOverride ||
+          left.fillOpacity != right.fillOpacity ||
+          left.strokeWidth != right.strokeWidth ||
+          left.points.length != right.points.length) {
+        return false;
+      }
+      if (identical(left.points, right.points)) continue;
+      for (var pointIndex = 0; pointIndex < right.points.length; pointIndex++) {
+        final leftPoint = left.points[pointIndex];
+        final rightPoint = right.points[pointIndex];
+        if (leftPoint.x != rightPoint.x ||
+            leftPoint.y != rightPoint.y ||
+            leftPoint.meta != rightPoint.meta) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }

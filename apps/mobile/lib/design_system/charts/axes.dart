@@ -99,6 +99,17 @@ class TimeAxis {
     final dt = DateTime.fromMillisecondsSinceEpoch(msSinceEpoch.round());
     return DateFormat.yMMMd(locale).format(dt);
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is TimeAxis &&
+      format == other.format &&
+      locale == other.locale &&
+      maxLabels == other.maxLabels &&
+      showGrid == other.showGrid;
+
+  @override
+  int get hashCode => Object.hash(format, locale, maxLabels, showGrid);
 }
 
 /// Axis configuration for a Y axis displaying numeric values.
@@ -182,6 +193,26 @@ class ValueAxis {
   }
 
   static String _glyph(String code) => AppFormatters.currencyGlyph(code);
+
+  @override
+  bool operator ==(Object other) =>
+      other is ValueAxis &&
+      format == other.format &&
+      currencyCode == other.currencyCode &&
+      fractionDigits == other.fractionDigits &&
+      maxLabels == other.maxLabels &&
+      showGrid == other.showGrid &&
+      locale == other.locale;
+
+  @override
+  int get hashCode => Object.hash(
+    format,
+    currencyCode,
+    fractionDigits,
+    maxLabels,
+    showGrid,
+    locale,
+  );
 }
 
 enum ValueAxisFormat { auto, currency, percent, decimal }

@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/assets/data/asset_detail_providers.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -18,8 +18,8 @@ class ManualAssetEditRoute extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final repoAsync = ref.watch(manualAssetRepositoryProvider);
-    return repoAsync.when(
+    final assetAsync = ref.watch(manualAssetByIdProvider(assetId));
+    return assetAsync.when(
       loading: () => AppPageScaffold(
         title: l10n.assetDetailUnknown,
         child: const AssetDetailSkeleton(),
@@ -31,25 +31,15 @@ class ManualAssetEditRoute extends ConsumerWidget {
           message: userSafeErrorMessage(context, error, stackTrace: stackTrace),
         ),
       ),
-      data: (repo) => FutureBuilder<Asset?>(
-        future: repo.findById(assetId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return AppPageScaffold(
-              title: l10n.assetDetailUnknown,
-              child: const AssetDetailSkeleton(),
-            );
-          }
-          final asset = snapshot.data;
-          if (asset == null) {
-            return AppPageScaffold(
-              title: l10n.assetDetailUnknown,
-              child: Center(child: Text(l10n.assetDetailNotFound)),
-            );
-          }
-          return ManualAssetEditPage(asset: asset);
-        },
-      ),
+      data: (asset) {
+        if (asset == null) {
+          return AppPageScaffold(
+            title: l10n.assetDetailUnknown,
+            child: Center(child: Text(l10n.assetDetailNotFound)),
+          );
+        }
+        return ManualAssetEditPage(asset: asset);
+      },
     );
   }
 }

@@ -158,3 +158,115 @@ class BriefScaffold extends StatelessWidget {
     return out;
   }
 }
+
+/// Brief composition for an unbounded repeated section.
+///
+/// Unlike [BriefScaffold], repeated rows are backed by a
+/// [SliverChildBuilderDelegate] and are only built near the viewport. Use this
+/// for Today/Review surfaces whose row count grows with user data.
+class BriefLazyListScaffold extends StatelessWidget {
+  const BriefLazyListScaffold({
+    super.key,
+    required this.greeting,
+    required this.stage,
+    required this.itemCount,
+    required this.itemBuilder,
+    this.modules = const <Widget>[],
+    this.listHeader,
+    this.padding,
+    this.atmosphere = true,
+    this.onRefresh,
+    this.stickyBuilder,
+    this.stickyPadding,
+  });
+
+  final Widget greeting;
+  final Widget stage;
+  final List<Widget> modules;
+  final Widget? listHeader;
+  final int itemCount;
+  final IndexedWidgetBuilder itemBuilder;
+  final EdgeInsetsGeometry? padding;
+  final bool atmosphere;
+  final Future<void> Function()? onRefresh;
+  final Widget Function(BuildContext context, double progress)? stickyBuilder;
+  final EdgeInsetsGeometry? stickyPadding;
+
+  @override
+  Widget build(BuildContext context) {
+    final contentPadding =
+        padding ??
+        EdgeInsets.fromLTRB(
+          AppSpacing.s16,
+          AppSpacing.s8,
+          AppSpacing.s16,
+          AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
+        );
+    final resolved = contentPadding.resolve(Directionality.of(context));
+    final headerChildren = <Widget>[
+      greeting,
+      const SizedBox(height: AppPageRhythm.module),
+      stage,
+      if (modules.isNotEmpty) ...[
+        const SizedBox(height: AppPageRhythm.section),
+        ...BriefScaffold._interleave(modules, AppPageRhythm.module),
+      ],
+      if (listHeader != null) ...[
+        const SizedBox(height: AppPageRhythm.module),
+        listHeader!,
+      ],
+    ];
+
+    Widget body = CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            resolved.left,
+            resolved.top,
+            resolved.right,
+            itemCount == 0 ? resolved.bottom : 0,
+          ),
+          sliver: SliverList(delegate: SliverChildListDelegate(headerChildren)),
+        ),
+        if (itemCount > 0)
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              resolved.left,
+              AppPageRhythm.module,
+              resolved.right,
+              resolved.bottom,
+            ),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index == itemCount - 1 ? 0 : AppPageRhythm.module,
+                  ),
+                  child: itemBuilder(context, index),
+                ),
+                childCount: itemCount,
+              ),
+            ),
+          ),
+      ],
+    );
+
+    if (onRefresh != null) {
+      body = AppRefreshIndicator(onRefresh: onRefresh!, child: body);
+    }
+    final sticky = stickyBuilder;
+    if (sticky != null) {
+      final resolvedStickyPad =
+          stickyPadding ??
+          EdgeInsets.fromLTRB(resolved.left, AppSpacing.s4, resolved.right, 0);
+      body = AppCollapsingScrollHost(
+        padding: resolvedStickyPad,
+        stickyBuilder: sticky,
+        body: body,
+      );
+    }
+    if (!atmosphere) return body;
+    return AppAtmosphere(child: body);
+  }
+}

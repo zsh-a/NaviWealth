@@ -129,7 +129,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(FTextField), 'portfolio');
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 160));
 
     expect(find.text('Search all knowledge'), findsOneWidget);
     await tester.tap(find.text('Search all knowledge'));

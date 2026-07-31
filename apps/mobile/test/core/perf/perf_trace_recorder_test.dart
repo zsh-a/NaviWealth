@@ -48,6 +48,7 @@ void main() {
       expect(trace.stats.frameCount, 2);
       expect(trace.stats.jankFrameCount, 1);
       expect(trace.wallDuration, const Duration(milliseconds: 50));
+      expect(recorder.recentTraces.single, same(trace));
     });
 
     test('end without begin returns null', () {

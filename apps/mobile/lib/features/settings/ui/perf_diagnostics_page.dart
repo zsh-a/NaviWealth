@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../core/perf/frame_timing_collector.dart';
+import '../../../core/perf/perf_trace_recorder.dart';
 import '../../../core/perf/providers.dart';
 import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
@@ -21,6 +22,12 @@ class PerfDiagnosticsPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     ref.watch(_perfDiagnosticsTickerProvider);
     final stats = ref.watch(frameTimingCollectorProvider).statsForAll();
+    final traces = ref
+        .watch(perfTraceRecorderProvider)
+        .recentTraces
+        .toList(growable: false)
+        .reversed
+        .take(5);
 
     return AppPageScaffold(
       title: l10n.settingsPerfTitle,
@@ -31,6 +38,43 @@ class PerfDiagnosticsPage extends ConsumerWidget {
           ResponsiveTwoColumn(
             left: _SummaryCard(stats: stats),
             right: _TimingCard(stats: stats),
+          ),
+          for (final trace in traces) ...[
+            const SizedBox(height: AppSpacing.s12),
+            _TraceCard(trace: trace),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _TraceCard extends StatelessWidget {
+  const _TraceCard({required this.trace});
+
+  final PerfTrace trace;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SoftCard.raised(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(trace.name, style: context.labelStyle),
+          const SizedBox(height: AppSpacing.s8),
+          _MetricRow(
+            label: l10n.settingsPerfTotalP95,
+            value: _ms(trace.stats.p95TotalUs),
+          ),
+          _MetricRow(
+            label: l10n.settingsPerfJankFrames,
+            value: '${trace.stats.jankFrameCount} / ${trace.stats.frameCount}',
+          ),
+          _MetricRow(
+            label: l10n.settingsPerfFrameBudget,
+            value: '${trace.wallDuration.inMilliseconds} ms',
           ),
         ],
       ),

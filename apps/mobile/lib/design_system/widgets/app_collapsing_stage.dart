@@ -91,6 +91,7 @@ class AppCollapsingScrollHost extends StatefulWidget {
     this.stickyBuilder,
     this.collapseExtent = kAppCollapseExtent,
     this.padding = EdgeInsets.zero,
+    this.primaryController,
   });
 
   /// Scrollable content (usually a [ListView] / [CustomScrollView]).
@@ -104,6 +105,10 @@ class AppCollapsingScrollHost extends StatefulWidget {
   /// Outer inset applied to the sticky bar (not the body).
   final EdgeInsetsGeometry padding;
 
+  /// Optional authoritative scroll source for layouts with multiple nested
+  /// scrollables. When set, descendant [ScrollNotification]s are ignored.
+  final ScrollController? primaryController;
+
   @override
   State<AppCollapsingScrollHost> createState() =>
       _AppCollapsingScrollHostState();
@@ -112,17 +117,48 @@ class AppCollapsingScrollHost extends StatefulWidget {
 class _AppCollapsingScrollHostState extends State<AppCollapsingScrollHost> {
   double _progress = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    widget.primaryController?.addListener(_onPrimaryScroll);
+  }
+
+  @override
+  void didUpdateWidget(covariant AppCollapsingScrollHost oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.primaryController == widget.primaryController) return;
+    oldWidget.primaryController?.removeListener(_onPrimaryScroll);
+    widget.primaryController?.addListener(_onPrimaryScroll);
+  }
+
+  @override
+  void dispose() {
+    widget.primaryController?.removeListener(_onPrimaryScroll);
+    super.dispose();
+  }
+
+  void _onPrimaryScroll() {
+    final controller = widget.primaryController;
+    if (controller == null || !controller.hasClients) return;
+    _updateProgress(controller.offset);
+  }
+
+  void _updateProgress(double pixels) {
+    final next = appScrollCollapseProgress(
+      pixels: pixels,
+      extent: widget.collapseExtent,
+    );
+    if ((next - _progress).abs() < 0.008) return;
+    setState(() => _progress = next);
+  }
+
   bool _onScroll(ScrollNotification notification) {
+    if (widget.primaryController != null) return false;
     // depth 0 = direct scrollable body; depth 1 = cockpit dual-column
     // ListViews nested one level under a Row/Column host body.
     if (notification.depth > 1) return false;
     if (notification.metrics.axis != Axis.vertical) return false;
-    final next = appScrollCollapseProgress(
-      pixels: notification.metrics.pixels,
-      extent: widget.collapseExtent,
-    );
-    if ((next - _progress).abs() < 0.008) return false;
-    setState(() => _progress = next);
+    _updateProgress(notification.metrics.pixels);
     return false;
   }
 

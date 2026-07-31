@@ -94,6 +94,65 @@ void main() {
     expect(opacity, greaterThan(0.5));
   });
 
+  testWidgets('explicit primary controller ignores secondary column scroll', (
+    tester,
+  ) async {
+    final primary = ScrollController();
+    final secondary = ScrollController();
+    addTearDown(primary.dispose);
+    addTearDown(secondary.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppCollapsingScrollHost(
+            primaryController: primary,
+            collapseExtent: 80,
+            stickyBuilder: (context, progress) => AppCollapsedSummaryBar(
+              progress: progress,
+              showAfter: 0.4,
+              child: const Text('primary-only-summary'),
+            ),
+            body: Row(
+              children: [
+                Expanded(
+                  child: ListView(
+                    controller: primary,
+                    children: const [SizedBox(height: 1600)],
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    controller: secondary,
+                    children: const [SizedBox(height: 1600)],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Opacity summaryOpacity() => tester.widget<Opacity>(
+      find
+          .ancestor(
+            of: find.text('primary-only-summary'),
+            matching: find.byType(Opacity),
+          )
+          .first,
+    );
+
+    secondary.jumpTo(100);
+    await tester.pump();
+    expect(summaryOpacity().opacity, 0);
+
+    primary.jumpTo(100);
+    await tester.pump();
+    expect(summaryOpacity().opacity, greaterThan(0.5));
+  });
+
   testWidgets('AppCollapsedSummaryBar hides when not visible', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(

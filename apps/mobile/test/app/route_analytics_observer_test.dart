@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/routing/route_analytics_observer.dart';
+import 'package:naviwealth/core/perf/frame_timing_collector.dart';
+import 'package:naviwealth/core/perf/perf_trace_recorder.dart';
 
 class _RecordingSink implements PageViewSink {
   final List<PageViewEvent> events = <PageViewEvent>[];
@@ -22,8 +24,13 @@ void main() {
 
   setUp(() {
     sink = _RecordingSink();
-    observer = RouteAnalyticsObserver(sink);
+    observer = RouteAnalyticsObserver(
+      sink,
+      PerfTraceRecorder(collector: FrameTimingCollector()),
+    );
   });
+
+  tearDown(() => observer.dispose());
 
   test('didPush emits a page_view event with the route name', () {
     observer.didPush(_route('home'), null);

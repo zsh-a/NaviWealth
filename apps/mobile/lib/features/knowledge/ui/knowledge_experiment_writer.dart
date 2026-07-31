@@ -208,7 +208,7 @@ class _AssumptionTargetPicker extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return FutureBuilder<String>(
-      future: ref.watch(currentUserIdProvider)(),
+      future: ref.watch(knowledgeOwnerUserIdProvider.future),
       builder: (context, ownerSnap) {
         if (!ownerSnap.hasData) {
           return const KnowledgeLoadingState(

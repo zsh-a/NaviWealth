@@ -8,6 +8,7 @@ import '../../l10n/gen/app_localizations.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
+import '../widgets/app_tappable.dart';
 import 'chart_palette.dart';
 import 'chart_series.dart';
 import 'drilldown.dart';
@@ -136,29 +137,77 @@ class _NwPieChartState extends State<NwPieChart> {
       ],
     );
 
-    if (widget.legendBuilder == null) {
-      return Semantics(
-        label: widget.semanticLabel,
-        container: true,
-        child: AspectRatio(aspectRatio: widget.aspectRatio, child: chartWidget),
-      );
-    }
-
-    final legend = widget.legendBuilder!(context, widget.slices, colors, total);
-
-    return Semantics(
-      label: widget.semanticLabel,
-      container: true,
-      child: AspectRatio(
-        aspectRatio: widget.aspectRatio,
-        child: Row(
-          children: [
-            Expanded(child: chartWidget),
-            legend,
-          ],
-        ),
-      ),
+    final legend = widget.legendBuilder?.call(
+      context,
+      widget.slices,
+      colors,
+      total,
     );
+    final content = AspectRatio(
+      aspectRatio: widget.aspectRatio,
+      child: legend == null
+          ? chartWidget
+          : Row(
+              children: [
+                Expanded(child: chartWidget),
+                legend,
+              ],
+            ),
+    );
+    return Semantics(
+      label: _resolvedSemanticLabel(total),
+      container: true,
+      onIncrease: () => _moveHighlight(1),
+      onDecrease: () => _moveHighlight(-1),
+      child: Focus(onKeyEvent: _handleKeyEvent, child: content),
+    );
+  }
+
+  void _moveHighlight(int delta) {
+    if (widget.slices.isEmpty) return;
+    final base = _highlightedIndex < 0
+        ? (delta < 0 ? widget.slices.length - 1 : 0)
+        : _highlightedIndex;
+    setState(() {
+      _highlightedIndex = (base + delta).clamp(0, widget.slices.length - 1);
+    });
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+      _moveHighlight(-1);
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+      _moveHighlight(1);
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.escape) {
+      setState(() => _highlightedIndex = -1);
+      return KeyEventResult.handled;
+    }
+    if ((event.logicalKey == LogicalKeyboardKey.enter ||
+            event.logicalKey == LogicalKeyboardKey.space) &&
+        _highlightedIndex >= 0 &&
+        widget.drillDown is SliceDrillDown) {
+      (widget.drillDown! as SliceDrillDown).onTap(
+        widget.slices[_highlightedIndex],
+      );
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  String _resolvedSemanticLabel(double total) {
+    final supplied = widget.semanticLabel?.trim();
+    if (supplied != null && supplied.isNotEmpty) return supplied;
+    return widget.slices
+        .map((slice) {
+          final percent = total <= 0 ? 0 : (slice.value / total) * 100;
+          return '${slice.label}: ${percent.toStringAsFixed(1)}%';
+        })
+        .join(', ');
   }
 
   Widget _buildCenterSlot(
@@ -277,9 +326,8 @@ class LegendRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onSurface = context.theme.colors.foreground;
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+    return AppTappable(
+      onPress: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.accentBar),
         child: Column(

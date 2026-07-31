@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -50,6 +52,101 @@ class ExecutionTodayPage extends ConsumerWidget {
   }
 }
 
+final _executionTodayViewProvider =
+    Provider.family<AsyncValue<_ExecutionTodayView>, ExecutionTodayFilter>((
+      ref,
+      filter,
+    ) {
+      final actionsAsync = ref.watch(executionTodayActionsProvider);
+      final openActionsAsync = ref.watch(executionOpenActionsProvider);
+      final projects =
+          ref.watch(executionProjectsProvider).value ??
+          const <ExecutionProject>[];
+      final commitments =
+          ref.watch(executionCommitmentsProvider).value ??
+          const <ExecutionCommitment>[];
+      final recentProgress =
+          ref.watch(executionRecentProgressProvider).value ??
+          const <ExecutionProgressEntry>[];
+      final relations = ref.watch(executionActionRelationsProvider).value;
+      final focusIds = ref.watch(executionDailyFocusProvider);
+      final reviewArtifact = ref
+          .watch(
+            execution_agent_providers.latestExecutionReviewArtifactProvider,
+          )
+          .value;
+
+      return actionsAsync.whenData((actions) {
+        final openActions = openActionsAsync.value ?? actions;
+        final filteredActions = filteredExecutionActions(
+          filter: filter,
+          todayActions: actions,
+          openActions: openActions,
+        );
+        final focusOrder = <String, int>{
+          for (var i = 0; i < focusIds.length; i++) focusIds[i]: i,
+        };
+        final visibleActions = filteredActions
+            .where(
+              (action) =>
+                  filter != ExecutionTodayFilter.focus ||
+                  !focusOrder.containsKey(action.id),
+            )
+            .toList(growable: false);
+        visibleActions.sort((a, b) {
+          final aIndex = focusOrder[a.id];
+          final bIndex = focusOrder[b.id];
+          if (aIndex != null && bIndex != null) {
+            return aIndex.compareTo(bIndex);
+          }
+          if (aIndex != null) return -1;
+          if (bIndex != null) return 1;
+          return 0;
+        });
+        return _ExecutionTodayView(
+          openActions: openActions,
+          projects: projects,
+          commitments: commitments,
+          relations: relations,
+          focusIds: focusIds,
+          visibleActions: visibleActions,
+          snapshot: ExecutionOverviewSnapshot.fromLists(
+            todayActions: actions,
+            openActions: openActions,
+            projects: projects,
+            commitments: commitments,
+            recentProgress: recentProgress,
+            now: DateTime.now(),
+          ),
+          suggestedFocus: focusIds.isEmpty
+              ? _recommendedFocusActions(reviewArtifact, openActions)
+              : const <ExecutionAction>[],
+        );
+      });
+    });
+
+class _ExecutionTodayView {
+  const _ExecutionTodayView({
+    required this.openActions,
+    required this.projects,
+    required this.commitments,
+    required this.relations,
+    required this.focusIds,
+    required this.visibleActions,
+    required this.snapshot,
+    required this.suggestedFocus,
+  });
+
+  final List<ExecutionAction> openActions;
+  final List<ExecutionProject> projects;
+  final List<ExecutionCommitment> commitments;
+  final ExecutionRelations? relations;
+  final List<String> focusIds;
+  final List<ExecutionAction> visibleActions;
+  final ExecutionOverviewSnapshot snapshot;
+  final List<ExecutionAction> suggestedFocus;
+}
+
 class _TodayList extends ConsumerStatefulWidget {
   @override
   ConsumerState<_TodayList> createState() => _TodayListState();
@@ -71,17 +168,17 @@ class _TodayListState extends ConsumerState<_TodayList> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final actionsAsync = ref.watch(executionTodayActionsProvider);
-    final openActionsAsync = ref.watch(executionOpenActionsProvider);
-    final projectsAsync = ref.watch(executionProjectsProvider);
-    final commitmentsAsync = ref.watch(executionCommitmentsProvider);
-    final progressAsync = ref.watch(executionRecentProgressProvider);
-    final relations = ref.watch(executionActionRelationsProvider).value;
-    final focusIds = ref.watch(executionDailyFocusProvider);
-    final reviewArtifact = ref
-        .watch(execution_agent_providers.latestExecutionReviewArtifactProvider)
-        .value;
-    return actionsAsync.when(
+    ref.listen(executionOpenActionsProvider, (previous, next) {
+      final actions = next.value;
+      if (actions == null) return;
+      unawaited(
+        ref
+            .read(executionDailyFocusProvider.notifier)
+            .retainExisting(actions.map((action) => action.id)),
+      );
+    });
+    final viewAsync = ref.watch(_executionTodayViewProvider(_filter));
+    return viewAsync.when(
       loading: () =>
           AppListPageSkeleton(padding: shellTabContentPadding(context)),
       error: (error, stackTrace) => kDefaultError(
@@ -90,53 +187,15 @@ class _TodayListState extends ConsumerState<_TodayList> {
         stackTrace,
         onRetry: () => ref.invalidate(executionTodayActionsProvider),
       ),
-      data: (actions) {
-        final now = DateTime.now();
-        final openActions = openActionsAsync.value ?? actions;
-        final projects = projectsAsync.value ?? const <ExecutionProject>[];
-        final commitments =
-            commitmentsAsync.value ?? const <ExecutionCommitment>[];
-        final recentProgress =
-            progressAsync.value ?? const <ExecutionProgressEntry>[];
-        if (openActionsAsync.value case final loadedOpenActions?) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ref
-                .read(executionDailyFocusProvider.notifier)
-                .retainExisting(loadedOpenActions.map((action) => action.id));
-          });
-        }
-        final filteredActions = filteredExecutionActions(
-          filter: _filter,
-          todayActions: actions,
-          openActions: openActions,
-        );
-        final visibleActions =
-            filteredActions
-                .where(
-                  (action) =>
-                      _filter != ExecutionTodayFilter.focus ||
-                      !focusIds.contains(action.id),
-                )
-                .toList()
-              ..sort((a, b) {
-                final aIndex = focusIds.indexOf(a.id);
-                final bIndex = focusIds.indexOf(b.id);
-                if (aIndex >= 0 && bIndex >= 0) return aIndex.compareTo(bIndex);
-                if (aIndex >= 0) return -1;
-                if (bIndex >= 0) return 1;
-                return 0;
-              });
-        final snapshot = ExecutionOverviewSnapshot.fromLists(
-          todayActions: actions,
-          openActions: openActions,
-          projects: projects,
-          commitments: commitments,
-          recentProgress: recentProgress,
-          now: now,
-        );
-        final suggestedFocus = focusIds.isEmpty
-            ? _recommendedFocusActions(reviewArtifact, openActions)
-            : const <ExecutionAction>[];
+      data: (view) {
+        final openActions = view.openActions;
+        final projects = view.projects;
+        final commitments = view.commitments;
+        final relations = view.relations;
+        final focusIds = view.focusIds;
+        final visibleActions = view.visibleActions;
+        final snapshot = view.snapshot;
+        final suggestedFocus = view.suggestedFocus;
 
         final actionModules = <Widget>[
           _DailyFocusPanel(
@@ -170,43 +229,10 @@ class _TodayListState extends ConsumerState<_TodayList> {
                       )
                     : null,
               ),
-          ] else ...[
-            ExecutionSectionHeader(
-              title: _filter == ExecutionTodayFilter.focus
-                  ? l10n.executionTodayNextActions
-                  : executionTodayFilterLabel(l10n, _filter),
-              count: visibleActions.length,
-              icon: executionTodayFilterIcon(_filter),
-            ),
-            for (final action in visibleActions)
-              ExecutionActionCardController(
-                action: action,
-                projectLabel:
-                    relations?.projectLabel(action.projectId) ??
-                    executionProjectRelationLabel(projects, action.projectId),
-                commitmentLabel:
-                    relations?.commitmentLabel(action.commitmentId) ??
-                    executionCommitmentRelationLabel(
-                      commitments,
-                      action.commitmentId,
-                    ),
-                onOpen: () => context.push(ExecutionRoutes.action(action.id)),
-                onSourceOpen: executionSourceOpen(context, ref, action.source),
-                onEdit: () =>
-                    showExecutionActionSheet(context: context, action: action),
-                onRecordProgress: () => showExecutionProgressSheet(
-                  context: context,
-                  action: action,
-                ),
-                doneProgressNote: l10n.executionProgressDoneDefault,
-                droppedProgressNote: l10n.executionProgressDroppedDefault,
-                focusSelected: focusIds.contains(action.id),
-                onToggleFocus: () => _toggleFocus(action, openActions),
-              ),
           ],
         ];
 
-        return BriefScaffold(
+        return BriefLazyListScaffold(
           padding: shellTabContentPadding(context),
           onRefresh: _refresh,
           greeting: const SizedBox.shrink(),
@@ -249,7 +275,42 @@ class _TodayListState extends ConsumerState<_TodayList> {
               ),
             );
           },
-          secondary: actionModules,
+          modules: actionModules,
+          listHeader: visibleActions.isEmpty
+              ? null
+              : ExecutionSectionHeader(
+                  title: _filter == ExecutionTodayFilter.focus
+                      ? l10n.executionTodayNextActions
+                      : executionTodayFilterLabel(l10n, _filter),
+                  count: visibleActions.length,
+                  icon: executionTodayFilterIcon(_filter),
+                ),
+          itemCount: visibleActions.length,
+          itemBuilder: (context, index) {
+            final action = visibleActions[index];
+            return ExecutionActionCardController(
+              action: action,
+              projectLabel:
+                  relations?.projectLabel(action.projectId) ??
+                  executionProjectRelationLabel(projects, action.projectId),
+              commitmentLabel:
+                  relations?.commitmentLabel(action.commitmentId) ??
+                  executionCommitmentRelationLabel(
+                    commitments,
+                    action.commitmentId,
+                  ),
+              onOpen: () => context.push(ExecutionRoutes.action(action.id)),
+              onSourceOpen: executionSourceOpen(context, ref, action.source),
+              onEdit: () =>
+                  showExecutionActionSheet(context: context, action: action),
+              onRecordProgress: () =>
+                  showExecutionProgressSheet(context: context, action: action),
+              doneProgressNote: l10n.executionProgressDoneDefault,
+              droppedProgressNote: l10n.executionProgressDroppedDefault,
+              focusSelected: focusIds.contains(action.id),
+              onToggleFocus: () => _toggleFocus(action, openActions),
+            );
+          },
         );
       },
     );
@@ -418,9 +479,8 @@ class _DailyFocusRow extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.s8),
           Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onOpen,
+            child: AppTappable(
+              onPress: onOpen,
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
                 child: Text(

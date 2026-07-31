@@ -143,6 +143,7 @@ class _NwLineChartState extends State<NwLineChart> {
   // NOT the entire chart (LineChart + axes + grid).
   final _touchNotifier = ValueNotifier<_TouchState?>(null);
   int _lastSpotIndex = -1;
+  int _keyboardSpotIndex = -1;
 
   _PreparedLineData? _prepared;
   List<ChartSeries>? _preparedSource;
@@ -157,11 +158,72 @@ class _NwLineChartState extends State<NwLineChart> {
   _PreparedLineData? _cachedChartDataSource;
   ChartPalette? _cachedChartPalette;
   bool? _cachedHideAmounts;
+  Object? _cachedChartConfig;
 
   @override
   void dispose() {
     _touchNotifier.dispose();
     super.dispose();
+  }
+
+  void _moveKeyboardSpot(
+    int delta,
+    List<ChartSeries> processed,
+    List<FlSpot> spots,
+  ) {
+    if (processed.isEmpty || processed.first.points.isEmpty || spots.isEmpty) {
+      return;
+    }
+    final lastIndex = processed.first.points.length - 1;
+    final base = _keyboardSpotIndex < 0
+        ? (delta < 0 ? lastIndex : 0)
+        : _keyboardSpotIndex;
+    final next = (base + delta).clamp(0, lastIndex);
+    _keyboardSpotIndex = next;
+    final point = processed.first.points[next];
+    _touchNotifier.value = _TouchState(
+      spot: spots[next],
+      spotIndex: next,
+      touchStartPoint: point,
+    );
+    widget.onScrub?.call(point);
+  }
+
+  void _clearKeyboardSpot() {
+    _keyboardSpotIndex = -1;
+    _touchNotifier.value = null;
+    widget.onScrub?.call(null);
+  }
+
+  KeyEventResult _handleKeyEvent(
+    FocusNode node,
+    KeyEvent event,
+    List<ChartSeries> processed,
+    List<FlSpot> spots,
+  ) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+      _moveKeyboardSpot(-1, processed, spots);
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+      _moveKeyboardSpot(1, processed, spots);
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.escape) {
+      _clearKeyboardSpot();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  String _resolvedSemanticLabel(List<ChartSeries> processed) {
+    final supplied = widget.semanticLabel?.trim();
+    if (supplied != null && supplied.isNotEmpty) return supplied;
+    return processed
+        .where((series) => series.points.isNotEmpty)
+        .map((series) => '${series.name}: ${series.points.last.y}')
+        .join(', ');
   }
 
   @override
@@ -187,6 +249,23 @@ class _NwLineChartState extends State<NwLineChart> {
     final chartMaxY = maxY + yPad;
     final plotInsets = _plotInsets;
     final hideAmounts = AmountPrivacyScope.isHiddenOf(context);
+    final chartConfig = (
+      xAxis: widget.xAxis,
+      yAxis: widget.yAxis,
+      minX: minX,
+      maxX: maxX,
+      minY: chartMinY,
+      maxY: chartMaxY,
+      filled: widget.filled,
+      interpolation: widget.interpolation,
+      curved: widget.curved,
+      curveSmoothness: widget.curveSmoothness,
+      heroDots: widget.heroDots,
+      showDots: widget.showDots,
+      showXAxis: widget.showXAxis,
+      showYAxis: widget.showYAxis,
+      minimal: widget.minimal,
+    );
 
     // Cache chart data — only rebuild when data/palette/privacy changes.
     // Touch events do NOT trigger a rebuild of this method, so the cached
@@ -195,7 +274,8 @@ class _NwLineChartState extends State<NwLineChart> {
     if (cached == null ||
         !identical(_cachedChartDataSource, prepared) ||
         _cachedChartPalette != palette ||
-        _cachedHideAmounts != hideAmounts) {
+        _cachedHideAmounts != hideAmounts ||
+        _cachedChartConfig != chartConfig) {
       final lineBars = <LineChartBarData>[];
       for (var i = 0; i < processed.length; i++) {
         final s = processed[i];
@@ -251,6 +331,7 @@ class _NwLineChartState extends State<NwLineChart> {
       _cachedChartDataSource = prepared;
       _cachedChartPalette = palette;
       _cachedHideAmounts = hideAmounts;
+      _cachedChartConfig = chartConfig;
     }
 
     final chartDataObj = _cachedChartData!;
@@ -363,9 +444,20 @@ class _NwLineChartState extends State<NwLineChart> {
         ? AspectRatio(aspectRatio: ratio, child: stack)
         : stack;
     return Semantics(
-      label: widget.semanticLabel,
+      label: _resolvedSemanticLabel(processed),
       container: true,
-      child: chart,
+      onIncrease: widget.minimal
+          ? null
+          : () => _moveKeyboardSpot(1, processed, prepared.spots.first),
+      onDecrease: widget.minimal
+          ? null
+          : () => _moveKeyboardSpot(-1, processed, prepared.spots.first),
+      child: Focus(
+        canRequestFocus: !widget.minimal,
+        onKeyEvent: (node, event) =>
+            _handleKeyEvent(node, event, processed, prepared.spots.first),
+        child: chart,
+      ),
     );
   }
 }

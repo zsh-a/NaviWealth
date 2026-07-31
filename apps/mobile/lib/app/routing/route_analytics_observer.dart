@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/logging/app_logger.dart';
 import '../../core/logging/providers.dart';
+import '../../core/perf/perf_trace_recorder.dart';
+import '../../core/perf/providers.dart';
 
 /// Hooks Flutter's [Navigator] lifecycle and emits a single `page_view` event
 /// per route transition.
@@ -16,9 +20,11 @@ import '../../core/logging/providers.dart';
 /// `lib/app/router.dart` and is rebuilt whenever its sink changes (Riverpod
 /// invalidation), so swapping the sink in tests is just an `overrideWithValue`.
 class RouteAnalyticsObserver extends NavigatorObserver {
-  RouteAnalyticsObserver(this._sink);
+  RouteAnalyticsObserver(this._sink, this._perfRecorder);
 
   final PageViewSink _sink;
+  final PerfTraceRecorder _perfRecorder;
+  Timer? _traceTimer;
 
   @override
   void didPush(Route<Object?> route, Route<Object?>? previousRoute) {
@@ -53,7 +59,13 @@ class RouteAnalyticsObserver extends NavigatorObserver {
         transition: transition,
       ),
     );
+    _traceTimer?.cancel();
+    _perfRecorder.end();
+    _perfRecorder.begin('route:$transition:$name');
+    _traceTimer = Timer(const Duration(milliseconds: 750), _perfRecorder.end);
   }
+
+  void dispose() => _traceTimer?.cancel();
 
   static String? _routeName(Route<Object?> route) {
     final settings = route.settings;
@@ -106,6 +118,11 @@ final pageViewSinkProvider = Provider<PageViewSink>(
   (ref) => LoggerPageViewSink(ref.watch(loggerProvider)),
 );
 
-final routeAnalyticsObserverProvider = Provider<RouteAnalyticsObserver>(
-  (ref) => RouteAnalyticsObserver(ref.watch(pageViewSinkProvider)),
-);
+final routeAnalyticsObserverProvider = Provider<RouteAnalyticsObserver>((ref) {
+  final observer = RouteAnalyticsObserver(
+    ref.watch(pageViewSinkProvider),
+    ref.watch(perfTraceRecorderProvider),
+  );
+  ref.onDispose(observer.dispose);
+  return observer;
+});
