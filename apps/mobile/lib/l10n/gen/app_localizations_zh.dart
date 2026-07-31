@@ -16022,10 +16022,34 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthActivationBody =>
-      '授权只读访问并完成首次 30 天同步。即使不连接数据源，也可以继续使用 HealthOS。';
+      '选择你已经在用的数据源。所有连接均为只读，也可以仅靠手动记录使用 HealthOS。';
 
   @override
-  String get healthActivationAction => '连接并同步';
+  String get healthActivationAction => '连接系统健康';
+
+  @override
+  String get healthActivationGarminAction => '连接 Garmin';
+
+  @override
+  String get healthActivationManualAction => '手动记录';
+
+  @override
+  String healthRefreshFresh(String time) {
+    return '健康数据更新于$time';
+  }
+
+  @override
+  String healthRefreshStale(String time) {
+    return '健康数据可能已过期 · 更新于$time';
+  }
+
+  @override
+  String healthRefreshPartialFailure(int count) {
+    return '$count 个数据源刷新失败';
+  }
+
+  @override
+  String get healthRefreshPullHint => '下拉即可同步所有已连接数据源';
 
   @override
   String healthRecoveryConfidence(String confidence, int coverage) {
@@ -16043,6 +16067,61 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthRecoveryConfidenceInsufficient => '不足';
+
+  @override
+  String healthRecoveryFreshness(String time) {
+    return '最新输入于$time';
+  }
+
+  @override
+  String get healthRecoveryWhyTitle => '为什么是这个分数';
+
+  @override
+  String get healthRecoveryWhyLess => '收起评分依据';
+
+  @override
+  String healthRecoveryEvidence(String metric, String recent, String delta) {
+    return '$metric：当前 $recent · 较基线$delta';
+  }
+
+  @override
+  String healthRecoveryEvidenceNoBaseline(String metric, String recent) {
+    return '$metric：当前 $recent · 正在建立个人基线';
+  }
+
+  @override
+  String healthRecoveryDeltaUp(String value) {
+    return '高 $value%';
+  }
+
+  @override
+  String healthRecoveryDeltaDown(String value) {
+    return '低 $value%';
+  }
+
+  @override
+  String get healthRecoveryMetricHrv => 'HRV';
+
+  @override
+  String get healthRecoveryMetricRhr => '静息心率';
+
+  @override
+  String get healthRecoveryMetricSleep => '睡眠';
+
+  @override
+  String get healthRecoveryMetricVo2 => '最大摄氧量';
+
+  @override
+  String get healthRecoveryMetricBodyBattery => '身体电量';
+
+  @override
+  String get healthRecoveryMetricStress => '压力';
+
+  @override
+  String get healthSettingsSourcesTitle => '已连接的数据源';
+
+  @override
+  String get healthSettingsSourcesHelp => '集中管理连接、Garmin 安全会话和数据新鲜度。';
 
   @override
   String get executionDailyFocusTitle => '今日 Top 3';

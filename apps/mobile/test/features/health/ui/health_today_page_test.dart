@@ -48,6 +48,7 @@ void main() {
           health_data.garminSyncControllerProvider.overrideWithBuild(
             (_, _) => const GarminInitial(),
           ),
+          health_data.healthSyncStatusProvider.overrideWithValue(null),
           healthTodayMetricGridProvider.overrideWith(
             (ref) async => HealthTodayMetricGridModel.empty(),
           ),
@@ -148,6 +149,7 @@ void main() {
           health_data.garminSyncControllerProvider.overrideWithBuild(
             (_, _) => const GarminInitial(),
           ),
+          health_data.healthSyncStatusProvider.overrideWithValue(null),
           healthTodayMetricGridProvider.overrideWith(
             (ref) async => HealthTodayMetricGridModel.empty(),
           ),

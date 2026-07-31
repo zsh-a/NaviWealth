@@ -45,7 +45,7 @@ mixin GarminSyncControllerSyncMixin
 
       if (ranges.isEmpty) {
         logger.i('HealthOS Garmin sync skipped: no missing days');
-        state = GarminConnected(lastSyncAt: now);
+        state = await _recordSuccessfulSync(attemptedAt: now, totalMetrics: 0);
         return;
       }
 
@@ -88,7 +88,10 @@ mixin GarminSyncControllerSyncMixin
 
       await _persistSession();
       logger.i('HealthOS Garmin sync success: totalMetrics=$totalPersisted');
-      state = GarminConnected(lastSyncAt: now, totalMetrics: totalPersisted);
+      state = await _recordSuccessfulSync(
+        attemptedAt: now,
+        totalMetrics: totalPersisted,
+      );
     } catch (e) {
       logger.e('HealthOS Garmin sync exception', error: e);
       final issue = GarminSyncIssue.fromLegacyMessage(e.toString());

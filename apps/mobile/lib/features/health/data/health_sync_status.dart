@@ -12,6 +12,7 @@ class HealthSyncStatus {
     required this.totalFetched,
     required this.upserted,
     required this.unchanged,
+    this.lastSuccessAt,
     this.errorCode,
   });
 
@@ -21,6 +22,7 @@ class HealthSyncStatus {
   final int totalFetched;
   final int upserted;
   final int unchanged;
+  final DateTime? lastSuccessAt;
   final String? errorCode;
 
   factory HealthSyncStatus.fromJson(Map<String, Object?> json) {
@@ -31,6 +33,10 @@ class HealthSyncStatus {
       totalFetched: json['total_fetched']! as int,
       upserted: json['upserted']! as int,
       unchanged: json['unchanged']! as int,
+      lastSuccessAt: switch (json['last_success_at']) {
+        final String value => DateTime.parse(value).toUtc(),
+        _ => null,
+      },
       errorCode: json['error_code'] as String?,
     );
   }
@@ -42,6 +48,7 @@ class HealthSyncStatus {
     'total_fetched': totalFetched,
     'upserted': upserted,
     'unchanged': unchanged,
+    'last_success_at': lastSuccessAt?.toUtc().toIso8601String(),
     'error_code': errorCode,
   };
 }
@@ -72,6 +79,7 @@ class HealthSyncStatusStore {
     required int unchanged,
     String? errorCode,
   }) {
+    final previous = read();
     return _preferences.setString(
       kHealthSyncStatusKey,
       jsonEncode(
@@ -82,6 +90,7 @@ class HealthSyncStatusStore {
           totalFetched: totalFetched,
           upserted: upserted,
           unchanged: unchanged,
+          lastSuccessAt: ok ? completedAt : previous?.lastSuccessAt,
           errorCode: errorCode,
         ).toJson(),
       ),

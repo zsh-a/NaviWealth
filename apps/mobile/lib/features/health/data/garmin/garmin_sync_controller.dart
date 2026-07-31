@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/logging/app_logger.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/src/rust/api/health.dart' show GarminSyncProgress;
 
 import '../../domain/health_metric.dart';
@@ -21,6 +22,7 @@ import 'garmin_bridge.dart';
 import 'garmin_region_preference.dart';
 import 'garmin_snapshot_writer.dart';
 import 'garmin_sync_issue.dart';
+import 'garmin_sync_status_store.dart';
 import 'garmin_token_store.dart';
 
 part 'garmin_sync_controller_persistence.dart';

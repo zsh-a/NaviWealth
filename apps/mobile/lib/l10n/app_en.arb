@@ -7978,8 +7978,23 @@
   "rebalanceCapitalFirstAction": "Resolve capital movements first",
   "rebalanceResolveTransferAction": "Resolve transfer",
   "healthActivationTitle": "Connect your health data",
-  "healthActivationBody": "Grant read access and run the first 30-day sync. You can keep using HealthOS without connecting a source.",
-  "healthActivationAction": "Connect and sync",
+  "healthActivationBody": "Choose the source you already use. HealthOS stays useful with manual entries, and every connection is read-only.",
+  "healthActivationAction": "Connect system health",
+  "healthActivationGarminAction": "Connect Garmin",
+  "healthActivationManualAction": "Record manually",
+  "healthRefreshFresh": "Health data updated {time}",
+  "@healthRefreshFresh": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "healthRefreshStale": "Health data may be out of date · updated {time}",
+  "@healthRefreshStale": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "healthRefreshPartialFailure": "{count} data source failed to refresh",
+  "@healthRefreshPartialFailure": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "healthRefreshPullHint": "Pull down to sync every connected source",
   "healthRecoveryConfidence": "{confidence} confidence · {coverage}% coverage",
   "@healthRecoveryConfidence": {
     "placeholders": {
@@ -7991,6 +8006,43 @@
   "healthRecoveryConfidenceMedium": "Medium",
   "healthRecoveryConfidenceLow": "Low",
   "healthRecoveryConfidenceInsufficient": "Insufficient",
+  "healthRecoveryFreshness": "Latest input {time}",
+  "@healthRecoveryFreshness": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "healthRecoveryWhyTitle": "Why this score",
+  "healthRecoveryWhyLess": "Hide score details",
+  "healthRecoveryEvidence": "{metric}: {recent} now · {delta} vs baseline",
+  "@healthRecoveryEvidence": {
+    "placeholders": {
+      "metric": { "type": "String" },
+      "recent": { "type": "String" },
+      "delta": { "type": "String" }
+    }
+  },
+  "healthRecoveryEvidenceNoBaseline": "{metric}: {recent} · building your baseline",
+  "@healthRecoveryEvidenceNoBaseline": {
+    "placeholders": {
+      "metric": { "type": "String" },
+      "recent": { "type": "String" }
+    }
+  },
+  "healthRecoveryDeltaUp": "{value}% above",
+  "@healthRecoveryDeltaUp": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "healthRecoveryDeltaDown": "{value}% below",
+  "@healthRecoveryDeltaDown": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "healthRecoveryMetricHrv": "HRV",
+  "healthRecoveryMetricRhr": "Resting heart rate",
+  "healthRecoveryMetricSleep": "Sleep",
+  "healthRecoveryMetricVo2": "VO₂ max",
+  "healthRecoveryMetricBodyBattery": "Body Battery",
+  "healthRecoveryMetricStress": "Stress",
+  "healthSettingsSourcesTitle": "Connected data sources",
+  "healthSettingsSourcesHelp": "Manage connections, secure Garmin sessions, and source freshness in one place.",
   "executionDailyFocusTitle": "Daily Top 3",
   "executionDailyFocusEmpty": "Pin up to three actions below. The latest review recommendation is used until you choose your own.",
   "executionDailyFocusToggle": "Top 3",

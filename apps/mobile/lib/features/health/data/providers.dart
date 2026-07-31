@@ -9,10 +9,12 @@ import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/outbox_provider.dart';
 import '../../../design_system/preferences/theme_preferences.dart';
 import 'garmin/garmin_snapshot_writer.dart';
+import 'garmin/garmin_sync_controller.dart';
 import 'health_metric_repository.dart';
 import 'health_metric_write_service.dart';
 import 'health_platform_adapter.dart';
 import 'health_platform_adapter_factory.dart';
+import 'health_refresh_coordinator.dart';
 import 'health_sync_service.dart';
 import 'health_sync_status.dart';
 
@@ -30,6 +32,13 @@ export 'garmin/garmin_sync_controller.dart'
         GarminSyncing,
         GarminError,
         garminSyncControllerProvider;
+export 'health_refresh_coordinator.dart'
+    show
+        HealthRefreshCoordinator,
+        HealthRefreshOutcome,
+        HealthRefreshResult,
+        HealthRefreshSource,
+        HealthRefreshSourceResult;
 
 /// Async repository — awaits the database + cross-domain outbox so a
 /// shell-only build doesn't crash if Health is opt-in OFF.
@@ -68,6 +77,62 @@ final healthSyncServiceProvider = FutureProvider<HealthSyncService>((
 final healthSyncStatusProvider = Provider<HealthSyncStatus?>(
   (ref) => HealthSyncStatusStore(ref.watch(sharedPreferencesProvider)).read(),
 );
+
+final healthRefreshCoordinatorProvider =
+    FutureProvider<HealthRefreshCoordinator>((ref) async {
+      final platform = await ref.watch(healthSyncServiceProvider.future);
+      return HealthRefreshCoordinator(
+        platform: platform,
+        refreshGarmin: () async {
+          final before = ref.read(garminSyncControllerProvider);
+          if (before is GarminRestoring || before is GarminSyncing) {
+            return const HealthRefreshSourceResult(
+              source: HealthRefreshSource.garmin,
+              outcome: HealthRefreshOutcome.skipped,
+            );
+          }
+          if (before case GarminError(
+            :final issue,
+          ) when issue.requiresReconnect) {
+            return HealthRefreshSourceResult(
+              source: HealthRefreshSource.garmin,
+              outcome: HealthRefreshOutcome.failed,
+              errorCode: issue.code,
+            );
+          }
+          if (before is GarminPendingMfa) {
+            return const HealthRefreshSourceResult(
+              source: HealthRefreshSource.garmin,
+              outcome: HealthRefreshOutcome.failed,
+              errorCode: 'mfa_required',
+            );
+          }
+
+          await ref.read(garminSyncControllerProvider.notifier).syncNow();
+          return switch (ref.read(garminSyncControllerProvider)) {
+            GarminConnected(:final totalMetrics) => HealthRefreshSourceResult(
+              source: HealthRefreshSource.garmin,
+              outcome: HealthRefreshOutcome.synced,
+              imported: totalMetrics,
+            ),
+            GarminError(:final issue) => HealthRefreshSourceResult(
+              source: HealthRefreshSource.garmin,
+              outcome: HealthRefreshOutcome.failed,
+              errorCode: issue.code,
+            ),
+            GarminPendingMfa() => const HealthRefreshSourceResult(
+              source: HealthRefreshSource.garmin,
+              outcome: HealthRefreshOutcome.failed,
+              errorCode: 'mfa_required',
+            ),
+            _ => const HealthRefreshSourceResult(
+              source: HealthRefreshSource.garmin,
+              outcome: HealthRefreshOutcome.skipped,
+            ),
+          };
+        },
+      );
+    });
 
 final healthMetricWriteServiceProvider =
     FutureProvider<HealthMetricWriteService>((ref) async {

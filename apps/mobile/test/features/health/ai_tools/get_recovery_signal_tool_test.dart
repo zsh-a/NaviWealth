@@ -136,6 +136,13 @@ void main() {
       expect(out['coverage'], 0.5);
       expect(out['freshness_hours'], 24);
       expect(out['components'], hasLength(3));
+      final components = out['components']! as List<Object?>;
+      final hrvComponent = components
+          .whereType<Map<String, Object?>>()
+          .firstWhere((component) => component['metric'] == 'hrv');
+      expect(hrvComponent['recent_value'], isNotNull);
+      expect(hrvComponent['baseline_value'], isNotNull);
+      expect(hrvComponent['delta_pct'], isNotNull);
     });
 
     test('old and narrow input is explicitly low confidence', () {

@@ -28345,14 +28345,50 @@ abstract class AppLocalizations {
   /// No description provided for @healthActivationBody.
   ///
   /// In en, this message translates to:
-  /// **'Grant read access and run the first 30-day sync. You can keep using HealthOS without connecting a source.'**
+  /// **'Choose the source you already use. HealthOS stays useful with manual entries, and every connection is read-only.'**
   String get healthActivationBody;
 
   /// No description provided for @healthActivationAction.
   ///
   /// In en, this message translates to:
-  /// **'Connect and sync'**
+  /// **'Connect system health'**
   String get healthActivationAction;
+
+  /// No description provided for @healthActivationGarminAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Garmin'**
+  String get healthActivationGarminAction;
+
+  /// No description provided for @healthActivationManualAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Record manually'**
+  String get healthActivationManualAction;
+
+  /// No description provided for @healthRefreshFresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Health data updated {time}'**
+  String healthRefreshFresh(String time);
+
+  /// No description provided for @healthRefreshStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Health data may be out of date · updated {time}'**
+  String healthRefreshStale(String time);
+
+  /// No description provided for @healthRefreshPartialFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} data source failed to refresh'**
+  String healthRefreshPartialFailure(int count);
+
+  /// No description provided for @healthRefreshPullHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull down to sync every connected source'**
+  String get healthRefreshPullHint;
 
   /// No description provided for @healthRecoveryConfidence.
   ///
@@ -28383,6 +28419,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Insufficient'**
   String get healthRecoveryConfidenceInsufficient;
+
+  /// No description provided for @healthRecoveryFreshness.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest input {time}'**
+  String healthRecoveryFreshness(String time);
+
+  /// No description provided for @healthRecoveryWhyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Why this score'**
+  String get healthRecoveryWhyTitle;
+
+  /// No description provided for @healthRecoveryWhyLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide score details'**
+  String get healthRecoveryWhyLess;
+
+  /// No description provided for @healthRecoveryEvidence.
+  ///
+  /// In en, this message translates to:
+  /// **'{metric}: {recent} now · {delta} vs baseline'**
+  String healthRecoveryEvidence(String metric, String recent, String delta);
+
+  /// No description provided for @healthRecoveryEvidenceNoBaseline.
+  ///
+  /// In en, this message translates to:
+  /// **'{metric}: {recent} · building your baseline'**
+  String healthRecoveryEvidenceNoBaseline(String metric, String recent);
+
+  /// No description provided for @healthRecoveryDeltaUp.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}% above'**
+  String healthRecoveryDeltaUp(String value);
+
+  /// No description provided for @healthRecoveryDeltaDown.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}% below'**
+  String healthRecoveryDeltaDown(String value);
+
+  /// No description provided for @healthRecoveryMetricHrv.
+  ///
+  /// In en, this message translates to:
+  /// **'HRV'**
+  String get healthRecoveryMetricHrv;
+
+  /// No description provided for @healthRecoveryMetricRhr.
+  ///
+  /// In en, this message translates to:
+  /// **'Resting heart rate'**
+  String get healthRecoveryMetricRhr;
+
+  /// No description provided for @healthRecoveryMetricSleep.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep'**
+  String get healthRecoveryMetricSleep;
+
+  /// No description provided for @healthRecoveryMetricVo2.
+  ///
+  /// In en, this message translates to:
+  /// **'VO₂ max'**
+  String get healthRecoveryMetricVo2;
+
+  /// No description provided for @healthRecoveryMetricBodyBattery.
+  ///
+  /// In en, this message translates to:
+  /// **'Body Battery'**
+  String get healthRecoveryMetricBodyBattery;
+
+  /// No description provided for @healthRecoveryMetricStress.
+  ///
+  /// In en, this message translates to:
+  /// **'Stress'**
+  String get healthRecoveryMetricStress;
+
+  /// No description provided for @healthSettingsSourcesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected data sources'**
+  String get healthSettingsSourcesTitle;
+
+  /// No description provided for @healthSettingsSourcesHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage connections, secure Garmin sessions, and source freshness in one place.'**
+  String get healthSettingsSourcesHelp;
 
   /// No description provided for @executionDailyFocusTitle.
   ///

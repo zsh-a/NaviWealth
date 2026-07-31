@@ -4977,8 +4977,23 @@
   "rebalanceCapitalFirstAction": "请先处理资金调拨",
   "rebalanceResolveTransferAction": "处理调拨",
   "healthActivationTitle": "连接健康数据",
-  "healthActivationBody": "授权只读访问并完成首次 30 天同步。即使不连接数据源，也可以继续使用 HealthOS。",
-  "healthActivationAction": "连接并同步",
+  "healthActivationBody": "选择你已经在用的数据源。所有连接均为只读，也可以仅靠手动记录使用 HealthOS。",
+  "healthActivationAction": "连接系统健康",
+  "healthActivationGarminAction": "连接 Garmin",
+  "healthActivationManualAction": "手动记录",
+  "healthRefreshFresh": "健康数据更新于{time}",
+  "@healthRefreshFresh": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "healthRefreshStale": "健康数据可能已过期 · 更新于{time}",
+  "@healthRefreshStale": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "healthRefreshPartialFailure": "{count} 个数据源刷新失败",
+  "@healthRefreshPartialFailure": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "healthRefreshPullHint": "下拉即可同步所有已连接数据源",
   "healthRecoveryConfidence": "{confidence}可信度 · {coverage}% 覆盖",
   "@healthRecoveryConfidence": {
     "placeholders": {
@@ -4990,6 +5005,43 @@
   "healthRecoveryConfidenceMedium": "中",
   "healthRecoveryConfidenceLow": "低",
   "healthRecoveryConfidenceInsufficient": "不足",
+  "healthRecoveryFreshness": "最新输入于{time}",
+  "@healthRecoveryFreshness": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "healthRecoveryWhyTitle": "为什么是这个分数",
+  "healthRecoveryWhyLess": "收起评分依据",
+  "healthRecoveryEvidence": "{metric}：当前 {recent} · 较基线{delta}",
+  "@healthRecoveryEvidence": {
+    "placeholders": {
+      "metric": { "type": "String" },
+      "recent": { "type": "String" },
+      "delta": { "type": "String" }
+    }
+  },
+  "healthRecoveryEvidenceNoBaseline": "{metric}：当前 {recent} · 正在建立个人基线",
+  "@healthRecoveryEvidenceNoBaseline": {
+    "placeholders": {
+      "metric": { "type": "String" },
+      "recent": { "type": "String" }
+    }
+  },
+  "healthRecoveryDeltaUp": "高 {value}%",
+  "@healthRecoveryDeltaUp": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "healthRecoveryDeltaDown": "低 {value}%",
+  "@healthRecoveryDeltaDown": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "healthRecoveryMetricHrv": "HRV",
+  "healthRecoveryMetricRhr": "静息心率",
+  "healthRecoveryMetricSleep": "睡眠",
+  "healthRecoveryMetricVo2": "最大摄氧量",
+  "healthRecoveryMetricBodyBattery": "身体电量",
+  "healthRecoveryMetricStress": "压力",
+  "healthSettingsSourcesTitle": "已连接的数据源",
+  "healthSettingsSourcesHelp": "集中管理连接、Garmin 安全会话和数据新鲜度。",
   "executionDailyFocusTitle": "今日 Top 3",
   "executionDailyFocusEmpty": "可在下方固定最多三个行动；手动选择前会采用最近一次 Review 的推荐。",
   "executionDailyFocusToggle": "Top 3",

@@ -89,10 +89,12 @@ final garminSyncCronProvider = Provider<void>((ref) {
   final scheduler = ref.watch(background_providers.backgroundSchedulerProvider);
   final optIns = ref.watch(core_auth.domainOptInsProvider).value;
   final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
+  final garminConnected =
+      ref.watch(garminSyncControllerProvider) is GarminConnected;
   unawaited(() async {
     try {
       if (!await scheduler.isAvailable()) return;
-      if (healthEnabled) {
+      if (healthEnabled && garminConnected) {
         await scheduler.registerTask(kGarminSyncBackgroundTask);
       } else {
         await scheduler.cancelTask(kGarminSyncBackgroundTask);
@@ -214,7 +216,7 @@ Future<AgentRunResult?> runDueMorningBriefingTick(Ref ref) async {
 /// Public so test scaffolds can drive the agent without going through
 /// workmanager.
 ///
-/// **Pulls fresh platform data first** so the briefing reflects last
+/// **Pulls every connected source first** so the briefing reflects last
 /// night's sleep / HRV that the workmanager wakeup couldn't fetch from
 /// the background isolate (Drift + SQLCipher would be expensive there).
 /// Sync errors are swallowed — a stale snapshot is better than no
@@ -238,13 +240,14 @@ Future<AgentRunResult> runMorningBriefingNow(Ref ref) async {
 }
 
 Future<void> _syncHealthBeforeBriefing(Ref ref) async {
-  // Best-effort sync so the agent reads the night that just happened.
+  // Best-effort sync so the agent reads the night that just happened,
+  // regardless of whether it came from the system platform or Garmin.
   // Wrapped so a missing service / permissions / network error doesn't
   // block the briefing from running on whatever data is already in the
   // local DB.
   try {
-    final svc = await ref.read(healthSyncServiceProvider.future);
-    await svc.syncRange();
+    final coordinator = await ref.read(healthRefreshCoordinatorProvider.future);
+    await coordinator.refreshConnectedSources();
   } on Object {
     // Best-effort — sync failure here surfaces in the next manual sync.
   }

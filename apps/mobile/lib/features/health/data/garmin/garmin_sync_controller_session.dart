@@ -42,7 +42,7 @@ mixin GarminSyncControllerSessionMixin on Notifier<GarminSyncState> {
       final authState = await _ensureInit(storedTokenJson: stored);
       if (authState.canMakeRequests) {
         await _persistSession();
-        state = const GarminConnected();
+        state = _restoredConnectedState(ownerUserId);
       } else {
         final issue = garminRestoreAuthIssue(authState);
         await _clearStaleSession();
@@ -100,6 +100,7 @@ mixin GarminSyncControllerSessionMixin on Notifier<GarminSyncState> {
         case GarminAuthResultType.authenticated:
           await _persistSession();
           await _commitCredentialPreference();
+          await _clearSyncStatus();
           state = const GarminConnected();
         case GarminAuthResultType.mfaRequired:
           state = const GarminPendingMfa();
@@ -126,7 +127,7 @@ mixin GarminSyncControllerSessionMixin on Notifier<GarminSyncState> {
         case GarminAuthResultType.authenticated:
           await _persistSession();
           await _commitCredentialPreference();
-          state = const GarminConnected();
+          state = await _restoredConnectedStateForCurrentOwner();
         case GarminAuthResultType.mfaRequired:
           state = const GarminPendingMfa();
         case GarminAuthResultType.failed:
@@ -189,7 +190,7 @@ mixin GarminSyncControllerSessionMixin on Notifier<GarminSyncState> {
     await _bridge.cancelSync();
     await _syncSub?.cancel();
     _syncSub = null;
-    state = const GarminConnected();
+    state = await _restoredConnectedStateForCurrentOwner();
   }
 
   /// Disconnect and clear credentials.
@@ -198,6 +199,9 @@ mixin GarminSyncControllerSessionMixin on Notifier<GarminSyncState> {
       final ownerUserId = await _ownerUserId();
       if (_initialized) await _bridge.logout();
       await _tokenStore.clearAll(ownerUserId: ownerUserId);
+      await GarminSyncStatusStore(
+        ref.read(sharedPreferencesProvider),
+      ).clear(ownerUserId);
       _initialized = false;
       _initializedRegion = null;
       _clearPendingCredentials();
@@ -231,6 +235,41 @@ mixin GarminSyncControllerSessionMixin on Notifier<GarminSyncState> {
     return ref.read(currentUserIdProvider)();
   }
 
+  GarminConnected _restoredConnectedState(String ownerUserId) {
+    final status = GarminSyncStatusStore(
+      ref.read(sharedPreferencesProvider),
+    ).read(ownerUserId);
+    return GarminConnected(
+      lastSyncAt: status?.lastSuccessAt,
+      totalMetrics: status?.totalMetrics ?? 0,
+    );
+  }
+
+  Future<GarminConnected> _restoredConnectedStateForCurrentOwner() async {
+    return _restoredConnectedState(await _ownerUserId());
+  }
+
+  Future<GarminConnected> _recordSuccessfulSync({
+    required DateTime attemptedAt,
+    required int totalMetrics,
+  }) async {
+    final ownerUserId = await _ownerUserId();
+    final completedAt = DateTime.now().toUtc();
+    await GarminSyncStatusStore(ref.read(sharedPreferencesProvider)).write(
+      ownerUserId: ownerUserId,
+      lastAttemptAt: attemptedAt,
+      lastSuccessAt: completedAt,
+      totalMetrics: totalMetrics,
+    );
+    return GarminConnected(lastSyncAt: completedAt, totalMetrics: totalMetrics);
+  }
+
+  Future<void> _clearSyncStatus() async {
+    await GarminSyncStatusStore(
+      ref.read(sharedPreferencesProvider),
+    ).clear(await _ownerUserId());
+  }
+
   Future<bool> _recoverWithSavedCredentials({AppLogger? logger}) async {
     final credentials = await loadSavedCredentials();
     if (credentials == null) return false;
@@ -252,7 +291,7 @@ mixin GarminSyncControllerSessionMixin on Notifier<GarminSyncState> {
         case GarminAuthResultType.authenticated:
           await _persistSession();
           await _commitCredentialPreference();
-          state = const GarminConnected();
+          state = await _restoredConnectedStateForCurrentOwner();
           logger?.i('HealthOS Garmin secure credential recovery succeeded');
           return true;
         case GarminAuthResultType.mfaRequired:

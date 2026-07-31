@@ -17,26 +17,32 @@ import '../data/health_sync_service.dart';
 import '../data/health_sync_status.dart';
 import '../data/morning_briefing_preferences.dart';
 import '../data/providers.dart' as health_data;
+import 'garmin_sync_status_card.dart';
 
 class HealthDomainSettingsPage extends ConsumerWidget {
   const HealthDomainSettingsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return const AppPageScaffold(
+    final l10n = AppLocalizations.of(context);
+    return AppPageScaffold(
       title: 'HealthOS',
       childPad: false,
       child: SettingsPageFrame(
         children: <Widget>[
-          SoftCard.raised(
+          Text(l10n.healthSettingsSourcesTitle, style: context.mutedLabelStyle),
+          const SizedBox(height: AppSpacing.s4),
+          Text(l10n.healthSettingsSourcesHelp, style: context.captionStyle),
+          const SizedBox(height: AppSpacing.s8),
+          const SoftCard.raised(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
-            child: Column(
-              children: <Widget>[
-                _HealthPlatformSyncRow(),
-                AppGradientDivider(),
-                _BriefingHourRow(),
-              ],
-            ),
+            child: Column(children: <Widget>[_HealthPlatformSyncRow()]),
+          ),
+          const GarminSyncStatusCard(),
+          const SizedBox(height: AppSpacing.s8),
+          const SoftCard.raised(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
+            child: _BriefingHourRow(),
           ),
         ],
       ),

@@ -90,6 +90,7 @@ class RecoveryScorer {
     final rhrBaselineN = _countInWindow(rhr, baselineFrom, baselineTo);
 
     final sleepHoursRecent = _avgSleepHours(sleep, recentFrom, t);
+    final sleepHoursBaseline = _avgSleepHours(sleep, baselineFrom, baselineTo);
     final sleepBaselineN = _countInWindow(sleep, baselineFrom, baselineTo);
 
     final vo2Recent = _avgInWindow(vo2Max, recentFrom, t);
@@ -160,6 +161,8 @@ class RecoveryScorer {
       required double score,
       required int recentSamples,
       required int baselineSamples,
+      required double recentValue,
+      double? baselineValue,
     }) {
       subScores.add(score);
       components.add(<String, Object?>{
@@ -167,6 +170,11 @@ class RecoveryScorer {
         'score': _round(score),
         'recent_samples': recentSamples,
         'baseline_samples': baselineSamples,
+        'recent_value': _round(recentValue),
+        'baseline_value': baselineValue == null ? null : _round(baselineValue),
+        'delta_pct': baselineValue == null || baselineValue == 0
+            ? null
+            : _round((recentValue - baselineValue) / baselineValue * 100),
         'weight': 1,
       });
     }
@@ -178,6 +186,8 @@ class RecoveryScorer {
         score: _clamp(50 + ratio * 125, 0, 100),
         recentSamples: _countInWindow(hrv, recentFrom, t),
         baselineSamples: hrvBaselineN,
+        recentValue: hrvRecent,
+        baselineValue: hrvBaseline,
       );
     }
     if (rhrRecent != null && rhrBaseline != null && rhrBaseline > 0) {
@@ -187,6 +197,8 @@ class RecoveryScorer {
         score: _clamp(50 - ratio * 125, 0, 100),
         recentSamples: _countInWindow(rhr, recentFrom, t),
         baselineSamples: rhrBaselineN,
+        recentValue: rhrRecent,
+        baselineValue: rhrBaseline,
       );
     }
     if (sleepHoursRecent != null) {
@@ -195,6 +207,8 @@ class RecoveryScorer {
         score: _clamp(50 + (sleepHoursRecent - 7.0) * 20, 0, 100),
         recentSamples: _countInWindow(sleep, recentFrom, t),
         baselineSamples: sleepBaselineN,
+        recentValue: sleepHoursRecent,
+        baselineValue: sleepHoursBaseline,
       );
     }
     if (vo2Recent != null && vo2Baseline != null && vo2Baseline > 0) {
@@ -204,6 +218,8 @@ class RecoveryScorer {
         score: _clamp(50 + ratio * 125, 0, 100),
         recentSamples: _countInWindow(vo2Max, recentFrom, t),
         baselineSamples: vo2BaselineN,
+        recentValue: vo2Recent,
+        baselineValue: vo2Baseline,
       );
     }
     // Body Battery: higher is better (like HRV).
@@ -214,6 +230,8 @@ class RecoveryScorer {
         score: _clamp(50 + ratio * 125, 0, 100),
         recentSamples: _countInWindow(bodyBattery, recentFrom, t),
         baselineSamples: bbBaselineN,
+        recentValue: bbRecent,
+        baselineValue: bbBaseline,
       );
     }
     // Stress: lower is better (like RHR — inverted).
@@ -224,6 +242,8 @@ class RecoveryScorer {
         score: _clamp(50 - ratio * 125, 0, 100),
         recentSamples: _countInWindow(stress, recentFrom, t),
         baselineSamples: stressBaselineN,
+        recentValue: stressRecent,
+        baselineValue: stressBaseline,
       );
     }
 

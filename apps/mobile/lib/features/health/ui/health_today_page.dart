@@ -39,10 +39,12 @@ import '../agents/weekly_summary_agent.dart' show kWeeklySummaryAgentId;
 import '../composition/health_route_paths.dart';
 import '../data/health_metric_source.dart';
 import '../data/health_sync_service.dart';
+import '../data/health_sync_status.dart';
 import '../data/providers.dart' as health_data;
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 import 'body_measurement_entry_sheet.dart';
+import 'garmin_account_bind_sheet.dart';
 import 'garmin_sync_status_card.dart';
 import 'health_metric_colors.dart';
 import 'health_today_providers.dart';
@@ -65,6 +67,18 @@ class HealthTodayPage extends ConsumerStatefulWidget {
 }
 
 class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
+  health_data.HealthRefreshResult? _lastRefresh;
+
+  Future<void> _refresh() async {
+    final coordinator = await ref.read(
+      health_data.healthRefreshCoordinatorProvider.future,
+    );
+    final result = await coordinator.refreshConnectedSources();
+    if (mounted) setState(() => _lastRefresh = result);
+    _invalidateHealthSurfaces(ref);
+    await ref.read(healthTodaySnapshotProvider.future);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -87,36 +101,19 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
         routePath: HealthRoutes.today,
         child: BriefScaffold(
           padding: shellTabContentPadding(context),
-          onRefresh: () async {
-            ref.invalidate(healthTodaySnapshotProvider);
-            ref.invalidate(
-              health_agent_providers.latestMorningBriefingProvider,
-            );
-            ref.invalidate(
-              health_agent_providers.latestMorningBriefingArtifactProvider,
-            );
-            ref.invalidate(
-              health_agent_providers.latestRecoveryAlertArtifactProvider,
-            );
-            ref.invalidate(
-              health_agent_providers.latestRecoveryAlertRunProvider,
-            );
-            ref.invalidate(
-              health_agent_providers.latestHealthReviewAgentResultsProvider,
-            );
-            await ref.read(healthTodaySnapshotProvider.future);
-          },
+          onRefresh: _refresh,
           greeting: const SizedBox.shrink(),
           // Hero = recovery verdict + same-day actions (ex-Plan).
           stage: const FadeSlideIn(child: _RecoveryHero()),
           stickyBuilder: (context, progress) =>
               _HealthRecoveryStickyBar(progress: progress),
-          modules: const [
-            _HealthActivationCard(),
+          modules: [
+            const _HealthActivationCard(),
+            _HealthDataFreshnessBanner(lastRefresh: _lastRefresh),
             // Signal first: alerts only when real; briefing promoted.
-            _RecoveryAlertPanel(),
-            _BriefingPanel(),
-            _MetricGrid(),
+            const _RecoveryAlertPanel(),
+            const _BriefingPanel(),
+            const _MetricGrid(),
           ],
           secondary: const [_SourcesSection(), _WeeklySummaryPanel()],
         ),
@@ -137,43 +134,59 @@ class _HealthActivationCardState extends ConsumerState<_HealthActivationCard> {
   bool _running = false;
   String? _error;
 
-  Future<void> _activate() async {
+  Future<void> _activatePlatform() async {
     if (_running) return;
     setState(() {
       _running = true;
       _error = null;
     });
     try {
-      final service = await ref.read(
-        health_data.healthSyncServiceProvider.future,
+      final coordinator = await ref.read(
+        health_data.healthRefreshCoordinatorProvider.future,
       );
-      if (!await service.hasPermissions() &&
-          !await service.requestPermissions()) {
-        final result = HealthSyncResult.skipped(
-          startedAt: DateTime.now().toUtc(),
-          errorMessage: 'health-platform-permission-denied',
-        );
-        await service.recordResult(result);
+      final result = await coordinator.connectAndSyncPlatform();
+      if (!result.synced) {
         if (mounted) {
-          setState(
-            () => _error = AppLocalizations.of(
-              context,
-            ).healthSyncPermissionDenied,
-          );
+          setState(() {
+            _error = result.errorCode == 'health-platform-permission-denied'
+                ? AppLocalizations.of(context).healthSyncPermissionDenied
+                : AppLocalizations.of(context).healthSyncFailed;
+          });
         }
         return;
       }
-      final result = await service.syncRange();
-      if (!result.ok) {
-        if (mounted) setState(() => _error = result.errorMessage);
-        return;
-      }
-      ref.invalidate(health_data.healthSyncStatusProvider);
-      ref.invalidate(healthTodaySnapshotProvider);
+      _invalidateHealthSurfaces(ref);
       await ref.read(healthTodaySnapshotProvider.future);
     } finally {
       if (mounted) setState(() => _running = false);
     }
+  }
+
+  Future<void> _activateGarmin() async {
+    await showGarminAccountBindSheet(context: context);
+    if (!mounted ||
+        ref.read(health_data.garminSyncControllerProvider)
+            is! health_data.GarminConnected) {
+      return;
+    }
+    setState(() => _running = true);
+    try {
+      await ref
+          .read(health_data.garminSyncControllerProvider.notifier)
+          .syncNow();
+      _invalidateHealthSurfaces(ref);
+      await ref.read(healthTodaySnapshotProvider.future);
+    } finally {
+      if (mounted) setState(() => _running = false);
+    }
+  }
+
+  Future<void> _recordManually() async {
+    final saved = await showBodyMeasurementEntrySheet(
+      context: context,
+      initialKind: HealthMetricKind.weight,
+    );
+    if (saved == true) _invalidateHealthSurfaces(ref);
   }
 
   @override
@@ -208,11 +221,30 @@ class _HealthActivationCardState extends ConsumerState<_HealthActivationCard> {
                 ),
               ],
               const SizedBox(height: AppSpacing.s12),
-              FButton(
-                onPress: _running ? null : _activate,
-                child: _running
-                    ? const FCircularProgress()
-                    : Text(l10n.healthActivationAction),
+              SizedBox(
+                width: double.infinity,
+                child: FButton(
+                  onPress: _running ? null : _activatePlatform,
+                  child: _running
+                      ? const FCircularProgress()
+                      : Text(l10n.healthActivationAction),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              SizedBox(
+                width: double.infinity,
+                child: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: _running ? null : _activateGarmin,
+                  child: Text(l10n.healthActivationGarminAction),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s6),
+              AppQuietButton(
+                label: l10n.healthActivationManualAction,
+                onPress: _running ? null : _recordManually,
+                prefix: const Icon(FLucideIcons.pencil),
+                expanded: true,
               ),
             ],
           ),
@@ -220,6 +252,68 @@ class _HealthActivationCardState extends ConsumerState<_HealthActivationCard> {
       },
     );
   }
+}
+
+class _HealthDataFreshnessBanner extends ConsumerWidget {
+  const _HealthDataFreshnessBanner({required this.lastRefresh});
+
+  final health_data.HealthRefreshResult? lastRefresh;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final platform = ref.watch(health_data.healthSyncStatusProvider);
+    final garmin = ref.watch(health_data.garminSyncControllerProvider);
+    final platformAt = platform?.lastSuccessAt;
+    final garminAt = switch (garmin) {
+      health_data.GarminConnected(:final lastSyncAt) => lastSyncAt,
+      _ => null,
+    };
+    final latest = _latestDate(platformAt, garminAt);
+    if (latest == null && lastRefresh == null) return const SizedBox.shrink();
+
+    final l10n = AppLocalizations.of(context);
+    final failures = lastRefresh?.failedCount ?? 0;
+    if (failures > 0) {
+      return AppStatusBanner(
+        message: l10n.healthRefreshPartialFailure(failures),
+        details: latest == null
+            ? l10n.healthRefreshPullHint
+            : l10n.healthRefreshFresh(_ago(l10n, latest)),
+        kind: AppStatusKind.warning,
+        icon: FLucideIcons.circleAlert,
+        compact: true,
+      );
+    }
+    if (latest == null) return const SizedBox.shrink();
+    final stale =
+        DateTime.now().toUtc().difference(latest.toUtc()) >
+        const Duration(hours: 36);
+    return AppStatusBanner(
+      message: stale
+          ? l10n.healthRefreshStale(_ago(l10n, latest))
+          : l10n.healthRefreshFresh(_ago(l10n, latest)),
+      details: l10n.healthRefreshPullHint,
+      kind: stale ? AppStatusKind.warning : AppStatusKind.neutral,
+      icon: stale ? FLucideIcons.clockAlert : FLucideIcons.refreshCw,
+      compact: true,
+    );
+  }
+}
+
+DateTime? _latestDate(DateTime? left, DateTime? right) {
+  if (left == null) return right;
+  if (right == null) return left;
+  return left.isAfter(right) ? left : right;
+}
+
+void _invalidateHealthSurfaces(WidgetRef ref) {
+  ref.invalidate(health_data.healthSyncStatusProvider);
+  ref.invalidate(healthTodaySnapshotProvider);
+  ref.invalidate(health_agent_providers.latestMorningBriefingProvider);
+  ref.invalidate(health_agent_providers.latestMorningBriefingArtifactProvider);
+  ref.invalidate(health_agent_providers.latestRecoveryAlertArtifactProvider);
+  ref.invalidate(health_agent_providers.latestRecoveryAlertRunProvider);
+  ref.invalidate(health_agent_providers.latestHealthReviewAgentResultsProvider);
 }
 
 /// Sticky residual for the recovery stage — icon + verdict + score.
@@ -394,6 +488,7 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
     final l10n = AppLocalizations.of(context);
     final optIns = ref.watch(core_auth.domainOptInsProvider).value;
     final enabled = optIns?.contains(DomainScope.health) ?? false;
+    final persisted = ref.watch(health_data.healthSyncStatusProvider);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -424,7 +519,7 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
                     ),
                     const SizedBox(height: AppSpacing.s2),
                     Text(
-                      _healthKitText(l10n, enabled),
+                      _healthKitText(l10n, enabled, persisted),
                       style: context.captionStyle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -474,15 +569,27 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
     if (!enabled) return colors.mutedForeground;
     final result = _lastResult;
     if (_syncing) return colors.primary;
-    if (result == null) return colors.mutedForeground;
+    if (result == null) {
+      final persisted = ref.read(health_data.healthSyncStatusProvider);
+      if (persisted == null) return colors.mutedForeground;
+      return persisted.ok ? colors.primary : colors.destructive;
+    }
     return result.ok ? colors.primary : colors.destructive;
   }
 
-  String _healthKitText(AppLocalizations l10n, bool enabled) {
+  String _healthKitText(
+    AppLocalizations l10n,
+    bool enabled,
+    HealthSyncStatus? persisted,
+  ) {
     if (!enabled) return l10n.healthNotEnabled;
     if (_syncing) return l10n.healthSyncingData;
     final result = _lastResult;
-    if (result == null) return l10n.healthSyncReady;
+    if (result == null) {
+      if (persisted == null) return l10n.healthSyncReady;
+      if (!persisted.ok) return l10n.healthSyncFailed;
+      return '${l10n.healthSyncResult('${persisted.unchanged}', '${persisted.upserted}')} · ${_ago(l10n, persisted.completedAt)}';
+    }
     if (result.ok) {
       return l10n.healthSyncResult('${result.unchanged}', '${result.upserted}');
     }

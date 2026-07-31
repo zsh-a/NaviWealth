@@ -46,10 +46,24 @@ Key files:
 `HealthSyncService.syncRange()` fetches platform data, converts it to `HealthMetric`, and upserts only changed rows. Unchanged rows do not create outbox work.
 
 The first-run Today activation card is optional: users can continue without
-connecting a platform source, or grant read-only access and run the first sync
-in one action. The last platform-sync attempt and its fetched/upserted/unchanged
-counts are persisted locally by `health_sync_status.dart` and restored in
-Health Settings; this operational state does not sync.
+connecting a source. It offers system Health, Garmin Connect, and manual body
+measurement as peer entry paths. Connecting a source performs the first sync
+in one action.
+
+Pull-to-refresh is a real source refresh, not a local-query reload:
+
+- Every connected source is refreshed once through
+  `health_refresh_coordinator.dart`.
+- Concurrent refresh gestures share one in-flight import.
+- Partial failures preserve successful source results and remain visible on
+  Today.
+- Morning Briefing uses the same coordinator before generating its result.
+
+The last platform-sync attempt, last successful refresh, and its
+fetched/upserted/unchanged counts are persisted locally by
+`health_sync_status.dart`. Garmin persists its last successful refresh and
+import count per NaviWealth owner. Today and Health Settings restore this
+operational state after restart; it does not sync.
 
 ### Garmin session lifecycle
 
@@ -64,8 +78,9 @@ Health Settings; this operational state does not sync.
 - If token refresh fails, HealthOS attempts one automatic login with the saved
   credentials. An MFA challenge pauses recovery and asks the user for the
   current verification code.
-- Disconnect clears Garmin sessions for all regions and the saved password.
-  Previously imported health metrics remain.
+- Disconnect clears Garmin sessions for all regions, the saved password, and
+  local Garmin operational sync status. Previously imported health metrics
+  remain.
 
 ## Persistence
 
@@ -130,7 +145,7 @@ HealthOS is active only when the user enables it in Settings.
 
 | Tab | Purpose |
 |---|---|
-| Today | Optional source activation, sleep, HRV, recovery confidence, workout cards, latest Morning Briefing, manual run |
+| Today | Source choice and freshness, sleep, HRV, explainable recovery confidence, workout cards, latest Morning Briefing, manual run |
 | Trend | HRV, sleep hours, workout minutes line charts |
 
 Key files:
@@ -158,7 +173,8 @@ Rules:
 - Health interpretation must cite tool-returned windows and values.
 - Recovery score is a lifestyle signal, not a diagnosis. Today and the AI
   tool use the same scorer and expose the same confidence, input coverage,
-  freshness, and component evidence.
+  freshness, and component evidence. Component evidence includes recent value,
+  personal baseline, delta, and sample counts where available.
 
 ## Memory Integration
 

@@ -16863,10 +16863,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthActivationBody =>
-      'Grant read access and run the first 30-day sync. You can keep using HealthOS without connecting a source.';
+      'Choose the source you already use. HealthOS stays useful with manual entries, and every connection is read-only.';
 
   @override
-  String get healthActivationAction => 'Connect and sync';
+  String get healthActivationAction => 'Connect system health';
+
+  @override
+  String get healthActivationGarminAction => 'Connect Garmin';
+
+  @override
+  String get healthActivationManualAction => 'Record manually';
+
+  @override
+  String healthRefreshFresh(String time) {
+    return 'Health data updated $time';
+  }
+
+  @override
+  String healthRefreshStale(String time) {
+    return 'Health data may be out of date · updated $time';
+  }
+
+  @override
+  String healthRefreshPartialFailure(int count) {
+    return '$count data source failed to refresh';
+  }
+
+  @override
+  String get healthRefreshPullHint =>
+      'Pull down to sync every connected source';
 
   @override
   String healthRecoveryConfidence(String confidence, int coverage) {
@@ -16884,6 +16909,62 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthRecoveryConfidenceInsufficient => 'Insufficient';
+
+  @override
+  String healthRecoveryFreshness(String time) {
+    return 'Latest input $time';
+  }
+
+  @override
+  String get healthRecoveryWhyTitle => 'Why this score';
+
+  @override
+  String get healthRecoveryWhyLess => 'Hide score details';
+
+  @override
+  String healthRecoveryEvidence(String metric, String recent, String delta) {
+    return '$metric: $recent now · $delta vs baseline';
+  }
+
+  @override
+  String healthRecoveryEvidenceNoBaseline(String metric, String recent) {
+    return '$metric: $recent · building your baseline';
+  }
+
+  @override
+  String healthRecoveryDeltaUp(String value) {
+    return '$value% above';
+  }
+
+  @override
+  String healthRecoveryDeltaDown(String value) {
+    return '$value% below';
+  }
+
+  @override
+  String get healthRecoveryMetricHrv => 'HRV';
+
+  @override
+  String get healthRecoveryMetricRhr => 'Resting heart rate';
+
+  @override
+  String get healthRecoveryMetricSleep => 'Sleep';
+
+  @override
+  String get healthRecoveryMetricVo2 => 'VO₂ max';
+
+  @override
+  String get healthRecoveryMetricBodyBattery => 'Body Battery';
+
+  @override
+  String get healthRecoveryMetricStress => 'Stress';
+
+  @override
+  String get healthSettingsSourcesTitle => 'Connected data sources';
+
+  @override
+  String get healthSettingsSourcesHelp =>
+      'Manage connections, secure Garmin sessions, and source freshness in one place.';
 
   @override
   String get executionDailyFocusTitle => 'Daily Top 3';
