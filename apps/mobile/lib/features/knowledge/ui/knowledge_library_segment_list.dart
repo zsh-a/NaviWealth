@@ -5,8 +5,13 @@ part of 'knowledge_library_page.dart';
 /// only in row layout via [tileBuilder].
 class _SegmentList<T> extends StatefulWidget {
   const _SegmentList({
+    required this.storageKey,
     required this.stream,
     required this.query,
+    required this.scopeLabel,
+    required this.createLabel,
+    required this.onCreate,
+    this.onSearchAll,
     required this.searchableText,
     required this.searchSuggestions,
     required this.filterFacets,
@@ -23,8 +28,13 @@ class _SegmentList<T> extends StatefulWidget {
     this.statusOf,
   });
 
+  final String storageKey;
   final Stream<List<T>> stream;
   final String query;
+  final String scopeLabel;
+  final String createLabel;
+  final VoidCallback onCreate;
+  final VoidCallback? onSearchAll;
   final String Function(T item) searchableText;
   final List<String> Function(BuildContext context, T item) searchSuggestions;
   final List<String> Function(BuildContext context, T item) filterFacets;
@@ -78,10 +88,32 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
         }
         final items = snap.data ?? <T>[];
         if (items.isEmpty) {
+          if (normalizedQuery.isNotEmpty) {
+            return KnowledgeEmptyState(
+              icon: FLucideIcons.search,
+              title: l10n.knowledgeLibrarySearchEmptyTitle,
+              message: widget.onSearchAll == null
+                  ? l10n.knowledgeLibrarySearchEmptyBody
+                  : l10n.knowledgeLibrarySearchEmptyScopedBody(
+                      widget.scopeLabel,
+                    ),
+              action: widget.onSearchAll == null
+                  ? null
+                  : AppQuietButton(
+                      label: l10n.knowledgeLibrarySearchAllAction,
+                      onPress: widget.onSearchAll,
+                    ),
+            );
+          }
           return KnowledgeEmptyState(
             icon: widget.emptyIcon,
             title: widget.emptyTitle,
             message: widget.emptyMessage,
+            action: FButton(
+              onPress: widget.onCreate,
+              prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.xs),
+              child: Text(widget.createLabel),
+            ),
           );
         }
 
@@ -176,7 +208,17 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
                 child: KnowledgeEmptyState(
                   icon: FLucideIcons.search,
                   title: l10n.knowledgeLibrarySearchEmptyTitle,
-                  message: l10n.knowledgeLibrarySearchEmptyBody,
+                  message: widget.onSearchAll == null
+                      ? l10n.knowledgeLibrarySearchEmptyBody
+                      : l10n.knowledgeLibrarySearchEmptyScopedBody(
+                          widget.scopeLabel,
+                        ),
+                  action: widget.onSearchAll == null
+                      ? null
+                      : AppQuietButton(
+                          label: l10n.knowledgeLibrarySearchAllAction,
+                          onPress: widget.onSearchAll,
+                        ),
                 ),
               ),
             ],
@@ -186,6 +228,9 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
         final list = AppRefreshIndicator(
           onRefresh: widget.onRefresh,
           child: ListView.separated(
+            key: PageStorageKey<String>(
+              'knowledge-library.${widget.storageKey}',
+            ),
             physics: const AlwaysScrollableScrollPhysics(),
             itemCount: visibleItems.length,
             separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),

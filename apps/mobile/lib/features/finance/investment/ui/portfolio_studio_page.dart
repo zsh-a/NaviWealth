@@ -695,7 +695,8 @@ class _StudioSectionSegment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SegmentedRow<PortfolioStudioSection>(
+    return AppAdaptiveChoice<PortfolioStudioSection>(
+      title: l10n.portfolioStudioTitle,
       options: PortfolioStudioSection.values,
       value: value,
       labelOf: (item) => switch (item) {
@@ -703,6 +704,12 @@ class _StudioSectionSegment extends StatelessWidget {
         PortfolioStudioSection.structure => l10n.portfolioStudioStructureTab,
         PortfolioStudioSection.assets => l10n.portfolioStudioAssetsTab,
         PortfolioStudioSection.rules => l10n.portfolioStudioRulesTab,
+      },
+      iconOf: (item) => switch (item) {
+        PortfolioStudioSection.overview => FLucideIcons.layoutDashboard,
+        PortfolioStudioSection.structure => FLucideIcons.network,
+        PortfolioStudioSection.assets => FLucideIcons.walletCards,
+        PortfolioStudioSection.rules => FLucideIcons.listChecks,
       },
       onChanged: onChanged,
     );

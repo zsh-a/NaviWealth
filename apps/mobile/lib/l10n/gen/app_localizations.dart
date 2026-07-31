@@ -15964,11 +15964,23 @@ abstract class AppLocalizations {
   /// **'This month'**
   String get expenseReportRangeThisMonth;
 
+  /// No description provided for @expenseReportRangeThisMonthCompact.
+  ///
+  /// In en, this message translates to:
+  /// **'MTD'**
+  String get expenseReportRangeThisMonthCompact;
+
   /// Expense report: range chip — last 3 months
   ///
   /// In en, this message translates to:
   /// **'Last 3 months'**
   String get expenseReportRangeLast3Months;
+
+  /// No description provided for @expenseReportRange3mCompact.
+  ///
+  /// In en, this message translates to:
+  /// **'3M'**
+  String get expenseReportRange3mCompact;
 
   /// Expense report: range chip — last 6 months
   ///
@@ -15976,17 +15988,35 @@ abstract class AppLocalizations {
   /// **'Last 6 months'**
   String get expenseReportRangeLast6Months;
 
+  /// No description provided for @expenseReportRange6mCompact.
+  ///
+  /// In en, this message translates to:
+  /// **'6M'**
+  String get expenseReportRange6mCompact;
+
   /// Expense report: range chip — last 12 months
   ///
   /// In en, this message translates to:
   /// **'Last 12 months'**
   String get expenseReportRangeLast12Months;
 
+  /// No description provided for @expenseReportRange12mCompact.
+  ///
+  /// In en, this message translates to:
+  /// **'12M'**
+  String get expenseReportRange12mCompact;
+
   /// Expense report: range chip — custom
   ///
   /// In en, this message translates to:
   /// **'Custom'**
   String get expenseReportRangeCustom;
+
+  /// No description provided for @expenseReportRangeCustomCompact.
+  ///
+  /// In en, this message translates to:
+  /// **'Range'**
+  String get expenseReportRangeCustomCompact;
 
   /// Expense report: summary card heading
   ///
@@ -21687,6 +21717,12 @@ abstract class AppLocalizations {
   /// **'Auto'**
   String get knowledgeCaptureKindAuto;
 
+  /// No description provided for @knowledgeCaptureKindAutoDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Let KnowledgeOS classify it after saving'**
+  String get knowledgeCaptureKindAutoDescription;
+
   /// No description provided for @knowledgeCaptureKindNote.
   ///
   /// In en, this message translates to:
@@ -22093,6 +22129,96 @@ abstract class AppLocalizations {
   /// **'Search {segment}'**
   String knowledgeLibrarySearchSegmentHint(Object segment);
 
+  /// No description provided for @knowledgeLibraryTypeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge type'**
+  String get knowledgeLibraryTypeTitle;
+
+  /// No description provided for @knowledgeLibraryTypePickerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what to browse in your library.'**
+  String get knowledgeLibraryTypePickerSubtitle;
+
+  /// No description provided for @knowledgeLibraryTypeScope.
+  ///
+  /// In en, this message translates to:
+  /// **'{type} · {count} items'**
+  String knowledgeLibraryTypeScope(String type, int count);
+
+  /// No description provided for @knowledgeLibraryTypeGroupCore.
+  ///
+  /// In en, this message translates to:
+  /// **'Core'**
+  String get knowledgeLibraryTypeGroupCore;
+
+  /// No description provided for @knowledgeLibraryTypeGroupSources.
+  ///
+  /// In en, this message translates to:
+  /// **'Sources'**
+  String get knowledgeLibraryTypeGroupSources;
+
+  /// No description provided for @knowledgeLibraryTypeGroupThinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking'**
+  String get knowledgeLibraryTypeGroupThinking;
+
+  /// No description provided for @knowledgeLibraryTypeGroupAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Action'**
+  String get knowledgeLibraryTypeGroupAction;
+
+  /// No description provided for @knowledgeLibraryTypeAllDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse every knowledge object'**
+  String get knowledgeLibraryTypeAllDescription;
+
+  /// No description provided for @knowledgeLibraryTypeDecisionsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Record choices, rationale, and outcomes'**
+  String get knowledgeLibraryTypeDecisionsDescription;
+
+  /// No description provided for @knowledgeLibraryTypePrinciplesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Durable rules that guide judgment'**
+  String get knowledgeLibraryTypePrinciplesDescription;
+
+  /// No description provided for @knowledgeLibraryTypeAssumptionsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Beliefs that still need validation'**
+  String get knowledgeLibraryTypeAssumptionsDescription;
+
+  /// No description provided for @knowledgeLibraryTypeNotesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep raw observations and sources'**
+  String get knowledgeLibraryTypeNotesDescription;
+
+  /// No description provided for @knowledgeLibraryTypeConceptsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Organize topics, aliases, and links'**
+  String get knowledgeLibraryTypeConceptsDescription;
+
+  /// No description provided for @knowledgeLibraryTypeExperimentsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Validate assumptions through action'**
+  String get knowledgeLibraryTypeExperimentsDescription;
+
+  /// No description provided for @knowledgeLibraryTypeRoutinesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat actions on a cadence'**
+  String get knowledgeLibraryTypeRoutinesDescription;
+
   /// No description provided for @knowledgeLibraryFilterAll.
   ///
   /// In en, this message translates to:
@@ -22188,6 +22314,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try a different keyword or switch segments.'**
   String get knowledgeLibrarySearchEmptyBody;
+
+  /// No description provided for @knowledgeLibrarySearchEmptyScopedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No matches in {segment}. Search all knowledge or try another keyword.'**
+  String knowledgeLibrarySearchEmptyScopedBody(String segment);
+
+  /// No description provided for @knowledgeLibrarySearchAllAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Search all knowledge'**
+  String get knowledgeLibrarySearchAllAction;
 
   /// No description provided for @knowledgeLibraryLoadFailed.
   ///

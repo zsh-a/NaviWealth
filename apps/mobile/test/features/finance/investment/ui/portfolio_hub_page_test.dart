@@ -166,8 +166,21 @@ void main() {
 
     expect(find.text('Long term'), findsWidgets);
     expect(find.text('Overview'), findsOneWidget);
+    expect(find.text('Structure'), findsNothing);
+    expect(find.text('Assets'), findsNothing);
+
+    await tester.tap(find.text('Overview'));
+    await tester.pumpAndSettle();
     expect(find.text('Structure'), findsOneWidget);
     expect(find.text('Assets'), findsOneWidget);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AppSheet),
+        matching: find.text('Overview'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
     expect(find.text('Rules'), findsWidgets);
     expect(find.text('Capital path'), findsOneWidget);
     expect(find.text('Index core'), findsOneWidget);

@@ -187,10 +187,10 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
     final l10n = AppLocalizations.of(context);
     final query = ref.watch(activityFeedQueryProvider);
     final controller = ref.read(activityFeedQueryProvider.notifier);
-    final selected = query.kinds;
-    final allActive = selected.isEmpty;
     final sheetFilterCount =
-        (query.dateRange == null ? 0 : 1) + query.accountIds.length;
+        (query.kinds.isEmpty ? 0 : 1) +
+        (query.dateRange == null ? 0 : 1) +
+        query.accountIds.length;
     final filterLabel = sheetFilterCount == 0
         ? l10n.activityFeedFilterTitle
         : '${l10n.activityFeedFilterTitle} · $sheetFilterCount';
@@ -205,35 +205,6 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
       _syncSearchText(query.searchText);
     }
 
-    final chips = <_KindChipSpec>[
-      _KindChipSpec(
-        label: l10n.activityFilterChipAll,
-        active: allActive,
-        onTap: () =>
-            _setActivityKinds(controller, query, const <ActivityKind>{}),
-      ),
-      for (final kind in const [
-        ActivityKind.income,
-        ActivityKind.expense,
-        ActivityKind.transfer,
-        ActivityKind.trade,
-      ])
-        _KindChipSpec(
-          label: _labelForKind(l10n, kind),
-          active: selected.contains(kind),
-          onTap: () {
-            AppInteraction.signal(AppInteractionIntent.select);
-            final next = {...selected};
-            if (next.contains(kind)) {
-              next.remove(kind);
-            } else {
-              next.add(kind);
-            }
-            controller.setQuery(query.copyWith(kinds: next));
-          },
-        ),
-    ];
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s16,
@@ -247,10 +218,11 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
           Row(
             children: [
               Expanded(
-                child: Wrap(
-                  spacing: AppSpacing.s8,
-                  runSpacing: AppSpacing.s8,
-                  children: [for (final chip in chips) _FilterChip(spec: chip)],
+                child: AppQuietButton(
+                  label: filterLabel,
+                  expanded: true,
+                  prefix: const Icon(FLucideIcons.slidersHorizontal),
+                  onPress: () => ActivityFeedFilterSheet.show(context),
                 ),
               ),
               const SizedBox(width: AppSpacing.s8),
@@ -258,11 +230,6 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
                 icon: FLucideIcons.search,
                 tooltip: l10n.activityFeedSearchAction,
                 onPress: () => setState(() => _searchOpen = !_searchOpen),
-              ),
-              AppIconButton(
-                icon: FLucideIcons.slidersHorizontal,
-                tooltip: filterLabel,
-                onPress: () => ActivityFeedFilterSheet.show(context),
               ),
             ],
           ),
@@ -312,6 +279,28 @@ class _ActiveFilterTags extends ConsumerWidget {
         ref.watch(accountsStreamProvider).value ?? const <Account>[];
     final byId = {for (final a in accounts) a.id: a};
     final tags = <Widget>[];
+
+    for (final kind in const <ActivityKind>[
+      ActivityKind.income,
+      ActivityKind.expense,
+      ActivityKind.transfer,
+      ActivityKind.trade,
+    ]) {
+      if (!query.kinds.contains(kind)) continue;
+      tags.add(
+        AppFilterChip(
+          label: _labelForKind(l10n, kind),
+          active: true,
+          onPress: () => ActivityFeedFilterSheet.show(context),
+          onClear: () {
+            controller.mutateQuery((q) {
+              final kinds = {...q.kinds}..remove(kind);
+              return q.copyWith(kinds: kinds);
+            });
+          },
+        ),
+      );
+    }
 
     if (query.searchText.trim().isNotEmpty) {
       tags.add(
@@ -373,42 +362,6 @@ class _ActiveFilterTags extends ConsumerWidget {
   }
 }
 
-class _KindChipSpec {
-  const _KindChipSpec({
-    required this.label,
-    required this.active,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-}
-
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({required this.spec});
-
-  final _KindChipSpec spec;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppFilterChip(
-      label: spec.label,
-      active: spec.active,
-      onPress: spec.onTap,
-    );
-  }
-}
-
 String _labelForKind(AppLocalizations l10n, ActivityKind kind) {
   return entryKindLabel(l10n, entryKindFromActivityKind(kind));
-}
-
-void _setActivityKinds(
-  ActivityFeedQueryController controller,
-  ActivityFeedQuery query,
-  Set<ActivityKind> kinds,
-) {
-  AppInteraction.signal(AppInteractionIntent.select);
-  controller.setQuery(query.copyWith(kinds: kinds));
 }

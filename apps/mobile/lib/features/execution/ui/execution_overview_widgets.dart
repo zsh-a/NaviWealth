@@ -68,7 +68,8 @@ class ExecutionOverviewStrip extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.s12),
-        SegmentedRow<ExecutionTodayFilter>(
+        AppAdaptiveChoice<ExecutionTodayFilter>(
+          title: l10n.executionTodayTitle,
           options: ExecutionTodayFilter.values,
           value: selectedFilter,
           labelOf: (filter) => switch (filter) {
@@ -82,6 +83,7 @@ class ExecutionOverviewStrip extends StatelessWidget {
               '${l10n.executionOverviewOpen} ${snapshot.openCount}',
           },
           semanticLabelOf: (filter) => executionTodayFilterLabel(l10n, filter),
+          iconOf: executionTodayFilterIcon,
           onChanged: onFilterChanged,
         ),
         if (meta.isNotEmpty) ...[

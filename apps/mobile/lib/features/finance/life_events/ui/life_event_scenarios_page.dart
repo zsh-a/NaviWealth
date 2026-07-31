@@ -64,10 +64,17 @@ class _LifeEventScenariosPageState
                   style: context.bodyCaptionStyle,
                 ),
                 const SizedBox(height: AppSpacing.s12),
-                SegmentedRow<LifeEventTemplate>(
+                AppAdaptiveChoice<LifeEventTemplate>(
+                  title: l10n.lifeEventScenariosTitle,
                   options: LifeEventTemplate.values,
                   value: _selectedTemplate,
                   labelOf: (template) => _templateLabel(l10n, template),
+                  inlineMaxOptions: 2,
+                  iconOf: (template) => switch (template) {
+                    LifeEventTemplate.largePurchase => FLucideIcons.shoppingBag,
+                    LifeEventTemplate.careerBreak => FLucideIcons.briefcase,
+                    LifeEventTemplate.homePurchase => FLucideIcons.house,
+                  },
                   onChanged: (template) =>
                       setState(() => _selectedTemplate = template),
                 ),

@@ -87,6 +87,27 @@ void main() {
     expect(find.byType(SingleChildScrollView), findsNothing);
   });
 
+  testWidgets('balances four wrapped options into two columns', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        SegmentedRow<int>(
+          options: const [0, 1, 2, 3],
+          value: 0,
+          labelOf: (i) => 'Option $i',
+          onChanged: (_) {},
+        ),
+        width: 320,
+      ),
+    );
+
+    final option = tester.getSize(find.text('Option 0'));
+    final nextRow = tester.getTopLeft(find.text('Option 2'));
+    final firstRow = tester.getTopLeft(find.text('Option 0'));
+    expect(option.width, greaterThan(0));
+    expect(nextRow.dy, greaterThan(firstRow.dy));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('large text switches equal segments to visible wrapping', (
     tester,
   ) async {

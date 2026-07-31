@@ -76,12 +76,17 @@ class SegmentedRow<T> extends StatelessWidget {
           ],
         );
 
-        final columns = maxW.isFinite
+        final maxColumns = maxW.isFinite
             ? ((maxW + gap) / (effectiveMinSegmentWidth + gap)).floor().clamp(
                 1,
                 n,
               )
             : n;
+        // Balance wrapped rows instead of producing an isolated last item.
+        // Example: four options with room for at most three become 2×2 rather
+        // than 3+1. Five options remain 3+2 because that is already balanced.
+        final rows = (n / maxColumns).ceil();
+        final columns = (n / rows).ceil().clamp(1, maxColumns);
         final wrappedSegmentWidth = maxW.isFinite
             ? (maxW - gap * (columns - 1)) / columns
             : effectiveMinSegmentWidth;

@@ -35,9 +35,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Backlog 1'), findsOneWidget);
+    expect(find.textContaining('Backlog 1'), findsNothing);
     expect(find.text('Plan the next release'), findsNothing);
 
+    await tester.tap(find.text('Focus 0'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Backlog 1'), findsOneWidget);
     await tester.tap(find.textContaining('Backlog 1'));
     await tester.pumpAndSettle();
 
@@ -56,7 +59,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Open actions'), findsOneWidget);
+    expect(find.text('Standalone actions'), findsOneWidget);
     expect(find.text('Capture standalone follow-up'), findsOneWidget);
     expect(find.text('No active work'), findsNothing);
   });

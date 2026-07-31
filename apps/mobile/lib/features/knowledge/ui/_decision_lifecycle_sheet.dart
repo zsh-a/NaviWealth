@@ -180,23 +180,13 @@ class _DecisionLifecycleSheetState
           KnowledgeWriterSection(
             title: l10n.knowledgeDecisionStatusLabel,
             children: [
-              SizedBox(
-                height: AppSpacing.s32,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: DecisionStatus.values.length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(width: AppSpacing.s4),
-                  itemBuilder: (context, i) {
-                    final s = DecisionStatus.values[i];
-                    final active = s == _status;
-                    return AppFilterChip(
-                      label: decisionStatusLabel(context, s),
-                      active: active,
-                      onPress: () => setState(() => _status = s),
-                    );
-                  },
-                ),
+              AppAdaptiveChoice<DecisionStatus>(
+                title: l10n.knowledgeDecisionStatusLabel,
+                options: DecisionStatus.values,
+                value: _status,
+                labelOf: (status) => decisionStatusLabel(context, status),
+                iconOf: _decisionStatusIcon,
+                onChanged: (status) => setState(() => _status = status),
               ),
             ],
           ),
@@ -242,3 +232,13 @@ class _DecisionLifecycleSheetState
     );
   }
 }
+
+IconData _decisionStatusIcon(DecisionStatus status) => switch (status) {
+  DecisionStatus.draft => FLucideIcons.filePenLine,
+  DecisionStatus.active => FLucideIcons.play,
+  DecisionStatus.paused => FLucideIcons.pause,
+  DecisionStatus.expired => FLucideIcons.clockAlert,
+  DecisionStatus.verified => FLucideIcons.badgeCheck,
+  DecisionStatus.falsified => FLucideIcons.badgeX,
+  DecisionStatus.superseded => FLucideIcons.gitPullRequestArrow,
+};

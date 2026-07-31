@@ -152,7 +152,7 @@ void main() {
     expect(afterQuery.dateRange, isNotNull);
   });
 
-  testWidgets('Clear header action zeroes date + accounts but keeps kinds', (
+  testWidgets('Clear header action resets every filter dimension', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(420, 900));
@@ -204,7 +204,6 @@ void main() {
     final cleared = container.read(activityFeedQueryProvider);
     expect(cleared.dateRange, isNull);
     expect(cleared.accountIds, isEmpty);
-    // Kinds stay where the inline chip row left them.
-    expect(cleared.kinds, contains(ActivityKind.expense));
+    expect(cleared.kinds, isEmpty);
   });
 }

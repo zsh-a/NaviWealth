@@ -50,14 +50,22 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Large purchase'), findsNWidgets(2));
+    expect(find.text('Career break'), findsNothing);
+    expect(find.text('Home purchase'), findsNothing);
+
+    await tester.tap(
+      find.bySemanticsLabel('Life-event scenarios: Large purchase'),
+    );
+    await tester.pumpAndSettle();
+
     expect(find.text('Career break'), findsOneWidget);
     expect(find.text('Home purchase'), findsOneWidget);
 
     await tester.tap(find.text('Career break'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Large purchase'), findsOneWidget);
+    expect(find.text('Large purchase'), findsNothing);
     expect(find.text('Career break'), findsNWidgets(2));
-    expect(find.text('Home purchase'), findsOneWidget);
+    expect(find.text('Home purchase'), findsNothing);
   });
 }

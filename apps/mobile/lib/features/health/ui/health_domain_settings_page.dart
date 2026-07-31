@@ -168,10 +168,25 @@ class _BriefingHourRow extends ConsumerWidget {
 }
 
 /// Compact horizontal-scrollable hour picker.
-class _BriefingHourSheet extends StatelessWidget {
+class _BriefingHourSheet extends StatefulWidget {
   const _BriefingHourSheet({required this.selectedHour});
 
   final int selectedHour;
+
+  @override
+  State<_BriefingHourSheet> createState() => _BriefingHourSheetState();
+}
+
+class _BriefingHourSheetState extends State<_BriefingHourSheet> {
+  late final ScrollController _controller = ScrollController(
+    initialScrollOffset: (widget.selectedHour * 54.0 - 108).clamp(0, 1000),
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -179,12 +194,13 @@ class _BriefingHourSheet extends StatelessWidget {
     return SizedBox(
       height: AppControlHeights.pickerStrip,
       child: ListView.separated(
+        controller: _controller,
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
         itemCount: 24,
         separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s6),
         itemBuilder: (_, index) {
-          final selected = index == selectedHour;
+          final selected = index == widget.selectedHour;
           return GestureDetector(
             onTap: () => Navigator.of(context).pop(index),
             child: AnimatedContainer(

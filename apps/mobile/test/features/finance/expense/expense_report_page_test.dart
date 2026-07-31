@@ -164,7 +164,7 @@ void main() {
     );
 
     final l10n = AppLocalizations.of(tester.element(find.byType(SpendingPage)));
-    await tester.tap(find.text(l10n.expenseReportRangeThisMonth));
+    await tester.tap(find.text(l10n.expenseReportRangeThisMonthCompact));
     await tester.pumpAndSettle();
     expect(
       container.read(expenseReportRangePresetProvider),

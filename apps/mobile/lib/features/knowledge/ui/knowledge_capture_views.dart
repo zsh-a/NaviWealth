@@ -55,59 +55,28 @@ class _CaptureKindPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final options = <_CaptureKindOption>[
-      _CaptureKindOption(null, l10n.knowledgeCaptureKindAuto),
-      for (final kind in CaptureKind.values)
-        _CaptureKindOption(kind, _captureKindShortLabel(l10n, kind)),
-    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(l10n.knowledgeCaptureTypeLabel, style: context.captionStyle),
         const SizedBox(height: AppSpacing.s6),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (var i = 0; i < options.length; i++) ...[
-                _CaptureKindChip(
-                  label: options[i].label,
-                  selected: options[i].kind == selectedKind,
-                  onTap: () => onChanged(options[i].kind),
-                ),
-                if (i != options.length - 1)
-                  const SizedBox(width: AppSpacing.s6),
-              ],
-            ],
-          ),
+        AppAdaptiveChoice<CaptureKind?>(
+          title: l10n.knowledgeCaptureTypeLabel,
+          subtitle: l10n.knowledgeCaptureKindAutoDescription,
+          options: const <CaptureKind?>[null, ...CaptureKind.values],
+          value: selectedKind,
+          labelOf: (kind) => kind == null
+              ? l10n.knowledgeCaptureKindAuto
+              : _captureKindShortLabel(l10n, kind),
+          descriptionOf: (kind) => kind == null
+              ? l10n.knowledgeCaptureKindAutoDescription
+              : _captureKindDescription(l10n, kind),
+          iconOf: _captureKindIcon,
+          onChanged: onChanged,
         ),
       ],
     );
   }
-}
-
-class _CaptureKindChip extends StatelessWidget {
-  const _CaptureKindChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppFilterChip(label: label, active: selected, onPress: onTap);
-  }
-}
-
-class _CaptureKindOption {
-  const _CaptureKindOption(this.kind, this.label);
-
-  final CaptureKind? kind;
-  final String label;
 }
 
 String _captureKindShortLabel(AppLocalizations l10n, CaptureKind kind) {
@@ -121,3 +90,26 @@ String _captureKindShortLabel(AppLocalizations l10n, CaptureKind kind) {
     CaptureKind.experiment => l10n.knowledgeCaptureKindExperiment,
   };
 }
+
+String _captureKindDescription(AppLocalizations l10n, CaptureKind kind) {
+  return switch (kind) {
+    CaptureKind.note => l10n.knowledgeCaptureKindNoteDescription,
+    CaptureKind.routine => l10n.knowledgeCaptureKindRoutineDescription,
+    CaptureKind.decision => l10n.knowledgeCaptureKindDecisionDescription,
+    CaptureKind.principle => l10n.knowledgeCaptureKindPrincipleDescription,
+    CaptureKind.assumption => l10n.knowledgeCaptureKindAssumptionDescription,
+    CaptureKind.concept => l10n.knowledgeCaptureKindConceptDescription,
+    CaptureKind.experiment => l10n.knowledgeCaptureKindExperimentDescription,
+  };
+}
+
+IconData _captureKindIcon(CaptureKind? kind) => switch (kind) {
+  null => FLucideIcons.sparkles,
+  CaptureKind.note => FLucideIcons.fileText,
+  CaptureKind.routine => FLucideIcons.calendarClock,
+  CaptureKind.decision => FLucideIcons.gitBranch,
+  CaptureKind.principle => FLucideIcons.badgeCheck,
+  CaptureKind.assumption => FLucideIcons.lightbulb,
+  CaptureKind.concept => FLucideIcons.folderTree,
+  CaptureKind.experiment => FLucideIcons.flaskConical,
+};

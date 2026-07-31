@@ -7,21 +7,15 @@ import 'package:naviwealth/features/finance/domain/models/account.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../shared/l10n/account_l10n.dart';
+import '../../shared/l10n/entry_kind_labels.dart';
 import '../data/activity_feed_provider.dart';
+import '../data/activity_feed_query.dart';
 
-/// Activity timeline filter sheet — dimensions the inline kind chip row
-/// can't express: **date range** + **per-account multi-select**.
-///
-/// Kind selection is intentionally absent here even though the
-/// underlying `ActivityFeedQuery` carries a `kinds` field — that's
-/// already covered by the inline chip row at the top of the timeline.
-/// Showing it twice was the original "redundant content" complaint, so
-/// the sheet now stays narrowly focused on the two dimensions inline
-/// chips can't reach.
+/// Activity timeline filter sheet: kind, date range, and account filters in
+/// one stable mobile surface. The page header only shows a compact summary.
 ///
 /// Edits apply live and the pinned Done action makes that contract explicit.
-/// The Clear action zeroes the date range + accounts (kind chips stay where
-/// the user left them in the inline row).
+/// The Clear action resets every filter dimension.
 class ActivityFeedFilterSheet extends ConsumerWidget {
   const ActivityFeedFilterSheet({super.key});
 
@@ -36,12 +30,13 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
           builder: (ctx, ref, _) => _HeaderTextAction(
             label: l10n.activityFeedFilterClear,
             onPress: () {
-              // Zero the dimensions this sheet owns. Kind selection
-              // stays untouched — that's the inline row's domain.
               final controller = ref.read(activityFeedQueryProvider.notifier);
               controller.mutateQuery(
-                (q) =>
-                    q.copyWith(dateRange: null, accountIds: const <String>{}),
+                (q) => q.copyWith(
+                  kinds: const <ActivityKind>{},
+                  dateRange: null,
+                  accountIds: const <String>{},
+                ),
               );
             },
           ),
@@ -68,6 +63,13 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        AppSheetSectionLabel(l10n.activityFeedFilterKind),
+        _KindFilterRow(
+          selected: query.kinds,
+          onChanged: (kinds) =>
+              controller.mutateQuery((q) => q.copyWith(kinds: kinds)),
+        ),
+        const SizedBox(height: AppSpacing.s20),
         AppSheetSectionLabel(l10n.activityFeedFilterDateRange),
         _DateRangeRow(
           active: activeRange,
@@ -123,6 +125,45 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
                 ],
               ),
             ),
+          ),
+      ],
+    );
+  }
+}
+
+class _KindFilterRow extends StatelessWidget {
+  const _KindFilterRow({required this.selected, required this.onChanged});
+
+  final Set<ActivityKind> selected;
+  final ValueChanged<Set<ActivityKind>> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    const kinds = <ActivityKind>[
+      ActivityKind.income,
+      ActivityKind.expense,
+      ActivityKind.transfer,
+      ActivityKind.trade,
+    ];
+    return Wrap(
+      spacing: AppSpacing.s8,
+      runSpacing: AppSpacing.s8,
+      children: [
+        AppFilterChip(
+          label: l10n.activityFilterChipAll,
+          active: selected.isEmpty,
+          onPress: () => onChanged(const <ActivityKind>{}),
+        ),
+        for (final kind in kinds)
+          AppFilterChip(
+            label: entryKindLabel(l10n, entryKindFromActivityKind(kind)),
+            active: selected.contains(kind),
+            onPress: () {
+              final next = {...selected};
+              next.contains(kind) ? next.remove(kind) : next.add(kind);
+              onChanged(next);
+            },
           ),
       ],
     );

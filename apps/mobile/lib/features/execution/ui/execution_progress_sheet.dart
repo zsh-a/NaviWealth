@@ -217,7 +217,8 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
               style: context.captionLabelStyle,
             ),
             const SizedBox(height: AppSpacing.s6),
-            SegmentedRow<ExecutionProgressKind>(
+            AppAdaptiveChoice<ExecutionProgressKind>(
+              title: l10n.executionProgressKindField,
               options: ExecutionProgressKind.values,
               value: _kind,
               labelOf: (kind) => executionProgressKindLabel(l10n, kind),

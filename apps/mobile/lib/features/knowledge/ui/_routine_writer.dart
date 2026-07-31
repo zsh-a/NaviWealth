@@ -156,10 +156,12 @@ class _RoutineWriterState extends ConsumerState<_RoutineWriter> {
           KnowledgeWriterSection(
             title: l10n.knowledgeWriterCadenceSectionTitle,
             children: [
-              SegmentedRow<int>(
+              AppAdaptiveChoice<int>(
+                title: l10n.knowledgeWriterCadenceSectionTitle,
                 options: _kIntervalPresets,
                 value: _intervalDays,
                 labelOf: (preset) => _intervalPresetLabel(l10n, preset),
+                iconOf: (_) => FLucideIcons.calendarClock,
                 onChanged: (preset) => setState(() => _intervalDays = preset),
               ),
               FTextField(

@@ -3,6 +3,10 @@ part of 'knowledge_library_page.dart';
 class _LibraryList extends ConsumerWidget {
   const _LibraryList({
     required this.segment,
+    required this.segmentLabel,
+    required this.createLabel,
+    required this.onCreate,
+    required this.onSegmentChanged,
     required this.query,
     required this.searchHistory,
     required this.onSearchSelected,
@@ -12,6 +16,10 @@ class _LibraryList extends ConsumerWidget {
   });
 
   final _LibrarySegment segment;
+  final String segmentLabel;
+  final String createLabel;
+  final VoidCallback onCreate;
+  final ValueChanged<_LibrarySegment> onSegmentChanged;
   final String query;
   final List<String> searchHistory;
   final ValueChanged<String> onSearchSelected;
@@ -308,8 +316,15 @@ class _LibraryList extends ConsumerWidget {
     String Function(T item)? statusOf,
   }) {
     return _SegmentList<T>(
+      storageKey: segment.name,
       stream: stream,
       query: query,
+      scopeLabel: segmentLabel,
+      createLabel: createLabel,
+      onCreate: onCreate,
+      onSearchAll: segment == _LibrarySegment.all
+          ? null
+          : () => onSegmentChanged(_LibrarySegment.all),
       searchableText: searchableText,
       searchSuggestions: searchSuggestions,
       filterFacets: filterFacets,

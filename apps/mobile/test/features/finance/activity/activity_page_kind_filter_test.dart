@@ -69,10 +69,9 @@ ProviderContainer _container() {
 }
 
 void main() {
-  testWidgets('mobile shell keeps kind filters visible and add in the header', (
+  testWidgets('mobile shell keeps one filter summary and add in the header', (
     tester,
   ) async {
-    // The same filter grammar stays visible across responsive widths.
     await tester.binding.setSurfaceSize(const Size(760, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -82,9 +81,14 @@ void main() {
     await tester.pumpWidget(_wrap(container: container));
     await tester.pumpAndSettle();
 
+    expect(find.text('Filter'), findsOneWidget);
+    expect(find.text('Expense'), findsNothing);
+    expect(find.byIcon(FLucideIcons.plus), findsWidgets);
+
+    await tester.tap(find.text('Filter'));
+    await tester.pumpAndSettle();
     expect(find.text('All'), findsOneWidget);
     expect(find.text('Expense'), findsOneWidget);
-    expect(find.byIcon(FLucideIcons.plus), findsWidgets);
   });
 
   testWidgets('filter bar stays bounded on a narrow scaled viewport', (
@@ -100,12 +104,12 @@ void main() {
     await tester.pumpWidget(_wrap(container: container, textScale: 1.5));
     await tester.pumpAndSettle();
 
-    expect(find.text('All'), findsOneWidget);
+    expect(find.text('All'), findsNothing);
     expect(find.byIcon(FLucideIcons.slidersHorizontal), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('desktop quick filter toggles a kind into the active query', (
+  testWidgets('unified filter sheet toggles a kind into the active query', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1600, 1000);
@@ -120,6 +124,8 @@ void main() {
 
     expect(container.read(activityFeedQueryProvider).kinds, isEmpty);
 
+    await tester.tap(find.text('Filter'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Expense'));
     await tester.pumpAndSettle();
 
@@ -128,14 +134,13 @@ void main() {
       contains(ActivityKind.expense),
     );
 
-    // Tapping again toggles off.
     await tester.tap(find.text('Expense'));
     await tester.pumpAndSettle();
 
     expect(container.read(activityFeedQueryProvider).kinds, isEmpty);
   });
 
-  testWidgets('desktop All chip clears any selected kinds', (tester) async {
+  testWidgets('All in the filter sheet clears selected kinds', (tester) async {
     tester.view.physicalSize = const Size(1600, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -155,6 +160,8 @@ void main() {
         );
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text('Filter · 1'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('All'));
     await tester.pumpAndSettle();
 

@@ -1819,7 +1819,8 @@ class _IngestDraftEditSheetState extends State<_IngestDraftEditSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SegmentedRow<IngestTransactionKind>(
+          AppAdaptiveChoice<IngestTransactionKind>(
+            title: l10n.ingestEditDraft,
             options: IngestTransactionKind.values,
             value: _kind,
             labelOf: (kind) => switch (kind) {
@@ -1827,6 +1828,12 @@ class _IngestDraftEditSheetState extends State<_IngestDraftEditSheet> {
               IngestTransactionKind.expense => l10n.ingestKindExpense,
               IngestTransactionKind.transfer => l10n.ingestKindTransfer,
               IngestTransactionKind.trade => l10n.ingestKindTrade,
+            },
+            iconOf: (kind) => switch (kind) {
+              IngestTransactionKind.income => FLucideIcons.arrowDownLeft,
+              IngestTransactionKind.expense => FLucideIcons.arrowUpRight,
+              IngestTransactionKind.transfer => FLucideIcons.arrowRightLeft,
+              IngestTransactionKind.trade => FLucideIcons.chartCandlestick,
             },
             onChanged: (kind) => setState(() => _kind = kind),
           ),

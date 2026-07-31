@@ -9039,16 +9039,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get expenseReportRangeThisMonth => '本月';
 
   @override
+  String get expenseReportRangeThisMonthCompact => '本月';
+
+  @override
   String get expenseReportRangeLast3Months => '近 3 月';
+
+  @override
+  String get expenseReportRange3mCompact => '3月';
 
   @override
   String get expenseReportRangeLast6Months => '近 6 月';
 
   @override
+  String get expenseReportRange6mCompact => '6月';
+
+  @override
   String get expenseReportRangeLast12Months => '近 12 月';
 
   @override
+  String get expenseReportRange12mCompact => '12月';
+
+  @override
   String get expenseReportRangeCustom => '自定义';
+
+  @override
+  String get expenseReportRangeCustomCompact => '自定';
 
   @override
   String get expenseReportTotalExpenses => '总支出';
@@ -12238,6 +12253,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeCaptureKindAuto => '自动';
 
   @override
+  String get knowledgeCaptureKindAutoDescription => '保存后由 KnowledgeOS 判断知识类型';
+
+  @override
   String get knowledgeCaptureKindNote => '笔记';
 
   @override
@@ -12398,14 +12416,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeLibraryEmptyAllBody =>
-      '先从收件箱记录 Note，或用右下角 + 创建 Decision、Assumption、Routine 等知识对象。';
+      '先从收件箱记录 Note，或直接创建 Decision、Assumption、Routine 等知识对象。';
 
   @override
   String get knowledgeLibraryEmptyDecisionsTitle => '还没有 Decision';
 
   @override
-  String get knowledgeLibraryEmptyDecisionsBody =>
-      '点右下角 + 新建 Decision，记录第一条值得复盘的判断。';
+  String get knowledgeLibraryEmptyDecisionsBody => '新建 Decision，记录第一条值得复盘的判断。';
 
   @override
   String get knowledgeLibraryEmptyPrinciplesTitle => '还没有 Principle';
@@ -12479,6 +12496,53 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get knowledgeLibraryTypeTitle => '知识类型';
+
+  @override
+  String get knowledgeLibraryTypePickerSubtitle => '选择资料库的浏览范围。';
+
+  @override
+  String knowledgeLibraryTypeScope(String type, int count) {
+    return '$type · $count 条';
+  }
+
+  @override
+  String get knowledgeLibraryTypeGroupCore => '核心';
+
+  @override
+  String get knowledgeLibraryTypeGroupSources => '素材';
+
+  @override
+  String get knowledgeLibraryTypeGroupThinking => '认知';
+
+  @override
+  String get knowledgeLibraryTypeGroupAction => '行动';
+
+  @override
+  String get knowledgeLibraryTypeAllDescription => '浏览全部知识对象';
+
+  @override
+  String get knowledgeLibraryTypeDecisionsDescription => '记录选择、理由与结果';
+
+  @override
+  String get knowledgeLibraryTypePrinciplesDescription => '长期稳定的判断规则';
+
+  @override
+  String get knowledgeLibraryTypeAssumptionsDescription => '仍需验证的判断';
+
+  @override
+  String get knowledgeLibraryTypeNotesDescription => '保留原始记录与来源';
+
+  @override
+  String get knowledgeLibraryTypeConceptsDescription => '归纳主题、别名与关联';
+
+  @override
+  String get knowledgeLibraryTypeExperimentsDescription => '用行动验证假设';
+
+  @override
+  String get knowledgeLibraryTypeRoutinesDescription => '需要周期执行的事项';
+
+  @override
   String get knowledgeLibraryFilterAll => '全部';
 
   @override
@@ -12525,6 +12589,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeLibrarySearchEmptyBody => '换个关键词，或切换到其他分段。';
+
+  @override
+  String knowledgeLibrarySearchEmptyScopedBody(String segment) {
+    return '“$segment”中没有匹配结果。可搜索全部知识或换个关键词。';
+  }
+
+  @override
+  String get knowledgeLibrarySearchAllAction => '搜索全部知识';
 
   @override
   String knowledgeLibraryLoadFailed(Object error) {

@@ -221,18 +221,21 @@ void main() {
     );
 
     expect(find.textContaining('Focus'), findsNWidgets(2));
-    expect(find.textContaining('Open'), findsOneWidget);
-    expect(find.textContaining('Blocked'), findsOneWidget);
+    expect(find.textContaining('Open'), findsNothing);
+    expect(find.textContaining('Blocked'), findsNothing);
     expect(find.textContaining('7d progress'), findsOneWidget);
 
+    await tester.tap(find.textContaining('Focus').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.textContaining('Blocked'));
-    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pumpAndSettle();
 
     expect(selected, ExecutionTodayFilter.blocked);
 
-    await tester.ensureVisible(find.textContaining('Open'));
+    await tester.tap(find.textContaining('Blocked'));
+    await tester.pumpAndSettle();
     await tester.tap(find.textContaining('Open'));
-    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pumpAndSettle();
 
     expect(selected, ExecutionTodayFilter.open);
 

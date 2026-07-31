@@ -167,11 +167,6 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _LibraryTabBar(
-                  selected: _segment,
-                  onChanged: (s) => setState(() => _segment = s),
-                ),
-                const SizedBox(height: AppSpacing.s16),
                 Row(
                   children: [
                     Expanded(
@@ -210,9 +205,21 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.s12),
+                _LibraryTabBar(
+                  selected: _segment,
+                  onChanged: (s) => setState(() => _segment = s),
+                ),
+                const SizedBox(height: AppSpacing.s12),
                 Expanded(
                   child: _LibraryList(
                     segment: _segment,
+                    segmentLabel: _segmentLabel(l10n, _segment),
+                    createLabel: _createLabel(l10n, _segment),
+                    onCreate: () => _segment == _LibrarySegment.all
+                        ? _openCreateSheet(context, ref)
+                        : _createForSegment(context, ref, _segment),
+                    onSegmentChanged: (segment) =>
+                        setState(() => _segment = segment),
                     query: _searchCtrl.text,
                     searchHistory: _searchHistory,
                     onSearchSelected: _applySearch,

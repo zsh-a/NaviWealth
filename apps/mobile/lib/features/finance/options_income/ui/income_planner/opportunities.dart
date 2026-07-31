@@ -142,7 +142,8 @@ class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SegmentedRow<_OpportunityFilter>(
+            AppAdaptiveChoice<_OpportunityFilter>(
+              title: l10n.incomePlannerOpportunitiesSectionTitle,
               options: _OpportunityFilter.values,
               value: _filter,
               labelOf: (filter) => switch (filter) {
@@ -151,6 +152,12 @@ class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
                 _OpportunityFilter.put => l10n.incomePlannerChipCashSecuredPut,
                 _OpportunityFilter.call => l10n.incomePlannerChipCoveredCall,
                 _OpportunityFilter.leaps => l10n.incomePlannerChipLeaps,
+              },
+              iconOf: (filter) => switch (filter) {
+                _OpportunityFilter.all => FLucideIcons.layers,
+                _OpportunityFilter.put => FLucideIcons.shieldCheck,
+                _OpportunityFilter.call => FLucideIcons.badgeDollarSign,
+                _OpportunityFilter.leaps => FLucideIcons.trendingUp,
               },
               onChanged: (filter) => setState(() => _filter = filter),
             ),

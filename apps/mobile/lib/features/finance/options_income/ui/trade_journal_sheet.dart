@@ -747,10 +747,17 @@ class _StatusSelect extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SegmentedRow<TradeJournalStatus>(
+    return AppAdaptiveChoice<TradeJournalStatus>(
+      title: l10n.incomePlannerJournalSectionTitle,
       options: TradeJournalStatus.values,
       value: value,
       labelOf: (o) => tradeJournalStatusLabel(l10n, o),
+      iconOf: (status) => switch (status) {
+        TradeJournalStatus.open => FLucideIcons.play,
+        TradeJournalStatus.closed => FLucideIcons.circleCheck,
+        TradeJournalStatus.assigned => FLucideIcons.arrowRightLeft,
+        TradeJournalStatus.expired => FLucideIcons.clockAlert,
+      },
       onChanged: onChanged,
     );
   }

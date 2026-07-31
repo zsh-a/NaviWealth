@@ -126,25 +126,32 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
           children: [
             LayoutBuilder(
               builder: (context, constraints) {
-                final groupPicker = SegmentedRow<TrendGroup>(
+                final groupPicker = AppAdaptiveChoice<TrendGroup>(
+                  title: l10n.healthTrendTitle,
                   options: TrendGroup.values,
                   value: _group,
                   labelOf: (g) => _trendGroupLabel(l10n, g),
+                  inlineMaxOptions: 2,
+                  iconOf: (group) => switch (group) {
+                    TrendGroup.recovery => FLucideIcons.heartPulse,
+                    TrendGroup.activity => FLucideIcons.activity,
+                    TrendGroup.body => FLucideIcons.scale,
+                  },
                   onChanged: (value) => _go(context, group: value),
                 );
                 final windowPicker = SegmentedRow<_TrendWindow>(
                   options: _TrendWindow.values,
                   value: _window,
+                  minSegmentWidth: 44,
                   labelOf: (w) => '${w.days}d',
                   onChanged: (value) => _go(context, window: value),
                 );
                 if (constraints.maxWidth < Breakpoints.dialogWide) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  return Row(
                     children: [
-                      groupPicker,
-                      const SizedBox(height: AppSpacing.s8),
-                      windowPicker,
+                      Expanded(flex: 3, child: groupPicker),
+                      const SizedBox(width: AppSpacing.s8),
+                      Expanded(flex: 2, child: windowPicker),
                     ],
                   );
                 }

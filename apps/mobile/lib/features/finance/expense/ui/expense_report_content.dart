@@ -51,10 +51,14 @@ class _RangeChips extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final selected = ref.watch(expenseReportRangePresetProvider);
-    return SegmentedRow<ExpenseReportRangePreset>(
+    return AppAdaptiveChoice<ExpenseReportRangePreset>(
+      title: l10n.expenseReportRangeCustom,
       options: ExpenseReportRangePreset.values,
       value: selected,
-      labelOf: (preset) => _label(preset, l10n),
+      labelOf: (preset) => _compactLabel(preset, l10n),
+      semanticLabelOf: (preset) => _label(preset, l10n),
+      inlineMaxOptions: 5,
+      minSegmentWidth: 44,
       onChanged: (preset) => _select(context, ref, preset),
     );
   }
@@ -104,6 +108,17 @@ class _RangeChips extends ConsumerWidget {
       case ExpenseReportRangePreset.custom:
         return l10n.expenseReportRangeCustom;
     }
+  }
+
+  String _compactLabel(ExpenseReportRangePreset preset, AppLocalizations l10n) {
+    return switch (preset) {
+      ExpenseReportRangePreset.monthToDate =>
+        l10n.expenseReportRangeThisMonthCompact,
+      ExpenseReportRangePreset.m3 => l10n.expenseReportRange3mCompact,
+      ExpenseReportRangePreset.m6 => l10n.expenseReportRange6mCompact,
+      ExpenseReportRangePreset.m12 => l10n.expenseReportRange12mCompact,
+      ExpenseReportRangePreset.custom => l10n.expenseReportRangeCustomCompact,
+    };
   }
 }
 

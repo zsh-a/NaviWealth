@@ -9511,16 +9511,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseReportRangeThisMonth => 'This month';
 
   @override
+  String get expenseReportRangeThisMonthCompact => 'MTD';
+
+  @override
   String get expenseReportRangeLast3Months => 'Last 3 months';
+
+  @override
+  String get expenseReportRange3mCompact => '3M';
 
   @override
   String get expenseReportRangeLast6Months => 'Last 6 months';
 
   @override
+  String get expenseReportRange6mCompact => '6M';
+
+  @override
   String get expenseReportRangeLast12Months => 'Last 12 months';
 
   @override
+  String get expenseReportRange12mCompact => '12M';
+
+  @override
   String get expenseReportRangeCustom => 'Custom';
+
+  @override
+  String get expenseReportRangeCustomCompact => 'Range';
 
   @override
   String get expenseReportTotalExpenses => 'Total expenses';
@@ -12885,6 +12900,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeCaptureKindAuto => 'Auto';
 
   @override
+  String get knowledgeCaptureKindAutoDescription =>
+      'Let KnowledgeOS classify it after saving';
+
+  @override
   String get knowledgeCaptureKindNote => 'Note';
 
   @override
@@ -13135,6 +13154,62 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get knowledgeLibraryTypeTitle => 'Knowledge type';
+
+  @override
+  String get knowledgeLibraryTypePickerSubtitle =>
+      'Choose what to browse in your library.';
+
+  @override
+  String knowledgeLibraryTypeScope(String type, int count) {
+    return '$type · $count items';
+  }
+
+  @override
+  String get knowledgeLibraryTypeGroupCore => 'Core';
+
+  @override
+  String get knowledgeLibraryTypeGroupSources => 'Sources';
+
+  @override
+  String get knowledgeLibraryTypeGroupThinking => 'Thinking';
+
+  @override
+  String get knowledgeLibraryTypeGroupAction => 'Action';
+
+  @override
+  String get knowledgeLibraryTypeAllDescription =>
+      'Browse every knowledge object';
+
+  @override
+  String get knowledgeLibraryTypeDecisionsDescription =>
+      'Record choices, rationale, and outcomes';
+
+  @override
+  String get knowledgeLibraryTypePrinciplesDescription =>
+      'Durable rules that guide judgment';
+
+  @override
+  String get knowledgeLibraryTypeAssumptionsDescription =>
+      'Beliefs that still need validation';
+
+  @override
+  String get knowledgeLibraryTypeNotesDescription =>
+      'Keep raw observations and sources';
+
+  @override
+  String get knowledgeLibraryTypeConceptsDescription =>
+      'Organize topics, aliases, and links';
+
+  @override
+  String get knowledgeLibraryTypeExperimentsDescription =>
+      'Validate assumptions through action';
+
+  @override
+  String get knowledgeLibraryTypeRoutinesDescription =>
+      'Repeat actions on a cadence';
+
+  @override
   String get knowledgeLibraryFilterAll => 'All';
 
   @override
@@ -13182,6 +13257,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get knowledgeLibrarySearchEmptyBody =>
       'Try a different keyword or switch segments.';
+
+  @override
+  String knowledgeLibrarySearchEmptyScopedBody(String segment) {
+    return 'No matches in $segment. Search all knowledge or try another keyword.';
+  }
+
+  @override
+  String get knowledgeLibrarySearchAllAction => 'Search all knowledge';
 
   @override
   String knowledgeLibraryLoadFailed(Object error) {

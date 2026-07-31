@@ -253,23 +253,20 @@ class _WorkspaceChips extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionHeader.module(title: l10n.lifeWorkbenchTitle),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (var i = 0; i < packs.length; i++) ...[
-                if (i > 0) const SizedBox(width: AppPageRhythm.row),
-                _DomainChip(
-                  pack: packs[i],
-                  l10n: l10n,
-                  colors: colors,
-                  status: status,
-                  signalCount: summary.signalsFor(packs[i].scope),
-                  highCount: summary.highFor(packs[i].scope),
-                ),
-              ],
-            ],
-          ),
+        Wrap(
+          spacing: AppPageRhythm.row,
+          runSpacing: AppPageRhythm.row,
+          children: [
+            for (final pack in packs)
+              _DomainChip(
+                pack: pack,
+                l10n: l10n,
+                colors: colors,
+                status: status,
+                signalCount: summary.signalsFor(pack.scope),
+                highCount: summary.highFor(pack.scope),
+              ),
+          ],
         ),
       ],
     );

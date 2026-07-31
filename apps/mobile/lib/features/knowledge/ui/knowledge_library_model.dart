@@ -55,6 +55,39 @@ String _segmentLabel(AppLocalizations l10n, _LibrarySegment segment) {
   };
 }
 
+String _segmentDescription(AppLocalizations l10n, _LibrarySegment segment) {
+  return switch (segment) {
+    _LibrarySegment.all => l10n.knowledgeLibraryTypeAllDescription,
+    _LibrarySegment.decisions => l10n.knowledgeLibraryTypeDecisionsDescription,
+    _LibrarySegment.principles =>
+      l10n.knowledgeLibraryTypePrinciplesDescription,
+    _LibrarySegment.assumptions =>
+      l10n.knowledgeLibraryTypeAssumptionsDescription,
+    _LibrarySegment.notes => l10n.knowledgeLibraryTypeNotesDescription,
+    _LibrarySegment.concepts => l10n.knowledgeLibraryTypeConceptsDescription,
+    _LibrarySegment.experiments =>
+      l10n.knowledgeLibraryTypeExperimentsDescription,
+    _LibrarySegment.routines => l10n.knowledgeLibraryTypeRoutinesDescription,
+  };
+}
+
+final _knowledgeLibrarySegmentCountsProvider = StreamProvider.autoDispose
+    .family<Map<_LibrarySegment, int>, String>((ref, ownerUserId) async* {
+      final repository = await ref.watch(knowledgeRepositoryProvider.future);
+      yield* _watchAllKnowledge(repository, ownerUserId: ownerUserId).map((
+        rows,
+      ) {
+        final counts = <_LibrarySegment, int>{
+          for (final segment in _LibrarySegment.values) segment: 0,
+        };
+        counts[_LibrarySegment.all] = rows.length;
+        for (final row in rows) {
+          counts[row.segment] = (counts[row.segment] ?? 0) + 1;
+        }
+        return Map<_LibrarySegment, int>.unmodifiable(counts);
+      });
+    });
+
 String _dateFilterLabel(
   AppLocalizations l10n,
   KnowledgeLibraryDateFilter filter,

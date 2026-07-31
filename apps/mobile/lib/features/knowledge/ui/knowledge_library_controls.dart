@@ -318,28 +318,276 @@ class _DateFilterChipRow extends StatelessWidget {
   }
 }
 
-/// Horizontally scrollable tab bar for the 7 Library segments. Every
-/// segment keeps its label visible; icon-only tabs made the object
-/// families hard to recognize unless the user already knew the order.
-class _LibraryTabBar extends StatelessWidget {
+/// Compact type picker on phones/tablets and an always-visible segmented row
+/// only when there is enough room to render every label without truncation.
+class _LibraryTabBar extends ConsumerWidget {
   const _LibraryTabBar({required this.selected, required this.onChanged});
 
   final _LibrarySegment selected;
   final ValueChanged<_LibrarySegment> onChanged;
 
   @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final owner = ref.watch(activeUserIdProvider) ?? kLocalOnlyUserId;
+    final counts =
+        ref.watch(_knowledgeLibrarySegmentCountsProvider(owner)).value ??
+        const <_LibrarySegment, int>{};
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= Breakpoints.readingColumn) {
+          return SegmentedRow<_LibrarySegment>(
+            key: const ValueKey<String>('knowledge-library.segmented-types'),
+            options: _LibrarySegment.values,
+            value: selected,
+            labelOf: (segment) => _segmentLabel(l10n, segment),
+            iconOf: _segmentIcon,
+            onChanged: _select,
+            minSegmentWidth: 104,
+          );
+        }
+        final count = counts[selected];
+        final scope = count == null
+            ? _segmentLabel(l10n, selected)
+            : l10n.knowledgeLibraryTypeScope(
+                _segmentLabel(l10n, selected),
+                count,
+              );
+        return _LibraryTypeTrigger(
+          label: scope,
+          onPress: () async {
+            final next = await _showLibraryTypePicker(
+              context: context,
+              selected: selected,
+              counts: counts,
+            );
+            if (next != null) _select(next);
+          },
+        );
+      },
+    );
+  }
+
+  void _select(_LibrarySegment segment) {
+    if (segment == selected) return;
+    AppInteraction.signal(AppInteractionIntent.select);
+    onChanged(segment);
+  }
+}
+
+class _LibraryTypeTrigger extends StatelessWidget {
+  const _LibraryTypeTrigger({required this.label, required this.onPress});
+
+  final String label;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Semantics(
+      button: true,
+      label: label,
+      child: AppTappable(
+        key: const ValueKey<String>('knowledge-library.type-picker'),
+        onPress: onPress,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.muted.withValues(alpha: AppOpacity.disabled),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(
+              color: colors.border.withValues(alpha: AppOpacity.highlight),
+            ),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: AppControlHeights.touchTarget,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
+              child: Row(
+                children: [
+                  Icon(
+                    FLucideIcons.library,
+                    size: AppIconSizes.sm,
+                    color: colors.primary,
+                  ),
+                  const SizedBox(width: AppSpacing.s8),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.labelStyle,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s8),
+                  Icon(
+                    FLucideIcons.chevronsUpDown,
+                    size: AppIconSizes.sm,
+                    color: colors.mutedForeground,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+Future<_LibrarySegment?> _showLibraryTypePicker({
+  required BuildContext context,
+  required _LibrarySegment selected,
+  required Map<_LibrarySegment, int> counts,
+}) {
+  final l10n = AppLocalizations.of(context);
+  final groups = <(String?, List<_LibrarySegment>)>[
+    (null, const <_LibrarySegment>[_LibrarySegment.all]),
+    (
+      l10n.knowledgeLibraryTypeGroupCore,
+      const <_LibrarySegment>[_LibrarySegment.decisions],
+    ),
+    (
+      l10n.knowledgeLibraryTypeGroupSources,
+      const <_LibrarySegment>[_LibrarySegment.notes, _LibrarySegment.concepts],
+    ),
+    (
+      l10n.knowledgeLibraryTypeGroupThinking,
+      const <_LibrarySegment>[
+        _LibrarySegment.principles,
+        _LibrarySegment.assumptions,
+      ],
+    ),
+    (
+      l10n.knowledgeLibraryTypeGroupAction,
+      const <_LibrarySegment>[
+        _LibrarySegment.experiments,
+        _LibrarySegment.routines,
+      ],
+    ),
+  ];
+  return showAppSheet<_LibrarySegment>(
+    context: context,
+    title: l10n.knowledgeLibraryTypeTitle,
+    subtitle: l10n.knowledgeLibraryTypePickerSubtitle,
+    builder: (sheetContext) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var groupIndex = 0; groupIndex < groups.length; groupIndex++) ...[
+          if (groupIndex > 0) const SizedBox(height: AppSpacing.s12),
+          if (groups[groupIndex].$1 case final label?)
+            AppSheetSectionLabel(label),
+          AppGroupedSurface(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                for (
+                  var index = 0;
+                  index < groups[groupIndex].$2.length;
+                  index++
+                ) ...[
+                  _LibraryTypeOptionRow(
+                    segment: groups[groupIndex].$2[index],
+                    count: counts[groups[groupIndex].$2[index]],
+                    selected: groups[groupIndex].$2[index] == selected,
+                    onPress: () => Navigator.of(
+                      sheetContext,
+                    ).pop(groups[groupIndex].$2[index]),
+                  ),
+                  if (index != groups[groupIndex].$2.length - 1)
+                    const AppGroupedDivider(
+                      indent: AppSpacing.s12,
+                      endIndent: AppSpacing.s12,
+                    ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
+class _LibraryTypeOptionRow extends StatelessWidget {
+  const _LibraryTypeOptionRow({
+    required this.segment,
+    required this.count,
+    required this.selected,
+    required this.onPress,
+  });
+
+  final _LibrarySegment segment;
+  final int? count;
+  final bool selected;
+  final VoidCallback onPress;
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SegmentedRow<_LibrarySegment>(
-      options: _LibrarySegment.values,
-      value: selected,
-      labelOf: (segment) => _segmentLabel(l10n, segment),
-      iconOf: _segmentIcon,
-      onChanged: (segment) {
-        AppInteraction.signal(AppInteractionIntent.select);
-        onChanged(segment);
-      },
-      minSegmentWidth: 72,
+    final colors = context.theme.colors;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: _segmentLabel(l10n, segment),
+      child: AppTappable(
+        selected: selected,
+        onPress: onPress,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s12,
+            vertical: AppSpacing.s10,
+          ),
+          child: Row(
+            children: [
+              AppIconTile(
+                icon: _segmentIcon(segment),
+                color: selected ? colors.primary : colors.mutedForeground,
+                size: AppSpacing.s32,
+                iconSize: AppIconSizes.sm,
+                radius: AppRadius.sm,
+                backgroundOpacity: AppOpacity.subtle,
+                foregroundOpacity: 1,
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _segmentLabel(l10n, segment),
+                      style: context.labelStyle,
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(
+                      _segmentDescription(l10n, segment),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.captionStyle,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              if (count != null)
+                Text('$count', style: context.captionLabelStyle),
+              const SizedBox(width: AppSpacing.s8),
+              SizedBox.square(
+                dimension: AppIconSizes.sm,
+                child: selected
+                    ? Icon(
+                        FLucideIcons.check,
+                        size: AppIconSizes.sm,
+                        color: colors.primary,
+                      )
+                    : null,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

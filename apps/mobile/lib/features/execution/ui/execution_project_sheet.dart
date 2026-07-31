@@ -179,7 +179,8 @@ class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
             const SizedBox(height: AppSpacing.s12),
             Text(l10n.executionHorizonField, style: context.captionLabelStyle),
             const SizedBox(height: AppSpacing.s6),
-            SegmentedRow<ExecutionHorizon>(
+            AppAdaptiveChoice<ExecutionHorizon>(
+              title: l10n.executionHorizonField,
               options: ExecutionHorizon.values,
               value: _horizon,
               labelOf: (horizon) => executionHorizonLabel(l10n, horizon),

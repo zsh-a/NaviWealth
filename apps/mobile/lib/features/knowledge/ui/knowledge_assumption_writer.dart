@@ -116,7 +116,7 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
                     next.toStringAsFixed(2),
               ),
               SegmentedRow<double>(
-                options: const <double>[0.3, 0.5, 0.7, 0.85, 0.95],
+                options: const <double>[0.3, 0.7, 0.95],
                 value: _confidencePresetValue(_confidence),
                 labelOf: (v) => v.toStringAsFixed(2),
                 onChanged: (v) => setState(() => _confidence = v),
@@ -135,7 +135,7 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
 }
 
 double _confidencePresetValue(double confidence) {
-  for (final value in const <double>[0.3, 0.5, 0.7, 0.85, 0.95]) {
+  for (final value in const <double>[0.3, 0.7, 0.95]) {
     if ((confidence - value).abs() < 0.005) return value;
   }
   return double.nan;
