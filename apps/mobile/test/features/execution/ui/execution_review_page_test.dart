@@ -6,16 +6,22 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/theme/app_theme.dart';
 import 'package:naviwealth/features/execution/agents/providers.dart'
     as execution_agent_providers;
 import 'package:naviwealth/features/execution/agents/review_agent.dart';
+import 'package:naviwealth/features/execution/data/execution_repository.dart';
 import 'package:naviwealth/features/execution/data/providers.dart';
 import 'package:naviwealth/features/execution/domain/execution_models.dart';
 import 'package:naviwealth/features/execution/ui/execution_review_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
+import '../../../core/persistence/test_database.dart';
+import '../../finance/data/repositories/_stub_stamper.dart';
 
 void main() {
   testWidgets('review page renders latest agent artifact', (tester) async {
@@ -170,6 +176,84 @@ void main() {
 
     expect(find.text('Old execution blocker'), findsOneWidget);
   });
+
+  testWidgets('review creates only selected missing next actions', (
+    tester,
+  ) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final repository = ExecutionRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+    );
+    final project = ExecutionProject(
+      id: 'project-missing',
+      title: 'Launch project',
+      createdAt: DateTime.utc(2026, 7, 1),
+      sync: _sync(DateTime.utc(2026, 7, 1)),
+    );
+    final commitment = ExecutionCommitment(
+      id: 'commitment-missing',
+      title: 'Weekly planning',
+      createdAt: DateTime.utc(2026, 7, 1),
+      sync: _sync(DateTime.utc(2026, 7, 1)),
+    );
+    await repository.upsertProject(project);
+    await repository.upsertCommitment(commitment);
+    final artifact = _artifactWithMissingNextActions(project.id, commitment.id);
+
+    await tester.pumpWidget(
+      _wrap(
+        const ExecutionReviewPage(),
+        overrides: [
+          execution_agent_providers.latestExecutionReviewResultsProvider
+              .overrideWith(
+                (ref) async => agent_providers.AgentResultBundle(
+                  artifacts: [artifact],
+                  latestRuns: const <AgentRunRecord>[],
+                ),
+              ),
+          executionRepositoryProvider.overrideWith((_) async => repository),
+          executionOwnerUserIdProvider.overrideWith((_) async => 'user-1'),
+          mutationStamperProvider.overrideWith(
+            (_) async => makeStubStamper(userId: 'user-1'),
+          ),
+          executionRecentProgressProvider.overrideWith(
+            (ref) => Stream.value(const <ExecutionProgressEntry>[]),
+          ),
+          executionClosedActionsProvider.overrideWith(
+            (ref) => Stream.value(const <ExecutionAction>[]),
+          ),
+          executionReviewRelationsProvider.overrideWith(
+            (ref) async => ExecutionReviewRelations(
+              actions: const <String, ExecutionAction>{},
+              projects: {project.id: project},
+              commitments: {commitment.id: commitment},
+            ),
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Review 2 missing next actions'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Launch project'), findsOneWidget);
+    expect(find.text('Weekly planning'), findsOneWidget);
+    expect(find.text('Create 2 next actions'), findsOneWidget);
+
+    await tester.tap(find.text('Weekly planning'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create 1 next actions'));
+    await tester.pumpAndSettle();
+
+    final actions = await repository.listOpenActions(ownerUserId: 'user-1');
+    expect(actions, hasLength(1));
+    expect(actions.single.projectId, project.id);
+    expect(actions.single.commitmentId, isNull);
+    expect(actions.single.priority, ExecutionPriority.high);
+  });
 }
 
 Widget _wrap(Widget child, {required List<Override> overrides}) {
@@ -200,6 +284,33 @@ AgentArtifact _artifact() {
     ],
     evidence: const <AgentEvidenceRef>[
       AgentEvidenceRef(type: 'execution_action', id: 'action-1'),
+    ],
+    createdAt: DateTime.utc(2026, 7, 5, 8),
+  );
+}
+
+AgentArtifact _artifactWithMissingNextActions(
+  String projectId,
+  String commitmentId,
+) {
+  return AgentArtifact(
+    id: 'execution-review-batch',
+    ownerUserId: 'user-1',
+    agentId: kExecutionReviewAgentId,
+    domain: 'execution',
+    kind: AgentArtifactKind.review,
+    severity: AgentArtifactSeverity.attention,
+    title: 'Execution Review',
+    summary: '2 plans need a next action',
+    actions: [
+      AgentAction(
+        kind: 'proposal',
+        label: 'Create next actions',
+        payload: {
+          'projects_without_next_action': [projectId],
+          'commitments_without_next_action': [commitmentId],
+        },
+      ),
     ],
     createdAt: DateTime.utc(2026, 7, 5, 8),
   );

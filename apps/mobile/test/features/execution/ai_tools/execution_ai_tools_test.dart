@@ -251,6 +251,17 @@ void main() {
   );
 
   test('execution proposal applier creates an action', () async {
+    final repo = await container.read(executionRepositoryProvider.future);
+    final projectSync = _sync(24);
+    await repo.upsertProject(
+      ExecutionProject(
+        id: 'proj-health',
+        title: 'Health plan',
+        createdAt: projectSync.updatedAt,
+        sync: projectSync,
+      ),
+    );
+
     final proposal = await _withRef(
       container,
       (ref) => const ProposeActionTool()
@@ -272,7 +283,6 @@ void main() {
       return applier.apply(plan as ReadyProposalPlan);
     });
 
-    final repo = await container.read(executionRepositoryProvider.future);
     final action = await repo.findAction(
       ownerUserId: _userId,
       id: state.appliedEntityId!,
@@ -294,6 +304,80 @@ void main() {
       throwsA(isA<ProposalApplyException>()),
     );
   });
+
+  test(
+    'execution proposal applier inherits and validates action relations',
+    () async {
+      final repo = await container.read(executionRepositoryProvider.future);
+      final projectASync = _sync(31);
+      final projectBSync = _sync(32);
+      final commitmentSync = _sync(33);
+      await repo.upsertProject(
+        ExecutionProject(
+          id: 'project-a',
+          title: 'Project A',
+          createdAt: projectASync.updatedAt,
+          sync: projectASync,
+        ),
+      );
+      await repo.upsertProject(
+        ExecutionProject(
+          id: 'project-b',
+          title: 'Project B',
+          createdAt: projectBSync.updatedAt,
+          sync: projectBSync,
+        ),
+      );
+      await repo.upsertCommitment(
+        ExecutionCommitment(
+          id: 'commitment-a',
+          title: 'Commitment A',
+          projectId: 'project-a',
+          createdAt: commitmentSync.updatedAt,
+          sync: commitmentSync,
+        ),
+      );
+
+      final inheritedPlan = _readyPlan(
+        await _withRef(
+          container,
+          (ref) => const ProposeActionTool()
+              .invoke(DeviceToolContext(ref: ref, session: _session()), const {
+                'title': 'Honor the commitment relationship',
+                'commitment_id': 'commitment-a',
+                'reason': 'The commitment already identifies its project',
+              }),
+        ),
+      );
+      final inheritedState = await _applyReadyPlan(container, inheritedPlan);
+      final inherited = await repo.findAction(
+        ownerUserId: _userId,
+        id: inheritedState.appliedEntityId!,
+      );
+      expect(inherited?.projectId, 'project-a');
+      expect(inherited?.commitmentId, 'commitment-a');
+
+      final conflictingPlan = _readyPlan(
+        await _withRef(
+          container,
+          (ref) => const ProposeActionTool()
+              .invoke(DeviceToolContext(ref: ref, session: _session()), const {
+                'title': 'Create an inconsistent relationship',
+                'project_id': 'project-b',
+                'commitment_id': 'commitment-a',
+                'reason': 'This proposal should be rejected',
+              }),
+        ),
+      );
+      final applier = await container.read(
+        executionProposalApplierProvider.future,
+      );
+      await expectLater(
+        applier.apply(conflictingPlan),
+        throwsA(isA<ProposalApplyException>()),
+      );
+    },
+  );
 
   test(
     'execution proposal applier preserves Health source refs on commitments',

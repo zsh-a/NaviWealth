@@ -15,6 +15,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as execution_agent_providers;
 import '../agents/review_agent.dart' show kExecutionReviewAgentId;
 import '../composition/execution_route_paths.dart';
+import '../data/execution_repository.dart';
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
 import 'execution_action_card_controller.dart';
@@ -224,7 +225,6 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
                   showExecutionActionSheet(context: context, action: action),
               onRecordProgress: () =>
                   showExecutionProgressSheet(context: context, action: action),
-              blockedProgressNote: l10n.executionProgressBlockedDefault,
               doneProgressNote: l10n.executionProgressDoneDefault,
               droppedProgressNote: l10n.executionProgressDroppedDefault,
               outcome: outcomes[action.id],
@@ -278,7 +278,6 @@ class _ReviewNextActionsBatchState
     required List<String> projectIds,
     required List<String> commitmentIds,
   }) async {
-    final l10n = AppLocalizations.of(context);
     try {
       final owner = await ref.read(executionOwnerUserIdProvider.future);
       final repository = await ref.read(executionRepositoryProvider.future);
@@ -315,29 +314,14 @@ class _ReviewNextActionsBatchState
         ));
       }
       if (!mounted) return;
-      await showAppSheet<void>(
+      await showAppFormSheet<void>(
         context: context,
-        title: l10n.executionReviewDraftNextActions(drafts.length),
-        subtitle: l10n.executionReviewDraftNextActionsBody,
-        builder: (sheetContext) => AppActionSheetList(
-          children: [
-            for (final draft in drafts)
-              AppActionSheetTile(
-                icon: draft.project
-                    ? FLucideIcons.folderKanban
-                    : FLucideIcons.flag,
-                title: draft.title,
-                subtitle: l10n.executionReviewDefineConcreteNextAction,
-                onPress: () {
-                  Navigator.of(sheetContext).pop();
-                  showExecutionActionSheet(
-                    context: context,
-                    initialProjectId: draft.project ? draft.id : null,
-                    initialCommitmentId: draft.project ? null : draft.id,
-                  );
-                },
-              ),
-          ],
+        builder: (sheetContext) => _ReviewBatchDraftSheet(
+          drafts: drafts,
+          onConfirm: (selected) async {
+            Navigator.of(sheetContext).pop();
+            await _createBatch(repository, selected);
+          },
         ),
       );
     } on Object catch (error, stackTrace) {
@@ -349,6 +333,127 @@ class _ReviewNextActionsBatchState
         );
       }
     }
+  }
+
+  Future<void> _createBatch(
+    ExecutionRepository repository,
+    List<({String id, String title, bool project})> drafts,
+  ) async {
+    if (drafts.isEmpty) return;
+    final l10n = AppLocalizations.of(context);
+    try {
+      for (final draft in drafts) {
+        final sync = await stampExecutionSync(ref);
+        await repository.upsertAction(
+          ExecutionAction(
+            id: kExecutionUuid.v4(),
+            title: l10n.executionReviewNextActionFor(draft.title),
+            priority: ExecutionPriority.high,
+            projectId: draft.project ? draft.id : null,
+            commitmentId: draft.project ? null : draft.id,
+            createdAt: sync.updatedAt,
+            sync: sync,
+          ),
+        );
+      }
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          l10n.executionReviewCreatedNextActions(drafts.length),
+        );
+      }
+    } on Object catch (error, stackTrace) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(context, error, stackTrace: stackTrace),
+        );
+      }
+    }
+  }
+}
+
+class _ReviewBatchDraftSheet extends StatefulWidget {
+  const _ReviewBatchDraftSheet({required this.drafts, required this.onConfirm});
+
+  final List<({String id, String title, bool project})> drafts;
+  final ValueChanged<List<({String id, String title, bool project})>> onConfirm;
+
+  @override
+  State<_ReviewBatchDraftSheet> createState() => _ReviewBatchDraftSheetState();
+}
+
+class _ReviewBatchDraftSheetState extends State<_ReviewBatchDraftSheet> {
+  late final Set<String> _selected = widget.drafts
+      .map((draft) => '${draft.project}:${draft.id}')
+      .toSet();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final selected = widget.drafts
+        .where((draft) => _selected.contains('${draft.project}:${draft.id}'))
+        .toList(growable: false);
+    return AppSheet(
+      title: l10n.executionReviewDraftNextActions(widget.drafts.length),
+      footer: SafeArea(
+        top: false,
+        child: FButton(
+          onPress: selected.isEmpty ? null : () => widget.onConfirm(selected),
+          child: Text(l10n.executionReviewCreateNextActions(selected.length)),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.executionReviewCreateNextActionsBody,
+            style: context.captionStyle,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          for (final draft in widget.drafts)
+            AppTappable(
+              onPress: () => _toggle(draft),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FCheckbox(
+                      value: _selected.contains('${draft.project}:${draft.id}'),
+                      onChange: (_) => _toggle(draft),
+                    ),
+                    const SizedBox(width: AppSpacing.s10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(draft.title, style: context.labelStyle),
+                          const SizedBox(height: AppSpacing.s2),
+                          Text(
+                            l10n.executionReviewNextActionFor(draft.title),
+                            style: context.captionStyle,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _toggle(({String id, String title, bool project}) draft) {
+    setState(() {
+      final key = '${draft.project}:${draft.id}';
+      if (!_selected.add(key)) _selected.remove(key);
+    });
   }
 }
 
@@ -405,8 +510,6 @@ class _ExecutionReviewRunStatus extends ConsumerStatefulWidget {
 
 class _ExecutionReviewRunStatusState
     extends ConsumerState<_ExecutionReviewRunStatus> {
-  bool _running = false;
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -432,21 +535,7 @@ class _ExecutionReviewRunStatusState
           : AppStatusKind.info,
       icon: FLucideIcons.bot,
       message: message,
-      action: FButton(
-        variant: FButtonVariant.ghost,
-        onPress: _running ? null : _run,
-        child: Text(l10n.executionReviewRunNow),
-      ),
     );
-  }
-
-  Future<void> _run() async {
-    setState(() => _running = true);
-    try {
-      await _retryExecutionReview(ref);
-    } finally {
-      if (mounted) setState(() => _running = false);
-    }
   }
 }
 

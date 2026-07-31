@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
@@ -77,22 +78,9 @@ class _TodayListState extends ConsumerState<_TodayList> {
     final progressAsync = ref.watch(executionRecentProgressProvider);
     final relations = ref.watch(executionActionRelationsProvider).value;
     final focusIds = ref.watch(executionDailyFocusProvider);
-    ref.listen(
-      execution_agent_providers.latestExecutionReviewArtifactProvider,
-      (_, next) {
-        next.whenData((artifact) {
-          if (artifact == null) return;
-          final insight = artifact.insights
-              .where((item) => item.id == 'today_focus')
-              .firstOrNull;
-          final raw = insight?.payload['recommended_focus_ids'];
-          if (raw is! List) return;
-          ref
-              .read(executionDailyFocusProvider.notifier)
-              .adoptRecommendedIfEmpty(raw.whereType<String>());
-        });
-      },
-    );
+    final reviewArtifact = ref
+        .watch(execution_agent_providers.latestExecutionReviewArtifactProvider)
+        .value;
     return actionsAsync.when(
       loading: () =>
           AppListPageSkeleton(padding: shellTabContentPadding(context)),
@@ -122,15 +110,22 @@ class _TodayListState extends ConsumerState<_TodayList> {
           todayActions: actions,
           openActions: openActions,
         );
-        final visibleActions = filteredActions.toList()
-          ..sort((a, b) {
-            final aIndex = focusIds.indexOf(a.id);
-            final bIndex = focusIds.indexOf(b.id);
-            if (aIndex >= 0 && bIndex >= 0) return aIndex.compareTo(bIndex);
-            if (aIndex >= 0) return -1;
-            if (bIndex >= 0) return 1;
-            return 0;
-          });
+        final visibleActions =
+            filteredActions
+                .where(
+                  (action) =>
+                      _filter != ExecutionTodayFilter.focus ||
+                      !focusIds.contains(action.id),
+                )
+                .toList()
+              ..sort((a, b) {
+                final aIndex = focusIds.indexOf(a.id);
+                final bIndex = focusIds.indexOf(b.id);
+                if (aIndex >= 0 && bIndex >= 0) return aIndex.compareTo(bIndex);
+                if (aIndex >= 0) return -1;
+                if (bIndex >= 0) return 1;
+                return 0;
+              });
         final snapshot = ExecutionOverviewSnapshot.fromLists(
           todayActions: actions,
           openActions: openActions,
@@ -139,84 +134,74 @@ class _TodayListState extends ConsumerState<_TodayList> {
           recentProgress: recentProgress,
           now: now,
         );
+        final suggestedFocus = focusIds.isEmpty
+            ? _recommendedFocusActions(reviewArtifact, openActions)
+            : const <ExecutionAction>[];
 
         final actionModules = <Widget>[
           _DailyFocusPanel(
             actions: openActions,
             selectedIds: focusIds,
+            suggestedActions: suggestedFocus,
+            onAdoptSuggestions: suggestedFocus.isEmpty
+                ? null
+                : () => ref
+                      .read(executionDailyFocusProvider.notifier)
+                      .set(suggestedFocus.map((action) => action.id)),
             onOpen: (action) => context.push(ExecutionRoutes.action(action.id)),
           ),
-          if (visibleActions.isEmpty)
-            ExecutionStateView(
-              icon: _filter == ExecutionTodayFilter.focus
-                  ? FLucideIcons.checkCheck
-                  : executionTodayFilterIcon(_filter),
-              title: _filter == ExecutionTodayFilter.focus
-                  ? l10n.executionTodayEmptyTitle
-                  : l10n.executionTodayFilteredEmptyTitle,
-              message: _filter == ExecutionTodayFilter.focus
-                  ? l10n.executionTodayEmptyBody
-                  : l10n.executionTodayFilteredEmptyBody,
-              action: _filter == ExecutionTodayFilter.focus
-                  ? FButton(
-                      onPress: () => showExecutionActionSheet(context: context),
-                      child: Text(l10n.executionCreateActionTitle),
-                    )
-                  : null,
-            )
-          else ...[
+          if (visibleActions.isEmpty) ...[
+            if (!(_filter == ExecutionTodayFilter.focus && focusIds.isNotEmpty))
+              ExecutionStateView(
+                icon: _filter == ExecutionTodayFilter.focus
+                    ? FLucideIcons.checkCheck
+                    : executionTodayFilterIcon(_filter),
+                title: _filter == ExecutionTodayFilter.focus
+                    ? l10n.executionTodayEmptyTitle
+                    : l10n.executionTodayFilteredEmptyTitle,
+                message: _filter == ExecutionTodayFilter.focus
+                    ? l10n.executionTodayEmptyBody
+                    : l10n.executionTodayFilteredEmptyBody,
+                action: _filter == ExecutionTodayFilter.focus
+                    ? FButton(
+                        onPress: () =>
+                            showExecutionActionSheet(context: context),
+                        child: Text(l10n.executionCreateActionTitle),
+                      )
+                    : null,
+              ),
+          ] else ...[
             ExecutionSectionHeader(
-              title: executionTodayFilterLabel(l10n, _filter),
+              title: _filter == ExecutionTodayFilter.focus
+                  ? l10n.executionTodayNextActions
+                  : executionTodayFilterLabel(l10n, _filter),
               count: visibleActions.length,
               icon: executionTodayFilterIcon(_filter),
             ),
             for (final action in visibleActions)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: AppFilterChip(
-                      label: l10n.executionDailyFocusToggle,
-                      active: focusIds.contains(action.id),
-                      onPress: () => _toggleFocus(action, openActions),
+              ExecutionActionCardController(
+                action: action,
+                projectLabel:
+                    relations?.projectLabel(action.projectId) ??
+                    executionProjectRelationLabel(projects, action.projectId),
+                commitmentLabel:
+                    relations?.commitmentLabel(action.commitmentId) ??
+                    executionCommitmentRelationLabel(
+                      commitments,
+                      action.commitmentId,
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.s4),
-                  ExecutionActionCardController(
-                    action: action,
-                    projectLabel:
-                        relations?.projectLabel(action.projectId) ??
-                        executionProjectRelationLabel(
-                          projects,
-                          action.projectId,
-                        ),
-                    commitmentLabel:
-                        relations?.commitmentLabel(action.commitmentId) ??
-                        executionCommitmentRelationLabel(
-                          commitments,
-                          action.commitmentId,
-                        ),
-                    onOpen: () =>
-                        context.push(ExecutionRoutes.action(action.id)),
-                    onSourceOpen: executionSourceOpen(
-                      context,
-                      ref,
-                      action.source,
-                    ),
-                    onEdit: () => showExecutionActionSheet(
-                      context: context,
-                      action: action,
-                    ),
-                    onRecordProgress: () => showExecutionProgressSheet(
-                      context: context,
-                      action: action,
-                    ),
-                    blockedProgressNote: l10n.executionProgressBlockedDefault,
-                    doneProgressNote: l10n.executionProgressDoneDefault,
-                    droppedProgressNote: l10n.executionProgressDroppedDefault,
-                  ),
-                ],
+                onOpen: () => context.push(ExecutionRoutes.action(action.id)),
+                onSourceOpen: executionSourceOpen(context, ref, action.source),
+                onEdit: () =>
+                    showExecutionActionSheet(context: context, action: action),
+                onRecordProgress: () => showExecutionProgressSheet(
+                  context: context,
+                  action: action,
+                ),
+                doneProgressNote: l10n.executionProgressDoneDefault,
+                droppedProgressNote: l10n.executionProgressDroppedDefault,
+                focusSelected: focusIds.contains(action.id),
+                onToggleFocus: () => _toggleFocus(action, openActions),
               ),
           ],
         ];
@@ -308,11 +293,15 @@ class _DailyFocusPanel extends ConsumerWidget {
   const _DailyFocusPanel({
     required this.actions,
     required this.selectedIds,
+    required this.suggestedActions,
+    required this.onAdoptSuggestions,
     required this.onOpen,
   });
 
   final List<ExecutionAction> actions;
   final List<String> selectedIds;
+  final List<ExecutionAction> suggestedActions;
+  final VoidCallback? onAdoptSuggestions;
   final ValueChanged<ExecutionAction> onOpen;
 
   @override
@@ -344,9 +333,25 @@ class _DailyFocusPanel extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.s8),
-          if (selected.isEmpty)
-            Text(l10n.executionDailyFocusEmpty, style: context.captionStyle)
-          else
+          if (selected.isEmpty) ...[
+            Text(l10n.executionDailyFocusEmpty, style: context.captionStyle),
+            if (suggestedActions.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.s10),
+              AppStatusBanner(
+                compact: true,
+                kind: AppStatusKind.info,
+                icon: FLucideIcons.sparkles,
+                message: l10n.executionDailyFocusSuggestion(
+                  suggestedActions.map((action) => action.title).join(' · '),
+                ),
+                action: FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: onAdoptSuggestions,
+                  child: Text(l10n.executionDailyFocusUseSuggestion),
+                ),
+              ),
+            ],
+          ] else
             for (var index = 0; index < selected.length; index++)
               _DailyFocusRow(
                 index: index,
@@ -364,6 +369,22 @@ class _DailyFocusPanel extends ConsumerWidget {
       ),
     );
   }
+}
+
+List<ExecutionAction> _recommendedFocusActions(
+  AgentArtifact? artifact,
+  List<ExecutionAction> openActions,
+) {
+  final insight = artifact?.insights
+      .where((item) => item.id == 'today_focus')
+      .firstOrNull;
+  final raw = insight?.payload['recommended_focus_ids'];
+  if (raw is! List) return const <ExecutionAction>[];
+  final ids = raw.whereType<String>().take(3).toList(growable: false);
+  final byId = <String, ExecutionAction>{
+    for (final action in openActions) action.id: action,
+  };
+  return ids.map((id) => byId[id]).whereType<ExecutionAction>().toList();
 }
 
 class _DailyFocusRow extends StatelessWidget {

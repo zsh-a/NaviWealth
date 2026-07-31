@@ -80,11 +80,6 @@ final class ExecutionDailyFocusController extends StateNotifier<List<String>> {
     );
   }
 
-  Future<void> adoptRecommendedIfEmpty(Iterable<String> ids) async {
-    if (state.isNotEmpty) return;
-    await set(ids);
-  }
-
   static List<String> _readToday(
     SharedPreferences preferences,
     String ownerUserId,

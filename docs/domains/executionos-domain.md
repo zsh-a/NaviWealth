@@ -11,7 +11,7 @@ Included:
 - Projects for bounded delivery work that contains actions and commitments.
 - Commitments for work that needs a longer-running promise.
 - Progress entries for check-ins, blockers, scope changes, and completion.
-- Today, Commitments, and Review shell tabs.
+- Today, Plans, and Review shell tabs.
 - Cross-domain source references by neutral row-family metadata.
 
 Excluded:
@@ -35,7 +35,7 @@ Contributions:
 - Scope: `DomainScope.execution`.
 - Shell: `features/execution/composition/execution_domain_shell.dart`.
 - Routes: `features/execution/composition/execution_routes.dart`.
-- Tabs: Today, Commitments, Review.
+- Tabs: Today, Plans, Review.
 - Tools: `features/execution/execution_ai_tools.dart`.
 - Command palette: `features/execution/composition/execution_command_palette.dart`.
 - Proposal kinds: `features/execution/composition/execution_proposal_kinds.dart`.
@@ -81,7 +81,7 @@ boundary.
 | Tab | Purpose |
 |---|---|
 | Today | Persistent daily Top 3 plus today's open actions, blockers, and high-priority follow-through |
-| Commitments | Active projects, commitments, and open actions |
+| Plans | Inbox actions, active projects, long-term commitments, and a closed-work archive |
 | Review | Focus, stalled/blocked work, missing next actions, overdue targets, repeated blockers, throughput, source outcomes, recently closed actions, and confirmed batch next-action creation |
 
 Key files:
@@ -92,10 +92,16 @@ Key files:
 - `features/execution/ui/execution_search_sheet.dart`
 
 The daily Top 3 is device-local, persists for the current local calendar day,
-and resets the next day. Users can pin or remove Actions directly; an empty Top
-3 may adopt the latest Review artifact's `recommended_focus_ids`.
+and resets the next day. Users pin or remove Actions from the Action menu. An
+empty Top 3 can show the latest Review artifact's `recommended_focus_ids`, but
+the recommendation is never adopted until the user explicitly confirms it.
 
-Today, Commitments, and Review share an all-status search across Action title
+New Action capture starts with title plus Inbox / Today / Tomorrow and keeps
+priority, dates, relations, and notes behind an optional detail disclosure.
+Manual status changes show a short Undo action. Blocking requires a concrete
+reason, which is stored as blocker progress instead of a generic placeholder.
+
+Today, Plans, and Review share an all-status search across Action title
 and note, Project title and description, and Commitment title and description.
 Default open-list reads are complete rather than silently capped; explicit
 limits are reserved for callers that intentionally paginate.
@@ -163,6 +169,9 @@ Rules:
   `source_row_family`, and `source_row_id` must be supplied together.
   Applying a proposal rejects a near-identical open Action tied to the same
   concrete source.
+- Proposal application validates every referenced Action, Project, and
+  Commitment. A Commitment's Project is inherited when omitted, while
+  conflicting Project / Commitment relations are rejected.
 
 ## Agents, Review, And Memory
 
@@ -181,10 +190,10 @@ indexed into local Memory/Event storage; blockers and completion/scope changes
 receive higher event importance. Derived findings and memory indexes do not
 sync.
 
-The Review page can turn all currently missing Project/Commitment next steps
-from the artifact proposal payload into high-priority Actions after one user
-confirmation. It re-checks current open Actions before writing and performs the
-batch through the repository.
+The Review page can turn selected missing Project/Commitment next steps from
+the artifact proposal payload into high-priority Actions after explicit user
+confirmation. It re-checks current open Actions before presenting the batch
+and writes only the selected rows through the repository.
 
 `ExecutionDueActionAgent` runs daily, finds open Actions due within the next
 24 hours (including overdue Actions), writes a reminder artifact with

@@ -23617,7 +23617,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionTabCommitments.
   ///
   /// In en, this message translates to:
-  /// **'Commitments'**
+  /// **'Plans'**
   String get executionTabCommitments;
 
   /// No description provided for @executionTabReview.
@@ -23635,7 +23635,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionCommandCommitments.
   ///
   /// In en, this message translates to:
-  /// **'ExecutionOS Commitments'**
+  /// **'ExecutionOS Plans'**
   String get executionCommandCommitments;
 
   /// No description provided for @executionCommandReview.
@@ -23653,7 +23653,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionCommitmentsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Commitments'**
+  /// **'Plans'**
   String get executionCommitmentsTitle;
 
   /// No description provided for @executionReviewTitle.
@@ -23815,7 +23815,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionOverviewFocus.
   ///
   /// In en, this message translates to:
-  /// **'Focus'**
+  /// **'Today'**
   String get executionOverviewFocus;
 
   /// No description provided for @executionOverviewBacklog.
@@ -23953,8 +23953,14 @@ abstract class AppLocalizations {
   /// No description provided for @executionCommitmentsSection.
   ///
   /// In en, this message translates to:
-  /// **'Commitments'**
+  /// **'Long-term commitments'**
   String get executionCommitmentsSection;
+
+  /// No description provided for @executionInboxSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox'**
+  String get executionInboxSection;
 
   /// No description provided for @executionActionsSection.
   ///
@@ -24255,12 +24261,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t update commitment status.'**
   String get executionCommitmentStatusUpdateFailed;
-
-  /// No description provided for @executionProgressBlockedDefault.
-  ///
-  /// In en, this message translates to:
-  /// **'Marked blocked.'**
-  String get executionProgressBlockedDefault;
 
   /// No description provided for @executionProgressDoneDefault.
   ///
@@ -28818,8 +28818,86 @@ abstract class AppLocalizations {
   /// No description provided for @executionDailyFocusEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Pin up to three actions below. The latest review recommendation is used until you choose your own.'**
+  /// **'Choose up to three actions that deserve your attention today.'**
   String get executionDailyFocusEmpty;
+
+  /// No description provided for @executionTodayNextActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Next actions'**
+  String get executionTodayNextActions;
+
+  /// No description provided for @executionDailyFocusSuggestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested from your latest review: {titles}'**
+  String executionDailyFocusSuggestion(String titles);
+
+  /// No description provided for @executionDailyFocusUseSuggestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Use these'**
+  String get executionDailyFocusUseSuggestion;
+
+  /// No description provided for @executionActionStatusUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Action moved to {status}'**
+  String executionActionStatusUpdated(String status);
+
+  /// No description provided for @executionQuickWhenField.
+  ///
+  /// In en, this message translates to:
+  /// **'When'**
+  String get executionQuickWhenField;
+
+  /// No description provided for @executionQuickWhenInbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox'**
+  String get executionQuickWhenInbox;
+
+  /// No description provided for @executionQuickWhenToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get executionQuickWhenToday;
+
+  /// No description provided for @executionQuickWhenTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get executionQuickWhenTomorrow;
+
+  /// No description provided for @executionShowDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'More details'**
+  String get executionShowDetails;
+
+  /// No description provided for @executionHideDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Fewer details'**
+  String get executionHideDetails;
+
+  /// No description provided for @executionScheduleAfterDue.
+  ///
+  /// In en, this message translates to:
+  /// **'The scheduled date must be on or before the deadline.'**
+  String get executionScheduleAfterDue;
+
+  /// No description provided for @executionBlockReasonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What is blocking this action?'**
+  String get executionBlockReasonTitle;
+
+  /// No description provided for @executionBlockReasonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Name the dependency, decision, or missing information'**
+  String get executionBlockReasonHint;
 
   /// No description provided for @executionDailyFocusToggle.
   ///
@@ -28905,23 +28983,17 @@ abstract class AppLocalizations {
   /// **'Create one high-priority action for every project or commitment that still has no open next action?'**
   String get executionReviewCreateNextActionsBody;
 
+  /// No description provided for @executionReviewCreatedNextActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Created {count} next actions'**
+  String executionReviewCreatedNextActions(int count);
+
   /// No description provided for @executionReviewDraftNextActions.
   ///
   /// In en, this message translates to:
   /// **'Review {count} missing next actions'**
   String executionReviewDraftNextActions(int count);
-
-  /// No description provided for @executionReviewDraftNextActionsBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Open each project or commitment and write a concrete next action. Nothing is created until you confirm its title, priority, and timing.'**
-  String get executionReviewDraftNextActionsBody;
-
-  /// No description provided for @executionReviewDefineConcreteNextAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Define a concrete next action'**
-  String get executionReviewDefineConcreteNextAction;
 
   /// No description provided for @executionReviewAgentNotRun.
   ///
@@ -28970,6 +29042,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search ExecutionOS'**
   String get executionSearchTitle;
+
+  /// No description provided for @executionSearchFilterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Result type'**
+  String get executionSearchFilterTitle;
+
+  /// No description provided for @executionSearchFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get executionSearchFilterAll;
 
   /// No description provided for @executionSearchHint.
   ///
@@ -29054,12 +29138,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{kind} needs its structured fields before it can be created. Add decision options, assumption confidence, or experiment method and metrics.'**
   String knowledgeCaptureNeedsStructure(String kind);
-
-  /// No description provided for @executionReviewCreatedNextActions.
-  ///
-  /// In en, this message translates to:
-  /// **'Created {count} next actions.'**
-  String executionReviewCreatedNextActions(int count);
 }
 
 class _AppLocalizationsDelegate

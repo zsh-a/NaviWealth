@@ -14025,7 +14025,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionTabToday => 'Today';
 
   @override
-  String get executionTabCommitments => 'Commitments';
+  String get executionTabCommitments => 'Plans';
 
   @override
   String get executionTabReview => 'Review';
@@ -14034,7 +14034,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionCommandToday => 'ExecutionOS Today';
 
   @override
-  String get executionCommandCommitments => 'ExecutionOS Commitments';
+  String get executionCommandCommitments => 'ExecutionOS Plans';
 
   @override
   String get executionCommandReview => 'ExecutionOS Review';
@@ -14043,7 +14043,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionTodayTitle => 'Today';
 
   @override
-  String get executionCommitmentsTitle => 'Commitments';
+  String get executionCommitmentsTitle => 'Plans';
 
   @override
   String get executionReviewTitle => 'Review';
@@ -14126,7 +14126,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Optional scope, why it matters, or target outcome';
 
   @override
-  String get executionOverviewFocus => 'Focus';
+  String get executionOverviewFocus => 'Today';
 
   @override
   String get executionOverviewBacklog => 'Backlog';
@@ -14203,7 +14203,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionProjectsSection => 'Projects';
 
   @override
-  String get executionCommitmentsSection => 'Commitments';
+  String get executionCommitmentsSection => 'Long-term commitments';
+
+  @override
+  String get executionInboxSection => 'Inbox';
 
   @override
   String get executionActionsSection => 'Actions';
@@ -14367,9 +14370,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get executionCommitmentStatusUpdateFailed =>
       'Couldn\'t update commitment status.';
-
-  @override
-  String get executionProgressBlockedDefault => 'Marked blocked.';
 
   @override
   String get executionProgressDoneDefault => 'Marked done.';
@@ -17160,7 +17160,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionDailyFocusEmpty =>
-      'Pin up to three actions below. The latest review recommendation is used until you choose your own.';
+      'Choose up to three actions that deserve your attention today.';
+
+  @override
+  String get executionTodayNextActions => 'Next actions';
+
+  @override
+  String executionDailyFocusSuggestion(String titles) {
+    return 'Suggested from your latest review: $titles';
+  }
+
+  @override
+  String get executionDailyFocusUseSuggestion => 'Use these';
+
+  @override
+  String executionActionStatusUpdated(String status) {
+    return 'Action moved to $status';
+  }
+
+  @override
+  String get executionQuickWhenField => 'When';
+
+  @override
+  String get executionQuickWhenInbox => 'Inbox';
+
+  @override
+  String get executionQuickWhenToday => 'Today';
+
+  @override
+  String get executionQuickWhenTomorrow => 'Tomorrow';
+
+  @override
+  String get executionShowDetails => 'More details';
+
+  @override
+  String get executionHideDetails => 'Fewer details';
+
+  @override
+  String get executionScheduleAfterDue =>
+      'The scheduled date must be on or before the deadline.';
+
+  @override
+  String get executionBlockReasonTitle => 'What is blocking this action?';
+
+  @override
+  String get executionBlockReasonHint =>
+      'Name the dependency, decision, or missing information';
 
   @override
   String get executionDailyFocusToggle => 'Top 3';
@@ -17216,17 +17261,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Create one high-priority action for every project or commitment that still has no open next action?';
 
   @override
-  String executionReviewDraftNextActions(int count) {
-    return 'Review $count missing next actions';
+  String executionReviewCreatedNextActions(int count) {
+    return 'Created $count next actions';
   }
 
   @override
-  String get executionReviewDraftNextActionsBody =>
-      'Open each project or commitment and write a concrete next action. Nothing is created until you confirm its title, priority, and timing.';
-
-  @override
-  String get executionReviewDefineConcreteNextAction =>
-      'Define a concrete next action';
+  String executionReviewDraftNextActions(int count) {
+    return 'Review $count missing next actions';
+  }
 
   @override
   String get executionReviewAgentNotRun =>
@@ -17257,6 +17299,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionSearchTitle => 'Search ExecutionOS';
+
+  @override
+  String get executionSearchFilterTitle => 'Result type';
+
+  @override
+  String get executionSearchFilterAll => 'All';
 
   @override
   String get executionSearchHint => 'Search actions, projects, and commitments';
@@ -17305,10 +17353,5 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String knowledgeCaptureNeedsStructure(String kind) {
     return '$kind needs its structured fields before it can be created. Add decision options, assumption confidence, or experiment method and metrics.';
-  }
-
-  @override
-  String executionReviewCreatedNextActions(int count) {
-    return 'Created $count next actions.';
   }
 }

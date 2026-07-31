@@ -225,7 +225,6 @@ class _ActionDetailBody extends ConsumerWidget {
               showExecutionActionSheet(context: context, action: action),
           onRecordProgress: () =>
               showExecutionProgressSheet(context: context, action: action),
-          blockedProgressNote: l10n.executionProgressBlockedDefault,
           doneProgressNote: l10n.executionProgressDoneDefault,
           droppedProgressNote: l10n.executionProgressDroppedDefault,
         ),
@@ -433,7 +432,6 @@ class _RelatedActionsSection extends ConsumerWidget {
                     context: context,
                     action: action,
                   ),
-                  blockedProgressNote: l10n.executionProgressBlockedDefault,
                   doneProgressNote: l10n.executionProgressDoneDefault,
                   droppedProgressNote: l10n.executionProgressDroppedDefault,
                 ),

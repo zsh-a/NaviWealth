@@ -13315,7 +13315,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionTabToday => '今天';
 
   @override
-  String get executionTabCommitments => '承诺';
+  String get executionTabCommitments => '计划';
 
   @override
   String get executionTabReview => '复盘';
@@ -13324,7 +13324,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionCommandToday => 'ExecutionOS 今天';
 
   @override
-  String get executionCommandCommitments => 'ExecutionOS 承诺';
+  String get executionCommandCommitments => 'ExecutionOS 计划';
 
   @override
   String get executionCommandReview => 'ExecutionOS 复盘';
@@ -13333,7 +13333,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionTodayTitle => '今天';
 
   @override
-  String get executionCommitmentsTitle => '承诺';
+  String get executionCommitmentsTitle => '计划';
 
   @override
   String get executionReviewTitle => '复盘';
@@ -13414,7 +13414,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionCommitmentDescriptionHint => '可选范围、原因或目标结果';
 
   @override
-  String get executionOverviewFocus => '焦点';
+  String get executionOverviewFocus => '今日';
 
   @override
   String get executionOverviewBacklog => '待排期';
@@ -13485,7 +13485,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionProjectsSection => '项目';
 
   @override
-  String get executionCommitmentsSection => '承诺';
+  String get executionCommitmentsSection => '长期承诺';
+
+  @override
+  String get executionInboxSection => '收集箱';
 
   @override
   String get executionActionsSection => '行动';
@@ -13644,9 +13647,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionCommitmentStatusUpdateFailed => '更新承诺状态失败。';
-
-  @override
-  String get executionProgressBlockedDefault => '已标记为阻塞。';
 
   @override
   String get executionProgressDoneDefault => '已标记为完成。';
@@ -16302,8 +16302,50 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionDailyFocusTitle => '今日 Top 3';
 
   @override
-  String get executionDailyFocusEmpty =>
-      '可在下方固定最多三个行动；手动选择前会采用最近一次 Review 的推荐。';
+  String get executionDailyFocusEmpty => '选择今天真正值得投入注意力的最多三个行动。';
+
+  @override
+  String get executionTodayNextActions => '接下来的行动';
+
+  @override
+  String executionDailyFocusSuggestion(String titles) {
+    return '最近复盘建议：$titles';
+  }
+
+  @override
+  String get executionDailyFocusUseSuggestion => '采用建议';
+
+  @override
+  String executionActionStatusUpdated(String status) {
+    return '行动已移至「$status」';
+  }
+
+  @override
+  String get executionQuickWhenField => '何时处理';
+
+  @override
+  String get executionQuickWhenInbox => '收集箱';
+
+  @override
+  String get executionQuickWhenToday => '今天';
+
+  @override
+  String get executionQuickWhenTomorrow => '明天';
+
+  @override
+  String get executionShowDetails => '更多选项';
+
+  @override
+  String get executionHideDetails => '收起选项';
+
+  @override
+  String get executionScheduleAfterDue => '计划日期不能晚于截止日期。';
+
+  @override
+  String get executionBlockReasonTitle => '是什么阻塞了这个行动？';
+
+  @override
+  String get executionBlockReasonHint => '记录依赖、待决事项或缺失信息';
 
   @override
   String get executionDailyFocusToggle => 'Top 3';
@@ -16357,16 +16399,14 @@ class AppLocalizationsZh extends AppLocalizations {
       '是否为仍缺少下一步行动的每个项目或承诺创建一个高优先级行动？';
 
   @override
-  String executionReviewDraftNextActions(int count) {
-    return '检查 $count 个缺失的下一步';
+  String executionReviewCreatedNextActions(int count) {
+    return '已创建 $count 条下一步行动';
   }
 
   @override
-  String get executionReviewDraftNextActionsBody =>
-      '逐个打开项目或承诺，填写具体的下一步行动。确认标题、优先级和时间前不会创建任何内容。';
-
-  @override
-  String get executionReviewDefineConcreteNextAction => '填写具体下一步';
+  String executionReviewDraftNextActions(int count) {
+    return '检查 $count 个缺失的下一步';
+  }
 
   @override
   String get executionReviewAgentNotRun => '每周 Execution Review 尚未运行。';
@@ -16396,6 +16436,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionSearchTitle => '搜索 ExecutionOS';
+
+  @override
+  String get executionSearchFilterTitle => '结果类型';
+
+  @override
+  String get executionSearchFilterAll => '全部';
 
   @override
   String get executionSearchHint => '搜索行动、项目和承诺';
@@ -16443,10 +16489,5 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String knowledgeCaptureNeedsStructure(String kind) {
     return '创建 $kind 前需要补齐结构化字段：决策选项、假设置信度，或实验方法与指标。';
-  }
-
-  @override
-  String executionReviewCreatedNextActions(int count) {
-    return '已创建 $count 个下一步行动。';
   }
 }

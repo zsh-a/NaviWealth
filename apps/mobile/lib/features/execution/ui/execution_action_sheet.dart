@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/forms/forms.dart';
+import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../data/execution_repository.dart';
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
 import 'execution_delete_confirm.dart';
@@ -61,6 +63,7 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
   DateTime? _scheduledFor;
   String? _projectId;
   String? _commitmentId;
+  late bool _showDetails;
   bool _saving = false;
 
   @override
@@ -76,6 +79,8 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
     _commitmentId = action == null
         ? widget.initialCommitmentId
         : action.commitmentId;
+    _showDetails =
+        action != null || _projectId != null || _commitmentId != null;
     widget.dirty.bindTextControllers([_title, _note]);
     _title.addListener(_onTitleChanged);
   }
@@ -98,6 +103,16 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
     if (!_canSave) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final l10n = AppLocalizations.of(context);
+    if (_scheduledFor != null &&
+        _dueAt != null &&
+        _scheduledFor!.isAfter(_dueAt!)) {
+      AppMessenger.show(
+        context,
+        ToastKind.warning,
+        l10n.executionScheduleAfterDue,
+      );
+      return;
+    }
     final title = _title.text.trim();
     await submitForm<void>(
       dirty: widget.dirty,
@@ -215,117 +230,163 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
                   ? l10n.executionTitleRequired
                   : null,
             ),
-            const SizedBox(height: AppSpacing.s12),
-            Text(l10n.executionPriorityField, style: context.captionLabelStyle),
-            const SizedBox(height: AppSpacing.s6),
-            SegmentedRow<ExecutionPriority>(
-              options: ExecutionPriority.values,
-              value: _priority,
-              labelOf: (priority) => executionPriorityLabel(l10n, priority),
-              iconOf: _priorityIcon,
-              onChanged: _saving
-                  ? (_) {}
-                  : (priority) {
-                      setState(() => _priority = priority);
-                      _markDirty();
-                    },
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: DateField(
-                    label: l10n.executionScheduledForField,
-                    initialValue: _scheduledFor,
-                    enabled: !_saving,
-                    onChanged: (value) {
-                      setState(() => _scheduledFor = value);
-                      _markDirty();
-                    },
+            if (!isEditing) ...[
+              const SizedBox(height: AppSpacing.s12),
+              Text(
+                l10n.executionQuickWhenField,
+                style: context.captionLabelStyle,
+              ),
+              const SizedBox(height: AppSpacing.s6),
+              SegmentedRow<_ExecutionQuickWhen>(
+                options: _ExecutionQuickWhen.values,
+                value: _quickWhen,
+                labelOf: (value) => switch (value) {
+                  _ExecutionQuickWhen.inbox => l10n.executionQuickWhenInbox,
+                  _ExecutionQuickWhen.today => l10n.executionQuickWhenToday,
+                  _ExecutionQuickWhen.tomorrow =>
+                    l10n.executionQuickWhenTomorrow,
+                },
+                iconOf: (value) => switch (value) {
+                  _ExecutionQuickWhen.inbox => FLucideIcons.inbox,
+                  _ExecutionQuickWhen.today => FLucideIcons.sun,
+                  _ExecutionQuickWhen.tomorrow => FLucideIcons.sunrise,
+                },
+                onChanged: _saving ? (_) {} : _setQuickWhen,
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: AppQuietButton(
+                  label: _showDetails
+                      ? l10n.executionHideDetails
+                      : l10n.executionShowDetails,
+                  prefix: Icon(
+                    _showDetails
+                        ? FLucideIcons.chevronUp
+                        : FLucideIcons.slidersHorizontal,
                   ),
+                  onPress: _saving
+                      ? null
+                      : () => setState(() => _showDetails = !_showDetails),
                 ),
-                const SizedBox(width: AppSpacing.s12),
-                Expanded(
-                  child: DateField(
-                    label: l10n.executionDueAtField,
-                    initialValue: _dueAt,
-                    enabled: !_saving,
-                    onChanged: (value) {
-                      setState(() => _dueAt = value);
-                      _markDirty();
-                    },
+              ),
+            ],
+            if (_showDetails) ...[
+              const SizedBox(height: AppSpacing.s12),
+              Text(
+                l10n.executionPriorityField,
+                style: context.captionLabelStyle,
+              ),
+              const SizedBox(height: AppSpacing.s6),
+              SegmentedRow<ExecutionPriority>(
+                options: ExecutionPriority.values,
+                value: _priority,
+                labelOf: (priority) => executionPriorityLabel(l10n, priority),
+                iconOf: _priorityIcon,
+                onChanged: _saving
+                    ? (_) {}
+                    : (priority) {
+                        setState(() => _priority = priority);
+                        _markDirty();
+                      },
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: DateField(
+                      label: l10n.executionScheduledForField,
+                      initialValue: _scheduledFor,
+                      enabled: !_saving,
+                      onChanged: (value) {
+                        setState(() => _scheduledFor = value);
+                        _markDirty();
+                      },
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            FormPickerRow(
-              label: l10n.executionProjectField,
-              value:
-                  selectedProject?.title ??
-                  executionProjectPickerLabel(l10n, projects, _projectId),
-              leading: const Icon(FLucideIcons.folder),
-              enabled: !_saving,
-              onPress: () async {
-                final picked = await showExecutionProjectPicker(
-                  context: context,
-                  projects: projects,
-                  selectedId: _projectId,
-                );
-                if (picked == null) return;
-                setState(() {
-                  final next = executionRelationAfterProjectPick(
-                    commitments: commitments,
-                    currentCommitmentId: _commitmentId,
-                    pickedProjectId: picked,
-                  );
-                  _projectId = next.projectId;
-                  _commitmentId = next.commitmentId;
-                });
-                _markDirty();
-              },
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            FormPickerRow(
-              label: l10n.executionCommitmentField,
-              value:
-                  selectedCommitment?.title ??
-                  executionCommitmentPickerLabel(
-                    l10n,
-                    commitments,
-                    _commitmentId,
+                  const SizedBox(width: AppSpacing.s12),
+                  Expanded(
+                    child: DateField(
+                      label: l10n.executionDueAtField,
+                      initialValue: _dueAt,
+                      enabled: !_saving,
+                      onChanged: (value) {
+                        setState(() => _dueAt = value);
+                        _markDirty();
+                      },
+                    ),
                   ),
-              leading: const Icon(FLucideIcons.target),
-              enabled: !_saving,
-              onPress: () async {
-                final picked = await showExecutionCommitmentPicker(
-                  context: context,
-                  commitments: commitments,
-                  selectedId: _commitmentId,
-                );
-                if (picked == null) return;
-                setState(() {
-                  final next = executionRelationAfterCommitmentPick(
-                    commitments: commitments,
-                    currentProjectId: _projectId,
-                    pickedCommitmentId: picked,
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              FormPickerRow(
+                label: l10n.executionProjectField,
+                value:
+                    selectedProject?.title ??
+                    executionProjectPickerLabel(l10n, projects, _projectId),
+                leading: const Icon(FLucideIcons.folder),
+                enabled: !_saving,
+                onPress: () async {
+                  final picked = await showExecutionProjectPicker(
+                    context: context,
+                    projects: projects,
+                    selectedId: _projectId,
                   );
-                  _projectId = next.projectId;
-                  _commitmentId = next.commitmentId;
-                });
-                _markDirty();
-              },
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            FTextFormField(
-              control: FTextFieldControl.managed(controller: _note),
-              label: Text(l10n.commonNote),
-              hint: l10n.executionActionNoteHint,
-              minLines: 3,
-              maxLines: 5,
-              textInputAction: TextInputAction.newline,
-            ),
+                  if (picked == null) return;
+                  setState(() {
+                    final next = executionRelationAfterProjectPick(
+                      commitments: commitments,
+                      currentCommitmentId: _commitmentId,
+                      pickedProjectId: picked,
+                    );
+                    _projectId = next.projectId;
+                    _commitmentId = next.commitmentId;
+                  });
+                  _markDirty();
+                },
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              FormPickerRow(
+                label: l10n.executionCommitmentField,
+                value:
+                    selectedCommitment?.title ??
+                    executionCommitmentPickerLabel(
+                      l10n,
+                      commitments,
+                      _commitmentId,
+                    ),
+                leading: const Icon(FLucideIcons.target),
+                enabled: !_saving,
+                onPress: () async {
+                  final picked = await showExecutionCommitmentPicker(
+                    context: context,
+                    commitments: commitments,
+                    selectedId: _commitmentId,
+                  );
+                  if (picked == null) return;
+                  setState(() {
+                    final next = executionRelationAfterCommitmentPick(
+                      commitments: commitments,
+                      currentProjectId: _projectId,
+                      pickedCommitmentId: picked,
+                    );
+                    _projectId = next.projectId;
+                    _commitmentId = next.commitmentId;
+                  });
+                  _markDirty();
+                },
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              FTextFormField(
+                control: FTextFieldControl.managed(controller: _note),
+                label: Text(l10n.commonNote),
+                hint: l10n.executionActionNoteHint,
+                minLines: 3,
+                maxLines: 5,
+                textInputAction: TextInputAction.newline,
+              ),
+            ],
             if (isEditing) ...[
               const SizedBox(height: AppSpacing.s16),
               const AppDivider(),
@@ -341,7 +402,35 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
       ),
     );
   }
+
+  _ExecutionQuickWhen get _quickWhen {
+    final scheduled = _scheduledFor?.toLocal();
+    if (scheduled == null) return _ExecutionQuickWhen.inbox;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(scheduled.year, scheduled.month, scheduled.day);
+    if (day == today) return _ExecutionQuickWhen.today;
+    if (day == today.add(const Duration(days: 1))) {
+      return _ExecutionQuickWhen.tomorrow;
+    }
+    return _ExecutionQuickWhen.inbox;
+  }
+
+  void _setQuickWhen(_ExecutionQuickWhen value) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    setState(() {
+      _scheduledFor = switch (value) {
+        _ExecutionQuickWhen.inbox => null,
+        _ExecutionQuickWhen.today => today,
+        _ExecutionQuickWhen.tomorrow => today.add(const Duration(days: 1)),
+      };
+    });
+    _markDirty();
+  }
 }
+
+enum _ExecutionQuickWhen { inbox, today, tomorrow }
 
 IconData _priorityIcon(ExecutionPriority priority) {
   return switch (priority) {
@@ -351,7 +440,44 @@ IconData _priorityIcon(ExecutionPriority priority) {
   };
 }
 
-Future<void> updateExecutionActionStatus({
+class ExecutionActionStatusUndo {
+  const ExecutionActionStatusUndo({
+    required this.repository,
+    required this.before,
+    required this.appliedSync,
+    required this.stamp,
+    required this.progressId,
+  });
+
+  final ExecutionRepository repository;
+  final ExecutionAction before;
+  final SyncMeta appliedSync;
+  final Future<SyncMeta> Function() stamp;
+  final String? progressId;
+
+  Future<void> restore() async {
+    final current = await repository.findAction(
+      ownerUserId: before.sync.ownerUserId,
+      id: before.id,
+    );
+    if (current == null || current.sync.hlc != appliedSync.hlc) {
+      throw StateError('Action changed after the status update.');
+    }
+    final sync = await stamp();
+    await repository.upsertAction(before.copyWith(sync: sync));
+    final id = progressId;
+    if (id == null) return;
+    final progress = await repository.findProgress(
+      ownerUserId: before.sync.ownerUserId,
+      id: id,
+    );
+    if (progress != null) {
+      await repository.softDeleteProgress(progress: progress, sync: sync);
+    }
+  }
+}
+
+Future<ExecutionActionStatusUndo> updateExecutionActionStatus({
   required WidgetRef ref,
   required ExecutionAction action,
   required ExecutionActionStatus status,
@@ -359,11 +485,28 @@ Future<void> updateExecutionActionStatus({
 }) async {
   final repo = await ref.read(executionRepositoryProvider.future);
   final sync = await stampExecutionSync(ref);
+  final stamper = await ref.read(mutationStamperProvider.future);
+  final progressId = progressNote == null ? null : kExecutionUuid.v4();
   await repo.updateActionStatus(
     action: action,
     status: status,
     sync: sync,
-    progressId: progressNote == null ? null : kExecutionUuid.v4(),
+    progressId: progressId,
     progressNote: progressNote,
+  );
+  return ExecutionActionStatusUndo(
+    repository: repo,
+    before: action,
+    appliedSync: sync,
+    stamp: () async {
+      final next = await stamper.stamp();
+      return SyncMeta(
+        ownerUserId: next.ownerUserId,
+        updatedAt: next.now,
+        updatedByDevice: next.deviceId,
+        hlc: next.hlc,
+      );
+    },
+    progressId: progressId,
   );
 }

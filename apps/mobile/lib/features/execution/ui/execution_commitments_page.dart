@@ -65,6 +65,7 @@ class ExecutionCommitmentsPage extends ConsumerWidget {
             ref.invalidate(executionProjectsProvider);
             ref.invalidate(executionClosedProjectsProvider);
             ref.invalidate(executionOpenActionsProvider);
+            ref.invalidate(executionClosedActionsProvider);
             ref.invalidate(executionCommitmentsProvider);
             ref.invalidate(executionClosedCommitmentsProvider);
             ref.invalidate(executionRecentProgressProvider);
@@ -94,7 +95,11 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
           ? executionProjectsProvider
           : executionClosedProjectsProvider,
     );
-    final actionsAsync = ref.watch(executionOpenActionsProvider);
+    final actionsAsync = ref.watch(
+      _view == _CommitmentsView.active
+          ? executionOpenActionsProvider
+          : executionClosedActionsProvider,
+    );
     final commitmentsAsync = ref.watch(
       _view == _CommitmentsView.active
           ? executionCommitmentsProvider
@@ -112,6 +117,7 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
           ref.invalidate(executionProjectsProvider);
           ref.invalidate(executionClosedProjectsProvider);
           ref.invalidate(executionOpenActionsProvider);
+          ref.invalidate(executionClosedActionsProvider);
           ref.invalidate(executionCommitmentsProvider);
           ref.invalidate(executionClosedCommitmentsProvider);
         },
@@ -132,10 +138,7 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
     final projects = projectsAsync.value ?? const <ExecutionProject>[];
     final commitments = commitmentsAsync.value ?? const <ExecutionCommitment>[];
     final activeView = _view == _CommitmentsView.active;
-    final empty =
-        projects.isEmpty &&
-        commitments.isEmpty &&
-        (!activeView || actions.isEmpty);
+    final empty = projects.isEmpty && commitments.isEmpty && actions.isEmpty;
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -166,6 +169,42 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
                 : null,
           ),
         if (!empty) ...[
+          if (standaloneActions.isNotEmpty) ...[
+            ExecutionSectionHeader(
+              title: activeView
+                  ? l10n.executionInboxSection
+                  : l10n.executionClosedActionsSection,
+              count: standaloneActions.length,
+              icon: activeView ? FLucideIcons.inbox : FLucideIcons.archive,
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            for (final action in standaloneActions) ...[
+              ExecutionActionCardController(
+                action: action,
+                projectLabel:
+                    relations?.projectLabel(action.projectId) ??
+                    executionProjectRelationLabel(projects, action.projectId),
+                commitmentLabel:
+                    relations?.commitmentLabel(action.commitmentId) ??
+                    executionCommitmentRelationLabel(
+                      commitments,
+                      action.commitmentId,
+                    ),
+                onOpen: () => context.push(ExecutionRoutes.action(action.id)),
+                onSourceOpen: executionSourceOpen(context, ref, action.source),
+                onEdit: () =>
+                    showExecutionActionSheet(context: context, action: action),
+                onRecordProgress: () => showExecutionProgressSheet(
+                  context: context,
+                  action: action,
+                ),
+                doneProgressNote: l10n.executionProgressDoneDefault,
+                droppedProgressNote: l10n.executionProgressDroppedDefault,
+              ),
+              const SizedBox(height: AppSpacing.s8),
+            ],
+            const SizedBox(height: AppSpacing.s8),
+          ],
           if (projects.isNotEmpty) ...[
             ExecutionSectionHeader(
               title: l10n.executionProjectsSection,
@@ -249,40 +288,6 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
               const SizedBox(height: AppSpacing.s8),
             ],
             const SizedBox(height: AppSpacing.s8),
-          ],
-          if (activeView && standaloneActions.isNotEmpty) ...[
-            ExecutionSectionHeader(
-              title: l10n.executionStandaloneActionsSection,
-              count: standaloneActions.length,
-              icon: FLucideIcons.listTodo,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            for (final action in standaloneActions) ...[
-              ExecutionActionCardController(
-                action: action,
-                projectLabel:
-                    relations?.projectLabel(action.projectId) ??
-                    executionProjectRelationLabel(projects, action.projectId),
-                commitmentLabel:
-                    relations?.commitmentLabel(action.commitmentId) ??
-                    executionCommitmentRelationLabel(
-                      commitments,
-                      action.commitmentId,
-                    ),
-                onOpen: () => context.push(ExecutionRoutes.action(action.id)),
-                onSourceOpen: executionSourceOpen(context, ref, action.source),
-                onEdit: () =>
-                    showExecutionActionSheet(context: context, action: action),
-                onRecordProgress: () => showExecutionProgressSheet(
-                  context: context,
-                  action: action,
-                ),
-                blockedProgressNote: l10n.executionProgressBlockedDefault,
-                doneProgressNote: l10n.executionProgressDoneDefault,
-                droppedProgressNote: l10n.executionProgressDroppedDefault,
-              ),
-              const SizedBox(height: AppSpacing.s8),
-            ],
           ],
         ],
       ],

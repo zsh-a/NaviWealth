@@ -5,6 +5,7 @@ import '../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
+import '../data/execution_repository.dart';
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
 
@@ -139,6 +140,11 @@ class ExecutionProposalApplier implements ProposalApplier {
     final meta = await stamp();
     final repo = await ref.read(executionRepositoryProvider.future);
     final source = _sourceRef(plan);
+    final relations = await _validatedRelations(
+      repo,
+      projectId: plan.get('project_id'),
+      commitmentId: plan.get('commitment_id'),
+    );
     final openActions = await repo.listOpenActions(
       ownerUserId: ownerUserId,
       limit: 500,
@@ -157,8 +163,8 @@ class ExecutionProposalApplier implements ProposalApplier {
       priority: ExecutionPriority.parse(plan.get('priority') ?? 'normal'),
       dueAt: _parseOptionalUtc(plan.get('due_at')),
       scheduledFor: _parseOptionalUtc(plan.get('scheduled_for')),
-      projectId: plan.get('project_id'),
-      commitmentId: plan.get('commitment_id'),
+      projectId: relations.projectId,
+      commitmentId: relations.commitmentId,
       source: source,
       createdAt: meta.updatedAt,
       sync: meta,
@@ -267,13 +273,19 @@ class ExecutionProposalApplier implements ProposalApplier {
     final title = _require(plan, 'title');
     final meta = await stamp();
     final repo = await ref.read(executionRepositoryProvider.future);
+    final projectId = plan.get('project_id');
+    if (projectId != null &&
+        await repo.findProject(ownerUserId: ownerUserId, id: projectId) ==
+            null) {
+      throw ProposalApplyException('execution project not found: $projectId');
+    }
     final commitment = ExecutionCommitment(
       id: kExecutionUuid.v4(),
       title: title,
       description: plan.get('description') ?? '',
       horizon: ExecutionHorizon.parse(plan.get('horizon') ?? 'open'),
       targetDate: _parseOptionalUtc(plan.get('target_date')),
-      projectId: plan.get('project_id'),
+      projectId: projectId,
       source: _sourceRef(plan),
       createdAt: meta.updatedAt,
       sync: meta,
@@ -292,11 +304,24 @@ class ExecutionProposalApplier implements ProposalApplier {
     final note = _require(plan, 'note');
     final meta = await stamp();
     final repo = await ref.read(executionRepositoryProvider.future);
+    final actionId = plan.get('action_id');
+    ExecutionAction? action;
+    if (actionId != null) {
+      action = await repo.findAction(ownerUserId: ownerUserId, id: actionId);
+      if (action == null) {
+        throw ProposalApplyException('execution action not found: $actionId');
+      }
+    }
+    final relations = await _validatedRelations(
+      repo,
+      projectId: plan.get('project_id') ?? action?.projectId,
+      commitmentId: plan.get('commitment_id') ?? action?.commitmentId,
+    );
     final progress = ExecutionProgressEntry(
       id: kExecutionUuid.v4(),
-      actionId: plan.get('action_id'),
-      projectId: plan.get('project_id'),
-      commitmentId: plan.get('commitment_id'),
+      actionId: actionId,
+      projectId: relations.projectId,
+      commitmentId: relations.commitmentId,
       kind: ExecutionProgressKind.parse(plan.get('kind') ?? 'checkin'),
       note: note,
       createdAt: meta.updatedAt,
@@ -310,6 +335,42 @@ class ExecutionProposalApplier implements ProposalApplier {
       appliedAt: _now(),
       shortLabel: '已记录 ExecutionOS 进展',
     );
+  }
+
+  Future<({String? projectId, String? commitmentId})> _validatedRelations(
+    ExecutionRepository repo, {
+    required String? projectId,
+    required String? commitmentId,
+  }) async {
+    ExecutionProject? project;
+    ExecutionCommitment? commitment;
+    if (projectId != null && projectId.isNotEmpty) {
+      project = await repo.findProject(ownerUserId: ownerUserId, id: projectId);
+      if (project == null) {
+        throw ProposalApplyException('execution project not found: $projectId');
+      }
+    }
+    if (commitmentId != null && commitmentId.isNotEmpty) {
+      commitment = await repo.findCommitment(
+        ownerUserId: ownerUserId,
+        id: commitmentId,
+      );
+      if (commitment == null) {
+        throw ProposalApplyException(
+          'execution commitment not found: $commitmentId',
+        );
+      }
+    }
+    final commitmentProjectId = commitment?.projectId;
+    if (commitmentProjectId != null && commitmentProjectId.isNotEmpty) {
+      if (project != null && project.id != commitmentProjectId) {
+        throw ProposalApplyException(
+          'execution commitment belongs to another project: $commitmentId',
+        );
+      }
+      return (projectId: commitmentProjectId, commitmentId: commitmentId);
+    }
+    return (projectId: projectId, commitmentId: commitmentId);
   }
 
   Future<void> _undoActionStatusUpdate(

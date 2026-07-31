@@ -18,6 +18,8 @@ class ExecutionActionCard extends StatelessWidget {
     this.onSourceOpen,
     this.showActions = true,
     this.outcome,
+    this.focusSelected = false,
+    this.onToggleFocus,
   });
 
   final ExecutionAction action;
@@ -35,6 +37,8 @@ class ExecutionActionCard extends StatelessWidget {
   final VoidCallback? onSourceOpen;
   final bool showActions;
   final ActionOutcomeSummary? outcome;
+  final bool focusSelected;
+  final VoidCallback? onToggleFocus;
 
   @override
   Widget build(BuildContext context) {
@@ -206,6 +210,8 @@ class ExecutionActionCard extends StatelessWidget {
                   onDone: onDone,
                   onDrop: onDrop,
                   onRecordProgress: onRecordProgress,
+                  focusSelected: focusSelected,
+                  onToggleFocus: onToggleFocus,
                 ),
             ],
           ),
@@ -279,6 +285,8 @@ class _ActionQuickButtons extends StatelessWidget {
     required this.onDone,
     required this.onDrop,
     required this.onRecordProgress,
+    required this.focusSelected,
+    required this.onToggleFocus,
   });
 
   final String menuTitle;
@@ -293,6 +301,8 @@ class _ActionQuickButtons extends StatelessWidget {
   final VoidCallback onDone;
   final VoidCallback onDrop;
   final VoidCallback onRecordProgress;
+  final bool focusSelected;
+  final VoidCallback? onToggleFocus;
 
   @override
   Widget build(BuildContext context) {
@@ -331,6 +341,14 @@ class _ActionQuickButtons extends StatelessWidget {
         AppAdaptiveActionMenu(
           title: menuTitle,
           actions: <AppAdaptiveAction>[
+            if (onToggleFocus != null)
+              AppAdaptiveAction(
+                icon: focusSelected ? FLucideIcons.pinOff : FLucideIcons.pin,
+                title: focusSelected
+                    ? l10n.executionDailyFocusRemove
+                    : l10n.executionDailyFocusToggle,
+                onPress: onToggleFocus!,
+              ),
             AppAdaptiveAction(
               icon: FLucideIcons.pencil,
               title: l10n.executionEditActionTitle,
