@@ -10,12 +10,13 @@ import 'package:drift/drift.dart';
 import '../../persistence/app_database.dart';
 import 'agent.dart';
 
-enum AgentRunTrigger { manual, schedule, backgroundDue, catchUp }
+enum AgentRunTrigger { manual, schedule, event, backgroundDue, catchUp }
 
 extension AgentRunTriggerWire on AgentRunTrigger {
   String get wire => switch (this) {
     AgentRunTrigger.manual => 'manual',
     AgentRunTrigger.schedule => 'schedule',
+    AgentRunTrigger.event => 'event',
     AgentRunTrigger.backgroundDue => 'background_due',
     AgentRunTrigger.catchUp => 'catch_up',
   };
@@ -35,6 +36,7 @@ extension AgentRunLifecycleStatusWire on AgentRunLifecycleStatus {
 AgentRunTrigger agentRunTriggerFromWire(String value) => switch (value) {
   'manual' => AgentRunTrigger.manual,
   'schedule' => AgentRunTrigger.schedule,
+  'event' => AgentRunTrigger.event,
   'background_due' => AgentRunTrigger.backgroundDue,
   'catch_up' => AgentRunTrigger.catchUp,
   _ => AgentRunTrigger.manual,

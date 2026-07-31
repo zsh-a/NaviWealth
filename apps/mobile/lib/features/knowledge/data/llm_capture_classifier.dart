@@ -66,6 +66,11 @@ const String _kCaptureSystemPrompt =
     '  "statement": "提取出的一句话陈述,短",\n'
     '  "interval_days": 整数 1..3650 (routine 时必填),\n'
     '  "scope": "可选自由 tag,例如 finance/cards/hk 或 health 或 *",\n'
+    '  "decision_options": ["决策选项A", "决策选项B"] (decision 时至少两项),\n'
+    '  "expected_outcome": "可选预期结果",\n'
+    '  "assumption_confidence": 数字 0..1 (assumption 时必填),\n'
+    '  "experiment_metrics": ["成功指标"] (experiment 时至少一项),\n'
+    '  "experiment_method": "验证方法" (experiment 时必填),\n'
     '  "polished_title": "润色后的标题或 null",\n'
     '  "polished_body": "润色后的正文或 null"\n'
     '}';
@@ -273,6 +278,23 @@ CaptureClassification? _parseCaptureClassification(Map<String, Object?> json) {
   }
 
   final statementRaw = _nullIfEmpty((json['statement'] as String?)?.trim());
+  final decisionOptions = _stringList(json['decision_options']);
+  final expectedOutcome = _nullIfEmpty(
+    (json['expected_outcome'] as String?)?.trim(),
+  );
+  final assumptionConfidence = _coerceDouble(
+    json['assumption_confidence'],
+  )?.clamp(0.0, 1.0);
+  final experimentMetrics = _stringList(json['experiment_metrics']);
+  final experimentMethod = _nullIfEmpty(
+    (json['experiment_method'] as String?)?.trim(),
+  );
+  if (kind == CaptureKind.decision && decisionOptions.length < 2 ||
+      kind == CaptureKind.assumption && assumptionConfidence == null ||
+      kind == CaptureKind.experiment &&
+          (experimentMetrics.isEmpty || experimentMethod == null)) {
+    return null;
+  }
   final scopeRawTrimmed = (json['scope'] as String?)?.trim();
   final scope =
       (scopeRawTrimmed == null ||
@@ -288,7 +310,23 @@ CaptureClassification? _parseCaptureClassification(Map<String, Object?> json) {
     intervalDays: intervalDays,
     statement: statementRaw,
     scope: scope,
+    decisionOptions: decisionOptions,
+    expectedOutcome: expectedOutcome,
+    assumptionConfidence: assumptionConfidence,
+    experimentMetrics: experimentMetrics,
+    experimentMethod: experimentMethod,
     polishedTitle: polishedTitle,
     polishedBody: polishedBody,
   );
+}
+
+List<String> _stringList(Object? value) {
+  if (value is! List) return const <String>[];
+  return value
+      .whereType<String>()
+      .map((item) => item.trim())
+      .where((item) => item.isNotEmpty)
+      .toSet()
+      .take(8)
+      .toList(growable: false);
 }

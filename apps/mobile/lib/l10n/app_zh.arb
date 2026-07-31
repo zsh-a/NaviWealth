@@ -4971,5 +4971,70 @@
   "rebalanceTransferTaskHint": "优先移动现金；不足时再调整持仓归属。完成后返回再平衡，系统会用最新资产归属重新计算下一阶段。",
   "rebalanceTransferTaskRecalculateAction": "完成并重新计算",
   "rebalanceCapitalFirstAction": "请先处理资金调拨",
-  "rebalanceResolveTransferAction": "处理调拨"
+  "rebalanceResolveTransferAction": "处理调拨",
+  "healthActivationTitle": "连接健康数据",
+  "healthActivationBody": "授权只读访问并完成首次 30 天同步。即使不连接数据源，也可以继续使用 HealthOS。",
+  "healthActivationAction": "连接并同步",
+  "healthRecoveryConfidence": "{confidence}可信度 · {coverage}% 覆盖",
+  "@healthRecoveryConfidence": {
+    "placeholders": {
+      "confidence": { "type": "String" },
+      "coverage": { "type": "int" }
+    }
+  },
+  "healthRecoveryConfidenceHigh": "高",
+  "healthRecoveryConfidenceMedium": "中",
+  "healthRecoveryConfidenceLow": "低",
+  "healthRecoveryConfidenceInsufficient": "不足",
+  "executionDailyFocusTitle": "今日 Top 3",
+  "executionDailyFocusEmpty": "可在下方固定最多三个行动；手动选择前会采用最近一次 Review 的推荐。",
+  "executionDailyFocusToggle": "Top 3",
+  "executionDueAgentTitle": "即将到期的行动",
+  "executionDueAgentDescription": "每天检查明天前到期的未完成行动，并可发送本地提醒。",
+  "executionDueAgentNothingDue": "未来一天内没有行动到期。",
+  "executionDueAgentSummary": "明天前有 {count} 个行动到期，首项：{title}",
+  "@executionDueAgentSummary": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "title": { "type": "String" }
+    }
+  },
+  "executionReviewCreateNextActions": "创建 {count} 个下一步行动",
+  "@executionReviewCreateNextActions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "executionReviewCreateNextActionsBody": "是否为仍缺少下一步行动的每个项目或承诺创建一个高优先级行动？",
+  "executionReviewNextActionFor": "明确「{title}」的下一步",
+  "@executionReviewNextActionFor": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "agentSettingsTriggerEvent": "数据变更",
+  "executionSearchTitle": "搜索 ExecutionOS",
+  "executionSearchHint": "搜索行动、项目和承诺",
+  "executionSearchEmptyTitle": "搜索全部执行事项",
+  "executionSearchEmptyBody": "结果包含进行中和已关闭的行动、项目与承诺。",
+  "executionSearchNoResults": "没有匹配事项",
+  "executionSearchTryAgain": "可尝试标题、备注或描述。",
+  "executionSearchKindAction": "行动",
+  "executionSearchKindProject": "项目",
+  "executionSearchKindCommitment": "承诺",
+  "executionSearchKindProgress": "进展",
+  "knowledgeSettingsReviewCadence": "复盘频率",
+  "knowledgeSettingsStaleThreshold": "假设过期阈值",
+  "knowledgeSettingsEveryDays": "每 {days} 天",
+  "@knowledgeSettingsEveryDays": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "knowledgeSettingsAfterDays": "连续 {days} 天未验证后",
+  "@knowledgeSettingsAfterDays": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "knowledgeCaptureNeedsStructure": "创建 {kind} 前需要补齐结构化字段：决策选项、假设置信度，或实验方法与指标。",
+  "@knowledgeCaptureNeedsStructure": {
+    "placeholders": { "kind": { "type": "String" } }
+  },
+  "executionReviewCreatedNextActions": "已创建 {count} 个下一步行动。",
+  "@executionReviewCreatedNextActions": {
+    "placeholders": { "count": { "type": "int" } }
+  }
 }

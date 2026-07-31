@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/domain_packs.dart';
+import 'package:naviwealth/app/domain_packs/finance_life_contribution.dart';
+import 'package:naviwealth/app/domain_packs/health_life_contribution.dart';
+import 'package:naviwealth/app/domain_packs/knowledge_life_contribution.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
 import 'package:naviwealth/core/ai/agents/agent_intents.dart';
@@ -36,6 +39,7 @@ import 'package:naviwealth/core/shell/entity_route_resolver.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/execution/composition/execution_route_paths.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/health/composition/health_route_paths.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_route_paths.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -327,6 +331,29 @@ void main() {
     expect(
       resolver(const EntityRouteRef(entityTable: 'unknown', entityId: 'id-1')),
       isNull,
+    );
+  });
+
+  test('source route resolver distinguishes aggregate and entity ids', () {
+    expect(
+      financeSourceRoute('fin:journal_entries', 'day:2026-07-31'),
+      FinanceRoutes.activity,
+    );
+    expect(
+      financeSourceRoute('fin:journal_entries', 'entry-1'),
+      FinanceRoutes.activityEntry('entry-1'),
+    );
+    expect(
+      knowledgeSourceRoute('know:knowledge_notes', 'inbox'),
+      KnowledgeRoutes.inbox,
+    );
+    expect(
+      knowledgeSourceRoute('know:knowledge_notes', 'note-1'),
+      KnowledgeRoutes.object('note', 'note-1'),
+    );
+    expect(
+      healthSourceRoute('health:health_metrics', 'recovery:2026-07-31'),
+      HealthRoutes.trend,
     );
   });
 
@@ -648,6 +675,7 @@ void main() {
           'recovery_alert',
           'knowledge_routine_due',
           'execution_review',
+          'execution_due_actions',
         },
       );
       expect(

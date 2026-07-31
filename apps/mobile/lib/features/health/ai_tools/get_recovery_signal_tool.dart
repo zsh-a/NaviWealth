@@ -101,19 +101,10 @@ class GetRecoverySignalTool implements DeviceTool {
       now: now,
     );
 
-    if (!result.hasScore) {
-      return <String, Object?>{
-        'score': null,
-        'verdict': result.verdict,
-        'inputs': result.inputs,
-        'note': 'Health data insufficient for recovery scoring.',
-      };
-    }
-
     return <String, Object?>{
-      'score': result.score,
-      'verdict': result.verdict,
-      'inputs': result.inputs,
+      ...result.toJson(),
+      if (!result.hasScore)
+        'note': 'Health data insufficient for recovery scoring.',
     };
   }
 }

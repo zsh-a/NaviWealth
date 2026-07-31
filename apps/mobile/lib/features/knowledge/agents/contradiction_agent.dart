@@ -91,9 +91,8 @@ class ContradictionAgent implements Agent {
   @override
   String get name => 'Contradiction Check';
 
-  /// §7 says "每次新 Decision / Note 落库". MVP fires on a 6-hour
-  /// cadence; once `know:*` events land in `EventStore` this becomes
-  /// an event-driven listener.
+  /// Periodic fallback. KnowledgeRepository also debounces Note, Decision,
+  /// Principle, and Assumption writes into an immediate event-triggered run.
   @override
   AgentSchedule get schedule => AgentSchedule.everyHours(6);
 

@@ -7972,5 +7972,70 @@
   "rebalanceTransferTaskHint": "Move cash first, then adjust position ownership if needed. Return to rebalancing when done to recalculate the next stage from the latest assignments.",
   "rebalanceTransferTaskRecalculateAction": "Done, recalculate",
   "rebalanceCapitalFirstAction": "Resolve capital movements first",
-  "rebalanceResolveTransferAction": "Resolve transfer"
+  "rebalanceResolveTransferAction": "Resolve transfer",
+  "healthActivationTitle": "Connect your health data",
+  "healthActivationBody": "Grant read access and run the first 30-day sync. You can keep using HealthOS without connecting a source.",
+  "healthActivationAction": "Connect and sync",
+  "healthRecoveryConfidence": "{confidence} confidence · {coverage}% coverage",
+  "@healthRecoveryConfidence": {
+    "placeholders": {
+      "confidence": { "type": "String" },
+      "coverage": { "type": "int" }
+    }
+  },
+  "healthRecoveryConfidenceHigh": "High",
+  "healthRecoveryConfidenceMedium": "Medium",
+  "healthRecoveryConfidenceLow": "Low",
+  "healthRecoveryConfidenceInsufficient": "Insufficient",
+  "executionDailyFocusTitle": "Daily Top 3",
+  "executionDailyFocusEmpty": "Pin up to three actions below. The latest review recommendation is used until you choose your own.",
+  "executionDailyFocusToggle": "Top 3",
+  "executionDueAgentTitle": "Actions due soon",
+  "executionDueAgentDescription": "Checks daily for open actions due by tomorrow and can send a local reminder.",
+  "executionDueAgentNothingDue": "No actions are due in the next day.",
+  "executionDueAgentSummary": "{count} actions are due by tomorrow. First: {title}",
+  "@executionDueAgentSummary": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "title": { "type": "String" }
+    }
+  },
+  "executionReviewCreateNextActions": "Create {count} next actions",
+  "@executionReviewCreateNextActions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "executionReviewCreateNextActionsBody": "Create one high-priority action for every project or commitment that still has no open next action?",
+  "executionReviewNextActionFor": "Define the next step for {title}",
+  "@executionReviewNextActionFor": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "agentSettingsTriggerEvent": "Data change",
+  "executionSearchTitle": "Search ExecutionOS",
+  "executionSearchHint": "Search actions, projects, and commitments",
+  "executionSearchEmptyTitle": "Search all execution work",
+  "executionSearchEmptyBody": "Results include open and closed actions, projects, and commitments.",
+  "executionSearchNoResults": "No matching work",
+  "executionSearchTryAgain": "Try a title, note, or description.",
+  "executionSearchKindAction": "Action",
+  "executionSearchKindProject": "Project",
+  "executionSearchKindCommitment": "Commitment",
+  "executionSearchKindProgress": "Progress",
+  "knowledgeSettingsReviewCadence": "Review cadence",
+  "knowledgeSettingsStaleThreshold": "Stale assumption threshold",
+  "knowledgeSettingsEveryDays": "Every {days} days",
+  "@knowledgeSettingsEveryDays": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "knowledgeSettingsAfterDays": "After {days} days without verification",
+  "@knowledgeSettingsAfterDays": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "knowledgeCaptureNeedsStructure": "{kind} needs its structured fields before it can be created. Add decision options, assumption confidence, or experiment method and metrics.",
+  "@knowledgeCaptureNeedsStructure": {
+    "placeholders": { "kind": { "type": "String" } }
+  },
+  "executionReviewCreatedNextActions": "Created {count} next actions.",
+  "@executionReviewCreatedNextActions": {
+    "placeholders": { "count": { "type": "int" } }
+  }
 }

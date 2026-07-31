@@ -23,6 +23,9 @@ List<HealthMetric> selectCanonicalMetricsForKind(
   List<HealthMetric> rows,
 ) {
   if (rows.length < 2) return rows;
+  if (kind == HealthMetricKind.sleepSession) {
+    return _selectCanonicalSleep(rows);
+  }
 
   final byBucket = <String, HealthMetric>{};
   for (final row in rows) {
@@ -53,7 +56,7 @@ bool _isBetter(HealthMetric candidate, HealthMetric incumbent) {
 }
 
 String _bucketKey(HealthMetricKind kind, HealthMetric row) {
-  if (_dailyKinds.contains(kind) || kind == HealthMetricKind.sleepSession) {
+  if (_dailyKinds.contains(kind)) {
     return _utcDayKey(row.capturedAt);
   }
   if (kind == HealthMetricKind.workoutSession) {
@@ -62,6 +65,48 @@ String _bucketKey(HealthMetricKind kind, HealthMetric row) {
     return '${_utcDayKey(t)}T${t.hour.toString().padLeft(2, '0')}:$minute';
   }
   return row.id;
+}
+
+List<HealthMetric> _selectCanonicalSleep(List<HealthMetric> rows) {
+  final selected = <HealthMetric>[];
+  final ordered = rows.toList()
+    ..sort((a, b) => a.capturedAt.compareTo(b.capturedAt));
+  for (final candidate in ordered) {
+    final duplicateIndex = selected.indexWhere(
+      (current) => _sameSleepSession(candidate, current),
+    );
+    if (duplicateIndex < 0) {
+      selected.add(candidate);
+    } else if (_isBetter(candidate, selected[duplicateIndex])) {
+      selected[duplicateIndex] = candidate;
+    }
+  }
+  selected.sort((a, b) => b.capturedAt.compareTo(a.capturedAt));
+  return List<HealthMetric>.unmodifiable(selected);
+}
+
+bool _sameSleepSession(HealthMetric a, HealthMetric b) {
+  final aStart = a.capturedAt;
+  final bStart = b.capturedAt;
+  final aEnd = aStart.add(_durationFor(a));
+  final bEnd = bStart.add(_durationFor(b));
+  final overlapStart = aStart.isAfter(bStart) ? aStart : bStart;
+  final overlapEnd = aEnd.isBefore(bEnd) ? aEnd : bEnd;
+  if (!overlapEnd.isAfter(overlapStart)) return false;
+  final overlap = overlapEnd.difference(overlapStart).inSeconds;
+  final shorter = _durationFor(a).inSeconds < _durationFor(b).inSeconds
+      ? _durationFor(a).inSeconds
+      : _durationFor(b).inSeconds;
+  return shorter > 0 && overlap / shorter >= 0.8;
+}
+
+Duration _durationFor(HealthMetric metric) {
+  final seconds = switch (metric.unit) {
+    'h' => metric.value * 3600,
+    'min' => metric.value * 60,
+    _ => metric.value,
+  };
+  return Duration(seconds: seconds.round().clamp(0, 86400));
 }
 
 String _utcDayKey(DateTime t) {

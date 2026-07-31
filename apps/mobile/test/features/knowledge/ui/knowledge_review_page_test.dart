@@ -263,7 +263,7 @@ class _FakeKnowledgeRepository implements KnowledgeRepository {
   @override
   Stream<List<KnowledgeDecision>> watchDecisions({
     required String ownerUserId,
-    int limit = 200,
+    int? limit,
   }) => Stream<List<KnowledgeDecision>>.value(const <KnowledgeDecision>[]);
 
   @override

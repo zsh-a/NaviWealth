@@ -12,7 +12,7 @@ mixin KnowledgeNotesRepositoryMixin {
 
   Stream<List<KnowledgeNote>> watchNotes({
     required String ownerUserId,
-    int limit = 200,
+    int? limit,
   }) {
     final q = _db.select(_db.knowledgeNotes)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
@@ -20,8 +20,8 @@ mixin KnowledgeNotesRepositoryMixin {
       ..where((t) => t.promotedToId.isNull())
       ..orderBy([
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
+      ]);
+    if (limit != null) q.limit(limit);
     return q.watch().map((rows) => rows.map(knowledgeNoteFromRow).toList());
   }
 

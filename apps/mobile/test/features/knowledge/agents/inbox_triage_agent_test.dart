@@ -101,7 +101,8 @@ void main() {
         responseText: '''
 {
   "classification": {"kind":"decision","confidence":0.82,
-                     "reason_zh":"在权衡两个方案"},
+                     "reason_zh":"在权衡两个方案",
+                     "decision_options":["QQQ","BOXX"]},
   "tags": {"tags":["fire","options"],"confidence":0.75,"reason_zh":"含期权/FIRE"},
   "link_to_decision": {"decision_ids":["dec1"],"confidence":0.7,
                        "reason_zh":"与该决策相关"}

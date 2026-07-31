@@ -51,7 +51,9 @@ const String _kInboxTriageSystemPrompt =
     '仅输出一个 JSON 对象,**不要任何额外文字 / Markdown / 代码栅栏**。schema:\n'
     '{\n'
     '  "classification": {"kind": "decision|concept", '
-    '"confidence": 数字, "reason_zh": "一句中文"} 或 null,\n'
+    '"confidence": 数字, "reason_zh": "一句中文", '
+    '"decision_options": ["选项 A", "选项 B"], '
+    '"expected_outcome": "可选预期结果"} 或 null,\n'
     '  "tags": {"tags": ["..."], "confidence": 数字, "reason_zh": "一句中文"} 或 null,\n'
     '  "link_to_decision": {"decision_ids": ["..."], "confidence": 数字, '
     '"reason_zh": "一句中文"} 或 null\n'
@@ -242,6 +244,9 @@ InboxProposal? _parseClassification(KnowledgeNote note, Object? raw) {
   if (confidence < _kMinConfidence) return null;
   final reason = (m['reason_zh'] as String?)?.trim();
   if (reason == null || reason.isEmpty) return null;
+  final decisionOptions = _stringList(m['decision_options']);
+  if (kind == 'decision' && decisionOptions.length < 2) return null;
+  final expectedOutcome = (m['expected_outcome'] as String?)?.trim();
 
   final label = kind == 'decision'
       ? '看起来像在权衡某个选项 — 建议升级为 Decision draft'
@@ -254,9 +259,23 @@ InboxProposal? _parseClassification(KnowledgeNote note, Object? raw) {
       'kind': kind,
       'confidence': confidence.clamp(0.0, 1.0),
       'reason': reason,
+      if (kind == 'decision') 'decision_options': decisionOptions,
+      if (expectedOutcome != null && expectedOutcome.isNotEmpty)
+        'expected_outcome': expectedOutcome,
     },
     status: InboxProposalStatus.pending,
   );
+}
+
+List<String> _stringList(Object? value) {
+  if (value is! List) return const <String>[];
+  return value
+      .whereType<String>()
+      .map((item) => item.trim())
+      .where((item) => item.isNotEmpty)
+      .toSet()
+      .take(8)
+      .toList(growable: false);
 }
 
 InboxProposal? _parseTags(KnowledgeNote note, Object? raw) {

@@ -96,6 +96,30 @@ enum HealthMetricKind {
 }
 
 extension HealthMetricKindX on HealthMetricKind {
+  /// Directional meaning for trend presentation. Null means a change is
+  /// contextual and must not be colored as intrinsically good or bad.
+  bool? get higherIsBetter => switch (this) {
+    HealthMetricKind.sleepSession ||
+    HealthMetricKind.hrvDaily ||
+    HealthMetricKind.stepsDaily ||
+    HealthMetricKind.activeEnergyDaily ||
+    HealthMetricKind.vo2Max ||
+    HealthMetricKind.distanceWalkingRunningDaily ||
+    HealthMetricKind.bodyBatteryDaily ||
+    HealthMetricKind.trainingEffectDaily ||
+    HealthMetricKind.spo2Daily => true,
+    HealthMetricKind.rhrDaily || HealthMetricKind.stressDaily => false,
+    HealthMetricKind.weight ||
+    HealthMetricKind.bodyFat ||
+    HealthMetricKind.workoutSession ||
+    HealthMetricKind.heartRateDaily ||
+    HealthMetricKind.totalEnergyDaily ||
+    HealthMetricKind.floorsClimbedDaily ||
+    HealthMetricKind.respiratoryRateDaily ||
+    HealthMetricKind.trainingLoadDaily ||
+    HealthMetricKind.unknown => null,
+  };
+
   /// Stable wire / column name. Used as the `kind` column literal.
   String get wire => switch (this) {
     HealthMetricKind.sleepSession => 'sleep_session',

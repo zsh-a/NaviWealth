@@ -16,6 +16,7 @@ import 'execution_commitment_sheet.dart';
 import 'execution_lifecycle_card_controller.dart';
 import 'execution_progress_sheet.dart';
 import 'execution_project_sheet.dart';
+import 'execution_search_sheet.dart';
 import 'execution_source_route.dart';
 import 'execution_widgets.dart';
 
@@ -32,6 +33,12 @@ class ExecutionCommitmentsPage extends ConsumerWidget {
       // One primary create; project/commitment land in overflow.
       directActionBudget: 1,
       actions: [
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.search,
+          label: l10n.executionSearchTitle,
+          onPress: () => showExecutionSearchSheet(context: context),
+          order: -10,
+        ),
         ShellHeaderActionSpec(
           icon: FLucideIcons.plus,
           label: l10n.executionCreateActionTitle,

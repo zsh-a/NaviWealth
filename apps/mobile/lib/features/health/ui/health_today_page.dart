@@ -112,6 +112,7 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
           stickyBuilder: (context, progress) =>
               _HealthRecoveryStickyBar(progress: progress),
           modules: const [
+            _HealthActivationCard(),
             // Signal first: alerts only when real; briefing promoted.
             _RecoveryAlertPanel(),
             _BriefingPanel(),
@@ -120,6 +121,103 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
           secondary: const [_SourcesSection(), _WeeklySummaryPanel()],
         ),
       ),
+    );
+  }
+}
+
+class _HealthActivationCard extends ConsumerStatefulWidget {
+  const _HealthActivationCard();
+
+  @override
+  ConsumerState<_HealthActivationCard> createState() =>
+      _HealthActivationCardState();
+}
+
+class _HealthActivationCardState extends ConsumerState<_HealthActivationCard> {
+  bool _running = false;
+  String? _error;
+
+  Future<void> _activate() async {
+    if (_running) return;
+    setState(() {
+      _running = true;
+      _error = null;
+    });
+    try {
+      final service = await ref.read(
+        health_data.healthSyncServiceProvider.future,
+      );
+      if (!await service.hasPermissions() &&
+          !await service.requestPermissions()) {
+        final result = HealthSyncResult.skipped(
+          startedAt: DateTime.now().toUtc(),
+          errorMessage: 'health-platform-permission-denied',
+        );
+        await service.recordResult(result);
+        if (mounted) {
+          setState(
+            () => _error = AppLocalizations.of(
+              context,
+            ).healthSyncPermissionDenied,
+          );
+        }
+        return;
+      }
+      final result = await service.syncRange();
+      if (!result.ok) {
+        if (mounted) setState(() => _error = result.errorMessage);
+        return;
+      }
+      ref.invalidate(health_data.healthSyncStatusProvider);
+      ref.invalidate(healthTodaySnapshotProvider);
+      await ref.read(healthTodaySnapshotProvider.future);
+    } finally {
+      if (mounted) setState(() => _running = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasData = ref.watch(healthHasAnyDataProvider);
+    return hasData.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (value) {
+        if (value) return const SizedBox.shrink();
+        final l10n = AppLocalizations.of(context);
+        return SoftCard(
+          level: SoftCardLevel.raised,
+          padding: AppPageRhythm.cardPadding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppMetricHeader(
+                icon: FLucideIcons.heartPulse,
+                title: l10n.healthActivationTitle,
+                color: context.appTheme.status.info.fg,
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              Text(l10n.healthActivationBody, style: context.captionStyle),
+              if (_error != null) ...[
+                const SizedBox(height: AppSpacing.s8),
+                Text(
+                  _error!,
+                  style: context.captionStyle.copyWith(
+                    color: context.appTheme.status.danger.fg,
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.s12),
+              FButton(
+                onPress: _running ? null : _activate,
+                child: _running
+                    ? const FCircularProgress()
+                    : Text(l10n.healthActivationAction),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -276,12 +374,15 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
               ).healthSyncPermissionDenied,
             );
           });
+          await service.recordResult(_lastResult!);
+          ref.invalidate(health_data.healthSyncStatusProvider);
           return;
         }
       }
       final result = await service.syncRange();
       if (!mounted) return;
       setState(() => _lastResult = result);
+      ref.invalidate(health_data.healthSyncStatusProvider);
       ref.invalidate(healthTodaySnapshotProvider);
     } finally {
       if (mounted) setState(() => _syncing = false);

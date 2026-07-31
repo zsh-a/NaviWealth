@@ -104,4 +104,55 @@ void main() {
       'hk:hrv:2026-06-13',
     ]);
   });
+
+  test('sleep selector preserves independent sessions on the same day', () {
+    final rows = <HealthMetric>[
+      _metric(
+        id: 'hk:sleep:night',
+        kind: HealthMetricKind.sleepSession,
+        capturedAt: DateTime.utc(2026, 6, 14),
+        value: 8 * 3600,
+      ),
+      _metric(
+        id: 'hk:sleep:nap',
+        kind: HealthMetricKind.sleepSession,
+        capturedAt: DateTime.utc(2026, 6, 14, 13),
+        value: 45 * 60,
+      ),
+    ];
+
+    final selected = selectCanonicalMetricsForKind(
+      HealthMetricKind.sleepSession,
+      rows,
+    );
+
+    expect(selected.map((metric) => metric.id), [
+      'hk:sleep:nap',
+      'hk:sleep:night',
+    ]);
+  });
+
+  test('sleep selector deduplicates highly overlapping source sessions', () {
+    final rows = <HealthMetric>[
+      _metric(
+        id: 'hk:sleep:night',
+        kind: HealthMetricKind.sleepSession,
+        capturedAt: DateTime.utc(2026, 6, 14),
+        value: 8 * 3600,
+      ),
+      _metric(
+        id: 'garmin:sleep:night',
+        kind: HealthMetricKind.sleepSession,
+        capturedAt: DateTime.utc(2026, 6, 14, 0, 10),
+        value: 7.8 * 3600,
+      ),
+    ];
+
+    final selected = selectCanonicalMetricsForKind(
+      HealthMetricKind.sleepSession,
+      rows,
+    );
+
+    expect(selected.map((metric) => metric.id), ['garmin:sleep:night']);
+  });
 }

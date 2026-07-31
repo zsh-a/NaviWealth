@@ -132,6 +132,41 @@ void main() {
       expect(inputs['latest_hrv_ms'], 65);
       expect(inputs['avg_sleep_hours'], 8);
       expect(inputs['latest_rhr_bpm'], 55);
+      expect(out['confidence'], 'medium');
+      expect(out['coverage'], 0.5);
+      expect(out['freshness_hours'], 24);
+      expect(out['components'], hasLength(3));
+    });
+
+    test('old and narrow input is explicitly low confidence', () {
+      final hrv = <HealthMetric>[
+        for (var i = 8; i <= 14; i++)
+          _m(
+            kind: HealthMetricKind.hrvDaily,
+            at: now.subtract(Duration(days: i)),
+            value: 50,
+            unit: 'ms',
+          ),
+        _m(
+          kind: HealthMetricKind.hrvDaily,
+          at: now.subtract(const Duration(days: 6)),
+          value: 52,
+          unit: 'ms',
+        ),
+      ];
+
+      final out = GetRecoverySignalTool.shape(
+        hrv: hrv,
+        sleep: const <HealthMetric>[],
+        rhr: const <HealthMetric>[],
+        now: now,
+      );
+
+      expect(out['score'], isNotNull);
+      expect(out['confidence'], 'low');
+      expect(out['coverage'], 0.17);
+      expect(out['freshness_hours'], 144);
+      expect(out['components'], hasLength(1));
     });
 
     test('strained verdict when HRV ↓ + RHR ↑ + sleep short', () {

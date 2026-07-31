@@ -26,6 +26,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../agent_runtime/overrides/agent_runtime_health_overrides.dart';
 import '../routing/route_paths.dart';
 import 'domain_settings_spec.dart';
+import 'health_life_contribution.dart';
 
 final DomainPack kHealthPack = DomainPack(
   scope: DomainScope.health,
@@ -76,6 +77,8 @@ final DomainPack kHealthPack = DomainPack(
   backgroundBootstrapBuilder: _healthBackgroundBootstrap,
   commandPaletteEntriesBuilder: healthCommandPaletteEntries,
   providerOverridesBuilder: agentRuntimeHealthProviderOverrides,
+  lifeSignalBuilder: healthLifeSignals,
+  sourceRouteResolver: healthSourceRoute,
   notificationSettingsBuilder: healthNotificationSettings,
   dataManagementSpec: healthDataManagementSpec,
   settingsSpec: domainSettingsSpec(

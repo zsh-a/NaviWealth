@@ -20,14 +20,28 @@ import '../../../core/auth/providers.dart' as core_auth;
 import '../../../core/background/background_scheduler.dart';
 import '../../../core/background/providers.dart' as background_providers;
 import '../../../core/notifications/notification_preferences.dart';
+import '../../../core/notifications/providers.dart' as notification_providers;
+import 'due_action_agent.dart';
 import 'review_agent.dart';
 
 final executionReviewAgentProvider = Provider<ExecutionReviewAgent>(
   (ref) => const ExecutionReviewAgent(),
 );
 
+final executionDueActionAgentProvider = Provider<ExecutionDueActionAgent>((
+  ref,
+) {
+  final notifier = ref.watch(notificationsEnabledProvider)
+      ? ref.watch(notification_providers.notificationServiceProvider)
+      : null;
+  return ExecutionDueActionAgent(notifier: notifier);
+});
+
 final executionAgentsProvider = Provider<List<Agent>>((ref) {
-  return <Agent>[ref.watch(executionReviewAgentProvider)];
+  return <Agent>[
+    ref.watch(executionReviewAgentProvider),
+    ref.watch(executionDueActionAgentProvider),
+  ];
 });
 
 const _executionReviewResultScope = agent_providers.AgentResultScope(

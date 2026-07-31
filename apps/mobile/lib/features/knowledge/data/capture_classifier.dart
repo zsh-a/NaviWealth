@@ -25,6 +25,11 @@ class CaptureClassification {
     this.intervalDays,
     this.scope,
     this.statement,
+    this.decisionOptions = const <String>[],
+    this.expectedOutcome,
+    this.assumptionConfidence,
+    this.experimentMetrics = const <String>[],
+    this.experimentMethod,
     this.polishedTitle,
     this.polishedBody,
   });
@@ -43,6 +48,11 @@ class CaptureClassification {
   final int? intervalDays;
   final String? scope;
   final String? statement;
+  final List<String> decisionOptions;
+  final String? expectedOutcome;
+  final double? assumptionConfidence;
+  final List<String> experimentMetrics;
+  final String? experimentMethod;
 
   /// Optional AI rewrite of the user's title / body. Same meaning, just
   /// clearer / fixes typos / restructures Markdown. The LLM populates
@@ -103,21 +113,28 @@ class HeuristicCaptureClassifier implements CaptureClassifier {
     final scope = _scopeGuess(lower);
 
     if (_experimentMarkers.hasMatch(lower)) {
+      final metrics = _extractMetrics(text);
+      if (metrics.isEmpty) return null;
       return CaptureClassification(
         kind: CaptureKind.experiment,
         confidence: 0.72,
         reasonZh: '检出 "实验 / 验证 / 指标 / A/B" 等实验结构关键词',
         statement: statement,
         scope: scope,
+        experimentMetrics: metrics,
+        experimentMethod: text.trim(),
       );
     }
     if (_decisionMarkers.hasMatch(lower)) {
+      final options = _extractDecisionOptions(text);
+      if (options.length < 2) return null;
       return CaptureClassification(
         kind: CaptureKind.decision,
         confidence: 0.7,
         reasonZh: '检出 "是否 / 还是 / vs / 选项" 等决策权衡关键词',
         statement: statement,
         scope: scope,
+        decisionOptions: options,
       );
     }
     if (_principleMarkers.hasMatch(lower)) {
@@ -130,12 +147,15 @@ class HeuristicCaptureClassifier implements CaptureClassifier {
       );
     }
     if (_assumptionMarkers.hasMatch(lower)) {
+      final beliefConfidence = _extractAssumptionConfidence(lower);
+      if (beliefConfidence == null) return null;
       return CaptureClassification(
         kind: CaptureKind.assumption,
         confidence: 0.66,
         reasonZh: '检出 "假设 / 我认为 / 预计 / 可能" 等可检验信念表述',
         statement: statement,
         scope: scope,
+        assumptionConfidence: beliefConfidence,
       );
     }
     if (_conceptMarkers.hasMatch(text)) {
@@ -235,6 +255,53 @@ class HeuristicCaptureClassifier implements CaptureClassifier {
       return 'health';
     }
     return null;
+  }
+
+  static List<String> _extractDecisionOptions(String text) {
+    final line = text.split('\n').first.trim();
+    final separator = line.contains(RegExp(r'\bvs\.?\b', caseSensitive: false))
+        ? RegExp(r'\bvs\.?\b', caseSensitive: false)
+        : line.contains('还是')
+        ? RegExp('还是')
+        : line.contains('或')
+        ? RegExp('或')
+        : line.contains(RegExp(r'\bor\b', caseSensitive: false))
+        ? RegExp(r'\bor\b', caseSensitive: false)
+        : null;
+    if (separator == null) return const <String>[];
+    return line
+        .split(separator)
+        .map((value) => value.replaceAll(RegExp(r'[？?。.]'), '').trim())
+        .where((value) => value.length >= 2)
+        .take(5)
+        .toList(growable: false);
+  }
+
+  static double? _extractAssumptionConfidence(String lower) {
+    final percent = RegExp(r'(\d{1,3})\s*%').firstMatch(lower);
+    if (percent != null) {
+      final value = int.tryParse(percent.group(1)!);
+      if (value != null && value <= 100) return value / 100;
+    }
+    if (lower.contains('大概率') || lower.contains('likely')) return 0.7;
+    if (lower.contains('我认为') || lower.contains('i think')) return 0.6;
+    if (lower.contains('可能') || lower.contains('maybe')) return 0.4;
+    return null;
+  }
+
+  static List<String> _extractMetrics(String text) {
+    final match = RegExp(
+      r'(?:指标|metrics?)\s*(?::|：|是)\s*([^\n。]+)',
+      caseSensitive: false,
+    ).firstMatch(text);
+    if (match == null) return const <String>[];
+    return match
+        .group(1)!
+        .split(RegExp(r'[,，、/]'))
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .take(6)
+        .toList(growable: false);
   }
 
   // "每 6 个月" / "每隔 30 天" / "每 2 周" / "每 90 天" — captures (n, unit).

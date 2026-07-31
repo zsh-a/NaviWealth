@@ -532,6 +532,28 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     tags: <String>{kAgentOutcomeBudgetExhaustedTag},
   ),
   AgentOutcomeRegressionCase(
+    id: 'execution.due_actions.no_finding',
+    agentId: 'execution_due_actions',
+    domain: 'execution',
+    snapshotId: 'execution.due_actions.none_due',
+    expectedStatus: AgentOutcomeRegressionStatus.noFinding,
+  ),
+  AgentOutcomeRegressionCase(
+    id: 'execution.due_actions.ready',
+    agentId: 'execution_due_actions',
+    domain: 'execution',
+    snapshotId: 'execution.due_actions.due_tomorrow',
+    expectedStatus: AgentOutcomeRegressionStatus.ready,
+    expectedArtifactKind: AgentArtifactKind.reminder,
+    expectedSeverity: AgentArtifactSeverity.attention,
+    expectedTopInsightTitles: <String>{'Due work'},
+    expectedEvidenceTypes: <String>{'execution_action'},
+    expectedEvidenceRoutePatterns: <String, String>{
+      'execution_action': '/execution/action/*',
+    },
+    expectedActionRoutes: <String>{'/execution/today'},
+  ),
+  AgentOutcomeRegressionCase(
     id: 'knowledge.routine_due.ready',
     agentId: 'knowledge_routine_due',
     domain: 'knowledge',

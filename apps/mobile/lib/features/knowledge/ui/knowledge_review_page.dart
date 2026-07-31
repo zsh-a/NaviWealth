@@ -23,6 +23,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as knowledge_agent_providers;
 import '../agents/routine_due_agent.dart';
 import '../composition/knowledge_route_paths.dart';
+import '../data/knowledge_review_preferences.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_ai_suggestions_card.dart';
@@ -277,7 +278,9 @@ List<AppAdaptiveAction> _reviewBulkActions(
           AppMessenger.show(
             context,
             ToastKind.info,
-            l10n.knowledgeReviewAssumptionsEmpty(kKnowledgeAssumptionStaleDays),
+            l10n.knowledgeReviewAssumptionsEmpty(
+              ref.read(knowledgeReviewPreferencesProvider).staleAssumptionDays,
+            ),
           );
           return;
         }
@@ -320,8 +323,11 @@ Future<List<KnowledgeAssumption>> _loadReviewAssumptions(WidgetRef ref) async {
   final repo = await ref.read(knowledgeRepositoryProvider.future);
   final now = DateTime.now().toUtc();
   final all = await repo.listOpenAssumptions(ownerUserId: owner);
+  final threshold = ref
+      .read(knowledgeReviewPreferencesProvider)
+      .staleAssumptionDays;
   return all
-      .where((a) => a.daysSinceVerify(now) >= kKnowledgeAssumptionStaleDays)
+      .where((a) => a.daysSinceVerify(now) >= threshold)
       .toList(growable: false);
 }
 

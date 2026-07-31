@@ -31,9 +31,15 @@ const String kKnowledgeReviewAgentId = 'knowledge_review';
 const String kKnowledgeReviewMemorySource = 'agent:knowledge_review';
 
 class ReviewAgent implements Agent {
-  const ReviewAgent({this.dueReader = const RepositoryReviewDueReader()});
+  const ReviewAgent({
+    this.dueReader = const RepositoryReviewDueReader(),
+    this.reviewIntervalDays = 7,
+    this.staleAssumptionDays = kKnowledgeAssumptionStaleDays,
+  });
 
   final ReviewDueReader dueReader;
+  final int reviewIntervalDays;
+  final int staleAssumptionDays;
 
   @override
   String get id => kKnowledgeReviewAgentId;
@@ -44,8 +50,10 @@ class ReviewAgent implements Agent {
   /// "每周日 09:00 local". MVP fires on daily ticks at hour 9 and
   /// the underlying [AgentSchedule] gate keeps the cadence at ≥ 7d.
   @override
-  AgentSchedule get schedule =>
-      const AgentSchedule(interval: Duration(days: 7), preferredHourLocal: 9);
+  AgentSchedule get schedule => AgentSchedule(
+    interval: Duration(days: reviewIntervalDays),
+    preferredHourLocal: 9,
+  );
 
   @override
   Future<AgentRunResult> run(AgentContext ctx) async {
@@ -56,7 +64,9 @@ class ReviewAgent implements Agent {
 
     final dueSnapshot = await dueReader.read(ctx);
     final due = dueSnapshot.dueReviews;
-    final staleAssumptions = dueSnapshot.staleAssumptions;
+    final staleAssumptions = dueSnapshot.staleAssumptions
+        .where((item) => item.daysSinceVerify >= staleAssumptionDays)
+        .toList(growable: false);
     final finished = DateTime.now().toUtc();
 
     if (due.isEmpty && staleAssumptions.isEmpty) {
@@ -91,7 +101,7 @@ class ReviewAgent implements Agent {
         'stale_assumption_ids': staleAssumptions
             .map((a) => a.id)
             .toList(growable: false),
-        'assumption_threshold_days': kKnowledgeAssumptionStaleDays,
+        'assumption_threshold_days': staleAssumptionDays,
         if (dueSnapshot.traceId != null) 'trace_id': dueSnapshot.traceId,
       },
       entities: <String>{'knowledge_review', 'weekly_review'},
@@ -194,14 +204,14 @@ class ReviewAgent implements Agent {
             body: l10n.knowledgeAgentReviewInsightAssumptionsBody(
               staleAssumptions.length,
               staleAssumptions.length == 1 ? '' : 's',
-              kKnowledgeAssumptionStaleDays,
+              staleAssumptionDays,
             ),
             severity: AgentArtifactSeverity.attention,
             evidenceIds: <String>[for (final item in staleAssumptions) item.id],
             route: KnowledgeRoutes.review,
             payload: <String, Object?>{
               'count': staleAssumptions.length,
-              'threshold_days': kKnowledgeAssumptionStaleDays,
+              'threshold_days': staleAssumptionDays,
               'first_id': staleAssumptions.first.id,
             },
           ),
@@ -264,12 +274,12 @@ class ReviewAgent implements Agent {
       parts.add(
         staleCount == 1
             ? l10n.knowledgeAgentReviewAssumptionOne(
-                kKnowledgeAssumptionStaleDays,
+                staleAssumptionDays,
                 firstStale ?? '',
               )
             : l10n.knowledgeAgentReviewAssumptionMany(
                 staleCount,
-                kKnowledgeAssumptionStaleDays,
+                staleAssumptionDays,
                 firstStale ?? '',
               ),
       );
@@ -295,10 +305,7 @@ class RepositoryReviewDueReader implements ReviewDueReader {
     );
     final open = await repo.listOpenAssumptions(ownerUserId: ownerUserId);
     final staleAssumptions = open
-        .where(
-          (a) => a.daysSinceVerify(ctx.now) >= kKnowledgeAssumptionStaleDays,
-        )
-        .map(ReviewAssumptionItem.fromAssumption)
+        .map((item) => ReviewAssumptionItem.fromAssumption(item, ctx.now))
         .toList(growable: false);
     return ReviewDueSnapshot(
       dueReviews: due
@@ -367,17 +374,26 @@ class ReviewDecisionItem {
 }
 
 class ReviewAssumptionItem {
-  const ReviewAssumptionItem({required this.id, required this.statement});
+  const ReviewAssumptionItem({
+    required this.id,
+    required this.statement,
+    this.daysSinceVerify = 1000000,
+  });
 
-  factory ReviewAssumptionItem.fromAssumption(KnowledgeAssumption assumption) {
+  factory ReviewAssumptionItem.fromAssumption(
+    KnowledgeAssumption assumption,
+    DateTime now,
+  ) {
     return ReviewAssumptionItem(
       id: assumption.id,
       statement: assumption.statement,
+      daysSinceVerify: assumption.daysSinceVerify(now),
     );
   }
 
   final String id;
   final String statement;
+  final int daysSinceVerify;
 }
 
 ReviewDueSnapshot? reviewDueSnapshotFromTerminalStep(
@@ -393,8 +409,13 @@ ReviewDueSnapshot? reviewDueSnapshotFromTerminalStep(
   );
   if (reviews == null || openAssumptions == null) return null;
   final staleAssumptions = openAssumptions
-      .where((a) => a.daysSinceVerify >= kKnowledgeAssumptionStaleDays)
-      .map((a) => ReviewAssumptionItem(id: a.id, statement: a.statement))
+      .map(
+        (a) => ReviewAssumptionItem(
+          id: a.id,
+          statement: a.statement,
+          daysSinceVerify: a.daysSinceVerify,
+        ),
+      )
       .toList(growable: false);
   return ReviewDueSnapshot(
     dueReviews: reviews,

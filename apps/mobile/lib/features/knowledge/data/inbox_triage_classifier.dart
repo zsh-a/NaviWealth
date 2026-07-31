@@ -84,8 +84,9 @@ class HeuristicInboxTriageClassifier implements InboxTriageClassifier {
       r'(option|选项|对比|vs\.?|trade-?off|权衡|犹豫|决定|应该)',
       caseSensitive: false,
     ).hasMatch('$title\n$body');
+    final options = _decisionOptions('$title\n$body');
 
-    if (long && (hasQuestion || hasOptionsLanguage)) {
+    if (long && (hasQuestion || hasOptionsLanguage) && options.length >= 2) {
       return InboxProposal(
         kind: InboxProposalKind.classification,
         summaryZh: '看起来像在权衡某个选项 — 建议升级为 Decision draft',
@@ -94,6 +95,7 @@ class HeuristicInboxTriageClassifier implements InboxTriageClassifier {
           'kind': 'decision',
           'confidence': 0.6,
           'reason': '正文较长且包含 "对比 / 选项 / 应该 / ?" 类语言',
+          'decision_options': options,
         },
         status: InboxProposalStatus.pending,
       );
@@ -113,6 +115,26 @@ class HeuristicInboxTriageClassifier implements InboxTriageClassifier {
       );
     }
     return null;
+  }
+
+  static List<String> _decisionOptions(String text) {
+    final firstLine = text.split('\n').first.trim();
+    final separator =
+        firstLine.contains(RegExp(r'\bvs\.?\b', caseSensitive: false))
+        ? RegExp(r'\bvs\.?\b', caseSensitive: false)
+        : firstLine.contains('还是')
+        ? RegExp('还是')
+        : firstLine.contains(RegExp(r'\bor\b', caseSensitive: false))
+        ? RegExp(r'\bor\b', caseSensitive: false)
+        : null;
+    if (separator == null) return const <String>[];
+    return firstLine
+        .split(separator)
+        .map((value) => value.replaceAll(RegExp(r'[？?。.]'), '').trim())
+        .where((value) => value.length >= 2)
+        .toSet()
+        .take(5)
+        .toList(growable: false);
   }
 
   static InboxProposal? _suggestTags(KnowledgeNote note) {

@@ -12,15 +12,15 @@ mixin KnowledgeDecisionsRepositoryMixin {
 
   Stream<List<KnowledgeDecision>> watchDecisions({
     required String ownerUserId,
-    int limit = 200,
+    int? limit,
   }) {
     final q = _db.select(_db.knowledgeDecisions)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([
         (t) => OrderingTerm(expression: t.decidedAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
+      ]);
+    if (limit != null) q.limit(limit);
     return q.watch().map((rows) => rows.map(knowledgeDecisionFromRow).toList());
   }
 

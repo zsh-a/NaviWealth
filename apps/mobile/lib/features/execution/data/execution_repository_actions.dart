@@ -14,7 +14,7 @@ mixin ExecutionActionRepositoryMixin {
   Stream<List<ExecutionAction>> watchTodayActions({
     required String ownerUserId,
     required DateTime asOf,
-    int limit = 100,
+    int? limit,
   }) {
     final endOfToday = DateTime(asOf.year, asOf.month, asOf.day + 1);
     final q = _db.select(_db.executionActions)
@@ -44,14 +44,14 @@ mixin ExecutionActionRepositoryMixin {
         ),
         (t) => OrderingTerm(expression: t.dueAt, mode: OrderingMode.asc),
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
+      ]);
+    if (limit != null) q.limit(limit);
     return q.watch().map((rows) => rows.map(executionActionFromRow).toList());
   }
 
   Stream<List<ExecutionAction>> watchOpenActions({
     required String ownerUserId,
-    int limit = 200,
+    int? limit,
   }) {
     final q = _db.select(_db.executionActions)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
@@ -73,8 +73,8 @@ mixin ExecutionActionRepositoryMixin {
           mode: OrderingMode.desc,
         ),
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
+      ]);
+    if (limit != null) q.limit(limit);
     return q.watch().map((rows) => rows.map(executionActionFromRow).toList());
   }
 
@@ -167,7 +167,8 @@ mixin ExecutionActionRepositoryMixin {
 
   Future<List<ExecutionAction>> listOpenActions({
     required String ownerUserId,
-    int limit = 200,
+    int? limit,
+    int offset = 0,
   }) async {
     final q = _db.select(_db.executionActions)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
@@ -181,8 +182,8 @@ mixin ExecutionActionRepositoryMixin {
       )
       ..orderBy([
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
+      ]);
+    if (limit != null) q.limit(limit, offset: offset);
     final rows = await q.get();
     return rows.map(executionActionFromRow).toList();
   }
@@ -276,6 +277,24 @@ mixin ExecutionActionRepositoryMixin {
       tableName: ExecutionRepository._actionsTable,
       rowId: action.id,
     );
+  }
+
+  Future<void> upsertActions(List<ExecutionAction> actions) async {
+    if (actions.isEmpty) return;
+    await _db.transaction(() async {
+      for (final action in actions) {
+        await _db
+            .into(_db.executionActions)
+            .insert(
+              executionActionCompanion(action),
+              mode: InsertMode.insertOrReplace,
+            );
+        await _outbox.enqueue(
+          table: ExecutionRepository._actionsTable,
+          rowId: action.id,
+        );
+      }
+    });
   }
 
   Future<void> softDeleteAction({

@@ -1,0 +1,75 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/ai/agents/agent_artifact_routes.dart';
+import '../../core/auth/domain_scope.dart';
+import '../../core/lifeos/life_signal.dart';
+import '../../features/execution/agents/providers.dart' as agents;
+import '../../features/execution/composition/execution_route_paths.dart';
+import '../../features/execution/data/providers.dart';
+import '../../features/execution/domain/execution_models.dart';
+import '../../features/life/data/life_events_provider.dart';
+
+const _artifactFamily = 'execution:agent_artifacts';
+
+DomainLifeSignalSlice executionLifeSignals(Ref ref, DateTime now) {
+  final events = <LifeEvent>[];
+  final evaluated = <String>{};
+  final today = ref.watch(executionTodayActionsProvider).value;
+  final open = ref.watch(executionOpenActionsProvider).value ?? today;
+  if (open != null) {
+    final blocked = open
+        .where((action) => action.status == ExecutionActionStatus.blocked)
+        .length;
+    if (blocked > 0) {
+      events.add(
+        LifeEvent(
+          id: 'sig-exec-blocked',
+          at: now,
+          domain: DomainScope.execution,
+          template: LifeEventTemplate.executionBlocked,
+          params: <String>['$blocked'],
+          routePath: ExecutionRoutes.today,
+          priority: LifeSignalPriority.high,
+        ),
+      );
+    }
+    final due = open.where((action) => action.isDue(now)).length;
+    if (due > 0) {
+      events.add(
+        LifeEvent(
+          id: 'sig-exec-due',
+          at: now,
+          domain: DomainScope.execution,
+          template: LifeEventTemplate.executionDue,
+          params: <String>['$due'],
+          routePath: ExecutionRoutes.today,
+          priority: LifeSignalPriority.high,
+        ),
+      );
+    }
+  }
+
+  final results = ref.watch(agents.latestExecutionReviewResultsProvider);
+  if (_settled(results)) evaluated.add(_artifactFamily);
+  final artifacts = _settled(results) ? results.value?.artifacts : null;
+  if (artifacts != null && artifacts.isNotEmpty) {
+    events.add(lifeEventForAgentArtifact(artifacts.first));
+  }
+  return DomainLifeSignalSlice(
+    events: List<LifeEvent>.unmodifiable(events),
+    evaluatedSourceFamilies: Set<String>.unmodifiable(evaluated),
+  );
+}
+
+String? executionSourceRouteContribution(String family, String rowId) =>
+    switch (family) {
+      'exec:execution_actions' => ExecutionRoutes.action(rowId),
+      'exec:execution_projects' => ExecutionRoutes.project(rowId),
+      'exec:execution_commitments' => ExecutionRoutes.commitment(rowId),
+      'exec:execution_progress_entries' => ExecutionRoutes.review,
+      _artifactFamily => AgentArtifactRoutes.detail(rowId),
+      _ => null,
+    };
+
+bool _settled<T>(AsyncValue<T> value) =>
+    value.hasValue && !value.hasError && !value.isLoading;

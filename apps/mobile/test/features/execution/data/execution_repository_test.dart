@@ -887,4 +887,74 @@ void main() {
       ]);
     },
   );
+
+  test(
+    'search covers closed actions and project or commitment descriptions',
+    () async {
+      await repo.upsertAction(
+        ExecutionAction(
+          id: 'closed-search',
+          title: 'Ship allocation review',
+          note: 'Contains 100% and underscore_value literally',
+          status: ExecutionActionStatus.done,
+          completedAt: DateTime.utc(2026, 6, 2),
+          createdAt: DateTime.utc(2026, 6, 1),
+          sync: _sync(20),
+        ),
+      );
+      await repo.upsertProject(
+        ExecutionProject(
+          id: 'project-search',
+          title: 'Portfolio cleanup',
+          description: 'Consolidate brokerage accounts',
+          createdAt: DateTime.utc(2026, 6, 1),
+          sync: _sync(21),
+        ),
+      );
+      await repo.upsertCommitment(
+        ExecutionCommitment(
+          id: 'commitment-search',
+          title: 'Weekly operating rhythm',
+          description: 'Protect deep work time',
+          createdAt: DateTime.utc(2026, 6, 1),
+          sync: _sync(22),
+        ),
+      );
+      await repo.upsertAction(
+        ExecutionAction(
+          id: 'other-owner',
+          title: 'Consolidate brokerage accounts privately',
+          createdAt: DateTime.utc(2026, 6, 1),
+          sync: SyncMeta(
+            ownerUserId: 'another-owner',
+            updatedAt: DateTime.utc(2026, 6, 1),
+            updatedByDevice: _deviceId,
+            hlc: Hlc.zero(_deviceId),
+          ),
+        ),
+      );
+
+      final projectHits = await repo.search(
+        ownerUserId: _userId,
+        query: 'brokerage',
+      );
+      final commitmentHits = await repo.search(
+        ownerUserId: _userId,
+        query: 'deep work',
+      );
+      final percentHits = await repo.search(ownerUserId: _userId, query: '%');
+      final underscoreHits = await repo.search(
+        ownerUserId: _userId,
+        query: '_',
+      );
+
+      expect(projectHits.map((hit) => hit.id), ['project-search']);
+      expect(projectHits.single.kind, ExecutionEntryKind.project);
+      expect(commitmentHits.map((hit) => hit.id), ['commitment-search']);
+      expect(commitmentHits.single.kind, ExecutionEntryKind.commitment);
+      expect(percentHits.map((hit) => hit.id), ['closed-search']);
+      expect(underscoreHits.map((hit) => hit.id), ['closed-search']);
+      expect(percentHits.single.status, ExecutionActionStatus.done.wire);
+    },
+  );
 }

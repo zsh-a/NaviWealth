@@ -80,15 +80,25 @@ boundary.
 
 | Tab | Purpose |
 |---|---|
-| Today | Today's open actions, blockers, and high-priority follow-through |
+| Today | Persistent daily Top 3 plus today's open actions, blockers, and high-priority follow-through |
 | Commitments | Active projects, commitments, and open actions |
-| Review | Focus, stalled/blocked work, missing next actions, overdue targets, repeated blockers, throughput, source outcomes, and recently closed actions |
+| Review | Focus, stalled/blocked work, missing next actions, overdue targets, repeated blockers, throughput, source outcomes, recently closed actions, and confirmed batch next-action creation |
 
 Key files:
 
 - `features/execution/ui/execution_today_page.dart`
 - `features/execution/ui/execution_commitments_page.dart`
 - `features/execution/ui/execution_review_page.dart`
+- `features/execution/ui/execution_search_sheet.dart`
+
+The daily Top 3 is device-local, persists for the current local calendar day,
+and resets the next day. Users can pin or remove Actions directly; an empty Top
+3 may adopt the latest Review artifact's `recommended_focus_ids`.
+
+Today, Commitments, and Review share an all-status search across Action title
+and note, Project title and description, and Commitment title and description.
+Default open-list reads are complete rather than silently capped; explicit
+limits are reserved for callers that intentionally paginate.
 
 ## Cross-Domain References
 
@@ -154,7 +164,7 @@ Rules:
   Applying a proposal rejects a near-identical open Action tied to the same
   concrete source.
 
-## Review Agent And Memory
+## Agents, Review, And Memory
 
 The weekly Review agent reads complete bounded snapshots of open Actions,
 active Projects/Commitments, the last seven days of progress and closed
@@ -170,3 +180,13 @@ turning diagnostics into concrete next Actions. Progress entries are also
 indexed into local Memory/Event storage; blockers and completion/scope changes
 receive higher event importance. Derived findings and memory indexes do not
 sync.
+
+The Review page can turn all currently missing Project/Commitment next steps
+from the artifact proposal payload into high-priority Actions after one user
+confirmation. It re-checks current open Actions before writing and performs the
+batch through the repository.
+
+`ExecutionDueActionAgent` runs daily, finds open Actions due within the next
+24 hours (including overdue Actions), writes a reminder artifact with
+action-detail evidence routes, and posts a local notification only when global
+and per-agent notification preferences permit it.

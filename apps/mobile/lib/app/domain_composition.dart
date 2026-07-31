@@ -176,6 +176,20 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
       return domainShellSpecs(ref.watch(activeDomainPacksProvider), l10n);
     }),
     entityRouteResolverProvider.overrideWith((_) => appEntityRouteResolver),
+    sourceRouteResolverProvider.overrideWith((ref) {
+      final packs = ref.watch(activeDomainPacksProvider);
+      return (family, rowId) {
+        for (final pack in packs) {
+          final route = pack.sourceRouteResolver?.call(family, rowId);
+          if (route != null) return route;
+        }
+        final separator = family.indexOf(':');
+        final table = separator < 0 ? family : family.substring(separator + 1);
+        return appEntityRouteResolver(
+          EntityRouteRef(entityTable: table, entityId: rowId),
+        );
+      };
+    }),
     auth_providers.authTokenDomainsProvider.overrideWith((ref) {
       return (ref.watch(auth_providers.domainOptInsProvider).value ??
               DomainOptIns.financeOnly)

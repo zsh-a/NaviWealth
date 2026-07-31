@@ -38,6 +38,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../agent_runtime/overrides/agent_runtime_knowledge_overrides.dart';
 import '../routing/route_paths.dart';
 import 'domain_settings_spec.dart';
+import 'knowledge_life_contribution.dart';
 import 'proposal_applier_route.dart';
 
 final DomainPack kKnowledgePack = DomainPack(
@@ -110,6 +111,8 @@ final DomainPack kKnowledgePack = DomainPack(
   backgroundBootstrapBuilder: _knowledgeBackgroundBootstrap,
   commandPaletteEntriesBuilder: knowledgeCommandPaletteEntries,
   providerOverridesBuilder: agentRuntimeKnowledgeProviderOverrides,
+  lifeSignalBuilder: knowledgeLifeSignals,
+  sourceRouteResolver: knowledgeSourceRoute,
   shareIntentHandlers: const [KnowledgeShareIntentHandler()],
   dataManagementSpec: knowledgeDataManagementSpec,
   settingsSpec: domainSettingsSpec(

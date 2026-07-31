@@ -29,9 +29,15 @@ final class KnowledgePromotionService {
   Future<KnowledgePromotionResult> promoteClassification({
     required KnowledgeNote note,
     required String classification,
+    List<String> decisionOptions = const <String>[],
+    String? expectedOutcome,
   }) async {
     return switch (classification) {
-      'decision' => promoteToDecision(note),
+      'decision' => promoteToDecision(
+        note,
+        options: decisionOptions,
+        expectedOutcome: expectedOutcome,
+      ),
       'concept' => promoteToConcept(note),
       _ => throw StateError(
         'unsupported knowledge promotion classification: $classification',
@@ -39,7 +45,19 @@ final class KnowledgePromotionService {
     };
   }
 
-  Future<KnowledgePromotionResult> promoteToDecision(KnowledgeNote note) async {
+  Future<KnowledgePromotionResult> promoteToDecision(
+    KnowledgeNote note, {
+    List<String> options = const <String>[],
+    String? expectedOutcome,
+  }) async {
+    final normalizedOptions = options
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    if (normalizedOptions.length < 2) {
+      throw StateError('decision promotion requires at least two options');
+    }
     final existing = await _current(note);
     final prior = _priorResult(existing, KnowledgeEntryKind.decision);
     if (prior != null) return prior;
@@ -53,11 +71,14 @@ final class KnowledgePromotionService {
     final decision = KnowledgeDecision(
       id: id,
       question: question,
-      options: const <DecisionOption>[],
+      options: normalizedOptions
+          .map((label) => DecisionOption(label: label))
+          .toList(growable: false),
       selectedLabel: '',
       rationaleMd: existing.bodyMd,
       principleIds: const <String>[],
       assumptionIds: const <String>[],
+      expectedOutcome: expectedOutcome,
       status: DecisionStatus.draft,
       decidedAt: decisionSync.updatedAt,
       sync: decisionSync,
@@ -131,8 +152,12 @@ final class KnowledgePromotionService {
 
   Future<KnowledgePromotionResult> promoteToAssumption(
     KnowledgeNote note, {
+    required double confidence,
     String scope = '*',
   }) async {
+    if (confidence < 0 || confidence > 1) {
+      throw StateError('assumption confidence must be between 0 and 1');
+    }
     final existing = await _current(note);
     final prior = _priorResult(existing, KnowledgeEntryKind.assumption);
     if (prior != null) return prior;
@@ -144,7 +169,7 @@ final class KnowledgePromotionService {
         existing.id,
       ),
       statement: _headline(existing),
-      confidence: 0.5,
+      confidence: confidence,
       scope: scope,
       evidenceIds: <String>[existing.id],
       status: AssumptionStatus.active,
@@ -163,8 +188,18 @@ final class KnowledgePromotionService {
   }
 
   Future<KnowledgePromotionResult> promoteToExperiment(
-    KnowledgeNote note,
-  ) async {
+    KnowledgeNote note, {
+    required List<String> metrics,
+    required String method,
+  }) async {
+    final normalizedMetrics = metrics
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    if (normalizedMetrics.isEmpty || method.trim().isEmpty) {
+      throw StateError('experiment promotion requires method and metrics');
+    }
     final existing = await _current(note);
     final prior = _priorResult(existing, KnowledgeEntryKind.experiment);
     if (prior != null) return prior;
@@ -176,8 +211,8 @@ final class KnowledgePromotionService {
         existing.id,
       ),
       hypothesis: _headline(existing),
-      methodMd: existing.bodyMd,
-      metrics: const <String>[],
+      methodMd: method.trim(),
+      metrics: normalizedMetrics,
       status: ExperimentStatus.planned,
       startedAt: targetSync.updatedAt,
       sync: targetSync,
@@ -235,12 +270,33 @@ final class KnowledgePromotionService {
     int? intervalDays,
     String? statement,
     DateTime? nextDueAt,
+    List<String> decisionOptions = const <String>[],
+    String? expectedOutcome,
+    double? assumptionConfidence,
+    List<String> experimentMetrics = const <String>[],
+    String? experimentMethod,
   }) => switch (kind) {
-    CaptureKind.decision => promoteToDecision(note),
+    CaptureKind.decision => promoteToDecision(
+      note,
+      options: decisionOptions,
+      expectedOutcome: expectedOutcome,
+    ),
     CaptureKind.principle => promoteToPrinciple(note, scope: scope ?? '*'),
-    CaptureKind.assumption => promoteToAssumption(note, scope: scope ?? '*'),
+    CaptureKind.assumption => promoteToAssumption(
+      note,
+      confidence:
+          assumptionConfidence ??
+          (throw StateError('assumption promotion requires confidence')),
+      scope: scope ?? '*',
+    ),
     CaptureKind.concept => promoteToConcept(note),
-    CaptureKind.experiment => promoteToExperiment(note),
+    CaptureKind.experiment => promoteToExperiment(
+      note,
+      metrics: experimentMetrics,
+      method:
+          experimentMethod ??
+          (throw StateError('experiment promotion requires method')),
+    ),
     CaptureKind.routine => promoteToRoutine(
       note,
       intervalDays: intervalDays ?? 180,

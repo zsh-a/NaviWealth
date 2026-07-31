@@ -37,9 +37,11 @@ const String kKnowledgeAssumptionMemorySource = 'agent:knowledge_assumption';
 class AssumptionAgent implements Agent {
   const AssumptionAgent({
     this.assumptionReader = const RepositoryAssumptionReviewReader(),
+    this.staleAssumptionDays = kKnowledgeAssumptionStaleDays,
   });
 
   final AssumptionReviewReader assumptionReader;
+  final int staleAssumptionDays;
 
   @override
   String get id => kKnowledgeAssumptionAgentId;
@@ -63,7 +65,7 @@ class AssumptionAgent implements Agent {
     final snapshot = await assumptionReader.listOpen(ctx);
     final open = snapshot.open;
     final stale = open
-        .where((a) => a.daysSinceVerify >= kKnowledgeAssumptionStaleDays)
+        .where((a) => a.daysSinceVerify >= staleAssumptionDays)
         .toList(growable: false);
     final finished = DateTime.now().toUtc();
 
@@ -90,7 +92,7 @@ class AssumptionAgent implements Agent {
       summary: summary,
       payload: <String, Object?>{
         'stale_assumption_ids': stale.map((a) => a.id).toList(growable: false),
-        'threshold_days': kKnowledgeAssumptionStaleDays,
+        'threshold_days': staleAssumptionDays,
         'artifact_id': artifactId,
         if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
       },
@@ -164,14 +166,14 @@ class AssumptionAgent implements Agent {
           body: l10n.knowledgeAgentAssumptionInsightBody(
             stale.length,
             stale.length == 1 ? '' : 's',
-            kKnowledgeAssumptionStaleDays,
+            staleAssumptionDays,
           ),
           severity: AgentArtifactSeverity.attention,
           evidenceIds: <String>[for (final item in stale) item.id],
           route: KnowledgeRoutes.review,
           payload: <String, Object?>{
             'count': stale.length,
-            'threshold_days': kKnowledgeAssumptionStaleDays,
+            'threshold_days': staleAssumptionDays,
             'first_id': stale.first.id,
           },
         ),
@@ -213,13 +215,13 @@ class AssumptionAgent implements Agent {
   String _summarize(AppLocalizations l10n, int count, String first) {
     if (count == 1) {
       return l10n.knowledgeAgentAssumptionSummaryOne(
-        kKnowledgeAssumptionStaleDays,
+        staleAssumptionDays,
         first,
       );
     }
     return l10n.knowledgeAgentAssumptionSummaryMany(
       count,
-      kKnowledgeAssumptionStaleDays,
+      staleAssumptionDays,
       first,
     );
   }

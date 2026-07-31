@@ -1170,6 +1170,7 @@ String _triggerLabel(AppLocalizations l10n, AgentRunTrigger trigger) {
   return switch (trigger) {
     AgentRunTrigger.manual => l10n.agentSettingsTriggerManual,
     AgentRunTrigger.schedule => l10n.agentSettingsTriggerSchedule,
+    AgentRunTrigger.event => l10n.agentSettingsTriggerEvent,
     AgentRunTrigger.backgroundDue => l10n.agentSettingsTriggerBackgroundDue,
     AgentRunTrigger.catchUp => l10n.agentSettingsTriggerCatchUp,
   };

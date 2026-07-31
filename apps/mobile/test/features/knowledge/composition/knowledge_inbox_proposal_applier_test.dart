@@ -70,7 +70,10 @@ void main() {
     final proposal = InboxProposal(
       kind: InboxProposalKind.classification,
       summaryZh: 'classification',
-      payload: const {'kind': 'decision'},
+      payload: const {
+        'kind': 'decision',
+        'decision_options': <String>['SQLite', 'PostgreSQL'],
+      },
       status: InboxProposalStatus.pending,
     );
 
@@ -158,7 +161,10 @@ void main() {
     final classification = InboxProposal(
       kind: InboxProposalKind.classification,
       summaryZh: 'classification',
-      payload: const <String, Object?>{'kind': 'decision'},
+      payload: const <String, Object?>{
+        'kind': 'decision',
+        'decision_options': <String>['SQLite', 'PostgreSQL'],
+      },
       status: InboxProposalStatus.pending,
     );
     await triage.upsert(

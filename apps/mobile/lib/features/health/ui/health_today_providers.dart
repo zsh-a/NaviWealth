@@ -69,6 +69,12 @@ final healthTodaySnapshotProvider = FutureProvider<_HealthTodaySnapshot?>((
   );
 });
 
+final healthHasAnyDataProvider = FutureProvider.autoDispose<bool>((ref) async {
+  final snapshot = await ref.watch(healthTodaySnapshotProvider.future);
+  return snapshot != null &&
+      snapshot.byKind.values.any((rows) => rows.isNotEmpty);
+});
+
 class HealthTodayMetricGridModel {
   const HealthTodayMetricGridModel({
     this.sleep,
@@ -253,11 +259,7 @@ final recoverySignalProvider =
         bodyBattery: snapshot.rows(HealthMetricKind.bodyBatteryDaily),
         stress: snapshot.rows(HealthMetricKind.stressDaily),
       );
-      return <String, Object?>{
-        'score': result.score,
-        'verdict': result.verdict,
-        'inputs': result.inputs,
-      };
+      return result.toJson();
     });
 
 /// Trend direction and delta for a metric kind over the last 7 days.
@@ -310,13 +312,19 @@ MetricTrend? _metricTrendFromSnapshot(
   if (priorAvg == 0) return null;
 
   final deltaPct = ((recentAvg - priorAvg) / priorAvg * 100);
-  return MetricTrend(deltaPct: deltaPct);
+  return MetricTrend(deltaPct: deltaPct, higherIsBetter: kind.higherIsBetter);
 }
 
 /// Trend data for a metric.
 class MetricTrend {
-  const MetricTrend({required this.deltaPct});
+  const MetricTrend({required this.deltaPct, required this.higherIsBetter});
   final double deltaPct;
+  final bool? higherIsBetter;
+
+  bool? get isFavorable {
+    if (higherIsBetter == null || direction == TrendDirection.flat) return null;
+    return higherIsBetter! ? deltaPct > 0 : deltaPct < 0;
+  }
 
   /// Positive = up, negative = down, near zero = flat.
   TrendDirection get direction {

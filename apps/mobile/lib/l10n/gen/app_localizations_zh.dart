@@ -16002,4 +16002,128 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get rebalanceResolveTransferAction => '处理调拨';
+
+  @override
+  String get healthActivationTitle => '连接健康数据';
+
+  @override
+  String get healthActivationBody =>
+      '授权只读访问并完成首次 30 天同步。即使不连接数据源，也可以继续使用 HealthOS。';
+
+  @override
+  String get healthActivationAction => '连接并同步';
+
+  @override
+  String healthRecoveryConfidence(String confidence, int coverage) {
+    return '$confidence可信度 · $coverage% 覆盖';
+  }
+
+  @override
+  String get healthRecoveryConfidenceHigh => '高';
+
+  @override
+  String get healthRecoveryConfidenceMedium => '中';
+
+  @override
+  String get healthRecoveryConfidenceLow => '低';
+
+  @override
+  String get healthRecoveryConfidenceInsufficient => '不足';
+
+  @override
+  String get executionDailyFocusTitle => '今日 Top 3';
+
+  @override
+  String get executionDailyFocusEmpty =>
+      '可在下方固定最多三个行动；手动选择前会采用最近一次 Review 的推荐。';
+
+  @override
+  String get executionDailyFocusToggle => 'Top 3';
+
+  @override
+  String get executionDueAgentTitle => '即将到期的行动';
+
+  @override
+  String get executionDueAgentDescription => '每天检查明天前到期的未完成行动，并可发送本地提醒。';
+
+  @override
+  String get executionDueAgentNothingDue => '未来一天内没有行动到期。';
+
+  @override
+  String executionDueAgentSummary(int count, String title) {
+    return '明天前有 $count 个行动到期，首项：$title';
+  }
+
+  @override
+  String executionReviewCreateNextActions(int count) {
+    return '创建 $count 个下一步行动';
+  }
+
+  @override
+  String get executionReviewCreateNextActionsBody =>
+      '是否为仍缺少下一步行动的每个项目或承诺创建一个高优先级行动？';
+
+  @override
+  String executionReviewNextActionFor(String title) {
+    return '明确「$title」的下一步';
+  }
+
+  @override
+  String get agentSettingsTriggerEvent => '数据变更';
+
+  @override
+  String get executionSearchTitle => '搜索 ExecutionOS';
+
+  @override
+  String get executionSearchHint => '搜索行动、项目和承诺';
+
+  @override
+  String get executionSearchEmptyTitle => '搜索全部执行事项';
+
+  @override
+  String get executionSearchEmptyBody => '结果包含进行中和已关闭的行动、项目与承诺。';
+
+  @override
+  String get executionSearchNoResults => '没有匹配事项';
+
+  @override
+  String get executionSearchTryAgain => '可尝试标题、备注或描述。';
+
+  @override
+  String get executionSearchKindAction => '行动';
+
+  @override
+  String get executionSearchKindProject => '项目';
+
+  @override
+  String get executionSearchKindCommitment => '承诺';
+
+  @override
+  String get executionSearchKindProgress => '进展';
+
+  @override
+  String get knowledgeSettingsReviewCadence => '复盘频率';
+
+  @override
+  String get knowledgeSettingsStaleThreshold => '假设过期阈值';
+
+  @override
+  String knowledgeSettingsEveryDays(int days) {
+    return '每 $days 天';
+  }
+
+  @override
+  String knowledgeSettingsAfterDays(int days) {
+    return '连续 $days 天未验证后';
+  }
+
+  @override
+  String knowledgeCaptureNeedsStructure(String kind) {
+    return '创建 $kind 前需要补齐结构化字段：决策选项、假设置信度，或实验方法与指标。';
+  }
+
+  @override
+  String executionReviewCreatedNextActions(int count) {
+    return '已创建 $count 个下一步行动。';
+  }
 }

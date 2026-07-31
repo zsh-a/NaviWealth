@@ -22,16 +22,27 @@ import '../../../core/background/background_scheduler.dart';
 import '../../../core/background/providers.dart' as background_providers;
 import '../../../core/notifications/notification_preferences.dart';
 import '../../../core/notifications/providers.dart' as notif_providers;
+import '../data/knowledge_review_preferences.dart';
 import 'assumption_agent.dart';
 import 'contradiction_agent.dart';
 import 'inbox_triage_agent.dart';
 import 'review_agent.dart';
 import 'routine_due_agent.dart';
 
-final reviewAgentProvider = Provider<ReviewAgent>((ref) => const ReviewAgent());
+final reviewAgentProvider = Provider<ReviewAgent>((ref) {
+  final preferences = ref.watch(knowledgeReviewPreferencesProvider);
+  return ReviewAgent(
+    reviewIntervalDays: preferences.cadenceDays,
+    staleAssumptionDays: preferences.staleAssumptionDays,
+  );
+});
 
 final assumptionAgentProvider = Provider<AssumptionAgent>(
-  (ref) => const AssumptionAgent(),
+  (ref) => AssumptionAgent(
+    staleAssumptionDays: ref
+        .watch(knowledgeReviewPreferencesProvider)
+        .staleAssumptionDays,
+  ),
 );
 
 final contradictionAgentProvider = Provider<ContradictionAgent>(

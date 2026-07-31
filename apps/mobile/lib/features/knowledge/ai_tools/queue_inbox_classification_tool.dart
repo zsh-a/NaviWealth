@@ -43,6 +43,16 @@ class QueueInboxClassificationTool implements DeviceTool {
         'maximum': 1,
       },
       'reason': {'type': 'string', 'description': '一句中文说明为什么这么分类。会显示给用户。'},
+      'decision_options': {
+        'type': 'array',
+        'items': {'type': 'string'},
+        'minItems': 2,
+        'description': 'kind=decision 时必填，至少两个真实选项。',
+      },
+      'expected_outcome': {
+        'type': 'string',
+        'description': 'kind=decision 时可选的预期结果。',
+      },
     },
     'required': <String>['note_id', 'kind', 'reason'],
   };
@@ -56,9 +66,21 @@ class QueueInboxClassificationTool implements DeviceTool {
     final kind = (input['kind'] as String?)?.trim() ?? '';
     final reason = (input['reason'] as String?)?.trim() ?? '';
     final confidence = (input['confidence'] as num?)?.toDouble() ?? 0.6;
+    final decisionOptions = input['decision_options'] is List
+        ? (input['decision_options'] as List)
+              .whereType<String>()
+              .map((item) => item.trim())
+              .where((item) => item.isNotEmpty)
+              .toSet()
+              .toList(growable: false)
+        : const <String>[];
+    final expectedOutcome = (input['expected_outcome'] as String?)?.trim();
 
     if (!_kClassifications.contains(kind) || reason.isEmpty) {
       return badRequest('kind 必须是 decision / concept; reason 必填。');
+    }
+    if (kind == 'decision' && decisionOptions.length < 2) {
+      return badRequest('decision 分类必须提供至少两个 decision_options。');
     }
 
     final loaded = await loadOwnedNote(ctx, noteId);
@@ -72,6 +94,9 @@ class QueueInboxClassificationTool implements DeviceTool {
       'kind': kind,
       'confidence': confidence.clamp(0.0, 1.0),
       'reason': reason,
+      if (kind == 'decision') 'decision_options': decisionOptions,
+      if (expectedOutcome != null && expectedOutcome.isNotEmpty)
+        'expected_outcome': expectedOutcome,
     };
 
     await persistEnvelope(

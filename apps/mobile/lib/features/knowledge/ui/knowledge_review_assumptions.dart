@@ -85,6 +85,9 @@ class _StaleAssumptionsCard extends ConsumerWidget {
           ),
           data: (repo) {
             final tick = ref.watch(_reviewActionsRefreshProvider);
+            final staleDays = ref
+                .watch(knowledgeReviewPreferencesProvider)
+                .staleAssumptionDays;
             return FutureBuilder(
               key: ValueKey<int>(tick),
               future: repo.listOpenAssumptions(ownerUserId: owner),
@@ -109,11 +112,7 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                 final all = snap.data ?? const [];
                 final now = DateTime.now().toUtc();
                 final stale = all
-                    .where(
-                      (a) =>
-                          a.daysSinceVerify(now) >=
-                          kKnowledgeAssumptionStaleDays,
-                    )
+                    .where((a) => a.daysSinceVerify(now) >= staleDays)
                     .toList();
                 if (stale.isEmpty) return const SizedBox.shrink();
                 final ordered = _orderedReviewItems<KnowledgeAssumption>(

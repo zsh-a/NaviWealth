@@ -16843,4 +16843,131 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rebalanceResolveTransferAction => 'Resolve transfer';
+
+  @override
+  String get healthActivationTitle => 'Connect your health data';
+
+  @override
+  String get healthActivationBody =>
+      'Grant read access and run the first 30-day sync. You can keep using HealthOS without connecting a source.';
+
+  @override
+  String get healthActivationAction => 'Connect and sync';
+
+  @override
+  String healthRecoveryConfidence(String confidence, int coverage) {
+    return '$confidence confidence · $coverage% coverage';
+  }
+
+  @override
+  String get healthRecoveryConfidenceHigh => 'High';
+
+  @override
+  String get healthRecoveryConfidenceMedium => 'Medium';
+
+  @override
+  String get healthRecoveryConfidenceLow => 'Low';
+
+  @override
+  String get healthRecoveryConfidenceInsufficient => 'Insufficient';
+
+  @override
+  String get executionDailyFocusTitle => 'Daily Top 3';
+
+  @override
+  String get executionDailyFocusEmpty =>
+      'Pin up to three actions below. The latest review recommendation is used until you choose your own.';
+
+  @override
+  String get executionDailyFocusToggle => 'Top 3';
+
+  @override
+  String get executionDueAgentTitle => 'Actions due soon';
+
+  @override
+  String get executionDueAgentDescription =>
+      'Checks daily for open actions due by tomorrow and can send a local reminder.';
+
+  @override
+  String get executionDueAgentNothingDue =>
+      'No actions are due in the next day.';
+
+  @override
+  String executionDueAgentSummary(int count, String title) {
+    return '$count actions are due by tomorrow. First: $title';
+  }
+
+  @override
+  String executionReviewCreateNextActions(int count) {
+    return 'Create $count next actions';
+  }
+
+  @override
+  String get executionReviewCreateNextActionsBody =>
+      'Create one high-priority action for every project or commitment that still has no open next action?';
+
+  @override
+  String executionReviewNextActionFor(String title) {
+    return 'Define the next step for $title';
+  }
+
+  @override
+  String get agentSettingsTriggerEvent => 'Data change';
+
+  @override
+  String get executionSearchTitle => 'Search ExecutionOS';
+
+  @override
+  String get executionSearchHint => 'Search actions, projects, and commitments';
+
+  @override
+  String get executionSearchEmptyTitle => 'Search all execution work';
+
+  @override
+  String get executionSearchEmptyBody =>
+      'Results include open and closed actions, projects, and commitments.';
+
+  @override
+  String get executionSearchNoResults => 'No matching work';
+
+  @override
+  String get executionSearchTryAgain => 'Try a title, note, or description.';
+
+  @override
+  String get executionSearchKindAction => 'Action';
+
+  @override
+  String get executionSearchKindProject => 'Project';
+
+  @override
+  String get executionSearchKindCommitment => 'Commitment';
+
+  @override
+  String get executionSearchKindProgress => 'Progress';
+
+  @override
+  String get knowledgeSettingsReviewCadence => 'Review cadence';
+
+  @override
+  String get knowledgeSettingsStaleThreshold => 'Stale assumption threshold';
+
+  @override
+  String knowledgeSettingsEveryDays(int days) {
+    return 'Every $days days';
+  }
+
+  @override
+  String knowledgeSettingsAfterDays(int days) {
+    return 'After $days days without verification';
+  }
+
+  @override
+  String knowledgeCaptureNeedsStructure(String kind) {
+    return '$kind needs its structured fields before it can be created. Add decision options, assumption confidence, or experiment method and metrics.';
+  }
+
+  @override
+  String executionReviewCreatedNextActions(int count) {
+    return 'Created $count next actions.';
+  }
 }

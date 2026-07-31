@@ -28311,6 +28311,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Resolve transfer'**
   String get rebalanceResolveTransferAction;
+
+  /// No description provided for @healthActivationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your health data'**
+  String get healthActivationTitle;
+
+  /// No description provided for @healthActivationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Grant read access and run the first 30-day sync. You can keep using HealthOS without connecting a source.'**
+  String get healthActivationBody;
+
+  /// No description provided for @healthActivationAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect and sync'**
+  String get healthActivationAction;
+
+  /// No description provided for @healthRecoveryConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'{confidence} confidence · {coverage}% coverage'**
+  String healthRecoveryConfidence(String confidence, int coverage);
+
+  /// No description provided for @healthRecoveryConfidenceHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get healthRecoveryConfidenceHigh;
+
+  /// No description provided for @healthRecoveryConfidenceMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get healthRecoveryConfidenceMedium;
+
+  /// No description provided for @healthRecoveryConfidenceLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get healthRecoveryConfidenceLow;
+
+  /// No description provided for @healthRecoveryConfidenceInsufficient.
+  ///
+  /// In en, this message translates to:
+  /// **'Insufficient'**
+  String get healthRecoveryConfidenceInsufficient;
+
+  /// No description provided for @executionDailyFocusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Top 3'**
+  String get executionDailyFocusTitle;
+
+  /// No description provided for @executionDailyFocusEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin up to three actions below. The latest review recommendation is used until you choose your own.'**
+  String get executionDailyFocusEmpty;
+
+  /// No description provided for @executionDailyFocusToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Top 3'**
+  String get executionDailyFocusToggle;
+
+  /// No description provided for @executionDueAgentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions due soon'**
+  String get executionDueAgentTitle;
+
+  /// No description provided for @executionDueAgentDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Checks daily for open actions due by tomorrow and can send a local reminder.'**
+  String get executionDueAgentDescription;
+
+  /// No description provided for @executionDueAgentNothingDue.
+  ///
+  /// In en, this message translates to:
+  /// **'No actions are due in the next day.'**
+  String get executionDueAgentNothingDue;
+
+  /// No description provided for @executionDueAgentSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} actions are due by tomorrow. First: {title}'**
+  String executionDueAgentSummary(int count, String title);
+
+  /// No description provided for @executionReviewCreateNextActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Create {count} next actions'**
+  String executionReviewCreateNextActions(int count);
+
+  /// No description provided for @executionReviewCreateNextActionsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Create one high-priority action for every project or commitment that still has no open next action?'**
+  String get executionReviewCreateNextActionsBody;
+
+  /// No description provided for @executionReviewNextActionFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Define the next step for {title}'**
+  String executionReviewNextActionFor(String title);
+
+  /// No description provided for @agentSettingsTriggerEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Data change'**
+  String get agentSettingsTriggerEvent;
+
+  /// No description provided for @executionSearchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search ExecutionOS'**
+  String get executionSearchTitle;
+
+  /// No description provided for @executionSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search actions, projects, and commitments'**
+  String get executionSearchHint;
+
+  /// No description provided for @executionSearchEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search all execution work'**
+  String get executionSearchEmptyTitle;
+
+  /// No description provided for @executionSearchEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Results include open and closed actions, projects, and commitments.'**
+  String get executionSearchEmptyBody;
+
+  /// No description provided for @executionSearchNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching work'**
+  String get executionSearchNoResults;
+
+  /// No description provided for @executionSearchTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a title, note, or description.'**
+  String get executionSearchTryAgain;
+
+  /// No description provided for @executionSearchKindAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Action'**
+  String get executionSearchKindAction;
+
+  /// No description provided for @executionSearchKindProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Project'**
+  String get executionSearchKindProject;
+
+  /// No description provided for @executionSearchKindCommitment.
+  ///
+  /// In en, this message translates to:
+  /// **'Commitment'**
+  String get executionSearchKindCommitment;
+
+  /// No description provided for @executionSearchKindProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get executionSearchKindProgress;
+
+  /// No description provided for @knowledgeSettingsReviewCadence.
+  ///
+  /// In en, this message translates to:
+  /// **'Review cadence'**
+  String get knowledgeSettingsReviewCadence;
+
+  /// No description provided for @knowledgeSettingsStaleThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Stale assumption threshold'**
+  String get knowledgeSettingsStaleThreshold;
+
+  /// No description provided for @knowledgeSettingsEveryDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {days} days'**
+  String knowledgeSettingsEveryDays(int days);
+
+  /// No description provided for @knowledgeSettingsAfterDays.
+  ///
+  /// In en, this message translates to:
+  /// **'After {days} days without verification'**
+  String knowledgeSettingsAfterDays(int days);
+
+  /// No description provided for @knowledgeCaptureNeedsStructure.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind} needs its structured fields before it can be created. Add decision options, assumption confidence, or experiment method and metrics.'**
+  String knowledgeCaptureNeedsStructure(String kind);
+
+  /// No description provided for @executionReviewCreatedNextActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Created {count} next actions.'**
+  String executionReviewCreatedNextActions(int count);
 }
 
 class _AppLocalizationsDelegate

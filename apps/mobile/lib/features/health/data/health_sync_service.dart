@@ -21,6 +21,7 @@ import '../domain/health_metric_kind.dart';
 import 'health_metric_ingestor.dart';
 import 'health_metric_repository.dart';
 import 'health_platform_adapter.dart';
+import 'health_sync_status.dart';
 
 /// Outcome of one [HealthSyncService.syncRange] call. Used by the
 /// Settings UI to render "Synced N readings · last at HH:MM" and to
@@ -64,18 +65,21 @@ class HealthSyncService {
     required HealthPlatformAdapter adapter,
     required HealthMetricRepository repository,
     required MutationStamper stamper,
+    HealthSyncStatusStore? statusStore,
     DateTime Function()? clock,
   }) : _adapter = adapter,
        _ingestor = HealthMetricIngestor(
          repository: repository,
          stamper: stamper,
        ),
+       _statusStore = statusStore,
        _clock = clock ?? _defaultClock;
 
   static DateTime _defaultClock() => DateTime.now().toUtc();
 
   final HealthPlatformAdapter _adapter;
   final HealthMetricIngestor _ingestor;
+  final HealthSyncStatusStore? _statusStore;
   final DateTime Function() _clock;
 
   /// Pass-through to the adapter — Settings UI calls this when the
@@ -85,6 +89,23 @@ class HealthSyncService {
   Future<bool> isAvailable() => _adapter.isAvailable();
 
   Future<bool> hasPermissions() => _adapter.hasPermissions();
+
+  Future<void> recordResult(HealthSyncResult result) async {
+    try {
+      await _statusStore?.write(
+        attemptedAt: result.startedAt,
+        completedAt: result.completedAt,
+        ok: result.ok,
+        totalFetched: result.totalFetched,
+        upserted: result.upserted,
+        unchanged: result.unchanged,
+        errorCode: result.errorMessage,
+      );
+    } on Object {
+      // Operational history is best-effort and must never turn a completed
+      // health import into a failed sync result.
+    }
+  }
 
   /// Pull the last [window] of platform health data and upsert into
   /// `health_metrics`. Returns a [HealthSyncResult] either way — never
@@ -99,15 +120,19 @@ class HealthSyncService {
     final effectiveFrom = from ?? effectiveTo.subtract(window);
 
     if (!await _adapter.isAvailable()) {
-      return HealthSyncResult.skipped(
-        startedAt: startedAt,
-        errorMessage: 'health-platform-unavailable',
+      return _record(
+        HealthSyncResult.skipped(
+          startedAt: startedAt,
+          errorMessage: 'health-platform-unavailable',
+        ),
       );
     }
     if (!await _adapter.hasPermissions()) {
-      return HealthSyncResult.skipped(
-        startedAt: startedAt,
-        errorMessage: 'health-platform-permission-denied',
+      return _record(
+        HealthSyncResult.skipped(
+          startedAt: startedAt,
+          errorMessage: 'health-platform-permission-denied',
+        ),
       );
     }
 
@@ -118,21 +143,30 @@ class HealthSyncService {
         to: effectiveTo,
       );
     } on Object catch (e) {
-      return HealthSyncResult.skipped(
-        startedAt: startedAt,
-        errorMessage: 'health-platform-fetch-failed: $e',
+      return _record(
+        HealthSyncResult.skipped(
+          startedAt: startedAt,
+          errorMessage: 'health-platform-fetch-failed: $e',
+        ),
       );
     }
 
     final ingest = await _ingestor.ingestRaw(_metricsFromSnapshot(snapshot));
 
-    return HealthSyncResult(
-      startedAt: startedAt,
-      completedAt: _clock(),
-      totalFetched: snapshot.totalCount,
-      upserted: ingest.upserted,
-      unchanged: ingest.unchanged,
+    return _record(
+      HealthSyncResult(
+        startedAt: startedAt,
+        completedAt: _clock(),
+        totalFetched: snapshot.totalCount,
+        upserted: ingest.upserted,
+        unchanged: ingest.unchanged,
+      ),
     );
+  }
+
+  Future<HealthSyncResult> _record(HealthSyncResult result) async {
+    await recordResult(result);
+    return result;
   }
 
   Iterable<RawHealthMetric> _metricsFromSnapshot(

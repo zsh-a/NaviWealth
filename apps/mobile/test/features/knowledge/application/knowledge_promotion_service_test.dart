@@ -70,6 +70,10 @@ void main() {
         note: source,
         kind: entry.key,
         scope: 'test/scope',
+        decisionOptions: const <String>['Option A', 'Option B'],
+        assumptionConfidence: 0.7,
+        experimentMetrics: const <String>['success rate'],
+        experimentMethod: 'Run a controlled trial',
       );
 
       expect(result.kind, entry.value);
@@ -91,8 +95,14 @@ void main() {
     final source = note('same');
     await repository.upsertNote(source);
 
-    final first = await service.promoteToDecision(source);
-    final second = await service.promoteToDecision(source);
+    final first = await service.promoteToDecision(
+      source,
+      options: const <String>['Option A', 'Option B'],
+    );
+    final second = await service.promoteToDecision(
+      source,
+      options: const <String>['Option A', 'Option B'],
+    );
     expect(second.id, first.id);
     expect(() => service.promoteToConcept(source), throwsStateError);
   });

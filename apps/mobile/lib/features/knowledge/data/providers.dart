@@ -22,6 +22,7 @@ import 'capture_classifier.dart';
 import 'contradiction_judge.dart';
 import 'inbox_triage_classifier.dart';
 import 'inbox_triage_repository.dart';
+import 'knowledge_change_scheduler.dart';
 import 'knowledge_llm_client.dart';
 import 'knowledge_repository.dart';
 import 'knowledge_search_service.dart';
@@ -34,12 +35,25 @@ import 'llm_inbox_triage_classifier.dart';
 /// declarations — Uuid is stateless, no reason to hold several.
 const Uuid kKnowledgeUuid = Uuid();
 
+final knowledgeChangeSchedulerProvider = Provider<KnowledgeChangeScheduler>((
+  ref,
+) {
+  final scheduler = KnowledgeChangeScheduler(ref);
+  ref.onDispose(scheduler.dispose);
+  return scheduler;
+});
+
 final knowledgeRepositoryProvider = FutureProvider<KnowledgeRepository>((
   ref,
 ) async {
   final db = await ref.watch(appDatabaseProvider.future);
   final outbox = await ref.watch(outboxStoreProvider.future);
-  return KnowledgeRepository(db: db, outbox: outbox);
+  final scheduler = ref.watch(knowledgeChangeSchedulerProvider);
+  return KnowledgeRepository(
+    db: db,
+    outbox: outbox,
+    onRowChanged: (table, _) => scheduler.schedule(table),
+  );
 });
 
 final knowledgeOwnerUserIdProvider = FutureProvider.autoDispose<String>((ref) {

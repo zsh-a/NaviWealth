@@ -11,11 +11,7 @@ String? executionSourceRoute(WidgetRef ref, ExecutionSourceRef source) {
   if (family == null || family.isEmpty || rowId == null || rowId.isEmpty) {
     return null;
   }
-  final separator = family.indexOf(':');
-  final table = separator < 0 ? family : family.substring(separator + 1);
-  return ref.read(entityRouteResolverProvider)(
-    EntityRouteRef(entityTable: table, entityId: rowId),
-  );
+  return ref.read(sourceRouteResolverProvider)(family, rowId);
 }
 
 VoidCallback? executionSourceOpen(

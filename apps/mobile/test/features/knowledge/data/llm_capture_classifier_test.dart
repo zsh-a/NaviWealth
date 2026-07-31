@@ -69,6 +69,7 @@ void main() {
   "confidence": 0.78,
   "reason_zh": "用户在权衡两个对冲方案",
   "statement": "升级到 QQQ + BOXX 动态对冲 vs 保持现状",
+  "decision_options": ["升级到 QQQ + BOXX 动态对冲", "保持现状"],
   "scope": "*"
 }''',
       );
@@ -78,6 +79,7 @@ void main() {
 
       expect(r.kind, CaptureKind.decision);
       expect(r.statement, '升级到 QQQ + BOXX 动态对冲 vs 保持现状');
+      expect(r.decisionOptions, ['升级到 QQQ + BOXX 动态对冲', '保持现状']);
       expect(r.intervalDays, isNull);
       expect(r.scope, isNull, reason: 'scope == "*" maps to null');
     });

@@ -45,6 +45,12 @@ Key files:
 
 `HealthSyncService.syncRange()` fetches platform data, converts it to `HealthMetric`, and upserts only changed rows. Unchanged rows do not create outbox work.
 
+The first-run Today activation card is optional: users can continue without
+connecting a platform source, or grant read-only access and run the first sync
+in one action. The last platform-sync attempt and its fetched/upserted/unchanged
+counts are persisted locally by `health_sync_status.dart` and restored in
+Health Settings; this operational state does not sync.
+
 ## Persistence
 
 Table:
@@ -108,7 +114,7 @@ HealthOS is active only when the user enables it in Settings.
 
 | Tab | Purpose |
 |---|---|
-| Today | Sleep, HRV, recovery, workout cards, latest Morning Briefing, manual run |
+| Today | Optional source activation, sleep, HRV, recovery confidence, workout cards, latest Morning Briefing, manual run |
 | Trend | HRV, sleep hours, workout minutes line charts |
 
 Key files:
@@ -126,7 +132,7 @@ Tool barrel: `features/health/health_ai_tools.dart`.
 | `get_recent_sleep_summary` | Read | Sleep sessions and average duration |
 | `get_hrv_trend` | Read | HRV points, window summary, delta |
 | `get_activity_summary` | Read | Steps, active calories, workout totals |
-| `get_recovery_signal` | Read | Score and verdict from sleep, HRV, RHR, VO2 max where available |
+| `get_recovery_signal` | Read | Score, verdict, confidence, coverage, freshness, and explainable components from sleep, HRV, RHR, VO2 max, Body Battery, and stress where available |
 | `record_body_measurement` | Confirmed local write | Weight or body fat only |
 
 Rules:
@@ -134,7 +140,9 @@ Rules:
 - AI must not write sleep, HRV, steps, workouts, or platform-collected health rows.
 - Weight and body fat writes require a user-explicit record/save intent plus a numeric value.
 - Health interpretation must cite tool-returned windows and values.
-- Recovery score is a lifestyle signal, not a diagnosis.
+- Recovery score is a lifestyle signal, not a diagnosis. Today and the AI
+  tool use the same scorer and expose the same confidence, input coverage,
+  freshness, and component evidence.
 
 ## Memory Integration
 
@@ -205,7 +213,10 @@ Behavior:
 
 - iOS HealthKit capability must be enabled in Xcode signing settings.
 - iOS background scheduling is opportunistic and not guaranteed to run exactly on time.
-- HealthKit sleep can arrive as segments; the adapter merges close segments into sessions.
+- HealthKit sleep can arrive as segments; the adapter merges close segments
+  into sessions. Canonical multi-source selection deduplicates only sessions
+  with at least 80% overlap, so a separate nap or split sleep on the same UTC
+  day is preserved.
 - VO2 max depends on `package:health` platform support. The pipeline can store it when the adapter returns it.
 
 ## Tests To Prefer

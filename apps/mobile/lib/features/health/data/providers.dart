@@ -7,12 +7,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/persistence/providers.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/outbox_provider.dart';
+import '../../../design_system/preferences/theme_preferences.dart';
 import 'garmin/garmin_snapshot_writer.dart';
 import 'health_metric_repository.dart';
 import 'health_metric_write_service.dart';
 import 'health_platform_adapter.dart';
 import 'health_platform_adapter_factory.dart';
 import 'health_sync_service.dart';
+import 'health_sync_status.dart';
 
 export 'garmin/garmin_region_preference.dart'
     show GarminRegion, GarminRegionX, garminRegionProvider;
@@ -59,8 +61,13 @@ final healthSyncServiceProvider = FutureProvider<HealthSyncService>((
     adapter: adapter,
     repository: repo,
     stamper: stamper,
+    statusStore: HealthSyncStatusStore(ref.watch(sharedPreferencesProvider)),
   );
 });
+
+final healthSyncStatusProvider = Provider<HealthSyncStatus?>(
+  (ref) => HealthSyncStatusStore(ref.watch(sharedPreferencesProvider)).read(),
+);
 
 final healthMetricWriteServiceProvider =
     FutureProvider<HealthMetricWriteService>((ref) async {

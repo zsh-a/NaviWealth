@@ -9,6 +9,8 @@ import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/shell/settings_route_paths.dart';
+import 'package:naviwealth/features/execution/agents/due_action_agent.dart'
+    show kExecutionDueActionAgentId;
 import 'package:naviwealth/features/execution/agents/providers.dart'
     as execution_agent_providers;
 import 'package:naviwealth/features/execution/agents/review_agent.dart'
@@ -28,6 +30,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../agent_runtime/overrides/agent_runtime_execution_overrides.dart';
 import '../routing/route_paths.dart';
 import 'domain_settings_spec.dart';
+import 'execution_life_contribution.dart';
 import 'proposal_applier_route.dart';
 
 final DomainPack kExecutionPack = DomainPack(
@@ -62,12 +65,23 @@ final DomainPack kExecutionPack = DomainPack(
       notificationsSupported: true,
       placement: AgentResultPlacement.domainReview,
     ),
+    AgentPresentationSpec(
+      agentId: kExecutionDueActionAgentId,
+      domain: DomainScope.execution,
+      icon: FLucideIcons.alarmClock,
+      label: _executionDueLabel,
+      description: _executionDueDescription,
+      notificationsSupported: true,
+      placement: AgentResultPlacement.domainReview,
+    ),
   ],
   memorySourcePrefixes: const ['execution:', 'agent:execution_'],
   memoryBootstrapBuilder: _executionMemoryBootstrap,
   backgroundBootstrapBuilder: _executionBackgroundBootstrap,
   commandPaletteEntriesBuilder: executionCommandPaletteEntries,
   providerOverridesBuilder: agentRuntimeExecutionProviderOverrides,
+  lifeSignalBuilder: executionLifeSignals,
+  sourceRouteResolver: executionSourceRouteContribution,
   dataManagementSpec: executionDataManagementSpec,
   settingsSpec: domainSettingsSpec(
     icon: FLucideIcons.listTodo,
@@ -105,3 +119,8 @@ String _executionReviewLabel(AppLocalizations l10n) =>
 
 String _executionReviewDescription(AppLocalizations l10n) =>
     l10n.agentPresentationExecutionReviewDescription;
+
+String _executionDueLabel(AppLocalizations l10n) => l10n.executionDueAgentTitle;
+
+String _executionDueDescription(AppLocalizations l10n) =>
+    l10n.executionDueAgentDescription;

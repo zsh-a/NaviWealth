@@ -28,6 +28,7 @@ import '../auth/providers.dart';
 import '../command_palette/command_palette_entry.dart';
 import '../data_management/data_management.dart';
 import '../shell/domain_shell.dart';
+import 'life_signal.dart';
 import 'share_intent.dart';
 
 /// Builds the per-turn list of [Agent]s a domain contributes. Receives
@@ -79,6 +80,14 @@ typedef DomainBootstrapBuilder = void Function(Ref ref);
 /// Build-level provider overrides a domain contributes to composition
 /// seams that are not yet represented by a narrower [DomainPack] field.
 typedef DomainProviderOverridesBuilder = List<Override> Function();
+
+/// Builds the current bounded Life-hub signal slice for a domain.
+typedef DomainLifeSignalBuilder =
+    DomainLifeSignalSlice Function(Ref ref, DateTime now);
+
+/// Resolves a source-preserving Execution reference owned by a domain.
+typedef DomainSourceRouteResolver =
+    String? Function(String rowFamily, String rowId);
 
 /// Builds diagnostic local row counts for one domain.
 typedef DomainLocalTableCountsBuilder =
@@ -151,6 +160,8 @@ class DomainPack {
     this.backgroundBootstrapBuilder,
     this.commandPaletteEntriesBuilder,
     this.providerOverridesBuilder,
+    this.lifeSignalBuilder,
+    this.sourceRouteResolver,
     this.localTableCountsBuilder,
     this.dataManagementSpec,
     this.notificationSettingsBuilder,
@@ -250,6 +261,12 @@ class DomainPack {
   /// the build inventory; opt-in-gated work should still check opt-ins
   /// inside the contributing provider.
   final DomainProviderOverridesBuilder? providerOverridesBuilder;
+
+  /// Domain-owned signals and evaluated source-family evidence for Life.
+  final DomainLifeSignalBuilder? lifeSignalBuilder;
+
+  /// Domain-owned route resolution for Execution source references.
+  final DomainSourceRouteResolver? sourceRouteResolver;
 
   /// Debug diagnostics for Settings → Sync. Domains own their table SQL;
   /// the Settings page reads the domain-neutral aggregate provider.

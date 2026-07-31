@@ -14,6 +14,7 @@ import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/health_sync_service.dart';
+import '../data/health_sync_status.dart';
 import '../data/morning_briefing_preferences.dart';
 import '../data/providers.dart' as health_data;
 
@@ -75,20 +76,33 @@ class _HealthPlatformSyncRowState
               errorMessage: l10n.settingsDomainsHealthPermissionDenied,
             );
           });
+          await service.recordResult(_lastResult!);
+          ref.invalidate(health_data.healthSyncStatusProvider);
           return;
         }
       }
       final result = await service.syncRange();
       setState(() => _lastResult = result);
+      ref.invalidate(health_data.healthSyncStatusProvider);
     } finally {
       if (mounted) setState(() => _running = false);
     }
   }
 
-  String _subtitle(AppLocalizations l10n) {
+  String _subtitle(AppLocalizations l10n, HealthSyncStatus? persisted) {
     final r = _lastResult;
     if (_running) return l10n.settingsDomainsHealthSyncRunning;
-    if (r == null) return l10n.settingsDomainsHealthSyncIdle;
+    if (r == null) {
+      if (persisted == null) return l10n.settingsDomainsHealthSyncIdle;
+      if (!persisted.ok) {
+        return persisted.errorCode ?? l10n.settingsDomainsHealthSyncFailed;
+      }
+      return l10n.settingsDomainsHealthSyncSummary(
+        persisted.upserted,
+        persisted.unchanged,
+        persisted.totalFetched,
+      );
+    }
     if (!r.ok) return r.errorMessage ?? l10n.settingsDomainsHealthSyncFailed;
     return l10n.settingsDomainsHealthSyncSummary(
       r.upserted,
@@ -100,10 +114,11 @@ class _HealthPlatformSyncRowState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final persisted = ref.watch(health_data.healthSyncStatusProvider);
     return InlineLinkRow(
       icon: FLucideIcons.refreshCw,
       label: l10n.settingsDomainsHealthSyncTitle,
-      subtitle: _subtitle(l10n),
+      subtitle: _subtitle(l10n, persisted),
       onTap: _running ? () {} : _run,
     );
   }

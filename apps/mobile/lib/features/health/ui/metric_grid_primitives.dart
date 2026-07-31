@@ -120,8 +120,6 @@ class _SourceChip extends StatelessWidget {
 /// Renders through [DeltaText] so the direction color follows the user's
 /// market-color preference (incl. colorblind mode) like every other delta
 /// in the app, instead of the old hard-coded primary/destructive pair.
-// TODO(doc 15 §8): flip good/bad per metric kind (resting HR down = good)
-// once metric metadata carries a `higherIsBetter` flag.
 class _TrendBadge extends StatelessWidget {
   const _TrendBadge({required this.trend});
   final MetricTrend trend;
@@ -136,6 +134,11 @@ class _TrendBadge extends StatelessWidget {
       format: DeltaFormat.percent,
       fractionDigits: 0,
       style: context.captionLabelStyle,
+      color: switch (trend.isFavorable) {
+        true => context.appTheme.status.success.fg,
+        false => context.appTheme.status.danger.fg,
+        null => context.appTheme.status.info.fg,
+      },
     );
   }
 }

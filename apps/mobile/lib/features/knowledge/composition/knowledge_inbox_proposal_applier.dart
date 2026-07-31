@@ -53,6 +53,10 @@ class KnowledgeInboxProposalApplier {
         return promotionService.promoteClassification(
           note: current,
           classification: kind.trim(),
+          decisionOptions: _stringList(proposal.payload['decision_options']),
+          expectedOutcome: _optionalString(
+            proposal.payload['expected_outcome'],
+          ),
         );
       case InboxProposalKind.tags:
         final raw = proposal.payload['tags'];
@@ -160,6 +164,21 @@ class KnowledgeInboxProposalApplier {
       return result;
     });
   }
+}
+
+List<String> _stringList(Object? value) {
+  if (value is! List) return const <String>[];
+  return value
+      .whereType<String>()
+      .map((item) => item.trim())
+      .where((item) => item.isNotEmpty)
+      .toSet()
+      .toList(growable: false);
+}
+
+String? _optionalString(Object? value) {
+  if (value is! String || value.trim().isEmpty) return null;
+  return value.trim();
 }
 
 final knowledgeInboxProposalApplierProvider =

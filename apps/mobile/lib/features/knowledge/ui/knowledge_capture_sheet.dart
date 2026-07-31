@@ -1,31 +1,17 @@
 /// Unified KnowledgeOS Capture sheet
 /// (`docs/domains/knowledgeos-domain.md` §3 + §5 + §14).
 ///
-/// One sheet, one textarea, one Save. Replaces the old Inbox-only
-/// `_NewNoteSheet`. Default Auto mode lands as a `KnowledgeNote` first —
-/// zero-latency, never blocks on AI. Users can also pick a concrete
-/// target kind up front: Routine writes a structured row immediately;
-/// Decision / Principle / Assumption / Concept / Experiment are promoted to
-/// first-class typed objects. In Auto mode, after save,
-/// the sheet awaits a single LLM round-trip via [captureClassifierProvider]
-/// (LLM when a device profile is configured, deterministic heuristic
-/// otherwise). When the classifier returns a non-Note kind the sheet swaps
-/// its body for an inline "AI 建议升级" card with ✓ / ✗:
-///
-/// - ✓ promotes:
-///   * `routine` → writes a [KnowledgeRoutine] + soft-deletes the
-///     temp Note. RoutineDueAgent picks it up from the next tick.
-///   * other kinds (decision / principle / assumption / concept /
-///     experiment) → atomically writes the typed object and records the
-///     source relationship on the Note.
-/// - ✗ keeps the Note unchanged. Sheet closes.
+/// One sheet, one textarea, one Save. Default Auto mode persists a
+/// [KnowledgeNote] and closes immediately. Repository change scheduling then
+/// runs Inbox Triage and contradiction detection in the background, so capture
+/// never waits for an LLM. Users can still choose a concrete kind up front;
+/// structured kinds are validated and promoted explicitly during the save.
 library;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import '../../../core/logging/providers.dart' show loggerProvider;
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
@@ -53,11 +39,7 @@ class _KnowledgeCaptureSheet extends ConsumerStatefulWidget {
       _KnowledgeCaptureSheetState();
 }
 
-/// Sheet drives a small state machine. `composing` → user typing.
-/// `saving` → upsertNote in flight (sync). `classifying` → note saved,
-/// awaiting LLM classifier. `suggesting` → classifier returned an
-/// upgrade, waiting for ✓ / ✗. `applying` → promote in flight.
-enum _CaptureStage { composing, saving, classifying, suggesting, applying }
+enum _CaptureStage { composing, saving }
 
 class _KnowledgeCaptureSheetState
     extends ConsumerState<_KnowledgeCaptureSheet> {
@@ -65,10 +47,6 @@ class _KnowledgeCaptureSheetState
   final _bodyCtrl = TextEditingController();
   _CaptureStage _stage = _CaptureStage.composing;
   CaptureKind? _manualKind;
-
-  // Populated after save → classify().
-  KnowledgeNote? _savedNote;
-  CaptureClassification? _suggestion;
 
   @override
   void initState() {
@@ -96,6 +74,30 @@ class _KnowledgeCaptureSheetState
   Future<void> _saveAndClassify() async {
     if (!_canSave) return;
     final manualKind = _manualKind;
+    final text = <String>[
+      if (_titleCtrl.text.trim().isNotEmpty) _titleCtrl.text.trim(),
+      _bodyCtrl.text.trim(),
+    ].join('\n');
+    CaptureClassification? manualClassification;
+    if (manualKind == CaptureKind.decision ||
+        manualKind == CaptureKind.assumption ||
+        manualKind == CaptureKind.experiment) {
+      manualClassification = await const HeuristicCaptureClassifier().classify(
+        text: text,
+      );
+      if (manualClassification.kind != manualKind) {
+        if (mounted) {
+          AppMessenger.show(
+            context,
+            ToastKind.warning,
+            AppLocalizations.of(context).knowledgeCaptureNeedsStructure(
+              _captureKindShortLabel(AppLocalizations.of(context), manualKind!),
+            ),
+          );
+        }
+        return;
+      }
+    }
     setState(() => _stage = _CaptureStage.saving);
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
@@ -117,53 +119,16 @@ class _KnowledgeCaptureSheetState
       await repo.upsertNote(note);
 
       if (manualKind != null) {
-        _savedNote = note;
-        await _applyManualKind(note, manualKind);
+        await _applyManualKind(
+          note,
+          manualKind,
+          classification: manualClassification,
+        );
         if (mounted) Navigator.of(context).pop();
         return;
       }
 
-      // Classify against title + body together — the routine signal
-      // sometimes lives in the title ("港卡活跃") and sometimes in the
-      // body. The classifier provider returns the LLM impl when a
-      // device profile is configured; otherwise the pure-Dart
-      // heuristic. Either path is async + degrades to "note" on any
-      // failure, so we never block the sheet.
-      final text = <String>[
-        if (_titleCtrl.text.trim().isNotEmpty) _titleCtrl.text.trim(),
-        _bodyCtrl.text.trim(),
-      ].join('\n');
-      if (mounted) {
-        setState(() {
-          _savedNote = note;
-          _stage = _CaptureStage.classifying;
-        });
-      }
-      final classifier = ref.read(captureClassifierProvider);
-      final logger = ref.read(loggerProvider);
-      logger.d(
-        '[capture-sheet] classify start impl=${classifier.runtimeType} '
-        'text_len=${text.length}',
-      );
-      final classification = await classifier.classify(text: text);
-      logger.i(
-        '[capture-sheet] classify done kind=${classification.kind.wire} '
-        'confidence=${classification.confidence.toStringAsFixed(2)} '
-        'hasSuggestion=${classification.hasSuggestion} '
-        '(isUpgrade=${classification.isUpgrade} hasPolish=${classification.hasPolish})',
-      );
-      if (!mounted) return;
-      if (classification.hasSuggestion) {
-        setState(() {
-          _suggestion = classification;
-          _stage = _CaptureStage.suggesting;
-        });
-      } else {
-        logger.d(
-          '[capture-sheet] no suggestion (Note kept as-is), closing sheet',
-        );
-        Navigator.of(context).pop();
-      }
+      if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
         setState(() => _stage = _CaptureStage.composing);
@@ -176,7 +141,11 @@ class _KnowledgeCaptureSheetState
     }
   }
 
-  Future<void> _applyManualKind(KnowledgeNote note, CaptureKind kind) async {
+  Future<void> _applyManualKind(
+    KnowledgeNote note,
+    CaptureKind kind, {
+    CaptureClassification? classification,
+  }) async {
     final repo = await ref.read(knowledgeRepositoryProvider.future);
     final stamper = await ref.read(mutationStamperProvider.future);
     final title = note.title.trim();
@@ -200,122 +169,25 @@ class _KnowledgeCaptureSheetState
           kind: kind,
           intervalDays: kind == CaptureKind.routine ? 180 : null,
           statement: statement,
+          decisionOptions: classification?.decisionOptions ?? const <String>[],
+          expectedOutcome: classification?.expectedOutcome,
+          assumptionConfidence: classification?.assumptionConfidence,
+          experimentMetrics:
+              classification?.experimentMetrics ?? const <String>[],
+          experimentMethod: classification?.experimentMethod,
         );
       case CaptureKind.note:
         break;
     }
   }
 
-  Future<void> _acceptUpgrade() async {
-    final note = _savedNote;
-    final suggestion = _suggestion;
-    if (note == null || suggestion == null) return;
-    setState(() => _stage = _CaptureStage.applying);
-    try {
-      final repo = await ref.read(knowledgeRepositoryProvider.future);
-      final stamper = await ref.read(mutationStamperProvider.future);
-
-      // Resolved title / body that downstream writes use. When the LLM
-      // produced a polish, that's the authoritative version going
-      // forward — the raw input was always the temp lossy form.
-      final resolvedTitle = suggestion.polishedTitle ?? note.title;
-      final resolvedBody = suggestion.polishedBody ?? note.bodyMd;
-
-      switch (suggestion.kind) {
-        case CaptureKind.routine:
-        case CaptureKind.decision:
-        case CaptureKind.principle:
-        case CaptureKind.assumption:
-        case CaptureKind.concept:
-        case CaptureKind.experiment:
-          final polishStamp = await stamper.stamp();
-          final polishedNote = KnowledgeNote(
-            id: note.id,
-            title: resolvedTitle,
-            bodyMd: resolvedBody,
-            sourceUrl: note.sourceUrl,
-            tags: note.tags,
-            projectTag: note.projectTag,
-            createdAt: note.createdAt,
-            sync: _syncMetaFromStamp(polishStamp),
-          );
-          await repo.upsertNote(polishedNote);
-          final promotion = KnowledgePromotionService(
-            repository: repo,
-            ownerUserId: note.sync.ownerUserId,
-            stamp: () async => _syncMetaFromStamp(await stamper.stamp()),
-          );
-          await promotion.promoteCapture(
-            note: polishedNote,
-            kind: suggestion.kind,
-            scope: suggestion.scope,
-            intervalDays: suggestion.intervalDays,
-            statement: suggestion.statement,
-          );
-        case CaptureKind.note:
-          // Polish-only path: classifier said "note" but produced a
-          // rewrite worth showing. Apply just the polish in place.
-          if (suggestion.hasPolish) {
-            final stamp = await stamper.stamp();
-            await repo.upsertNote(
-              KnowledgeNote(
-                id: note.id,
-                title: resolvedTitle,
-                bodyMd: resolvedBody,
-                sourceUrl: note.sourceUrl,
-                tags: note.tags,
-                projectTag: note.projectTag,
-                createdAt: note.createdAt,
-                sync: SyncMeta(
-                  ownerUserId: stamp.ownerUserId,
-                  updatedAt: stamp.now,
-                  updatedByDevice: stamp.deviceId,
-                  hlc: stamp.hlc,
-                ),
-              ),
-            );
-          }
-      }
-      if (mounted) Navigator.of(context).pop();
-    } catch (e) {
-      if (mounted) {
-        setState(() => _stage = _CaptureStage.suggesting);
-        AppMessenger.show(
-          context,
-          ToastKind.error,
-          AppLocalizations.of(context).knowledgeCaptureApplyFailed('$e'),
-        );
-      }
-    }
-  }
-
-  void _dismissSuggestion() {
-    // ✗ → keep the saved Note as-is and close. The Note survived the
-    // save step so dismissing just means the user agreed it's a Note.
-    if (mounted) Navigator.of(context).pop();
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final stage = _stage;
-    final isSuggestStage =
-        stage == _CaptureStage.suggesting || stage == _CaptureStage.applying;
-    final showSavedPreview =
-        stage == _CaptureStage.classifying || isSuggestStage;
-    final savedTitle = _savedNote?.title ?? _titleCtrl.text;
-    final savedBody = _savedNote?.bodyMd ?? _bodyCtrl.text;
     return AppSheet(
-      title: isSuggestStage
-          ? l10n.knowledgeCaptureSuggestionTitle
-          : stage == _CaptureStage.classifying
-          ? l10n.knowledgeCaptureSavedClassifyingTitle
-          : l10n.knowledgeCaptureTitle,
-      subtitle: isSuggestStage
-          ? l10n.knowledgeCaptureSuggestionSubtitle
-          : stage == _CaptureStage.classifying
-          ? l10n.knowledgeCaptureClassifyingSubtitle
-          : l10n.knowledgeCaptureComposeSubtitle,
+      title: l10n.knowledgeCaptureTitle,
+      subtitle: l10n.knowledgeCaptureComposeSubtitle,
       footer: switch (stage) {
         _CaptureStage.composing => AppSheetFooter(
           submitLabel: _manualKind == null
@@ -329,79 +201,13 @@ class _KnowledgeCaptureSheetState
             _saveAndClassify();
           },
         ),
-        _CaptureStage.suggesting || _CaptureStage.applying => AppSheetFooter(
-          submitLabel: stage == _CaptureStage.applying
-              ? l10n.knowledgeCaptureApplying
-              : (_suggestion!.isUpgrade
-                    ? l10n.knowledgeCaptureApplySuggestion
-                    : l10n.knowledgeCaptureApplyPolish),
-          cancelLabel: l10n.knowledgeCaptureKeepOriginal,
-          busy: stage == _CaptureStage.applying,
-          onSubmit: _acceptUpgrade,
-          onCancel: _dismissSuggestion,
-        ),
-        _CaptureStage.saving || _CaptureStage.classifying => null,
+        _CaptureStage.saving => null,
       },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AnimatedSwitcher(
-            duration: AppMotionPolicy.duration(context, Motion.medium),
-            switchInCurve: Motion.standardDecelerate,
-            switchOutCurve: Motion.standardAccelerate,
-            transitionBuilder: _capturePreviewTransition,
-            child: showSavedPreview
-                ? _SavedCapturePreview(
-                    key: const ValueKey<String>('saved-capture-preview'),
-                    sectionTitle: stage == _CaptureStage.classifying
-                        ? l10n.knowledgeCaptureSavedClassifyingTitle
-                        : l10n.knowledgeCaptureSavedPreviewTitle,
-                    promoted: isSuggestStage,
-                    title: savedTitle,
-                    body: savedBody,
-                  )
-                : const SizedBox.shrink(
-                    key: ValueKey<String>('no-saved-capture-preview'),
-                  ),
-          ),
-          if (showSavedPreview) const SizedBox(height: AppSpacing.s12),
-          AnimatedSwitcher(
-            duration: AppMotionPolicy.duration(context, Motion.medium),
-            switchInCurve: Motion.standardDecelerate,
-            switchOutCurve: Motion.standardAccelerate,
-            transitionBuilder: _captureStageTransition,
-            child: switch (stage) {
-              _CaptureStage.composing || _CaptureStage.saving => _ComposeBody(
-                key: const ValueKey<String>('compose'),
-                titleController: _titleCtrl,
-                bodyController: _bodyCtrl,
-                selectedKind: _manualKind,
-                onKindChanged: (kind) => setState(() => _manualKind = kind),
-              ),
-              _CaptureStage.classifying => _ClassifyingBody(
-                key: const ValueKey<String>('classifying'),
-                onSkip: () {
-                  // The Note is already persisted from `_saveAndClassify` →
-                  // popping here just abandons the in-flight classifier.
-                  // The `mounted` guard after the await drops whatever the
-                  // LLM returns once it eventually lands.
-                  if (mounted) Navigator.of(context).pop();
-                },
-              ),
-              _CaptureStage.suggesting ||
-              _CaptureStage.applying => _SuggestionBody(
-                key: const ValueKey<String>('suggestion'),
-                suggestion: _suggestion!,
-                originalTitle: savedTitle,
-                originalBody: savedBody,
-                applying: stage == _CaptureStage.applying,
-                onAccept: _acceptUpgrade,
-                onDismiss: _dismissSuggestion,
-              ),
-            },
-          ),
-        ],
+      child: _ComposeBody(
+        titleController: _titleCtrl,
+        bodyController: _bodyCtrl,
+        selectedKind: _manualKind,
+        onKindChanged: (kind) => setState(() => _manualKind = kind),
       ),
     );
   }

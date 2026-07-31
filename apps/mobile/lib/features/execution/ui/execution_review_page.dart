@@ -9,6 +9,8 @@ import '../../../core/ai/agents/ui/agent_results_panel.dart';
 import '../../../core/lifeos/action_outcome.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
+import '../../../core/sync/mutation_context.dart';
+import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as execution_agent_providers;
@@ -20,6 +22,7 @@ import 'execution_action_card_controller.dart';
 import 'execution_action_sheet.dart';
 import 'execution_delete_confirm.dart';
 import 'execution_progress_sheet.dart';
+import 'execution_search_sheet.dart';
 import 'execution_source_route.dart';
 import 'execution_widgets.dart';
 
@@ -32,6 +35,12 @@ class ExecutionReviewPage extends ConsumerWidget {
     return ShellTabScaffold(
       title: l10n.executionReviewTitle,
       actions: [
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.search,
+          label: l10n.executionSearchTitle,
+          onPress: () => showExecutionSearchSheet(context: context),
+          order: -10,
+        ),
         ShellHeaderActionSpec(
           icon: FLucideIcons.plus,
           label: l10n.executionCreateProgressTitle,
@@ -141,6 +150,8 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
         _ReviewSummary(entries: entries, closedActions: closedActions),
         const SizedBox(height: AppSpacing.s16),
         const _ExecutionReviewAgentPanel(),
+        const SizedBox(height: AppSpacing.s8),
+        const _ReviewNextActionsBatch(),
         if (empty)
           ExecutionStateView(
             icon: FLucideIcons.clipboardCheck,
@@ -224,6 +235,159 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
     );
   }
 }
+
+class _ReviewNextActionsBatch extends ConsumerStatefulWidget {
+  const _ReviewNextActionsBatch();
+
+  @override
+  ConsumerState<_ReviewNextActionsBatch> createState() =>
+      _ReviewNextActionsBatchState();
+}
+
+class _ReviewNextActionsBatchState
+    extends ConsumerState<_ReviewNextActionsBatch> {
+  bool _running = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final artifact = ref
+        .watch(execution_agent_providers.latestExecutionReviewArtifactProvider)
+        .value;
+    final plan = artifact?.actions
+        .where((action) => action.kind == 'proposal')
+        .firstOrNull;
+    if (plan == null) return const SizedBox.shrink();
+    final projectIds = _stringIds(plan.payload['projects_without_next_action']);
+    final commitmentIds = _stringIds(
+      plan.payload['commitments_without_next_action'],
+    );
+    final count = projectIds.length + commitmentIds.length;
+    if (count == 0) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: FButton(
+        variant: FButtonVariant.outline,
+        onPress: _running
+            ? null
+            : () =>
+                  _create(projectIds: projectIds, commitmentIds: commitmentIds),
+        child: Text(l10n.executionReviewCreateNextActions(count)),
+      ),
+    );
+  }
+
+  Future<void> _create({
+    required List<String> projectIds,
+    required List<String> commitmentIds,
+  }) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: Text(
+        l10n.executionReviewCreateNextActions(
+          projectIds.length + commitmentIds.length,
+        ),
+      ),
+      body: Text(l10n.executionReviewCreateNextActionsBody),
+      confirmLabel: l10n.commonConfirm,
+      cancelLabel: l10n.commonCancel,
+      icon: FLucideIcons.listPlus,
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _running = true);
+    try {
+      final owner = await ref.read(executionOwnerUserIdProvider.future);
+      final repository = await ref.read(executionRepositoryProvider.future);
+      final open = await repository.listOpenActions(ownerUserId: owner);
+      final projectsWithAction = open
+          .map((action) => action.projectId)
+          .whereType<String>()
+          .toSet();
+      final commitmentsWithAction = open
+          .map((action) => action.commitmentId)
+          .whereType<String>()
+          .toSet();
+      final stamper = await ref.read(mutationStamperProvider.future);
+      final actions = <ExecutionAction>[];
+      for (final id in projectIds) {
+        if (projectsWithAction.contains(id)) continue;
+        final project = await repository.findProject(
+          ownerUserId: owner,
+          id: id,
+        );
+        if (project == null) continue;
+        final stamp = await stamper.stamp();
+        actions.add(
+          ExecutionAction(
+            id: kExecutionUuid.v4(),
+            title: l10n.executionReviewNextActionFor(project.title),
+            projectId: project.id,
+            priority: ExecutionPriority.high,
+            scheduledFor: stamp.now,
+            createdAt: stamp.now,
+            sync: SyncMeta(
+              ownerUserId: stamp.ownerUserId,
+              updatedAt: stamp.now,
+              updatedByDevice: stamp.deviceId,
+              hlc: stamp.hlc,
+            ),
+          ),
+        );
+      }
+      for (final id in commitmentIds) {
+        if (commitmentsWithAction.contains(id)) continue;
+        final commitment = await repository.findCommitment(
+          ownerUserId: owner,
+          id: id,
+        );
+        if (commitment == null) continue;
+        final stamp = await stamper.stamp();
+        actions.add(
+          ExecutionAction(
+            id: kExecutionUuid.v4(),
+            title: l10n.executionReviewNextActionFor(commitment.title),
+            projectId: commitment.projectId,
+            commitmentId: commitment.id,
+            priority: ExecutionPriority.high,
+            scheduledFor: stamp.now,
+            createdAt: stamp.now,
+            sync: SyncMeta(
+              ownerUserId: stamp.ownerUserId,
+              updatedAt: stamp.now,
+              updatedByDevice: stamp.deviceId,
+              hlc: stamp.hlc,
+            ),
+          ),
+        );
+      }
+      await repository.upsertActions(actions);
+      ref.invalidate(executionTodayActionsProvider);
+      ref.invalidate(executionOpenActionsProvider);
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          l10n.executionReviewCreatedNextActions(actions.length),
+        );
+      }
+    } on Object catch (error, stackTrace) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(context, error, stackTrace: stackTrace),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _running = false);
+    }
+  }
+}
+
+List<String> _stringIds(Object? value) => value is List
+    ? value.whereType<String>().toList(growable: false)
+    : const [];
 
 class _ReviewSummary extends StatelessWidget {
   const _ReviewSummary({required this.entries, required this.closedActions});

@@ -71,6 +71,8 @@ class KnowledgeExperimentClosure {
   final KnowledgeAssumption? targetAssumption;
 }
 
+typedef KnowledgeRowChanged = void Function(String tableName, String rowId);
+
 class KnowledgeRepository
     with
         KnowledgeNotesRepositoryMixin,
@@ -83,14 +85,19 @@ class KnowledgeRepository
         KnowledgePromotionsRepositoryMixin,
         KnowledgeRelationsRepositoryMixin,
         KnowledgeRepositoryMerge {
-  KnowledgeRepository({required AppDatabase db, required OutboxStore outbox})
-    : _db = db,
-      _outbox = outbox;
+  KnowledgeRepository({
+    required AppDatabase db,
+    required OutboxStore outbox,
+    KnowledgeRowChanged? onRowChanged,
+  }) : _db = db,
+       _outbox = outbox,
+       _onRowChanged = onRowChanged;
 
   @override
   final AppDatabase _db;
   @override
   final OutboxStore _outbox;
+  final KnowledgeRowChanged? _onRowChanged;
 
   Future<T> transaction<T>(Future<T> Function() action) =>
       _db.transaction(action);
@@ -111,6 +118,7 @@ class KnowledgeRepository
       await _db.into(table).insert(companion, mode: InsertMode.insertOrReplace);
       await _outbox.enqueue(table: tableName, rowId: rowId);
     });
+    _onRowChanged?.call(tableName, rowId);
   }
 
   /// Soft-delete one KnowledgeOS row using the shared sync columns.
@@ -145,6 +153,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
         await _outbox.enqueue(table: kind.tableName, rowId: id);
       }
     });
+    _onRowChanged?.call(kind.tableName, id);
   }
 
   TableInfo<Table, Object?> _tableFor(KnowledgeEntryKind kind) =>

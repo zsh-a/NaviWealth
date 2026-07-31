@@ -101,7 +101,7 @@ workflow state.
 | Tab | Purpose |
 |---|---|
 | Inbox | Fast capture with no synchronous LLM call |
-| Library | Browse and edit knowledge objects; Decision is the primary object |
+| Library | Browse, search, and edit the complete knowledge collection; Decision is the primary object |
 | Review | Due decisions, stale assumptions, contradictions, inbox AI suggestions, due routines |
 
 Key files:
@@ -114,6 +114,11 @@ Key files:
 - `features/knowledge/ui/knowledge_object_detail_page.dart`
 
 Capture rule: saving to Inbox must remain fast and offline. Do not call the LLM synchronously on the save path. AI classification, tags, links, and merge suggestions are asynchronous review work.
+
+Repository writes debounce an event-triggered agent run. New or edited Notes
+schedule Inbox Triage and contradiction detection; changes to Decisions,
+Principles, and Assumptions schedule contradiction detection. Agent run records
+identify these runs with the `event` trigger.
 
 ## AI Tools
 
@@ -147,8 +152,9 @@ Rules:
 - `queue_*` inbox triage tools persist derived envelopes to `knowledge_inbox_triage` for the Review tab; they are not chat proposal-card apply kinds.
 - Before creating new knowledge, prefer search or similarity tools to avoid duplicates.
 - The model must not invent decisions, principles, assumptions, or outcomes. User confirmation is required.
-- `review_knowledge_health` uses the same 90-day stale-assumption threshold as
-  Review agents/UI. Orphan Notes must be older than 24 hours and have neither
+- `review_knowledge_health` uses the user-configured stale-assumption threshold
+  shared by Review agents/UI. Review cadence and the stale threshold are
+  device-local Knowledge Settings preferences. Orphan Notes must be older than 24 hours and have neither
   tags, project membership, nor incoming/outgoing Knowledge relations.
 - Topic evolution expands the query through matched Concept aliases, paginates
   Notes and Decisions, and reports truncation metadata instead of silently
@@ -250,6 +256,12 @@ Decision links are persisted as typed `knowledge_relations` rows, never as
 synthetic tags. When a Note is promoted, its outgoing relations move to the
 typed object in the same transaction; proposal undo restores both the source
 Note and its original relation endpoints.
+
+Promotion is structurally strict: a Decision needs at least two options, an
+Assumption needs an explicit confidence, and an Experiment needs both a method
+and one or more metrics. Capture classifiers and Inbox proposals must carry
+these fields through to the confirmed promotion; incomplete suggestions stay
+as Notes instead of creating hollow first-class objects.
 
 ## Decision Lifecycle
 

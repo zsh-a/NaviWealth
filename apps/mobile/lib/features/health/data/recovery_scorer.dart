@@ -17,6 +17,10 @@ class RecoveryResult {
     required this.score,
     required this.verdict,
     required this.inputs,
+    required this.confidence,
+    required this.coverage,
+    required this.freshnessHours,
+    required this.components,
   });
 
   /// Null when insufficient data.
@@ -28,7 +32,29 @@ class RecoveryResult {
   /// Raw metric values that drove the score.
   final Map<String, Object?> inputs;
 
+  /// `high`, `medium`, `low`, or `insufficient`.
+  final String confidence;
+
+  /// Fraction of the six supported inputs that contributed to the score.
+  final double coverage;
+
+  /// Age of the freshest recent input. Null when there is no recent input.
+  final double? freshnessHours;
+
+  /// Explainable per-input scores and recent/baseline sample counts.
+  final List<Map<String, Object?>> components;
+
   bool get hasScore => score != null;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'score': score,
+    'verdict': verdict,
+    'inputs': inputs,
+    'confidence': confidence,
+    'coverage': coverage,
+    'freshness_hours': freshnessHours,
+    'components': components,
+  };
 }
 
 /// Pure recovery scorer — no side effects, no DB.
@@ -104,41 +130,101 @@ class RecoveryScorer {
         bbRecent != null ||
         stressRecent != null;
 
+    final freshestAt = _freshestAt(
+      <List<HealthMetric>>[hrv, sleep, rhr, vo2Max, bodyBattery, stress],
+      recentFrom,
+      t,
+    );
+    final freshnessHours = freshestAt == null
+        ? null
+        : t.difference(freshestAt).inMinutes / 60;
+
     if (!haveBaseline || !haveRecent) {
       return RecoveryResult(
         score: null,
         verdict: 'insufficient_data',
         inputs: inputs,
+        confidence: 'insufficient',
+        coverage: 0,
+        freshnessHours: freshnessHours,
+        components: const <Map<String, Object?>>[],
       );
     }
 
     // Per-component sub-scores in 0–100.
     final subScores = <double>[];
+    final components = <Map<String, Object?>>[];
+
+    void addComponent({
+      required String key,
+      required double score,
+      required int recentSamples,
+      required int baselineSamples,
+    }) {
+      subScores.add(score);
+      components.add(<String, Object?>{
+        'metric': key,
+        'score': _round(score),
+        'recent_samples': recentSamples,
+        'baseline_samples': baselineSamples,
+        'weight': 1,
+      });
+    }
 
     if (hrvRecent != null && hrvBaseline != null && hrvBaseline > 0) {
       final ratio = (hrvRecent - hrvBaseline) / hrvBaseline;
-      subScores.add(_clamp(50 + ratio * 125, 0, 100));
+      addComponent(
+        key: 'hrv',
+        score: _clamp(50 + ratio * 125, 0, 100),
+        recentSamples: _countInWindow(hrv, recentFrom, t),
+        baselineSamples: hrvBaselineN,
+      );
     }
     if (rhrRecent != null && rhrBaseline != null && rhrBaseline > 0) {
       final ratio = (rhrRecent - rhrBaseline) / rhrBaseline;
-      subScores.add(_clamp(50 - ratio * 125, 0, 100));
+      addComponent(
+        key: 'rhr',
+        score: _clamp(50 - ratio * 125, 0, 100),
+        recentSamples: _countInWindow(rhr, recentFrom, t),
+        baselineSamples: rhrBaselineN,
+      );
     }
     if (sleepHoursRecent != null) {
-      subScores.add(_clamp(50 + (sleepHoursRecent - 7.0) * 20, 0, 100));
+      addComponent(
+        key: 'sleep',
+        score: _clamp(50 + (sleepHoursRecent - 7.0) * 20, 0, 100),
+        recentSamples: _countInWindow(sleep, recentFrom, t),
+        baselineSamples: sleepBaselineN,
+      );
     }
     if (vo2Recent != null && vo2Baseline != null && vo2Baseline > 0) {
       final ratio = (vo2Recent - vo2Baseline) / vo2Baseline;
-      subScores.add(_clamp(50 + ratio * 125, 0, 100));
+      addComponent(
+        key: 'vo2_max',
+        score: _clamp(50 + ratio * 125, 0, 100),
+        recentSamples: _countInWindow(vo2Max, recentFrom, t),
+        baselineSamples: vo2BaselineN,
+      );
     }
     // Body Battery: higher is better (like HRV).
     if (bbRecent != null && bbBaseline != null && bbBaseline > 0) {
       final ratio = (bbRecent - bbBaseline) / bbBaseline;
-      subScores.add(_clamp(50 + ratio * 125, 0, 100));
+      addComponent(
+        key: 'body_battery',
+        score: _clamp(50 + ratio * 125, 0, 100),
+        recentSamples: _countInWindow(bodyBattery, recentFrom, t),
+        baselineSamples: bbBaselineN,
+      );
     }
     // Stress: lower is better (like RHR — inverted).
     if (stressRecent != null && stressBaseline != null && stressBaseline > 0) {
       final ratio = (stressRecent - stressBaseline) / stressBaseline;
-      subScores.add(_clamp(50 - ratio * 125, 0, 100));
+      addComponent(
+        key: 'stress',
+        score: _clamp(50 - ratio * 125, 0, 100),
+        recentSamples: _countInWindow(stress, recentFrom, t),
+        baselineSamples: stressBaselineN,
+      );
     }
 
     if (subScores.isEmpty) {
@@ -146,18 +232,36 @@ class RecoveryScorer {
         score: null,
         verdict: 'insufficient_data',
         inputs: inputs,
+        confidence: 'insufficient',
+        coverage: 0,
+        freshnessHours: freshnessHours,
+        components: const <Map<String, Object?>>[],
       );
     }
 
     final avg = subScores.reduce((a, b) => a + b) / subScores.length;
     final rounded = avg.round();
+    final coverage = subScores.length / 6;
+    final confidence = switch ((coverage, freshnessHours)) {
+      (>= 0.66, final double hours) when hours <= 36 => 'high',
+      (>= 0.33, final double hours) when hours <= 72 => 'medium',
+      _ => 'low',
+    };
     final verdict = rounded < 40
         ? 'strained'
         : rounded < 70
         ? 'balanced'
         : 'rested';
 
-    return RecoveryResult(score: rounded, verdict: verdict, inputs: inputs);
+    return RecoveryResult(
+      score: rounded,
+      verdict: verdict,
+      inputs: inputs,
+      confidence: confidence,
+      coverage: _round(coverage),
+      freshnessHours: freshnessHours == null ? null : _round(freshnessHours),
+      components: List<Map<String, Object?>>.unmodifiable(components),
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -210,6 +314,25 @@ class RecoveryScorer {
       n += 1;
     }
     return n == 0 ? null : sumHours / n;
+  }
+
+  static DateTime? _freshestAt(
+    List<List<HealthMetric>> groups,
+    DateTime from,
+    DateTime to,
+  ) {
+    DateTime? latest;
+    for (final rows in groups) {
+      for (final metric in rows) {
+        if (metric.capturedAt.isBefore(from) || metric.capturedAt.isAfter(to)) {
+          continue;
+        }
+        if (latest == null || metric.capturedAt.isAfter(latest)) {
+          latest = metric.capturedAt;
+        }
+      }
+    }
+    return latest;
   }
 
   static double _clamp(double v, double lo, double hi) =>

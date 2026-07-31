@@ -246,7 +246,13 @@ void main() {
       expect(snapshot, isNotNull);
       expect(snapshot!.traceId, 'trace-parser-1');
       expect(snapshot.dueReviews.single.id, 'decision_1');
-      expect(snapshot.staleAssumptions.single.id, 'assumption_stale');
+      expect(snapshot.staleAssumptions, hasLength(2));
+      expect(
+        snapshot.staleAssumptions
+            .firstWhere((item) => item.id == 'assumption_stale')
+            .daysSinceVerify,
+        kKnowledgeAssumptionStaleDays,
+      );
     });
 
     test('returns null for malformed tool output', () {
@@ -279,7 +285,12 @@ void main() {
 
       expect(snapshot.dueReviews.single.question, 'Revisit portfolio hedge?');
       expect(snapshot.traceId, 'agent-runtime:knowledge_review:run_1');
-      expect(snapshot.staleAssumptions.single.statement, 'Rates stay high');
+      expect(
+        snapshot.staleAssumptions
+            .firstWhere((item) => item.id == 'assumption_stale')
+            .statement,
+        'Rates stay high',
+      );
       expect(dispatcher.calls.map((c) => c.name), <String>[
         'list_due_reviews',
         'list_open_assumptions',
@@ -405,7 +416,12 @@ void main() {
         final snapshot = await reader.read(_context());
 
         expect(snapshot.dueReviews.single.question, 'Revisit portfolio hedge?');
-        expect(snapshot.staleAssumptions.single.statement, 'Rates stay high');
+        expect(
+          snapshot.staleAssumptions
+              .firstWhere((item) => item.id == 'assumption_stale')
+              .statement,
+          'Rates stay high',
+        );
         expect(fallback.calls, 0);
       },
     );

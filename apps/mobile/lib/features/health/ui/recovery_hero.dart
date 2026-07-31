@@ -39,6 +39,8 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
             final verdict = out?['verdict']?.toString() ?? 'insufficient_data';
             final score = out?['score'];
             final scoreText = score == null ? '—' : '$score';
+            final confidence = out?['confidence']?.toString() ?? 'insufficient';
+            final coverage = (out?['coverage'] as num?)?.toDouble() ?? 0;
             final color = RecoveryVerdict.color(verdict, colors);
             final actions = healthPlanActionsForVerdict(verdict, l10n);
             final primaryActions = actions
@@ -103,6 +105,14 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
                   style: context.bodyCaptionStyle,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.s8),
+                AppBadge(
+                  label: l10n.healthRecoveryConfidence(
+                    _confidenceLabel(confidence, l10n),
+                    (coverage * 100).round(),
+                  ),
+                  size: AppBadgeSize.compact,
                 ),
                 if (!enabled) ...[
                   const SizedBox(height: AppSpacing.s12),
@@ -172,6 +182,14 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
     );
   }
 }
+
+String _confidenceLabel(String confidence, AppLocalizations l10n) =>
+    switch (confidence) {
+      'high' => l10n.healthRecoveryConfidenceHigh,
+      'medium' => l10n.healthRecoveryConfidenceMedium,
+      'low' => l10n.healthRecoveryConfidenceLow,
+      _ => l10n.healthRecoveryConfidenceInsufficient,
+    };
 
 class _PlanActionRow extends StatelessWidget {
   const _PlanActionRow({required this.action, required this.color});
