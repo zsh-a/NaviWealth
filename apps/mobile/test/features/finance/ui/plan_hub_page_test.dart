@@ -258,10 +258,18 @@ void main() {
     final dcaY = tester.getTopLeft(find.text(l10n.planStatusDcaDue).first).dy;
     expect(shortfallY, lessThan(budgetY));
     expect(budgetY, lessThan(dcaY));
+    expect(find.text(l10n.planStatusPendingReviews(2)), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text(l10n.planAttentionShowAll(2)),
+      120,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text(l10n.planAttentionShowAll(2)));
+    await tester.pumpAndSettle();
     expect(
       find.text(l10n.planStatusPendingReviews(2)),
       findsOneWidget,
-      reason: 'Lower-priority items stay available in My plans.',
+      reason: 'Promoted work appears once and remains available on demand.',
     );
   });
 

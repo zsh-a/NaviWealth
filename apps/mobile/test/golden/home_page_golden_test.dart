@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/features/finance/activation/data/finance_activation_providers.dart';
+import 'package:naviwealth/features/finance/activation/domain/finance_activation.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_feed_provider.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_feed_query.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
@@ -265,6 +267,18 @@ List<Override> _homeOverrides(
   ActivityFeedPage? activityFeed,
 }) => [
   sharedPreferencesProvider.overrideWithValue(prefs),
+  financeActivationProvider.overrideWith(
+    (_) => AsyncValue.data(
+      FinanceActivationSnapshot(
+        stage: snapshot == null
+            ? FinanceActivationStage.addData
+            : FinanceActivationStage.complete,
+        hasLedgerData: snapshot != null,
+        pendingReviewCount: 0,
+        runway: null,
+      ),
+    ),
+  ),
   ingestDraftProgressProvider.overrideWith(
     (_) => Stream.value(const IngestDraftProgress.empty()),
   ),

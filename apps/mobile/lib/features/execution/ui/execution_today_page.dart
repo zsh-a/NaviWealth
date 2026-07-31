@@ -198,17 +198,19 @@ class _TodayListState extends ConsumerState<_TodayList> {
         final suggestedFocus = view.suggestedFocus;
 
         final actionModules = <Widget>[
-          _DailyFocusPanel(
-            actions: openActions,
-            selectedIds: focusIds,
-            suggestedActions: suggestedFocus,
-            onAdoptSuggestions: suggestedFocus.isEmpty
-                ? null
-                : () => ref
-                      .read(executionDailyFocusProvider.notifier)
-                      .set(suggestedFocus.map((action) => action.id)),
-            onOpen: (action) => context.push(ExecutionRoutes.action(action.id)),
-          ),
+          if (_filter == ExecutionTodayFilter.focus && openActions.isNotEmpty)
+            _DailyFocusPanel(
+              actions: openActions,
+              selectedIds: focusIds,
+              suggestedActions: suggestedFocus,
+              onAdoptSuggestions: suggestedFocus.isEmpty
+                  ? null
+                  : () => ref
+                        .read(executionDailyFocusProvider.notifier)
+                        .set(suggestedFocus.map((action) => action.id)),
+              onOpen: (action) =>
+                  context.push(ExecutionRoutes.action(action.id)),
+            ),
           if (visibleActions.isEmpty) ...[
             if (!(_filter == ExecutionTodayFilter.focus && focusIds.isNotEmpty))
               ExecutionStateView(

@@ -75,6 +75,11 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
                     .value
                     ?.contains(DomainScope.health) ??
                 false;
+            if (score == null ||
+                confidence == 'insufficient' ||
+                verdict == 'insufficient_data') {
+              return _RecoveryInsufficientState(verdict: verdict, color: color);
+            }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -97,15 +102,12 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (score != null)
-                      Text(
-                        scoreText,
-                        // Hero rule (§8.1): the recovery score is the
-                        // stage's display-scale number.
-                        style: TypographyTokens.numericDisplay.copyWith(
-                          color: scoreColor,
-                        ),
+                    Text(
+                      scoreText,
+                      style: TypographyTokens.numericDisplay.copyWith(
+                        color: scoreColor,
                       ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.s16),
@@ -240,6 +242,57 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
           },
         ),
       ),
+    );
+  }
+}
+
+class _RecoveryInsufficientState extends StatelessWidget {
+  const _RecoveryInsufficientState({
+    required this.verdict,
+    required this.color,
+  });
+
+  final String verdict;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            AppIconTile(
+              icon: RecoveryVerdict.icon(verdict),
+              color: color,
+              size: 36,
+              iconSize: AppIconSizes.md,
+              backgroundOpacity: AppOpacity.medium,
+              foregroundOpacity: 1,
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Text(
+                l10n.healthRecoveryTitle,
+                style: context.mutedLabelStyle,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        Text(
+          RecoveryVerdict.label(verdict, l10n),
+          style: context.labelStyle.copyWith(color: color),
+        ),
+        const SizedBox(height: AppSpacing.s4),
+        Text(
+          RecoveryVerdict.suggestion(verdict, l10n),
+          style: context.bodyCaptionStyle,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 }

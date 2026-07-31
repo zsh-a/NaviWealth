@@ -135,6 +135,10 @@ class _DashboardBodyContentState extends ConsumerState<_DashboardBodyContent> {
                                       const SizedBox(
                                         height: AppPageRhythm.module,
                                       ),
+                                      const FinanceActivationCard(),
+                                      const SizedBox(
+                                        height: AppPageRhythm.section,
+                                      ),
                                       HomeQuickActions(
                                         mode: snapshot.isEmpty
                                             ? HomeQuickActionMode.onboarding

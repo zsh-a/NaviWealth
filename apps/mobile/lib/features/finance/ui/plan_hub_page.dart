@@ -35,6 +35,8 @@ class PlanHubPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final status = ref.watch(planningHubStatusProvider);
     final fire = ref.watch(fireDashboardViewProvider);
+    final attentionItems = _attentionItems(context, status);
+    final promotedPaths = attentionItems.map((item) => item.path).toSet();
 
     return ShellTabScaffold(
       title: l10n.planHubTitle,
@@ -52,15 +54,19 @@ class PlanHubPage extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: shellTabContentPadding(context, top: AppSpacing.s8),
               children: [
-                _AttentionSection(status: status),
+                _AttentionSection(status: status, items: attentionItems),
                 const SizedBox(height: AppSpacing.s20),
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final overview = _PlanningOverview(
                       status: status,
                       fire: fire,
+                      excludedPaths: promotedPaths,
                     );
-                    final plans = _MyPlansSection(status: status);
+                    final plans = _MyPlansSection(
+                      status: status,
+                      excludedPaths: promotedPaths,
+                    );
                     if (constraints.maxWidth < Breakpoints.contentThreeColumn) {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -118,9 +124,10 @@ Future<void> _refreshPlanningWorkspace(WidgetRef ref) async {
 }
 
 class _AttentionSection extends StatefulWidget {
-  const _AttentionSection({required this.status});
+  const _AttentionSection({required this.status, required this.items});
 
   final PlanningHubStatus status;
+  final List<_PlanEntrySpec> items;
 
   @override
   State<_AttentionSection> createState() => _AttentionSectionState();
@@ -133,7 +140,7 @@ class _AttentionSectionState extends State<_AttentionSection> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final status = widget.status;
-    final items = _attentionItems(context, status);
+    final items = widget.items;
     final hasAttention = items.isNotEmpty;
     final tone = hasAttention ? items.first.tone : AppBadgeTone.success;
     final icon = hasAttention
@@ -142,8 +149,8 @@ class _AttentionSectionState extends State<_AttentionSection> {
         ? FLucideIcons.loaderCircle
         : FLucideIcons.circleCheckBig;
 
-    return SoftCard.hero(
-      padding: AppPageRhythm.heroPadding,
+    return SoftCard.raised(
+      padding: AppPageRhythm.cardPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -252,12 +259,6 @@ class _AttentionRow extends StatelessWidget {
                 Text(spec.title, style: context.labelStyle),
                 const SizedBox(height: AppSpacing.s2),
                 Text(spec.subtitle, style: context.captionStyle),
-                const SizedBox(height: AppSpacing.s4),
-                AppBadge(
-                  label: _toneLabel(context, spec.tone),
-                  tone: spec.tone,
-                  size: AppBadgeSize.compact,
-                ),
               ],
             ),
           ),
@@ -298,66 +299,77 @@ class _AttentionSkeleton extends StatelessWidget {
 }
 
 class _PlanningOverview extends StatelessWidget {
-  const _PlanningOverview({required this.status, required this.fire});
+  const _PlanningOverview({
+    required this.status,
+    required this.fire,
+    required this.excludedPaths,
+  });
 
   final PlanningHubStatus status;
   final AsyncValue<FireDashboardView> fire;
+  final Set<String> excludedPaths;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
-    return AppSection.group(
-      title: l10n.planOverviewTitle,
-      children: [
-        _PlanRow(spec: _runwayEntry(l10n, status)),
-        const FDivider(),
-        _PlanRow(spec: _budgetEntry(l10n, status)),
-        const FDivider(),
-        _PlanRow(spec: _fireEntry(l10n, formatters, fire)),
-      ],
-    );
+    final entries = [
+      _runwayEntry(l10n, status),
+      _budgetEntry(l10n, status),
+      _fireEntry(l10n, formatters, fire),
+    ].where((entry) => !excludedPaths.contains(entry.path)).toList();
+    return _PlanSection(title: l10n.planOverviewTitle, entries: entries);
   }
 }
 
 class _MyPlansSection extends StatelessWidget {
-  const _MyPlansSection({required this.status});
+  const _MyPlansSection({required this.status, required this.excludedPaths});
 
   final PlanningHubStatus status;
+  final Set<String> excludedPaths;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final entries = <_PlanEntrySpec>[
+      _dcaEntry(context, l10n, status),
+      _rebalanceEntry(l10n, status),
+      if (!kIsWeb) _incomeStrategyEntry(l10n, status),
+      _PlanEntrySpec(
+        icon: FLucideIcons.waypoints,
+        title: l10n.lifeEventScenariosTitle,
+        subtitle: status.pendingLifeEventReviews == null
+            ? l10n.planStatusLoading
+            : status.pendingLifeEventReviews == 0
+            ? l10n.planStatusNoPendingReviews
+            : l10n.planStatusPendingReviews(status.pendingLifeEventReviews!),
+        path: FinanceRoutes.planLifeEvents,
+        tone: status.pendingLifeEventReviews == null
+            ? AppBadgeTone.neutral
+            : status.pendingLifeEventReviews! > 0
+            ? AppBadgeTone.warning
+            : AppBadgeTone.success,
+      ),
+    ].where((entry) => !excludedPaths.contains(entry.path)).toList();
+    return _PlanSection(title: l10n.planMyPlansTitle, entries: entries);
+  }
+}
+
+class _PlanSection extends StatelessWidget {
+  const _PlanSection({required this.title, required this.entries});
+
+  final String title;
+  final List<_PlanEntrySpec> entries;
+
+  @override
+  Widget build(BuildContext context) {
     return AppSection.group(
-      title: l10n.planMyPlansTitle,
+      title: title,
       children: [
-        _PlanRow(spec: _dcaEntry(context, l10n, status)),
-        const FDivider(),
-        _PlanRow(spec: _rebalanceEntry(l10n, status)),
-        if (!kIsWeb) ...[
-          const FDivider(),
-          _PlanRow(spec: _incomeStrategyEntry(l10n, status)),
+        for (final (index, entry) in entries.indexed) ...[
+          if (index > 0) const FDivider(),
+          _PlanRow(spec: entry),
         ],
-        const FDivider(),
-        _PlanRow(
-          spec: _PlanEntrySpec(
-            icon: FLucideIcons.waypoints,
-            title: l10n.lifeEventScenariosTitle,
-            subtitle: status.pendingLifeEventReviews == null
-                ? l10n.planStatusLoading
-                : status.pendingLifeEventReviews == 0
-                ? l10n.planStatusNoPendingReviews
-                : l10n.planStatusPendingReviews(
-                    status.pendingLifeEventReviews!,
-                  ),
-            path: FinanceRoutes.planLifeEvents,
-            tone: status.pendingLifeEventReviews == null
-                ? AppBadgeTone.neutral
-                : status.pendingLifeEventReviews! > 0
-                ? AppBadgeTone.warning
-                : AppBadgeTone.success,
-          ),
-        ),
       ],
     );
   }

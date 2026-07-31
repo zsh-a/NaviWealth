@@ -46,28 +46,6 @@ class ExecutionOverviewStrip extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Hero rule (§8.1): every Today stage carries exactly one
-        // display-scale number — for Execution, today's focus count.
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Text(
-              '${snapshot.todayCount}',
-              style: TypographyTokens.displayLarge,
-            ),
-            const SizedBox(width: AppSpacing.s8),
-            Expanded(
-              child: Text(
-                l10n.executionOverviewFocus,
-                style: context.mutedLabelStyle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.s12),
         AppAdaptiveChoice<ExecutionTodayFilter>(
           title: l10n.executionTodayTitle,
           options: ExecutionTodayFilter.values,

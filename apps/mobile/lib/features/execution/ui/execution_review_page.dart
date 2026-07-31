@@ -127,52 +127,59 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
             .toList(growable: false);
     final empty = entries.isEmpty && closedActions.isEmpty;
 
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: shellTabContentPadding(context),
-      children: [
-        SegmentedRow<_ReviewWindow>(
-          options: _ReviewWindow.values,
-          value: _window,
-          labelOf: (window) => switch (window) {
-            _ReviewWindow.sevenDays => l10n.executionReviewWindow7d,
-            _ReviewWindow.thirtyDays => l10n.executionReviewWindow30d,
-            _ReviewWindow.all => l10n.executionReviewWindowAll,
-          },
-          iconOf: (window) => switch (window) {
-            _ReviewWindow.sevenDays => FLucideIcons.calendarDays,
-            _ReviewWindow.thirtyDays => FLucideIcons.calendarRange,
-            _ReviewWindow.all => FLucideIcons.infinity,
-          },
-          onChanged: (window) => setState(() => _window = window),
+    final itemBuilders = <WidgetBuilder>[
+      (_) => SegmentedRow<_ReviewWindow>(
+        options: _ReviewWindow.values,
+        value: _window,
+        labelOf: (window) => switch (window) {
+          _ReviewWindow.sevenDays => l10n.executionReviewWindow7d,
+          _ReviewWindow.thirtyDays => l10n.executionReviewWindow30d,
+          _ReviewWindow.all => l10n.executionReviewWindowAll,
+        },
+        iconOf: (window) => switch (window) {
+          _ReviewWindow.sevenDays => FLucideIcons.calendarDays,
+          _ReviewWindow.thirtyDays => FLucideIcons.calendarRange,
+          _ReviewWindow.all => FLucideIcons.infinity,
+        },
+        onChanged: (window) => setState(() => _window = window),
+      ),
+      (_) => const SizedBox(height: AppSpacing.s12),
+      (_) => _ReviewSummary(entries: entries, closedActions: closedActions),
+      (_) => const SizedBox(height: AppSpacing.s12),
+      (_) => const _ExecutionReviewRunStatus(),
+      (_) => const SizedBox(height: AppSpacing.s16),
+      (_) => const _ExecutionReviewAgentPanel(),
+      (_) => const SizedBox(height: AppSpacing.s8),
+      (_) => const _ReviewNextActionsBatch(),
+    ];
+    if (empty) {
+      itemBuilders.add(
+        (_) => ExecutionStateView(
+          icon: FLucideIcons.clipboardCheck,
+          title: l10n.executionReviewEmptyTitle,
+          message: l10n.executionReviewEmptyBody,
+          action: FButton(
+            onPress: () => showExecutionProgressSheet(context: context),
+            child: Text(l10n.executionCreateProgressTitle),
+          ),
         ),
-        const SizedBox(height: AppSpacing.s12),
-        _ReviewSummary(entries: entries, closedActions: closedActions),
-        const SizedBox(height: AppSpacing.s12),
-        const _ExecutionReviewRunStatus(),
-        const SizedBox(height: AppSpacing.s16),
-        const _ExecutionReviewAgentPanel(),
-        const SizedBox(height: AppSpacing.s8),
-        const _ReviewNextActionsBatch(),
-        if (empty)
-          ExecutionStateView(
-            icon: FLucideIcons.clipboardCheck,
-            title: l10n.executionReviewEmptyTitle,
-            message: l10n.executionReviewEmptyBody,
-            action: FButton(
-              onPress: () => showExecutionProgressSheet(context: context),
-              child: Text(l10n.executionCreateProgressTitle),
-            ),
-          )
-        else if (entries.isNotEmpty) ...[
-          ExecutionSectionHeader(
+      );
+    }
+    if (entries.isNotEmpty) {
+      itemBuilders
+        ..add(
+          (_) => ExecutionSectionHeader(
             title: l10n.executionReviewTitle,
             count: entries.length,
             icon: FLucideIcons.clipboardCheck,
           ),
-          const SizedBox(height: AppSpacing.s8),
-          for (final entry in entries) ...[
-            ExecutionProgressCard(
+        )
+        ..add((_) => const SizedBox(height: AppSpacing.s8));
+      for (final entry in entries) {
+        itemBuilders.add(
+          (_) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+            child: ExecutionProgressCard(
               entry: entry,
               actionLabel:
                   relations?.actionLabel(entry.actionId) ??
@@ -199,19 +206,26 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
                       ExecutionRoutes.commitment(entry.commitmentId!),
                     ),
             ),
-            const SizedBox(height: AppSpacing.s8),
-          ],
-          const SizedBox(height: AppSpacing.s8),
-        ],
-        if (closedActions.isNotEmpty) ...[
-          ExecutionSectionHeader(
+          ),
+        );
+      }
+      itemBuilders.add((_) => const SizedBox(height: AppSpacing.s8));
+    }
+    if (closedActions.isNotEmpty) {
+      itemBuilders
+        ..add(
+          (_) => ExecutionSectionHeader(
             title: l10n.executionClosedActionsSection,
             count: closedActions.length,
             icon: FLucideIcons.archive,
           ),
-          const SizedBox(height: AppSpacing.s8),
-          for (final action in closedActions) ...[
-            ExecutionActionCardController(
+        )
+        ..add((_) => const SizedBox(height: AppSpacing.s8));
+      for (final action in closedActions) {
+        itemBuilders.add(
+          (_) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+            child: ExecutionActionCardController(
               action: action,
               projectLabel:
                   relations?.projectLabel(action.projectId) ??
@@ -229,10 +243,16 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
               droppedProgressNote: l10n.executionProgressDroppedDefault,
               outcome: outcomes[action.id],
             ),
-            const SizedBox(height: AppSpacing.s8),
-          ],
-        ],
-      ],
+          ),
+        );
+      }
+    }
+
+    return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: shellTabContentPadding(context),
+      itemCount: itemBuilders.length,
+      itemBuilder: (context, index) => itemBuilders[index](context),
     );
   }
 }

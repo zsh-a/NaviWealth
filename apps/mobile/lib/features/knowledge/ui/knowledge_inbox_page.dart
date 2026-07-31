@@ -252,13 +252,19 @@ class _NotesList extends ConsumerWidget {
       ),
       data: (notes) {
         if (notes.isEmpty) {
-          return KnowledgeEmptyState(
-            icon: FLucideIcons.inbox,
-            title: l10n.knowledgeInboxEmptyTitle,
-            message: l10n.knowledgeInboxEmptyBody,
-            action: FButton(
-              onPress: () => showKnowledgeCaptureSheet(context, ref),
-              child: Text(l10n.knowledgeCaptureAction),
+          return AppRefreshIndicator(
+            onRefresh: () => _refreshKnowledgeRepository(ref),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: shellTabContentPadding(context, top: AppSpacing.s8),
+              children: [
+                KnowledgeEmptyState(
+                  icon: FLucideIcons.inbox,
+                  title: l10n.knowledgeInboxEmptyTitle,
+                  message: l10n.knowledgeInboxEmptyBody,
+                  density: KnowledgeStateDensity.section,
+                ),
+              ],
             ),
           );
         }

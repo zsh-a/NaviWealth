@@ -82,6 +82,18 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final hasData = ref.watch(healthHasAnyDataProvider);
+    final dataReady = hasData.value == true;
+    final resolving = hasData.isLoading && !hasData.hasValue;
+    final stage = resolving
+        ? const _HealthTodayLoadingStage()
+        : hasData.hasError
+        ? _HealthTodayErrorStage(
+            onRetry: () => ref.invalidate(healthHasAnyDataProvider),
+          )
+        : dataReady
+        ? const FadeSlideIn(child: _RecoveryHero())
+        : const _HealthActivationCard();
     return ShellTabScaffold(
       title: l10n.healthTodayTitle,
       actions: [
@@ -103,20 +115,57 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
           padding: shellTabContentPadding(context),
           onRefresh: _refresh,
           greeting: const SizedBox.shrink(),
-          // Hero = recovery verdict + same-day actions (ex-Plan).
-          stage: const FadeSlideIn(child: _RecoveryHero()),
-          stickyBuilder: (context, progress) =>
-              _HealthRecoveryStickyBar(progress: progress),
-          modules: [
-            const _HealthActivationCard(),
-            _HealthDataFreshnessBanner(lastRefresh: _lastRefresh),
-            // Signal first: alerts only when real; briefing promoted.
-            const _RecoveryAlertPanel(),
-            const _BriefingPanel(),
-            const _MetricGrid(),
-          ],
-          secondary: const [_SourcesSection(), _WeeklySummaryPanel()],
+          stage: stage,
+          stickyBuilder: dataReady
+              ? (context, progress) =>
+                    _HealthRecoveryStickyBar(progress: progress)
+              : null,
+          modules: dataReady
+              ? [
+                  _HealthDataFreshnessBanner(lastRefresh: _lastRefresh),
+                  const _RecoveryAlertPanel(),
+                  const _BriefingPanel(),
+                  const _MetricGrid(),
+                ]
+              : const [],
+          secondary: dataReady
+              ? const [_SourcesSection(), _WeeklySummaryPanel()]
+              : const [_SourcesSection()],
         ),
+      ),
+    );
+  }
+}
+
+class _HealthTodayLoadingStage extends StatelessWidget {
+  const _HealthTodayLoadingStage();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SoftCard.raised(
+      child: SizedBox(
+        height: AppControlHeights.compactLoadingState,
+        child: Center(child: FCircularProgress()),
+      ),
+    );
+  }
+}
+
+class _HealthTodayErrorStage extends StatelessWidget {
+  const _HealthTodayErrorStage({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SoftCard.raised(
+      child: AppEmptyState.error(
+        title: l10n.commonLoadFailed,
+        message: l10n.healthSyncFailed,
+        retryLabel: l10n.commonRetry,
+        onRetry: onRetry,
+        compact: true,
       ),
     );
   }

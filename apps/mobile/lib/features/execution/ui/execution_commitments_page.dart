@@ -139,158 +139,205 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
     final commitments = commitmentsAsync.value ?? const <ExecutionCommitment>[];
     final activeView = _view == _CommitmentsView.active;
     final empty = projects.isEmpty && commitments.isEmpty && actions.isEmpty;
+    final actionCountByProject = <String, int>{};
+    final blockedCountByProject = <String, int>{};
+    final actionCountByCommitment = <String, int>{};
+    final blockedCountByCommitment = <String, int>{};
+    final commitmentCountByProject = <String, int>{};
+    for (final action in actions) {
+      if (action.projectId case final projectId?) {
+        actionCountByProject.update(
+          projectId,
+          (count) => count + 1,
+          ifAbsent: () => 1,
+        );
+        if (action.status == ExecutionActionStatus.blocked) {
+          blockedCountByProject.update(
+            projectId,
+            (count) => count + 1,
+            ifAbsent: () => 1,
+          );
+        }
+      }
+      if (action.commitmentId case final commitmentId?) {
+        actionCountByCommitment.update(
+          commitmentId,
+          (count) => count + 1,
+          ifAbsent: () => 1,
+        );
+        if (action.status == ExecutionActionStatus.blocked) {
+          blockedCountByCommitment.update(
+            commitmentId,
+            (count) => count + 1,
+            ifAbsent: () => 1,
+          );
+        }
+      }
+    }
+    for (final commitment in commitments) {
+      if (commitment.projectId case final projectId?) {
+        commitmentCountByProject.update(
+          projectId,
+          (count) => count + 1,
+          ifAbsent: () => 1,
+        );
+      }
+    }
 
-    return ListView(
+    final itemBuilders = <WidgetBuilder>[
+      (_) => SegmentedRow<_CommitmentsView>(
+        options: _CommitmentsView.values,
+        value: _view,
+        labelOf: (view) => _commitmentsViewLabel(l10n, view),
+        iconOf: _commitmentsViewIcon,
+        onChanged: (view) => setState(() => _view = view),
+      ),
+      (_) => const SizedBox(height: AppSpacing.s12),
+    ];
+    if (empty) {
+      itemBuilders.add(
+        (_) => ExecutionStateView(
+          icon: activeView ? FLucideIcons.listTodo : FLucideIcons.archive,
+          title: activeView
+              ? l10n.executionCommitmentsEmptyTitle
+              : l10n.executionCommitmentsClosedEmptyTitle,
+          message: activeView
+              ? l10n.executionCommitmentsEmptyBody
+              : l10n.executionCommitmentsClosedEmptyBody,
+          action: activeView
+              ? FButton(
+                  onPress: () => showExecutionActionSheet(context: context),
+                  child: Text(l10n.executionCreateActionTitle),
+                )
+              : null,
+        ),
+      );
+    }
+    if (standaloneActions.isNotEmpty) {
+      itemBuilders
+        ..add(
+          (_) => ExecutionSectionHeader(
+            title: activeView
+                ? l10n.executionInboxSection
+                : l10n.executionClosedActionsSection,
+            count: standaloneActions.length,
+            icon: activeView ? FLucideIcons.inbox : FLucideIcons.archive,
+          ),
+        )
+        ..add((_) => const SizedBox(height: AppSpacing.s8));
+      for (final action in standaloneActions) {
+        itemBuilders.add(
+          (_) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+            child: ExecutionActionCardController(
+              action: action,
+              projectLabel:
+                  relations?.projectLabel(action.projectId) ??
+                  executionProjectRelationLabel(projects, action.projectId),
+              commitmentLabel:
+                  relations?.commitmentLabel(action.commitmentId) ??
+                  executionCommitmentRelationLabel(
+                    commitments,
+                    action.commitmentId,
+                  ),
+              onOpen: () => context.push(ExecutionRoutes.action(action.id)),
+              onSourceOpen: executionSourceOpen(context, ref, action.source),
+              onEdit: () =>
+                  showExecutionActionSheet(context: context, action: action),
+              onRecordProgress: () =>
+                  showExecutionProgressSheet(context: context, action: action),
+              doneProgressNote: l10n.executionProgressDoneDefault,
+              droppedProgressNote: l10n.executionProgressDroppedDefault,
+            ),
+          ),
+        );
+      }
+      itemBuilders.add((_) => const SizedBox(height: AppSpacing.s8));
+    }
+    if (projects.isNotEmpty) {
+      itemBuilders
+        ..add(
+          (_) => ExecutionSectionHeader(
+            title: l10n.executionProjectsSection,
+            count: projects.length,
+            icon: FLucideIcons.folder,
+          ),
+        )
+        ..add((_) => const SizedBox(height: AppSpacing.s8));
+      for (final project in projects) {
+        itemBuilders.add(
+          (_) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+            child: ExecutionProjectCardController(
+              project: project,
+              openActionCount: actionCountByProject[project.id] ?? 0,
+              blockedActionCount: blockedCountByProject[project.id] ?? 0,
+              commitmentCount: commitmentCountByProject[project.id] ?? 0,
+              onCreateAction: () => showExecutionActionSheet(
+                context: context,
+                initialProjectId: project.id,
+              ),
+              onEdit: () =>
+                  showExecutionProjectSheet(context: context, project: project),
+              onRecordProgress: () => showExecutionProgressSheet(
+                context: context,
+                projectId: project.id,
+              ),
+              onOpen: () => context.push(ExecutionRoutes.project(project.id)),
+            ),
+          ),
+        );
+      }
+      itemBuilders.add((_) => const SizedBox(height: AppSpacing.s8));
+    }
+    if (commitments.isNotEmpty) {
+      itemBuilders
+        ..add(
+          (_) => ExecutionSectionHeader(
+            title: l10n.executionCommitmentsSection,
+            count: commitments.length,
+            icon: FLucideIcons.target,
+          ),
+        )
+        ..add((_) => const SizedBox(height: AppSpacing.s8));
+      for (final commitment in commitments) {
+        itemBuilders.add(
+          (_) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+            child: ExecutionCommitmentCardController(
+              commitment: commitment,
+              openActionCount: actionCountByCommitment[commitment.id] ?? 0,
+              blockedActionCount: blockedCountByCommitment[commitment.id] ?? 0,
+              projectLabel:
+                  relations?.projectLabel(commitment.projectId) ??
+                  executionProjectRelationLabel(projects, commitment.projectId),
+              onCreateAction: () => showExecutionActionSheet(
+                context: context,
+                initialProjectId: commitment.projectId,
+                initialCommitmentId: commitment.id,
+              ),
+              onEdit: () => showExecutionCommitmentSheet(
+                context: context,
+                commitment: commitment,
+              ),
+              onRecordProgress: () => showExecutionProgressSheet(
+                context: context,
+                projectId: commitment.projectId,
+                commitmentId: commitment.id,
+              ),
+              onOpen: () =>
+                  context.push(ExecutionRoutes.commitment(commitment.id)),
+            ),
+          ),
+        );
+      }
+    }
+
+    return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: shellTabContentPadding(context),
-      children: [
-        SegmentedRow<_CommitmentsView>(
-          options: _CommitmentsView.values,
-          value: _view,
-          labelOf: (view) => _commitmentsViewLabel(l10n, view),
-          iconOf: _commitmentsViewIcon,
-          onChanged: (view) => setState(() => _view = view),
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        if (empty)
-          ExecutionStateView(
-            icon: activeView ? FLucideIcons.listTodo : FLucideIcons.archive,
-            title: activeView
-                ? l10n.executionCommitmentsEmptyTitle
-                : l10n.executionCommitmentsClosedEmptyTitle,
-            message: activeView
-                ? l10n.executionCommitmentsEmptyBody
-                : l10n.executionCommitmentsClosedEmptyBody,
-            action: activeView
-                ? FButton(
-                    onPress: () => showExecutionActionSheet(context: context),
-                    child: Text(l10n.executionCreateActionTitle),
-                  )
-                : null,
-          ),
-        if (!empty) ...[
-          if (standaloneActions.isNotEmpty) ...[
-            ExecutionSectionHeader(
-              title: activeView
-                  ? l10n.executionInboxSection
-                  : l10n.executionClosedActionsSection,
-              count: standaloneActions.length,
-              icon: activeView ? FLucideIcons.inbox : FLucideIcons.archive,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            for (final action in standaloneActions) ...[
-              ExecutionActionCardController(
-                action: action,
-                projectLabel:
-                    relations?.projectLabel(action.projectId) ??
-                    executionProjectRelationLabel(projects, action.projectId),
-                commitmentLabel:
-                    relations?.commitmentLabel(action.commitmentId) ??
-                    executionCommitmentRelationLabel(
-                      commitments,
-                      action.commitmentId,
-                    ),
-                onOpen: () => context.push(ExecutionRoutes.action(action.id)),
-                onSourceOpen: executionSourceOpen(context, ref, action.source),
-                onEdit: () =>
-                    showExecutionActionSheet(context: context, action: action),
-                onRecordProgress: () => showExecutionProgressSheet(
-                  context: context,
-                  action: action,
-                ),
-                doneProgressNote: l10n.executionProgressDoneDefault,
-                droppedProgressNote: l10n.executionProgressDroppedDefault,
-              ),
-              const SizedBox(height: AppSpacing.s8),
-            ],
-            const SizedBox(height: AppSpacing.s8),
-          ],
-          if (projects.isNotEmpty) ...[
-            ExecutionSectionHeader(
-              title: l10n.executionProjectsSection,
-              count: projects.length,
-              icon: FLucideIcons.folder,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            for (final project in projects) ...[
-              ExecutionProjectCardController(
-                project: project,
-                openActionCount: _openActionCount(
-                  actions,
-                  projectId: project.id,
-                ),
-                blockedActionCount: _blockedActionCount(
-                  actions,
-                  projectId: project.id,
-                ),
-                commitmentCount: commitments
-                    .where((commitment) => commitment.projectId == project.id)
-                    .length,
-                onCreateAction: () => showExecutionActionSheet(
-                  context: context,
-                  initialProjectId: project.id,
-                ),
-                onEdit: () => showExecutionProjectSheet(
-                  context: context,
-                  project: project,
-                ),
-                onRecordProgress: () => showExecutionProgressSheet(
-                  context: context,
-                  projectId: project.id,
-                ),
-                onOpen: () => context.push(ExecutionRoutes.project(project.id)),
-              ),
-              const SizedBox(height: AppSpacing.s8),
-            ],
-            const SizedBox(height: AppSpacing.s8),
-          ],
-          if (commitments.isNotEmpty) ...[
-            ExecutionSectionHeader(
-              title: l10n.executionCommitmentsSection,
-              count: commitments.length,
-              icon: FLucideIcons.target,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            for (final commitment in commitments) ...[
-              ExecutionCommitmentCardController(
-                commitment: commitment,
-                openActionCount: _openActionCount(
-                  actions,
-                  commitmentId: commitment.id,
-                ),
-                blockedActionCount: _blockedActionCount(
-                  actions,
-                  commitmentId: commitment.id,
-                ),
-                projectLabel:
-                    relations?.projectLabel(commitment.projectId) ??
-                    executionProjectRelationLabel(
-                      projects,
-                      commitment.projectId,
-                    ),
-                onCreateAction: () => showExecutionActionSheet(
-                  context: context,
-                  initialProjectId: commitment.projectId,
-                  initialCommitmentId: commitment.id,
-                ),
-                onEdit: () => showExecutionCommitmentSheet(
-                  context: context,
-                  commitment: commitment,
-                ),
-                onRecordProgress: () => showExecutionProgressSheet(
-                  context: context,
-                  projectId: commitment.projectId,
-                  commitmentId: commitment.id,
-                ),
-                onOpen: () =>
-                    context.push(ExecutionRoutes.commitment(commitment.id)),
-              ),
-              const SizedBox(height: AppSpacing.s8),
-            ],
-            const SizedBox(height: AppSpacing.s8),
-          ],
-        ],
-      ],
+      itemCount: itemBuilders.length,
+      itemBuilder: (context, index) => itemBuilders[index](context),
     );
   }
 }
@@ -307,33 +354,4 @@ IconData _commitmentsViewIcon(_CommitmentsView view) {
     _CommitmentsView.active => FLucideIcons.play,
     _CommitmentsView.closed => FLucideIcons.archive,
   };
-}
-
-int _openActionCount(
-  List<ExecutionAction> actions, {
-  String? projectId,
-  String? commitmentId,
-}) {
-  return actions
-      .where(
-        (action) =>
-            (projectId == null || action.projectId == projectId) &&
-            (commitmentId == null || action.commitmentId == commitmentId),
-      )
-      .length;
-}
-
-int _blockedActionCount(
-  List<ExecutionAction> actions, {
-  String? projectId,
-  String? commitmentId,
-}) {
-  return actions
-      .where(
-        (action) =>
-            action.status == ExecutionActionStatus.blocked &&
-            (projectId == null || action.projectId == projectId) &&
-            (commitmentId == null || action.commitmentId == commitmentId),
-      )
-      .length;
 }
