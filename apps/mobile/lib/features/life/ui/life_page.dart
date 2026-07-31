@@ -20,8 +20,8 @@ import 'package:naviwealth/features/life/ui/life_event_l10n.dart';
 import 'package:naviwealth/features/life/ui/life_signal_sheet.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-/// Max attention rows when the list is collapsed.
-const int _kAttentionCollapsedCap = 5;
+/// Recent, non-priority rows visible before the timeline is expanded.
+const int _kRecentCollapsedCap = 4;
 
 class LifePage extends ConsumerWidget {
   const LifePage({super.key});
@@ -33,6 +33,32 @@ class LifePage extends ConsumerWidget {
     final events = ref.watch(lifeEventsProvider);
     final hero = ref.watch(lifeHeroSummaryProvider);
     final formatters = context.formatters(ref);
+    final priorityEvents = events
+        .where((event) => event.priority == LifeSignalPriority.high)
+        .toList(growable: false);
+    final recentEvents = events
+        .where((event) => event.priority != LifeSignalPriority.high)
+        .toList(growable: false);
+    final eventPresentation = _LifeEventPresentation(
+      executionEnabled: packs.any(
+        (pack) => pack.scope == DomainScope.execution,
+      ),
+      l10n: l10n,
+      timeLabel: (at) => formatters.time(at),
+      iconFor: _iconFor,
+      accentFor: (event) => _accentFor(context, event),
+      domainLabel: (scope) => _domainLabel(l10n, scope),
+    );
+    final primaryModules = <Widget>[
+      if (priorityEvents.isNotEmpty)
+        _LifeEventSection(
+          title: l10n.lifeTimelinePriorityTitle,
+          events: priorityEvents,
+          presentation: eventPresentation,
+        ),
+      if (packs.isNotEmpty)
+        _WorkspaceGrid(packs: packs, l10n: l10n, summary: hero),
+    ];
 
     return ShellCanvasScaffold(
       childPad: false,
@@ -75,21 +101,18 @@ class LifePage extends ConsumerWidget {
             ),
           ),
           modules: [
-            if (packs.isNotEmpty)
-              _WorkspaceChips(packs: packs, l10n: l10n, summary: hero),
+            if (primaryModules.isNotEmpty) _LifePrimaryModules(primaryModules),
           ],
           secondary: [
-            _AttentionSection(
-              events: events,
-              executionEnabled: packs.any(
-                (pack) => pack.scope == DomainScope.execution,
-              ),
-              l10n: l10n,
-              timeLabel: (at) => formatters.time(at),
-              iconFor: _iconFor,
-              accentFor: (e) => _accentFor(context, e),
-              domainLabel: (scope) => _domainLabel(l10n, scope),
-            ),
+            if (recentEvents.isNotEmpty)
+              _LifeEventSection(
+                title: l10n.lifeTimelineTitle,
+                events: recentEvents,
+                presentation: eventPresentation,
+                collapsedCap: _kRecentCollapsedCap,
+              )
+            else if (priorityEvents.isEmpty)
+              _LifeEmptySection(l10n: l10n),
           ],
         ),
       ),
@@ -178,7 +201,9 @@ class _LifeGreeting extends StatelessWidget {
   }
 }
 
-/// Stage: conclusion copy + primary metric number (Health/Execution pattern).
+/// Compact cross-domain status. The actionable rows below own the visual
+/// hierarchy; this stage only establishes context and must not push them below
+/// the fold.
 class _LifeHero extends StatelessWidget {
   const _LifeHero({required this.l10n, required this.summary});
 
@@ -195,40 +220,52 @@ class _LifeHero extends StatelessWidget {
         ? colors.mutedForeground
         : colors.primary;
 
-    return SoftCard.hero(
-      padding: AppPageRhythm.heroPadding,
+    return SoftCard.raised(
+      key: const ValueKey('life-summary-card'),
+      padding: AppPageRhythm.densePadding,
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          AppIconTile(
+            icon: FLucideIcons.sparkles,
+            color: metricColor,
+            size: 32,
+            iconSize: AppIconSizes.sm,
+            radius: AppRadius.sm,
+            backgroundOpacity: AppOpacity.subtle,
+            foregroundOpacity: 1,
+          ),
+          const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  summary.localizedMetricLabel(l10n),
-                  style: context.mutedLabelStyle,
-                ),
-                const SizedBox(height: AppPageRhythm.row),
-                Text(
                   summary.localizedHeadline(l10n),
-                  style: TypographyTokens.displaySmall.copyWith(height: 1.15),
+                  style: context.rowTitleStyle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: AppPageRhythm.row),
+                const SizedBox(height: AppSpacing.s4),
                 Text(
                   summary.localizedBody(l10n),
-                  style: context.bodyCaptionStyle,
+                  style: context.captionStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
           if (!summary.isCalm) ...[
             const SizedBox(width: AppSpacing.s12),
-            Text(
-              '${summary.primaryMetric}',
-              style: TypographyTokens.displayLarge.copyWith(
-                color: metricColor,
-                height: 1,
-              ),
+            AppBadge(
+              label:
+                  '${summary.primaryMetric} ${summary.localizedMetricLabel(l10n)}',
+              tone: summary.hasAttention
+                  ? AppBadgeTone.warning
+                  : AppBadgeTone.accent,
+              size: AppBadgeSize.compact,
             ),
           ],
         ],
@@ -237,9 +274,11 @@ class _LifeHero extends StatelessWidget {
   }
 }
 
-/// Compact horizontal domain chips with per-domain signal badges.
-class _WorkspaceChips extends StatelessWidget {
-  const _WorkspaceChips({
+/// Equal-width domain destinations. Intrinsic-width chips caused the two rows
+/// to drift whenever a label or signal badge changed; the grid keeps a stable
+/// scan line across locales and viewport sizes.
+class _WorkspaceGrid extends StatelessWidget {
+  const _WorkspaceGrid({
     required this.packs,
     required this.l10n,
     required this.summary,
@@ -257,28 +296,44 @@ class _WorkspaceChips extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionHeader.module(title: l10n.lifeWorkbenchTitle),
-        Wrap(
-          spacing: AppPageRhythm.row,
-          runSpacing: AppPageRhythm.row,
-          children: [
-            for (final pack in packs)
-              _DomainChip(
-                pack: pack,
-                l10n: l10n,
-                colors: colors,
-                status: status,
-                signalCount: summary.signalsFor(pack.scope),
-                highCount: summary.highFor(pack.scope),
-              ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final desiredColumns =
+                constraints.maxWidth >= Breakpoints.contentThreeColumn ? 4 : 2;
+            final columns = packs.length < desiredColumns
+                ? packs.length
+                : desiredColumns;
+            final tileWidth =
+                (constraints.maxWidth - AppPageRhythm.row * (columns - 1)) /
+                columns;
+            return Wrap(
+              spacing: AppPageRhythm.row,
+              runSpacing: AppPageRhythm.row,
+              children: [
+                for (final pack in packs)
+                  SizedBox(
+                    key: ValueKey('life-domain-${pack.scope.wire}'),
+                    width: tileWidth,
+                    child: _DomainTile(
+                      pack: pack,
+                      l10n: l10n,
+                      colors: colors,
+                      status: status,
+                      signalCount: summary.signalsFor(pack.scope),
+                      highCount: summary.highFor(pack.scope),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       ],
     );
   }
 }
 
-class _DomainChip extends StatelessWidget {
-  const _DomainChip({
+class _DomainTile extends StatelessWidget {
+  const _DomainTile({
     required this.pack,
     required this.l10n,
     required this.colors,
@@ -315,7 +370,6 @@ class _DomainChip extends StatelessWidget {
       padding: AppPageRhythm.densePadding,
       onPress: () => context.go(path),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           AppIconTile(
             icon: icon,
@@ -327,7 +381,14 @@ class _DomainChip extends StatelessWidget {
             foregroundOpacity: 1,
           ),
           const SizedBox(width: AppSpacing.s8),
-          Text(label, style: context.labelStyle),
+          Expanded(
+            child: Text(
+              label,
+              style: context.labelStyle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           if (signalCount > 0) ...[
             const SizedBox(width: AppSpacing.s8),
             AppBadge(
@@ -343,10 +404,45 @@ class _DomainChip extends StatelessWidget {
   }
 }
 
-/// Attention stream: high-priority first, then the rest, with expand/collapse.
-class _AttentionSection extends StatefulWidget {
-  const _AttentionSection({
-    required this.events,
+/// Keeps the action surface and workspace navigation in one responsive module.
+/// Narrow screens preserve task-first reading order; wide canvases use two
+/// balanced columns without changing the semantic order.
+class _LifePrimaryModules extends StatelessWidget {
+  const _LifePrimaryModules(this.children);
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    if (children.length == 1) return children.first;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < Breakpoints.contentTwoColumn) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < children.length; i++) ...[
+                if (i > 0) const SizedBox(height: AppPageRhythm.section),
+                children[i],
+              ],
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: children.first),
+            const SizedBox(width: AppPageRhythm.section),
+            Expanded(child: children.last),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _LifeEventPresentation {
+  const _LifeEventPresentation({
     required this.executionEnabled,
     required this.l10n,
     required this.timeLabel,
@@ -355,129 +451,75 @@ class _AttentionSection extends StatefulWidget {
     required this.domainLabel,
   });
 
-  final List<LifeEvent> events;
   final bool executionEnabled;
   final AppLocalizations l10n;
   final String Function(DateTime at) timeLabel;
   final IconData Function(LifeEvent e) iconFor;
   final Color Function(LifeEvent e) accentFor;
   final String Function(DomainScope scope) domainLabel;
-
-  @override
-  State<_AttentionSection> createState() => _AttentionSectionState();
 }
 
-class _AttentionSectionState extends State<_AttentionSection> {
+/// One semantic tier of the life stream. Priority and recent events share the
+/// same presentation contract, while only the recent tier is collapsible.
+class _LifeEventSection extends StatefulWidget {
+  const _LifeEventSection({
+    required this.title,
+    required this.events,
+    required this.presentation,
+    this.collapsedCap,
+  });
+
+  final String title;
+  final List<LifeEvent> events;
+  final _LifeEventPresentation presentation;
+  final int? collapsedCap;
+
+  @override
+  State<_LifeEventSection> createState() => _LifeEventSectionState();
+}
+
+class _LifeEventSectionState extends State<_LifeEventSection> {
   bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
     final events = widget.events;
-    final l10n = widget.l10n;
-
-    if (events.isEmpty) {
-      return SoftCard.raised(
-        padding: AppPageRhythm.cardPadding,
-        child: Consumer(
-          builder: (context, ref, _) => AppEmptyState(
-            icon: FLucideIcons.sparkles,
-            title: l10n.lifeTimelineEmptyTitle,
-            message: l10n.lifeTimelineEmpty,
-            compact: true,
-            iconSize: AppIconSizes.lg,
-            action: FButton(
-              variant: FButtonVariant.outline,
-              onPress: () => showDomainSwitcherSheet(
-                context,
-                ref.read(activeDomainShellsProvider),
-                ref.read<String?>(domainSwitcherHomePathProvider),
-              ),
-              child: Text(l10n.shellSwitchDomainTitle),
-            ),
-          ),
-        ),
-      );
-    }
-
-    final high = events
-        .where((e) => e.priority == LifeSignalPriority.high)
-        .toList(growable: false);
-    final normal = events
-        .where((e) => e.priority != LifeSignalPriority.high)
-        .toList(growable: false);
-
-    // High-priority is never truncated. Cap only applies to the normal tier.
-    final shownHigh = high;
-    final List<LifeEvent> shownNormal;
-    if (_expanded) {
-      shownNormal = normal;
-    } else {
-      final remaining = (_kAttentionCollapsedCap - high.length).clamp(
-        0,
-        normal.length,
-      );
-      shownNormal = remaining == 0
-          ? const <LifeEvent>[]
-          : normal.take(remaining).toList(growable: false);
-    }
-    final hiddenCount = events.length - shownHigh.length - shownNormal.length;
-    final showToggle = events.length > _kAttentionCollapsedCap;
+    final cap = widget.collapsedCap;
+    final shown = cap == null || _expanded
+        ? events
+        : events.take(cap).toList(growable: false);
+    final hiddenCount = events.length - shown.length;
+    final showToggle = cap != null && events.length > cap;
+    final presentation = widget.presentation;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (shownHigh.isNotEmpty) ...[
-          SectionHeader.module(title: l10n.lifeTimelinePriorityTitle),
-          LifeTimeline(
-            items: [
-              for (final e in shownHigh)
-                LifeTimelineItem(
-                  id: e.id,
-                  at: e.at,
-                  title: e.localizedTitle(l10n),
-                  subtitle: e.localizedSubtitle(l10n),
-                  icon: widget.iconFor(e),
-                  accent: widget.accentFor(e),
-                  domainLabel: widget.domainLabel(e.domain),
-                  onOpen: _onOpen(context, e),
-                  onAction: _onAction(context, e),
-                  actionLabel: _actionLabel(e),
-                ),
-            ],
-            timeLabel: widget.timeLabel,
-          ),
-          if (shownNormal.isNotEmpty)
-            const SizedBox(height: AppPageRhythm.section),
-        ],
-        if (shownNormal.isNotEmpty) ...[
-          SectionHeader.module(title: l10n.lifeTimelineTitle),
-          LifeTimeline(
-            items: [
-              for (final e in shownNormal)
-                LifeTimelineItem(
-                  id: e.id,
-                  at: e.at,
-                  title: e.localizedTitle(l10n),
-                  subtitle: e.localizedSubtitle(l10n),
-                  icon: widget.iconFor(e),
-                  accent: widget.accentFor(e),
-                  domainLabel: widget.domainLabel(e.domain),
-                  onOpen: _onOpen(context, e),
-                  onAction: _onAction(context, e),
-                  actionLabel: _actionLabel(e),
-                ),
-            ],
-            timeLabel: widget.timeLabel,
-          ),
-        ],
+        SectionHeader.module(title: widget.title),
+        LifeTimeline(
+          items: [
+            for (final event in shown)
+              LifeTimelineItem(
+                id: event.id,
+                at: event.at,
+                title: event.localizedTitle(presentation.l10n),
+                subtitle: event.localizedSubtitle(presentation.l10n),
+                icon: presentation.iconFor(event),
+                accent: presentation.accentFor(event),
+                domainLabel: presentation.domainLabel(event.domain),
+                onOpen: _onOpen(context, event),
+                onAction: _onAction(context, event),
+                actionLabel: _actionLabel(event),
+              ),
+          ],
+          timeLabel: presentation.timeLabel,
+        ),
         if (showToggle) ...[
           const SizedBox(height: AppPageRhythm.row),
           AppRevealControl(
             expanded: _expanded,
-            collapsedLabel: l10n.lifeTimelineShowMore(
-              hiddenCount > 0 ? hiddenCount : 1,
-            ),
-            expandedLabel: l10n.lifeTimelineShowLess,
+            collapsedLabel: presentation.l10n.lifeTimelineShowMore(hiddenCount),
+            expandedLabel: presentation.l10n.lifeTimelineShowLess,
             onToggle: () => setState(() => _expanded = !_expanded),
           ),
         ],
@@ -496,15 +538,45 @@ class _AttentionSectionState extends State<_AttentionSection> {
       await showLifeSignalSheet(
         context: context,
         event: event,
-        executionEnabled: widget.executionEnabled,
+        executionEnabled: widget.presentation.executionEnabled,
       );
     };
   }
 
   String? _actionLabel(LifeEvent event) {
     if (event.actionSuggestion == null) return null;
-    return widget.l10n.lifeSignalCreateActionFor(
-      event.localizedTitle(widget.l10n),
+    final l10n = widget.presentation.l10n;
+    return l10n.lifeSignalCreateActionFor(event.localizedTitle(l10n));
+  }
+}
+
+class _LifeEmptySection extends StatelessWidget {
+  const _LifeEmptySection({required this.l10n});
+
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard.raised(
+      padding: AppPageRhythm.cardPadding,
+      child: Consumer(
+        builder: (context, ref, _) => AppEmptyState(
+          icon: FLucideIcons.sparkles,
+          title: l10n.lifeTimelineEmptyTitle,
+          message: l10n.lifeTimelineEmpty,
+          compact: true,
+          iconSize: AppIconSizes.lg,
+          action: FButton(
+            variant: FButtonVariant.outline,
+            onPress: () => showDomainSwitcherSheet(
+              context,
+              ref.read(activeDomainShellsProvider),
+              ref.read<String?>(domainSwitcherHomePathProvider),
+            ),
+            child: Text(l10n.shellSwitchDomainTitle),
+          ),
+        ),
+      ),
     );
   }
 }

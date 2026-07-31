@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
+import 'app_badge.dart';
 import 'app_icon_button.dart';
 import 'app_icon_tile.dart';
 import 'app_interaction.dart';
@@ -102,7 +103,7 @@ class _LifeTimelineRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final content = Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         AppIconTile(
           icon: item.icon,
@@ -128,30 +129,41 @@ class _LifeTimelineRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (timeLabel != null)
+                  if (timeLabel != null) ...[
+                    const SizedBox(width: AppSpacing.s8),
                     Text(timeLabel!, style: context.microCaptionStyle),
+                  ],
                 ],
               ),
-              const SizedBox(height: AppSpacing.s2),
-              Text(
-                item.subtitle,
-                style: context.captionStyle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (item.domainLabel != null) ...[
-                const SizedBox(height: AppSpacing.s4),
+              const SizedBox(height: AppSpacing.s4),
+              if (item.domainLabel case final domainLabel?)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppBadge(label: domainLabel, size: AppBadgeSize.compact),
+                    const SizedBox(width: AppSpacing.s6),
+                    Expanded(
+                      child: Text(
+                        item.subtitle,
+                        style: context.captionStyle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                )
+              else
                 Text(
-                  item.domainLabel!,
-                  style: context.microLabelStyle.copyWith(
-                    color: colors.mutedForeground,
-                  ),
+                  item.subtitle,
+                  style: context.captionStyle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
             ],
           ),
         ),
-        if (item.onOpen != null)
+        if (item.onOpen != null) ...[
+          const SizedBox(width: AppSpacing.s8),
           Icon(
             FLucideIcons.chevronRight,
             size: AppIconSizes.h18,
@@ -159,6 +171,7 @@ class _LifeTimelineRow extends StatelessWidget {
               alpha: AppOpacity.disabled,
             ),
           ),
+        ],
       ],
     );
 

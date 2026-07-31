@@ -70,9 +70,11 @@ List<ShellHeaderActionSpec> _buildShellGlobalActions(
 /// Compact domain switcher chip for a header prefix slot.
 ///
 /// Renders the active domain's icon + a chevron; tapping opens
-/// [showDomainSwitcherSheet]. Collapses to nothing when fewer than two
-/// domains are active — single-domain installs never need the switcher,
-/// matching [domainDockVisibleProvider].
+/// [showDomainSwitcherSheet]. On the Life hub it renders as an icon-only
+/// workspace control: no individual domain is active there, and showing the
+/// fallback Finance label incorrectly implies domain ownership. Collapses to
+/// nothing when fewer than two domains are active — single-domain installs
+/// never need the switcher, matching [domainDockVisibleProvider].
 class DomainSwitcherChip extends ConsumerWidget {
   const DomainSwitcherChip({super.key});
 
@@ -90,13 +92,16 @@ class DomainSwitcherChip extends ConsumerWidget {
     final homePath = ref.watch(domainSwitcherHomePathProvider);
 
     final path = GoRouter.of(context).routeInformationProvider.value.uri.path;
+    final isLifeHub = path == homePath;
     final active = activeSpecForPath(specs, path);
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
+    final semanticsLabel = isLifeHub
+        ? l10n.shellSwitchDomainTitle
+        : active.label;
 
-    // A named workspace switcher is more discoverable than the old icon-only
-    // control and keeps users oriented while moving across LifeOS domains.
     return Semantics(
-      label: active.label,
+      label: semanticsLabel,
       button: true,
       child: FTappable(
         onPress: () => showDomainSwitcherSheet(context, specs, homePath),
@@ -113,22 +118,24 @@ class DomainSwitcherChip extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                active.selectedIcon,
+                isLifeHub ? FLucideIcons.layers : active.selectedIcon,
                 size: AppIconSizes.sm,
                 color: colors.primary,
               ),
-              const SizedBox(width: AppSpacing.s6),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 76),
-                child: Text(
-                  active.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.captionLabelStyle.copyWith(
-                    color: colors.foreground,
+              if (!isLifeHub) ...[
+                const SizedBox(width: AppSpacing.s6),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 76),
+                  child: Text(
+                    active.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.captionLabelStyle.copyWith(
+                      color: colors.foreground,
+                    ),
                   ),
                 ),
-              ),
+              ],
               const SizedBox(width: AppSpacing.s4),
               Icon(
                 FLucideIcons.chevronDown,
