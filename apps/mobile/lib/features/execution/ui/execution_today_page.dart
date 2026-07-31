@@ -110,6 +110,13 @@ class _TodayListState extends ConsumerState<_TodayList> {
             commitmentsAsync.value ?? const <ExecutionCommitment>[];
         final recentProgress =
             progressAsync.value ?? const <ExecutionProgressEntry>[];
+        if (openActionsAsync.value case final loadedOpenActions?) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref
+                .read(executionDailyFocusProvider.notifier)
+                .retainExisting(loadedOpenActions.map((action) => action.id));
+          });
+        }
         final filteredActions = filteredExecutionActions(
           filter: _filter,
           todayActions: actions,
@@ -134,7 +141,11 @@ class _TodayListState extends ConsumerState<_TodayList> {
         );
 
         final actionModules = <Widget>[
-          _DailyFocusPanel(actions: openActions, selectedIds: focusIds),
+          _DailyFocusPanel(
+            actions: openActions,
+            selectedIds: focusIds,
+            onOpen: (action) => context.push(ExecutionRoutes.action(action.id)),
+          ),
           if (visibleActions.isEmpty)
             ExecutionStateView(
               icon: _filter == ExecutionTodayFilter.focus
@@ -168,9 +179,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
                     child: AppFilterChip(
                       label: l10n.executionDailyFocusToggle,
                       active: focusIds.contains(action.id),
-                      onPress: () => ref
-                          .read(executionDailyFocusProvider.notifier)
-                          .toggle(action.id),
+                      onPress: () => _toggleFocus(action, openActions),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.s4),
@@ -260,13 +269,51 @@ class _TodayListState extends ConsumerState<_TodayList> {
       },
     );
   }
+
+  Future<void> _toggleFocus(
+    ExecutionAction action,
+    List<ExecutionAction> openActions,
+  ) async {
+    final controller = ref.read(executionDailyFocusProvider.notifier);
+    if (await controller.toggle(action.id) || !mounted) return;
+    final l10n = AppLocalizations.of(context);
+    final selectedIds = ref.read(executionDailyFocusProvider);
+    final byId = <String, ExecutionAction>{
+      for (final item in openActions) item.id: item,
+    };
+    await showAppSheet<void>(
+      context: context,
+      title: l10n.executionDailyFocusReplaceTitle,
+      subtitle: l10n.executionDailyFocusReplaceBody(action.title),
+      builder: (sheetContext) => AppActionSheetList(
+        children: [
+          for (final id in selectedIds)
+            if (byId[id] case final selected?)
+              AppActionSheetTile(
+                icon: FLucideIcons.refreshCw,
+                title: selected.title,
+                subtitle: l10n.executionDailyFocusReplaceAction,
+                onPress: () {
+                  Navigator.of(sheetContext).pop();
+                  controller.replace(selected.id, action.id);
+                },
+              ),
+        ],
+      ),
+    );
+  }
 }
 
 class _DailyFocusPanel extends ConsumerWidget {
-  const _DailyFocusPanel({required this.actions, required this.selectedIds});
+  const _DailyFocusPanel({
+    required this.actions,
+    required this.selectedIds,
+    required this.onOpen,
+  });
 
   final List<ExecutionAction> actions;
   final List<String> selectedIds;
+  final ValueChanged<ExecutionAction> onOpen;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -288,15 +335,101 @@ class _DailyFocusPanel extends ConsumerWidget {
             icon: FLucideIcons.target,
             title: l10n.executionDailyFocusTitle,
             color: context.appTheme.status.info.fg,
+            trailing: AppBadge(
+              label: l10n.executionDailyFocusCount(selected.length),
+              size: AppBadgeSize.compact,
+              tone: selected.length == 3
+                  ? AppBadgeTone.info
+                  : AppBadgeTone.neutral,
+            ),
           ),
           const SizedBox(height: AppSpacing.s8),
-          Text(
-            selected.isEmpty
-                ? l10n.executionDailyFocusEmpty
-                : selected.map((action) => action.title).join(' · '),
-            style: context.captionStyle,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
+          if (selected.isEmpty)
+            Text(l10n.executionDailyFocusEmpty, style: context.captionStyle)
+          else
+            for (var index = 0; index < selected.length; index++)
+              _DailyFocusRow(
+                index: index,
+                action: selected[index],
+                count: selected.length,
+                onOpen: () => onOpen(selected[index]),
+                onMove: (offset) => ref
+                    .read(executionDailyFocusProvider.notifier)
+                    .move(selected[index].id, offset),
+                onRemove: () => ref
+                    .read(executionDailyFocusProvider.notifier)
+                    .toggle(selected[index].id),
+              ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DailyFocusRow extends StatelessWidget {
+  const _DailyFocusRow({
+    required this.index,
+    required this.action,
+    required this.count,
+    required this.onOpen,
+    required this.onMove,
+    required this.onRemove,
+  });
+
+  final int index;
+  final ExecutionAction action;
+  final int count;
+  final VoidCallback onOpen;
+  final ValueChanged<int> onMove;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.s4),
+      child: Row(
+        children: [
+          AppBadge(
+            label: '${index + 1}',
+            size: AppBadgeSize.compact,
+            tone: AppBadgeTone.info,
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onOpen,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
+                child: Text(
+                  action.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ),
+          AppIconButton(
+            icon: FLucideIcons.arrowUp,
+            tooltip: l10n.executionDailyFocusMoveUp,
+            onPress: index == 0 ? null : () => onMove(-1),
+            size: 32,
+            iconSize: AppIconSizes.xs,
+          ),
+          AppIconButton(
+            icon: FLucideIcons.arrowDown,
+            tooltip: l10n.executionDailyFocusMoveDown,
+            onPress: index == count - 1 ? null : () => onMove(1),
+            size: 32,
+            iconSize: AppIconSizes.xs,
+          ),
+          AppIconButton(
+            icon: FLucideIcons.x,
+            tooltip: l10n.executionDailyFocusRemove,
+            onPress: onRemove,
+            size: 32,
+            iconSize: AppIconSizes.xs,
           ),
         ],
       ),

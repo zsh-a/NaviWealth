@@ -5,12 +5,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/agents/agent_artifact_routes.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
+import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/ui/agent_results_panel.dart';
 import '../../../core/lifeos/action_outcome.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
-import '../../../core/sync/mutation_context.dart';
-import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as execution_agent_providers;
@@ -148,6 +147,8 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
         ),
         const SizedBox(height: AppSpacing.s12),
         _ReviewSummary(entries: entries, closedActions: closedActions),
+        const SizedBox(height: AppSpacing.s12),
+        const _ExecutionReviewRunStatus(),
         const SizedBox(height: AppSpacing.s16),
         const _ExecutionReviewAgentPanel(),
         const SizedBox(height: AppSpacing.s8),
@@ -246,8 +247,6 @@ class _ReviewNextActionsBatch extends ConsumerStatefulWidget {
 
 class _ReviewNextActionsBatchState
     extends ConsumerState<_ReviewNextActionsBatch> {
-  bool _running = false;
-
   @override
   Widget build(BuildContext context) {
     final artifact = ref
@@ -268,34 +267,18 @@ class _ReviewNextActionsBatchState
       alignment: Alignment.centerLeft,
       child: FButton(
         variant: FButtonVariant.outline,
-        onPress: _running
-            ? null
-            : () =>
-                  _create(projectIds: projectIds, commitmentIds: commitmentIds),
-        child: Text(l10n.executionReviewCreateNextActions(count)),
+        onPress: () =>
+            _review(projectIds: projectIds, commitmentIds: commitmentIds),
+        child: Text(l10n.executionReviewDraftNextActions(count)),
       ),
     );
   }
 
-  Future<void> _create({
+  Future<void> _review({
     required List<String> projectIds,
     required List<String> commitmentIds,
   }) async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showConfirmDialog(
-      context: context,
-      title: Text(
-        l10n.executionReviewCreateNextActions(
-          projectIds.length + commitmentIds.length,
-        ),
-      ),
-      body: Text(l10n.executionReviewCreateNextActionsBody),
-      confirmLabel: l10n.commonConfirm,
-      cancelLabel: l10n.commonCancel,
-      icon: FLucideIcons.listPlus,
-    );
-    if (confirmed != true || !mounted) return;
-    setState(() => _running = true);
     try {
       final owner = await ref.read(executionOwnerUserIdProvider.future);
       final repository = await ref.read(executionRepositoryProvider.future);
@@ -308,8 +291,7 @@ class _ReviewNextActionsBatchState
           .map((action) => action.commitmentId)
           .whereType<String>()
           .toSet();
-      final stamper = await ref.read(mutationStamperProvider.future);
-      final actions = <ExecutionAction>[];
+      final drafts = <({String id, String title, bool project})>[];
       for (final id in projectIds) {
         if (projectsWithAction.contains(id)) continue;
         final project = await repository.findProject(
@@ -317,23 +299,7 @@ class _ReviewNextActionsBatchState
           id: id,
         );
         if (project == null) continue;
-        final stamp = await stamper.stamp();
-        actions.add(
-          ExecutionAction(
-            id: kExecutionUuid.v4(),
-            title: l10n.executionReviewNextActionFor(project.title),
-            projectId: project.id,
-            priority: ExecutionPriority.high,
-            scheduledFor: stamp.now,
-            createdAt: stamp.now,
-            sync: SyncMeta(
-              ownerUserId: stamp.ownerUserId,
-              updatedAt: stamp.now,
-              updatedByDevice: stamp.deviceId,
-              hlc: stamp.hlc,
-            ),
-          ),
-        );
+        drafts.add((id: project.id, title: project.title, project: true));
       }
       for (final id in commitmentIds) {
         if (commitmentsWithAction.contains(id)) continue;
@@ -342,35 +308,38 @@ class _ReviewNextActionsBatchState
           id: id,
         );
         if (commitment == null) continue;
-        final stamp = await stamper.stamp();
-        actions.add(
-          ExecutionAction(
-            id: kExecutionUuid.v4(),
-            title: l10n.executionReviewNextActionFor(commitment.title),
-            projectId: commitment.projectId,
-            commitmentId: commitment.id,
-            priority: ExecutionPriority.high,
-            scheduledFor: stamp.now,
-            createdAt: stamp.now,
-            sync: SyncMeta(
-              ownerUserId: stamp.ownerUserId,
-              updatedAt: stamp.now,
-              updatedByDevice: stamp.deviceId,
-              hlc: stamp.hlc,
-            ),
-          ),
-        );
+        drafts.add((
+          id: commitment.id,
+          title: commitment.title,
+          project: false,
+        ));
       }
-      await repository.upsertActions(actions);
-      ref.invalidate(executionTodayActionsProvider);
-      ref.invalidate(executionOpenActionsProvider);
-      if (mounted) {
-        AppMessenger.show(
-          context,
-          ToastKind.success,
-          l10n.executionReviewCreatedNextActions(actions.length),
-        );
-      }
+      if (!mounted) return;
+      await showAppSheet<void>(
+        context: context,
+        title: l10n.executionReviewDraftNextActions(drafts.length),
+        subtitle: l10n.executionReviewDraftNextActionsBody,
+        builder: (sheetContext) => AppActionSheetList(
+          children: [
+            for (final draft in drafts)
+              AppActionSheetTile(
+                icon: draft.project
+                    ? FLucideIcons.folderKanban
+                    : FLucideIcons.flag,
+                title: draft.title,
+                subtitle: l10n.executionReviewDefineConcreteNextAction,
+                onPress: () {
+                  Navigator.of(sheetContext).pop();
+                  showExecutionActionSheet(
+                    context: context,
+                    initialProjectId: draft.project ? draft.id : null,
+                    initialCommitmentId: draft.project ? null : draft.id,
+                  );
+                },
+              ),
+          ],
+        ),
+      );
     } on Object catch (error, stackTrace) {
       if (mounted) {
         AppMessenger.show(
@@ -379,8 +348,6 @@ class _ReviewNextActionsBatchState
           userSafeErrorMessage(context, error, stackTrace: stackTrace),
         );
       }
-    } finally {
-      if (mounted) setState(() => _running = false);
     }
   }
 }
@@ -425,6 +392,61 @@ class _ReviewSummary extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _ExecutionReviewRunStatus extends ConsumerStatefulWidget {
+  const _ExecutionReviewRunStatus();
+
+  @override
+  ConsumerState<_ExecutionReviewRunStatus> createState() =>
+      _ExecutionReviewRunStatusState();
+}
+
+class _ExecutionReviewRunStatusState
+    extends ConsumerState<_ExecutionReviewRunStatus> {
+  bool _running = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final bundle = ref.watch(
+      execution_agent_providers.latestExecutionReviewResultsProvider,
+    );
+    final run = bundle.value?.latestRun;
+    final message = run == null
+        ? l10n.executionReviewAgentNotRun
+        : switch (run.status) {
+            AgentRunLifecycleStatus.running => l10n.executionReviewAgentRunning,
+            AgentRunLifecycleStatus.failed => l10n.executionReviewAgentFailed,
+            AgentRunLifecycleStatus.ready ||
+            AgentRunLifecycleStatus.noFinding =>
+              l10n.executionReviewAgentLastRun(
+                executionDate(context, run.finishedAt ?? run.startedAt),
+              ),
+          };
+    return AppStatusBanner(
+      compact: true,
+      kind: run?.status == AgentRunLifecycleStatus.failed
+          ? AppStatusKind.warning
+          : AppStatusKind.info,
+      icon: FLucideIcons.bot,
+      message: message,
+      action: FButton(
+        variant: FButtonVariant.ghost,
+        onPress: _running ? null : _run,
+        child: Text(l10n.executionReviewRunNow),
+      ),
+    );
+  }
+
+  Future<void> _run() async {
+    setState(() => _running = true);
+    try {
+      await _retryExecutionReview(ref);
+    } finally {
+      if (mounted) setState(() => _running = false);
+    }
   }
 }
 

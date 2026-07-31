@@ -25,4 +25,30 @@ void main() {
     expect(restored.state, isTrue);
     expect(otherOwner.state, isFalse);
   });
+
+  test('setup guide dismissal persists per owner', () async {
+    SharedPreferences.setMockInitialValues(const <String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
+    final controller = FinanceActivationDismissedController(
+      preferences,
+      ownerUserId: 'owner-a',
+    );
+
+    await controller.dismiss();
+
+    expect(
+      FinanceActivationDismissedController(
+        preferences,
+        ownerUserId: 'owner-a',
+      ).state,
+      isTrue,
+    );
+    expect(
+      FinanceActivationDismissedController(
+        preferences,
+        ownerUserId: 'owner-b',
+      ).state,
+      isFalse,
+    );
+  });
 }

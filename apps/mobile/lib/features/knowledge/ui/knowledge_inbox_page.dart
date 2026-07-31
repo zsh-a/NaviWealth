@@ -11,6 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ai/llm_credentials/providers.dart';
+import '../../../core/shell/settings_route_paths.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
@@ -18,8 +20,18 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '_ai_suggestions_card.dart';
 import '_widgets.dart';
 import 'knowledge_capture_sheet.dart';
+
+final _knowledgeInboxPendingSuggestionsProvider =
+    FutureProvider.autoDispose<int>((ref) async {
+      ref.watch(aiSuggestionsRefreshProvider);
+      final owner = await ref.watch(knowledgeOwnerUserIdProvider.future);
+      final triage = await ref.watch(inboxTriageRepositoryProvider.future);
+      final pending = await triage.listPending(ownerUserId: owner);
+      return pending.fold<int>(0, (sum, record) => sum + record.pending.length);
+    });
 
 class KnowledgeInboxPage extends ConsumerWidget {
   const KnowledgeInboxPage({super.key});
@@ -57,8 +69,45 @@ class _InboxBody extends ConsumerWidget {
       child: Column(
         children: [
           _AiAssistantBar(),
+          _InboxTriageStatus(),
           Expanded(child: _NotesList()),
         ],
+      ),
+    );
+  }
+}
+
+class _InboxTriageStatus extends ConsumerWidget {
+  const _InboxTriageStatus();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final aiAvailable = ref.watch(deviceLlmAvailableProvider);
+    final pending = ref.watch(_knowledgeInboxPendingSuggestionsProvider);
+    final count = pending.value ?? 0;
+    if (aiAvailable && count == 0 && !pending.isLoading && !pending.hasError) {
+      return const SizedBox.shrink();
+    }
+    final message = count > 0
+        ? l10n.knowledgeInboxSuggestionsPending(count)
+        : aiAvailable
+        ? l10n.knowledgeInboxSuggestionsLoading
+        : l10n.knowledgeInboxAiUnavailable;
+    final route = count > 0 ? KnowledgeRoutes.review : SettingsRoutes.aiLlm;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s4,
+        AppSpacing.s16,
+        AppSpacing.s4,
+      ),
+      child: AppStatusBanner(
+        compact: true,
+        kind: count > 0 ? AppStatusKind.info : AppStatusKind.neutral,
+        icon: count > 0 ? FLucideIcons.sparkles : FLucideIcons.cpu,
+        message: message,
+        onPress: pending.hasError ? null : () => context.push(route),
       ),
     );
   }

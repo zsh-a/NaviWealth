@@ -59,12 +59,16 @@ class _DueReviewsCard extends ConsumerWidget {
                 if (!snap.hasData) return const SizedBox.shrink();
                 final list = snap.data ?? const [];
                 if (list.isEmpty) return const SizedBox.shrink();
+                final orderPrefsKey = _reviewOrderPrefsKey(
+                  ref,
+                  _kReviewDecisionOrderPrefsKey,
+                );
                 final ordered = _orderedReviewItems<KnowledgeDecision>(
                   items: list,
                   order:
                       ref
                           .read(sharedPreferencesProvider)
-                          .getStringList(_kReviewDecisionOrderPrefsKey) ??
+                          .getStringList(orderPrefsKey) ??
                       const <String>[],
                   idOf: (d) => d.id,
                 );
@@ -73,40 +77,14 @@ class _DueReviewsCard extends ConsumerWidget {
                     .toList(growable: false);
                 return KnowledgeSection.group(
                   title: l10n.knowledgeReviewDecisionsTitle,
-                  trailing: _ReviewBulkActionButton(
-                    label: l10n.knowledgeReviewMarkAllDecisionsReviewed,
-                    icon: FLucideIcons.calendarCheck,
-                    onPress: () => _markDecisionsReviewed(
-                      context: context,
-                      ref: ref,
-                      decisions: list,
-                    ),
-                  ),
                   children: [
                     _ReviewCountHint(
                       visibleCount: visible.length,
                       totalCount: list.length,
                     ),
                     const SizedBox(height: AppSpacing.s8),
-                    _ReviewSelectableList<KnowledgeDecision>(
-                      items: visible,
-                      idOf: (d) => d.id,
-                      itemBuilder: (d) => _DueDecisionRow(decision: d),
-                      actionLabel:
-                          l10n.knowledgeReviewMarkSelectedDecisionsReviewed,
-                      icon: FLucideIcons.calendarCheck,
-                      onBulkAction: (selected) => _markDecisionsReviewed(
-                        context: context,
-                        ref: ref,
-                        decisions: selected,
-                      ),
-                      orderPrefsKey: _kReviewDecisionOrderPrefsKey,
-                      onOrderChanged: (ids) => _persistReviewOrder(
-                        ref: ref,
-                        prefsKey: _kReviewDecisionOrderPrefsKey,
-                        visibleIds: ids,
-                      ),
-                    ),
+                    for (final decision in visible)
+                      _DueDecisionRow(decision: decision),
                   ],
                 );
               },
@@ -248,34 +226,4 @@ Future<DateTime> _upsertDecisionReviewDate({
     ),
   );
   return nextReview;
-}
-
-Future<void> _markDecisionsReviewed({
-  required BuildContext context,
-  required WidgetRef ref,
-  required List<KnowledgeDecision> decisions,
-}) async {
-  if (decisions.isEmpty) return;
-  final l10n = AppLocalizations.of(context);
-  try {
-    for (final d in decisions) {
-      await _upsertDecisionReviewDate(ref: ref, decision: d);
-    }
-    ref.read(_reviewActionsRefreshProvider.notifier).state++;
-    if (context.mounted) {
-      AppMessenger.show(
-        context,
-        ToastKind.success,
-        l10n.knowledgeReviewDecisionsBulkReviewed(decisions.length),
-      );
-    }
-  } catch (e) {
-    if (context.mounted) {
-      AppMessenger.show(
-        context,
-        ToastKind.error,
-        l10n.knowledgeReviewDecisionReviewFailed('$e'),
-      );
-    }
-  }
 }

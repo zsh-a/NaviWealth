@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/domain_scope.dart';
@@ -86,12 +87,38 @@ class DomainsSettingsPage extends ConsumerWidget {
     DomainPack pack,
     bool enabled,
   ) async {
+    final l10n = AppLocalizations.of(context);
+    final label = pack.settingsSpec?.label ?? pack.scope.wire;
+    if (!enabled) {
+      final confirmed = await showConfirmDialog(
+        context: context,
+        title: Text(l10n.settingsDomainsDisableConfirmTitle(label)),
+        body: Text(l10n.settingsDomainsDisableConfirmBody(label)),
+        cancelLabel: l10n.commonCancel,
+        confirmLabel: l10n.settingsDomainsDisableConfirmAction,
+        destructive: true,
+        icon: FLucideIcons.power,
+      );
+      if (confirmed != true || !context.mounted) return;
+    }
     await ref
         .read(auth_providers.domainOptInsProvider.notifier)
         .setEnabled(pack.scope, enabled);
-    if (!context.mounted || enabled) return;
-    final l10n = AppLocalizations.of(context);
-    final label = pack.settingsSpec?.label ?? pack.scope.wire;
+    if (!context.mounted) return;
+    if (enabled) {
+      final homePath = pack.tabPaths.isEmpty ? null : pack.tabPaths.first;
+      if (homePath == null) return;
+      final openNow = await showConfirmDialog(
+        context: context,
+        title: Text(l10n.settingsDomainsEnableSuccessTitle(label)),
+        body: Text(l10n.settingsDomainsEnableSuccessBody(label)),
+        cancelLabel: l10n.settingsDomainsOpenLater,
+        confirmLabel: l10n.settingsDomainsOpenNow,
+        icon: pack.settingsSpec?.icon,
+      );
+      if (openNow == true && context.mounted) context.go(homePath);
+      return;
+    }
     context.go(SettingsRoutes.domains);
     AppMessenger.show(
       context,

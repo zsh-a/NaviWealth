@@ -1,56 +1,5 @@
 part of 'knowledge_review_page.dart';
 
-Future<void> _verifyAssumptions({
-  required BuildContext context,
-  required WidgetRef ref,
-  required List<KnowledgeAssumption> assumptions,
-}) async {
-  if (assumptions.isEmpty) return;
-  final l10n = AppLocalizations.of(context);
-  try {
-    final repo = await ref.read(knowledgeRepositoryProvider.future);
-    final stamper = await ref.read(mutationStamperProvider.future);
-    for (final a in assumptions) {
-      final stamp = await stamper.stamp();
-      await repo.upsertAssumption(
-        KnowledgeAssumption(
-          id: a.id,
-          statement: a.statement,
-          confidence: a.confidence,
-          scope: a.scope,
-          evidenceIds: a.evidenceIds,
-          status: a.status,
-          declaredAt: a.declaredAt,
-          lastVerifiedAt: stamp.now,
-          mergedIntoId: a.mergedIntoId,
-          sync: SyncMeta(
-            ownerUserId: stamp.ownerUserId,
-            updatedAt: stamp.now,
-            updatedByDevice: stamp.deviceId,
-            hlc: stamp.hlc,
-          ),
-        ),
-      );
-    }
-    ref.read(_reviewActionsRefreshProvider.notifier).state++;
-    if (context.mounted) {
-      AppMessenger.show(
-        context,
-        ToastKind.success,
-        l10n.knowledgeReviewAssumptionsBulkVerified(assumptions.length),
-      );
-    }
-  } catch (e) {
-    if (context.mounted) {
-      AppMessenger.show(
-        context,
-        ToastKind.error,
-        l10n.knowledgeReviewAssumptionVerifyFailed('$e'),
-      );
-    }
-  }
-}
-
 class _StaleAssumptionsCard extends ConsumerWidget {
   const _StaleAssumptionsCard();
 
@@ -115,12 +64,16 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                     .where((a) => a.daysSinceVerify(now) >= staleDays)
                     .toList();
                 if (stale.isEmpty) return const SizedBox.shrink();
+                final orderPrefsKey = _reviewOrderPrefsKey(
+                  ref,
+                  _kReviewAssumptionOrderPrefsKey,
+                );
                 final ordered = _orderedReviewItems<KnowledgeAssumption>(
                   items: stale,
                   order:
                       ref
                           .read(sharedPreferencesProvider)
-                          .getStringList(_kReviewAssumptionOrderPrefsKey) ??
+                          .getStringList(orderPrefsKey) ??
                       const <String>[],
                   idOf: (a) => a.id,
                 );
@@ -129,41 +82,14 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                     .toList(growable: false);
                 return KnowledgeSection.group(
                   title: l10n.knowledgeReviewAssumptionsTitle,
-                  trailing: _ReviewBulkActionButton(
-                    label: l10n.knowledgeReviewVerifyAllAssumptions,
-                    icon: FLucideIcons.badgeCheck,
-                    onPress: () => _verifyAssumptions(
-                      context: context,
-                      ref: ref,
-                      assumptions: stale,
-                    ),
-                  ),
                   children: [
                     _ReviewCountHint(
                       visibleCount: visible.length,
                       totalCount: stale.length,
                     ),
                     const SizedBox(height: AppSpacing.s8),
-                    _ReviewSelectableList<KnowledgeAssumption>(
-                      items: visible,
-                      idOf: (a) => a.id,
-                      itemBuilder: (a) =>
-                          _StaleAssumptionRow(assumption: a, now: now),
-                      actionLabel:
-                          l10n.knowledgeReviewVerifySelectedAssumptions,
-                      icon: FLucideIcons.badgeCheck,
-                      onBulkAction: (selected) => _verifyAssumptions(
-                        context: context,
-                        ref: ref,
-                        assumptions: selected,
-                      ),
-                      orderPrefsKey: _kReviewAssumptionOrderPrefsKey,
-                      onOrderChanged: (ids) => _persistReviewOrder(
-                        ref: ref,
-                        prefsKey: _kReviewAssumptionOrderPrefsKey,
-                        visibleIds: ids,
-                      ),
-                    ),
+                    for (final assumption in visible)
+                      _StaleAssumptionRow(assumption: assumption, now: now),
                   ],
                 );
               },
@@ -191,8 +117,19 @@ class _StaleAssumptionRowState extends ConsumerState<_StaleAssumptionRow> {
 
   Future<bool> _verify() async {
     if (_busy) return false;
-    setState(() => _busy = true);
     final l10n = AppLocalizations.of(context);
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: Text(l10n.knowledgeReviewAssumptionConfirmTitle),
+      body: Text(
+        l10n.knowledgeReviewAssumptionConfirmBody(widget.assumption.statement),
+      ),
+      confirmLabel: l10n.knowledgeReviewAssumptionStillValid,
+      cancelLabel: l10n.commonCancel,
+      icon: FLucideIcons.badgeCheck,
+    );
+    if (confirmed != true || !mounted) return false;
+    setState(() => _busy = true);
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);

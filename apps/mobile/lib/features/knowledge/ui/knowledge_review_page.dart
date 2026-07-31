@@ -13,7 +13,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/agents/agent_artifact_routes.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
+import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/ui/agent_results_panel.dart';
+import '../../../core/ai/llm_credentials/providers.dart';
+import '../../../core/auth/current_user.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../core/sync/mutation_context.dart';
@@ -21,6 +24,7 @@ import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as knowledge_agent_providers;
+import '../agents/review_agent.dart';
 import '../agents/routine_due_agent.dart';
 import '../composition/knowledge_route_paths.dart';
 import '../data/knowledge_review_preferences.dart';
@@ -35,11 +39,14 @@ part 'knowledge_review_routines.dart';
 part 'knowledge_review_selection.dart';
 
 const int _kDecisionReviewRescheduleDays = 90;
-const String _kReviewRoutineOrderPrefsKey = 'knowledge.review.routine_order.v1';
-const String _kReviewDecisionOrderPrefsKey =
-    'knowledge.review.decision_order.v1';
-const String _kReviewAssumptionOrderPrefsKey =
-    'knowledge.review.assumption_order.v1';
+const String _kReviewRoutineOrderPrefsKey = 'routine_order';
+const String _kReviewDecisionOrderPrefsKey = 'decision_order';
+const String _kReviewAssumptionOrderPrefsKey = 'assumption_order';
+
+String _reviewOrderPrefsKey(WidgetRef ref, String family) {
+  final owner = ref.read(activeUserIdProvider) ?? kLocalOnlyUserId;
+  return 'knowledge.$owner.review.$family.v2';
+}
 
 final _reviewActionsRefreshProvider = StateProvider<int>((ref) => 0);
 
@@ -131,20 +138,168 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: shellTabContentPadding(context, top: AppSpacing.s8),
               children: const <Widget>[
+                _KnowledgeReviewOverview(),
+                SizedBox(height: AppPageRhythm.module),
                 _KnowledgeReviewAgentResultPanel(),
-                SizedBox(height: AppPageRhythm.module),
                 KnowledgeAiSuggestionsCard(),
-                SizedBox(height: AppPageRhythm.module),
                 _DueRoutinesCard(),
-                SizedBox(height: AppPageRhythm.module),
                 _DueReviewsCard(),
-                SizedBox(height: AppPageRhythm.module),
                 _StaleAssumptionsCard(),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _KnowledgeReviewSnapshot {
+  const _KnowledgeReviewSnapshot({
+    required this.routineCount,
+    required this.decisionCount,
+    required this.assumptionCount,
+    required this.suggestionCount,
+    required this.agentFindingCount,
+    required this.lastRun,
+    required this.aiAvailable,
+  });
+
+  final int routineCount;
+  final int decisionCount;
+  final int assumptionCount;
+  final int suggestionCount;
+  final int agentFindingCount;
+  final AgentRunRecord? lastRun;
+  final bool aiAvailable;
+
+  int get attentionCount =>
+      routineCount +
+      decisionCount +
+      assumptionCount +
+      suggestionCount +
+      agentFindingCount;
+}
+
+final _knowledgeReviewSnapshotProvider =
+    FutureProvider.autoDispose<_KnowledgeReviewSnapshot>((ref) async {
+      ref.watch(_reviewActionsRefreshProvider);
+      ref.watch(aiSuggestionsRefreshProvider);
+      final preferences = ref.watch(knowledgeReviewPreferencesProvider);
+      final aiAvailable = ref.watch(deviceLlmAvailableProvider);
+      final owner = await ref.watch(knowledgeOwnerUserIdProvider.future);
+      final repo = await ref.watch(knowledgeRepositoryProvider.future);
+      final triage = await ref.watch(inboxTriageRepositoryProvider.future);
+      final resultBundle = await ref.watch(
+        knowledge_agent_providers.latestKnowledgeReviewResultsProvider.future,
+      );
+      final now = DateTime.now().toUtc();
+      final routines = await repo.listDueRoutines(
+        ownerUserId: owner,
+        asOf: now.add(kRoutineDueLookahead),
+        excludeDoneSince: DateTime(now.year, now.month, now.day),
+        limit: 1000,
+      );
+      final decisions = await repo.listDueReviews(
+        ownerUserId: owner,
+        asOf: now,
+        limit: 1000,
+      );
+      final assumptions = await repo.listOpenAssumptions(ownerUserId: owner);
+      final pending = await triage.listPending(ownerUserId: owner);
+      return _KnowledgeReviewSnapshot(
+        routineCount: routines.length,
+        decisionCount: decisions.length,
+        assumptionCount: assumptions
+            .where(
+              (item) =>
+                  item.daysSinceVerify(now) >= preferences.staleAssumptionDays,
+            )
+            .length,
+        suggestionCount: pending.fold<int>(
+          0,
+          (sum, record) => sum + record.pending.length,
+        ),
+        agentFindingCount: resultBundle.artifacts.length,
+        lastRun: resultBundle.latestRun,
+        aiAvailable: aiAvailable,
+      );
+    });
+
+class _KnowledgeReviewOverview extends ConsumerWidget {
+  const _KnowledgeReviewOverview();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final snapshot = ref.watch(_knowledgeReviewSnapshotProvider);
+    return snapshot.when(
+      loading: () =>
+          const KnowledgeLoadingState(density: KnowledgeStateDensity.section),
+      error: (error, stackTrace) => KnowledgeErrorState(
+        title: userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'load knowledge review overview',
+        ),
+        onRetry: () => ref.invalidate(_knowledgeReviewSnapshotProvider),
+        density: KnowledgeStateDensity.section,
+      ),
+      data: (value) {
+        final lastRun = value.lastRun;
+        final isAllClear = value.attentionCount == 0;
+        return KnowledgeSection.group(
+          title: l10n.knowledgeReviewOverviewTitle,
+          trailing: AppBadge(
+            label: isAllClear
+                ? l10n.knowledgeReviewAllClearBadge
+                : '${value.attentionCount}',
+            icon: isAllClear ? FLucideIcons.circleCheck : FLucideIcons.bell,
+            size: AppBadgeSize.compact,
+            tone: isAllClear ? AppBadgeTone.success : AppBadgeTone.warning,
+          ),
+          children: [
+            Text(
+              isAllClear
+                  ? l10n.knowledgeReviewAllClearBody
+                  : l10n.knowledgeReviewAttentionSummary(
+                      value.routineCount,
+                      value.decisionCount,
+                      value.assumptionCount,
+                      value.suggestionCount,
+                    ),
+              style: context.theme.typography.body.sm,
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            Text(
+              lastRun == null
+                  ? l10n.knowledgeReviewAgentNotRun
+                  : l10n.knowledgeReviewLastRun(
+                      knowledgeDate(
+                        context,
+                        lastRun.finishedAt ?? lastRun.startedAt,
+                        long: true,
+                      ),
+                    ),
+              style: context.captionStyle,
+            ),
+            if (!value.aiAvailable) ...[
+              const SizedBox(height: AppSpacing.s4),
+              Text(
+                l10n.knowledgeReviewAiUnavailable,
+                style: context.captionStyle,
+              ),
+            ],
+            const SizedBox(height: AppSpacing.s12),
+            FButton(
+              variant: FButtonVariant.outline,
+              onPress: () => _retryKnowledgeAgent(ref, kKnowledgeReviewAgentId),
+              child: Text(l10n.knowledgeReviewRunNow),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -245,52 +400,6 @@ List<AppAdaptiveAction> _reviewBulkActions(
         await _markRoutinesDone(context: context, ref: ref, routines: routines);
       },
     ),
-    AppAdaptiveAction(
-      icon: FLucideIcons.calendarCheck,
-      title: l10n.knowledgeReviewMarkAllDecisionsReviewed,
-      subtitle: l10n.knowledgeReviewDecisionsTitle,
-      onPress: () async {
-        final decisions = await _loadReviewDecisions(ref);
-        if (!context.mounted) return;
-        if (decisions.isEmpty) {
-          AppMessenger.show(
-            context,
-            ToastKind.info,
-            l10n.knowledgeReviewDecisionsEmpty,
-          );
-          return;
-        }
-        await _markDecisionsReviewed(
-          context: context,
-          ref: ref,
-          decisions: decisions,
-        );
-      },
-    ),
-    AppAdaptiveAction(
-      icon: FLucideIcons.badgeCheck,
-      title: l10n.knowledgeReviewVerifyAllAssumptions,
-      subtitle: l10n.knowledgeReviewAssumptionsTitle,
-      onPress: () async {
-        final assumptions = await _loadReviewAssumptions(ref);
-        if (!context.mounted) return;
-        if (assumptions.isEmpty) {
-          AppMessenger.show(
-            context,
-            ToastKind.info,
-            l10n.knowledgeReviewAssumptionsEmpty(
-              ref.read(knowledgeReviewPreferencesProvider).staleAssumptionDays,
-            ),
-          );
-          return;
-        }
-        await _verifyAssumptions(
-          context: context,
-          ref: ref,
-          assumptions: assumptions,
-        );
-      },
-    ),
   ];
 }
 
@@ -306,29 +415,6 @@ Future<List<KnowledgeRoutine>> _loadReviewRoutines(WidgetRef ref) async {
     excludeDoneSince: DateTime(now.year, now.month, now.day),
     limit: 1000,
   );
-}
-
-Future<List<KnowledgeDecision>> _loadReviewDecisions(WidgetRef ref) async {
-  final owner = await _reviewOwner(ref);
-  final repo = await ref.read(knowledgeRepositoryProvider.future);
-  return repo.listDueReviews(
-    ownerUserId: owner,
-    asOf: DateTime.now().toUtc(),
-    limit: 1000,
-  );
-}
-
-Future<List<KnowledgeAssumption>> _loadReviewAssumptions(WidgetRef ref) async {
-  final owner = await _reviewOwner(ref);
-  final repo = await ref.read(knowledgeRepositoryProvider.future);
-  final now = DateTime.now().toUtc();
-  final all = await repo.listOpenAssumptions(ownerUserId: owner);
-  final threshold = ref
-      .read(knowledgeReviewPreferencesProvider)
-      .staleAssumptionDays;
-  return all
-      .where((a) => a.daysSinceVerify(now) >= threshold)
-      .toList(growable: false);
 }
 
 void _toggleReviewSelection(Set<String> selectedIds, String id) {

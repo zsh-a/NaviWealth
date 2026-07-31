@@ -117,14 +117,22 @@ Future<void> _refreshPlanningWorkspace(WidgetRef ref) async {
   }
 }
 
-class _AttentionSection extends StatelessWidget {
+class _AttentionSection extends StatefulWidget {
   const _AttentionSection({required this.status});
 
   final PlanningHubStatus status;
 
   @override
+  State<_AttentionSection> createState() => _AttentionSectionState();
+}
+
+class _AttentionSectionState extends State<_AttentionSection> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final status = widget.status;
     final items = _attentionItems(context, status);
     final hasAttention = items.isNotEmpty;
     final tone = hasAttention ? items.first.tone : AppBadgeTone.success;
@@ -163,7 +171,8 @@ class _AttentionSection extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s12),
           if (hasAttention)
-            for (final (index, item) in items.take(3).indexed) ...[
+            for (final (index, item)
+                in items.take(_expanded ? items.length : 3).indexed) ...[
               if (index > 0) const FDivider(),
               _AttentionRow(spec: item),
             ]
@@ -174,6 +183,18 @@ class _AttentionSection extends StatelessWidget {
               l10n.planAttentionAllClearBody,
               style: context.bodyCaptionStyle,
             ),
+          if (items.length > 3) ...[
+            const SizedBox(height: AppSpacing.s8),
+            FButton(
+              variant: FButtonVariant.ghost,
+              onPress: () => setState(() => _expanded = !_expanded),
+              child: Text(
+                _expanded
+                    ? l10n.planAttentionCollapse
+                    : l10n.planAttentionShowAll(items.length - 3),
+              ),
+            ),
+          ],
           if (status.hasError) ...[
             const SizedBox(height: AppSpacing.s12),
             Row(
@@ -231,6 +252,12 @@ class _AttentionRow extends StatelessWidget {
                 Text(spec.title, style: context.labelStyle),
                 const SizedBox(height: AppSpacing.s2),
                 Text(spec.subtitle, style: context.captionStyle),
+                const SizedBox(height: AppSpacing.s4),
+                AppBadge(
+                  label: _toneLabel(context, spec.tone),
+                  tone: spec.tone,
+                  size: AppBadgeSize.compact,
+                ),
               ],
             ),
           ),

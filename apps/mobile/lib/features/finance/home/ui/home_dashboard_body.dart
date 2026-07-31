@@ -44,6 +44,10 @@ class _DashboardBodyContent extends ConsumerWidget {
         );
 
         Future<void> onRefresh() async {
+          final sync = await ref.read(syncSchedulerProvider.future);
+          await sync?.triggerNow();
+          final prices = await ref.read(priceSyncCoordinatorProvider.future);
+          await prices.triggerNow(reason: PriceSyncReason.manual);
           ref.invalidate(dashboardSnapshotProvider);
           ref.invalidate(dashboardHeaderMetricsProvider);
           await ref.read(dashboardSnapshotProvider.future);

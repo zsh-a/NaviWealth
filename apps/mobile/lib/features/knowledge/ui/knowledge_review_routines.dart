@@ -58,12 +58,16 @@ class _DueRoutinesCard extends ConsumerWidget {
                     .where((r) => shouldShowRoutineInReview(r, now))
                     .toList(growable: false);
                 if (due.isEmpty) return const SizedBox.shrink();
+                final orderPrefsKey = _reviewOrderPrefsKey(
+                  ref,
+                  _kReviewRoutineOrderPrefsKey,
+                );
                 final ordered = _orderedReviewItems<KnowledgeRoutine>(
                   items: due,
                   order:
                       ref
                           .read(sharedPreferencesProvider)
-                          .getStringList(_kReviewRoutineOrderPrefsKey) ??
+                          .getStringList(orderPrefsKey) ??
                       const <String>[],
                   idOf: (r) => r.id,
                 );
@@ -98,10 +102,10 @@ class _DueRoutinesCard extends ConsumerWidget {
                         ref: ref,
                         routines: selected,
                       ),
-                      orderPrefsKey: _kReviewRoutineOrderPrefsKey,
+                      orderPrefsKey: orderPrefsKey,
                       onOrderChanged: (ids) => _persistReviewOrder(
                         ref: ref,
-                        prefsKey: _kReviewRoutineOrderPrefsKey,
+                        prefsKey: orderPrefsKey,
                         visibleIds: ids,
                       ),
                     ),

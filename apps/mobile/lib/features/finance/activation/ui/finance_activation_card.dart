@@ -10,6 +10,7 @@ import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../composition/finance_route_paths.dart';
 import '../data/finance_activation_providers.dart';
+import '../data/finance_activation_store.dart';
 import '../domain/finance_activation.dart';
 
 class FinanceActivationCard extends ConsumerStatefulWidget {
@@ -40,9 +41,10 @@ class _FinanceActivationCardState extends ConsumerState<FinanceActivationCard> {
       (_, next) => _recordCompletion(next.value),
     );
     final activation = ref.watch(financeActivationProvider);
+    final dismissed = ref.watch(financeActivationDismissedProvider);
     final snapshot = activation.value;
     _recordCompletion(snapshot);
-    if (snapshot == null || snapshot.isComplete) {
+    if (dismissed || snapshot == null || snapshot.isComplete) {
       return const SizedBox.shrink();
     }
     final l10n = AppLocalizations.of(context);
@@ -88,6 +90,15 @@ class _FinanceActivationCardState extends ConsumerState<FinanceActivationCard> {
                   FinanceActivationSnapshot.totalSteps,
                 ),
                 size: AppBadgeSize.compact,
+              ),
+              AppIconButton(
+                icon: FLucideIcons.x,
+                tooltip: l10n.financeActivationDismiss,
+                onPress: () => ref
+                    .read(financeActivationDismissedProvider.notifier)
+                    .dismiss(),
+                size: 32,
+                iconSize: AppIconSizes.xs,
               ),
             ],
           ),

@@ -107,6 +107,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planAttentionTitle => '需要关注';
 
   @override
+  String planAttentionShowAll(int count) {
+    return '再查看 $count 项';
+  }
+
+  @override
+  String get planAttentionCollapse => '收起';
+
+  @override
   String planAttentionCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -7397,6 +7405,35 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String settingsDomainsEnableSuccessTitle(String domain) {
+    return '$domain 已就绪';
+  }
+
+  @override
+  String settingsDomainsEnableSuccessBody(String domain) {
+    return '立即打开 $domain 并创建第一个有用对象，也可以稍后再开始。';
+  }
+
+  @override
+  String get settingsDomainsOpenNow => '立即打开';
+
+  @override
+  String get settingsDomainsOpenLater => '稍后';
+
+  @override
+  String settingsDomainsDisableConfirmTitle(String domain) {
+    return '关闭 $domain？';
+  }
+
+  @override
+  String settingsDomainsDisableConfirmBody(String domain) {
+    return '$domain 数据仍会保留在本机和同步端，但导航、工具、后台 Agent 和通知会暂停，重新启用后即可恢复。';
+  }
+
+  @override
+  String get settingsDomainsDisableConfirmAction => '关闭';
+
+  @override
   String get agentSettingsTitle => 'Agents';
 
   @override
@@ -12065,6 +12102,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeInboxTitle => '收件箱 · KnowledgeOS';
 
   @override
+  String knowledgeInboxSuggestionsPending(int count) {
+    return '有 $count 条 AI 建议待确认';
+  }
+
+  @override
+  String get knowledgeInboxSuggestionsLoading => '正在检查异步 AI 建议…';
+
+  @override
+  String get knowledgeInboxAiUnavailable => '笔记仍会正常保存；配置设备端 LLM 后可获得异步分类与标签建议。';
+
+  @override
   String get knowledgeTabInbox => '收件箱';
 
   @override
@@ -12492,6 +12540,41 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeReviewTitle => '复盘 · KnowledgeOS';
 
   @override
+  String get knowledgeReviewOverviewTitle => '复盘状态';
+
+  @override
+  String get knowledgeReviewAllClearBadge => '全部正常';
+
+  @override
+  String get knowledgeReviewAllClearBody =>
+      '当前没有到期复盘或待确认建议。即使未配置 AI，确定性复盘仍然可用。';
+
+  @override
+  String knowledgeReviewAttentionSummary(
+    int routines,
+    int decisions,
+    int assumptions,
+    int suggestions,
+  ) {
+    return '$routines 个 Routine · $decisions 个 Decision · $assumptions 个 Assumption · $suggestions 条 AI 建议';
+  }
+
+  @override
+  String get knowledgeReviewAgentNotRun => 'Knowledge Review Agent 尚未运行。';
+
+  @override
+  String knowledgeReviewLastRun(String date) {
+    return '最近一次 Agent 复盘：$date';
+  }
+
+  @override
+  String get knowledgeReviewAiUnavailable =>
+      '尚未配置可用的设备端 LLM，AI 建议不可用；到期复盘仍可正常使用。';
+
+  @override
+  String get knowledgeReviewRunNow => '运行 Knowledge Review';
+
+  @override
   String get knowledgeReviewRoutinesTitle => '本周到期的 Routine';
 
   @override
@@ -12614,6 +12697,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeReviewAssumptionVerified => 'Assumption 已校验。';
 
   @override
+  String get knowledgeReviewAssumptionConfirmTitle => '确认这条 Assumption';
+
+  @override
+  String knowledgeReviewAssumptionConfirmBody(String statement) {
+    return '仅当当前证据仍支持以下假设时确认：\n“$statement”';
+  }
+
+  @override
+  String get knowledgeReviewAssumptionStillValid => '仍然成立';
+
+  @override
   String knowledgeReviewAssumptionVerifyFailed(Object error) {
     return '校验失败：$error';
   }
@@ -12673,6 +12767,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeNewRoutine => '新建 Routine';
+
+  @override
+  String get knowledgeNewMoreTypes => '更多类型';
 
   @override
   String get knowledgeNewChooserTitle => '新建…';
@@ -13560,6 +13657,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionOpenActionsSection => '开放行动';
+
+  @override
+  String get executionStandaloneActionsSection => '独立行动';
 
   @override
   String get executionProjectCommitmentsSection => '项目承诺';
@@ -15365,6 +15465,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get financeActivationTitle => '获得第一个有效结果';
 
   @override
+  String get financeActivationDismiss => '隐藏设置引导';
+
+  @override
   String financeActivationProgress(int completed, int total) {
     return '$completed/$total';
   }
@@ -16134,6 +16237,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionDailyFocusToggle => 'Top 3';
 
   @override
+  String executionDailyFocusCount(int count) {
+    return '$count/3';
+  }
+
+  @override
+  String get executionDailyFocusReplaceTitle => '替换 Top 3 行动';
+
+  @override
+  String executionDailyFocusReplaceBody(String title) {
+    return '今日 Top 3 已满，请选择一项替换为“$title”。';
+  }
+
+  @override
+  String get executionDailyFocusReplaceAction => '替换此行动';
+
+  @override
+  String get executionDailyFocusMoveUp => '上移';
+
+  @override
+  String get executionDailyFocusMoveDown => '下移';
+
+  @override
+  String get executionDailyFocusRemove => '移出 Top 3';
+
+  @override
   String get executionDueAgentTitle => '即将到期的行动';
 
   @override
@@ -16155,6 +16283,36 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get executionReviewCreateNextActionsBody =>
       '是否为仍缺少下一步行动的每个项目或承诺创建一个高优先级行动？';
+
+  @override
+  String executionReviewDraftNextActions(int count) {
+    return '检查 $count 个缺失的下一步';
+  }
+
+  @override
+  String get executionReviewDraftNextActionsBody =>
+      '逐个打开项目或承诺，填写具体的下一步行动。确认标题、优先级和时间前不会创建任何内容。';
+
+  @override
+  String get executionReviewDefineConcreteNextAction => '填写具体下一步';
+
+  @override
+  String get executionReviewAgentNotRun => '每周 Execution Review 尚未运行。';
+
+  @override
+  String get executionReviewAgentRunning => 'Execution Review 正在运行。';
+
+  @override
+  String get executionReviewAgentFailed =>
+      '最近一次 Execution Review 失败，活动摘要仍可正常使用。';
+
+  @override
+  String executionReviewAgentLastRun(String date) {
+    return '最近一次 Execution Review：$date';
+  }
+
+  @override
+  String get executionReviewRunNow => '运行复盘';
 
   @override
   String executionReviewNextActionFor(String title) {

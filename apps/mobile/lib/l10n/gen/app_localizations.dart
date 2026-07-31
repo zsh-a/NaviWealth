@@ -290,6 +290,18 @@ abstract class AppLocalizations {
   /// **'Needs attention'**
   String get planAttentionTitle;
 
+  /// No description provided for @planAttentionShowAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Show {count} more'**
+  String planAttentionShowAll(int count);
+
+  /// No description provided for @planAttentionCollapse.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get planAttentionCollapse;
+
   /// No description provided for @planAttentionCount.
   ///
   /// In en, this message translates to:
@@ -13105,6 +13117,48 @@ abstract class AppLocalizations {
   /// **'{domain} disabled. You can re-enable it here at any time.'**
   String settingsDomainsDisabledToast(String domain);
 
+  /// No description provided for @settingsDomainsEnableSuccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{domain} is ready'**
+  String settingsDomainsEnableSuccessTitle(String domain);
+
+  /// No description provided for @settingsDomainsEnableSuccessBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Open {domain} now and create the first useful item. You can also come back later.'**
+  String settingsDomainsEnableSuccessBody(String domain);
+
+  /// No description provided for @settingsDomainsOpenNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Open now'**
+  String get settingsDomainsOpenNow;
+
+  /// No description provided for @settingsDomainsOpenLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get settingsDomainsOpenLater;
+
+  /// No description provided for @settingsDomainsDisableConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off {domain}?'**
+  String settingsDomainsDisableConfirmTitle(String domain);
+
+  /// No description provided for @settingsDomainsDisableConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {domain} data stays on this device and in sync, but its navigation, tools, background agents, and notifications will stop until you turn it on again.'**
+  String settingsDomainsDisableConfirmBody(String domain);
+
+  /// No description provided for @settingsDomainsDisableConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off'**
+  String get settingsDomainsDisableConfirmAction;
+
   /// Settings page title for LifeOS agent management.
   ///
   /// In en, this message translates to:
@@ -21375,6 +21429,24 @@ abstract class AppLocalizations {
   /// **'Inbox · KnowledgeOS'**
   String get knowledgeInboxTitle;
 
+  /// No description provided for @knowledgeInboxSuggestionsPending.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} AI suggestions are ready for review'**
+  String knowledgeInboxSuggestionsPending(int count);
+
+  /// No description provided for @knowledgeInboxSuggestionsLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking asynchronous AI suggestions…'**
+  String get knowledgeInboxSuggestionsLoading;
+
+  /// No description provided for @knowledgeInboxAiUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes save normally. Configure a device LLM to receive asynchronous classification and tag suggestions.'**
+  String get knowledgeInboxAiUnavailable;
+
   /// No description provided for @knowledgeTabInbox.
   ///
   /// In en, this message translates to:
@@ -22135,6 +22207,59 @@ abstract class AppLocalizations {
   /// **'Review · KnowledgeOS'**
   String get knowledgeReviewTitle;
 
+  /// No description provided for @knowledgeReviewOverviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review status'**
+  String get knowledgeReviewOverviewTitle;
+
+  /// No description provided for @knowledgeReviewAllClearBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'All clear'**
+  String get knowledgeReviewAllClearBadge;
+
+  /// No description provided for @knowledgeReviewAllClearBody.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no due reviews or pending suggestions. Your deterministic review remains available even without AI.'**
+  String get knowledgeReviewAllClearBody;
+
+  /// No description provided for @knowledgeReviewAttentionSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{routines} routines · {decisions} decisions · {assumptions} assumptions · {suggestions} AI suggestions'**
+  String knowledgeReviewAttentionSummary(
+    int routines,
+    int decisions,
+    int assumptions,
+    int suggestions,
+  );
+
+  /// No description provided for @knowledgeReviewAgentNotRun.
+  ///
+  /// In en, this message translates to:
+  /// **'The Knowledge Review agent has not run yet.'**
+  String get knowledgeReviewAgentNotRun;
+
+  /// No description provided for @knowledgeReviewLastRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Last agent review: {date}'**
+  String knowledgeReviewLastRun(String date);
+
+  /// No description provided for @knowledgeReviewAiUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'AI suggestions are unavailable until an active device LLM profile is configured. Due reviews still work.'**
+  String get knowledgeReviewAiUnavailable;
+
+  /// No description provided for @knowledgeReviewRunNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Run Knowledge Review'**
+  String get knowledgeReviewRunNow;
+
   /// No description provided for @knowledgeReviewRoutinesTitle.
   ///
   /// In en, this message translates to:
@@ -22319,6 +22444,24 @@ abstract class AppLocalizations {
   /// **'Assumption verified.'**
   String get knowledgeReviewAssumptionVerified;
 
+  /// No description provided for @knowledgeReviewAssumptionConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm this assumption'**
+  String get knowledgeReviewAssumptionConfirmTitle;
+
+  /// No description provided for @knowledgeReviewAssumptionConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Only verify this if it is still supported by current evidence: “{statement}”'**
+  String knowledgeReviewAssumptionConfirmBody(String statement);
+
+  /// No description provided for @knowledgeReviewAssumptionStillValid.
+  ///
+  /// In en, this message translates to:
+  /// **'Still valid'**
+  String get knowledgeReviewAssumptionStillValid;
+
   /// No description provided for @knowledgeReviewAssumptionVerifyFailed.
   ///
   /// In en, this message translates to:
@@ -22432,6 +22575,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New Routine'**
   String get knowledgeNewRoutine;
+
+  /// No description provided for @knowledgeNewMoreTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'More types'**
+  String get knowledgeNewMoreTypes;
 
   /// No description provided for @knowledgeNewChooserTitle.
   ///
@@ -24130,6 +24279,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open actions'**
   String get executionOpenActionsSection;
+
+  /// No description provided for @executionStandaloneActionsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Standalone actions'**
+  String get executionStandaloneActionsSection;
 
   /// No description provided for @executionProjectCommitmentsSection.
   ///
@@ -27106,6 +27261,12 @@ abstract class AppLocalizations {
   /// **'Your first useful result'**
   String get financeActivationTitle;
 
+  /// No description provided for @financeActivationDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide setup guide'**
+  String get financeActivationDismiss;
+
   /// No description provided for @financeActivationProgress.
   ///
   /// In en, this message translates to:
@@ -28528,6 +28689,48 @@ abstract class AppLocalizations {
   /// **'Top 3'**
   String get executionDailyFocusToggle;
 
+  /// No description provided for @executionDailyFocusCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}/3'**
+  String executionDailyFocusCount(int count);
+
+  /// No description provided for @executionDailyFocusReplaceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace a Top 3 action'**
+  String get executionDailyFocusReplaceTitle;
+
+  /// No description provided for @executionDailyFocusReplaceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Top 3 is full. Choose which action to replace with “{title}”.'**
+  String executionDailyFocusReplaceBody(String title);
+
+  /// No description provided for @executionDailyFocusReplaceAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace this action'**
+  String get executionDailyFocusReplaceAction;
+
+  /// No description provided for @executionDailyFocusMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get executionDailyFocusMoveUp;
+
+  /// No description provided for @executionDailyFocusMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get executionDailyFocusMoveDown;
+
+  /// No description provided for @executionDailyFocusRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Top 3'**
+  String get executionDailyFocusRemove;
+
   /// No description provided for @executionDueAgentTitle.
   ///
   /// In en, this message translates to:
@@ -28563,6 +28766,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create one high-priority action for every project or commitment that still has no open next action?'**
   String get executionReviewCreateNextActionsBody;
+
+  /// No description provided for @executionReviewDraftNextActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Review {count} missing next actions'**
+  String executionReviewDraftNextActions(int count);
+
+  /// No description provided for @executionReviewDraftNextActionsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Open each project or commitment and write a concrete next action. Nothing is created until you confirm its title, priority, and timing.'**
+  String get executionReviewDraftNextActionsBody;
+
+  /// No description provided for @executionReviewDefineConcreteNextAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Define a concrete next action'**
+  String get executionReviewDefineConcreteNextAction;
+
+  /// No description provided for @executionReviewAgentNotRun.
+  ///
+  /// In en, this message translates to:
+  /// **'The weekly Execution Review has not run yet.'**
+  String get executionReviewAgentNotRun;
+
+  /// No description provided for @executionReviewAgentRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution Review is running now.'**
+  String get executionReviewAgentRunning;
+
+  /// No description provided for @executionReviewAgentFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The latest Execution Review failed. Your activity summary is still available.'**
+  String get executionReviewAgentFailed;
+
+  /// No description provided for @executionReviewAgentLastRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Execution Review: {date}'**
+  String executionReviewAgentLastRun(String date);
+
+  /// No description provided for @executionReviewRunNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Run review'**
+  String get executionReviewRunNow;
 
   /// No description provided for @executionReviewNextActionFor.
   ///

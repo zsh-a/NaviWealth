@@ -24,8 +24,8 @@ IconData _segmentIcon(_LibrarySegment segment) => switch (segment) {
 
 enum KnowledgeLibraryDateFilter { all, today, week, month, outsideMonth }
 
-const String _kKnowledgeLibrarySearchHistoryPrefsKey =
-    'knowledge.library.search_history.v1';
+String _knowledgeLibrarySearchHistoryPrefsKey(String ownerUserId) =>
+    'knowledge.$ownerUserId.library.search_history.v2';
 const int _kKnowledgeLibrarySearchHistoryLimit = 6;
 
 List<String> _normalizedSearchHistory(Iterable<String> raw) {

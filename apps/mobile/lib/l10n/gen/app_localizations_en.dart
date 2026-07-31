@@ -110,6 +110,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planAttentionTitle => 'Needs attention';
 
   @override
+  String planAttentionShowAll(int count) {
+    return 'Show $count more';
+  }
+
+  @override
+  String get planAttentionCollapse => 'Show less';
+
+  @override
   String planAttentionCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -7792,6 +7800,35 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String settingsDomainsEnableSuccessTitle(String domain) {
+    return '$domain is ready';
+  }
+
+  @override
+  String settingsDomainsEnableSuccessBody(String domain) {
+    return 'Open $domain now and create the first useful item. You can also come back later.';
+  }
+
+  @override
+  String get settingsDomainsOpenNow => 'Open now';
+
+  @override
+  String get settingsDomainsOpenLater => 'Later';
+
+  @override
+  String settingsDomainsDisableConfirmTitle(String domain) {
+    return 'Turn off $domain?';
+  }
+
+  @override
+  String settingsDomainsDisableConfirmBody(String domain) {
+    return 'Your $domain data stays on this device and in sync, but its navigation, tools, background agents, and notifications will stop until you turn it on again.';
+  }
+
+  @override
+  String get settingsDomainsDisableConfirmAction => 'Turn off';
+
+  @override
   String get agentSettingsTitle => 'Agents';
 
   @override
@@ -12707,6 +12744,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeInboxTitle => 'Inbox · KnowledgeOS';
 
   @override
+  String knowledgeInboxSuggestionsPending(int count) {
+    return '$count AI suggestions are ready for review';
+  }
+
+  @override
+  String get knowledgeInboxSuggestionsLoading =>
+      'Checking asynchronous AI suggestions…';
+
+  @override
+  String get knowledgeInboxAiUnavailable =>
+      'Notes save normally. Configure a device LLM to receive asynchronous classification and tag suggestions.';
+
+  @override
   String get knowledgeTabInbox => 'Inbox';
 
   @override
@@ -13147,6 +13197,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeReviewTitle => 'Review · KnowledgeOS';
 
   @override
+  String get knowledgeReviewOverviewTitle => 'Review status';
+
+  @override
+  String get knowledgeReviewAllClearBadge => 'All clear';
+
+  @override
+  String get knowledgeReviewAllClearBody =>
+      'There are no due reviews or pending suggestions. Your deterministic review remains available even without AI.';
+
+  @override
+  String knowledgeReviewAttentionSummary(
+    int routines,
+    int decisions,
+    int assumptions,
+    int suggestions,
+  ) {
+    return '$routines routines · $decisions decisions · $assumptions assumptions · $suggestions AI suggestions';
+  }
+
+  @override
+  String get knowledgeReviewAgentNotRun =>
+      'The Knowledge Review agent has not run yet.';
+
+  @override
+  String knowledgeReviewLastRun(String date) {
+    return 'Last agent review: $date';
+  }
+
+  @override
+  String get knowledgeReviewAiUnavailable =>
+      'AI suggestions are unavailable until an active device LLM profile is configured. Due reviews still work.';
+
+  @override
+  String get knowledgeReviewRunNow => 'Run Knowledge Review';
+
+  @override
   String get knowledgeReviewRoutinesTitle => 'Routines due this week';
 
   @override
@@ -13272,6 +13358,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeReviewAssumptionVerified => 'Assumption verified.';
 
   @override
+  String get knowledgeReviewAssumptionConfirmTitle => 'Confirm this assumption';
+
+  @override
+  String knowledgeReviewAssumptionConfirmBody(String statement) {
+    return 'Only verify this if it is still supported by current evidence: “$statement”';
+  }
+
+  @override
+  String get knowledgeReviewAssumptionStillValid => 'Still valid';
+
+  @override
   String knowledgeReviewAssumptionVerifyFailed(Object error) {
     return 'Could not verify assumption: $error';
   }
@@ -13331,6 +13428,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeNewRoutine => 'New Routine';
+
+  @override
+  String get knowledgeNewMoreTypes => 'More types';
 
   @override
   String get knowledgeNewChooserTitle => 'New...';
@@ -14284,6 +14384,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionOpenActionsSection => 'Open actions';
+
+  @override
+  String get executionStandaloneActionsSection => 'Standalone actions';
 
   @override
   String get executionProjectCommitmentsSection => 'Project commitments';
@@ -16166,6 +16269,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get financeActivationTitle => 'Your first useful result';
 
   @override
+  String get financeActivationDismiss => 'Hide setup guide';
+
+  @override
   String financeActivationProgress(int completed, int total) {
     return '$completed/$total';
   }
@@ -16977,6 +17083,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionDailyFocusToggle => 'Top 3';
 
   @override
+  String executionDailyFocusCount(int count) {
+    return '$count/3';
+  }
+
+  @override
+  String get executionDailyFocusReplaceTitle => 'Replace a Top 3 action';
+
+  @override
+  String executionDailyFocusReplaceBody(String title) {
+    return 'Your Top 3 is full. Choose which action to replace with “$title”.';
+  }
+
+  @override
+  String get executionDailyFocusReplaceAction => 'Replace this action';
+
+  @override
+  String get executionDailyFocusMoveUp => 'Move up';
+
+  @override
+  String get executionDailyFocusMoveDown => 'Move down';
+
+  @override
+  String get executionDailyFocusRemove => 'Remove from Top 3';
+
+  @override
   String get executionDueAgentTitle => 'Actions due soon';
 
   @override
@@ -17000,6 +17131,38 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get executionReviewCreateNextActionsBody =>
       'Create one high-priority action for every project or commitment that still has no open next action?';
+
+  @override
+  String executionReviewDraftNextActions(int count) {
+    return 'Review $count missing next actions';
+  }
+
+  @override
+  String get executionReviewDraftNextActionsBody =>
+      'Open each project or commitment and write a concrete next action. Nothing is created until you confirm its title, priority, and timing.';
+
+  @override
+  String get executionReviewDefineConcreteNextAction =>
+      'Define a concrete next action';
+
+  @override
+  String get executionReviewAgentNotRun =>
+      'The weekly Execution Review has not run yet.';
+
+  @override
+  String get executionReviewAgentRunning => 'Execution Review is running now.';
+
+  @override
+  String get executionReviewAgentFailed =>
+      'The latest Execution Review failed. Your activity summary is still available.';
+
+  @override
+  String executionReviewAgentLastRun(String date) {
+    return 'Last Execution Review: $date';
+  }
+
+  @override
+  String get executionReviewRunNow => 'Run review';
 
   @override
   String executionReviewNextActionFor(String title) {

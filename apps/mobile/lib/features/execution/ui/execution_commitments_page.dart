@@ -124,6 +124,11 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
     }
 
     final actions = actionsAsync.value ?? const <ExecutionAction>[];
+    final standaloneActions = actions
+        .where(
+          (action) => action.projectId == null && action.commitmentId == null,
+        )
+        .toList(growable: false);
     final projects = projectsAsync.value ?? const <ExecutionProject>[];
     final commitments = commitmentsAsync.value ?? const <ExecutionCommitment>[];
     final activeView = _view == _CommitmentsView.active;
@@ -155,9 +160,8 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
                 : l10n.executionCommitmentsClosedEmptyBody,
             action: activeView
                 ? FButton(
-                    onPress: () =>
-                        showExecutionCommitmentSheet(context: context),
-                    child: Text(l10n.executionCreateCommitmentTitle),
+                    onPress: () => showExecutionActionSheet(context: context),
+                    child: Text(l10n.executionCreateActionTitle),
                   )
                 : null,
           ),
@@ -246,14 +250,14 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
             ],
             const SizedBox(height: AppSpacing.s8),
           ],
-          if (activeView && actions.isNotEmpty) ...[
+          if (activeView && standaloneActions.isNotEmpty) ...[
             ExecutionSectionHeader(
-              title: l10n.executionOpenActionsSection,
-              count: actions.length,
+              title: l10n.executionStandaloneActionsSection,
+              count: standaloneActions.length,
               icon: FLucideIcons.listTodo,
             ),
             const SizedBox(height: AppSpacing.s8),
-            for (final action in actions) ...[
+            for (final action in standaloneActions) ...[
               ExecutionActionCardController(
                 action: action,
                 projectLabel:

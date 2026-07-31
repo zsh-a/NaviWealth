@@ -214,6 +214,55 @@ void main() {
     expect(find.text('Review in progress.'), findsOneWidget);
     expect(find.byType(AgentRunStatusCard), findsNothing);
   });
+
+  testWidgets('review page distinguishes all-clear from an agent not run', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final prefs = await SharedPreferences.getInstance();
+    await tester.pumpWidget(
+      _wrap(
+        const KnowledgeReviewPage(),
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          knowledge_agent_providers.latestKnowledgeReviewResultsProvider
+              .overrideWith(
+                (ref) async => agent_providers.AgentResultBundle(
+                  artifacts: const <AgentArtifact>[],
+                  latestRuns: [
+                    AgentRunRecord(
+                      id: 'run-clear',
+                      ownerUserId: 'user-1',
+                      agentId: kKnowledgeReviewAgentId,
+                      agentName: 'Knowledge Review',
+                      status: AgentRunLifecycleStatus.noFinding,
+                      trigger: AgentRunTrigger.manual,
+                      startedAt: DateTime.utc(2026, 7, 6, 9),
+                      finishedAt: DateTime.utc(2026, 7, 6, 9, 1),
+                    ),
+                  ],
+                ),
+              ),
+          knowledgeRepositoryProvider.overrideWith(
+            (ref) async => _FakeKnowledgeRepository(),
+          ),
+          inboxTriageRepositoryProvider.overrideWith(
+            (ref) async => _FakeInboxTriageRepository(),
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.text('All clear'), findsOneWidget);
+    expect(find.textContaining('Last agent review:'), findsOneWidget);
+    expect(
+      find.text('The Knowledge Review agent has not run yet.'),
+      findsNothing,
+    );
+  });
 }
 
 Widget _wrap(Widget child, {required List<Override> overrides}) {

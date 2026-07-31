@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/auth/current_user.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../core/sync/mutation_context.dart';
@@ -51,10 +52,12 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   final _searchCtrl = TextEditingController();
   final _searchFocus = FocusNode();
   final List<String> _searchHistory = <String>[];
+  late String _searchHistoryOwner;
 
   @override
   void initState() {
     super.initState();
+    _searchHistoryOwner = ref.read(activeUserIdProvider) ?? kLocalOnlyUserId;
     _loadSearchHistory();
     _searchCtrl.addListener(_onSearchChanged);
   }
@@ -75,7 +78,9 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   void _loadSearchHistory() {
     final prefs = ref.read(sharedPreferencesProvider);
     final stored =
-        prefs.getStringList(_kKnowledgeLibrarySearchHistoryPrefsKey) ??
+        prefs.getStringList(
+          _knowledgeLibrarySearchHistoryPrefsKey(_searchHistoryOwner),
+        ) ??
         const <String>[];
     _searchHistory
       ..clear()
@@ -107,7 +112,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   Future<void> _persistSearchHistory() async {
     final prefs = ref.read(sharedPreferencesProvider);
     await prefs.setStringList(
-      _kKnowledgeLibrarySearchHistoryPrefsKey,
+      _knowledgeLibrarySearchHistoryPrefsKey(_searchHistoryOwner),
       List<String>.unmodifiable(_searchHistory),
     );
   }
@@ -134,6 +139,11 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final owner = ref.watch(activeUserIdProvider) ?? kLocalOnlyUserId;
+    if (owner != _searchHistoryOwner) {
+      _searchHistoryOwner = owner;
+      _loadSearchHistory();
+    }
     final l10n = AppLocalizations.of(context);
     // Blueprint §8.2: creation lives in the page header; FAB retired.
     return ShellTabScaffold(
@@ -269,44 +279,58 @@ Future<void> _openCreateSheet(
       : _segmentLabel(l10n, activeSegment);
   final options = [
     KnowledgeCreateOption(
-      icon: FLucideIcons.gitBranch,
-      label: l10n.knowledgeNewDecision,
-      onSelected: () => showNewDecisionSheet(context, ref),
-    ),
-    KnowledgeCreateOption(
-      icon: FLucideIcons.badgeCheck,
-      label: l10n.knowledgeNewPrinciple,
-      onSelected: () => showNewPrincipleSheet(context, ref),
-    ),
-    KnowledgeCreateOption(
-      icon: FLucideIcons.lightbulb,
-      label: l10n.knowledgeNewAssumption,
-      onSelected: () => showNewAssumptionSheet(context, ref),
-    ),
-    KnowledgeCreateOption(
       icon: FLucideIcons.fileText,
       label: l10n.knowledgeNewNote,
       onSelected: () => showKnowledgeCaptureSheet(context, ref),
     ),
     KnowledgeCreateOption(
-      icon: FLucideIcons.folderTree,
-      label: l10n.knowledgeNewConcept,
-      onSelected: () => showNewConceptSheet(context, ref),
-    ),
-    KnowledgeCreateOption(
-      icon: FLucideIcons.flaskConical,
-      label: l10n.knowledgeNewExperiment,
-      onSelected: () => showNewExperimentSheet(context, ref),
+      icon: FLucideIcons.gitBranch,
+      label: l10n.knowledgeNewDecision,
+      onSelected: () => showNewDecisionSheet(context, ref),
     ),
     KnowledgeCreateOption(
       icon: FLucideIcons.calendarClock,
       label: l10n.knowledgeNewRoutine,
       onSelected: () => showNewRoutineSheet(context, ref),
     ),
+    KnowledgeCreateOption(
+      icon: FLucideIcons.ellipsis,
+      label: l10n.knowledgeNewMoreTypes,
+      onSelected: () => _openMoreCreateSheet(context, ref),
+    ),
   ];
   await showKnowledgeCreateSheet(
     context,
     options: options,
     activeLabel: activeLabel,
+  );
+}
+
+Future<void> _openMoreCreateSheet(BuildContext context, WidgetRef ref) {
+  final l10n = AppLocalizations.of(context);
+  return showKnowledgeCreateSheet(
+    context,
+    options: [
+      KnowledgeCreateOption(
+        icon: FLucideIcons.badgeCheck,
+        label: l10n.knowledgeNewPrinciple,
+        onSelected: () => showNewPrincipleSheet(context, ref),
+      ),
+      KnowledgeCreateOption(
+        icon: FLucideIcons.lightbulb,
+        label: l10n.knowledgeNewAssumption,
+        onSelected: () => showNewAssumptionSheet(context, ref),
+      ),
+      KnowledgeCreateOption(
+        icon: FLucideIcons.folderTree,
+        label: l10n.knowledgeNewConcept,
+        onSelected: () => showNewConceptSheet(context, ref),
+      ),
+      KnowledgeCreateOption(
+        icon: FLucideIcons.flaskConical,
+        label: l10n.knowledgeNewExperiment,
+        onSelected: () => showNewExperimentSheet(context, ref),
+      ),
+    ],
   );
 }
