@@ -9,6 +9,7 @@ import 'package:naviwealth/features/finance/rebalance/domain/hierarchical_rebala
 import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance_group.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/rebalance_engine.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/rebalance_models.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/rebalance_stage.dart';
 
 void main() {
   const engine = HierarchicalRebalanceEngine(
@@ -96,6 +97,13 @@ void main() {
           .capitalDecision
           .action,
       GroupCapitalAction.policyBlocked,
+    );
+    expect(plan.hasBlockedCapitalDecisions, isTrue);
+    expect(plan.hasUnresolvedCapital, isTrue);
+    expect(plan.requiresAction, isTrue);
+    expect(
+      RebalanceStageResolver.resolve(portfolioPlan: plan).stage,
+      RebalanceStage.groupBlocked,
     );
   });
 

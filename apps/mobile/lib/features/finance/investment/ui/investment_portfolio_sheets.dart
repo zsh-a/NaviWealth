@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/forms/form_dirty_guard.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/accounts/data/account_balances_provider.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
@@ -43,23 +44,34 @@ Future<bool?> showInvestmentPortfolioFormSheet(
   }
 }
 
-Future<void> showPortfolioLotAssignmentSheet(BuildContext context) {
+Future<void> showPortfolioLotAssignmentSheet(
+  BuildContext context, {
+  String? preferredGroupId,
+}) {
   final l10n = AppLocalizations.of(context);
   return showAppSheet<void>(
     context: context,
     title: l10n.portfolioAssignLotsTitle,
     subtitle: l10n.portfolioAssignLotsSubtitle,
-    builder: (_) => const _PortfolioLotAssignmentLoader(),
+    builder: (_) =>
+        _PortfolioLotAssignmentLoader(preferredGroupId: preferredGroupId),
   );
 }
 
-Future<void> showPortfolioCashAssignmentSheet(BuildContext context) {
+Future<void> showPortfolioCashAssignmentSheet(
+  BuildContext context, {
+  String? preferredGroupId,
+  Decimal? suggestedAmount,
+}) {
   final l10n = AppLocalizations.of(context);
   return showAppSheet<void>(
     context: context,
     title: l10n.portfolioAssignCashTitle,
     subtitle: l10n.portfolioAssignCashSubtitle,
-    builder: (_) => const _PortfolioCashAssignmentLoader(),
+    builder: (_) => _PortfolioCashAssignmentLoader(
+      preferredGroupId: preferredGroupId,
+      suggestedAmount: suggestedAmount,
+    ),
   );
 }
 
@@ -324,7 +336,9 @@ class _InvestmentPortfolioFormState
 }
 
 class _PortfolioLotAssignmentLoader extends ConsumerWidget {
-  const _PortfolioLotAssignmentLoader();
+  const _PortfolioLotAssignmentLoader({this.preferredGroupId});
+
+  final String? preferredGroupId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -381,6 +395,7 @@ class _PortfolioLotAssignmentLoader extends ConsumerWidget {
               ? asset.name!.trim()
               : asset.symbol,
       },
+      preferredGroupId: preferredGroupId,
     );
   }
 }
@@ -393,6 +408,7 @@ class _PortfolioLotAssignmentForm extends ConsumerStatefulWidget {
     required this.groups,
     required this.lots,
     required this.assetLabels,
+    required this.preferredGroupId,
   });
 
   final List<InvestmentPortfolio> portfolios;
@@ -400,6 +416,7 @@ class _PortfolioLotAssignmentForm extends ConsumerStatefulWidget {
   final List<PortfolioRebalanceGroup> groups;
   final List<Lot> lots;
   final Map<String, String> assetLabels;
+  final String? preferredGroupId;
 
   @override
   ConsumerState<_PortfolioLotAssignmentForm> createState() =>
@@ -441,7 +458,19 @@ class _PortfolioLotAssignmentFormState
             )
             .firstOrNull;
         if (prior != null) {
-          await repository.unassignCapital(prior);
+          if (entry.value.isEmpty) {
+            await repository.unassignCapital(prior);
+            continue;
+          }
+          final group = widget.groups.firstWhere(
+            (candidate) => candidate.id == entry.value,
+          );
+          await repository.moveCapitalAssignment(
+            assignment: prior,
+            portfolioId: group.portfolioId,
+            rebalanceGroupId: group.id,
+          );
+          continue;
         }
         if (entry.value.isNotEmpty) {
           final group = widget.groups.firstWhere(
@@ -502,8 +531,14 @@ class _PortfolioLotAssignmentFormState
     final portfolioNames = {
       for (final portfolio in widget.portfolios) portfolio.id: portfolio.name,
     };
+    final orderedGroups = [...widget.groups]
+      ..sort((a, b) {
+        if (a.id == widget.preferredGroupId) return -1;
+        if (b.id == widget.preferredGroupId) return 1;
+        return 0;
+      });
     final labels = {
-      for (final group in widget.groups)
+      for (final group in orderedGroups)
         group.id:
             '${portfolioNames[group.portfolioId] ?? group.portfolioId} · ${group.name}',
     };
@@ -517,34 +552,62 @@ class _PortfolioLotAssignmentFormState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final lot in widget.lots) ...[
-          FSelect<String>.rich(
-            format: (id) => id.isEmpty
-                ? l10n.portfolioUnassigned
-                : labels[id] ?? l10n.portfolioUnassigned,
-            control: FSelectControl<String>.lifted(
-              value: _selected[lot.id] ?? '',
-              onChange: (value) {
-                if (_busy) return;
-                setState(() => _selected[lot.id] = value ?? '');
-              },
-            ),
-            enabled: !_busy && !partialLotIds.contains(lot.id),
-            label: Text(widget.assetLabels[lot.assetId] ?? lot.assetId),
-            description: Text(
-              '${lot.remainingQuantity} · ${lot.openedAt.toLocal().toIso8601String().substring(0, 10)}',
-            ),
-            children: [
-              FSelectItem<String>(
-                value: '',
-                title: Text(l10n.portfolioUnassigned),
+          if (partialLotIds.contains(lot.id))
+            _PartialLotAssignments(
+              lot: lot,
+              label: widget.assetLabels[lot.assetId] ?? lot.assetId,
+              assignments: widget.assignments
+                  .where(
+                    (assignment) =>
+                        assignment.sourceKind ==
+                            PortfolioCapitalSourceKind.lot &&
+                        assignment.sourceId == lot.id &&
+                        !assignment.isWholeLot,
+                  )
+                  .toList(growable: false),
+              labels: labels,
+              busy: _busy,
+              onMove: (assignment) => _movePartialAssignment(
+                assignment: assignment,
+                lot: lot,
+                labels: labels,
               ),
-              for (final group in widget.groups)
+              onRemove: _removePartialAssignment,
+              onAdd: (remaining) => _addPartialAssignment(
+                lot: lot,
+                remaining: remaining,
+                labels: labels,
+              ),
+            )
+          else
+            FSelect<String>.rich(
+              format: (id) => id.isEmpty
+                  ? l10n.portfolioUnassigned
+                  : labels[id] ?? l10n.portfolioUnassigned,
+              control: FSelectControl<String>.lifted(
+                value: _selected[lot.id] ?? '',
+                onChange: (value) {
+                  if (_busy) return;
+                  setState(() => _selected[lot.id] = value ?? '');
+                },
+              ),
+              enabled: !_busy,
+              label: Text(widget.assetLabels[lot.assetId] ?? lot.assetId),
+              description: Text(
+                '${lot.remainingQuantity} · ${lot.openedAt.toLocal().toIso8601String().substring(0, 10)}',
+              ),
+              children: [
                 FSelectItem<String>(
-                  value: group.id,
-                  title: Text(labels[group.id]!),
+                  value: '',
+                  title: Text(l10n.portfolioUnassigned),
                 ),
-            ],
-          ),
+                for (final group in orderedGroups)
+                  FSelectItem<String>(
+                    value: group.id,
+                    title: Text(labels[group.id]!),
+                  ),
+              ],
+            ),
           const SizedBox(height: AppSpacing.s12),
         ],
         const SizedBox(height: AppSpacing.s8),
@@ -552,10 +615,294 @@ class _PortfolioLotAssignmentFormState
       ],
     );
   }
+
+  Future<void> _movePartialAssignment({
+    required PortfolioCapitalAssignment assignment,
+    required Lot lot,
+    required Map<String, String> labels,
+  }) async {
+    var selectedGroupId = assignment.rebalanceGroupId;
+    final targetGroupId = await showAppSheet<String>(
+      context: context,
+      title: AppLocalizations.of(context).portfolioCapitalAssignmentTitle,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FSelect<String>.rich(
+              format: (id) => labels[id] ?? id,
+              control: FSelectControl<String>.lifted(
+                value: selectedGroupId,
+                onChange: (value) {
+                  if (value == null) return;
+                  setSheetState(() => selectedGroupId = value);
+                },
+              ),
+              label: Text(AppLocalizations.of(context).portfolioGroupNameLabel),
+              children: [
+                for (final group in widget.groups)
+                  FSelectItem<String>(
+                    value: group.id,
+                    title: Text(labels[group.id]!),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            FButton(
+              onPress: selectedGroupId == assignment.rebalanceGroupId
+                  ? null
+                  : () => Navigator.of(sheetContext).pop(selectedGroupId),
+              child: Text(AppLocalizations.of(context).commonSave),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (targetGroupId == null || !mounted) return;
+    final group = widget.groups.firstWhere((item) => item.id == targetGroupId);
+    setState(() => _busy = true);
+    try {
+      final repository = await ref.read(
+        investmentPortfolioRepositoryProvider.future,
+      );
+      await repository.moveCapitalAssignment(
+        assignment: assignment,
+        portfolioId: group.portfolioId,
+        rebalanceGroupId: group.id,
+        sourceCapacity: lot.remainingQuantity,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).portfolioSaveFailed,
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _addPartialAssignment({
+    required Lot lot,
+    required Decimal remaining,
+    required Map<String, String> labels,
+  }) async {
+    final quantityController = TextEditingController(
+      text: remaining.toString(),
+    );
+    var groupId =
+        widget.preferredGroupId ?? widget.groups.firstOrNull?.id ?? '';
+    try {
+      final result = await showAppSheet<({String groupId, Decimal quantity})>(
+        context: context,
+        title: AppLocalizations.of(context).portfolioAssignLotsTitle,
+        builder: (sheetContext) => StatefulBuilder(
+          builder: (context, setSheetState) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FSelect<String>.rich(
+                format: (id) => labels[id] ?? id,
+                control: FSelectControl<String>.lifted(
+                  value: groupId,
+                  onChange: (value) {
+                    if (value == null) return;
+                    setSheetState(() => groupId = value);
+                  },
+                ),
+                label: Text(
+                  AppLocalizations.of(context).portfolioGroupNameLabel,
+                ),
+                children: [
+                  for (final group in widget.groups)
+                    FSelectItem<String>(
+                      value: group.id,
+                      title: Text(labels[group.id]!),
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              FTextFormField(
+                control: FTextFieldControl.managed(
+                  controller: quantityController,
+                ),
+                label: Text(
+                  AppLocalizations.of(context).tradeEntryQuantityLabel,
+                ),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s16),
+              FButton(
+                onPress: () {
+                  final quantity = Decimal.tryParse(
+                    quantityController.text.trim(),
+                  );
+                  if (groupId.isEmpty ||
+                      quantity == null ||
+                      quantity <= Decimal.zero ||
+                      quantity > remaining) {
+                    AppMessenger.show(
+                      context,
+                      ToastKind.error,
+                      AppLocalizations.of(context).portfolioSaveFailed,
+                    );
+                    return;
+                  }
+                  Navigator.of(
+                    sheetContext,
+                  ).pop((groupId: groupId, quantity: quantity));
+                },
+                child: Text(AppLocalizations.of(context).commonSave),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (result == null || !mounted) return;
+      final group = widget.groups.firstWhere(
+        (item) => item.id == result.groupId,
+      );
+      setState(() => _busy = true);
+      final repository = await ref.read(
+        investmentPortfolioRepositoryProvider.future,
+      );
+      await repository.assignLotQuantity(
+        lotId: lot.id,
+        quantity: result.quantity,
+        availableQuantity: lot.remainingQuantity,
+        portfolioId: group.portfolioId,
+        rebalanceGroupId: group.id,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).portfolioSaveFailed,
+      );
+    } finally {
+      quantityController.dispose();
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _removePartialAssignment(
+    PortfolioCapitalAssignment assignment,
+  ) async {
+    setState(() => _busy = true);
+    try {
+      final repository = await ref.read(
+        investmentPortfolioRepositoryProvider.future,
+      );
+      await repository.unassignCapital(assignment);
+    } catch (_) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).portfolioSaveFailed,
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+}
+
+class _PartialLotAssignments extends StatelessWidget {
+  const _PartialLotAssignments({
+    required this.lot,
+    required this.label,
+    required this.assignments,
+    required this.labels,
+    required this.busy,
+    required this.onMove,
+    required this.onRemove,
+    required this.onAdd,
+  });
+
+  final Lot lot;
+  final String label;
+  final List<PortfolioCapitalAssignment> assignments;
+  final Map<String, String> labels;
+  final bool busy;
+  final ValueChanged<PortfolioCapitalAssignment> onMove;
+  final ValueChanged<PortfolioCapitalAssignment> onRemove;
+  final ValueChanged<Decimal> onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final assigned = assignments.fold<Decimal>(
+      Decimal.zero,
+      (sum, assignment) => sum + (assignment.quantity ?? Decimal.zero),
+    );
+    final remaining = lot.remainingQuantity - assigned;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(label, style: context.theme.typography.body.sm),
+        const SizedBox(height: AppSpacing.s2),
+        Text(
+          '${lot.remainingQuantity} · ${lot.openedAt.toLocal().toIso8601String().substring(0, 10)}',
+          style: context.captionStyle,
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        AppGroupedSurface(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              for (var index = 0; index < assignments.length; index++) ...[
+                FTile(
+                  prefix: const Icon(FLucideIcons.split),
+                  title: Text(
+                    labels[assignments[index].rebalanceGroupId] ??
+                        assignments[index].rebalanceGroupId,
+                  ),
+                  subtitle: Text(
+                    '${l10n.tradeEntryQuantityLabel} ${assignments[index].quantity}',
+                  ),
+                  onPress: busy ? null : () => onMove(assignments[index]),
+                  suffix: FButton.icon(
+                    variant: FButtonVariant.ghost,
+                    onPress: busy ? null : () => onRemove(assignments[index]),
+                    child: const Icon(FLucideIcons.x),
+                  ),
+                ),
+                if (index != assignments.length - 1)
+                  const AppGroupedDivider(
+                    indent: AppSpacing.s12,
+                    endIndent: AppSpacing.s12,
+                  ),
+              ],
+            ],
+          ),
+        ),
+        if (remaining > Decimal.zero) ...[
+          const SizedBox(height: AppSpacing.s8),
+          FButton(
+            variant: FButtonVariant.outline,
+            onPress: busy ? null : () => onAdd(remaining),
+            prefix: const Icon(FLucideIcons.plus),
+            child: Text(
+              '${l10n.portfolioAssignLotsTitle} · ${l10n.tradeEntryQuantityLabel} $remaining',
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 class _PortfolioCashAssignmentLoader extends ConsumerWidget {
-  const _PortfolioCashAssignmentLoader();
+  const _PortfolioCashAssignmentLoader({
+    this.preferredGroupId,
+    this.suggestedAmount,
+  });
+
+  final String? preferredGroupId;
+  final Decimal? suggestedAmount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -563,15 +910,18 @@ class _PortfolioCashAssignmentLoader extends ConsumerWidget {
     final assignments = ref.watch(portfolioCapitalAssignmentsProvider);
     final groups = ref.watch(portfolioRebalanceGroupsProvider);
     final accounts = ref.watch(accountsStreamProvider);
+    final balances = ref.watch(accountBalancesByIdProvider);
     if (portfolios.hasError ||
         assignments.hasError ||
         groups.hasError ||
-        accounts.hasError) {
+        accounts.hasError ||
+        balances.hasError) {
       final failed = [
         portfolios,
         assignments,
         groups,
         accounts,
+        balances,
       ].firstWhere((value) => value.hasError);
       return AppEmptyState.error(
         title: userSafeErrorMessage(
@@ -585,7 +935,8 @@ class _PortfolioCashAssignmentLoader extends ConsumerWidget {
     if (!portfolios.hasValue ||
         !assignments.hasValue ||
         !groups.hasValue ||
-        !accounts.hasValue) {
+        !accounts.hasValue ||
+        !balances.hasValue) {
       return const Center(child: FCircularProgress());
     }
     return _PortfolioCashAssignmentForm(
@@ -602,6 +953,16 @@ class _PortfolioCashAssignmentLoader extends ConsumerWidget {
       accounts: accounts.requireValue
           .where((account) => account.category == AccountSide.asset)
           .toList(growable: false),
+      availableByAccount: {
+        for (final account in accounts.requireValue)
+          account.id:
+              balances.requireValue[account.id]
+                  ?.legFor(account.currency)
+                  ?.units ??
+              Decimal.zero,
+      },
+      preferredGroupId: preferredGroupId,
+      suggestedAmount: suggestedAmount,
     );
   }
 }
@@ -612,12 +973,18 @@ class _PortfolioCashAssignmentForm extends ConsumerStatefulWidget {
     required this.assignments,
     required this.groups,
     required this.accounts,
+    required this.availableByAccount,
+    required this.preferredGroupId,
+    required this.suggestedAmount,
   });
 
   final List<InvestmentPortfolio> portfolios;
   final List<PortfolioCapitalAssignment> assignments;
   final List<PortfolioRebalanceGroup> groups;
   final List<Account> accounts;
+  final Map<String, Decimal> availableByAccount;
+  final String? preferredGroupId;
+  final Decimal? suggestedAmount;
 
   @override
   ConsumerState<_PortfolioCashAssignmentForm> createState() =>
@@ -627,10 +994,17 @@ class _PortfolioCashAssignmentForm extends ConsumerStatefulWidget {
 class _PortfolioCashAssignmentFormState
     extends ConsumerState<_PortfolioCashAssignmentForm> {
   final _formKey = GlobalKey<FormState>();
-  final _amount = TextEditingController();
+  late final TextEditingController _amount;
   String? _accountId;
   String? _groupId;
   bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _amount = TextEditingController(text: widget.suggestedAmount?.toString());
+    _groupId = widget.preferredGroupId;
+  }
 
   @override
   void dispose() {
@@ -723,6 +1097,10 @@ class _PortfolioCashAssignmentFormState
                             onPress: _busy ? null : () => _remove(assignment),
                             child: const Icon(FLucideIcons.x),
                           ),
+                          onPress: _busy
+                              ? null
+                              : () =>
+                                    _move(assignment, groupLabels: groupLabels),
                         );
                       },
                     ),
@@ -817,6 +1195,7 @@ class _PortfolioCashAssignmentFormState
       await repository.assignCash(
         accountId: account.id,
         amount: Decimal.parse(_amount.text.trim()),
+        availableAmount: widget.availableByAccount[account.id] ?? Decimal.zero,
         currency: account.currency,
         portfolioId: group.portfolioId,
         rebalanceGroupId: group.id,
@@ -846,6 +1225,75 @@ class _PortfolioCashAssignmentFormState
         investmentPortfolioRepositoryProvider.future,
       );
       await repository.unassignCapital(assignment);
+    } catch (_) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).portfolioSaveFailed,
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _move(
+    PortfolioCapitalAssignment assignment, {
+    required Map<String, String> groupLabels,
+  }) async {
+    var selectedGroupId = assignment.rebalanceGroupId;
+    final targetGroupId = await showAppSheet<String>(
+      context: context,
+      title: AppLocalizations.of(context).portfolioCapitalAssignmentTitle,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FSelect<String>.rich(
+              format: (id) => groupLabels[id] ?? id,
+              control: FSelectControl<String>.lifted(
+                value: selectedGroupId,
+                onChange: (value) {
+                  if (value == null) return;
+                  setSheetState(() => selectedGroupId = value);
+                },
+              ),
+              label: Text(AppLocalizations.of(context).portfolioGroupNameLabel),
+              children: [
+                for (final group in widget.groups)
+                  FSelectItem<String>(
+                    value: group.id,
+                    title: Text(groupLabels[group.id]!),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            FButton(
+              onPress: selectedGroupId == assignment.rebalanceGroupId
+                  ? null
+                  : () => Navigator.of(sheetContext).pop(selectedGroupId),
+              child: Text(AppLocalizations.of(context).commonSave),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (targetGroupId == null || !mounted) return;
+    final group = widget.groups.firstWhere((item) => item.id == targetGroupId);
+    setState(() => _busy = true);
+    try {
+      final repository = await ref.read(
+        investmentPortfolioRepositoryProvider.future,
+      );
+      await repository.moveCapitalAssignment(
+        assignment: assignment,
+        portfolioId: group.portfolioId,
+        rebalanceGroupId: group.id,
+        sourceCapacity:
+            widget.availableByAccount[assignment.sourceId] ??
+            assignment.amount ??
+            Decimal.zero,
+      );
     } catch (_) {
       if (!mounted) return;
       AppMessenger.show(

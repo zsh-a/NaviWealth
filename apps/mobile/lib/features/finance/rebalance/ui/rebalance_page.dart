@@ -15,6 +15,7 @@ import '../domain/capital_allocation_engine.dart';
 import '../domain/hierarchical_rebalance_engine.dart';
 import '../domain/rebalance_execution.dart';
 import '../domain/rebalance_models.dart';
+import '../domain/rebalance_stage.dart';
 import '../domain/universe_rebalance_engine.dart';
 import 'deviation_bar.dart';
 
@@ -30,6 +31,10 @@ class RebalancePage extends ConsumerWidget {
     final portfolioPlan = ref.watch(hierarchicalRebalancePlanProvider);
     final universePlan = ref.watch(universeRebalancePlanProvider);
     final active = ref.watch(activeRebalanceExecutionProvider).value;
+    final stage = RebalanceStageResolver.resolve(
+      universePlan: universePlan,
+      portfolioPlan: portfolioPlan,
+    );
 
     return AppPageScaffold(
       title: l10n.rebalanceTitle,
@@ -39,12 +44,14 @@ class RebalancePage extends ConsumerWidget {
               active: active,
               portfolioPlan: portfolioPlan,
               universePlan: universePlan,
+              stage: stage,
             )
           : _RebalanceBody(
               plan: plan,
               portfolioPlan: portfolioPlan,
               universePlan: universePlan,
               active: active,
+              stage: stage,
             ),
     );
   }
@@ -117,11 +124,13 @@ class _EmptyState extends ConsumerWidget {
     required this.active,
     required this.portfolioPlan,
     required this.universePlan,
+    required this.stage,
   });
 
   final RebalanceExecutionSession? active;
   final PortfolioRebalancePlan? portfolioPlan;
   final UniverseRebalancePlan? universePlan;
+  final RebalanceStageState stage;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -129,12 +138,20 @@ class _EmptyState extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s16),
       children: [
-        if (universePlan != null) ...[
+        if (universePlan != null || portfolioPlan != null) ...[
+          _RebalanceStageRail(stage: stage),
+          const SizedBox(height: AppSpacing.s16),
+        ],
+        if (universePlan != null && stage.isPortfolioStage) ...[
           _UniversePortfolioAllocation(plan: universePlan!),
           const SizedBox(height: AppSpacing.s16),
         ],
-        if (portfolioPlan != null) ...[
+        if (portfolioPlan != null && stage.isGroupStage) ...[
           _PortfolioGroupSelector(plan: portfolioPlan!),
+          const SizedBox(height: AppSpacing.s16),
+        ],
+        if (stage.blocksAssetTrades) ...[
+          _MobileCapitalGate(blocked: stage.isBlocked),
           const SizedBox(height: AppSpacing.s16),
         ],
         AppEmptyState(
@@ -166,12 +183,14 @@ class _RebalanceBody extends StatelessWidget {
     required this.portfolioPlan,
     required this.universePlan,
     required this.active,
+    required this.stage,
   });
 
   final RebalancePlan plan;
   final PortfolioRebalancePlan? portfolioPlan;
   final UniverseRebalancePlan? universePlan;
   final RebalanceExecutionSession? active;
+  final RebalanceStageState stage;
 
   @override
   Widget build(BuildContext context) {
@@ -184,28 +203,30 @@ class _RebalanceBody extends StatelessWidget {
         return ListView(
           padding: padding,
           children: [
-            if (universePlan != null) ...[
+            if (universePlan != null || portfolioPlan != null) ...[
+              _RebalanceStageRail(stage: stage),
+              SizedBox(height: isMobile ? AppSpacing.s12 : AppSpacing.s16),
+            ],
+            if (universePlan != null && stage.isPortfolioStage) ...[
               _UniversePortfolioAllocation(plan: universePlan!),
               SizedBox(height: isMobile ? AppSpacing.s12 : AppSpacing.s16),
             ],
-            if (portfolioPlan != null) ...[
+            if (portfolioPlan != null &&
+                (stage.isGroupStage ||
+                    stage.stage == RebalanceStage.assetTrades ||
+                    stage.stage == RebalanceStage.complete)) ...[
               _PortfolioGroupSelector(plan: portfolioPlan!),
               SizedBox(height: isMobile ? AppSpacing.s12 : AppSpacing.s16),
             ],
-            if (isMobile &&
-                ((universePlan?.capitalPlan.transfers.isNotEmpty ?? false) ||
-                    (portfolioPlan?.transfers.isNotEmpty ?? false)))
-              const _MobileCapitalGate()
+            if (stage.blocksAssetTrades)
+              _MobileCapitalGate(blocked: stage.isBlocked)
             else
               ResponsiveTwoColumn(
                 left: _DriftOverview(plan: plan),
                 right: _TradeList(
                   plan: plan,
                   active: active,
-                  capitalTransfersPending:
-                      (universePlan?.capitalPlan.transfers.isNotEmpty ??
-                          false) ||
-                      (portfolioPlan?.transfers.isNotEmpty ?? false),
+                  capitalTransfersPending: false,
                 ),
               ),
           ],
@@ -296,6 +317,16 @@ class _UniversePortfolioAllocation extends ConsumerWidget {
                     fromName:
                         nameById[transfer.fromNodeId] ?? transfer.fromNodeId,
                     toName: nameById[transfer.toNodeId] ?? transfer.toNodeId,
+                    fromDetail: _weightDetail(
+                      l10n,
+                      formatters,
+                      plan.capitalPlan.decisions[transfer.fromNodeId],
+                    ),
+                    toDetail: _weightDetail(
+                      l10n,
+                      formatters,
+                      plan.capitalPlan.decisions[transfer.toNodeId],
+                    ),
                     amount: formatters.currency(
                       transfer.amount.amount,
                       code: transfer.amount.currency,
@@ -303,7 +334,13 @@ class _UniversePortfolioAllocation extends ConsumerWidget {
                     onResolve: () => context.push(
                       FinanceRoutes.wealthPortfolioStudioFor(
                         transfer.fromNodeId,
-                        section: 'assets',
+                        section: PortfolioStudioSection.assets,
+                        transfer: CapitalTransferIntent(
+                          fromPortfolioId: transfer.fromNodeId,
+                          toPortfolioId: transfer.toNodeId,
+                          amount: transfer.amount.amount.toString(),
+                          currency: transfer.amount.currency,
+                        ),
                       ),
                     ),
                   ),
@@ -412,6 +449,24 @@ class _PortfolioGroupSelector extends ConsumerWidget {
                         transfer.fromGroupId,
                     toName:
                         groupNameById[transfer.toGroupId] ?? transfer.toGroupId,
+                    fromDetail: _groupWeightDetail(
+                      l10n,
+                      formatters,
+                      plan.groups
+                          .where(
+                            (group) => group.group.id == transfer.fromGroupId,
+                          )
+                          .firstOrNull,
+                    ),
+                    toDetail: _groupWeightDetail(
+                      l10n,
+                      formatters,
+                      plan.groups
+                          .where(
+                            (group) => group.group.id == transfer.toGroupId,
+                          )
+                          .firstOrNull,
+                    ),
                     amount: formatters.currency(
                       transfer.amount.amount,
                       code: transfer.amount.currency,
@@ -420,7 +475,17 @@ class _PortfolioGroupSelector extends ConsumerWidget {
                         ? () => context.push(
                             FinanceRoutes.wealthPortfolioStudioFor(
                               plan.groups.first.group.portfolioId,
-                              section: 'assets',
+                              section: PortfolioStudioSection.assets,
+                              transfer: CapitalTransferIntent(
+                                fromPortfolioId:
+                                    plan.groups.first.group.portfolioId,
+                                toPortfolioId:
+                                    plan.groups.first.group.portfolioId,
+                                fromGroupId: transfer.fromGroupId,
+                                toGroupId: transfer.toGroupId,
+                                amount: transfer.amount.amount.toString(),
+                                currency: transfer.amount.currency,
+                              ),
                             ),
                           )
                         : null,
@@ -458,12 +523,16 @@ class _CapitalTransferTile extends StatelessWidget {
     required this.fromName,
     required this.toName,
     required this.amount,
+    this.fromDetail,
+    this.toDetail,
     this.onResolve,
   });
 
   final String fromName;
   final String toName;
   final String amount;
+  final String? fromDetail;
+  final String? toDetail;
   final VoidCallback? onResolve;
 
   @override
@@ -483,11 +552,18 @@ class _CapitalTransferTile extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  fromName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.theme.typography.body.sm,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      fromName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.theme.typography.body.sm,
+                    ),
+                    if (fromDetail != null)
+                      Text(fromDetail!, style: context.microLabelStyle),
+                  ],
                 ),
               ),
               Padding(
@@ -499,12 +575,23 @@ class _CapitalTransferTile extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: Text(
-                  toName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.end,
-                  style: context.theme.typography.body.sm,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      toName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: context.theme.typography.body.sm,
+                    ),
+                    if (toDetail != null)
+                      Text(
+                        toDetail!,
+                        textAlign: TextAlign.end,
+                        style: context.microLabelStyle,
+                      ),
+                  ],
                 ),
               ),
             ],
@@ -536,7 +623,9 @@ class _CapitalTransferTile extends StatelessWidget {
 }
 
 class _MobileCapitalGate extends StatelessWidget {
-  const _MobileCapitalGate();
+  const _MobileCapitalGate({required this.blocked});
+
+  final bool blocked;
 
   @override
   Widget build(BuildContext context) {
@@ -560,10 +649,79 @@ class _MobileCapitalGate extends StatelessWidget {
           const SizedBox(width: AppSpacing.s10),
           Expanded(
             child: Text(
-              l10n.rebalanceCapitalFirstHint,
+              blocked
+                  ? l10n.rebalanceCapitalBlockedHint
+                  : l10n.rebalanceCapitalFirstHint,
               style: context.captionStyle,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RebalanceStageRail extends StatelessWidget {
+  const _RebalanceStageRail({required this.stage});
+
+  final RebalanceStageState stage;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final activeIndex = switch (stage.stage) {
+      RebalanceStage.portfolioCapital || RebalanceStage.portfolioBlocked => 0,
+      RebalanceStage.groupCapital || RebalanceStage.groupBlocked => 1,
+      RebalanceStage.assetTrades || RebalanceStage.complete => 2,
+    };
+    final labels = [
+      l10n.rebalanceStagePortfolioTitle,
+      l10n.rebalanceStageStrategyTitle,
+      l10n.rebalanceStageAssetTitle,
+    ];
+    return AppGroupedSurface(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Row(
+        children: [
+          for (var index = 0; index < labels.length; index++) ...[
+            Expanded(
+              child: Row(
+                children: [
+                  Icon(
+                    index < activeIndex
+                        ? FLucideIcons.circleCheck
+                        : index == activeIndex
+                        ? FLucideIcons.circleDot
+                        : FLucideIcons.circle,
+                    size: AppIconSizes.sm,
+                    color: index <= activeIndex
+                        ? context.theme.colors.primary
+                        : context.theme.colors.mutedForeground,
+                  ),
+                  const SizedBox(width: AppSpacing.s4),
+                  Expanded(
+                    child: Text(
+                      labels[index].replaceFirst(RegExp(r'^\d+\s*·\s*'), ''),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: index == activeIndex
+                          ? context.captionLabelStyle
+                          : context.microLabelStyle,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (index != labels.length - 1)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+                child: Icon(
+                  FLucideIcons.chevronRight,
+                  size: AppIconSizes.xs,
+                  color: context.theme.colors.mutedForeground,
+                ),
+              ),
+          ],
         ],
       ),
     );
@@ -926,3 +1084,28 @@ String _targetLabel(AppLocalizations l10n, Drift drift) =>
 
 String _tradeTargetLabel(AppLocalizations l10n, SuggestedTrade trade) =>
     trade.targetLabel ?? AssetCategoryVisuals.label(l10n, trade.category);
+
+String? _weightDetail(
+  AppLocalizations l10n,
+  AppFormatters formatters,
+  CapitalAllocationDecision? decision,
+) {
+  if (decision == null) return null;
+  return l10n.rebalancePortfolioWeightPair(
+    formatters.percent(decision.actualWeight, decimalDigits: 0),
+    formatters.percent(decision.targetWeight, decimalDigits: 0),
+  );
+}
+
+String? _groupWeightDetail(
+  AppLocalizations l10n,
+  AppFormatters formatters,
+  GroupRebalancePlan? plan,
+) {
+  final decision = plan?.capitalDecision;
+  if (decision == null) return null;
+  return l10n.rebalancePortfolioWeightPair(
+    formatters.percent(decision.actualWeight, decimalDigits: 0),
+    formatters.percent(decision.targetWeight, decimalDigits: 0),
+  );
+}

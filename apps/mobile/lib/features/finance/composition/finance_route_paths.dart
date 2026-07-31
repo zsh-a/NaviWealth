@@ -1,6 +1,55 @@
 /// FinanceOS route path and route name contract.
 library;
 
+enum PortfolioStudioSection { overview, structure, assets, rules }
+
+class CapitalTransferIntent {
+  const CapitalTransferIntent({
+    required this.fromPortfolioId,
+    required this.toPortfolioId,
+    required this.amount,
+    required this.currency,
+    this.fromGroupId,
+    this.toGroupId,
+  });
+
+  final String fromPortfolioId;
+  final String toPortfolioId;
+  final String amount;
+  final String currency;
+  final String? fromGroupId;
+  final String? toGroupId;
+
+  bool get isGroupTransfer => fromGroupId != null || toGroupId != null;
+
+  Map<String, String> get queryParameters => {
+    'transferFrom': fromPortfolioId,
+    'transferTo': toPortfolioId,
+    'transferAmount': amount,
+    'transferCurrency': currency,
+    'transferFromGroup': ?fromGroupId,
+    'transferToGroup': ?toGroupId,
+  };
+
+  static CapitalTransferIntent? fromQuery(Map<String, String> query) {
+    final from = query['transferFrom'];
+    final to = query['transferTo'];
+    final amount = query['transferAmount'];
+    final currency = query['transferCurrency'];
+    if (from == null || to == null || amount == null || currency == null) {
+      return null;
+    }
+    return CapitalTransferIntent(
+      fromPortfolioId: from,
+      toPortfolioId: to,
+      amount: amount,
+      currency: currency,
+      fromGroupId: query['transferFromGroup'],
+      toGroupId: query['transferToGroup'],
+    );
+  }
+}
+
 abstract final class FinanceRoutes {
   static const home = '/';
   static const activity = '/activity';
@@ -49,11 +98,17 @@ abstract final class FinanceRoutes {
 
   static String wealthPortfolioStudioFor(
     String portfolioId, {
-    String? section,
+    PortfolioStudioSection? section,
+    CapitalTransferIntent? transfer,
   }) {
     final path = '/wealth/portfolio/${Uri.encodeComponent(portfolioId)}/studio';
-    if (section == null || section.isEmpty) return path;
-    return '$path?section=${Uri.encodeQueryComponent(section)}';
+    final query = <String, String>{
+      if (section != null) 'section': section.name,
+      if (transfer != null) ...transfer.queryParameters,
+    };
+    return query.isEmpty
+        ? path
+        : Uri(path: path, queryParameters: query).toString();
   }
 
   static String wealthAssetEdit(String id) =>

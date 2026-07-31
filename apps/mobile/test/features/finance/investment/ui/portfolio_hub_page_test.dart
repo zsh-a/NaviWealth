@@ -8,6 +8,7 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/analytics/data/providers.dart';
 import 'package:naviwealth/features/finance/analytics/domain/concentration_risk.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
@@ -438,7 +439,13 @@ void main() {
             locale: const Locale('en', 'US'),
             home: const PortfolioStudioPage(
               portfolioId: 'portfolio',
-              initialSection: 'assets',
+              initialSection: PortfolioStudioSection.assets,
+              transferIntent: CapitalTransferIntent(
+                fromPortfolioId: 'portfolio',
+                toPortfolioId: 'portfolio',
+                amount: '250',
+                currency: 'USD',
+              ),
             ),
           ),
         ),
@@ -447,6 +454,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Asset targets'), findsOneWidget);
+    expect(find.text('Current transfer task'), findsOneWidget);
+    expect(find.textContaining(r'$250.00'), findsOneWidget);
     expect(find.text('Apple target'), findsOneWidget);
     expect(find.text('60%'), findsOneWidget);
     expect(find.text('AAPL'), findsOneWidget);

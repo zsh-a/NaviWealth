@@ -7934,6 +7934,18 @@
   "portfolioStrategyArchiveBody": "Existing strategies keep their current configuration. This type will no longer appear when adding a strategy.",
   "portfolioStrategyArchiveFailed": "Couldn't archive this strategy type.",
   "rebalanceCapitalFirstHint": "Complete the capital movements above by updating asset assignment. Asset trades unlock after the portfolio and strategy balances are within tolerance.",
+  "rebalanceCapitalBlockedHint": "This allocation cannot be completed automatically. Adjust its transfer policy or target, or add eligible capital; the next stage will be recalculated after it is resolved.",
+  "rebalanceTransferTaskTitle": "Current transfer task",
+  "rebalanceTransferTaskSummary": "{from} → {to} · {amount}",
+  "@rebalanceTransferTaskSummary": {
+    "placeholders": {
+      "from": { "type": "String" },
+      "to": { "type": "String" },
+      "amount": { "type": "String" }
+    }
+  },
+  "rebalanceTransferTaskHint": "Move cash first, then adjust position ownership if needed. Return to rebalancing when done to recalculate the next stage from the latest assignments.",
+  "rebalanceTransferTaskRecalculateAction": "Done, recalculate",
   "rebalanceCapitalFirstAction": "Resolve capital movements first",
   "rebalanceResolveTransferAction": "Resolve transfer"
 }

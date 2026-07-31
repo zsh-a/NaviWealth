@@ -4933,6 +4933,18 @@
   "portfolioStrategyArchiveBody": "已有策略保留当前配置，但以后添加策略时将不再显示此类型。",
   "portfolioStrategyArchiveFailed": "无法归档此策略类型。",
   "rebalanceCapitalFirstHint": "请先通过资产归属完成上方资金调拨；组合与策略进入允许偏差后，才可执行策略内资产交易。",
+  "rebalanceCapitalBlockedHint": "当前资金配置无法自动完成。请调整调拨规则、目标比例或补充可用资金；解决后系统会重新计算下一阶段。",
+  "rebalanceTransferTaskTitle": "当前调拨任务",
+  "rebalanceTransferTaskSummary": "{from} → {to} · {amount}",
+  "@rebalanceTransferTaskSummary": {
+    "placeholders": {
+      "from": { "type": "String" },
+      "to": { "type": "String" },
+      "amount": { "type": "String" }
+    }
+  },
+  "rebalanceTransferTaskHint": "优先移动现金；不足时再调整持仓归属。完成后返回再平衡，系统会用最新资产归属重新计算下一阶段。",
+  "rebalanceTransferTaskRecalculateAction": "完成并重新计算",
   "rebalanceCapitalFirstAction": "请先处理资金调拨",
   "rebalanceResolveTransferAction": "处理调拨"
 }

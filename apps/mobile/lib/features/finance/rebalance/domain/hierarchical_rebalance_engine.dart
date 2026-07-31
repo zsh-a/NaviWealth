@@ -82,8 +82,18 @@ class PortfolioRebalancePlan {
   final List<GroupRebalancePlan> groups;
   final List<GroupCapitalTransfer> transfers;
 
+  bool get hasBlockedCapitalDecisions => groups.any(
+    (group) =>
+        group.capitalDecision.action == GroupCapitalAction.policyBlocked ||
+        group.capitalDecision.action == GroupCapitalAction.noCounterparty,
+  );
+
+  bool get hasUnresolvedCapital => groups.any(
+    (group) => group.capitalDecision.action != GroupCapitalAction.withinBand,
+  );
+
   bool get requiresAction =>
-      transfers.isNotEmpty ||
+      hasUnresolvedCapital ||
       groups.any((group) => !(group.internalPlan?.isBalanced ?? true));
 }
 

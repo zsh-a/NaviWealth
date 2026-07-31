@@ -10,6 +10,7 @@ import 'package:naviwealth/features/finance/rebalance/domain/hierarchical_rebala
 import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance_group.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/rebalance_engine.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/rebalance_models.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/rebalance_stage.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/rebalance_universe.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/universe_rebalance_engine.dart';
 
@@ -69,6 +70,13 @@ void main() {
             portfolio.strategyPlan.groups.single.internalPlan != null,
       ),
       isTrue,
+    );
+    expect(
+      RebalanceStageResolver.resolve(
+        universePlan: plan,
+        portfolioPlan: plan.portfolios.first.strategyPlan,
+      ).stage,
+      RebalanceStage.portfolioCapital,
     );
   });
 }

@@ -28152,6 +28152,36 @@ abstract class AppLocalizations {
   /// **'Complete the capital movements above by updating asset assignment. Asset trades unlock after the portfolio and strategy balances are within tolerance.'**
   String get rebalanceCapitalFirstHint;
 
+  /// No description provided for @rebalanceCapitalBlockedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This allocation cannot be completed automatically. Adjust its transfer policy or target, or add eligible capital; the next stage will be recalculated after it is resolved.'**
+  String get rebalanceCapitalBlockedHint;
+
+  /// No description provided for @rebalanceTransferTaskTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Current transfer task'**
+  String get rebalanceTransferTaskTitle;
+
+  /// No description provided for @rebalanceTransferTaskSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} → {to} · {amount}'**
+  String rebalanceTransferTaskSummary(String from, String to, String amount);
+
+  /// No description provided for @rebalanceTransferTaskHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Move cash first, then adjust position ownership if needed. Return to rebalancing when done to recalculate the next stage from the latest assignments.'**
+  String get rebalanceTransferTaskHint;
+
+  /// No description provided for @rebalanceTransferTaskRecalculateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Done, recalculate'**
+  String get rebalanceTransferTaskRecalculateAction;
+
   /// No description provided for @rebalanceCapitalFirstAction.
   ///
   /// In en, this message translates to:

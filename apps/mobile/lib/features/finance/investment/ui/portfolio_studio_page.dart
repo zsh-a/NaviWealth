@@ -1,7 +1,5 @@
 part of 'portfolio_hub_page.dart';
 
-enum _PortfolioStudioSection { overview, structure, assets, rules }
-
 class _PortfolioPlanStrip extends ConsumerWidget {
   const _PortfolioPlanStrip({
     required this.portfolios,
@@ -275,11 +273,13 @@ class PortfolioStudioPage extends ConsumerStatefulWidget {
   const PortfolioStudioPage({
     super.key,
     required this.portfolioId,
-    this.initialSection = 'overview',
+    this.initialSection = PortfolioStudioSection.overview,
+    this.transferIntent,
   });
 
   final String portfolioId;
-  final String initialSection;
+  final PortfolioStudioSection initialSection;
+  final CapitalTransferIntent? transferIntent;
 
   @override
   ConsumerState<PortfolioStudioPage> createState() =>
@@ -287,15 +287,12 @@ class PortfolioStudioPage extends ConsumerStatefulWidget {
 }
 
 class _PortfolioStudioPageState extends ConsumerState<PortfolioStudioPage> {
-  late _PortfolioStudioSection _section;
+  late PortfolioStudioSection _section;
 
   @override
   void initState() {
     super.initState();
-    _section = _PortfolioStudioSection.values.firstWhere(
-      (section) => section.name == widget.initialSection,
-      orElse: () => _PortfolioStudioSection.overview,
-    );
+    _section = widget.initialSection;
   }
 
   @override
@@ -326,6 +323,10 @@ class _PortfolioStudioPageState extends ConsumerState<PortfolioStudioPage> {
             portfolio: portfolio,
             tree: allocationTree,
             section: _section,
+            transferIntent: widget.transferIntent,
+            portfolioNames: {
+              for (final item in portfolios.requireValue) item.id: item.name,
+            },
             onSectionChanged: (next) => setState(() => _section = next),
           ),
         (AsyncError(:final error, :final stackTrace), _) ||
@@ -358,13 +359,17 @@ class _PortfolioStudioBody extends StatelessWidget {
     required this.portfolio,
     required this.tree,
     required this.section,
+    required this.transferIntent,
+    required this.portfolioNames,
     required this.onSectionChanged,
   });
 
   final InvestmentPortfolio portfolio;
   final PortfolioAllocationTree tree;
-  final _PortfolioStudioSection section;
-  final ValueChanged<_PortfolioStudioSection> onSectionChanged;
+  final PortfolioStudioSection section;
+  final CapitalTransferIntent? transferIntent;
+  final Map<String, String> portfolioNames;
+  final ValueChanged<PortfolioStudioSection> onSectionChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -388,6 +393,14 @@ class _PortfolioStudioBody extends StatelessWidget {
       ),
       primary: ListView(
         children: [
+          if (transferIntent != null) ...[
+            _StudioTransferTask(
+              intent: transferIntent!,
+              tree: tree,
+              portfolioNames: portfolioNames,
+            ),
+            const SizedBox(height: AppSpacing.s16),
+          ],
           _StudioHero(
             portfolio: portfolio,
             portfolioNode: portfolioNode,
@@ -398,23 +411,23 @@ class _PortfolioStudioBody extends StatelessWidget {
           _StudioSectionSegment(value: section, onChanged: onSectionChanged),
           const SizedBox(height: AppSpacing.s16),
           switch (section) {
-            _PortfolioStudioSection.overview => _StudioOverview(
+            PortfolioStudioSection.overview => _StudioOverview(
               portfolio: portfolio,
               portfolioNode: portfolioNode,
               sleeves: sleeves,
               tree: tree,
             ),
-            _PortfolioStudioSection.structure => _StudioStructure(
+            PortfolioStudioSection.structure => _StudioStructure(
               portfolio: portfolio,
               sleeves: sleeves,
               tree: tree,
             ),
-            _PortfolioStudioSection.assets => _StudioAssets(
+            PortfolioStudioSection.assets => _StudioAssets(
               portfolio: portfolio,
               sleeves: sleeves,
               tree: tree,
             ),
-            _PortfolioStudioSection.rules => _StudioRules(
+            PortfolioStudioSection.rules => _StudioRules(
               portfolio: portfolio,
               sleeves: sleeves,
               tree: tree,
@@ -524,23 +537,172 @@ class _StudioHero extends StatelessWidget {
   }
 }
 
+class _StudioTransferTask extends ConsumerWidget {
+  const _StudioTransferTask({
+    required this.intent,
+    required this.tree,
+    required this.portfolioNames,
+  });
+
+  final CapitalTransferIntent intent;
+  final PortfolioAllocationTree tree;
+  final Map<String, String> portfolioNames;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final formatters = context.formatters(ref);
+    final fromName = intent.fromGroupId == null
+        ? portfolioNames[intent.fromPortfolioId] ?? intent.fromPortfolioId
+        : tree
+                  .nodeForReference(
+                    AllocationNodeType.sleeve,
+                    intent.fromGroupId!,
+                  )
+                  ?.name ??
+              intent.fromGroupId!;
+    final toName = intent.toGroupId == null
+        ? portfolioNames[intent.toPortfolioId] ?? intent.toPortfolioId
+        : tree
+                  .nodeForReference(
+                    AllocationNodeType.sleeve,
+                    intent.toGroupId!,
+                  )
+                  ?.name ??
+              intent.toGroupId!;
+    final amount = formatters.currency(
+      Decimal.tryParse(intent.amount) ?? Decimal.zero,
+      code: intent.currency,
+    );
+    final targetPortfolioNode = tree.nodeForReference(
+      AllocationNodeType.portfolio,
+      intent.toPortfolioId,
+    );
+    final preferredGroupId =
+        intent.toGroupId ??
+        (targetPortfolioNode == null
+            ? null
+            : tree.childrenOf(targetPortfolioNode.id).firstOrNull?.referenceId);
+    return SoftCard.raised(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: context.theme.colors.primary.withValues(
+                    alpha: AppOpacity.subtle,
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Icon(
+                  FLucideIcons.arrowRightLeft,
+                  size: AppIconSizes.md,
+                  color: context.theme.colors.primary,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.rebalanceTransferTaskTitle,
+                      style: context.theme.typography.body.sm,
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(
+                      l10n.rebalanceTransferTaskSummary(
+                        fromName,
+                        toName,
+                        amount,
+                      ),
+                      style: context.captionStyle,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          Text(l10n.rebalanceTransferTaskHint, style: context.captionStyle),
+          const SizedBox(height: AppSpacing.s12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final stacked = constraints.maxWidth < Breakpoints.formColumn;
+              final positions = FButton(
+                onPress: () => showPortfolioLotAssignmentSheet(
+                  context,
+                  preferredGroupId: preferredGroupId,
+                ),
+                prefix: const Icon(FLucideIcons.briefcaseBusiness),
+                child: Text(l10n.portfolioStudioIncludePositionAction),
+              );
+              final cash = FButton(
+                variant: FButtonVariant.outline,
+                onPress: () => showPortfolioCashAssignmentSheet(
+                  context,
+                  preferredGroupId: preferredGroupId,
+                  suggestedAmount: Decimal.tryParse(intent.amount),
+                ),
+                prefix: const Icon(FLucideIcons.walletCards),
+                child: Text(l10n.portfolioStudioIncludeCashAction),
+              );
+              final children = [positions, cash];
+              if (stacked) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    children.first,
+                    const SizedBox(height: AppSpacing.s8),
+                    children.last,
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: children.first),
+                  const SizedBox(width: AppSpacing.s8),
+                  Expanded(child: children.last),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          FButton(
+            variant: FButtonVariant.ghost,
+            onPress: () => context.go(FinanceRoutes.planRebalance),
+            prefix: const Icon(FLucideIcons.refreshCw),
+            child: Text(l10n.rebalanceTransferTaskRecalculateAction),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _StudioSectionSegment extends StatelessWidget {
   const _StudioSectionSegment({required this.value, required this.onChanged});
 
-  final _PortfolioStudioSection value;
-  final ValueChanged<_PortfolioStudioSection> onChanged;
+  final PortfolioStudioSection value;
+  final ValueChanged<PortfolioStudioSection> onChanged;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SegmentedRow<_PortfolioStudioSection>(
-      options: _PortfolioStudioSection.values,
+    return SegmentedRow<PortfolioStudioSection>(
+      options: PortfolioStudioSection.values,
       value: value,
       labelOf: (item) => switch (item) {
-        _PortfolioStudioSection.overview => l10n.portfolioStudioOverviewTab,
-        _PortfolioStudioSection.structure => l10n.portfolioStudioStructureTab,
-        _PortfolioStudioSection.assets => l10n.portfolioStudioAssetsTab,
-        _PortfolioStudioSection.rules => l10n.portfolioStudioRulesTab,
+        PortfolioStudioSection.overview => l10n.portfolioStudioOverviewTab,
+        PortfolioStudioSection.structure => l10n.portfolioStudioStructureTab,
+        PortfolioStudioSection.assets => l10n.portfolioStudioAssetsTab,
+        PortfolioStudioSection.rules => l10n.portfolioStudioRulesTab,
       },
       onChanged: onChanged,
     );

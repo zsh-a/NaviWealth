@@ -15890,6 +15890,25 @@ class AppLocalizationsZh extends AppLocalizations {
       '请先通过资产归属完成上方资金调拨；组合与策略进入允许偏差后，才可执行策略内资产交易。';
 
   @override
+  String get rebalanceCapitalBlockedHint =>
+      '当前资金配置无法自动完成。请调整调拨规则、目标比例或补充可用资金；解决后系统会重新计算下一阶段。';
+
+  @override
+  String get rebalanceTransferTaskTitle => '当前调拨任务';
+
+  @override
+  String rebalanceTransferTaskSummary(String from, String to, String amount) {
+    return '$from → $to · $amount';
+  }
+
+  @override
+  String get rebalanceTransferTaskHint =>
+      '优先移动现金；不足时再调整持仓归属。完成后返回再平衡，系统会用最新资产归属重新计算下一阶段。';
+
+  @override
+  String get rebalanceTransferTaskRecalculateAction => '完成并重新计算';
+
+  @override
   String get rebalanceCapitalFirstAction => '请先处理资金调拨';
 
   @override

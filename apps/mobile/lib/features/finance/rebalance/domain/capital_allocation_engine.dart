@@ -86,7 +86,15 @@ class CapitalAllocationPlan {
   final Map<String, CapitalAllocationDecision> decisions;
   final List<CapitalAllocationTransfer> transfers;
 
-  bool get requiresAction => transfers.isNotEmpty;
+  bool get hasBlockedDecisions => decisions.values.any(
+    (decision) =>
+        decision.action == CapitalAllocationAction.policyBlocked ||
+        decision.action == CapitalAllocationAction.noCounterparty,
+  );
+
+  bool get requiresAction => decisions.values.any(
+    (decision) => decision.action != CapitalAllocationAction.withinBand,
+  );
 }
 
 /// Policy-aware allocator shared by universe → portfolio and

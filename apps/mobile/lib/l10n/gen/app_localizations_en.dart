@@ -16728,6 +16728,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'Complete the capital movements above by updating asset assignment. Asset trades unlock after the portfolio and strategy balances are within tolerance.';
 
   @override
+  String get rebalanceCapitalBlockedHint =>
+      'This allocation cannot be completed automatically. Adjust its transfer policy or target, or add eligible capital; the next stage will be recalculated after it is resolved.';
+
+  @override
+  String get rebalanceTransferTaskTitle => 'Current transfer task';
+
+  @override
+  String rebalanceTransferTaskSummary(String from, String to, String amount) {
+    return '$from → $to · $amount';
+  }
+
+  @override
+  String get rebalanceTransferTaskHint =>
+      'Move cash first, then adjust position ownership if needed. Return to rebalancing when done to recalculate the next stage from the latest assignments.';
+
+  @override
+  String get rebalanceTransferTaskRecalculateAction => 'Done, recalculate';
+
+  @override
   String get rebalanceCapitalFirstAction => 'Resolve capital movements first';
 
   @override

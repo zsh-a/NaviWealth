@@ -64,6 +64,8 @@ void main() {
       plan.decisions['isolated']!.action,
       CapitalAllocationAction.policyBlocked,
     );
+    expect(plan.hasBlockedDecisions, isTrue);
+    expect(plan.requiresAction, isTrue);
   });
 
   test('requires an exact 100% target total', () {

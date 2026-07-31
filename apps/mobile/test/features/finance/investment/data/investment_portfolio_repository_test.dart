@@ -452,6 +452,7 @@ void main() {
         await repository.assignCash(
           accountId: 'broker-cash',
           amount: Decimal.parse('1000'),
+          availableAmount: Decimal.parse('1000'),
           currency: 'USD',
           portfolioId: portfolio.id,
           rebalanceGroupId: removableGroup.id,
@@ -571,6 +572,7 @@ void main() {
       await repository.assignCash(
         accountId: 'broker-cash',
         amount: Decimal.parse('25000'),
+        availableAmount: Decimal.parse('25000'),
         currency: 'usd',
         portfolioId: portfolio.id,
         rebalanceGroupId: group.id,
@@ -583,6 +585,126 @@ void main() {
       expect(assignment.amount, Decimal.parse('25000'));
       expect(assignment.currency, 'USD');
       expect(assignment.rebalanceGroupId, group.id);
+    });
+
+    test(
+      'moves a capital assignment atomically and preserves history',
+      () async {
+        final db = makeTestDatabase();
+        final outbox = InMemoryOutboxStore();
+        final repository = InvestmentPortfolioRepository(
+          db: db,
+          outbox: outbox,
+          stamper: makeStubStamper(),
+        );
+        addTearDown(db.close);
+        final source = await repository.create(
+          name: 'Source',
+          initialStrategy: kIndexCoreStrategyTemplate,
+          baseCurrency: 'USD',
+          languageCode: 'en',
+        );
+        final target = await repository.create(
+          name: 'Target',
+          initialStrategy: kDividendIncomeStrategyTemplate,
+          baseCurrency: 'USD',
+          languageCode: 'en',
+        );
+        final groups = await repository.watchGroups('u-test').first;
+        final sourceGroup = groups.singleWhere(
+          (group) => group.portfolioId == source.id,
+        );
+        final targetGroup = groups.singleWhere(
+          (group) => group.portfolioId == target.id,
+        );
+        final original = await repository.assignWholeLot(
+          lotId: 'lot-1',
+          portfolioId: source.id,
+          rebalanceGroupId: sourceGroup.id,
+        );
+
+        final replacement = await repository.moveCapitalAssignment(
+          assignment: original,
+          portfolioId: target.id,
+          rebalanceGroupId: targetGroup.id,
+        );
+
+        final active = await repository.watchAssignments('u-test').first;
+        expect(active, hasLength(1));
+        expect(active.single.id, replacement.id);
+        expect(active.single.portfolioId, target.id);
+        final history = await repository.watchAssignmentHistory('u-test').first;
+        expect(history, hasLength(2));
+        expect(
+          history
+              .singleWhere((assignment) => assignment.id == original.id)
+              .unassignedAt,
+          isNotNull,
+        );
+        expect(
+          outbox.queued
+              .where(
+                (operation) =>
+                    operation.table ==
+                    InvestmentPortfolioRepository.assignmentsTable,
+              )
+              .length,
+          3,
+        );
+      },
+    );
+
+    test('rejects partial lot and cash assignments beyond capacity', () async {
+      final db = makeTestDatabase();
+      final repository = InvestmentPortfolioRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+      final portfolio = await repository.create(
+        name: 'Core',
+        initialStrategy: kIndexCoreStrategyTemplate,
+        baseCurrency: 'USD',
+        languageCode: 'en',
+      );
+      final group = (await repository.watchGroups('u-test').first).single;
+      await repository.assignLotQuantity(
+        lotId: 'lot-1',
+        quantity: Decimal.parse('6'),
+        availableQuantity: Decimal.parse('10'),
+        portfolioId: portfolio.id,
+        rebalanceGroupId: group.id,
+      );
+      await expectLater(
+        repository.assignLotQuantity(
+          lotId: 'lot-1',
+          quantity: Decimal.parse('5'),
+          availableQuantity: Decimal.parse('10'),
+          portfolioId: portfolio.id,
+          rebalanceGroupId: group.id,
+        ),
+        throwsStateError,
+      );
+      await repository.assignCash(
+        accountId: 'cash-1',
+        amount: Decimal.parse('60'),
+        availableAmount: Decimal.parse('100'),
+        currency: 'USD',
+        portfolioId: portfolio.id,
+        rebalanceGroupId: group.id,
+      );
+      await expectLater(
+        repository.assignCash(
+          accountId: 'cash-1',
+          amount: Decimal.parse('50'),
+          availableAmount: Decimal.parse('100'),
+          currency: 'USD',
+          portfolioId: portfolio.id,
+          rebalanceGroupId: group.id,
+        ),
+        throwsStateError,
+      );
     });
 
     test('persists target allocation on the selected group', () async {
