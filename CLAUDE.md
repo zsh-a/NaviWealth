@@ -2,12 +2,14 @@
 
 NaviWealth is a local-first Personal LifeOS. FinanceOS is the seed domain; HealthOS, KnowledgeOS, and ExecutionOS are opt-in domains registered through the LifeOS shell. The app targets iOS, Android, and Web. Device AI is native-only; Web has no AI runtime and no Health integration.
 
-Read these before changing architecture or cross-domain code:
+Start with `docs/agent-map.md`, which routes each task to the smallest
+authoritative context. Before changing architecture or cross-domain code, read:
 
 - `docs/architecture/lifeos-architecture-northstar.md`: boundaries and non-goals.
 - `docs/architecture/lifeos-shell.md`: cross-domain shell, domain registration, AI, sync, memory, persistence.
 - Roadmaps and domain SSOTs as needed: `docs/index.md`,
   `docs/roadmap/roadmap-lifeos.md`, `docs/roadmap/roadmap-finance.md`,
+  `docs/domains/financeos-domain.md`,
   `docs/domains/healthos-domain.md`, `docs/domains/knowledgeos-domain.md`,
   `docs/domains/executionos-domain.md`.
 
@@ -75,7 +77,9 @@ apps/backend/src/
 - `app/` is the composition root. It may import multiple domains to assemble routers, memory indexers, domain packs, AI tools, agents, and provider overrides.
 - AI contracts and runtime stay in `core/ai/`; concrete domain tools live in `features/<domain>/ai_tools/` and are exported by `features/<domain>/<domain>_ai_tools.dart`.
 - `core/persistence/` is the shared Drift adapter. Domain repositories own domain table access. Cross-domain infrastructure may use only its own tables.
-- Sync is v2 row-state: generic versioned blobs, last-writer-wins, one `POST /sync`. Do not rebuild sync as CRDT, event sourcing, or schema negotiation.
+- Sync is v3 row-state: generic versioned blobs, last-writer-wins, accepted
+  acknowledgements, and per-domain reset generations over one `POST /sync`.
+  Do not rebuild sync as CRDT, event sourcing, or schema negotiation.
 - AI is device-only. There is no backend AI relay, no cloud fallback, and no `/ai/chat` endpoint. Users provide their own Anthropic or OpenAI-compatible profile on device.
 - Web builds exclude AI runtime and Health platform integration.
 

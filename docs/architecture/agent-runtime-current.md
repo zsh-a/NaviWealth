@@ -1,5 +1,14 @@
 # Agent Runtime Current Architecture
 
+Status: active native-runtime implementation reference.
+
+## Document Contract
+
+Owns the current Rust Agent Runtime layout, Dart bridge boundaries, context
+pipeline, and durable-resume implementation. It does not own domain Agent
+behavior or user-facing presentation. The `third_party/agent-runtime` crates,
+FRB bridge code, and contract tests are authoritative for exact APIs.
+
 This is the current implementation map for agents working on the Rust agent
 runtime. Use this document for code navigation and maintenance decisions.
 It is the single source of truth for the runtime that exists now.

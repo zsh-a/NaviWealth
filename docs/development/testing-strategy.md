@@ -4,11 +4,15 @@
 Task spine, the CI gate design, and current coverage/gaps. Read this
 before adding a new test *layer* or changing a CI test gate.
 
+## Document Contract
+
+Owns which test layer should prove a behavior and how CI evidence is divided.
+It does not own product behavior or protocol semantics. Checked-in tests and
+workflow files are authoritative for current executable coverage and commands.
+
 Related: `docs/sync/sync-protocol-tests.md` (sync case matrix), `docs/sync/sync-e2e-manual.md`
 (manual multi-device checklist), `docs/development/web-compat-matrix.md` (browser support),
 `docs/visual-baseline/README.md` (golden contract).
-
----
 
 ## 1. Principle: test Tasks, not Pages
 

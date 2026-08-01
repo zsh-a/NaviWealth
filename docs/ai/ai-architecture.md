@@ -5,6 +5,13 @@ Rust agent runtime，再使用用户自己的 `LlmProfile` 直连 Anthropic 或
 OpenAI-compatible provider。Backend 不持有模型密钥、不转发 AI 请求；Web 不加载
 AI runtime。
 
+## Document Contract
+
+本文拥有设备端 AI 的产品边界、Host/Runtime 分工、工具治理、Memory 上下文和写入
+确认原则；不拥有具体领域业务规则或精确事件字段。字段与枚举以
+[`ai-protocol.md`](./ai-protocol.md) 和可执行 contract tests 为准，Rust 实现布局以
+[`agent-runtime-current.md`](../architecture/agent-runtime-current.md) 为准。
+
 运行时事件契约见 [`ai-protocol.md`](./ai-protocol.md)，Rust runtime 的代码地图与
 维护约束见
 [`agent-runtime-current.md`](../architecture/agent-runtime-current.md)。

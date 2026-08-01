@@ -231,43 +231,12 @@ Triggered work stays out of `Now` and `Next` until its evidence is recorded.
 | Future LifeOS domain | Explicit user need that cannot fit an existing domain | New ADR and real domain package |
 | Collaboration/social/publishing | No current trigger; outside product boundaries | Northstar change required |
 
-## Completed Baseline
+## Current Capability Source
 
-The following are current-state guarantees and must not be reintroduced as
-future roadmap phases:
-
-- Registry-driven multi-domain shell, opt-in, routes, tools, prompts, agents,
-  proposal appliers, settings, data management, and background hooks.
-- Source-preserving Health, Finance, and Knowledge Life-signal-to-Execution
-  loops with task-level flow coverage.
-- Deterministic Finance budget-pressure before/after interpretation through
-  the same observational Life-to-Execution contract.
-- Unified agent artifacts, result UI, preferences, scheduling, follow-up
-  intents, trace links, visibility state, and FinanceOS agents. Every
-  production Agent has executable ready and no-finding corpus coverage.
-- A privacy-safe 30-day local Agent quality report exposes completed/ready,
-  no-finding, failed, dismissed/snoozed, evidence-anchor, and actual navigation
-  success rates with visible sample counts. It retains no result content,
-  evidence ids, or routes; navigation history stores only timestamp and router
-  acceptance.
-- The fixed answer-quality gate emits aggregate forbidden-claim/evidence and
-  missing-fact/evidence failures. Its JSON field allowlist, production route
-  navigation, and cross-domain outcome corpus are deterministic regression
-  contracts.
-- Completed Life-to-Execution outcomes require a concrete source and a later,
-  successful source-family evaluation. Loading, failed, or disabled sources
-  remain unknown, and UI copy is observational rather than causal.
-- Batch proposal progress, recovery, durable undo, and focused contracts.
-- Memory answer-quality fixtures and navigable anchors for high-value reads;
-  lower-value legacy tools gain anchors only when touched by a real workflow.
-- Opt-in Sentry wiring plus Sync and performance diagnostic surfaces.
-- Dart/Rust Sync v3 serializer fixtures, accepted-ack behavior, conflict and
-  skipped-row diagnostics, and domain reset generations.
-- Deferred startup composition: auth restore, sync, maintenance, Memory,
-  agents, credentials, domain background work, and debug health checks do not
-  block first paint.
-- Native model lifecycle diagnostics and embedding fingerprint invalidation.
-- The 2026-07-17 dependency maintenance pass and native Flutter golden harness.
+Completed behavior is intentionally not archived in this roadmap. Current
+cross-domain guarantees belong in the architecture, AI, Sync, and domain SSOTs
+routed by the [Agent Task Map](../agent-map.md); exact coverage belongs in
+executable tests. Release history belongs in Git tags and release notes.
 
 ## Roadmap Operating Rules
 
@@ -278,8 +247,9 @@ future roadmap phases:
 - Triggered bets do not enter scheduled work until their trigger is recorded.
 - Architecture boundaries and anti-goals are referenced from the Northstar;
   they are not duplicated here.
-- When implementation satisfies an exit criterion, update this roadmap in the
-  same change and move the item to `Completed Baseline` or a release changelog.
+- When implementation satisfies an exit criterion, remove it from this
+  roadmap, update the owning SSOT when behavior changed, and record release
+  history in the release notes.
 - Mutable roadmap section numbers must not be used as source-code contract
   references; code should cite a stable architecture/domain SSOT or the owning
   test instead.

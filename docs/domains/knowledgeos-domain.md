@@ -2,6 +2,13 @@
 
 KnowledgeOS is the LifeOS personal cognitive infrastructure domain. It is a user-opt-in, AI-native decision memory system. It is not a Notion, Obsidian, wiki, publishing, or collaboration product.
 
+## Document Contract
+
+Owns KnowledgeOS objects, review behavior, proposals, Memory indexing, tools,
+and Agents. It does not own shared Memory Runtime or AI wire semantics.
+`knowledge_pack.dart`, Knowledge repositories, and focused Knowledge tests are
+authoritative for the current implementation inventory.
+
 ## Scope
 
 Included:

@@ -2,6 +2,13 @@
 
 Status: **Active** (2026-07-12).
 
+## Document Contract
+
+Owns the Sync v3 wire protocol, row-state conflict semantics, acknowledgements,
+cursors, and domain reset generations. It does not own domain table membership;
+that inventory comes from `sync_table_registry.dart`. Fixtures and Dart/Rust
+serializer tests are authoritative for exact payloads.
+
 The protocol uses row-state/LWW sync, explicit accepted acknowledgements, and
 per-domain reset generations so an OS can be permanently erased across every
 device without an offline device resurrecting stale rows.

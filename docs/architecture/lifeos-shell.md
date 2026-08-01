@@ -2,6 +2,13 @@
 
 This document describes the current cross-domain shell. It is written for implementation agents: where to plug in, which files own each seam, and which boundaries must not move.
 
+## Document Contract
+
+Owns `DomainPack` composition, opt-in behavior, shell routing, and the
+cross-domain integration seams. It does not own domain business rules or exact
+AI/Sync wire contracts. `domain_pack.dart`, `domain_packs.dart`, and their
+composition tests are authoritative for the current inventory.
+
 ## Scope
 
 The shell owns cross-domain infrastructure:
@@ -17,7 +24,7 @@ The shell owns cross-domain infrastructure:
 
 Domain business behavior belongs in the domain SSOT:
 
-- FinanceOS: `../roadmap/roadmap-finance.md` and finance feature docs.
+- FinanceOS: `../domains/financeos-domain.md`.
 - HealthOS: `../domains/healthos-domain.md`.
 - KnowledgeOS: `../domains/knowledgeos-domain.md`.
 - ExecutionOS: `../domains/executionos-domain.md`.
@@ -61,7 +68,7 @@ features/<domain>/
 | FinanceOS | `finance` | Today, Activity, Wealth, Plan | `kFinanceDeviceTools` | Weekly Wealth Review, Cashflow Anomaly Review, FIRE Plan Drift Monitor, Options Income Risk Review |
 | HealthOS | `health` | Today, Trends | `kHealthDeviceTools` | Morning Briefing, Recovery Alert, Weekly Summary |
 | KnowledgeOS | `knowledge` | Inbox, Library, Review | `kKnowledgeDeviceTools` | Review, Assumption, Contradiction, Inbox Triage, Routine Due |
-| ExecutionOS | `execution` | Today, Commitments, Review | `kExecutionDeviceTools` | Review |
+| ExecutionOS | `execution` | Today, Commitments, Review | `kExecutionDeviceTools` | Review, Due Action |
 
 Finance is always active. Health, Knowledge, and Execution are enabled through
 `domainOptInsProvider`.
@@ -77,7 +84,10 @@ Use this path for any domain-level change:
 5. Add command palette entries under `features/<domain>/composition/`.
 6. Register the domain once in `app/domain_packs.dart`.
 7. Add domain memory/background bootstraps through the owning `DomainPack` only when they have a real source stream or startup task.
-8. Add tests for opt-in behavior, route ownership, tool registration, and domain-specific repositories.
+8. Register any data-management, settings, notifications, share handlers, Life
+   signals, or source-route resolution on the same pack rather than in shell
+   conditionals.
+9. Add tests for opt-in behavior, route ownership, tool registration, and domain-specific repositories.
 
 Do not add custom opt-in checks to every consumer. Consumers should derive from `activeDomainPacksProvider` or from a domain-owned provider that already observes the opt-in.
 

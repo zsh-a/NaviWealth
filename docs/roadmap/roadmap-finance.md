@@ -141,47 +141,12 @@ Broker credentials must never enter Sync payloads or backup exports. Any
 future proxy stays schema-agnostic and must not normalize, score, or write
 Finance business data.
 
-## Completed Baseline
+## Current Capability Source
 
-- Deterministic current-month budget pressure participates in the Life →
-  Execution loop. Strained or over-budget posture preserves the `fin:budgets`
-  month aggregate source; a later settled budget read reports only whether the
-  same signal is still detected, without causal attribution.
-- Accounts, assets, liabilities, expenses, investments, activity, and wealth
-  workflows.
-- FIRE planning through Phase 0–5.
-- Budget and cashflow MVP, including the tested Budget → FIRE signal seam.
-- Options Income through Wheel lifecycle, with local deterministic scoring and
-  read-cache-only AI behavior.
-- Watchlist, event timeline, DCA simulator, analytics, and command palette.
-- Device-only Finance tools and four Finance agent result surfaces registered
-  through the Finance `DomainPack`.
-- Sync v3 row-state coverage with the `fin:` row-family prefix and reset
-  generation.
-- Backup, restore, and export navigation/task baselines.
-- Evidence-driven Financial Inbox and Monthly Close: account statement
-  reconciliation, explicit difference overrides, durable close snapshots, and
-  signals for import, runway, FX, balance, anomaly, subscription, valuation,
-  and due decision review. Inbox items expose evidence and detection history,
-  route to source repair, and retain linked Execution action state. Completed
-  and dropped actions feed a domain-neutral close-out seam; Finance then
-  persists cleared, still-detected, inconclusive, or action-dropped
-  revalidation without inferring causality from incomplete data. Monthly Close
-  resumes an open period, compares coverage, signal changes, carried-forward
-  exceptions, and completion time, and presents recent close history.
-- Resumable Finance activation from first import through review clearance to a
-  trustworthy Money Runway result, with an owner-scoped device milestone and
-  opt-in first-useful-result timing.
-- Thirty-/ninety-day Money Runway with spendable-cash policy, scheduled
-  liability payments, deterministic stress scenarios, daily forecast
-  sampling from the Runway workspace, and observed forecast error.
-- Versioned life-event decisions with deterministic alternatives,
-  source-preserving Execution review actions, due-review Inbox signals, and
-  observed outcome evidence.
-- Opt-in local product-evidence reports with bounded daily buckets, repeat
-  import/action/revalidation counters, and explicit privacy-safe copy actions.
-  Import diagnostics export stable enums and counts only; financial source
-  contents and identifiers are excluded by construction and test.
+Completed behavior is intentionally not archived in this roadmap. Use the
+[FinanceOS Domain SSOT](../domains/financeos-domain.md) to route to current
+business contracts and use executable tests for exact capability coverage.
+Release history belongs in Git tags and release notes.
 
 ## FinanceOS Boundaries
 

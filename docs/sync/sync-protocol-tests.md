@@ -1,5 +1,13 @@
 # Sync v3 Protocol — Test Case Catalogue
 
+Status: executable-coverage companion, not a protocol SSOT.
+
+## Document Contract
+
+Owns stable scenario identifiers and expected test coverage. It does not own
+wire semantics; [Sync v3](sync-v3.md) and serializer fixtures do. Checked-in
+client/backend tests are authoritative for which cases are executable.
+
 Companion to [`sync-v3.md`](./sync-v3.md). These are protocol-level
 scenarios that the Flutter client and Cloudflare Worker backend should cover
 for the active row-state sync protocol.
@@ -11,8 +19,8 @@ Each case lists **setup -> action -> expected outcome**. Test names follow
 
 ## A. HLC mechanics
 
-The client still uses canonical HLC strings as the v2 row `version` token, so
-the existing HLC unit-test IDs remain stable.
+The client uses canonical HLC strings as the row-state `version` token. Existing
+HLC unit-test IDs remain stable.
 
 ### SP-A-1 — `next` advances logical when phys equal
 
@@ -79,10 +87,10 @@ the existing HLC unit-test IDs remain stable.
 
 ### SP-B-3 — Outgoing table names carry LifeOS prefixes
 
-- **Setup**: dirty rows exist in Finance, Health, and Knowledge tables.
+- **Setup**: dirty rows exist in Finance, Health, Knowledge, and Execution tables.
 - **Action**: the client builds `RowChange.table`.
-- **Expect**: wire tables use `fin:`, `health:`, or `know:` prefixes at the
-  sync boundary; unprefixed business table names are not sent.
+- **Expect**: wire tables use `fin:`, `health:`, `know:`, or `exec:` prefixes at
+  the sync boundary; unprefixed business table names are not sent.
 
 ### SP-B-4 — Outgoing row sends full current payload
 

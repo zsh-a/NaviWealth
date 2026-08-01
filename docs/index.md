@@ -19,6 +19,7 @@ This documentation uses a docs-as-code structure:
 
 | Need | Read |
 |---|---|
+| Route an Agent task to the minimum SSOT set | [Agent Task Map](agent-map.md) |
 | Change architecture or cross-domain code | [Architecture Northstar](architecture/lifeos-architecture-northstar.md), [LifeOS Shell](architecture/lifeos-shell.md) |
 | Add or modify a domain | [LifeOS Shell](architecture/lifeos-shell.md), then the owning domain SSOT |
 | Work on device AI | [Device AI Architecture](ai/ai-architecture.md), [Runtime Event Contract](ai/ai-protocol.md), [Agent Experience](ai/agent-experience.md) |
@@ -33,8 +34,8 @@ This documentation uses a docs-as-code structure:
 
 | Domain | Status | Code root | Sync prefix | SSOT |
 |---|---|---|---|---|
-| FinanceOS | Always on | `apps/mobile/lib/features/finance/` | `fin:` | [Portfolio Strategy Groups](domains/portfolio-strategy-groups.md), [Income Strategy](domains/income-strategy.md), [FinanceOS Roadmap](roadmap/roadmap-finance.md) |
-| HealthOS | User opt-in | `apps/mobile/lib/features/health/` | `health:` | [HealthOS](domains/healthos-domain.md) |
+| FinanceOS | Always on | `apps/mobile/lib/features/finance/` | `fin:` | [FinanceOS](domains/financeos-domain.md) |
+| HealthOS | User opt-in | `apps/mobile/lib/features/health/` | `health:` | [HealthOS](domains/healthos-domain.md), [Garmin Integration](domains/garmin-integration-plan.md) |
 | KnowledgeOS | User opt-in | `apps/mobile/lib/features/knowledge/` | `know:` | [KnowledgeOS](domains/knowledgeos-domain.md) |
 | ExecutionOS | User opt-in | `apps/mobile/lib/features/execution/` | `exec:` | [ExecutionOS](domains/executionos-domain.md) |
 
