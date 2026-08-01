@@ -17317,10 +17317,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Results include open and closed actions, projects, and commitments.';
 
   @override
+  String get executionSearchStartAction => 'Start searching';
+
+  @override
   String get executionSearchNoResults => 'No matching work';
 
   @override
   String get executionSearchTryAgain => 'Try a title, note, or description.';
+
+  @override
+  String get executionSearchClearAction => 'Clear search';
 
   @override
   String get executionSearchKindAction => 'Action';

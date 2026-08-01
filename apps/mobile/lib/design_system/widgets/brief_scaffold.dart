@@ -259,7 +259,12 @@ class BriefLazyListScaffold extends StatelessWidget {
     if (sticky != null) {
       final resolvedStickyPad =
           stickyPadding ??
-          EdgeInsets.fromLTRB(resolved.left, AppSpacing.s4, resolved.right, 0);
+          EdgeInsets.fromLTRB(
+            resolved.left,
+            AppSpacing.s4,
+            resolved.right,
+            AppSpacing.s0,
+          );
       body = AppCollapsingScrollHost(
         padding: resolvedStickyPad,
         stickyBuilder: sticky,

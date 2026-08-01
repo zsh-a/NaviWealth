@@ -59,6 +59,7 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
 
   int _lastMessageCount = 0;
 
+  List<ChatTimelineSlot>? _cachedSlots;
   List<_TimelineItem>? _cachedItems;
 
   static const double _bottomThreshold = 96;
@@ -82,6 +83,7 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
   void didUpdateWidget(covariant ChatConversationView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.sessionId != widget.sessionId) {
+      _cachedSlots = null;
       _cachedItems = null;
       _renderedMessageIds.clear();
       _renderedInitialSnapshot = false;
@@ -90,6 +92,10 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
   }
 
   List<_TimelineItem> _buildTimelineItems(List<ChatTimelineSlot> slots) {
+    if (!identical(_cachedSlots, slots)) {
+      _cachedSlots = slots;
+      _cachedItems = null;
+    }
     _cachedItems ??= () {
       final l10n = AppLocalizations.of(context);
       final now = DateTime.now();
@@ -234,7 +240,7 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
                       isLastUser: slot.id == lastUserId,
                       animateIn:
                           animateMessageIds.contains(slot.id) &&
-                              slot.id == slots.last.id,
+                          slot.id == slots.last.id,
                     ),
                   ),
                 };

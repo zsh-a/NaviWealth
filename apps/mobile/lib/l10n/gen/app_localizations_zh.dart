@@ -16453,10 +16453,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionSearchEmptyBody => '结果包含进行中和已关闭的行动、项目与承诺。';
 
   @override
+  String get executionSearchStartAction => '开始搜索';
+
+  @override
   String get executionSearchNoResults => '没有匹配事项';
 
   @override
   String get executionSearchTryAgain => '可尝试标题、备注或描述。';
+
+  @override
+  String get executionSearchClearAction => '清除搜索';
 
   @override
   String get executionSearchKindAction => '行动';

@@ -88,7 +88,14 @@ class DomainsSettingsPage extends ConsumerWidget {
     bool enabled,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final label = pack.settingsSpec?.label ?? pack.scope.wire;
+    final label =
+        pack.settingsSpec?.label ??
+        switch (pack.scope) {
+          DomainScope.finance => 'FinanceOS',
+          DomainScope.health => 'HealthOS',
+          DomainScope.knowledge => 'KnowledgeOS',
+          DomainScope.execution => 'ExecutionOS',
+        };
     if (!enabled) {
       final confirmed = await showConfirmDialog(
         context: context,

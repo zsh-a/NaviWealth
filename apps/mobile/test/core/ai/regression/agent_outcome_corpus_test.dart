@@ -124,6 +124,8 @@ void main() {
             'test/features/knowledge/agents/routine_due_agent_test.dart',
         'execution_review':
             'test/features/execution/agents/review_agent_test.dart',
+        'execution_due_actions':
+            'test/features/execution/agents/due_action_agent_test.dart',
       };
 
       for (final c in agentOutcomeRegressionCorpus) {
@@ -161,6 +163,8 @@ void main() {
             'test/features/knowledge/agents/routine_due_agent_test.dart',
         'execution_review':
             'test/features/execution/agents/review_agent_test.dart',
+        'execution_due_actions':
+            'test/features/execution/agents/due_action_agent_test.dart',
       };
       const fixturePathsByCaseId = <String, String>{
         'knowledge.routine_due.domain_opt_out':

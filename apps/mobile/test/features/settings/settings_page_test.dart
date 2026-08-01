@@ -20,6 +20,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/persistence/test_database.dart';
 
+void _testWidgets(
+  String description,
+  Future<void> Function(WidgetTester tester) body,
+) {
+  testWidgets(description, (tester) async {
+    try {
+      await body(tester);
+    } finally {
+      // Riverpod closes the Drift stream store asynchronously when the
+      // ProviderScope is unmounted. Flush that cleanup before flutter_test
+      // checks for leaked timers.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(Duration.zero);
+      await tester.pump(Duration.zero);
+      await tester.pump(const Duration(milliseconds: 600));
+    }
+  });
+}
+
 GoRouter _router({
   String initialLocation = AppRoutes.settingsDomains,
   List<DomainPack>? packs,
@@ -77,7 +96,7 @@ void main() {
   group('Settings → Data & storage', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
-    testWidgets('shows all domains including disabled optional domains', (
+    _testWidgets('shows all domains including disabled optional domains', (
       tester,
     ) async {
       final prefs = await SharedPreferences.getInstance();
@@ -98,7 +117,7 @@ void main() {
   group('Settings → Base currency', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
-    testWidgets('shows the current base currency in the trailing label', (
+    _testWidgets('shows the current base currency in the trailing label', (
       tester,
     ) async {
       final prefs = await SharedPreferences.getInstance();
@@ -112,7 +131,7 @@ void main() {
       expect(find.textContaining('CNY'), findsWidgets);
     });
 
-    testWidgets(
+    _testWidgets(
       'tapping the row opens the picker and persists the new selection',
       (tester) async {
         final prefs = await SharedPreferences.getInstance();
@@ -164,46 +183,47 @@ void main() {
   group('Settings → Appearance', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
-    testWidgets('keeps the localized market color choice readable on a phone', (
-      tester,
-    ) async {
-      tester.view.physicalSize = const Size(390, 844);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
+    _testWidgets(
+      'keeps the localized market color choice readable on a phone',
+      (tester) async {
+        tester.view.physicalSize = const Size(390, 844);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
 
-      final prefs = await SharedPreferences.getInstance();
-      await tester.pumpWidget(
-        await _wrap(prefs, initialLocation: AppRoutes.settings),
-      );
-      await tester.pumpAndSettle();
+        final prefs = await SharedPreferences.getInstance();
+        await tester.pumpWidget(
+          await _wrap(prefs, initialLocation: AppRoutes.settings),
+        );
+        await tester.pumpAndSettle();
 
-      final label = find.text('Up / down colors');
-      final selected = find.text('Red up / green down (CN)');
-      await tester.ensureVisible(label);
-      await tester.pumpAndSettle();
+        final label = find.text('Up / down colors');
+        final selected = find.text('Red up / green down (CN)');
+        await tester.ensureVisible(label);
+        await tester.pumpAndSettle();
 
-      expect(label, findsOneWidget);
-      expect(selected, findsOneWidget);
-      expect(
-        tester.getTopLeft(selected).dy,
-        greaterThan(tester.getTopLeft(label).dy),
-      );
-      expect(tester.widget<Text>(label).maxLines, 2);
-      expect(tester.widget<Text>(selected).maxLines, 2);
+        expect(label, findsOneWidget);
+        expect(selected, findsOneWidget);
+        expect(
+          tester.getTopLeft(selected).dy,
+          greaterThan(tester.getTopLeft(label).dy),
+        );
+        expect(tester.widget<Text>(label).maxLines, 2);
+        expect(tester.widget<Text>(selected).maxLines, 2);
 
-      await tester.tap(label);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Green up / red down (Intl)'));
-      await tester.pumpAndSettle();
+        await tester.tap(label);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Green up / red down (Intl)'));
+        await tester.pumpAndSettle();
 
-      expect(find.text('Green up / red down (Intl)'), findsOneWidget);
-    });
+        expect(find.text('Green up / red down (Intl)'), findsOneWidget);
+      },
+    );
   });
 
   group('Settings → Domains', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
-    testWidgets('renders optional domain toggles from the shared spec list', (
+    _testWidgets('renders optional domain toggles from the shared spec list', (
       tester,
     ) async {
       final prefs = await SharedPreferences.getInstance();
@@ -245,7 +265,7 @@ void main() {
   group('Settings → KnowledgeOS', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
-    testWidgets('surfaces only operational KnowledgeOS settings', (
+    _testWidgets('surfaces only operational KnowledgeOS settings', (
       tester,
     ) async {
       final prefs = await SharedPreferences.getInstance();
@@ -265,7 +285,7 @@ void main() {
   group('Settings → ExecutionOS', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
-    testWidgets('surfaces only operational ExecutionOS settings', (
+    _testWidgets('surfaces only operational ExecutionOS settings', (
       tester,
     ) async {
       final prefs = await SharedPreferences.getInstance();
@@ -284,7 +304,7 @@ void main() {
   group('Settings → Security', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
-    testWidgets('enables biometric unlock after a successful prompt', (
+    _testWidgets('enables biometric unlock after a successful prompt', (
       tester,
     ) async {
       tester.view.physicalSize = const Size(900, 1400);

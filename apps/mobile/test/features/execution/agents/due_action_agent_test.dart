@@ -5,6 +5,7 @@ import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
+import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/notifications/notification_service.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
@@ -68,6 +69,13 @@ void main() {
 
     expect(result.status, AgentRunStatus.skipped);
     expect(result.artifactId, isNull);
+    final failures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'execution.due_actions.no_finding',
+      ),
+      result: result,
+    );
+    expect(failures, isEmpty, reason: failures.join('\n'));
   });
 
   test('creates a reminder artifact for open due actions only', () async {
@@ -99,6 +107,14 @@ void main() {
     expect(artifact!.kind, AgentArtifactKind.reminder);
     expect(artifact.evidence.map((item) => item.id), const <String>['due']);
     expect(artifact.evidence.single.route, '/execution/action/due');
+    final failures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'execution.due_actions.ready',
+      ),
+      result: result,
+      artifact: artifact,
+    );
+    expect(failures, isEmpty, reason: failures.join('\n'));
   });
 
   test('honors per-agent notification preference', () async {

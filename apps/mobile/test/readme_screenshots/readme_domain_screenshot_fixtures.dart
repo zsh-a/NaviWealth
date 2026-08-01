@@ -116,6 +116,7 @@ final _morningBriefing = AgentArtifact(
 );
 
 List<Override> readmeDomainShowcaseOverrides() => <Override>[
+  healthHasAnyDataProvider.overrideWith((_) async => true),
   health_data.garminSyncControllerProvider.overrideWithBuild(
     (_, _) => const GarminInitial(),
   ),

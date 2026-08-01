@@ -326,10 +326,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
             const SizedBox(height: AppSpacing.s12),
             FSelect<AssetMarket>(
               key: const Key('manual-security-market'),
-              items: {
-                for (final m in _supportedMarkets)
-                  (marketLabels[m] ?? m.wire): m,
-              },
+              items: {for (final m in _supportedMarkets) marketLabels[m]!: m},
               control: FSelectControl<AssetMarket>.managed(
                 initial: _market,
                 onChange: (m) {

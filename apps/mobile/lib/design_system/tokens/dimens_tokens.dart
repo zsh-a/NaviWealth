@@ -375,6 +375,9 @@ class AppControlHeights {
 
   /// Portfolio overview rail containing compact allocation cards.
   static const double portfolioOverviewRail = 164;
+
+  /// Search results viewport inside a standard bottom sheet.
+  static const double searchSheet = 460;
 }
 
 /// Canonical widths for fixed-format controls and chart side panels.

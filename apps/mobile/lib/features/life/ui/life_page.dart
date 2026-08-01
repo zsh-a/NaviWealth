@@ -312,7 +312,7 @@ class _WorkspaceGrid extends StatelessWidget {
               children: [
                 for (final pack in packs)
                   SizedBox(
-                    key: ValueKey('life-domain-${pack.scope.wire}'),
+                    key: ValueKey<DomainScope>(pack.scope),
                     width: tileWidth,
                     child: _DomainTile(
                       pack: pack,
@@ -355,7 +355,14 @@ class _DomainTile extends StatelessWidget {
         ? pack.tabPaths.first
         : FinanceRoutes.home;
     final spec = pack.shellSpecBuilder?.call(l10n);
-    final label = spec?.label ?? pack.scope.wire;
+    final label =
+        spec?.label ??
+        switch (pack.scope) {
+          DomainScope.finance => l10n.lifeDomainFinance,
+          DomainScope.health => l10n.lifeDomainHealth,
+          DomainScope.knowledge => l10n.lifeDomainKnowledge,
+          DomainScope.execution => l10n.lifeDomainExecution,
+        };
     final icon = spec?.icon ?? FLucideIcons.layers;
     final accent = highCount > 0
         ? switch (pack.scope) {

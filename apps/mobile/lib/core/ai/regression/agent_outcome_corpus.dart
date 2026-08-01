@@ -551,7 +551,8 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceRoutePatterns: <String, String>{
       'execution_action': '/execution/action/*',
     },
-    expectedActionRoutes: <String>{'/execution/today'},
+    expectedActionKinds: <String>{'open_route'},
+    expectedActionRoutes: <String>{'/execution'},
   ),
   AgentOutcomeRegressionCase(
     id: 'knowledge.routine_due.ready',

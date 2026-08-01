@@ -10,6 +10,7 @@ name: integration-device
 # the unit-test VM. Kept off the fast PR path (emulator boot is slow);
 # weekly + manual, plus PRs that touch the harness or the connection code.
 on:
+  workflow_call:
   pull_request:
     paths:
       - 'apps/mobile/integration_test/**'

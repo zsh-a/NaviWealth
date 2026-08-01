@@ -109,7 +109,7 @@ void main() {
 
     final domainTiles = [
       for (final scope in DomainScope.values)
-        find.byKey(ValueKey('life-domain-${scope.wire}')),
+        find.byKey(ValueKey<DomainScope>(scope)),
     ];
     final widths = [for (final tile in domainTiles) tester.getSize(tile).width];
     expect(widths.toSet(), hasLength(1));

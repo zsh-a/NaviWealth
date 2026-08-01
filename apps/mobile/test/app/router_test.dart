@@ -250,7 +250,8 @@ Future<ProviderContainer> _pumpAt(
   // time out. Use explicit pumps instead.
   await tester.pump(const Duration(milliseconds: 100));
   await tester.pump(const Duration(milliseconds: 100));
-  await tester.pump(const Duration(milliseconds: 100));
+  // Route performance traces close 750 ms after the last named transition.
+  await tester.pump(const Duration(milliseconds: 800));
   return container;
 }
 
@@ -880,6 +881,7 @@ void main() {
 
       expect(_currentPath(container), AppRoutes.activity);
       expect(find.byType(ActivityPage), findsOneWidget);
+      await _drainTimers(tester);
     });
 
     testWidgets('Recurring back returns to Cash Flow', (tester) async {
@@ -894,6 +896,7 @@ void main() {
 
       expect(_currentPath(container), AppRoutes.cashflow);
       expect(find.byType(CashFlowPage), findsOneWidget);
+      await _drainTimers(tester);
     });
 
     testWidgets('Dividend Center back returns to Portfolio', (tester) async {
@@ -907,6 +910,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(_currentPath(container), AppRoutes.wealthPortfolio);
+      await _drainTimers(tester);
     });
 
     // The browser back button doesn't pop a Navigator stack here — go_router

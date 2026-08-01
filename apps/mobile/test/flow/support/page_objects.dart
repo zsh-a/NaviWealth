@@ -537,6 +537,10 @@ class KnowledgeInboxPageObject {
     await settle(tester);
 
     await tester.enterText(find.widgetWithText(FTextField, 'Content'), body);
+    final typePicker = find.bySemanticsLabel('Save as: Auto');
+    expect(typePicker, findsOneWidget, reason: 'capture type picker missing');
+    await tester.tap(typePicker);
+    await settle(tester);
     await tester.tap(find.text('Note').last);
     await settle(tester);
     await tester.tap(find.text('Save as Note').last);

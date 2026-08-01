@@ -7,13 +7,14 @@ import 'package:naviwealth/features/finance/home/domain/dashboard_trend_builder.
 
 void main() {
   test('header deltas are unavailable when a baseline is incomplete', () async {
-    final now = DateTime.now().toUtc();
+    final now = DateTime.utc(2026, 8, 15, 12);
     final today = DateTime.utc(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final monthStart = DateTime.utc(today.year, today.month, 1);
     final yearStart = DateTime.utc(today.year, 1, 1);
     final container = ProviderContainer(
       overrides: [
+        dashboardHeaderClockProvider.overrideWithValue(() => now),
         dashboardBaseCurrencyProvider.overrideWith((_) => 'USD'),
         dashboardTrendProvider.overrideWith(
           (_, range) async => DashboardTrend(
@@ -43,12 +44,13 @@ void main() {
   test(
     'daily delta remains available when both daily points are complete',
     () async {
-      final now = DateTime.now().toUtc();
+      final now = DateTime.utc(2026, 8, 15, 12);
       final today = DateTime.utc(now.year, now.month, now.day);
       final yesterday = today.subtract(const Duration(days: 1));
       final yearStart = DateTime.utc(today.year, 1, 1);
       final container = ProviderContainer(
         overrides: [
+          dashboardHeaderClockProvider.overrideWithValue(() => now),
           dashboardBaseCurrencyProvider.overrideWith((_) => 'USD'),
           dashboardTrendProvider.overrideWith(
             (_, range) async => DashboardTrend(

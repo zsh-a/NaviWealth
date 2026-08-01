@@ -26,6 +26,22 @@ permissions:
   contents: write
 
 jobs:
+  mobile-quality:
+    name: mobile quality gate
+    uses: ./.github/workflows/mobile.yml
+
+  backend-quality:
+    name: backend quality gate
+    uses: ./.github/workflows/backend.yml
+
+  agent-runtime-quality:
+    name: agent-runtime quality gate
+    uses: ./.github/workflows/agent-runtime.yml
+
+  android-device-quality:
+    name: Android device quality gate
+    uses: ./.github/workflows/integration-device.yml
+
   meta:
     name: resolve metadata
     runs-on: ubuntu-latest
@@ -80,7 +96,12 @@ jobs:
 
   mobile-release:
     name: mobile release
-    needs: meta
+    needs:
+      - meta
+      - mobile-quality
+      - backend-quality
+      - agent-runtime-quality
+      - android-device-quality
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -217,7 +238,7 @@ jobs:
 
   backend-deploy:
     name: backend deploy
-    needs: meta
+    needs: [meta, backend-quality]
     if: needs.meta.outputs.do_backend == 'true'
     runs-on: ubuntu-latest
     concurrency:

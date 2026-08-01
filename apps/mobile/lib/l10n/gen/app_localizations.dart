@@ -29073,6 +29073,12 @@ abstract class AppLocalizations {
   /// **'Results include open and closed actions, projects, and commitments.'**
   String get executionSearchEmptyBody;
 
+  /// No description provided for @executionSearchStartAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Start searching'**
+  String get executionSearchStartAction;
+
   /// No description provided for @executionSearchNoResults.
   ///
   /// In en, this message translates to:
@@ -29084,6 +29090,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try a title, note, or description.'**
   String get executionSearchTryAgain;
+
+  /// No description provided for @executionSearchClearAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get executionSearchClearAction;
 
   /// No description provided for @executionSearchKindAction.
   ///

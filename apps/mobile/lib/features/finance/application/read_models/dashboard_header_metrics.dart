@@ -32,11 +32,15 @@ class DashboardHeaderMetrics {
   final double? ytdChangePct;
 }
 
+final dashboardHeaderClockProvider = Provider<DateTime Function()>(
+  (_) => DateTime.now,
+);
+
 final dashboardHeaderMetricsProvider = FutureProvider<DashboardHeaderMetrics>((
   ref,
 ) async {
   final base = ref.watch(dashboardBaseCurrencyProvider);
-  final now = DateTime.now().toUtc();
+  final now = ref.watch(dashboardHeaderClockProvider)().toUtc();
   final today = DateTime.utc(now.year, now.month, now.day);
   final yesterday = today.subtract(const Duration(days: 1));
   final monthStart = DateTime.utc(today.year, today.month, 1);

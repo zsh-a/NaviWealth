@@ -32,7 +32,11 @@ class BodyMeasurementEntrySheet extends ConsumerStatefulWidget {
     super.key,
     required this.initialKind,
     required this.dirty,
-  });
+  }) : assert(
+         initialKind == HealthMetricKind.weight ||
+             initialKind == HealthMetricKind.bodyFat,
+         'Body measurements support only weight and body fat.',
+       );
 
   final HealthMetricKind initialKind;
   final FormDirtyController dirty;
@@ -215,7 +219,7 @@ class _BodyMeasurementEntrySheetState
       switch (kind) {
         HealthMetricKind.weight => l10n.healthMetricWeight,
         HealthMetricKind.bodyFat => l10n.healthMetricBodyFat,
-        _ => kind.wire,
+        _ => throw StateError('Unsupported body measurement kind: $kind'),
       };
 
   static DateTime _dayAnchor(DateTime day) =>

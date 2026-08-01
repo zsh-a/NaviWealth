@@ -1,6 +1,7 @@
 name: agent-runtime
 
 on:
+  workflow_call:
   push:
     branches: [main]
     paths:

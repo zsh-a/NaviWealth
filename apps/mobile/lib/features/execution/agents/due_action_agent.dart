@@ -1,5 +1,6 @@
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_presentation.dart';
 import '../../../core/ai/agents/agent_artifact_routes.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
@@ -73,6 +74,13 @@ class ExecutionDueActionAgent implements Agent {
         severity: AgentArtifactSeverity.attention,
         title: l10n.executionDueAgentTitle,
         summary: summary,
+        metrics: <AgentMetric>[
+          AgentMetric(
+            label: l10n.executionAgentReviewInsightDueTitle,
+            value: due.length.toString(),
+            severity: AgentArtifactSeverity.attention,
+          ),
+        ],
         insights: <AgentInsight>[
           AgentInsight(
             id: 'due_actions',
@@ -91,6 +99,17 @@ class ExecutionDueActionAgent implements Agent {
               route: ExecutionRoutes.action(action.id),
             ),
         ],
+        actions: <AgentAction>[
+          AgentAction(
+            kind: 'open_route',
+            label: l10n.executionAgentReviewAction,
+            route: ExecutionRoutes.today,
+          ),
+        ],
+        methodology: localAgentMethodology(
+          l10n,
+          sourceLabel: l10n.executionDueAgentTitle,
+        ),
         createdAt: finishedAt,
       ),
     );

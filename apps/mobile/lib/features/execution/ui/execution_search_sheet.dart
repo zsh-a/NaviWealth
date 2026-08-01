@@ -31,6 +31,7 @@ class _ExecutionSearchBody extends ConsumerStatefulWidget {
 
 class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
   final TextEditingController _controller = TextEditingController();
+  final FocusNode _searchFocus = FocusNode();
   String _query = '';
   Timer? _debounce;
   List<ExecutionSearchHit> _hits = const <ExecutionSearchHit>[];
@@ -61,6 +62,7 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
   void dispose() {
     _debounce?.cancel();
     _controller.dispose();
+    _searchFocus.dispose();
     super.dispose();
   }
 
@@ -68,11 +70,12 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return SizedBox(
-      height: 460,
+      height: AppControlHeights.searchSheet,
       child: Column(
         children: [
           FTextField(
             control: FTextFieldControl.managed(controller: _controller),
+            focusNode: _searchFocus,
             hint: l10n.executionSearchHint,
           ),
           const SizedBox(height: AppSpacing.s8),
@@ -102,6 +105,10 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
                     icon: FLucideIcons.search,
                     title: l10n.executionSearchEmptyTitle,
                     message: l10n.executionSearchEmptyBody,
+                    action: AppActionButton(
+                      onPress: _searchFocus.requestFocus,
+                      child: Text(l10n.executionSearchStartAction),
+                    ),
                     compact: true,
                   )
                 : _loading
@@ -111,6 +118,13 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
                     icon: FLucideIcons.searchX,
                     title: l10n.executionSearchNoResults,
                     message: l10n.executionSearchTryAgain,
+                    action: AppActionButton(
+                      onPress: () {
+                        _controller.clear();
+                        _searchFocus.requestFocus();
+                      },
+                      child: Text(l10n.executionSearchClearAction),
+                    ),
                     compact: true,
                   )
                 : ListView.separated(

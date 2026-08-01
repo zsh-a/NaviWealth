@@ -59,6 +59,7 @@ void main() {
         profile: ReadmeScreenshotProfile.domainShowcase,
         goldenPath: '$_output/lifeos-domains.png',
         overrides: <Override>[
+          sharedPreferencesProvider.overrideWithValue(preferences),
           appDatabaseProvider.overrideWith((_) async => database),
           currentUserIdProvider.overrideWithValue(() async => 'readme-user'),
           ...readmeDomainShowcaseOverrides(),

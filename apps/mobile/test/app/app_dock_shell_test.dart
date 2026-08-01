@@ -84,7 +84,9 @@ Future<ProviderContainer> _pumpAt(
   );
   await tester.pump(const Duration(milliseconds: 100));
   await tester.pump(const Duration(milliseconds: 100));
-  await tester.pump(const Duration(milliseconds: 350));
+  // Route performance traces close 750 ms after the last named transition.
+  // Advance beyond that bounded window so flutter_test sees no live timer.
+  await tester.pump(const Duration(milliseconds: 800));
   return container;
 }
 
@@ -260,6 +262,7 @@ void main() {
       expect(_currentPath(container), AppRoutes.healthToday);
       expect(_currentAiContextPath(container), AppRoutes.healthToday);
       expect(find.byType(HealthTodayPage), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 800));
     });
   });
 }
