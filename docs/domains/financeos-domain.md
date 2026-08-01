@@ -56,7 +56,10 @@ owning SSOT explicitly says otherwise.
 
 Money calculations use `Money` and `Decimal`; localized strings and floating
 point values are presentation or provider-boundary concerns, not accounting
-truth.
+truth. Finance Ingest is the staged-input exception: it persists signed integer
+minor units and must route decimal parsing and formatting through
+`features/finance/ingest/domain/minor_unit_amount.dart` without floating-point
+rounding.
 
 ## Topic Routing
 
@@ -91,6 +94,7 @@ changed feature. When composition or ownership changes, also run:
 ```bash
 rtk ./tool/lint-cross-feature-imports.sh
 rtk ./tool/lint-finance-domain-data-imports.sh
+rtk ./tool/lint-ingest-money-conversions.sh
 rtk ./tool/lint-domain-neutral-contracts.sh
 cd apps/mobile
 rtk flutter test test/app/domain_composition_test.dart

@@ -26,6 +26,7 @@ import '../../../../core/auth/current_user.dart';
 import '../../../../core/persistence/providers.dart';
 import '../../ai_tools/local_skills/local_skills.dart';
 import '../domain/ingest_models.dart';
+import '../domain/minor_unit_amount.dart';
 import 'device_ingest_client.dart';
 import 'ingest_confirm_service.dart';
 import 'ingest_draft_store.dart';
@@ -354,14 +355,12 @@ TransactionInput? _incomeTransactionInput(JournalEntryWithPostings entry) {
         posting.units >= Decimal.zero) {
       continue;
     }
-    final minor = (-posting.units * Decimal.fromInt(100))
-        .round()
-        .toBigInt()
-        .toString();
+    final minor = parseMinorUnitAmount((-posting.units).toString());
+    if (minor == null) continue;
     return TransactionInput(
       id: entry.entry.id,
       description: entry.entry.payee ?? entry.entry.narration,
-      amountMinor: minor,
+      amountMinor: minor.toString(),
       currency: posting.unit,
       occurredAt: entry.entry.date,
       accountId: posting.accountId,
