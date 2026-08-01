@@ -2,7 +2,7 @@
 
 Status: active cross-domain sequencing SSOT.
 
-Last reviewed: 2026-07-19.
+Last reviewed: 2026-08-01.
 
 This roadmap contains only work that changes cross-domain product outcomes or
 shared delivery risk. Current architecture belongs in the architecture SSOTs,
@@ -68,7 +68,43 @@ Exit evidence:
 Owner: FinanceOS. Cross-domain roadmap ownership reflects its current product
 priority; parser and workflow details remain in `roadmap-finance.md`.
 
-### N2. Data Portability Recovery Correctness
+### N2. Six-Week Product Discovery Study
+
+Outcome: validate whether the current activation, Inbox, Runway, and decision
+loops produce a weekly return event before adding more features or domains.
+
+Current evidence:
+
+- The product-direction SSOT (`product-direction-and-demand-validation.md`)
+  defines a target-user hypothesis, three validation tasks, six-week
+  recruitment plan, and four quantitative gates.
+- Finance activation is a resumable first-task path with opt-in local
+  product-funnel measurement.
+- Financial Inbox, Monthly Close, Money Runway, and decision review actions
+  are implemented and testable end-to-end.
+- The six-week study instruments the existing activation, Inbox, and
+  repeated-close paths; no new telemetry surface is required to begin.
+
+Exit evidence:
+
+- Recruit 15 to 20 participants matching the target-user hypothesis.
+- Complete three tasks per participant: import and close one statement period,
+  answer whether the next 90 days are safe, and compare alternatives for one
+  real decision.
+- Record time, corrections, abandoned steps, external tool switches, and
+  whether each result caused a real follow-up action.
+- Pass or fail each of the four validation gates with an explicit
+  stop/continue/pivot decision recorded in this roadmap.
+
+Owner: cross-domain. Domain teams provide task support; the study result
+changes sequencing for all downstream roadmap work.
+
+## Next
+
+These are accepted follow-ups but are not allowed to displace `Now` work
+without an explicit reorder.
+
+### Data Portability Recovery Correctness
 
 Outcome: make encrypted recovery trustworthy under destructive failure modes,
 not merely navigable from Settings.
@@ -105,7 +141,7 @@ Exit evidence:
 - On-device Android recovery keeps the same atomicity guarantees under a
   process interruption or documents the platform-specific recovery path.
 
-### N3. Android Database-At-Rest Encryption
+### Android Database-At-Rest Encryption
 
 Outcome: protect native local data at rest without silently losing existing
 plaintext installs or replacing a missing device key.
@@ -146,11 +182,6 @@ Exit evidence:
   plaintext migration, and existing backup/restore journeys on the packaged
   application.
 
-## Next
-
-These are accepted follow-ups but are not allowed to displace `Now` work
-without an explicit reorder.
-
 ### Sync V3 Stability Gate
 
 The client now sorts terminal samples by timestamp and persists a privacy-safe
@@ -161,6 +192,31 @@ whether evidence is still collecting, failing, or passing, identifies exact
 blockers, and can copy aggregate JSON without row ids or payloads. The remaining
 exit evidence is a real release window that reaches the gate before any Sync
 E2EE decision.
+
+### Platform Quality Track
+
+Outcome: make the existing cross-domain loops feel native at 120fps and reach
+feature parity on Web without weakening device-only guarantees.
+
+Current evidence:
+
+- Scroll perf analysis identified repeated `List<_FeedItem>` and
+  `List<_TimelineItem>` allocations in Activity Feed and AI Chat that were
+  causing GC pressure on every scroll tick. Caching these lists removes the
+  per-frame allocation spike.
+- Web builds exclude AI runtime and Health platform integration by design; the
+  remaining parity gap is UI completeness, not architecture.
+- The project has lint gates for cross-feature imports, domain-neutral
+  contracts, and FRB entrypoints.
+
+Exit evidence:
+
+- Activity Feed and AI Chat maintain 8ms frame budget on 120Hz test devices
+  during sustained scroll, measured in Flutter DevTools performance traces.
+- Web parity checklist covers every cross-domain shell route, settings panel,
+  Finance view, and Knowledge view currently available on mobile.
+- Platform quality regressions are caught by a targeted widget or integration
+  test added for each identified hotspot.
 
 ## Triggered Bets
 

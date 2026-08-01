@@ -2,7 +2,7 @@
 
 Status: active FinanceOS sequencing SSOT.
 
-Last reviewed: 2026-07-19.
+Last reviewed: 2026-08-01.
 
 FinanceOS is the always-on seed domain. This document contains only
 Finance-specific product sequencing. Cross-domain shell, Memory Runtime,
@@ -58,6 +58,15 @@ Exit evidence:
 - Imported rows remain drafts until explicit confirmation; deterministic
   parsing remains primary and LLM/OCR suggestions never silently commit.
 
+Owner: FinanceOS. Cross-domain sequencing for this initiative lives in
+`roadmap-lifeos.md` N1; this document owns the parser, fixture, and Finance
+workflow details.
+
+## Next
+
+These are accepted follow-ups but are not allowed to displace `Now` work
+without an explicit reorder.
+
 ### F2. Portability And Recovery Correctness
 
 Outcome: users can recover or move Finance data under realistic failure
@@ -93,16 +102,18 @@ Exit evidence:
 - Expand the representative dataset only when measured production exports
   exceed the current 1,000-row boundary.
 
-## Next
-
 ### Demand-Validation Operations
 
 Use the implemented activation, repeated import, Inbox-to-action, and Monthly
-Close loops in the six-week task study. The next code change must address an
-observed failure in those sessions. In particular, add per-row import editing
-only if real corrections show a repeated field-level pattern; add another
-statement provider only with a redacted representative fixture; and add more
-Inbox detectors only when users repeatedly miss the same consequential work.
+Close loops in the six-week task study defined in `roadmap-lifeos.md`. The
+next Finance code change must address an observed failure in those sessions. In
+particular:
+
+- Add per-row import editing only if real corrections show a repeated
+  field-level pattern.
+- Add another statement provider only with a redacted representative fixture.
+- Add more Inbox detectors only when users repeatedly miss the same
+  consequential work.
 
 The study can use the local aggregate export and per-import privacy-safe
 diagnostic report. It must not add transaction contents, balances, labels,

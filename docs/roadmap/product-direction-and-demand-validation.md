@@ -12,7 +12,9 @@ LifeOS and FinanceOS roadmaps:
 - This document owns target-user, problem, positioning, and demand-validation
   hypotheses.
 - A direction enters a roadmap only after its trigger and evidence are
-  recorded.
+  recorded. The six-week study is sequenced as LifeOS `Now` N2; FinanceOS
+  `Next` Demand-Validation Operations defers code changes until that study
+  delivers an explicit decision.
 - Architecture Northstar changes still require an ADR and explicit review.
 
 ## Executive Conclusion
