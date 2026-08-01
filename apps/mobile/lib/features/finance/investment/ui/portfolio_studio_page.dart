@@ -851,30 +851,24 @@ class _PortfolioTrendChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final funded = series.points
-        .skipWhile((point) => point.marketValueInBase <= Decimal.zero)
-        .toList(growable: false);
-    if (funded.length < 2) {
+    final chart = PortfolioTrendChartProjection.fromSeries(
+      series: series,
+      metric: metric,
+    );
+    if (!chart.isRenderable) {
       return const _PortfolioTrendEmpty();
     }
 
     final chartPoints = [
-      for (final point in funded)
+      for (final datum in chart.data)
         ChartPoint(
-          x: point.asOf.millisecondsSinceEpoch.toDouble(),
-          y: switch (metric) {
-            PortfolioTrendMetric.marketValue =>
-              point.marketValueInBase.toDouble(),
-            PortfolioTrendMetric.performance => point.performanceRatio * 100,
-          },
-          meta: point,
+          x: datum.asOf.millisecondsSinceEpoch.toDouble(),
+          y: datum.value,
+          meta: datum.source,
         ),
     ];
     final periodPerformance = series.periodPerformanceRatio;
-    final changeIntent = switch (periodPerformance) {
-      final ratio? when ratio < 0 => SeriesIntent.down,
-      _ => SeriesIntent.up,
-    };
+    final changeIntent = chart.isDown ? SeriesIntent.down : SeriesIntent.up;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -939,12 +933,13 @@ class _PortfolioTrendChart extends StatelessWidget {
               ),
             ],
             xAxis: TimeAxis(
-              format: switch (series.range) {
-                PortfolioTrendRange.month ||
-                PortfolioTrendRange.quarter => AxisDateFormat.dayMonth,
-                PortfolioTrendRange.yearToDate ||
-                PortfolioTrendRange.year => AxisDateFormat.monthYear,
-                PortfolioTrendRange.all => AxisDateFormat.yearOnly,
+              format: switch (chart.axisGranularity) {
+                PortfolioTrendAxisGranularity.dayMonth =>
+                  AxisDateFormat.dayMonth,
+                PortfolioTrendAxisGranularity.monthYear =>
+                  AxisDateFormat.monthYear,
+                PortfolioTrendAxisGranularity.yearOnly =>
+                  AxisDateFormat.yearOnly,
               },
               maxLabels: 4,
             ),

@@ -2,6 +2,70 @@ import 'package:decimal/decimal.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 
 import '../domain/allocation/portfolio_allocation_tree.dart';
+import '../domain/portfolio_trend.dart';
+
+enum PortfolioTrendAxisGranularity { dayMonth, monthYear, yearOnly }
+
+final class PortfolioTrendChartDatum {
+  const PortfolioTrendChartDatum({
+    required this.asOf,
+    required this.value,
+    required this.source,
+  });
+
+  final DateTime asOf;
+  final double value;
+  final PortfolioTrendPoint source;
+}
+
+/// Chart-ready trend values with rendering decisions kept outside widgets.
+final class PortfolioTrendChartProjection {
+  PortfolioTrendChartProjection._({
+    required this.data,
+    required this.axisGranularity,
+    required this.isDown,
+  });
+
+  factory PortfolioTrendChartProjection.fromSeries({
+    required PortfolioTrendSeries series,
+    required PortfolioTrendMetric metric,
+  }) {
+    final fundedPoints = series.points.skipWhile(
+      (point) => point.marketValueInBase <= Decimal.zero,
+    );
+    return PortfolioTrendChartProjection._(
+      data: List.unmodifiable([
+        for (final point in fundedPoints)
+          PortfolioTrendChartDatum(
+            asOf: point.asOf,
+            value: switch (metric) {
+              PortfolioTrendMetric.marketValue =>
+                point.marketValueInBase.toDouble(),
+              PortfolioTrendMetric.performance => point.performanceRatio * 100,
+            },
+            source: point,
+          ),
+      ]),
+      axisGranularity: switch (series.range) {
+        PortfolioTrendRange.month ||
+        PortfolioTrendRange.quarter => PortfolioTrendAxisGranularity.dayMonth,
+        PortfolioTrendRange.yearToDate ||
+        PortfolioTrendRange.year => PortfolioTrendAxisGranularity.monthYear,
+        PortfolioTrendRange.all => PortfolioTrendAxisGranularity.yearOnly,
+      },
+      isDown: switch (series.periodPerformanceRatio) {
+        final ratio? => ratio < 0,
+        null => false,
+      },
+    );
+  }
+
+  final List<PortfolioTrendChartDatum> data;
+  final PortfolioTrendAxisGranularity axisGranularity;
+  final bool isDown;
+
+  bool get isRenderable => data.length >= 2;
+}
 
 /// Render-ready counts for the portfolio studio header.
 final class PortfolioStudioSummary {

@@ -5,6 +5,7 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/investment/domain/allocation/portfolio_allocation_tree.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/portfolio_capital_assignment.dart';
+import 'package:naviwealth/features/finance/investment/domain/portfolio_trend.dart';
 import 'package:naviwealth/features/finance/investment/domain/strategy/portfolio_strategy.dart';
 import 'package:naviwealth/features/finance/investment/ui/portfolio_studio_projection.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance_group.dart';
@@ -95,7 +96,89 @@ PortfolioCapitalAssignment _assignment(String id) => PortfolioCapitalAssignment(
   sync: _meta(),
 );
 
+PortfolioTrendPoint _trendPoint({
+  required int day,
+  required String value,
+  required double performance,
+}) => PortfolioTrendPoint(
+  asOf: DateTime.utc(2026, 7, day),
+  marketValueInBase: Decimal.parse(value),
+  costBasisInBase: Decimal.zero,
+  cashValueInBase: Decimal.zero,
+  netFlowInBase: Decimal.zero,
+  performanceRatio: performance,
+  quality: PortfolioTrendQuality.complete,
+);
+
 void main() {
+  group('portfolio trend chart projection', () {
+    test('drops only leading unfunded samples and converts performance', () {
+      final leadingZero = _trendPoint(day: 1, value: '0', performance: 0);
+      final funded = _trendPoint(day: 2, value: '100', performance: 0.125);
+      final laterZero = _trendPoint(day: 3, value: '0', performance: -0.25);
+      final projection = PortfolioTrendChartProjection.fromSeries(
+        series: PortfolioTrendSeries(
+          portfolioId: 'portfolio',
+          baseCurrency: 'USD',
+          range: PortfolioTrendRange.month,
+          points: [leadingZero, funded, laterZero],
+        ),
+        metric: PortfolioTrendMetric.performance,
+      );
+
+      expect(projection.data, hasLength(2));
+      expect(projection.data.first.source, same(funded));
+      expect(projection.data.first.value, 12.5);
+      expect(projection.data.last.source, same(laterZero));
+      expect(projection.data.last.value, -25);
+      expect(
+        projection.axisGranularity,
+        PortfolioTrendAxisGranularity.dayMonth,
+      );
+      expect(projection.isDown, isTrue);
+      expect(projection.isRenderable, isTrue);
+    });
+
+    test('keeps market values and maps longer-range axis granularity', () {
+      final first = _trendPoint(day: 1, value: '100.25', performance: 0);
+      final projection = PortfolioTrendChartProjection.fromSeries(
+        series: PortfolioTrendSeries(
+          portfolioId: 'portfolio',
+          baseCurrency: 'USD',
+          range: PortfolioTrendRange.year,
+          points: [first],
+        ),
+        metric: PortfolioTrendMetric.marketValue,
+      );
+
+      expect(projection.data.single.value, 100.25);
+      expect(
+        projection.axisGranularity,
+        PortfolioTrendAxisGranularity.monthYear,
+      );
+      expect(projection.isDown, isFalse);
+      expect(projection.isRenderable, isFalse);
+    });
+
+    test('uses year-only granularity for all-time series', () {
+      final projection = PortfolioTrendChartProjection.fromSeries(
+        series: const PortfolioTrendSeries(
+          portfolioId: 'portfolio',
+          baseCurrency: 'USD',
+          range: PortfolioTrendRange.all,
+          points: [],
+        ),
+        metric: PortfolioTrendMetric.marketValue,
+      );
+
+      expect(projection.data, isEmpty);
+      expect(
+        projection.axisGranularity,
+        PortfolioTrendAxisGranularity.yearOnly,
+      );
+    });
+  });
+
   test('studio summary counts inclusions and secondary rules by sleeve', () {
     final primary = _strategy('primary');
     final secondary = _strategy('secondary');
