@@ -18,7 +18,6 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
-import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 import '../../../../core/ai/visual/visual.dart';
 import '../../../../core/product/product_metrics.dart';
@@ -28,7 +27,6 @@ import '../../../../core/shortcuts/master_detail_shortcuts.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../activation/data/finance_activation_store.dart';
-import '../../composition/finance_route_paths.dart';
 import '../../shared/ui/forms/forms.dart';
 import '../data/capture_encoder.dart';
 import '../data/ingest_capture_feedback.dart';
@@ -40,7 +38,9 @@ import '../domain/ingest_models.dart';
 import '../domain/ingest_quality_report.dart';
 import 'ingest_capture_lease.dart';
 import 'ingest_capture_presentation.dart';
+import 'ingest_external_route.dart';
 import 'ingest_review_selection.dart';
+import 'ingest_review_view_data.dart';
 import 'ingest_summary_sheet.dart';
 
 part 'ingest_review/draft_card.dart';
@@ -126,11 +126,11 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
             accounts == null ||
             items == null
         ? null
-        : _IngestReviewViewData.from(
+        : IngestReviewViewData.from(
             accounts: accounts,
             items: items,
             selectedAccountId: _accountId,
-            pendingFinalize: _pendingFinalize,
+            pendingFinalizeIds: _pendingFinalize.keys.toSet(),
           );
     if (viewData != null) {
       _scheduleSelectionPrune(viewData.items, ensureWideFocus: useMasterDetail);
@@ -205,7 +205,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   );
 
   WidgetBuilder? _footerBuilder(
-    _IngestReviewViewData? data,
+    IngestReviewViewData? data,
     List<IngestReviewItem>? selectedItems,
   ) {
     final l10n = AppLocalizations.of(context);
@@ -239,7 +239,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   }
 
   Widget _wideWorkspace(
-    _IngestReviewViewData data,
+    IngestReviewViewData data,
     List<IngestReviewItem> selectedItems,
   ) {
     final l10n = AppLocalizations.of(context);
@@ -333,7 +333,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
 
   Widget _draftCard(
     IngestReviewItem item,
-    _IngestReviewViewData data, {
+    IngestReviewViewData data, {
     bool showSelection = true,
   }) {
     final draft = item.draft;
@@ -365,7 +365,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     _masterFocus.requestFocus();
   }
 
-  void _moveFocus(_IngestReviewViewData data, int delta) {
+  void _moveFocus(IngestReviewViewData data, int delta) {
     if (_isBusy || isTextInputFocused() || data.items.isEmpty) return;
     final next = _selection.focusByOffset(
       data.items.map((item) => item.draft.draftId).toList(growable: false),
@@ -374,7 +374,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     if (next != null) _focusItem(next);
   }
 
-  KeyEventResult _onMasterKey(_IngestReviewViewData data, KeyEvent event) {
+  KeyEventResult _onMasterKey(IngestReviewViewData data, KeyEvent event) {
     if (!_masterFocus.hasPrimaryFocus || _isBusy || isTextInputFocused()) {
       return KeyEventResult.ignored;
     }
@@ -469,7 +469,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   List<Widget> _primarySlivers({
     required AsyncValue<List<Account>> accountsAsync,
     required AsyncValue<List<IngestReviewItem>> reviewItemsAsync,
-    required _IngestReviewViewData? data,
+    required IngestReviewViewData? data,
   }) {
     if (accountsAsync.hasError) {
       return [
@@ -573,14 +573,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   Future<void> _recordTransfer(IngestDraft draft) async {
     if (_isBusy) return;
     final parsed = draft.parsed;
-    final route = Uri(
-      path: FinanceRoutes.transfer,
-      queryParameters: <String, String>{
-        'amount': (parsed.amountMinor.abs() / 100).toStringAsFixed(2),
-        'date': _ingestYmd(parsed.occurredAt),
-        'note': parsed.description,
-      },
-    ).toString();
+    final route = buildIngestTransferRoute(parsed);
     final recorded = await context.push<bool>(route);
     if (recorded != true || !mounted) return;
     await _settleExternalDraft(
@@ -592,19 +585,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   Future<void> _recordTrade(IngestDraft draft) async {
     if (_isBusy) return;
     final parsed = draft.parsed;
-    final route = Uri(
-      path: FinanceRoutes.tradeEntry,
-      queryParameters: <String, String>{
-        if (parsed.activitySide != null) 'side': parsed.activitySide!,
-        if (parsed.instrumentSymbol != null) 'symbol': parsed.instrumentSymbol!,
-        if (parsed.quantity != null) 'quantity': parsed.quantity!,
-        if (parsed.unitPrice != null) 'price': parsed.unitPrice!,
-        'currency': parsed.currency,
-        'date': _ingestYmd(parsed.occurredAt),
-        'note': parsed.description,
-        'ingest': '1',
-      },
-    ).toString();
+    final route = buildIngestTradeRoute(parsed);
     final recorded = await context.push<bool>(route);
     if (recorded != true || !mounted) return;
     await _settleExternalDraft(
@@ -789,7 +770,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     child: Center(child: Text(message)),
   );
 
-  List<Widget> _compactControlSlivers(_IngestReviewViewData data) {
+  List<Widget> _compactControlSlivers(IngestReviewViewData data) {
     if (data.items.isEmpty) return const <Widget>[];
     return [
       SliverToBoxAdapter(child: _accountPicker(data)),
@@ -802,7 +783,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     ];
   }
 
-  Widget _rail(_IngestReviewViewData? data) {
+  Widget _rail(IngestReviewViewData? data) {
     final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -839,7 +820,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     );
   }
 
-  Widget _accountPicker(_IngestReviewViewData data) => AccountPicker(
+  Widget _accountPicker(IngestReviewViewData data) => AccountPicker(
     accounts: data.payableAccounts,
     value: data.selectedAccountId,
     label: AppLocalizations.of(context).ingestExpenseAccountLabel,
@@ -856,15 +837,6 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
           .read(productMetricsProvider.notifier)
           .record(ProductFunnelEvent.importReviewCorrected),
     );
-  }
-
-  static String? _defaultAccountId(List<Account> accounts) {
-    if (accounts.isEmpty) return null;
-    for (final c in const [AccountCategory.cash, AccountCategory.bank]) {
-      final hit = accounts.where((a) => a.type == c);
-      if (hit.isNotEmpty) return hit.first.id;
-    }
-    return accounts.first.id;
   }
 
   Future<void> _confirm(IngestDraft draft, String? accountId) async {
@@ -1508,54 +1480,6 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   }
 }
 
-class _IngestReviewViewData {
-  const _IngestReviewViewData({
-    required this.items,
-    required this.payableAccounts,
-    required this.selectedAccountId,
-    required this.actionableDrafts,
-    required this.freshCount,
-  });
-
-  factory _IngestReviewViewData.from({
-    required List<Account> accounts,
-    required List<IngestReviewItem> items,
-    required String? selectedAccountId,
-    required Map<String, ConfirmedIngestItem> pendingFinalize,
-  }) {
-    final payable = accounts
-        .where((account) => !account.archived)
-        .toList(growable: false);
-    final effectiveSelectedId =
-        payable.any((account) => account.id == selectedAccountId)
-        ? selectedAccountId
-        : _IngestReviewPageState._defaultAccountId(payable);
-    final actionableDrafts = items
-        .where(
-          (item) =>
-              item.isOrdinaryPending &&
-              !pendingFinalize.containsKey(item.draft.draftId),
-        )
-        .map((item) => item.draft)
-        .toList(growable: false);
-    return _IngestReviewViewData(
-      items: items,
-      payableAccounts: payable,
-      selectedAccountId: effectiveSelectedId,
-      actionableDrafts: actionableDrafts,
-      freshCount: actionableDrafts
-          .where((draft) => draft.verdict == DedupVerdict.newTxn)
-          .length,
-    );
-  }
-
-  final List<IngestReviewItem> items;
-  final List<Account> payableAccounts;
-  final String? selectedAccountId;
-  final List<IngestDraft> actionableDrafts;
-  final int freshCount;
-}
-
 class _IngestSelectionActions extends StatelessWidget {
   const _IngestSelectionActions({
     required this.count,
@@ -1756,13 +1680,6 @@ class _IngestDraftEditSheet extends StatefulWidget {
 
   @override
   State<_IngestDraftEditSheet> createState() => _IngestDraftEditSheetState();
-}
-
-String _ingestYmd(DateTime value) {
-  final local = value.toLocal();
-  return '${local.year.toString().padLeft(4, '0')}-'
-      '${local.month.toString().padLeft(2, '0')}-'
-      '${local.day.toString().padLeft(2, '0')}';
 }
 
 class _IngestDraftEditSheetState extends State<_IngestDraftEditSheet> {
