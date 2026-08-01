@@ -37,6 +37,7 @@ import '../data/providers.dart';
 import '../domain/ingest_models.dart';
 import '../domain/ingest_quality_report.dart';
 import '../domain/minor_unit_amount.dart';
+import 'ingest_batch_review_outcome.dart';
 import 'ingest_capture_lease.dart';
 import 'ingest_capture_presentation.dart';
 import 'ingest_external_route.dart';
@@ -998,43 +999,33 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
           );
         },
       );
-      if (result.confirmed.isNotEmpty) {
+      final outcome = IngestBatchReviewOutcome.from(result);
+      if (outcome.confirmed.isNotEmpty) {
         await ref.read(financeImportConfirmedProvider.notifier).markConfirmed();
         await ref
             .read(productMetricsProvider.notifier)
             .record(ProductFunnelEvent.importReviewCompleted, success: true);
       }
       if (mounted) {
-        final confirmedIds = result.confirmed
-            .map((item) => item.draft.draftId)
-            .toSet();
-        setState(() => _selection.removeAll(confirmedIds));
-        final unresolved = <ConfirmedIngestItem>[
-          for (final failure in result.failures)
-            if (failure.error.recovery == IngestRecovery.finalizeApplied &&
-                failure.error.item != null)
-              failure.error.item!,
-        ];
-        if (unresolved.isNotEmpty) {
-          setState(() {
-            for (final item in unresolved) {
-              _pendingFinalize[item.draft.draftId] = item;
-            }
-          });
-        }
-        final failed = result.failures.length;
+        setState(() {
+          _selection.removeAll(outcome.confirmedDraftIds);
+          _pendingFinalize.addAll(outcome.pendingFinalizeByDraftId);
+        });
         AppMessenger.show(
           context,
-          failed == 0 ? ToastKind.success : ToastKind.warning,
-          unresolved.isNotEmpty
+          outcome.hasFailures ? ToastKind.warning : ToastKind.success,
+          outcome.needsManualFinalize
               ? l10n.ingestRecordNeedsReview
-              : failed == 0
-              ? l10n.ingestRecordedN(result.confirmed.length)
-              : l10n.ingestRecordedPartial(result.confirmed.length, failed),
-          actionLabel: result.confirmed.isEmpty ? null : l10n.commonUndo,
-          onAction: result.confirmed.isEmpty
+              : !outcome.hasFailures
+              ? l10n.ingestRecordedN(outcome.confirmed.length)
+              : l10n.ingestRecordedPartial(
+                  outcome.confirmed.length,
+                  outcome.failureCount,
+                ),
+          actionLabel: outcome.canUndo ? l10n.commonUndo : null,
+          onAction: !outcome.canUndo
               ? null
-              : () => unawaited(_undoAllConfirmed(svc, result.confirmed)),
+              : () => unawaited(_undoAllConfirmed(svc, outcome.confirmed)),
         );
       }
     } catch (_) {
