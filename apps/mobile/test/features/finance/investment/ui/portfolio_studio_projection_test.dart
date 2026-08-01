@@ -228,7 +228,7 @@ void main() {
   });
 
   test('transfer task resolves group labels and target default', () {
-    const tree = PortfolioAllocationTree(
+    final tree = PortfolioAllocationTree(
       root: _root,
       nodes: [_root, _fromPortfolio, _toPortfolio, _fromSleeve, _toSleeve],
       attachments: [],
@@ -254,7 +254,7 @@ void main() {
   });
 
   test('transfer task preserves unknown ids and invalid amount state', () {
-    const tree = PortfolioAllocationTree(
+    final tree = PortfolioAllocationTree(
       root: _root,
       nodes: [_root],
       attachments: [],

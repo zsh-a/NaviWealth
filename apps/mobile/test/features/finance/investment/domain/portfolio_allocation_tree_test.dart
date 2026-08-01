@@ -125,6 +125,8 @@ void main() {
     final sleeves = tree.childrenOf(portfolioNode!.id);
     expect(sleeves, hasLength(1));
     expect(sleeves.single.name, 'Index core');
+    expect(identical(sleeves, tree.childrenOf(portfolioNode.id)), isTrue);
+    expect(() => sleeves.clear(), throwsUnsupportedError);
 
     final assetNodes = tree.childrenOf(sleeves.single.id);
     expect(assetNodes, hasLength(2));
@@ -141,9 +143,68 @@ void main() {
 
     final attachments = tree.attachmentsFor(sleeves.single.id);
     expect(attachments, hasLength(2));
+    expect(
+      identical(attachments, tree.attachmentsFor(sleeves.single.id)),
+      isTrue,
+    );
     expect(attachments.where((item) => item.isPrimary), hasLength(1));
     expect(attachments.where((item) => !item.isPrimary), hasLength(1));
-    expect(tree.inclusionsFor(sleeves.single.id).single.id, assignment.id);
+    final inclusions = tree.inclusionsFor(sleeves.single.id);
+    expect(inclusions.single.id, assignment.id);
+    expect(
+      identical(inclusions, tree.inclusionsFor(sleeves.single.id)),
+      isTrue,
+    );
+  });
+
+  test('freezes constructor inputs and preserves first reference match', () {
+    const root = AllocationNode(
+      id: 'plan',
+      parentId: null,
+      type: AllocationNodeType.plan,
+      name: 'Plan',
+      targetWeightBps: 10000,
+      driftBandBps: 0,
+      transferPolicy: GroupTransferPolicy.bidirectional,
+    );
+    const first = AllocationNode(
+      id: 'portfolio:first',
+      parentId: 'plan',
+      type: AllocationNodeType.portfolio,
+      name: 'First',
+      targetWeightBps: 5000,
+      driftBandBps: 500,
+      transferPolicy: GroupTransferPolicy.bidirectional,
+      referenceId: 'shared',
+    );
+    const second = AllocationNode(
+      id: 'portfolio:second',
+      parentId: 'plan',
+      type: AllocationNodeType.portfolio,
+      name: 'Second',
+      targetWeightBps: 5000,
+      driftBandBps: 500,
+      transferPolicy: GroupTransferPolicy.bidirectional,
+      referenceId: 'shared',
+    );
+    final sourceNodes = <AllocationNode>[root, first, second];
+    final tree = PortfolioAllocationTree(
+      root: root,
+      nodes: sourceNodes,
+      attachments: const [],
+      inclusions: const [],
+    );
+
+    sourceNodes.clear();
+
+    expect(tree.childrenOf(root.id), [first, second]);
+    expect(
+      tree.nodeForReference(AllocationNodeType.portfolio, 'shared'),
+      same(first),
+    );
+    expect(tree.childrenOf('missing'), isEmpty);
+    expect(tree.attachmentsFor('missing'), isEmpty);
+    expect(tree.inclusionsFor('missing'), isEmpty);
   });
 
   test('omits portfolios without an active plan target', () {

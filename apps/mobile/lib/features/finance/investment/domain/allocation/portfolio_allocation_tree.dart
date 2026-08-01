@@ -75,35 +75,50 @@ class CapitalInclusion {
 }
 
 class PortfolioAllocationTree {
-  const PortfolioAllocationTree({
+  PortfolioAllocationTree({
     required this.root,
-    required this.nodes,
-    required this.attachments,
-    required this.inclusions,
-  });
+    required List<AllocationNode> nodes,
+    required List<StrategyAttachment> attachments,
+    required List<CapitalInclusion> inclusions,
+  }) : nodes = List<AllocationNode>.unmodifiable(nodes),
+       attachments = List<StrategyAttachment>.unmodifiable(attachments),
+       inclusions = List<CapitalInclusion>.unmodifiable(inclusions),
+       _childrenByParentId = _indexBy(
+         nodes.where((node) => node.parentId != null),
+         (node) => node.parentId!,
+       ),
+       _nodesByReference = _indexNodesByReference(nodes),
+       _attachmentsBySleeveId = _indexBy(
+         attachments,
+         (attachment) => attachment.sleeveId,
+       ),
+       _inclusionsBySleeveId = _indexBy(
+         inclusions,
+         (inclusion) => inclusion.sleeveId,
+       );
 
   final AllocationNode root;
   final List<AllocationNode> nodes;
   final List<StrategyAttachment> attachments;
   final List<CapitalInclusion> inclusions;
+  final Map<String, List<AllocationNode>> _childrenByParentId;
+  final Map<(AllocationNodeType, String), AllocationNode> _nodesByReference;
+  final Map<String, List<StrategyAttachment>> _attachmentsBySleeveId;
+  final Map<String, List<CapitalInclusion>> _inclusionsBySleeveId;
 
   List<AllocationNode> childrenOf(String nodeId) =>
-      nodes.where((node) => node.parentId == nodeId).toList(growable: false);
+      _childrenByParentId[nodeId] ?? const [];
 
   AllocationNode? nodeForReference(
     AllocationNodeType type,
     String referenceId,
-  ) => nodes
-      .where((node) => node.type == type && node.referenceId == referenceId)
-      .firstOrNull;
+  ) => _nodesByReference[(type, referenceId)];
 
-  List<StrategyAttachment> attachmentsFor(String sleeveId) => attachments
-      .where((attachment) => attachment.sleeveId == sleeveId)
-      .toList(growable: false);
+  List<StrategyAttachment> attachmentsFor(String sleeveId) =>
+      _attachmentsBySleeveId[sleeveId] ?? const [];
 
-  List<CapitalInclusion> inclusionsFor(String sleeveId) => inclusions
-      .where((inclusion) => inclusion.sleeveId == sleeveId)
-      .toList(growable: false);
+  List<CapitalInclusion> inclusionsFor(String sleeveId) =>
+      _inclusionsBySleeveId[sleeveId] ?? const [];
 
   static PortfolioAllocationTree compose({
     required RebalanceUniverse universe,
@@ -227,4 +242,30 @@ class PortfolioAllocationTree {
       ]),
     );
   }
+}
+
+Map<String, List<T>> _indexBy<T>(
+  Iterable<T> values,
+  String Function(T value) keyOf,
+) {
+  final mutable = <String, List<T>>{};
+  for (final value in values) {
+    (mutable[keyOf(value)] ??= <T>[]).add(value);
+  }
+  return Map.unmodifiable({
+    for (final entry in mutable.entries)
+      entry.key: List<T>.unmodifiable(entry.value),
+  });
+}
+
+Map<(AllocationNodeType, String), AllocationNode> _indexNodesByReference(
+  Iterable<AllocationNode> nodes,
+) {
+  final indexed = <(AllocationNodeType, String), AllocationNode>{};
+  for (final node in nodes) {
+    if (node.referenceId case final referenceId?) {
+      indexed.putIfAbsent((node.type, referenceId), () => node);
+    }
+  }
+  return Map.unmodifiable(indexed);
 }

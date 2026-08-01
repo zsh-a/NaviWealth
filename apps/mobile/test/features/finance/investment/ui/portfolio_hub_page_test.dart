@@ -127,7 +127,7 @@ void main() {
       transferPolicy: GroupTransferPolicy.bidirectional,
       referenceId: 'core',
     );
-    const tree = PortfolioAllocationTree(
+    final tree = PortfolioAllocationTree(
       root: root,
       nodes: [root, portfolioNode, sleeveNode],
       attachments: [],
@@ -140,9 +140,7 @@ void main() {
           investmentPortfoliosProvider.overrideWith(
             (ref) => Stream.value([portfolio]),
           ),
-          portfolioAllocationTreeProvider.overrideWithValue(
-            const AsyncData(tree),
-          ),
+          portfolioAllocationTreeProvider.overrideWithValue(AsyncData(tree)),
           portfolioTrendProvider(
             const PortfolioTrendRequest(
               portfolioId: 'portfolio',
@@ -229,7 +227,7 @@ void main() {
       transferPolicy: GroupTransferPolicy.bidirectional,
       referenceId: 'core',
     );
-    const tree = PortfolioAllocationTree(
+    final tree = PortfolioAllocationTree(
       root: root,
       nodes: [root, portfolioNode, sleeveNode],
       attachments: [],
@@ -267,9 +265,7 @@ void main() {
           investmentPortfoliosProvider.overrideWith(
             (ref) => Stream.value([portfolio]),
           ),
-          portfolioAllocationTreeProvider.overrideWithValue(
-            const AsyncData(tree),
-          ),
+          portfolioAllocationTreeProvider.overrideWithValue(AsyncData(tree)),
           portfolioTrendProvider(
             const PortfolioTrendRequest(
               portfolioId: 'portfolio',
