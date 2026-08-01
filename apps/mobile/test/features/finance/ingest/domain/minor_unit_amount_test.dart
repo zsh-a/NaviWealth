@@ -38,4 +38,13 @@ void main() {
       );
     }
   });
+
+  test('parses signed statement values within the SQLite integer range', () {
+    expect(parseMinorUnitAmount('-0.05'), -5);
+    expect(parseMinorUnitAmount('123.45'), 12345);
+    expect(parseMinorUnitAmount('92233720368547758.07'), 9223372036854775807);
+    expect(parseMinorUnitAmount('-92233720368547758.08'), -9223372036854775808);
+    expect(parseMinorUnitAmount('92233720368547758.08'), isNull);
+    expect(parseMinorUnitAmount('-92233720368547758.09'), isNull);
+  });
 }

@@ -2,6 +2,7 @@ library;
 
 import '../domain/ingest_models.dart';
 import '../domain/ingest_parse_diagnostics.dart';
+import '../domain/minor_unit_amount.dart';
 
 final RegExp _statementPeriod = RegExp(r'(20\d{2})年(\d{2})月');
 final RegExp _candidateRow = RegExp(r'^\s*\d{2}/\d{2}\s+');
@@ -61,7 +62,9 @@ ParsedLedgerReport<ParsedTransaction> parseCmbCreditCardLedgerReport(
       '${month.toString().padLeft(2, '0')}-'
       '${day.toString().padLeft(2, '0')}',
     );
-    final amount = double.tryParse(match.group(8)!.replaceAll(',', ''));
+    final amountMinor = parseMinorUnitAmount(
+      match.group(8)!.replaceAll(',', ''),
+    );
     if (occurredAt == null ||
         occurredAt.month != month ||
         occurredAt.day != day) {
@@ -73,7 +76,7 @@ ParsedLedgerReport<ParsedTransaction> parseCmbCreditCardLedgerReport(
       );
       continue;
     }
-    if (amount == null) {
+    if (amountMinor == null) {
       issues.add(
         IngestParseIssue(
           lineNumber: index + 1,
@@ -82,7 +85,6 @@ ParsedLedgerReport<ParsedTransaction> parseCmbCreditCardLedgerReport(
       );
       continue;
     }
-    final amountMinor = (amount * 100).round();
     if (amountMinor == 0) {
       issues.add(
         IngestParseIssue(
