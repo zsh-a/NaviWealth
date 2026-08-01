@@ -36,6 +36,7 @@ import '../data/ingest_confirm_service.dart';
 import '../data/providers.dart';
 import '../domain/ingest_models.dart';
 import '../domain/ingest_quality_report.dart';
+import '../domain/minor_unit_amount.dart';
 import 'ingest_capture_lease.dart';
 import 'ingest_capture_presentation.dart';
 import 'ingest_external_route.dart';

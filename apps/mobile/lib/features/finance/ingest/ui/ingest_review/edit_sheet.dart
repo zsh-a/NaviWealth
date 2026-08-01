@@ -24,7 +24,7 @@ class _IngestDraftEditSheetState extends State<_IngestDraftEditSheet> {
     final parsed = widget.parsed;
     _description = TextEditingController(text: parsed.description);
     _amount = TextEditingController(
-      text: (parsed.amountMinor.abs() / 100).toStringAsFixed(2),
+      text: formatMinorUnitAmount(parsed.amountMinor.abs()),
     );
     _currency = TextEditingController(text: parsed.currency);
     _category = TextEditingController(text: parsed.categoryHint);
@@ -115,11 +115,11 @@ class _IngestDraftEditSheetState extends State<_IngestDraftEditSheet> {
   }
 
   void _submit() {
-    final amount = double.tryParse(_amount.text.trim());
+    final unsignedMinor = parseUnsignedMinorUnitAmount(_amount.text);
     final currency = _currency.text.trim().toUpperCase();
     final description = _description.text.trim();
-    if (amount == null ||
-        amount <= 0 ||
+    if (unsignedMinor == null ||
+        unsignedMinor <= 0 ||
         currency.isEmpty ||
         description.isEmpty) {
       setState(() {
@@ -127,7 +127,6 @@ class _IngestDraftEditSheetState extends State<_IngestDraftEditSheet> {
       });
       return;
     }
-    final unsignedMinor = (amount * 100).round();
     final amountMinor = _kind == IngestTransactionKind.income
         ? unsignedMinor
         : -unsignedMinor;

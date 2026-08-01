@@ -1,11 +1,12 @@
 import '../../composition/finance_route_paths.dart';
 import '../domain/ingest_models.dart';
+import '../domain/minor_unit_amount.dart';
 
 String buildIngestTransferRoute(ParsedTransaction parsed) {
   return Uri(
     path: FinanceRoutes.transfer,
     queryParameters: <String, String>{
-      'amount': _minorAmount(parsed.amountMinor),
+      'amount': formatMinorUnitAmount(parsed.amountMinor.abs()),
       'date': _localYmd(parsed.occurredAt),
       'note': parsed.description,
     },
@@ -26,13 +27,6 @@ String buildIngestTradeRoute(ParsedTransaction parsed) {
       'ingest': '1',
     },
   ).toString();
-}
-
-String _minorAmount(int amountMinor) {
-  final absolute = amountMinor.abs();
-  final major = absolute ~/ 100;
-  final minor = (absolute % 100).toString().padLeft(2, '0');
-  return '$major.$minor';
 }
 
 String _localYmd(DateTime value) {
