@@ -6,7 +6,7 @@ String buildIngestTransferRoute(ParsedTransaction parsed) {
   return Uri(
     path: FinanceRoutes.transfer,
     queryParameters: <String, String>{
-      'amount': formatMinorUnitAmount(parsed.amountMinor.abs()),
+      'amount': formatAbsoluteMinorUnitAmount(parsed.amountMinor),
       'date': _localYmd(parsed.occurredAt),
       'note': parsed.description,
     },

@@ -113,6 +113,7 @@ void main() {
       expect(plan.payload['category'], 'coffee');
       expect(plan.payload['note'], 'Starbucks Coffee');
       expect(plan.payload['date'], '2026-05-10T00:00:00.000Z');
+      expect(plan.payload['amount'], '38.50');
       // Amount is positive (sign handled by the JE builder) and exact.
       expect(
         Decimal.parse(plan.payload['amount']! as String),

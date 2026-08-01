@@ -24,7 +24,7 @@ class _IngestDraftEditSheetState extends State<_IngestDraftEditSheet> {
     final parsed = widget.parsed;
     _description = TextEditingController(text: parsed.description);
     _amount = TextEditingController(
-      text: formatMinorUnitAmount(parsed.amountMinor.abs()),
+      text: formatAbsoluteMinorUnitAmount(parsed.amountMinor),
     );
     _currency = TextEditingController(text: parsed.currency);
     _category = TextEditingController(text: parsed.categoryHint);

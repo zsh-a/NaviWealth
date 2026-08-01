@@ -2,10 +2,18 @@
 ///
 /// This avoids routing persisted money through binary floating point.
 String formatMinorUnitAmount(int minorUnits) {
-  final negative = minorUnits < 0;
-  final absolute = minorUnits.abs();
-  final major = absolute ~/ 100;
-  final minor = (absolute % 100).toString().padLeft(2, '0');
+  final value = BigInt.from(minorUnits);
+  return _formatMinorUnitMagnitude(value.abs(), negative: value.isNegative);
+}
+
+/// Formats the magnitude of a signed minor-unit amount.
+String formatAbsoluteMinorUnitAmount(int minorUnits) {
+  return _formatMinorUnitMagnitude(BigInt.from(minorUnits).abs());
+}
+
+String _formatMinorUnitMagnitude(BigInt absolute, {bool negative = false}) {
+  final major = absolute ~/ BigInt.from(100);
+  final minor = (absolute % BigInt.from(100)).toString().padLeft(2, '0');
   return '${negative ? '-' : ''}$major.$minor';
 }
 

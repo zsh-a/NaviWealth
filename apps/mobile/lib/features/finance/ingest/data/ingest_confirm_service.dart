@@ -10,7 +10,6 @@
 /// post-invocation ambiguity is fail-closed for manual recovery.
 library;
 
-import 'package:decimal/decimal.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/ai/composition/proposal_applier.dart';
@@ -19,6 +18,7 @@ import '../../../../core/ai/composition/proposal_plan.dart';
 import '../../ai_tools/local_skills/txn_classifier.dart'
     show expenseCategorySlugForHint;
 import '../domain/ingest_models.dart';
+import '../domain/minor_unit_amount.dart';
 
 class IngestConfirmException implements Exception {
   const IngestConfirmException(
@@ -655,7 +655,7 @@ class IngestConfirmService {
     IngestDraft draft, {
     required String fromAccountId,
   }) {
-    final amount = _minorToDecimalString(draft.parsed.amountMinor.abs());
+    final amount = formatAbsoluteMinorUnitAmount(draft.parsed.amountMinor);
     final category = expenseCategorySlugForHint(draft.parsed.categoryHint);
     return ReadyProposalPlan(
       proposalId: draft.draftId,
@@ -678,7 +678,7 @@ class IngestConfirmService {
     IngestDraft draft, {
     required String toAccountId,
   }) {
-    final amount = _minorToDecimalString(draft.parsed.amountMinor.abs());
+    final amount = formatAbsoluteMinorUnitAmount(draft.parsed.amountMinor);
     final category = switch (draft.parsed.categoryHint) {
       'salary' || 'dividend' || 'interest' => draft.parsed.categoryHint!,
       _ => 'other',
@@ -719,13 +719,6 @@ class IngestConfirmService {
       'Trade drafts must use the typed trade form.',
     ),
   };
-
-  static String _minorToDecimalString(int absMinor) {
-    final whole = absMinor ~/ 100;
-    final frac = (absMinor % 100).toString().padLeft(2, '0');
-    // Round-trips through Decimal exactly; ProposalApplier re-parses it.
-    return Decimal.parse('$whole.$frac').toString();
-  }
 
   static String _shortDesc(String s) =>
       s.length <= 24 ? s : '${s.substring(0, 23)}…';

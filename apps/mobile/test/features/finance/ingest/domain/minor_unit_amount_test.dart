@@ -8,6 +8,14 @@ void main() {
     expect(formatMinorUnitAmount(150), '1.50');
     expect(formatMinorUnitAmount(-12345), '-123.45');
     expect(formatMinorUnitAmount(9007199254740993), '90071992547409.93');
+    expect(
+      formatMinorUnitAmount(-9223372036854775808),
+      '-92233720368547758.08',
+    );
+    expect(
+      formatAbsoluteMinorUnitAmount(-9223372036854775808),
+      '92233720368547758.08',
+    );
   });
 
   test('parses supported unsigned decimal forms exactly', () {
