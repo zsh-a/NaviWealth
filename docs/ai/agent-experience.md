@@ -2,7 +2,14 @@
 
 Status: current implementation and extension contract.
 
-Last reviewed: 2026-07-17.
+Last reviewed: 2026-08-01.
+
+## Document Contract
+
+Owns Agent lifecycle, artifact presentation, scheduling, evidence, and outcome
+evaluation rules. It does not own the native chat runtime or domain-specific
+finding logic. `DomainPack` registrations and the executable Agent outcome
+corpus are authoritative for the production inventory.
 
 This document describes the production agent experience. Cross-domain outcome
 and evaluation sequencing belongs in `../roadmap/roadmap-lifeos.md`; this file
@@ -36,7 +43,7 @@ The production `DomainPack` registry is authoritative. At this review:
 | FinanceOS | Weekly Wealth Review, Cashflow Anomaly Review, FIRE Plan Drift Monitor, Options Income Risk Review | Finance home |
 | HealthOS | Morning Briefing, Recovery Alert, Weekly Summary | Health home/review |
 | KnowledgeOS | Review, Assumption, Contradiction, Inbox Triage, Routine Due | Knowledge review |
-| ExecutionOS | Review | Execution review |
+| ExecutionOS | Review, Due Action | Execution review |
 
 Do not copy this list into another roadmap. Composition contract tests must
 continue to enforce one presentation spec and one executable outcome fixture

@@ -8,6 +8,9 @@ Tracking issues: web routing verification, initial setup, cross-browser matrix.
 
 ```bash
 cd apps/mobile
+tool/setup-drift-web.sh
+tool/build-cn-fonts.sh
+tool/build-latin-fonts.sh
 flutter build web --release
 cd build/web && python3 -m http.server 8080
 # open http://localhost:8080/
@@ -22,7 +25,7 @@ from the registered domain packs:
 
 | Path | Tab | Notes |
 |------|-----|-------|
-| `/` | Home | Default landing; index 0 |
+| `/` | Today | Default landing; index 0 |
 | `/activity` | Activity | Index 1 |
 | `/wealth` | Wealth | Index 2 |
 | `/plan` | Plan | Index 3 |
@@ -85,7 +88,9 @@ Repeat at `/`, `/activity`, `/wealth`, `/plan`, `/settings`.
 
 Paste `http://localhost:8080/nope` and Enter.
 
-Expected: a branded `RouteErrorPage` (see `apps/mobile/lib/app/route_error_page.dart`) with a link back to `/`. No crash, no blank screen.
+Expected: a branded `RouteErrorPage` (see
+`apps/mobile/lib/core/shell/route_error_page.dart`) with a link back to `/`. No
+crash, no blank screen.
 
 ### E. Authenticated routes
 

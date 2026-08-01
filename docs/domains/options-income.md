@@ -1,10 +1,10 @@
 # NaviWealth Income Planner（期权现金流机会引擎）
 
-> 文档版本：2026-07-26
+> Last reviewed: 2026-08-01
 > 关联：[`ai-architecture.md`](../ai/ai-architecture.md)、[`ai-protocol.md`](../ai/ai-protocol.md)、[`roadmap-finance.md`](../roadmap/roadmap-finance.md)、[`market-data-providers.md`](./market-data-providers.md)、[`sync-v3.md`](../sync/sync-v3.md)
 > 定位：在 NaviWealth 已有的"持仓 + 现金 + FIRE 现金桶 + 风险偏好"之上，新增一个**低频期权现金流规划器**。
 >
-> 状态（2026-07-26）：P0–P4 已实现。Income Planner 采用 Opportunities / Wheel / Journal 三工作区；交易日志记录到期日、合约数量和总费用。Wheel 与 LEAPS 通过 [Income Strategy Framework](income-strategy.md) 和股息 sleeve 组合；LEAPS 不属于 Wheel 阶段，也不是 PMCC。MVP 行情源锁定 yfinance；AI tool **只读 cache**，不触发实时扫描。P5（Tradier OAuth 接入）是触发式工作，尚未排期。
+> 状态：Income Planner 采用 Opportunities / Wheel / Journal 三工作区；交易日志记录到期日、合约数量和总费用。Wheel 与 LEAPS 通过 [Income Strategy Framework](income-strategy.md) 和股息 sleeve 组合；LEAPS 不属于 Wheel 阶段，也不是 PMCC。当前行情源是 yfinance；AI tool **只读 cache**，不触发实时扫描。Authenticated provider 属于未排期的触发式工作。
 
 ---
 
@@ -30,7 +30,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 
 ## 1. 产品边界
 
-### 1.1 做什么（MVP–P4）
+### 1.1 当前范围
 
 - **Covered Call 扫描**：基于用户已持仓（≥100 股）找出合适的卖 call 机会。
 - **Cash-secured Put 扫描**：基于"用户愿意以这个价格长期持有"的标的清单找出卖 put 机会。
@@ -56,13 +56,13 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 
 | 原则 | 含义 |
 |------|------|
-| Local-first | 行情拉取、normalize、评分、cache 全部在端侧。Backend 在 P5 之前**不出现一行代码**。 |
+| Local-first | 行情拉取、normalize、评分、cache 全部在端侧。当前 Backend 没有期权业务路由。 |
 | 显性持有意愿 | sell put / covered call 都要求标的进入"approved underlyings"清单。LLM 不能绕过。 |
 | 解释结构化 | 评分引擎产 `OpportunityExplanation` 结构体；UI 与 AI 共享同一份解释，杜绝双源。 |
 | 最坏情况优先 | 卡片必须显示"被行权后会发生什么"；不只是收益数字。 |
 | AI 只读 cache | LLM 不能让扫描重跑，只能读最近一次扫描结果；保证可解释性 + 控本。 |
 | Decimal-only | premium / strike / cash_required / pnl 全部 `Decimal` + `Money`。禁止 `double`。 |
-| 渐进增强 | MVP 走 yfinance 非官方端点；接 OAuth 数据源（Tradier/Schwab）放到 P5。 |
+| 渐进增强 | 当前走 yfinance 非官方端点；authenticated provider 需要真实需求和独立安全设计。 |
 
 ---
 
@@ -82,7 +82,8 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 
 ### 2.2 不会被打破的现有原则
 
-- **评分逻辑不上 Worker**。P5 接 OAuth 行情源时，Worker 角色严格限制为"凭证持有 + HTTP 透传"，禁止任何 normalize / score / cache。
+- **评分逻辑不上 Worker**。未来接 OAuth 行情源时，Worker 也禁止任何
+  normalize、score 或 opportunity cache。
 - 不破坏 [`market-data-providers.md`](./market-data-providers.md) 的 valuation / metadata 双路径：`OptionsChainProvider` 是**第三条**路径——"low-frequency user-initiated scan"，单独定义 cache 与 rate limit 策略。
 - 不污染 FIRE engine：期权产生的现金流通过既有 `cashflow_buckets` 接入 FIRE，FIRE engine 不感知期权语义。
 
@@ -154,20 +155,11 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 - 失败时不阻塞 UI：返回上一次 cache + freshness badge（沿用现有 `DataFreshness` 机制）。
 - 期权扫描**必须用户手势触发**——不挂任何后台定时任务，不挂任何 render 路径。这是和 `searchSymbol` 同级的约束。
 
-### 4.2 后续路线
+### 4.2 扩展约束
 
-| Phase | 数据源 | 触发 | 备注 |
-|---|---|---|---|
-| P1–P4 | yfinance | 用户点 "刷新机会" | 当前文档范围 |
-| P5 | Tradier sandbox | 同上 | 第一个有正式 greeks 的源；OAuth 必须，需要 backend 透传 |
-| P6+ | Schwab Trader API | 同上 | 需要 backend 透传 + 用户级 OAuth；评估再决定是否做 |
-
-**P5 backend proxy 规则**（提前在此锚定，防止漂移）：
-
-- 路由位于 `apps/backend/src/routes/market/options.rs`。
-- 只接 `symbol` + `params`，**拒绝任何评分参数**。
-- 不 normalize、不 cache、不打分。错误回 `AppError`。
-- 凭证仅保存在 backend（OAuth refresh token），客户端只持短期 access token 或纯通过 backend 透传。
+当前只实现端侧 yfinance provider。任何 authenticated options provider
+都属于触发式工作：只有真实数据质量需求出现后，才在 FinanceOS roadmap 中立项并
+单独设计 credential custody、撤销和代理边界。当前 Backend 没有行情或期权路由。
 
 ---
 
@@ -428,7 +420,7 @@ final_score =
   + 0.10 * event_safety_score
 ```
 
-权重通过 `Provider<ScoringWeights>` 注入；测试可 override；高级用户后续可调。
+权重通过 `Provider<ScoringWeights>` 注入，测试可 override；当前 UI 不暴露权重编辑。
 
 每个子分数都在 `OpportunityExplanation.scoreBreakdown` 里暴露，便于：
 
@@ -641,23 +633,18 @@ LEAPS 使用独立表单和字段语义。表单对日期顺序、正数金额�
 
 ---
 
-## 12. 落地路线
+## 12. 当前实现基线
 
-| Phase | 范围 | 行情源 | Backend 改动 |
-|---|---|---|---|
-| **P0** | Profile + Approved List + OCC 披露 + Drift 表 + 同步 wiring + Income Planner 入口 | — | ⚠️ 极小：新表 migration + `sql_table_name` 两行（透传，无业务逻辑） |
-| **P1** | Covered Call Scanner（yfinance）+ `OpportunityScorer`（call 路径）+ income_planner_page tab 1 + `get_options_income_opportunities` tool | yfinance | ❌ |
-| **P2** | Cash-secured Put Scanner + sell put 路径 + cash 暴露检查 | yfinance | ❌ |
-| **P3** | Trade Journal + `propose_options_journal_entry` tool + activity 接入 | — | ❌ |
-| **P4** | Wheel / Income Cycle 状态机 + 复盘视图 | yfinance | ❌ |
-| **P5** | Tradier sandbox 接入 | Tradier (OAuth) | ✅ 新增 `routes/market/options.rs` 透传 |
+当前实现包括 Profile、Wheel intent、OCC 披露、Covered Call/Cash-secured
+Put 扫描、端侧评分、Opportunities/Wheel/Journal UI、交易日志以及对应的读取和
+proposal tools。Authenticated options data 只有在记录真实需求，并完成
+credential custody、revocation、proxy 边界和 typed-confirmation 设计后，才进入
+FinanceOS `Now`。
 
-P0–P4 是当前实现基线，不再作为未来 phase 维护。P5 只有在确认需要
-authenticated options data，并完成 credential custody、revocation、proxy
-边界和 typed-confirmation 设计后，才进入 FinanceOS `Now`。
-
-P0/P3 不需要新增 backend 业务表；服务端通过 [`sync-v3.md`](../sync/sync-v3.md) 的 `sync_rows` 统一存储 opaque payload。
-**评分 / 候选生成 / opportunity cache 永远不上 server。** 这条线在 P5 接 OAuth 行情源时也不能松——P5 的 backend route 仅做凭证持有 + HTTP 透传，禁止 normalize / cache / score。
+Profile、income strategy plan 和 journal 不需要 Backend 业务表；服务端通过
+[`sync-v3.md`](../sync/sync-v3.md) 的 `sync_rows` 统一存储 opaque payload。
+**评分 / 候选生成 / opportunity cache 永远不上 server。** 未来即使接入 OAuth
+行情源，也禁止 Backend normalize、cache 或 score。
 
 > Sync v3 后端保持 schema-agnostic。新增同步表只需在端侧统一注册表中声明
 > 主键、owner scope 与 backfill 策略；accepted ack 和 domain generation 由通用同步层处理。
@@ -695,7 +682,7 @@ P0/P3 不需要新增 backend 业务表；服务端通过 [`sync-v3.md`](../sync
 
 ## 15. 相关代码路径
 
-P0–P3 已落地（2026-05-21）：
+当前代码地图：
 
 ```
 apps/mobile/lib/features/finance/options_income/
@@ -705,26 +692,26 @@ apps/mobile/lib/features/finance/options_income/
 │   ├── options_ledger_narrations.dart     # narration contract + EN default
 │   ├── options_ledger_narrations_l10n.dart
 │   ├── leaps_scan_targets.dart            # LEAPS lane universe + budget/funding
-│   ├── scan_controller.dart            # P1 — Notifier driving refresh button
-│   ├── scan_inputs_bridge.dart         # P1 — holdings/cash bridge from portfolio
-│   └── scan_orchestrator.dart          # P1 — universe → chain → scorer → cache
+│   ├── scan_controller.dart            # Notifier driving refresh button
+│   ├── scan_inputs_bridge.dart         # holdings/cash bridge from portfolio
+│   └── scan_orchestrator.dart          # universe → chain → scorer → cache
 ├── data/
 │   ├── leaps_call_position_repository.dart
-│   ├── options_opportunity_cache_repository.dart  # P1 — local-only cache repo
+│   ├── options_opportunity_cache_repository.dart  # local-only cache repo
 │   ├── options_strategy_profile_repository.dart
 │   ├── providers.dart
-│   └── trade_journal_repository.dart   # P3 — synced journal CRUD
+│   └── trade_journal_repository.dart   # synced journal CRUD
 ├── domain/
 │   ├── approved_underlying.dart        # derived view of Wheel-enabled plans
-│   ├── option_contract.dart            # P1
-│   ├── options_opportunity.dart        # P1 — Opportunity / sealed Metrics / RiskLevel
+│   ├── option_contract.dart
+│   ├── options_opportunity.dart        # Opportunity / sealed Metrics / RiskLevel
 │   ├── options_strategy_profile.dart   # incl. LEAPS lane thresholds
 │   ├── leaps_call_position.dart         # independent long-call source row
-│   ├── opportunity_explanation.dart    # P1 — UI ⇄ AI shared explanation struct
-│   ├── services/opportunity_scorer.dart# P1/P2 — sell-side pure-Dart scorer
+│   ├── opportunity_explanation.dart    # UI ⇄ AI shared explanation struct
+│   ├── services/opportunity_scorer.dart# sell-side pure-Dart scorer
 │   ├── services/leaps_opportunity_scorer.dart # buy-side LEAPS lane
 │   ├── services/opportunity_explanation_texts.dart
-│   └── trade_journal_entry.dart        # P3
+│   └── trade_journal_entry.dart
 └── ui/
     ├── income_planner/
     │   ├── income_planner_page.dart
@@ -732,22 +719,22 @@ apps/mobile/lib/features/finance/options_income/
     ├── income_planner_labels.dart      # single source for enum labels
     ├── occ_disclosure_sheet.dart
     ├── leaps_call_position_sheet.dart
-    ├── opportunity_detail_sheet.dart   # P1 — score breakdown, worst-case, log-trade CTA
+    ├── opportunity_detail_sheet.dart   # score breakdown, worst-case, log-trade CTA
     ├── options_trade_stats_page.dart   # /plan/income/stats — Options review
     ├── strategy_profile_sheet.dart
-    ├── trade_journal_sheet.dart        # P3
+    ├── trade_journal_sheet.dart
     └── wheel_lifecycle_page.dart       # /plan/income/wheel — single Wheel surface
 
-apps/mobile/lib/data/market/providers/options/
-├── options_chain_provider.dart         # P1 abstract chain provider
-└── yfinance_options_provider.dart      # P1 — yfinance options chain adapter
+apps/mobile/lib/features/finance/data/market/providers/options/
+├── options_chain_provider.dart         # abstract chain provider
+└── yfinance_options_provider.dart      # yfinance options chain adapter
 
 apps/mobile/lib/features/finance/options_income/ai_tools/
-├── get_options_income_opportunities_tool.dart  # P1 — cache-read tool
-├── get_options_strategy_profile_tool.dart      # P1 — profile read tool
-├── get_wheel_lifecycle_tool.dart               # P4 — wheel lifecycle read tool
-├── propose_options_profile_update_tool.dart    # P1 — proposal
-├── propose_options_journal_entry_tool.dart     # P3 — proposal
+├── get_options_income_opportunities_tool.dart  # cache-read tool
+├── get_options_strategy_profile_tool.dart      # profile read tool
+├── get_wheel_lifecycle_tool.dart               # wheel lifecycle read tool
+├── propose_options_profile_update_tool.dart    # proposal
+├── propose_options_journal_entry_tool.dart     # proposal
 └── propose_leaps_call_position_tool.dart       # independent Long Call proposal
 
 apps/mobile/lib/core/persistence/tables.dart       # +OptionsTradeJournal
@@ -758,10 +745,4 @@ apps/mobile/lib/core/sync/providers.dart           # row-state sync providers
 apps/mobile/lib/features/finance/finance_ai_tools.dart     # Income Planner tool registrations + descriptors
 apps/backend/migrations/0002_sync_schema.sql       # backend sync_rows store
 apps/backend/src/sync/store.rs                     # schema-agnostic row store
-```
-
-后续阶段会落地：
-
-```
-P5: apps/backend/src/routes/market/options.rs                       # Tradier OAuth proxy
 ```

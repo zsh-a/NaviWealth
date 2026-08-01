@@ -168,6 +168,8 @@ flutter run -d chrome --dart-define=BYPASS_AUTH=true
 | 主题 | 文档 |
 |---|---|
 | 项目总览 | [Documentation Index](docs/index.md) |
+| Agent 任务路由 | [Agent Task Map](docs/agent-map.md) |
+| FinanceOS | [FinanceOS Domain](docs/domains/financeos-domain.md) |
 | 设备端 AI | [AI Architecture](docs/ai/ai-architecture.md) · [Runtime Contract](docs/ai/ai-protocol.md) |
 | Agent Runtime | [Current Architecture](docs/architecture/agent-runtime-current.md) |
 | 数据同步 | [Sync v3](docs/sync/sync-v3.md) |

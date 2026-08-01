@@ -1,5 +1,14 @@
 # NaviWealth AI Chat Event Contract
 
+Status: active wire-contract reference.
+
+## Document Contract
+
+Owns provider-neutral AI event names, payload shapes, stop reasons, and tool
+continuation semantics. It does not own UI presentation or domain tool
+behavior. Dart/Rust serializers and `docs/fixtures/ai_contract_wire_enums.json`
+are authoritative for exact wire values.
+
 The interactive chat path is device-only and runs through the FRB/native
 streaming runtime. NaviWealth backend is not part of this path:
 

@@ -3,6 +3,13 @@
 ExecutionOS is the LifeOS execution layer. It is user opt-in, local-first, and
 focused on personal commitments, next actions, and progress review.
 
+## Document Contract
+
+Owns ExecutionOS objects, Today/Commitments/Review behavior, source references,
+tools, and Agents. It does not own sibling-domain evidence semantics or shared
+proposal infrastructure. `execution_pack.dart`, Execution repositories, and
+focused Execution tests are authoritative for the current implementation.
+
 ## Scope
 
 Included:
@@ -11,7 +18,7 @@ Included:
 - Projects for bounded delivery work that contains actions and commitments.
 - Commitments for work that needs a longer-running promise.
 - Progress entries for check-ins, blockers, scope changes, and completion.
-- Today, Plans, and Review shell tabs.
+- Today, Commitments, and Review shell tabs.
 - Cross-domain source references by neutral row-family metadata.
 
 Excluded:
@@ -35,7 +42,7 @@ Contributions:
 - Scope: `DomainScope.execution`.
 - Shell: `features/execution/composition/execution_domain_shell.dart`.
 - Routes: `features/execution/composition/execution_routes.dart`.
-- Tabs: Today, Plans, Review.
+- Tabs: Today, Commitments, Review.
 - Tools: `features/execution/execution_ai_tools.dart`.
 - Command palette: `features/execution/composition/execution_command_palette.dart`.
 - Proposal kinds: `features/execution/composition/execution_proposal_kinds.dart`.
@@ -81,7 +88,7 @@ boundary.
 | Tab | Purpose |
 |---|---|
 | Today | Persistent daily Top 3 plus today's open actions, blockers, and high-priority follow-through |
-| Plans | Inbox actions, active projects, long-term commitments, and a closed-work archive |
+| Commitments | Inbox actions, active projects, long-term commitments, and a closed-work archive |
 | Review | Focus, stalled/blocked work, missing next actions, overdue targets, repeated blockers, throughput, source outcomes, recently closed actions, and confirmed batch next-action creation |
 
 Key files:
@@ -101,7 +108,7 @@ priority, dates, relations, and notes behind an optional detail disclosure.
 Manual status changes show a short Undo action. Blocking requires a concrete
 reason, which is stored as blocker progress instead of a generic placeholder.
 
-Today, Plans, and Review share an all-status search across Action title
+Today, Commitments, and Review share an all-status search across Action title
 and note, Project title and description, and Commitment title and description.
 Default open-list reads are complete rather than silently capped; explicit
 limits are reserved for callers that intentionally paginate.

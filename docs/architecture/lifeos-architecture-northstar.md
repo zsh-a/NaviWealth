@@ -2,6 +2,13 @@
 
 This document defines hard architecture boundaries for new work. It is not a roadmap and does not track completed migration history. When code and this document disagree, treat this document as the target boundary and update the stale source.
 
+## Document Contract
+
+Owns cross-domain layering, hard boundaries, and non-goals. It does not own
+current feature inventories, wire formats, or delivery sequencing. The
+architecture lint scripts are the executable authority for dependency
+boundaries; use [LifeOS Shell](lifeos-shell.md) for current composition.
+
 ## Positioning
 
 NaviWealth is a Personal LifeOS with multiple opt-in domains:
@@ -46,7 +53,8 @@ Rules:
 - `core/` must stay domain-neutral and must not import `features/`.
 - `features/<domain>/` must not import a sibling domain. Cross-domain coordination belongs in `app/` or `core/` seams.
 - `app/` is the composition root and may import multiple domains.
-- Shared contracts carry primitive, JSON, or domain-neutral data. They must not expose Finance, Health, or Knowledge entities.
+- Shared contracts carry primitive, JSON, or domain-neutral data. They must not
+  expose Finance, Health, Knowledge, or Execution entities.
 
 ## Domain Registration
 
@@ -62,12 +70,15 @@ Locations:
 Each domain may contribute:
 
 - `DomainScope`
-- AI device tools and descriptors
-- System prompt block
-- Shell spec and route builder
-- Agent builder
-- Command palette entries
-- Primary tab paths and route ownership
+- AI device tools, descriptors, intents, and system prompt blocks
+- Proposal kinds and apply/undo routing
+- Shell spec, route builder, tab paths, and additional route ownership
+- Agents and their presentation metadata
+- Memory sources, indexers, and background jobs
+- Command palette entries and provider overrides
+- Life signals and cross-domain source-route resolution
+- Data-management, notification, and domain-settings surfaces
+- Share-intent handlers
 
 Adding a domain means landing the domain feature, adding a `DomainPack`, and wiring a single registry entry. Do not add independent domain switches in bootstrap, router, command palette, tool registry, or agent registry.
 
@@ -197,6 +208,7 @@ Before merging architecture-affecting code, answer:
 
 - This document: architecture boundaries.
 - `lifeos-shell.md`: current shell implementation and extension points.
+- `financeos-domain.md`: FinanceOS ownership and topic routing.
 - `healthos-domain.md`: HealthOS domain behavior.
 - `knowledgeos-domain.md`: KnowledgeOS domain behavior.
 - `executionos-domain.md`: ExecutionOS domain behavior.

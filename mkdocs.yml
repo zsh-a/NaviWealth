@@ -24,18 +24,21 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Agent Task Map: agent-map.md
   - Architecture:
       - Northstar: architecture/lifeos-architecture-northstar.md
       - LifeOS Shell: architecture/lifeos-shell.md
       - Agent Runtime: architecture/agent-runtime-current.md
   - Domains:
+      - FinanceOS: domains/financeos-domain.md
+      - Portfolio Strategy Groups: domains/portfolio-strategy-groups.md
       - Income Strategy: domains/income-strategy.md
       - HealthOS: domains/healthos-domain.md
       - KnowledgeOS: domains/knowledgeos-domain.md
       - ExecutionOS: domains/executionos-domain.md
       - Options Income: domains/options-income.md
       - Market Data Providers: domains/market-data-providers.md
-      - Garmin Integration: domains/garmin-integration-plan.md
+      - Garmin Integration Reference: domains/garmin-integration-plan.md
   - AI:
       - Device AI Architecture: ai/ai-architecture.md
       - Runtime Event Contract: ai/ai-protocol.md
@@ -48,8 +51,10 @@ nav:
   - Development:
       - Local Development: development/local-development.md
       - Testing Strategy: development/testing-strategy.md
+      - Structured Logging: development/logging.md
       - Web Routing: development/web-routing.md
       - Web Compatibility Matrix: development/web-compat-matrix.md
+      - Visual Baseline: visual-baseline/README.md
   - Operations:
       - Branch Protection: operations/branch-protection.md
   - Roadmap:

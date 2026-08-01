@@ -2,6 +2,13 @@
 
 HealthOS is the LifeOS health domain. It is user opt-in, native-only, local-first, and focused on daily recovery signals rather than medical diagnosis.
 
+## Document Contract
+
+Owns HealthOS behavior, data-source precedence, recovery semantics, tools, and
+Agents. It does not own native runtime internals or Sync wire behavior.
+`health_pack.dart`, Health repositories, and focused Health tests are
+authoritative for the current implementation inventory.
+
 ## Scope
 
 Included:

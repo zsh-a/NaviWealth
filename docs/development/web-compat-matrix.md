@@ -13,7 +13,7 @@ Parent task: cross-browser compatibility.
 | Tier | Meaning | Browsers |
 |------|---------|----------|
 | **1** | Fully supported. Bug = release blocker. | Chrome (latest, Win/macOS), Edge (latest, Win), Safari (latest, macOS), Safari iOS (latest two majors) |
-| **2** | Supported with documented degraded path. Bug = high-priority but shippable. | Firefox (latest, Win/macOS) — degraded persistence (see §4.1) |
+| **2** | Supported with documented degraded path. Bug = high-priority but shippable. | Firefox (latest, Win/macOS) — storage implementation may differ from Chromium (see §4.1) |
 | **3** | Best-effort. Bug = nice to fix, not blocking. | Chrome / Edge previous-major; Firefox ESR; Safari N-2 |
 
 Not supported: any IE, Opera Mini, Android in-app webviews (WeChat, etc.), or browsers older than the tiers above. The app should still load (no blank screen), but no other guarantees.
@@ -25,14 +25,30 @@ Not supported: any IE, Opera Mini, Android in-app webviews (WeChat, etc.), or br
 | Chrome / Edge | Windows | OPFS (worker) | Yes (omnibox) | Yes | Baseline. |
 | Chrome | macOS | OPFS (worker) | Yes (omnibox) | Yes | Baseline. |
 | Safari | macOS 14+ | OPFS (worker) | Yes (Sonoma+ "Add to Dock") | Yes | OPFS quota differs from Chromium; private mode falls back to in-memory. |
-| Safari | iOS 17+ | OPFS (where avail) → IndexedDB | Share → Add to Home | Limited (no background sync, no push without gesture) | Aggressive eviction after 7 days unused; keyboard focus quirks. |
-| Firefox | Win/macOS | **IndexedDB fallback** (no OPFS in workers as of FF 124) | Add-on / add-to-home varies | Yes | Slower writes than OPFS; fallback path must stay green. See §4.1. |
+| Safari | supported iOS versions | Auto-selected by Drift | Share → Add to Home | Limited | Storage eviction and keyboard focus quirks. |
+| Firefox | Win/macOS | Auto-selected by Drift | Add-on / add-to-home varies | Yes | Persistent fallback path must stay green. See §4.1. |
 
-Persistence reflects what `WasmDatabase.open` selects today (see `apps/mobile/lib/data/db/connection_web.dart`). The choice is logged in debug builds — verify on a real device when in doubt.
+Persistence reflects what `WasmDatabase.open` selects today (see
+`apps/mobile/lib/core/persistence/connection_web.dart`). Drift chooses among
+OPFS, shared IndexedDB, unsafe IndexedDB, and in-memory storage based on browser
+capabilities. The choice is logged in debug builds; verify the selected
+implementation on the target browser rather than relying on a browser-version
+assumption.
 
 ## 3. Manual smoke checklist
 
-Run against a release build (`flutter build web --release` then `apps/mobile/tool/setup-drift-web.sh`, or the `mobile-web-build` CI artifact) before each release. Walk each browser/OS row in §2; mark ✅ / ❌ / N/A in the release issue.
+Prepare Drift and font assets, then run against a release build (or use the
+`mobile-web-build` CI artifact) before each release:
+
+```bash
+cd apps/mobile
+tool/setup-drift-web.sh
+tool/build-cn-fonts.sh
+tool/build-latin-fonts.sh
+flutter build web --release
+```
+
+Walk each browser/OS row in §2; mark ✅ / ❌ / N/A in the release issue.
 
 ### 3.1 First paint & shell
 - [ ] Page loads with no console errors (drift-impl info log is acceptable).
@@ -50,7 +66,8 @@ Run against a release build (`flutter build web --release` then `apps/mobile/too
 - [ ] Record the chosen impl from `drift web: opened "naviwealth" via …`.
 - [ ] On Firefox: chosen impl is `sharedIndexedDb` / `unsafeIndexedDb`, not OPFS.
 - [ ] On iOS Safari PWA: force-quit → reopen → data still present.
-- [ ] In private/incognito: app loads, persistence is in-memory only, banner warns the user.
+- [ ] In private/incognito: app either selects persistent storage or degrades
+  to the implementation reported by Drift without a blank screen.
 
 ### 3.4 PWA install (manual only)
 - [ ] **Chrome / Edge desktop**: omnibox icon → app launches in own window with manifest theme + icon.
@@ -78,13 +95,18 @@ Run against a release build (`flutter build web --release` then `apps/mobile/too
 
 ## 4. Known issues / accepted limitations
 
-### 4.1 Firefox — no OPFS in dedicated workers
-Drift probes for OPFS in a worker; FF stable (≤124) doesn't expose `navigator.storage.getDirectory()` there. We fall through to **shared IndexedDB** (Tier 2 path). Bulk imports are noticeably slower than Chromium; this is acceptable. If a release ever sees Firefox pick `inMemory`, that's a regression — file a blocker. Smoke asserts the chosen impl is one of `{sharedIndexedDb, unsafeIndexedDb, opfsLocks, opfsShared}`.
+### 4.1 Firefox storage selection
+
+Drift probes browser capabilities and may select OPFS or an IndexedDB fallback.
+The release gate is behavioral: data must survive reload and the smoke suite
+must identify a persistent implementation. A silent `inMemory` selection is a
+regression.
 
 ### 4.2 iOS Safari — PWA storage eviction
-iOS evicts website data after **7 days of non-use**, including PWAs. There is no opt-out (`navigator.storage.persist()` returns `false`). Implications:
-- Sync must rehydrate from the server on first launch after eviction. Not an edge case — part of the iOS PWA happy path.
-- Encryption keys in IndexedDB also disappear; treat them as cache, not source of truth.
+
+iOS may evict website data under platform storage policy. Sync must be able to
+rehydrate the local database, and browser storage must not be treated as a
+backup.
 
 ### 4.3 iOS Safari — no background Service Worker
 Background Sync, Periodic Background Sync, and Push without a user gesture don't work on iOS. Sync only runs while the PWA is in the foreground; "refresh quotes" notifications are not delivered when closed.
