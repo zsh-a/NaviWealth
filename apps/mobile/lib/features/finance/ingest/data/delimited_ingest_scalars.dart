@@ -1,4 +1,4 @@
-import 'package:decimal/decimal.dart';
+import '../domain/minor_unit_amount.dart';
 
 String detectIngestDelimiter(List<String> lines) {
   final sample = lines.firstWhere(
@@ -92,10 +92,8 @@ int? parseIngestAmountMinor(String? value) {
   text = text.replaceAll(RegExp(r'[^\d.,-]'), '');
   if (text.contains(',')) text = text.replaceAll(',', '');
   text = text.replaceAll(RegExp(r'(?!^)-'), '');
-  final decimal = Decimal.tryParse(text.replaceAll('-', ''));
-  if (decimal == null) return null;
-  final minor = (decimal * Decimal.fromInt(100)).round().toBigInt().toInt();
-  return negative ? -minor : minor;
+  final magnitude = text.replaceAll('-', '');
+  return parseMinorUnitAmount(negative ? '-$magnitude' : magnitude);
 }
 
 String normalizeIngestHeader(String value, {bool stripSlash = false}) {

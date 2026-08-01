@@ -61,6 +61,20 @@ void main() {
       expect(rows.single.description, 'Valid');
     });
 
+    test('rejects monetary precision that cannot fit minor units', () {
+      final report = parseCsvLedgerReport(
+        'date,description,amount\n'
+        '2026-05-10,Too precise,1.234\n'
+        '2026-05-11,Exact,1.23\n',
+      );
+
+      expect(report.rows, hasLength(1));
+      expect(report.rows.single.amountMinor, -123);
+      expect(report.issues, hasLength(1));
+      expect(report.issues.single.code, IngestParseIssueCode.invalidAmount);
+      expect(report.accountsForEveryCandidate, isTrue);
+    });
+
     test('diagnostics account for every candidate row without raw text', () {
       final report = parseCsvLedgerReport(
         'date,description,amount,收入金额,收/支,状态\n'
