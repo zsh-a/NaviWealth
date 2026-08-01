@@ -98,7 +98,10 @@ Private Safari reports a tiny IndexedDB quota and may refuse OPFS. `WasmDatabase
 
 ## 5. Smoke automation
 
-`apps/mobile/web_smoke/` remains available for manual Playwright checks on Chromium, WebKit, and Firefox. It is no longer part of GitHub Actions CI.
+`apps/mobile/web_smoke/` is enforced by
+`.github/workflows/web-smoke.yml`. Web-relevant pull requests run Chromium as
+a fast gate; weekly and manually dispatched runs cover Chromium, Firefox, and
+WebKit. The suite remains available locally for targeted checks.
 
 Covered headless:
 - App loads with no console errors.

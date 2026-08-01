@@ -77,7 +77,7 @@ Current evidence:
 
 - The product-direction SSOT (`product-direction-and-demand-validation.md`)
   defines a target-user hypothesis, three validation tasks, six-week
-  recruitment plan, and four quantitative gates.
+  recruitment plan, and five explicit validation gates.
 - Finance activation is a resumable first-task path with opt-in local
   product-funnel measurement.
 - Financial Inbox, Monthly Close, Money Runway, and decision review actions
@@ -93,7 +93,7 @@ Exit evidence:
   real decision.
 - Record time, corrections, abandoned steps, external tool switches, and
   whether each result caused a real follow-up action.
-- Pass or fail each of the four validation gates with an explicit
+- Pass or fail each of the five validation gates with an explicit
   stop/continue/pivot decision recorded in this roadmap.
 
 Owner: cross-domain. Domain teams provide task support; the study result

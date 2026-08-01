@@ -39,7 +39,11 @@ and run against a deployed build instead.
 
 ## CI
 
-`web-smoke` workflow runs nightly + on manual dispatch (`.github/workflows/web-smoke.yml`). It downloads the `mobile-web-build` artifact from the `mobile` workflow on the same commit and runs the three browser projects in a matrix, so a Firefox-only failure (most common shape) doesn't block Chromium / WebKit.
+The `web-smoke` workflow (`.github/workflows/web-smoke.yml`) runs Chromium for
+pull requests that touch Web-relevant paths. Weekly and manually dispatched
+runs execute the Chromium, Firefox, and WebKit projects. The workflow builds
+its own production-shaped Flutter Web bundle so every smoke run verifies the
+same commit without depending on a separate workflow artifact.
 
 ## Adding a check
 
