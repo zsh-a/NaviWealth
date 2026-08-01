@@ -1,9 +1,13 @@
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../core/perf/frame_timing_collector.dart';
+import '../../../core/perf/perf_diagnostics_report.dart';
 import '../../../core/perf/perf_trace_recorder.dart';
 import '../../../core/perf/providers.dart';
 import '../../../core/shell/settings_ui/settings_page_frame.dart';
@@ -27,10 +31,18 @@ class PerfDiagnosticsPage extends ConsumerWidget {
         .recentTraces
         .toList(growable: false)
         .reversed
-        .take(5);
+        .toList(growable: false);
+    final visibleTraces = traces.take(5);
 
     return AppPageScaffold(
       title: l10n.settingsPerfTitle,
+      actions: <Widget>[
+        AppHeaderAction(
+          semanticsLabel: l10n.settingsPerfCopyEvidence,
+          icon: const Icon(FLucideIcons.copy),
+          onPress: () => _copyEvidence(context, stats, traces),
+        ),
+      ],
       childPad: false,
       child: SettingsPageFrame(
         maxWidth: AdaptiveMaxWidth.page,
@@ -39,7 +51,7 @@ class PerfDiagnosticsPage extends ConsumerWidget {
             left: _SummaryCard(stats: stats),
             right: _TimingCard(stats: stats),
           ),
-          for (final trace in traces) ...[
+          for (final trace in visibleTraces) ...[
             const SizedBox(height: AppSpacing.s12),
             _TraceCard(trace: trace),
           ],
@@ -47,6 +59,25 @@ class PerfDiagnosticsPage extends ConsumerWidget {
       ),
     );
   }
+}
+
+Future<void> _copyEvidence(
+  BuildContext context,
+  FrameStats aggregate,
+  List<PerfTrace> traces,
+) async {
+  final report = PerfDiagnosticsReport(
+    generatedAt: DateTime.now(),
+    aggregate: aggregate,
+    traces: traces,
+  );
+  await Clipboard.setData(ClipboardData(text: jsonEncode(report.toJson())));
+  if (!context.mounted) return;
+  AppMessenger.show(
+    context,
+    ToastKind.info,
+    AppLocalizations.of(context).settingsPerfEvidenceCopied,
+  );
 }
 
 class _TraceCard extends StatelessWidget {

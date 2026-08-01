@@ -14459,6 +14459,18 @@ abstract class AppLocalizations {
   /// **'Raster p95'**
   String get settingsPerfRasterP95;
 
+  /// Accessibility label for copying the privacy-safe performance report
+  ///
+  /// In en, this message translates to:
+  /// **'Copy performance evidence'**
+  String get settingsPerfCopyEvidence;
+
+  /// Toast after copying the privacy-safe performance report
+  ///
+  /// In en, this message translates to:
+  /// **'Performance evidence copied'**
+  String get settingsPerfEvidenceCopied;
+
   /// No description provided for @settingsDomainsHealthEnabledSubtitle.
   ///
   /// In en, this message translates to:

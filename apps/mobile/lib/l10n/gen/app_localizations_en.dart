@@ -8608,6 +8608,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPerfRasterP95 => 'Raster p95';
 
   @override
+  String get settingsPerfCopyEvidence => 'Copy performance evidence';
+
+  @override
+  String get settingsPerfEvidenceCopied => 'Performance evidence copied';
+
+  @override
   String get settingsDomainsHealthEnabledSubtitle =>
       'AI tools and Memory indexing are enabled';
 

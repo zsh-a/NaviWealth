@@ -2564,6 +2564,8 @@
   "settingsPerfTotalP95": "总耗时 p95",
   "settingsPerfBuildP95": "构建 p95",
   "settingsPerfRasterP95": "栅格 p95",
+  "settingsPerfCopyEvidence": "复制性能证据",
+  "settingsPerfEvidenceCopied": "已复制性能证据",
   "settingsDomainsHealthEnabledSubtitle": "AI 工具和本地记忆索引已启用",
   "settingsDomainsHealthDisabledSubtitle": "启用 AI 工具和本地记忆索引",
   "settingsDomainsHealthTodaySubtitle": "查看今日恢复、指标与早间简报",

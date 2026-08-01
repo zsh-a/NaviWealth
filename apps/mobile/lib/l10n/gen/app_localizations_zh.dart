@@ -8171,6 +8171,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsPerfRasterP95 => '栅格 p95';
 
   @override
+  String get settingsPerfCopyEvidence => '复制性能证据';
+
+  @override
+  String get settingsPerfEvidenceCopied => '已复制性能证据';
+
+  @override
   String get settingsDomainsHealthEnabledSubtitle => 'AI 工具和本地记忆索引已启用';
 
   @override

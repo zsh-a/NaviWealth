@@ -38,6 +38,7 @@ import '../data/ingest_confirm_service.dart';
 import '../data/providers.dart';
 import '../domain/ingest_models.dart';
 import '../domain/ingest_quality_report.dart';
+import 'ingest_capture_lease.dart';
 import 'ingest_capture_presentation.dart';
 import 'ingest_review_selection.dart';
 import 'ingest_summary_sheet.dart';
@@ -56,7 +57,7 @@ class IngestReviewPage extends ConsumerStatefulWidget {
 class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   String? _accountId;
   _IngestBusyState? _busy;
-  bool _captureInProgress = false;
+  final IngestCaptureLease _captureLease = IngestCaptureLease();
   ProviderSubscription<List<IngestCaptureFeedbackEvent>>?
   _captureFeedbackSubscription;
   bool _captureFeedbackDrainScheduled = false;
@@ -65,7 +66,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   final FocusNode _masterFocus = FocusNode(debugLabel: 'ingest review master');
   IngestQualityReport? _latestQualityReport;
 
-  bool get _isBusy => _busy != null || _captureInProgress;
+  bool get _isBusy => _busy != null || _captureLease.isHeld;
 
   @override
   void initState() {
@@ -1114,13 +1115,13 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   }
 
   bool _beginCapture() {
-    if (_isBusy) return false;
-    setState(() => _captureInProgress = true);
+    if (_busy != null || !_captureLease.tryAcquire()) return false;
+    setState(() {});
     return true;
   }
 
   void _endCapture() {
-    if (mounted) setState(() => _captureInProgress = false);
+    if (mounted) setState(_captureLease.release);
   }
 
   Future<void> _handleCaptureOutcome(

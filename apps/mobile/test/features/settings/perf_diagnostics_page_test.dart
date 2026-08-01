@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/perf/frame_timing_collector.dart';
@@ -70,5 +73,51 @@ void main() {
     expect(find.text('Total p95'), findsOneWidget);
     expect(find.text('22.8 ms'), findsOneWidget);
     expect(find.text('Raster p95'), findsOneWidget);
+  });
+
+  testWidgets('copies privacy-safe performance evidence', (tester) async {
+    final collector = FrameTimingCollector(frameBudgetUs: 16000);
+    collector.ingest([
+      _frame(vsyncStartUs: 0, totalUs: 8000),
+      _frame(vsyncStartUs: 16000, totalUs: 12000),
+    ]);
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copiedText =
+              (call.arguments as Map<Object?, Object?>)['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [frameTimingCollectorProvider.overrideWithValue(collector)],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const PerfDiagnosticsPage(),
+        ),
+      ),
+    );
+
+    await tester.tap(find.bySemanticsLabel('Copy performance evidence'));
+    await tester.pump();
+
+    expect(copiedText, isNotNull);
+    final report = jsonDecode(copiedText!) as Map<String, Object?>;
+    expect(report['schema_version'], 1);
+    expect(report['aggregate'], containsPair('status', 'insufficientData'));
+    await tester.pump(const Duration(milliseconds: 200));
   });
 }
