@@ -9,12 +9,14 @@ choose to use pull requests.
 
 - `mobile / static checks`
 - `mobile / test shard 0..3 / 4`
+- `mobile / test timing summary`
 - `mobile / responsive task-flow goldens` on pull requests
 - `mobile / golden regression (mobile)` on `main`
 - `mobile / build Android arm64 AAB`
 - `mobile / build web` on `main`
 - `backend / fmt + clippy + test`
 - `web-smoke / web smoke (...)` for web-relevant pull requests
+- `docs / links + strict build` for documentation changes
 
 Workflows use path filters, so unrelated application areas do not start each
 other's checks.

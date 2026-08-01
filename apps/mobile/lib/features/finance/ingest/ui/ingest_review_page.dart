@@ -39,6 +39,7 @@ import '../data/providers.dart';
 import '../domain/ingest_models.dart';
 import '../domain/ingest_quality_report.dart';
 import 'ingest_capture_presentation.dart';
+import 'ingest_review_selection.dart';
 import 'ingest_summary_sheet.dart';
 
 part 'ingest_review/draft_card.dart';
@@ -60,9 +61,8 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   _captureFeedbackSubscription;
   bool _captureFeedbackDrainScheduled = false;
   final Map<String, ConfirmedIngestItem> _pendingFinalize = {};
-  final List<String> _selectedIds = [];
+  final IngestReviewSelection _selection = IngestReviewSelection();
   final FocusNode _masterFocus = FocusNode(debugLabel: 'ingest review master');
-  String? _focusedId;
   IngestQualityReport? _latestQualityReport;
 
   bool get _isBusy => _busy != null || _captureInProgress;
@@ -135,7 +135,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       _scheduleSelectionPrune(viewData.items, ensureWideFocus: useMasterDetail);
     }
     final selectedItems = viewData?.items
-        .where((item) => _selectedIds.contains(item.draft.draftId))
+        .where((item) => _selection.isSelected(item.draft.draftId))
         .toList(growable: false);
 
     final content = useMasterDetail && viewData != null
@@ -243,7 +243,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   ) {
     final l10n = AppLocalizations.of(context);
     final focused = data.items
-        .where((item) => item.draft.draftId == _focusedId)
+        .where((item) => _selection.isFocused(item.draft.draftId))
         .firstOrNull;
     final footer = _footerBuilder(data, selectedItems)?.call(context);
     return AppPageScaffold(
@@ -287,9 +287,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
                                 ),
                                 child: _DraftMasterRow(
                                   draft: item.draft,
-                                  selected: _selectedIds.contains(draftId),
+                                  selected: _selection.isSelected(draftId),
                                   selectable: !item.recoveryUnreadable,
-                                  focused: _focusedId == draftId,
+                                  focused: _selection.isFocused(draftId),
                                   busy: _isBusy,
                                   pendingFinalize:
                                       item.pendingFinalize != null ||
@@ -339,9 +339,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     final pending = item.pendingFinalize ?? _pendingFinalize[draft.draftId];
     return _DraftCard(
       draft: draft,
-      selected: _selectedIds.contains(draft.draftId),
+      selected: _selection.isSelected(draft.draftId),
       selectable: !item.recoveryUnreadable,
-      focused: _focusedId == draft.draftId,
+      focused: _selection.isFocused(draft.draftId),
       busy: _isBusy,
       pendingFinalize: pending != null,
       recoveryUnavailable: item.recoveryUnreadable,
@@ -360,19 +360,17 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
 
   void _focusItem(String draftId) {
     if (_isBusy) return;
-    setState(() => _focusedId = draftId);
+    setState(() => _selection.focus(draftId));
     _masterFocus.requestFocus();
   }
 
   void _moveFocus(_IngestReviewViewData data, int delta) {
     if (_isBusy || isTextInputFocused() || data.items.isEmpty) return;
-    final current = data.items.indexWhere(
-      (item) => item.draft.draftId == _focusedId,
+    final next = _selection.focusByOffset(
+      data.items.map((item) => item.draft.draftId).toList(growable: false),
+      delta,
     );
-    final next = current < 0
-        ? (delta > 0 ? 0 : data.items.length - 1)
-        : (current + delta).clamp(0, data.items.length - 1);
-    _focusItem(data.items[next].draft.draftId);
+    if (next != null) _focusItem(next);
   }
 
   KeyEventResult _onMasterKey(_IngestReviewViewData data, KeyEvent event) {
@@ -390,14 +388,14 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       return KeyEventResult.handled;
     }
     final focused = data.items
-        .where((item) => item.draft.draftId == _focusedId)
+        .where((item) => _selection.isFocused(item.draft.draftId))
         .firstOrNull;
     if (focused == null) return KeyEventResult.ignored;
     if (event.logicalKey == LogicalKeyboardKey.space) {
       if (!focused.recoveryUnreadable) {
         _toggleSelection(
           focused.draft.draftId,
-          !_selectedIds.contains(focused.draft.draftId),
+          !_selection.isSelected(focused.draft.draftId),
         );
       }
       return KeyEventResult.handled;
@@ -516,9 +514,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
               ),
               child: _DraftCard(
                 draft: draft,
-                selected: _selectedIds.contains(draft.draftId),
+                selected: _selection.isSelected(draft.draftId),
                 selectable: !item.recoveryUnreadable,
-                focused: _focusedId == draft.draftId,
+                focused: _selection.isFocused(draft.draftId),
                 busy: _isBusy,
                 pendingFinalize: pending != null,
                 recoveryUnavailable: item.recoveryUnreadable,
@@ -543,10 +541,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
 
   void _toggleSelection(String draftId, bool selected) {
     if (_isBusy) return;
-    setState(() {
-      _selectedIds.remove(draftId);
-      if (selected) _selectedIds.add(draftId);
-    });
+    setState(() => _selection.setSelected(draftId, selected: selected));
   }
 
   Future<void> _editDraft(IngestDraft draft) async {
@@ -650,20 +645,15 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     required bool ensureWideFocus,
   }) {
     final ids = items.map((item) => item.draft.draftId).toSet();
-    final focusIsValid = ids.contains(_focusedId);
     final fallbackFocusId = ensureWideFocus ? _preferredFocusId(items) : null;
-    if (_selectedIds.every(ids.contains) &&
-        (focusIsValid || _focusedId == fallbackFocusId)) {
+    if (!_selection.needsReconcile(ids, fallbackFocusId: fallbackFocusId)) {
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      setState(() {
-        _selectedIds.retainWhere(ids.contains);
-        if (!ids.contains(_focusedId)) {
-          _focusedId = fallbackFocusId;
-        }
-      });
+      setState(
+        () => _selection.reconcile(ids, fallbackFocusId: fallbackFocusId),
+      );
     });
   }
 
@@ -706,7 +696,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       if (!mounted) return;
       setState(() {
         final succeeded = dismissed.map((draft) => draft.draftId).toSet();
-        _selectedIds.removeWhere(succeeded.contains);
+        _selection.removeAll(succeeded);
       });
       AppMessenger.show(
         context,
@@ -765,7 +755,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         final succeeded = result.succeeded
             .map((item) => item.draft.draftId)
             .toSet();
-        _selectedIds.removeWhere(succeeded.contains);
+        _selection.removeAll(succeeded);
         for (final id in succeeded) {
           _pendingFinalize.remove(id);
         }
@@ -1041,7 +1031,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         final confirmedIds = result.confirmed
             .map((item) => item.draft.draftId)
             .toSet();
-        setState(() => _selectedIds.removeWhere(confirmedIds.contains));
+        setState(() => _selection.removeAll(confirmedIds));
         final unresolved = <ConfirmedIngestItem>[
           for (final failure in result.failures)
             if (failure.error.recovery == IngestRecovery.finalizeApplied &&

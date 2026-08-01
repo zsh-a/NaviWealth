@@ -1,0 +1,39 @@
+name: docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - 'CLAUDE.md'
+      - 'mkdocs.yml'
+      - 'tool/check-docs.mjs'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - 'CLAUDE.md'
+      - 'mkdocs.yml'
+      - 'tool/check-docs.mjs'
+      - '.github/workflows/docs.yml'
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: links + strict build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@v7
+      - name: Check documentation contracts
+        run: node tool/check-docs.mjs
+      - name: Build MkDocs strictly
+        run: uvx --from mkdocs-material mkdocs build --strict

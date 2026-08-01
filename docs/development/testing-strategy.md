@@ -233,10 +233,12 @@ Weekly ├─ web smoke full matrix (Firefox/WebKit/OPFS)
 **Zero-failure unit/widget gate.** `mobile.yml` distributes
 `flutter test --reporter=expanded --exclude-tags=golden` across four
 deterministic shards with bounded concurrency. There is no known-failing allowlist:
-any non-golden test failure fails CI. A failing shard uploads its
-machine-readable JSON event stream for seven days, so a timeout or runner
-failure retains the last completed test and error events instead of leaving
-only an incomplete console log.
+any non-golden test failure fails CI. Every shard uploads its machine-readable
+JSON event stream for seven days. The `test timing summary` job reports shard
+wall time and the slowest executable test cases in the workflow summary, while
+failure artifacts retain the last completed test and error events instead of
+leaving only an incomplete console log. Use accumulated timing evidence before
+changing shard count or test placement.
 Golden PNG comparison remains isolated in the Linux-pinned
 `golden-regression` job.
 
