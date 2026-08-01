@@ -124,11 +124,10 @@ class _FeedList extends ConsumerStatefulWidget {
 class _FeedListState extends ConsumerState<_FeedList> {
   bool _loadingMore = false;
 
-  // First-frame entrance stagger (doc 11 §5): rows built during the first
-  // frame cascade in; anything built later (scroll, load-more) appears
-  // instantly so the table never "shimmies" on updates.
   bool _entranceStagger = true;
   static const int _kStaggerRowCap = 10;
+
+  List<_FeedItem>? _cachedItems;
 
   @override
   void initState() {
@@ -138,16 +137,26 @@ class _FeedListState extends ConsumerState<_FeedList> {
     });
   }
 
+  @override
+  void didUpdateWidget(covariant _FeedList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.groups != widget.groups) {
+      _cachedItems = null;
+    }
+  }
+
+  List<_FeedItem> _buildItems() {
+    _cachedItems ??= _flattenFeedItems(widget.groups);
+    return _cachedItems!;
+  }
+
   Future<void> _tryLoadMore() async {
     if (!widget.hasMore || _loadingMore) return;
     setState(() => _loadingMore = true);
     ref.read(activityFeedQueryProvider.notifier).loadMore();
-    // Wait for the enlarged page snapshot (or failure) instead of a fixed
-    // delay so load-more cannot re-fire mid-fetch or unlock too early.
     try {
       await ref.read(activityFeedProvider.future);
     } catch (_) {
-      // Error surface lives on the parent when(); keep the footer idle.
     }
     if (mounted) setState(() => _loadingMore = false);
   }
@@ -166,7 +175,7 @@ class _FeedListState extends ConsumerState<_FeedList> {
 
   @override
   Widget build(BuildContext context) {
-    final items = _flattenFeedItems(widget.groups);
+    final items = _buildItems();
     return NotificationListener<ScrollNotification>(
       onNotification: _onScroll,
       child: ListView.builder(

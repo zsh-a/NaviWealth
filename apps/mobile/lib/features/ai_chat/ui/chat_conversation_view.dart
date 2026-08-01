@@ -54,14 +54,13 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
   final Set<String> _renderedMessageIds = <String>{};
   bool _renderedInitialSnapshot = false;
 
-  /// Local notifiers avoid rebuilding the message list on every scroll.
   final ValueNotifier<bool> _atBottom = ValueNotifier(true);
   final ValueNotifier<int> _unseenCount = ValueNotifier(0);
 
   int _lastMessageCount = 0;
 
-  /// Pixels from the bottom that still count as "at the bottom". Wide
-  /// enough that a momentum scroll-back near the edge doesn't detach.
+  List<_TimelineItem>? _cachedItems;
+
   static const double _bottomThreshold = 96;
 
   @override
@@ -77,6 +76,40 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
     _atBottom.dispose();
     _unseenCount.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant ChatConversationView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.sessionId != widget.sessionId) {
+      _cachedItems = null;
+      _renderedMessageIds.clear();
+      _renderedInitialSnapshot = false;
+      _lastMessageCount = 0;
+    }
+  }
+
+  List<_TimelineItem> _buildTimelineItems(List<ChatTimelineSlot> slots) {
+    _cachedItems ??= () {
+      final l10n = AppLocalizations.of(context);
+      final now = DateTime.now();
+      final items = <_TimelineItem>[];
+      DateTime? lastDay;
+      for (final slot in slots) {
+        final day = DateTime(
+          slot.createdAt.toLocal().year,
+          slot.createdAt.toLocal().month,
+          slot.createdAt.toLocal().day,
+        );
+        if (lastDay == null || day != lastDay) {
+          items.add(_DateHeaderItem(_dateLabel(l10n, day, now)));
+          lastDay = day;
+        }
+        items.add(_MessageItem(slot));
+      }
+      return items;
+    }();
+    return _cachedItems!;
   }
 
   void _onScroll() {
@@ -201,7 +234,7 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
                       isLastUser: slot.id == lastUserId,
                       animateIn:
                           animateMessageIds.contains(slot.id) &&
-                          slot.id == slots.last.id,
+                              slot.id == slots.last.id,
                     ),
                   ),
                 };
@@ -220,26 +253,6 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
         );
       },
     );
-  }
-
-  List<_TimelineItem> _buildTimelineItems(List<ChatTimelineSlot> slots) {
-    final l10n = AppLocalizations.of(context);
-    final now = DateTime.now();
-    final items = <_TimelineItem>[];
-    DateTime? lastDay;
-    for (final slot in slots) {
-      final day = DateTime(
-        slot.createdAt.toLocal().year,
-        slot.createdAt.toLocal().month,
-        slot.createdAt.toLocal().day,
-      );
-      if (lastDay == null || day != lastDay) {
-        items.add(_DateHeaderItem(_dateLabel(l10n, day, now)));
-        lastDay = day;
-      }
-      items.add(_MessageItem(slot));
-    }
-    return items;
   }
 
   String _dateLabel(AppLocalizations l10n, DateTime day, DateTime now) {
