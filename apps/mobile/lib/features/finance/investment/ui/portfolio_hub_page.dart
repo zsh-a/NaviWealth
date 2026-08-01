@@ -45,6 +45,7 @@ import 'investment_portfolio_sheets.dart';
 import 'portfolio_allocation_sheets.dart';
 import 'portfolio_group_sheets.dart';
 import 'portfolio_strategy_visuals.dart';
+import 'portfolio_studio_projection.dart';
 
 part 'portfolio_hub_engine_cards.dart';
 part 'portfolio_hub_group_detail.dart';

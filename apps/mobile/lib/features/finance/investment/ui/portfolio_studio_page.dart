@@ -455,18 +455,9 @@ class _StudioHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final included = sleeves.fold<int>(
-      0,
-      (count, sleeve) => count + tree.inclusionsFor(sleeve.id).length,
-    );
-    final rules = sleeves.fold<int>(
-      0,
-      (count, sleeve) =>
-          count +
-          tree
-              .attachmentsFor(sleeve.id)
-              .where((attachment) => !attachment.isPrimary)
-              .length,
+    final summary = PortfolioStudioSummary.fromTree(
+      tree: tree,
+      sleeves: sleeves,
     );
     return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
@@ -492,7 +483,7 @@ class _StudioHero extends StatelessWidget {
                     Text(
                       l10n.portfolioStudioTargetSummary(
                         _studioPercentFromBps(portfolioNode.targetWeightBps),
-                        sleeves.length,
+                        summary.sleeveCount,
                       ),
                       style: context.captionStyle,
                     ),
@@ -508,19 +499,19 @@ class _StudioHero extends StatelessWidget {
               Expanded(
                 child: _StudioMetric(
                   label: l10n.portfolioStudioSleevesMetric,
-                  value: '${sleeves.length}',
+                  value: '${summary.sleeveCount}',
                 ),
               ),
               Expanded(
                 child: _StudioMetric(
                   label: l10n.portfolioStudioAssetsMetric,
-                  value: '$included',
+                  value: '${summary.includedAssetCount}',
                 ),
               ),
               Expanded(
                 child: _StudioMetric(
                   label: l10n.portfolioStudioRulesMetric,
-                  value: '$rules',
+                  value: '${summary.secondaryRuleCount}',
                 ),
               ),
             ],
@@ -552,37 +543,15 @@ class _StudioTransferTask extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
-    final fromName = intent.fromGroupId == null
-        ? portfolioNames[intent.fromPortfolioId] ?? intent.fromPortfolioId
-        : tree
-                  .nodeForReference(
-                    AllocationNodeType.sleeve,
-                    intent.fromGroupId!,
-                  )
-                  ?.name ??
-              intent.fromGroupId!;
-    final toName = intent.toGroupId == null
-        ? portfolioNames[intent.toPortfolioId] ?? intent.toPortfolioId
-        : tree
-                  .nodeForReference(
-                    AllocationNodeType.sleeve,
-                    intent.toGroupId!,
-                  )
-                  ?.name ??
-              intent.toGroupId!;
+    final task = PortfolioTransferTaskProjection.fromIntent(
+      intent: intent,
+      tree: tree,
+      portfolioNames: portfolioNames,
+    );
     final amount = formatters.currency(
-      Decimal.tryParse(intent.amount) ?? Decimal.zero,
+      task.amount ?? Decimal.zero,
       code: intent.currency,
     );
-    final targetPortfolioNode = tree.nodeForReference(
-      AllocationNodeType.portfolio,
-      intent.toPortfolioId,
-    );
-    final preferredGroupId =
-        intent.toGroupId ??
-        (targetPortfolioNode == null
-            ? null
-            : tree.childrenOf(targetPortfolioNode.id).firstOrNull?.referenceId);
     return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
@@ -618,8 +587,8 @@ class _StudioTransferTask extends ConsumerWidget {
                     const SizedBox(height: AppSpacing.s2),
                     Text(
                       l10n.rebalanceTransferTaskSummary(
-                        fromName,
-                        toName,
+                        task.fromName,
+                        task.toName,
                         amount,
                       ),
                       style: context.captionStyle,
@@ -638,7 +607,7 @@ class _StudioTransferTask extends ConsumerWidget {
               final positions = FButton(
                 onPress: () => showPortfolioLotAssignmentSheet(
                   context,
-                  preferredGroupId: preferredGroupId,
+                  preferredGroupId: task.preferredGroupId,
                 ),
                 prefix: const Icon(FLucideIcons.briefcaseBusiness),
                 child: Text(l10n.portfolioStudioIncludePositionAction),
@@ -647,8 +616,8 @@ class _StudioTransferTask extends ConsumerWidget {
                 variant: FButtonVariant.outline,
                 onPress: () => showPortfolioCashAssignmentSheet(
                   context,
-                  preferredGroupId: preferredGroupId,
-                  suggestedAmount: Decimal.tryParse(intent.amount),
+                  preferredGroupId: task.preferredGroupId,
+                  suggestedAmount: task.amount,
                 ),
                 prefix: const Icon(FLucideIcons.walletCards),
                 child: Text(l10n.portfolioStudioIncludeCashAction),
