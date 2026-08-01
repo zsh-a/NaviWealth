@@ -51,6 +51,7 @@ part 'portfolio_hub_engine_cards.dart';
 part 'portfolio_hub_group_detail.dart';
 part 'portfolio_hub_state.dart';
 part 'portfolio_hub_widgets.dart';
+part 'portfolio_studio_overview.dart';
 part 'portfolio_studio_page.dart';
 
 class PortfolioHubPage extends ConsumerStatefulWidget {
