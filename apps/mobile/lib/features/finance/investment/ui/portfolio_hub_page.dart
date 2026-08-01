@@ -55,6 +55,7 @@ part 'portfolio_studio_assets.dart';
 part 'portfolio_studio_overview.dart';
 part 'portfolio_studio_page.dart';
 part 'portfolio_studio_plan.dart';
+part 'portfolio_studio_strategy.dart';
 
 class PortfolioHubPage extends ConsumerStatefulWidget {
   const PortfolioHubPage({super.key});
