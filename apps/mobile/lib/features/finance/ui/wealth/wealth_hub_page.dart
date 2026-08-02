@@ -92,6 +92,8 @@ class _WealthHubBody extends ConsumerWidget {
     final totalLiabilities = snapshot.totalLiabilities.amount;
     final isEmpty =
         totalAssets == Decimal.zero && totalLiabilities == Decimal.zero;
+    final showValuationTrust =
+        !snapshot.isEmpty || snapshot.currencyMismatches.isNotEmpty;
     // The shared cross-domain brief shell (blueprint §8.1) — this page used
     // to hand-assemble the identical refresh/atmosphere/collapse stack.
     return BriefScaffold(
@@ -140,23 +142,41 @@ class _WealthHubBody extends ConsumerWidget {
           ],
         ),
       ),
-      modules: [
-        ValuationTrustNotice(snapshot: snapshot),
-        const _WealthDestinations(),
-        if (!isEmpty) const WealthTrendSection(),
+      summaryTiles: [
+        if (showValuationTrust)
+          AdaptiveSummaryTile(
+            span: AdaptiveSummaryTileSpan.full,
+            child: ValuationTrustNotice(snapshot: snapshot),
+          ),
+        const AdaptiveSummaryTile(
+          span: AdaptiveSummaryTileSpan.supporting,
+          child: _WealthDestinations(),
+        ),
+        if (!isEmpty)
+          const AdaptiveSummaryTile(
+            span: AdaptiveSummaryTileSpan.featured,
+            child: WealthTrendSection(),
+          ),
         if (isEmpty)
-          AppEmptyState(
-            icon: FLucideIcons.landmark,
-            title: l10n.wealthEmptyTitle,
-            message: l10n.wealthEmptyBody,
-            action: FButton(
-              onPress: () => context.push(FinanceRoutes.wealthAccountNew),
-              prefix: const Icon(FLucideIcons.plus),
-              child: Text(l10n.wealthEmptyAction),
+          AdaptiveSummaryTile(
+            span: AdaptiveSummaryTileSpan.full,
+            child: AppEmptyState(
+              icon: FLucideIcons.landmark,
+              title: l10n.wealthEmptyTitle,
+              message: l10n.wealthEmptyBody,
+              action: FButton(
+                onPress: () => context.push(FinanceRoutes.wealthAccountNew),
+                prefix: const Icon(FLucideIcons.plus),
+                child: Text(l10n.wealthEmptyAction),
+              ),
             ),
           ),
+        if (!isEmpty)
+          const AdaptiveSummaryTile(
+            span: AdaptiveSummaryTileSpan.full,
+            child: WealthPerspectiveSection(),
+          ),
       ],
-      secondary: [if (!isEmpty) const WealthPerspectiveSection()],
     );
   }
 }
@@ -278,6 +298,7 @@ class _WealthDestinations extends StatelessWidget {
       ),
     ];
     return Column(
+      key: const ValueKey('wealth-destinations'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(

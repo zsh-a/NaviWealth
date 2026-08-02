@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -7,8 +8,11 @@ import 'package:naviwealth/features/finance/accounts/data/account_balances_provi
 import 'package:naviwealth/features/finance/application/planning_hub_status.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_time_range.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_trend_builder.dart';
 import 'package:naviwealth/features/finance/ui/plan_hub_page.dart';
 import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -76,6 +80,73 @@ void main() {
     expect(find.text('Dividend Center'), findsNothing);
     expect(find.text('Income projection'), findsNothing);
   });
+
+  testWidgets(
+    'Wealth hub pairs object navigation with the trend on wide canvas',
+    (tester) async {
+      await _setDesktopSurface(tester);
+      await tester.pumpWidget(
+        _wrap(
+          overrides: [
+            accountsStreamProvider.overrideWith((_) => Stream.value(const [])),
+            accountBalancesByIdProvider.overrideWith(
+              (_) => Stream.value(const {}),
+            ),
+            dashboardSnapshotProvider.overrideWith(
+              (_) async => DashboardSnapshot(
+                asOf: DateTime.utc(2026, 6, 1),
+                baseCurrency: 'USD',
+                allocations: const [],
+                totalAssets: Money(Decimal.fromInt(100000), 'USD'),
+                totalLiabilities: Money(Decimal.fromInt(10000), 'USD'),
+                netWorth: Money(Decimal.fromInt(90000), 'USD'),
+              ),
+            ),
+            dashboardBaseCurrencyProvider.overrideWith((_) => 'USD'),
+            dashboardTrendProvider.overrideWith((_, _) async => _trend()),
+          ],
+          child: const WealthHubPage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final destinations = tester.getRect(
+        find.byKey(const ValueKey('wealth-destinations')),
+      );
+      final trend = tester.getRect(
+        find.byKey(const ValueKey('wealth-trend-section')),
+      );
+      final perspective = tester.getRect(
+        find.byKey(const ValueKey('wealth-perspective-section')),
+      );
+
+      expect(trend.top, destinations.top);
+      expect(trend.left, greaterThan(destinations.right));
+      expect(trend.width, greaterThan(destinations.width * 1.9));
+      expect(perspective.top, greaterThan(trend.bottom));
+    },
+  );
+}
+
+DashboardTrend _trend() {
+  final range = DashboardTimeRange.resolve(
+    preset: DashboardRangePreset.y1,
+    now: DateTime.utc(2026, 6, 1),
+  );
+  TrendPoint point(DateTime asOf, int value) => TrendPoint(
+    asOf: asOf,
+    assets: Money(Decimal.fromInt(value), 'USD'),
+    liabilities: Money.zero('USD'),
+    netWorth: Money(Decimal.fromInt(value), 'USD'),
+  );
+  return DashboardTrend(
+    range: range,
+    baseCurrency: 'USD',
+    points: [
+      point(DateTime.utc(2025, 6, 1), 80000),
+      point(DateTime.utc(2026, 6, 1), 90000),
+    ],
+  );
 }
 
 Widget _wrap({required Widget child, List<Override> overrides = const []}) {

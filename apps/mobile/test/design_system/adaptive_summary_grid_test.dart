@@ -64,6 +64,53 @@ void main() {
     expect(third.top, greaterThan(featured.bottom));
   });
 
+  testWidgets('supporting tile becomes a rail only with three columns', (
+    tester,
+  ) async {
+    Future<void> pump(double width) async {
+      tester.view.physicalSize = Size(width, 1000);
+      tester.view.devicePixelRatio = 1;
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: AdaptiveSummaryGrid(
+              items: [
+                AdaptiveSummaryTile(
+                  span: AdaptiveSummaryTileSpan.supporting,
+                  child: SizedBox(key: ValueKey('supporting'), height: 80),
+                ),
+                AdaptiveSummaryTile(
+                  span: AdaptiveSummaryTileSpan.featured,
+                  child: SizedBox(key: ValueKey('primary'), height: 80),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await pump(900);
+    final mediumSupporting = tester.getRect(
+      find.byKey(const ValueKey('supporting')),
+    );
+    final mediumPrimary = tester.getRect(find.byKey(const ValueKey('primary')));
+    expect(mediumPrimary.top, greaterThan(mediumSupporting.bottom));
+    expect(mediumPrimary.width, mediumSupporting.width);
+
+    await pump(1200);
+    final wideSupporting = tester.getRect(
+      find.byKey(const ValueKey('supporting')),
+    );
+    final widePrimary = tester.getRect(find.byKey(const ValueKey('primary')));
+    expect(widePrimary.top, wideSupporting.top);
+    expect(widePrimary.left, greaterThan(wideSupporting.right));
+    expect(widePrimary.width, greaterThan(wideSupporting.width * 1.9));
+  });
+
   testWidgets('enlarged text returns a wide canvas to one column', (
     tester,
   ) async {

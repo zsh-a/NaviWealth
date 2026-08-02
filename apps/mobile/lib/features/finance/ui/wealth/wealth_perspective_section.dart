@@ -43,6 +43,7 @@ class WealthPerspectiveSection extends ConsumerWidget {
         ? perspective
         : WealthPerspective.byCategory;
     return SoftCard(
+      key: const ValueKey('wealth-perspective-section'),
       padding: const EdgeInsets.all(AppSpacing.s16),
       borderRadius: AppRadius.lg,
       level: SoftCardLevel.raised,

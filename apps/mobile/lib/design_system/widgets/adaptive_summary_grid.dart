@@ -100,6 +100,7 @@ class AdaptiveSummaryGrid extends StatelessWidget {
     for (final tile in items) {
       final span = switch (tile.span) {
         AdaptiveSummaryTileSpan.standard => 1,
+        AdaptiveSummaryTileSpan.supporting => columns < 3 ? columns : 1,
         AdaptiveSummaryTileSpan.featured => columns.clamp(1, 2),
         AdaptiveSummaryTileSpan.full => columns,
       };
@@ -135,6 +136,12 @@ class AdaptiveSummaryTile {
 enum AdaptiveSummaryTileSpan {
   /// One column on every multi-column layout.
   standard,
+
+  /// A quiet supporting rail on three-column canvases.
+  ///
+  /// Two-column canvases keep it full-width so a narrow chart or primary
+  /// module is not forced into the remaining half of the row.
+  supporting,
 
   /// Two columns when available; useful for one primary overview module.
   featured,
