@@ -142,7 +142,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         if (viewData != null) {
           _scheduleSelectionPrune(
             viewData.items,
-            ensureWideFocus: useMasterDetail,
+            ensureFocus: true,
           );
         }
         final selectedItems = viewData?.items
@@ -638,10 +638,10 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
 
   void _scheduleSelectionPrune(
     List<IngestReviewItem> items, {
-    required bool ensureWideFocus,
+    required bool ensureFocus,
   }) {
     final ids = items.map((item) => item.draft.draftId).toSet();
-    final fallbackFocusId = ensureWideFocus ? _preferredFocusId(items) : null;
+    final fallbackFocusId = ensureFocus ? _preferredFocusId(items) : null;
     if (!_selection.needsReconcile(ids, fallbackFocusId: fallbackFocusId)) {
       return;
     }

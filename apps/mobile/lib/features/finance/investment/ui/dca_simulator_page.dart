@@ -32,7 +32,7 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
   AssetMarket _market = AssetMarket.usStock;
   DcaFrequency _frequency = DcaFrequency.monthly;
   int _years = 5;
-  bool _builderOpen = false;
+  bool? _builderOpen;
 
   @override
   void initState() {
@@ -55,15 +55,18 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(dcaSimulationProvider);
     final plans = ref.watch(dcaPlansProvider);
+    final builderOpen = _builderOpen ?? (plans.value?.isEmpty ?? false);
     return AppPageScaffold(
       title: l10n.planDcaPlanTitle,
-      actions: [
-        AppHeaderAction(
-          semanticsLabel: l10n.dcaSimulatorTitle,
-          icon: const Icon(FLucideIcons.plus),
-          onPress: () => setState(() => _builderOpen = true),
-        ),
-      ],
+      actions: builderOpen
+          ? const []
+          : [
+              AppHeaderAction(
+                semanticsLabel: l10n.dcaSimulatorTitle,
+                icon: const Icon(FLucideIcons.plus),
+                onPress: () => setState(() => _builderOpen = true),
+              ),
+            ],
       childPad: false,
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -83,9 +86,8 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
                 onExecute: _executePlan,
                 onToggle: _togglePlan,
                 onDelete: _deletePlan,
-                onCreate: () => setState(() => _builderOpen = true),
               ),
-              if (_builderOpen) ...[
+              if (builderOpen) ...[
                 const SizedBox(height: AppSpacing.s16),
                 AppDisclosureHeader(
                   title: l10n.dcaSimulatorTitle,
@@ -153,6 +155,7 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
         endAt: DateTime.utc(now.year + state.request.years, now.month, now.day),
       );
       if (mounted) {
+        setState(() => _builderOpen = false);
         AppMessenger.show(
           context,
           ToastKind.success,
@@ -270,14 +273,12 @@ class _DcaPlansSection extends StatelessWidget {
     required this.onExecute,
     required this.onToggle,
     required this.onDelete,
-    required this.onCreate,
   });
 
   final AsyncValue<List<DcaPlan>> plans;
   final ValueChanged<DcaPlan> onExecute;
   final ValueChanged<DcaPlan> onToggle;
   final ValueChanged<DcaPlan> onDelete;
-  final VoidCallback onCreate;
 
   @override
   Widget build(BuildContext context) {
@@ -287,21 +288,7 @@ class _DcaPlansSection extends StatelessWidget {
       error: (error, stackTrace) => kDefaultError(context, error, stackTrace),
       data: (rows) {
         if (rows.isEmpty) {
-          return SoftCard.flat(
-            padding: AppPageRhythm.densePadding,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.dcaPlanEmpty, style: context.captionStyle),
-                const SizedBox(height: AppSpacing.s10),
-                FButton(
-                  onPress: onCreate,
-                  prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
-                  child: Text(l10n.dcaSimulatorTitle),
-                ),
-              ],
-            ),
-          );
+          return const SizedBox.shrink();
         }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

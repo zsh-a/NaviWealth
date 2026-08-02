@@ -30,6 +30,7 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/settings/ui/advanced_settings_page.dart';
 import 'package:naviwealth/features/settings/ui/agents_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -174,24 +175,8 @@ void main() {
     expect(find.text('Presented Agent'), findsOneWidget);
     expect(find.textContaining('Presented description.'), findsOneWidget);
     expect(find.textContaining('Daily · around 08:00'), findsOneWidget);
-    expect(find.text('Enabled 1/1'), findsOneWidget);
-    expect(find.text('Ready 0'), findsOneWidget);
-    expect(find.text('Failed 0'), findsOneWidget);
-    expect(find.text('Notifications 1'), findsOneWidget);
-    expect(find.text('30-day quality'), findsOneWidget);
-    expect(find.text('10 completed runs'), findsOneWidget);
-    expect(find.text('Ready 60% · 6/10'), findsOneWidget);
-    expect(find.text('No finding 30% · 3/10'), findsOneWidget);
-    expect(find.text('Failed 10% · 1/10'), findsOneWidget);
-    expect(find.text('Hidden or delayed 20% · 1/5'), findsOneWidget);
-    expect(find.text('Evidence-linked 75% · 3/4'), findsOneWidget);
-    expect(find.text('Evidence opened 80% · 4/5'), findsOneWidget);
-    expect(
-      find.text(
-        'Device-only aggregates · no result content, evidence ids, or routes retained',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Enabled 1/1'), findsNothing);
+    expect(find.text('30-day quality'), findsNothing);
     expect(find.text('FinanceOS'), findsOneWidget);
     expect(find.text('Run now'), findsNothing);
     expect(find.text('Notifications'), findsNothing);
@@ -277,7 +262,7 @@ void main() {
     expect(find.text('Disabled'), findsWidgets);
   });
 
-  testWidgets('overview counts only enabled ready and failed agents', (
+  testWidgets('agent rows keep state without duplicating overview metrics', (
     tester,
   ) async {
     final preferenceStore = InMemoryAgentPreferenceStore();
@@ -385,11 +370,53 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Enabled 1/2'), findsOneWidget);
-    expect(find.text('Ready 1'), findsOneWidget);
-    expect(find.text('Failed 0'), findsOneWidget);
-    expect(find.text('Notifications 1'), findsOneWidget);
+    expect(find.text('Enabled 1/2'), findsNothing);
+    expect(find.text('Ready 1'), findsNothing);
+    expect(find.text('Failed 0'), findsNothing);
+    expect(find.text('Notifications 1'), findsNothing);
     expect(find.text('Disabled'), findsWidgets);
+  });
+
+  testWidgets('advanced settings owns agent quality diagnostics', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          agent_providers.agentQualityReportProvider.overrideWith(
+            (ref) async => AgentQualityReport(
+              windowStart: DateTime.utc(2026, 6, 5),
+              generatedAt: DateTime.utc(2026, 7, 5),
+              readyRuns: 6,
+              noFindingRuns: 3,
+              failedRuns: 1,
+              artifactCount: 5,
+              dismissedOrSnoozedArtifacts: 1,
+              evidenceBearingArtifacts: 4,
+              fullyAnchoredEvidenceArtifacts: 3,
+              evidenceNavigationAttempts: 5,
+              evidenceNavigationSuccesses: 4,
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: FTheme(
+            data: FThemes.slate.light.desktop,
+            child: const AdvancedSettingsPage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('30-day quality'), findsOneWidget);
+    expect(find.text('10 completed runs'), findsOneWidget);
+    expect(find.text('Ready 60% · 6/10'), findsOneWidget);
+    expect(find.text('Failed 10% · 1/10'), findsOneWidget);
+    expect(find.text('Evidence opened 80% · 4/5'), findsOneWidget);
   });
 
   testWidgets('disabled agents cannot be run manually from settings', (

@@ -168,6 +168,8 @@
   "wealthPerspectiveItemCount": "{count}项",
   "wealthPerspectiveEmpty": "暂无资产。可从财富页右上角的「+」添加资产后查看分布。",
   "cashFlowTitle": "现金流",
+  "cashFlowShowOriginalCurrencies": "显示原币金额",
+  "cashFlowShowBaseCurrency": "显示本位币金额",
   "cashFlowCommandOpen": "打开现金流",
   "cashFlowCommandViewIncome": "查看收入流水",
   "cashFlowPeriodMonth": "按月",

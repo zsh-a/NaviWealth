@@ -101,7 +101,7 @@ class _RebalanceExecutionWorkspacePageState
     final useMasterDetail = MasterDetailLayout.shouldUseMasterDetail(
       availableWidth,
     );
-    _schedulePrune(session, ensureWideFocus: useMasterDetail);
+    _schedulePrune(session, ensureFocus: true);
     final body = _WorkspaceBody(
       session: session,
       selectedIds: _selectedIds,
@@ -138,7 +138,7 @@ class _RebalanceExecutionWorkspacePageState
 
   void _schedulePrune(
     RebalanceExecutionSession session, {
-    required bool ensureWideFocus,
+    required bool ensureFocus,
   }) {
     final ids = session.items.map((item) => item.id).toSet();
     final now = DateTime.now().toUtc();
@@ -150,7 +150,7 @@ class _RebalanceExecutionWorkspacePageState
               .toSet()
         : <String>{};
     final focusIsValid = ids.contains(_focusedId);
-    final fallbackFocusId = ensureWideFocus
+    final fallbackFocusId = ensureFocus
         ? _preferredFocusId(session, selectableIds)
         : null;
     if (_selectedIds.every(selectableIds.contains) &&
@@ -1240,9 +1240,10 @@ class _ExecutionItemRow extends StatelessWidget {
       compact: true,
       showSign: false,
     );
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTap: onFocus,
+    return AppTappable(
+      onPress: onFocus,
+      semanticsLabel: '$direction $target',
+      selected: focused,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
         child: Row(
@@ -1293,55 +1294,65 @@ class _ExecutionItemRow extends StatelessWidget {
                     _stateLabel(l10n, item.state),
                     style: context.captionStyle,
                   ),
-                  if (item.issue case final issue?) ...[
-                    const SizedBox(height: AppSpacing.s4),
-                    Text(
-                      issue.userMessage(l10n),
-                      style: context.captionStyle.copyWith(
-                        color:
-                            issue.recoveryAction == RebalanceRecoveryAction.none
-                            ? context.theme.colors.destructive
-                            : context.theme.colors.mutedForeground,
+                  if (focused)
+                    if (item.issue case final issue?) ...[
+                      const SizedBox(height: AppSpacing.s4),
+                      Text(
+                        issue.userMessage(l10n),
+                        style: context.captionStyle.copyWith(
+                          color:
+                              issue.recoveryAction ==
+                                  RebalanceRecoveryAction.none
+                              ? context.theme.colors.destructive
+                              : context.theme.colors.mutedForeground,
+                        ),
+                      ),
+                    ],
+                  AnimatedSizeFade(
+                    visible: focused,
+                    alignment: AlignmentDirectional.topStart,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.s8),
+                      child: Wrap(
+                        spacing: AppSpacing.s6,
+                        runSpacing: AppSpacing.s6,
+                        children: [
+                          if (canReview)
+                            AppActionButton(
+                              variant: FButtonVariant.outline,
+                              mainAxisSize: MainAxisSize.min,
+                              onPress: busy ? null : onReview,
+                              child: Flexible(
+                                child: Text(
+                                  canEnterManualPrice
+                                      ? l10n.rebalanceExecutionAddPriceAction
+                                      : l10n.rebalanceExecutionReviewAction,
+                                ),
+                              ),
+                            ),
+                          if (canSkip)
+                            AppActionButton(
+                              variant: FButtonVariant.ghost,
+                              mainAxisSize: MainAxisSize.min,
+                              onPress: busy ? null : onSkip,
+                              child: Flexible(
+                                child: Text(l10n.rebalanceExecutionSkipAction),
+                              ),
+                            ),
+                          if (skipped)
+                            AppActionButton(
+                              variant: FButtonVariant.outline,
+                              mainAxisSize: MainAxisSize.min,
+                              onPress: busy ? null : onReopen,
+                              child: Flexible(
+                                child: Text(
+                                  l10n.rebalanceExecutionReopenAction,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                  ],
-                  const SizedBox(height: AppSpacing.s8),
-                  Wrap(
-                    spacing: AppSpacing.s6,
-                    runSpacing: AppSpacing.s6,
-                    children: [
-                      if (canReview)
-                        AppActionButton(
-                          variant: FButtonVariant.outline,
-                          mainAxisSize: MainAxisSize.min,
-                          onPress: busy ? null : onReview,
-                          child: Flexible(
-                            child: Text(
-                              canEnterManualPrice
-                                  ? l10n.rebalanceExecutionAddPriceAction
-                                  : l10n.rebalanceExecutionReviewAction,
-                            ),
-                          ),
-                        ),
-                      if (canSkip)
-                        AppActionButton(
-                          variant: FButtonVariant.ghost,
-                          mainAxisSize: MainAxisSize.min,
-                          onPress: busy ? null : onSkip,
-                          child: Flexible(
-                            child: Text(l10n.rebalanceExecutionSkipAction),
-                          ),
-                        ),
-                      if (skipped)
-                        AppActionButton(
-                          variant: FButtonVariant.outline,
-                          mainAxisSize: MainAxisSize.min,
-                          onPress: busy ? null : onReopen,
-                          child: Flexible(
-                            child: Text(l10n.rebalanceExecutionReopenAction),
-                          ),
-                        ),
-                    ],
                   ),
                 ],
               ),

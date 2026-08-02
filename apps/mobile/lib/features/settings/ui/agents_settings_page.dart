@@ -11,7 +11,6 @@ import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_artifact_routes.dart';
 import '../../../core/ai/agents/agent_preference_store.dart';
 import '../../../core/ai/agents/agent_presentation.dart';
-import '../../../core/ai/agents/agent_quality_report.dart';
 import '../../../core/ai/agents/agent_registry.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
@@ -97,7 +96,6 @@ class AgentsSettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final rows = ref.watch(_agentSettingsRowsProvider);
-    final quality = ref.watch(agent_providers.agentQualityReportProvider);
     return AppPageScaffold(
       title: l10n.agentSettingsTitle,
       childPad: false,
@@ -136,12 +134,6 @@ class AgentsSettingsPage extends ConsumerWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _AgentSettingsOverview(rows: items),
-                  if (quality.value case final report?) ...[
-                    const SizedBox(height: AppSpacing.s12),
-                    _AgentQualitySummary(report: report),
-                  ],
-                  const SizedBox(height: AppSpacing.s12),
                   for (var i = 0; i < sections.length; i++) ...[
                     _AgentSettingsDomainSectionView(section: sections[i]),
                     if (i != sections.length - 1)
@@ -156,136 +148,6 @@ class AgentsSettingsPage extends ConsumerWidget {
     );
   }
 }
-
-class _AgentQualitySummary extends StatelessWidget {
-  const _AgentQualitySummary({required this.report});
-
-  final AgentQualityReport report;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
-    final status = context.appTheme.status;
-    final hasFailures = report.failedRuns > 0;
-    return SoftCard.flat(
-      padding: AppPageRhythm.densePadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              AppIconTile(
-                icon: FLucideIcons.chartNoAxesColumnIncreasing,
-                color: hasFailures ? status.warning.fg : colors.primary,
-                size: AppSpacing.s32,
-                iconSize: AppIconSizes.sm,
-                backgroundOpacity: AppOpacity.subtle,
-              ),
-              const SizedBox(width: AppSpacing.s10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(l10n.agentQualityTitle, style: context.labelStyle),
-                    const SizedBox(height: AppSpacing.s2),
-                    Text(
-                      report.completedRuns == 0
-                          ? l10n.agentQualityNoRuns
-                          : l10n.agentQualityCompletedRuns(
-                              report.completedRuns,
-                            ),
-                      style: context.captionStyle,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          Wrap(
-            spacing: AppSpacing.s12,
-            runSpacing: AppSpacing.s6,
-            children: [
-              if (report.completedRuns > 0) ...[
-                _OverviewFragment(
-                  text: l10n.agentQualityReadyRate(
-                    _percentage(report.highSignalRate),
-                    report.readyRuns,
-                    report.completedRuns,
-                  ),
-                  emphasis: report.readyRuns > 0,
-                ),
-                _OverviewFragment(
-                  text: l10n.agentQualityNoFindingRate(
-                    _percentage(report.noFindingRate),
-                    report.noFindingRuns,
-                    report.completedRuns,
-                  ),
-                ),
-                _OverviewFragment(
-                  text: l10n.agentQualityFailureRate(
-                    _percentage(report.failureRate),
-                    report.failedRuns,
-                    report.completedRuns,
-                  ),
-                  danger: hasFailures,
-                ),
-              ],
-              if (report.artifactCount > 0) ...[
-                _OverviewFragment(
-                  text: l10n.agentQualitySuppressedRate(
-                    _percentage(report.dismissedOrSnoozedRate),
-                    report.dismissedOrSnoozedArtifacts,
-                    report.artifactCount,
-                  ),
-                ),
-                _OverviewFragment(
-                  text: l10n.agentQualityEvidenceRate(
-                    _percentage(report.evidenceAnchorCoverageRate),
-                    report.fullyAnchoredEvidenceArtifacts,
-                    report.evidenceBearingArtifacts,
-                  ),
-                ),
-              ],
-              _OverviewFragment(
-                text: report.evidenceNavigationAttempts == 0
-                    ? l10n.agentQualityEvidenceNavigationNoSamples
-                    : l10n.agentQualityEvidenceNavigationRate(
-                        _percentage(report.evidenceNavigationSuccessRate),
-                        report.evidenceNavigationSuccesses,
-                        report.evidenceNavigationAttempts,
-                      ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                FLucideIcons.shieldCheck,
-                size: AppIconSizes.xs,
-                color: colors.mutedForeground,
-              ),
-              const SizedBox(width: AppSpacing.s6),
-              Expanded(
-                child: Text(
-                  l10n.agentQualityPrivacyNote,
-                  style: context.captionStyle.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-int _percentage(double value) => (value * 100).round().clamp(0, 100);
 
 class _AgentSettingsRow {
   const _AgentSettingsRow({
@@ -334,108 +196,6 @@ List<_AgentSettingsDomainSection> _groupRowsByDomain(
       if (grouped[domain]?.isNotEmpty ?? false)
         _AgentSettingsDomainSection(domain: domain, rows: grouped[domain]!),
   ];
-}
-
-class _AgentSettingsOverview extends StatelessWidget {
-  const _AgentSettingsOverview({required this.rows});
-
-  final List<_AgentSettingsRow> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final activeRows = rows.where((row) => row.preference.enabled).toList();
-    final enabled = activeRows.length;
-    final ready = activeRows
-        .where((row) => row.latestRun?.status == AgentRunLifecycleStatus.ready)
-        .length;
-    final failed = activeRows
-        .where((row) => row.latestRun?.status == AgentRunLifecycleStatus.failed)
-        .length;
-    final notificationsOn = activeRows
-        .where(
-          (row) =>
-              (row.presentation?.notificationsSupported ?? false) &&
-              row.preference.notificationsEnabled,
-        )
-        .length;
-    return SoftCard.flat(
-      padding: AppPageRhythm.densePadding,
-      child: Row(
-        children: [
-          AppIconTile(
-            icon: FLucideIcons.bot,
-            color: context.theme.colors.primary,
-            size: AppSpacing.s40,
-            iconSize: AppIconSizes.md,
-          ),
-          const SizedBox(width: AppSpacing.s12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.agentSettingsTitle, style: context.labelStyle),
-                const SizedBox(height: AppSpacing.s4),
-                Wrap(
-                  spacing: AppSpacing.s8,
-                  runSpacing: AppSpacing.s4,
-                  children: [
-                    _OverviewFragment(
-                      text: l10n.agentSettingsOverviewEnabled(
-                        enabled,
-                        rows.length,
-                      ),
-                    ),
-                    _OverviewFragment(
-                      text: l10n.agentSettingsOverviewReady(ready),
-                      emphasis: ready > 0,
-                    ),
-                    _OverviewFragment(
-                      text: l10n.agentSettingsOverviewFailed(failed),
-                      danger: failed > 0,
-                    ),
-                    _OverviewFragment(
-                      text: l10n.agentSettingsOverviewNotificationsOn(
-                        notificationsOn,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OverviewFragment extends StatelessWidget {
-  const _OverviewFragment({
-    required this.text,
-    this.emphasis = false,
-    this.danger = false,
-  });
-
-  final String text;
-  final bool emphasis;
-  final bool danger;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final status = context.appTheme.status;
-    return Text(
-      text,
-      style: context.captionStyle.copyWith(
-        color: danger
-            ? status.danger.fg
-            : emphasis
-            ? colors.primary
-            : colors.mutedForeground,
-      ),
-    );
-  }
 }
 
 class _AgentSettingsDomainSectionView extends StatelessWidget {

@@ -256,6 +256,8 @@
   "wealthPerspectiveEmpty": "No holdings yet. Add assets from the Wealth quick actions to see the breakdown.",
   "@wealthPerspectiveEmpty": { "description": "Empty-state body for the perspective section when no allocations exist" },
   "cashFlowTitle": "Cash flow",
+  "cashFlowShowOriginalCurrencies": "Show original currencies",
+  "cashFlowShowBaseCurrency": "Show base currency",
   "@cashFlowTitle": { "description": "Cash-flow overview page title" },
   "cashFlowCommandOpen": "Open cash flow",
   "@cashFlowCommandOpen": { "description": "Command palette action that opens the cash-flow overview" },

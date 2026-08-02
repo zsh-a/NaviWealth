@@ -412,6 +412,8 @@ class IngestReviewPageObject {
   }
 
   Future<void> skipDraft(String description) async {
+    await tester.tap(find.textContaining(description).first);
+    await tester.pumpAndSettle();
     final card = find.ancestor(
       of: find.textContaining(description).first,
       matching: find.byType(SoftCard),

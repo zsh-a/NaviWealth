@@ -143,9 +143,10 @@ class _DraftCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final p = draft.parsed;
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTap: onFocus,
+    return AppTappable(
+      onPress: onFocus,
+      semanticsLabel: p.description,
+      selected: focused,
       child: SoftCard.raised(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s14,
@@ -216,101 +217,114 @@ class _DraftCard extends StatelessWidget {
                   icon: FLucideIcons.tags,
                   label: p.categoryHint ?? l10n.ingestUncategorized,
                 ),
-                _DraftMetaChip(
-                  icon: _sourceIcon(draft.sourceKind),
-                  label: _draftSourceLabel(l10n, draft),
-                ),
-                _DraftMetaChip(
-                  icon: FLucideIcons.sparkles,
-                  label: l10n.ingestDraftConfidence(
-                    (draft.confidence * 100).round(),
+                if (focused) ...[
+                  _DraftMetaChip(
+                    icon: _sourceIcon(draft.sourceKind),
+                    label: _draftSourceLabel(l10n, draft),
                   ),
-                ),
-                _VerdictIndicator(verdict: draft.verdict),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s10),
-            if (pendingFinalize || recoveryUnavailable) ...[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    FLucideIcons.triangleAlert,
-                    size: AppIconSizes.sm,
-                    color: context.theme.colors.destructive,
-                  ),
-                  const SizedBox(width: AppSpacing.s8),
-                  Expanded(
-                    child: Text(
-                      recoveryUnavailable
-                          ? l10n.ingestRecoveryUnavailableHint
-                          : l10n.ingestNeedsReviewHint,
-                      style: context.bodyCaptionStyle,
+                  _DraftMetaChip(
+                    icon: FLucideIcons.sparkles,
+                    label: l10n.ingestDraftConfidence(
+                      (draft.confidence * 100).round(),
                     ),
                   ),
                 ],
-              ),
-              if (!recoveryUnavailable) ...[
-                const SizedBox(height: AppSpacing.s10),
-                AppActionButton(
-                  variant: FButtonVariant.primary,
-                  onPress: busy ? null : onFinalize,
-                  child: Text(l10n.ingestResolveAction),
-                ),
+                _VerdictIndicator(verdict: draft.verdict),
               ],
-            ] else
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AppActionButton(
-                    variant: FButtonVariant.ghost,
-                    onPress: busy ? null : onEdit,
-                    child: Text(l10n.ingestEditDraft),
-                  ),
-                  const SizedBox(height: AppSpacing.s6),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: AppActionButton(
-                          variant: FButtonVariant.outline,
-                          onPress: busy ? null : onSkip,
-                          child: Flexible(
-                            child: Text(
-                              l10n.ingestSkip,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+            ),
+            AnimatedSizeFade(
+              visible: focused || pendingFinalize || recoveryUnavailable,
+              alignment: AlignmentDirectional.topStart,
+              child: Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.s10),
+                child: pendingFinalize || recoveryUnavailable
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                FLucideIcons.triangleAlert,
+                                size: AppIconSizes.sm,
+                                color: context.theme.colors.destructive,
+                              ),
+                              const SizedBox(width: AppSpacing.s8),
+                              Expanded(
+                                child: Text(
+                                  recoveryUnavailable
+                                      ? l10n.ingestRecoveryUnavailableHint
+                                      : l10n.ingestNeedsReviewHint,
+                                  style: context.bodyCaptionStyle,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.s8),
-                      Expanded(
-                        child: AppActionButton(
-                          variant: FButtonVariant.primary,
-                          onPress: busy
-                              ? null
-                              : p.kind == IngestTransactionKind.transfer
-                              ? onTransfer
-                              : p.kind == IngestTransactionKind.trade
-                              ? onTrade
-                              : onConfirm,
-                          child: Flexible(
-                            child: Text(
-                              p.kind == IngestTransactionKind.transfer
-                                  ? l10n.ingestRecordTransfer
-                                  : p.kind == IngestTransactionKind.trade
-                                  ? l10n.ingestRecordTrade
-                                  : l10n.ingestConfirm,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          if (!recoveryUnavailable) ...[
+                            const SizedBox(height: AppSpacing.s10),
+                            AppActionButton(
+                              variant: FButtonVariant.primary,
+                              onPress: busy ? null : onFinalize,
+                              child: Text(l10n.ingestResolveAction),
                             ),
+                          ],
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          AppActionButton(
+                            variant: FButtonVariant.ghost,
+                            onPress: busy ? null : onEdit,
+                            child: Text(l10n.ingestEditDraft),
                           ),
-                        ),
+                          const SizedBox(height: AppSpacing.s6),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AppActionButton(
+                                  variant: FButtonVariant.outline,
+                                  onPress: busy ? null : onSkip,
+                                  child: Flexible(
+                                    child: Text(
+                                      l10n.ingestSkip,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.s8),
+                              Expanded(
+                                child: AppActionButton(
+                                  variant: FButtonVariant.primary,
+                                  onPress: busy
+                                      ? null
+                                      : p.kind == IngestTransactionKind.transfer
+                                      ? onTransfer
+                                      : p.kind == IngestTransactionKind.trade
+                                      ? onTrade
+                                      : onConfirm,
+                                  child: Flexible(
+                                    child: Text(
+                                      p.kind == IngestTransactionKind.transfer
+                                          ? l10n.ingestRecordTransfer
+                                          : p.kind ==
+                                                IngestTransactionKind.trade
+                                          ? l10n.ingestRecordTrade
+                                          : l10n.ingestConfirm,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ],
               ),
+            ),
           ],
         ),
       ),

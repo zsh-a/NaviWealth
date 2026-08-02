@@ -22,18 +22,39 @@ class _DualMoneyTextState extends State<_DualMoneyText> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final text = _showOriginal
         ? widget.money.formatOriginal(widget.formatter, signed: widget.signed)
         : widget.money.formatBase(widget.formatter, signed: widget.signed);
-    return GestureDetector(
-      onLongPressStart: (_) => setState(() => _showOriginal = true),
-      onLongPressEnd: (_) => setState(() => _showOriginal = false),
-      onLongPressCancel: () => setState(() => _showOriginal = false),
-      child: Text(
-        text,
-        style: widget.style,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+    final value = Text(
+      text,
+      style: widget.style,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+    final hasAlternateCurrency = widget.money.originals.keys.any(
+      (currency) => currency != widget.money.baseCurrency,
+    );
+    if (!hasAlternateCurrency) return value;
+
+    final actionLabel = _showOriginal
+        ? l10n.cashFlowShowBaseCurrency
+        : l10n.cashFlowShowOriginalCurrencies;
+    return Tooltip(
+      message: actionLabel,
+      child: AppTappable(
+        semanticsLabel: '$text. $actionLabel',
+        onPress: () => setState(() => _showOriginal = !_showOriginal),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: AppControlHeights.touchTarget,
+          ),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: value,
+          ),
+        ),
       ),
     );
   }

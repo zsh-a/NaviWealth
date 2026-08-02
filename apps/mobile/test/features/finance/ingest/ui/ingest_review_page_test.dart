@@ -1029,6 +1029,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Coffee receipt'), findsOneWidget);
+    await tester.tap(find.text('Coffee receipt'));
+    await tester.pumpAndSettle();
     expect(find.widgetWithText(AppActionButton, 'Record'), findsOneWidget);
     expect(find.text('Resolve review state'), findsOneWidget);
     expect(

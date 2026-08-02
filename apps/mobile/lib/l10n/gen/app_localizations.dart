@@ -986,6 +986,18 @@ abstract class AppLocalizations {
   /// **'Cash flow'**
   String get cashFlowTitle;
 
+  /// No description provided for @cashFlowShowOriginalCurrencies.
+  ///
+  /// In en, this message translates to:
+  /// **'Show original currencies'**
+  String get cashFlowShowOriginalCurrencies;
+
+  /// No description provided for @cashFlowShowBaseCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Show base currency'**
+  String get cashFlowShowBaseCurrency;
+
   /// Command palette action that opens the cash-flow overview
   ///
   /// In en, this message translates to:

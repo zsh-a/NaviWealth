@@ -560,6 +560,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cashFlowTitle => 'Cash flow';
 
   @override
+  String get cashFlowShowOriginalCurrencies => 'Show original currencies';
+
+  @override
+  String get cashFlowShowBaseCurrency => 'Show base currency';
+
+  @override
   String get cashFlowCommandOpen => 'Open cash flow';
 
   @override

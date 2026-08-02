@@ -117,9 +117,11 @@ class _LegendRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+    return AppTappable(
+      onPress: onTap,
+      semanticsLabel:
+          '$label, ${formatters.percent(percent, decimalDigits: 1)}, '
+          '${valueInBase.toStringAsFixed(2)} $currencyCode',
       child: Padding(
         padding: const EdgeInsets.symmetric(
           vertical: AppSpacing.s6,

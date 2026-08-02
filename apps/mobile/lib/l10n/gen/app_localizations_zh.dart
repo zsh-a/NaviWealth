@@ -531,6 +531,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cashFlowTitle => '现金流';
 
   @override
+  String get cashFlowShowOriginalCurrencies => '显示原币金额';
+
+  @override
+  String get cashFlowShowBaseCurrency => '显示本位币金额';
+
+  @override
   String get cashFlowCommandOpen => '打开现金流';
 
   @override

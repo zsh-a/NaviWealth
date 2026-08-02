@@ -461,31 +461,34 @@ class _IconChoice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return Semantics(
-      button: true,
+    return AppTappable(
+      onPress: onTap,
+      semanticsLabel: token,
       selected: selected,
-      label: token,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: selected
-                ? colors.primary.withValues(alpha: AppOpacity.subtle)
-                : colors.muted.withValues(alpha: AppOpacity.subtle),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(
-              color: selected ? colors.primary : colors.border,
-              width: selected ? 2 : 1,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: SizedBox.square(
+        dimension: AppControlHeights.touchTarget,
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: selected
+                  ? colors.primary.withValues(alpha: AppOpacity.subtle)
+                  : colors.muted.withValues(alpha: AppOpacity.subtle),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(
+                color: selected ? colors.primary : colors.border,
+                width: selected ? 2 : 1,
+              ),
             ),
-          ),
-          alignment: Alignment.center,
-          child: Icon(
-            kExpenseCategoryIcons[token] ?? kExpenseCategoryFallbackIcon,
-            size: AppIconSizes.h18,
-            color: selected ? colors.primary : colors.mutedForeground,
+            alignment: Alignment.center,
+            child: Icon(
+              kExpenseCategoryIcons[token] ?? kExpenseCategoryFallbackIcon,
+              size: AppIconSizes.h18,
+              color: selected ? colors.primary : colors.mutedForeground,
+            ),
           ),
         ),
       ),
@@ -507,28 +510,31 @@ class _ColorChoice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = parseAccountColor(hex)!;
-    return Semantics(
-      button: true,
+    return AppTappable(
+      onPress: onTap,
+      semanticsLabel: hex,
       selected: selected,
-      label: hex,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          width: 34,
-          height: 34,
-          padding: const EdgeInsets.all(AppSpacing.accentBar),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: selected
-                  ? context.theme.colors.foreground
-                  : context.theme.colors.border,
-              width: selected ? 2 : 1,
+      borderRadius: BorderRadius.circular(AppRadius.full),
+      child: SizedBox.square(
+        dimension: AppControlHeights.touchTarget,
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            width: 34,
+            height: 34,
+            padding: const EdgeInsets.all(AppSpacing.accentBar),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: selected
+                    ? context.theme.colors.foreground
+                    : context.theme.colors.border,
+                width: selected ? 2 : 1,
+              ),
             ),
-          ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            child: DecoratedBox(
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
           ),
         ),
       ),
