@@ -305,7 +305,7 @@ void main() {
     expect(find.text('High'), findsOneWidget);
     expect(find.textContaining('Overdue'), findsOneWidget);
     expect(find.textContaining('Scheduled'), findsOneWidget);
-    expect(find.text('Project: Execution polish'), findsOneWidget);
+    expect(find.text('Plan: Execution polish'), findsOneWidget);
     expect(find.text('Commitment: Weekly review'), findsOneWidget);
     expect(find.text('Budget alert'), findsOneWidget);
 
@@ -522,7 +522,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    await selectMoreAction('Edit Project');
+    await selectMoreAction('Edit Plan');
     await selectMoreAction('New Action');
     await selectMoreAction('Pause');
     await selectMoreAction('Complete');
@@ -755,7 +755,7 @@ void main() {
     expect(find.text('Completion'), findsOneWidget);
     expect(find.text('Completed proposal coverage.'), findsOneWidget);
     expect(find.text('Action: Review budget delta'), findsOneWidget);
-    expect(find.text('Project: Execution polish'), findsOneWidget);
+    expect(find.text('Plan: Execution polish'), findsOneWidget);
     expect(find.text('Commitment: Weekly review'), findsOneWidget);
 
     await tester.tap(find.text('Action: Review budget delta'));

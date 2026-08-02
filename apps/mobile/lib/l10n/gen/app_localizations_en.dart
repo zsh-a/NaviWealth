@@ -14105,7 +14105,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionCreatePlanTitle => 'Add';
 
   @override
-  String get executionCreateProjectTitle => 'New Project';
+  String get executionCreateProjectTitle => 'New Plan';
 
   @override
   String get executionCreateCommitmentTitle => 'New Commitment';
@@ -14120,7 +14120,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionEditActionTitle => 'Edit Action';
 
   @override
-  String get executionEditProjectTitle => 'Edit Project';
+  String get executionEditProjectTitle => 'Edit Plan';
 
   @override
   String get executionEditCommitmentTitle => 'Edit Commitment';
@@ -14129,7 +14129,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionActionField => 'Action';
 
   @override
-  String get executionProjectField => 'Project';
+  String get executionProjectField => 'Plan';
 
   @override
   String get executionCommitmentField => 'Commitment';
@@ -14165,7 +14165,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionActionNoteHint => 'Optional note';
 
   @override
-  String get executionProjectTitleHint => 'What project are you driving?';
+  String get executionProjectTitleHint => 'What outcome needs multiple steps?';
 
   @override
   String get executionProjectDescriptionHint =>
@@ -14197,7 +14197,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionOverviewDue => 'Due';
 
   @override
-  String get executionOverviewProjects => 'Projects';
+  String get executionOverviewProjects => 'Plans';
 
   @override
   String get executionOverviewCommitments => 'Commitments';
@@ -14233,14 +14233,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionCommitmentsEmptyBody =>
-      'Use actions for personal todos; group larger work into projects or commitments.';
+      'Capture one next action, or group multi-step work into a plan.';
 
   @override
   String get executionCommitmentsClosedEmptyTitle => 'No closed items';
 
   @override
   String get executionCommitmentsClosedEmptyBody =>
-      'Completed and archived projects or commitments will appear here.';
+      'Completed and archived plans will appear here.';
 
   @override
   String get executionReviewEmptyTitle => 'No progress yet';
@@ -14253,10 +14253,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionClosedActionsSection => 'Recent closed actions';
 
   @override
-  String get executionProjectsSection => 'Projects';
+  String get executionProjectsSection => 'Plans';
 
   @override
-  String get executionCommitmentsSection => 'Long-term commitments';
+  String get executionCommitmentsSection => 'Ongoing';
 
   @override
   String get executionInboxSection => 'Inbox';

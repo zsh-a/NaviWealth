@@ -5,7 +5,7 @@ focused on personal commitments, next actions, and progress review.
 
 ## Document Contract
 
-Owns ExecutionOS objects, Today/Commitments/Review behavior, source references,
+Owns ExecutionOS objects, Today/Plans/Review behavior, source references,
 tools, and Agents. It does not own sibling-domain evidence semantics or shared
 proposal infrastructure. `execution_pack.dart`, Execution repositories, and
 focused Execution tests are authoritative for the current implementation.
@@ -18,7 +18,8 @@ Included:
 - Projects for bounded delivery work that contains actions and commitments.
 - Commitments for work that needs a longer-running promise.
 - Progress entries for check-ins, blockers, scope changes, and completion.
-- Today, Commitments, and Review shell tabs.
+- Today and Plans shell tabs. Review is a contextual destination reached from
+  signals and the command palette.
 - Cross-domain source references by neutral row-family metadata.
 
 Excluded:
@@ -42,7 +43,7 @@ Contributions:
 - Scope: `DomainScope.execution`.
 - Shell: `features/execution/composition/execution_domain_shell.dart`.
 - Routes: `features/execution/composition/execution_routes.dart`.
-- Tabs: Today, Commitments, Review.
+- Primary tabs: Today, Plans.
 - Tools: `features/execution/execution_ai_tools.dart`.
 - Command palette: `features/execution/composition/execution_command_palette.dart`.
 - Proposal kinds: `features/execution/composition/execution_proposal_kinds.dart`.
@@ -88,7 +89,7 @@ boundary.
 | Tab | Purpose |
 |---|---|
 | Today | Persistent daily Top 3 plus today's open actions, blockers, and high-priority follow-through |
-| Commitments | Inbox actions, active projects, long-term commitments, and a closed-work archive |
+| Plans | Later actions, active plans, existing long-term commitments, and a closed-work archive |
 | Review | Focus, stalled/blocked work, missing next actions, overdue targets, repeated blockers, throughput, source outcomes, recently closed actions, and confirmed batch next-action creation |
 
 Key files:
@@ -104,12 +105,13 @@ empty Top 3 can show the latest Review artifact's `recommended_focus_ids`, but
 the recommendation is never adopted until the user explicitly confirms it.
 
 Today exposes only the daily focus and blocked-work lenses. Unscheduled backlog
-and the complete open inventory belong to Plan, not the daily workspace. Plan
-uses one Add entry point that progressively offers Action, Project, or
-Commitment creation; search is also owned there instead of repeated on every
-tab.
+and the complete open inventory belong to Plans, not the daily workspace.
+Plans uses one Add entry point that offers Action or multi-step Plan creation;
+search is also owned there instead of repeated on every tab.
 
-New Action capture starts with title plus Inbox / Today / Tomorrow and keeps
+The shared Add entry asks only whether the user is creating an Action or a
+multi-step Plan. New Action capture starts with title plus Inbox / Today /
+Tomorrow and keeps
 priority, dates, relations, and notes behind an optional detail disclosure.
 Manual status changes show a short Undo action. Blocking requires a concrete
 reason, which is stored as blocker progress instead of a generic placeholder.

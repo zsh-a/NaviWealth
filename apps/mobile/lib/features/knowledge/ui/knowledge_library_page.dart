@@ -269,7 +269,7 @@ void _createForSegment(
     case _LibrarySegment.assumptions:
       showNewAssumptionSheet(context, ref);
     case _LibrarySegment.notes:
-      showKnowledgeCaptureSheet(context, ref);
+      showKnowledgeCaptureSheet(context);
     case _LibrarySegment.concepts:
       showNewConceptSheet(context, ref);
     case _LibrarySegment.experiments:
@@ -304,7 +304,7 @@ Future<void> _openCreateSheet(
     KnowledgeCreateOption(
       icon: FLucideIcons.fileText,
       label: l10n.knowledgeNewNote,
-      onSelected: () => showKnowledgeCaptureSheet(context, ref),
+      onSelected: () => showKnowledgeCaptureSheet(context),
     ),
     KnowledgeCreateOption(
       icon: FLucideIcons.gitBranch,
@@ -312,48 +312,14 @@ Future<void> _openCreateSheet(
       onSelected: () => showNewDecisionSheet(context, ref),
     ),
     KnowledgeCreateOption(
-      icon: FLucideIcons.calendarClock,
-      label: l10n.knowledgeNewRoutine,
-      onSelected: () => showNewRoutineSheet(context, ref),
-    ),
-    KnowledgeCreateOption(
-      icon: FLucideIcons.ellipsis,
-      label: l10n.knowledgeNewMoreTypes,
-      onSelected: () => _openMoreCreateSheet(context, ref),
+      icon: FLucideIcons.lightbulb,
+      label: l10n.knowledgeNewAssumption,
+      onSelected: () => showNewAssumptionSheet(context, ref),
     ),
   ];
   await showKnowledgeCreateSheet(
     context,
     options: options,
     activeLabel: activeLabel,
-  );
-}
-
-Future<void> _openMoreCreateSheet(BuildContext context, WidgetRef ref) {
-  final l10n = AppLocalizations.of(context);
-  return showKnowledgeCreateSheet(
-    context,
-    options: [
-      KnowledgeCreateOption(
-        icon: FLucideIcons.badgeCheck,
-        label: l10n.knowledgeNewPrinciple,
-        onSelected: () => showNewPrincipleSheet(context, ref),
-      ),
-      KnowledgeCreateOption(
-        icon: FLucideIcons.lightbulb,
-        label: l10n.knowledgeNewAssumption,
-        onSelected: () => showNewAssumptionSheet(context, ref),
-      ),
-      KnowledgeCreateOption(
-        icon: FLucideIcons.folderTree,
-        label: l10n.knowledgeNewConcept,
-        onSelected: () => showNewConceptSheet(context, ref),
-      ),
-      KnowledgeCreateOption(
-        icon: FLucideIcons.flaskConical,
-        label: l10n.knowledgeNewExperiment,
-        onSelected: () => showNewExperimentSheet(context, ref),
-      ),
-    ],
   );
 }

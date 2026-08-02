@@ -13385,7 +13385,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionCreatePlanTitle => '添加';
 
   @override
-  String get executionCreateProjectTitle => '新建项目';
+  String get executionCreateProjectTitle => '新建计划';
 
   @override
   String get executionCreateCommitmentTitle => '新建承诺';
@@ -13400,7 +13400,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionEditActionTitle => '编辑行动';
 
   @override
-  String get executionEditProjectTitle => '编辑项目';
+  String get executionEditProjectTitle => '编辑计划';
 
   @override
   String get executionEditCommitmentTitle => '编辑承诺';
@@ -13409,7 +13409,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionActionField => '行动';
 
   @override
-  String get executionProjectField => '项目';
+  String get executionProjectField => '计划';
 
   @override
   String get executionCommitmentField => '承诺';
@@ -13445,7 +13445,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionActionNoteHint => '可选备注';
 
   @override
-  String get executionProjectTitleHint => '你正在推进哪个项目？';
+  String get executionProjectTitleHint => '哪件事需要多个步骤完成？';
 
   @override
   String get executionProjectDescriptionHint => '可选结果、范围或完成标准';
@@ -13475,7 +13475,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionOverviewDue => '到期';
 
   @override
-  String get executionOverviewProjects => '项目';
+  String get executionOverviewProjects => '计划';
 
   @override
   String get executionOverviewCommitments => '承诺';
@@ -13507,13 +13507,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionCommitmentsEmptyTitle => '没有进行中事项';
 
   @override
-  String get executionCommitmentsEmptyBody => '个人待办先记录为行动；事情变大后再归入项目或承诺。';
+  String get executionCommitmentsEmptyBody => '先记录一个具体行动；需要多个步骤时再建立计划。';
 
   @override
   String get executionCommitmentsClosedEmptyTitle => '没有已关闭事项';
 
   @override
-  String get executionCommitmentsClosedEmptyBody => '已完成或已归档的项目与承诺会出现在这里。';
+  String get executionCommitmentsClosedEmptyBody => '已完成或已归档的计划会出现在这里。';
 
   @override
   String get executionReviewEmptyTitle => '还没有进展记录';
@@ -13525,10 +13525,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionClosedActionsSection => '最近已关闭行动';
 
   @override
-  String get executionProjectsSection => '项目';
+  String get executionProjectsSection => '计划';
 
   @override
-  String get executionCommitmentsSection => '长期承诺';
+  String get executionCommitmentsSection => '持续事项';
 
   @override
   String get executionInboxSection => '收集箱';

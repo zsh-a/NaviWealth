@@ -80,8 +80,11 @@ void main() {
     expect(find.text('Knowledge type'), findsOneWidget);
     expect(find.text('Core'), findsOneWidget);
     expect(find.text('Sources'), findsOneWidget);
-    expect(find.text('Thinking'), findsOneWidget);
-    expect(find.text('Action'), findsOneWidget);
+    expect(find.text('Thinking'), findsNothing);
+    expect(find.text('Action'), findsNothing);
+    expect(find.text('Concepts'), findsNothing);
+    expect(find.text('Experiments'), findsNothing);
+    expect(find.text('Routines'), findsNothing);
     expect(find.text('Keep raw observations and sources'), findsOneWidget);
 
     await tester.tap(find.text('Notes'));
@@ -140,7 +143,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(AppSheet), findsOneWidget);
-    expect(find.text('Repeat actions on a cadence'), findsOneWidget);
+    expect(find.text('Keep raw observations and sources'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

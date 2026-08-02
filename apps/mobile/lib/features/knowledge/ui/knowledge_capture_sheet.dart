@@ -21,7 +21,7 @@ import '_widgets.dart';
 
 part 'knowledge_capture_views.dart';
 
-Future<void> showKnowledgeCaptureSheet(BuildContext context, WidgetRef _) {
+Future<void> showKnowledgeCaptureSheet(BuildContext context) {
   return showAppFormSheet<void>(
     context: context,
     builder: (sheetContext) => const _KnowledgeCaptureSheet(),

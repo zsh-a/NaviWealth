@@ -2,7 +2,8 @@
 /// (`docs/architecture/lifeos-shell.md` §3 + `docs/domains/knowledgeos-domain.md` §5).
 ///
 /// Mirrors `features/health/composition/health_domain_shell.dart`.
-/// 3 tabs: Inbox / Library / Review. Labels come from l10n so domain
+/// 2 tabs: Inbox / Library. Review remains available from contextual signals
+/// and the command palette instead of consuming permanent navigation space.
 /// chrome stays consistent with FinanceOS and HealthOS.
 library;
 
@@ -31,12 +32,6 @@ DomainShellSpec knowledgeDomainShell(AppLocalizations l10n) {
         selectedIcon: FLucideIcons.bookOpen,
         label: l10n.knowledgeTabLibrary,
         routePath: KnowledgeRoutes.library,
-      ),
-      DomainShellTab(
-        icon: FLucideIcons.clipboardCheck,
-        selectedIcon: FLucideIcons.clipboardCheck,
-        label: l10n.knowledgeTabReview,
-        routePath: KnowledgeRoutes.review,
       ),
     ],
   );

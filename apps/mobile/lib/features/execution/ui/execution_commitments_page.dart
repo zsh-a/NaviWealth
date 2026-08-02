@@ -13,6 +13,7 @@ import '../domain/execution_models.dart';
 import 'execution_action_card_controller.dart';
 import 'execution_action_sheet.dart';
 import 'execution_commitment_sheet.dart';
+import 'execution_create_sheet.dart';
 import 'execution_lifecycle_card_controller.dart';
 import 'execution_progress_sheet.dart';
 import 'execution_project_sheet.dart';
@@ -35,7 +36,7 @@ class ExecutionCommitmentsPage extends ConsumerWidget {
         ShellHeaderActionSpec(
           icon: FLucideIcons.plus,
           label: l10n.executionCreatePlanTitle,
-          onPress: () => _showExecutionCreateSheet(context),
+          onPress: () => showExecutionCreateSheet(context),
           order: -10,
         ),
         ShellHeaderActionSpec(
@@ -327,45 +328,6 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
       itemBuilder: (context, index) => itemBuilders[index](context),
     );
   }
-}
-
-Future<void> _showExecutionCreateSheet(BuildContext context) {
-  final l10n = AppLocalizations.of(context);
-  return showAppSheet<void>(
-    context: context,
-    title: l10n.executionCreatePlanTitle,
-    builder: (sheetContext) => AppActionSheetList(
-      children: [
-        AppActionSheetTile(
-          icon: FLucideIcons.listPlus,
-          title: l10n.executionCreateActionTitle,
-          subtitle: l10n.executionActionTitleHint,
-          onPress: () {
-            Navigator.of(sheetContext).pop();
-            showExecutionActionSheet(context: context);
-          },
-        ),
-        AppActionSheetTile(
-          icon: FLucideIcons.folder,
-          title: l10n.executionCreateProjectTitle,
-          subtitle: l10n.executionProjectTitleHint,
-          onPress: () {
-            Navigator.of(sheetContext).pop();
-            showExecutionProjectSheet(context: context);
-          },
-        ),
-        AppActionSheetTile(
-          icon: FLucideIcons.target,
-          title: l10n.executionCreateCommitmentTitle,
-          subtitle: l10n.executionCommitmentTitleHint,
-          onPress: () {
-            Navigator.of(sheetContext).pop();
-            showExecutionCommitmentSheet(context: context);
-          },
-        ),
-      ],
-    ),
-  );
 }
 
 String _commitmentsViewLabel(AppLocalizations l10n, _CommitmentsView view) {

@@ -7,6 +7,7 @@ import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/app/domain_packs/finance_life_contribution.dart';
 import 'package:naviwealth/app/domain_packs/health_life_contribution.dart';
 import 'package:naviwealth/app/domain_packs/knowledge_life_contribution.dart';
+import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
 import 'package:naviwealth/core/ai/agents/agent_intents.dart';
@@ -509,7 +510,7 @@ void main() {
       expect(c.read(domainPackRegistryProvider), kAllDomainPacks);
       expect(kFinancePack.backgroundBootstrapBuilder, isNotNull);
       expect(kHealthPack.backgroundBootstrapBuilder, isNotNull);
-      expect(kKnowledgePack.backgroundBootstrapBuilder, isNotNull);
+      expect(kKnowledgePack.backgroundBootstrapBuilder, isNull);
       expect(kExecutionPack.backgroundBootstrapBuilder, isNotNull);
       expect(
         kAllDomainPacks
@@ -540,17 +541,31 @@ void main() {
         DomainScope.knowledge,
         DomainScope.execution,
       ]);
+      final l10n = lookupAppLocalizations(const Locale('en'));
       expect(
-        kExecutionPack
-            .commandPaletteEntriesBuilder!(
-              lookupAppLocalizations(const Locale('en')),
-            )
-            .map((entry) => entry.id),
-        containsAll(<String>[
-          'create.execution.action',
-          'create.execution.project',
-          'create.execution.commitment',
-        ]),
+        kKnowledgePack.shellSpecBuilder!(l10n).tabs.map((tab) => tab.routePath),
+        <String>[AppRoutes.knowledgeInbox, AppRoutes.knowledgeLibrary],
+      );
+      expect(
+        kExecutionPack.shellSpecBuilder!(l10n).tabs.map((tab) => tab.routePath),
+        <String>[AppRoutes.executionToday, AppRoutes.executionCommitments],
+      );
+      final executionCommandIds = kExecutionPack
+          .commandPaletteEntriesBuilder!(l10n)
+          .map((entry) => entry.id);
+      expect(executionCommandIds, contains('create.execution'));
+      for (final retiredId in const <String>[
+        'create.execution.action',
+        'create.execution.project',
+        'create.execution.commitment',
+      ]) {
+        expect(executionCommandIds, isNot(contains(retiredId)));
+      }
+      expect(
+        kKnowledgePack.commandPaletteEntriesBuilder!(l10n).map(
+          (entry) => entry.id,
+        ),
+        contains('create.knowledge.note'),
       );
       expect(
         c.read(agentRegistryProvider).map((agent) => agent.id),
@@ -673,7 +688,6 @@ void main() {
         <String>{
           'morning_briefing',
           'recovery_alert',
-          'knowledge_routine_due',
           'execution_review',
           'execution_due_actions',
         },

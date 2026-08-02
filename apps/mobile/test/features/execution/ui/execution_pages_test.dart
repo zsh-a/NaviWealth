@@ -18,6 +18,7 @@ import 'package:naviwealth/features/execution/domain/execution_models.dart';
 import 'package:naviwealth/features/execution/ui/execution_action_card_controller.dart';
 import 'package:naviwealth/features/execution/ui/execution_action_sheet.dart';
 import 'package:naviwealth/features/execution/ui/execution_commitments_page.dart';
+import 'package:naviwealth/features/execution/ui/execution_create_sheet.dart';
 import 'package:naviwealth/features/execution/ui/execution_lifecycle_card_controller.dart';
 import 'package:naviwealth/features/execution/ui/execution_today_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -160,6 +161,27 @@ void main() {
       expect(find.text('Fewer details'), findsOneWidget);
     },
   );
+
+  testWidgets('shared Add entry exposes only action and plan', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        Builder(
+          builder: (context) => FButton(
+            onPress: () => showExecutionCreateSheet(context),
+            child: const Text('Open add'),
+          ),
+        ),
+        overrides: _executionOverrides(),
+      ),
+    );
+
+    await tester.tap(find.text('Open add'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('New Action'), findsOneWidget);
+    expect(find.text('New Plan'), findsOneWidget);
+    expect(find.text('New Commitment'), findsNothing);
+  });
 
   testWidgets('manual action status changes can be restored', (tester) async {
     final db = makeTestDatabase();

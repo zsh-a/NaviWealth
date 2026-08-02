@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -19,8 +17,6 @@ import 'package:naviwealth/features/knowledge/agents/providers.dart'
     as knowledge_agent_providers;
 import 'package:naviwealth/features/knowledge/agents/review_agent.dart'
     show kKnowledgeReviewAgentId;
-import 'package:naviwealth/features/knowledge/agents/routine_due_agent.dart'
-    show kKnowledgeRoutineAgentId;
 import 'package:naviwealth/features/knowledge/composition/knowledge_command_palette.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_domain_shell.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_proposal_applier.dart'
@@ -57,11 +53,7 @@ final DomainPack kKnowledgePack = DomainPack(
   systemPromptBlock: kKnowledgeSystemPromptBlock,
   shellSpecBuilder: knowledgeDomainShell,
   shellRouteBuilder: knowledgeShellRoute,
-  tabPaths: [
-    AppRoutes.knowledgeInbox,
-    AppRoutes.knowledgeLibrary,
-    AppRoutes.knowledgeReview,
-  ],
+  tabPaths: [AppRoutes.knowledgeInbox, AppRoutes.knowledgeLibrary],
   agentBuilder: _knowledgeAgents,
   agentPresentationSpecs: const [
     AgentPresentationSpec(
@@ -96,19 +88,9 @@ final DomainPack kKnowledgePack = DomainPack(
       description: _knowledgeInboxTriageDescription,
       placement: AgentResultPlacement.domainReview,
     ),
-    AgentPresentationSpec(
-      agentId: kKnowledgeRoutineAgentId,
-      domain: DomainScope.knowledge,
-      icon: FLucideIcons.bell,
-      label: _knowledgeRoutineLabel,
-      description: _knowledgeRoutineDescription,
-      notificationsSupported: true,
-      placement: AgentResultPlacement.domainReview,
-    ),
   ],
   memorySourcePrefixes: const ['know:', 'agent:knowledge_'],
   memoryBootstrapBuilder: _knowledgeMemoryBootstrap,
-  backgroundBootstrapBuilder: _knowledgeBackgroundBootstrap,
   commandPaletteEntriesBuilder: knowledgeCommandPaletteEntries,
   providerOverridesBuilder: agentRuntimeKnowledgeProviderOverrides,
   lifeSignalBuilder: knowledgeLifeSignals,
@@ -136,15 +118,6 @@ void _knowledgeMemoryBootstrap(Ref ref) {
   ref.watch(knowledgeConceptMemoryIndexerProvider);
   ref.watch(knowledgeExperimentMemoryIndexerProvider);
   ref.watch(knowledgeRoutineMemoryIndexerProvider);
-}
-
-void _knowledgeBackgroundBootstrap(Ref ref) {
-  ref.watch(knowledge_agent_providers.knowledgeRoutineDueCronProvider);
-  unawaited(
-    ref.read(
-      knowledge_agent_providers.pendingKnowledgeRoutineDueRunProvider.future,
-    ),
-  );
 }
 
 String _knowledgeSettingsSubtitle(AppLocalizations l10n, bool enabled) =>
@@ -175,9 +148,3 @@ String _knowledgeInboxTriageLabel(AppLocalizations l10n) =>
 
 String _knowledgeInboxTriageDescription(AppLocalizations l10n) =>
     l10n.agentPresentationKnowledgeInboxTriageDescription;
-
-String _knowledgeRoutineLabel(AppLocalizations l10n) =>
-    l10n.agentPresentationKnowledgeRoutineLabel;
-
-String _knowledgeRoutineDescription(AppLocalizations l10n) =>
-    l10n.agentPresentationKnowledgeRoutineDescription;

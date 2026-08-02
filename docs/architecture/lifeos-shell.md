@@ -67,8 +67,8 @@ features/<domain>/
 |---|---|---|---|---|
 | FinanceOS | `finance` | Today, Activity, Wealth, Plan | `kFinanceDeviceTools` | Weekly Wealth Review, Cashflow Anomaly Review, FIRE Plan Drift Monitor, Options Income Risk Review |
 | HealthOS | `health` | Today, Trends | `kHealthDeviceTools` | Morning Briefing, Recovery Alert, Weekly Summary |
-| KnowledgeOS | `knowledge` | Inbox, Library, Review | `kKnowledgeDeviceTools` | Review, Assumption, Contradiction, Inbox Triage, Routine Due |
-| ExecutionOS | `execution` | Today, Commitments, Review | `kExecutionDeviceTools` | Review, Due Action |
+| KnowledgeOS | `knowledge` | Inbox, Library | `kKnowledgeDeviceTools` | Review, Assumption, Contradiction, Inbox Triage |
+| ExecutionOS | `execution` | Today, Plans | `kExecutionDeviceTools` | Review, Due Action |
 
 Finance is always active. Health, Knowledge, and Execution are enabled through
 `domainOptInsProvider`.
@@ -185,7 +185,7 @@ Core framework:
 Current domain agents:
 
 - Health: Morning Briefing, Recovery Alert, Weekly Summary.
-- Knowledge: Review, Assumption, Contradiction, Inbox Triage, Routine Due.
+- Knowledge: Review, Assumption, Contradiction, Inbox Triage.
 - Execution: Review.
 
 Rules:

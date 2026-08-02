@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/command_palette/command_palette_entry.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../ui/knowledge_capture_sheet.dart';
 import 'knowledge_route_paths.dart';
 
 /// KnowledgeOS contributions to the shared Cmd-K command palette.
@@ -21,6 +22,13 @@ List<CommandPaletteEntry> knowledgeCommandPaletteEntries(
   AppLocalizations l10n,
 ) {
   return <CommandPaletteEntry>[
+    CommandPaletteEntry(
+      id: 'create.knowledge.note',
+      label: l10n.knowledgeCaptureTitle,
+      icon: FLucideIcons.filePlus,
+      keywords: const <String>['knowledge', 'capture', 'note', '记录', '笔记'],
+      run: (BuildContext ctx) => showKnowledgeCaptureSheet(ctx),
+    ),
     CommandPaletteEntry(
       id: 'nav.knowledge.inbox',
       label: l10n.knowledgeCommandInbox,

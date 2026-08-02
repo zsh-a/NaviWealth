@@ -43,7 +43,8 @@ Contributions:
 - Scope: `DomainScope.knowledge`.
 - Shell: `features/knowledge/composition/knowledge_domain_shell.dart`.
 - Routes: `features/knowledge/composition/knowledge_routes.dart`.
-- Tabs: Inbox, Library, Review.
+- Primary tabs: Inbox, Library. Review is a contextual destination reached from
+  due signals and the command palette rather than a permanent shell tab.
 - Tools: `features/knowledge/knowledge_ai_tools.dart`.
 - Agents: `features/knowledge/agents/providers.dart`.
 - Command palette: `features/knowledge/composition/knowledge_command_palette.dart`.
@@ -109,7 +110,7 @@ workflow state.
 |---|---|
 | Inbox | Fast capture with no synchronous LLM call |
 | Library | Browse, search, and edit the complete knowledge collection; Decision is the primary object |
-| Review | Due decisions, stale assumptions, contradictions, inbox AI suggestions, due routines |
+| Review (contextual) | Due decisions, stale assumptions, contradictions, inbox AI suggestions, and existing due routines |
 
 Key files:
 
@@ -126,7 +127,10 @@ call the LLM synchronously. AI classification, tags, links, and merge
 suggestions are asynchronous review work. Users create an explicitly structured
 object from Library only when they already know the intended type.
 
-Library keeps object types behind one adaptive picker on every screen size.
+Library exposes Notes, Decisions, and Assumptions in its adaptive picker and
+creation sheet. Existing advanced objects remain searchable in All, but
+Principles, Concepts, Experiments, and Routines are no longer creation choices
+in the primary UI.
 Concept relationships render as accessible links, never as a graph
 visualization. Review is a signal-first work queue: suggestions, due routines,
 due decisions, stale assumptions, and agent findings appear without a duplicate
@@ -233,7 +237,6 @@ Current agents:
 | AssumptionAgent | Finds assumptions that need verification |
 | ContradictionAgent | Detects structural and semantic conflicts against active principles, assumptions, Notes, and all active Decisions |
 | InboxTriageAgent | Produces async proposals for new or materially edited captured notes |
-| RoutineDueAgent | Surfaces routines due soon and sends review notifications |
 
 Location:
 

@@ -23749,7 +23749,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionCreateProjectTitle.
   ///
   /// In en, this message translates to:
-  /// **'New Project'**
+  /// **'New Plan'**
   String get executionCreateProjectTitle;
 
   /// No description provided for @executionCreateCommitmentTitle.
@@ -23779,7 +23779,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionEditProjectTitle.
   ///
   /// In en, this message translates to:
-  /// **'Edit Project'**
+  /// **'Edit Plan'**
   String get executionEditProjectTitle;
 
   /// No description provided for @executionEditCommitmentTitle.
@@ -23797,7 +23797,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionProjectField.
   ///
   /// In en, this message translates to:
-  /// **'Project'**
+  /// **'Plan'**
   String get executionProjectField;
 
   /// No description provided for @executionCommitmentField.
@@ -23869,7 +23869,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionProjectTitleHint.
   ///
   /// In en, this message translates to:
-  /// **'What project are you driving?'**
+  /// **'What outcome needs multiple steps?'**
   String get executionProjectTitleHint;
 
   /// No description provided for @executionProjectDescriptionHint.
@@ -23929,7 +23929,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionOverviewProjects.
   ///
   /// In en, this message translates to:
-  /// **'Projects'**
+  /// **'Plans'**
   String get executionOverviewProjects;
 
   /// No description provided for @executionOverviewCommitments.
@@ -23989,7 +23989,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionCommitmentsEmptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Use actions for personal todos; group larger work into projects or commitments.'**
+  /// **'Capture one next action, or group multi-step work into a plan.'**
   String get executionCommitmentsEmptyBody;
 
   /// No description provided for @executionCommitmentsClosedEmptyTitle.
@@ -24001,7 +24001,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionCommitmentsClosedEmptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Completed and archived projects or commitments will appear here.'**
+  /// **'Completed and archived plans will appear here.'**
   String get executionCommitmentsClosedEmptyBody;
 
   /// No description provided for @executionReviewEmptyTitle.
@@ -24025,13 +24025,13 @@ abstract class AppLocalizations {
   /// No description provided for @executionProjectsSection.
   ///
   /// In en, this message translates to:
-  /// **'Projects'**
+  /// **'Plans'**
   String get executionProjectsSection;
 
   /// No description provided for @executionCommitmentsSection.
   ///
   /// In en, this message translates to:
-  /// **'Long-term commitments'**
+  /// **'Ongoing'**
   String get executionCommitmentsSection;
 
   /// No description provided for @executionInboxSection.

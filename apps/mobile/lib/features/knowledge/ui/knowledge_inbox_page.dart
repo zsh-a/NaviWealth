@@ -46,7 +46,7 @@ class KnowledgeInboxPage extends ConsumerWidget {
         ShellHeaderActionSpec(
           icon: FLucideIcons.plus,
           label: l10n.knowledgeCaptureAction,
-          onPress: () => showKnowledgeCaptureSheet(context, ref),
+          onPress: () => showKnowledgeCaptureSheet(context),
         ),
       ],
       child: const ShellTabPause(

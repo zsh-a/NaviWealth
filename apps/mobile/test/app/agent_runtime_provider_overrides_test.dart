@@ -38,7 +38,6 @@ import 'package:naviwealth/features/knowledge/agents/inbox_triage_agent.dart';
 import 'package:naviwealth/features/knowledge/agents/providers.dart'
     as knowledge_agent_providers;
 import 'package:naviwealth/features/knowledge/agents/review_agent.dart';
-import 'package:naviwealth/features/knowledge/agents/routine_due_agent.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_llm_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -167,14 +166,6 @@ void main() {
           (agent) => agent.sourceReader,
           'sourceReader',
           isA<FrbContradictionSourceReader>(),
-        ),
-      );
-      expect(
-        container.read(knowledge_agent_providers.routineDueAgentProvider),
-        isA<RoutineDueAgent>().having(
-          (agent) => agent.dueReader,
-          'dueReader',
-          isA<FrbRoutineDueReader>(),
         ),
       );
     },

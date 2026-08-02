@@ -429,25 +429,14 @@ Future<_LibrarySegment?> _showLibraryTypePicker({
     (null, const <_LibrarySegment>[_LibrarySegment.all]),
     (
       l10n.knowledgeLibraryTypeGroupCore,
-      const <_LibrarySegment>[_LibrarySegment.decisions],
-    ),
-    (
-      l10n.knowledgeLibraryTypeGroupSources,
-      const <_LibrarySegment>[_LibrarySegment.notes, _LibrarySegment.concepts],
-    ),
-    (
-      l10n.knowledgeLibraryTypeGroupThinking,
       const <_LibrarySegment>[
-        _LibrarySegment.principles,
+        _LibrarySegment.decisions,
         _LibrarySegment.assumptions,
       ],
     ),
     (
-      l10n.knowledgeLibraryTypeGroupAction,
-      const <_LibrarySegment>[
-        _LibrarySegment.experiments,
-        _LibrarySegment.routines,
-      ],
+      l10n.knowledgeLibraryTypeGroupSources,
+      const <_LibrarySegment>[_LibrarySegment.notes],
     ),
   ];
   return showAppSheet<_LibrarySegment>(

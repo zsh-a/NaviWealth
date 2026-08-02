@@ -6,9 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/command_palette/command_palette_entry.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../ui/execution_action_sheet.dart';
-import '../ui/execution_commitment_sheet.dart';
-import '../ui/execution_project_sheet.dart';
+import '../ui/execution_create_sheet.dart';
 import 'execution_route_paths.dart';
 
 List<CommandPaletteEntry> executionCommandPaletteEntries(
@@ -16,35 +14,20 @@ List<CommandPaletteEntry> executionCommandPaletteEntries(
 ) {
   return <CommandPaletteEntry>[
     CommandPaletteEntry(
-      id: 'create.execution.action',
-      label: l10n.executionCreateActionTitle,
-      icon: FLucideIcons.listPlus,
+      id: 'create.execution',
+      label: l10n.executionCreatePlanTitle,
+      icon: FLucideIcons.plus,
       keywords: const <String>[
         'execution',
         'action',
+        'plan',
+        'project',
         'todo',
         'capture',
         '行动',
         '待办',
       ],
-      run: (BuildContext ctx) =>
-          unawaited(showExecutionActionSheet(context: ctx)),
-    ),
-    CommandPaletteEntry(
-      id: 'create.execution.project',
-      label: l10n.executionCreateProjectTitle,
-      icon: FLucideIcons.folderPlus,
-      keywords: const <String>['execution', 'project', '项目'],
-      run: (BuildContext ctx) =>
-          unawaited(showExecutionProjectSheet(context: ctx)),
-    ),
-    CommandPaletteEntry(
-      id: 'create.execution.commitment',
-      label: l10n.executionCreateCommitmentTitle,
-      icon: FLucideIcons.target,
-      keywords: const <String>['execution', 'commitment', '承诺'],
-      run: (BuildContext ctx) =>
-          unawaited(showExecutionCommitmentSheet(context: ctx)),
+      run: (BuildContext ctx) => unawaited(showExecutionCreateSheet(ctx)),
     ),
     CommandPaletteEntry(
       id: 'nav.execution.today',
