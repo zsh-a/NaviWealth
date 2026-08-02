@@ -113,6 +113,10 @@ Rules:
 - A domain owns its tab paths through `DomainPack.tabPaths`.
 - Additional route prefixes that belong to a domain but are not tabs use `DomainPack.additionalPathPrefixes`.
 - The dock is visible when at least two domain shell specs are active.
+- The Life hub does not repeat domain destinations inside its content. Desktop
+  uses the dock; compact layouts use the header switcher. When only one domain
+  is active, that header control becomes a direct link to the domain instead
+  of opening a one-item picker.
 
 ## Identity And Opt-In
 
@@ -178,7 +182,7 @@ Rule: proposal metadata and proposal applier routes belong in the owning domain'
 KnowledgeOS and ExecutionOS contribute their contextual review destinations
 through `DomainPack.reviewRoutePath`. The Life hub renders one review entry and
 offers only active domains with a real destination. Review data and pages stay
-domain-owned; the Life surface composes routes and signal counts only.
+domain-owned; generic Life signals are not presented as a review backlog.
 
 ## Agent Runtime
 

@@ -2194,9 +2194,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeStickyCalm => '暂无待处理事项';
 
   @override
-  String get lifeWorkbenchTitle => '功能领域';
-
-  @override
   String get lifeReviewTitle => '复盘';
 
   @override
@@ -2207,11 +2204,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get lifeReviewPickerSubtitle => '选择本次要复盘的领域。';
-
-  @override
-  String lifeReviewDomainPending(int count) {
-    return '$count 个信号待处理';
-  }
 
   @override
   String get lifeTimelineTitle => '最新动态';
@@ -12628,33 +12620,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeLibraryFilterTitle => '筛选';
-
-  @override
-  String get knowledgeLibraryFilterClear => '清除筛选';
-
-  @override
-  String get knowledgeLibraryFilterStatus => '状态';
-
-  @override
-  String get knowledgeLibraryFilterDate => '日期';
-
-  @override
-  String get knowledgeLibraryFilterFacet => '标签与范围';
-
-  @override
-  String get knowledgeLibraryDateFilterAll => '任意日期';
-
-  @override
-  String get knowledgeLibraryDateFilterToday => '今天';
-
-  @override
-  String get knowledgeLibraryDateFilterWeek => '7 天内';
-
-  @override
-  String get knowledgeLibraryDateFilterMonth => '30 天内';
-
-  @override
-  String get knowledgeLibraryDateFilterOutsideMonth => '30 天外';
 
   @override
   String get knowledgeLibrarySearchClear => '清除搜索';

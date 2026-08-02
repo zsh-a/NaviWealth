@@ -3923,12 +3923,6 @@ abstract class AppLocalizations {
   /// **'Nothing to do'**
   String get lifeStickyCalm;
 
-  /// Section title for domain workspace chips
-  ///
-  /// In en, this message translates to:
-  /// **'Domains'**
-  String get lifeWorkbenchTitle;
-
   /// No description provided for @lifeReviewTitle.
   ///
   /// In en, this message translates to:
@@ -3952,12 +3946,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose what you want to review.'**
   String get lifeReviewPickerSubtitle;
-
-  /// No description provided for @lifeReviewDomainPending.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} signals need attention'**
-  String lifeReviewDomainPending(int count);
 
   /// Cross-domain signal list title
   ///
@@ -22362,60 +22350,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Filters'**
   String get knowledgeLibraryFilterTitle;
-
-  /// No description provided for @knowledgeLibraryFilterClear.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear filters'**
-  String get knowledgeLibraryFilterClear;
-
-  /// No description provided for @knowledgeLibraryFilterStatus.
-  ///
-  /// In en, this message translates to:
-  /// **'Status'**
-  String get knowledgeLibraryFilterStatus;
-
-  /// No description provided for @knowledgeLibraryFilterDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Date'**
-  String get knowledgeLibraryFilterDate;
-
-  /// No description provided for @knowledgeLibraryFilterFacet.
-  ///
-  /// In en, this message translates to:
-  /// **'Tags and scope'**
-  String get knowledgeLibraryFilterFacet;
-
-  /// No description provided for @knowledgeLibraryDateFilterAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Any date'**
-  String get knowledgeLibraryDateFilterAll;
-
-  /// No description provided for @knowledgeLibraryDateFilterToday.
-  ///
-  /// In en, this message translates to:
-  /// **'Today'**
-  String get knowledgeLibraryDateFilterToday;
-
-  /// No description provided for @knowledgeLibraryDateFilterWeek.
-  ///
-  /// In en, this message translates to:
-  /// **'7 days'**
-  String get knowledgeLibraryDateFilterWeek;
-
-  /// No description provided for @knowledgeLibraryDateFilterMonth.
-  ///
-  /// In en, this message translates to:
-  /// **'30 days'**
-  String get knowledgeLibraryDateFilterMonth;
-
-  /// No description provided for @knowledgeLibraryDateFilterOutsideMonth.
-  ///
-  /// In en, this message translates to:
-  /// **'30+ days'**
-  String get knowledgeLibraryDateFilterOutsideMonth;
 
   /// No description provided for @knowledgeLibrarySearchClear.
   ///

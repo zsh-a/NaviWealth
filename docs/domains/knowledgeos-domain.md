@@ -130,7 +130,9 @@ object from Library only when they already know the intended type.
 Library exposes Notes, Decisions, and Assumptions in its adaptive picker and
 creation sheet. Existing advanced objects remain searchable in All, but
 Principles, Concepts, Experiments, and Routines are no longer creation choices
-in the primary UI.
+in the primary UI. Library filtering has one contextual dimension: All filters
+by object type, while a typed collection filters by its status. Tags, scope,
+and dates remain searchable content rather than separate filter configuration.
 
 Decision detail exposes one source-preserving follow-up action when ExecutionOS
 is active. Creation uses the domain-neutral Life action dispatcher with

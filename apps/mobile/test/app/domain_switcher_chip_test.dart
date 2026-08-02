@@ -30,6 +30,54 @@ DomainShellSpec _domain({
 );
 
 void main() {
+  testWidgets('Life hub links directly to its only active domain', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/life',
+      routes: [
+        GoRoute(
+          path: '/life',
+          builder: (_, _) => const Scaffold(body: DomainSwitcherChip()),
+        ),
+        GoRoute(
+          path: '/today',
+          builder: (_, _) => const Scaffold(body: Text('Finance today')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          activeDomainShellsProvider.overrideWithValue([
+            _domain(
+              scope: DomainScope.finance,
+              label: 'FinanceOS',
+              path: '/today',
+            ),
+          ]),
+          domainSwitcherHomePathProvider.overrideWithValue('/life'),
+        ],
+        child: MaterialApp.router(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+          builder: (context, child) =>
+              FTheme(data: FThemes.slate.light.desktop, child: child!),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('FinanceOS'), findsOneWidget);
+    await tester.tap(find.byType(DomainSwitcherChip));
+    await tester.pumpAndSettle();
+    expect(find.text('Finance today'), findsOneWidget);
+  });
+
   testWidgets('Life hub uses a neutral icon-only workspace switcher', (
     tester,
   ) async {

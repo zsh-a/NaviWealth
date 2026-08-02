@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
@@ -12,48 +14,41 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  group('matchesKnowledgeLibraryDateFilter', () {
-    test('matches recent week and month buckets', () {
-      final now = DateTime.utc(2026, 6, 7, 12);
+  testWidgets('uses one immediate contextual filter', (tester) async {
+    await _pumpLibrary(
+      tester,
+      width: 390,
+      repository: _EmptyKnowledgeRepository(
+        decisions: [
+          _decision('draft', DecisionStatus.draft),
+          _decision('active', DecisionStatus.active),
+        ],
+      ),
+    );
 
-      expect(
-        matchesKnowledgeLibraryDateFilter(
-          DateTime.utc(2026, 6, 1),
-          KnowledgeLibraryDateFilter.week,
-          now,
-        ),
-        isTrue,
-      );
-      expect(
-        matchesKnowledgeLibraryDateFilter(
-          DateTime.utc(2026, 5, 8),
-          KnowledgeLibraryDateFilter.month,
-          now,
-        ),
-        isTrue,
-      );
-    });
+    await tester.tap(
+      find.byKey(const ValueKey<String>('knowledge-library.type-picker')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Decisions').last);
+    await tester.pumpAndSettle();
 
-    test('excludes dates outside the selected bucket', () {
-      final now = DateTime.utc(2026, 6, 7, 12);
+    await tester.tap(find.text('Filters'));
+    await tester.pumpAndSettle();
 
-      expect(
-        matchesKnowledgeLibraryDateFilter(
-          DateTime.utc(2026, 6, 16),
-          KnowledgeLibraryDateFilter.week,
-          now,
-        ),
-        isFalse,
-      );
-      expect(
-        matchesKnowledgeLibraryDateFilter(
-          DateTime.utc(2026, 7, 8),
-          KnowledgeLibraryDateFilter.month,
-          now,
-        ),
-        isFalse,
-      );
-    });
+    expect(find.text('Active'), findsWidgets);
+    expect(find.text('Draft'), findsWidgets);
+    expect(find.text('Date'), findsNothing);
+    expect(find.text('Tags and scope'), findsNothing);
+    expect(find.text('Clear filters'), findsNothing);
+
+    await tester.tap(find.text('Active').last);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey<String>('lib-tile-active')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey<String>('lib-tile-draft')), findsNothing);
   });
 
   testWidgets('uses a compact, descriptive type picker on mobile', (
@@ -152,6 +147,7 @@ Future<void> _pumpLibrary(
   WidgetTester tester, {
   required double width,
   double textScale = 1,
+  KnowledgeRepository? repository,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = Size(width, 844);
@@ -167,7 +163,7 @@ Future<void> _pumpLibrary(
         activeUserIdProvider.overrideWithValue('user-1'),
         currentUserIdProvider.overrideWithValue(() async => 'user-1'),
         knowledgeRepositoryProvider.overrideWith(
-          (_) async => _EmptyKnowledgeRepository(),
+          (_) async => repository ?? _EmptyKnowledgeRepository(),
         ),
       ],
       child: MaterialApp(
@@ -191,12 +187,37 @@ Future<void> _pumpLibrary(
   await tester.pumpAndSettle();
 }
 
+KnowledgeDecision _decision(String id, DecisionStatus status) {
+  final at = DateTime.utc(2026, 8, 2);
+  return KnowledgeDecision(
+    id: id,
+    question: id,
+    options: const <DecisionOption>[],
+    selectedLabel: '',
+    rationaleMd: '',
+    principleIds: const <String>[],
+    assumptionIds: const <String>[],
+    status: status,
+    decidedAt: at,
+    sync: SyncMeta(
+      ownerUserId: 'user-1',
+      updatedAt: at,
+      updatedByDevice: 'test-device',
+      hlc: Hlc.zero('test-device'),
+    ),
+  );
+}
+
 class _EmptyKnowledgeRepository implements KnowledgeRepository {
+  _EmptyKnowledgeRepository({this.decisions = const <KnowledgeDecision>[]});
+
+  final List<KnowledgeDecision> decisions;
+
   @override
   Stream<List<KnowledgeDecision>> watchDecisions({
     required String ownerUserId,
     int? limit,
-  }) => Stream<List<KnowledgeDecision>>.value(const <KnowledgeDecision>[]);
+  }) => Stream<List<KnowledgeDecision>>.value(decisions);
 
   @override
   Stream<List<KnowledgePrinciple>> watchPrinciples({

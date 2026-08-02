@@ -2287,9 +2287,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lifeStickyCalm => 'Nothing to do';
 
   @override
-  String get lifeWorkbenchTitle => 'Domains';
-
-  @override
   String get lifeReviewTitle => 'Review';
 
   @override
@@ -2301,11 +2298,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lifeReviewPickerSubtitle => 'Choose what you want to review.';
-
-  @override
-  String lifeReviewDomainPending(int count) {
-    return '$count signals need attention';
-  }
 
   @override
   String get lifeTimelineTitle => 'Latest updates';
@@ -13305,33 +13297,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeLibraryFilterTitle => 'Filters';
-
-  @override
-  String get knowledgeLibraryFilterClear => 'Clear filters';
-
-  @override
-  String get knowledgeLibraryFilterStatus => 'Status';
-
-  @override
-  String get knowledgeLibraryFilterDate => 'Date';
-
-  @override
-  String get knowledgeLibraryFilterFacet => 'Tags and scope';
-
-  @override
-  String get knowledgeLibraryDateFilterAll => 'Any date';
-
-  @override
-  String get knowledgeLibraryDateFilterToday => 'Today';
-
-  @override
-  String get knowledgeLibraryDateFilterWeek => '7 days';
-
-  @override
-  String get knowledgeLibraryDateFilterMonth => '30 days';
-
-  @override
-  String get knowledgeLibraryDateFilterOutsideMonth => '30+ days';
 
   @override
   String get knowledgeLibrarySearchClear => 'Clear search';

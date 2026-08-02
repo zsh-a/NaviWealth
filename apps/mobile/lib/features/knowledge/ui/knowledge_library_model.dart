@@ -22,8 +22,6 @@ IconData _segmentIcon(_LibrarySegment segment) => switch (segment) {
   _LibrarySegment.routines => FLucideIcons.calendarClock,
 };
 
-enum KnowledgeLibraryDateFilter { all, week, month }
-
 String _knowledgeLibrarySearchHistoryPrefsKey(String ownerUserId) =>
     'knowledge.$ownerUserId.library.search_history.v2';
 const int _kKnowledgeLibrarySearchHistoryLimit = 6;
@@ -88,17 +86,6 @@ final _knowledgeLibrarySegmentCountsProvider = StreamProvider.autoDispose
       });
     });
 
-String _dateFilterLabel(
-  AppLocalizations l10n,
-  KnowledgeLibraryDateFilter filter,
-) {
-  return switch (filter) {
-    KnowledgeLibraryDateFilter.all => l10n.knowledgeLibraryDateFilterAll,
-    KnowledgeLibraryDateFilter.week => l10n.knowledgeLibraryDateFilterWeek,
-    KnowledgeLibraryDateFilter.month => l10n.knowledgeLibraryDateFilterMonth,
-  };
-}
-
 /// Weighted search: ranks prefix matches above substring matches, and
 /// suggestion-field matches above full-text matches. Returns items
 /// sorted by relevance (best first), filtered to only matching items.
@@ -160,7 +147,6 @@ class _LibraryEntry {
     required this.date,
     required this.searchText,
     required this.suggestions,
-    required this.facets,
     required this.value,
     this.status,
   });
@@ -172,7 +158,6 @@ class _LibraryEntry {
   final DateTime date;
   final String searchText;
   final List<String> suggestions;
-  final List<String> facets;
   final Object value;
   final String? status;
 }
@@ -230,7 +215,6 @@ Stream<List<_LibraryEntry>> _watchAllKnowledge(
                 d.status.wire,
                 d.selectedLabel,
               ].where((value) => value.isNotEmpty).toList(growable: false),
-              facets: [d.status.wire],
               value: d,
             ),
         ],
@@ -254,7 +238,6 @@ Stream<List<_LibraryEntry>> _watchAllKnowledge(
                 p.status.wire,
               ].join('\n'),
               suggestions: [p.statement, p.status.wire, p.scope],
-              facets: [p.status.wire, p.scope],
               value: p,
             ),
         ],
@@ -283,7 +266,6 @@ Stream<List<_LibraryEntry>> _watchAllKnowledge(
                 a.scope,
                 a.confidence.toStringAsFixed(2),
               ],
-              facets: [a.status.wire, a.scope],
               value: a,
             ),
         ],
@@ -310,10 +292,6 @@ Stream<List<_LibraryEntry>> _watchAllKnowledge(
                 n.projectTag,
                 ...n.tags,
               ].whereType<String>().toList(growable: false),
-              facets: [
-                n.projectTag,
-                ...n.tags,
-              ].whereType<String>().toList(growable: false),
               value: n,
             ),
         ],
@@ -335,7 +313,6 @@ Stream<List<_LibraryEntry>> _watchAllKnowledge(
                 ...c.aliases,
               ].whereType<String>().join('\n'),
               suggestions: [c.name, ...c.aliases],
-              facets: [...c.aliases],
               value: c,
             ),
         ],
@@ -359,7 +336,6 @@ Stream<List<_LibraryEntry>> _watchAllKnowledge(
                 ...e.metrics,
               ].whereType<String>().join('\n'),
               suggestions: [e.hypothesis, e.status.wire, ...e.metrics],
-              facets: [e.status.wire, ...e.metrics],
               value: e,
             ),
         ],
@@ -378,7 +354,6 @@ Stream<List<_LibraryEntry>> _watchAllKnowledge(
               status: r.status.wire,
               searchText: [r.statement, r.scope, r.status.wire].join('\n'),
               suggestions: [r.statement, r.status.wire, r.scope],
-              facets: [r.status.wire, r.scope],
               value: r,
             ),
         ],
@@ -392,22 +367,4 @@ Stream<List<_LibraryEntry>> _watchAllKnowledge(
   );
 
   return controller.stream;
-}
-
-bool matchesKnowledgeLibraryDateFilter(
-  DateTime date,
-  KnowledgeLibraryDateFilter filter,
-  DateTime now,
-) {
-  if (filter == KnowledgeLibraryDateFilter.all) return true;
-  final dateLocal = date.toLocal();
-  final nowLocal = now.toLocal();
-  final localDate = DateTime(dateLocal.year, dateLocal.month, dateLocal.day);
-  final localNow = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
-  final days = localDate.difference(localNow).inDays.abs();
-  return switch (filter) {
-    KnowledgeLibraryDateFilter.all => true,
-    KnowledgeLibraryDateFilter.week => days <= 7,
-    KnowledgeLibraryDateFilter.month => days <= 30,
-  };
 }

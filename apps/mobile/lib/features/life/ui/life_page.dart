@@ -13,7 +13,6 @@ import 'package:naviwealth/core/shell/domain_switcher.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/life/data/life_events_provider.dart';
 import 'package:naviwealth/features/life/domain/life_event.dart';
 import 'package:naviwealth/features/life/ui/life_event_l10n.dart';
@@ -52,17 +51,6 @@ class LifePage extends ConsumerWidget {
       accentFor: (event) => _accentFor(context, event),
       domainLabel: (scope) => _domainLabel(l10n, scope),
     );
-    final primaryModules = <Widget>[
-      if (priorityEvents.isNotEmpty)
-        _LifeEventSection(
-          title: l10n.lifeTimelinePriorityTitle,
-          events: priorityEvents,
-          presentation: eventPresentation,
-        ),
-      if (packs.isNotEmpty)
-        _WorkspaceGrid(packs: packs, l10n: l10n, summary: hero),
-    ];
-
     return ShellCanvasScaffold(
       childPad: false,
       child: SafeArea(
@@ -104,11 +92,16 @@ class LifePage extends ConsumerWidget {
             ),
           ),
           modules: [
-            if (primaryModules.isNotEmpty) _LifePrimaryModules(primaryModules),
+            if (priorityEvents.isNotEmpty)
+              _LifeEventSection(
+                title: l10n.lifeTimelinePriorityTitle,
+                events: priorityEvents,
+                presentation: eventPresentation,
+              ),
           ],
           secondary: [
             if (reviewPacks.isNotEmpty)
-              _LifeReviewEntry(packs: reviewPacks, events: events, l10n: l10n),
+              _LifeReviewEntry(packs: reviewPacks, l10n: l10n),
             if (recentEvents.isNotEmpty)
               _LifeEventSection(
                 title: l10n.lifeTimelineTitle,
@@ -162,22 +155,13 @@ class LifePage extends ConsumerWidget {
 }
 
 class _LifeReviewEntry extends StatelessWidget {
-  const _LifeReviewEntry({
-    required this.packs,
-    required this.events,
-    required this.l10n,
-  });
+  const _LifeReviewEntry({required this.packs, required this.l10n});
 
   final List<DomainPack> packs;
-  final List<LifeEvent> events;
   final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    final scopes = packs.map((pack) => pack.scope).toSet();
-    final pendingCount = events
-        .where((event) => scopes.contains(event.domain))
-        .length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -214,19 +198,11 @@ class _LifeReviewEntry extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.s8),
-              if (pendingCount > 0)
-                AppBadge(
-                  label: '$pendingCount',
-                  size: AppBadgeSize.compact,
-                  tone: AppBadgeTone.accent,
-                  minWidth: 22,
-                )
-              else
-                Icon(
-                  FLucideIcons.chevronRight,
-                  size: AppIconSizes.sm,
-                  color: context.theme.colors.mutedForeground,
-                ),
+              Icon(
+                FLucideIcons.chevronRight,
+                size: AppIconSizes.sm,
+                color: context.theme.colors.mutedForeground,
+              ),
             ],
           ),
         ),
@@ -251,9 +227,6 @@ class _LifeReviewEntry extends StatelessWidget {
                   ? FLucideIcons.brain
                   : FLucideIcons.listChecks,
               title: LifePage._domainLabel(l10n, pack.scope),
-              subtitle: l10n.lifeReviewDomainPending(
-                events.where((event) => event.domain == pack.scope).length,
-              ),
               onPress: () {
                 Navigator.of(sheetContext).pop();
                 context.go(pack.reviewRoutePath!);
@@ -379,180 +352,6 @@ class _LifeHero extends StatelessWidget {
           ],
         ],
       ),
-    );
-  }
-}
-
-/// Equal-width domain destinations. Intrinsic-width chips caused the two rows
-/// to drift whenever a label or signal badge changed; the grid keeps a stable
-/// scan line across locales and viewport sizes.
-class _WorkspaceGrid extends StatelessWidget {
-  const _WorkspaceGrid({
-    required this.packs,
-    required this.l10n,
-    required this.summary,
-  });
-
-  final List<DomainPack> packs;
-  final AppLocalizations l10n;
-  final LifeHeroSummary summary;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final status = context.appTheme.status;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SectionHeader.module(title: l10n.lifeWorkbenchTitle),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final desiredColumns =
-                constraints.maxWidth >= Breakpoints.contentThreeColumn ? 4 : 2;
-            final columns = packs.length < desiredColumns
-                ? packs.length
-                : desiredColumns;
-            final tileWidth =
-                (constraints.maxWidth - AppPageRhythm.row * (columns - 1)) /
-                columns;
-            return Wrap(
-              spacing: AppPageRhythm.row,
-              runSpacing: AppPageRhythm.row,
-              children: [
-                for (final pack in packs)
-                  SizedBox(
-                    key: ValueKey<DomainScope>(pack.scope),
-                    width: tileWidth,
-                    child: _DomainTile(
-                      pack: pack,
-                      l10n: l10n,
-                      colors: colors,
-                      status: status,
-                      signalCount: summary.signalsFor(pack.scope),
-                      highCount: summary.highFor(pack.scope),
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class _DomainTile extends StatelessWidget {
-  const _DomainTile({
-    required this.pack,
-    required this.l10n,
-    required this.colors,
-    required this.status,
-    required this.signalCount,
-    required this.highCount,
-  });
-
-  final DomainPack pack;
-  final AppLocalizations l10n;
-  final FColors colors;
-  final AppStatus status;
-  final int signalCount;
-  final int highCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final path = pack.tabPaths.isNotEmpty
-        ? pack.tabPaths.first
-        : FinanceRoutes.home;
-    final spec = pack.shellSpecBuilder?.call(l10n);
-    final label =
-        spec?.label ??
-        switch (pack.scope) {
-          DomainScope.finance => l10n.lifeDomainFinance,
-          DomainScope.health => l10n.lifeDomainHealth,
-          DomainScope.knowledge => l10n.lifeDomainKnowledge,
-          DomainScope.execution => l10n.lifeDomainExecution,
-        };
-    final icon = spec?.icon ?? FLucideIcons.layers;
-    final accent = highCount > 0
-        ? switch (pack.scope) {
-            DomainScope.health => colors.destructive,
-            DomainScope.execution => status.warning.fg,
-            DomainScope.knowledge => status.info.fg,
-            DomainScope.finance => colors.primary,
-          }
-        : colors.primary;
-
-    return SoftCard.raised(
-      padding: AppPageRhythm.densePadding,
-      onPress: () => context.go(path),
-      child: Row(
-        children: [
-          AppIconTile(
-            icon: icon,
-            color: accent,
-            size: 28,
-            iconSize: AppIconSizes.sm,
-            radius: AppRadius.sm,
-            backgroundOpacity: AppOpacity.subtle,
-            foregroundOpacity: 1,
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          Expanded(
-            child: Text(
-              label,
-              style: context.labelStyle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (signalCount > 0) ...[
-            const SizedBox(width: AppSpacing.s8),
-            AppBadge(
-              label: '$signalCount',
-              size: AppBadgeSize.compact,
-              tone: highCount > 0 ? AppBadgeTone.warning : AppBadgeTone.accent,
-              minWidth: 22,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// Keeps the action surface and workspace navigation in one responsive module.
-/// Narrow screens preserve task-first reading order; wide canvases use two
-/// balanced columns without changing the semantic order.
-class _LifePrimaryModules extends StatelessWidget {
-  const _LifePrimaryModules(this.children);
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    if (children.length == 1) return children.first;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < Breakpoints.contentTwoColumn) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (var i = 0; i < children.length; i++) ...[
-                if (i > 0) const SizedBox(height: AppPageRhythm.section),
-                children[i],
-              ],
-            ],
-          );
-        }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: children.first),
-            const SizedBox(width: AppPageRhythm.section),
-            Expanded(child: children.last),
-          ],
-        );
-      },
     );
   }
 }

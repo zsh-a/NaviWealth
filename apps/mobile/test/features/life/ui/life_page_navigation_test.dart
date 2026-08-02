@@ -33,7 +33,7 @@ DomainPack _domainPack(
 }
 
 void main() {
-  testWidgets('keeps a compact task-first hierarchy and equal domain grid', (
+  testWidgets('keeps a compact task-first hierarchy without duplicate nav', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(430, 1000));
@@ -101,35 +101,16 @@ void main() {
     final priorityTop = tester
         .getTopLeft(find.text(l10n.lifeTimelinePriorityTitle))
         .dy;
-    final workspaceTop = tester
-        .getTopLeft(find.text(l10n.lifeWorkbenchTitle))
-        .dy;
     final recentTop = tester.getTopLeft(find.text(l10n.lifeTimelineTitle)).dy;
-    expect(priorityTop, lessThan(workspaceTop));
-    expect(workspaceTop, lessThan(recentTop));
+    expect(priorityTop, lessThan(recentTop));
     expect(
       tester.getSize(find.byKey(const ValueKey('life-summary-card'))).height,
       lessThan(100),
     );
 
-    final domainTiles = [
-      for (final scope in DomainScope.values)
-        find.byKey(ValueKey<DomainScope>(scope)),
-    ];
-    final widths = [for (final tile in domainTiles) tester.getSize(tile).width];
-    expect(widths.toSet(), hasLength(1));
-    expect(
-      tester.getTopLeft(domainTiles[0]).dy,
-      tester.getTopLeft(domainTiles[1]).dy,
-    );
-    expect(
-      tester.getTopLeft(domainTiles[2]).dy,
-      tester.getTopLeft(domainTiles[3]).dy,
-    );
-    expect(
-      tester.getTopLeft(domainTiles[2]).dy,
-      greaterThan(tester.getTopLeft(domainTiles[0]).dy),
-    );
+    for (final scope in DomainScope.values) {
+      expect(find.byKey(ValueKey<DomainScope>(scope)), findsNothing);
+    }
   });
 
   testWidgets('opens domain reviews from one Life review entry', (

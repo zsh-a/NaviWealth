@@ -72,9 +72,9 @@ List<ShellHeaderActionSpec> _buildShellGlobalActions(
 /// Renders the active domain's icon + a chevron; tapping opens
 /// [showDomainSwitcherSheet]. On the Life hub it renders as an icon-only
 /// workspace control: no individual domain is active there, and showing the
-/// fallback Finance label incorrectly implies domain ownership. Collapses to
-/// nothing when fewer than two domains are active — single-domain installs
-/// never need the switcher, matching [domainDockVisibleProvider].
+/// fallback Finance label incorrectly implies domain ownership. A
+/// single-domain install gets one compact direct link on the Life hub instead
+/// of a redundant in-content domain navigation section.
 class DomainSwitcherChip extends ConsumerWidget {
   const DomainSwitcherChip({super.key});
 
@@ -88,15 +88,25 @@ class DomainSwitcherChip extends ConsumerWidget {
       return const SizedBox.shrink();
     }
     final specs = ref.watch(activeDomainShellsProvider);
-    if (specs.length < 2) return const SizedBox.shrink();
+    if (specs.isEmpty) return const SizedBox.shrink();
     final homePath = ref.watch(domainSwitcherHomePathProvider);
 
     final path = GoRouter.of(context).routeInformationProvider.value.uri.path;
     final isLifeHub = path == homePath;
+    final single = specs.length == 1 ? specs.single : null;
+    final singleTarget = single != null && single.tabs.isNotEmpty
+        ? single.tabs.first.routePath
+        : null;
+    final isSingleHomeLink = isLifeHub && singleTarget != null;
+    if (specs.length == 1 && !isSingleHomeLink) {
+      return const SizedBox.shrink();
+    }
     final active = activeSpecForPath(specs, path);
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
-    final semanticsLabel = isLifeHub
+    final semanticsLabel = isSingleHomeLink
+        ? single!.label
+        : isLifeHub
         ? l10n.shellSwitchDomainTitle
         : active.label;
 
@@ -104,7 +114,9 @@ class DomainSwitcherChip extends ConsumerWidget {
       label: semanticsLabel,
       button: true,
       child: FTappable(
-        onPress: () => showDomainSwitcherSheet(context, specs, homePath),
+        onPress: isSingleHomeLink
+            ? () => context.go(singleTarget)
+            : () => showDomainSwitcherSheet(context, specs, homePath),
         child: Container(
           constraints: const BoxConstraints(
             minHeight: AppControlHeights.touchTarget,
@@ -118,16 +130,20 @@ class DomainSwitcherChip extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                isLifeHub ? FLucideIcons.layers : active.selectedIcon,
+                isSingleHomeLink
+                    ? single!.selectedIcon
+                    : isLifeHub
+                    ? FLucideIcons.layers
+                    : active.selectedIcon,
                 size: AppIconSizes.sm,
                 color: colors.primary,
               ),
-              if (!isLifeHub) ...[
+              if (!isLifeHub || isSingleHomeLink) ...[
                 const SizedBox(width: AppSpacing.s6),
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 76),
                   child: Text(
-                    active.label,
+                    isSingleHomeLink ? single!.label : active.label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: context.captionLabelStyle.copyWith(
@@ -138,7 +154,9 @@ class DomainSwitcherChip extends ConsumerWidget {
               ],
               const SizedBox(width: AppSpacing.s4),
               Icon(
-                FLucideIcons.chevronDown,
+                isSingleHomeLink
+                    ? FLucideIcons.chevronRight
+                    : FLucideIcons.chevronDown,
                 size: AppIconSizes.xs,
                 color: colors.mutedForeground,
               ),
