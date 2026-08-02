@@ -57,7 +57,11 @@ void main() {
     final packs = [
       _domainPack(DomainScope.finance, 'FinanceOS'),
       _domainPack(DomainScope.health, 'HealthOS'),
-      _domainPack(DomainScope.knowledge, 'KnowledgeOS'),
+      _domainPack(
+        DomainScope.knowledge,
+        'KnowledgeOS',
+        reviewRoutePath: '/knowledge/review',
+      ),
       _domainPack(DomainScope.execution, 'ExecutionOS'),
     ];
     final router = GoRouter(
@@ -111,6 +115,19 @@ void main() {
     for (final scope in DomainScope.values) {
       expect(find.byKey(ValueKey<DomainScope>(scope)), findsNothing);
     }
+
+    await tester.binding.setSurfaceSize(const Size(1200, 1000));
+    await tester.pump(const Duration(milliseconds: 150));
+
+    final priorityWideTop = tester
+        .getTopLeft(find.text(l10n.lifeTimelinePriorityTitle))
+        .dy;
+    final reviewWideTop = tester.getTopLeft(find.text(l10n.lifeReviewTitle)).dy;
+    final recentWideTop = tester
+        .getTopLeft(find.text(l10n.lifeTimelineTitle))
+        .dy;
+    expect(priorityWideTop, reviewWideTop);
+    expect(recentWideTop, greaterThan(priorityWideTop));
   });
 
   testWidgets('opens domain reviews from one Life review entry', (

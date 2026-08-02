@@ -12,6 +12,8 @@ import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/core/shell/shell_visibility.dart';
 import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/activation/data/finance_activation_providers.dart';
+import 'package:naviwealth/features/finance/activation/data/finance_activation_store.dart';
 import 'package:naviwealth/features/finance/activation/ui/finance_activation_card.dart';
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;

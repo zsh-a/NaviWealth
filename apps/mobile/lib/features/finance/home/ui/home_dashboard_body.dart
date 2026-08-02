@@ -10,38 +10,28 @@ class _DashboardBody extends StatelessWidget {
       _DashboardBodyContent(snapshot: snapshot);
 }
 
-class _DashboardBodyContent extends ConsumerStatefulWidget {
+class _DashboardBodyContent extends ConsumerWidget {
   const _DashboardBodyContent({required this.snapshot});
 
   final DashboardSnapshot snapshot;
 
   @override
-  ConsumerState<_DashboardBodyContent> createState() =>
-      _DashboardBodyContentState();
-}
-
-class _DashboardBodyContentState extends ConsumerState<_DashboardBodyContent> {
-  final _primaryScrollController = ScrollController();
-
-  @override
-  void dispose() {
-    _primaryScrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final snapshot = widget.snapshot;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final snapshot = this.snapshot;
     final amountsHidden = ref.watch(_financeAmountsHiddenProvider);
+    final activation = ref.watch(financeActivationProvider).value;
+    final activationDismissed = ref.watch(financeActivationDismissedProvider);
+    final agentResults = ref.watch(
+      finance_agent_providers.latestFinanceAgentResultsProvider,
+    );
+    final showActivation =
+        !activationDismissed && activation != null && !activation.isComplete;
+    final showAgentResults =
+        (agentResults.hasError && !agentResults.hasValue) ||
+        agentResults.value?.visibleEntries.isNotEmpty == true;
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        // Keep one stable desktop workspace before and after activation.
-        // Switching from a centered onboarding column to a separate cockpit
-        // after the first import made the product feel like two different
-        // apps and moved familiar actions at the exact moment users began to
-        // rely on them.
-        final useCockpit = width >= Breakpoints.contentTwoColumn;
         final basePadding = Breakpoints.isMobile(width)
             ? const EdgeInsets.symmetric(
                 horizontal: AppSpacing.s16,
@@ -97,118 +87,36 @@ class _DashboardBodyContentState extends ConsumerState<_DashboardBodyContent> {
 
         return AmountPrivacyScope(
           hidden: amountsHidden,
-          child: useCockpit
-              ? AppRefreshIndicator(
-                  onRefresh: onRefresh,
-                  child: AppAtmosphere(
-                    child: AppCollapsingScrollHost(
-                      primaryController: _primaryScrollController,
-                      padding: EdgeInsets.fromLTRB(
-                        padding.left,
-                        AppSpacing.s4,
-                        padding.right,
-                        0,
-                      ),
-                      stickyBuilder: stickyNetWorth,
-                      // Dual-column: primary and secondary scroll independently
-                      // so the right rail stays usable on tall dashboards.
-                      body: Align(
-                        alignment: Alignment.topCenter,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: AdaptiveMaxWidth.dashboard,
-                          ),
-                          child: Padding(
-                            padding: padding.copyWith(top: AppSpacing.s0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Expanded(
-                                  child: ListView(
-                                    controller: _primaryScrollController,
-                                    physics:
-                                        const AlwaysScrollableScrollPhysics(),
-                                    padding: EdgeInsets.zero,
-                                    children: [
-                                      const HomeGreetingHeader(),
-                                      _NetWorthHeader(snapshot: snapshot),
-                                      const SizedBox(
-                                        height: AppPageRhythm.module,
-                                      ),
-                                      const FinanceActivationCard(),
-                                      const SizedBox(
-                                        height: AppPageRhythm.section,
-                                      ),
-                                      HomeQuickActions(
-                                        mode: snapshot.isEmpty
-                                            ? HomeQuickActionMode.onboarding
-                                            : HomeQuickActionMode.active,
-                                      ),
-                                      const SizedBox(
-                                        height: AppPageRhythm.section,
-                                      ),
-                                      const FinancialInboxCard(),
-                                      const SizedBox(
-                                        height: AppPageRhythm.section,
-                                      ),
-                                      const FinanceAgentResultsPanel(
-                                        showPlaceholderStates: false,
-                                      ),
-                                      const SizedBox(
-                                        height: AppPageRhythm.section,
-                                      ),
-                                      const ActivityTimelinePreview(),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: AppSpacing.s24),
-                                SizedBox(
-                                  width: kAdaptiveRightRailWidth,
-                                  child: ListView(
-                                    physics:
-                                        const AlwaysScrollableScrollPhysics(),
-                                    padding: EdgeInsets.zero,
-                                    children: const [
-                                      MoneyRunwayCard(),
-                                      SizedBox(height: AppPageRhythm.section),
-                                      CashflowCalendarCard(),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-              : BriefScaffold(
-                  padding: padding,
-                  maxContentWidth: snapshot.isEmpty
-                      ? AdaptiveMaxWidth.narrow
-                      : null,
-                  onRefresh: onRefresh,
-                  greeting: const HomeGreetingHeader(),
-                  stage: _NetWorthHeader(snapshot: snapshot),
-                  stickyBuilder: stickyNetWorth,
-                  modules: [
-                    const FinanceActivationCard(),
-                    HomeQuickActions(
-                      mode: snapshot.isEmpty
-                          ? HomeQuickActionMode.onboarding
-                          : HomeQuickActionMode.active,
-                    ),
-                    const FinancialInboxCard(),
-                    const FinanceAgentResultsPanel(
-                      showPlaceholderStates: false,
-                    ),
-                    const ActivityTimelinePreview(),
-                  ],
-                  // Cash-flow detail lives on its own page; Activity is
-                  // the daily signal on Today.
-                  secondary: const [MoneyRunwayCard(), CashflowCalendarCard()],
+          child: BriefScaffold(
+            padding: padding,
+            maxContentWidth: snapshot.isEmpty
+                ? AdaptiveMaxWidth.narrow
+                : AdaptiveMaxWidth.dashboard,
+            onRefresh: onRefresh,
+            greeting: const HomeGreetingHeader(),
+            stage: _NetWorthHeader(snapshot: snapshot),
+            stickyBuilder: stickyNetWorth,
+            summaryTiles: [
+              if (showActivation)
+                const AdaptiveSummaryTile(child: FinanceActivationCard()),
+              AdaptiveSummaryTile(
+                span: AdaptiveSummaryTileSpan.featured,
+                child: HomeQuickActions(
+                  mode: snapshot.isEmpty
+                      ? HomeQuickActionMode.onboarding
+                      : HomeQuickActionMode.active,
                 ),
+              ),
+              const AdaptiveSummaryTile(child: FinancialInboxCard()),
+              if (showAgentResults)
+                const AdaptiveSummaryTile(
+                  child: FinanceAgentResultsPanel(showPlaceholderStates: false),
+                ),
+              const AdaptiveSummaryTile(child: ActivityTimelinePreview()),
+              const AdaptiveSummaryTile(child: MoneyRunwayCard()),
+              const AdaptiveSummaryTile(child: CashflowCalendarCard()),
+            ],
+          ),
         );
       },
     );

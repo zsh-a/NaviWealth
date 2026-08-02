@@ -32,6 +32,7 @@ export 'tokens/motion_tokens.dart';
 export 'tokens/text_style_presets.dart';
 export 'tokens/typography_tokens.dart';
 export 'widgets/adaptive_content_frame.dart';
+export 'widgets/adaptive_summary_grid.dart';
 export 'widgets/amount_privacy_placeholder.dart';
 export 'widgets/amount_privacy_scope.dart';
 export 'widgets/animated_money_text.dart';

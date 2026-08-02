@@ -91,26 +91,34 @@ class LifePage extends ConsumerWidget {
               ],
             ),
           ),
-          modules: [
+          summaryTiles: [
             if (priorityEvents.isNotEmpty)
-              _LifeEventSection(
-                title: l10n.lifeTimelinePriorityTitle,
-                events: priorityEvents,
-                presentation: eventPresentation,
+              AdaptiveSummaryTile(
+                span: AdaptiveSummaryTileSpan.featured,
+                child: _LifeEventSection(
+                  title: l10n.lifeTimelinePriorityTitle,
+                  events: priorityEvents,
+                  presentation: eventPresentation,
+                ),
               ),
-          ],
-          secondary: [
             if (reviewPacks.isNotEmpty)
-              _LifeReviewEntry(packs: reviewPacks, l10n: l10n),
+              AdaptiveSummaryTile(
+                child: _LifeReviewEntry(packs: reviewPacks, l10n: l10n),
+              ),
             if (recentEvents.isNotEmpty)
-              _LifeEventSection(
-                title: l10n.lifeTimelineTitle,
-                events: recentEvents,
-                presentation: eventPresentation,
-                collapsedCap: _kRecentCollapsedCap,
+              AdaptiveSummaryTile(
+                span: priorityEvents.isNotEmpty
+                    ? AdaptiveSummaryTileSpan.full
+                    : AdaptiveSummaryTileSpan.featured,
+                child: _LifeEventSection(
+                  title: l10n.lifeTimelineTitle,
+                  events: recentEvents,
+                  presentation: eventPresentation,
+                  collapsedCap: _kRecentCollapsedCap,
+                ),
               )
             else if (priorityEvents.isEmpty)
-              _LifeEmptySection(l10n: l10n),
+              AdaptiveSummaryTile(child: _LifeEmptySection(l10n: l10n)),
           ],
         ),
       ),

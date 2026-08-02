@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/dimens_tokens.dart';
+import 'adaptive_summary_grid.dart';
 import 'app_collapsing_stage.dart';
 import 'app_refresh_indicator.dart';
 import 'atmosphere.dart';
@@ -33,6 +34,7 @@ class BriefScaffold extends StatelessWidget {
     this.stickyBuilder,
     this.stickyPadding,
     this.maxContentWidth,
+    this.summaryTiles,
   });
 
   /// Top identity row (greeting + chrome).
@@ -67,6 +69,10 @@ class BriefScaffold extends StatelessWidget {
   /// canvases. Mobile layouts remain governed by [padding].
   final double? maxContentWidth;
 
+  /// Optional adaptive overview composition. When supplied, it replaces
+  /// [modules] and [secondary] with one ordered responsive grid.
+  final List<AdaptiveSummaryTile>? summaryTiles;
+
   @override
   Widget build(BuildContext context) {
     final contentPadding =
@@ -78,15 +84,19 @@ class BriefScaffold extends StatelessWidget {
           AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
         );
 
+    final adaptiveTiles = summaryTiles;
     final columnChildren = <Widget>[
       greeting,
       const SizedBox(height: AppPageRhythm.module),
       stage,
-      if (modules.isNotEmpty) ...[
+      if (adaptiveTiles != null && adaptiveTiles.isNotEmpty) ...[
+        const SizedBox(height: AppPageRhythm.section),
+        AdaptiveSummaryGrid(items: adaptiveTiles),
+      ] else if (modules.isNotEmpty) ...[
         const SizedBox(height: AppPageRhythm.section),
         ..._interleave(modules, AppPageRhythm.module),
       ],
-      if (secondary.isNotEmpty) ...[
+      if (adaptiveTiles == null && secondary.isNotEmpty) ...[
         const SizedBox(height: AppPageRhythm.section),
         ..._interleave(secondary, AppPageRhythm.module),
       ],
