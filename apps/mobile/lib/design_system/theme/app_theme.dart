@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/breakpoints.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
@@ -10,8 +11,19 @@ import 'accent_seed.dart';
 import 'app_page_transitions.dart';
 import 'app_surface_style.dart';
 
-bool useCompactDensity(TargetPlatform platform, bool isWeb) {
-  if (isWeb) return true;
+/// Resolves pointer-oriented density from both platform and window class.
+///
+/// Web is not inherently desktop: a compact browser viewport is normally a
+/// phone and must retain touch-sized targets. Native desktop stays compact;
+/// native mobile stays touch-oriented regardless of window resizing.
+bool useCompactDensity(
+  TargetPlatform platform,
+  bool isWeb, {
+  double? windowWidth,
+}) {
+  if (isWeb) {
+    return windowWidth == null || windowWidth >= Breakpoints.mobile;
+  }
   return switch (platform) {
     TargetPlatform.macOS ||
     TargetPlatform.windows ||

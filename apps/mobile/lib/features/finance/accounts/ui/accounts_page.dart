@@ -24,21 +24,22 @@ class AccountsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final masterDetail = MasterDetailLayout.shouldUseMasterDetail(
-      MediaQuery.sizeOf(context).width,
-    );
     final selected = selectedQueryOf(context);
-    if (masterDetail) {
-      return AppCanvasScaffold(
-        childPad: false,
-        child: MasterDetailLayout(
-          master: AccountsMaster(selectedId: selected, inMasterDetail: true),
-          detail: selected == null
-              ? const AccountsDetailEmpty()
-              : AccountDetailPage(accountId: selected),
-        ),
-      );
-    }
-    return const AccountsMaster(selectedId: null, inMasterDetail: false);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (!MasterDetailLayout.shouldUseMasterDetail(constraints.maxWidth)) {
+          return const AccountsMaster(selectedId: null, inMasterDetail: false);
+        }
+        return AppCanvasScaffold(
+          childPad: false,
+          child: MasterDetailLayout(
+            master: AccountsMaster(selectedId: selected, inMasterDetail: true),
+            detail: selected == null
+                ? const AccountsDetailEmpty()
+                : AccountDetailPage(accountId: selected),
+          ),
+        );
+      },
+    );
   }
 }

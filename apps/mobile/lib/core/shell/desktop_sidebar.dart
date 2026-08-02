@@ -24,11 +24,15 @@ class DesktopSidebar extends ConsumerWidget {
     required this.destinations,
     required this.selectedIndex,
     required this.onDestinationSelected,
+    this.workspace,
+    this.footerActions = const <DesktopSidebarAction>[],
   });
 
   final List<DesktopSidebarDestination> destinations;
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
+  final DesktopSidebarWorkspace? workspace;
+  final List<DesktopSidebarAction> footerActions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,13 +41,35 @@ class DesktopSidebar extends ConsumerWidget {
       duration: AppMotionPolicy.duration(context, Motion.fast),
       curve: Motion.standardDecelerate,
       width: collapsed ? kSidebarCollapsedWidth : kSidebarExpandedWidth,
-      child: AppGlassSurface(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: context.appTheme.surfaces.card,
+          border: Border(
+            right: BorderSide(
+              color: context.appTheme.surfaces.border,
+              width: AppStroke.hairline,
+            ),
+          ),
+        ),
         child: SafeArea(
           right: false,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: AppSpacing.s12),
+              if (workspace case final workspace?) ...[
+                _WorkspaceSwitcherRow(
+                  workspace: workspace,
+                  collapsed: collapsed,
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s12,
+                    vertical: AppSpacing.s8,
+                  ),
+                  child: FDivider(),
+                ),
+              ],
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(
@@ -60,6 +86,8 @@ class DesktopSidebar extends ConsumerWidget {
                 ),
               ),
               const FDivider(),
+              for (final action in footerActions)
+                _PinnedActionRow(action: action, collapsed: collapsed),
               // Pinned bottom row — Settings is off-nav (IA contract §1)
               // but the desktop shell has the room to surface it as a
               // discoverable entry, mirroring the Today-header avatar on
@@ -90,6 +118,138 @@ class DesktopSidebarDestination {
   final IconData icon;
   final IconData selectedIcon;
   final String label;
+}
+
+/// Current workspace affordance shown above domain-local destinations.
+///
+/// The shell composition root supplies the label and callback, keeping this
+/// shared sidebar independent of LifeOS domain types and app routes.
+class DesktopSidebarWorkspace {
+  const DesktopSidebarWorkspace({
+    required this.icon,
+    required this.label,
+    required this.onPress,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPress;
+}
+
+/// A pinned shell action rendered between navigation and Settings.
+class DesktopSidebarAction {
+  const DesktopSidebarAction({
+    required this.icon,
+    required this.label,
+    required this.onPress,
+    this.emphasized = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPress;
+  final bool emphasized;
+}
+
+class _WorkspaceSwitcherRow extends StatelessWidget {
+  const _WorkspaceSwitcherRow({
+    required this.workspace,
+    required this.collapsed,
+  });
+
+  final DesktopSidebarWorkspace workspace;
+  final bool collapsed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final row = Container(
+      height: AppSpacing.s48,
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
+      decoration: BoxDecoration(
+        color: colors.muted.withValues(alpha: AppOpacity.medium),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: AppSpacing.s40,
+            child: Icon(workspace.icon, color: colors.primary),
+          ),
+          if (!collapsed) ...[
+            Expanded(
+              child: Text(
+                workspace.label,
+                style: context.labelStyle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Icon(
+              FLucideIcons.chevronsUpDown,
+              color: colors.mutedForeground,
+              size: AppIconSizes.sm,
+            ),
+          ],
+        ],
+      ),
+    );
+    final tap = AppTappable(
+      semanticsLabel: workspace.label,
+      onPress: workspace.onPress,
+      child: row,
+    );
+    if (!collapsed) return tap;
+    return FTooltip(tipBuilder: (_, _) => Text(workspace.label), child: tap);
+  }
+}
+
+class _PinnedActionRow extends StatelessWidget {
+  const _PinnedActionRow({required this.action, required this.collapsed});
+
+  final DesktopSidebarAction action;
+  final bool collapsed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final foreground = action.emphasized
+        ? colors.primary
+        : colors.mutedForeground;
+    final row = Container(
+      height: AppSpacing.s48,
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s2,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: AppSpacing.s40,
+            child: Icon(action.icon, color: foreground),
+          ),
+          if (!collapsed)
+            Expanded(
+              child: Text(
+                action.label,
+                style: context.mediumLabelStyle.copyWith(color: foreground),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+        ],
+      ),
+    );
+    final tap = AppTappable(
+      semanticsLabel: action.label,
+      onPress: action.onPress,
+      child: row,
+    );
+    if (!collapsed) return tap;
+    return FTooltip(tipBuilder: (_, _) => Text(action.label), child: tap);
+  }
 }
 
 class _SidebarItem extends StatelessWidget {

@@ -75,12 +75,10 @@ Future<void> _setSurface(WidgetTester tester, double width) async {
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('uses viewport width for inline selection at 1280', (
-    tester,
-  ) async {
+  testWidgets('uses local content width for inline selection', (tester) async {
     await _setSurface(tester, 1280);
     final prefs = await SharedPreferences.getInstance();
-    await tester.pumpWidget(_wrap(prefs: prefs, contentWidth: 900));
+    await tester.pumpWidget(_wrap(prefs: prefs, contentWidth: 1100));
     await tester.pumpAndSettle();
 
     expect(find.byType(MasterDetailLayout), findsOneWidget);
@@ -96,9 +94,10 @@ void main() {
     expect(find.text('single-account-detail'), findsNothing);
   });
 
-  // shellDesktop aliases desktop (1240) since doc 15 §7.1.
-  testWidgets('pushes a detail route below 1240', (tester) async {
-    await _setSurface(tester, 1239);
+  testWidgets('pushes a detail route when the local pane is narrow', (
+    tester,
+  ) async {
+    await _setSurface(tester, 1600);
     final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(_wrap(prefs: prefs, contentWidth: 900));
     await tester.pumpAndSettle();
@@ -110,15 +109,15 @@ void main() {
     expect(find.text('single-account-detail'), findsOneWidget);
   });
 
-  testWidgets('shows compact primary actions on mobile', (tester) async {
+  testWidgets('keeps the account collection compact on mobile', (tester) async {
     await _setSurface(tester, 320);
     final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(_wrap(prefs: prefs, contentWidth: 320));
     await tester.pumpAndSettle();
 
     expect(find.text('1 account'), findsWidgets);
-    expect(find.text('Transfer'), findsOneWidget);
-    expect(find.text('Journal'), findsNothing);
+    expect(find.text('Checking account'), findsOneWidget);
+    expect(find.byType(MasterDetailLayout), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

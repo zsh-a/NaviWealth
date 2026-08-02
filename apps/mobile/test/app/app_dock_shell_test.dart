@@ -2,8 +2,8 @@
 // `docs/domains/healthos-domain.md` §0.
 //
 // Two invariants:
-//   1. Finance-only (default): no switcher UI surfaces at all;
-//      layout is identical to the pre-D-2.3b single-shell baseline.
+//   1. Desktop always has one unified Life/domain/tab sidebar, including
+//      Finance-only installs; compact widths avoid redundant shell chrome.
 //   2. Health opt-in: mobile exposes a compact current-domain switcher
 //      above the bottom nav, and tapping it shows a sheet that routes to
 //      the picked domain.
@@ -69,8 +69,8 @@ Future<ProviderContainer> _pumpAt(
         (ref) => buildAppRouter(ref, initialLocation: initialLocation),
       ),
       // Bypass the opt-in plumbing: the dock chrome only watches
-      // activeDomainShellsProvider + domainDockVisibleProvider, so
-      // overriding the list directly is the minimal surface tests need.
+      // activeDomainShellsProvider, so overriding the list directly is the
+      // minimal surface tests need.
       activeDomainShellsProvider.overrideWith((_) => domains),
     ],
   );
@@ -106,8 +106,8 @@ void main() {
     addTearDown(() => FlutterError.onError = originalHandler);
   });
 
-  group('Finance-only baseline (D-2.3b regression guard)', () {
-    testWidgets('dock chrome is absent when only one domain is registered', (
+  group('Finance-only shell', () {
+    testWidgets('compact chrome stays domain-local with one domain', (
       tester,
     ) async {
       final l10n = lookupAppLocalizations(const Locale('en'));
@@ -121,18 +121,33 @@ void main() {
       expect(find.text('HealthOS'), findsNothing);
       expect(find.text('FinanceOS'), findsNothing);
     });
+
+    testWidgets('desktop keeps one unified sidebar with one domain', (
+      tester,
+    ) async {
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await _pumpAt(
+        tester,
+        viewportSize: _desktopSize,
+        domains: <DomainShellSpec>[financeDomainShell(l10n)],
+      );
+
+      expect(find.byType(DesktopSidebar), findsOneWidget);
+      expect(find.text(l10n.lifeNavLabel), findsOneWidget);
+      expect(find.text(l10n.navToday), findsOneWidget);
+    });
   });
 
   group('Multi-domain dock (Health opt-in)', () {
-    // Below shellDesktop (=desktop, 1240) the header chip is the switcher;
+    // Below shellDesktop (=large, 1200) the header chip is the switcher;
     // at and above it the always-visible dock takes over — exactly one
     // switching affordance per tier, with no dead band (doc 15 §7.2).
     for (final testCase
         in <({double width, bool mobile, bool desktop, bool chip})>[
           (width: 599, mobile: true, desktop: false, chip: true),
           (width: 600, mobile: false, desktop: false, chip: true),
-          (width: 1239, mobile: false, desktop: false, chip: true),
-          (width: 1240, mobile: false, desktop: true, chip: false),
+          (width: 1199, mobile: false, desktop: false, chip: true),
+          (width: 1200, mobile: false, desktop: true, chip: false),
           (width: 1440, mobile: false, desktop: true, chip: false),
         ]) {
       testWidgets('uses one shell tier at ${testCase.width}px', (tester) async {

@@ -29,8 +29,8 @@ import 'domain_shell.dart';
 /// null and still switch directly between domain roots.
 final domainSwitcherHomePathProvider = Provider<String?>((ref) => null);
 
-/// Show the domain-picker sheet. No-op if fewer than 2 domains are
-/// registered (single-domain installs never need the picker).
+/// Show the workspace picker. It remains useful with one registered domain
+/// when [homePath] contributes the cross-domain Life surface.
 ///
 /// Offers the app-composed home surface first when [homePath] is present.
 Future<void> showDomainSwitcherSheet(
@@ -38,7 +38,7 @@ Future<void> showDomainSwitcherSheet(
   List<DomainShellSpec> specs,
   String? homePath,
 ) async {
-  if (specs.length < 2) return;
+  if (specs.length < 2 && homePath == null) return;
   final activePath = GoRouter.of(
     context,
   ).routeInformationProvider.value.uri.path;

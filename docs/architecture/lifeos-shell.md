@@ -95,7 +95,7 @@ Do not add custom opt-in checks to every consumer. Consumers should derive from 
 
 The router uses a two-layer shell:
 
-- Outer shell: `AppDockShell`, global lifecycle, route context, system-back behavior, and domain dock/switcher.
+- Outer shell: `AppDockShell`, global lifecycle, route context, system-back behavior, and adaptive workspace navigation.
 - Inner shell: one `StatefulShellRoute` per active domain route builder.
 
 Important files:
@@ -112,11 +112,14 @@ Rules:
 - Settings, login, onboarding, AI history, and global configuration routes stay outside the domain dock shell.
 - A domain owns its tab paths through `DomainPack.tabPaths`.
 - Additional route prefixes that belong to a domain but are not tabs use `DomainPack.additionalPathPrefixes`.
-- The dock is visible when at least two domain shell specs are active.
-- The Life hub does not repeat domain destinations inside its content. Desktop
-  uses the dock; compact layouts use the header switcher. When only one domain
-  is active, that header control becomes a direct link to the domain instead
-  of opening a one-item picker.
+- Desktop uses one visual sidebar at the large window class (1200dp+). Its
+  workspace row switches between Life and active domains; its destinations
+  are the tabs of the current domain. Do not stack a domain dock beside a
+  second tab sidebar.
+- Compact and medium layouts keep domain-local bottom/rail navigation and use
+  the header workspace switcher. A single registered domain can still switch
+  with Life, so the desktop workspace affordance remains useful.
+- The Life hub does not repeat domain destinations inside its content.
 
 ## Identity And Opt-In
 

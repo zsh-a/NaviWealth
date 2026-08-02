@@ -213,79 +213,141 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
     final visibleHoldings = _showAllPositions ? holdings : previewHoldings;
     final showReveal = overflowHoldings.isNotEmpty;
 
-    return AdaptiveContentFrame(
-      maxWidth: AdaptiveMaxWidth.page,
-      expandSinglePrimary: true,
-      padding: shellTabContentPadding(
-        context,
-        left: AppSpacing.s16,
-        top: AppSpacing.s0,
-        right: AppSpacing.s16,
-        bottom: AppSpacing.s16,
-      ),
-      primary: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _PortfolioSummary(data: data),
-                const SizedBox(height: AppSpacing.s20),
-                if (widget.allocationTree case final tree?) ...[
-                  _PortfolioPlanStrip(
-                    portfolios: widget.portfolios,
-                    tree: tree,
-                    actualWeights: widget.actualPortfolioWeights,
-                  ),
-                  const SizedBox(height: AppSpacing.s16),
-                ],
-                _PortfolioSelector(
+    final mainScroll = CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _PortfolioSummary(data: data),
+              const SizedBox(height: AppSpacing.s20),
+              if (widget.allocationTree case final tree?) ...[
+                _PortfolioPlanStrip(
                   portfolios: widget.portfolios,
-                  value: widget.selectedPortfolioId,
-                  holdingCount: data.holdings.length,
-                  onChanged: widget.onPortfolioChanged,
+                  tree: tree,
+                  actualWeights: widget.actualPortfolioWeights,
                 ),
                 const SizedBox(height: AppSpacing.s16),
               ],
-            ),
-          ),
-          _positionsSliver(
-            l10n: l10n,
-            holdings: visibleHoldings,
-            empty: holdings.isEmpty,
-            showReveal: showReveal,
-            overflowCount: overflowHoldings.length,
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.s20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const _ConcentrationRiskSection(),
-                  FButton(
-                    variant: FButtonVariant.outline,
-                    onPress: () => setState(() {
-                      _showInsights = !_showInsights;
-                    }),
-                    prefix: Icon(
-                      _showInsights
-                          ? FLucideIcons.chevronUp
-                          : FLucideIcons.sparkles,
-                    ),
-                    child: Text(l10n.portfolioHubSectionInsights),
-                  ),
-                  if (_showInsights) ...[
-                    const SizedBox(height: AppSpacing.s12),
-                    _EngineExposureSection(baseCurrency: data.baseCurrency),
-                  ],
-                ],
+              _PortfolioSelector(
+                portfolios: widget.portfolios,
+                value: widget.selectedPortfolioId,
+                holdingCount: data.holdings.length,
+                onChanged: widget.onPortfolioChanged,
               ),
-            ),
+              const SizedBox(height: AppSpacing.s16),
+            ],
           ),
-        ],
-      ),
+        ),
+        _positionsSliver(
+          l10n: l10n,
+          holdings: visibleHoldings,
+          empty: holdings.isEmpty,
+          showReveal: showReveal,
+          overflowCount: overflowHoldings.length,
+        ),
+      ],
+    );
+    final padding = shellTabContentPadding(
+      context,
+      left: AppSpacing.s16,
+      top: AppSpacing.s0,
+      right: AppSpacing.s16,
+      bottom: AppSpacing.s16,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final useSupportingPane =
+            constraints.maxWidth >= Breakpoints.contentTwoColumn &&
+            MediaQuery.textScalerOf(context).scale(1) <= 1.3;
+        if (useSupportingPane) {
+          return AdaptiveContentFrame(
+            maxWidth: AdaptiveMaxWidth.dashboard,
+            layout: AdaptiveFrameLayout.cockpit,
+            expandSinglePrimary: true,
+            padding: padding,
+            primary: mainScroll,
+            secondary: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                const _ConcentrationRiskSection(),
+                const SizedBox(height: AppSpacing.s16),
+                _EngineExposureSection(baseCurrency: data.baseCurrency),
+              ],
+            ),
+          );
+        }
+        return AdaptiveContentFrame(
+          maxWidth: AdaptiveMaxWidth.page,
+          expandSinglePrimary: true,
+          padding: padding,
+          primary: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _PortfolioSummary(data: data),
+                    const SizedBox(height: AppSpacing.s20),
+                    if (widget.allocationTree case final tree?) ...[
+                      _PortfolioPlanStrip(
+                        portfolios: widget.portfolios,
+                        tree: tree,
+                        actualWeights: widget.actualPortfolioWeights,
+                      ),
+                      const SizedBox(height: AppSpacing.s16),
+                    ],
+                    _PortfolioSelector(
+                      portfolios: widget.portfolios,
+                      value: widget.selectedPortfolioId,
+                      holdingCount: data.holdings.length,
+                      onChanged: widget.onPortfolioChanged,
+                    ),
+                    const SizedBox(height: AppSpacing.s16),
+                  ],
+                ),
+              ),
+              _positionsSliver(
+                l10n: l10n,
+                holdings: visibleHoldings,
+                empty: holdings.isEmpty,
+                showReveal: showReveal,
+                overflowCount: overflowHoldings.length,
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.s20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const _ConcentrationRiskSection(),
+                      FButton(
+                        variant: FButtonVariant.outline,
+                        onPress: () => setState(() {
+                          _showInsights = !_showInsights;
+                        }),
+                        prefix: Icon(
+                          _showInsights
+                              ? FLucideIcons.chevronUp
+                              : FLucideIcons.sparkles,
+                        ),
+                        child: Text(l10n.portfolioHubSectionInsights),
+                      ),
+                      if (_showInsights) ...[
+                        const SizedBox(height: AppSpacing.s12),
+                        _EngineExposureSection(baseCurrency: data.baseCurrency),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

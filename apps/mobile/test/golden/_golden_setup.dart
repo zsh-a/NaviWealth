@@ -296,7 +296,7 @@ extension ResponsiveGoldenProfileData on ResponsiveGoldenProfile {
 
   double get devicePixelRatio => switch (this) {
     ResponsiveGoldenProfile.narrow || ResponsiveGoldenProfile.textScale => 2,
-    ResponsiveGoldenProfile.wide => 1,
+    _ => 1,
   };
 
   TextScaler get textScaler => switch (this) {
@@ -333,18 +333,28 @@ Future<void> pumpAndSnapshotResponsive(
   required Widget child,
   List<Override> overrides = const [],
   Locale locale = const Locale('en'),
+  Size? logicalSizeOverride,
+  double? devicePixelRatioOverride,
+  TextScaler? textScalerOverride,
+  TargetPlatform? targetPlatformOverride,
+  bool? touchOverride,
+  bool? compactOverride,
 }) async {
+  final logicalSize = logicalSizeOverride ?? profile.logicalSize;
+  final dpr = devicePixelRatioOverride ?? profile.devicePixelRatio;
+  final textScaler = textScalerOverride ?? profile.textScaler;
+  final targetPlatform = targetPlatformOverride ?? profile.targetPlatform;
+  final touch = touchOverride ?? profile.touch;
+  final compact = compactOverride ?? profile.compact;
   final previousPlatformOverride = debugDefaultTargetPlatformOverride;
-  debugDefaultTargetPlatformOverride = profile.targetPlatform;
+  debugDefaultTargetPlatformOverride = targetPlatform;
   addTearDown(() {
     debugDefaultTargetPlatformOverride = previousPlatformOverride;
   });
 
   try {
-    final materialTheme = AppTheme.dark(compact: profile.compact);
+    final materialTheme = AppTheme.dark(compact: compact);
     await loadGoldenFonts();
-    final logicalSize = profile.logicalSize;
-    final dpr = profile.devicePixelRatio;
     await tester.binding.setSurfaceSize(logicalSize);
     tester.view
       ..physicalSize = Size(logicalSize.width * dpr, logicalSize.height * dpr)
@@ -379,12 +389,12 @@ Future<void> pumpAndSnapshotResponsive(
               return MediaQuery(
                 data: media.copyWith(
                   disableAnimations: true,
-                  textScaler: profile.textScaler,
+                  textScaler: textScaler,
                 ),
                 child: FTheme(
                   data: buildAppForuiTheme(
                     brightness: Brightness.dark,
-                    touch: profile.touch,
+                    touch: touch,
                   ),
                   child: Builder(
                     key: _responsiveGoldenMediaKey,
@@ -402,27 +412,28 @@ Future<void> pumpAndSnapshotResponsive(
     await tester.pump(const Duration(milliseconds: 200));
     await tester.pump(const Duration(milliseconds: 200));
 
-    final expectedPhysical = profile == ResponsiveGoldenProfile.wide
-        ? const Size(1280, 900)
-        : const Size(780, 1688);
+    final expectedPhysical = Size(
+      logicalSize.width * dpr,
+      logicalSize.height * dpr,
+    );
     expect(tester.view.physicalSize, expectedPhysical);
     final mediaContext = tester.element(find.byKey(_responsiveGoldenMediaKey));
     expect(MediaQuery.sizeOf(mediaContext), logicalSize);
     expect(
       MediaQuery.textScalerOf(mediaContext).scale(10),
-      profile == ResponsiveGoldenProfile.textScale ? 20 : 10,
+      textScaler.scale(10),
     );
     final foruiTheme = FTheme.of(mediaContext);
     expect(
       foruiTheme.buttonStyles.primary.md.contentStyle.constraints.minHeight,
-      profile.touch ? 44 : 36,
+      touch ? 44 : 36,
     );
     expect(foruiTheme.colors.primary, AccentColors.primary(Brightness.dark));
     final materialThemeAtProfile = Theme.of(mediaContext);
-    expect(materialThemeAtProfile.platform, profile.targetPlatform);
+    expect(materialThemeAtProfile.platform, targetPlatform);
     expect(
       materialThemeAtProfile.visualDensity,
-      profile.compact ? VisualDensity.compact : VisualDensity.standard,
+      compact ? VisualDensity.compact : VisualDensity.standard,
     );
     expect(tester.takeException(), isNull);
     await expectGoldenSurface('goldens/$name.png');

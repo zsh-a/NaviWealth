@@ -46,7 +46,15 @@ class NaviWealthApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
-    final compact = useCompactDensity(defaultTargetPlatform, kIsWeb);
+    final view = View.of(context);
+    final windowWidth =
+        MediaQuery.maybeSizeOf(context)?.width ??
+        view.physicalSize.width / view.devicePixelRatio;
+    final compact = useCompactDensity(
+      defaultTargetPlatform,
+      kIsWeb,
+      windowWidth: windowWidth,
+    );
     final accentSeed = ref.watch(accentSeedProvider);
     final surfaceStylePref = ref.watch(surfaceStyleProvider);
 
@@ -80,10 +88,7 @@ class NaviWealthApp extends ConsumerWidget {
           ThemeMode.light => false,
           ThemeMode.system => platformBrightness == Brightness.dark,
         };
-        final isTouch =
-            !kIsWeb &&
-            (defaultTargetPlatform == TargetPlatform.iOS ||
-                defaultTargetPlatform == TargetPlatform.android);
+        final isTouch = !compact;
         final brightness = isDark ? Brightness.dark : Brightness.light;
         final surfaceStyle = surfaceStylePref;
         final fTheme = buildAppForuiTheme(

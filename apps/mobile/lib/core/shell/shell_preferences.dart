@@ -18,9 +18,8 @@ const String _kSidebarCollapsedKey = 'naviwealth.shell.sidebar_collapsed';
 const String _kMasterPaneWidthKey = 'naviwealth.shell.master_pane_width';
 
 /// Default width for the master list pane on desktop. 380dp is wide enough
-/// for a primary asset row + delta chip
-/// without truncation, narrow enough to leave the detail pane the bulk
-/// of a 1240dp window.
+/// for a primary asset row + delta chip without truncation, while leaving the
+/// detail pane the bulk of a content-local two-pane workspace.
 const double kMasterPaneDefaultWidth = 380;
 const double kMasterPaneMinWidth = 320;
 const double kMasterPaneMaxWidth = 520;

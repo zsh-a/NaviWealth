@@ -722,8 +722,8 @@ void main() {
   });
 
   group('responsive shell switches by viewport width', () {
-    // FIR-84: < 600 → GlassBottomBar (bottom), ≥ 600 & < 1240 →
-    // GlassSideBar, ≥ 1240 → DesktopSidebar. Tabs and selectedIndex
+    // FIR-84: < 600 → GlassBottomBar (bottom), ≥ 600 & < 1200 →
+    // GlassSideBar, ≥ 1200 → unified DesktopSidebar. Tabs and selectedIndex
     // stay consistent across the three layouts.
 
     testWidgets('mobile width uses GlassBottomBar at the bottom', (
@@ -836,7 +836,7 @@ void main() {
       final sidebar = tester.widget<DesktopSidebar>(
         find.byType(DesktopSidebar),
       );
-      expect(sidebar.selectedIndex, 3);
+      expect(sidebar.selectedIndex, 4);
 
       // Settings is off-nav (IA contract §1) — navigating to /settings
       // exits the shell and the sidebar isn't visible. So we hop to
@@ -847,7 +847,7 @@ void main() {
       final updated = tester.widget<DesktopSidebar>(
         find.byType(DesktopSidebar),
       );
-      expect(updated.selectedIndex, 2);
+      expect(updated.selectedIndex, 3);
       await _drainTimers(tester);
     });
 

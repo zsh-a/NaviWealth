@@ -1,10 +1,12 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show AsyncData;
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/features/finance/analytics/data/providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/dividend_center_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/dividend_forecast_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_event.dart';
@@ -25,6 +27,7 @@ import 'package:naviwealth/features/finance/investment/domain/models/realized_pn
 import 'package:naviwealth/features/finance/investment/domain/returns/portfolio_return.dart';
 import 'package:naviwealth/features/finance/investment/domain/returns/xirr_engine.dart';
 import 'package:naviwealth/features/finance/investment/ui/portfolio_hub_page.dart';
+import 'package:naviwealth/features/finance/rebalance/data/rebalance_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '_golden_setup.dart';
@@ -286,6 +289,7 @@ final _corporateActions = [
 List<Override> _portfolioOverrides(SharedPreferences prefs) => [
   sharedPreferencesProvider.overrideWithValue(prefs),
   allAssetsStreamProvider.overrideWith((_) => Stream.value(_assets)),
+  equityAssetsStreamProvider.overrideWith((_) => Stream.value(_assets)),
   accountsStreamProvider.overrideWith((_) => Stream.value(_accounts)),
   holdingsSnapshotProvider.overrideWith((_) async => _holdings),
   holdingServiceProvider.overrideWith(
@@ -295,6 +299,8 @@ List<Override> _portfolioOverrides(SharedPreferences prefs) => [
   portfolioCapitalAssignmentsProvider.overrideWith(
     (_) => Stream.value(const []),
   ),
+  portfolioAllocationTreeProvider.overrideWith((_) => const AsyncData(null)),
+  universeRebalancePlanProvider.overrideWith((_) => null),
   portfolioReturnServiceProvider.overrideWith(
     (_) async => const _GoldenReturnService(),
   ),

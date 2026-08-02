@@ -199,8 +199,7 @@ class _AccountsByType extends StatelessWidget {
   }
 
   void _openAccount(BuildContext context, Account account) {
-    final width = MediaQuery.sizeOf(context).width;
-    if (MasterDetailLayout.shouldUseMasterDetail(width)) {
+    if (inMasterDetail) {
       replaceSelectedQuery(
         context,
         path: FinanceRoutes.wealthAccounts,

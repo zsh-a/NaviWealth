@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../ai/write/persistent_undo_banner.dart';
-import 'desktop_sidebar.dart';
 import 'domain_shell.dart';
 import 'domain_switcher.dart';
 import 'shell_visibility.dart';
@@ -70,19 +69,12 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Navigation chrome is a window-level decision. The outer domain dock
-        // and the inner tab rail both consume horizontal space, so using this
-        // widget's reduced constraints would make the desktop threshold drift.
+        // Navigation chrome is a window-level decision. At large widths the
+        // app-level shell owns the unified workspace/tab sidebar; this inner
+        // shell contributes no second desktop navigation surface.
         final width = MediaQuery.sizeOf(context).width;
         if (width >= DomainTabsShell._desktopBreakpoint) {
-          return _withGlobalOverlays(
-            _DesktopLayout(
-              tabs: tabs,
-              selectedIndex: index,
-              onDestinationSelected: _onSelected,
-              child: shellChild,
-            ),
-          );
+          return _withGlobalOverlays(_DesktopLayout(child: shellChild));
         }
         if (width >= DomainTabsShell._tabletBreakpoint) {
           return _withGlobalOverlays(
@@ -460,16 +452,8 @@ class _TabletRailItem extends StatelessWidget {
 }
 
 class _DesktopLayout extends StatelessWidget {
-  const _DesktopLayout({
-    required this.tabs,
-    required this.selectedIndex,
-    required this.onDestinationSelected,
-    required this.child,
-  });
+  const _DesktopLayout({required this.child});
 
-  final List<DomainShellTab> tabs;
-  final int selectedIndex;
-  final ValueChanged<int> onDestinationSelected;
   final Widget child;
 
   @override
@@ -479,18 +463,6 @@ class _DesktopLayout extends StatelessWidget {
       // See _MobileLayout: the routed page owns keyboard avoidance; the shell
       // must not double-count the inset.
       resizeToAvoidBottomInset: false,
-      sidebar: DesktopSidebar(
-        destinations: [
-          for (final t in tabs)
-            DesktopSidebarDestination(
-              icon: t.icon,
-              selectedIcon: t.selectedIcon,
-              label: t.label,
-            ),
-        ],
-        selectedIndex: selectedIndex,
-        onDestinationSelected: onDestinationSelected,
-      ),
       child: child,
     );
   }

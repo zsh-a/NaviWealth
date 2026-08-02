@@ -35,11 +35,9 @@ Future<void> _pumpLayout(
 }
 
 void main() {
-  test('shouldUseMasterDetail follows the desktop breakpoint', () {
-    // shellDesktop aliases desktop (1240) — doc 15 §7.1 removed the
-    // 1240–1279 band where shell and content disagreed.
-    expect(MasterDetailLayout.shouldUseMasterDetail(1239), isFalse);
-    expect(MasterDetailLayout.shouldUseMasterDetail(1240), isTrue);
+  test('shouldUseMasterDetail follows the local content breakpoint', () {
+    expect(MasterDetailLayout.shouldUseMasterDetail(1023), isFalse);
+    expect(MasterDetailLayout.shouldUseMasterDetail(1024), isTrue);
   });
 
   testWidgets('uses the default master pane width', (tester) async {

@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import '../../core/ai/composition/ai_context.dart';
 import '../../core/ai/composition/ask_ai.dart';
 import '../../core/lifeos/domain_pack.dart';
+import '../../core/shell/desktop_sidebar.dart';
 import '../../core/shell/domain_shell.dart';
+import '../../core/shell/domain_switcher.dart';
 import '../../design_system/design_system.dart';
 import '../../features/settings/ui/ai/ai_privacy_onboarding.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -26,10 +28,9 @@ import '../share_intents/share_intent_service.dart';
 ///   * share-intent lifecycle (mounts once, survives domain switches)
 ///   * `aiContextProvider` sync (route + domain, location-driven, global)
 ///   * root-level system back handling (pop → exit-arm)
-///   * domain dock chrome — desktop side dock only (≥ 600 px). Mobile
-///     swaps the always-visible chip row for a per-page chevron in the
-///     title; see `domain_switcher.dart`. [domainDockVisibleProvider]
-///     still gates whether either presentation is rendered at all.
+///   * adaptive shell chrome — desktop merges workspace switching and
+///     domain-local tabs into one sidebar. Compact/tablet layouts keep the
+///     domain switcher in page headers; see `domain_switcher.dart`.
 ///   * `aiContextProvider.domain` — derived from the active route via
 ///     `domainForRoute`; the `askAi` helper reads this so no call site
 ///     needs to know which OS it's invoked from.
@@ -146,11 +147,10 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
         ? GoRouter.of(context).routeInformationProvider.value.uri.path
         : _location;
 
-    final showDock = ref.watch(domainDockVisibleProvider);
     final specs = ref.watch(activeDomainShellsProvider);
-    final shellChild = showDock
-        ? _DockChrome(specs: specs, activePath: location, child: widget.child)
-        : widget.child;
+    final shellChild = specs.isEmpty
+        ? widget.child
+        : _DockChrome(specs: specs, activePath: location, child: widget.child);
 
     return ExitConfirmingSystemBackScope(
       onBack: _handleSystemBackBeforeExit,
@@ -194,15 +194,14 @@ class _DockChrome extends StatelessWidget {
       builder: (context, constraints) {
         final viewportWidth = MediaQuery.sizeOf(context).width;
         if (viewportWidth < Breakpoints.shellDesktop) {
-          // Compact and tablet layouts already expose the domain switcher in
-          // the page header. Keeping the outer domain dock hidden here avoids
-          // stacking it beside the inner tablet tab rail, which otherwise
-          // consumes 136 px before page content begins on a 600 px viewport.
+          // Compact and tablet layouts already expose the workspace switcher
+          // in the page header. The domain shell continues to own its bottom
+          // bar / compact rail at these widths.
           return child;
         }
         return Row(
           children: [
-            _DesktopDock(specs: specs, activePath: activePath),
+            _UnifiedDesktopSidebar(specs: specs, activePath: activePath),
             Expanded(child: child),
           ],
         );
@@ -211,163 +210,68 @@ class _DockChrome extends StatelessWidget {
   }
 }
 
-void _switchToDomain(BuildContext context, DomainShellSpec spec) {
-  final target = spec.tabs.isNotEmpty
-      ? spec.tabs.first.routePath
-      : AppRoutes.home;
-  GoRouter.of(context).go(target);
-}
-
-class _DesktopDock extends ConsumerWidget {
-  const _DesktopDock({required this.specs, required this.activePath});
+class _UnifiedDesktopSidebar extends ConsumerWidget {
+  const _UnifiedDesktopSidebar({required this.specs, required this.activePath});
 
   final List<DomainShellSpec> specs;
   final String activePath;
 
-  static const double _width = AppSpacing.s56;
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.theme.colors;
-    return Container(
-      width: _width,
-      decoration: BoxDecoration(
-        color: colors.background,
-        border: Border(
-          right: BorderSide(color: colors.border, width: AppStroke.hairline),
-        ),
-      ),
-      child: SafeArea(
-        right: false,
-        child: Column(
-          children: [
-            const SizedBox(height: AppSpacing.s12),
-            // Life hub (Phase B spatial layer) sits above domain workspaces.
-            _LifeDockIcon(
-              selected:
-                  activePath == AppRoutes.life ||
-                  activePath.startsWith('${AppRoutes.life}/'),
-              onTap: () {
-                AppInteraction.signal(AppInteractionIntent.navigate);
-                GoRouter.of(context).go(AppRoutes.life);
-              },
-            ),
-            const SizedBox(height: AppSpacing.s4),
-            const _DockGroupDivider(),
-            const SizedBox(height: AppSpacing.s4),
-            for (final spec in specs)
-              _DockIcon(
-                spec: spec,
-                selected: specOwnsPath(spec, activePath),
-                onTap: () => _switchToDomain(context, spec),
-              ),
-            const Spacer(),
-            const _DockGroupDivider(),
-            const SizedBox(height: AppSpacing.s8),
-            _AskAiDockButton(onPress: () => askAi(context, ref)),
-            const SizedBox(height: AppSpacing.s12),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Shell-level assistant affordance docked at the bottom of the desktop
-/// rail. Always visible (not gated on multi-domain) so HealthOS /
-/// KnowledgeOS users get the same one-tap entry FinanceOS has.
-class _AskAiDockButton extends StatelessWidget {
-  const _AskAiDockButton({required this.onPress});
-
-  final VoidCallback onPress;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppIconButton.softPrimaryRing(
-      icon: FLucideIcons.sparkles,
-      tooltip: AppLocalizations.of(context).commandPaletteOpenAi,
-      onPress: onPress,
-      size: AppSpacing.s48,
-      iconSize: AppIconSizes.mlg,
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
-    );
-  }
-}
-
-class _DockGroupDivider extends StatelessWidget {
-  const _DockGroupDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Container(
-      width: AppSpacing.s24,
-      height: AppSpacing.hairline,
-      decoration: BoxDecoration(
-        color: colors.border.withValues(alpha: AppOpacity.medium),
-        borderRadius: BorderRadius.circular(AppRadius.full),
-      ),
-    );
-  }
-}
-
-class _LifeDockIcon extends StatelessWidget {
-  const _LifeDockIcon({required this.selected, required this.onTap});
-
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
-    return AppIconButton(
-      icon: FLucideIcons.house,
-      tooltip: l10n.lifeNavLabel,
-      onPress: onTap,
-      size: AppSpacing.s40,
-      iconSize: AppIconSizes.mlg,
-      iconColor: selected ? colors.primary : colors.mutedForeground,
-      surface: selected
-          ? AppIconButtonSurface.softSelected
-          : AppIconButtonSurface.plain,
-      borderRadius: AppRadius.md,
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: AppSpacing.s4,
-      ),
+    final homePath = ref.watch(domainSwitcherHomePathProvider);
+    final onLife =
+        activePath == AppRoutes.life ||
+        activePath.startsWith('${AppRoutes.life}/');
+    final activeSpec = activeSpecForPath(specs, activePath);
+    final selectedTab = activeSpec.tabs.indexWhere(
+      (tab) =>
+          activePath == tab.routePath ||
+          activePath.startsWith('${tab.routePath}/'),
     );
-  }
-}
-
-class _DockIcon extends StatelessWidget {
-  const _DockIcon({
-    required this.spec,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final DomainShellSpec spec;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return AppIconButton(
-      icon: selected ? spec.selectedIcon : spec.icon,
-      tooltip: spec.label,
-      onPress: onTap,
-      size: AppSpacing.s40,
-      iconSize: AppIconSizes.mlg,
-      iconColor: selected ? colors.primary : colors.mutedForeground,
-      surface: selected
-          ? AppIconButtonSurface.softSelected
-          : AppIconButtonSurface.plain,
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: AppSpacing.s4,
+    final workspaceLabel = onLife ? l10n.lifeNavLabel : activeSpec.label;
+    final workspaceIcon = onLife ? FLucideIcons.house : activeSpec.selectedIcon;
+    final destinations = <DesktopSidebarDestination>[
+      DesktopSidebarDestination(
+        icon: FLucideIcons.house,
+        selectedIcon: FLucideIcons.house,
+        label: l10n.lifeNavLabel,
       ),
+      for (final tab in activeSpec.tabs)
+        DesktopSidebarDestination(
+          icon: tab.icon,
+          selectedIcon: tab.selectedIcon,
+          label: tab.label,
+        ),
+    ];
+    return DesktopSidebar(
+      workspace: DesktopSidebarWorkspace(
+        icon: workspaceIcon,
+        label: workspaceLabel,
+        onPress: () => showDomainSwitcherSheet(context, specs, homePath),
+      ),
+      destinations: destinations,
+      selectedIndex: onLife
+          ? 0
+          : selectedTab < 0
+          ? -1
+          : selectedTab + 1,
+      onDestinationSelected: (index) {
+        AppInteraction.signal(AppInteractionIntent.navigate);
+        if (index == 0) {
+          GoRouter.of(context).go(AppRoutes.life);
+          return;
+        }
+        GoRouter.of(context).go(activeSpec.tabs[index - 1].routePath);
+      },
+      footerActions: [
+        DesktopSidebarAction(
+          icon: FLucideIcons.sparkles,
+          label: l10n.navAskAi,
+          onPress: () => askAi(context, ref),
+          emphasized: true,
+        ),
+      ],
     );
   }
 }

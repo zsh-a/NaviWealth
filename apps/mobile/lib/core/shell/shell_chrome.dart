@@ -180,7 +180,10 @@ class ShellTabScaffold extends ConsumerWidget {
     return DomainTabScaffold(
       title: title,
       childPad: childPad,
-      collapseOnScroll: collapseOnScroll,
+      // Desktop keeps a stable, quiet title bar while independently
+      // scrollable panes move below it. Touch layouts reclaim vertical space
+      // with the existing direction-aware collapse behavior.
+      collapseOnScroll: inline && collapseOnScroll,
       leading: inline ? chrome.buildLeading(context, ref) : null,
       actions: <Widget>[
         for (final action in directActions)

@@ -23,14 +23,14 @@ import 'sessions/sessions_panel.dart';
 
 /// Top-level "AI 助手" surface.
 ///
-/// Layout adapts at the [Breakpoints.mobile] / [Breakpoints.desktop]
+/// Layout adapts at the [Breakpoints.mobile] / local content
 /// boundaries:
 ///
 ///  - mobile (< 600px): single-column conversation, sessions accessible
 ///    via a sheet.
-///  - tablet (600–1240px): same single-column conversation but with the
+///  - medium (600–1024px): same single-column conversation but with the
 ///    sessions in a slim end sheet triggered from the AppBar.
-///  - desktop (>= 1240px): permanent two-pane Row — sessions on the
+///  - roomy content (>= 1024px): permanent two-pane Row — sessions on the
 ///    left, conversation on the right.
 class AiChatPage extends ConsumerStatefulWidget {
   const AiChatPage({super.key, this.initialSessionId});
@@ -105,9 +105,9 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     final defaultAsync = ref.watch(defaultChatSessionProvider(userId));
 
     return LayoutBuilder(
-      builder: (context, _) {
+      builder: (context, constraints) {
         final isDesktop = MasterDetailLayout.shouldUseMasterDetail(
-          MediaQuery.sizeOf(context).width,
+          constraints.maxWidth,
         );
         final selectedFromQuery = selectedQueryOf(context);
         final activeId =

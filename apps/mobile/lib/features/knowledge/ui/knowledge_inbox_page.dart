@@ -66,12 +66,17 @@ class _InboxBody extends ConsumerWidget {
     // pinned above the note list (visible even while loading / empty) so
     // add / query / dedupe / suggest are always one tap away.
     return const AppAtmosphere(
-      child: Column(
-        children: [
-          _AiAssistantBar(),
-          _InboxTriageStatus(),
-          Expanded(child: _NotesList()),
-        ],
+      child: AdaptiveContentFrame(
+        maxWidth: Breakpoints.readingColumn,
+        expandSinglePrimary: true,
+        padding: EdgeInsets.zero,
+        primary: Column(
+          children: [
+            _AiAssistantBar(),
+            _InboxTriageStatus(),
+            Expanded(child: _NotesList()),
+          ],
+        ),
       ),
     );
   }

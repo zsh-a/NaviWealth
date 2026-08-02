@@ -6,14 +6,15 @@ import '../../design_system/design_system.dart';
 import 'selection_query.dart';
 import 'shell_preferences.dart';
 
-/// Two-pane master-detail surface used by the desktop shell at ≥ 1280dp.
+/// Two-pane master-detail surface used when its local content area has enough
+/// room for two independently useful panes.
 /// The list pane lives on the left at the user's preferred width
 /// (clamped 320–520) and the detail pane fills the remainder. A draggable
 /// hairline between the two acts as the splitter.
 ///
-/// At narrower widths each consumer falls back to its single-column
-/// rendering — this widget is only mounted when [shouldUseMasterDetail]
-/// returns true.
+/// Callers must pass a local [LayoutBuilder] constraint to
+/// [shouldUseMasterDetail], never the full window width: navigation chrome,
+/// browser splits, and parent panes have already consumed part of that width.
 class MasterDetailLayout extends ConsumerWidget {
   const MasterDetailLayout({
     super.key,
@@ -25,7 +26,7 @@ class MasterDetailLayout extends ConsumerWidget {
   final Widget detail;
 
   static bool shouldUseMasterDetail(double width) =>
-      width >= Breakpoints.shellDesktop;
+      width >= Breakpoints.contentTwoColumn;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

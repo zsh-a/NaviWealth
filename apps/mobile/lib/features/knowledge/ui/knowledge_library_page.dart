@@ -178,9 +178,11 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
       child: ShellTabPause(
         routePath: KnowledgeRoutes.library,
         child: AppAtmosphere(
-          child: Padding(
+          child: AdaptiveContentFrame(
+            maxWidth: Breakpoints.readingColumn,
+            expandSinglePrimary: true,
             padding: shellTabContentPadding(context, top: AppSpacing.s8),
-            child: Column(
+            primary: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(

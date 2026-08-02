@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/dimens_tokens.dart';
 import 'adaptive_summary_grid.dart';
+import 'adaptive_supporting_pane.dart';
 import 'app_collapsing_stage.dart';
 import 'app_refresh_indicator.dart';
 import 'atmosphere.dart';
@@ -35,6 +36,7 @@ class BriefScaffold extends StatelessWidget {
     this.stickyPadding,
     this.maxContentWidth,
     this.summaryTiles,
+    this.adaptiveSupportingPane = true,
   });
 
   /// Top identity row (greeting + chrome).
@@ -73,6 +75,11 @@ class BriefScaffold extends StatelessWidget {
   /// [modules] and [secondary] with one ordered responsive grid.
   final List<AdaptiveSummaryTile>? summaryTiles;
 
+  /// Moves [secondary] into a stable right pane when this surface has enough
+  /// local width. Disable only when semantic reading order requires every
+  /// secondary module to remain full-width below [modules].
+  final bool adaptiveSupportingPane;
+
   @override
   Widget build(BuildContext context) {
     final contentPadding =
@@ -85,18 +92,29 @@ class BriefScaffold extends StatelessWidget {
         );
 
     final adaptiveTiles = summaryTiles;
-    final columnChildren = <Widget>[
+    final leadingChildren = <Widget>[
       greeting,
       const SizedBox(height: AppPageRhythm.module),
       stage,
+    ];
+    final columnChildren = <Widget>[
+      ...leadingChildren,
       if (adaptiveTiles != null && adaptiveTiles.isNotEmpty) ...[
         const SizedBox(height: AppPageRhythm.section),
         AdaptiveSummaryGrid(items: adaptiveTiles),
       ] else if (modules.isNotEmpty) ...[
         const SizedBox(height: AppPageRhythm.section),
-        ..._interleave(modules, AppPageRhythm.module),
+        if (adaptiveSupportingPane && secondary.isNotEmpty)
+          AdaptiveSupportingPane(
+            primary: _BriefModuleColumn(items: modules),
+            supporting: _BriefModuleColumn(items: secondary),
+          )
+        else
+          ..._interleave(modules, AppPageRhythm.module),
       ],
-      if (adaptiveTiles == null && secondary.isNotEmpty) ...[
+      if (adaptiveTiles == null &&
+          secondary.isNotEmpty &&
+          (!adaptiveSupportingPane || modules.isEmpty)) ...[
         const SizedBox(height: AppPageRhythm.section),
         ..._interleave(secondary, AppPageRhythm.module),
       ],
@@ -166,6 +184,20 @@ class BriefScaffold extends StatelessWidget {
         ..add(items[i]);
     }
     return out;
+  }
+}
+
+class _BriefModuleColumn extends StatelessWidget {
+  const _BriefModuleColumn({required this.items});
+
+  final List<Widget> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: BriefScaffold._interleave(items, AppPageRhythm.module),
+    );
   }
 }
 
