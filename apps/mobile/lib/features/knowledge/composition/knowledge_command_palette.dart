@@ -26,7 +26,7 @@ List<CommandPaletteEntry> knowledgeCommandPaletteEntries(
       id: 'create.knowledge.note',
       label: l10n.knowledgeCaptureTitle,
       icon: FLucideIcons.filePlus,
-      keywords: const <String>['knowledge', 'capture', 'note', '记录', '笔记'],
+      keywords: const <String>['knowledge', 'capture', 'note'],
       run: (BuildContext ctx) => showKnowledgeCaptureSheet(ctx),
     ),
     CommandPaletteEntry(

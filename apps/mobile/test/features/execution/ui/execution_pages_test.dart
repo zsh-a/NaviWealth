@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
@@ -27,6 +28,36 @@ import '../../../core/persistence/test_database.dart';
 import '../../finance/data/repositories/_stub_stamper.dart';
 
 void main() {
+  testWidgets(
+    'Today keeps core actions reachable by keyboard with enlarged text',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        _wrap(
+          const ExecutionTodayPage(),
+          textScaler: const TextScaler.linear(2),
+          overrides: _executionOverrides(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.bySemanticsLabel('New Action'), findsWidgets);
+      expect(find.bySemanticsLabel('Review'), findsWidgets);
+      expect(tester.takeException(), isNull);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+
+      expect(find.text('New Action'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('Today keeps unscheduled backlog out of the daily workspace', (
     tester,
   ) async {
@@ -530,7 +561,11 @@ List<Override> _executionOverrides({
   ];
 }
 
-Widget _wrap(Widget child, {required List<Override> overrides}) {
+Widget _wrap(
+  Widget child, {
+  required List<Override> overrides,
+  TextScaler textScaler = TextScaler.noScaling,
+}) {
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
@@ -538,7 +573,12 @@ Widget _wrap(Widget child, {required List<Override> overrides}) {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en', 'US'),
-      home: FTheme(data: FThemes.slate.light.desktop, child: child),
+      home: Builder(
+        builder: (context) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+          child: FTheme(data: FThemes.slate.light.desktop, child: child),
+        ),
+      ),
     ),
   );
 }

@@ -44,8 +44,6 @@ jobs:
 
       # Web build needs the same asset materialisation as the build-web job
       # in mobile.yml (drift wasm worker + font subsets).
-      - name: Materialize drift web assets (sqlite3.wasm + drift_worker.dart.js)
-        run: tool/setup-drift-web.sh
       - name: Build CN web font subsets
         env:
           CHECK_CN_FONT_SIZE: 'false'
@@ -57,7 +55,7 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: echo "url=$(cat apps/backend/.api-base-url | tr -d '\n')" >> "$GITHUB_OUTPUT"
       - name: Build Flutter web (release)
-        run: flutter build web --release --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=BYPASS_AUTH=true
+        run: bash tool/build-web.sh --release --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=BYPASS_AUTH=true
 
       - name: Install Playwright + browsers
         working-directory: apps/mobile/web_smoke

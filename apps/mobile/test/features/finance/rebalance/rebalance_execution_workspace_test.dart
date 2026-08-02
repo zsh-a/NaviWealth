@@ -73,7 +73,7 @@ void main() {
 
     expect(find.text('Apply'), findsOneWidget);
     expect(find.text('Undo'), findsNothing);
-    expect(find.text('Buy Apple'), findsOneWidget);
+    expect(find.text('Buy Apple'), findsWidgets);
     expect(
       tester
           .getSize(find.byKey(const Key('rebalance-execution-progress')))

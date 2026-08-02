@@ -333,6 +333,16 @@ class _PlanningSections extends StatelessWidget {
             title: l10n.planAddPlanAction,
             actions: [
               AppAdaptiveAction(
+                icon: FLucideIcons.piggyBank,
+                title: l10n.planBudgetSectionTitle,
+                onPress: () => context.push(FinanceRoutes.planBudget),
+              ),
+              AppAdaptiveAction(
+                icon: FLucideIcons.scale,
+                title: l10n.planRebalanceSectionTitle,
+                onPress: () => context.push(FinanceRoutes.planRebalance),
+              ),
+              AppAdaptiveAction(
                 icon: FLucideIcons.calendarClock,
                 title: l10n.planDcaPlanTitle,
                 onPress: () => context.push(FinanceRoutes.planDca),

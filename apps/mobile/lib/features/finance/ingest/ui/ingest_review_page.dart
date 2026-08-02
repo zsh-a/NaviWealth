@@ -122,68 +122,77 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     final accountsAsync = ref.watch(accountsStreamProvider);
     final accounts = accountsAsync.value;
     final items = reviewItemsAsync.value;
-    final useMasterDetail = MasterDetailLayout.shouldUseMasterDetail(
-      MediaQuery.sizeOf(context).width,
-    );
-    final viewData =
-        accountsAsync.hasError ||
-            reviewItemsAsync.hasError ||
-            accounts == null ||
-            items == null
-        ? null
-        : IngestReviewViewData.from(
-            accounts: accounts,
-            items: items,
-            selectedAccountId: _accountId,
-            pendingFinalizeIds: _pendingFinalize.keys.toSet(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final useMasterDetail = MasterDetailLayout.shouldUseMasterDetail(
+          constraints.maxWidth,
+        );
+        final viewData =
+            accountsAsync.hasError ||
+                reviewItemsAsync.hasError ||
+                accounts == null ||
+                items == null
+            ? null
+            : IngestReviewViewData.from(
+                accounts: accounts,
+                items: items,
+                selectedAccountId: _accountId,
+                pendingFinalizeIds: _pendingFinalize.keys.toSet(),
+              );
+        if (viewData != null) {
+          _scheduleSelectionPrune(
+            viewData.items,
+            ensureWideFocus: useMasterDetail,
           );
-    if (viewData != null) {
-      _scheduleSelectionPrune(viewData.items, ensureWideFocus: useMasterDetail);
-    }
-    final selectedItems = viewData?.items
-        .where((item) => _selection.isSelected(item.draft.draftId))
-        .toList(growable: false);
+        }
+        final selectedItems = viewData?.items
+            .where((item) => _selection.isSelected(item.draft.draftId))
+            .toList(growable: false);
 
-    final content = useMasterDetail && viewData != null
-        ? _wideWorkspace(viewData, selectedItems ?? const [])
-        : AppTaskScaffold(
-            titleWidget: _title(l10n),
-            actionsBuilder: (context, wide) => wide
-                ? const <Widget>[]
-                : <Widget>[
-                    _CapturePopoverAction(
-                      enabled: !_isBusy,
-                      onCamera: _captureCamera,
-                      onFile: _pickFile,
-                      onPaste: _openPasteDialog,
-                    ),
-                  ],
-            compactLeadingSliversBuilder: viewData == null
-                ? null
-                : (_) => _compactControlSlivers(viewData),
-            primarySliversBuilder: (_) => _primarySlivers(
-              accountsAsync: accountsAsync,
-              reviewItemsAsync: reviewItemsAsync,
-              data: viewData,
+        final content = useMasterDetail && viewData != null
+            ? _wideWorkspace(viewData, selectedItems ?? const [])
+            : AppTaskScaffold(
+                titleWidget: _title(l10n),
+                actionsBuilder: (context, wide) => wide
+                    ? const <Widget>[]
+                    : <Widget>[
+                        _CapturePopoverAction(
+                          enabled: !_isBusy,
+                          onCamera: _captureCamera,
+                          onFile: _pickFile,
+                          onPaste: _openPasteDialog,
+                        ),
+                      ],
+                compactLeadingSliversBuilder: viewData == null
+                    ? null
+                    : (_) => _compactControlSlivers(viewData),
+                primarySliversBuilder: (_) => _primarySlivers(
+                  accountsAsync: accountsAsync,
+                  reviewItemsAsync: reviewItemsAsync,
+                  data: viewData,
+                ),
+                railBuilder: (_) => _rail(viewData),
+                footerBuilder: _footerBuilder(viewData, selectedItems),
+              );
+        return DropTarget(
+          onDragDone: _isBusy ? (_) {} : _onDrop,
+          child: Focus(
+            focusNode: _masterFocus,
+            onKeyEvent: (_, event) => viewData == null
+                ? KeyEventResult.ignored
+                : _onMasterKey(viewData, event),
+            child: MasterDetailShortcuts(
+              onSelectNext: viewData == null
+                  ? null
+                  : () => _moveFocus(viewData, 1),
+              onSelectPrevious: viewData == null
+                  ? null
+                  : () => _moveFocus(viewData, -1),
+              child: content,
             ),
-            railBuilder: (_) => _rail(viewData),
-            footerBuilder: _footerBuilder(viewData, selectedItems),
-          );
-    return DropTarget(
-      onDragDone: _isBusy ? (_) {} : _onDrop,
-      child: Focus(
-        focusNode: _masterFocus,
-        onKeyEvent: (_, event) => viewData == null
-            ? KeyEventResult.ignored
-            : _onMasterKey(viewData, event),
-        child: MasterDetailShortcuts(
-          onSelectNext: viewData == null ? null : () => _moveFocus(viewData, 1),
-          onSelectPrevious: viewData == null
-              ? null
-              : () => _moveFocus(viewData, -1),
-          child: content,
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

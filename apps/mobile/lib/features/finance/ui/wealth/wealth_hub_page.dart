@@ -84,8 +84,6 @@ class _WealthHubBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = Breakpoints.isMobile(width) ? AppSpacing.s16 : AppSpacing.s24;
     final baseCurrency = snapshot.baseCurrency;
     final netWorth = snapshot.netWorth.amount;
     final totalAssets = snapshot.totalAssets.amount;
@@ -96,87 +94,94 @@ class _WealthHubBody extends ConsumerWidget {
         !snapshot.isEmpty || snapshot.currencyMismatches.isNotEmpty;
     // The shared cross-domain brief shell (blueprint §8.1) — this page used
     // to hand-assemble the identical refresh/atmosphere/collapse stack.
-    return BriefScaffold(
-      padding: shellTabContentPadding(
-        context,
-        left: hPad,
-        top: AppSpacing.s8,
-        right: hPad,
-      ),
-      onRefresh: () async {
-        final range = ref.read(dashboardTimeRangeProvider);
-        ref.invalidate(dashboardSnapshotProvider);
-        ref.invalidate(dashboardTrendProvider(range));
-        await Future.wait([
-          ref.read(dashboardSnapshotProvider.future),
-          ref.read(dashboardTrendProvider(range).future),
-        ]);
-      },
-      greeting: const SizedBox.shrink(),
-      stage: AppCollapsingStage(
-        child: _BalanceOverview(
-          baseCurrency: baseCurrency,
-          netWorth: netWorth,
-          totalAssets: totalAssets,
-          totalLiabilities: totalLiabilities,
-        ),
-      ),
-      stickyBuilder: (context, progress) => AppCollapsedSummaryBar(
-        progress: progress,
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                l10n.homeNetWorthTitle,
-                style: context.mutedLabelStyle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final hPad = Breakpoints.isMobile(constraints.maxWidth)
+            ? AppSpacing.s16
+            : AppSpacing.s24;
+        return BriefScaffold(
+          padding: shellTabContentPadding(
+            context,
+            left: hPad,
+            top: AppSpacing.s8,
+            right: hPad,
+          ),
+          onRefresh: () async {
+            final range = ref.read(dashboardTimeRangeProvider);
+            ref.invalidate(dashboardSnapshotProvider);
+            ref.invalidate(dashboardTrendProvider(range));
+            await Future.wait([
+              ref.read(dashboardSnapshotProvider.future),
+              ref.read(dashboardTrendProvider(range).future),
+            ]);
+          },
+          greeting: const SizedBox.shrink(),
+          stage: AppCollapsingStage(
+            child: _BalanceOverview(
+              baseCurrency: baseCurrency,
+              netWorth: netWorth,
+              totalAssets: totalAssets,
+              totalLiabilities: totalLiabilities,
+            ),
+          ),
+          stickyBuilder: (context, progress) => AppCollapsedSummaryBar(
+            progress: progress,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.homeNetWorthTitle,
+                    style: context.mutedLabelStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                MoneyText(
+                  amount: netWorth.toDouble(),
+                  currencyCode: baseCurrency,
+                  compact: true,
+                  style: TypographyTokens.numericTitleStrong,
+                ),
+              ],
+            ),
+          ),
+          summaryTiles: [
+            if (showValuationTrust)
+              AdaptiveSummaryTile(
+                span: AdaptiveSummaryTileSpan.full,
+                child: ValuationTrustNotice(snapshot: snapshot),
               ),
+            const AdaptiveSummaryTile(
+              span: AdaptiveSummaryTileSpan.supporting,
+              child: _WealthDestinations(),
             ),
-            MoneyText(
-              amount: netWorth.toDouble(),
-              currencyCode: baseCurrency,
-              compact: true,
-              style: TypographyTokens.numericTitleStrong,
-            ),
+            if (!isEmpty)
+              const AdaptiveSummaryTile(
+                span: AdaptiveSummaryTileSpan.featured,
+                child: WealthTrendSection(),
+              ),
+            if (isEmpty)
+              AdaptiveSummaryTile(
+                span: AdaptiveSummaryTileSpan.full,
+                child: AppEmptyState(
+                  icon: FLucideIcons.landmark,
+                  title: l10n.wealthEmptyTitle,
+                  message: l10n.wealthEmptyBody,
+                  action: FButton(
+                    onPress: () => context.push(FinanceRoutes.wealthAccountNew),
+                    prefix: const Icon(FLucideIcons.plus),
+                    child: Text(l10n.wealthEmptyAction),
+                  ),
+                ),
+              ),
+            if (!isEmpty)
+              const AdaptiveSummaryTile(
+                span: AdaptiveSummaryTileSpan.full,
+                child: WealthPerspectiveSection(),
+              ),
           ],
-        ),
-      ),
-      summaryTiles: [
-        if (showValuationTrust)
-          AdaptiveSummaryTile(
-            span: AdaptiveSummaryTileSpan.full,
-            child: ValuationTrustNotice(snapshot: snapshot),
-          ),
-        const AdaptiveSummaryTile(
-          span: AdaptiveSummaryTileSpan.supporting,
-          child: _WealthDestinations(),
-        ),
-        if (!isEmpty)
-          const AdaptiveSummaryTile(
-            span: AdaptiveSummaryTileSpan.featured,
-            child: WealthTrendSection(),
-          ),
-        if (isEmpty)
-          AdaptiveSummaryTile(
-            span: AdaptiveSummaryTileSpan.full,
-            child: AppEmptyState(
-              icon: FLucideIcons.landmark,
-              title: l10n.wealthEmptyTitle,
-              message: l10n.wealthEmptyBody,
-              action: FButton(
-                onPress: () => context.push(FinanceRoutes.wealthAccountNew),
-                prefix: const Icon(FLucideIcons.plus),
-                child: Text(l10n.wealthEmptyAction),
-              ),
-            ),
-          ),
-        if (!isEmpty)
-          const AdaptiveSummaryTile(
-            span: AdaptiveSummaryTileSpan.full,
-            child: WealthPerspectiveSection(),
-          ),
-      ],
+        );
+      },
     );
   }
 }

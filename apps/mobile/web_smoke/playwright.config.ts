@@ -6,6 +6,7 @@ import { defineConfig, devices } from '@playwright/test';
 const buildDir = process.env.WEB_BUILD_DIR ?? '../build/web';
 const port = Number(process.env.WEB_SMOKE_PORT ?? 4173);
 const baseURL = process.env.WEB_SMOKE_BASE_URL ?? `http://127.0.0.1:${port}`;
+const chromiumExecutable = process.env.WEB_SMOKE_CHROMIUM_EXECUTABLE;
 
 // Headless WebKit on Linux runners stands in for desktop Safari for the
 // rendering / OPFS-fallback paths; real iOS Safari is covered by the
@@ -29,7 +30,12 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: chromiumExecutable
+          ? { executablePath: chromiumExecutable }
+          : undefined,
+      },
     },
     {
       name: 'firefox',

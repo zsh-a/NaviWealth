@@ -4,6 +4,8 @@ Automated companion to [`docs/development/web-compat-matrix.md`](../../../docs/d
 
 - Drift opens a persistent storage backend (and on Firefox, that backend is not OPFS).
 - `PathUrlStrategy` routes resolve as direct hits and after reload.
+- Core Finance routes stay free of document-level horizontal overflow at
+  390, 840, 1200, and 1600px viewport widths.
 - `manifest.json` and Drift's web assets (`sqlite3.wasm`, `drift_worker.dart.js`) are reachable.
 - The boot flow doesn't leak console errors or unhandled page errors.
 
@@ -13,14 +15,17 @@ Out of scope:
 - Perf benchmarks (first-paint budgets live in FIR-39).
 - Real iOS Safari (not reachable from a Linux runner).
 
+The responsive viewport matrix runs once in Chromium; the existing boot,
+routing, persistence, and PWA suites continue to run in all three browser
+engines so breakpoint coverage does not multiply the cross-browser runtime.
+
 ## Local run
 
 From `apps/mobile/`:
 
 ```bash
-# 1. Build the web bundle and materialize Drift assets.
-tool/setup-drift-web.sh
-flutter build web --release
+# 1. Build the web bundle and install the generated Drift root assets.
+bash tool/build-web.sh --release --dart-define=BYPASS_AUTH=true
 
 # 2. Install Playwright browsers (one-time).
 cd web_smoke
@@ -31,6 +36,10 @@ npm run install-browsers
 npm test                    # all three projects
 npm run test:firefox        # one project
 ```
+
+If the Playwright-managed Chromium bundle is unavailable but the host already
+has Chromium, set `WEB_SMOKE_CHROMIUM_EXECUTABLE=/path/to/chromium` for the
+Chromium project. CI continues to use Playwright's pinned browser by default.
 
 The harness boots a tiny static server (`serve.mjs`) that points at
 `../build/web` and falls back to `index.html` for SPA routes. Set

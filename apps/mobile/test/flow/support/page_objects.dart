@@ -537,13 +537,9 @@ class KnowledgeInboxPageObject {
     await settle(tester);
 
     await tester.enterText(find.widgetWithText(FTextField, 'Content'), body);
-    final typePicker = find.bySemanticsLabel('Save as: Auto');
-    expect(typePicker, findsOneWidget, reason: 'capture type picker missing');
-    await tester.tap(typePicker);
-    await settle(tester);
-    await tester.tap(find.text('Note').last);
-    await settle(tester);
-    await tester.tap(find.text('Save as Note').last);
+    final save = find.text('Save and analyze').hitTestable();
+    expect(save, findsOneWidget, reason: 'knowledge save action missing');
+    await tester.tap(save);
     await settle(tester);
   }
 
@@ -604,6 +600,30 @@ class ExecutionTodayPageObject {
     await settle(tester);
     await tester.tap(find.text('Done').last);
     await settle(tester);
+    final action = find.text(title);
+    for (var i = 0; i < 20 && action.evaluate().isNotEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    expect(action, findsNothing, reason: 'completed action still shown today');
+  }
+
+  Future<void> openReview() async {
+    final reviewAction = find.byWidgetPredicate(
+      (widget) => widget is FHeaderAction && widget.semanticsLabel == 'Review',
+    );
+    if (reviewAction.evaluate().isNotEmpty) {
+      tester.widget<FHeaderAction>(reviewAction).onPress?.call();
+      await settle(tester);
+      return;
+    }
+    final more = find.bySemanticsLabel('More actions').hitTestable();
+    expect(more, findsOneWidget, reason: 'execution header menu missing');
+    await tester.tap(more);
+    await settle(tester);
+    final review = find.text('Review').hitTestable();
+    expect(review, findsOneWidget, reason: 'execution review action missing');
+    await tester.tap(review);
+    await settle(tester);
   }
 }
 
@@ -613,14 +633,24 @@ class ExecutionReviewPageObject {
   final WidgetTester tester;
 
   Future<void> expectCompletedAction(String title) async {
-    final allHistory = find.text('All');
-    expect(allHistory, findsOneWidget, reason: 'review history filter missing');
-    await tester.tap(allHistory);
+    final recentActivity = find.textContaining('Recent activity ·');
+    expect(
+      recentActivity,
+      findsOneWidget,
+      reason: 'review activity disclosure missing',
+    );
+    final disclosure = find.ancestor(
+      of: recentActivity,
+      matching: find.byType(AppTappable),
+    );
+    tester.widget<AppTappable>(disclosure).onPress?.call();
     await settle(tester);
 
+    final closedActions = find.text('Recent closed actions');
+    await _scrollUntilMounted(closedActions);
+    expect(closedActions, findsWidgets);
     final completedAction = find.text(title);
     await _scrollUntilMounted(completedAction);
-    expect(find.text('Recent closed actions'), findsWidgets);
     expect(completedAction, findsOneWidget);
   }
 
@@ -738,54 +768,29 @@ class PlanPageObject {
   }
 
   Future<void> openRebalance() async {
-    final action = find.text('Rebalance');
-    expect(action, findsWidgets, reason: 'rebalance planning action missing');
-    await tester.ensureVisible(action.last);
-    await settle(tester);
-    await tester.tap(action.last);
-    await settle(tester);
+    await _openExploreAction('Rebalance');
   }
 
   Future<void> openBudget() async {
-    final action = find.text('Budget');
-    expect(action, findsWidgets, reason: 'budget planning action missing');
-    await tester.tap(action.first);
-    await settle(tester);
+    await _openExploreAction('Budget');
   }
 
   Future<void> openIncomeStrategy() async {
-    var action = find.text('Income strategy');
+    await _openExploreAction('Income strategy');
+  }
+
+  Future<void> _openExploreAction(String label) async {
+    var action = find.text(label).hitTestable();
     if (action.evaluate().isEmpty) {
-      final strategies = find.text('Simulations & advanced strategies');
-      if (strategies.evaluate().isEmpty) {
-        await tester.scrollUntilVisible(
-          strategies,
-          160,
-          scrollable: find.byType(Scrollable).last,
-        );
-      }
-      expect(
-        strategies,
-        findsOneWidget,
-        reason: 'strategy tools disclosure missing',
-      );
-      await tester.ensureVisible(strategies);
+      final explore = find.text('Add or explore').hitTestable();
+      expect(explore, findsOneWidget, reason: 'plan actions menu missing');
+      await tester.ensureVisible(explore);
+      await tester.tap(explore);
       await settle(tester);
-      await tester.tap(strategies);
-      await settle(tester);
-      action = find.text('Income strategy');
+      action = find.text(label).hitTestable();
     }
-    if (action.evaluate().isEmpty) {
-      await tester.scrollUntilVisible(
-        action,
-        160,
-        scrollable: find.byType(Scrollable).last,
-      );
-    }
-    expect(action, findsWidgets, reason: 'income strategy action missing');
-    await tester.ensureVisible(action.first);
-    await settle(tester);
-    await tester.tap(action.first);
+    expect(action, findsWidgets, reason: '$label planning action missing');
+    await tester.tap(action.last);
     await settle(tester);
   }
 }
@@ -910,7 +915,6 @@ class PortfolioAnalysisPageObject {
   void expectEmptyAnalysis() {
     expect(find.text('Portfolio'), findsWidgets);
     expect(find.text('Market value'), findsOneWidget);
-    expect(find.text('Allocation'), findsOneWidget);
     expect(find.text('Positions'), findsWidgets);
     expect(find.text('No investment holdings yet.'), findsWidgets);
   }

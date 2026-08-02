@@ -99,7 +99,10 @@ class FlowDataHarness {
     return FlowDataHarness(
       db: makeTestDatabase(),
       outbox: InMemoryOutboxStore(),
-      stamper: makeStubStamper(userId: kLocalOnlyUserId),
+      stamper: makeStubStamper(
+        userId: kLocalOnlyUserId,
+        initialMillis: DateTime.now().millisecondsSinceEpoch,
+      ),
     );
   }
 

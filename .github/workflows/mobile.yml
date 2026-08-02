@@ -291,13 +291,11 @@ jobs:
           name: mobile-font-assets
           path: apps/mobile/assets/fonts
       - run: flutter pub get
-      - name: Materialize drift web assets (sqlite3.wasm + drift_worker.dart.js)
-        run: tool/setup-drift-web.sh
       - name: Read backend API URL
         id: api-url
         working-directory: ${{ github.workspace }}
         run: echo "url=$(cat apps/backend/.api-base-url | tr -d '\n')" >> "$GITHUB_OUTPUT"
-      - run: flutter build web --release --source-maps --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
+      - run: bash tool/build-web.sh --release --source-maps --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
       - uses: actions/upload-artifact@v4
         with:
           name: mobile-web-build

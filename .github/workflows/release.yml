@@ -146,8 +146,6 @@ jobs:
         run: bash tool/build-cn-fonts.sh
       - name: Build Latin font subsets (Inter + Outfit)
         run: bash tool/build-latin-fonts.sh
-      - name: Materialize drift web assets
-        run: bash tool/setup-drift-web.sh
       - name: Read backend API URL
         id: api-url
         working-directory: ${{ github.workspace }}
@@ -176,7 +174,7 @@ jobs:
           ../../tool/check-android-native-libs.sh build/app/outputs/flutter-apk/app-release.apk
           ../../tool/check-android-native-libs.sh build/app/outputs/bundle/release/app-release.aab
       - name: Build release web PWA
-        run: flutter build web --release --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
+        run: bash tool/build-web.sh --release --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
       - name: Verify securities catalog in release artifacts
         working-directory: ${{ github.workspace }}
         run: |

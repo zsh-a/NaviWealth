@@ -23,8 +23,8 @@ Future<DatabaseConnection> _openWebConnection(String dbFileName) async {
 
   final result = await WasmDatabase.open(
     databaseName: databaseName,
-    sqlite3Uri: Uri.parse('sqlite3.wasm'),
-    driftWorkerUri: Uri.parse('drift_worker.dart.js'),
+    sqlite3Uri: Uri.parse('/sqlite3.wasm'),
+    driftWorkerUri: Uri.parse('/drift_worker.dart.js'),
   );
 
   if (kDebugMode) {

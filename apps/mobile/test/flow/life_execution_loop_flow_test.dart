@@ -46,7 +46,7 @@ void main() {
       execution.expectAction('Protect recovery today');
       await execution.completeAction('Protect recovery today');
 
-      await AppShell(tester).openTab('Review');
+      await execution.openReview();
       final review = ExecutionReviewPageObject(tester);
       await review.expectCompletedAction('Protect recovery today');
       review.expectOutcome('Health: signal still detected');
@@ -99,7 +99,7 @@ void main() {
       execution.expectAction("View this month's budget");
       await execution.completeAction("View this month's budget");
 
-      await AppShell(tester).openTab('Review');
+      await execution.openReview();
       final review = ExecutionReviewPageObject(tester);
       await review.expectCompletedAction("View this month's budget");
       review.expectOutcome('Finance: signal still detected');

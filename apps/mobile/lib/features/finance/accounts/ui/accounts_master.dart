@@ -177,24 +177,29 @@ class _AccountsByType extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = Breakpoints.isMobile(width) ? AppSpacing.s16 : AppSpacing.s24;
-    return ListView(
-      padding: EdgeInsets.fromLTRB(
-        hPad,
-        AppSpacing.s4,
-        hPad,
-        80 + MediaQuery.paddingOf(context).bottom,
-      ),
-      children: [
-        AccountsGroupedSections(
-          accounts: accounts,
-          balances: balances,
-          selectedId: selectedId,
-          heroEnabled: !inMasterDetail,
-          onAccountPressed: _openAccount,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final hPad = Breakpoints.isMobile(constraints.maxWidth)
+            ? AppSpacing.s16
+            : AppSpacing.s24;
+        return ListView(
+          padding: EdgeInsets.fromLTRB(
+            hPad,
+            AppSpacing.s4,
+            hPad,
+            80 + MediaQuery.paddingOf(context).bottom,
+          ),
+          children: [
+            AccountsGroupedSections(
+              accounts: accounts,
+              balances: balances,
+              selectedId: selectedId,
+              heroEnabled: !inMasterDetail,
+              onAccountPressed: _openAccount,
+            ),
+          ],
+        );
+      },
     );
   }
 

@@ -65,57 +65,61 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
         ),
       ],
       childPad: false,
-      child: ListView(
-        padding: shellTabContentPadding(
-          context,
-          left: Breakpoints.isMobile(MediaQuery.sizeOf(context).width)
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final horizontalPadding = Breakpoints.isMobile(constraints.maxWidth)
               ? AppSpacing.s16
-              : AppSpacing.s24,
-          top: AppSpacing.s8,
-          right: Breakpoints.isMobile(MediaQuery.sizeOf(context).width)
-              ? AppSpacing.s16
-              : AppSpacing.s24,
-        ),
-        children: [
-          _DcaPlansSection(
-            plans: plans,
-            onExecute: _executePlan,
-            onToggle: _togglePlan,
-            onDelete: _deletePlan,
-            onCreate: () => setState(() => _builderOpen = true),
-          ),
-          if (_builderOpen) ...[
-            const SizedBox(height: AppSpacing.s16),
-            AppDisclosureHeader(
-              title: l10n.dcaSimulatorTitle,
-              expanded: true,
-              onToggle: () => setState(() => _builderOpen = false),
+              : AppSpacing.s24;
+          return ListView(
+            padding: shellTabContentPadding(
+              context,
+              left: horizontalPadding,
+              top: AppSpacing.s8,
+              right: horizontalPadding,
             ),
-            const SizedBox(height: AppSpacing.s8),
-            _DcaControls(
-              formKey: _formKey,
-              symbols: _symbols,
-              amount: _amount,
-              currency: _currency,
-              market: _market,
-              frequency: _frequency,
-              years: _years,
-              busy: state.isLoading,
-              onMarketChanged: (value) => setState(() => _market = value),
-              onFrequencyChanged: (value) => setState(() => _frequency = value),
-              onYearsChanged: (value) => setState(() => _years = value),
-              onRun: _run,
-            ),
-            const SizedBox(height: AppSpacing.s16),
-            state.when(
-              loading: () => const SkeletonBox(height: 360, radius: 8),
-              error: (error, stackTrace) =>
-                  kDefaultError(context, error, stackTrace),
-              data: (data) =>
-                  _DcaResults(state: data, onDraft: () => _savePlan(data)),
-            ),
-          ],
-        ],
+            children: [
+              _DcaPlansSection(
+                plans: plans,
+                onExecute: _executePlan,
+                onToggle: _togglePlan,
+                onDelete: _deletePlan,
+                onCreate: () => setState(() => _builderOpen = true),
+              ),
+              if (_builderOpen) ...[
+                const SizedBox(height: AppSpacing.s16),
+                AppDisclosureHeader(
+                  title: l10n.dcaSimulatorTitle,
+                  expanded: true,
+                  onToggle: () => setState(() => _builderOpen = false),
+                ),
+                const SizedBox(height: AppSpacing.s8),
+                _DcaControls(
+                  formKey: _formKey,
+                  symbols: _symbols,
+                  amount: _amount,
+                  currency: _currency,
+                  market: _market,
+                  frequency: _frequency,
+                  years: _years,
+                  busy: state.isLoading,
+                  onMarketChanged: (value) => setState(() => _market = value),
+                  onFrequencyChanged: (value) =>
+                      setState(() => _frequency = value),
+                  onYearsChanged: (value) => setState(() => _years = value),
+                  onRun: _run,
+                ),
+                const SizedBox(height: AppSpacing.s16),
+                state.when(
+                  loading: () => const SkeletonBox(height: 360, radius: 8),
+                  error: (error, stackTrace) =>
+                      kDefaultError(context, error, stackTrace),
+                  data: (data) =>
+                      _DcaResults(state: data, onDraft: () => _savePlan(data)),
+                ),
+              ],
+            ],
+          );
+        },
       ),
     );
   }

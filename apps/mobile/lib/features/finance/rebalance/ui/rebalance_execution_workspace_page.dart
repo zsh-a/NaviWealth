@@ -62,39 +62,44 @@ class _RebalanceExecutionWorkspacePageState
           );
         }
       },
-      child: sessionAsync.when(
-        loading: () => _WorkspaceStatePage(
-          title: l10n.rebalanceExecutionWorkspaceTitle,
-          child: const Center(child: FCircularProgress()),
-        ),
-        error: (error, stackTrace) => _WorkspaceStatePage(
-          title: l10n.rebalanceExecutionWorkspaceTitle,
-          child: _WorkspaceError(
-            message: userSafeErrorMessage(
-              context,
-              error,
-              stackTrace: stackTrace,
-              operation: 'load rebalance execution workspace',
-            ),
-            onRetry: _refresh,
+      child: LayoutBuilder(
+        builder: (context, constraints) => sessionAsync.when(
+          loading: () => _WorkspaceStatePage(
+            title: l10n.rebalanceExecutionWorkspaceTitle,
+            child: const Center(child: FCircularProgress()),
           ),
+          error: (error, stackTrace) => _WorkspaceStatePage(
+            title: l10n.rebalanceExecutionWorkspaceTitle,
+            child: _WorkspaceError(
+              message: userSafeErrorMessage(
+                context,
+                error,
+                stackTrace: stackTrace,
+                operation: 'load rebalance execution workspace',
+              ),
+              onRetry: _refresh,
+            ),
+          ),
+          data: (session) => session == null
+              ? _WorkspaceStatePage(
+                  title: l10n.rebalanceExecutionWorkspaceTitle,
+                  child: _WorkspaceError(
+                    message: l10n.rebalanceExecutionNotFound,
+                    onRetry: _refresh,
+                  ),
+                )
+              : _buildSession(session, constraints.maxWidth),
         ),
-        data: (session) => session == null
-            ? _WorkspaceStatePage(
-                title: l10n.rebalanceExecutionWorkspaceTitle,
-                child: _WorkspaceError(
-                  message: l10n.rebalanceExecutionNotFound,
-                  onRetry: _refresh,
-                ),
-              )
-            : _buildSession(session),
       ),
     );
   }
 
-  Widget _buildSession(RebalanceExecutionSession session) {
+  Widget _buildSession(
+    RebalanceExecutionSession session,
+    double availableWidth,
+  ) {
     final useMasterDetail = MasterDetailLayout.shouldUseMasterDetail(
-      MediaQuery.sizeOf(context).width,
+      availableWidth,
     );
     _schedulePrune(session, ensureWideFocus: useMasterDetail);
     final body = _WorkspaceBody(
@@ -118,6 +123,7 @@ class _RebalanceExecutionWorkspacePageState
           _runBatch(undo: true, itemIds: List<String>.of(_selectedIds)),
       onSkipSelected: () => _mutateSelected(reopen: false),
       onReopenSelected: () => _mutateSelected(reopen: true),
+      useMasterDetail: useMasterDetail,
     );
     return Focus(
       focusNode: _masterFocus,
@@ -494,6 +500,7 @@ class _WorkspaceBody extends StatelessWidget {
     required this.onUndoSelected,
     required this.onSkipSelected,
     required this.onReopenSelected,
+    required this.useMasterDetail,
   });
 
   final RebalanceExecutionSession session;
@@ -514,6 +521,7 @@ class _WorkspaceBody extends StatelessWidget {
   final VoidCallback onUndoSelected;
   final VoidCallback onSkipSelected;
   final VoidCallback onReopenSelected;
+  final bool useMasterDetail;
 
   @override
   Widget build(BuildContext context) {
@@ -564,9 +572,7 @@ class _WorkspaceBody extends StatelessWidget {
       driftAfterPct: session.plan.driftAfterPct,
     );
     final showFooter = mutable && (batchRunning || ready || applied);
-    if (MasterDetailLayout.shouldUseMasterDetail(
-      MediaQuery.sizeOf(context).width,
-    )) {
+    if (useMasterDetail) {
       final focusedItem = session.items
           .where((item) => item.id == focusedId)
           .firstOrNull;
@@ -1227,9 +1233,7 @@ class _ExecutionItemRow extends StatelessWidget {
     final direction = item.suggestion.isBuy
         ? l10n.rebalanceBuy
         : l10n.rebalanceSell;
-    final stackAmount =
-        Breakpoints.isMobile(MediaQuery.sizeOf(context).width) &&
-        MediaQuery.textScalerOf(context).scale(1) > 1.5;
+    final stackAmount = MediaQuery.textScalerOf(context).scale(1) > 1.5;
     final amount = AnimatedMoneyText(
       amount: item.suggestion.amount.amount.toDouble(),
       currencyCode: item.suggestion.amount.currency,

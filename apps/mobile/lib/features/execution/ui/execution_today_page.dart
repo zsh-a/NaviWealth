@@ -29,12 +29,18 @@ class ExecutionTodayPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
       title: l10n.executionTodayTitle,
-      directActionBudget: 1,
+      collapseOnScroll: false,
+      directActionBudget: 2,
       actions: [
         ShellHeaderActionSpec(
           icon: FLucideIcons.plus,
           label: l10n.executionCreateActionTitle,
           onPress: () => showExecutionActionSheet(context: context),
+        ),
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.history,
+          label: l10n.executionReviewTitle,
+          onPress: () => context.push(ExecutionRoutes.review),
         ),
       ],
       child: ShellTabPause(
@@ -220,7 +226,13 @@ class _TodayListState extends ConsumerState<_TodayList> {
                     ? FButton(
                         onPress: () =>
                             showExecutionActionSheet(context: context),
-                        child: Text(l10n.executionCreateActionTitle),
+                        child: Flexible(
+                          child: Text(
+                            l10n.executionCreateActionTitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       )
                     : null,
               ),
