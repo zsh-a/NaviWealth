@@ -22,7 +22,9 @@ class _NetWorthHeader extends ConsumerWidget {
     return AppCollapsingStage(
       child: SoftCard.hero(
         // SoftCard owns select haptics; keep navigation as plain side-effect.
-        onPress: () => context.go(FinanceRoutes.wealth),
+        onPress: () => StatefulNavigationShell.of(
+          context,
+        ).goBranch(FinanceShellTab.wealth.index, initialLocation: true),
         padding: AppPageRhythm.heroPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -41,71 +41,83 @@ class DesktopSidebar extends ConsumerWidget {
       duration: AppMotionPolicy.duration(context, Motion.fast),
       curve: Motion.standardDecelerate,
       width: collapsed ? kSidebarCollapsedWidth : kSidebarExpandedWidth,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: context.appTheme.surfaces.card,
-          border: Border(
-            right: BorderSide(
-              color: context.appTheme.surfaces.border,
-              width: AppStroke.hairline,
-            ),
-          ),
-        ),
-        child: SafeArea(
-          right: false,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: AppSpacing.s12),
-              if (workspace case final workspace?) ...[
-                _WorkspaceSwitcherRow(
-                  workspace: workspace,
-                  collapsed: collapsed,
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s12,
-                    vertical: AppSpacing.s8,
-                  ),
-                  child: FDivider(),
-                ),
-              ],
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s8,
-                    vertical: AppSpacing.s4,
-                  ),
-                  itemCount: destinations.length,
-                  itemBuilder: (_, i) => _SidebarItem(
-                    destination: destinations[i],
-                    selected: i == selectedIndex,
-                    collapsed: collapsed,
-                    onTap: () => onDestinationSelected(i),
+      child: ClipRect(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Drive label visibility from the animated width, not from the
+            // target preference. This keeps both directions overflow-free:
+            // labels leave before the rail becomes too narrow and return only
+            // after enough room is available.
+            final visuallyCollapsed =
+                constraints.maxWidth < _kSidebarLabelBreakpoint;
+            return DecoratedBox(
+              decoration: BoxDecoration(
+                color: context.appTheme.surfaces.card,
+                border: Border(
+                  right: BorderSide(
+                    color: context.appTheme.surfaces.border,
+                    width: AppStroke.hairline,
                   ),
                 ),
               ),
-              const FDivider(),
-              for (final action in footerActions)
-                _PinnedActionRow(action: action, collapsed: collapsed),
-              // Pinned bottom row — Settings is off-nav (IA contract §1)
-              // but the desktop shell has the room to surface it as a
-              // discoverable entry, mirroring the Today-header avatar on
-              // mobile. Not a destination, so [selectedIndex] semantics
-              // are unaffected.
-              _SettingsPinnedRow(collapsed: collapsed),
-              _CollapseToggle(
-                collapsed: collapsed,
-                onToggle: () =>
-                    ref.read(sidebarCollapsedProvider.notifier).toggle(),
+              child: SafeArea(
+                right: false,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: AppSpacing.s12),
+                    if (workspace case final workspace?) ...[
+                      _WorkspaceSwitcherRow(
+                        workspace: workspace,
+                        collapsed: visuallyCollapsed,
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s12,
+                          vertical: AppSpacing.s8,
+                        ),
+                        child: FDivider(),
+                      ),
+                    ],
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s8,
+                          vertical: AppSpacing.s4,
+                        ),
+                        itemCount: destinations.length,
+                        itemBuilder: (_, i) => _SidebarItem(
+                          destination: destinations[i],
+                          selected: i == selectedIndex,
+                          collapsed: visuallyCollapsed,
+                          onTap: () => onDestinationSelected(i),
+                        ),
+                      ),
+                    ),
+                    const FDivider(),
+                    for (final action in footerActions)
+                      _PinnedActionRow(
+                        action: action,
+                        collapsed: visuallyCollapsed,
+                      ),
+                    _SettingsPinnedRow(collapsed: visuallyCollapsed),
+                    _CollapseToggle(
+                      collapsed: visuallyCollapsed,
+                      onToggle: () =>
+                          ref.read(sidebarCollapsedProvider.notifier).toggle(),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
 }
+
+const double _kSidebarLabelBreakpoint = 144;
 
 /// One row in the sidebar.
 class DesktopSidebarDestination {
@@ -276,7 +288,7 @@ class _SidebarItem extends StatelessWidget {
     final row = Row(
       children: [
         SizedBox(
-          width: kSidebarCollapsedWidth - 16,
+          width: AppSpacing.s40,
           child: Icon(
             selected ? destination.selectedIcon : destination.icon,
             color: iconColor,
@@ -361,7 +373,7 @@ class _SettingsPinnedRow extends StatelessWidget {
     final row = Row(
       children: [
         SizedBox(
-          width: kSidebarCollapsedWidth - 16,
+          width: AppSpacing.s40,
           child: Icon(FLucideIcons.settings, color: iconColor),
         ),
         if (!collapsed)
@@ -388,13 +400,14 @@ class _SettingsPinnedRow extends StatelessWidget {
       onPress: () => context.push(SettingsRoutes.root),
       child: tile,
     );
-    if (collapsed) {
-      return FTooltip(tipBuilder: (_, _) => Text(label), child: tap);
-    }
-    return Padding(
+    final padded = Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
       child: tap,
     );
+    if (collapsed) {
+      return FTooltip(tipBuilder: (_, _) => Text(label), child: padded);
+    }
+    return padded;
   }
 }
 

@@ -14,6 +14,13 @@ import '../../../core/shell/domain_shell.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'finance_route_paths.dart';
 
+/// Stable branch order for FinanceOS' stateful tab shell.
+///
+/// In-domain shortcuts should switch stateful branches instead of issuing a
+/// top-level route change. This keeps the adaptive tab chrome mounted while
+/// moving between tab roots.
+enum FinanceShellTab { today, activity, wealth, plan }
+
 DomainShellSpec financeDomainShell(AppLocalizations l10n) {
   return DomainShellSpec(
     scope: DomainScope.finance,

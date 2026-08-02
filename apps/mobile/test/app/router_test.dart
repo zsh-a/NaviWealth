@@ -44,6 +44,7 @@ import 'package:naviwealth/features/finance/analytics/data/providers.dart'
     as analytics_data;
 import 'package:naviwealth/features/finance/analytics/domain/benchmark/benchmark_comparison.dart';
 import 'package:naviwealth/features/finance/analytics/domain/benchmark/benchmark_index.dart';
+import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/finance/assets/ui/asset_detail_page.dart';
 import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
@@ -65,6 +66,7 @@ import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_calculator.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_goal.dart';
 import 'package:naviwealth/features/finance/fire/ui/fire_page.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/home/ui/home_page.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/holding_service.dart';
@@ -207,6 +209,12 @@ Future<ProviderContainer> _pumpAt(
         (ref) async => _EmptyHoldingService(),
       ),
       holdingsSnapshotProvider.overrideWith((ref) async => const {}),
+      dashboardSnapshotProvider.overrideWith(
+        (ref) async => DashboardSnapshot.empty(
+          asOf: DateTime(2026, 8, 2),
+          baseCurrency: 'CNY',
+        ),
+      ),
       recurringTransactionsProvider.overrideWith(
         (ref) => Stream.value(const []),
       ),
@@ -658,6 +666,23 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(_currentPath(container), AppRoutes.plan);
+      await _drainTimers(tester);
+    });
+
+    testWidgets('home hero switches to Wealth without losing bottom nav', (
+      tester,
+    ) async {
+      final container = await _pumpAt(tester);
+      expect(find.byType(HomePage), findsOneWidget);
+      expect(find.byType(FloatingGlassNavBar), findsOneWidget);
+
+      await tester.tap(find.text('Net Worth').hitTestable());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(_currentPath(container), AppRoutes.wealth);
+      expect(find.byType(WealthHubPage), findsOneWidget);
+      expect(find.byType(FloatingGlassNavBar), findsOneWidget);
       await _drainTimers(tester);
     });
 

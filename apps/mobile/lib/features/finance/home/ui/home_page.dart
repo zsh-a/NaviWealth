@@ -19,6 +19,7 @@ import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/cashflow_calendar_card.dart';
+import 'package:naviwealth/features/finance/composition/finance_domain_shell.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/market/sync/price_sync_coordinator.dart';
 import 'package:naviwealth/features/finance/data/market/sync/price_sync_providers.dart';
