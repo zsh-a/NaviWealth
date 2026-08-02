@@ -32,13 +32,16 @@ import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
 import 'package:naviwealth/core/command_palette/command_palette_entry.dart';
+import 'package:naviwealth/core/lifeos/action_dispatcher.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/shell/domain_shell.dart';
 import 'package:naviwealth/core/shell/entity_route_resolver.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/execution/composition/execution_route_paths.dart';
+import 'package:naviwealth/features/execution/data/providers.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/health/composition/health_route_paths.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_route_paths.dart';
@@ -46,6 +49,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/persistence/test_database.dart';
+import '../features/finance/data/repositories/_stub_stamper.dart';
 
 const _tool = _FakeTool('domain_tool');
 const _agent = _FakeAgent('domain_agent');
@@ -204,6 +208,54 @@ ProviderContainer _container({
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test(
+    'Life action dispatcher reuses an existing source-linked action',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final c = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          mutationStamperProvider.overrideWith(
+            (_) async => makeStubStamper(userId: 'user-1'),
+          ),
+          ...lifeOsDomainCompositionOverrides(),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      const draft = LifeActionDraft(
+        title: 'Follow up the decision',
+        note: 'Selected option A',
+        sourceDomain: 'knowledge',
+        sourceRowFamily: 'know:knowledge_decisions',
+        sourceRowId: 'decision-1',
+      );
+      final dispatcher = c.read(lifeActionDispatcherProvider);
+      final firstId = await dispatcher(draft);
+      final secondId = await dispatcher(draft);
+
+      expect(firstId, isNotNull);
+      expect(secondId, firstId);
+      final repository = await c.read(executionRepositoryProvider.future);
+      expect(
+        await repository.listOpenActions(ownerUserId: 'user-1'),
+        hasLength(1),
+      );
+      final linked = await c.read(
+        lifeLinkedActionProvider((
+          rowFamily: draft.sourceRowFamily,
+          rowId: draft.sourceRowId,
+        )).future,
+      );
+      expect(linked?.id, firstId);
+      expect(linked?.state, LifeActionState.todo);
+    },
+  );
 
   test(
     'composition bundle wires the registry and active device tools',

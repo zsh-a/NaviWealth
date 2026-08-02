@@ -131,6 +131,11 @@ Library exposes Notes, Decisions, and Assumptions in its adaptive picker and
 creation sheet. Existing advanced objects remain searchable in All, but
 Principles, Concepts, Experiments, and Routines are no longer creation choices
 in the primary UI.
+
+Decision detail exposes one source-preserving follow-up action when ExecutionOS
+is active. Creation uses the domain-neutral Life action dispatcher with
+`know:knowledge_decisions` plus the decision id, reuses an existing linked
+action, and opens that action on later visits instead of creating duplicates.
 Concept relationships render as accessible links, never as a graph
 visualization. Review is a signal-first work queue: suggestions, due routines,
 due decisions, stale assumptions, and agent findings appear without a duplicate

@@ -47,6 +47,7 @@ import '../design_system/preferences/theme_preferences.dart';
 import '../features/ai_chat/composition/ai_chat_surface.dart';
 import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
 import '../features/execution/composition/execution_route_paths.dart';
+import '../features/execution/data/execution_repository.dart';
 import '../features/execution/data/providers.dart';
 import '../features/execution/domain/execution_models.dart';
 import '../features/finance/composition/finance_route_paths.dart';
@@ -125,6 +126,9 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
         };
       };
     }),
+    lifeSourceActionReaderProvider.overrideWith((ref) {
+      return (source) => _readLinkedLifeAction(ref, source);
+    }),
     lifeOpenActionCountProvider.overrideWith((ref) {
       final executionActive = ref
           .watch(activeDomainPacksProvider)
@@ -202,6 +206,14 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
 Future<String> _dispatchLifeAction(Ref ref, LifeActionDraft draft) async {
   final repository = await ref.read(executionRepositoryProvider.future);
   final stamp = await (await ref.read(mutationStamperProvider.future)).stamp();
+  final existing = await _findLinkedExecutionAction(
+    repository: repository,
+    ownerUserId: stamp.ownerUserId,
+    source: (rowFamily: draft.sourceRowFamily, rowId: draft.sourceRowId),
+  );
+  if (existing != null && existing.status != ExecutionActionStatus.dropped) {
+    return existing.id;
+  }
   final id = kExecutionUuid.v4();
   await repository.upsertAction(
     ExecutionAction(
@@ -226,6 +238,52 @@ Future<String> _dispatchLifeAction(Ref ref, LifeActionDraft draft) async {
     ),
   );
   return id;
+}
+
+Future<LifeLinkedAction?> _readLinkedLifeAction(
+  Ref ref,
+  LifeActionSource source,
+) async {
+  final repository = await ref.read(executionRepositoryProvider.future);
+  final owner = await (await ref.read(
+    mutationStamperProvider.future,
+  )).currentUserId();
+  final action = await _findLinkedExecutionAction(
+    repository: repository,
+    ownerUserId: owner,
+    source: source,
+  );
+  if (action == null || action.status == ExecutionActionStatus.dropped) {
+    return null;
+  }
+  return LifeLinkedAction(
+    id: action.id,
+    state: switch (action.status) {
+      ExecutionActionStatus.todo => LifeActionState.todo,
+      ExecutionActionStatus.doing => LifeActionState.doing,
+      ExecutionActionStatus.blocked => LifeActionState.blocked,
+      ExecutionActionStatus.done => LifeActionState.done,
+      ExecutionActionStatus.dropped => LifeActionState.dropped,
+    },
+  );
+}
+
+Future<ExecutionAction?> _findLinkedExecutionAction({
+  required ExecutionRepository repository,
+  required String ownerUserId,
+  required LifeActionSource source,
+}) async {
+  final actions = <ExecutionAction>[
+    ...await repository.listOpenActions(ownerUserId: ownerUserId),
+    ...await repository.listClosedActions(ownerUserId: ownerUserId),
+  ];
+  for (final action in actions) {
+    if (action.source.rowFamily == source.rowFamily &&
+        action.source.rowId == source.rowId) {
+      return action;
+    }
+  }
+  return null;
 }
 
 String? appEntityRouteResolver(EntityRouteRef ref) {

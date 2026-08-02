@@ -32,6 +32,9 @@ class LifePage extends ConsumerWidget {
     final packs = ref.watch(lifeWorkbenchDomainsProvider);
     final events = ref.watch(lifeEventsProvider);
     final hero = ref.watch(lifeHeroSummaryProvider);
+    final reviewPacks = packs
+        .where((pack) => pack.reviewRoutePath != null)
+        .toList(growable: false);
     final formatters = context.formatters(ref);
     final priorityEvents = events
         .where((event) => event.priority == LifeSignalPriority.high)
@@ -104,6 +107,8 @@ class LifePage extends ConsumerWidget {
             if (primaryModules.isNotEmpty) _LifePrimaryModules(primaryModules),
           ],
           secondary: [
+            if (reviewPacks.isNotEmpty)
+              _LifeReviewEntry(packs: reviewPacks, events: events, l10n: l10n),
             if (recentEvents.isNotEmpty)
               _LifeEventSection(
                 title: l10n.lifeTimelineTitle,
@@ -154,6 +159,110 @@ class LifePage extends ConsumerWidget {
         DomainScope.knowledge => l10n.lifeDomainKnowledge,
         DomainScope.execution => l10n.lifeDomainExecution,
       };
+}
+
+class _LifeReviewEntry extends StatelessWidget {
+  const _LifeReviewEntry({
+    required this.packs,
+    required this.events,
+    required this.l10n,
+  });
+
+  final List<DomainPack> packs;
+  final List<LifeEvent> events;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final scopes = packs.map((pack) => pack.scope).toSet();
+    final pendingCount = events
+        .where((event) => scopes.contains(event.domain))
+        .length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionHeader.module(title: l10n.lifeReviewTitle),
+        SoftCard.raised(
+          key: const ValueKey<String>('life-review-entry'),
+          padding: AppPageRhythm.densePadding,
+          onPress: () => _open(context),
+          child: Row(
+            children: [
+              AppIconTile(
+                icon: FLucideIcons.clipboardCheck,
+                color: context.theme.colors.primary,
+                size: 32,
+                iconSize: AppIconSizes.sm,
+                radius: AppRadius.sm,
+                backgroundOpacity: AppOpacity.subtle,
+                foregroundOpacity: 1,
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l10n.lifeReviewHeadline, style: context.rowTitleStyle),
+                    const SizedBox(height: AppSpacing.s4),
+                    Text(
+                      l10n.lifeReviewSubtitle,
+                      style: context.captionStyle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              if (pendingCount > 0)
+                AppBadge(
+                  label: '$pendingCount',
+                  size: AppBadgeSize.compact,
+                  tone: AppBadgeTone.accent,
+                  minWidth: 22,
+                )
+              else
+                Icon(
+                  FLucideIcons.chevronRight,
+                  size: AppIconSizes.sm,
+                  color: context.theme.colors.mutedForeground,
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _open(BuildContext context) async {
+    if (packs.length == 1) {
+      context.go(packs.single.reviewRoutePath!);
+      return;
+    }
+    await showAppSheet<void>(
+      context: context,
+      title: l10n.lifeReviewTitle,
+      subtitle: l10n.lifeReviewPickerSubtitle,
+      builder: (sheetContext) => AppActionSheetList(
+        children: [
+          for (final pack in packs)
+            AppActionSheetTile(
+              icon: pack.scope == DomainScope.knowledge
+                  ? FLucideIcons.brain
+                  : FLucideIcons.listChecks,
+              title: LifePage._domainLabel(l10n, pack.scope),
+              subtitle: l10n.lifeReviewDomainPending(
+                events.where((event) => event.domain == pack.scope).length,
+              ),
+              onPress: () {
+                Navigator.of(sheetContext).pop();
+                context.go(pack.reviewRoutePath!);
+              },
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 class _LifeGreeting extends StatelessWidget {

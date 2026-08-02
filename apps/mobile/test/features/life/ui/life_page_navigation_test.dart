@@ -12,11 +12,16 @@ import 'package:naviwealth/features/life/domain/life_event.dart';
 import 'package:naviwealth/features/life/ui/life_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-DomainPack _domainPack(DomainScope scope, String label) {
+DomainPack _domainPack(
+  DomainScope scope,
+  String label, {
+  String? reviewRoutePath,
+}) {
   final path = '/${scope.wire}';
   return DomainPack(
     scope: scope,
     tabPaths: [path],
+    reviewRoutePath: reviewRoutePath,
     shellSpecBuilder: (_) => DomainShellSpec(
       scope: scope,
       label: label,
@@ -125,6 +130,78 @@ void main() {
       tester.getTopLeft(domainTiles[2]).dy,
       greaterThan(tester.getTopLeft(domainTiles[0]).dy),
     );
+  });
+
+  testWidgets('opens domain reviews from one Life review entry', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/life',
+      routes: [
+        GoRoute(path: '/life', builder: (_, _) => const LifePage()),
+        GoRoute(
+          path: '/knowledge/review',
+          builder: (_, _) => const Scaffold(body: Text('Knowledge review')),
+        ),
+        GoRoute(
+          path: '/execution/review',
+          builder: (_, _) => const Scaffold(body: Text('Execution review')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          lifeEventsProvider.overrideWithValue(const []),
+          lifeHeroSummaryProvider.overrideWithValue(
+            const LifeHeroSummary(
+              domainCount: 2,
+              signalCount: 0,
+              highPriorityCount: 0,
+            ),
+          ),
+          lifeWorkbenchDomainsProvider.overrideWithValue([
+            _domainPack(
+              DomainScope.knowledge,
+              'KnowledgeOS',
+              reviewRoutePath: '/knowledge/review',
+            ),
+            _domainPack(
+              DomainScope.execution,
+              'ExecutionOS',
+              reviewRoutePath: '/execution/review',
+            ),
+          ]),
+        ],
+        child: MaterialApp.router(
+          theme: AppTheme.light(),
+          locale: const Locale('en', 'US'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+          builder: (context, child) =>
+              FTheme(data: FThemes.slate.light.desktop, child: child!),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey<String>('life-review-entry')),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Close the loop'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Choose what you want to review.'), findsOneWidget);
+    expect(find.text('Knowledge'), findsOneWidget);
+    expect(find.text('Execution'), findsOneWidget);
+
+    await tester.tap(find.text('Knowledge'));
+    await tester.pumpAndSettle();
+    expect(find.text('Knowledge review'), findsOneWidget);
   });
 
   testWidgets(

@@ -50,6 +50,7 @@ final DomainPack kExecutionPack = DomainPack(
   shellSpecBuilder: executionDomainShell,
   shellRouteBuilder: executionShellRoute,
   tabPaths: [AppRoutes.executionToday, AppRoutes.executionCommitments],
+  reviewRoutePath: AppRoutes.executionReview,
   agentBuilder: _executionAgents,
   agentPresentationSpecs: const [
     AgentPresentationSpec(

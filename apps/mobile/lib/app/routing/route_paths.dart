@@ -69,7 +69,7 @@ abstract final class AppRoutes {
   static const healthPlan = HealthRoutes.plan;
 
   // ── KnowledgeOS (`docs/domains/knowledgeos-domain.md` §5) — gated by domain
-  // opt-in. 3 tabs: Inbox / Library / Review.
+  // opt-in. Primary tabs: Inbox / Library; Review is contextual.
   static const knowledgeInbox = KnowledgeRoutes.inbox;
   static const knowledgeLibrary = KnowledgeRoutes.library;
   static const knowledgeReview = KnowledgeRoutes.review;
@@ -231,7 +231,7 @@ abstract final class AppRouteNames {
   static const healthTrend = HealthRouteNames.trend;
   static const healthPlan = HealthRouteNames.plan;
 
-  // ── KnowledgeOS — gated by opt-in. 3 tabs per knowledgeos-domain.md §5.
+  // ── KnowledgeOS — gated by opt-in. Review is contextual, not a tab.
   static const knowledgeInbox = KnowledgeRouteNames.inbox;
   static const knowledgeLibrary = KnowledgeRouteNames.library;
   static const knowledgeReview = KnowledgeRouteNames.review;

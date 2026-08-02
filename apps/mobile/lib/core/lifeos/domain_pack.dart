@@ -153,6 +153,7 @@ class DomainPack {
     this.deferredPreloader,
     this.tabPaths = const <String>[],
     this.additionalPathPrefixes = const <String>[],
+    this.reviewRoutePath,
     this.agentBuilder,
     this.agentPresentationSpecs = const <AgentPresentationSpec>[],
     this.memorySourcePrefixes = const <String>[],
@@ -220,6 +221,10 @@ class DomainPack {
   /// `/cashflow*` which lives under the Finance shell but isn't a
   /// 4-tab destination.
   final List<String> additionalPathPrefixes;
+
+  /// Optional contextual review destination surfaced by the Life hub.
+  /// Review pages stay domain-owned and do not consume a permanent shell tab.
+  final String? reviewRoutePath;
 
   /// Builds the per-turn list of [Agent]s. Null when the domain has no
   /// agents (e.g. FinanceOS today). Non-null builders typically read

@@ -116,6 +116,10 @@ priority, dates, relations, and notes behind an optional detail disclosure.
 Manual status changes show a short Undo action. Blocking requires a concrete
 reason, which is stored as blocker progress instead of a generic placeholder.
 
+Actions created from a Knowledge decision preserve the source family and row
+id. App-level composition de-duplicates that source link, so a decision has one
+current follow-up action while a dropped action can be replaced explicitly.
+
 Review is a current-week digest. Progress is normally recorded from the Action,
 Project, or Commitment that owns it; Review does not expose a global create
 Progress action or historical time-window switcher.

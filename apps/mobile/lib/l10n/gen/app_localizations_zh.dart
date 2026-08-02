@@ -2197,6 +2197,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeWorkbenchTitle => '功能领域';
 
   @override
+  String get lifeReviewTitle => '复盘';
+
+  @override
+  String get lifeReviewHeadline => '完成闭环';
+
+  @override
+  String get lifeReviewSubtitle => '集中回看决策、假设与后续行动。';
+
+  @override
+  String get lifeReviewPickerSubtitle => '选择本次要复盘的领域。';
+
+  @override
+  String lifeReviewDomainPending(int count) {
+    return '$count 个信号待处理';
+  }
+
+  @override
   String get lifeTimelineTitle => '最新动态';
 
   @override
@@ -8604,6 +8621,39 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeDecisionDetailTitle => '决策详情';
+
+  @override
+  String get knowledgeDecisionActionPrompt => '将这个决策转化为一个具体的下一步。';
+
+  @override
+  String get knowledgeDecisionActionLinked => '这个决策已有后续行动。';
+
+  @override
+  String get knowledgeDecisionCreateAction => '创建行动';
+
+  @override
+  String get knowledgeDecisionOpenAction => '打开行动';
+
+  @override
+  String knowledgeDecisionActionDraftTitle(String decision) {
+    return '跟进：$decision';
+  }
+
+  @override
+  String knowledgeDecisionActionDraftNote(String choice) {
+    return '决策选择：$choice';
+  }
+
+  @override
+  String get knowledgeDecisionActionCreated => '已创建后续行动';
+
+  @override
+  String get knowledgeDecisionActionUnavailable => '启用 ExecutionOS 后可创建后续行动。';
+
+  @override
+  String knowledgeDecisionActionFailed(String error) {
+    return '无法创建行动：$error';
+  }
 
   @override
   String knowledgeDecisionDecidedAt(Object date) {

@@ -3929,6 +3929,36 @@ abstract class AppLocalizations {
   /// **'Domains'**
   String get lifeWorkbenchTitle;
 
+  /// No description provided for @lifeReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get lifeReviewTitle;
+
+  /// No description provided for @lifeReviewHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Close the loop'**
+  String get lifeReviewHeadline;
+
+  /// No description provided for @lifeReviewSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Revisit decisions, assumptions, and follow-through in one place.'**
+  String get lifeReviewSubtitle;
+
+  /// No description provided for @lifeReviewPickerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what you want to review.'**
+  String get lifeReviewPickerSubtitle;
+
+  /// No description provided for @lifeReviewDomainPending.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} signals need attention'**
+  String lifeReviewDomainPending(int count);
+
   /// Cross-domain signal list title
   ///
   /// In en, this message translates to:
@@ -15174,6 +15204,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Decision details'**
   String get knowledgeDecisionDetailTitle;
+
+  /// No description provided for @knowledgeDecisionActionPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn this decision into one concrete next step.'**
+  String get knowledgeDecisionActionPrompt;
+
+  /// No description provided for @knowledgeDecisionActionLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'A follow-up action is linked to this decision.'**
+  String get knowledgeDecisionActionLinked;
+
+  /// No description provided for @knowledgeDecisionCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create action'**
+  String get knowledgeDecisionCreateAction;
+
+  /// No description provided for @knowledgeDecisionOpenAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open action'**
+  String get knowledgeDecisionOpenAction;
+
+  /// No description provided for @knowledgeDecisionActionDraftTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow up: {decision}'**
+  String knowledgeDecisionActionDraftTitle(String decision);
+
+  /// No description provided for @knowledgeDecisionActionDraftNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Decision: {choice}'**
+  String knowledgeDecisionActionDraftNote(String choice);
+
+  /// No description provided for @knowledgeDecisionActionCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up action created'**
+  String get knowledgeDecisionActionCreated;
+
+  /// No description provided for @knowledgeDecisionActionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable ExecutionOS to create a follow-up action.'**
+  String get knowledgeDecisionActionUnavailable;
+
+  /// No description provided for @knowledgeDecisionActionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create the action: {error}'**
+  String knowledgeDecisionActionFailed(String error);
 
   /// No description provided for @knowledgeDecisionDecidedAt.
   ///

@@ -54,6 +54,7 @@ final DomainPack kKnowledgePack = DomainPack(
   shellSpecBuilder: knowledgeDomainShell,
   shellRouteBuilder: knowledgeShellRoute,
   tabPaths: [AppRoutes.knowledgeInbox, AppRoutes.knowledgeLibrary],
+  reviewRoutePath: AppRoutes.knowledgeReview,
   agentBuilder: _knowledgeAgents,
   agentPresentationSpecs: const [
     AgentPresentationSpec(

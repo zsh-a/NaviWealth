@@ -27,6 +27,18 @@ enum LifeActionState { todo, doing, blocked, done, dropped }
 typedef LifeActionStateReader =
     Future<LifeActionState?> Function(String actionId);
 
+typedef LifeActionSource = ({String rowFamily, String rowId});
+
+final class LifeLinkedAction {
+  const LifeLinkedAction({required this.id, required this.state});
+
+  final String id;
+  final LifeActionState state;
+}
+
+typedef LifeSourceActionReader =
+    Future<LifeLinkedAction?> Function(LifeActionSource source);
+
 /// App-composition seam for creating an Execution action without making a
 /// source domain import ExecutionOS.
 final lifeActionDispatcherProvider = Provider<LifeActionDispatcher>(
@@ -45,6 +57,16 @@ final lifeActionStateReaderProvider = Provider<LifeActionStateReader>(
   (ref) =>
       (actionId) async => null,
 );
+
+final lifeSourceActionReaderProvider = Provider<LifeSourceActionReader>(
+  (ref) =>
+      (source) async => null,
+);
+
+final lifeLinkedActionProvider = FutureProvider.autoDispose
+    .family<LifeLinkedAction?, LifeActionSource>((ref, source) {
+      return ref.watch(lifeSourceActionReaderProvider)(source);
+    });
 
 final lifeActionStateProvider = FutureProvider.autoDispose
     .family<LifeActionState?, String>((ref, actionId) {

@@ -173,6 +173,13 @@ Current composition:
 
 Rule: proposal metadata and proposal applier routes belong in the owning domain's `DomainPack`, not in bootstrap-time manual unions or domain-specific composite overrides.
 
+## Cross-Domain Review
+
+KnowledgeOS and ExecutionOS contribute their contextual review destinations
+through `DomainPack.reviewRoutePath`. The Life hub renders one review entry and
+offers only active domains with a real destination. Review data and pages stay
+domain-owned; the Life surface composes routes and signal counts only.
+
 ## Agent Runtime
 
 Core framework:

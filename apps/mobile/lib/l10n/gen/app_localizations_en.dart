@@ -2290,6 +2290,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lifeWorkbenchTitle => 'Domains';
 
   @override
+  String get lifeReviewTitle => 'Review';
+
+  @override
+  String get lifeReviewHeadline => 'Close the loop';
+
+  @override
+  String get lifeReviewSubtitle =>
+      'Revisit decisions, assumptions, and follow-through in one place.';
+
+  @override
+  String get lifeReviewPickerSubtitle => 'Choose what you want to review.';
+
+  @override
+  String lifeReviewDomainPending(int count) {
+    return '$count signals need attention';
+  }
+
+  @override
   String get lifeTimelineTitle => 'Latest updates';
 
   @override
@@ -9071,6 +9089,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeDecisionDetailTitle => 'Decision details';
+
+  @override
+  String get knowledgeDecisionActionPrompt =>
+      'Turn this decision into one concrete next step.';
+
+  @override
+  String get knowledgeDecisionActionLinked =>
+      'A follow-up action is linked to this decision.';
+
+  @override
+  String get knowledgeDecisionCreateAction => 'Create action';
+
+  @override
+  String get knowledgeDecisionOpenAction => 'Open action';
+
+  @override
+  String knowledgeDecisionActionDraftTitle(String decision) {
+    return 'Follow up: $decision';
+  }
+
+  @override
+  String knowledgeDecisionActionDraftNote(String choice) {
+    return 'Decision: $choice';
+  }
+
+  @override
+  String get knowledgeDecisionActionCreated => 'Follow-up action created';
+
+  @override
+  String get knowledgeDecisionActionUnavailable =>
+      'Enable ExecutionOS to create a follow-up action.';
+
+  @override
+  String knowledgeDecisionActionFailed(String error) {
+    return 'Could not create the action: $error';
+  }
 
   @override
   String knowledgeDecisionDecidedAt(Object date) {
