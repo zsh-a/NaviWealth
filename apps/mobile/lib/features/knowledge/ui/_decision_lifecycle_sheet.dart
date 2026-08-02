@@ -20,6 +20,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/forms/form_dirty_guard.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
@@ -50,15 +51,17 @@ Future<bool?> showDecisionLifecycleSheet(
   WidgetRef _,
   KnowledgeDecision decision,
 ) {
-  return showAppFormSheet<bool>(
+  return showGuardedFormSheet<bool>(
     context: context,
-    builder: (_) => _DecisionLifecycleSheet(decision: decision),
+    builder: (_, dirty) =>
+        _DecisionLifecycleSheet(decision: decision, dirty: dirty),
   );
 }
 
 class _DecisionLifecycleSheet extends ConsumerStatefulWidget {
-  const _DecisionLifecycleSheet({required this.decision});
+  const _DecisionLifecycleSheet({required this.decision, required this.dirty});
   final KnowledgeDecision decision;
+  final FormDirtyController dirty;
   @override
   ConsumerState<_DecisionLifecycleSheet> createState() =>
       _DecisionLifecycleSheetState();
@@ -77,6 +80,7 @@ class _DecisionLifecycleSheetState
   @override
   void initState() {
     super.initState();
+    widget.dirty.bindTextControllers([_outcomeCtrl]);
     _loadCandidates();
   }
 
@@ -108,7 +112,8 @@ class _DecisionLifecycleSheetState
           .map((option) => option.label.trim())
           .where((label) => label.isNotEmpty)
           .toSet();
-      if (labels.isEmpty || !labels.contains(widget.decision.selectedLabel)) {
+      if (labels.length < 2 ||
+          !labels.contains(widget.decision.selectedLabel)) {
         return false;
       }
     }
@@ -121,6 +126,7 @@ class _DecisionLifecycleSheetState
   Future<void> _save() async {
     if (!_canSave) return;
     setState(() => _saving = true);
+    widget.dirty.busy = true;
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
@@ -155,8 +161,18 @@ class _DecisionLifecycleSheetState
         ),
       );
       await repo.upsertDecision(updated);
+      widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop(true);
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).commonSaveFailed,
+        );
+      }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }
@@ -170,7 +186,8 @@ class _DecisionLifecycleSheetState
       footer: AppSheetFooter(
         submitLabel: _saving ? l10n.commonSaving : l10n.commonSave,
         cancelLabel: l10n.commonCancel,
-        busy: !_canSave,
+        busy: _saving,
+        enabled: _canSave,
         onSubmit: _save,
       ),
       child: Column(
@@ -186,7 +203,10 @@ class _DecisionLifecycleSheetState
                 value: _status,
                 labelOf: (status) => decisionStatusLabel(context, status),
                 iconOf: _decisionStatusIcon,
-                onChanged: (status) => setState(() => _status = status),
+                onChanged: (status) {
+                  setState(() => _status = status);
+                  widget.dirty.markDirty();
+                },
               ),
             ],
           ),
@@ -222,7 +242,10 @@ class _DecisionLifecycleSheetState
                       selected: c.id == _supersededBy,
                       mode: KnowledgeSelectionMode.radio,
                       maxLines: 2,
-                      onPress: () => setState(() => _supersededBy = c.id),
+                      onPress: () {
+                        setState(() => _supersededBy = c.id);
+                        widget.dirty.markDirty();
+                      },
                     ),
               ],
             ),

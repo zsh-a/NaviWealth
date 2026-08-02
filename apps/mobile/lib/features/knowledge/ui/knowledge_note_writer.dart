@@ -1,8 +1,9 @@
 part of '_object_writers.dart';
 
 class _NoteWriter extends ConsumerStatefulWidget {
-  const _NoteWriter({required this.initial});
+  const _NoteWriter({required this.initial, required this.dirty});
   final KnowledgeNote initial;
+  final FormDirtyController dirty;
   @override
   ConsumerState<_NoteWriter> createState() => _NoteWriterState();
 }
@@ -27,6 +28,13 @@ class _NoteWriterState extends ConsumerState<_NoteWriter> {
     _titleCtrl.addListener(() {
       if (mounted) setState(() {});
     });
+    widget.dirty.bindTextControllers([
+      _titleCtrl,
+      _bodyCtrl,
+      _sourceUrlCtrl,
+      _tagsCtrl,
+      _projectTagCtrl,
+    ]);
   }
 
   @override
@@ -42,6 +50,7 @@ class _NoteWriterState extends ConsumerState<_NoteWriter> {
   Future<void> _save() async {
     if (_saving) return;
     setState(() => _saving = true);
+    widget.dirty.busy = true;
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
@@ -73,8 +82,18 @@ class _NoteWriterState extends ConsumerState<_NoteWriter> {
           ),
         ),
       );
+      widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).commonSaveFailed,
+        );
+      }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }

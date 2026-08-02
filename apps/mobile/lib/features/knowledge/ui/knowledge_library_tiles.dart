@@ -52,11 +52,29 @@ Widget _buildLibraryTile(
                   KnowledgeStatusLabel(label: statusBadge),
                   const SizedBox(width: AppSpacing.s4),
                 ],
-                Icon(
-                  FLucideIcons.chevronRight,
-                  size: AppIconSizes.xs,
-                  color: colors.mutedForeground.withValues(
-                    alpha: AppOpacity.muted,
+                AppAdaptiveActionMenu(
+                  title: AppLocalizations.of(
+                    context,
+                  ).knowledgeLibraryItemActions,
+                  actions: [
+                    AppAdaptiveAction(
+                      icon: FLucideIcons.trash2,
+                      title: AppLocalizations.of(context).commonDelete,
+                      destructive: true,
+                      onPress: onDelete,
+                    ),
+                  ],
+                  triggerBuilder: (context, openMenu, focusNode) => Focus(
+                    focusNode: focusNode,
+                    child: AppIconButton(
+                      icon: FLucideIcons.ellipsis,
+                      tooltip: AppLocalizations.of(
+                        context,
+                      ).knowledgeLibraryItemActions,
+                      onPress: openMenu,
+                      size: AppControlHeights.touchTarget,
+                      iconSize: AppIconSizes.xs,
+                    ),
                   ),
                 ),
               ],

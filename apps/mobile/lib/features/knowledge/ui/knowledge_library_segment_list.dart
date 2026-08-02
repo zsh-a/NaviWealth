@@ -8,6 +8,7 @@ class _SegmentList<T> extends StatefulWidget {
     required this.storageKey,
     required this.stream,
     required this.query,
+    required this.showSearchAssist,
     required this.scopeLabel,
     required this.createLabel,
     required this.onCreate,
@@ -29,6 +30,7 @@ class _SegmentList<T> extends StatefulWidget {
   final String storageKey;
   final Stream<List<T>> stream;
   final String query;
+  final bool showSearchAssist;
   final String scopeLabel;
   final String createLabel;
   final VoidCallback onCreate;
@@ -119,8 +121,12 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
           _statusFilter = null;
         }
         final searchAssist = _SearchAssistRow(
-          history: widget.searchHistory,
-          suggestions: _suggestionsFor(context, items, normalizedQuery),
+          history: widget.showSearchAssist
+              ? widget.searchHistory
+              : const <String>[],
+          suggestions: widget.showSearchAssist
+              ? _suggestionsFor(context, items, normalizedQuery)
+              : const <String>[],
           query: normalizedQuery,
           onSelected: widget.onSearchSelected,
           onHistoryClear: widget.onSearchHistoryClear,

@@ -19,6 +19,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/forms/form_dirty_guard.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
@@ -28,23 +29,24 @@ import '../domain/knowledge_models.dart';
 import '_widgets.dart';
 
 Future<void> showNewRoutineSheet(BuildContext context, WidgetRef _) =>
-    showAppFormSheet<void>(
+    showGuardedFormSheet<void>(
       context: context,
-      builder: (_) => const _RoutineWriter(),
+      builder: (_, dirty) => _RoutineWriter(dirty: dirty),
     );
 
 Future<void> showEditRoutineSheet(
   BuildContext context,
   WidgetRef _,
   KnowledgeRoutine routine,
-) => showAppFormSheet<void>(
+) => showGuardedFormSheet<void>(
   context: context,
-  builder: (_) => _RoutineWriter(initial: routine),
+  builder: (_, dirty) => _RoutineWriter(initial: routine, dirty: dirty),
 );
 
 class _RoutineWriter extends ConsumerStatefulWidget {
-  const _RoutineWriter({this.initial});
+  const _RoutineWriter({this.initial, required this.dirty});
   final KnowledgeRoutine? initial;
+  final FormDirtyController dirty;
   @override
   ConsumerState<_RoutineWriter> createState() => _RoutineWriterState();
 }
@@ -78,6 +80,7 @@ class _RoutineWriterState extends ConsumerState<_RoutineWriter> {
     _statementCtrl.addListener(() {
       if (mounted) setState(() {});
     });
+    widget.dirty.bindTextControllers([_statementCtrl, _scopeCtrl]);
   }
 
   @override
@@ -90,6 +93,7 @@ class _RoutineWriterState extends ConsumerState<_RoutineWriter> {
   Future<void> _save() async {
     if (_saving || _statementCtrl.text.trim().isEmpty) return;
     setState(() => _saving = true);
+    widget.dirty.busy = true;
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
@@ -118,8 +122,18 @@ class _RoutineWriterState extends ConsumerState<_RoutineWriter> {
           ),
         ),
       );
+      widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).commonSaveFailed,
+        );
+      }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }
@@ -133,7 +147,8 @@ class _RoutineWriterState extends ConsumerState<_RoutineWriter> {
       footer: AppSheetFooter(
         submitLabel: _saving ? l10n.commonSaving : l10n.commonSave,
         cancelLabel: l10n.commonCancel,
-        busy: _saving || _statementCtrl.text.trim().isEmpty,
+        busy: _saving,
+        enabled: _statementCtrl.text.trim().isNotEmpty,
         onSubmit: () {
           _save();
         },
@@ -162,7 +177,10 @@ class _RoutineWriterState extends ConsumerState<_RoutineWriter> {
                 value: _intervalDays,
                 labelOf: (preset) => _intervalPresetLabel(l10n, preset),
                 iconOf: (_) => FLucideIcons.calendarClock,
-                onChanged: (preset) => setState(() => _intervalDays = preset),
+                onChanged: (preset) {
+                  setState(() => _intervalDays = preset);
+                  widget.dirty.markDirty();
+                },
               ),
               FTextField(
                 control: FTextFieldControl.managed(controller: _scopeCtrl),

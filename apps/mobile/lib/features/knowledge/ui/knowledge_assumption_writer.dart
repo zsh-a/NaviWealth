@@ -1,8 +1,9 @@
 part of '_object_writers.dart';
 
 class _AssumptionWriter extends ConsumerStatefulWidget {
-  const _AssumptionWriter({this.initial});
+  const _AssumptionWriter({this.initial, required this.dirty});
   final KnowledgeAssumption? initial;
+  final FormDirtyController dirty;
   @override
   ConsumerState<_AssumptionWriter> createState() => _AssumptionWriterState();
 }
@@ -23,6 +24,7 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
     _stmtCtrl.addListener(() {
       if (mounted) setState(() {});
     });
+    widget.dirty.bindTextControllers([_stmtCtrl, _scopeCtrl]);
   }
 
   @override
@@ -35,6 +37,7 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
   Future<void> _save() async {
     if (_saving || _stmtCtrl.text.trim().isEmpty) return;
     setState(() => _saving = true);
+    widget.dirty.busy = true;
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
@@ -59,8 +62,18 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
           ),
         ),
       );
+      widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).commonSaveFailed,
+        );
+      }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }
@@ -74,7 +87,8 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
       footer: AppSheetFooter(
         submitLabel: _saving ? l10n.commonSaving : l10n.commonSave,
         cancelLabel: l10n.commonCancel,
-        busy: _saving || _stmtCtrl.text.trim().isEmpty,
+        busy: _saving,
+        enabled: _stmtCtrl.text.trim().isNotEmpty,
         onSubmit: () {
           _save();
         },
@@ -107,7 +121,10 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
                   0.7 => l10n.knowledgeConfidenceMedium,
                   _ => l10n.knowledgeConfidenceHigh,
                 },
-                onChanged: (v) => setState(() => _confidence = v),
+                onChanged: (v) {
+                  setState(() => _confidence = v);
+                  widget.dirty.markDirty();
+                },
               ),
               FTextField(
                 control: FTextFieldControl.managed(controller: _scopeCtrl),

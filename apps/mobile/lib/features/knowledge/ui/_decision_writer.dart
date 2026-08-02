@@ -20,6 +20,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import '../../../core/forms/form_dirty_guard.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
@@ -34,9 +35,9 @@ part '_decision_writer_references.dart';
 part '_decision_writer_review_date.dart';
 
 Future<void> showNewDecisionSheet(BuildContext context, WidgetRef _) {
-  return showAppFormSheet<void>(
+  return showGuardedFormSheet<void>(
     context: context,
-    builder: (_) => const _DecisionWriter(),
+    builder: (_, dirty) => _DecisionWriter(dirty: dirty),
   );
 }
 
@@ -45,16 +46,17 @@ Future<bool?> showEditDecisionSheet(
   WidgetRef _,
   KnowledgeDecision decision,
 ) {
-  return showAppFormSheet<bool>(
+  return showGuardedFormSheet<bool>(
     context: context,
-    builder: (_) => _DecisionWriter(initial: decision),
+    builder: (_, dirty) => _DecisionWriter(initial: decision, dirty: dirty),
   );
 }
 
 class _DecisionWriter extends ConsumerStatefulWidget {
-  const _DecisionWriter({this.initial});
+  const _DecisionWriter({this.initial, required this.dirty});
 
   final KnowledgeDecision? initial;
+  final FormDirtyController dirty;
   @override
   ConsumerState<_DecisionWriter> createState() => _DecisionWriterState();
 }
@@ -98,6 +100,15 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
     for (final o in _options) {
       o.labelCtrl.addListener(_onAnyChange);
     }
+    widget.dirty.bindTextControllers([
+      _questionCtrl,
+      _rationaleCtrl,
+      _expectedCtrl,
+      for (final option in _options) ...[
+        option.labelCtrl,
+        option.rationaleCtrl,
+      ],
+    ]);
   }
 
   void _onAnyChange() {
@@ -121,15 +132,20 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
   bool get _canSave {
     if (_saving) return false;
     if (_questionCtrl.text.trim().isEmpty) return false;
-    if (_options.where((o) => o.labelCtrl.text.trim().isNotEmpty).isEmpty) {
-      return false;
-    }
-    return true;
+    return _validOptionLabels.length >= 2;
   }
+
+  List<String> get _validOptionLabels => _options
+      .map((option) => option.labelCtrl.text.trim())
+      .where((label) => label.isNotEmpty)
+      .toSet()
+      .toList(growable: false);
 
   Future<void> _save() async {
     if (!_canSave) return;
+    final l10n = AppLocalizations.of(context);
     setState(() => _saving = true);
+    widget.dirty.busy = true;
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
@@ -182,8 +198,14 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
         ),
       );
       await repo.upsertDecision(decision);
+      widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop(initial == null ? null : true);
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
+      }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }
@@ -197,7 +219,8 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
       footer: AppSheetFooter(
         submitLabel: _saving ? l10n.commonSaving : l10n.commonSave,
         cancelLabel: l10n.commonCancel,
-        busy: _saving || !_canSave,
+        busy: _saving,
+        enabled: _canSave,
         onSubmit: () {
           _save();
         },
@@ -231,13 +254,25 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
                     final label = _options[i].labelCtrl.text.trim();
                     if (label.isEmpty) return;
                     setState(() => _selectedLabel = label);
+                    widget.dirty.markDirty();
                   },
                   onRemove: _options.length <= 2
                       ? null
                       : () => setState(() {
                           _options.removeAt(i).dispose();
                           _selectedLabel = _activeLabel();
+                          widget.dirty.markDirty();
                         }),
+                ),
+              if (_validOptionLabels.length < 2)
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    l10n.knowledgeDecisionOptionsRequirement,
+                    style: context.captionStyle.copyWith(
+                      color: context.theme.colors.destructive,
+                    ),
+                  ),
                 ),
               Align(
                 alignment: Alignment.centerLeft,
@@ -247,7 +282,12 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
                   onPress: () => setState(() {
                     final draft = _OptionDraft();
                     draft.labelCtrl.addListener(_onAnyChange);
+                    widget.dirty.bindTextControllers([
+                      draft.labelCtrl,
+                      draft.rationaleCtrl,
+                    ]);
                     _options.add(draft);
+                    widget.dirty.markDirty();
                   }),
                 ),
               ),
@@ -276,11 +316,13 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
                 principleIds: _principleIds,
                 assumptionIds: _assumptionIds,
                 onPrincipleToggle: (id) => setState(() {
+                  widget.dirty.markDirty();
                   _principleIds.contains(id)
                       ? _principleIds.remove(id)
                       : _principleIds.add(id);
                 }),
                 onAssumptionToggle: (id) => setState(() {
+                  widget.dirty.markDirty();
                   _assumptionIds.contains(id)
                       ? _assumptionIds.remove(id)
                       : _assumptionIds.add(id);
@@ -319,6 +361,7 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
                       final picked = await _pickReviewDate(context);
                       if (picked != null) {
                         setState(() => _reviewDate = picked);
+                        widget.dirty.markDirty();
                       }
                     },
                     child: Text(
@@ -331,7 +374,10 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
                     const SizedBox(width: AppSpacing.s8),
                     FButton(
                       variant: FButtonVariant.outline,
-                      onPress: () => setState(() => _reviewDate = null),
+                      onPress: () {
+                        setState(() => _reviewDate = null);
+                        widget.dirty.markDirty();
+                      },
                       child: Text(l10n.knowledgeDecisionClear),
                     ),
                   ],

@@ -184,30 +184,40 @@ class _StaleAssumptionRowState extends ConsumerState<_StaleAssumptionRow> {
       label: l10n.knowledgeReviewVerifyAssumption,
       icon: FLucideIcons.badgeCheck,
       onComplete: _verify,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                l10n.knowledgeReviewAssumptionStaleSummary(
-                  widget.assumption.statement,
-                  widget.assumption.daysSinceVerify(widget.now),
-                  widget.assumption.confidence.toStringAsFixed(2),
+      child: Semantics(
+        button: true,
+        label: widget.assumption.statement,
+        child: AppTappable(
+          onPress: () => context.pushNamed(
+            KnowledgeRouteNames.objectDetail,
+            pathParameters: {'kind': 'assumption', 'id': widget.assumption.id},
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.knowledgeReviewAssumptionStaleSummary(
+                      widget.assumption.statement,
+                      widget.assumption.daysSinceVerify(widget.now),
+                      widget.assumption.confidence.toStringAsFixed(2),
+                    ),
+                    style: typography.body.sm,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                style: typography.body.sm,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
+                const SizedBox(width: AppSpacing.s4),
+                _ReviewIconButton(
+                  icon: FLucideIcons.badgeCheck,
+                  busy: _busy,
+                  tooltip: l10n.knowledgeReviewVerifyAssumption,
+                  onPress: _verify,
+                ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.s4),
-            _ReviewIconButton(
-              icon: FLucideIcons.badgeCheck,
-              busy: _busy,
-              tooltip: l10n.knowledgeReviewVerifyAssumption,
-              onPress: _verify,
-            ),
-          ],
+          ),
         ),
       ),
     );

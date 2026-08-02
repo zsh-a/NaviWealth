@@ -374,14 +374,20 @@ class _ReviewReorderableListState<T> extends State<_ReviewReorderableList<T>> {
           children: [
             Expanded(child: widget.itemBuilder(item)),
             const SizedBox(width: AppSpacing.s4),
-            ReorderableDragStartListener(
-              index: index,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.s6),
-                child: Icon(
-                  FLucideIcons.gripVertical,
-                  size: AppIconSizes.xs,
-                  color: colors.mutedForeground,
+            Semantics(
+              button: true,
+              label: AppLocalizations.of(context).knowledgeReviewReorder,
+              child: ReorderableDragStartListener(
+                index: index,
+                child: SizedBox.square(
+                  dimension: AppControlHeights.touchTarget,
+                  child: Center(
+                    child: Icon(
+                      FLucideIcons.gripVertical,
+                      size: AppIconSizes.xs,
+                      color: colors.mutedForeground,
+                    ),
+                  ),
                 ),
               ),
             ),

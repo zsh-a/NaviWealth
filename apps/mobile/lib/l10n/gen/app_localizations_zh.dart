@@ -12679,6 +12679,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeLibrarySearchClear => '清除搜索';
 
   @override
+  String get knowledgeLibraryItemActions => '知识条目操作';
+
+  @override
   String get knowledgeLibrarySearchRecent => '最近';
 
   @override
@@ -12720,6 +12723,12 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get knowledgeReviewAllClearBody =>
       '当前没有到期复盘或待确认建议。即使未配置 AI，确定性复盘仍然可用。';
+
+  @override
+  String get knowledgeReviewBrowseLibrary => '浏览知识库';
+
+  @override
+  String get knowledgeReviewReorder => '拖动调整顺序';
 
   @override
   String knowledgeReviewAttentionSummary(
@@ -13005,6 +13014,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeDecisionOptionsLabel => '选项';
+
+  @override
+  String get knowledgeDecisionOptionsRequirement => '至少填写两个不同的选项。';
 
   @override
   String knowledgeDecisionOptionLabelHint(Object index) {

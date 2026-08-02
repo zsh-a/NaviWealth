@@ -7,10 +7,12 @@
 /// an LLM or asks the user to understand the domain taxonomy up front.
 library;
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/forms/form_dirty_guard.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
@@ -22,14 +24,16 @@ import '_widgets.dart';
 part 'knowledge_capture_views.dart';
 
 Future<void> showKnowledgeCaptureSheet(BuildContext context) {
-  return showAppFormSheet<void>(
+  return showGuardedFormSheet<void>(
     context: context,
-    builder: (sheetContext) => const _KnowledgeCaptureSheet(),
+    builder: (sheetContext, dirty) => _KnowledgeCaptureSheet(dirty: dirty),
   );
 }
 
 class _KnowledgeCaptureSheet extends ConsumerStatefulWidget {
-  const _KnowledgeCaptureSheet();
+  const _KnowledgeCaptureSheet({required this.dirty});
+
+  final FormDirtyController dirty;
   @override
   ConsumerState<_KnowledgeCaptureSheet> createState() =>
       _KnowledgeCaptureSheetState();
@@ -41,6 +45,7 @@ class _KnowledgeCaptureSheetState
     extends ConsumerState<_KnowledgeCaptureSheet> {
   final _titleCtrl = TextEditingController();
   final _bodyCtrl = TextEditingController();
+  final _bodyFocus = FocusNode();
   _CaptureStage _stage = _CaptureStage.composing;
 
   @override
@@ -48,6 +53,10 @@ class _KnowledgeCaptureSheetState
     super.initState();
     _bodyCtrl.addListener(_onTextChange);
     _titleCtrl.addListener(_onTextChange);
+    widget.dirty.bindTextControllers([_titleCtrl, _bodyCtrl]);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _bodyFocus.requestFocus();
+    });
   }
 
   void _onTextChange() {
@@ -60,6 +69,7 @@ class _KnowledgeCaptureSheetState
   void dispose() {
     _titleCtrl.dispose();
     _bodyCtrl.dispose();
+    _bodyFocus.dispose();
     super.dispose();
   }
 
@@ -69,6 +79,7 @@ class _KnowledgeCaptureSheetState
   Future<void> _save() async {
     if (!_canSave) return;
     setState(() => _stage = _CaptureStage.saving);
+    widget.dirty.busy = true;
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
@@ -87,40 +98,58 @@ class _KnowledgeCaptureSheetState
         ),
       );
       await repo.upsertNote(note);
+      widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() => _stage = _CaptureStage.composing);
         AppMessenger.show(
           context,
           ToastKind.error,
-          AppLocalizations.of(context).knowledgeCaptureSaveFailed('$e'),
+          AppLocalizations.of(context).commonSaveFailed,
         );
       }
+    } finally {
+      widget.dirty.busy = false;
     }
+  }
+
+  KeyEventResult _onKeyEvent(FocusNode _, KeyEvent event) {
+    if (event is! KeyDownEvent ||
+        event.logicalKey != LogicalKeyboardKey.enter) {
+      return KeyEventResult.ignored;
+    }
+    final keyboard = HardwareKeyboard.instance;
+    if (!keyboard.isControlPressed && !keyboard.isMetaPressed) {
+      return KeyEventResult.ignored;
+    }
+    _save();
+    return KeyEventResult.handled;
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final stage = _stage;
-    return AppSheet(
-      title: l10n.knowledgeCaptureTitle,
-      subtitle: l10n.knowledgeCaptureComposeSubtitle,
-      footer: switch (stage) {
-        _CaptureStage.composing => AppSheetFooter(
-          submitLabel: l10n.knowledgeCaptureSave,
+    return Focus(
+      onKeyEvent: _onKeyEvent,
+      child: AppSheet(
+        title: l10n.knowledgeCaptureTitle,
+        subtitle: l10n.knowledgeCaptureComposeSubtitle,
+        footer: AppSheetFooter(
+          submitLabel: stage == _CaptureStage.saving
+              ? l10n.commonSaving
+              : l10n.knowledgeCaptureSave,
           cancelLabel: l10n.knowledgeCaptureCancel,
+          busy: stage == _CaptureStage.saving,
           enabled: _canSave,
-          onSubmit: () {
-            _save();
-          },
+          onSubmit: _save,
         ),
-        _CaptureStage.saving => null,
-      },
-      child: _ComposeBody(
-        titleController: _titleCtrl,
-        bodyController: _bodyCtrl,
+        child: _ComposeBody(
+          titleController: _titleCtrl,
+          bodyController: _bodyCtrl,
+          bodyFocusNode: _bodyFocus,
+        ),
       ),
     );
   }

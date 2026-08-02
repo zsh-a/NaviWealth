@@ -44,12 +44,12 @@ Future<void> _deleteEntry({
         AppLocalizations.of(context).knowledgeDeletedToast,
       );
     }
-  } catch (e) {
+  } catch (_) {
     if (context.mounted) {
       AppMessenger.show(
         context,
         ToastKind.error,
-        AppLocalizations.of(context).knowledgeLibraryDeleteFailed('$e'),
+        AppLocalizations.of(context).commonDeleteFailed,
       );
     }
   }

@@ -66,6 +66,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
     _searchHistoryOwner = ref.read(activeUserIdProvider) ?? kLocalOnlyUserId;
     _loadSearchHistory();
     _searchCtrl.addListener(_onSearchChanged);
+    _searchFocus.addListener(_onSearchFocusChanged);
   }
 
   @override
@@ -74,6 +75,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
     _searchCtrl
       ..removeListener(_onSearchChanged)
       ..dispose();
+    _searchFocus.removeListener(_onSearchFocusChanged);
     _searchFocus.dispose();
     super.dispose();
   }
@@ -91,6 +93,10 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
       if (!mounted || next == _searchQuery) return;
       setState(() => _searchQuery = next);
     });
+  }
+
+  void _onSearchFocusChanged() {
+    if (mounted) setState(() {});
   }
 
   void _loadSearchHistory() {
@@ -254,10 +260,12 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
             ),
             if (_searchCtrl.text.isNotEmpty) ...[
               const SizedBox(width: AppSpacing.s8),
-              FButton.icon(
-                variant: FButtonVariant.ghost,
+              AppIconButton(
+                icon: FLucideIcons.x,
+                tooltip: l10n.knowledgeLibrarySearchClear,
                 onPress: _searchCtrl.clear,
-                child: const Icon(FLucideIcons.x),
+                size: AppControlHeights.touchTarget,
+                iconSize: AppIconSizes.sm,
               ),
             ],
           ],
@@ -278,6 +286,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                 : _createForSegment(context, ref, _segment),
             onSegmentChanged: (segment) => setState(() => _segment = segment),
             query: _searchQuery,
+            showSearchAssist: _searchFocus.hasFocus,
             searchHistory: _searchHistory,
             onSearchSelected: _applySearch,
             onSearchHistoryClear: _clearSearchHistory,

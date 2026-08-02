@@ -8,6 +8,7 @@ class _LibraryList extends ConsumerWidget {
     required this.onCreate,
     required this.onSegmentChanged,
     required this.query,
+    required this.showSearchAssist,
     required this.searchHistory,
     required this.onSearchSelected,
     required this.onSearchHistoryClear,
@@ -21,6 +22,7 @@ class _LibraryList extends ConsumerWidget {
   final VoidCallback onCreate;
   final ValueChanged<_LibrarySegment> onSegmentChanged;
   final String query;
+  final bool showSearchAssist;
   final List<String> searchHistory;
   final ValueChanged<String> onSearchSelected;
   final VoidCallback onSearchHistoryClear;
@@ -287,6 +289,7 @@ class _LibraryList extends ConsumerWidget {
       storageKey: segment.name,
       stream: stream,
       query: query,
+      showSearchAssist: showSearchAssist,
       scopeLabel: segmentLabel,
       createLabel: createLabel,
       onCreate: onCreate,

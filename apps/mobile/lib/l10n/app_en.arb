@@ -6932,6 +6932,7 @@
   "knowledgeLibraryFilterAll": "All",
   "knowledgeLibraryFilterTitle": "Filters",
   "knowledgeLibrarySearchClear": "Clear search",
+  "knowledgeLibraryItemActions": "Knowledge item actions",
   "knowledgeLibrarySearchRecent": "Recent",
   "knowledgeLibrarySearchSuggestions": "Suggestions",
   "knowledgeLibrarySearchEmptyTitle": "No matching knowledge",
@@ -6945,6 +6946,8 @@
   "knowledgeReviewOverviewTitle": "Review status",
   "knowledgeReviewAllClearBadge": "All clear",
   "knowledgeReviewAllClearBody": "There are no due reviews or pending suggestions. Your deterministic review remains available even without AI.",
+  "knowledgeReviewBrowseLibrary": "Browse library",
+  "knowledgeReviewReorder": "Drag to reorder",
   "knowledgeReviewAttentionSummary": "{routines} routines · {decisions} decisions · {assumptions} assumptions · {suggestions} AI suggestions",
   "@knowledgeReviewAttentionSummary": {
     "placeholders": {
@@ -7047,6 +7050,7 @@
   "knowledgeDecisionQuestionLabel": "Question",
   "knowledgeDecisionQuestionHint": "\"Upgrade to QQQ + BOXX dynamic hedging?\"",
   "knowledgeDecisionOptionsLabel": "Options",
+  "knowledgeDecisionOptionsRequirement": "Enter at least two different options.",
   "knowledgeDecisionOptionLabelHint": "Option {index}",
   "knowledgeDecisionOptionRationaleHint": "Why choose this option (optional)",
   "knowledgeDecisionNoReferenceCandidates": "No Principle or Assumption has been declared yet. You can save the Decision now and attach references later.",

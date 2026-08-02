@@ -1,8 +1,9 @@
 part of '_object_writers.dart';
 
 class _ConceptWriter extends ConsumerStatefulWidget {
-  const _ConceptWriter({this.initial});
+  const _ConceptWriter({this.initial, required this.dirty});
   final KnowledgeConcept? initial;
+  final FormDirtyController dirty;
   @override
   ConsumerState<_ConceptWriter> createState() => _ConceptWriterState();
 }
@@ -25,6 +26,7 @@ class _ConceptWriterState extends ConsumerState<_ConceptWriter> {
     _nameCtrl.addListener(() {
       if (mounted) setState(() {});
     });
+    widget.dirty.bindTextControllers([_nameCtrl, _aliasesCtrl, _summaryCtrl]);
   }
 
   @override
@@ -38,6 +40,7 @@ class _ConceptWriterState extends ConsumerState<_ConceptWriter> {
   Future<void> _save() async {
     if (_saving || _nameCtrl.text.trim().isEmpty) return;
     setState(() => _saving = true);
+    widget.dirty.busy = true;
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
@@ -64,8 +67,18 @@ class _ConceptWriterState extends ConsumerState<_ConceptWriter> {
           ),
         ),
       );
+      widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).commonSaveFailed,
+        );
+      }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }
@@ -79,7 +92,8 @@ class _ConceptWriterState extends ConsumerState<_ConceptWriter> {
       footer: AppSheetFooter(
         submitLabel: _saving ? l10n.commonSaving : l10n.commonSave,
         cancelLabel: l10n.commonCancel,
-        busy: _saving || _nameCtrl.text.trim().isEmpty,
+        busy: _saving,
+        enabled: _nameCtrl.text.trim().isNotEmpty,
         onSubmit: () {
           _save();
         },

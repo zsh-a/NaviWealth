@@ -110,12 +110,23 @@ class _DueDecisionRowState extends ConsumerState<_DueDecisionRow> {
 
   Future<bool> _markReviewed() async {
     if (_busy) return false;
+    final reviewed = await showDecisionLifecycleSheet(
+      context,
+      ref,
+      widget.decision,
+    );
+    if (reviewed != true || !mounted) return false;
     setState(() => _busy = true);
     final l10n = AppLocalizations.of(context);
     try {
+      final repo = await ref.read(knowledgeRepositoryProvider.future);
+      final refreshed = await repo.findDecision(
+        ownerUserId: widget.decision.sync.ownerUserId,
+        id: widget.decision.id,
+      );
       final next = await _upsertDecisionReviewDate(
         ref: ref,
-        decision: widget.decision,
+        decision: refreshed ?? widget.decision,
       );
       if (mounted) {
         AppMessenger.show(
@@ -153,37 +164,47 @@ class _DueDecisionRowState extends ConsumerState<_DueDecisionRow> {
       label: l10n.knowledgeReviewDecisionReviewed,
       icon: FLucideIcons.calendarCheck,
       onComplete: _markReviewed,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-        child: Row(
-          children: [
-            Icon(
-              FLucideIcons.calendar,
-              size: AppIconSizes.xs,
-              color: colors.mutedForeground,
+      child: Semantics(
+        button: true,
+        label: widget.decision.question,
+        child: AppTappable(
+          onPress: () => context.pushNamed(
+            KnowledgeRouteNames.decisionDetail,
+            pathParameters: {'id': widget.decision.id},
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+            child: Row(
+              children: [
+                Icon(
+                  FLucideIcons.calendar,
+                  size: AppIconSizes.xs,
+                  color: colors.mutedForeground,
+                ),
+                const SizedBox(width: AppSpacing.s4),
+                Expanded(
+                  child: Text(
+                    widget.decision.question,
+                    style: typography.body.sm,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s4),
+                Text(
+                  l10n.knowledgeReviewDecisionOverdueDays(overdueDays),
+                  style: context.captionStyle,
+                ),
+                const SizedBox(width: AppSpacing.s4),
+                _ReviewIconButton(
+                  icon: FLucideIcons.calendarCheck,
+                  busy: _busy,
+                  tooltip: l10n.knowledgeReviewDecisionReviewed,
+                  onPress: _markReviewed,
+                ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.s4),
-            Expanded(
-              child: Text(
-                widget.decision.question,
-                style: typography.body.sm,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s4),
-            Text(
-              l10n.knowledgeReviewDecisionOverdueDays(overdueDays),
-              style: context.captionStyle,
-            ),
-            const SizedBox(width: AppSpacing.s4),
-            _ReviewIconButton(
-              icon: FLucideIcons.calendarCheck,
-              busy: _busy,
-              tooltip: l10n.knowledgeReviewDecisionReviewed,
-              onPress: _markReviewed,
-            ),
-          ],
+          ),
         ),
       ),
     );

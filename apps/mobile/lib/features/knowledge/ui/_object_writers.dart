@@ -8,6 +8,7 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import '../../../core/forms/form_dirty_guard.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
@@ -24,70 +25,70 @@ part 'knowledge_experiment_writer.dart';
 part 'knowledge_note_writer.dart';
 
 Future<void> showNewPrincipleSheet(BuildContext context, WidgetRef _) =>
-    showAppFormSheet<void>(
+    showGuardedFormSheet<void>(
       context: context,
-      builder: (_) => const _PrincipleWriter(),
+      builder: (_, dirty) => _PrincipleWriter(dirty: dirty),
     );
 
 Future<void> showEditPrincipleSheet(
   BuildContext context,
   WidgetRef _,
   KnowledgePrinciple principle,
-) => showAppFormSheet<void>(
+) => showGuardedFormSheet<void>(
   context: context,
-  builder: (_) => _PrincipleWriter(initial: principle),
+  builder: (_, dirty) => _PrincipleWriter(initial: principle, dirty: dirty),
 );
 
 Future<void> showNewAssumptionSheet(BuildContext context, WidgetRef _) =>
-    showAppFormSheet<void>(
+    showGuardedFormSheet<void>(
       context: context,
-      builder: (_) => const _AssumptionWriter(),
+      builder: (_, dirty) => _AssumptionWriter(dirty: dirty),
     );
 
 Future<void> showEditAssumptionSheet(
   BuildContext context,
   WidgetRef _,
   KnowledgeAssumption assumption,
-) => showAppFormSheet<void>(
+) => showGuardedFormSheet<void>(
   context: context,
-  builder: (_) => _AssumptionWriter(initial: assumption),
+  builder: (_, dirty) => _AssumptionWriter(initial: assumption, dirty: dirty),
 );
 
 Future<void> showNewConceptSheet(BuildContext context, WidgetRef _) =>
-    showAppFormSheet<void>(
+    showGuardedFormSheet<void>(
       context: context,
-      builder: (_) => const _ConceptWriter(),
+      builder: (_, dirty) => _ConceptWriter(dirty: dirty),
     );
 
 Future<void> showEditConceptSheet(
   BuildContext context,
   WidgetRef _,
   KnowledgeConcept concept,
-) => showAppFormSheet<void>(
+) => showGuardedFormSheet<void>(
   context: context,
-  builder: (_) => _ConceptWriter(initial: concept),
+  builder: (_, dirty) => _ConceptWriter(initial: concept, dirty: dirty),
 );
 
 Future<void> showNewExperimentSheet(BuildContext context, WidgetRef _) =>
-    showAppFormSheet<void>(
+    showGuardedFormSheet<void>(
       context: context,
-      builder: (_) => const _ExperimentWriter(),
+      builder: (_, dirty) => _ExperimentWriter(dirty: dirty),
     );
 
 Future<void> showEditExperimentSheet(
   BuildContext context,
   WidgetRef _,
   KnowledgeExperiment experiment,
-) => showAppFormSheet<void>(
+) => showGuardedFormSheet<void>(
   context: context,
-  builder: (_) => _ExperimentWriter(initial: experiment),
+  builder: (_, dirty) => _ExperimentWriter(initial: experiment, dirty: dirty),
 );
 
 Future<void> showEditNoteSheet(
   BuildContext context,
   WidgetRef _,
   KnowledgeNote note,
-) => showAppFormSheet<void>(
+) => showGuardedFormSheet<void>(
   context: context,
-  builder: (_) => _NoteWriter(initial: note),
+  builder: (_, dirty) => _NoteWriter(initial: note, dirty: dirty),
 );

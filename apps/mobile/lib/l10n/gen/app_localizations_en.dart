@@ -13361,6 +13361,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeLibrarySearchClear => 'Clear search';
 
   @override
+  String get knowledgeLibraryItemActions => 'Knowledge item actions';
+
+  @override
   String get knowledgeLibrarySearchRecent => 'Recent';
 
   @override
@@ -13403,6 +13406,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get knowledgeReviewAllClearBody =>
       'There are no due reviews or pending suggestions. Your deterministic review remains available even without AI.';
+
+  @override
+  String get knowledgeReviewBrowseLibrary => 'Browse library';
+
+  @override
+  String get knowledgeReviewReorder => 'Drag to reorder';
 
   @override
   String knowledgeReviewAttentionSummary(
@@ -13702,6 +13711,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeDecisionOptionsLabel => 'Options';
+
+  @override
+  String get knowledgeDecisionOptionsRequirement =>
+      'Enter at least two different options.';
 
   @override
   String knowledgeDecisionOptionLabelHint(Object index) {

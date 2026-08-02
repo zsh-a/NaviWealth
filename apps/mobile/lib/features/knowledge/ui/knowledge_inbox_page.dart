@@ -1,9 +1,8 @@
 /// KnowledgeOS Inbox tab (`docs/domains/knowledgeos-domain.md` §5).
 ///
-/// Renders captured Notes. The Inbox action now supports Auto capture
-/// plus explicit type selection: quick Notes remain one tap away, while
-/// Routine / Decision / Principle / Assumption / Concept / Experiment
-/// can be marked at capture time.
+/// Renders captured Notes and keeps free-form capture one tap away. Structured
+/// classification remains asynchronous Review work so Inbox never waits for
+/// an LLM or exposes the KnowledgeOS taxonomy during capture.
 library;
 
 import 'package:flutter/widgets.dart';

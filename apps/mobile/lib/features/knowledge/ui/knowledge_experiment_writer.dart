@@ -1,8 +1,9 @@
 part of '_object_writers.dart';
 
 class _ExperimentWriter extends ConsumerStatefulWidget {
-  const _ExperimentWriter({this.initial});
+  const _ExperimentWriter({this.initial, required this.dirty});
   final KnowledgeExperiment? initial;
+  final FormDirtyController dirty;
   @override
   ConsumerState<_ExperimentWriter> createState() => _ExperimentWriterState();
 }
@@ -34,6 +35,13 @@ class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
     _hypoCtrl.addListener(() {
       if (mounted) setState(() {});
     });
+    widget.dirty.bindTextControllers([
+      _hypoCtrl,
+      _methodCtrl,
+      _metricsCtrl,
+      _resultCtrl,
+      _conclusionCtrl,
+    ]);
   }
 
   @override
@@ -49,6 +57,7 @@ class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
   Future<void> _save() async {
     if (_saving || _hypoCtrl.text.trim().isEmpty) return;
     setState(() => _saving = true);
+    widget.dirty.busy = true;
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
@@ -90,8 +99,18 @@ class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
       } else {
         await repo.upsertExperiment(experiment);
       }
+      widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).commonSaveFailed,
+        );
+      }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }
@@ -105,7 +124,8 @@ class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
       footer: AppSheetFooter(
         submitLabel: _saving ? l10n.commonSaving : l10n.commonSave,
         cancelLabel: l10n.commonCancel,
-        busy: _saving || _hypoCtrl.text.trim().isEmpty,
+        busy: _saving,
+        enabled: _hypoCtrl.text.trim().isNotEmpty,
         onSubmit: () {
           _save();
         },
@@ -138,6 +158,7 @@ class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
                   onChange: (next) {
                     if (next == null) return;
                     setState(() => _status = next);
+                    widget.dirty.markDirty();
                   },
                 ),
                 label: Text(l10n.knowledgeWriterStatusLabel),
@@ -187,7 +208,10 @@ class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
             children: [
               _AssumptionTargetPicker(
                 selectedId: _targetAssumptionId,
-                onChange: (id) => setState(() => _targetAssumptionId = id),
+                onChange: (id) {
+                  setState(() => _targetAssumptionId = id);
+                  widget.dirty.markDirty();
+                },
               ),
             ],
           ),

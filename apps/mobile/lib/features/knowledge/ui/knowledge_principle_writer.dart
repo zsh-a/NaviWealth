@@ -1,8 +1,9 @@
 part of '_object_writers.dart';
 
 class _PrincipleWriter extends ConsumerStatefulWidget {
-  const _PrincipleWriter({this.initial});
+  const _PrincipleWriter({this.initial, required this.dirty});
   final KnowledgePrinciple? initial;
+  final FormDirtyController dirty;
   @override
   ConsumerState<_PrincipleWriter> createState() => _PrincipleWriterState();
 }
@@ -25,6 +26,7 @@ class _PrincipleWriterState extends ConsumerState<_PrincipleWriter> {
     _stmtCtrl.addListener(() {
       if (mounted) setState(() {});
     });
+    widget.dirty.bindTextControllers([_stmtCtrl, _rationaleCtrl, _scopeCtrl]);
   }
 
   @override
@@ -38,6 +40,7 @@ class _PrincipleWriterState extends ConsumerState<_PrincipleWriter> {
   Future<void> _save() async {
     if (_saving || _stmtCtrl.text.trim().isEmpty) return;
     setState(() => _saving = true);
+    widget.dirty.busy = true;
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
@@ -59,8 +62,18 @@ class _PrincipleWriterState extends ConsumerState<_PrincipleWriter> {
           ),
         ),
       );
+      widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).commonSaveFailed,
+        );
+      }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }
@@ -74,7 +87,8 @@ class _PrincipleWriterState extends ConsumerState<_PrincipleWriter> {
       footer: AppSheetFooter(
         submitLabel: _saving ? l10n.commonSaving : l10n.commonSave,
         cancelLabel: l10n.commonCancel,
-        busy: _saving || _stmtCtrl.text.trim().isEmpty,
+        busy: _saving,
+        enabled: _stmtCtrl.text.trim().isNotEmpty,
         onSubmit: () {
           _save();
         },

@@ -22453,6 +22453,12 @@ abstract class AppLocalizations {
   /// **'Clear search'**
   String get knowledgeLibrarySearchClear;
 
+  /// No description provided for @knowledgeLibraryItemActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge item actions'**
+  String get knowledgeLibraryItemActions;
+
   /// No description provided for @knowledgeLibrarySearchRecent.
   ///
   /// In en, this message translates to:
@@ -22524,6 +22530,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'There are no due reviews or pending suggestions. Your deterministic review remains available even without AI.'**
   String get knowledgeReviewAllClearBody;
+
+  /// No description provided for @knowledgeReviewBrowseLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse library'**
+  String get knowledgeReviewBrowseLibrary;
+
+  /// No description provided for @knowledgeReviewReorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to reorder'**
+  String get knowledgeReviewReorder;
 
   /// No description provided for @knowledgeReviewAttentionSummary.
   ///
@@ -23007,6 +23025,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Options'**
   String get knowledgeDecisionOptionsLabel;
+
+  /// No description provided for @knowledgeDecisionOptionsRequirement.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter at least two different options.'**
+  String get knowledgeDecisionOptionsRequirement;
 
   /// No description provided for @knowledgeDecisionOptionLabelHint.
   ///

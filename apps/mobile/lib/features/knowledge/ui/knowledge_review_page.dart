@@ -27,6 +27,7 @@ import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_ai_suggestions_card.dart';
+import '_decision_lifecycle_sheet.dart';
 import '_widgets.dart';
 
 part 'knowledge_review_assumptions.dart';
@@ -45,6 +46,39 @@ String _reviewOrderPrefsKey(WidgetRef ref, String family) {
 }
 
 final _reviewActionsRefreshProvider = StateProvider<int>((ref) => 0);
+
+final _knowledgeReviewIsEmptyProvider = FutureProvider.autoDispose<bool>((
+  ref,
+) async {
+  ref.watch(_reviewActionsRefreshProvider);
+  ref.watch(aiSuggestionsRefreshProvider);
+  final owner = await ref.watch(knowledgeOwnerUserIdProvider.future);
+  final repo = await ref.watch(knowledgeRepositoryProvider.future);
+  final triage = await ref.watch(inboxTriageRepositoryProvider.future);
+  final results = await ref.watch(
+    knowledge_agent_providers.latestKnowledgeReviewResultsProvider.future,
+  );
+  final now = DateTime.now();
+  final routines = await repo.listDueRoutines(
+    ownerUserId: owner,
+    asOf: now.add(kRoutineDueLookahead),
+  );
+  final decisions = await repo.listDueReviews(
+    ownerUserId: owner,
+    asOf: now.toUtc(),
+  );
+  final assumptions = await repo.listOpenAssumptions(ownerUserId: owner);
+  final pending = await triage.listPending(ownerUserId: owner);
+  final hasStaleAssumption = assumptions.any(
+    (item) =>
+        item.daysSinceVerify(now.toUtc()) >= kKnowledgeAssumptionStaleDays,
+  );
+  return routines.isEmpty &&
+      decisions.isEmpty &&
+      !hasStaleAssumption &&
+      pending.every((record) => record.pending.isEmpty) &&
+      results.artifacts.isEmpty;
+});
 
 @visibleForTesting
 bool shouldShowRoutineInReview(
@@ -130,11 +164,42 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage> {
                 _DueReviewsCard(),
                 _StaleAssumptionsCard(),
                 _KnowledgeReviewAgentResultPanel(),
+                _KnowledgeReviewCompleteState(),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _KnowledgeReviewCompleteState extends ConsumerWidget {
+  const _KnowledgeReviewCompleteState();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final empty = ref.watch(_knowledgeReviewIsEmptyProvider);
+    return empty.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (isEmpty) {
+        if (!isEmpty) return const SizedBox.shrink();
+        final l10n = AppLocalizations.of(context);
+        return Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.s24),
+          child: KnowledgeEmptyState(
+            icon: FLucideIcons.circleCheckBig,
+            title: l10n.knowledgeReviewAllClearBadge,
+            message: l10n.knowledgeReviewAllClearBody,
+            action: AppQuietButton(
+              label: l10n.knowledgeReviewBrowseLibrary,
+              prefix: const Icon(FLucideIcons.library, size: AppIconSizes.xs),
+              onPress: () => context.go(KnowledgeRoutes.library),
+            ),
+          ),
+        );
+      },
     );
   }
 }

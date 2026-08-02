@@ -57,4 +57,19 @@ void main() {
     expect(find.text('Inbox · KnowledgeOS'), findsNothing);
     expect(find.byIcon(FLucideIcons.plus), findsOneWidget);
   });
+
+  testWidgets('protects an unfinished capture from accidental dismissal', (
+    tester,
+  ) async {
+    await pumpInbox(tester);
+
+    await tester.tap(find.byIcon(FLucideIcons.plus));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(FTextField).last, 'A durable thought');
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Discard changes?'), findsOneWidget);
+    expect(find.text('Keep editing'), findsOneWidget);
+  });
 }

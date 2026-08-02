@@ -151,6 +151,32 @@ void main() {
     expect(find.byType(MasterDetailLayout), findsOneWidget);
     expect(find.textContaining('Select an item'), findsOneWidget);
   });
+
+  testWidgets('decision form distinguishes validation from saving', (
+    tester,
+  ) async {
+    await _pumpLibrary(tester, width: 390);
+
+    await tester.tap(find.byIcon(FLucideIcons.plus).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New Decision'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Enter at least two different options.'), findsOneWidget);
+    expect(find.byType(FCircularProgress), findsNothing);
+
+    final fields = find.descendant(
+      of: find.byType(AppSheet),
+      matching: find.byType(EditableText),
+    );
+    await tester.enterText(fields.at(0), 'Which direction should I choose?');
+    await tester.enterText(fields.at(1), 'Option A');
+    await tester.enterText(fields.at(3), 'Option B');
+    await tester.pump();
+
+    expect(find.text('Enter at least two different options.'), findsNothing);
+    expect(find.byType(FCircularProgress), findsNothing);
+  });
 }
 
 Future<void> _pumpLibrary(
