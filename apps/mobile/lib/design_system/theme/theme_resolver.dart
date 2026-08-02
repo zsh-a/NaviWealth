@@ -1,12 +1,14 @@
 import 'package:flutter/widgets.dart';
 
 import '../tokens/color_palette.dart';
+import '../tokens/dimens_tokens.dart';
 import 'accent_colors.dart';
 import 'accent_seed.dart';
 import 'app_categorical.dart';
 import 'app_surface_style.dart';
 import 'app_theme_data.dart';
 import 'app_type_scale.dart';
+import 'component_specs.dart';
 import 'market_color_mode.dart';
 import 'market_colors.dart';
 import 'semantic_colors.dart';
@@ -87,6 +89,87 @@ AppThemeData resolveAppTheme(ThemeInputs inputs) {
   // OLED is a dark-only override; light mode falls back to standard.
   final oled = inputs.surfaceStyle == AppSurfaceStyle.oled && isDark;
   final highContrast = inputs.surfaceStyle == AppSurfaceStyle.highContrast;
+
+  final glass = highContrast
+      ? const GlassSpec(
+          chrome: GlassMaterialSpec(
+            blurSigma: AppBlur.chrome,
+            fillOpacity: AppOpacity.opaque,
+            borderOpacity: AppOpacity.emphasis,
+            liveBlur: false,
+          ),
+          sticky: GlassMaterialSpec(
+            blurSigma: AppBlur.chrome,
+            fillOpacity: AppOpacity.opaque,
+            borderOpacity: AppOpacity.emphasis,
+            liveBlur: false,
+          ),
+          sheet: GlassMaterialSpec(
+            blurSigma: AppBlur.sheet,
+            fillOpacity: AppOpacity.opaque,
+            borderOpacity: AppOpacity.emphasis,
+            liveBlur: false,
+          ),
+          overlay: GlassMaterialSpec(
+            blurSigma: AppBlur.sheet,
+            fillOpacity: AppOpacity.opaque,
+            borderOpacity: AppOpacity.emphasis,
+            liveBlur: false,
+          ),
+        )
+      : oled
+      ? const GlassSpec(
+          chrome: GlassMaterialSpec(
+            blurSigma: AppBlur.chrome,
+            fillOpacity: AppOpacity.nearOpaqueDark,
+            borderOpacity: AppOpacity.light,
+            liveBlur: false,
+          ),
+          sticky: GlassMaterialSpec(
+            blurSigma: AppBlur.chrome,
+            fillOpacity: AppOpacity.nearOpaqueDark,
+            borderOpacity: AppOpacity.light,
+            liveBlur: false,
+          ),
+          sheet: GlassMaterialSpec(
+            blurSigma: AppBlur.sheet,
+            fillOpacity: AppOpacity.nearOpaqueDark,
+            borderOpacity: AppOpacity.light,
+            liveBlur: false,
+          ),
+          overlay: GlassMaterialSpec(
+            blurSigma: AppBlur.sheet,
+            fillOpacity: AppOpacity.nearOpaqueDark,
+            borderOpacity: AppOpacity.light,
+            liveBlur: false,
+          ),
+        )
+      : const GlassSpec(
+          chrome: GlassMaterialSpec(
+            blurSigma: AppBlur.chrome,
+            fillOpacity: AppOpacity.overlay,
+            borderOpacity: AppOpacity.strong,
+            liveBlur: true,
+          ),
+          sticky: GlassMaterialSpec(
+            blurSigma: AppBlur.chrome,
+            fillOpacity: AppOpacity.solidSurface,
+            borderOpacity: AppOpacity.medium,
+            liveBlur: true,
+          ),
+          sheet: GlassMaterialSpec(
+            blurSigma: AppBlur.sheet,
+            fillOpacity: AppOpacity.overlay,
+            borderOpacity: AppOpacity.medium,
+            liveBlur: true,
+          ),
+          overlay: GlassMaterialSpec(
+            blurSigma: AppBlur.sheet,
+            fillOpacity: AppOpacity.solidSurface,
+            borderOpacity: AppOpacity.medium,
+            liveBlur: true,
+          ),
+        );
 
   final surfaces = isDark
       ? AppSurfaces(
@@ -215,5 +298,6 @@ AppThemeData resolveAppTheme(ThemeInputs inputs) {
       brightness: inputs.brightness,
       cardSurface: surfaces.card,
     ),
+    glass: glass,
   );
 }

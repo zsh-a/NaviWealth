@@ -120,17 +120,35 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
               ? (context, progress) =>
                     _HealthRecoveryStickyBar(progress: progress)
               : null,
-          modules: dataReady
+          summaryTiles: dataReady
               ? [
-                  _HealthDataFreshnessBanner(lastRefresh: _lastRefresh),
-                  const _RecoveryAlertPanel(),
-                  const _BriefingPanel(),
-                  const _MetricGrid(),
+                  AdaptiveSummaryTile(
+                    role: AdaptiveSummaryTileRole.continuous,
+                    child: _HealthDataFreshnessBanner(
+                      lastRefresh: _lastRefresh,
+                    ),
+                  ),
+                  const AdaptiveSummaryTile(child: _RecoveryAlertPanel()),
+                  const AdaptiveSummaryTile(
+                    role: AdaptiveSummaryTileRole.featured,
+                    child: _BriefingPanel(),
+                  ),
+                  const AdaptiveSummaryTile(
+                    role: AdaptiveSummaryTileRole.featured,
+                    child: _MetricGrid(),
+                  ),
+                  const AdaptiveSummaryTile(
+                    role: AdaptiveSummaryTileRole.supporting,
+                    child: _SourcesSection(),
+                  ),
+                  const AdaptiveSummaryTile(child: _WeeklySummaryPanel()),
                 ]
-              : const [],
-          secondary: dataReady
-              ? const [_SourcesSection(), _WeeklySummaryPanel()]
-              : const [_SourcesSection()],
+              : const [
+                  AdaptiveSummaryTile(
+                    role: AdaptiveSummaryTileRole.continuous,
+                    child: _SourcesSection(),
+                  ),
+                ],
         ),
       ),
     );

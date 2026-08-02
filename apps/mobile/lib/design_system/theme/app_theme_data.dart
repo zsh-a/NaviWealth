@@ -162,6 +162,7 @@ class AppThemeData {
     required this.market,
     required this.type,
     required this.categorical,
+    required this.glass,
     this.press = kAppPressSpec,
     this.card = kAppCardSpec,
     this.badge = kAppBadgeSpec,
@@ -185,6 +186,9 @@ class AppThemeData {
 
   /// Brightness-aware categorical data colors (expense/knowledge/health).
   final AppCategorical categorical;
+
+  /// Material policy for the few floating surfaces allowed to use blur.
+  final GlassSpec glass;
 
   // ── L2 component specs (blueprint §6.3) ────────────────────────────────
   final PressSpec press;

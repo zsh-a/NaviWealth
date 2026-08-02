@@ -89,6 +89,50 @@ class MetricTileSpec {
   final double minWidth;
 }
 
+/// Semantic roles for the small number of surfaces allowed to use live blur.
+///
+/// Content modules stay opaque `SoftCard` surfaces. Glass is application
+/// chrome: navigation, sticky context, modal sheets, and temporary overlays.
+enum AppGlassRole { chrome, sticky, sheet, overlay }
+
+@immutable
+class GlassMaterialSpec {
+  const GlassMaterialSpec({
+    required this.blurSigma,
+    required this.fillOpacity,
+    required this.borderOpacity,
+    required this.liveBlur,
+  });
+
+  final double blurSigma;
+  final double fillOpacity;
+  final double borderOpacity;
+  final bool liveBlur;
+}
+
+/// Theme-owned glass language resolved from accessibility and surface style.
+@immutable
+class GlassSpec {
+  const GlassSpec({
+    required this.chrome,
+    required this.sticky,
+    required this.sheet,
+    required this.overlay,
+  });
+
+  final GlassMaterialSpec chrome;
+  final GlassMaterialSpec sticky;
+  final GlassMaterialSpec sheet;
+  final GlassMaterialSpec overlay;
+
+  GlassMaterialSpec resolve(AppGlassRole role) => switch (role) {
+    AppGlassRole.chrome => chrome,
+    AppGlassRole.sticky => sticky,
+    AppGlassRole.sheet => sheet,
+    AppGlassRole.overlay => overlay,
+  };
+}
+
 /// The resolved spec set. Values are density/brightness-invariant today but
 /// resolve through the theme so a future axis (compact desktop chrome, …)
 /// changes one function, not every component.

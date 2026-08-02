@@ -148,21 +148,21 @@ class _WealthHubBody extends ConsumerWidget {
           summaryTiles: [
             if (showValuationTrust)
               AdaptiveSummaryTile(
-                span: AdaptiveSummaryTileSpan.full,
+                role: AdaptiveSummaryTileRole.continuous,
                 child: ValuationTrustNotice(snapshot: snapshot),
               ),
-            const AdaptiveSummaryTile(
-              span: AdaptiveSummaryTileSpan.supporting,
-              child: _WealthDestinations(),
-            ),
             if (!isEmpty)
               const AdaptiveSummaryTile(
-                span: AdaptiveSummaryTileSpan.featured,
+                role: AdaptiveSummaryTileRole.featured,
                 child: WealthTrendSection(),
               ),
+            const AdaptiveSummaryTile(
+              role: AdaptiveSummaryTileRole.supporting,
+              child: _WealthDestinations(),
+            ),
             if (isEmpty)
               AdaptiveSummaryTile(
-                span: AdaptiveSummaryTileSpan.full,
+                role: AdaptiveSummaryTileRole.continuous,
                 child: AppEmptyState(
                   icon: FLucideIcons.landmark,
                   title: l10n.wealthEmptyTitle,
@@ -176,7 +176,7 @@ class _WealthHubBody extends ConsumerWidget {
               ),
             if (!isEmpty)
               const AdaptiveSummaryTile(
-                span: AdaptiveSummaryTileSpan.full,
+                role: AdaptiveSummaryTileRole.continuous,
                 child: WealthPerspectiveSection(),
               ),
           ],

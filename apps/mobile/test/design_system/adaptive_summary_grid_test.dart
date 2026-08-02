@@ -6,6 +6,7 @@ Future<void> _pumpGrid(
   WidgetTester tester, {
   required double width,
   TextScaler textScaler = TextScaler.noScaling,
+  bool featuredFirst = true,
 }) async {
   tester.view.physicalSize = Size(width, 1000);
   tester.view.devicePixelRatio = 1;
@@ -15,17 +16,19 @@ Future<void> _pumpGrid(
     MaterialApp(
       home: MediaQuery(
         data: MediaQueryData(textScaler: textScaler),
-        child: const Scaffold(
+        child: Scaffold(
           body: AdaptiveSummaryGrid(
             items: [
               AdaptiveSummaryTile(
-                span: AdaptiveSummaryTileSpan.featured,
-                child: SizedBox(key: ValueKey('featured'), height: 80),
+                role: featuredFirst
+                    ? AdaptiveSummaryTileRole.featured
+                    : AdaptiveSummaryTileRole.standard,
+                child: const SizedBox(key: ValueKey('featured'), height: 80),
               ),
-              AdaptiveSummaryTile(
+              const AdaptiveSummaryTile(
                 child: SizedBox(key: ValueKey('second'), height: 60),
               ),
-              AdaptiveSummaryTile(
+              const AdaptiveSummaryTile(
                 child: SizedBox(key: ValueKey('third'), height: 40),
               ),
             ],
@@ -76,11 +79,11 @@ void main() {
             body: AdaptiveSummaryGrid(
               items: [
                 AdaptiveSummaryTile(
-                  span: AdaptiveSummaryTileSpan.supporting,
+                  role: AdaptiveSummaryTileRole.supporting,
                   child: SizedBox(key: ValueKey('supporting'), height: 80),
                 ),
                 AdaptiveSummaryTile(
-                  span: AdaptiveSummaryTileSpan.featured,
+                  role: AdaptiveSummaryTileRole.featured,
                   child: SizedBox(key: ValueKey('primary'), height: 80),
                 ),
               ],
@@ -111,19 +114,22 @@ void main() {
     expect(widePrimary.width, greaterThan(wideSupporting.width * 1.9));
   });
 
-  testWidgets('enlarged text returns a wide canvas to one column', (
+  testWidgets('enlarged text reduces density without wasting a wide canvas', (
     tester,
   ) async {
     await _pumpGrid(
       tester,
       width: 1200,
       textScaler: const TextScaler.linear(2),
+      featuredFirst: false,
     );
 
     final featured = tester.getRect(find.byKey(const ValueKey('featured')));
     final second = tester.getRect(find.byKey(const ValueKey('second')));
-    expect(second.top, greaterThan(featured.bottom));
-    expect(second.width, featured.width);
+    final third = tester.getRect(find.byKey(const ValueKey('third')));
+    expect(second.top, featured.top);
+    expect(second.left, greaterThan(featured.right));
+    expect(third.top, greaterThan(featured.bottom));
   });
 
   testWidgets('adds no glass or backdrop rendering layer', (tester) async {

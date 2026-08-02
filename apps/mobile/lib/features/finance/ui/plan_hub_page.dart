@@ -280,8 +280,8 @@ class _PlanningSections extends StatelessWidget {
         ),
     ];
     final overviewSpan = investments.isNotEmpty || reviews.isNotEmpty
-        ? AdaptiveSummaryTileSpan.supporting
-        : AdaptiveSummaryTileSpan.full;
+        ? AdaptiveSummaryTileRole.supporting
+        : AdaptiveSummaryTileRole.continuous;
     final companion = investments.isNotEmpty
         ? _PlanSection(
             key: const ValueKey('plan-investments-section'),
@@ -303,7 +303,7 @@ class _PlanningSections extends StatelessWidget {
           gap: AppSpacing.s20,
           items: [
             AdaptiveSummaryTile(
-              span: overviewSpan,
+              role: overviewSpan,
               child: _PlanSection(
                 key: const ValueKey('plan-outlook-section'),
                 title: l10n.planOverviewTitle,
@@ -312,12 +312,12 @@ class _PlanningSections extends StatelessWidget {
             ),
             if (companion != null)
               AdaptiveSummaryTile(
-                span: AdaptiveSummaryTileSpan.featured,
+                role: AdaptiveSummaryTileRole.featured,
                 child: companion,
               ),
             if (investments.isNotEmpty && reviews.isNotEmpty)
               AdaptiveSummaryTile(
-                span: AdaptiveSummaryTileSpan.full,
+                role: AdaptiveSummaryTileRole.continuous,
                 child: _PlanSection(
                   key: const ValueKey('plan-reviews-section'),
                   title: l10n.lifeEventDecisionHistory,

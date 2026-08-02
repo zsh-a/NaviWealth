@@ -38,15 +38,12 @@ class Breakpoints {
   /// content width after navigation.
   static const double shellDesktop = desktop;
 
-  /// Threshold (measured against a *surface's* own constraints, not the
-  /// window) at which content frames flip from a stacked column to a
-  /// two-column layout. Smaller than [desktop] because the shell already
-  /// reserves space for navigation chrome — a 1200-window minus a
-  /// ~256-wide drawer leaves ~944 dp for content, which stays single-column.
+  /// Threshold for master/detail and supporting-pane compositions. Bento
+  /// grids derive their columns from a minimum tile width instead.
   static const double contentTwoColumn = 1024;
 
-  /// Threshold at which content frames switch from 2-column to 3-column grids.
-  /// Used by health metric grids and similar dense layouts.
+  /// Threshold for dense metric grids that can safely introduce a second
+  /// compact column. This is not a three-column Bento threshold.
   static const double contentThreeColumn = 720;
 
   // ── Sub-mobile module thresholds & overlay caps (blueprint §7.1) ────────

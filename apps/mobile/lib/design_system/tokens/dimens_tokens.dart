@@ -456,6 +456,9 @@ class AppControlWidths {
   /// Compact metric tile in analytical wrap layouts.
   static const double metricTile = 148;
 
+  /// Minimum readable Bento module width at the default text scale.
+  static const double bentoTile = 320;
+
   /// Short statistic tile in sheet summary grids.
   static const double statsTile = 140;
 

@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import '../theme/component_specs.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
@@ -156,7 +157,7 @@ class AppFormActionBar extends StatelessWidget {
             child: SizedBox(width: contentWidth, child: child),
           );
     return AppGlassSurface(
-      blurSigma: AppBlur.sheet,
+      role: AppGlassRole.sheet,
       child: SafeArea(top: false, minimum: padding, child: content),
     );
   }

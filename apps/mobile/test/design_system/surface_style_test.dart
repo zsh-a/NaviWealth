@@ -23,6 +23,8 @@ void main() {
         oled.surfaces.card.computeLuminance(),
         lessThan(standard.surfaces.card.computeLuminance()),
       );
+      expect(oled.glass.chrome.liveBlur, isFalse);
+      expect(oled.glass.chrome.fillOpacity, AppOpacity.nearOpaqueDark);
     });
 
     test('oled is dark-only — light mode falls back to standard', () {
@@ -58,7 +60,22 @@ void main() {
           greaterThan(contrast(std.surfaces.border, std.surfaces.card)),
           reason: '${b.name}: high contrast must strengthen borders',
         );
+        expect(hc.glass.sheet.liveBlur, isFalse);
+        expect(hc.glass.sheet.fillOpacity, AppOpacity.opaque);
       }
+    });
+
+    test('standard surfaces retain role-specific live glass', () {
+      final standard = resolveAppTheme(
+        _inputs(Brightness.light, AppSurfaceStyle.standard),
+      );
+
+      expect(standard.glass.chrome.liveBlur, isTrue);
+      expect(standard.glass.sheet.blurSigma, AppBlur.sheet);
+      expect(
+        standard.glass.sticky.fillOpacity,
+        greaterThan(standard.glass.chrome.fillOpacity),
+      );
     });
 
     test('forui theme surfaces follow the style', () {

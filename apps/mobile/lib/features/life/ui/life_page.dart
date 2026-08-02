@@ -94,7 +94,7 @@ class LifePage extends ConsumerWidget {
           summaryTiles: [
             if (priorityEvents.isNotEmpty)
               AdaptiveSummaryTile(
-                span: AdaptiveSummaryTileSpan.featured,
+                role: AdaptiveSummaryTileRole.featured,
                 child: _LifeEventSection(
                   title: l10n.lifeTimelinePriorityTitle,
                   events: priorityEvents,
@@ -107,9 +107,9 @@ class LifePage extends ConsumerWidget {
               ),
             if (recentEvents.isNotEmpty)
               AdaptiveSummaryTile(
-                span: priorityEvents.isNotEmpty
-                    ? AdaptiveSummaryTileSpan.full
-                    : AdaptiveSummaryTileSpan.featured,
+                role: priorityEvents.isNotEmpty
+                    ? AdaptiveSummaryTileRole.continuous
+                    : AdaptiveSummaryTileRole.featured,
                 child: _LifeEventSection(
                   title: l10n.lifeTimelineTitle,
                   events: recentEvents,

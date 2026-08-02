@@ -213,42 +213,6 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
     final visibleHoldings = _showAllPositions ? holdings : previewHoldings;
     final showReveal = overflowHoldings.isNotEmpty;
 
-    final mainScroll = CustomScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      slivers: [
-        SliverToBoxAdapter(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _PortfolioSummary(data: data),
-              const SizedBox(height: AppSpacing.s20),
-              if (widget.allocationTree case final tree?) ...[
-                _PortfolioPlanStrip(
-                  portfolios: widget.portfolios,
-                  tree: tree,
-                  actualWeights: widget.actualPortfolioWeights,
-                ),
-                const SizedBox(height: AppSpacing.s16),
-              ],
-              _PortfolioSelector(
-                portfolios: widget.portfolios,
-                value: widget.selectedPortfolioId,
-                holdingCount: data.holdings.length,
-                onChanged: widget.onPortfolioChanged,
-              ),
-              const SizedBox(height: AppSpacing.s16),
-            ],
-          ),
-        ),
-        _positionsSliver(
-          l10n: l10n,
-          holdings: visibleHoldings,
-          empty: holdings.isEmpty,
-          showReveal: showReveal,
-          overflowCount: overflowHoldings.length,
-        ),
-      ],
-    );
     final padding = shellTabContentPadding(
       context,
       left: AppSpacing.s16,
@@ -257,97 +221,86 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
       bottom: AppSpacing.s16,
     );
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final useSupportingPane =
-            constraints.maxWidth >= Breakpoints.contentTwoColumn &&
-            MediaQuery.textScalerOf(context).scale(1) <= 1.3;
-        if (useSupportingPane) {
-          return AdaptiveContentFrame(
-            maxWidth: AdaptiveMaxWidth.dashboard,
-            layout: AdaptiveFrameLayout.cockpit,
-            expandSinglePrimary: true,
-            padding: padding,
-            primary: mainScroll,
-            secondary: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                const _ConcentrationRiskSection(),
-                const SizedBox(height: AppSpacing.s16),
-                _EngineExposureSection(baseCurrency: data.baseCurrency),
-              ],
-            ),
-          );
-        }
-        return AdaptiveContentFrame(
-          maxWidth: AdaptiveMaxWidth.page,
-          expandSinglePrimary: true,
-          padding: padding,
-          primary: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _PortfolioSummary(data: data),
-                    const SizedBox(height: AppSpacing.s20),
-                    if (widget.allocationTree case final tree?) ...[
-                      _PortfolioPlanStrip(
-                        portfolios: widget.portfolios,
-                        tree: tree,
-                        actualWeights: widget.actualPortfolioWeights,
+    return AdaptiveContentFrame(
+      maxWidth: AdaptiveMaxWidth.dashboard,
+      expandSinglePrimary: true,
+      padding: padding,
+      primary: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s20),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final wideInsights =
+                      constraints.maxWidth >= Breakpoints.contentTwoColumn;
+                  return AdaptiveSummaryGrid(
+                    gap: AppSpacing.s16,
+                    items: [
+                      AdaptiveSummaryTile(
+                        role: AdaptiveSummaryTileRole.continuous,
+                        child: _PortfolioSummary(data: data),
                       ),
-                      const SizedBox(height: AppSpacing.s16),
-                    ],
-                    _PortfolioSelector(
-                      portfolios: widget.portfolios,
-                      value: widget.selectedPortfolioId,
-                      holdingCount: data.holdings.length,
-                      onChanged: widget.onPortfolioChanged,
-                    ),
-                    const SizedBox(height: AppSpacing.s16),
-                  ],
-                ),
-              ),
-              _positionsSliver(
-                l10n: l10n,
-                holdings: visibleHoldings,
-                empty: holdings.isEmpty,
-                showReveal: showReveal,
-                overflowCount: overflowHoldings.length,
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: AppSpacing.s20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const _ConcentrationRiskSection(),
-                      FButton(
-                        variant: FButtonVariant.outline,
-                        onPress: () => setState(() {
-                          _showInsights = !_showInsights;
-                        }),
-                        prefix: Icon(
-                          _showInsights
-                              ? FLucideIcons.chevronUp
-                              : FLucideIcons.sparkles,
+                      if (widget.allocationTree case final tree?)
+                        AdaptiveSummaryTile(
+                          role: AdaptiveSummaryTileRole.featured,
+                          child: _PortfolioPlanStrip(
+                            portfolios: widget.portfolios,
+                            tree: tree,
+                            actualWeights: widget.actualPortfolioWeights,
+                          ),
                         ),
-                        child: Text(l10n.portfolioHubSectionInsights),
+                      AdaptiveSummaryTile(
+                        role: AdaptiveSummaryTileRole.supporting,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const _ConcentrationRiskSection(),
+                            const SizedBox(height: AppSpacing.s16),
+                            _PortfolioSelector(
+                              portfolios: widget.portfolios,
+                              value: widget.selectedPortfolioId,
+                              holdingCount: data.holdings.length,
+                              onChanged: widget.onPortfolioChanged,
+                            ),
+                          ],
+                        ),
                       ),
-                      if (_showInsights) ...[
-                        const SizedBox(height: AppSpacing.s12),
-                        _EngineExposureSection(baseCurrency: data.baseCurrency),
-                      ],
+                      if (wideInsights || _showInsights)
+                        AdaptiveSummaryTile(
+                          role: AdaptiveSummaryTileRole.featured,
+                          child: _EngineExposureSection(
+                            baseCurrency: data.baseCurrency,
+                          ),
+                        )
+                      else
+                        AdaptiveSummaryTile(
+                          role: AdaptiveSummaryTileRole.continuous,
+                          child: FButton(
+                            variant: FButtonVariant.outline,
+                            onPress: () => setState(() {
+                              _showInsights = true;
+                            }),
+                            prefix: const Icon(FLucideIcons.sparkles),
+                            child: Text(l10n.portfolioHubSectionInsights),
+                          ),
+                        ),
                     ],
-                  ),
-                ),
+                  );
+                },
               ),
-            ],
+            ),
           ),
-        );
-      },
+          _positionsSliver(
+            l10n: l10n,
+            holdings: visibleHoldings,
+            empty: holdings.isEmpty,
+            showReveal: showReveal,
+            overflowCount: overflowHoldings.length,
+          ),
+        ],
+      ),
     );
   }
 

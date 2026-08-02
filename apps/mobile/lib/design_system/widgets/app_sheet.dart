@@ -1,15 +1,16 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/component_specs.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/breakpoints.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/text_style_presets.dart';
 import 'app_busy_button.dart';
+import 'app_glass.dart';
 import 'app_gradient_divider.dart';
 import 'form_dirty_controller.dart';
 
@@ -568,7 +569,6 @@ class AppSheetSurface extends StatelessWidget {
     this.borderRadius = const BorderRadius.vertical(
       top: Radius.circular(AppRadius.lg),
     ),
-    this.border,
     this.safeTop = false,
     this.safeBottom = true,
     this.frosted = true,
@@ -576,7 +576,6 @@ class AppSheetSurface extends StatelessWidget {
 
   final Widget child;
   final BorderRadius borderRadius;
-  final Border? border;
   final bool safeTop;
   final bool safeBottom;
 
@@ -588,14 +587,6 @@ class AppSheetSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     if (_AppSheetSurfaceScope.hasSurface(context)) return child;
 
-    final colors = context.theme.colors;
-    final isDark = colors.brightness == Brightness.dark;
-    final surface = frosted
-        ? colors.background.withValues(alpha: AppOpacity.overlay)
-        : colors.background;
-    final hairline = colors.foreground.withValues(
-      alpha: isDark ? AppOpacity.light : AppOpacity.subtle,
-    );
     final mediaQuery = MediaQuery.of(context);
 
     // Domain shells use MediaQuery.padding.bottom to reserve space for their
@@ -609,34 +600,18 @@ class AppSheetSurface extends StatelessWidget {
       ),
     );
 
-    final decorated = DecoratedBox(
-      key: const ValueKey<String>('app-sheet.surface'),
-      decoration: BoxDecoration(
-        color: surface,
-        border:
-            border ??
-            Border(
-              top: BorderSide(color: hairline, width: AppStroke.hairline),
-            ),
-      ),
-      child: MediaQuery(
-        data: sheetMediaQuery,
-        child: SafeArea(top: safeTop, bottom: safeBottom, child: child),
-      ),
+    final sheetContent = MediaQuery(
+      data: sheetMediaQuery,
+      child: SafeArea(top: safeTop, bottom: safeBottom, child: child),
     );
 
     final surfaceWidget = _AppSheetSurfaceScope(
-      child: ClipRRect(
+      child: AppGlassSurface(
+        key: const ValueKey<String>('app-sheet.surface'),
+        role: AppGlassRole.sheet,
         borderRadius: borderRadius,
-        child: frosted
-            ? BackdropFilter(
-                filter: ui.ImageFilter.blur(
-                  sigmaX: AppBlur.sheet,
-                  sigmaY: AppBlur.sheet,
-                ),
-                child: decorated,
-              )
-            : decorated,
+        frosted: frosted,
+        child: sheetContent,
       ),
     );
 

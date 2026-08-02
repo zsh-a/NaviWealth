@@ -100,7 +100,7 @@ class _DashboardBodyContent extends ConsumerWidget {
               if (showActivation)
                 const AdaptiveSummaryTile(child: FinanceActivationCard()),
               AdaptiveSummaryTile(
-                span: AdaptiveSummaryTileSpan.featured,
+                role: AdaptiveSummaryTileRole.featured,
                 child: HomeQuickActions(
                   mode: snapshot.isEmpty
                       ? HomeQuickActionMode.onboarding

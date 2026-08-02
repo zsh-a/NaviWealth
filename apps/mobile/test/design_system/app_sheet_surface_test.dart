@@ -24,11 +24,11 @@ void main() {
       _wrap(const AppSheetSurface(child: Text('content'))),
     );
 
-    final surface = tester.widget<DecoratedBox>(
+    final surface = tester.widget<AppGlassSurface>(
       find.byKey(const ValueKey<String>('app-sheet.surface')),
     );
-    final decoration = surface.decoration as BoxDecoration;
-    expect(decoration.color!.a, lessThan(1));
+    expect(surface.role, AppGlassRole.sheet);
+    expect(surface.frosted, isTrue);
     expect(find.byType(BackdropFilter), findsOneWidget);
   });
 
@@ -39,11 +39,11 @@ void main() {
       _wrap(const AppSheetSurface(frosted: false, child: Text('content'))),
     );
 
-    final surface = tester.widget<DecoratedBox>(
+    final surface = tester.widget<AppGlassSurface>(
       find.byKey(const ValueKey<String>('app-sheet.surface')),
     );
-    final decoration = surface.decoration as BoxDecoration;
-    expect(decoration.color!.a, 1);
+    expect(surface.role, AppGlassRole.sheet);
+    expect(surface.frosted, isFalse);
     expect(find.byType(BackdropFilter), findsNothing);
   });
 

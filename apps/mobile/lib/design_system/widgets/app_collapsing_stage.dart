@@ -2,6 +2,7 @@ import 'dart:ui' as ui show lerpDouble;
 
 import 'package:flutter/widgets.dart';
 
+import '../theme/component_specs.dart';
 import '../tokens/dimens_tokens.dart';
 import 'app_glass.dart';
 
@@ -263,6 +264,7 @@ class _StickyGlassChrome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppGlassSurface(
+      role: AppGlassRole.sticky,
       borderRadius: BorderRadius.circular(AppRadius.lg),
       boxShadow: AppShadow.elevation2,
       padding: padding,

@@ -9,7 +9,7 @@ import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
-import 'package:naviwealth/design_system/theme/app_theme.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/health/agents/morning_briefing_agent.dart';
 import 'package:naviwealth/features/health/agents/providers.dart'
     as health_agent_providers;
@@ -108,6 +108,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
+    expect(find.byType(AdaptiveSummaryGrid), findsOneWidget);
     expect(find.text('Morning Briefing'), findsOneWidget);
     expect(
       find.text('Keep the first block light after short sleep.'),
