@@ -422,7 +422,11 @@ void main() {
       expect(routes, isNotEmpty);
 
       for (final route in routes) {
-        final container = await _pumpAt(tester, initialLocation: route);
+        final container = await _pumpAt(
+          tester,
+          initialLocation: route,
+          viewportSize: _desktopSize,
+        );
         expect(_currentPath(container), Uri.parse(route).path, reason: route);
         expect(find.byType(RouteErrorPage), findsNothing, reason: route);
         await _drainTimers(tester);
@@ -444,7 +448,11 @@ void main() {
         expect(routes, isNotEmpty);
 
         for (final route in routes) {
-          final container = await _pumpAt(tester, initialLocation: route);
+          final container = await _pumpAt(
+            tester,
+            initialLocation: route,
+            viewportSize: _desktopSize,
+          );
           expect(_currentPath(container), Uri.parse(route).path, reason: route);
           expect(find.byType(RouteErrorPage), findsNothing, reason: route);
           await _drainTimers(tester);

@@ -163,7 +163,7 @@ void main() {
       );
 
       expect(trend.top, destinations.top);
-      expect(trend.left, greaterThan(destinations.right));
+      expect(destinations.left, greaterThan(trend.right));
       expect(trend.width, greaterThan(destinations.width * 1.9));
       expect(perspective.top, greaterThan(trend.bottom));
     },

@@ -149,7 +149,6 @@ reviewAgentProvider FrbReviewDueReader
 assumptionAgentProvider FrbAssumptionReviewReader
 inboxTriageAgentProvider FrbInboxTriageSourceReader
 contradictionAgentProvider FrbContradictionSourceReader
-routineDueAgentProvider FrbRoutineDueReader
 '
 
 while read -r provider frb_type; do
@@ -180,8 +179,7 @@ for surface in \
   knowledge_review \
   knowledge_assumption \
   knowledge_inbox_triage \
-  knowledge_contradiction \
-  knowledge_routine_due; do
+  knowledge_contradiction; do
   if ! grep -qr "surface: '$surface'" "$RUNTIME_WIRING"; then
     echo "✖ production FRB scheduled agent is missing local trace capture:" >&2
     echo "  surface: $surface" >&2
