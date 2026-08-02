@@ -40,8 +40,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text('Income strategy'), findsOneWidget);
-    await tester.tap(find.text('Underlyings'));
-    await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('AAPL'), findsOneWidget);
     expect(find.text('Dividends'), findsOneWidget);
     expect(find.text('Wheel'), findsOneWidget);

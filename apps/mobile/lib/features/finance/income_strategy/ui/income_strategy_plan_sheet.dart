@@ -79,7 +79,7 @@ class _IncomeStrategyPlanFormState
     final modules = ref.read(incomeStrategyModulesProvider);
     _enabled =
         existing?.enabledSleeves.toSet() ??
-        modules.map((module) => module.id).toSet();
+        (modules.isEmpty ? <IncomeStrategySleeveKind>{} : {modules.first.id});
     for (final module in modules) {
       final existingIntent = existing?.intent(module.id);
       final boolValues = <IncomeStrategySettingKey, bool>{};
@@ -413,47 +413,6 @@ class _IncomeStrategyPlanFormState
                   ),
             ],
             const SizedBox(height: AppSpacing.s16),
-            Builder(
-              builder: (context) {
-                final groups = _existingGroups();
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    FSelect<String>(
-                      items: {
-                        l10n.incomeStrategyPlanGroupNone: _kNoGroup,
-                        for (final entry in groups.entries)
-                          entry.value: entry.key,
-                        l10n.incomeStrategyPlanGroupNew: _kNewGroup,
-                      },
-                      control: FSelectControl<String>.managed(
-                        initial: _groupSelection,
-                        onChange: (value) {
-                          if (value == null) return;
-                          widget.dirty.markDirty();
-                          setState(() => _groupSelection = value);
-                        },
-                      ),
-                      label: Text(l10n.incomeStrategyPlanGroup),
-                      description: Text(l10n.incomeStrategyPlanGroupHint),
-                    ),
-                    AnimatedSizeFade(
-                      visible: _groupSelection == _kNewGroup,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: AppSpacing.s12),
-                        child: FTextFormField(
-                          control: FTextFieldControl.managed(
-                            controller: _groupName,
-                          ),
-                          label: Text(l10n.incomeStrategyPlanGroupNameLabel),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: AppSpacing.s16),
             AppDisclosureHeader(
               title: l10n.incomeStrategyPlanLimits,
               subtitle: l10n.incomeStrategyPlanLimitsHint,
@@ -466,6 +425,53 @@ class _IncomeStrategyPlanFormState
                 padding: const EdgeInsets.only(top: AppSpacing.s12),
                 child: Column(
                   children: [
+                    Builder(
+                      builder: (context) {
+                        final groups = _existingGroups();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            FSelect<String>(
+                              items: {
+                                l10n.incomeStrategyPlanGroupNone: _kNoGroup,
+                                for (final entry in groups.entries)
+                                  entry.value: entry.key,
+                                l10n.incomeStrategyPlanGroupNew: _kNewGroup,
+                              },
+                              control: FSelectControl<String>.managed(
+                                initial: _groupSelection,
+                                onChange: (value) {
+                                  if (value == null) return;
+                                  widget.dirty.markDirty();
+                                  setState(() => _groupSelection = value);
+                                },
+                              ),
+                              label: Text(l10n.incomeStrategyPlanGroup),
+                              description: Text(
+                                l10n.incomeStrategyPlanGroupHint,
+                              ),
+                            ),
+                            AnimatedSizeFade(
+                              visible: _groupSelection == _kNewGroup,
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                  top: AppSpacing.s12,
+                                ),
+                                child: FTextFormField(
+                                  control: FTextFieldControl.managed(
+                                    controller: _groupName,
+                                  ),
+                                  label: Text(
+                                    l10n.incomeStrategyPlanGroupNameLabel,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
                     _DecimalField(
                       controller: _capitalBudget,
                       label: l10n.incomeStrategyPlanCapitalBudget,

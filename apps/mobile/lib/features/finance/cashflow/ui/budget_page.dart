@@ -137,6 +137,8 @@ class _PlanBudgetPageState extends ConsumerState<PlanBudgetPage> {
           onPreviousMonth: () => _shiftMonth(-1),
           onNextMonth: () => _shiftMonth(1),
           onCreate: openCreate,
+          onManageCategories: () =>
+              context.push(FinanceRoutes.planExpenseCategories),
         ),
       ),
     );
@@ -201,6 +203,7 @@ class _BudgetBody extends ConsumerWidget {
     required this.onPreviousMonth,
     required this.onNextMonth,
     required this.onCreate,
+    required this.onManageCategories,
   });
 
   final String monthKey;
@@ -214,6 +217,7 @@ class _BudgetBody extends ConsumerWidget {
   final VoidCallback onPreviousMonth;
   final VoidCallback onNextMonth;
   final VoidCallback onCreate;
+  final VoidCallback onManageCategories;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -245,11 +249,17 @@ class _BudgetBody extends ConsumerWidget {
                           categoriesError!,
                           operation: 'load expense categories',
                         ),
-                  action: categoriesLoading || selectableCategories.isEmpty
+                  action: categoriesLoading
                       ? null
                       : FButton(
-                          onPress: onCreate,
-                          child: Text(l10n.planBudgetEmptyCta),
+                          onPress: selectableCategories.isEmpty
+                              ? onManageCategories
+                              : onCreate,
+                          child: Text(
+                            selectableCategories.isEmpty
+                                ? l10n.expenseCategoriesManageTitle
+                                : l10n.planBudgetEmptyCta,
+                          ),
                         ),
                 )
               : ListView(

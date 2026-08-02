@@ -86,16 +86,51 @@ class _LifeEventScenariosPageState
                 ),
                 if (decisions.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.s12),
-                  Text(
-                    l10n.lifeEventDecisionHistory,
-                    style: context.mutedLabelStyle,
-                  ),
-                  const SizedBox(height: AppSpacing.s8),
-                  for (final decision in decisions)
-                    _DecisionRow(decision: decision, baseline: baseline),
+                  _DecisionHistory(decisions: decisions, baseline: baseline),
                 ],
               ],
             ),
+    );
+  }
+}
+
+class _DecisionHistory extends StatefulWidget {
+  const _DecisionHistory({required this.decisions, required this.baseline});
+
+  final List<FinancialDecision> decisions;
+  final LifeEventBaseline baseline;
+
+  @override
+  State<_DecisionHistory> createState() => _DecisionHistoryState();
+}
+
+class _DecisionHistoryState extends State<_DecisionHistory> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppDisclosureHeader(
+          title: l10n.lifeEventDecisionHistory,
+          expanded: _open,
+          onToggle: () => setState(() => _open = !_open),
+        ),
+        AnimatedSizeFade(
+          visible: _open,
+          child: Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.s8),
+            child: Column(
+              children: [
+                for (final decision in widget.decisions)
+                  _DecisionRow(decision: decision, baseline: widget.baseline),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

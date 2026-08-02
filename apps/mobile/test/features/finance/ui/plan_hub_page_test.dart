@@ -102,7 +102,7 @@ void main() {
     expect(find.byType(PlanHubPage), findsOneWidget);
     expect(find.text(l10n.planAttentionTitle), findsOneWidget);
     expect(find.byType(SkeletonBox), findsWidgets);
-    expect(find.text(l10n.planOverviewTitle), findsOneWidget);
+    expect(find.text(l10n.planMyPlansTitle), findsOneWidget);
     expect(find.text(l10n.planRebalanceSectionTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
   });
@@ -142,7 +142,7 @@ void main() {
     expect(find.text(l10n.incomePlannerTitle), findsNothing);
   });
 
-  testWidgets('renders configured FIRE progress in the overview', (
+  testWidgets('keeps configured FIRE progress quiet in the plan list', (
     tester,
   ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
@@ -159,7 +159,7 @@ void main() {
     await tester.pump();
 
     expect(find.text(l10n.planFireGoalTitle), findsOneWidget);
-    expect(find.text('25%'), findsOneWidget);
+    expect(find.text('25%'), findsNothing);
   });
 
   testWidgets('surfaces live planning status on workflow tiles', (
@@ -248,28 +248,18 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text(l10n.planAttentionCount(5)), findsOneWidget);
-    final shortfallY = tester
-        .getTopLeft(find.text(l10n.moneyRunwayStatusShortfall).first)
-        .dy;
-    final budgetY = tester
-        .getTopLeft(find.text(l10n.planStatusBudgetOver).first)
-        .dy;
-    final dcaY = tester.getTopLeft(find.text(l10n.planStatusDcaDue).first).dy;
-    expect(shortfallY, lessThan(budgetY));
-    expect(budgetY, lessThan(dcaY));
-    expect(find.text(l10n.planStatusPendingReviews(2)), findsNothing);
+    expect(find.text(l10n.planStatusActionRequired), findsWidgets);
+    expect(find.text(l10n.moneyRunwayStatusShortfall), findsWidgets);
+    expect(find.text(l10n.planAttentionCount(5)), findsNothing);
     await tester.scrollUntilVisible(
-      find.text(l10n.planAttentionShowAll(2)),
+      find.text(l10n.planStatusPendingReviews(2)),
       120,
       scrollable: find.byType(Scrollable).last,
     );
-    await tester.tap(find.text(l10n.planAttentionShowAll(2)));
-    await tester.pumpAndSettle();
     expect(
       find.text(l10n.planStatusPendingReviews(2)),
       findsOneWidget,
-      reason: 'Promoted work appears once and remains available on demand.',
+      reason: 'Every plan keeps a stable position below the single next step.',
     );
   });
 
@@ -310,6 +300,8 @@ void main() {
     await tester.pumpWidget(_wrapRouter(_view(FireGoal.unset())));
     await tester.pump();
 
+    await tester.drag(find.byType(Scrollable).last, const Offset(0, -320));
+    await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.planRebalanceSectionTitle));
     await tester.pumpAndSettle();
 

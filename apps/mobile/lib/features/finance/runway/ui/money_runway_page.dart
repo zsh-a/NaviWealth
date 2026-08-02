@@ -155,58 +155,7 @@ class _RunwayContent extends ConsumerWidget {
         const SizedBox(height: AppSpacing.s16),
         _ScenarioSection(snapshot: snapshot),
         const SizedBox(height: AppSpacing.s16),
-        SoftCard.raised(
-          padding: AppPageRhythm.cardPadding,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l10n.moneyRunwayAssumptionsTitle, style: context.labelStyle),
-              const SizedBox(height: AppSpacing.s10),
-              _ValueRow(
-                label: l10n.moneyRunwayStartingCash,
-                value: formatters.currency(
-                  snapshot.startingBalance,
-                  code: snapshot.currency,
-                ),
-              ),
-              _ValueRow(
-                label: l10n.moneyRunwayReserveTarget,
-                value:
-                    '${formatters.currency(snapshot.reserveTarget, code: snapshot.currency)}'
-                    ' · ${_assumptionSourceLabel(l10n, snapshot.reserveSource)}',
-              ),
-              _ValueRow(
-                label: l10n.moneyRunwayVariableEstimate,
-                value:
-                    '${formatters.currency(snapshot.estimatedDailyVariableOutflow * Decimal.fromInt(30), code: snapshot.currency)}'
-                    ' · ${_assumptionSourceLabel(l10n, snapshot.monthlyExpenseSource)}',
-              ),
-              _ValueRow(
-                label: l10n.moneyRunwayCoverage,
-                value: snapshot.emergencyCoverageMonths == null
-                    ? l10n.commonNotAvailable
-                    : l10n.moneyRunwayCoverageMonths(
-                        snapshot.emergencyCoverageMonths!.toStringAsFixed(1),
-                      ),
-              ),
-              _ValueRow(
-                label: l10n.moneyRunwayCompleteness,
-                value: formatters.percent(
-                  snapshot.dataCompleteness,
-                  decimalDigits: 0,
-                ),
-              ),
-              if (snapshot.historicalForecastError != null)
-                _ValueRow(
-                  label: l10n.moneyRunwayHistoricalError,
-                  value: formatters.percent(
-                    snapshot.historicalForecastError!,
-                    decimalDigits: 1,
-                  ),
-                ),
-            ],
-          ),
-        ),
+        _RunwayAssumptions(snapshot: snapshot),
         const SizedBox(height: AppSpacing.s16),
         Text(l10n.moneyRunwayScheduledTitle, style: context.mutedLabelStyle),
         const SizedBox(height: AppSpacing.s8),
@@ -272,7 +221,7 @@ class _RunwayHorizonGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final cards = [
-      for (final days in const [30, 60, 90])
+      for (final days in const [30, 60])
         SoftCard.flat(
           padding: const EdgeInsets.all(AppSpacing.s12),
           child: Column(
@@ -316,6 +265,93 @@ class _RunwayHorizonGrid extends StatelessWidget {
   }
 }
 
+class _RunwayAssumptions extends ConsumerStatefulWidget {
+  const _RunwayAssumptions({required this.snapshot});
+
+  final MoneyRunwaySnapshot snapshot;
+
+  @override
+  ConsumerState<_RunwayAssumptions> createState() => _RunwayAssumptionsState();
+}
+
+class _RunwayAssumptionsState extends ConsumerState<_RunwayAssumptions> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final formatters = context.formatters(ref);
+    final snapshot = widget.snapshot;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppDisclosureHeader(
+          title: l10n.moneyRunwayAssumptionsTitle,
+          expanded: _open,
+          onToggle: () => setState(() => _open = !_open),
+        ),
+        AnimatedSizeFade(
+          visible: _open,
+          child: Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.s8),
+            child: SoftCard.flat(
+              padding: AppPageRhythm.cardPadding,
+              child: Column(
+                children: [
+                  _ValueRow(
+                    label: l10n.moneyRunwayStartingCash,
+                    value: formatters.currency(
+                      snapshot.startingBalance,
+                      code: snapshot.currency,
+                    ),
+                  ),
+                  _ValueRow(
+                    label: l10n.moneyRunwayReserveTarget,
+                    value:
+                        '${formatters.currency(snapshot.reserveTarget, code: snapshot.currency)}'
+                        ' · ${_assumptionSourceLabel(l10n, snapshot.reserveSource)}',
+                  ),
+                  _ValueRow(
+                    label: l10n.moneyRunwayVariableEstimate,
+                    value:
+                        '${formatters.currency(snapshot.estimatedDailyVariableOutflow * Decimal.fromInt(30), code: snapshot.currency)}'
+                        ' · ${_assumptionSourceLabel(l10n, snapshot.monthlyExpenseSource)}',
+                  ),
+                  _ValueRow(
+                    label: l10n.moneyRunwayCoverage,
+                    value: snapshot.emergencyCoverageMonths == null
+                        ? l10n.commonNotAvailable
+                        : l10n.moneyRunwayCoverageMonths(
+                            snapshot.emergencyCoverageMonths!.toStringAsFixed(
+                              1,
+                            ),
+                          ),
+                  ),
+                  _ValueRow(
+                    label: l10n.moneyRunwayCompleteness,
+                    value: formatters.percent(
+                      snapshot.dataCompleteness,
+                      decimalDigits: 0,
+                    ),
+                  ),
+                  if (snapshot.historicalForecastError != null)
+                    _ValueRow(
+                      label: l10n.moneyRunwayHistoricalError,
+                      value: formatters.percent(
+                        snapshot.historicalForecastError!,
+                        decimalDigits: 1,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _ScenarioSection extends ConsumerStatefulWidget {
   const _ScenarioSection({required this.snapshot});
 
@@ -328,6 +364,7 @@ class _ScenarioSection extends ConsumerStatefulWidget {
 class _ScenarioSectionState extends ConsumerState<_ScenarioSection> {
   MoneyRunwaySnapshot? _customResult;
   _CustomRunwayScenario? _customInput;
+  bool _open = false;
 
   @override
   Widget build(BuildContext context) {
@@ -361,102 +398,116 @@ class _ScenarioSectionState extends ConsumerState<_ScenarioSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.moneyRunwayScenariosTitle, style: context.mutedLabelStyle),
-        const SizedBox(height: AppSpacing.s8),
-        for (final scenario in scenarios) ...[
-          SoftCard.flat(
-            padding: const EdgeInsets.all(AppSpacing.s12),
-            child: Row(
-              children: [
-                Expanded(child: Text(scenario.$1, style: context.labelStyle)),
-                Text(
-                  formatter.compactCurrency(
-                    scenario.$2.minimumExpectedBalance,
-                    code: scenario.$2.currency,
-                  ),
-                  style: TypographyTokens.numericBodyStrong,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-        ],
-        FButton(
-          variant: FButtonVariant.outline,
-          onPress: _configureCustomScenario,
-          child: Text(l10n.moneyRunwayCustomScenarioAction),
+        AppDisclosureHeader(
+          title: l10n.moneyRunwayScenariosTitle,
+          expanded: _open,
+          onToggle: () => setState(() => _open = !_open),
         ),
-        if (_customResult case final result?) ...[
-          const SizedBox(height: AppSpacing.s8),
-          SoftCard.raised(
-            padding: const EdgeInsets.all(AppSpacing.s12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        l10n.moneyRunwayCustomResult,
-                        style: context.labelStyle,
+        const SizedBox(height: AppSpacing.s8),
+        AnimatedSizeFade(
+          visible: _open,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final scenario in scenarios) ...[
+                SoftCard.flat(
+                  padding: const EdgeInsets.all(AppSpacing.s12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(scenario.$1, style: context.labelStyle),
                       ),
-                    ),
-                    Text(
-                      formatter.compactCurrency(
-                        result.minimumExpectedBalance,
-                        code: result.currency,
-                      ),
-                      style: TypographyTokens.numericBodyStrong,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.s4),
-                Text(
-                  _statusCopy(l10n, result.status).$2,
-                  style: context.captionStyle,
-                ),
-                const SizedBox(height: AppSpacing.s6),
-                Wrap(
-                  spacing: AppSpacing.s8,
-                  runSpacing: AppSpacing.s8,
-                  children: [
-                    FButton(
-                      variant: FButtonVariant.outline,
-                      onPress: () => _createRunwayAction(
-                        context,
-                        ref,
-                        l10n,
-                        result,
-                        scenario: _customInput?.toEvidenceJson(),
-                      ),
-                      child: Flexible(
-                        child: Text(
-                          l10n.moneyRunwayCreateAction,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      Text(
+                        formatter.compactCurrency(
+                          scenario.$2.minimumExpectedBalance,
+                          code: scenario.$2.currency,
                         ),
+                        style: TypographyTokens.numericBodyStrong,
                       ),
-                    ),
-                    FButton(
-                      variant: FButtonVariant.ghost,
-                      onPress: () => setState(() {
-                        _customResult = null;
-                        _customInput = null;
-                      }),
-                      child: Flexible(
-                        child: Text(
-                          l10n.moneyRunwayCustomReset,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.s8),
+              ],
+              FButton(
+                variant: FButtonVariant.outline,
+                onPress: _configureCustomScenario,
+                child: Text(l10n.moneyRunwayCustomScenarioAction),
+              ),
+              if (_customResult case final result?) ...[
+                const SizedBox(height: AppSpacing.s8),
+                SoftCard.raised(
+                  padding: const EdgeInsets.all(AppSpacing.s12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              l10n.moneyRunwayCustomResult,
+                              style: context.labelStyle,
+                            ),
+                          ),
+                          Text(
+                            formatter.compactCurrency(
+                              result.minimumExpectedBalance,
+                              code: result.currency,
+                            ),
+                            style: TypographyTokens.numericBodyStrong,
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: AppSpacing.s4),
+                      Text(
+                        _statusCopy(l10n, result.status).$2,
+                        style: context.captionStyle,
+                      ),
+                      const SizedBox(height: AppSpacing.s6),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          FButton(
+                            variant: FButtonVariant.outline,
+                            onPress: () => _createRunwayAction(
+                              context,
+                              ref,
+                              l10n,
+                              result,
+                              scenario: _customInput?.toEvidenceJson(),
+                            ),
+                            child: Flexible(
+                              child: Text(
+                                l10n.moneyRunwayCreateAction,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.s6),
+                          FButton(
+                            variant: FButtonVariant.ghost,
+                            onPress: () => setState(() {
+                              _customResult = null;
+                              _customInput = null;
+                            }),
+                            child: Flexible(
+                              child: Text(
+                                l10n.moneyRunwayCustomReset,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
-            ),
+            ],
           ),
-        ],
+        ),
       ],
     );
   }

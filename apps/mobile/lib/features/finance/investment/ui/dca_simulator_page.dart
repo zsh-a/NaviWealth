@@ -32,6 +32,7 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
   AssetMarket _market = AssetMarket.usStock;
   DcaFrequency _frequency = DcaFrequency.monthly;
   int _years = 5;
+  bool _builderOpen = false;
 
   @override
   void initState() {
@@ -55,12 +56,12 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
     final state = ref.watch(dcaSimulationProvider);
     final plans = ref.watch(dcaPlansProvider);
     return AppPageScaffold(
-      title: l10n.dcaSimulatorTitle,
+      title: l10n.planDcaPlanTitle,
       actions: [
         AppHeaderAction(
-          semanticsLabel: l10n.commonRefresh,
-          icon: const Icon(FLucideIcons.refreshCw),
-          onPress: () => ref.read(dcaSimulationProvider.notifier).refresh(),
+          semanticsLabel: l10n.dcaSimulatorTitle,
+          icon: const Icon(FLucideIcons.plus),
+          onPress: () => setState(() => _builderOpen = true),
         ),
       ],
       childPad: false,
@@ -81,30 +82,39 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
             onExecute: _executePlan,
             onToggle: _togglePlan,
             onDelete: _deletePlan,
+            onCreate: () => setState(() => _builderOpen = true),
           ),
-          const SizedBox(height: AppSpacing.s16),
-          _DcaControls(
-            formKey: _formKey,
-            symbols: _symbols,
-            amount: _amount,
-            currency: _currency,
-            market: _market,
-            frequency: _frequency,
-            years: _years,
-            busy: state.isLoading,
-            onMarketChanged: (value) => setState(() => _market = value),
-            onFrequencyChanged: (value) => setState(() => _frequency = value),
-            onYearsChanged: (value) => setState(() => _years = value),
-            onRun: _run,
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          state.when(
-            loading: () => const SkeletonBox(height: 360, radius: 8),
-            error: (error, stackTrace) =>
-                kDefaultError(context, error, stackTrace),
-            data: (data) =>
-                _DcaResults(state: data, onDraft: () => _savePlan(data)),
-          ),
+          if (_builderOpen) ...[
+            const SizedBox(height: AppSpacing.s16),
+            AppDisclosureHeader(
+              title: l10n.dcaSimulatorTitle,
+              expanded: true,
+              onToggle: () => setState(() => _builderOpen = false),
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            _DcaControls(
+              formKey: _formKey,
+              symbols: _symbols,
+              amount: _amount,
+              currency: _currency,
+              market: _market,
+              frequency: _frequency,
+              years: _years,
+              busy: state.isLoading,
+              onMarketChanged: (value) => setState(() => _market = value),
+              onFrequencyChanged: (value) => setState(() => _frequency = value),
+              onYearsChanged: (value) => setState(() => _years = value),
+              onRun: _run,
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            state.when(
+              loading: () => const SkeletonBox(height: 360, radius: 8),
+              error: (error, stackTrace) =>
+                  kDefaultError(context, error, stackTrace),
+              data: (data) =>
+                  _DcaResults(state: data, onDraft: () => _savePlan(data)),
+            ),
+          ],
         ],
       ),
     );
@@ -256,12 +266,14 @@ class _DcaPlansSection extends StatelessWidget {
     required this.onExecute,
     required this.onToggle,
     required this.onDelete,
+    required this.onCreate,
   });
 
   final AsyncValue<List<DcaPlan>> plans;
   final ValueChanged<DcaPlan> onExecute;
   final ValueChanged<DcaPlan> onToggle;
   final ValueChanged<DcaPlan> onDelete;
+  final VoidCallback onCreate;
 
   @override
   Widget build(BuildContext context) {
@@ -273,7 +285,18 @@ class _DcaPlansSection extends StatelessWidget {
         if (rows.isEmpty) {
           return SoftCard.flat(
             padding: AppPageRhythm.densePadding,
-            child: Text(l10n.dcaPlanEmpty, style: context.captionStyle),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.dcaPlanEmpty, style: context.captionStyle),
+                const SizedBox(height: AppSpacing.s10),
+                FButton(
+                  onPress: onCreate,
+                  prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+                  child: Text(l10n.dcaSimulatorTitle),
+                ),
+              ],
+            ),
           );
         }
         return Column(
@@ -345,25 +368,39 @@ class _DcaPlanCard extends StatelessWidget {
             style: context.captionStyle,
           ),
           const SizedBox(height: AppSpacing.s8),
-          Wrap(
-            spacing: AppSpacing.s8,
-            runSpacing: AppSpacing.s8,
+          Row(
             children: [
               FButton(
                 onPress: plan.enabled ? onExecute : null,
                 child: Text(l10n.dcaPlanExecuteNow),
               ),
-              FButton(
-                variant: FButtonVariant.outline,
-                onPress: onToggle,
-                child: Text(
-                  plan.enabled ? l10n.dcaPlanPause : l10n.dcaPlanResume,
+              const Spacer(),
+              AppAdaptiveActionMenu(
+                title: l10n.shellMoreActions,
+                actions: [
+                  AppAdaptiveAction(
+                    icon: plan.enabled ? FLucideIcons.pause : FLucideIcons.play,
+                    title: plan.enabled
+                        ? l10n.dcaPlanPause
+                        : l10n.dcaPlanResume,
+                    onPress: onToggle,
+                  ),
+                  AppAdaptiveAction(
+                    icon: FLucideIcons.trash2,
+                    title: l10n.commonDelete,
+                    onPress: onDelete,
+                  ),
+                ],
+                triggerBuilder: (context, openMenu, focusNode) => FButton(
+                  variant: FButtonVariant.ghost,
+                  focusNode: focusNode,
+                  onPress: openMenu,
+                  prefix: const Icon(
+                    FLucideIcons.ellipsis,
+                    size: AppIconSizes.sm,
+                  ),
+                  child: Text(l10n.shellMoreActions),
                 ),
-              ),
-              FButton(
-                variant: FButtonVariant.ghost,
-                onPress: onDelete,
-                child: Text(l10n.commonDelete),
               ),
             ],
           ),

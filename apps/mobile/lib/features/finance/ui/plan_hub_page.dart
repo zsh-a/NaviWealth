@@ -36,7 +36,6 @@ class PlanHubPage extends ConsumerWidget {
     final status = ref.watch(planningHubStatusProvider);
     final fire = ref.watch(fireDashboardViewProvider);
     final attentionItems = _attentionItems(context, status);
-    final promotedPaths = attentionItems.map((item) => item.path).toSet();
 
     return ShellTabScaffold(
       title: l10n.planHubTitle,
@@ -54,39 +53,9 @@ class PlanHubPage extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: shellTabContentPadding(context, top: AppSpacing.s8),
               children: [
-                _AttentionSection(status: status, items: attentionItems),
+                _NextActionSection(status: status, items: attentionItems),
                 const SizedBox(height: AppSpacing.s20),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final overview = _PlanningOverview(
-                      status: status,
-                      fire: fire,
-                      excludedPaths: promotedPaths,
-                    );
-                    final plans = _MyPlansSection(
-                      status: status,
-                      excludedPaths: promotedPaths,
-                    );
-                    if (constraints.maxWidth < Breakpoints.contentThreeColumn) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          overview,
-                          const SizedBox(height: AppSpacing.s20),
-                          plans,
-                        ],
-                      );
-                    }
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: overview),
-                        const SizedBox(width: AppSpacing.s16),
-                        Expanded(child: plans),
-                      ],
-                    );
-                  },
-                ),
+                _AllPlansSection(status: status, fire: fire),
               ],
             ),
           ),
@@ -123,28 +92,20 @@ Future<void> _refreshPlanningWorkspace(WidgetRef ref) async {
   }
 }
 
-class _AttentionSection extends StatefulWidget {
-  const _AttentionSection({required this.status, required this.items});
+class _NextActionSection extends StatelessWidget {
+  const _NextActionSection({required this.status, required this.items});
 
   final PlanningHubStatus status;
   final List<_PlanEntrySpec> items;
 
   @override
-  State<_AttentionSection> createState() => _AttentionSectionState();
-}
-
-class _AttentionSectionState extends State<_AttentionSection> {
-  bool _expanded = false;
-
-  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final status = widget.status;
-    final items = widget.items;
+    final next = items.firstOrNull;
     final hasAttention = items.isNotEmpty;
-    final tone = hasAttention ? items.first.tone : AppBadgeTone.success;
+    final tone = next?.tone ?? AppBadgeTone.success;
     final icon = hasAttention
-        ? items.first.icon
+        ? next!.icon
         : status.isLoading
         ? FLucideIcons.loaderCircle
         : FLucideIcons.circleCheckBig;
@@ -166,7 +127,7 @@ class _AttentionSectionState extends State<_AttentionSection> {
                 label: status.isLoading && !hasAttention
                     ? l10n.commonLoading
                     : hasAttention
-                    ? l10n.planAttentionCount(items.length)
+                    ? _toneLabel(context, tone)
                     : l10n.planAttentionAllClearBadge,
                 size: AppBadgeSize.compact,
                 tone: status.isLoading && !hasAttention
@@ -178,11 +139,7 @@ class _AttentionSectionState extends State<_AttentionSection> {
           ),
           const SizedBox(height: AppSpacing.s12),
           if (hasAttention)
-            for (final (index, item)
-                in items.take(_expanded ? items.length : 3).indexed) ...[
-              if (index > 0) const FDivider(),
-              _AttentionRow(spec: item),
-            ]
+            _AttentionRow(spec: next!)
           else if (status.isLoading)
             const _AttentionSkeleton()
           else
@@ -190,18 +147,6 @@ class _AttentionSectionState extends State<_AttentionSection> {
               l10n.planAttentionAllClearBody,
               style: context.bodyCaptionStyle,
             ),
-          if (items.length > 3) ...[
-            const SizedBox(height: AppSpacing.s8),
-            FButton(
-              variant: FButtonVariant.ghost,
-              onPress: () => setState(() => _expanded = !_expanded),
-              child: Text(
-                _expanded
-                    ? l10n.planAttentionCollapse
-                    : l10n.planAttentionShowAll(items.length - 3),
-              ),
-            ),
-          ],
           if (status.hasError) ...[
             const SizedBox(height: AppSpacing.s12),
             Row(
@@ -298,40 +243,20 @@ class _AttentionSkeleton extends StatelessWidget {
   }
 }
 
-class _PlanningOverview extends StatelessWidget {
-  const _PlanningOverview({
-    required this.status,
-    required this.fire,
-    required this.excludedPaths,
-  });
+class _AllPlansSection extends StatelessWidget {
+  const _AllPlansSection({required this.status, required this.fire});
 
   final PlanningHubStatus status;
   final AsyncValue<FireDashboardView> fire;
-  final Set<String> excludedPaths;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
-    final entries = [
+    final entries = <_PlanEntrySpec>[
       _runwayEntry(l10n, status),
       _budgetEntry(l10n, status),
       _fireEntry(l10n, formatters, fire),
-    ].where((entry) => !excludedPaths.contains(entry.path)).toList();
-    return _PlanSection(title: l10n.planOverviewTitle, entries: entries);
-  }
-}
-
-class _MyPlansSection extends StatelessWidget {
-  const _MyPlansSection({required this.status, required this.excludedPaths});
-
-  final PlanningHubStatus status;
-  final Set<String> excludedPaths;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final entries = <_PlanEntrySpec>[
       _dcaEntry(context, l10n, status),
       _rebalanceEntry(l10n, status),
       if (!kIsWeb) _incomeStrategyEntry(l10n, status),
@@ -350,7 +275,7 @@ class _MyPlansSection extends StatelessWidget {
             ? AppBadgeTone.warning
             : AppBadgeTone.success,
       ),
-    ].where((entry) => !excludedPaths.contains(entry.path)).toList();
+    ];
     return _PlanSection(title: l10n.planMyPlansTitle, entries: entries);
   }
 }
@@ -417,12 +342,15 @@ class _PlanRow extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: AppSpacing.s4),
-                AppBadge(
-                  label: spec.badge ?? _toneLabel(context, spec.tone),
-                  tone: spec.tone,
-                  size: AppBadgeSize.compact,
-                ),
+                if (spec.tone == AppBadgeTone.warning ||
+                    spec.tone == AppBadgeTone.error) ...[
+                  const SizedBox(height: AppSpacing.s4),
+                  AppBadge(
+                    label: spec.badge ?? _toneLabel(context, spec.tone),
+                    tone: spec.tone,
+                    size: AppBadgeSize.compact,
+                  ),
+                ],
               ],
             ),
           ),

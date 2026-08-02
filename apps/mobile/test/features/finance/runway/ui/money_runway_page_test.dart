@@ -73,6 +73,11 @@ void main() {
     expect(find.text('Estimated after-tax dividend'), findsOneWidget);
     expect(find.textContaining('estimate'), findsOneWidget);
 
+    await tester.ensureVisible(
+      find.text('Quick stress tests · minimum balance'),
+    );
+    await tester.tap(find.text('Quick stress tests · minimum balance'));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Custom stress test'));
     await tester.tap(find.text('Custom stress test'));
     await tester.pumpAndSettle();

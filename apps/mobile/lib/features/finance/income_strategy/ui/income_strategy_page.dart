@@ -16,20 +16,11 @@ import '../domain/income_strategy.dart';
 import '../domain/income_strategy_plan.dart';
 import 'income_strategy_plan_sheet.dart';
 
-enum _IncomeStrategyTab { overview, underlyings, activity }
-
-class IncomeStrategyPage extends ConsumerStatefulWidget {
+class IncomeStrategyPage extends ConsumerWidget {
   const IncomeStrategyPage({super.key});
 
   @override
-  ConsumerState<IncomeStrategyPage> createState() => _IncomeStrategyPageState();
-}
-
-class _IncomeStrategyPageState extends ConsumerState<IncomeStrategyPage> {
-  _IncomeStrategyTab _tab = _IncomeStrategyTab.overview;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final snapshot = ref.watch(portfolioIncomeStrategyProvider);
     final plans = ref.watch(incomeStrategyPlansProvider);
@@ -65,54 +56,10 @@ class _IncomeStrategyPageState extends ConsumerState<IncomeStrategyPage> {
                       in plans.value ?? const <IncomeStrategyPlan>[])
                     plan.assetId: plan,
                 };
-                return Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.s16,
-                        AppSpacing.s12,
-                        AppSpacing.s16,
-                        AppSpacing.s8,
-                      ),
-                      child: SegmentedRow<_IncomeStrategyTab>(
-                        options: _IncomeStrategyTab.values,
-                        value: _tab,
-                        labelOf: (tab) => switch (tab) {
-                          _IncomeStrategyTab.overview =>
-                            l10n.incomeStrategyTabOverview,
-                          _IncomeStrategyTab.underlyings =>
-                            l10n.incomeStrategyTabUnderlyings,
-                          _IncomeStrategyTab.activity =>
-                            l10n.incomeStrategyTabActivity,
-                        },
-                        iconOf: (tab) => switch (tab) {
-                          _IncomeStrategyTab.overview => FLucideIcons.gauge,
-                          _IncomeStrategyTab.underlyings =>
-                            FLucideIcons.layers3,
-                          _IncomeStrategyTab.activity => FLucideIcons.listTree,
-                        },
-                        onChanged: (value) => setState(() => _tab = value),
-                      ),
-                    ),
-                    Expanded(
-                      child: switch (_tab) {
-                        _IncomeStrategyTab.overview => _Overview(
-                          snapshot: data,
-                          planByAsset: planByAsset,
-                          modules: modules,
-                        ),
-                        _IncomeStrategyTab.underlyings => _Underlyings(
-                          snapshot: data,
-                          planByAsset: planByAsset,
-                          modules: modules,
-                        ),
-                        _IncomeStrategyTab.activity => _Activity(
-                          snapshot: data,
-                          modules: modules,
-                        ),
-                      },
-                    ),
-                  ],
+                return _Overview(
+                  snapshot: data,
+                  planByAsset: planByAsset,
+                  modules: modules,
                 );
               },
             ),
@@ -213,7 +160,7 @@ class _Overview extends ConsumerWidget {
           style: context.mutedLabelStyle,
         ),
         const SizedBox(height: AppSpacing.s8),
-        for (final underlying in snapshot.underlyings.take(5))
+        for (final underlying in snapshot.underlyings)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.s8),
             child: _StrategyTrack(
@@ -222,61 +169,17 @@ class _Overview extends ConsumerWidget {
               modules: modules,
             ),
           ),
-      ],
-    );
-  }
-}
-
-class _Underlyings extends StatelessWidget {
-  const _Underlyings({
-    required this.snapshot,
-    required this.planByAsset,
-    required this.modules,
-  });
-
-  final PortfolioIncomeStrategySnapshot snapshot;
-  final Map<String, IncomeStrategyPlan> planByAsset;
-  final List<IncomeStrategyModule> modules;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    if (snapshot.underlyings.isEmpty) {
-      return Center(
-        child: AppEmptyState(
-          icon: FLucideIcons.layers3,
-          title: l10n.incomeStrategyEmptyTitle,
-          action: FButton(
-            onPress: () => showIncomeStrategyPlanSheet(context),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 168),
-              child: Text(
-                l10n.incomeStrategyPlanAdd,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+        if (snapshot.activity.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s12),
+          Text(l10n.incomeStrategyTabActivity, style: context.mutedLabelStyle),
+          const SizedBox(height: AppSpacing.s8),
+          for (final flow in snapshot.activity.take(5))
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+              child: _ActivityRow(flow: flow, modules: modules),
             ),
-          ),
-        ),
-      );
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s16,
-        AppSpacing.s8,
-        AppSpacing.s16,
-        AppSpacing.s32,
-      ),
-      itemCount: snapshot.underlyings.length,
-      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
-      itemBuilder: (context, index) {
-        final underlying = snapshot.underlyings[index];
-        return _StrategyTrack(
-          underlying: underlying,
-          plan: planByAsset[underlying.asset.assetId],
-          modules: modules,
-        );
-      },
+        ],
+      ],
     );
   }
 }
@@ -420,76 +323,49 @@ class _SleeveLane extends StatelessWidget {
   }
 }
 
-class _Activity extends StatelessWidget {
-  const _Activity({required this.snapshot, required this.modules});
+class _ActivityRow extends StatelessWidget {
+  const _ActivityRow({required this.flow, required this.modules});
 
-  final PortfolioIncomeStrategySnapshot snapshot;
+  final IncomeStrategyCashFlow flow;
   final List<IncomeStrategyModule> modules;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final activity = snapshot.activity;
-    if (activity.isEmpty) {
-      return Center(
-        child: AppEmptyState(
-          icon: FLucideIcons.listTree,
-          title: l10n.incomeStrategyActivityEmpty,
-          action: FButton(
-            variant: FButtonVariant.outline,
-            onPress: () => showIncomeStrategyPlanSheet(context),
-            child: Text(l10n.incomeStrategyPlanAdd),
+    return SoftCard.flat(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Row(
+        children: [
+          Icon(
+            _cashFlowPresentation(modules, flow.kind)?.icon ??
+                FLucideIcons.circleDollarSign,
+            size: AppIconSizes.md,
           ),
-        ),
-      );
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s16,
-        AppSpacing.s8,
-        AppSpacing.s16,
-        AppSpacing.s32,
-      ),
-      itemCount: activity.length,
-      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
-      itemBuilder: (context, index) {
-        final flow = activity[index];
-        return SoftCard.flat(
-          padding: const EdgeInsets.all(AppSpacing.s12),
-          child: Row(
-            children: [
-              Icon(
-                _cashFlowPresentation(modules, flow.kind)?.icon ??
-                    FLucideIcons.circleDollarSign,
-                size: AppIconSizes.md,
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _cashFlowPresentation(modules, flow.kind)?.label(l10n) ??
-                          flow.kind.wire,
-                      style: context.labelStyle,
-                    ),
-                    Text(
-                      '${flow.assetId} · '
-                      '${MaterialLocalizations.of(context).formatShortDate(flow.date.toLocal())}',
-                      style: context.captionStyle,
-                    ),
-                  ],
+          const SizedBox(width: AppSpacing.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _cashFlowPresentation(modules, flow.kind)?.label(l10n) ??
+                      flow.kind.wire,
+                  style: context.labelStyle,
                 ),
-              ),
-              MoneyText(
-                amount: flow.amount.amount.toDouble(),
-                currencyCode: flow.amount.currency,
-                showSign: true,
-              ),
-            ],
+                Text(
+                  '${flow.assetId} · '
+                  '${MaterialLocalizations.of(context).formatShortDate(flow.date.toLocal())}',
+                  style: context.captionStyle,
+                ),
+              ],
+            ),
           ),
-        );
-      },
+          MoneyText(
+            amount: flow.amount.amount.toDouble(),
+            currencyCode: flow.amount.currency,
+            showSign: true,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -500,28 +376,34 @@ class _WorkspaceActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Wrap(
-      spacing: AppSpacing.s8,
-      runSpacing: AppSpacing.s8,
-      children: [
-        FButton(
-          variant: FButtonVariant.outline,
+    return AppAdaptiveActionMenu(
+      title: l10n.shellMoreActions,
+      actions: [
+        AppAdaptiveAction(
+          icon: FLucideIcons.coins,
+          title: l10n.incomeStrategyOpenDividendCenter,
           onPress: () => context.push(FinanceRoutes.cashflowDividends),
-          child: Text(l10n.incomeStrategyOpenDividendCenter),
         ),
-        if (!kIsWeb) ...[
-          FButton(
-            variant: FButtonVariant.outline,
+        if (!kIsWeb)
+          AppAdaptiveAction(
+            icon: FLucideIcons.chartCandlestick,
+            title: l10n.incomeStrategyOpenOptionsPlanner,
             onPress: () => context.push(FinanceRoutes.planIncomeOptions),
-            child: Text(l10n.incomeStrategyOpenOptionsPlanner),
           ),
-          FButton(
-            variant: FButtonVariant.outline,
+        if (!kIsWeb)
+          AppAdaptiveAction(
+            icon: FLucideIcons.repeat2,
+            title: l10n.planWheelTitle,
             onPress: () => context.push(FinanceRoutes.planWheel),
-            child: Text(l10n.planWheelTitle),
           ),
-        ],
       ],
+      triggerBuilder: (context, openMenu, focusNode) => FButton(
+        variant: FButtonVariant.outline,
+        focusNode: focusNode,
+        onPress: openMenu,
+        prefix: const Icon(FLucideIcons.ellipsis, size: AppIconSizes.sm),
+        child: Text(l10n.shellMoreActions),
+      ),
     );
   }
 }

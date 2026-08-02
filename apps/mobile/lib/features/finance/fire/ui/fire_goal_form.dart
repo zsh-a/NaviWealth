@@ -41,6 +41,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
   late double _swr;
   late FireLifestyleMode _lifestyleMode;
   bool _saving = false;
+  bool _advancedOpen = false;
 
   @override
   void initState() {
@@ -118,85 +119,99 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
               helper: l10n.fireGoalFieldMonthlySurplusHelper,
             ),
             const SizedBox(height: AppSpacing.s16),
-            Text(
-              l10n.fireGoalFieldInflation(
-                (_inflation * 100).toStringAsFixed(1),
+            AppDisclosureHeader(
+              title: l10n.fireOsPlanFormAdvancedTitle,
+              expanded: _advancedOpen,
+              onToggle: () => setState(() => _advancedOpen = !_advancedOpen),
+            ),
+            AnimatedSizeFade(
+              visible: _advancedOpen,
+              child: Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.s12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      l10n.fireGoalFieldInflation(
+                        (_inflation * 100).toStringAsFixed(1),
+                      ),
+                      style: context.theme.typography.body.sm,
+                    ),
+                    FSlider(
+                      control: FSliderControl.managedContinuous(
+                        initial: FSliderValue(max: _inflation / 0.10),
+                        onChange: (v) => setState(() {
+                          _inflation = v.max * 0.10;
+                          widget.dirty.markDirty();
+                        }),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.s16),
+                    Text(
+                      '${l10n.fireOsPlanFormSwrLabel} · '
+                      '${l10n.fireOsPlanFormSwrValue((_swr * 100).toStringAsFixed(1))}',
+                      style: context.theme.typography.body.sm,
+                    ),
+                    FSlider(
+                      control: FSliderControl.managedContinuous(
+                        initial: FSliderValue(max: _swr / 0.10),
+                        onChange: (v) => setState(() {
+                          _swr = v.max * 0.10;
+                          widget.dirty.markDirty();
+                        }),
+                      ),
+                    ),
+                    Text(
+                      l10n.fireOsPlanFormSwrHelper,
+                      style: context.captionStyle,
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    FTextFormField(
+                      control: FTextFieldControl.managed(
+                        controller: _cashBucketCtrl,
+                      ),
+                      label: Text(l10n.fireOsPlanFormCashBucketLabel),
+                      description: Text(l10n.fireOsPlanFormCashBucketHelper),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                      ],
+                      validator: (value) {
+                        final raw = (value ?? '').trim();
+                        if (raw.isEmpty) return null;
+                        final parsed = int.tryParse(raw);
+                        if (parsed == null || parsed < 0 || parsed > 60) {
+                          return l10n.fireGoalValidationInvalidNumber;
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    Text(
+                      l10n.fireOsPlanFormLifestyleLabel,
+                      style: context.theme.typography.body.sm,
+                    ),
+                    const SizedBox(height: AppSpacing.s8),
+                    Wrap(
+                      spacing: AppSpacing.s8,
+                      runSpacing: AppSpacing.s8,
+                      children: [
+                        for (final mode in FireLifestyleMode.values)
+                          FButton(
+                            variant: _lifestyleMode == mode
+                                ? FButtonVariant.primary
+                                : FButtonVariant.outline,
+                            onPress: () => setState(() {
+                              _lifestyleMode = mode;
+                              widget.dirty.markDirty();
+                            }),
+                            child: Text(_lifestyleLabel(l10n, mode)),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              style: context.theme.typography.body.sm,
-            ),
-            FSlider(
-              control: FSliderControl.managedContinuous(
-                initial: FSliderValue(max: _inflation / 0.10),
-                onChange: (v) => setState(() {
-                  _inflation = v.max * 0.10;
-                  widget.dirty.markDirty();
-                }),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.s24),
-            // FIRE OS extras: advanced planning knobs. Stay folded into
-            // the same sheet so saving stays a single confirm.
-            Text(
-              l10n.fireOsPlanFormAdvancedTitle,
-              style: context.bodyCaptionStyle,
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            Text(
-              '${l10n.fireOsPlanFormSwrLabel} · '
-              '${l10n.fireOsPlanFormSwrValue((_swr * 100).toStringAsFixed(1))}',
-              style: context.theme.typography.body.sm,
-            ),
-            FSlider(
-              control: FSliderControl.managedContinuous(
-                initial: FSliderValue(max: _swr / 0.10),
-                onChange: (v) => setState(() {
-                  _swr = v.max * 0.10;
-                  widget.dirty.markDirty();
-                }),
-              ),
-            ),
-            Text(l10n.fireOsPlanFormSwrHelper, style: context.captionStyle),
-            const SizedBox(height: AppSpacing.s12),
-            FTextFormField(
-              control: FTextFieldControl.managed(controller: _cashBucketCtrl),
-              label: Text(l10n.fireOsPlanFormCashBucketLabel),
-              description: Text(l10n.fireOsPlanFormCashBucketHelper),
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
-              ],
-              validator: (value) {
-                final raw = (value ?? '').trim();
-                if (raw.isEmpty) return null;
-                final parsed = int.tryParse(raw);
-                if (parsed == null || parsed < 0 || parsed > 60) {
-                  return l10n.fireGoalValidationInvalidNumber;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            Text(
-              l10n.fireOsPlanFormLifestyleLabel,
-              style: context.theme.typography.body.sm,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            Wrap(
-              spacing: AppSpacing.s8,
-              runSpacing: AppSpacing.s8,
-              children: [
-                for (final mode in FireLifestyleMode.values)
-                  FButton(
-                    variant: _lifestyleMode == mode
-                        ? FButtonVariant.primary
-                        : FButtonVariant.outline,
-                    onPress: () => setState(() {
-                      _lifestyleMode = mode;
-                      widget.dirty.markDirty();
-                    }),
-                    child: Text(_lifestyleLabel(l10n, mode)),
-                  ),
-              ],
             ),
           ],
         ),
