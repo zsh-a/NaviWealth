@@ -117,33 +117,88 @@ class _LiabilityListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final remaining = summary?.remainingPrincipal;
+    final amount = remaining ?? liability.principal;
+    final colors = context.theme.colors;
 
-    return FTile(
-      title: Text(liability.name),
-      prefix: CircleAvatar(
-        backgroundColor: context.appTheme.accent.container,
-        child: Icon(
-          _iconFor(liability.type),
-          color: context.theme.colors.primary,
+    return Semantics(
+      button: true,
+      label:
+          '${liability.name}, '
+          '${liabilityTypeLabel(l10n, liability.type)}, '
+          '${formatters.currency(amount, code: liability.currency)}',
+      child: ExcludeSemantics(
+        child: AppTappable(
+          onPress: () =>
+              context.push(FinanceRoutes.wealthLiability(liability.id)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s14,
+              vertical: AppSpacing.s12,
+            ),
+            child: Row(
+              children: [
+                SizedBox.square(
+                  dimension: AppSpacing.s40,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(
+                        alpha: AppOpacity.whisper,
+                      ),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    child: Icon(
+                      _iconFor(liability.type),
+                      size: AppIconSizes.md,
+                      color: colors.primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        liability.name,
+                        style: context.labelStyle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: AppSpacing.s2),
+                      Text(
+                        '${liabilityTypeLabel(l10n, liability.type)} · '
+                        '${formatters.percent(liability.interestRate.toDouble())}',
+                        style: context.captionStyle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s12),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 128),
+                  child: Text(
+                    formatters.currency(amount, code: liability.currency),
+                    style: context.strongLabelStyle.copyWith(
+                      fontFeatures: TypographyTokens.tabularFigures,
+                    ),
+                    textAlign: TextAlign.end,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                Icon(
+                  FLucideIcons.chevronRight,
+                  size: AppIconSizes.h18,
+                  color: colors.mutedForeground,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
-      subtitle: Text(
-        '${liabilityTypeLabel(l10n, liability.type)} · '
-        '${formatters.percent(liability.interestRate.toDouble())}',
-      ),
-      suffix: remaining != null
-          ? Text(
-              formatters.currency(remaining, code: liability.currency),
-              style: context.theme.typography.body.md,
-            )
-          : Text(
-              formatters.currency(
-                liability.principal,
-                code: liability.currency,
-              ),
-              style: context.theme.typography.body.md,
-            ),
-      onPress: () => context.push(FinanceRoutes.wealthLiability(liability.id)),
     );
   }
 

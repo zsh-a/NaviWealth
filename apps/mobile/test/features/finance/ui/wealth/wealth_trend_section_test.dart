@@ -12,7 +12,7 @@ import 'package:naviwealth/features/finance/ui/wealth/wealth_trend_section.dart'
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
-  testWidgets('switches between net worth, asset, and liability series', (
+  testWidgets('keeps net worth primary and moves ranges into one menu', (
     tester,
   ) async {
     await _setSurface(tester, width: 390);
@@ -21,21 +21,15 @@ void main() {
 
     expect(find.text('Wealth trend'), findsOneWidget);
     expect(_chart(tester).series.single.points.last.y, 1200);
+    expect(find.text('Assets'), findsNothing);
+    expect(find.text('Liabilities'), findsNothing);
 
-    await tester.tap(find.text('Assets'));
+    await tester.tap(find.text('1Y'));
     await tester.pumpAndSettle();
-    expect(_chart(tester).series.single.points.last.y, 1800);
-
-    await tester.tap(find.text('Liabilities'));
-    await tester.pumpAndSettle();
-    expect(_chart(tester).series.single.points.last.y, 600);
-
     await tester.tap(find.text('3M'));
     await tester.pumpAndSettle();
-    final range = tester.widget<SegmentedRow<DashboardRangePreset>>(
-      find.byType(SegmentedRow<DashboardRangePreset>),
-    );
-    expect(range.value, DashboardRangePreset.m3);
+    expect(find.text('3M'), findsOneWidget);
+    expect(_chart(tester).series.single.points.last.y, 1200);
   });
 
   testWidgets('remains overflow-safe at 320dp and 1.5x text scale', (

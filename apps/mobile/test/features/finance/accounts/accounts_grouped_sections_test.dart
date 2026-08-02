@@ -99,8 +99,10 @@ void main() {
     expect(opened, account);
   });
 
-  testWidgets('expands multi-unit accounts on Hub surfaces', (tester) async {
-    var opened = false;
+  testWidgets('multi-unit account rows keep one clear navigation action', (
+    tester,
+  ) async {
+    Account? opened;
     final account = _account(
       id: 'brokerage',
       name: 'Brokerage',
@@ -123,20 +125,19 @@ void main() {
               ],
             ),
           },
-          allowExpansion: true,
-          onAccountPressed: (_, _) => opened = true,
+          onAccountPressed: (_, account) => opened = account,
         ),
       ),
     );
 
     expect(find.text('10.00'), findsNothing);
+    expect(find.byIcon(FLucideIcons.chevronDown), findsNothing);
+    expect(find.byIcon(FLucideIcons.chevronRight), findsOneWidget);
 
-    await tester.tap(find.byIcon(FLucideIcons.chevronDown));
+    await tester.tap(find.text('Brokerage').last);
     await tester.pumpAndSettle();
 
-    expect(opened, isFalse);
-    expect(find.text('AAPL'), findsOneWidget);
-    expect(find.text('10.00'), findsOneWidget);
+    expect(opened, account);
   });
 
   testWidgets('localizes seeded system account row names', (tester) async {

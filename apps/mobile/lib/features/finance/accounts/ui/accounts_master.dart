@@ -187,14 +187,11 @@ class _AccountsByType extends StatelessWidget {
         80 + MediaQuery.paddingOf(context).bottom,
       ),
       children: [
-        _AccountPrimaryActions(accountCount: accounts.length),
-        const SizedBox(height: AppSpacing.s16),
         AccountsGroupedSections(
           accounts: accounts,
           balances: balances,
           selectedId: selectedId,
           heroEnabled: !inMasterDetail,
-          allowExpansion: true,
           onAccountPressed: _openAccount,
         ),
       ],
@@ -212,33 +209,5 @@ class _AccountsByType extends StatelessWidget {
     } else {
       context.push(FinanceRoutes.wealthAccount(account.id));
     }
-  }
-}
-
-class _AccountPrimaryActions extends StatelessWidget {
-  const _AccountPrimaryActions({required this.accountCount});
-
-  final int accountCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final transfer = FButton(
-      variant: FButtonVariant.primary,
-      onPress: () => context.push(FinanceRoutes.transfer),
-      prefix: const Icon(FLucideIcons.arrowLeftRight, size: AppIconSizes.sm),
-      child: Text(l10n.accountsTransferAction),
-    );
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            l10n.accountsCategoryCount(accountCount),
-            style: context.captionStyle,
-          ),
-        ),
-        transfer,
-      ],
-    );
   }
 }

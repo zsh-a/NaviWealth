@@ -1,4 +1,3 @@
-import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -6,7 +5,6 @@ import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/shared/l10n/account_l10n.dart';
 
-import '../../../../core/format/formatters.dart';
 import '../../../../core/format/providers.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -26,7 +24,6 @@ class AccountsGroupedSections extends StatelessWidget {
     required this.onAccountPressed,
     this.selectedId,
     this.heroEnabled = false,
-    this.allowExpansion = false,
   });
 
   final List<Account> accounts;
@@ -34,7 +31,6 @@ class AccountsGroupedSections extends StatelessWidget {
   final AccountPressed onAccountPressed;
   final String? selectedId;
   final bool heroEnabled;
-  final bool allowExpansion;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +47,6 @@ class AccountsGroupedSections extends StatelessWidget {
             balances: balances,
             selectedId: selectedId,
             heroEnabled: heroEnabled,
-            allowExpansion: allowExpansion,
             onAccountPressed: onAccountPressed,
           ),
       ],
@@ -82,7 +77,6 @@ class _AccountsSection extends StatelessWidget {
     required this.balances,
     required this.selectedId,
     required this.heroEnabled,
-    required this.allowExpansion,
     required this.onAccountPressed,
   });
 
@@ -91,7 +85,6 @@ class _AccountsSection extends StatelessWidget {
   final Map<String, AccountBalances> balances;
   final String? selectedId;
   final bool heroEnabled;
-  final bool allowExpansion;
   final AccountPressed onAccountPressed;
 
   @override
@@ -141,7 +134,6 @@ class _AccountsSection extends StatelessWidget {
                           AccountBalances.empty(accounts[i].id),
                       selected: accounts[i].id == selectedId,
                       heroEnabled: heroEnabled,
-                      allowExpansion: allowExpansion,
                       onAccountPressed: onAccountPressed,
                     ),
                     if (i < accounts.length - 1)
@@ -169,13 +161,12 @@ class _AccountsSection extends StatelessWidget {
   }
 }
 
-class _AccountRow extends StatefulWidget {
+class _AccountRow extends StatelessWidget {
   const _AccountRow({
     required this.account,
     required this.balances,
     required this.selected,
     required this.heroEnabled,
-    required this.allowExpansion,
     required this.onAccountPressed,
   });
 
@@ -183,30 +174,14 @@ class _AccountRow extends StatefulWidget {
   final AccountBalances balances;
   final bool selected;
   final bool heroEnabled;
-  final bool allowExpansion;
   final AccountPressed onAccountPressed;
-
-  @override
-  State<_AccountRow> createState() => _AccountRowState();
-}
-
-class _AccountRowState extends State<_AccountRow> {
-  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final account = widget.account;
-    final balances = widget.balances;
     final primaryLeg =
         balances.legFor(account.currency) ??
         (balances.legs.isNotEmpty ? balances.legs.first : null);
-    final detailLegs = primaryLeg == null
-        ? balances.legs
-        : balances.legs
-              .where((leg) => leg.unit != primaryLeg.unit)
-              .toList(growable: false);
-    final isExpandable = widget.allowExpansion && detailLegs.isNotEmpty;
     final accountName = localizedAccountName(
       AppLocalizations.of(context),
       account,
@@ -219,113 +194,79 @@ class _AccountRowState extends State<_AccountRow> {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: widget.selected
+        color: selected
             ? colors.primary.withValues(alpha: AppOpacity.whisper)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s2,
-              vertical: AppSpacing.s12,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Semantics(
-                    button: true,
-                    label: accountName,
-                    child: AppTappable(
-                      onPress: () => widget.onAccountPressed(context, account),
-                      child: Row(
-                        children: [
-                          _AccountIconMark(
-                            account: account,
-                            selected: widget.selected,
-                          ),
-                          const SizedBox(width: AppSpacing.s16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                OptionalHero(
-                                  tag: 'account-${account.id}-name',
-                                  enabled: widget.heroEnabled,
-                                  child: Text(
-                                    accountName,
-                                    style: context.labelStyle.copyWith(
-                                      color: colors.foreground,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s2,
+          vertical: AppSpacing.s12,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Semantics(
+                button: true,
+                label: accountName,
+                child: AppTappable(
+                  onPress: () => onAccountPressed(context, account),
+                  child: Row(
+                    children: [
+                      _AccountIconMark(account: account, selected: selected),
+                      const SizedBox(width: AppSpacing.s16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            OptionalHero(
+                              tag: 'account-${account.id}-name',
+                              enabled: heroEnabled,
+                              child: Text(
+                                accountName,
+                                style: context.labelStyle.copyWith(
+                                  color: colors.foreground,
                                 ),
-                                const SizedBox(height: AppSpacing.s2),
-                                Text(
-                                  metadata,
-                                  style: context.captionStyle,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: AppSpacing.s12),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 128),
-                            child: primaryLeg == null
-                                ? Text(
-                                    '—',
-                                    textAlign: TextAlign.end,
-                                    style: context.bodyCaptionStyle,
-                                  )
-                                : _PrimaryAmount(leg: primaryLeg),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                if (isExpandable)
-                  Padding(
-                    padding: const EdgeInsetsDirectional.only(
-                      start: AppSpacing.s4,
-                    ),
-                    child: AppTappable(
-                      onPress: () => setState(() => _expanded = !_expanded),
-                      child: SizedBox(
-                        width: AppSpacing.s32,
-                        height: AppSpacing.s32,
-                        child: Icon(
-                          _expanded
-                              ? FLucideIcons.chevronUp
-                              : FLucideIcons.chevronDown,
-                          size: AppIconSizes.h18,
-                          color: colors.mutedForeground.withValues(
-                            alpha: AppOpacity.prominent,
-                          ),
+                            const SizedBox(height: AppSpacing.s2),
+                            Text(
+                              metadata,
+                              style: context.captionStyle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       ),
-                    ),
+                      const SizedBox(width: AppSpacing.s12),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 128),
+                        child: primaryLeg == null
+                            ? Text(
+                                '—',
+                                textAlign: TextAlign.end,
+                                style: context.bodyCaptionStyle,
+                              )
+                            : _PrimaryAmount(leg: primaryLeg),
+                      ),
+                    ],
                   ),
-              ],
-            ),
-          ),
-          if (isExpandable && _expanded)
-            Padding(
-              padding: const EdgeInsetsDirectional.only(
-                start: AppSpacing.s48,
-                end: AppSpacing.s2,
-                bottom: AppSpacing.s10,
-              ),
-              child: Column(
-                children: [for (final leg in detailLegs) _SubLegRow(leg: leg)],
+                ),
               ),
             ),
-        ],
+            const SizedBox(width: AppSpacing.s8),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.h18,
+              color: colors.mutedForeground,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -393,45 +334,4 @@ class _PrimaryAmount extends ConsumerWidget {
       textAlign: TextAlign.end,
     );
   }
-}
-
-class _SubLegRow extends ConsumerWidget {
-  const _SubLegRow({required this.leg});
-
-  final AccountBalanceLeg leg;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final formatters = context.formatters(ref);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              AppFormatters.assetCode(leg.unit),
-              style: context.captionMediumStyle,
-            ),
-          ),
-          Text(
-            formatters.number(
-              leg.units.toDouble(),
-              decimalDigits: _balanceQuantityDigits(leg.units),
-            ),
-            style: context.theme.typography.body.sm.copyWith(
-              fontFeatures: TypographyTokens.tabularFigures,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-int _balanceQuantityDigits(Decimal quantity) {
-  final value = quantity.toDouble().abs();
-  if (value == 0) return 0;
-  if (value >= 100) return 0;
-  if (value >= 1) return 2;
-  return 4;
 }

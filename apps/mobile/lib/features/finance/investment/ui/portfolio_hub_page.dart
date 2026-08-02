@@ -92,12 +92,6 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
     return AppPageScaffold(
       title: l10n.portfolioHubTitle,
       actions: [
-        if (needsRebalance)
-          AppHeaderAction(
-            semanticsLabel: l10n.portfolioStudioRebalanceAction,
-            icon: const Icon(FLucideIcons.triangleAlert),
-            onPress: () => context.push(FinanceRoutes.planRebalance),
-          ),
         AppHeaderAction(
           semanticsLabel: l10n.tradeEntryAppBarTitle,
           icon: const Icon(FLucideIcons.plus),
@@ -106,6 +100,12 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
         AppAdaptiveActionMenu(
           title: l10n.shellMoreActions,
           actions: [
+            if (needsRebalance)
+              AppAdaptiveAction(
+                icon: FLucideIcons.triangleAlert,
+                title: l10n.portfolioStudioRebalanceAction,
+                onPress: () => context.push(FinanceRoutes.planRebalance),
+              ),
             AppAdaptiveAction(
               icon: FLucideIcons.plus,
               title: l10n.portfolioCreateTitle,

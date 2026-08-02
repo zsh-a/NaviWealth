@@ -71,7 +71,9 @@ void main() {
 
     expect(find.text('Accounts'), findsOneWidget);
     expect(find.text('Holdings'), findsOneWidget);
-    expect(find.text('Dividend Center'), findsOneWidget);
+    expect(find.text('Liabilities'), findsWidgets);
+    expect(find.text('Wealth items'), findsOneWidget);
+    expect(find.text('Dividend Center'), findsNothing);
     expect(find.text('Income projection'), findsNothing);
   });
 }

@@ -488,6 +488,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wealthEmptyAction => 'Add account';
 
   @override
+  String get wealthObjectsTitle => 'Wealth items';
+
+  @override
   String get wealthAccountsSectionTitle => 'Accounts';
 
   @override
@@ -2623,6 +2626,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get wealthActionPanelSubtitle =>
       'Choose what you want to add to your net worth.';
+
+  @override
+  String get wealthActionPanelAssetHint =>
+      'Cash, deposits, investments, or physical assets';
+
+  @override
+  String get wealthActionPanelAssetSubtitle =>
+      'Choose the type that best fits this asset.';
 
   @override
   String get wealthActionPanelAccountsGroup => 'Accounts';

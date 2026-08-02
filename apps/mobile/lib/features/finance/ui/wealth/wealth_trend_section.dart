@@ -12,18 +12,11 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 ///
 /// This is deliberately separate from the Today brief: Today surfaces only
 /// the latest change, while Wealth owns the longer-running balance-sheet view.
-class WealthTrendSection extends ConsumerStatefulWidget {
+class WealthTrendSection extends ConsumerWidget {
   const WealthTrendSection({super.key});
 
   @override
-  ConsumerState<WealthTrendSection> createState() => _WealthTrendSectionState();
-}
-
-class _WealthTrendSectionState extends ConsumerState<WealthTrendSection> {
-  _WealthTrendMetric _metric = _WealthTrendMetric.netWorth;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final range = ref.watch(dashboardTimeRangeProvider);
     final trendAsync = ref.watch(dashboardTrendProvider(range));
@@ -47,27 +40,16 @@ class _WealthTrendSectionState extends ConsumerState<WealthTrendSection> {
               ),
             ],
           ),
-          const SizedBox(height: AppPageRhythm.row),
-          SegmentedRow<_WealthTrendMetric>(
-            options: _WealthTrendMetric.values,
-            value: _metric,
-            minSegmentWidth: 72,
-            labelOf: (metric) => metric.label(l10n),
-            onChanged: (metric) => setState(() => _metric = metric),
-          ),
           const SizedBox(height: AppPageRhythm.module),
           ContentCrossFade(
             child: KeyedSubtree(
-              key: ValueKey(
-                'wealth-trend-${_metric.name}-${range.preset.name}',
-              ),
+              key: ValueKey('wealth-trend-${range.preset.name}'),
               child: trendAsync.when(
                 loading: () => const _WealthTrendSkeleton(),
                 error: (_, _) => _WealthTrendError(
                   onRetry: () => ref.invalidate(dashboardTrendProvider(range)),
                 ),
-                data: (trend) =>
-                    _WealthTrendBody(trend: trend, metric: _metric),
+                data: (trend) => _WealthTrendBody(trend: trend),
               ),
             ),
           ),
@@ -79,33 +61,10 @@ class _WealthTrendSectionState extends ConsumerState<WealthTrendSection> {
   }
 }
 
-enum _WealthTrendMetric { netWorth, assets, liabilities }
-
-extension on _WealthTrendMetric {
-  String label(AppLocalizations l10n) => switch (this) {
-    _WealthTrendMetric.netWorth => l10n.homeNetWorthTitle,
-    _WealthTrendMetric.assets => l10n.dashboardNetWorthAssetsLabel,
-    _WealthTrendMetric.liabilities => l10n.dashboardNetWorthLiabilitiesLabel,
-  };
-
-  Decimal valueOf(TrendPoint point) => switch (this) {
-    _WealthTrendMetric.netWorth => point.netWorth.amount,
-    _WealthTrendMetric.assets => point.assets.amount,
-    _WealthTrendMetric.liabilities => point.liabilities.amount,
-  };
-
-  SeriesIntent get intent => switch (this) {
-    _WealthTrendMetric.netWorth => SeriesIntent.primary,
-    _WealthTrendMetric.assets => SeriesIntent.up,
-    _WealthTrendMetric.liabilities => SeriesIntent.down,
-  };
-}
-
 class _WealthTrendBody extends StatelessWidget {
-  const _WealthTrendBody({required this.trend, required this.metric});
+  const _WealthTrendBody({required this.trend});
 
   final DashboardTrend trend;
-  final _WealthTrendMetric metric;
 
   @override
   Widget build(BuildContext context) {
@@ -135,10 +94,10 @@ class _WealthTrendBody extends StatelessWidget {
         ? completeTail
         : segments.last.points;
     final estimatedOnly = completeTail.length < 2;
-    final values = [for (final p in summaryPoints) metric.valueOf(p)];
+    final values = [for (final p in summaryPoints) p.netWorth.amount];
     final allFlat = values.every((value) => value == values.first);
 
-    final seriesName = metric.label(l10n);
+    final seriesName = l10n.homeNetWorthTitle;
     final series = <ChartSeries>[
       for (final segment in segments)
         ChartSeries(
@@ -147,11 +106,11 @@ class _WealthTrendBody extends StatelessWidget {
             for (final point in segment.points)
               ChartPoint(
                 x: point.asOf.millisecondsSinceEpoch.toDouble(),
-                y: metric.valueOf(point).toDouble(),
+                y: point.netWorth.amount.toDouble(),
                 meta: point,
               ),
           ],
-          intent: metric.intent,
+          intent: SeriesIntent.primary,
           emphasis: segment.isEstimated
               ? SeriesEmphasis.dashed
               : SeriesEmphasis.solid,
@@ -357,23 +316,72 @@ class _WealthTrendRangeSelector extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final selected = ref.watch(dashboardSelectedRangeProvider);
-    return SegmentedRow<DashboardRangePreset>(
-      options: _ranges,
-      value: selected,
-      minSegmentWidth: 44,
-      labelOf: (range) => switch (range) {
-        DashboardRangePreset.m1 => l10n.dashboardRange1M,
-        DashboardRangePreset.m3 => l10n.dashboardRange3M,
-        DashboardRangePreset.y1 => l10n.dashboardRange1Y,
-        DashboardRangePreset.y3 => l10n.dashboardRange3Y,
-        DashboardRangePreset.all => l10n.dashboardRangeAll,
-        DashboardRangePreset.m6 => l10n.dashboardRange6M,
-        DashboardRangePreset.custom => l10n.dashboardRangeCustom,
-      },
-      onChanged: (range) {
-        ref.read(dashboardCustomRangeProvider.notifier).state = null;
-        ref.read(dashboardSelectedRangeProvider.notifier).state = range;
-      },
+    String labelOf(DashboardRangePreset range) => switch (range) {
+      DashboardRangePreset.m1 => l10n.dashboardRange1M,
+      DashboardRangePreset.m3 => l10n.dashboardRange3M,
+      DashboardRangePreset.y1 => l10n.dashboardRange1Y,
+      DashboardRangePreset.y3 => l10n.dashboardRange3Y,
+      DashboardRangePreset.all => l10n.dashboardRangeAll,
+      DashboardRangePreset.m6 => l10n.dashboardRange6M,
+      DashboardRangePreset.custom => l10n.dashboardRangeCustom,
+    };
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: AppAdaptiveSelectionMenu<DashboardRangePreset>(
+        title: l10n.wealthTrendTitle,
+        subtitle: l10n.dashboardRangeCustom,
+        options: [
+          for (final range in _ranges)
+            AppAdaptiveSelection(
+              value: range,
+              title: labelOf(range),
+              icon: FLucideIcons.calendarRange,
+            ),
+        ],
+        value: selected,
+        onChanged: (range) {
+          ref.read(dashboardCustomRangeProvider.notifier).state = null;
+          ref.read(dashboardSelectedRangeProvider.notifier).state = range;
+        },
+        triggerBuilder: (context, openMenu, focusNode) => Focus(
+          focusNode: focusNode,
+          child: Semantics(
+            button: true,
+            label: '${l10n.wealthTrendTitle}: ${labelOf(selected)}',
+            child: AppTappable(
+              onPress: openMenu,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: AppSpacing.s48),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s10,
+                    vertical: AppSpacing.s8,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        FLucideIcons.calendarRange,
+                        size: AppIconSizes.sm,
+                        color: context.theme.colors.mutedForeground,
+                      ),
+                      const SizedBox(width: AppSpacing.s8),
+                      Text(labelOf(selected), style: context.labelStyle),
+                      const SizedBox(width: AppSpacing.s6),
+                      Icon(
+                        FLucideIcons.chevronDown,
+                        size: AppIconSizes.h18,
+                        color: context.theme.colors.mutedForeground,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

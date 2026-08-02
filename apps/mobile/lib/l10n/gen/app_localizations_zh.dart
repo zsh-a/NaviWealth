@@ -469,6 +469,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wealthEmptyAction => '添加账户';
 
   @override
+  String get wealthObjectsTitle => '资产项目';
+
+  @override
   String get wealthAccountsSectionTitle => '账户';
 
   @override
@@ -2512,6 +2515,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get wealthActionPanelSubtitle => '选择要纳入净资产的对象。';
+
+  @override
+  String get wealthActionPanelAssetHint => '现金、存款、理财或实物资产';
+
+  @override
+  String get wealthActionPanelAssetSubtitle => '选择最符合这项资产的类型。';
 
   @override
   String get wealthActionPanelAccountsGroup => '账户容器';

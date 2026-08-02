@@ -40,7 +40,13 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('添加资产项目'), findsOneWidget);
-    expect(find.byType(AppActionSheetTile), findsNWidgets(7));
+    expect(find.byType(AppActionSheetTile), findsNWidgets(3));
     expect(find.byType(SoftCard), findsNothing);
+
+    await tester.tap(find.text('资产'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('选择最符合这项资产的类型。'), findsOneWidget);
+    expect(find.byType(AppActionSheetTile), findsNWidgets(5));
   });
 }

@@ -866,6 +866,12 @@ abstract class AppLocalizations {
   /// **'Add account'**
   String get wealthEmptyAction;
 
+  /// Heading above account, holdings, and liability navigation on the Wealth hub
+  ///
+  /// In en, this message translates to:
+  /// **'Wealth items'**
+  String get wealthObjectsTitle;
+
   /// Wealth hub: accounts section title
   ///
   /// In en, this message translates to:
@@ -4456,6 +4462,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose what you want to add to your net worth.'**
   String get wealthActionPanelSubtitle;
+
+  /// Summary under the progressive Asset choice in the Wealth quick-add panel
+  ///
+  /// In en, this message translates to:
+  /// **'Cash, deposits, investments, or physical assets'**
+  String get wealthActionPanelAssetHint;
+
+  /// Subtitle for the second-level asset type picker
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the type that best fits this asset.'**
+  String get wealthActionPanelAssetSubtitle;
 
   /// Wealth quick-add section heading for account containers
   ///
