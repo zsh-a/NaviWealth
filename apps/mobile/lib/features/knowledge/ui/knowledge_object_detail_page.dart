@@ -23,6 +23,7 @@ import '../domain/knowledge_models.dart';
 import '_object_writers.dart';
 import '_routine_writer.dart';
 import '_widgets.dart';
+import 'knowledge_execution_action.dart';
 import 'knowledge_status_labels.dart';
 
 part 'knowledge_object_detail_links.dart';
@@ -361,6 +362,8 @@ class _KnowledgeObjectDetailPageState
       _ => const <Widget>[],
     };
     final allSections = <Widget>[...children];
+    final executionAction = _executionActionFor(obj);
+    if (executionAction != null) allSections.insert(1, executionAction);
     if (_linkedDecisions.isNotEmpty) {
       allSections.addAll(<Widget>[
         const SizedBox(height: AppSpacing.s12),
@@ -371,6 +374,34 @@ class _KnowledgeObjectDetailPageState
       padding: const EdgeInsets.all(AppSpacing.s16),
       children: allSections,
     );
+  }
+
+  Widget? _executionActionFor(Object obj) {
+    final l10n = AppLocalizations.of(context);
+    return switch (obj) {
+      final KnowledgeNote note => KnowledgeExecutionAction(
+        draftTitle: l10n.knowledgeNoteActionDraftTitle(
+          note.title.trim().isEmpty ? l10n.knowledgeUntitled : note.title,
+        ),
+        draftNote: knowledgeExcerpt(note.bodyMd),
+        sourceRowFamily: 'know:knowledge_notes',
+        sourceRowId: note.id,
+        prompt: l10n.knowledgeNoteActionPrompt,
+      ),
+      final KnowledgeExperiment experiment
+          when experiment.status == ExperimentStatus.planned ||
+              experiment.status == ExperimentStatus.running =>
+        KnowledgeExecutionAction(
+          draftTitle: l10n.knowledgeExperimentActionDraftTitle(
+            experiment.hypothesis,
+          ),
+          draftNote: knowledgeExcerpt(experiment.methodMd),
+          sourceRowFamily: 'know:knowledge_experiments',
+          sourceRowId: experiment.id,
+          prompt: l10n.knowledgeExperimentActionPrompt,
+        ),
+      _ => null,
+    };
   }
 }
 

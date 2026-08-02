@@ -55,14 +55,31 @@ class ExecutionReviewPage extends ConsumerWidget {
   }
 }
 
-class _ReviewBody extends ConsumerWidget {
+class _ReviewBody extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ReviewBody> createState() => _ReviewBodyState();
+}
+
+class _ReviewBodyState extends ConsumerState<_ReviewBody> {
+  bool _showWeekResults = false;
+  bool _showReviewDetails = false;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final progressAsync = ref.watch(executionRecentProgressProvider);
     final closedActionsAsync = ref.watch(executionClosedActionsProvider);
     final relations = ref.watch(executionReviewRelationsProvider).value;
     final outcomes = ref.watch(actionOutcomeSummariesProvider);
+    final attentionCount =
+        ref
+            .watch(
+              execution_agent_providers.latestExecutionReviewResultsProvider,
+            )
+            .value
+            ?.artifacts
+            .length ??
+        0;
     final error = progressAsync.error ?? closedActionsAsync.error;
     if (error != null) {
       return AppEmptyState.error(
@@ -94,15 +111,35 @@ class _ReviewBody extends ConsumerWidget {
     final empty = entries.isEmpty && closedActions.isEmpty;
 
     final itemBuilders = <WidgetBuilder>[
-      (_) => _ReviewSummary(entries: entries, closedActions: closedActions),
-      (_) => const SizedBox(height: AppSpacing.s12),
-      (_) => const _ExecutionReviewRunStatus(),
-      (_) => const SizedBox(height: AppSpacing.s16),
+      (_) => ExecutionSectionHeader(
+        title: l10n.executionReviewNeedsAttentionTitle,
+        count: attentionCount,
+        icon: FLucideIcons.triangleAlert,
+      ),
+      (_) => const SizedBox(height: AppSpacing.s8),
       (_) => const _ExecutionReviewAgentPanel(),
       (_) => const SizedBox(height: AppSpacing.s8),
       (_) => const _ReviewNextActionsBatch(),
+      (_) => const SizedBox(height: AppSpacing.s20),
+      (_) => ExecutionSectionHeader(
+        title: l10n.executionReviewWeekResultsTitle,
+        count: entries.length + closedActions.length,
+        icon: FLucideIcons.chartNoAxesColumnIncreasing,
+      ),
+      (_) => const SizedBox(height: AppSpacing.s8),
+      (_) => _ReviewSummary(entries: entries, closedActions: closedActions),
+      (_) => const SizedBox(height: AppSpacing.s12),
+      (_) => _ReviewDisclosure(
+        icon: FLucideIcons.history,
+        title: l10n.executionReviewRecentActivity(
+          entries.length + closedActions.length,
+        ),
+        expanded: _showWeekResults,
+        onTap: () => setState(() => _showWeekResults = !_showWeekResults),
+      ),
+      (_) => const SizedBox(height: AppSpacing.s12),
     ];
-    if (empty) {
+    if (_showWeekResults && empty) {
       itemBuilders.add(
         (_) => ExecutionStateView(
           icon: FLucideIcons.clipboardCheck,
@@ -111,7 +148,7 @@ class _ReviewBody extends ConsumerWidget {
         ),
       );
     }
-    if (entries.isNotEmpty) {
+    if (_showWeekResults && entries.isNotEmpty) {
       itemBuilders
         ..add(
           (_) => ExecutionSectionHeader(
@@ -157,7 +194,7 @@ class _ReviewBody extends ConsumerWidget {
       }
       itemBuilders.add((_) => const SizedBox(height: AppSpacing.s8));
     }
-    if (closedActions.isNotEmpty) {
+    if (_showWeekResults && closedActions.isNotEmpty) {
       itemBuilders
         ..add(
           (_) => ExecutionSectionHeader(
@@ -193,12 +230,89 @@ class _ReviewBody extends ConsumerWidget {
         );
       }
     }
+    itemBuilders
+      ..add((_) => const SizedBox(height: AppSpacing.s8))
+      ..add(
+        (_) => _ReviewDisclosure(
+          icon: FLucideIcons.info,
+          title: l10n.executionReviewDetailsTitle,
+          subtitle: l10n.executionReviewDetailsSubtitle,
+          expanded: _showReviewDetails,
+          onTap: () => setState(() => _showReviewDetails = !_showReviewDetails),
+        ),
+      );
+    if (_showReviewDetails) {
+      itemBuilders
+        ..add((_) => const SizedBox(height: AppSpacing.s8))
+        ..add((_) => const _ExecutionReviewRunStatus());
+    }
 
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: shellTabContentPadding(context),
       itemCount: itemBuilders.length,
       itemBuilder: (context, index) => itemBuilders[index](context),
+    );
+  }
+}
+
+class _ReviewDisclosure extends StatelessWidget {
+  const _ReviewDisclosure({
+    required this.icon,
+    required this.title,
+    required this.expanded,
+    required this.onTap,
+    this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final bool expanded;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Semantics(
+      button: true,
+      expanded: expanded,
+      child: AppGroupedSurface(
+        padding: EdgeInsets.zero,
+        child: AppTappable(
+          onPress: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s14,
+              vertical: AppSpacing.s12,
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: AppIconSizes.sm, color: colors.primary),
+                const SizedBox(width: AppSpacing.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: context.labelStyle),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: AppSpacing.s2),
+                        Text(subtitle!, style: context.captionStyle),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                Icon(
+                  expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
+                  size: AppIconSizes.sm,
+                  color: colors.mutedForeground,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -232,7 +346,6 @@ class _ReviewNextActionsBatchState
     return Align(
       alignment: Alignment.centerLeft,
       child: FButton(
-        variant: FButtonVariant.outline,
         onPress: () =>
             _review(projectIds: projectIds, commitmentIds: commitmentIds),
         child: Text(l10n.executionReviewDraftNextActions(count)),

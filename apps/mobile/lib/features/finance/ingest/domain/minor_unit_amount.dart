@@ -50,7 +50,7 @@ int? _parseMinorUnitAmount(String input, {required bool allowNegative}) {
   if (major == null) return null;
 
   final unsigned = major * BigInt.from(100) + minor;
-  final maxSigned64 = BigInt.from(9223372036854775807);
+  final maxSigned64 = BigInt.parse('9223372036854775807');
   final minSigned64 = -maxSigned64 - BigInt.one;
   final signed = negative ? -unsigned : unsigned;
   if (signed < minSigned64 || signed > maxSigned64) return null;

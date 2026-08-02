@@ -180,9 +180,16 @@ Rules:
 - `queue_*` inbox triage tools persist derived envelopes to `knowledge_inbox_triage` for the Review tab; they are not chat proposal-card apply kinds.
 - Before creating new knowledge, prefer search or similarity tools to avoid duplicates.
 - The model must not invent decisions, principles, assumptions, or outcomes. User confirmation is required.
-- `review_knowledge_health` uses the user-configured stale-assumption threshold
-  shared by Review agents/UI. Review cadence and the stale threshold are
-  device-local Knowledge Settings preferences. Orphan Notes must be older than 24 hours and have neither
+- Decision, Note, and active Experiment detail pages may create one explicit
+  Execution follow-up through the app composition seam. They preserve stable
+  source identity (`know:knowledge_decisions`, `know:knowledge_notes`, or
+  `know:knowledge_experiments` plus row id), reopen an existing linked Action,
+  and never auto-write. Concept, Principle, and Assumption pages do not expose
+  generic create-action controls.
+- `review_knowledge_health`, Review agents, and Review UI share product defaults:
+  a 7-day review cadence and a 90-day stale-assumption threshold. These are
+  workflow semantics rather than user-facing expert settings. Orphan Notes
+  must be older than 24 hours and have neither
   tags, project membership, nor incoming/outgoing Knowledge relations.
 - Topic evolution expands the query through matched Concept aliases, paginates
   Notes and Decisions, and reports truncation metadata instead of silently

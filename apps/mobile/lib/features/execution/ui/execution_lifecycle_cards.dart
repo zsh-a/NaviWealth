@@ -17,6 +17,7 @@ class ExecutionCommitmentCard extends StatelessWidget {
     this.onOpen,
     this.busy = false,
     this.showActions = true,
+    this.showTypeLabel = false,
   });
 
   final ExecutionCommitment commitment;
@@ -33,6 +34,7 @@ class ExecutionCommitmentCard extends StatelessWidget {
   final VoidCallback? onOpen;
   final bool busy;
   final bool showActions;
+  final bool showTypeLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +66,7 @@ class ExecutionCommitmentCard extends StatelessWidget {
                       openActionCount: openActionCount,
                       blockedActionCount: blockedActionCount,
                       projectLabel: projectLabel,
+                      showTypeLabel: showTypeLabel,
                     ),
                   ),
                 ],
@@ -114,12 +117,14 @@ class _CommitmentBody extends StatelessWidget {
     required this.openActionCount,
     required this.blockedActionCount,
     required this.projectLabel,
+    required this.showTypeLabel,
   });
 
   final ExecutionCommitment commitment;
   final int? openActionCount;
   final int? blockedActionCount;
   final String? projectLabel;
+  final bool showTypeLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -127,6 +132,10 @@ class _CommitmentBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (showTypeLabel) ...[
+          Text(l10n.executionCommitmentField, style: context.captionLabelStyle),
+          const SizedBox(height: AppSpacing.s2),
+        ],
         Text(
           commitment.title,
           style: context.rowTitleStyle,
@@ -203,6 +212,7 @@ class ExecutionProjectCard extends StatelessWidget {
     this.onOpen,
     this.busy = false,
     this.showActions = true,
+    this.showTypeLabel = false,
   });
 
   final ExecutionProject project;
@@ -219,6 +229,7 @@ class ExecutionProjectCard extends StatelessWidget {
   final VoidCallback? onOpen;
   final bool busy;
   final bool showActions;
+  final bool showTypeLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -250,6 +261,7 @@ class ExecutionProjectCard extends StatelessWidget {
                       openActionCount: openActionCount,
                       blockedActionCount: blockedActionCount,
                       commitmentCount: commitmentCount,
+                      showTypeLabel: showTypeLabel,
                     ),
                   ),
                 ],
@@ -299,12 +311,14 @@ class _ProjectBody extends StatelessWidget {
     required this.openActionCount,
     required this.blockedActionCount,
     required this.commitmentCount,
+    required this.showTypeLabel,
   });
 
   final ExecutionProject project;
   final int? openActionCount;
   final int? blockedActionCount;
   final int? commitmentCount;
+  final bool showTypeLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -312,6 +326,10 @@ class _ProjectBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (showTypeLabel) ...[
+          Text(l10n.executionProjectField, style: context.captionLabelStyle),
+          const SizedBox(height: AppSpacing.s2),
+        ],
         Text(
           project.title,
           style: context.rowTitleStyle,

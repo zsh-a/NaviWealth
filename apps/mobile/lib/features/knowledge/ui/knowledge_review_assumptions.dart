@@ -34,9 +34,7 @@ class _StaleAssumptionsCard extends ConsumerWidget {
           ),
           data: (repo) {
             final tick = ref.watch(_reviewActionsRefreshProvider);
-            final staleDays = ref
-                .watch(knowledgeReviewPreferencesProvider)
-                .staleAssumptionDays;
+            const staleDays = kKnowledgeAssumptionStaleDays;
             return FutureBuilder(
               key: ValueKey<int>(tick),
               future: repo.listOpenAssumptions(ownerUserId: owner),

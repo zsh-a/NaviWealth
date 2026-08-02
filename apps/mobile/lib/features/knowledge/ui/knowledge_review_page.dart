@@ -24,7 +24,6 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as knowledge_agent_providers;
 import '../agents/routine_due_agent.dart';
 import '../composition/knowledge_route_paths.dart';
-import '../data/knowledge_review_preferences.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_ai_suggestions_card.dart';

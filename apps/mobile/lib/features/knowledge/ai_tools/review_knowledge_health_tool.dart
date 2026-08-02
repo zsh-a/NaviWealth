@@ -17,7 +17,6 @@ import 'package:naviwealth/core/auth/current_user.dart';
 
 import '../agents/contradiction_agent.dart' show kKnowledgeContradictionAgentId;
 import '../data/knowledge_repository.dart';
-import '../data/knowledge_review_preferences.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 
@@ -70,9 +69,7 @@ class ReviewKnowledgeHealthTool implements DeviceTool {
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final now = DateTime.now().toUtc();
-    final staleDays = ctx.ref
-        .read(knowledgeReviewPreferencesProvider)
-        .staleAssumptionDays;
+    const staleDays = kKnowledgeAssumptionStaleDays;
 
     final dueReviews = await repo.listDueReviews(
       ownerUserId: ownerUserId,

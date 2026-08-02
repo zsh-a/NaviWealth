@@ -116,22 +116,26 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
   /// primitive so system back, the toolbar arrow, and the Esc shortcut
   /// stay in lockstep; only the app-shell-specific tail lives here:
   ///  1–3. delegated to [attemptBack];
-  ///  4. at a non-first tab root → return to the domain's first tab
-  ///     (doc 15 §7.5 — previously back at ANY of 12 tab roots went
-  ///     straight to the exit prompt);
+  ///  4. at a non-first tab root or contextual review root → return to
+  ///     the domain's first tab (doc 15 §7.5 — previously back at ANY
+  ///     tab root went straight to the exit prompt);
   ///  5. at the domain's first tab root → fall through to
   ///     [ExitConfirmingSystemBackScope].
   bool _handleSystemBackBeforeExit(BuildContext context) {
     if (attemptBack(context)) return true;
     final router = GoRouter.of(context);
     final path = router.routeInformationProvider.value.uri.path;
-    final tabs = domainTabPathsForLocation(
-      ref.read(activeDomainPacksProvider),
-      path,
-    );
+    final packs = ref.read(activeDomainPacksProvider);
+    final tabs = domainTabPathsForLocation(packs, path);
     if (tabs.length > 1 && tabs.contains(path) && path != tabs.first) {
       router.go(tabs.first);
       return true;
+    }
+    for (final pack in packs) {
+      if (pack.reviewRoutePath == path && pack.tabPaths.isNotEmpty) {
+        router.go(pack.tabPaths.first);
+        return true;
+      }
     }
     return false;
   }

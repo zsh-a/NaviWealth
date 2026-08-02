@@ -8,7 +8,6 @@ import 'package:naviwealth/core/ai/agents/agent_intents.dart';
 import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
-import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/features/execution/agents/due_action_agent.dart'
     show kExecutionDueActionAgentId;
 import 'package:naviwealth/features/execution/agents/providers.dart'
@@ -25,11 +24,9 @@ import 'package:naviwealth/features/execution/composition/execution_routes.dart'
 import 'package:naviwealth/features/execution/data/execution_memory_indexer.dart';
 import 'package:naviwealth/features/execution/data_management/execution_data_management.dart';
 import 'package:naviwealth/features/execution/execution_ai_tools.dart';
-import 'package:naviwealth/features/execution/ui/execution_domain_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../agent_runtime/overrides/agent_runtime_execution_overrides.dart';
 import '../routing/route_paths.dart';
-import 'domain_settings_spec.dart';
 import 'execution_life_contribution.dart';
 import 'proposal_applier_route.dart';
 
@@ -80,13 +77,10 @@ final DomainPack kExecutionPack = DomainPack(
   lifeSignalBuilder: executionLifeSignals,
   sourceRouteResolver: executionSourceRouteContribution,
   dataManagementSpec: executionDataManagementSpec,
-  settingsSpec: domainSettingsSpec(
+  settingsSpec: const DomainSettingsSpec(
     icon: FLucideIcons.listTodo,
     label: 'ExecutionOS',
     subtitle: _executionSettingsSubtitle,
-    routePath: SettingsRoutes.domainsExecution,
-    routeName: SettingsRouteNames.domainsExecution,
-    page: const ExecutionDomainSettingsPage(),
   ),
 );
 

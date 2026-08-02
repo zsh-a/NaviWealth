@@ -20,6 +20,7 @@ class ExecutionProjectCardController extends ConsumerStatefulWidget {
     this.commitmentCount,
     this.onOpen,
     this.showActions = true,
+    this.showTypeLabel = false,
   });
 
   final ExecutionProject project;
@@ -31,6 +32,7 @@ class ExecutionProjectCardController extends ConsumerStatefulWidget {
   final int? commitmentCount;
   final VoidCallback? onOpen;
   final bool showActions;
+  final bool showTypeLabel;
 
   @override
   ConsumerState<ExecutionProjectCardController> createState() =>
@@ -95,6 +97,7 @@ class _ExecutionProjectCardControllerState
       busy: _busy,
       onOpen: _busy ? null : widget.onOpen,
       showActions: widget.showActions,
+      showTypeLabel: widget.showTypeLabel,
       onCreateAction: widget.onCreateAction,
       onEdit: widget.onEdit,
       onRecordProgress: widget.onRecordProgress,
@@ -118,6 +121,7 @@ class ExecutionCommitmentCardController extends ConsumerStatefulWidget {
     this.projectLabel,
     this.onOpen,
     this.showActions = true,
+    this.showTypeLabel = false,
   });
 
   final ExecutionCommitment commitment;
@@ -129,6 +133,7 @@ class ExecutionCommitmentCardController extends ConsumerStatefulWidget {
   final String? projectLabel;
   final VoidCallback? onOpen;
   final bool showActions;
+  final bool showTypeLabel;
 
   @override
   ConsumerState<ExecutionCommitmentCardController> createState() =>
@@ -194,6 +199,7 @@ class _ExecutionCommitmentCardControllerState
       busy: _busy,
       onOpen: _busy ? null : widget.onOpen,
       showActions: widget.showActions,
+      showTypeLabel: widget.showTypeLabel,
       onCreateAction: widget.onCreateAction,
       onEdit: widget.onEdit,
       onRecordProgress: widget.onRecordProgress,

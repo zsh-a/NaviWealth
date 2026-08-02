@@ -14,26 +14,15 @@ import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
-import '../data/knowledge_review_preferences.dart';
 import 'assumption_agent.dart';
 import 'contradiction_agent.dart';
 import 'inbox_triage_agent.dart';
 import 'review_agent.dart';
 
-final reviewAgentProvider = Provider<ReviewAgent>((ref) {
-  final preferences = ref.watch(knowledgeReviewPreferencesProvider);
-  return ReviewAgent(
-    reviewIntervalDays: preferences.cadenceDays,
-    staleAssumptionDays: preferences.staleAssumptionDays,
-  );
-});
+final reviewAgentProvider = Provider<ReviewAgent>((ref) => const ReviewAgent());
 
 final assumptionAgentProvider = Provider<AssumptionAgent>(
-  (ref) => AssumptionAgent(
-    staleAssumptionDays: ref
-        .watch(knowledgeReviewPreferencesProvider)
-        .staleAssumptionDays,
-  ),
+  (ref) => const AssumptionAgent(),
 );
 
 final contradictionAgentProvider = Provider<ContradictionAgent>(

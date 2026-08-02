@@ -13,7 +13,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/lifeos/action_dispatcher.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/knowledge_route_paths.dart';
@@ -23,6 +22,7 @@ import '../domain/knowledge_models.dart';
 import '_decision_lifecycle_sheet.dart';
 import '_decision_writer.dart';
 import '_widgets.dart';
+import 'knowledge_execution_action.dart';
 import 'knowledge_status_labels.dart';
 
 class KnowledgeDecisionDetailPage extends ConsumerWidget {
@@ -50,8 +50,6 @@ class _BodyState extends ConsumerState<_Body> {
   List<KnowledgeAssumption> _assumptions = const <KnowledgeAssumption>[];
   List<KnowledgeDecision> _linkedDecisions = const <KnowledgeDecision>[];
   bool _loading = true;
-  bool _creatingAction = false;
-  String? _createdActionId;
 
   @override
   void initState() {
@@ -154,60 +152,6 @@ class _BodyState extends ConsumerState<_Body> {
     if (saved == true) await _load();
   }
 
-  Future<void> _createAction(KnowledgeDecision decision) async {
-    if (_creatingAction) return;
-    setState(() => _creatingAction = true);
-    final l10n = AppLocalizations.of(context);
-    try {
-      final actionId = await ref.read(lifeActionDispatcherProvider)(
-        LifeActionDraft(
-          title: l10n.knowledgeDecisionActionDraftTitle(decision.question),
-          note: l10n.knowledgeDecisionActionDraftNote(decision.selectedLabel),
-          sourceDomain: 'knowledge',
-          sourceRowFamily: 'know:knowledge_decisions',
-          sourceRowId: decision.id,
-          dueAt: decision.reviewDate,
-        ),
-      );
-      if (!mounted) return;
-      if (actionId == null) {
-        AppMessenger.show(
-          context,
-          ToastKind.error,
-          l10n.knowledgeDecisionActionUnavailable,
-        );
-        return;
-      }
-      setState(() => _createdActionId = actionId);
-      ref.invalidate(
-        lifeLinkedActionProvider((
-          rowFamily: 'know:knowledge_decisions',
-          rowId: decision.id,
-        )),
-      );
-      AppMessenger.show(
-        context,
-        ToastKind.success,
-        l10n.knowledgeDecisionActionCreated,
-      );
-    } catch (error) {
-      if (mounted) {
-        AppMessenger.show(
-          context,
-          ToastKind.error,
-          l10n.knowledgeDecisionActionFailed('$error'),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _creatingAction = false);
-    }
-  }
-
-  void _openAction(String actionId) {
-    final route = ref.read(lifeActionRouteBuilderProvider)?.call(actionId);
-    if (route != null) context.push(route);
-  }
-
   @override
   Widget build(BuildContext context) {
     final d = _decision;
@@ -255,17 +199,6 @@ class _BodyState extends ConsumerState<_Body> {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
-    final executionAvailable =
-        ref.watch(lifeOpenActionCountProvider).value != null;
-    final linkedAction = ref
-        .watch(
-          lifeLinkedActionProvider((
-            rowFamily: 'know:knowledge_decisions',
-            rowId: d.id,
-          )),
-        )
-        .value;
-    final actionId = _createdActionId ?? linkedAction?.id;
     final decidedDate = knowledgeDate(context, d.decidedAt, long: true);
     final reviewDate = d.reviewDate == null
         ? null
@@ -281,45 +214,14 @@ class _BodyState extends ConsumerState<_Body> {
           status: decisionStatusLabelOf(l10n, d.status),
           updatedAt: d.sync.updatedAt,
         ),
-        if (executionAvailable) ...[
-          const SizedBox(height: AppSpacing.s12),
-          KnowledgePromptSurface(
-            child: Row(
-              children: [
-                Icon(
-                  actionId == null
-                      ? FLucideIcons.listPlus
-                      : FLucideIcons.circleCheck,
-                  size: AppIconSizes.sm,
-                  color: colors.primary,
-                ),
-                const SizedBox(width: AppSpacing.s8),
-                Expanded(
-                  child: Text(
-                    actionId == null
-                        ? l10n.knowledgeDecisionActionPrompt
-                        : l10n.knowledgeDecisionActionLinked,
-                    style: context.captionStyle,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s8),
-                AppBusyButton(
-                  label: actionId == null
-                      ? l10n.knowledgeDecisionCreateAction
-                      : l10n.knowledgeDecisionOpenAction,
-                  busy: _creatingAction,
-                  size: FButtonSizeVariant.sm,
-                  variant: actionId == null
-                      ? FButtonVariant.primary
-                      : FButtonVariant.outline,
-                  onPress: actionId == null
-                      ? () => _createAction(d)
-                      : () => _openAction(actionId),
-                ),
-              ],
-            ),
-          ),
-        ],
+        KnowledgeExecutionAction(
+          draftTitle: l10n.knowledgeDecisionActionDraftTitle(d.question),
+          draftNote: l10n.knowledgeDecisionActionDraftNote(d.selectedLabel),
+          sourceRowFamily: 'know:knowledge_decisions',
+          sourceRowId: d.id,
+          prompt: l10n.knowledgeDecisionActionPrompt,
+          dueAt: d.reviewDate,
+        ),
         const SizedBox(height: AppSpacing.s12),
         KnowledgeSection.group(
           title: l10n.knowledgeDetailMetadataTitle,

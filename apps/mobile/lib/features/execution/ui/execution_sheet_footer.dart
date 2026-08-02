@@ -25,30 +25,46 @@ class ExecutionSheetFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: FButton(
-            variant: FButtonVariant.outline,
-            onPress: busy
-                ? null
-                : (onCancel ?? () => Navigator.of(context).maybePop(false)),
-            child: Text(cancelLabel),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.s12),
-        Expanded(
-          child: AppBusyButton(
-            label: submitLabel,
-            busyLabel: submitLabel,
-            busy: busy,
-            variant: destructive
-                ? FButtonVariant.destructive
-                : FButtonVariant.primary,
-            onPress: enabled && !busy ? onSubmit : null,
-          ),
-        ),
-      ],
+    final cancelButton = FButton(
+      variant: FButtonVariant.outline,
+      onPress: busy
+          ? null
+          : (onCancel ?? () => Navigator.of(context).maybePop(false)),
+      child: Text(cancelLabel),
+    );
+    final submitButton = AppBusyButton(
+      label: submitLabel,
+      busyLabel: submitLabel,
+      busy: busy,
+      variant: destructive
+          ? FButtonVariant.destructive
+          : FButtonVariant.primary,
+      onPress: enabled && !busy ? onSubmit : null,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textScale = MediaQuery.textScalerOf(context).scale(1);
+        final stackActions = constraints.maxWidth < 360 || textScale > 1.3;
+        if (stackActions) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              cancelButton,
+              const SizedBox(height: AppSpacing.s8),
+              submitButton,
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: cancelButton),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(child: submitButton),
+          ],
+        );
+      },
     );
   }
 }

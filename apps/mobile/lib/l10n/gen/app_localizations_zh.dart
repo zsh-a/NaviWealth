@@ -7454,6 +7454,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDomainsDisableConfirmAction => '关闭';
 
   @override
+  String settingsDomainsConfigure(String domain) {
+    return '配置 $domain';
+  }
+
+  @override
   String get agentSettingsTitle => 'Agents';
 
   @override
@@ -8618,13 +8623,40 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeDecisionActionPrompt => '将这个决策转化为一个具体的下一步。';
 
   @override
-  String get knowledgeDecisionActionLinked => '这个决策已有后续行动。';
+  String get knowledgeActionLinked => '已关联一个后续行动。';
 
   @override
-  String get knowledgeDecisionCreateAction => '创建行动';
+  String get knowledgeActionCreate => '创建行动';
 
   @override
-  String get knowledgeDecisionOpenAction => '打开行动';
+  String get knowledgeActionOpen => '打开行动';
+
+  @override
+  String get knowledgeActionCreated => '已创建后续行动';
+
+  @override
+  String get knowledgeActionUnavailable => '启用 ExecutionOS 后可创建后续行动。';
+
+  @override
+  String knowledgeActionFailed(String error) {
+    return '无法创建行动：$error';
+  }
+
+  @override
+  String get knowledgeNoteActionPrompt => '将这条笔记转化为一个具体后续行动。';
+
+  @override
+  String knowledgeNoteActionDraftTitle(String note) {
+    return '跟进：$note';
+  }
+
+  @override
+  String get knowledgeExperimentActionPrompt => '将这个实验转化为一个具体下一步。';
+
+  @override
+  String knowledgeExperimentActionDraftTitle(String experiment) {
+    return '推进实验：$experiment';
+  }
 
   @override
   String knowledgeDecisionActionDraftTitle(String decision) {
@@ -8634,17 +8666,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String knowledgeDecisionActionDraftNote(String choice) {
     return '决策选择：$choice';
-  }
-
-  @override
-  String get knowledgeDecisionActionCreated => '已创建后续行动';
-
-  @override
-  String get knowledgeDecisionActionUnavailable => '启用 ExecutionOS 后可创建后续行动。';
-
-  @override
-  String knowledgeDecisionActionFailed(String error) {
-    return '无法创建行动：$error';
   }
 
   @override
@@ -13394,6 +13415,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionReviewTitle => '复盘';
 
   @override
+  String get executionReviewNeedsAttentionTitle => '需要关注';
+
+  @override
+  String get executionReviewWeekResultsTitle => '本周结果';
+
+  @override
+  String executionReviewRecentActivity(int count) {
+    return '近期活动 · $count';
+  }
+
+  @override
+  String get executionReviewDetailsTitle => '复盘详情';
+
+  @override
+  String get executionReviewDetailsSubtitle => 'Agent 运行状态与数据新鲜度';
+
+  @override
   String get executionCreateActionTitle => '新建行动';
 
   @override
@@ -13428,6 +13466,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionCommitmentField => '承诺';
+
+  @override
+  String get executionRelationField => '归属';
+
+  @override
+  String get executionNoRelation => '收件箱 · 不归属计划';
 
   @override
   String get executionStatusField => '状态';
@@ -13699,6 +13743,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionLifecycleClosedView => '已关闭';
+
+  @override
+  String get executionClosedWorkEntry => '已关闭事项';
+
+  @override
+  String get executionActiveWorkEntry => '返回进行中事项';
 
   @override
   String get executionProjectStatusUpdateFailed => '更新项目状态失败。';

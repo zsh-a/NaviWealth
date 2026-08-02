@@ -7856,6 +7856,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDomainsDisableConfirmAction => 'Turn off';
 
   @override
+  String settingsDomainsConfigure(String domain) {
+    return 'Configure $domain';
+  }
+
+  @override
   String get agentSettingsTitle => 'Agents';
 
   @override
@@ -9087,14 +9092,43 @@ class AppLocalizationsEn extends AppLocalizations {
       'Turn this decision into one concrete next step.';
 
   @override
-  String get knowledgeDecisionActionLinked =>
-      'A follow-up action is linked to this decision.';
+  String get knowledgeActionLinked => 'A follow-up action is already linked.';
 
   @override
-  String get knowledgeDecisionCreateAction => 'Create action';
+  String get knowledgeActionCreate => 'Create action';
 
   @override
-  String get knowledgeDecisionOpenAction => 'Open action';
+  String get knowledgeActionOpen => 'Open action';
+
+  @override
+  String get knowledgeActionCreated => 'Follow-up action created';
+
+  @override
+  String get knowledgeActionUnavailable =>
+      'Enable ExecutionOS to create a follow-up action.';
+
+  @override
+  String knowledgeActionFailed(String error) {
+    return 'Could not create the action: $error';
+  }
+
+  @override
+  String get knowledgeNoteActionPrompt =>
+      'Turn this note into one concrete follow-up.';
+
+  @override
+  String knowledgeNoteActionDraftTitle(String note) {
+    return 'Follow up: $note';
+  }
+
+  @override
+  String get knowledgeExperimentActionPrompt =>
+      'Turn this experiment into its next concrete step.';
+
+  @override
+  String knowledgeExperimentActionDraftTitle(String experiment) {
+    return 'Run experiment: $experiment';
+  }
 
   @override
   String knowledgeDecisionActionDraftTitle(String decision) {
@@ -9104,18 +9138,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String knowledgeDecisionActionDraftNote(String choice) {
     return 'Decision: $choice';
-  }
-
-  @override
-  String get knowledgeDecisionActionCreated => 'Follow-up action created';
-
-  @override
-  String get knowledgeDecisionActionUnavailable =>
-      'Enable ExecutionOS to create a follow-up action.';
-
-  @override
-  String knowledgeDecisionActionFailed(String error) {
-    return 'Could not create the action: $error';
   }
 
   @override
@@ -14118,6 +14140,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionReviewTitle => 'Review';
 
   @override
+  String get executionReviewNeedsAttentionTitle => 'Needs attention';
+
+  @override
+  String get executionReviewWeekResultsTitle => 'This week';
+
+  @override
+  String executionReviewRecentActivity(int count) {
+    return 'Recent activity · $count';
+  }
+
+  @override
+  String get executionReviewDetailsTitle => 'Review details';
+
+  @override
+  String get executionReviewDetailsSubtitle =>
+      'Agent run status and data freshness';
+
+  @override
   String get executionCreateActionTitle => 'New Action';
 
   @override
@@ -14152,6 +14192,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionCommitmentField => 'Commitment';
+
+  @override
+  String get executionRelationField => 'Belongs to';
+
+  @override
+  String get executionNoRelation => 'Inbox · no plan';
 
   @override
   String get executionStatusField => 'Status';
@@ -14434,6 +14480,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionLifecycleClosedView => 'Closed';
+
+  @override
+  String get executionClosedWorkEntry => 'Closed work';
+
+  @override
+  String get executionActiveWorkEntry => 'Back to active work';
 
   @override
   String get executionProjectStatusUpdateFailed =>

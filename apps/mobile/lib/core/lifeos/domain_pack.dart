@@ -115,8 +115,12 @@ class DomainSettingsSpec {
     required this.label,
     required this.subtitle,
     this.sectionBuilder,
+    this.detailPath,
     this.routeBuilder,
-  });
+  }) : assert(
+         (detailPath == null) == (routeBuilder == null),
+         'detailPath and routeBuilder must be provided together',
+       );
 
   /// Icon shown on the Settings → Domains toggle row.
   final IconData icon;
@@ -130,6 +134,10 @@ class DomainSettingsSpec {
   /// Optional fully-owned section shown on Settings -> Domains. Use this for
   /// always-on domains whose settings are richer than an opt-in toggle.
   final DomainSettingsSectionBuilder? sectionBuilder;
+
+  /// Canonical path for the optional domain detail page. The Domains page
+  /// uses this to push the detail route without knowing domain internals.
+  final String? detailPath;
 
   /// Optional per-domain settings detail page route.
   final DomainSettingsRouteBuilder? routeBuilder;

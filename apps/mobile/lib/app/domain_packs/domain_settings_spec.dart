@@ -16,6 +16,7 @@ DomainSettingsSpec domainSettingsSpec({
     icon: icon,
     label: label,
     subtitle: subtitle,
+    detailPath: routePath,
     routeBuilder: (wrap) => GoRoute(
       path: _settingsChildPath(routePath),
       name: routeName,

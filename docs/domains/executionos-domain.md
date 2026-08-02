@@ -111,8 +111,9 @@ search is also owned there instead of repeated on every tab.
 
 The shared Add entry asks only whether the user is creating an Action or a
 multi-step Plan. New Action capture starts with title plus Inbox / Today /
-Tomorrow and keeps
-priority, dates, relations, and notes behind an optional detail disclosure.
+Tomorrow and keeps priority, dates, one unified `Belongs to` relation, and
+notes behind an optional detail disclosure. Choosing a Commitment inherits its
+Project atomically instead of asking the user to configure both fields.
 Manual status changes show a short Undo action. Blocking requires a concrete
 reason, which is stored as blocker progress instead of a generic placeholder.
 
@@ -120,7 +121,13 @@ Actions created from a Knowledge decision preserve the source family and row
 id. App-level composition de-duplicates that source link, so a decision has one
 current follow-up action while a dropped action can be replaced explicitly.
 
-Review is a current-week digest. Progress is normally recorded from the Action,
+Plans presents Projects and Commitments in one plan inventory, with object type
+as secondary context. Closed work is a subordinate archive entry rather than a
+peer mode competing with active work.
+
+Review is a current-week digest. Attention findings and the one batch
+next-action CTA come first. Weekly activity is collapsed by default, while
+Agent run status and freshness live behind Review details. Progress is normally recorded from the Action,
 Project, or Commitment that owns it; Review does not expose a global create
 Progress action or historical time-window switcher.
 

@@ -6,7 +6,6 @@ import 'package:naviwealth/core/ai/agents/agent_intents.dart';
 import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
-import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/features/knowledge/agents/assumption_agent.dart'
     show kKnowledgeAssumptionAgentId;
 import 'package:naviwealth/features/knowledge/agents/contradiction_agent.dart'
@@ -29,11 +28,9 @@ import 'package:naviwealth/features/knowledge/data/knowledge_decision_memory_ind
 import 'package:naviwealth/features/knowledge/data/knowledge_object_memory_indexers.dart';
 import 'package:naviwealth/features/knowledge/data_management/knowledge_data_management.dart';
 import 'package:naviwealth/features/knowledge/knowledge_ai_tools.dart';
-import 'package:naviwealth/features/knowledge/ui/knowledge_domain_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../agent_runtime/overrides/agent_runtime_knowledge_overrides.dart';
 import '../routing/route_paths.dart';
-import 'domain_settings_spec.dart';
 import 'knowledge_life_contribution.dart';
 import 'proposal_applier_route.dart';
 
@@ -98,13 +95,10 @@ final DomainPack kKnowledgePack = DomainPack(
   sourceRouteResolver: knowledgeSourceRoute,
   shareIntentHandlers: const [KnowledgeShareIntentHandler()],
   dataManagementSpec: knowledgeDataManagementSpec,
-  settingsSpec: domainSettingsSpec(
+  settingsSpec: const DomainSettingsSpec(
     icon: FLucideIcons.brain,
     label: 'KnowledgeOS',
     subtitle: _knowledgeSettingsSubtitle,
-    routePath: SettingsRoutes.domainsKnowledge,
-    routeName: SettingsRouteNames.domainsKnowledge,
-    page: const KnowledgeDomainSettingsPage(),
   ),
 );
 

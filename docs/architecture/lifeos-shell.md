@@ -130,6 +130,9 @@ Rules:
 
 - `DomainScope.finance` is always present.
 - Optional domains default to off.
+- Settings → Domains separates enablement from operational configuration.
+  A domain contributes a detail route only when it owns meaningful integration
+  controls; domains with no such controls expose only their opt-in switch.
 - Tool lists, prompt blocks, shell specs, agents, and command entries are derived from active domain packs.
 - Backend auth may use the domain claim to filter sync pulls; client code must still enforce local opt-in for UI and domain jobs.
 

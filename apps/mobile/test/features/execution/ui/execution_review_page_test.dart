@@ -58,6 +58,10 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
+    expect(
+      tester.getTopLeft(find.text('Needs attention')).dy,
+      lessThan(tester.getTopLeft(find.text('This week')).dy),
+    );
     expect(find.text('Execution Review'), findsWidgets);
     expect(find.text('3 actions need attention'), findsOneWidget);
     expect(find.text('Today focus'), findsNothing);
@@ -162,9 +166,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Generate'), findsOneWidget);
-    expect(find.text('Recent execution progress'), findsOneWidget);
+    expect(find.text('Recent activity · 1'), findsOneWidget);
+    expect(find.text('Recent execution progress'), findsNothing);
     expect(find.text('Old execution blocker'), findsNothing);
     expect(find.text('New progress'), findsNothing);
+
+    await tester.tap(find.text('Recent activity · 1'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recent execution progress'), findsOneWidget);
+    expect(find.text('Old execution blocker'), findsNothing);
   });
 
   testWidgets('review creates only selected missing next actions', (

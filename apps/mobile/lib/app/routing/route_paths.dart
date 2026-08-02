@@ -143,8 +143,6 @@ abstract final class AppRoutes {
   static const settingsMonthlyExpense = SettingsRoutes.monthlyExpense;
   static const settingsDomains = SettingsRoutes.domains;
   static const settingsDomainsHealth = SettingsRoutes.domainsHealth;
-  static const settingsDomainsKnowledge = SettingsRoutes.domainsKnowledge;
-  static const settingsDomainsExecution = SettingsRoutes.domainsExecution;
   // Target allocation editor is reachable via the rebalance Custom
   // chip; settings overview links to it through a deep link for
   // discoverability.
@@ -206,8 +204,6 @@ abstract final class AppRouteNames {
   static const monthlyExpense = SettingsRouteNames.monthlyExpense;
   static const domains = SettingsRouteNames.domains;
   static const domainsHealth = SettingsRouteNames.domainsHealth;
-  static const domainsKnowledge = SettingsRouteNames.domainsKnowledge;
-  static const domainsExecution = SettingsRouteNames.domainsExecution;
 
   // ── Wealth ──────────────────────────────────────────────────────────────
   static const wealth = FinanceRouteNames.wealth;

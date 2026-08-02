@@ -75,6 +75,11 @@ class DomainsSettingsPage extends ConsumerWidget {
           subtitle: spec.subtitle(l10n, optIns?.contains(pack.scope) ?? false),
           value: optIns?.contains(pack.scope) ?? false,
           onChanged: (v) => _setDomainEnabled(context, ref, pack, v),
+          onOpenSettings:
+              (optIns?.contains(pack.scope) ?? false) && spec.detailPath != null
+              ? () => context.push(spec.detailPath!)
+              : null,
+          settingsLabel: l10n.settingsDomainsConfigure(spec.label),
         ),
       );
     }
@@ -142,6 +147,8 @@ class _DomainToggleCard extends StatelessWidget {
     required this.subtitle,
     required this.value,
     required this.onChanged,
+    required this.settingsLabel,
+    this.onOpenSettings,
   });
 
   final IconData icon;
@@ -149,17 +156,33 @@ class _DomainToggleCard extends StatelessWidget {
   final String subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
+  final String settingsLabel;
+  final VoidCallback? onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
     return AppGroupedSurface(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-      child: InlineSwitchRow(
-        icon: icon,
-        label: label,
-        subtitle: subtitle,
-        value: value,
-        onChanged: onChanged,
+      child: Column(
+        children: [
+          InlineSwitchRow(
+            icon: icon,
+            label: label,
+            subtitle: subtitle,
+            value: value,
+            onChanged: onChanged,
+          ),
+          // Operational configuration is separate from the enable/disable
+          // gesture so neither target has a surprising side effect.
+          if (onOpenSettings != null) ...[
+            const AppGroupedDivider(),
+            InlineLinkRow(
+              icon: FLucideIcons.slidersHorizontal,
+              label: settingsLabel,
+              onTap: onOpenSettings!,
+            ),
+          ],
+        ],
       ),
     );
   }

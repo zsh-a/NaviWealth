@@ -7,6 +7,32 @@ import '../domain/execution_models.dart';
 
 const String kExecutionPickerNone = '';
 
+typedef ExecutionRelationSelection = ({
+  String? projectId,
+  String? commitmentId,
+});
+
+String executionRelationPickerLabel(
+  AppLocalizations l10n,
+  List<ExecutionProject> projects,
+  List<ExecutionCommitment> commitments,
+  ExecutionRelationSelection selection,
+) {
+  final commitment = executionCommitmentById(
+    commitments,
+    selection.commitmentId,
+  );
+  if (commitment != null) return commitment.title;
+  final projectId = selection.projectId;
+  if (projectId != null && projectId.isNotEmpty) {
+    for (final project in projects) {
+      if (project.id == projectId) return project.title;
+    }
+    return l10n.executionUnknownProject;
+  }
+  return l10n.executionNoRelation;
+}
+
 String executionProjectPickerLabel(
   AppLocalizations l10n,
   List<ExecutionProject> projects,
@@ -97,6 +123,234 @@ executionRelationAfterCommitmentPick({
         : commitmentProjectId,
     commitmentId: pickedCommitmentId,
   );
+}
+
+Future<ExecutionRelationSelection?> showExecutionRelationPicker({
+  required BuildContext context,
+  required List<ExecutionProject> projects,
+  required List<ExecutionCommitment> commitments,
+  required ExecutionRelationSelection selected,
+}) {
+  final l10n = AppLocalizations.of(context);
+  return showAppSheet<ExecutionRelationSelection>(
+    context: context,
+    title: l10n.executionRelationField,
+    scrollable: false,
+    maxHeightFactor: 0.82,
+    builder: (sheetContext) => _RelationPickerList(
+      projects: projects,
+      commitments: commitments,
+      selected: selected,
+    ),
+  );
+}
+
+class _RelationPickerList extends StatefulWidget {
+  const _RelationPickerList({
+    required this.projects,
+    required this.commitments,
+    required this.selected,
+  });
+
+  final List<ExecutionProject> projects;
+  final List<ExecutionCommitment> commitments;
+  final ExecutionRelationSelection selected;
+
+  @override
+  State<_RelationPickerList> createState() => _RelationPickerListState();
+}
+
+class _RelationPickerListState extends State<_RelationPickerList> {
+  final TextEditingController _query = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _query.addListener(_refresh);
+  }
+
+  @override
+  void dispose() {
+    _query.removeListener(_refresh);
+    _query.dispose();
+    super.dispose();
+  }
+
+  void _refresh() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final query = _query.text.trim().toLowerCase();
+    final showSearch = widget.projects.length + widget.commitments.length > 6;
+    final independent = widget.commitments
+        .where((commitment) => commitment.projectId == null)
+        .toList(growable: false);
+    final visibleProjects = widget.projects
+        .where((project) {
+          if (query.isEmpty || _matchesProject(project, query)) return true;
+          return widget.commitments.any(
+            (commitment) =>
+                commitment.projectId == project.id &&
+                _matchesCommitment(commitment, query),
+          );
+        })
+        .toList(growable: false);
+    final visibleIndependent = independent
+        .where(
+          (commitment) =>
+              query.isEmpty || _matchesCommitment(commitment, query),
+        )
+        .toList(growable: false);
+    final hasMatches =
+        visibleProjects.isNotEmpty || visibleIndependent.isNotEmpty;
+    final maxListHeight = MediaQuery.sizeOf(context).height * 0.5;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ExecutionPickerTile(
+          icon: FLucideIcons.inbox,
+          title: l10n.executionNoRelation,
+          selected:
+              widget.selected.projectId == null &&
+              widget.selected.commitmentId == null,
+          onPress: () =>
+              Navigator.of(context).pop((projectId: null, commitmentId: null)),
+        ),
+        if (showSearch) ...[
+          const AppDivider(),
+          const SizedBox(height: AppSpacing.s8),
+          FTextField(
+            control: FTextFieldControl.managed(controller: _query),
+            hint: l10n.executionPickerSearchHint,
+            prefixBuilder: (ctx, style, variants) => const Padding(
+              padding: EdgeInsetsDirectional.only(
+                start: AppSpacing.s12,
+                end: AppSpacing.s8,
+              ),
+              child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s8),
+        ] else
+          const AppDivider(),
+        ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxListHeight),
+          child: !hasMatches
+              ? AppEmptyState(
+                  icon: FLucideIcons.searchX,
+                  title: l10n.executionPickerSearchEmpty,
+                  action: query.isEmpty
+                      ? null
+                      : FButton(
+                          variant: FButtonVariant.outline,
+                          onPress: _query.clear,
+                          child: Text(l10n.aiChatSessionsSearchClear),
+                        ),
+                )
+              : ListView(
+                  shrinkWrap: true,
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  children: [
+                    for (var index = 0; index < visibleProjects.length; index++)
+                      ..._projectGroup(
+                        context,
+                        visibleProjects[index],
+                        query,
+                        showDivider: index > 0,
+                      ),
+                    if (visibleIndependent.isNotEmpty) ...[
+                      if (visibleProjects.isNotEmpty) const AppDivider(),
+                      _RelationGroupLabel(
+                        label: l10n.executionCommitmentsSection,
+                      ),
+                      for (final commitment in visibleIndependent)
+                        _commitmentTile(context, commitment),
+                    ],
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _projectGroup(
+    BuildContext context,
+    ExecutionProject project,
+    String query, {
+    required bool showDivider,
+  }) {
+    final commitments = widget.commitments
+        .where(
+          (commitment) =>
+              commitment.projectId == project.id &&
+              (query.isEmpty || _matchesCommitment(commitment, query)),
+        )
+        .toList(growable: false);
+    return [
+      if (showDivider) const AppDivider(),
+      ExecutionPickerTile(
+        icon: FLucideIcons.folder,
+        title: project.title,
+        subtitle: AppLocalizations.of(context).executionProjectField,
+        selected:
+            widget.selected.projectId == project.id &&
+            widget.selected.commitmentId == null,
+        onPress: () => Navigator.of(
+          context,
+        ).pop((projectId: project.id, commitmentId: null)),
+      ),
+      for (final commitment in commitments)
+        Padding(
+          padding: const EdgeInsetsDirectional.only(start: AppSpacing.s20),
+          child: _commitmentTile(context, commitment),
+        ),
+    ];
+  }
+
+  Widget _commitmentTile(BuildContext context, ExecutionCommitment commitment) {
+    return ExecutionPickerTile(
+      icon: FLucideIcons.target,
+      title: commitment.title,
+      subtitle: AppLocalizations.of(context).executionCommitmentField,
+      selected: widget.selected.commitmentId == commitment.id,
+      onPress: () => Navigator.of(
+        context,
+      ).pop((projectId: commitment.projectId, commitmentId: commitment.id)),
+    );
+  }
+
+  bool _matchesProject(ExecutionProject project, String query) =>
+      project.title.toLowerCase().contains(query) ||
+      project.description.toLowerCase().contains(query);
+
+  bool _matchesCommitment(ExecutionCommitment commitment, String query) =>
+      commitment.title.toLowerCase().contains(query) ||
+      commitment.description.toLowerCase().contains(query);
+}
+
+class _RelationGroupLabel extends StatelessWidget {
+  const _RelationGroupLabel({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(
+        AppSpacing.s16,
+        AppSpacing.s12,
+        AppSpacing.s16,
+        AppSpacing.s4,
+      ),
+      child: Text(label, style: context.captionLabelStyle),
+    );
+  }
 }
 
 Future<String?> showExecutionActionPicker({

@@ -187,12 +187,6 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
     final commitments =
         ref.watch(executionCommitmentsProvider).value ??
         const <ExecutionCommitment>[];
-    final selectedProject = _projectId == null || _projectId!.isEmpty
-        ? null
-        : ref.watch(executionProjectByIdProvider(_projectId!)).value;
-    final selectedCommitment = _commitmentId == null || _commitmentId!.isEmpty
-        ? null
-        : ref.watch(executionCommitmentByIdProvider(_commitmentId!)).value;
     final isEditing = widget.action != null;
 
     return AppSheet(
@@ -254,8 +248,8 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
                 onChanged: _saving ? (_) {} : _setQuickWhen,
               ),
               const SizedBox(height: AppSpacing.s12),
-              Align(
-                alignment: Alignment.centerLeft,
+              SizedBox(
+                width: double.infinity,
                 child: AppQuietButton(
                   label: _showDetails
                       ? l10n.executionHideDetails
@@ -291,88 +285,72 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
                       },
               ),
               const SizedBox(height: AppSpacing.s12),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: DateField(
-                      label: l10n.executionScheduledForField,
-                      initialValue: _scheduledFor,
-                      enabled: !_saving,
-                      onChanged: (value) {
-                        setState(() => _scheduledFor = value);
-                        _markDirty();
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.s12),
-                  Expanded(
-                    child: DateField(
-                      label: l10n.executionDueAtField,
-                      initialValue: _dueAt,
-                      enabled: !_saving,
-                      onChanged: (value) {
-                        setState(() => _dueAt = value);
-                        _markDirty();
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.s12),
-              FormPickerRow(
-                label: l10n.executionProjectField,
-                value:
-                    selectedProject?.title ??
-                    executionProjectPickerLabel(l10n, projects, _projectId),
-                leading: const Icon(FLucideIcons.folder),
-                enabled: !_saving,
-                onPress: () async {
-                  final picked = await showExecutionProjectPicker(
-                    context: context,
-                    projects: projects,
-                    selectedId: _projectId,
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final scheduled = DateField(
+                    label: l10n.executionScheduledForField,
+                    initialValue: _scheduledFor,
+                    enabled: !_saving,
+                    onChanged: (value) {
+                      setState(() => _scheduledFor = value);
+                      _markDirty();
+                    },
                   );
-                  if (picked == null) return;
-                  setState(() {
-                    final next = executionRelationAfterProjectPick(
-                      commitments: commitments,
-                      currentCommitmentId: _commitmentId,
-                      pickedProjectId: picked,
+                  final due = DateField(
+                    label: l10n.executionDueAtField,
+                    initialValue: _dueAt,
+                    enabled: !_saving,
+                    onChanged: (value) {
+                      setState(() => _dueAt = value);
+                      _markDirty();
+                    },
+                  );
+                  final largeText =
+                      MediaQuery.textScalerOf(context).scale(1) > 1.3;
+                  if (constraints.maxWidth < 420 || largeText) {
+                    return Column(
+                      children: [
+                        scheduled,
+                        const SizedBox(height: AppSpacing.s12),
+                        due,
+                      ],
                     );
-                    _projectId = next.projectId;
-                    _commitmentId = next.commitmentId;
-                  });
-                  _markDirty();
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: scheduled),
+                      const SizedBox(width: AppSpacing.s12),
+                      Expanded(child: due),
+                    ],
+                  );
                 },
               ),
               const SizedBox(height: AppSpacing.s12),
               FormPickerRow(
-                label: l10n.executionCommitmentField,
-                value:
-                    selectedCommitment?.title ??
-                    executionCommitmentPickerLabel(
-                      l10n,
-                      commitments,
-                      _commitmentId,
-                    ),
-                leading: const Icon(FLucideIcons.target),
+                label: l10n.executionRelationField,
+                value: executionRelationPickerLabel(
+                  l10n,
+                  projects,
+                  commitments,
+                  (projectId: _projectId, commitmentId: _commitmentId),
+                ),
+                leading: const Icon(FLucideIcons.layers),
                 enabled: !_saving,
                 onPress: () async {
-                  final picked = await showExecutionCommitmentPicker(
+                  final picked = await showExecutionRelationPicker(
                     context: context,
+                    projects: projects,
                     commitments: commitments,
-                    selectedId: _commitmentId,
+                    selected: (
+                      projectId: _projectId,
+                      commitmentId: _commitmentId,
+                    ),
                   );
                   if (picked == null) return;
                   setState(() {
-                    final next = executionRelationAfterCommitmentPick(
-                      commitments: commitments,
-                      currentProjectId: _projectId,
-                      pickedCommitmentId: picked,
-                    );
-                    _projectId = next.projectId;
-                    _commitmentId = next.commitmentId;
+                    _projectId = picked.projectId;
+                    _commitmentId = picked.commitmentId;
                   });
                   _markDirty();
                 },

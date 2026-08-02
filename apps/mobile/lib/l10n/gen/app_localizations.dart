@@ -13189,6 +13189,12 @@ abstract class AppLocalizations {
   /// **'Turn off'**
   String get settingsDomainsDisableConfirmAction;
 
+  /// Open operational settings for an enabled LifeOS domain.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure {domain}'**
+  String settingsDomainsConfigure(String domain);
+
   /// Settings page title for LifeOS agent management.
   ///
   /// In en, this message translates to:
@@ -15199,23 +15205,65 @@ abstract class AppLocalizations {
   /// **'Turn this decision into one concrete next step.'**
   String get knowledgeDecisionActionPrompt;
 
-  /// No description provided for @knowledgeDecisionActionLinked.
+  /// No description provided for @knowledgeActionLinked.
   ///
   /// In en, this message translates to:
-  /// **'A follow-up action is linked to this decision.'**
-  String get knowledgeDecisionActionLinked;
+  /// **'A follow-up action is already linked.'**
+  String get knowledgeActionLinked;
 
-  /// No description provided for @knowledgeDecisionCreateAction.
+  /// No description provided for @knowledgeActionCreate.
   ///
   /// In en, this message translates to:
   /// **'Create action'**
-  String get knowledgeDecisionCreateAction;
+  String get knowledgeActionCreate;
 
-  /// No description provided for @knowledgeDecisionOpenAction.
+  /// No description provided for @knowledgeActionOpen.
   ///
   /// In en, this message translates to:
   /// **'Open action'**
-  String get knowledgeDecisionOpenAction;
+  String get knowledgeActionOpen;
+
+  /// No description provided for @knowledgeActionCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up action created'**
+  String get knowledgeActionCreated;
+
+  /// No description provided for @knowledgeActionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable ExecutionOS to create a follow-up action.'**
+  String get knowledgeActionUnavailable;
+
+  /// No description provided for @knowledgeActionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create the action: {error}'**
+  String knowledgeActionFailed(String error);
+
+  /// No description provided for @knowledgeNoteActionPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn this note into one concrete follow-up.'**
+  String get knowledgeNoteActionPrompt;
+
+  /// No description provided for @knowledgeNoteActionDraftTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow up: {note}'**
+  String knowledgeNoteActionDraftTitle(String note);
+
+  /// No description provided for @knowledgeExperimentActionPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn this experiment into its next concrete step.'**
+  String get knowledgeExperimentActionPrompt;
+
+  /// No description provided for @knowledgeExperimentActionDraftTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Run experiment: {experiment}'**
+  String knowledgeExperimentActionDraftTitle(String experiment);
 
   /// No description provided for @knowledgeDecisionActionDraftTitle.
   ///
@@ -15228,24 +15276,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Decision: {choice}'**
   String knowledgeDecisionActionDraftNote(String choice);
-
-  /// No description provided for @knowledgeDecisionActionCreated.
-  ///
-  /// In en, this message translates to:
-  /// **'Follow-up action created'**
-  String get knowledgeDecisionActionCreated;
-
-  /// No description provided for @knowledgeDecisionActionUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable ExecutionOS to create a follow-up action.'**
-  String get knowledgeDecisionActionUnavailable;
-
-  /// No description provided for @knowledgeDecisionActionFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not create the action: {error}'**
-  String knowledgeDecisionActionFailed(String error);
 
   /// No description provided for @knowledgeDecisionDecidedAt.
   ///
@@ -23752,6 +23782,36 @@ abstract class AppLocalizations {
   /// **'Review'**
   String get executionReviewTitle;
 
+  /// No description provided for @executionReviewNeedsAttentionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs attention'**
+  String get executionReviewNeedsAttentionTitle;
+
+  /// No description provided for @executionReviewWeekResultsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get executionReviewWeekResultsTitle;
+
+  /// No description provided for @executionReviewRecentActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent activity · {count}'**
+  String executionReviewRecentActivity(int count);
+
+  /// No description provided for @executionReviewDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review details'**
+  String get executionReviewDetailsTitle;
+
+  /// No description provided for @executionReviewDetailsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent run status and data freshness'**
+  String get executionReviewDetailsSubtitle;
+
   /// No description provided for @executionCreateActionTitle.
   ///
   /// In en, this message translates to:
@@ -23823,6 +23883,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Commitment'**
   String get executionCommitmentField;
+
+  /// No description provided for @executionRelationField.
+  ///
+  /// In en, this message translates to:
+  /// **'Belongs to'**
+  String get executionRelationField;
+
+  /// No description provided for @executionNoRelation.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox · no plan'**
+  String get executionNoRelation;
 
   /// No description provided for @executionStatusField.
   ///
@@ -24345,6 +24417,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Closed'**
   String get executionLifecycleClosedView;
+
+  /// No description provided for @executionClosedWorkEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed work'**
+  String get executionClosedWorkEntry;
+
+  /// No description provided for @executionActiveWorkEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to active work'**
+  String get executionActiveWorkEntry;
 
   /// No description provided for @executionProjectStatusUpdateFailed.
   ///

@@ -259,45 +259,21 @@ void main() {
         find.text('AI tools and Memory indexing are enabled'),
         findsOneWidget,
       );
-    });
-  });
-
-  group('Settings → KnowledgeOS', () {
-    setUp(() => SharedPreferences.setMockInitialValues({}));
-
-    _testWidgets('surfaces only operational KnowledgeOS settings', (
-      tester,
-    ) async {
-      final prefs = await SharedPreferences.getInstance();
-      await tester.pumpWidget(
-        await _wrap(prefs, initialLocation: AppRoutes.settingsDomainsKnowledge),
-      );
+      await tester.tap(find.text('Later'));
       await tester.pumpAndSettle();
 
-      expect(find.text('KnowledgeOS · Inbox'), findsNothing);
-      expect(find.text('KnowledgeOS · Library'), findsNothing);
-      expect(find.text('KnowledgeOS · Review'), findsNothing);
-      expect(find.text('KnowledgeOS Memory'), findsOneWidget);
-      expect(find.text('Agents'), findsOneWidget);
-    });
-  });
+      expect(find.text('Configure HealthOS'), findsOneWidget);
+      expect(find.text('Configure KnowledgeOS'), findsNothing);
+      expect(find.text('Configure ExecutionOS'), findsNothing);
 
-  group('Settings → ExecutionOS', () {
-    setUp(() => SharedPreferences.setMockInitialValues({}));
-
-    _testWidgets('surfaces only operational ExecutionOS settings', (
-      tester,
-    ) async {
-      final prefs = await SharedPreferences.getInstance();
-      await tester.pumpWidget(
-        await _wrap(prefs, initialLocation: AppRoutes.settingsDomainsExecution),
-      );
+      await tester.tap(find.text('Configure HealthOS'));
       await tester.pumpAndSettle();
+      expect(find.text('Connected data sources'), findsOneWidget);
 
-      expect(find.text('ExecutionOS · Today'), findsNothing);
-      expect(find.text('ExecutionOS · Commitments'), findsNothing);
-      expect(find.text('ExecutionOS · Review'), findsNothing);
-      expect(find.text('Agents'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('app.back')));
+      await tester.pumpAndSettle();
+      expect(find.text('Configure HealthOS'), findsOneWidget);
+      expect(find.text('Domain management'), findsOneWidget);
     });
   });
 

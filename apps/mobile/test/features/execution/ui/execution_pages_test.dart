@@ -158,9 +158,133 @@ void main() {
       expect(find.text('Priority'), findsOneWidget);
       expect(find.text('Scheduled'), findsOneWidget);
       expect(find.text('Due'), findsOneWidget);
+      expect(find.text('Belongs to'), findsOneWidget);
+      expect(find.text('Plan'), findsNothing);
+      expect(find.text('Commitment'), findsNothing);
       expect(find.text('Fewer details'), findsOneWidget);
     },
   );
+
+  testWidgets('action uses one relation picker and inherits a plan', (
+    tester,
+  ) async {
+    final project = ExecutionProject(
+      id: 'project',
+      title: 'Launch plan',
+      createdAt: DateTime.utc(2026, 7, 24),
+      sync: _sync(),
+    );
+    final commitment = ExecutionCommitment(
+      id: 'commitment',
+      projectId: project.id,
+      title: 'Ship the launch',
+      createdAt: DateTime.utc(2026, 7, 24),
+      sync: _sync(),
+    );
+    await tester.pumpWidget(
+      _wrap(
+        Builder(
+          builder: (context) => FButton(
+            onPress: () => showExecutionActionSheet(context: context),
+            child: const Text('Open capture'),
+          ),
+        ),
+        overrides: _executionOverrides(
+          projects: [project],
+          commitments: [commitment],
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open capture'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.text('More details'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Belongs to'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Launch plan'), findsOneWidget);
+    expect(find.text('Ship the launch'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Ship the launch')).dx,
+      greaterThan(tester.getTopLeft(find.text('Launch plan')).dx),
+    );
+
+    await tester.tap(find.text('Ship the launch'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ship the launch'), findsOneWidget);
+    expect(find.text('Belongs to'), findsOneWidget);
+  });
+
+  testWidgets('action details remain usable on a small phone with large text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(375, 667);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await tester.pumpWidget(
+      _wrap(
+        Builder(
+          builder: (context) => FButton(
+            onPress: () => showExecutionActionSheet(context: context),
+            child: const Text('Open capture'),
+          ),
+        ),
+        overrides: _executionOverrides(),
+      ),
+    );
+    await tester.tap(find.text('Open capture'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.text('More details'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Belongs to'), findsOneWidget);
+    expect(find.text('Scheduled'), findsOneWidget);
+    expect(find.text('Due'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Plans demotes closed work to an archive entry', (tester) async {
+    final active = ExecutionProject(
+      id: 'active',
+      title: 'Active launch',
+      createdAt: DateTime.utc(2026, 7, 24),
+      sync: _sync(),
+    );
+    final closed = ExecutionProject(
+      id: 'closed',
+      title: 'Closed launch',
+      status: ExecutionProjectStatus.completed,
+      createdAt: DateTime.utc(2026, 7, 24),
+      sync: _sync(),
+    );
+    await tester.pumpWidget(
+      _wrap(
+        const ExecutionCommitmentsPage(),
+        overrides: _executionOverrides(
+          projects: [active],
+          closedProjects: [closed],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Active launch'), findsOneWidget);
+    expect(find.text('Closed launch'), findsNothing);
+    expect(find.text('Closed work'), findsOneWidget);
+
+    await tester.tap(find.text('Closed work'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Active launch'), findsNothing);
+    expect(find.text('Closed launch'), findsOneWidget);
+    expect(find.text('Back to active work'), findsOneWidget);
+  });
 
   testWidgets('shared Add entry exposes only action and plan', (tester) async {
     await tester.pumpWidget(
@@ -365,8 +489,11 @@ void main() {
 List<Override> _executionOverrides({
   List<ExecutionAction> todayActions = const [],
   List<ExecutionAction> openActions = const [],
+  List<ExecutionAction> closedActions = const [],
   List<ExecutionProject> projects = const [],
+  List<ExecutionProject> closedProjects = const [],
   List<ExecutionCommitment> commitments = const [],
+  List<ExecutionCommitment> closedCommitments = const [],
 }) {
   return [
     executionTodayActionsProvider.overrideWith(
@@ -377,13 +504,16 @@ List<Override> _executionOverrides({
     ),
     executionProjectsProvider.overrideWith((ref) => Stream.value(projects)),
     executionClosedProjectsProvider.overrideWith(
-      (ref) => Stream.value(const <ExecutionProject>[]),
+      (ref) => Stream.value(closedProjects),
     ),
     executionCommitmentsProvider.overrideWith(
       (ref) => Stream.value(commitments),
     ),
     executionClosedCommitmentsProvider.overrideWith(
-      (ref) => Stream.value(const <ExecutionCommitment>[]),
+      (ref) => Stream.value(closedCommitments),
+    ),
+    executionClosedActionsProvider.overrideWith(
+      (ref) => Stream.value(closedActions),
     ),
     executionRecentProgressProvider.overrideWith(
       (ref) => Stream.value(const <ExecutionProgressEntry>[]),

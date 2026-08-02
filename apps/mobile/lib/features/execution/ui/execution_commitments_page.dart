@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/shell/settings_ui/inline_setting_row.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
@@ -173,14 +174,17 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
     }
 
     final itemBuilders = <WidgetBuilder>[
-      (_) => SegmentedRow<_CommitmentsView>(
-        options: _CommitmentsView.values,
-        value: _view,
-        labelOf: (view) => _commitmentsViewLabel(l10n, view),
-        iconOf: _commitmentsViewIcon,
-        onChanged: (view) => setState(() => _view = view),
-      ),
-      (_) => const SizedBox(height: AppSpacing.s12),
+      if (!activeView) ...[
+        (_) => AppGroupedSurface(
+          padding: EdgeInsets.zero,
+          child: InlineLinkRow(
+            icon: FLucideIcons.arrowLeft,
+            label: l10n.executionActiveWorkEntry,
+            onTap: () => setState(() => _view = _CommitmentsView.active),
+          ),
+        ),
+        (_) => const SizedBox(height: AppSpacing.s16),
+      ],
     ];
     if (empty) {
       itemBuilders.add(
@@ -242,16 +246,18 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
       }
       itemBuilders.add((_) => const SizedBox(height: AppSpacing.s8));
     }
-    if (projects.isNotEmpty) {
+    if (projects.isNotEmpty || commitments.isNotEmpty) {
       itemBuilders
         ..add(
           (_) => ExecutionSectionHeader(
             title: l10n.executionProjectsSection,
-            count: projects.length,
-            icon: FLucideIcons.folder,
+            count: projects.length + commitments.length,
+            icon: FLucideIcons.layers,
           ),
         )
         ..add((_) => const SizedBox(height: AppSpacing.s8));
+    }
+    if (projects.isNotEmpty) {
       for (final project in projects) {
         itemBuilders.add(
           (_) => Padding(
@@ -261,6 +267,7 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
               openActionCount: actionCountByProject[project.id] ?? 0,
               blockedActionCount: blockedCountByProject[project.id] ?? 0,
               commitmentCount: commitmentCountByProject[project.id] ?? 0,
+              showTypeLabel: true,
               onCreateAction: () => showExecutionActionSheet(
                 context: context,
                 initialProjectId: project.id,
@@ -276,18 +283,8 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
           ),
         );
       }
-      itemBuilders.add((_) => const SizedBox(height: AppSpacing.s8));
     }
     if (commitments.isNotEmpty) {
-      itemBuilders
-        ..add(
-          (_) => ExecutionSectionHeader(
-            title: l10n.executionCommitmentsSection,
-            count: commitments.length,
-            icon: FLucideIcons.target,
-          ),
-        )
-        ..add((_) => const SizedBox(height: AppSpacing.s8));
       for (final commitment in commitments) {
         itemBuilders.add(
           (_) => Padding(
@@ -296,6 +293,7 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
               commitment: commitment,
               openActionCount: actionCountByCommitment[commitment.id] ?? 0,
               blockedActionCount: blockedCountByCommitment[commitment.id] ?? 0,
+              showTypeLabel: true,
               projectLabel:
                   relations?.projectLabel(commitment.projectId) ??
                   executionProjectRelationLabel(projects, commitment.projectId),
@@ -320,6 +318,20 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
         );
       }
     }
+    if (activeView) {
+      itemBuilders
+        ..add((_) => const SizedBox(height: AppSpacing.s12))
+        ..add(
+          (_) => AppGroupedSurface(
+            padding: EdgeInsets.zero,
+            child: InlineLinkRow(
+              icon: FLucideIcons.archive,
+              label: l10n.executionClosedWorkEntry,
+              onTap: () => setState(() => _view = _CommitmentsView.closed),
+            ),
+          ),
+        );
+    }
 
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -328,18 +340,4 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
       itemBuilder: (context, index) => itemBuilders[index](context),
     );
   }
-}
-
-String _commitmentsViewLabel(AppLocalizations l10n, _CommitmentsView view) {
-  return switch (view) {
-    _CommitmentsView.active => l10n.executionLifecycleActiveView,
-    _CommitmentsView.closed => l10n.executionLifecycleClosedView,
-  };
-}
-
-IconData _commitmentsViewIcon(_CommitmentsView view) {
-  return switch (view) {
-    _CommitmentsView.active => FLucideIcons.play,
-    _CommitmentsView.closed => FLucideIcons.archive,
-  };
 }
