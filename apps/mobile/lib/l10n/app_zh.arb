@@ -2232,6 +2232,15 @@
   "activityFeedSummaryExpense": "支出",
   "activityFeedSummaryIncome": "收入",
   "activityFeedSummaryCount": "笔数",
+  "activityFeedSummaryNet": "净收支",
+  "activityFeedSummaryShown": "已显示 {count} 笔",
+  "@activityFeedSummaryShown": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "activityFeedSummaryCountValue": "共 {count} 笔",
+  "@activityFeedSummaryCountValue": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "activityFeedDayExpense": "出 {amount}",
   "@activityFeedDayExpense": {
     "placeholders": { "amount": { "type": "String" } }
@@ -2241,7 +2250,7 @@
     "placeholders": { "amount": { "type": "String" } }
   },
   "activityFeedSearchAction": "搜索",
-  "activityFeedSearchHint": "搜索备注或收款方",
+  "activityFeedSearchHint": "搜索商户、备注或账户",
   "activityFeedSearchTag": "“{query}”",
   "@activityFeedSearchTag": {
     "placeholders": { "query": { "type": "String" } }
@@ -2990,6 +2999,17 @@
   "activityAddAction": "记一笔",
   "activityFeedFilterTitle": "筛选",
   "activityFeedFilterClear": "清除",
+  "activityFeedFilterApply": "应用筛选",
+  "activityFeedFilterAllDates": "全部日期",
+  "activityFeedFilterAllKinds": "全部类型",
+  "activityFeedFilterKindCount": "{count} 种类型",
+  "@activityFeedFilterKindCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "activityFeedFilterAccountCount": "{count} 个账户",
+  "@activityFeedFilterAccountCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "activityFeedFilterKind": "类型",
   "activityFeedFilterAccount": "账户",
   "activityFeedFilterAccountEmpty": "还没有账户 — 请到「账户」标签创建。",

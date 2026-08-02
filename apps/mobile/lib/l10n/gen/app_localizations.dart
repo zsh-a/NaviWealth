@@ -12535,6 +12535,24 @@ abstract class AppLocalizations {
   /// **'Entries'**
   String get activityFeedSummaryCount;
 
+  /// Activity feed page summary: income minus expense
+  ///
+  /// In en, this message translates to:
+  /// **'Net cash flow'**
+  String get activityFeedSummaryNet;
+
+  /// Activity feed page summary: number of currently loaded entries when more pages exist
+  ///
+  /// In en, this message translates to:
+  /// **'{count} shown'**
+  String activityFeedSummaryShown(int count);
+
+  /// Activity feed page summary: complete entry count
+  ///
+  /// In en, this message translates to:
+  /// **'{count} entries'**
+  String activityFeedSummaryCountValue(int count);
+
   /// Activity day section trailing expense total
   ///
   /// In en, this message translates to:
@@ -12556,7 +12574,7 @@ abstract class AppLocalizations {
   /// Activity search field hint
   ///
   /// In en, this message translates to:
-  /// **'Search narration or payee'**
+  /// **'Search merchant, note, or account'**
   String get activityFeedSearchHint;
 
   /// Active search filter chip
@@ -16941,6 +16959,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear'**
   String get activityFeedFilterClear;
+
+  /// Apply the activity filter draft
+  ///
+  /// In en, this message translates to:
+  /// **'Apply filters'**
+  String get activityFeedFilterApply;
+
+  /// Activity toolbar and filter option for no date restriction
+  ///
+  /// In en, this message translates to:
+  /// **'All dates'**
+  String get activityFeedFilterAllDates;
+
+  /// Activity toolbar summary when no kind is selected
+  ///
+  /// In en, this message translates to:
+  /// **'All kinds'**
+  String get activityFeedFilterAllKinds;
+
+  /// Activity toolbar summary for multiple selected kinds
+  ///
+  /// In en, this message translates to:
+  /// **'{count} kinds'**
+  String activityFeedFilterKindCount(int count);
+
+  /// Activity toolbar summary for selected accounts
+  ///
+  /// In en, this message translates to:
+  /// **'{count} accounts'**
+  String activityFeedFilterAccountCount(int count);
 
   /// Activity feed filter kind section
   ///

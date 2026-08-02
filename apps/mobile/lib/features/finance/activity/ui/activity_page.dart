@@ -8,11 +8,8 @@ import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/core/shell/shell_visibility.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
-import 'package:naviwealth/features/finance/data/repositories/providers.dart';
-import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-import '../../shared/l10n/account_l10n.dart';
 import '../../shared/l10n/entry_kind_labels.dart';
 import '../data/activity_feed_provider.dart';
 import '../data/activity_feed_query.dart';
@@ -88,7 +85,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
         routePath: FinanceRoutes.activity,
         placeholder: ActivityFeedSkeleton(),
         child: AdaptiveContentFrame(
-          maxWidth: AdaptiveMaxWidth.dashboard,
+          maxWidth: AdaptiveMaxWidth.narrow,
           expandSinglePrimary: true,
           padding: EdgeInsets.zero,
           primary: Column(
@@ -135,6 +132,7 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
   static const _searchDebounceDuration = Duration(milliseconds: 220);
 
   late final TextEditingController _searchController;
+  late final FocusNode _searchFocus;
   Timer? _searchDebounce;
   String? _pendingSearchText;
   bool _searchHydrated = false;
@@ -145,12 +143,14 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _searchFocus = FocusNode();
   }
 
   @override
   void dispose() {
     _searchDebounce?.cancel();
     _searchController.dispose();
+    _searchFocus.dispose();
     super.dispose();
   }
 
@@ -182,18 +182,25 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
     controller.mutateQuery((q) => q.copyWith(searchText: ''));
   }
 
+  void _openSearch() {
+    setState(() => _searchOpen = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _searchFocus.requestFocus();
+    });
+  }
+
+  void _closeSearch(ActivityFeedQueryController controller) {
+    _clearSearch(controller);
+    _searchFocus.unfocus();
+    setState(() => _searchOpen = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final query = ref.watch(activityFeedQueryProvider);
     final controller = ref.read(activityFeedQueryProvider.notifier);
-    final sheetFilterCount =
-        (query.kinds.isEmpty ? 0 : 1) +
-        (query.dateRange == null ? 0 : 1) +
-        query.accountIds.length;
-    final filterLabel = sheetFilterCount == 0
-        ? l10n.activityFeedFilterTitle
-        : '${l10n.activityFeedFilterTitle} · $sheetFilterCount';
+    final filterLabel = _filterSummary(l10n, query);
 
     // Hydrate the initial deep-linked query once. Afterwards panel visibility
     // remains a user choice, even while a search filter stays active.
@@ -212,154 +219,90 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
         AppSpacing.s16,
         AppSpacing.s4,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: AppQuietButton(
-                  label: filterLabel,
-                  expanded: true,
-                  prefix: const Icon(FLucideIcons.slidersHorizontal),
-                  onPress: () => ActivityFeedFilterSheet.show(context),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              AppIconButton(
-                icon: FLucideIcons.search,
-                tooltip: l10n.activityFeedSearchAction,
-                onPress: () => setState(() => _searchOpen = !_searchOpen),
-              ),
-            ],
-          ),
-          if (_searchOpen) ...[
-            const SizedBox(height: AppSpacing.s8),
-            Row(
-              children: [
-                Expanded(
-                  child: FTextField(
-                    control: FTextFieldControl.managed(
-                      controller: _searchController,
-                      onChange: (value) =>
-                          _scheduleSearch(controller, value.text),
+      child: AnimatedSwitcher(
+        duration: AppMotionPolicy.duration(
+          context,
+          Motion.fast,
+          role: AppMotionRole.transition,
+        ),
+        switchInCurve: Motion.standardDecelerate,
+        switchOutCurve: Motion.standardAccelerate,
+        child: _searchOpen
+            ? Row(
+                key: const ValueKey<String>('activity-search'),
+                children: [
+                  Expanded(
+                    child: FTextField(
+                      control: FTextFieldControl.managed(
+                        controller: _searchController,
+                        onChange: (value) =>
+                            _scheduleSearch(controller, value.text),
+                      ),
+                      focusNode: _searchFocus,
+                      textInputAction: TextInputAction.search,
+                      prefixBuilder: (_, _, _) => const Padding(
+                        padding: EdgeInsetsDirectional.only(
+                          start: AppSpacing.s12,
+                          end: AppSpacing.s8,
+                        ),
+                        child: Icon(
+                          FLucideIcons.search,
+                          size: AppIconSizes.h18,
+                        ),
+                      ),
+                      hint: l10n.activityFeedSearchHint,
                     ),
-                    hint: l10n.activityFeedSearchHint,
                   ),
-                ),
-                const SizedBox(width: AppSpacing.s8),
-                AppIconButton(
-                  icon: FLucideIcons.x,
-                  tooltip: l10n.activityFeedFilterClear,
-                  onPress: () => _clearSearch(controller),
-                ),
-              ],
-            ),
-          ],
-          if (query.hasSheetFilters || query.searchText.trim().isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.s8),
-            _ActiveFilterTags(query: query),
-          ],
-        ],
+                  const SizedBox(width: AppSpacing.s8),
+                  AppIconButton(
+                    icon: FLucideIcons.x,
+                    tooltip: l10n.commonClose,
+                    onPress: () => _closeSearch(controller),
+                  ),
+                ],
+              )
+            : Row(
+                key: const ValueKey<String>('activity-toolbar'),
+                children: [
+                  Expanded(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minHeight: AppControlHeights.touchTarget,
+                      ),
+                      child: AppQuietButton(
+                        label: filterLabel,
+                        expanded: true,
+                        prefix: const Icon(FLucideIcons.listFilter),
+                        onPress: () => ActivityFeedFilterSheet.show(context),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s8),
+                  AppIconButton(
+                    icon: FLucideIcons.search,
+                    tooltip: l10n.activityFeedSearchAction,
+                    onPress: _openSearch,
+                  ),
+                ],
+              ),
       ),
     );
   }
 }
 
-class _ActiveFilterTags extends ConsumerWidget {
-  const _ActiveFilterTags({required this.query});
-
-  final ActivityFeedQuery query;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final controller = ref.read(activityFeedQueryProvider.notifier);
-    final accounts =
-        ref.watch(accountsStreamProvider).value ?? const <Account>[];
-    final byId = {for (final a in accounts) a.id: a};
-    final tags = <Widget>[];
-
-    for (final kind in const <ActivityKind>[
-      ActivityKind.income,
-      ActivityKind.expense,
-      ActivityKind.transfer,
-      ActivityKind.trade,
-    ]) {
-      if (!query.kinds.contains(kind)) continue;
-      tags.add(
-        AppFilterChip(
-          label: _labelForKind(l10n, kind),
-          active: true,
-          onPress: () => ActivityFeedFilterSheet.show(context),
-          onClear: () {
-            controller.mutateQuery((q) {
-              final kinds = {...q.kinds}..remove(kind);
-              return q.copyWith(kinds: kinds);
-            });
-          },
-        ),
-      );
-    }
-
-    if (query.searchText.trim().isNotEmpty) {
-      tags.add(
-        AppFilterChip(
-          label: l10n.activityFeedSearchTag(query.searchText.trim()),
-          active: true,
-          onPress: null,
-          onClear: () =>
-              controller.mutateQuery((q) => q.copyWith(searchText: '')),
-          icon: FLucideIcons.search,
-        ),
-      );
-    }
-    if (query.dateRange != null) {
-      tags.add(
-        AppFilterChip(
-          label: l10n.activityFeedFilterDateRange,
-          active: true,
-          onPress: () => ActivityFeedFilterSheet.show(context),
-          onClear: () =>
-              controller.mutateQuery((q) => q.copyWith(dateRange: null)),
-          icon: FLucideIcons.calendar,
-        ),
-      );
-    }
-    for (final id in query.accountIds) {
-      final name = byId[id] != null
-          ? localizedAccountName(l10n, byId[id]!)
-          : id;
-      tags.add(
-        AppFilterChip(
-          label: name,
-          active: true,
-          onPress: () => ActivityFeedFilterSheet.show(context),
-          onClear: () {
-            controller.mutateQuery((q) {
-              final ids = {...q.accountIds}..remove(id);
-              return q.copyWith(accountIds: ids);
-            });
-          },
-          icon: FLucideIcons.wallet,
-        ),
-      );
-    }
-
-    if (tags.isEmpty) return const SizedBox.shrink();
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (var i = 0; i < tags.length; i++) ...[
-            tags[i],
-            if (i < tags.length - 1) const SizedBox(width: AppSpacing.s8),
-          ],
-        ],
-      ),
-    );
-  }
+String _filterSummary(AppLocalizations l10n, ActivityFeedQuery query) {
+  final segments = <String>[
+    activityFeedDateRangeLabel(l10n, query.dateRange),
+    if (query.kinds.isEmpty)
+      l10n.activityFeedFilterAllKinds
+    else if (query.kinds.length == 1)
+      _labelForKind(l10n, query.kinds.single)
+    else
+      l10n.activityFeedFilterKindCount(query.kinds.length),
+    if (query.accountIds.isNotEmpty)
+      l10n.activityFeedFilterAccountCount(query.accountIds.length),
+  ];
+  return segments.join(' · ');
 }
 
 String _labelForKind(AppLocalizations l10n, ActivityKind kind) {

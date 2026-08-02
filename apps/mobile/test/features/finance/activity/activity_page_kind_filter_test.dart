@@ -69,7 +69,7 @@ ProviderContainer _container() {
 }
 
 void main() {
-  testWidgets('mobile shell keeps one filter summary and add in the header', (
+  testWidgets('mobile shell shows a semantic filter summary and header add', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(760, 900));
@@ -81,11 +81,11 @@ void main() {
     await tester.pumpWidget(_wrap(container: container));
     await tester.pumpAndSettle();
 
-    expect(find.text('Filter'), findsOneWidget);
+    expect(find.text('All dates · All kinds'), findsOneWidget);
     expect(find.text('Expense'), findsNothing);
     expect(find.byIcon(FLucideIcons.plus), findsWidgets);
 
-    await tester.tap(find.text('Filter'));
+    await tester.tap(find.text('All dates · All kinds'));
     await tester.pumpAndSettle();
     expect(find.text('All'), findsOneWidget);
     expect(find.text('Expense'), findsOneWidget);
@@ -105,13 +105,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('All'), findsNothing);
-    expect(find.byIcon(FLucideIcons.slidersHorizontal), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.listFilter), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('unified filter sheet toggles a kind into the active query', (
-    tester,
-  ) async {
+  testWidgets('filter sheet applies kind changes as one draft', (tester) async {
     tester.view.physicalSize = const Size(1600, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -124,20 +122,20 @@ void main() {
 
     expect(container.read(activityFeedQueryProvider).kinds, isEmpty);
 
-    await tester.tap(find.text('Filter'));
+    await tester.tap(find.text('All dates · All kinds'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Expense'));
+    await tester.pumpAndSettle();
+
+    // Chip edits remain local until the pinned action is submitted.
+    expect(container.read(activityFeedQueryProvider).kinds, isEmpty);
+    await tester.tap(find.text('Apply filters'));
     await tester.pumpAndSettle();
 
     expect(
       container.read(activityFeedQueryProvider).kinds,
       contains(ActivityKind.expense),
     );
-
-    await tester.tap(find.text('Expense'));
-    await tester.pumpAndSettle();
-
-    expect(container.read(activityFeedQueryProvider).kinds, isEmpty);
   });
 
   testWidgets('All in the filter sheet clears selected kinds', (tester) async {
@@ -160,15 +158,19 @@ void main() {
         );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Filter · 1'));
+    await tester.tap(find.text('All dates · 2 kinds'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('All'));
+    await tester.pumpAndSettle();
+
+    expect(container.read(activityFeedQueryProvider).kinds, hasLength(2));
+    await tester.tap(find.text('Apply filters'));
     await tester.pumpAndSettle();
 
     expect(container.read(activityFeedQueryProvider).kinds, isEmpty);
   });
 
-  testWidgets('search debounces query updates and can stay collapsed', (
+  testWidgets('search debounces updates and closing clears the query', (
     tester,
   ) async {
     final container = _container();
@@ -192,9 +194,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 150));
     expect(container.read(activityFeedQueryProvider).searchText, 'coffee');
 
-    await tester.tap(searchButton);
+    await tester.tap(find.widgetWithIcon(AppIconButton, FLucideIcons.x));
     await tester.pumpAndSettle();
     expect(find.byType(FTextField), findsNothing);
-    expect(container.read(activityFeedQueryProvider).searchText, 'coffee');
+    expect(container.read(activityFeedQueryProvider).searchText, isEmpty);
   });
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -123,19 +125,9 @@ class _FeedList extends ConsumerStatefulWidget {
 
 class _FeedListState extends ConsumerState<_FeedList> {
   bool _loadingMore = false;
-
-  bool _entranceStagger = true;
-  static const int _kStaggerRowCap = 10;
+  bool _loadMoreFailed = false;
 
   List<_FeedItem>? _cachedItems;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _entranceStagger = false;
-    });
-  }
 
   @override
   void didUpdateWidget(covariant _FeedList oldWidget) {
@@ -152,11 +144,15 @@ class _FeedListState extends ConsumerState<_FeedList> {
 
   Future<void> _tryLoadMore() async {
     if (!widget.hasMore || _loadingMore) return;
-    setState(() => _loadingMore = true);
+    setState(() {
+      _loadingMore = true;
+      _loadMoreFailed = false;
+    });
     ref.read(activityFeedQueryProvider.notifier).loadMore();
     try {
       await ref.read(activityFeedProvider.future);
     } catch (_) {
+      if (mounted) setState(() => _loadMoreFailed = true);
     }
     if (mounted) setState(() => _loadingMore = false);
   }
@@ -191,6 +187,7 @@ class _FeedListState extends ConsumerState<_FeedList> {
                 totals: widget.pageTotals,
                 formatter: widget.formatter,
                 l10n: widget.l10n,
+                hasMore: widget.hasMore,
               ),
             ),
             _FeedDayHeaderItem(:final section) => Padding(
@@ -216,16 +213,11 @@ class _FeedListState extends ConsumerState<_FeedList> {
             _FeedFooterItem() => _FeedFooter(
               canLoadMore: widget.hasMore,
               loading: _loadingMore,
+              failed: _loadMoreFailed,
               l10n: widget.l10n,
               onLoadMore: _tryLoadMore,
             ),
           };
-          if (_entranceStagger && index < _kStaggerRowCap) {
-            return FadeSlideIn(
-              delay: Duration(milliseconds: 30 * index),
-              child: row,
-            );
-          }
           return row;
         },
       ),
@@ -314,10 +306,52 @@ class _VirtualizedDayEntry extends ConsumerWidget {
       destructive: true,
     );
     if (confirmed != true || !context.mounted) return false;
-    final repo = await ref.read(journalEntryRepositoryProvider.future);
-    await repo.softDelete(entry.entry.id);
-    ref.invalidate(activityFeedProvider);
-    return true;
+    AppMessenger.cacheOverlay(context);
+    try {
+      final repo = await ref.read(journalEntryRepositoryProvider.future);
+      await repo.softDelete(entry.entry.id);
+      ref.invalidate(activityFeedProvider);
+      if (context.mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          l10n.activityEntryDeleted,
+          duration: const Duration(seconds: 6),
+          actionLabel: l10n.commonUndo,
+          onAction: () => unawaited(_restore(context, ref, repo, l10n)),
+        );
+      }
+      return true;
+    } catch (_) {
+      if (context.mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          l10n.activityEntryDeleteFailed,
+        );
+      }
+      return false;
+    }
+  }
+
+  Future<void> _restore(
+    BuildContext context,
+    WidgetRef ref,
+    JournalEntryRepository repo,
+    AppLocalizations l10n,
+  ) async {
+    try {
+      await repo.restoreSoftDeleted(entry.entry.id);
+      ref.invalidate(activityFeedProvider);
+    } catch (_) {
+      if (context.mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          l10n.activityEntryDeleteFailed,
+        );
+      }
+    }
   }
 
   @override
@@ -329,6 +363,7 @@ class _VirtualizedDayEntry extends ConsumerWidget {
       child: AppDismissible(
         itemKey: ValueKey('activity-entry-${entry.entry.id}'),
         borderRadius: AppRadius.lg,
+        label: AppLocalizations.of(context).commonDelete,
         confirm: () => _confirmAndDelete(context, ref),
         // The feed re-flows via provider invalidation; no row animation.
         removeRow: false,
@@ -349,57 +384,83 @@ class _PageSummaryStrip extends StatelessWidget {
     required this.totals,
     required this.formatter,
     required this.l10n,
+    required this.hasMore,
   });
 
   final ActivityPageTotals totals;
   final AppFormatters formatter;
   final AppLocalizations l10n;
+  final bool hasMore;
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final status = context.appTheme.status;
-    return SoftCard.raised(
+    final net = totals.incomeTotal - totals.expenseTotal;
+    return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s14,
-        vertical: AppSpacing.s12,
+        horizontal: AppSpacing.s4,
+        vertical: AppSpacing.s10,
       ),
-      child: Row(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: context.theme.colors.border.withValues(
+              alpha: AppOpacity.highlight,
+            ),
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: _SummaryMetric(
-              label: l10n.activityFeedSummaryExpense,
-              value: formatter.currency(totals.expenseTotal, code: totals.unit),
-              valueColor: totals.expenseTotal > Decimal.zero
-                  ? status.danger.fg
-                  : colors.mutedForeground,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.activityFeedSummaryNet,
+                  style: context.captionMediumStyle,
+                ),
+              ),
+              Text(
+                hasMore
+                    ? l10n.activityFeedSummaryShown(totals.count)
+                    : l10n.activityFeedSummaryCountValue(totals.count),
+                style: context.captionStyle,
+              ),
+            ],
           ),
-          Container(
-            width: AppStroke.hairline,
-            height: 28,
-            color: colors.border,
+          const SizedBox(height: AppSpacing.s4),
+          SignedMoneyText(
+            amount: net,
+            unit: totals.unit,
+            formatters: formatter,
+            style: context.strongHeadlineStyle,
           ),
-          Expanded(
-            child: _SummaryMetric(
-              label: l10n.activityFeedSummaryIncome,
-              value: formatter.currency(totals.incomeTotal, code: totals.unit),
-              valueColor: totals.incomeTotal > Decimal.zero
-                  ? status.success.fg
-                  : colors.mutedForeground,
-            ),
-          ),
-          Container(
-            width: AppStroke.hairline,
-            height: 28,
-            color: colors.border,
-          ),
-          Expanded(
-            child: _SummaryMetric(
-              label: l10n.activityFeedSummaryCount,
-              value: '${totals.count}',
-              valueColor: colors.foreground,
-            ),
+          const SizedBox(height: AppSpacing.s8),
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryMetric(
+                  label: l10n.activityFeedSummaryIncome,
+                  amount: totals.incomeTotal,
+                  unit: totals.unit,
+                  formatter: formatter,
+                  valueColor: totals.incomeTotal > Decimal.zero
+                      ? status.success.fg
+                      : context.theme.colors.mutedForeground,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s16),
+              Expanded(
+                child: _SummaryMetric(
+                  label: l10n.activityFeedSummaryExpense,
+                  amount: totals.expenseTotal,
+                  unit: totals.unit,
+                  formatter: formatter,
+                  valueColor: context.theme.colors.foreground,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -410,25 +471,35 @@ class _PageSummaryStrip extends StatelessWidget {
 class _SummaryMetric extends StatelessWidget {
   const _SummaryMetric({
     required this.label,
-    required this.value,
+    required this.amount,
+    required this.unit,
+    required this.formatter,
     required this.valueColor,
   });
 
   final String label;
-  final String value;
+  final Decimal amount;
+  final String unit;
+  final AppFormatters formatter;
   final Color valueColor;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       children: [
         Text(label, style: context.captionStyle),
-        const SizedBox(height: AppSpacing.s4),
-        Text(
-          value,
-          style: context.strongLabelStyle.copyWith(color: valueColor),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        const SizedBox(width: AppSpacing.s6),
+        Expanded(
+          child: SignedMoneyText(
+            amount: amount,
+            unit: unit,
+            formatters: formatter,
+            showPositiveSign: false,
+            colorBySign: false,
+            color: valueColor,
+            style: context.strongLabelStyle,
+            textAlign: TextAlign.end,
+          ),
         ),
       ],
     );
@@ -502,12 +573,14 @@ class _FeedFooter extends StatelessWidget {
   const _FeedFooter({
     required this.canLoadMore,
     required this.loading,
+    required this.failed,
     required this.l10n,
     required this.onLoadMore,
   });
 
   final bool canLoadMore;
   final bool loading;
+  final bool failed;
   final AppLocalizations l10n;
   final VoidCallback onLoadMore;
 
@@ -523,14 +596,20 @@ class _FeedFooter extends StatelessWidget {
                       height: AppIconSizes.md,
                       child: FCircularProgress(),
                     )
-                  : FButton(
+                  : failed
+                  ? FButton(
                       variant: FButtonVariant.ghost,
                       size: FButtonSizeVariant.sm,
                       mainAxisSize: MainAxisSize.min,
                       onPress: onLoadMore,
-                      child: Text(l10n.activityFeedLoadMore),
-                    ))
-            : Text(l10n.activityFeedAllLoaded, style: context.captionStyle),
+                      child: Text(l10n.commonRetry),
+                    )
+                  : const SizedBox(height: AppControlHeights.touchTarget))
+            : Container(
+                width: AppSpacing.s32,
+                height: AppStroke.hairline,
+                color: context.theme.colors.border,
+              ),
       ),
     );
   }

@@ -82,9 +82,9 @@ void main() {
       find.text('No accounts yet — add one from the Accounts tab.'),
       findsOneWidget,
     );
-    expect(find.text('Done'), findsOneWidget);
+    expect(find.text('Apply filters'), findsOneWidget);
 
-    await tester.tap(find.text('Done'));
+    await tester.tap(find.text('Apply filters'));
     await tester.pumpAndSettle();
     expect(find.text('Filter'), findsNothing);
   });
@@ -110,9 +110,7 @@ void main() {
     expect(find.text('Brokerage'), findsOneWidget);
   });
 
-  testWidgets('tapping a date preset writes the range into the query', (
-    tester,
-  ) async {
+  testWidgets('date preset stays in the draft until applied', (tester) async {
     await tester.binding.setSurfaceSize(const Size(420, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -148,11 +146,14 @@ void main() {
     await tester.tap(find.text('This month'));
     await tester.pumpAndSettle();
 
-    final afterQuery = container.read(activityFeedQueryProvider);
-    expect(afterQuery.dateRange, isNotNull);
+    expect(container.read(activityFeedQueryProvider).dateRange, isNull);
+
+    await tester.tap(find.text('Apply filters'));
+    await tester.pumpAndSettle();
+    expect(container.read(activityFeedQueryProvider).dateRange, isNotNull);
   });
 
-  testWidgets('Clear header action resets every filter dimension', (
+  testWidgets('Clear resets the draft and Apply commits every dimension', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(420, 900));
@@ -199,6 +200,14 @@ void main() {
 
     // The sheet's Clear action lives in the header alongside the title.
     await tester.tap(find.text('Clear'));
+    await tester.pumpAndSettle();
+
+    final beforeApply = container.read(activityFeedQueryProvider);
+    expect(beforeApply.dateRange, isNotNull);
+    expect(beforeApply.accountIds, isNotEmpty);
+    expect(beforeApply.kinds, isNotEmpty);
+
+    await tester.tap(find.text('Apply filters'));
     await tester.pumpAndSettle();
 
     final cleared = container.read(activityFeedQueryProvider);

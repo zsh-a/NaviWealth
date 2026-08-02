@@ -7045,6 +7045,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityFeedSummaryCount => '笔数';
 
   @override
+  String get activityFeedSummaryNet => '净收支';
+
+  @override
+  String activityFeedSummaryShown(int count) {
+    return '已显示 $count 笔';
+  }
+
+  @override
+  String activityFeedSummaryCountValue(int count) {
+    return '共 $count 笔';
+  }
+
+  @override
   String activityFeedDayExpense(String amount) {
     return '出 $amount';
   }
@@ -7058,7 +7071,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityFeedSearchAction => '搜索';
 
   @override
-  String get activityFeedSearchHint => '搜索备注或收款方';
+  String get activityFeedSearchHint => '搜索商户、备注或账户';
 
   @override
   String activityFeedSearchTag(String query) {
@@ -9556,6 +9569,25 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get activityFeedFilterClear => '清除';
+
+  @override
+  String get activityFeedFilterApply => '应用筛选';
+
+  @override
+  String get activityFeedFilterAllDates => '全部日期';
+
+  @override
+  String get activityFeedFilterAllKinds => '全部类型';
+
+  @override
+  String activityFeedFilterKindCount(int count) {
+    return '$count 种类型';
+  }
+
+  @override
+  String activityFeedFilterAccountCount(int count) {
+    return '$count 个账户';
+  }
 
   @override
   String get activityFeedFilterKind => '类型';

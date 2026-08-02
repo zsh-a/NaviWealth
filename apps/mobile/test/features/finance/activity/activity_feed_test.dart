@@ -183,10 +183,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Today'), findsOneWidget);
-    expect(find.text('Coffee'), findsOneWidget);
-    // Subtitle prefers payee · category/account.
-    expect(find.textContaining('Blue Bottle'), findsOneWidget);
-    expect(find.text('-¥32'), findsOneWidget);
+    expect(find.text('Blue Bottle'), findsOneWidget);
+    // Merchant is primary; note and category remain available as metadata.
+    expect(find.textContaining('Coffee'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(ActivityFeedEntryRow),
+        matching: find.text('-¥32'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Net cash flow'), findsOneWidget);
     // Day rows are virtualized with DecoratedBox chrome (not one
     // AppGroupedSurface wrapping the whole day).
     expect(find.byType(ActivityFeedEntryRow), findsOneWidget);
@@ -235,7 +242,7 @@ void main() {
     expect(find.textContaining('1000.12345678 600519'), findsOneWidget);
   });
 
-  testWidgets('shows load-more footer when another page exists', (
+  testWidgets('uses a quiet automatic-pagination footer when more exists', (
     tester,
   ) async {
     await _enlarge(tester);
@@ -278,13 +285,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Load more'), findsOneWidget);
+    expect(find.text('Load more'), findsNothing);
     expect(find.text('All activity loaded'), findsNothing);
   });
 
-  testWidgets('shows all-loaded footer when the page is exhausted', (
-    tester,
-  ) async {
+  testWidgets('ends an exhausted feed without status copy', (tester) async {
     await _enlarge(tester);
     final accounts = [
       _account(
@@ -326,7 +331,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Load more'), findsNothing);
-    expect(find.text('All activity loaded'), findsOneWidget);
+    expect(find.text('All activity loaded'), findsNothing);
   });
 
   testWidgets('expands a journal row to reveal posting details', (

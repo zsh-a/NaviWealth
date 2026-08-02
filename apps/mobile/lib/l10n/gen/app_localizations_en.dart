@@ -7425,6 +7425,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityFeedSummaryCount => 'Entries';
 
   @override
+  String get activityFeedSummaryNet => 'Net cash flow';
+
+  @override
+  String activityFeedSummaryShown(int count) {
+    return '$count shown';
+  }
+
+  @override
+  String activityFeedSummaryCountValue(int count) {
+    return '$count entries';
+  }
+
+  @override
   String activityFeedDayExpense(String amount) {
     return 'Out $amount';
   }
@@ -7438,7 +7451,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityFeedSearchAction => 'Search';
 
   @override
-  String get activityFeedSearchHint => 'Search narration or payee';
+  String get activityFeedSearchHint => 'Search merchant, note, or account';
 
   @override
   String activityFeedSearchTag(String query) {
@@ -10038,6 +10051,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activityFeedFilterClear => 'Clear';
+
+  @override
+  String get activityFeedFilterApply => 'Apply filters';
+
+  @override
+  String get activityFeedFilterAllDates => 'All dates';
+
+  @override
+  String get activityFeedFilterAllKinds => 'All kinds';
+
+  @override
+  String activityFeedFilterKindCount(int count) {
+    return '$count kinds';
+  }
+
+  @override
+  String activityFeedFilterAccountCount(int count) {
+    return '$count accounts';
+  }
 
   @override
   String get activityFeedFilterKind => 'Kind';

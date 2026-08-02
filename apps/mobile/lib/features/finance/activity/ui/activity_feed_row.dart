@@ -52,12 +52,19 @@ class ActivityFeedEntryRow extends StatelessWidget {
       resolveCategory: (id) => accountsById[id]?.category,
     );
     final headline = activityHeadlinePosting(entry.postings, accountsById);
-    final title = entry.entry.narration.isEmpty ? '—' : entry.entry.narration;
+    final narration = entry.entry.narration.trim();
+    final payee = entry.entry.payee?.trim();
+    final title = payee != null && payee.isNotEmpty
+        ? payee
+        : narration.isNotEmpty
+        ? narration
+        : entryKindLabel(l10n, classification.kind);
     final subtitle = activityRowSubtitle(
       l10n: l10n,
       entry: entry,
       accountsById: accountsById,
       kind: classification.kind,
+      title: title,
     );
     final timeStr = formatter.time(entry.entry.date);
     final iconTint = activityKindTint(classification.kind, colors, status);
@@ -65,59 +72,76 @@ class ActivityFeedEntryRow extends StatelessWidget {
     final padH = compact ? AppSpacing.s14 : AppSpacing.s12;
     final padV = compact ? AppSpacing.s10 : AppSpacing.s12;
 
-    return AppTappable(
-      onPress: () => _openDetail(context),
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: padH, vertical: padV),
-        child: Row(
-          children: [
-            _KindDisc(icon: iconData, tint: iconTint),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: compact
-                        ? context.mediumLabelStyle
-                        : context.labelStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: AppSpacing.s2),
+    final semantics = <String>[
+      title,
+      ?subtitle,
+      if (headline != null)
+        formatter.signedMoney(headline.units, unit: headline.unit),
+      if (showTime) timeStr,
+    ].join(', ');
+
+    return Semantics(
+      button: true,
+      label: semantics,
+      excludeSemantics: true,
+      child: AppTappable(
+        onPress: () => _openDetail(context),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: padH, vertical: padV),
+          child: Row(
+            children: [
+              _KindDisc(icon: iconData, tint: iconTint),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      subtitle,
-                      style: context.captionStyle,
+                      title,
+                      style: compact
+                          ? context.mediumLabelStyle
+                          : context.labelStyle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: AppSpacing.s2),
+                      Text(
+                        subtitle,
+                        style: context.captionStyle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (headline != null)
+                    SignedMoneyText(
+                      amount: headline.units,
+                      unit: headline.unit,
+                      formatters: formatter,
+                      colorBySign: classification.kind == EntryKind.income,
+                      color: classification.kind == EntryKind.income
+                          ? null
+                          : colors.foreground,
+                      style: compact
+                          ? context.labelStyle
+                          : context.strongLabelStyle,
+                    ),
+                  if (showTime) ...[
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(timeStr, style: context.captionStyle),
                   ],
                 ],
               ),
-            ),
-            const SizedBox(width: AppSpacing.s12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (headline != null)
-                  SignedMoneyText(
-                    amount: headline.units,
-                    unit: headline.unit,
-                    formatters: formatter,
-                    style: compact
-                        ? context.labelStyle
-                        : context.strongLabelStyle,
-                  ),
-                if (showTime) ...[
-                  const SizedBox(height: AppSpacing.s2),
-                  Text(timeStr, style: context.captionStyle),
-                ],
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -212,7 +236,7 @@ class _KindDisc extends StatelessWidget {
       height: AppSpacing.s32,
       decoration: BoxDecoration(
         color: tint.withValues(alpha: AppOpacity.light),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       alignment: Alignment.center,
       child: Icon(icon, size: AppIconSizes.sm, color: tint),
@@ -226,6 +250,7 @@ String? activityRowSubtitle({
   required JournalEntryWithPostings entry,
   required Map<String, Account> accountsById,
   required EntryKind kind,
+  required String title,
 }) {
   if (kind == EntryKind.transfer) {
     final ends = _transferEnds(entry.postings, accountsById, l10n);
@@ -239,8 +264,8 @@ String? activityRowSubtitle({
   }
 
   final parts = <String>[];
-  final payee = entry.entry.payee;
-  if (payee != null && payee.isNotEmpty) parts.add(payee);
+  final narration = entry.entry.narration.trim();
+  if (narration.isNotEmpty && narration != title) parts.add(narration);
 
   final account = _primaryAccountLabel(entry.postings, accountsById, l10n);
   if (account != null && !parts.contains(account)) parts.add(account);
@@ -350,7 +375,7 @@ Color activityKindTint(EntryKind kind, FColors colors, AppStatus status) {
       return colors.primary;
     case EntryKind.expense:
     case EntryKind.payment:
-      return status.danger.fg;
+      return colors.mutedForeground;
     case EntryKind.transfer:
       return status.info.fg;
     case EntryKind.adjustment:

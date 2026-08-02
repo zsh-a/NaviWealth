@@ -75,7 +75,16 @@ Stream<ActivityFeedPage> _watchActivityFeedPage(
                   .where((entry) {
                     final narration = entry.entry.narration.toLowerCase();
                     final payee = (entry.entry.payee ?? '').toLowerCase();
-                    return narration.contains(needle) || payee.contains(needle);
+                    final account = entry.postings.any(
+                      (posting) =>
+                          accountsById[posting.accountId]?.name
+                              .toLowerCase()
+                              .contains(needle) ??
+                          false,
+                    );
+                    return narration.contains(needle) ||
+                        payee.contains(needle) ||
+                        account;
                   })
                   .toList(growable: false);
         return ActivityFeedPage(

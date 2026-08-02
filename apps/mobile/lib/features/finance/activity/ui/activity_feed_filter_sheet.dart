@@ -11,122 +11,144 @@ import '../../shared/l10n/entry_kind_labels.dart';
 import '../data/activity_feed_provider.dart';
 import '../data/activity_feed_query.dart';
 
-/// Activity timeline filter sheet: kind, date range, and account filters in
-/// one stable mobile surface. The page header only shows a compact summary.
+/// Activity timeline filter sheet with draft-based edits.
 ///
-/// Edits apply live and the pinned Done action makes that contract explicit.
-/// The Clear action resets every filter dimension.
+/// The feed only changes when the user applies the draft, avoiding repeated
+/// refreshes behind the sheet while chips are being selected.
 class ActivityFeedFilterSheet extends ConsumerWidget {
-  const ActivityFeedFilterSheet({super.key});
+  const ActivityFeedFilterSheet({super.key, required this.draft});
 
-  static Future<void> show(BuildContext context) {
+  final ValueNotifier<ActivityFeedQuery> draft;
+
+  static Future<void> show(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
-    return showAppSheet<void>(
-      context: context,
-      title: l10n.activityFeedFilterTitle,
-      builder: (_) => const ActivityFeedFilterSheet(),
-      actions: [
-        Consumer(
-          builder: (ctx, ref, _) => _HeaderTextAction(
+    final container = ProviderScope.containerOf(context);
+    final draft = ValueNotifier<ActivityFeedQuery>(
+      container.read(activityFeedQueryProvider),
+    );
+    try {
+      await showAppSheet<void>(
+        context: context,
+        title: l10n.activityFeedFilterTitle,
+        maxHeightFactor: 0.9,
+        builder: (_) => ActivityFeedFilterSheet(draft: draft),
+        actions: [
+          _HeaderTextAction(
             label: l10n.activityFeedFilterClear,
             onPress: () {
-              final controller = ref.read(activityFeedQueryProvider.notifier);
-              controller.mutateQuery(
-                (q) => q.copyWith(
-                  kinds: const <ActivityKind>{},
-                  dateRange: null,
-                  accountIds: const <String>{},
-                ),
+              draft.value = draft.value.copyWith(
+                kinds: const <ActivityKind>{},
+                dateRange: null,
+                accountIds: const <String>{},
               );
             },
           ),
+        ],
+        footer: _FilterFooter(
+          onApply: (sheetContext) {
+            final next = draft.value;
+            container
+                .read(activityFeedQueryProvider.notifier)
+                .mutateQuery(
+                  (current) => current.copyWith(
+                    dateRange: next.dateRange,
+                    kinds: Set<ActivityKind>.unmodifiable(next.kinds),
+                    accountIds: Set<String>.unmodifiable(next.accountIds),
+                  ),
+                );
+            Navigator.of(sheetContext).pop();
+          },
         ),
-        _HeaderTextAction(
-          label: l10n.commonDone,
-          onPress: () => Navigator.of(context).pop(),
-          emphasized: true,
-        ),
-      ],
-    );
+      );
+    } finally {
+      draft.dispose();
+    }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final query = ref.watch(activityFeedQueryProvider);
     final accounts =
         ref.watch(accountsStreamProvider).value ?? const <Account>[];
-    final controller = ref.read(activityFeedQueryProvider.notifier);
-    final activeRange = _activeRangeOf(query.dateRange);
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AppSheetSectionLabel(l10n.activityFeedFilterKind),
-        _KindFilterRow(
-          selected: query.kinds,
-          onChanged: (kinds) =>
-              controller.mutateQuery((q) => q.copyWith(kinds: kinds)),
-        ),
-        const SizedBox(height: AppSpacing.s20),
-        AppSheetSectionLabel(l10n.activityFeedFilterDateRange),
-        _DateRangeRow(
-          active: activeRange,
-          onPick: (range) => controller.mutateQuery(
-            (q) => q.copyWith(dateRange: _rangeFor(range)),
+    return ValueListenableBuilder<ActivityFeedQuery>(
+      valueListenable: draft,
+      builder: (context, query, _) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppSheetSectionLabel(l10n.activityFeedFilterDateRange),
+          _DateRangeRow(
+            active: _activeRangeOf(query.dateRange),
+            current: query.dateRange,
+            onChanged: (range) =>
+                draft.value = query.copyWith(dateRange: range),
           ),
-        ),
-        if (query.dateRange != null)
-          Padding(
-            padding: const EdgeInsets.only(
-              top: AppSpacing.s6,
-              left: AppSpacing.s4,
-            ),
-            child: Text(
-              _formatRange(l10n, query.dateRange!),
-              style: context.captionStyle,
-            ),
-          ),
-        const SizedBox(height: AppSpacing.s20),
-        AppSheetSectionLabel(l10n.activityFeedFilterAccount),
-        if (accounts.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(
-              top: AppSpacing.s4,
-              bottom: AppSpacing.s8,
-            ),
-            child: Text(
-              l10n.activityFeedFilterAccountEmpty,
-              style: context.captionStyle,
-            ),
-          )
-        else
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 280),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (final account in accounts)
-                    _AccountFilterRow(
-                      account: account,
-                      selected: query.accountIds.contains(account.id),
-                      onToggle: () {
-                        controller.mutateQuery((q) {
-                          final ids = {...q.accountIds};
-                          ids.contains(account.id)
-                              ? ids.remove(account.id)
-                              : ids.add(account.id);
-                          return q.copyWith(accountIds: ids);
-                        });
-                      },
-                    ),
-                ],
+          if (query.dateRange != null)
+            Padding(
+              padding: const EdgeInsets.only(
+                top: AppSpacing.s6,
+                left: AppSpacing.s4,
+              ),
+              child: Text(
+                _formatRange(l10n, query.dateRange!),
+                style: context.captionStyle,
               ),
             ),
+          const SizedBox(height: AppSpacing.s20),
+          AppSheetSectionLabel(l10n.activityFeedFilterKind),
+          _KindFilterRow(
+            selected: query.kinds,
+            onChanged: (kinds) => draft.value = query.copyWith(kinds: kinds),
           ),
-      ],
+          const SizedBox(height: AppSpacing.s20),
+          AppSheetSectionLabel(l10n.activityFeedFilterAccount),
+          if (accounts.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(
+                top: AppSpacing.s4,
+                bottom: AppSpacing.s8,
+              ),
+              child: Text(
+                l10n.activityFeedFilterAccountEmpty,
+                style: context.captionStyle,
+              ),
+            )
+          else
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final account in accounts)
+                  _AccountFilterRow(
+                    account: account,
+                    selected: query.accountIds.contains(account.id),
+                    onToggle: () {
+                      final ids = {...query.accountIds};
+                      ids.contains(account.id)
+                          ? ids.remove(account.id)
+                          : ids.add(account.id);
+                      draft.value = query.copyWith(accountIds: ids);
+                    },
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterFooter extends StatelessWidget {
+  const _FilterFooter({required this.onApply});
+
+  final ValueChanged<BuildContext> onApply;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppSheetFooter(
+      submitLabel: l10n.activityFeedFilterApply,
+      onSubmit: () => onApply(context),
+      cancelLabel: l10n.commonCancel,
     );
   }
 }
@@ -225,11 +247,27 @@ String _formatRange(AppLocalizations l10n, DateTimeRange r) {
   return '${fmt(r.start)} → ${fmt(r.end.subtract(const Duration(days: 1)))}';
 }
 
+String activityFeedDateRangeLabel(AppLocalizations l10n, DateTimeRange? range) {
+  if (range == null) return l10n.activityFeedFilterAllDates;
+  return switch (_activeRangeOf(range)) {
+    _DateRange.thisWeek => l10n.activityFeedFilterRangeThisWeek,
+    _DateRange.thisMonth => l10n.activityFeedFilterRangeThisMonth,
+    _DateRange.lastMonth => l10n.activityFeedFilterRangeLastMonth,
+    _DateRange.thisYear => l10n.activityFeedFilterRangeThisYear,
+    _DateRange.custom || null => _formatRange(l10n, range),
+  };
+}
+
 class _DateRangeRow extends StatelessWidget {
-  const _DateRangeRow({required this.active, required this.onPick});
+  const _DateRangeRow({
+    required this.active,
+    required this.current,
+    required this.onChanged,
+  });
 
   final _DateRange? active;
-  final ValueChanged<_DateRange> onPick;
+  final DateTimeRange? current;
+  final ValueChanged<DateTimeRange?> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -244,13 +282,18 @@ class _DateRangeRow extends StatelessWidget {
       spacing: AppSpacing.s8,
       runSpacing: AppSpacing.s8,
       children: [
+        AppFilterChip(
+          label: l10n.activityFeedFilterAllDates,
+          active: active == null,
+          onPress: () => onChanged(null),
+        ),
         for (final (range, label) in entries)
           AppFilterChip(
             label: label,
             active: active == range,
             onPress: () {
               AppInteraction.signal(AppInteractionIntent.select);
-              onPick(range);
+              onChanged(_rangeFor(range));
             },
           ),
         // Custom date pickers feel out-of-place inside a quick-filter
@@ -259,47 +302,34 @@ class _DateRangeRow extends StatelessWidget {
         AppFilterChip(
           label: l10n.activityFeedFilterRangeCustom,
           active: active == _DateRange.custom,
-          onPress: () => _pickCustom(context, onPick),
+          onPress: () => _pickCustom(context),
         ),
       ],
     );
   }
 
-  Future<void> _pickCustom(
-    BuildContext context,
-    ValueChanged<_DateRange> onPick,
-  ) async {
+  Future<void> _pickCustom(BuildContext context) async {
     final now = DateTime.now();
-    // Capture the container before await so the post-await check
-    // doesn't need a reanchored BuildContext.
-    final container = ProviderScope.containerOf(context);
     final result = await showDateRangePicker(
       context: context,
       firstDate: DateTime(now.year - 10),
       lastDate: DateTime(now.year + 1),
-      initialDateRange: DateTimeRange(
-        start: DateTime(now.year, now.month),
-        end: DateTime(now.year, now.month, now.day + 1),
-      ),
+      initialDateRange:
+          current ??
+          DateTimeRange(
+            start: DateTime(now.year, now.month),
+            end: DateTime(now.year, now.month, now.day + 1),
+          ),
     );
-    if (result != null) {
-      container
-          .read(activityFeedQueryProvider.notifier)
-          .mutateQuery((q) => q.copyWith(dateRange: result));
-    }
+    if (result != null) onChanged(result);
   }
 }
 
 class _HeaderTextAction extends StatelessWidget {
-  const _HeaderTextAction({
-    required this.label,
-    required this.onPress,
-    this.emphasized = false,
-  });
+  const _HeaderTextAction({required this.label, required this.onPress});
 
   final String label;
   final VoidCallback onPress;
-  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
@@ -312,12 +342,9 @@ class _HeaderTextAction extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: (emphasized ? context.labelStyle : context.mediumLabelStyle)
-              .copyWith(
-                color: emphasized
-                    ? context.theme.colors.primary
-                    : context.theme.colors.mutedForeground,
-              ),
+          style: context.mediumLabelStyle.copyWith(
+            color: context.theme.colors.mutedForeground,
+          ),
         ),
       ),
     );

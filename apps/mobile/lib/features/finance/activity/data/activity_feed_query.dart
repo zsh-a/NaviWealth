@@ -27,7 +27,7 @@ class ActivityFeedQuery {
   final Set<String> accountIds;
   final Set<ActivityKind> kinds;
 
-  /// Case-insensitive match against narration / payee.
+  /// Case-insensitive match against merchant, narration, or account name.
   final String searchText;
   final int pageSize;
 
@@ -37,7 +37,8 @@ class ActivityFeedQuery {
       kinds.isNotEmpty ||
       searchText.trim().isNotEmpty;
 
-  bool get hasSheetFilters => dateRange != null || accountIds.isNotEmpty;
+  bool get hasSheetFilters =>
+      dateRange != null || accountIds.isNotEmpty || kinds.isNotEmpty;
 
   ActivityFeedQuery copyWith({
     Object? dateRange = _sentinel,
@@ -155,7 +156,16 @@ List<JournalEntryWithPostings> filterActivityEntries({
         if (needle.isNotEmpty) {
           final narration = entry.entry.narration.toLowerCase();
           final payee = (entry.entry.payee ?? '').toLowerCase();
-          if (!narration.contains(needle) && !payee.contains(needle)) {
+          final account = entry.postings.any(
+            (posting) =>
+                accountsById[posting.accountId]?.name.toLowerCase().contains(
+                  needle,
+                ) ??
+                false,
+          );
+          if (!narration.contains(needle) &&
+              !payee.contains(needle) &&
+              !account) {
             return false;
           }
         }

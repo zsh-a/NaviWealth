@@ -48,6 +48,21 @@ void main() {
     expect(filtered.map((e) => e.entry.id), ['food']);
   });
 
+  test('searches account names as well as entry copy', () {
+    final entries = [
+      _entry('food', DateTime.utc(2026, 5, 1), ['expense', 'cash']),
+      _entry('salary', DateTime.utc(2026, 5, 2), ['income', 'bank']),
+    ];
+
+    final filtered = filterActivityEntries(
+      entries: entries,
+      query: const ActivityFeedQuery(searchText: 'bank'),
+      accountsById: _accounts,
+    );
+
+    expect(filtered.map((e) => e.entry.id), ['salary']);
+  });
+
   test('filters by half-open date range', () {
     final entries = [
       _entry('old', DateTime.utc(2026, 4, 30), ['expense', 'cash']),

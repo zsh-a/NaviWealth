@@ -3742,6 +3742,18 @@
   "@activityFeedSummaryIncome": { "description": "Activity feed page summary: income total label" },
   "activityFeedSummaryCount": "Entries",
   "@activityFeedSummaryCount": { "description": "Activity feed page summary: loaded entry count" },
+  "activityFeedSummaryNet": "Net cash flow",
+  "@activityFeedSummaryNet": { "description": "Activity feed page summary: income minus expense" },
+  "activityFeedSummaryShown": "{count} shown",
+  "@activityFeedSummaryShown": {
+    "description": "Activity feed page summary: number of currently loaded entries when more pages exist",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "activityFeedSummaryCountValue": "{count} entries",
+  "@activityFeedSummaryCountValue": {
+    "description": "Activity feed page summary: complete entry count",
+    "placeholders": { "count": { "type": "int" } }
+  },
   "activityFeedDayExpense": "Out {amount}",
   "@activityFeedDayExpense": {
     "description": "Activity day section trailing expense total",
@@ -3754,7 +3766,7 @@
   },
   "activityFeedSearchAction": "Search",
   "@activityFeedSearchAction": { "description": "Toggle activity search field" },
-  "activityFeedSearchHint": "Search narration or payee",
+  "activityFeedSearchHint": "Search merchant, note, or account",
   "@activityFeedSearchHint": { "description": "Activity search field hint" },
   "activityFeedSearchTag": "“{query}”",
   "@activityFeedSearchTag": {
@@ -5269,6 +5281,22 @@
   "@activityFeedFilterTitle": { "description": "Activity feed filter action title" },
   "activityFeedFilterClear": "Clear",
   "@activityFeedFilterClear": { "description": "Activity feed filter clear action" },
+  "activityFeedFilterApply": "Apply filters",
+  "@activityFeedFilterApply": { "description": "Apply the activity filter draft" },
+  "activityFeedFilterAllDates": "All dates",
+  "@activityFeedFilterAllDates": { "description": "Activity toolbar and filter option for no date restriction" },
+  "activityFeedFilterAllKinds": "All kinds",
+  "@activityFeedFilterAllKinds": { "description": "Activity toolbar summary when no kind is selected" },
+  "activityFeedFilterKindCount": "{count} kinds",
+  "@activityFeedFilterKindCount": {
+    "description": "Activity toolbar summary for multiple selected kinds",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "activityFeedFilterAccountCount": "{count} accounts",
+  "@activityFeedFilterAccountCount": {
+    "description": "Activity toolbar summary for selected accounts",
+    "placeholders": { "count": { "type": "int" } }
+  },
   "activityFeedFilterKind": "Kind",
   "@activityFeedFilterKind": { "description": "Activity feed filter kind section" },
   "activityFeedFilterAccount": "Account",
