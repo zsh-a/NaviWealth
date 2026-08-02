@@ -1,13 +1,11 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:forui/forui.dart';
 
 import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import 'adaptive_content_frame.dart';
+import 'app_glass.dart';
 
 /// Full-screen form body with a scrollable field area and a pinned action bar.
 ///
@@ -150,14 +148,6 @@ class AppFormActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final isDark = colors.brightness == Brightness.dark;
-    final surface = colors.background.withValues(
-      alpha: isDark ? AppOpacity.nearOpaqueDark : AppOpacity.nearOpaque,
-    );
-    final hairline = colors.foreground.withValues(
-      alpha: isDark ? AppOpacity.light : AppOpacity.subtle,
-    );
     final contentWidth = maxContentWidth;
     final content = contentWidth == null
         ? child
@@ -165,20 +155,9 @@ class AppFormActionBar extends StatelessWidget {
             alignment: Alignment.topCenter,
             child: SizedBox(width: contentWidth, child: child),
           );
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(
-          sigmaX: AppBlur.sheet,
-          sigmaY: AppBlur.sheet,
-        ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: surface,
-            border: Border(top: BorderSide(color: hairline)),
-          ),
-          child: SafeArea(top: false, minimum: padding, child: content),
-        ),
-      ),
+    return AppGlassSurface(
+      blurSigma: AppBlur.sheet,
+      child: SafeArea(top: false, minimum: padding, child: content),
     );
   }
 }

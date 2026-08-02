@@ -33,53 +33,46 @@ class DesktopSidebar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final collapsed = ref.watch(sidebarCollapsedProvider);
-    final colors = context.theme.colors;
     return AnimatedContainer(
       duration: AppMotionPolicy.duration(context, Motion.fast),
       curve: Motion.standardDecelerate,
       width: collapsed ? kSidebarCollapsedWidth : kSidebarExpandedWidth,
-      decoration: BoxDecoration(
-        // Same navigation material as the mobile glass dock, pre-blended
-        // opaque for a full-height panel (see appGlassPanelColor).
-        color: appGlassPanelColor(context),
-        border: Border(
-          right: BorderSide(color: colors.border, width: AppStroke.hairline),
-        ),
-      ),
-      child: SafeArea(
-        right: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: AppSpacing.s12),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s8,
-                  vertical: AppSpacing.s4,
-                ),
-                itemCount: destinations.length,
-                itemBuilder: (_, i) => _SidebarItem(
-                  destination: destinations[i],
-                  selected: i == selectedIndex,
-                  collapsed: collapsed,
-                  onTap: () => onDestinationSelected(i),
+      child: AppGlassSurface(
+        child: SafeArea(
+          right: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: AppSpacing.s12),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s8,
+                    vertical: AppSpacing.s4,
+                  ),
+                  itemCount: destinations.length,
+                  itemBuilder: (_, i) => _SidebarItem(
+                    destination: destinations[i],
+                    selected: i == selectedIndex,
+                    collapsed: collapsed,
+                    onTap: () => onDestinationSelected(i),
+                  ),
                 ),
               ),
-            ),
-            const FDivider(),
-            // Pinned bottom row — Settings is off-nav (IA contract §1)
-            // but the desktop shell has the room to surface it as a
-            // discoverable entry, mirroring the Today-header avatar on
-            // mobile. Not a destination, so [selectedIndex] semantics
-            // are unaffected.
-            _SettingsPinnedRow(collapsed: collapsed),
-            _CollapseToggle(
-              collapsed: collapsed,
-              onToggle: () =>
-                  ref.read(sidebarCollapsedProvider.notifier).toggle(),
-            ),
-          ],
+              const FDivider(),
+              // Pinned bottom row — Settings is off-nav (IA contract §1)
+              // but the desktop shell has the room to surface it as a
+              // discoverable entry, mirroring the Today-header avatar on
+              // mobile. Not a destination, so [selectedIndex] semantics
+              // are unaffected.
+              _SettingsPinnedRow(collapsed: collapsed),
+              _CollapseToggle(
+                collapsed: collapsed,
+                onToggle: () =>
+                    ref.read(sidebarCollapsedProvider.notifier).toggle(),
+              ),
+            ],
+          ),
         ),
       ),
     );

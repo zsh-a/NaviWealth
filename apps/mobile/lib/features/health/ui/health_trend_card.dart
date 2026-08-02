@@ -14,6 +14,7 @@ class _TrendCard extends StatelessWidget {
       final seed => context.appTheme.categorical.adapt(seed),
     };
     return SoftCard(
+      key: ValueKey('health-trend-${spec.kind.name}'),
       level: SoftCardLevel.raised,
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(

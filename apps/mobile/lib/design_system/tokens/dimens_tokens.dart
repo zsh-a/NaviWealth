@@ -205,6 +205,9 @@ class AppIconSizes {
 class AppBlur {
   const AppBlur._();
 
+  /// Floating navigation and compact sticky chrome.
+  static const double chrome = 14;
+
   /// Standard sheet / dialog blur.
   static const double sheet = 18;
 }

@@ -182,8 +182,8 @@ void main() {
         .map((o) => o.opacity)
         .reduce((a, b) => a > b ? a : b);
     expect(shown, 1);
-    // Tonal glass chrome (no live BackdropFilter — matches FloatingGlassNav).
-    expect(find.byType(DecoratedBox), findsWidgets);
+    expect(find.byType(AppGlassSurface), findsOneWidget);
+    expect(find.byType(BackdropFilter), findsOneWidget);
   });
 
   test('appScrollCollapseProgress clamps into 0–1', () {

@@ -253,9 +253,7 @@ class AppCollapsedSummaryBar extends StatelessWidget {
   }
 }
 
-/// Sticky residual surface — same family as [FloatingGlassNavBar]:
-/// tonal fill + hairline border, no live [BackdropFilter]. Live blur was
-/// resampling the scrolling page every frame and was a major raster cost.
+/// Sticky residual surface — the compact counterpart of the floating dock.
 class _StickyGlassChrome extends StatelessWidget {
   const _StickyGlassChrome({required this.child, required this.padding});
 
@@ -264,13 +262,11 @@ class _StickyGlassChrome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: appGlassDecoration(
-        context,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppShadow.elevation2,
-      ),
-      child: Padding(padding: padding, child: child),
+    return AppGlassSurface(
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      boxShadow: AppShadow.elevation2,
+      padding: padding,
+      child: child,
     );
   }
 }

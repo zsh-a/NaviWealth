@@ -28,7 +28,7 @@ Widget _wrap(Widget child, {required double keyboardInset}) {
 }
 
 void main() {
-  testWidgets('AppSheetSurface defaults to no blur and dedupes frosted blur', (
+  testWidgets('AppSheetSurface defaults to one deduplicated glass layer', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -43,22 +43,22 @@ void main() {
     );
 
     expect(find.byKey(const Key('content')), findsOneWidget);
-    expect(find.byType(BackdropFilter), findsNothing);
+    expect(find.byType(BackdropFilter), findsOneWidget);
 
     await tester.pumpWidget(
       _wrap(
         keyboardInset: 0,
         const AppSheetSurface(
-          frosted: true,
+          frosted: false,
           child: AppSheetSurface(
-            frosted: true,
+            frosted: false,
             child: SizedBox(key: Key('content'), height: 120),
           ),
         ),
       ),
     );
 
-    expect(find.byType(BackdropFilter), findsOneWidget);
+    expect(find.byType(BackdropFilter), findsNothing);
   });
 
   testWidgets(

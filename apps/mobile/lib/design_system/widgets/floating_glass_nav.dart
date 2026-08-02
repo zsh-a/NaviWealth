@@ -61,60 +61,41 @@ class FloatingGlassNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // One restrained frosted layer (shared glass tone — see appGlassDecoration
-    // for the no-BackdropFilter rationale). Tonal contrast and a hairline
-    // border do the hierarchy work; extra highlight gradients would make the
-    // dock read glossier than the rest of the app.
-    final glass = appGlassDecoration(
-      context,
-      borderRadius: BorderRadius.circular(AppRadius.full),
-      boxShadow: AppShadow.nav,
-    );
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final compactAssistant =
             constraints.maxWidth < _kAssistantLabelBreakpoint;
-        return RepaintBoundary(
-          child: Container(
-            height: kFloatingGlassNavBarHeight,
-            decoration: BoxDecoration(
-              borderRadius: glass.borderRadius,
-              border: glass.border,
-              boxShadow: glass.boxShadow,
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: ColoredBox(
-              color: glass.color!,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s8,
-                  vertical: AppSpacing.s6,
-                ),
-                child: Row(
-                  children: [
-                    for (var i = 0; i < items.length; i++)
-                      Expanded(
-                        child: _NavTabButton(
-                          tab: items[i],
-                          selected: i == selectedIndex,
-                          onTap: () => onIndexChanged(i),
-                        ),
-                      ),
-                    if (onAssistantAction != null)
-                      Padding(
-                        padding: const EdgeInsets.only(left: AppSpacing.s8),
-                        child: _AssistantActionButton(
-                          icon: assistantIcon,
-                          label: compactAssistant ? null : assistantLabel,
-                          semanticLabel: assistantSemanticLabel,
-                          compact: compactAssistant,
-                          onTap: onAssistantAction!,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+        return AppGlassSurface(
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          boxShadow: AppShadow.nav,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s8,
+            vertical: AppSpacing.s6,
+          ),
+          child: SizedBox(
+            height: _kDestinationHeight,
+            child: Row(
+              children: [
+                for (var i = 0; i < items.length; i++)
+                  Expanded(
+                    child: _NavTabButton(
+                      tab: items[i],
+                      selected: i == selectedIndex,
+                      onTap: () => onIndexChanged(i),
+                    ),
+                  ),
+                if (onAssistantAction != null)
+                  Padding(
+                    padding: const EdgeInsets.only(left: AppSpacing.s8),
+                    child: _AssistantActionButton(
+                      icon: assistantIcon,
+                      label: compactAssistant ? null : assistantLabel,
+                      semanticLabel: assistantSemanticLabel,
+                      compact: compactAssistant,
+                      onTap: onAssistantAction!,
+                    ),
+                  ),
+              ],
             ),
           ),
         );

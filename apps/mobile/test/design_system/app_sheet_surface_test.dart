@@ -17,7 +17,9 @@ Widget _wrap(Widget child, {MediaQueryData? mediaQueryData}) {
 }
 
 void main() {
-  testWidgets('ordinary sheet surfaces are fully opaque', (tester) async {
+  testWidgets('ordinary sheet surfaces use the shared frosted material', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _wrap(const AppSheetSurface(child: Text('content'))),
     );
@@ -26,23 +28,23 @@ void main() {
       find.byKey(const ValueKey<String>('app-sheet.surface')),
     );
     final decoration = surface.decoration as BoxDecoration;
-    expect(decoration.color!.a, 1);
-    expect(find.byType(BackdropFilter), findsNothing);
+    expect(decoration.color!.a, lessThan(1));
+    expect(find.byType(BackdropFilter), findsOneWidget);
   });
 
-  testWidgets('frosted sheets retain blur and translucent tint', (
+  testWidgets('rendering-heavy sheets can opt out of live blur', (
     tester,
   ) async {
     await tester.pumpWidget(
-      _wrap(const AppSheetSurface(frosted: true, child: Text('content'))),
+      _wrap(const AppSheetSurface(frosted: false, child: Text('content'))),
     );
 
     final surface = tester.widget<DecoratedBox>(
       find.byKey(const ValueKey<String>('app-sheet.surface')),
     );
     final decoration = surface.decoration as BoxDecoration;
-    expect(decoration.color!.a, lessThan(1));
-    expect(find.byType(BackdropFilter), findsOneWidget);
+    expect(decoration.color!.a, 1);
+    expect(find.byType(BackdropFilter), findsNothing);
   });
 
   testWidgets('sheet ignores shell padding and keeps the device safe inset', (

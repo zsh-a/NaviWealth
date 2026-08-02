@@ -279,18 +279,53 @@ class _PlanningSections extends StatelessWidget {
               : AppBadgeTone.success,
         ),
     ];
+    final overviewSpan = investments.isNotEmpty || reviews.isNotEmpty
+        ? AdaptiveSummaryTileSpan.supporting
+        : AdaptiveSummaryTileSpan.full;
+    final companion = investments.isNotEmpty
+        ? _PlanSection(
+            key: const ValueKey('plan-investments-section'),
+            title: l10n.planMyPlansTitle,
+            entries: investments,
+          )
+        : reviews.isNotEmpty
+        ? _PlanSection(
+            key: const ValueKey('plan-reviews-section'),
+            title: l10n.lifeEventDecisionHistory,
+            entries: reviews,
+          )
+        : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _PlanSection(title: l10n.planOverviewTitle, entries: outlook),
-        if (investments.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s20),
-          _PlanSection(title: l10n.planMyPlansTitle, entries: investments),
-        ],
-        if (reviews.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s20),
-          _PlanSection(title: l10n.lifeEventDecisionHistory, entries: reviews),
-        ],
+        AdaptiveSummaryGrid(
+          gap: AppSpacing.s20,
+          items: [
+            AdaptiveSummaryTile(
+              span: overviewSpan,
+              child: _PlanSection(
+                key: const ValueKey('plan-outlook-section'),
+                title: l10n.planOverviewTitle,
+                entries: outlook,
+              ),
+            ),
+            if (companion != null)
+              AdaptiveSummaryTile(
+                span: AdaptiveSummaryTileSpan.featured,
+                child: companion,
+              ),
+            if (investments.isNotEmpty && reviews.isNotEmpty)
+              AdaptiveSummaryTile(
+                span: AdaptiveSummaryTileSpan.full,
+                child: _PlanSection(
+                  key: const ValueKey('plan-reviews-section'),
+                  title: l10n.lifeEventDecisionHistory,
+                  entries: reviews,
+                ),
+              ),
+          ],
+        ),
         const SizedBox(height: AppSpacing.s12),
         Align(
           alignment: AlignmentDirectional.centerStart,
@@ -335,7 +370,7 @@ class _PlanningSections extends StatelessWidget {
 }
 
 class _PlanSection extends StatelessWidget {
-  const _PlanSection({required this.title, required this.entries});
+  const _PlanSection({super.key, required this.title, required this.entries});
 
   final String title;
   final List<_PlanEntrySpec> entries;

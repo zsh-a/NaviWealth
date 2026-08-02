@@ -160,18 +160,15 @@ void main() {
         tester.getSize(find.byType(FloatingGlassNavBar)).height,
         kFloatingGlassNavBarHeight,
       );
-      expect(find.byType(BackdropFilter), findsNothing);
-      final navSurface = tester.widget<Container>(
-        find
-            .descendant(
-              of: find.byType(FloatingGlassNavBar),
-              matching: find.byType(Container),
-            )
-            .first,
+      expect(find.byType(BackdropFilter), findsOneWidget);
+      final glassSurface = tester.widget<AppGlassSurface>(
+        find.descendant(
+          of: find.byType(FloatingGlassNavBar),
+          matching: find.byType(AppGlassSurface),
+        ),
       );
-      final navDecoration = navSurface.decoration! as BoxDecoration;
-      expect(navDecoration.boxShadow, hasLength(1));
-      expect(navDecoration.borderRadius, BorderRadius.circular(AppRadius.full));
+      expect(glassSurface.boxShadow, hasLength(1));
+      expect(glassSurface.borderRadius, BorderRadius.circular(AppRadius.full));
       final assistant = find.byKey(
         const ValueKey<String>('floating-nav.assistant'),
       );

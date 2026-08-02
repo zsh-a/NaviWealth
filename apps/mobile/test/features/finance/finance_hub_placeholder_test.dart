@@ -18,7 +18,7 @@ import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
-  testWidgets('Plan hub shows the action-first planning workspace', (
+  testWidgets('Plan hub keeps loading state focused on financial outlook', (
     tester,
   ) async {
     await _setDesktopSurface(tester);
@@ -38,17 +38,59 @@ void main() {
     await tester.pump();
 
     expect(find.text('Needs attention'), findsOneWidget);
-    expect(find.text('Planning overview'), findsOneWidget);
+    expect(find.text('Financial outlook'), findsOneWidget);
+    expect(find.text('Money runway'), findsOneWidget);
     expect(find.text('Financial independence'), findsOneWidget);
-    expect(find.text('My plans'), findsOneWidget);
-    expect(find.text('Rebalance'), findsOneWidget);
-    expect(find.text('Budget'), findsOneWidget);
-    expect(find.text('Recurring investment plan'), findsOneWidget);
-    // Optional strategy tools stay collapsed.
+    expect(find.text('Active investment plans'), findsNothing);
     expect(find.text('Income Planner'), findsNothing);
     expect(find.text('Scenario analytics'), findsNothing);
     expect(find.text('Scenarios'), findsNothing);
     expect(find.text('Goals'), findsNothing);
+  });
+
+  testWidgets('Plan hub pairs outlook with active plans on wide canvas', (
+    tester,
+  ) async {
+    await _setDesktopSurface(tester);
+    await tester.pumpWidget(
+      _wrap(
+        overrides: [
+          fireDashboardViewProvider.overrideWith(
+            (_) => const AsyncValue.loading(),
+          ),
+          planningHubStatusProvider.overrideWith(
+            (_) => PlanningHubStatus(
+              runway: PlanningRunwayStatus.healthy,
+              pendingLifeEventReviews: 0,
+              rebalance: PlanningRebalanceStatus.active,
+              rebalanceDriftPct: 0.08,
+              budgetCount: 1,
+              budgetSignal: null,
+              budgetProgress: 0.4,
+              dcaPlanCount: 1,
+              dcaNextDueAt: DateTime.utc(2026, 8, 8),
+              dcaDue: false,
+              wheelCycleCount: 0,
+              wheelOpenPositionCount: 0,
+              isLoading: false,
+              hasError: false,
+            ),
+          ),
+        ],
+        child: const PlanHubPage(),
+      ),
+    );
+    await tester.pump();
+
+    final outlook = tester.getRect(
+      find.byKey(const ValueKey('plan-outlook-section')),
+    );
+    final investments = tester.getRect(
+      find.byKey(const ValueKey('plan-investments-section')),
+    );
+    expect(investments.top, outlook.top);
+    expect(investments.left, greaterThan(outlook.right));
+    expect(investments.width, greaterThan(outlook.width * 1.9));
   });
 
   testWidgets('Wealth hub hides placeholder-only entries', (tester) async {

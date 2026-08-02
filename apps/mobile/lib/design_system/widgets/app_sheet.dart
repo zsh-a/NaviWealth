@@ -571,7 +571,7 @@ class AppSheetSurface extends StatelessWidget {
     this.border,
     this.safeTop = false,
     this.safeBottom = true,
-    this.frosted = false,
+    this.frosted = true,
   });
 
   final Widget child;
@@ -580,9 +580,8 @@ class AppSheetSurface extends StatelessWidget {
   final bool safeTop;
   final bool safeBottom;
 
-  /// Enables the expensive live backdrop blur. The default sheet surface is
-  /// intentionally opaque enough to read as elevated without forcing the GPU
-  /// to blur a complex page behind every sheet animation.
+  /// Enables live backdrop blur. Glass is the default modal material; callers
+  /// may opt out only for a full-screen or rendering-heavy surface.
   final bool frosted;
 
   @override
@@ -592,9 +591,7 @@ class AppSheetSurface extends StatelessWidget {
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
     final surface = frosted
-        ? colors.background.withValues(
-            alpha: isDark ? AppOpacity.nearOpaqueDark : AppOpacity.nearOpaque,
-          )
+        ? colors.background.withValues(alpha: AppOpacity.overlay)
         : colors.background;
     final hairline = colors.foreground.withValues(
       alpha: isDark ? AppOpacity.light : AppOpacity.subtle,
