@@ -80,7 +80,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
   }
 
-  testWidgets('renders a concept graph for related concepts', (tester) async {
+  testWidgets('renders related concepts as a compact list', (tester) async {
     await repo.upsertConcept(
       concept(
         id: 'fire',
@@ -96,14 +96,14 @@ void main() {
 
     await pumpDetail(tester, 'fire');
 
-    expect(find.byKey(const ValueKey('knowledge-concept-graph')), findsOne);
+    expect(find.byKey(const ValueKey('knowledge-concept-graph')), findsNothing);
     expect(find.text('FIRE'), findsWidgets);
     expect(find.text('Margin of Safety'), findsWidgets);
     expect(find.text('XIRR'), findsWidgets);
     expect(find.text('MOS'), findsWidgets);
   });
 
-  testWidgets('omits the concept graph when there are no related concepts', (
+  testWidgets('omits related links when there are no related concepts', (
     tester,
   ) async {
     await repo.upsertConcept(concept(id: 'solo', name: 'Solo Concept'));

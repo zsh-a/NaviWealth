@@ -103,10 +103,20 @@ and resets the next day. Users pin or remove Actions from the Action menu. An
 empty Top 3 can show the latest Review artifact's `recommended_focus_ids`, but
 the recommendation is never adopted until the user explicitly confirms it.
 
+Today exposes only the daily focus and blocked-work lenses. Unscheduled backlog
+and the complete open inventory belong to Plan, not the daily workspace. Plan
+uses one Add entry point that progressively offers Action, Project, or
+Commitment creation; search is also owned there instead of repeated on every
+tab.
+
 New Action capture starts with title plus Inbox / Today / Tomorrow and keeps
 priority, dates, relations, and notes behind an optional detail disclosure.
 Manual status changes show a short Undo action. Blocking requires a concrete
 reason, which is stored as blocker progress instead of a generic placeholder.
+
+Review is a current-week digest. Progress is normally recorded from the Action,
+Project, or Commitment that owns it; Review does not expose a global create
+Progress action or historical time-window switcher.
 
 Today, Commitments, and Review share an all-status search across Action title
 and note, Project title and description, and Commitment title and description.

@@ -34,13 +34,6 @@ class ExecutionOverviewStrip extends StatelessWidget {
           icon: FLucideIcons.calendarClock,
           color: colors.primary,
         ),
-      if (snapshot.recentProgressCount > 0)
-        _OverviewMeta(
-          label: l10n.executionOverviewProgress7d,
-          value: snapshot.recentProgressCount,
-          icon: FLucideIcons.clipboardCheck,
-          color: status.success.fg,
-        ),
     ];
 
     return Column(
@@ -48,17 +41,17 @@ class ExecutionOverviewStrip extends StatelessWidget {
       children: [
         AppAdaptiveChoice<ExecutionTodayFilter>(
           title: l10n.executionTodayTitle,
-          options: ExecutionTodayFilter.values,
+          options: const <ExecutionTodayFilter>[
+            ExecutionTodayFilter.focus,
+            ExecutionTodayFilter.blocked,
+          ],
           value: selectedFilter,
           labelOf: (filter) => switch (filter) {
             ExecutionTodayFilter.focus =>
               '${l10n.executionOverviewFocus} ${snapshot.todayCount}',
-            ExecutionTodayFilter.backlog =>
-              '${l10n.executionOverviewBacklog} ${snapshot.backlogCount}',
             ExecutionTodayFilter.blocked =>
               '${l10n.executionOverviewBlocked} ${snapshot.blockedCount}',
-            ExecutionTodayFilter.open =>
-              '${l10n.executionOverviewOpen} ${snapshot.openCount}',
+            ExecutionTodayFilter.backlog || ExecutionTodayFilter.open => '',
           },
           semanticLabelOf: (filter) => executionTodayFilterLabel(l10n, filter),
           iconOf: executionTodayFilterIcon,

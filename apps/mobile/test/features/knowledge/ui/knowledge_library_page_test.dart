@@ -13,17 +13,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('matchesKnowledgeLibraryDateFilter', () {
-    test('matches day-distance buckets for past and future dates', () {
+    test('matches recent week and month buckets', () {
       final now = DateTime.utc(2026, 6, 7, 12);
 
-      expect(
-        matchesKnowledgeLibraryDateFilter(
-          DateTime.utc(2026, 6, 7, 1),
-          KnowledgeLibraryDateFilter.today,
-          now,
-        ),
-        isTrue,
-      );
       expect(
         matchesKnowledgeLibraryDateFilter(
           DateTime.utc(2026, 6, 1),
@@ -40,27 +32,11 @@ void main() {
         ),
         isTrue,
       );
-      expect(
-        matchesKnowledgeLibraryDateFilter(
-          DateTime.utc(2026, 7, 15),
-          KnowledgeLibraryDateFilter.outsideMonth,
-          now,
-        ),
-        isTrue,
-      );
     });
 
     test('excludes dates outside the selected bucket', () {
       final now = DateTime.utc(2026, 6, 7, 12);
 
-      expect(
-        matchesKnowledgeLibraryDateFilter(
-          DateTime.utc(2026, 6, 8),
-          KnowledgeLibraryDateFilter.today,
-          now,
-        ),
-        isFalse,
-      );
       expect(
         matchesKnowledgeLibraryDateFilter(
           DateTime.utc(2026, 6, 16),
@@ -138,21 +114,19 @@ void main() {
     expect(find.text('All · 0 items'), findsOneWidget);
   });
 
-  testWidgets('keeps the fast segmented switcher on wide layouts', (
+  testWidgets('keeps the taxonomy behind one picker on wide layouts', (
     tester,
   ) async {
     await _pumpLibrary(tester, width: 1200);
 
     expect(
       find.byKey(const ValueKey<String>('knowledge-library.type-picker')),
-      findsNothing,
+      findsOneWidget,
     );
     expect(
       find.byKey(const ValueKey<String>('knowledge-library.segmented-types')),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.text('Experiments'), findsOneWidget);
-    expect(find.text('Routines'), findsOneWidget);
   });
 
   testWidgets('type picker remains usable on a narrow large-text phone', (

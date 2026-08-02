@@ -9,8 +9,6 @@
 /// still resolves.
 library;
 
-import 'dart:math' as math;
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -27,7 +25,6 @@ import '_routine_writer.dart';
 import '_widgets.dart';
 import 'knowledge_status_labels.dart';
 
-part 'knowledge_object_detail_graph.dart';
 part 'knowledge_object_detail_links.dart';
 part 'knowledge_object_detail_sections.dart';
 

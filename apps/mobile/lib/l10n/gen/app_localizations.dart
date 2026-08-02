@@ -23254,6 +23254,30 @@ abstract class AppLocalizations {
   /// **'Confidence'**
   String get knowledgeWriterConfidenceLabel;
 
+  /// No description provided for @knowledgeConfidenceLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get knowledgeConfidenceLow;
+
+  /// No description provided for @knowledgeConfidenceMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get knowledgeConfidenceMedium;
+
+  /// No description provided for @knowledgeConfidenceHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get knowledgeConfidenceHigh;
+
+  /// No description provided for @knowledgeWriterScopeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional, such as investing, health, or work'**
+  String get knowledgeWriterScopeHint;
+
   /// No description provided for @knowledgeWriterStatusLabel.
   ///
   /// In en, this message translates to:
@@ -23715,6 +23739,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New Action'**
   String get executionCreateActionTitle;
+
+  /// No description provided for @executionCreatePlanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get executionCreatePlanTitle;
 
   /// No description provided for @executionCreateProjectTitle.
   ///

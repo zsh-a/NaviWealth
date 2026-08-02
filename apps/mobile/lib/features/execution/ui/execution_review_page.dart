@@ -22,7 +22,6 @@ import 'execution_action_card_controller.dart';
 import 'execution_action_sheet.dart';
 import 'execution_delete_confirm.dart';
 import 'execution_progress_sheet.dart';
-import 'execution_search_sheet.dart';
 import 'execution_source_route.dart';
 import 'execution_widgets.dart';
 
@@ -34,19 +33,6 @@ class ExecutionReviewPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
       title: l10n.executionReviewTitle,
-      actions: [
-        ShellHeaderActionSpec(
-          icon: FLucideIcons.search,
-          label: l10n.executionSearchTitle,
-          onPress: () => showExecutionSearchSheet(context: context),
-          order: -10,
-        ),
-        ShellHeaderActionSpec(
-          icon: FLucideIcons.plus,
-          label: l10n.executionCreateProgressTitle,
-          onPress: () => showExecutionProgressSheet(context: context),
-        ),
-      ],
       child: ShellTabPause(
         routePath: ExecutionRoutes.review,
         child: AppRefreshIndicator(
@@ -69,18 +55,9 @@ class ExecutionReviewPage extends ConsumerWidget {
   }
 }
 
-enum _ReviewWindow { sevenDays, thirtyDays, all }
-
-class _ReviewBody extends ConsumerStatefulWidget {
+class _ReviewBody extends ConsumerWidget {
   @override
-  ConsumerState<_ReviewBody> createState() => _ReviewBodyState();
-}
-
-class _ReviewBodyState extends ConsumerState<_ReviewBody> {
-  _ReviewWindow _window = _ReviewWindow.sevenDays;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final progressAsync = ref.watch(executionRecentProgressProvider);
     final closedActionsAsync = ref.watch(executionClosedActionsProvider);
@@ -103,47 +80,20 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
       return AppListPageSkeleton(padding: shellTabContentPadding(context));
     }
 
-    final cutoff = switch (_window) {
-      _ReviewWindow.sevenDays => DateTime.now().subtract(
-        const Duration(days: 7),
-      ),
-      _ReviewWindow.thirtyDays => DateTime.now().subtract(
-        const Duration(days: 30),
-      ),
-      _ReviewWindow.all => null,
-    };
+    final cutoff = DateTime.now().subtract(const Duration(days: 7));
     final entries = (progressAsync.value ?? const <ExecutionProgressEntry>[])
-        .where(
-          (entry) =>
-              cutoff == null || !entry.createdAt.toLocal().isBefore(cutoff),
-        )
+        .where((entry) => !entry.createdAt.toLocal().isBefore(cutoff))
         .toList(growable: false);
     final closedActions =
         (closedActionsAsync.value ?? const <ExecutionAction>[])
             .where((action) {
               final at = action.completedAt ?? action.createdAt;
-              return cutoff == null || !at.toLocal().isBefore(cutoff);
+              return !at.toLocal().isBefore(cutoff);
             })
             .toList(growable: false);
     final empty = entries.isEmpty && closedActions.isEmpty;
 
     final itemBuilders = <WidgetBuilder>[
-      (_) => SegmentedRow<_ReviewWindow>(
-        options: _ReviewWindow.values,
-        value: _window,
-        labelOf: (window) => switch (window) {
-          _ReviewWindow.sevenDays => l10n.executionReviewWindow7d,
-          _ReviewWindow.thirtyDays => l10n.executionReviewWindow30d,
-          _ReviewWindow.all => l10n.executionReviewWindowAll,
-        },
-        iconOf: (window) => switch (window) {
-          _ReviewWindow.sevenDays => FLucideIcons.calendarDays,
-          _ReviewWindow.thirtyDays => FLucideIcons.calendarRange,
-          _ReviewWindow.all => FLucideIcons.infinity,
-        },
-        onChanged: (window) => setState(() => _window = window),
-      ),
-      (_) => const SizedBox(height: AppSpacing.s12),
       (_) => _ReviewSummary(entries: entries, closedActions: closedActions),
       (_) => const SizedBox(height: AppSpacing.s12),
       (_) => const _ExecutionReviewRunStatus(),
@@ -158,10 +108,6 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
           icon: FLucideIcons.clipboardCheck,
           title: l10n.executionReviewEmptyTitle,
           message: l10n.executionReviewEmptyBody,
-          action: FButton(
-            onPress: () => showExecutionProgressSheet(context: context),
-            child: Text(l10n.executionCreateProgressTitle),
-          ),
         ),
       );
     }

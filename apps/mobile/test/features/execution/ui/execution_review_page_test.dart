@@ -119,9 +119,7 @@ void main() {
     expect(find.text('Today focus'), findsNothing);
   });
 
-  testWidgets('review page filters history and exposes an empty-agent CTA', (
-    tester,
-  ) async {
+  testWidgets('review page stays focused on the current week', (tester) async {
     final now = DateTime.now();
     final recent = ExecutionProgressEntry(
       id: 'recent',
@@ -164,17 +162,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Generate'), findsOneWidget);
-    expect(
-      tester.getTopLeft(find.text('All')).dy,
-      lessThan(tester.getTopLeft(find.text('Generate')).dy),
-    );
     expect(find.text('Recent execution progress'), findsOneWidget);
     expect(find.text('Old execution blocker'), findsNothing);
-
-    await tester.tap(find.text('All'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Old execution blocker'), findsOneWidget);
+    expect(find.text('New progress'), findsNothing);
   });
 
   testWidgets('review creates only selected missing next actions', (

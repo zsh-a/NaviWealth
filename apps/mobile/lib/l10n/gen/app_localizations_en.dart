@@ -13838,6 +13838,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeWriterConfidenceLabel => 'Confidence';
 
   @override
+  String get knowledgeConfidenceLow => 'Low';
+
+  @override
+  String get knowledgeConfidenceMedium => 'Medium';
+
+  @override
+  String get knowledgeConfidenceHigh => 'High';
+
+  @override
+  String get knowledgeWriterScopeHint =>
+      'Optional, such as investing, health, or work';
+
+  @override
   String get knowledgeWriterStatusLabel => 'Status';
 
   @override
@@ -14087,6 +14100,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionCreateActionTitle => 'New Action';
+
+  @override
+  String get executionCreatePlanTitle => 'Add';
 
   @override
   String get executionCreateProjectTitle => 'New Project';

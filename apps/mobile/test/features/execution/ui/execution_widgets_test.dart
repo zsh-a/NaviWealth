@@ -222,8 +222,8 @@ void main() {
 
     expect(find.textContaining('Today'), findsOneWidget);
     expect(find.textContaining('Open'), findsNothing);
-    expect(find.textContaining('Blocked'), findsNothing);
-    expect(find.textContaining('7d progress'), findsOneWidget);
+    expect(find.textContaining('Blocked'), findsOneWidget);
+    expect(find.textContaining('7d progress'), findsNothing);
 
     await tester.tap(find.textContaining('Today').last);
     await tester.pumpAndSettle();
@@ -231,13 +231,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(selected, ExecutionTodayFilter.blocked);
-
-    await tester.tap(find.textContaining('Blocked'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('Open'));
-    await tester.pumpAndSettle();
-
-    expect(selected, ExecutionTodayFilter.open);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 200));

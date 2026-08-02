@@ -215,7 +215,7 @@ void main() {
     expect(find.byType(AgentRunStatusCard), findsNothing);
   });
 
-  testWidgets('review page distinguishes all-clear from an agent not run', (
+  testWidgets('review page stays quiet when there is nothing to review', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -256,12 +256,13 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.text('All clear'), findsOneWidget);
-    expect(find.textContaining('Last agent review:'), findsOneWidget);
+    expect(find.text('All clear'), findsNothing);
+    expect(find.textContaining('Last agent review:'), findsNothing);
     expect(
       find.text('The Knowledge Review agent has not run yet.'),
       findsNothing,
     );
+    expect(find.byType(AgentResultCard), findsNothing);
   });
 }
 

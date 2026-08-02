@@ -318,8 +318,8 @@ class _DateFilterChipRow extends StatelessWidget {
   }
 }
 
-/// Compact type picker on phones/tablets and an always-visible segmented row
-/// only when there is enough room to render every label without truncation.
+/// A single compact type picker keeps the eight-object taxonomy out of the
+/// primary reading flow on every screen size.
 class _LibraryTabBar extends ConsumerWidget {
   const _LibraryTabBar({required this.selected, required this.onChanged});
 
@@ -333,37 +333,19 @@ class _LibraryTabBar extends ConsumerWidget {
     final counts =
         ref.watch(_knowledgeLibrarySegmentCountsProvider(owner)).value ??
         const <_LibrarySegment, int>{};
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth >= Breakpoints.readingColumn) {
-          return SegmentedRow<_LibrarySegment>(
-            key: const ValueKey<String>('knowledge-library.segmented-types'),
-            options: _LibrarySegment.values,
-            value: selected,
-            labelOf: (segment) => _segmentLabel(l10n, segment),
-            iconOf: _segmentIcon,
-            onChanged: _select,
-            minSegmentWidth: 104,
-          );
-        }
-        final count = counts[selected];
-        final scope = count == null
-            ? _segmentLabel(l10n, selected)
-            : l10n.knowledgeLibraryTypeScope(
-                _segmentLabel(l10n, selected),
-                count,
-              );
-        return _LibraryTypeTrigger(
-          label: scope,
-          onPress: () async {
-            final next = await _showLibraryTypePicker(
-              context: context,
-              selected: selected,
-              counts: counts,
-            );
-            if (next != null) _select(next);
-          },
+    final count = counts[selected];
+    final scope = count == null
+        ? _segmentLabel(l10n, selected)
+        : l10n.knowledgeLibraryTypeScope(_segmentLabel(l10n, selected), count);
+    return _LibraryTypeTrigger(
+      label: scope,
+      onPress: () async {
+        final next = await _showLibraryTypePicker(
+          context: context,
+          selected: selected,
+          counts: counts,
         );
+        if (next != null) _select(next);
       },
     );
   }

@@ -120,7 +120,17 @@ Key files:
 - `features/knowledge/ui/knowledge_decision_detail_page.dart`
 - `features/knowledge/ui/knowledge_object_detail_page.dart`
 
-Capture rule: saving to Inbox must remain fast and offline. Do not call the LLM synchronously on the save path. AI classification, tags, links, and merge suggestions are asynchronous review work.
+Capture rule: saving to Inbox must remain fast and offline. Inbox capture always
+creates a Note from title and body; it does not expose the object taxonomy or
+call the LLM synchronously. AI classification, tags, links, and merge
+suggestions are asynchronous review work. Users create an explicitly structured
+object from Library only when they already know the intended type.
+
+Library keeps object types behind one adaptive picker on every screen size.
+Concept relationships render as accessible links, never as a graph
+visualization. Review is a signal-first work queue: suggestions, due routines,
+due decisions, stale assumptions, and agent findings appear without a duplicate
+dashboard or manual agent-control surface.
 
 Repository writes debounce an event-triggered agent run. New or edited Notes
 schedule Inbox Triage and contradiction detection; changes to Decisions,

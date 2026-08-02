@@ -26,7 +26,7 @@ import '../../../core/persistence/test_database.dart';
 import '../../finance/data/repositories/_stub_stamper.dart';
 
 void main() {
-  testWidgets('Today exposes unscheduled backlog as a first-class lens', (
+  testWidgets('Today keeps unscheduled backlog out of the daily workspace', (
     tester,
   ) async {
     final backlog = _action(id: 'backlog', title: 'Plan the next release');
@@ -44,13 +44,8 @@ void main() {
     expect(find.textContaining('Backlog 1'), findsNothing);
     expect(find.text('Plan the next release'), findsNothing);
 
-    await tester.tap(find.text('Today 0'));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('Backlog 1'), findsOneWidget);
-    await tester.tap(find.textContaining('Backlog 1'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Plan the next release'), findsOneWidget);
+    expect(find.text('Today 0'), findsOneWidget);
+    expect(find.textContaining('Backlog'), findsNothing);
   });
 
   testWidgets('Today asks before adopting review Top 3 recommendations', (

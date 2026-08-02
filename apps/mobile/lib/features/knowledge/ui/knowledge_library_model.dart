@@ -22,7 +22,7 @@ IconData _segmentIcon(_LibrarySegment segment) => switch (segment) {
   _LibrarySegment.routines => FLucideIcons.calendarClock,
 };
 
-enum KnowledgeLibraryDateFilter { all, today, week, month, outsideMonth }
+enum KnowledgeLibraryDateFilter { all, week, month }
 
 String _knowledgeLibrarySearchHistoryPrefsKey(String ownerUserId) =>
     'knowledge.$ownerUserId.library.search_history.v2';
@@ -94,11 +94,8 @@ String _dateFilterLabel(
 ) {
   return switch (filter) {
     KnowledgeLibraryDateFilter.all => l10n.knowledgeLibraryDateFilterAll,
-    KnowledgeLibraryDateFilter.today => l10n.knowledgeLibraryDateFilterToday,
     KnowledgeLibraryDateFilter.week => l10n.knowledgeLibraryDateFilterWeek,
     KnowledgeLibraryDateFilter.month => l10n.knowledgeLibraryDateFilterMonth,
-    KnowledgeLibraryDateFilter.outsideMonth =>
-      l10n.knowledgeLibraryDateFilterOutsideMonth,
   };
 }
 
@@ -410,9 +407,7 @@ bool matchesKnowledgeLibraryDateFilter(
   final days = localDate.difference(localNow).inDays.abs();
   return switch (filter) {
     KnowledgeLibraryDateFilter.all => true,
-    KnowledgeLibraryDateFilter.today => days == 0,
     KnowledgeLibraryDateFilter.week => days <= 7,
     KnowledgeLibraryDateFilter.month => days <= 30,
-    KnowledgeLibraryDateFilter.outsideMonth => days > 30,
   };
 }

@@ -67,7 +67,6 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
     return AppSheet(
       title: l10n.knowledgeAssumptionWriterTitle,
@@ -98,33 +97,22 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
           KnowledgeWriterSection(
             title: l10n.knowledgeWriterEvidenceSectionTitle,
             collapsible: true,
+            initiallyExpanded: false,
             children: [
-              Text(
-                '${l10n.knowledgeWriterConfidenceLabel}: '
-                '${_confidence.toStringAsFixed(2)}',
-                style: typography.body.sm,
-              ),
-              FSlider(
-                control: FSliderControl.liftedContinuous(
-                  value: FSliderValue(max: _confidence.clamp(0, 1).toDouble()),
-                  stepPercentage: 0.01,
-                  onChange: (next) =>
-                      setState(() => _confidence = next.max.clamp(0, 1)),
-                ),
-                tooltipBuilder: (_, next) => Text(next.toStringAsFixed(2)),
-                semanticValueFormatterCallback: (next) =>
-                    next.toStringAsFixed(2),
-              ),
               SegmentedRow<double>(
                 options: const <double>[0.3, 0.7, 0.95],
                 value: _confidencePresetValue(_confidence),
-                labelOf: (v) => v.toStringAsFixed(2),
+                labelOf: (value) => switch (value) {
+                  0.3 => l10n.knowledgeConfidenceLow,
+                  0.7 => l10n.knowledgeConfidenceMedium,
+                  _ => l10n.knowledgeConfidenceHigh,
+                },
                 onChanged: (v) => setState(() => _confidence = v),
               ),
               FTextField(
                 control: FTextFieldControl.managed(controller: _scopeCtrl),
                 label: Text(l10n.knowledgeWriterScopeLabel),
-                hint: '"*" / "investing" / "fire"',
+                hint: l10n.knowledgeWriterScopeHint,
               ),
             ],
           ),
@@ -135,8 +123,7 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
 }
 
 double _confidencePresetValue(double confidence) {
-  for (final value in const <double>[0.3, 0.7, 0.95]) {
-    if ((confidence - value).abs() < 0.005) return value;
-  }
-  return double.nan;
+  if (confidence < 0.5) return 0.3;
+  if (confidence < 0.85) return 0.7;
+  return 0.95;
 }

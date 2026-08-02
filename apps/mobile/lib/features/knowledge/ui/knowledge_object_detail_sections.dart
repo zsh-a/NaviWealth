@@ -159,15 +159,6 @@ List<Widget> _conceptSections(
       KnowledgeSection.group(
         title: AppLocalizations.of(context).knowledgeDetailRelatedConceptsTitle,
         children: [
-          _ConceptGraphPanel(
-            concept: c,
-            relatedConcepts: relatedConcepts,
-            onConceptPress: (concept) => context.pushNamed(
-              KnowledgeRouteNames.objectDetail,
-              pathParameters: {'kind': 'concept', 'id': concept.id},
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s12),
           for (final concept in relatedConcepts)
             _RelatedObjectLink(
               label: concept.name,

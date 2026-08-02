@@ -12851,25 +12851,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeSegmentRoutines => '例行事项';
 
   @override
-  String get knowledgeNewDecision => '新建 Decision';
+  String get knowledgeNewDecision => '新建决策';
 
   @override
-  String get knowledgeNewPrinciple => '新建 Principle';
+  String get knowledgeNewPrinciple => '新建原则';
 
   @override
-  String get knowledgeNewAssumption => '新建 Assumption';
+  String get knowledgeNewAssumption => '新建假设';
 
   @override
-  String get knowledgeNewNote => '新建 Note';
+  String get knowledgeNewNote => '新建笔记';
 
   @override
-  String get knowledgeNewConcept => '新建 Concept';
+  String get knowledgeNewConcept => '新建概念';
 
   @override
-  String get knowledgeNewExperiment => '新建 Experiment';
+  String get knowledgeNewExperiment => '新建实验';
 
   @override
-  String get knowledgeNewRoutine => '新建 Routine';
+  String get knowledgeNewRoutine => '新建例行事项';
 
   @override
   String get knowledgeNewMoreTypes => '更多类型';
@@ -12878,7 +12878,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeNewChooserTitle => '新建…';
 
   @override
-  String get knowledgeNewChooserSubtitle => '选择要创建的结构化知识对象。快速 Note 走收件箱捕获。';
+  String get knowledgeNewChooserSubtitle => '选择要创建的结构化知识。临时想法可以先记入收件箱。';
 
   @override
   String get knowledgeNewDecisionHint => '主要内容：问题、选项和理由';
@@ -12890,7 +12890,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeNewAssumptionHint => '可证伪的信念 + 置信度';
 
   @override
-  String get knowledgeDecisionWriterTitle => '新建 Decision';
+  String get knowledgeDecisionWriterTitle => '新建决策';
 
   @override
   String get knowledgeDecisionWriterSubtitle => '记录决策的问题、选项、理由和复盘';
@@ -12911,7 +12911,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeConceptWriterSubtitle2 => '用于 soft links 和 AI 交叉引用的锚点';
 
   @override
-  String get knowledgeExperimentWriterSubtitle2 => '用明确方法验证一条 Assumption';
+  String get knowledgeExperimentWriterSubtitle2 => '用明确方法验证一条假设';
 
   @override
   String get knowledgeWriterAliasLabel => '别名';
@@ -13042,7 +13042,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '还没有其它 Decision 可指向——先记录新决策，再回来标记取代关系。';
 
   @override
-  String get knowledgePrincipleWriterTitle => '新建 Principle';
+  String get knowledgePrincipleWriterTitle => '新建原则';
 
   @override
   String get knowledgePrincipleWriterSubtitle => '长期世界观原语，不可证伪';
@@ -13052,10 +13052,10 @@ class AppLocalizationsZh extends AppLocalizations {
       '\"默认 edge-first\" / \"避免高维护成本系统\"';
 
   @override
-  String get knowledgePrincipleRationaleHint => '为什么把这个世界观定为 Principle';
+  String get knowledgePrincipleRationaleHint => '为什么把这个世界观定为原则';
 
   @override
-  String get knowledgeAssumptionWriterTitle => '新建 Assumption';
+  String get knowledgeAssumptionWriterTitle => '新建假设';
 
   @override
   String get knowledgeAssumptionWriterSubtitle => '可证伪的信念 + 置信度';
@@ -13064,26 +13064,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeAssumptionStatementHint => '\"长期指数增长高于通胀\"';
 
   @override
-  String get knowledgeConceptWriterTitle => '新建 Concept';
+  String get knowledgeConceptWriterTitle => '新建概念';
 
   @override
-  String get knowledgeConceptWriterSubtitle => '用于搜索和 soft links 的命名节点';
+  String get knowledgeConceptWriterSubtitle => '用于搜索和内容关联的命名节点';
 
   @override
-  String get knowledgeConceptNameHint => 'Concept 名称（例如 \"edge-first\"）';
+  String get knowledgeConceptNameHint => '概念名称（例如 \"edge-first\"）';
 
   @override
   String get knowledgeConceptAliasesHint => '逗号分隔的同义词';
 
   @override
-  String get knowledgeConceptSummaryHint =>
-      '1–2 句定义，用作 [[soft link]] 的 tooltip';
+  String get knowledgeConceptSummaryHint => '用 1–2 句话说明这个概念';
 
   @override
-  String get knowledgeExperimentWriterTitle => '新建 Experiment';
+  String get knowledgeExperimentWriterTitle => '新建实验';
 
   @override
-  String get knowledgeExperimentWriterSubtitle => '用方法和指标验证一条 Assumption';
+  String get knowledgeExperimentWriterSubtitle => '用方法和指标验证一条假设';
 
   @override
   String get knowledgeExperimentHypothesisHint =>
@@ -13097,17 +13096,16 @@ class AppLocalizationsZh extends AppLocalizations {
       '逗号分隔（例如 \"yield, drawdown, sharpe\"）';
 
   @override
-  String get knowledgeExperimentNoActiveAssumptions =>
-      '没有 active 的 Assumption 可挂（留空也可以）';
+  String get knowledgeExperimentNoActiveAssumptions => '目前没有可关联的活跃假设，也可以暂时留空';
 
   @override
-  String get knowledgeExperimentTargetAssumptionLabel => '目标 Assumption（可选）';
+  String get knowledgeExperimentTargetAssumptionLabel => '关联假设（可选）';
 
   @override
-  String get knowledgeRoutineWriterTitle => '新建 Routine';
+  String get knowledgeRoutineWriterTitle => '新建例行事项';
 
   @override
-  String get knowledgeRoutineWriterSubtitle => '定期提醒，AI 会在临近 next_due_at 时主动提示';
+  String get knowledgeRoutineWriterSubtitle => '设置定期提醒，临近到期时会主动提示';
 
   @override
   String get knowledgeRoutineStatementHint => '例如“港卡做一次活跃交易”或“每月对账”';
@@ -13129,6 +13127,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeWriterConfidenceLabel => '置信度';
+
+  @override
+  String get knowledgeConfidenceLow => '较低';
+
+  @override
+  String get knowledgeConfidenceMedium => '中等';
+
+  @override
+  String get knowledgeConfidenceHigh => '较高';
+
+  @override
+  String get knowledgeWriterScopeHint => '可选，例如投资、健康或工作';
 
   @override
   String get knowledgeWriterStatusLabel => '状态';
@@ -13179,11 +13189,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeRoutineFrequencyLabel => '频率';
 
   @override
-  String get knowledgeNotesHintTitle => 'Note 在收件箱录入';
+  String get knowledgeNotesHintTitle => '在收件箱快速记录';
 
   @override
-  String get knowledgeNotesHintBody =>
-      '资料库的 Note 段是浏览面；录入走收件箱。关闭这个面板，切到收件箱标签页，使用创建入口即可。';
+  String get knowledgeNotesHintBody => '资料库用于浏览已保存的笔记。临时想法请先记入收件箱，再在复盘中整理。';
 
   @override
   String get amountHidden => '金额已隐藏';
@@ -13371,6 +13380,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionCreateActionTitle => '新建行动';
+
+  @override
+  String get executionCreatePlanTitle => '添加';
 
   @override
   String get executionCreateProjectTitle => '新建项目';

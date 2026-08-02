@@ -13,9 +13,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/agents/agent_artifact_routes.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
-import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/ui/agent_results_panel.dart';
-import '../../../core/ai/llm_credentials/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
@@ -24,7 +22,6 @@ import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as knowledge_agent_providers;
-import '../agents/review_agent.dart';
 import '../agents/routine_due_agent.dart';
 import '../composition/knowledge_route_paths.dart';
 import '../data/knowledge_review_preferences.dart';
@@ -118,17 +115,8 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    // Blueprint §8.2: creation/bulk entry points live in the page header —
-    // the Knowledge-only FAB is retired app-wide.
     return ShellTabScaffold(
       title: l10n.knowledgeReviewTitle,
-      actions: [
-        ShellHeaderActionSpec(
-          icon: FLucideIcons.checkCheck,
-          label: l10n.knowledgeReviewTitle,
-          onPress: () => _showReviewActionsSheet(context, ref),
-        ),
-      ],
       child: ShellTabPause(
         routePath: KnowledgeRoutes.review,
         child: AppAtmosphere(
@@ -138,168 +126,16 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: shellTabContentPadding(context, top: AppSpacing.s8),
               children: const <Widget>[
-                _KnowledgeReviewOverview(),
-                SizedBox(height: AppPageRhythm.module),
-                _KnowledgeReviewAgentResultPanel(),
                 KnowledgeAiSuggestionsCard(),
                 _DueRoutinesCard(),
                 _DueReviewsCard(),
                 _StaleAssumptionsCard(),
+                _KnowledgeReviewAgentResultPanel(),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-class _KnowledgeReviewSnapshot {
-  const _KnowledgeReviewSnapshot({
-    required this.routineCount,
-    required this.decisionCount,
-    required this.assumptionCount,
-    required this.suggestionCount,
-    required this.agentFindingCount,
-    required this.lastRun,
-    required this.aiAvailable,
-  });
-
-  final int routineCount;
-  final int decisionCount;
-  final int assumptionCount;
-  final int suggestionCount;
-  final int agentFindingCount;
-  final AgentRunRecord? lastRun;
-  final bool aiAvailable;
-
-  int get attentionCount =>
-      routineCount +
-      decisionCount +
-      assumptionCount +
-      suggestionCount +
-      agentFindingCount;
-}
-
-final _knowledgeReviewSnapshotProvider =
-    FutureProvider.autoDispose<_KnowledgeReviewSnapshot>((ref) async {
-      ref.watch(_reviewActionsRefreshProvider);
-      ref.watch(aiSuggestionsRefreshProvider);
-      final preferences = ref.watch(knowledgeReviewPreferencesProvider);
-      final aiAvailable = ref.watch(deviceLlmAvailableProvider);
-      final owner = await ref.watch(knowledgeOwnerUserIdProvider.future);
-      final repo = await ref.watch(knowledgeRepositoryProvider.future);
-      final triage = await ref.watch(inboxTriageRepositoryProvider.future);
-      final resultBundle = await ref.watch(
-        knowledge_agent_providers.latestKnowledgeReviewResultsProvider.future,
-      );
-      final now = DateTime.now().toUtc();
-      final routines = await repo.listDueRoutines(
-        ownerUserId: owner,
-        asOf: now.add(kRoutineDueLookahead),
-        excludeDoneSince: DateTime(now.year, now.month, now.day),
-        limit: 1000,
-      );
-      final decisions = await repo.listDueReviews(
-        ownerUserId: owner,
-        asOf: now,
-        limit: 1000,
-      );
-      final assumptions = await repo.listOpenAssumptions(ownerUserId: owner);
-      final pending = await triage.listPending(ownerUserId: owner);
-      return _KnowledgeReviewSnapshot(
-        routineCount: routines.length,
-        decisionCount: decisions.length,
-        assumptionCount: assumptions
-            .where(
-              (item) =>
-                  item.daysSinceVerify(now) >= preferences.staleAssumptionDays,
-            )
-            .length,
-        suggestionCount: pending.fold<int>(
-          0,
-          (sum, record) => sum + record.pending.length,
-        ),
-        agentFindingCount: resultBundle.artifacts.length,
-        lastRun: resultBundle.latestRun,
-        aiAvailable: aiAvailable,
-      );
-    });
-
-class _KnowledgeReviewOverview extends ConsumerWidget {
-  const _KnowledgeReviewOverview();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final snapshot = ref.watch(_knowledgeReviewSnapshotProvider);
-    return snapshot.when(
-      loading: () =>
-          const KnowledgeLoadingState(density: KnowledgeStateDensity.section),
-      error: (error, stackTrace) => KnowledgeErrorState(
-        title: userSafeErrorMessage(
-          context,
-          error,
-          stackTrace: stackTrace,
-          operation: 'load knowledge review overview',
-        ),
-        onRetry: () => ref.invalidate(_knowledgeReviewSnapshotProvider),
-        density: KnowledgeStateDensity.section,
-      ),
-      data: (value) {
-        final lastRun = value.lastRun;
-        final isAllClear = value.attentionCount == 0;
-        return KnowledgeSection.group(
-          title: l10n.knowledgeReviewOverviewTitle,
-          trailing: AppBadge(
-            label: isAllClear
-                ? l10n.knowledgeReviewAllClearBadge
-                : '${value.attentionCount}',
-            icon: isAllClear ? FLucideIcons.circleCheck : FLucideIcons.bell,
-            size: AppBadgeSize.compact,
-            tone: isAllClear ? AppBadgeTone.success : AppBadgeTone.warning,
-          ),
-          children: [
-            Text(
-              isAllClear
-                  ? l10n.knowledgeReviewAllClearBody
-                  : l10n.knowledgeReviewAttentionSummary(
-                      value.routineCount,
-                      value.decisionCount,
-                      value.assumptionCount,
-                      value.suggestionCount,
-                    ),
-              style: context.theme.typography.body.sm,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            Text(
-              lastRun == null
-                  ? l10n.knowledgeReviewAgentNotRun
-                  : l10n.knowledgeReviewLastRun(
-                      knowledgeDate(
-                        context,
-                        lastRun.finishedAt ?? lastRun.startedAt,
-                        long: true,
-                      ),
-                    ),
-              style: context.captionStyle,
-            ),
-            if (!value.aiAvailable) ...[
-              const SizedBox(height: AppSpacing.s4),
-              Text(
-                l10n.knowledgeReviewAiUnavailable,
-                style: context.captionStyle,
-              ),
-            ],
-            const SizedBox(height: AppSpacing.s12),
-            FButton(
-              variant: FButtonVariant.outline,
-              onPress: () => _retryKnowledgeAgent(ref, kKnowledgeReviewAgentId),
-              child: Text(l10n.knowledgeReviewRunNow),
-            ),
-          ],
-        );
-      },
     );
   }
 }
@@ -347,73 +183,6 @@ Future<void> _retryKnowledgeAgent(WidgetRef ref, String agentId) async {
   await controller.runOnceById(agentId);
   ref.invalidate(
     knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
-  );
-}
-
-/// Icon-only FAB that opens the adaptive review batch-actions menu.
-Future<void> _showReviewActionsSheet(BuildContext context, WidgetRef ref) {
-  final l10n = AppLocalizations.of(context);
-  return showAppSheet<void>(
-    context: context,
-    title: l10n.knowledgeReviewTitle,
-    builder: (sheetContext) {
-      final actions = _reviewBulkActions(context, ref, l10n);
-      return AppActionSheetList(
-        children: [
-          for (final action in actions)
-            AppActionSheetTile(
-              icon: action.icon,
-              title: action.title,
-              subtitle: action.subtitle,
-              onPress: () {
-                Navigator.of(sheetContext).pop();
-                action.onPress();
-              },
-            ),
-        ],
-      );
-    },
-  );
-}
-
-List<AppAdaptiveAction> _reviewBulkActions(
-  BuildContext context,
-  WidgetRef ref,
-  AppLocalizations l10n,
-) {
-  return <AppAdaptiveAction>[
-    AppAdaptiveAction(
-      icon: FLucideIcons.checkCheck,
-      title: l10n.knowledgeReviewMarkAllDone,
-      subtitle: l10n.knowledgeReviewRoutinesTitle,
-      onPress: () async {
-        final routines = await _loadReviewRoutines(ref);
-        if (!context.mounted) return;
-        if (routines.isEmpty) {
-          AppMessenger.show(
-            context,
-            ToastKind.info,
-            l10n.knowledgeReviewRoutinesEmpty,
-          );
-          return;
-        }
-        await _markRoutinesDone(context: context, ref: ref, routines: routines);
-      },
-    ),
-  ];
-}
-
-Future<String> _reviewOwner(WidgetRef ref) => ref.read(currentUserIdProvider)();
-
-Future<List<KnowledgeRoutine>> _loadReviewRoutines(WidgetRef ref) async {
-  final owner = await _reviewOwner(ref);
-  final repo = await ref.read(knowledgeRepositoryProvider.future);
-  final now = DateTime.now();
-  return repo.listDueRoutines(
-    ownerUserId: owner,
-    asOf: now.add(kRoutineDueLookahead).toUtc(),
-    excludeDoneSince: DateTime(now.year, now.month, now.day),
-    limit: 1000,
   );
 }
 

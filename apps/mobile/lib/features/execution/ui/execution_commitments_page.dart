@@ -30,32 +30,19 @@ class ExecutionCommitmentsPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
       title: l10n.executionCommitmentsTitle,
-      // One primary create; project/commitment land in overflow.
       directActionBudget: 1,
       actions: [
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.plus,
+          label: l10n.executionCreatePlanTitle,
+          onPress: () => _showExecutionCreateSheet(context),
+          order: -10,
+        ),
         ShellHeaderActionSpec(
           icon: FLucideIcons.search,
           label: l10n.executionSearchTitle,
           onPress: () => showExecutionSearchSheet(context: context),
-          order: -10,
-        ),
-        ShellHeaderActionSpec(
-          icon: FLucideIcons.plus,
-          label: l10n.executionCreateActionTitle,
-          onPress: () => showExecutionActionSheet(context: context),
-          order: 0,
-        ),
-        ShellHeaderActionSpec(
-          icon: FLucideIcons.target,
-          label: l10n.executionCreateCommitmentTitle,
-          onPress: () => showExecutionCommitmentSheet(context: context),
           order: 10,
-        ),
-        ShellHeaderActionSpec(
-          icon: FLucideIcons.folder,
-          label: l10n.executionCreateProjectTitle,
-          onPress: () => showExecutionProjectSheet(context: context),
-          order: 20,
         ),
       ],
       child: ShellTabPause(
@@ -340,6 +327,45 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
       itemBuilder: (context, index) => itemBuilders[index](context),
     );
   }
+}
+
+Future<void> _showExecutionCreateSheet(BuildContext context) {
+  final l10n = AppLocalizations.of(context);
+  return showAppSheet<void>(
+    context: context,
+    title: l10n.executionCreatePlanTitle,
+    builder: (sheetContext) => AppActionSheetList(
+      children: [
+        AppActionSheetTile(
+          icon: FLucideIcons.listPlus,
+          title: l10n.executionCreateActionTitle,
+          subtitle: l10n.executionActionTitleHint,
+          onPress: () {
+            Navigator.of(sheetContext).pop();
+            showExecutionActionSheet(context: context);
+          },
+        ),
+        AppActionSheetTile(
+          icon: FLucideIcons.folder,
+          title: l10n.executionCreateProjectTitle,
+          subtitle: l10n.executionProjectTitleHint,
+          onPress: () {
+            Navigator.of(sheetContext).pop();
+            showExecutionProjectSheet(context: context);
+          },
+        ),
+        AppActionSheetTile(
+          icon: FLucideIcons.target,
+          title: l10n.executionCreateCommitmentTitle,
+          subtitle: l10n.executionCommitmentTitleHint,
+          onPress: () {
+            Navigator.of(sheetContext).pop();
+            showExecutionCommitmentSheet(context: context);
+          },
+        ),
+      ],
+    ),
+  );
 }
 
 String _commitmentsViewLabel(AppLocalizations l10n, _CommitmentsView view) {
