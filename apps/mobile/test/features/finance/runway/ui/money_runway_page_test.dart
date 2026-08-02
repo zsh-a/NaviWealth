@@ -12,7 +12,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../../../../core/persistence/test_database.dart';
 
 void main() {
-  testWidgets('labels declared and estimated dividend cash separately', (
+  testWidgets('summarizes upcoming flows and keeps one custom stress test', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(430, 1600);
@@ -69,14 +69,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Declared after-tax dividend'), findsOneWidget);
-    expect(find.text('Estimated after-tax dividend'), findsOneWidget);
-    expect(find.textContaining('estimate'), findsOneWidget);
+    expect(find.text('2 upcoming items included'), findsOneWidget);
+    expect(find.text('Declared after-tax dividend'), findsNothing);
+    expect(find.text('Estimated after-tax dividend'), findsNothing);
 
-    await tester.ensureVisible(
-      find.text('Quick stress tests · minimum balance'),
-    );
-    await tester.tap(find.text('Quick stress tests · minimum balance'));
+    await tester.ensureVisible(find.text('Stress test'));
+    await tester.tap(find.text('Stress test'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Custom stress test'));
     await tester.tap(find.text('Custom stress test'));

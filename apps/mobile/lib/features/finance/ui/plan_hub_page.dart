@@ -36,6 +36,8 @@ class PlanHubPage extends ConsumerWidget {
     final status = ref.watch(planningHubStatusProvider);
     final fire = ref.watch(fireDashboardViewProvider);
     final attentionItems = _attentionItems(context, status);
+    final showNextAction =
+        attentionItems.isNotEmpty || status.isLoading || status.hasError;
 
     return ShellTabScaffold(
       title: l10n.planHubTitle,
@@ -53,9 +55,11 @@ class PlanHubPage extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: shellTabContentPadding(context, top: AppSpacing.s8),
               children: [
-                _NextActionSection(status: status, items: attentionItems),
-                const SizedBox(height: AppSpacing.s20),
-                _AllPlansSection(status: status, fire: fire),
+                if (showNextAction) ...[
+                  _NextActionSection(status: status, items: attentionItems),
+                  const SizedBox(height: AppSpacing.s20),
+                ],
+                _PlanningSections(status: status, fire: fire),
               ],
             ),
           ),
@@ -103,12 +107,8 @@ class _NextActionSection extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final next = items.firstOrNull;
     final hasAttention = items.isNotEmpty;
-    final tone = next?.tone ?? AppBadgeTone.success;
-    final icon = hasAttention
-        ? next!.icon
-        : status.isLoading
-        ? FLucideIcons.loaderCircle
-        : FLucideIcons.circleCheckBig;
+    final tone = next?.tone ?? AppBadgeTone.neutral;
+    final icon = hasAttention ? next!.icon : FLucideIcons.loaderCircle;
 
     return SoftCard.raised(
       padding: AppPageRhythm.cardPadding,
@@ -123,18 +123,17 @@ class _NextActionSection extends StatelessWidget {
                   style: context.mutedLabelStyle,
                 ),
               ),
-              AppBadge(
-                label: status.isLoading && !hasAttention
-                    ? l10n.commonLoading
-                    : hasAttention
-                    ? _toneLabel(context, tone)
-                    : l10n.planAttentionAllClearBadge,
-                size: AppBadgeSize.compact,
-                tone: status.isLoading && !hasAttention
-                    ? AppBadgeTone.neutral
-                    : tone,
-                icon: icon,
-              ),
+              if (hasAttention || status.isLoading)
+                AppBadge(
+                  label: status.isLoading && !hasAttention
+                      ? l10n.commonLoading
+                      : _toneLabel(context, tone),
+                  size: AppBadgeSize.compact,
+                  tone: status.isLoading && !hasAttention
+                      ? AppBadgeTone.neutral
+                      : tone,
+                  icon: icon,
+                ),
             ],
           ),
           const SizedBox(height: AppSpacing.s12),
@@ -142,11 +141,8 @@ class _NextActionSection extends StatelessWidget {
             _AttentionRow(spec: next!)
           else if (status.isLoading)
             const _AttentionSkeleton()
-          else
-            Text(
-              l10n.planAttentionAllClearBody,
-              style: context.bodyCaptionStyle,
-            ),
+          else if (!status.hasError)
+            const SizedBox.shrink(),
           if (status.hasError) ...[
             const SizedBox(height: AppSpacing.s12),
             Row(
@@ -243,8 +239,8 @@ class _AttentionSkeleton extends StatelessWidget {
   }
 }
 
-class _AllPlansSection extends StatelessWidget {
-  const _AllPlansSection({required this.status, required this.fire});
+class _PlanningSections extends StatelessWidget {
+  const _PlanningSections({required this.status, required this.fire});
 
   final PlanningHubStatus status;
   final AsyncValue<FireDashboardView> fire;
@@ -253,30 +249,88 @@ class _AllPlansSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
-    final entries = <_PlanEntrySpec>[
+    final outlook = <_PlanEntrySpec>[
       _runwayEntry(l10n, status),
-      _budgetEntry(l10n, status),
       _fireEntry(l10n, formatters, fire),
-      _dcaEntry(context, l10n, status),
-      _rebalanceEntry(l10n, status),
-      if (!kIsWeb) _incomeStrategyEntry(l10n, status),
-      _PlanEntrySpec(
-        icon: FLucideIcons.waypoints,
-        title: l10n.lifeEventScenariosTitle,
-        subtitle: status.pendingLifeEventReviews == null
-            ? l10n.planStatusLoading
-            : status.pendingLifeEventReviews == 0
-            ? l10n.planStatusNoPendingReviews
-            : l10n.planStatusPendingReviews(status.pendingLifeEventReviews!),
-        path: FinanceRoutes.planLifeEvents,
-        tone: status.pendingLifeEventReviews == null
-            ? AppBadgeTone.neutral
-            : status.pendingLifeEventReviews! > 0
-            ? AppBadgeTone.warning
-            : AppBadgeTone.success,
-      ),
     ];
-    return _PlanSection(title: l10n.planMyPlansTitle, entries: entries);
+    final investments = <_PlanEntrySpec>[
+      if ((status.dcaPlanCount ?? 0) > 0) _dcaEntry(context, l10n, status),
+      if (status.rebalance == PlanningRebalanceStatus.attention ||
+          status.rebalance == PlanningRebalanceStatus.active)
+        _rebalanceEntry(l10n, status),
+      if (!kIsWeb && (status.wheelCycleCount ?? 0) > 0)
+        _incomeStrategyEntry(l10n, status),
+    ];
+    final reviews = <_PlanEntrySpec>[
+      if ((status.pendingLifeEventReviews ?? 0) > 0)
+        _PlanEntrySpec(
+          icon: FLucideIcons.waypoints,
+          title: l10n.lifeEventScenariosTitle,
+          subtitle: status.pendingLifeEventReviews == null
+              ? l10n.planStatusLoading
+              : status.pendingLifeEventReviews == 0
+              ? l10n.planStatusNoPendingReviews
+              : l10n.planStatusPendingReviews(status.pendingLifeEventReviews!),
+          path: FinanceRoutes.planLifeEvents,
+          tone: status.pendingLifeEventReviews == null
+              ? AppBadgeTone.neutral
+              : status.pendingLifeEventReviews! > 0
+              ? AppBadgeTone.warning
+              : AppBadgeTone.success,
+        ),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _PlanSection(title: l10n.planOverviewTitle, entries: outlook),
+        if (investments.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s20),
+          _PlanSection(title: l10n.planMyPlansTitle, entries: investments),
+        ],
+        if (reviews.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s20),
+          _PlanSection(title: l10n.lifeEventDecisionHistory, entries: reviews),
+        ],
+        const SizedBox(height: AppSpacing.s12),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: AppAdaptiveActionMenu(
+            title: l10n.planAddPlanAction,
+            actions: [
+              AppAdaptiveAction(
+                icon: FLucideIcons.calendarClock,
+                title: l10n.planDcaPlanTitle,
+                onPress: () => context.push(FinanceRoutes.planDca),
+              ),
+              if (!kIsWeb)
+                AppAdaptiveAction(
+                  icon: FLucideIcons.candlestickChart,
+                  title: l10n.incomeStrategyTitle,
+                  onPress: () => context.push(FinanceRoutes.planIncome),
+                ),
+              AppAdaptiveAction(
+                icon: FLucideIcons.waypoints,
+                title: l10n.lifeEventScenariosTitle,
+                onPress: () => context.push(FinanceRoutes.planLifeEvents),
+              ),
+            ],
+            triggerBuilder: (context, openMenu, focusNode) => FButton(
+              variant: FButtonVariant.ghost,
+              focusNode: focusNode,
+              onPress: openMenu,
+              prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+              child: Flexible(
+                child: Text(
+                  l10n.planAddPlanAction,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -482,32 +536,6 @@ _PlanEntrySpec _runwayEntry(AppLocalizations l10n, PlanningHubStatus status) {
       PlanningRunwayStatus.watch => AppBadgeTone.warning,
       PlanningRunwayStatus.shortfall => AppBadgeTone.error,
       PlanningRunwayStatus.needsData || null => AppBadgeTone.neutral,
-    },
-  );
-}
-
-_PlanEntrySpec _budgetEntry(AppLocalizations l10n, PlanningHubStatus status) {
-  final signal = status.budgetSignal;
-  final progress = status.budgetProgress;
-  return _PlanEntrySpec(
-    icon: FLucideIcons.piggyBank,
-    title: l10n.planBudgetSectionTitle,
-    subtitle: switch (signal) {
-      BudgetSignal.comfortable =>
-        progress == null
-            ? l10n.planStatusBudgetComfortable
-            : l10n.planStatusBudgetUsed((progress * 100).toStringAsFixed(0)),
-      BudgetSignal.strained => l10n.planStatusBudgetStrained,
-      BudgetSignal.overBudget => l10n.planStatusBudgetOver,
-      BudgetSignal.noData => l10n.planStatusNeedsSetup,
-      null => l10n.planStatusLoading,
-    },
-    path: FinanceRoutes.planBudget,
-    tone: switch (signal) {
-      BudgetSignal.comfortable => AppBadgeTone.success,
-      BudgetSignal.strained => AppBadgeTone.warning,
-      BudgetSignal.overBudget => AppBadgeTone.error,
-      BudgetSignal.noData || null => AppBadgeTone.neutral,
     },
   );
 }

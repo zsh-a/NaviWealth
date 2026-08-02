@@ -125,16 +125,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get planAttentionAllClearBadge => '状态良好';
+  String get planOverviewTitle => '财务展望';
 
   @override
-  String get planAttentionAllClearBody => '当前没有到期事项，进行中的计划均在轨道上。';
+  String get planMyPlansTitle => '进行中的投资计划';
 
   @override
-  String get planOverviewTitle => '规划概览';
-
-  @override
-  String get planMyPlansTitle => '我的计划';
+  String get planAddPlanAction => '添加或探索';
 
   @override
   String planExploreActiveOptions(int count) {
@@ -4110,10 +4107,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fireEditGoal => '修改目标';
 
   @override
-  String get fireDepthTitle => '压力测试与模拟';
+  String get fireDepthTitle => '财务韧性检查';
 
   @override
-  String get fireDepthSubtitle => '韧性检查与计划假设推演';
+  String get fireDepthSubtitle => '自动检查真正影响目标的风险';
 
   @override
   String fireHeroProgressLine(String progress, String current, String target) {
@@ -4582,53 +4579,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fireOsUnmappedSubtitle => '这些资产尚未归入任何类别。如需纳入计划，请配置分类规则。';
-
-  @override
-  String get fireOsSimulationsTitle => '情景模拟';
-
-  @override
-  String get fireOsSimulationsSubtitle =>
-      '选择一个预设，查看计划变化对提取率、现金储备覆盖和安全等级的影响。模拟不会修改计划。';
-
-  @override
-  String get fireOsSimulationsBaselineLabel => '基线';
-
-  @override
-  String get fireOsSimulationsPresetExpenseUp20 => '支出 +20%';
-
-  @override
-  String get fireOsSimulationsPresetExpenseDown10 => '支出 −10%';
-
-  @override
-  String get fireOsSimulationsPresetSurplusUp30 => '结余 +30%';
-
-  @override
-  String get fireOsSimulationsPresetHalfRetireIncome => '半退休 +¥5k/月';
-
-  @override
-  String get fireOsSimulationsPresetInflationUp1pp => '通胀 +1 个百分点';
-
-  @override
-  String get fireOsSimulationsPresetSwrTight => '安全提取率收紧到 3.5%';
-
-  @override
-  String get fireOsSimulationsPresetCashBucketUp24 => '现金桶目标 24 个月';
-
-  @override
-  String fireOsSimulationsDeltaWrPp(String sign, String pp) {
-    return '提取率 $sign$pp pp';
-  }
-
-  @override
-  String get fireOsSimulationsDeltaWrUnavailable => '提取率 —';
-
-  @override
-  String fireOsSimulationsDeltaCash(String sign, String months) {
-    return '现金 $sign$months 个月';
-  }
-
-  @override
-  String get fireOsSimulationsDeltaCashUnavailable => '现金 —';
 
   @override
   String get fireOsStressTitle => '压力测试';
@@ -10057,11 +10007,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ingestSummaryViewActivity => '查看活动';
 
   @override
-  String fireMilestoneReached(Object milestone) {
-    return '已跨越 FIRE 目标的 $milestone%';
-  }
-
-  @override
   String get agentResultsLoadingTitle => '助手正在整理';
 
   @override
@@ -15400,7 +15345,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeEventAskAi => '让助手解读';
 
   @override
-  String get lifeEventChooseScenario => '选择';
+  String get lifeEventChooseScenario => '保存决策';
 
   @override
   String get lifeEventOpenAction => '打开后续行动';
@@ -15551,7 +15496,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get moneyRunwayHistoricalError => '近期预测误差';
 
   @override
-  String get moneyRunwayScenariosTitle => '快速压力测试 · 最低余额';
+  String get moneyRunwayScenariosTitle => '压力测试';
 
   @override
   String get moneyRunwayScenarioPurchase => '立即支出一个月生活费';
@@ -15604,6 +15549,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get moneyRunwayScheduledEmpty => '尚未配置周期收入或账单。';
+
+  @override
+  String moneyRunwayScheduledCount(int count) {
+    return '已计入 $count 项未来收支';
+  }
 
   @override
   String get moneyRunwayDeclaredDividend => '已宣告税后股息';

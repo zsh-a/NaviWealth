@@ -40,10 +40,13 @@ Widget _wrapAsync(
   ),
 );
 
-Widget _wrapRouter(FireDashboardView view) => ProviderScope(
+Widget _wrapRouter(
+  FireDashboardView view, {
+  PlanningHubStatus? status,
+}) => ProviderScope(
   overrides: [
     fireDashboardViewProvider.overrideWith((ref) => AsyncValue.data(view)),
-    planningHubStatusProvider.overrideWith((ref) => _settledStatus()),
+    planningHubStatusProvider.overrideWith((ref) => status ?? _settledStatus()),
   ],
   child: MaterialApp.router(
     theme: AppTheme.light(),
@@ -102,9 +105,9 @@ void main() {
     expect(find.byType(PlanHubPage), findsOneWidget);
     expect(find.text(l10n.planAttentionTitle), findsOneWidget);
     expect(find.byType(SkeletonBox), findsWidgets);
-    expect(find.text(l10n.planMyPlansTitle), findsOneWidget);
-    expect(find.text(l10n.planRebalanceSectionTitle), findsOneWidget);
-    expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
+    expect(find.text(l10n.planOverviewTitle), findsOneWidget);
+    expect(find.text(l10n.planMyPlansTitle), findsNothing);
+    expect(find.text(l10n.planBudgetSectionTitle), findsNothing);
   });
 
   testWidgets('keeps the workspace usable when FIRE status errors', (
@@ -120,7 +123,8 @@ void main() {
     expect(find.byType(PlanHubPage), findsOneWidget);
     expect(find.text(l10n.planStatusUnavailable), findsOneWidget);
     expect(find.text('Bad state: fire failed'), findsNothing);
-    expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
+    expect(find.text(l10n.planOverviewTitle), findsOneWidget);
+    expect(find.text(l10n.planBudgetSectionTitle), findsNothing);
   });
 
   testWidgets('keeps unconfigured FIRE secondary to the planning workspace', (
@@ -136,9 +140,10 @@ void main() {
     expect(find.text(l10n.planAttentionTitle), findsOneWidget);
     expect(find.text(l10n.planFireGoalNotConfigured), findsOneWidget);
     expect(find.text(l10n.planFireGoalTitle), findsOneWidget);
-    expect(find.text(l10n.planRebalanceSectionTitle), findsOneWidget);
-    expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
-    expect(find.text(l10n.planDcaPlanTitle), findsOneWidget);
+    expect(find.text(l10n.planRebalanceSectionTitle), findsNothing);
+    expect(find.text(l10n.planBudgetSectionTitle), findsNothing);
+    expect(find.text(l10n.planDcaPlanTitle), findsNothing);
+    expect(find.text(l10n.planAddPlanAction), findsOneWidget);
     expect(find.text(l10n.incomePlannerTitle), findsNothing);
   });
 
@@ -193,7 +198,7 @@ void main() {
     expect(find.text('On track'), findsWidgets);
     expect(find.text('2 reviews due'), findsWidgets);
     expect(find.text('7.5% drift'), findsWidgets);
-    expect(find.text('62% used this month'), findsOneWidget);
+    expect(find.text('62% used this month'), findsNothing);
 
     await tester.scrollUntilVisible(
       find.text(l10n.incomeStrategyTitle),
@@ -220,13 +225,8 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Needs attention'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Income strategy'),
-      160,
-      scrollable: find.byType(Scrollable).last,
-    );
-    expect(find.text('Income strategy'), findsOneWidget);
+    expect(find.text('Needs attention'), findsNothing);
+    expect(find.text('Recurring investment plan'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -271,38 +271,38 @@ void main() {
     await tester.pumpWidget(_wrapRouter(_view(FireGoal.unset())));
     await tester.pump();
 
-    await tester.scrollUntilVisible(
-      find.text(l10n.incomeStrategyTitle),
-      160,
-      scrollable: find.byType(Scrollable).last,
-    );
+    await tester.tap(find.text(l10n.planAddPlanAction));
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.incomeStrategyTitle));
     await tester.pumpAndSettle();
     expect(find.text('income-route'), findsOneWidget);
   });
 
-  testWidgets('budget action navigates to budget route', (tester) async {
+  testWidgets('budget is not duplicated as a permanent planning tool', (
+    tester,
+  ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
     await tester.pumpWidget(_wrapRouter(_view(FireGoal.unset())));
     await tester.pump();
 
-    await tester.tap(find.text(l10n.planBudgetSectionTitle));
-    await tester.pumpAndSettle();
-
-    expect(find.text('budget-route'), findsOneWidget);
+    expect(find.text(l10n.planBudgetSectionTitle), findsNothing);
   });
 
   testWidgets('rebalance action navigates to rebalance route', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
-    await tester.pumpWidget(_wrapRouter(_view(FireGoal.unset())));
+    await tester.pumpWidget(
+      _wrapRouter(
+        _view(FireGoal.unset()),
+        status: _settledStatus(rebalance: PlanningRebalanceStatus.attention),
+      ),
+    );
     await tester.pump();
 
-    await tester.drag(find.byType(Scrollable).last, const Offset(0, -320));
+    await tester.drag(find.byType(Scrollable).last, const Offset(0, -200));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.planRebalanceSectionTitle));
+    await tester.tap(find.text(l10n.planRebalanceSectionTitle).last);
     await tester.pumpAndSettle();
 
     expect(find.text('rebalance-route'), findsOneWidget);

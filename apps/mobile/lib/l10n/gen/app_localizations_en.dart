@@ -129,17 +129,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get planAttentionAllClearBadge => 'On track';
+  String get planOverviewTitle => 'Financial outlook';
 
   @override
-  String get planAttentionAllClearBody =>
-      'Nothing is due right now. Your active plans are on track.';
+  String get planMyPlansTitle => 'Active investment plans';
 
   @override
-  String get planOverviewTitle => 'Planning overview';
-
-  @override
-  String get planMyPlansTitle => 'My plans';
+  String get planAddPlanAction => 'Add or explore';
 
   @override
   String planExploreActiveOptions(int count) {
@@ -4298,10 +4294,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fireEditGoal => 'Edit goal';
 
   @override
-  String get fireDepthTitle => 'Stress & simulate';
+  String get fireDepthTitle => 'Resilience checks';
 
   @override
-  String get fireDepthSubtitle => 'Resilience checks and plan what-ifs';
+  String get fireDepthSubtitle => 'Automatic checks for the risks that matter';
 
   @override
   String fireHeroProgressLine(String progress, String current, String target) {
@@ -4800,53 +4796,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get fireOsUnmappedSubtitle =>
       'These assets aren\'t part of any bucket. Map them if they should fund the plan.';
-
-  @override
-  String get fireOsSimulationsTitle => 'Simulations';
-
-  @override
-  String get fireOsSimulationsSubtitle =>
-      'Press a preset to see how a change to the plan moves WR / cash bucket coverage / safety level. Nothing is saved.';
-
-  @override
-  String get fireOsSimulationsBaselineLabel => 'Baseline';
-
-  @override
-  String get fireOsSimulationsPresetExpenseUp20 => 'Spending +20%';
-
-  @override
-  String get fireOsSimulationsPresetExpenseDown10 => 'Spending −10%';
-
-  @override
-  String get fireOsSimulationsPresetSurplusUp30 => 'Surplus +30%';
-
-  @override
-  String get fireOsSimulationsPresetHalfRetireIncome => 'Half-retire +¥5k/mo';
-
-  @override
-  String get fireOsSimulationsPresetInflationUp1pp => 'Inflation +1 pp';
-
-  @override
-  String get fireOsSimulationsPresetSwrTight => 'SWR 3.5%';
-
-  @override
-  String get fireOsSimulationsPresetCashBucketUp24 => 'Cash bucket 24 mo';
-
-  @override
-  String fireOsSimulationsDeltaWrPp(String sign, String pp) {
-    return 'WR $sign$pp pp';
-  }
-
-  @override
-  String get fireOsSimulationsDeltaWrUnavailable => 'WR —';
-
-  @override
-  String fireOsSimulationsDeltaCash(String sign, String months) {
-    return 'Cash $sign$months mo';
-  }
-
-  @override
-  String get fireOsSimulationsDeltaCashUnavailable => 'Cash —';
 
   @override
   String get fireOsStressTitle => 'Stress tests';
@@ -10597,11 +10546,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ingestSummaryViewActivity => 'View activity';
 
   @override
-  String fireMilestoneReached(Object milestone) {
-    return 'You have crossed $milestone% of your FIRE goal';
-  }
-
-  @override
   String get agentResultsLoadingTitle => 'Assistant is checking in';
 
   @override
@@ -16210,7 +16154,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lifeEventAskAi => 'Explore with assistant';
 
   @override
-  String get lifeEventChooseScenario => 'Choose';
+  String get lifeEventChooseScenario => 'Save decision';
 
   @override
   String get lifeEventOpenAction => 'Open follow-up';
@@ -16368,8 +16312,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moneyRunwayHistoricalError => 'Recent forecast error';
 
   @override
-  String get moneyRunwayScenariosTitle =>
-      'Quick stress tests · minimum balance';
+  String get moneyRunwayScenariosTitle => 'Stress test';
 
   @override
   String get moneyRunwayScenarioPurchase => 'Spend one month of expenses now';
@@ -16426,6 +16369,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get moneyRunwayScheduledEmpty =>
       'No recurring income or bills are configured.';
+
+  @override
+  String moneyRunwayScheduledCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count upcoming items included',
+      one: '1 upcoming item included',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get moneyRunwayDeclaredDividend => 'Declared after-tax dividend';

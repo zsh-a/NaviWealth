@@ -308,29 +308,23 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 item} other{{count} items}}'**
   String planAttentionCount(int count);
 
-  /// No description provided for @planAttentionAllClearBadge.
-  ///
-  /// In en, this message translates to:
-  /// **'On track'**
-  String get planAttentionAllClearBadge;
-
-  /// No description provided for @planAttentionAllClearBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Nothing is due right now. Your active plans are on track.'**
-  String get planAttentionAllClearBody;
-
   /// No description provided for @planOverviewTitle.
   ///
   /// In en, this message translates to:
-  /// **'Planning overview'**
+  /// **'Financial outlook'**
   String get planOverviewTitle;
 
   /// No description provided for @planMyPlansTitle.
   ///
   /// In en, this message translates to:
-  /// **'My plans'**
+  /// **'Active investment plans'**
   String get planMyPlansTitle;
+
+  /// No description provided for @planAddPlanAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add or explore'**
+  String get planAddPlanAction;
 
   /// No description provided for @planExploreActiveOptions.
   ///
@@ -7336,13 +7330,13 @@ abstract class AppLocalizations {
   /// Expandable FIRE depth section title
   ///
   /// In en, this message translates to:
-  /// **'Stress & simulate'**
+  /// **'Resilience checks'**
   String get fireDepthTitle;
 
   /// Expandable FIRE depth section subtitle
   ///
   /// In en, this message translates to:
-  /// **'Resilience checks and plan what-ifs'**
+  /// **'Automatic checks for the risks that matter'**
   String get fireDepthSubtitle;
 
   /// FIRE hero progress caption under the slim bar
@@ -8172,90 +8166,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'These assets aren\'t part of any bucket. Map them if they should fund the plan.'**
   String get fireOsUnmappedSubtitle;
-
-  /// No description provided for @fireOsSimulationsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Simulations'**
-  String get fireOsSimulationsTitle;
-
-  /// No description provided for @fireOsSimulationsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Press a preset to see how a change to the plan moves WR / cash bucket coverage / safety level. Nothing is saved.'**
-  String get fireOsSimulationsSubtitle;
-
-  /// No description provided for @fireOsSimulationsBaselineLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Baseline'**
-  String get fireOsSimulationsBaselineLabel;
-
-  /// No description provided for @fireOsSimulationsPresetExpenseUp20.
-  ///
-  /// In en, this message translates to:
-  /// **'Spending +20%'**
-  String get fireOsSimulationsPresetExpenseUp20;
-
-  /// No description provided for @fireOsSimulationsPresetExpenseDown10.
-  ///
-  /// In en, this message translates to:
-  /// **'Spending −10%'**
-  String get fireOsSimulationsPresetExpenseDown10;
-
-  /// No description provided for @fireOsSimulationsPresetSurplusUp30.
-  ///
-  /// In en, this message translates to:
-  /// **'Surplus +30%'**
-  String get fireOsSimulationsPresetSurplusUp30;
-
-  /// No description provided for @fireOsSimulationsPresetHalfRetireIncome.
-  ///
-  /// In en, this message translates to:
-  /// **'Half-retire +¥5k/mo'**
-  String get fireOsSimulationsPresetHalfRetireIncome;
-
-  /// No description provided for @fireOsSimulationsPresetInflationUp1pp.
-  ///
-  /// In en, this message translates to:
-  /// **'Inflation +1 pp'**
-  String get fireOsSimulationsPresetInflationUp1pp;
-
-  /// No description provided for @fireOsSimulationsPresetSwrTight.
-  ///
-  /// In en, this message translates to:
-  /// **'SWR 3.5%'**
-  String get fireOsSimulationsPresetSwrTight;
-
-  /// No description provided for @fireOsSimulationsPresetCashBucketUp24.
-  ///
-  /// In en, this message translates to:
-  /// **'Cash bucket 24 mo'**
-  String get fireOsSimulationsPresetCashBucketUp24;
-
-  /// No description provided for @fireOsSimulationsDeltaWrPp.
-  ///
-  /// In en, this message translates to:
-  /// **'WR {sign}{pp} pp'**
-  String fireOsSimulationsDeltaWrPp(String sign, String pp);
-
-  /// No description provided for @fireOsSimulationsDeltaWrUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'WR —'**
-  String get fireOsSimulationsDeltaWrUnavailable;
-
-  /// No description provided for @fireOsSimulationsDeltaCash.
-  ///
-  /// In en, this message translates to:
-  /// **'Cash {sign}{months} mo'**
-  String fireOsSimulationsDeltaCash(String sign, String months);
-
-  /// No description provided for @fireOsSimulationsDeltaCashUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Cash —'**
-  String get fireOsSimulationsDeltaCashUnavailable;
 
   /// No description provided for @fireOsStressTitle.
   ///
@@ -17806,12 +17716,6 @@ abstract class AppLocalizations {
   /// **'View activity'**
   String get ingestSummaryViewActivity;
 
-  /// FIRE milestone celebration overlay caption
-  ///
-  /// In en, this message translates to:
-  /// **'You have crossed {milestone}% of your FIRE goal'**
-  String fireMilestoneReached(Object milestone);
-
   /// Agent results panel: loading title (all domains)
   ///
   /// In en, this message translates to:
@@ -27132,7 +27036,7 @@ abstract class AppLocalizations {
   /// No description provided for @lifeEventChooseScenario.
   ///
   /// In en, this message translates to:
-  /// **'Choose'**
+  /// **'Save decision'**
   String get lifeEventChooseScenario;
 
   /// No description provided for @lifeEventOpenAction.
@@ -27414,7 +27318,7 @@ abstract class AppLocalizations {
   /// No description provided for @moneyRunwayScenariosTitle.
   ///
   /// In en, this message translates to:
-  /// **'Quick stress tests · minimum balance'**
+  /// **'Stress test'**
   String get moneyRunwayScenariosTitle;
 
   /// No description provided for @moneyRunwayScenarioPurchase.
@@ -27512,6 +27416,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No recurring income or bills are configured.'**
   String get moneyRunwayScheduledEmpty;
+
+  /// No description provided for @moneyRunwayScheduledCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 upcoming item included} other{{count} upcoming items included}}'**
+  String moneyRunwayScheduledCount(int count);
 
   /// No description provided for @moneyRunwayDeclaredDividend.
   ///

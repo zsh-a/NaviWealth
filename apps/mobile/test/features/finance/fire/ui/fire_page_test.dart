@@ -183,36 +183,29 @@ void main() {
     },
   );
 
-  for (final (signal, expectedTitle) in const [
-    (BudgetSignal.noData, 'Budget signal not available'),
-    (BudgetSignal.comfortable, 'Budget supports the plan'),
-    (BudgetSignal.strained, 'Budget pressure is rising'),
-    (BudgetSignal.overBudget, 'Monthly budget exceeded'),
-  ]) {
-    testWidgets('renders ${signal.name} budget posture on configured FIRE', (
-      tester,
-    ) async {
-      final prefs = await SharedPreferences.getInstance();
-      await tester.pumpWidget(
-        await _wrap(
-          prefs: prefs,
-          goal: FireGoal(
-            targetAmount: Decimal.parse('1000000'),
-            monthlyExpenses: Decimal.parse('4000'),
-            monthlySurplus: Decimal.parse('5000'),
-            inflationRate: 0.03,
-          ),
-          currentNetWorth: Decimal.parse('250000'),
-          budgetSignal: signal,
+  testWidgets('does not duplicate budget posture on configured FIRE', (
+    tester,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await tester.pumpWidget(
+      await _wrap(
+        prefs: prefs,
+        goal: FireGoal(
+          targetAmount: Decimal.parse('1000000'),
+          monthlyExpenses: Decimal.parse('4000'),
+          monthlySurplus: Decimal.parse('5000'),
+          inflationRate: 0.03,
         ),
-      );
-      await _pumpFrames(tester);
+        currentNetWorth: Decimal.parse('250000'),
+        budgetSignal: BudgetSignal.overBudget,
+      ),
+    );
+    await _pumpFrames(tester);
 
-      expect(find.byKey(const ValueKey('fire-budget-posture')), findsOneWidget);
-      expect(find.text(expectedTitle), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    });
-  }
+    expect(find.byKey(const ValueKey('fire-budget-posture')), findsNothing);
+    expect(find.text('Monthly budget exceeded'), findsNothing);
+    expect(find.byType(FireStateHeroCard), findsOneWidget);
+  });
 
   testWidgets('saves a goal entered in the goal sheet', (tester) async {
     final prefs = await SharedPreferences.getInstance();

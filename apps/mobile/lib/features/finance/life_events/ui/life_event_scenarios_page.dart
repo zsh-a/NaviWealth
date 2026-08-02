@@ -172,6 +172,61 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
     final groundedOutcome = exactFireDelay == null
         ? outcome
         : outcome.withFireDelay(exactFireDelay);
+    Future<void> saveDecision() async {
+      final now = DateTime.now();
+      final reviewDate = await _chooseReviewDate(context, now);
+      if (reviewDate == null || !mounted) return;
+      setState(() => _saving = true);
+      try {
+        await ref
+            .read(productMetricsProvider.notifier)
+            .record(ProductFunnelEvent.lifeEventCompared);
+        final repository = await ref.read(
+          financialDecisionRepositoryProvider.future,
+        );
+        final decision = await repository.create(
+          template: widget.template,
+          selectedVariant: _selectedVariant,
+          baseline: widget.baseline,
+          assumptions: assumptions,
+          outcome: groundedOutcome,
+          reviewDate: reviewDate,
+          now: now,
+        );
+        final actionId = await ref.read(lifeActionDispatcherProvider)(
+          LifeActionDraft(
+            title: l10n.lifeEventReviewActionTitle(
+              _templateLabel(l10n, widget.template),
+            ),
+            note: l10n.lifeEventReviewActionBody,
+            sourceDomain: 'finance',
+            sourceRowFamily: 'financial_decisions',
+            sourceRowId: decision.id,
+            dueAt: decision.reviewDate,
+          ),
+        );
+        if (actionId != null) {
+          await repository.linkAction(id: decision.id, actionId: actionId);
+        }
+        await ref
+            .read(productMetricsProvider.notifier)
+            .record(ProductFunnelEvent.financialDecisionSaved);
+        if (context.mounted) {
+          AppMessenger.show(
+            context,
+            ToastKind.success,
+            l10n.lifeEventDecisionSaved,
+          );
+        }
+      } catch (_) {
+        if (context.mounted) {
+          AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
+        }
+      } finally {
+        if (mounted) setState(() => _saving = false);
+      }
+    }
+
     Widget variantTile(LifeEventVariant variant) {
       return Semantics(
         selected: variant == _selectedVariant,
@@ -291,119 +346,55 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
                   ? l10n.lifeEventFireNoDelay
                   : l10n.lifeEventFireDelay(exactFireDelay),
             ),
-          FButton(
-            variant: FButtonVariant.ghost,
-            onPress: () async {
-              final edited = await _editAssumptions(
-                context,
-                l10n,
-                baseAssumptions,
-              );
-              if (edited != null && mounted) {
-                setState(() => _editedAssumptions = edited);
-              }
-            },
-            child: Text(l10n.lifeEventEditAssumptions),
-          ),
           const SizedBox(height: AppSpacing.s10),
-          Row(
-            children: [
-              Expanded(
-                child: FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => askAi(
+          FButton(
+            onPress: _saving ? null : saveDecision,
+            child: Text(l10n.lifeEventChooseScenario),
+          ),
+          const SizedBox(height: AppSpacing.s6),
+          AppAdaptiveActionMenu(
+            title: l10n.shellMoreActions,
+            actions: [
+              AppAdaptiveAction(
+                icon: FLucideIcons.slidersHorizontal,
+                title: l10n.lifeEventEditAssumptions,
+                onPress: () async {
+                  final edited = await _editAssumptions(
                     context,
-                    ref,
-                    intent: 'explain_financial_life_event',
-                    objectLabel: _templateLabel(l10n, widget.template),
-                    attrs: {
-                      'template': widget.template.name,
-                      'assumptions': assumptions.toJson(),
-                      'deterministic_outcome': groundedOutcome.toJson(),
-                      'fire_delay_months': exactFireDelay,
-                      'instruction':
-                          'Explain only from these deterministic results and ask about missing assumptions.',
-                    },
-                  ),
-                  child: Text(l10n.lifeEventAskAi),
-                ),
+                    l10n,
+                    baseAssumptions,
+                  );
+                  if (edited != null && mounted) {
+                    setState(() => _editedAssumptions = edited);
+                  }
+                },
               ),
-              const SizedBox(width: AppSpacing.s8),
-              Expanded(
-                child: FButton(
-                  onPress: _saving
-                      ? null
-                      : () async {
-                          final now = DateTime.now();
-                          final reviewDate = await _chooseReviewDate(
-                            context,
-                            now,
-                          );
-                          if (reviewDate == null || !mounted) return;
-                          setState(() => _saving = true);
-                          try {
-                            await ref
-                                .read(productMetricsProvider.notifier)
-                                .record(ProductFunnelEvent.lifeEventCompared);
-                            final repository = await ref.read(
-                              financialDecisionRepositoryProvider.future,
-                            );
-                            final decision = await repository.create(
-                              template: widget.template,
-                              selectedVariant: _selectedVariant,
-                              baseline: widget.baseline,
-                              assumptions: assumptions,
-                              outcome: groundedOutcome,
-                              reviewDate: reviewDate,
-                              now: now,
-                            );
-                            final actionId =
-                                await ref.read(lifeActionDispatcherProvider)(
-                                  LifeActionDraft(
-                                    title: l10n.lifeEventReviewActionTitle(
-                                      _templateLabel(l10n, widget.template),
-                                    ),
-                                    note: l10n.lifeEventReviewActionBody,
-                                    sourceDomain: 'finance',
-                                    sourceRowFamily: 'financial_decisions',
-                                    sourceRowId: decision.id,
-                                    dueAt: decision.reviewDate,
-                                  ),
-                                );
-                            if (actionId != null) {
-                              await repository.linkAction(
-                                id: decision.id,
-                                actionId: actionId,
-                              );
-                            }
-                            await ref
-                                .read(productMetricsProvider.notifier)
-                                .record(
-                                  ProductFunnelEvent.financialDecisionSaved,
-                                );
-                            if (context.mounted) {
-                              AppMessenger.show(
-                                context,
-                                ToastKind.success,
-                                l10n.lifeEventDecisionSaved,
-                              );
-                            }
-                          } catch (_) {
-                            if (context.mounted) {
-                              AppMessenger.show(
-                                context,
-                                ToastKind.error,
-                                l10n.commonSaveFailed,
-                              );
-                            }
-                          } finally {
-                            if (mounted) setState(() => _saving = false);
-                          }
-                        },
-                  child: Text(l10n.lifeEventChooseScenario),
+              AppAdaptiveAction(
+                icon: FLucideIcons.sparkles,
+                title: l10n.lifeEventAskAi,
+                onPress: () => askAi(
+                  context,
+                  ref,
+                  intent: 'explain_financial_life_event',
+                  objectLabel: _templateLabel(l10n, widget.template),
+                  attrs: {
+                    'template': widget.template.name,
+                    'assumptions': assumptions.toJson(),
+                    'deterministic_outcome': groundedOutcome.toJson(),
+                    'fire_delay_months': exactFireDelay,
+                    'instruction':
+                        'Explain only from these deterministic results and ask about missing assumptions.',
+                  },
                 ),
               ),
             ],
+            triggerBuilder: (context, openMenu, focusNode) => FButton(
+              variant: FButtonVariant.ghost,
+              focusNode: focusNode,
+              onPress: openMenu,
+              prefix: const Icon(FLucideIcons.ellipsis, size: AppIconSizes.sm),
+              child: Text(l10n.shellMoreActions),
+            ),
           ),
         ],
       ),

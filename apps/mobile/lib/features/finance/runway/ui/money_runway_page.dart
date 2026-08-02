@@ -157,40 +157,37 @@ class _RunwayContent extends ConsumerWidget {
         const SizedBox(height: AppSpacing.s16),
         _RunwayAssumptions(snapshot: snapshot),
         const SizedBox(height: AppSpacing.s16),
-        Text(l10n.moneyRunwayScheduledTitle, style: context.mutedLabelStyle),
-        const SizedBox(height: AppSpacing.s8),
-        if (snapshot.scheduledFlows.isEmpty)
-          SoftCard.flat(
-            padding: AppPageRhythm.densePadding,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.moneyRunwayScheduledEmpty,
-                  style: context.captionStyle,
+        SoftCard.flat(
+          onPress: () => context.push(FinanceRoutes.cashflowRecurring),
+          padding: AppPageRhythm.densePadding,
+          child: Row(
+            children: [
+              const Icon(FLucideIcons.calendarSync, size: AppIconSizes.md),
+              const SizedBox(width: AppSpacing.s10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.moneyRunwayScheduledTitle,
+                      style: context.labelStyle,
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(
+                      snapshot.scheduledFlows.isEmpty
+                          ? l10n.moneyRunwayScheduledEmpty
+                          : l10n.moneyRunwayScheduledCount(
+                              snapshot.scheduledFlows.length,
+                            ),
+                      style: context.captionStyle,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.s8),
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: () => context.push(FinanceRoutes.cashflowRecurring),
-                  child: Text(l10n.recurringListTitle),
-                ),
-              ],
-            ),
-          )
-        else
-          SoftCard.flat(
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                for (var i = 0; i < snapshot.scheduledFlows.length; i++) ...[
-                  _ScheduledFlowRow(flow: snapshot.scheduledFlows[i]),
-                  if (i < snapshot.scheduledFlows.length - 1)
-                    const AppDivider(horizontalPadding: 0),
-                ],
-              ],
-            ),
+              ),
+              const Icon(FLucideIcons.chevronRight, size: AppIconSizes.sm),
+            ],
           ),
+        ),
         if (snapshot.missingCurrencies.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
           Text(
@@ -370,31 +367,6 @@ class _ScenarioSectionState extends ConsumerState<_ScenarioSection> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final formatter = context.formatters(ref);
-    final scenarios = <(String, MoneyRunwaySnapshot)>[
-      (
-        l10n.moneyRunwayScenarioPurchase,
-        applyMoneyRunwayScenario(
-          widget.snapshot,
-          MoneyRunwayScenario.largePurchase(
-            widget.snapshot.averageMonthlyExpense,
-          ),
-        ),
-      ),
-      (
-        l10n.moneyRunwayScenarioDelayedIncome,
-        applyMoneyRunwayScenario(
-          widget.snapshot,
-          MoneyRunwayScenario.delayedIncome(14),
-        ),
-      ),
-      (
-        l10n.moneyRunwayScenarioReducedIncome,
-        applyMoneyRunwayScenario(
-          widget.snapshot,
-          MoneyRunwayScenario.reducedIncome(reduction: Decimal.parse('0.3')),
-        ),
-      ),
-    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -409,26 +381,6 @@ class _ScenarioSectionState extends ConsumerState<_ScenarioSection> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              for (final scenario in scenarios) ...[
-                SoftCard.flat(
-                  padding: const EdgeInsets.all(AppSpacing.s12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(scenario.$1, style: context.labelStyle),
-                      ),
-                      Text(
-                        formatter.compactCurrency(
-                          scenario.$2.minimumExpectedBalance,
-                          code: scenario.$2.currency,
-                        ),
-                        style: TypographyTokens.numericBodyStrong,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.s8),
-              ],
               FButton(
                 variant: FButtonVariant.outline,
                 onPress: _configureCustomScenario,
@@ -690,52 +642,6 @@ class _CustomRunwayScenarioSheetState
           scaleOnInfinitePrecision: 4,
         ),
         reductionDurationDays: durationDays,
-      ),
-    );
-  }
-}
-
-class _ScheduledFlowRow extends ConsumerWidget {
-  const _ScheduledFlowRow({required this.flow});
-
-  final RunwayScheduledFlow flow;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final formatter = context.formatters(ref);
-    final label = flow.kind == RunwayFlowKind.dividend
-        ? flow.certainty == RunwayFlowCertainty.known
-              ? l10n.moneyRunwayDeclaredDividend
-              : l10n.moneyRunwayEstimatedDividend
-        : flow.label;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s14,
-        vertical: AppSpacing.s12,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: context.labelStyle),
-                const SizedBox(height: AppSpacing.s2),
-                Text(
-                  flow.certainty == RunwayFlowCertainty.estimated
-                      ? '${formatter.date(flow.date.toLocal())} · ${l10n.moneyRunwayEstimatedFlow}'
-                      : formatter.date(flow.date.toLocal()),
-                  style: context.captionStyle,
-                ),
-              ],
-            ),
-          ),
-          Text(
-            formatter.currency(flow.amount),
-            style: TypographyTokens.numericBodyStrong,
-          ),
-        ],
       ),
     );
   }
