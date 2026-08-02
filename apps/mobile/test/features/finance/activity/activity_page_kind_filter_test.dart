@@ -10,6 +10,9 @@ import 'package:naviwealth/features/finance/activity/data/activity_feed_query.da
 import 'package:naviwealth/features/finance/activity/ui/activity_page.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+late SharedPreferences _preferences;
 
 GoRouter _router() {
   return GoRouter(
@@ -52,6 +55,7 @@ Widget _wrap({required ProviderContainer container, double textScale = 1}) {
 ProviderContainer _container() {
   return ProviderContainer(
     overrides: [
+      sharedPreferencesProvider.overrideWithValue(_preferences),
       accountsStreamProvider.overrideWith((_) => Stream.value(const [])),
       activityFeedProvider.overrideWith(
         (_) => Stream.value(
@@ -69,6 +73,11 @@ ProviderContainer _container() {
 }
 
 void main() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    _preferences = await SharedPreferences.getInstance();
+  });
+
   testWidgets('mobile shell shows a semantic filter summary and header add', (
     tester,
   ) async {

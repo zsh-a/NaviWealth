@@ -96,19 +96,23 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
         : const _HealthActivationCard();
     return ShellTabScaffold(
       title: l10n.healthTodayTitle,
-      actions: [
-        ShellHeaderActionSpec(
-          icon: FLucideIcons.scale,
-          label: l10n.healthRecordBodyMetricAction,
-          onPress: () async {
-            final saved = await showBodyMeasurementEntrySheet(
-              context: context,
-              initialKind: HealthMetricKind.weight,
-            );
-            if (saved == true) ref.invalidate(healthTodaySnapshotProvider);
-          },
-        ),
-      ],
+      actions: dataReady
+          ? [
+              ShellHeaderActionSpec(
+                icon: FLucideIcons.scale,
+                label: l10n.healthRecordBodyMetricAction,
+                onPress: () async {
+                  final saved = await showBodyMeasurementEntrySheet(
+                    context: context,
+                    initialKind: HealthMetricKind.weight,
+                  );
+                  if (saved == true) {
+                    ref.invalidate(healthTodaySnapshotProvider);
+                  }
+                },
+              ),
+            ]
+          : const [],
       child: ShellTabPause(
         routePath: HealthRoutes.today,
         child: BriefScaffold(
@@ -288,30 +292,36 @@ class _HealthActivationCardState extends ConsumerState<_HealthActivationCard> {
                 ),
               ],
               const SizedBox(height: AppSpacing.s12),
-              SizedBox(
-                width: double.infinity,
-                child: FButton(
-                  onPress: _running ? null : _activatePlatform,
-                  child: _running
-                      ? const FCircularProgress()
-                      : Text(l10n.healthActivationAction),
+              AppAdaptiveActionMenu(
+                title: l10n.healthActivationTitle,
+                subtitle: l10n.healthActivationBody,
+                actions: [
+                  AppAdaptiveAction(
+                    icon: FLucideIcons.heartPulse,
+                    title: l10n.healthActivationAction,
+                    onPress: _activatePlatform,
+                  ),
+                  AppAdaptiveAction(
+                    icon: FLucideIcons.watch,
+                    title: l10n.healthActivationGarminAction,
+                    onPress: _activateGarmin,
+                  ),
+                  AppAdaptiveAction(
+                    icon: FLucideIcons.pencil,
+                    title: l10n.healthActivationManualAction,
+                    onPress: _recordManually,
+                  ),
+                ],
+                triggerBuilder: (context, openMenu, focusNode) => SizedBox(
+                  width: double.infinity,
+                  child: FButton(
+                    focusNode: focusNode,
+                    onPress: _running ? null : openMenu,
+                    child: _running
+                        ? const FCircularProgress()
+                        : Text(l10n.healthActivationTitle),
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.s8),
-              SizedBox(
-                width: double.infinity,
-                child: FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: _running ? null : _activateGarmin,
-                  child: Text(l10n.healthActivationGarminAction),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.s6),
-              AppQuietButton(
-                label: l10n.healthActivationManualAction,
-                onPress: _running ? null : _recordManually,
-                prefix: const Icon(FLucideIcons.pencil),
-                expanded: true,
               ),
             ],
           ),
@@ -355,13 +365,17 @@ class _HealthDataFreshnessBanner extends ConsumerWidget {
     final stale =
         DateTime.now().toUtc().difference(latest.toUtc()) >
         const Duration(hours: 36);
+    if (!stale) {
+      return AppStatusLine(
+        message: l10n.healthRefreshFresh(_ago(l10n, latest)),
+        icon: FLucideIcons.refreshCw,
+      );
+    }
     return AppStatusBanner(
-      message: stale
-          ? l10n.healthRefreshStale(_ago(l10n, latest))
-          : l10n.healthRefreshFresh(_ago(l10n, latest)),
+      message: l10n.healthRefreshStale(_ago(l10n, latest)),
       details: l10n.healthRefreshPullHint,
-      kind: stale ? AppStatusKind.warning : AppStatusKind.neutral,
-      icon: stale ? FLucideIcons.clockAlert : FLucideIcons.refreshCw,
+      kind: AppStatusKind.warning,
+      icon: FLucideIcons.clockAlert,
       compact: true,
     );
   }

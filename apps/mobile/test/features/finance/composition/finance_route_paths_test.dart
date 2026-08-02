@@ -30,4 +30,24 @@ void main() {
     expect(decoded?.fromGroupId, intent.fromGroupId);
     expect(decoded?.toGroupId, intent.toGroupId);
   });
+
+  test('portfolio assignment pages preserve optional workflow context', () {
+    final lots = Uri.parse(
+      FinanceRoutes.wealthPortfolioAssignLotsFor(
+        preferredGroupId: 'core/sleeve',
+      ),
+    );
+    final cash = Uri.parse(
+      FinanceRoutes.wealthPortfolioAssignCashFor(
+        preferredGroupId: 'income',
+        suggestedAmount: '1250.50',
+      ),
+    );
+
+    expect(lots.path, FinanceRoutes.wealthPortfolioAssignLots);
+    expect(lots.queryParameters['group'], 'core/sleeve');
+    expect(cash.path, FinanceRoutes.wealthPortfolioAssignCash);
+    expect(cash.queryParameters['group'], 'income');
+    expect(cash.queryParameters['amount'], '1250.50');
+  });
 }

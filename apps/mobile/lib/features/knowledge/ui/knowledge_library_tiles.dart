@@ -162,10 +162,8 @@ Widget _buildDecisionTile(
     statusBadge: decisionStatusLabelOf(AppLocalizations.of(context), d.status),
     typeIcon: FLucideIcons.gitBranch,
     typeColor: colors.primary,
-    onPress: () => context.pushNamed(
-      KnowledgeRouteNames.decisionDetail,
-      pathParameters: {'id': d.id},
-    ),
+    onPress: () =>
+        _openKnowledgeLibraryDetail(context, kind: 'decision', id: d.id),
     onDelete: onDelete,
     subtitle: subtitle,
   );
@@ -195,10 +193,7 @@ Widget _buildNoteTile(
     itemKey: itemKey,
     typeIcon: FLucideIcons.fileText,
     typeColor: colors.mutedForeground,
-    onPress: () => context.pushNamed(
-      KnowledgeRouteNames.objectDetail,
-      pathParameters: {'kind': 'note', 'id': n.id},
-    ),
+    onPress: () => _openKnowledgeLibraryDetail(context, kind: 'note', id: n.id),
     onDelete: onDelete,
     subtitle: subtitle,
   );
@@ -233,10 +228,8 @@ Widget _buildPrincipleTile(
     typeColor: context.appTheme.categorical.adapt(
       KnowledgeTypeColors.principle,
     ),
-    onPress: () => context.pushNamed(
-      KnowledgeRouteNames.objectDetail,
-      pathParameters: {'kind': 'principle', 'id': p.id},
-    ),
+    onPress: () =>
+        _openKnowledgeLibraryDetail(context, kind: 'principle', id: p.id),
     onDelete: onDelete,
     subtitle: subtitle,
   );
@@ -269,10 +262,8 @@ Widget _buildAssumptionTile(
     typeColor: context.appTheme.categorical.adapt(
       KnowledgeTypeColors.assumption,
     ),
-    onPress: () => context.pushNamed(
-      KnowledgeRouteNames.objectDetail,
-      pathParameters: {'kind': 'assumption', 'id': a.id},
-    ),
+    onPress: () =>
+        _openKnowledgeLibraryDetail(context, kind: 'assumption', id: a.id),
     onDelete: onDelete,
     subtitle: subtitle,
   );
@@ -300,10 +291,8 @@ Widget _buildConceptTile(
     itemKey: itemKey,
     typeIcon: FLucideIcons.folderTree,
     typeColor: context.appTheme.categorical.adapt(KnowledgeTypeColors.concept),
-    onPress: () => context.pushNamed(
-      KnowledgeRouteNames.objectDetail,
-      pathParameters: {'kind': 'concept', 'id': c.id},
-    ),
+    onPress: () =>
+        _openKnowledgeLibraryDetail(context, kind: 'concept', id: c.id),
     onDelete: onDelete,
     subtitle: subtitle,
   );
@@ -326,10 +315,8 @@ Widget _buildExperimentTile(
     typeColor: context.appTheme.categorical.adapt(
       KnowledgeTypeColors.experiment,
     ),
-    onPress: () => context.pushNamed(
-      KnowledgeRouteNames.objectDetail,
-      pathParameters: {'kind': 'experiment', 'id': e.id},
-    ),
+    onPress: () =>
+        _openKnowledgeLibraryDetail(context, kind: 'experiment', id: e.id),
     onDelete: onDelete,
   );
 }
@@ -365,10 +352,8 @@ Widget _buildRoutineTile(
     statusBadge: routineStatusLabel(AppLocalizations.of(context), r.status),
     typeIcon: FLucideIcons.calendarClock,
     typeColor: context.appTheme.categorical.adapt(KnowledgeTypeColors.routine),
-    onPress: () => context.pushNamed(
-      KnowledgeRouteNames.objectDetail,
-      pathParameters: {'kind': 'routine', 'id': r.id},
-    ),
+    onPress: () =>
+        _openKnowledgeLibraryDetail(context, kind: 'routine', id: r.id),
     onDelete: onDelete,
     subtitle: subtitle,
   );

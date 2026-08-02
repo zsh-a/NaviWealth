@@ -30,13 +30,8 @@ class ExecutionTodayPage extends ConsumerWidget {
     return ShellTabScaffold(
       title: l10n.executionTodayTitle,
       collapseOnScroll: false,
-      directActionBudget: 2,
+      directActionBudget: 1,
       actions: [
-        ShellHeaderActionSpec(
-          icon: FLucideIcons.plus,
-          label: l10n.executionCreateActionTitle,
-          onPress: () => showExecutionActionSheet(context: context),
-        ),
         ShellHeaderActionSpec(
           icon: FLucideIcons.history,
           label: l10n.executionReviewTitle,
@@ -222,19 +217,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
                 message: _filter == ExecutionTodayFilter.focus
                     ? l10n.executionTodayEmptyBody
                     : l10n.executionTodayFilteredEmptyBody,
-                action: _filter == ExecutionTodayFilter.focus
-                    ? FButton(
-                        onPress: () =>
-                            showExecutionActionSheet(context: context),
-                        child: Flexible(
-                          child: Text(
-                            l10n.executionCreateActionTitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      )
-                    : null,
+                action: null,
               ),
           ],
         ];

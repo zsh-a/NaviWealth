@@ -11,6 +11,8 @@ abstract final class SettingsRoutes {
   static const logs = '/settings/logs';
   static const performance = '/settings/performance';
   static const sync = '/settings/sync';
+  static const ai = '/settings/ai';
+  static const advanced = '/settings/advanced';
   static const aiTransparency = '/settings/ai-transparency';
   // §5.10.2 — AI chat is no longer a tab; sessions are read/replay-only
   // under Settings as part of the AI audit surface.
@@ -46,6 +48,8 @@ abstract final class SettingsRouteNames {
   static const logs = 'logs';
   static const performance = 'performance';
   static const sync = 'sync';
+  static const ai = 'ai';
+  static const advanced = 'advanced';
   static const aiTransparency = 'ai-transparency';
   static const aiTransparencyDetail = 'ai-transparency-detail';
   static const aiHistory = 'ai-history';

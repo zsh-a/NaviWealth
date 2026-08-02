@@ -73,6 +73,7 @@ export 'widgets/app_reveal_control.dart';
 export 'widgets/app_section.dart';
 export 'widgets/app_sheet.dart';
 export 'widgets/app_status_banner.dart';
+export 'widgets/app_status_line.dart';
 export 'widgets/app_tappable.dart';
 export 'widgets/app_task_scaffold.dart';
 export 'widgets/app_toast.dart';

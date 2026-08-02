@@ -91,14 +91,14 @@ class _InboxTriageStatus extends ConsumerWidget {
     final aiAvailable = ref.watch(deviceLlmAvailableProvider);
     final pending = ref.watch(_knowledgeInboxPendingSuggestionsProvider);
     final count = pending.value ?? 0;
-    if (aiAvailable && count == 0 && !pending.isLoading && !pending.hasError) {
+    if ((!aiAvailable || count == 0) &&
+        !pending.isLoading &&
+        !pending.hasError) {
       return const SizedBox.shrink();
     }
     final message = count > 0
         ? l10n.knowledgeInboxSuggestionsPending(count)
-        : aiAvailable
-        ? l10n.knowledgeInboxSuggestionsLoading
-        : l10n.knowledgeInboxAiUnavailable;
+        : l10n.knowledgeInboxSuggestionsLoading;
     final route = count > 0 ? KnowledgeRoutes.review : SettingsRoutes.aiLlm;
     return Padding(
       padding: const EdgeInsets.fromLTRB(

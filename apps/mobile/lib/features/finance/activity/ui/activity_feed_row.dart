@@ -29,6 +29,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
     required this.formatter,
     this.compact = false,
     this.showTime = true,
+    this.onPress,
   });
 
   final JournalEntryWithPostings entry;
@@ -41,6 +42,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
   /// Journal-style surfaces already group rows by date and can omit the
   /// redundant time line while keeping the same row hierarchy.
   final bool showTime;
+  final VoidCallback? onPress;
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +87,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
       label: semantics,
       excludeSemantics: true,
       child: AppTappable(
-        onPress: () => _openDetail(context),
+        onPress: onPress ?? () => _openDetail(context),
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: padH, vertical: padV),
           child: Row(
@@ -187,6 +189,7 @@ class ActivityFeedEntrySurface extends StatelessWidget {
     required this.isFirstInGroup,
     required this.isLastInGroup,
     this.showTime = true,
+    this.onPress,
   });
 
   final JournalEntryWithPostings entry;
@@ -195,6 +198,7 @@ class ActivityFeedEntrySurface extends StatelessWidget {
   final bool isFirstInGroup;
   final bool isLastInGroup;
   final bool showTime;
+  final VoidCallback? onPress;
 
   @override
   Widget build(BuildContext context) {
@@ -215,6 +219,7 @@ class ActivityFeedEntrySurface extends StatelessWidget {
             accountsById: accountsById,
             formatter: formatter,
             showTime: showTime,
+            onPress: onPress,
           ),
           if (!isLastInGroup) const AppGroupedDivider(indent: AppSpacing.s56),
         ],

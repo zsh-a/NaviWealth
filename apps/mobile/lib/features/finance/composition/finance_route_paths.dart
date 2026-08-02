@@ -78,6 +78,8 @@ abstract final class FinanceRoutes {
   static const wealthLiabilityNew = '/wealth/liabilities/new';
   static const wealthPortfolio = '/wealth/portfolio';
   static const wealthPortfolioStudio = '/wealth/portfolio/:portfolioId/studio';
+  static const wealthPortfolioAssignLots = '/wealth/portfolio/assign/positions';
+  static const wealthPortfolioAssignCash = '/wealth/portfolio/assign/cash';
   static const wealthWatchlist = '/wealth/watchlist';
 
   static const planFire = '/plan/fire';
@@ -110,6 +112,22 @@ abstract final class FinanceRoutes {
         ? path
         : Uri(path: path, queryParameters: query).toString();
   }
+
+  static String wealthPortfolioAssignLotsFor({String? preferredGroupId}) => Uri(
+    path: wealthPortfolioAssignLots,
+    queryParameters: <String, String>{'group': ?preferredGroupId},
+  ).toString();
+
+  static String wealthPortfolioAssignCashFor({
+    String? preferredGroupId,
+    String? suggestedAmount,
+  }) => Uri(
+    path: wealthPortfolioAssignCash,
+    queryParameters: <String, String>{
+      'group': ?preferredGroupId,
+      'amount': ?suggestedAmount,
+    },
+  ).toString();
 
   static String wealthAssetEdit(String id) =>
       '/wealth/assets/${Uri.encodeComponent(id)}/edit';
@@ -200,6 +218,8 @@ abstract final class FinanceRouteNames {
   static const wealthLiabilityDetail = 'wealth-liability-detail';
   static const wealthPortfolio = 'wealth-portfolio';
   static const wealthPortfolioStudio = 'wealth-portfolio-studio';
+  static const wealthPortfolioAssignLots = 'wealth-portfolio-assign-lots';
+  static const wealthPortfolioAssignCash = 'wealth-portfolio-assign-cash';
   static const wealthWatchlist = 'wealth-watchlist';
 
   static const plan = 'plan';

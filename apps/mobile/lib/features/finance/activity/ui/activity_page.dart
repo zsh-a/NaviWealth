@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/core/shell/master_detail_layout.dart';
+import 'package:naviwealth/core/shell/selection_query.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/core/shell/shell_visibility.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -14,6 +16,7 @@ import '../../shared/l10n/entry_kind_labels.dart';
 import '../data/activity_feed_provider.dart';
 import '../data/activity_feed_query.dart';
 import 'activity_action_panel.dart';
+import 'activity_entry_detail_page.dart';
 import 'activity_feed.dart';
 import 'activity_feed_filter_sheet.dart';
 
@@ -81,19 +84,46 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
           order: 40,
         ),
       ],
-      child: const ShellTabPause(
+      child: ShellTabPause(
         routePath: FinanceRoutes.activity,
-        placeholder: ActivityFeedSkeleton(),
-        child: AdaptiveContentFrame(
-          maxWidth: AdaptiveMaxWidth.narrow,
-          expandSinglePrimary: true,
-          padding: EdgeInsets.zero,
-          primary: Column(
-            children: [
-              _ActivityFilterBar(),
-              Expanded(child: ActivityFeed()),
-            ],
-          ),
+        placeholder: const ActivityFeedSkeleton(),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            Widget feed({ValueChanged<String>? onEntryOpen}) =>
+                AdaptiveContentFrame(
+                  maxWidth: AdaptiveMaxWidth.narrow,
+                  expandSinglePrimary: true,
+                  padding: EdgeInsets.zero,
+                  primary: Column(
+                    children: [
+                      const _ActivityFilterBar(),
+                      Expanded(child: ActivityFeed(onEntryOpen: onEntryOpen)),
+                    ],
+                  ),
+                );
+            if (GoRouter.maybeOf(context) == null ||
+                !MasterDetailLayout.shouldUseMasterDetail(
+                  constraints.maxWidth,
+                )) {
+              return feed();
+            }
+            final selected = selectedQueryOf(context);
+            return MasterDetailLayout(
+              master: feed(
+                onEntryOpen: (entryId) => replaceSelectedQuery(
+                  context,
+                  path: FinanceRoutes.activity,
+                  selected: entryId,
+                ),
+              ),
+              detail: selected == null
+                  ? MasterDetailEmpty(
+                      message: l10n.activitySelectEntry,
+                      icon: FLucideIcons.receiptText,
+                    )
+                  : ActivityEntryDetailRoute(entryId: selected),
+            );
+          },
         ),
       ),
     );

@@ -12487,6 +12487,12 @@ abstract class AppLocalizations {
   /// **'No activity yet — record a transfer, expense, or trade and it will appear here.'**
   String get activityFeedEmpty;
 
+  /// No description provided for @activitySelectEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an entry to inspect it without leaving the timeline'**
+  String get activitySelectEntry;
+
   /// Trade entry: warning dialog title when buy would overdraw cash
   ///
   /// In en, this message translates to:
@@ -12756,6 +12762,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'AI'**
   String get settingsAiSection;
+
+  /// No description provided for @settingsAiHubTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI & device intelligence'**
+  String get settingsAiHubTitle;
+
+  /// No description provided for @settingsAiHubSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Providers, local models, agents, privacy, and activity'**
+  String get settingsAiHubSubtitle;
+
+  /// No description provided for @settingsAiHubRuntimeSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Runtime'**
+  String get settingsAiHubRuntimeSection;
+
+  /// No description provided for @settingsAiHubTrustSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy & transparency'**
+  String get settingsAiHubTrustSection;
+
+  /// No description provided for @settingsAdvancedHubTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced diagnostics'**
+  String get settingsAdvancedHubTitle;
+
+  /// No description provided for @settingsAdvancedHubSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs and performance tools'**
+  String get settingsAdvancedHubSubtitle;
 
   /// Settings section header for the About tile (version, commit, etc.)
   ///
@@ -18681,6 +18723,12 @@ abstract class AppLocalizations {
   /// **'Watchlist'**
   String get watchlistTitle;
 
+  /// No description provided for @watchlistSelectItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a symbol to inspect its quote and alert rules'**
+  String get watchlistSelectItem;
+
   /// Accounts hub entry subtitle for watchlist
   ///
   /// In en, this message translates to:
@@ -21606,7 +21654,7 @@ abstract class AppLocalizations {
   /// KnowledgeOS Inbox tab title
   ///
   /// In en, this message translates to:
-  /// **'Inbox · KnowledgeOS'**
+  /// **'Inbox'**
   String get knowledgeInboxTitle;
 
   /// No description provided for @knowledgeInboxSuggestionsPending.
@@ -22098,7 +22146,7 @@ abstract class AppLocalizations {
   /// Placeholder in the KnowledgeOS AI prompt bar
   ///
   /// In en, this message translates to:
-  /// **'Capture something or ask a question...'**
+  /// **'Ask or search your knowledge...'**
   String get knowledgeAiPromptHint;
 
   /// Knowledge AI quick action: deduplicate notes
@@ -22140,8 +22188,14 @@ abstract class AppLocalizations {
   /// KnowledgeOS Library tab title
   ///
   /// In en, this message translates to:
-  /// **'Library · KnowledgeOS'**
+  /// **'Library'**
   String get knowledgeLibraryTitle;
+
+  /// No description provided for @knowledgeLibrarySelectItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an item to keep browsing while you read'**
+  String get knowledgeLibrarySelectItem;
 
   /// No description provided for @knowledgeLibraryEmptyAllTitle.
   ///
@@ -23775,6 +23829,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Plans'**
   String get executionCommitmentsTitle;
+
+  /// No description provided for @executionPlansSelectItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a project or commitment to review it here'**
+  String get executionPlansSelectItem;
 
   /// No description provided for @executionReviewTitle.
   ///

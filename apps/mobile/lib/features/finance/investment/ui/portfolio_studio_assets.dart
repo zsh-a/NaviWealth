@@ -48,15 +48,17 @@ Future<void> _showPortfolioAssetSourceSheet(
   if (!context.mounted || source == null) return;
   switch (source) {
     case _PortfolioAssetSource.positions:
-      await showPortfolioLotAssignmentSheet(
-        context,
-        preferredGroupId: preferredGroupId,
+      await context.push(
+        FinanceRoutes.wealthPortfolioAssignLotsFor(
+          preferredGroupId: preferredGroupId,
+        ),
       );
     case _PortfolioAssetSource.cash:
-      await showPortfolioCashAssignmentSheet(
-        context,
-        preferredGroupId: preferredGroupId,
-        suggestedAmount: suggestedAmount,
+      await context.push(
+        FinanceRoutes.wealthPortfolioAssignCashFor(
+          preferredGroupId: preferredGroupId,
+          suggestedAmount: suggestedAmount?.toString(),
+        ),
       );
   }
 }

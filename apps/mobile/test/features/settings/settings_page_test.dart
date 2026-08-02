@@ -10,8 +10,11 @@ import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/security/biometric_auth_service.dart';
 import 'package:naviwealth/core/security/biometric_lock_preferences.dart';
+import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
+import 'package:naviwealth/features/settings/ui/advanced_settings_page.dart';
+import 'package:naviwealth/features/settings/ui/ai/ai_settings_hub_page.dart';
 import 'package:naviwealth/features/settings/ui/data_management/data_management_page.dart';
 import 'package:naviwealth/features/settings/ui/domains_settings_page.dart';
 import 'package:naviwealth/features/settings/ui/settings_page.dart';
@@ -60,6 +63,16 @@ GoRouter _router({
             path: 'data-management',
             name: AppRouteNames.dataManagement,
             builder: (_, _) => const DataManagementPage(),
+          ),
+          GoRoute(
+            path: 'ai',
+            name: SettingsRouteNames.ai,
+            builder: (_, _) => const AiSettingsHubPage(),
+          ),
+          GoRoute(
+            path: 'advanced',
+            name: SettingsRouteNames.advanced,
+            builder: (_, _) => const AdvancedSettingsPage(),
           ),
           for (final pack in resolvedPacks)
             if (pack.settingsSpec?.routeBuilder != null)
@@ -218,6 +231,43 @@ void main() {
         expect(find.text('Green up / red down (Intl)'), findsOneWidget);
       },
     );
+  });
+
+  group('Settings → Progressive disclosure', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    _testWidgets('keeps AI and diagnostics details off the root page', (
+      tester,
+    ) async {
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        await _wrap(prefs, initialLocation: AppRoutes.settings),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('AI & device intelligence'), findsOneWidget);
+      expect(find.text('AI privacy'), findsNothing);
+      expect(find.text('AI Models'), findsNothing);
+      expect(find.text('App Logs'), findsNothing);
+
+      await tester.ensureVisible(find.text('AI & device intelligence'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('AI & device intelligence'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('AI privacy'), findsOneWidget);
+      expect(find.text('AI Models'), findsOneWidget);
+      expect(find.text('Agents'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('app.back')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Advanced diagnostics'));
+      await tester.tap(find.text('Advanced diagnostics'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('App Logs'), findsOneWidget);
+      expect(find.text('Performance'), findsOneWidget);
+    });
   });
 
   group('Settings → Domains', () {

@@ -20,7 +20,9 @@ import 'activity_feed_row.dart';
 
 /// Timeline feed grouped by calendar day with day totals and infinite scroll.
 class ActivityFeed extends ConsumerWidget {
-  const ActivityFeed({super.key});
+  const ActivityFeed({super.key, this.onEntryOpen});
+
+  final ValueChanged<String>? onEntryOpen;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -72,6 +74,7 @@ class ActivityFeed extends ConsumerWidget {
             formatter: formatter,
             l10n: l10n,
             hasMore: page.hasMore,
+            onEntryOpen: onEntryOpen,
           ),
         );
       },
@@ -110,6 +113,7 @@ class _FeedList extends ConsumerStatefulWidget {
     required this.formatter,
     required this.l10n,
     required this.hasMore,
+    required this.onEntryOpen,
   });
 
   final List<ActivityDaySection> groups;
@@ -118,6 +122,7 @@ class _FeedList extends ConsumerStatefulWidget {
   final AppFormatters formatter;
   final AppLocalizations l10n;
   final bool hasMore;
+  final ValueChanged<String>? onEntryOpen;
 
   @override
   ConsumerState<_FeedList> createState() => _FeedListState();
@@ -209,6 +214,7 @@ class _FeedListState extends ConsumerState<_FeedList> {
                 isLastInDay: isLastInDay,
                 accountsById: widget.accountsById,
                 formatter: widget.formatter,
+                onEntryOpen: widget.onEntryOpen,
               ),
             _FeedFooterItem() => _FeedFooter(
               canLoadMore: widget.hasMore,
@@ -285,6 +291,7 @@ class _VirtualizedDayEntry extends ConsumerWidget {
     required this.isLastInDay,
     required this.accountsById,
     required this.formatter,
+    required this.onEntryOpen,
   });
 
   final JournalEntryWithPostings entry;
@@ -292,6 +299,7 @@ class _VirtualizedDayEntry extends ConsumerWidget {
   final bool isLastInDay;
   final Map<String, Account> accountsById;
   final AppFormatters formatter;
+  final ValueChanged<String>? onEntryOpen;
 
   /// Swipe-to-delete on the highest-traffic list (audit §1): same confirm
   /// dialog + soft-delete + undo toast as the detail page.
@@ -371,6 +379,9 @@ class _VirtualizedDayEntry extends ConsumerWidget {
           entry: entry,
           accountsById: accountsById,
           formatter: formatter,
+          onPress: onEntryOpen == null
+              ? null
+              : () => onEntryOpen!(entry.entry.id),
           isFirstInGroup: isFirstInDay,
           isLastInGroup: isLastInDay,
         ),

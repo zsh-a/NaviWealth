@@ -66,7 +66,8 @@ void main() {
     await tester.pumpWidget(_wrap(mismatches: const []));
     await tester.pumpAndSettle();
 
-    expect(find.byType(AppStatusBanner), findsOneWidget);
+    expect(find.byType(AppStatusLine), findsOneWidget);
+    expect(find.byType(AppStatusBanner), findsNothing);
     expect(find.textContaining('Daily close'), findsOneWidget);
   });
 

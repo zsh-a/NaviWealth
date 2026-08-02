@@ -134,6 +134,8 @@ abstract final class AppRoutes {
   static const settingsLogs = SettingsRoutes.logs;
   static const settingsPerformance = SettingsRoutes.performance;
   static const settingsSync = SettingsRoutes.sync;
+  static const settingsAi = SettingsRoutes.ai;
+  static const settingsAdvanced = SettingsRoutes.advanced;
   static const settingsAiTransparency = SettingsRoutes.aiTransparency;
   static const settingsAiHistory = SettingsRoutes.aiHistory;
   static const settingsAiPrivacy = SettingsRoutes.aiPrivacy;
@@ -193,6 +195,8 @@ abstract final class AppRouteNames {
   static const logs = SettingsRouteNames.logs;
   static const performance = SettingsRouteNames.performance;
   static const sync = SettingsRouteNames.sync;
+  static const ai = SettingsRouteNames.ai;
+  static const advanced = SettingsRouteNames.advanced;
   static const aiTransparency = SettingsRouteNames.aiTransparency;
   static const aiTransparencyDetail = SettingsRouteNames.aiTransparencyDetail;
   static const aiHistory = SettingsRouteNames.aiHistory;

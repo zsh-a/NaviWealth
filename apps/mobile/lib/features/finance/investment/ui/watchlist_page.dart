@@ -5,11 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/forms/form_dirty_guard.dart';
 import 'package:naviwealth/core/forms/form_submission.dart';
 import 'package:naviwealth/core/logging/providers.dart';
+import 'package:naviwealth/core/shell/master_detail_layout.dart';
+import 'package:naviwealth/core/shell/selection_query.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/symbol_field.dart';
@@ -189,7 +193,7 @@ class _WatchlistBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final byId = {for (final snapshot in snapshots) snapshot.item.id: snapshot};
-    return AdaptiveContentFrame(
+    Widget list({ValueChanged<String>? onSelect}) => AdaptiveContentFrame(
       maxWidth: AdaptiveMaxWidth.narrow,
       expandSinglePrimary: true,
       primary: ListView(
@@ -216,6 +220,9 @@ class _WatchlistBody extends StatelessWidget {
                       loadingQuote: loadingQuotes && byId[items[i].id] == null,
                       onEdit: () => onEdit(items[i]),
                       onRemove: () => onRemove(items[i]),
+                      onSelect: onSelect == null
+                          ? null
+                          : () => onSelect(items[i].id),
                     ),
                     if (i != items.length - 1)
                       const AppGroupedDivider(
@@ -228,6 +235,40 @@ class _WatchlistBody extends StatelessWidget {
             ),
         ],
       ),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (GoRouter.maybeOf(context) == null ||
+            !MasterDetailLayout.shouldUseMasterDetail(constraints.maxWidth) ||
+            items.isEmpty) {
+          return list();
+        }
+        final selectedId = selectedQueryOf(context);
+        final selectedItem = items
+            .where((item) => item.id == selectedId)
+            .firstOrNull;
+        return MasterDetailLayout(
+          master: list(
+            onSelect: (id) => replaceSelectedQuery(
+              context,
+              path: FinanceRoutes.wealthWatchlist,
+              selected: id,
+            ),
+          ),
+          detail: selectedItem == null
+              ? MasterDetailEmpty(
+                  message: AppLocalizations.of(context).watchlistSelectItem,
+                  icon: FLucideIcons.bellRing,
+                )
+              : _WatchlistDetail(
+                  item: selectedItem,
+                  snapshot: byId[selectedItem.id],
+                  loadingQuote: loadingQuotes && byId[selectedItem.id] == null,
+                  onEdit: () => onEdit(selectedItem),
+                  onRemove: () => onRemove(selectedItem),
+                ),
+        );
+      },
     );
   }
 }
@@ -256,6 +297,7 @@ class _WatchlistRow extends StatelessWidget {
     required this.loadingQuote,
     required this.onEdit,
     required this.onRemove,
+    this.onSelect,
   });
 
   final WatchlistItem item;
@@ -263,6 +305,7 @@ class _WatchlistRow extends StatelessWidget {
   final bool loadingQuote;
   final VoidCallback onEdit;
   final VoidCallback onRemove;
+  final VoidCallback? onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -295,15 +338,23 @@ class _WatchlistRow extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.s12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.displaySymbol, style: context.labelStyle),
-                    Text(
-                      _marketLabel(l10n, item.market),
-                      style: context.captionStyle,
+                child: AppTappable(
+                  onPress: onSelect,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.s8,
                     ),
-                  ],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item.displaySymbol, style: context.labelStyle),
+                        Text(
+                          _marketLabel(l10n, item.market),
+                          style: context.captionStyle,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               if (loadingQuote)
@@ -375,6 +426,78 @@ class _WatchlistRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _WatchlistDetail extends StatelessWidget {
+  const _WatchlistDetail({
+    required this.item,
+    required this.snapshot,
+    required this.loadingQuote,
+    required this.onEdit,
+    required this.onRemove,
+  });
+
+  final WatchlistItem item;
+  final WatchlistQuoteSnapshot? snapshot;
+  final bool loadingQuote;
+  final VoidCallback onEdit;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final quote = snapshot?.quote;
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.s24),
+      children: [
+        Text(item.displaySymbol, style: context.theme.typography.body.xl),
+        const SizedBox(height: AppSpacing.s4),
+        Text(_marketLabel(l10n, item.market), style: context.captionStyle),
+        const SizedBox(height: AppSpacing.s24),
+        if (loadingQuote)
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: FCircularProgress(),
+          )
+        else if (quote == null)
+          Text(
+            l10n.watchlistPriceUnavailable,
+            style: context.theme.typography.body.md,
+          )
+        else
+          MoneyText(
+            amount: quote.price.toDouble(),
+            currencyCode: quote.currency,
+            style: context.theme.typography.body.xl,
+          ),
+        const SizedBox(height: AppSpacing.s16),
+        Wrap(
+          spacing: AppSpacing.s8,
+          runSpacing: AppSpacing.s8,
+          children: [
+            _FreshnessChip(snapshot: snapshot),
+            if (item.alertRules.above case final above?)
+              _RuleChip(label: l10n.watchlistAlertAboveChip(above.toString())),
+            if (item.alertRules.below case final below?)
+              _RuleChip(label: l10n.watchlistAlertBelowChip(below.toString())),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s24),
+        FButton(
+          onPress: onEdit,
+          prefix: const Icon(FLucideIcons.bell),
+          child: Text(l10n.watchlistEditAlertsAction),
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        FButton(
+          variant: FButtonVariant.ghost,
+          onPress: onRemove,
+          prefix: const Icon(FLucideIcons.trash2),
+          child: Text(l10n.watchlistRemoveAction),
+        ),
+      ],
     );
   }
 }

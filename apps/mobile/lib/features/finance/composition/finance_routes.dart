@@ -283,6 +283,33 @@ StatefulShellRoute financeShellRoute() {
                 ),
                 routes: [
                   GoRoute(
+                    path: 'assign/positions',
+                    name: FinanceRouteNames.wealthPortfolioAssignLots,
+                    builder: (context, state) => DeferredRoute(
+                      load: portfolio_hub_lib.loadLibrary,
+                      builder: (_) =>
+                          portfolio_hub_lib.PortfolioLotAssignmentPage(
+                            preferredGroupId:
+                                state.uri.queryParameters['group'],
+                          ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'assign/cash',
+                    name: FinanceRouteNames.wealthPortfolioAssignCash,
+                    builder: (context, state) => DeferredRoute(
+                      load: portfolio_hub_lib.loadLibrary,
+                      builder: (_) =>
+                          portfolio_hub_lib.PortfolioCashAssignmentPage(
+                            preferredGroupId:
+                                state.uri.queryParameters['group'],
+                            suggestedAmount: Decimal.tryParse(
+                              state.uri.queryParameters['amount'] ?? '',
+                            ),
+                          ),
+                    ),
+                  ),
+                  GoRoute(
                     path: 'dividends',
                     name: FinanceRouteNames.cashflowDividends,
                     builder: (context, state) => DividendCenterPage(

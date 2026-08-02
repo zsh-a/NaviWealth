@@ -14,6 +14,8 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/current_user.dart';
+import '../../../core/shell/master_detail_layout.dart';
+import '../../../core/shell/selection_query.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../core/sync/mutation_context.dart';
@@ -30,6 +32,8 @@ import '_object_writers.dart';
 import '_routine_writer.dart';
 import '_widgets.dart';
 import 'knowledge_capture_sheet.dart';
+import 'knowledge_decision_detail_page.dart';
+import 'knowledge_object_detail_page.dart';
 import 'knowledge_status_labels.dart';
 
 part 'knowledge_library_actions.dart';
@@ -161,6 +165,17 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
       _loadSearchHistory();
     }
     final l10n = AppLocalizations.of(context);
+    final library = _KnowledgeMasterDetailScope(
+      enabled: false,
+      child: AppAtmosphere(
+        child: AdaptiveContentFrame(
+          maxWidth: Breakpoints.readingColumn,
+          expandSinglePrimary: true,
+          padding: shellTabContentPadding(context, top: AppSpacing.s8),
+          primary: _buildLibraryContent(l10n),
+        ),
+      ),
+    );
     // Blueprint §8.2: creation lives in the page header; FAB retired.
     return ShellTabScaffold(
       title: l10n.knowledgeLibraryTitle,
@@ -177,82 +192,162 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
       ],
       child: ShellTabPause(
         routePath: KnowledgeRoutes.library,
-        child: AppAtmosphere(
-          child: AdaptiveContentFrame(
-            maxWidth: Breakpoints.readingColumn,
-            expandSinglePrimary: true,
-            padding: shellTabContentPadding(context, top: AppSpacing.s8),
-            primary: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Focus(
-                        onKeyEvent: _onSearchKey,
-                        child: FTextField(
-                          control: FTextFieldControl.managed(
-                            controller: _searchCtrl,
-                          ),
-                          focusNode: _searchFocus,
-                          textInputAction: TextInputAction.search,
-                          prefixBuilder: (_, _, _) => const Padding(
-                            padding: EdgeInsetsDirectional.only(
-                              start: AppSpacing.s12,
-                              end: AppSpacing.s8,
-                            ),
-                            child: Icon(
-                              FLucideIcons.search,
-                              size: AppIconSizes.h18,
-                            ),
-                          ),
-                          hint: l10n.knowledgeLibrarySearchSegmentHint(
-                            _segmentLabel(l10n, _segment),
-                          ),
-                        ),
-                      ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (GoRouter.maybeOf(context) == null ||
+                !MasterDetailLayout.shouldUseMasterDetail(
+                  constraints.maxWidth,
+                )) {
+              return library;
+            }
+            return MasterDetailLayout(
+              master: _KnowledgeMasterDetailScope(
+                enabled: true,
+                child: AppAtmosphere(
+                  child: AdaptiveContentFrame(
+                    maxWidth: Breakpoints.readingColumn,
+                    expandSinglePrimary: true,
+                    padding: shellTabContentPadding(
+                      context,
+                      top: AppSpacing.s8,
                     ),
-                    if (_searchCtrl.text.isNotEmpty) ...[
-                      const SizedBox(width: AppSpacing.s8),
-                      FButton.icon(
-                        variant: FButtonVariant.ghost,
-                        onPress: _searchCtrl.clear,
-                        child: const Icon(FLucideIcons.x),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.s12),
-                _LibraryTabBar(
-                  selected: _segment,
-                  onChanged: (s) => setState(() => _segment = s),
-                ),
-                const SizedBox(height: AppSpacing.s12),
-                Expanded(
-                  child: _LibraryList(
-                    segment: _segment,
-                    segmentLabel: _segmentLabel(l10n, _segment),
-                    createLabel: _createLabel(l10n, _segment),
-                    onCreate: () => _segment == _LibrarySegment.all
-                        ? _openCreateSheet(context, ref)
-                        : _createForSegment(context, ref, _segment),
-                    onSegmentChanged: (segment) =>
-                        setState(() => _segment = segment),
-                    query: _searchQuery,
-                    searchHistory: _searchHistory,
-                    onSearchSelected: _applySearch,
-                    onSearchHistoryClear: _clearSearchHistory,
-                    onSearchHistoryItemDelete: _removeSearchHistoryItem,
-                    onRefresh: () => _refreshKnowledgeRepository(ref),
+                    primary: _buildLibraryContent(l10n),
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+              detail: _knowledgeLibraryDetail(
+                context,
+                selectedQueryOf(context),
+              ),
+            );
+          },
         ),
       ),
     );
   }
+
+  Widget _buildLibraryContent(AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Focus(
+                onKeyEvent: _onSearchKey,
+                child: FTextField(
+                  control: FTextFieldControl.managed(controller: _searchCtrl),
+                  focusNode: _searchFocus,
+                  textInputAction: TextInputAction.search,
+                  prefixBuilder: (_, _, _) => const Padding(
+                    padding: EdgeInsetsDirectional.only(
+                      start: AppSpacing.s12,
+                      end: AppSpacing.s8,
+                    ),
+                    child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
+                  ),
+                  hint: l10n.knowledgeLibrarySearchSegmentHint(
+                    _segmentLabel(l10n, _segment),
+                  ),
+                ),
+              ),
+            ),
+            if (_searchCtrl.text.isNotEmpty) ...[
+              const SizedBox(width: AppSpacing.s8),
+              FButton.icon(
+                variant: FButtonVariant.ghost,
+                onPress: _searchCtrl.clear,
+                child: const Icon(FLucideIcons.x),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        _LibraryTabBar(
+          selected: _segment,
+          onChanged: (segment) => setState(() => _segment = segment),
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        Expanded(
+          child: _LibraryList(
+            segment: _segment,
+            segmentLabel: _segmentLabel(l10n, _segment),
+            createLabel: _createLabel(l10n, _segment),
+            onCreate: () => _segment == _LibrarySegment.all
+                ? _openCreateSheet(context, ref)
+                : _createForSegment(context, ref, _segment),
+            onSegmentChanged: (segment) => setState(() => _segment = segment),
+            query: _searchQuery,
+            searchHistory: _searchHistory,
+            onSearchSelected: _applySearch,
+            onSearchHistoryClear: _clearSearchHistory,
+            onSearchHistoryItemDelete: _removeSearchHistoryItem,
+            onRefresh: () => _refreshKnowledgeRepository(ref),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _KnowledgeMasterDetailScope extends InheritedWidget {
+  const _KnowledgeMasterDetailScope({
+    required this.enabled,
+    required super.child,
+  });
+
+  final bool enabled;
+
+  static bool of(BuildContext context) =>
+      context
+          .dependOnInheritedWidgetOfExactType<_KnowledgeMasterDetailScope>()
+          ?.enabled ??
+      false;
+
+  @override
+  bool updateShouldNotify(_KnowledgeMasterDetailScope oldWidget) =>
+      enabled != oldWidget.enabled;
+}
+
+Widget _knowledgeLibraryDetail(BuildContext context, String? selected) {
+  final separator = selected?.indexOf(':') ?? -1;
+  if (selected == null || separator <= 0 || separator == selected.length - 1) {
+    return MasterDetailEmpty(
+      message: AppLocalizations.of(context).knowledgeLibrarySelectItem,
+      icon: FLucideIcons.library,
+    );
+  }
+  final kind = selected.substring(0, separator);
+  final id = selected.substring(separator + 1);
+  return kind == 'decision'
+      ? KnowledgeDecisionDetailPage(decisionId: id)
+      : KnowledgeObjectDetailPage(kind: kind, id: id);
+}
+
+void _openKnowledgeLibraryDetail(
+  BuildContext context, {
+  required String kind,
+  required String id,
+}) {
+  if (_KnowledgeMasterDetailScope.of(context)) {
+    replaceSelectedQuery(
+      context,
+      path: KnowledgeRoutes.library,
+      selected: '$kind:$id',
+    );
+    return;
+  }
+  if (kind == 'decision') {
+    context.pushNamed(
+      KnowledgeRouteNames.decisionDetail,
+      pathParameters: {'id': id},
+    );
+    return;
+  }
+  context.pushNamed(
+    KnowledgeRouteNames.objectDetail,
+    pathParameters: {'kind': kind, 'id': id},
+  );
 }
 
 /// Icon-only FAB that opens the knowledge type picker sheet.

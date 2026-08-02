@@ -53,6 +53,8 @@ void main() {
   testWidgets('keeps capture in the shared shell header', (tester) async {
     await pumpInbox(tester);
 
+    expect(find.text('Inbox'), findsWidgets);
+    expect(find.text('Inbox · KnowledgeOS'), findsNothing);
     expect(find.byIcon(FLucideIcons.plus), findsOneWidget);
   });
 }

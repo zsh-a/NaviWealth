@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/shell/master_detail_layout.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/knowledge/composition/knowledge_route_paths.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
@@ -141,6 +144,13 @@ void main() {
     expect(find.text('Keep raw observations and sources'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('uses a browsing detail pane on desktop', (tester) async {
+    await _pumpLibrary(tester, width: 1400, withRouter: true);
+
+    expect(find.byType(MasterDetailLayout), findsOneWidget);
+    expect(find.textContaining('Select an item'), findsOneWidget);
+  });
 }
 
 Future<void> _pumpLibrary(
@@ -148,6 +158,7 @@ Future<void> _pumpLibrary(
   required double width,
   double textScale = 1,
   KnowledgeRepository? repository,
+  bool withRouter = false,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = Size(width, 844);
@@ -156,6 +167,40 @@ Future<void> _pumpLibrary(
   SharedPreferences.setMockInitialValues(<String, Object>{});
   final preferences = await SharedPreferences.getInstance();
 
+  final page = FTheme(
+    data: FThemes.slate.light.desktop,
+    child: const KnowledgeLibraryPage(),
+  );
+  GoRouter? router;
+  final Widget app;
+  if (withRouter) {
+    router = GoRouter(
+      initialLocation: KnowledgeRoutes.library,
+      routes: [GoRoute(path: KnowledgeRoutes.library, builder: (_, _) => page)],
+    );
+    addTearDown(router.dispose);
+    app = MaterialApp.router(
+      routerConfig: router,
+      theme: AppTheme.light(),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('en', 'US'),
+    );
+  } else {
+    app = MaterialApp(
+      theme: AppTheme.light(),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('en', 'US'),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        child: child!,
+      ),
+      home: page,
+    );
+  }
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -166,22 +211,7 @@ Future<void> _pumpLibrary(
           (_) async => repository ?? _EmptyKnowledgeRepository(),
         ),
       ],
-      child: MaterialApp(
-        theme: AppTheme.light(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('en', 'US'),
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(textScale)),
-          child: child!,
-        ),
-        home: FTheme(
-          data: FThemes.slate.light.desktop,
-          child: const KnowledgeLibraryPage(),
-        ),
-      ),
+      child: app,
     ),
   );
   await tester.pumpAndSettle();

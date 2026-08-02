@@ -196,7 +196,11 @@ void main() {
     await tester.pump();
 
     expect(find.text('On track'), findsWidgets);
-    expect(find.text('2 reviews due'), findsWidgets);
+    expect(
+      find.text('2 reviews due'),
+      findsOneWidget,
+      reason: 'The promoted next decision must not repeat in the plan list.',
+    );
     expect(find.text('7.5% drift'), findsWidgets);
     expect(find.text('62% used this month'), findsNothing);
 

@@ -26,7 +26,7 @@ class _AccountSection extends ConsumerWidget {
           icon: FLucideIcons.monitor,
           label: l10n.settingsDevicesTitle,
           subtitle: l10n.settingsDevicesSubtitle,
-          onTap: () => context.goNamed(SettingsRouteNames.devices),
+          onTap: () => context.pushNamed(SettingsRouteNames.devices),
         ),
         const AppGradientDivider(),
         InlineLinkRow(

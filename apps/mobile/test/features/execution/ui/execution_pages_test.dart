@@ -28,35 +28,33 @@ import '../../../core/persistence/test_database.dart';
 import '../../finance/data/repositories/_stub_stamper.dart';
 
 void main() {
-  testWidgets(
-    'Today keeps core actions reachable by keyboard with enlarged text',
-    (tester) async {
-      tester.view.physicalSize = const Size(390, 844);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets('Today keeps review reachable and leaves creation to Plans', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(
-        _wrap(
-          const ExecutionTodayPage(),
-          textScaler: const TextScaler.linear(2),
-          overrides: _executionOverrides(),
-        ),
-      );
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      _wrap(
+        const ExecutionTodayPage(),
+        textScaler: const TextScaler.linear(2),
+        overrides: _executionOverrides(),
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      expect(find.bySemanticsLabel('New Action'), findsWidgets);
-      expect(find.bySemanticsLabel('Review'), findsWidgets);
-      expect(tester.takeException(), isNull);
+    expect(find.bySemanticsLabel('Review'), findsWidgets);
+    expect(find.bySemanticsLabel('New Action'), findsNothing);
+    expect(find.text('New Action'), findsNothing);
+    expect(tester.takeException(), isNull);
 
-      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-      await tester.pumpAndSettle();
-
-      expect(find.text('New Action'), findsWidgets);
-      expect(tester.takeException(), isNull);
-    },
-  );
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    expect(FocusManager.instance.primaryFocus, isNotNull);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('Today keeps unscheduled backlog out of the daily workspace', (
     tester,

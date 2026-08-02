@@ -18,10 +18,12 @@ import '../../features/auth/ui/login_page.dart';
 import '../../features/auth/ui/onboarding_page.dart';
 import '../../features/life/composition/life_route_paths.dart';
 import '../../features/life/ui/life_page.dart';
+import '../../features/settings/ui/advanced_settings_page.dart';
 import '../../features/settings/ui/agents_settings_page.dart';
 import '../../features/settings/ui/ai/ai_llm_credentials_page.dart';
 import '../../features/settings/ui/ai/ai_models_page.dart';
 import '../../features/settings/ui/ai/ai_privacy_page.dart';
+import '../../features/settings/ui/ai/ai_settings_hub_page.dart';
 import '../../features/settings/ui/ai/ai_transparency_page.dart';
 import '../../features/settings/ui/backup/backup_page.dart';
 import '../../features/settings/ui/data_management/data_management_page.dart';
@@ -203,6 +205,16 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
         path: 'sync',
         name: SettingsRouteNames.sync,
         builder: (context, state) => _backSafe(const SyncStatusPage()),
+      ),
+      GoRoute(
+        path: 'ai',
+        name: SettingsRouteNames.ai,
+        builder: (context, state) => _backSafe(const AiSettingsHubPage()),
+      ),
+      GoRoute(
+        path: 'advanced',
+        name: SettingsRouteNames.advanced,
+        builder: (context, state) => _backSafe(const AdvancedSettingsPage()),
       ),
       GoRoute(
         path: 'domains',

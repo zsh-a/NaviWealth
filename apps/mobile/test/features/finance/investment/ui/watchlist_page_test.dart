@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
+import 'package:naviwealth/core/shell/master_detail_layout.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
 import 'package:naviwealth/features/finance/investment/ui/watchlist_page.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final _item = WatchlistItem(
   id: 'us_stock:AAPL',
@@ -94,5 +98,54 @@ void main() {
     expect(find.text('Alerts'), findsOneWidget);
     expect(find.text('Remove'), findsOneWidget);
     semantics.dispose();
+  });
+
+  testWidgets('uses a persistent quote detail pane on desktop', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
+    final router = GoRouter(
+      initialLocation: FinanceRoutes.wealthWatchlist,
+      routes: [
+        GoRoute(
+          path: FinanceRoutes.wealthWatchlist,
+          builder: (_, _) => FTheme(
+            data: buildAppForuiTheme(
+              brightness: Brightness.light,
+              touch: false,
+            ),
+            child: const WatchlistPage(),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          watchlistItemsProvider.overrideWith((_) => Stream.value([_item])),
+          watchlistQuoteSnapshotsProvider.overrideWith((_) async => const []),
+        ],
+        child: MaterialApp.router(
+          routerConfig: router,
+          theme: AppTheme.light().copyWith(platform: TargetPlatform.macOS),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en', 'US'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MasterDetailLayout), findsOneWidget);
+    expect(find.textContaining('Select a symbol'), findsOneWidget);
+    await tester.tap(find.text('AAPL').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('AAPL'), findsNWidgets(2));
+    expect(find.text('Alerts'), findsOneWidget);
   });
 }

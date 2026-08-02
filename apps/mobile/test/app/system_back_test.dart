@@ -26,6 +26,7 @@ import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -361,6 +362,8 @@ void main() {
       AppRoutes.spending: AppRoutes.activity,
       AppRoutes.wealthPortfolio: AppRoutes.wealth,
       AppRoutes.wealthWatchlist: AppRoutes.wealth,
+      FinanceRoutes.wealthPortfolioAssignLots: AppRoutes.wealthPortfolio,
+      FinanceRoutes.wealthPortfolioAssignCash: AppRoutes.wealthPortfolio,
     };
     cases.forEach((deep, parent) {
       testWidgets('go($deep) → system back → $parent', (tester) async {

@@ -7407,6 +7407,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'No activity yet — record a transfer, expense, or trade and it will appear here.';
 
   @override
+  String get activitySelectEntry =>
+      'Select an entry to inspect it without leaving the timeline';
+
+  @override
   String get tradeEntryCashOverdrawTitle => 'Cash balance will go negative';
 
   @override
@@ -7584,6 +7588,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAiSection => 'AI';
+
+  @override
+  String get settingsAiHubTitle => 'AI & device intelligence';
+
+  @override
+  String get settingsAiHubSubtitle =>
+      'Providers, local models, agents, privacy, and activity';
+
+  @override
+  String get settingsAiHubRuntimeSection => 'Runtime';
+
+  @override
+  String get settingsAiHubTrustSection => 'Privacy & transparency';
+
+  @override
+  String get settingsAdvancedHubTitle => 'Advanced diagnostics';
+
+  @override
+  String get settingsAdvancedHubSubtitle => 'Logs and performance tools';
 
   @override
   String get settingsAboutSection => 'About';
@@ -11118,6 +11141,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistTitle => 'Watchlist';
 
   @override
+  String get watchlistSelectItem =>
+      'Select a symbol to inspect its quote and alert rules';
+
+  @override
   String get watchlistAccountsEntrySubtitle =>
       'Track symbols and local price alerts';
 
@@ -12861,7 +12888,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get knowledgeInboxTitle => 'Inbox · KnowledgeOS';
+  String get knowledgeInboxTitle => 'Inbox';
 
   @override
   String knowledgeInboxSuggestionsPending(int count) {
@@ -13147,7 +13174,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get knowledgeAiPromptHint => 'Capture something or ask a question...';
+  String get knowledgeAiPromptHint => 'Ask or search your knowledge...';
 
   @override
   String get knowledgeAiDedupeAction => 'Deduplicate';
@@ -13170,7 +13197,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeAiSearchPrompt => 'Search my knowledge base: ';
 
   @override
-  String get knowledgeLibraryTitle => 'Library · KnowledgeOS';
+  String get knowledgeLibraryTitle => 'Library';
+
+  @override
+  String get knowledgeLibrarySelectItem =>
+      'Select an item to keep browsing while you read';
 
   @override
   String get knowledgeLibraryEmptyAllTitle => 'No knowledge yet';
@@ -14135,6 +14166,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionCommitmentsTitle => 'Plans';
+
+  @override
+  String get executionPlansSelectItem =>
+      'Select a project or commitment to review it here';
 
   @override
   String get executionReviewTitle => 'Review';

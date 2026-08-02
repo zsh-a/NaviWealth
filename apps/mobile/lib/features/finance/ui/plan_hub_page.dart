@@ -59,7 +59,11 @@ class PlanHubPage extends ConsumerWidget {
                   _NextActionSection(status: status, items: attentionItems),
                   const SizedBox(height: AppSpacing.s20),
                 ],
-                _PlanningSections(status: status, fire: fire),
+                _PlanningSections(
+                  status: status,
+                  fire: fire,
+                  excludedPath: attentionItems.firstOrNull?.path,
+                ),
               ],
             ),
           ),
@@ -240,10 +244,15 @@ class _AttentionSkeleton extends StatelessWidget {
 }
 
 class _PlanningSections extends StatelessWidget {
-  const _PlanningSections({required this.status, required this.fire});
+  const _PlanningSections({
+    required this.status,
+    required this.fire,
+    required this.excludedPath,
+  });
 
   final PlanningHubStatus status;
   final AsyncValue<FireDashboardView> fire;
+  final String? excludedPath;
 
   @override
   Widget build(BuildContext context) {
@@ -252,7 +261,7 @@ class _PlanningSections extends StatelessWidget {
     final outlook = <_PlanEntrySpec>[
       _runwayEntry(l10n, status),
       _fireEntry(l10n, formatters, fire),
-    ];
+    ].where((entry) => entry.path != excludedPath).toList(growable: false);
     final investments = <_PlanEntrySpec>[
       if ((status.dcaPlanCount ?? 0) > 0) _dcaEntry(context, l10n, status),
       if (status.rebalance == PlanningRebalanceStatus.attention ||
@@ -260,7 +269,7 @@ class _PlanningSections extends StatelessWidget {
         _rebalanceEntry(l10n, status),
       if (!kIsWeb && (status.wheelCycleCount ?? 0) > 0)
         _incomeStrategyEntry(l10n, status),
-    ];
+    ].where((entry) => entry.path != excludedPath).toList(growable: false);
     final reviews = <_PlanEntrySpec>[
       if ((status.pendingLifeEventReviews ?? 0) > 0)
         _PlanEntrySpec(
@@ -278,7 +287,7 @@ class _PlanningSections extends StatelessWidget {
               ? AppBadgeTone.warning
               : AppBadgeTone.success,
         ),
-    ];
+    ].where((entry) => entry.path != excludedPath).toList(growable: false);
     final overviewSpan = investments.isNotEmpty || reviews.isNotEmpty
         ? AdaptiveSummaryTileRole.supporting
         : AdaptiveSummaryTileRole.continuous;

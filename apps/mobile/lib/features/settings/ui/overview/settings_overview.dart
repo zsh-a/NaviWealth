@@ -56,43 +56,11 @@ class SettingsOverview extends ConsumerWidget {
     );
     final aiGroup = _Section(
       title: l10n.settingsAiSection,
-      child: Column(
-        children: [
-          InlineLinkRow(
-            icon: FLucideIcons.lock,
-            label: l10n.settingsAiPrivacyTitle,
-            subtitle: l10n.settingsAiPrivacySubtitle,
-            onTap: () => context.goNamed(SettingsRouteNames.aiPrivacy),
-          ),
-          const AppGradientDivider(),
-          InlineLinkRow(
-            icon: FLucideIcons.key,
-            label: l10n.settingsAiLlmTitle,
-            subtitle: l10n.settingsAiLlmSubtitle,
-            onTap: () => context.goNamed(SettingsRouteNames.aiLlm),
-          ),
-          const AppGradientDivider(),
-          InlineLinkRow(
-            icon: FLucideIcons.eye,
-            label: l10n.settingsAiTransparencyTitle,
-            subtitle: l10n.settingsAiTransparencySubtitle,
-            onTap: () => context.goNamed(SettingsRouteNames.aiTransparency),
-          ),
-          const AppGradientDivider(),
-          InlineLinkRow(
-            icon: FLucideIcons.download,
-            label: l10n.settingsAiModelsTitle,
-            subtitle: l10n.settingsAiModelsSubtitle,
-            onTap: () => context.goNamed(SettingsRouteNames.aiModels),
-          ),
-          const AppGradientDivider(),
-          InlineLinkRow(
-            icon: FLucideIcons.bot,
-            label: l10n.agentSettingsTitle,
-            subtitle: l10n.agentSettingsSubtitle,
-            onTap: () => context.goNamed(SettingsRouteNames.agents),
-          ),
-        ],
+      child: InlineLinkRow(
+        icon: FLucideIcons.sparkles,
+        label: l10n.settingsAiHubTitle,
+        subtitle: l10n.settingsAiHubSubtitle,
+        onTap: () => context.pushNamed(SettingsRouteNames.ai),
       ),
     );
     final isLocalOnly =
@@ -106,7 +74,7 @@ class SettingsOverview extends ConsumerWidget {
               icon: FLucideIcons.refreshCw,
               label: l10n.settingsSyncTitle,
               subtitle: l10n.settingsSyncSubtitle,
-              onTap: () => context.goNamed(SettingsRouteNames.sync),
+              onTap: () => context.pushNamed(SettingsRouteNames.sync),
             ),
             const AppGradientDivider(),
           ],
@@ -114,21 +82,21 @@ class SettingsOverview extends ConsumerWidget {
             icon: FLucideIcons.database,
             label: l10n.settingsDataManagementTitle,
             subtitle: l10n.settingsDataManagementSubtitle,
-            onTap: () => context.goNamed(SettingsRouteNames.dataManagement),
+            onTap: () => context.pushNamed(SettingsRouteNames.dataManagement),
           ),
           const AppGradientDivider(),
           InlineLinkRow(
             icon: FLucideIcons.cloudUpload,
             label: l10n.settingsDataTitle,
             subtitle: l10n.settingsDataSubtitle,
-            onTap: () => context.goNamed(SettingsRouteNames.backup),
+            onTap: () => context.pushNamed(SettingsRouteNames.backup),
           ),
           const AppGradientDivider(),
           InlineLinkRow(
             icon: FLucideIcons.bell,
             label: l10n.settingsNotificationsTitle,
             subtitle: l10n.settingsNotificationsSubtitle,
-            onTap: () => context.goNamed(SettingsRouteNames.notifications),
+            onTap: () => context.pushNamed(SettingsRouteNames.notifications),
           ),
           const AppGradientDivider(),
           const _BiometricUnlockRow(),
@@ -147,7 +115,7 @@ class SettingsOverview extends ConsumerWidget {
         icon: FLucideIcons.blocks,
         label: l10n.settingsDomainsTitle,
         subtitle: l10n.settingsDomainsSubtitle,
-        onTap: () => context.goNamed(SettingsRouteNames.domains),
+        onTap: () => context.pushNamed(SettingsRouteNames.domains),
       ),
     );
     // Logs viewer is exposed in release as well — the talker history is
@@ -159,17 +127,10 @@ class SettingsOverview extends ConsumerWidget {
       child: Column(
         children: [
           InlineLinkRow(
-            icon: FLucideIcons.bug,
-            label: l10n.settingsLogsTitle,
-            subtitle: l10n.settingsLogsSubtitle,
-            onTap: () => context.goNamed(SettingsRouteNames.logs),
-          ),
-          const AppGradientDivider(),
-          InlineLinkRow(
-            icon: FLucideIcons.activity,
-            label: l10n.settingsPerfTitle,
-            subtitle: l10n.settingsPerfSubtitle,
-            onTap: () => context.goNamed(SettingsRouteNames.performance),
+            icon: FLucideIcons.settings2,
+            label: l10n.settingsAdvancedHubTitle,
+            subtitle: l10n.settingsAdvancedHubSubtitle,
+            onTap: () => context.pushNamed(SettingsRouteNames.advanced),
           ),
           const AppGradientDivider(),
           const _AboutTile(),

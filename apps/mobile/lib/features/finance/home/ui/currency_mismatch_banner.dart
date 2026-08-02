@@ -48,12 +48,17 @@ class ValuationTrustNotice extends StatelessWidget {
             asOf,
           )
         : l10n.dashboardValuationTrustReady(quality, asOf);
+    if (!hasMissingFx && !isLowTrust) {
+      return AppStatusLine(
+        icon: FLucideIcons.shieldCheck,
+        message: message,
+        actionLabel: l10n.dashboardValuationTrustAction,
+        onPress: () => _showDetails(context, quality, asOf),
+        semanticLabel: l10n.dashboardValuationTrustAction,
+      );
+    }
     return AppStatusBanner(
-      kind: hasMissingFx
-          ? AppStatusKind.error
-          : isLowTrust
-          ? AppStatusKind.warning
-          : AppStatusKind.success,
+      kind: hasMissingFx ? AppStatusKind.error : AppStatusKind.warning,
       message: message,
       compact: true,
       onPress: () => _showDetails(context, quality, asOf),

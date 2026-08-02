@@ -7020,6 +7020,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityFeedEmpty => '暂无动态 — 记录一笔转账、支出或交易即可在此查看。';
 
   @override
+  String get activitySelectEntry => '选择一条流水，在不离开时间线的情况下查看详情';
+
+  @override
   String get tradeEntryCashOverdrawTitle => '现金余额将变为负数';
 
   @override
@@ -7192,6 +7195,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsAiSection => 'AI';
+
+  @override
+  String get settingsAiHubTitle => 'AI 与设备智能';
+
+  @override
+  String get settingsAiHubSubtitle => '服务、设备模型、智能体、隐私与活动记录';
+
+  @override
+  String get settingsAiHubRuntimeSection => '运行环境';
+
+  @override
+  String get settingsAiHubTrustSection => '隐私与透明度';
+
+  @override
+  String get settingsAdvancedHubTitle => '高级诊断';
+
+  @override
+  String get settingsAdvancedHubSubtitle => '日志与性能工具';
 
   @override
   String get settingsAboutSection => '关于';
@@ -10552,6 +10573,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistTitle => '自选清单';
 
   @override
+  String get watchlistSelectItem => '选择标的，查看行情与提醒规则';
+
+  @override
   String get watchlistAccountsEntrySubtitle => '跟踪标的并设置本地价格告警';
 
   @override
@@ -12208,7 +12232,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get knowledgeInboxTitle => '收件箱 · KnowledgeOS';
+  String get knowledgeInboxTitle => '收件箱';
 
   @override
   String knowledgeInboxSuggestionsPending(int count) {
@@ -12481,7 +12505,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get knowledgeAiPromptHint => '记录想法或提出问题…';
+  String get knowledgeAiPromptHint => '提问或搜索知识…';
 
   @override
   String get knowledgeAiDedupeAction => '查重';
@@ -12503,7 +12527,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeAiSearchPrompt => '搜索我的知识库：';
 
   @override
-  String get knowledgeLibraryTitle => '资料库 · KnowledgeOS';
+  String get knowledgeLibraryTitle => '资料库';
+
+  @override
+  String get knowledgeLibrarySelectItem => '选择一项，在阅读时继续浏览';
 
   @override
   String get knowledgeLibraryEmptyAllTitle => '资料库还没有内容';
@@ -13410,6 +13437,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionCommitmentsTitle => '计划';
+
+  @override
+  String get executionPlansSelectItem => '选择项目或承诺，在此处查看详情';
 
   @override
   String get executionReviewTitle => '复盘';

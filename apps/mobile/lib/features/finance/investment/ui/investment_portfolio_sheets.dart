@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/forms/form_dirty_guard.dart';
+import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/accounts/data/account_balances_provider.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
@@ -44,35 +45,82 @@ Future<bool?> showInvestmentPortfolioFormSheet(
   }
 }
 
-Future<void> showPortfolioLotAssignmentSheet(
-  BuildContext context, {
-  String? preferredGroupId,
-}) {
-  final l10n = AppLocalizations.of(context);
-  return showAppSheet<void>(
-    context: context,
-    title: l10n.portfolioAssignLotsTitle,
-    subtitle: l10n.portfolioAssignLotsSubtitle,
-    builder: (_) =>
-        _PortfolioLotAssignmentLoader(preferredGroupId: preferredGroupId),
-  );
+class PortfolioLotAssignmentPage extends StatelessWidget {
+  const PortfolioLotAssignmentPage({super.key, this.preferredGroupId});
+
+  final String? preferredGroupId;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return _PortfolioAssignmentPageFrame(
+      title: l10n.portfolioAssignLotsTitle,
+      subtitle: l10n.portfolioAssignLotsSubtitle,
+      child: _PortfolioLotAssignmentLoader(preferredGroupId: preferredGroupId),
+    );
+  }
 }
 
-Future<void> showPortfolioCashAssignmentSheet(
-  BuildContext context, {
-  String? preferredGroupId,
-  Decimal? suggestedAmount,
-}) {
-  final l10n = AppLocalizations.of(context);
-  return showAppSheet<void>(
-    context: context,
-    title: l10n.portfolioAssignCashTitle,
-    subtitle: l10n.portfolioAssignCashSubtitle,
-    builder: (_) => _PortfolioCashAssignmentLoader(
-      preferredGroupId: preferredGroupId,
-      suggestedAmount: suggestedAmount,
-    ),
-  );
+class PortfolioCashAssignmentPage extends StatelessWidget {
+  const PortfolioCashAssignmentPage({
+    super.key,
+    this.preferredGroupId,
+    this.suggestedAmount,
+  });
+
+  final String? preferredGroupId;
+  final Decimal? suggestedAmount;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return _PortfolioAssignmentPageFrame(
+      title: l10n.portfolioAssignCashTitle,
+      subtitle: l10n.portfolioAssignCashSubtitle,
+      child: _PortfolioCashAssignmentLoader(
+        preferredGroupId: preferredGroupId,
+        suggestedAmount: suggestedAmount,
+      ),
+    );
+  }
+}
+
+class _PortfolioAssignmentPageFrame extends StatelessWidget {
+  const _PortfolioAssignmentPageFrame({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppPageScaffold(
+      title: title,
+      childPad: false,
+      child: AdaptiveContentFrame(
+        maxWidth: AdaptiveMaxWidth.narrow,
+        expandSinglePrimary: true,
+        padding: shellTabContentPadding(
+          context,
+          left: AppSpacing.s16,
+          top: AppSpacing.s12,
+          right: AppSpacing.s16,
+          bottom: AppSpacing.s24,
+        ),
+        primary: ListView(
+          children: [
+            Text(subtitle, style: context.captionStyle),
+            const SizedBox(height: AppSpacing.s20),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _InvestmentPortfolioForm extends ConsumerStatefulWidget {

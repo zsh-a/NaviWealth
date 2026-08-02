@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/shell/master_detail_layout.dart';
+import '../../../core/shell/selection_query.dart';
 import '../../../core/shell/settings_ui/inline_setting_row.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
@@ -15,6 +17,7 @@ import 'execution_action_card_controller.dart';
 import 'execution_action_sheet.dart';
 import 'execution_commitment_sheet.dart';
 import 'execution_create_sheet.dart';
+import 'execution_detail_page.dart';
 import 'execution_lifecycle_card_controller.dart';
 import 'execution_progress_sheet.dart';
 import 'execution_project_sheet.dart';
@@ -30,6 +33,20 @@ class ExecutionCommitmentsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    Widget body({required bool inMasterDetail}) => AppRefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(executionProjectsProvider);
+        ref.invalidate(executionClosedProjectsProvider);
+        ref.invalidate(executionOpenActionsProvider);
+        ref.invalidate(executionClosedActionsProvider);
+        ref.invalidate(executionCommitmentsProvider);
+        ref.invalidate(executionClosedCommitmentsProvider);
+        ref.invalidate(executionRecentProgressProvider);
+        ref.invalidate(executionActionRelationsProvider);
+        await ref.read(executionOpenActionsProvider.future);
+      },
+      child: _CommitmentsBody(inMasterDetail: inMasterDetail),
+    );
     return ShellTabScaffold(
       title: l10n.executionCommitmentsTitle,
       directActionBudget: 1,
@@ -49,19 +66,19 @@ class ExecutionCommitmentsPage extends ConsumerWidget {
       ],
       child: ShellTabPause(
         routePath: ExecutionRoutes.commitments,
-        child: AppRefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(executionProjectsProvider);
-            ref.invalidate(executionClosedProjectsProvider);
-            ref.invalidate(executionOpenActionsProvider);
-            ref.invalidate(executionClosedActionsProvider);
-            ref.invalidate(executionCommitmentsProvider);
-            ref.invalidate(executionClosedCommitmentsProvider);
-            ref.invalidate(executionRecentProgressProvider);
-            ref.invalidate(executionActionRelationsProvider);
-            await ref.read(executionOpenActionsProvider.future);
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (GoRouter.maybeOf(context) == null ||
+                !MasterDetailLayout.shouldUseMasterDetail(
+                  constraints.maxWidth,
+                )) {
+              return body(inMasterDetail: false);
+            }
+            return MasterDetailLayout(
+              master: body(inMasterDetail: true),
+              detail: _executionPlansDetail(context, selectedQueryOf(context)),
+            );
           },
-          child: _CommitmentsBody(),
         ),
       ),
     );
@@ -69,6 +86,10 @@ class ExecutionCommitmentsPage extends ConsumerWidget {
 }
 
 class _CommitmentsBody extends ConsumerStatefulWidget {
+  const _CommitmentsBody({required this.inMasterDetail});
+
+  final bool inMasterDetail;
+
   @override
   ConsumerState<_CommitmentsBody> createState() => _CommitmentsBodyState();
 }
@@ -278,7 +299,12 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
                 context: context,
                 projectId: project.id,
               ),
-              onOpen: () => context.push(ExecutionRoutes.project(project.id)),
+              onOpen: () => _openExecutionPlanDetail(
+                context,
+                inMasterDetail: widget.inMasterDetail,
+                kind: 'project',
+                id: project.id,
+              ),
             ),
           ),
         );
@@ -311,8 +337,12 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
                 projectId: commitment.projectId,
                 commitmentId: commitment.id,
               ),
-              onOpen: () =>
-                  context.push(ExecutionRoutes.commitment(commitment.id)),
+              onOpen: () => _openExecutionPlanDetail(
+                context,
+                inMasterDetail: widget.inMasterDetail,
+                kind: 'commitment',
+                id: commitment.id,
+              ),
             ),
           ),
         );
@@ -345,4 +375,40 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
       ),
     );
   }
+}
+
+Widget _executionPlansDetail(BuildContext context, String? selected) {
+  final separator = selected?.indexOf(':') ?? -1;
+  if (selected == null || separator <= 0 || separator == selected.length - 1) {
+    return MasterDetailEmpty(
+      message: AppLocalizations.of(context).executionPlansSelectItem,
+      icon: FLucideIcons.layers,
+    );
+  }
+  final kind = selected.substring(0, separator);
+  final id = selected.substring(separator + 1);
+  return kind == 'project'
+      ? ExecutionProjectDetailPage(projectId: id)
+      : ExecutionCommitmentDetailPage(commitmentId: id);
+}
+
+void _openExecutionPlanDetail(
+  BuildContext context, {
+  required bool inMasterDetail,
+  required String kind,
+  required String id,
+}) {
+  if (inMasterDetail) {
+    replaceSelectedQuery(
+      context,
+      path: ExecutionRoutes.commitments,
+      selected: '$kind:$id',
+    );
+    return;
+  }
+  context.push(
+    kind == 'project'
+        ? ExecutionRoutes.project(id)
+        : ExecutionRoutes.commitment(id),
+  );
 }

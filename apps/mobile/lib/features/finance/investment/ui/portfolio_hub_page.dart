@@ -47,6 +47,9 @@ import 'portfolio_group_sheets.dart';
 import 'portfolio_strategy_visuals.dart';
 import 'portfolio_studio_projection.dart';
 
+export 'investment_portfolio_sheets.dart'
+    show PortfolioCashAssignmentPage, PortfolioLotAssignmentPage;
+
 part 'portfolio_hub_engine_cards.dart';
 part 'portfolio_hub_state.dart';
 part 'portfolio_hub_widgets.dart';
