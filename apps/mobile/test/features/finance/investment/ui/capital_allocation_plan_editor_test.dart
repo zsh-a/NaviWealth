@@ -7,7 +7,9 @@ import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
-  testWidgets('fills the allocation remainder before saving', (tester) async {
+  testWidgets('normalizes allocation to 100 percent before saving', (
+    tester,
+  ) async {
     List<CapitalAllocationDraft>? saved;
     await tester.pumpWidget(
       FTheme(
@@ -56,16 +58,17 @@ void main() {
 
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
-    expect(find.text('90%'), findsOneWidget);
-
-    await tester.tap(find.text('Fill remainder'));
+    expect(find.text('100%'), findsOneWidget);
+    final slider = tester.widget<Slider>(find.byType(Slider).first);
+    slider.onChanged!(7000);
     await tester.pump();
+    expect(find.text('70%'), findsOneWidget);
     expect(find.text('100%'), findsOneWidget);
 
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect(saved, isNotNull);
-    expect(saved!.map((draft) => draft.targetWeightBps), [6000, 4000]);
+    expect(saved!.map((draft) => draft.targetWeightBps), [7000, 3000]);
   });
 
   testWidgets('expands advanced settings for only one sleeve on mobile', (

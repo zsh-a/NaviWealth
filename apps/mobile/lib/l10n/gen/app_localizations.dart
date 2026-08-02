@@ -2217,6 +2217,30 @@ abstract class AppLocalizations {
   /// **'Strategy'**
   String get portfolioStrategyLabel;
 
+  /// No description provided for @portfolioCreateApproachTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an approach'**
+  String get portfolioCreateApproachTitle;
+
+  /// No description provided for @portfolioCreateApproachHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with a clear default. You can refine allocation later.'**
+  String get portfolioCreateApproachHint;
+
+  /// No description provided for @portfolioCreateRecommendedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended for a diversified long-term core'**
+  String get portfolioCreateRecommendedHint;
+
+  /// No description provided for @portfolioCreateCustomizableHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A focused starting point you can customize later'**
+  String get portfolioCreateCustomizableHint;
+
   /// No description provided for @portfolioStrategyIndexCore.
   ///
   /// In en, this message translates to:
@@ -2485,6 +2509,36 @@ abstract class AppLocalizations {
   /// **'Rules'**
   String get portfolioStudioRulesTab;
 
+  /// No description provided for @portfolioStudioConfigurationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio setup'**
+  String get portfolioStudioConfigurationTitle;
+
+  /// No description provided for @portfolioStudioConfigurationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Open only the area you want to adjust.'**
+  String get portfolioStudioConfigurationHint;
+
+  /// No description provided for @portfolioStudioSleeveCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} strategies'**
+  String portfolioStudioSleeveCount(int count);
+
+  /// No description provided for @portfolioStudioIncludedAssetCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} included assets'**
+  String portfolioStudioIncludedAssetCount(int count);
+
+  /// No description provided for @portfolioStudioRuleCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} optional rules'**
+  String portfolioStudioRuleCount(int count);
+
   /// No description provided for @portfolioStudioAllocationTitle.
   ///
   /// In en, this message translates to:
@@ -2568,6 +2622,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Include cash'**
   String get portfolioStudioIncludeCashAction;
+
+  /// No description provided for @portfolioStudioAddAssetsAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add assets'**
+  String get portfolioStudioAddAssetsAction;
+
+  /// No description provided for @portfolioStudioAddAssetsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a position or cash balance to include.'**
+  String get portfolioStudioAddAssetsHint;
 
   /// No description provided for @portfolioStudioRulesTitle.
   ///

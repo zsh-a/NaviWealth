@@ -28,17 +28,24 @@ included assets are “what the sleeve currently owns”.
 ## Interaction contract
 
 - `/wealth/portfolio` is the state-first investment plan overview. Each
-  portfolio card shows actual versus target weight and drift state.
+  portfolio card shows actual versus target weight and drift state. Holdings
+  and contextual insights follow in the same scroll surface; they are not
+  separate top-level modes.
 - `/wealth/portfolio/:portfolioId/studio` is the only deep configuration
-  surface. It has Overview, Structure, Assets, and Rules sections.
+  surface. Its default view is a status-first overview. Structure, Assets, and
+  Rules are drill-in destinations rather than persistent peer tabs.
 - Creating a portfolio or sleeve is a short modal action. Configuration,
   inspection, and navigation remain on full pages.
 - Portfolio and sleeve weights use the same complete-sibling allocation
-  editor. Advanced drift and transfer policy controls remain progressive
-  disclosure.
+  editor. Adjusting one weight automatically redistributes its siblings so the
+  total remains 100%. Advanced drift and transfer policy controls remain
+  progressive disclosure.
+- Portfolio creation presents user-facing strategy approaches instead of a
+  technical select control. Positions and cash share one Add assets entry and
+  branch only after the user opens it.
 - Rebalancing is entered from the plan overview or portfolio studio and is
-  shown in order: portfolio transfers, sleeve allocation, sleeve assets, then
-  executable trades.
+  shown only when relevant, in order: portfolio transfers, sleeve allocation,
+  sleeve assets, then executable trades.
 - UI copy says “included assets” and “rules”; it does not expose
   “assignments”, “rebalance groups”, “capital owners”, or “overlays”.
 

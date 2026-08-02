@@ -1261,6 +1261,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioStrategyLabel => 'Strategy';
 
   @override
+  String get portfolioCreateApproachTitle => 'Choose an approach';
+
+  @override
+  String get portfolioCreateApproachHint =>
+      'Start with a clear default. You can refine allocation later.';
+
+  @override
+  String get portfolioCreateRecommendedHint =>
+      'Recommended for a diversified long-term core';
+
+  @override
+  String get portfolioCreateCustomizableHint =>
+      'A focused starting point you can customize later';
+
+  @override
   String get portfolioStrategyIndexCore => 'Index core';
 
   @override
@@ -1409,6 +1424,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioStudioRulesTab => 'Rules';
 
   @override
+  String get portfolioStudioConfigurationTitle => 'Portfolio setup';
+
+  @override
+  String get portfolioStudioConfigurationHint =>
+      'Open only the area you want to adjust.';
+
+  @override
+  String portfolioStudioSleeveCount(int count) {
+    return '$count strategies';
+  }
+
+  @override
+  String portfolioStudioIncludedAssetCount(int count) {
+    return '$count included assets';
+  }
+
+  @override
+  String portfolioStudioRuleCount(int count) {
+    return '$count optional rules';
+  }
+
+  @override
   String get portfolioStudioAllocationTitle => 'Capital path';
 
   @override
@@ -1457,6 +1494,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get portfolioStudioIncludeCashAction => 'Include cash';
+
+  @override
+  String get portfolioStudioAddAssetsAction => 'Add assets';
+
+  @override
+  String get portfolioStudioAddAssetsHint =>
+      'Choose a position or cash balance to include.';
 
   @override
   String get portfolioStudioRulesTitle => 'Rules and enhancements';

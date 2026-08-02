@@ -138,32 +138,47 @@ class _PortfolioStudioBody extends StatelessWidget {
             sleeves: sleeves,
             tree: tree,
           ),
-          const SizedBox(height: AppSpacing.s16),
-          _StudioSectionSegment(value: section, onChanged: onSectionChanged),
-          const SizedBox(height: AppSpacing.s16),
-          switch (section) {
-            PortfolioStudioSection.overview => _StudioOverview(
+          const SizedBox(height: AppSpacing.s20),
+          if (section == PortfolioStudioSection.overview) ...[
+            _StudioOverview(
               portfolio: portfolio,
               portfolioNode: portfolioNode,
               sleeves: sleeves,
               tree: tree,
             ),
-            PortfolioStudioSection.structure => _StudioStructure(
-              portfolio: portfolio,
-              sleeves: sleeves,
-              tree: tree,
+            const SizedBox(height: AppSpacing.s20),
+            _StudioConfigurationList(
+              summary: PortfolioStudioSummary.fromTree(
+                tree: tree,
+                sleeves: sleeves,
+              ),
+              onSelected: onSectionChanged,
             ),
-            PortfolioStudioSection.assets => _StudioAssets(
-              portfolio: portfolio,
-              sleeves: sleeves,
-              tree: tree,
+          ] else ...[
+            _StudioDrillInHeader(
+              section: section,
+              onBack: () => onSectionChanged(PortfolioStudioSection.overview),
             ),
-            PortfolioStudioSection.rules => _StudioRules(
-              portfolio: portfolio,
-              sleeves: sleeves,
-              tree: tree,
-            ),
-          },
+            const SizedBox(height: AppSpacing.s12),
+            switch (section) {
+              PortfolioStudioSection.overview => const SizedBox.shrink(),
+              PortfolioStudioSection.structure => _StudioStructure(
+                portfolio: portfolio,
+                sleeves: sleeves,
+                tree: tree,
+              ),
+              PortfolioStudioSection.assets => _StudioAssets(
+                portfolio: portfolio,
+                sleeves: sleeves,
+                tree: tree,
+              ),
+              PortfolioStudioSection.rules => _StudioRules(
+                portfolio: portfolio,
+                sleeves: sleeves,
+                tree: tree,
+              ),
+            },
+          ],
         ],
       ),
     );
@@ -197,34 +212,19 @@ class _StudioHero extends StatelessWidget {
         children: [
           Row(
             children: [
-              AppIconTile(
-                icon: FLucideIcons.chartNoAxesCombined,
-                color: context.theme.colors.primary,
-              ),
-              const SizedBox(width: AppSpacing.s12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      portfolio.name,
-                      style: context.theme.typography.body.lg,
-                    ),
-                    const SizedBox(height: AppSpacing.s4),
-                    Text(
-                      l10n.portfolioStudioTargetSummary(
-                        _studioPercentFromBps(portfolioNode.targetWeightBps),
-                        summary.sleeveCount,
-                      ),
-                      style: context.captionStyle,
-                    ),
-                  ],
+                child: Text(
+                  l10n.portfolioStudioTargetSummary(
+                    _studioPercentFromBps(portfolioNode.targetWeightBps),
+                    summary.sleeveCount,
+                  ),
+                  style: context.captionStyle,
                 ),
               ),
               _StudioStatusPill(label: l10n.portfolioStudioConfiguredStatus),
             ],
           ),
-          const SizedBox(height: AppSpacing.s16),
+          const SizedBox(height: AppSpacing.s12),
           Row(
             children: [
               Expanded(
@@ -247,14 +247,103 @@ class _StudioHero extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s16),
-          FButton(
-            onPress: () => context.push(FinanceRoutes.planRebalance),
-            prefix: const Icon(FLucideIcons.scale),
-            child: Text(l10n.portfolioStudioRebalanceAction),
-          ),
         ],
       ),
+    );
+  }
+}
+
+class _StudioConfigurationList extends StatelessWidget {
+  const _StudioConfigurationList({
+    required this.summary,
+    required this.onSelected,
+  });
+
+  final PortfolioStudioSummary summary;
+  final ValueChanged<PortfolioStudioSection> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final items = [
+      (
+        section: PortfolioStudioSection.structure,
+        icon: FLucideIcons.layers3,
+        title: l10n.portfolioStudioStructureTab,
+        subtitle: l10n.portfolioStudioSleeveCount(summary.sleeveCount),
+      ),
+      (
+        section: PortfolioStudioSection.assets,
+        icon: FLucideIcons.walletCards,
+        title: l10n.portfolioStudioAssetsTab,
+        subtitle: l10n.portfolioStudioIncludedAssetCount(
+          summary.includedAssetCount,
+        ),
+      ),
+      (
+        section: PortfolioStudioSection.rules,
+        icon: FLucideIcons.listChecks,
+        title: l10n.portfolioStudioRulesTab,
+        subtitle: l10n.portfolioStudioRuleCount(summary.secondaryRuleCount),
+      ),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _StudioSectionHeader(
+          title: l10n.portfolioStudioConfigurationTitle,
+          subtitle: l10n.portfolioStudioConfigurationHint,
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        AppGroupedSurface(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              for (var index = 0; index < items.length; index++) ...[
+                FTile(
+                  prefix: Icon(items[index].icon),
+                  title: Text(items[index].title),
+                  subtitle: Text(items[index].subtitle),
+                  suffix: const Icon(
+                    FLucideIcons.chevronRight,
+                    size: AppIconSizes.sm,
+                  ),
+                  onPress: () => onSelected(items[index].section),
+                ),
+                if (index != items.length - 1)
+                  const AppGroupedDivider(
+                    indent: AppSpacing.s12,
+                    endIndent: AppSpacing.s12,
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StudioDrillInHeader extends StatelessWidget {
+  const _StudioDrillInHeader({required this.section, required this.onBack});
+
+  final PortfolioStudioSection section;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final title = switch (section) {
+      PortfolioStudioSection.overview => l10n.portfolioStudioOverviewTab,
+      PortfolioStudioSection.structure => l10n.portfolioStudioStructureTab,
+      PortfolioStudioSection.assets => l10n.portfolioStudioAssetsTab,
+      PortfolioStudioSection.rules => l10n.portfolioStudioRulesTab,
+    };
+    return FButton(
+      variant: FButtonVariant.ghost,
+      onPress: onBack,
+      prefix: const Icon(FLucideIcons.arrowLeft),
+      child: Align(alignment: Alignment.centerLeft, child: Text(title)),
     );
   }
 }
@@ -332,46 +421,14 @@ class _StudioTransferTask extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s12),
           Text(l10n.rebalanceTransferTaskHint, style: context.captionStyle),
           const SizedBox(height: AppSpacing.s12),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final stacked = constraints.maxWidth < Breakpoints.formColumn;
-              final positions = FButton(
-                onPress: () => showPortfolioLotAssignmentSheet(
-                  context,
-                  preferredGroupId: task.preferredGroupId,
-                ),
-                prefix: const Icon(FLucideIcons.briefcaseBusiness),
-                child: Text(l10n.portfolioStudioIncludePositionAction),
-              );
-              final cash = FButton(
-                variant: FButtonVariant.outline,
-                onPress: () => showPortfolioCashAssignmentSheet(
-                  context,
-                  preferredGroupId: task.preferredGroupId,
-                  suggestedAmount: task.amount,
-                ),
-                prefix: const Icon(FLucideIcons.walletCards),
-                child: Text(l10n.portfolioStudioIncludeCashAction),
-              );
-              final children = [positions, cash];
-              if (stacked) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    children.first,
-                    const SizedBox(height: AppSpacing.s8),
-                    children.last,
-                  ],
-                );
-              }
-              return Row(
-                children: [
-                  Expanded(child: children.first),
-                  const SizedBox(width: AppSpacing.s8),
-                  Expanded(child: children.last),
-                ],
-              );
-            },
+          FButton(
+            onPress: () => _showPortfolioAssetSourceSheet(
+              context,
+              preferredGroupId: task.preferredGroupId,
+              suggestedAmount: task.amount,
+            ),
+            prefix: const Icon(FLucideIcons.plus),
+            child: Text(l10n.portfolioStudioAddAssetsAction),
           ),
           const SizedBox(height: AppSpacing.s8),
           FButton(
@@ -382,36 +439,6 @@ class _StudioTransferTask extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _StudioSectionSegment extends StatelessWidget {
-  const _StudioSectionSegment({required this.value, required this.onChanged});
-
-  final PortfolioStudioSection value;
-  final ValueChanged<PortfolioStudioSection> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return AppAdaptiveChoice<PortfolioStudioSection>(
-      title: l10n.portfolioStudioTitle,
-      options: PortfolioStudioSection.values,
-      value: value,
-      labelOf: (item) => switch (item) {
-        PortfolioStudioSection.overview => l10n.portfolioStudioOverviewTab,
-        PortfolioStudioSection.structure => l10n.portfolioStudioStructureTab,
-        PortfolioStudioSection.assets => l10n.portfolioStudioAssetsTab,
-        PortfolioStudioSection.rules => l10n.portfolioStudioRulesTab,
-      },
-      iconOf: (item) => switch (item) {
-        PortfolioStudioSection.overview => FLucideIcons.layoutDashboard,
-        PortfolioStudioSection.structure => FLucideIcons.network,
-        PortfolioStudioSection.assets => FLucideIcons.walletCards,
-        PortfolioStudioSection.rules => FLucideIcons.listChecks,
-      },
-      onChanged: onChanged,
     );
   }
 }

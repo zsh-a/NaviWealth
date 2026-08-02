@@ -1214,6 +1214,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioStrategyLabel => '策略';
 
   @override
+  String get portfolioCreateApproachTitle => '选择投资方式';
+
+  @override
+  String get portfolioCreateApproachHint => '先使用清晰的默认方案，之后仍可调整配置。';
+
+  @override
+  String get portfolioCreateRecommendedHint => '推荐作为长期分散投资的核心配置';
+
+  @override
+  String get portfolioCreateCustomizableHint => '聚焦特定目标，之后可以继续调整';
+
+  @override
   String get portfolioStrategyIndexCore => '指数核心';
 
   @override
@@ -1354,6 +1366,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioStudioRulesTab => '规则';
 
   @override
+  String get portfolioStudioConfigurationTitle => '组合设置';
+
+  @override
+  String get portfolioStudioConfigurationHint => '只进入当前需要调整的部分。';
+
+  @override
+  String portfolioStudioSleeveCount(int count) {
+    return '$count 个策略';
+  }
+
+  @override
+  String portfolioStudioIncludedAssetCount(int count) {
+    return '已纳入 $count 项资产';
+  }
+
+  @override
+  String portfolioStudioRuleCount(int count) {
+    return '$count 条可选规则';
+  }
+
+  @override
   String get portfolioStudioAllocationTitle => '资金路径';
 
   @override
@@ -1396,6 +1429,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get portfolioStudioIncludeCashAction => '纳入现金';
+
+  @override
+  String get portfolioStudioAddAssetsAction => '添加资产';
+
+  @override
+  String get portfolioStudioAddAssetsHint => '选择要纳入的持仓或现金余额。';
 
   @override
   String get portfolioStudioRulesTitle => '规则与增强';

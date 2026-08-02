@@ -152,77 +152,10 @@ class PortfolioHubViewSegment extends StatelessWidget {
   }
 }
 
-class _GroupRow extends StatelessWidget {
-  const _GroupRow({required this.group, required this.onPressed});
-
-  final PortfolioGroupRow group;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Semantics(
-      button: true,
-      label: group.title,
-      child: AppTappable(
-        onPress: onPressed,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.s12),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _TitleSubtitle(
-                      title: group.title,
-                      subtitle:
-                          '${group.subtitle} · ${l10n.portfolioHubHoldingCount(group.holdingsCount)}',
-                    ),
-                  ),
-                  AnimatedMoneyText(
-                    amount: group.marketValueInBase.toDouble(),
-                    currencyCode: group.baseCurrency,
-                    style: context.labelStyle,
-                  ),
-                  const SizedBox(width: AppSpacing.s6),
-                  Icon(
-                    FLucideIcons.chevronRight,
-                    size: AppIconSizes.h18,
-                    color: context.theme.colors.mutedForeground,
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.s10),
-              _WeightBar(weight: group.weight.toDouble()),
-              const SizedBox(height: AppSpacing.s8),
-              Row(
-                children: [
-                  Text(
-                    _formatRatio(context, group.weight.toDouble()),
-                    style: context.captionStyle,
-                  ),
-                  const Spacer(),
-                  AnimatedMoneyText(
-                    amount: group.unrealizedPnlInBase.toDouble(),
-                    currencyCode: group.baseCurrency,
-                    showSign: true,
-                    style: context.captionStyle,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _HoldingRow extends StatelessWidget {
-  const _HoldingRow({required this.holding, this.onPressed});
+  const _HoldingRow({required this.holding});
 
   final PortfolioHoldingRow holding;
-  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -235,9 +168,7 @@ class _HoldingRow extends StatelessWidget {
       button: true,
       container: true,
       child: AppTappable(
-        onPress:
-            onPressed ??
-            () => context.push(FinanceRoutes.wealthAsset(holding.assetId)),
+        onPress: () => context.push(FinanceRoutes.wealthAsset(holding.assetId)),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s12),
           child: Column(
@@ -368,35 +299,6 @@ class _TitleSubtitle extends StatelessWidget {
           style: context.captionStyle,
         ),
       ],
-    );
-  }
-}
-
-class _WeightBar extends StatelessWidget {
-  const _WeightBar({required this.weight});
-
-  final double weight;
-
-  @override
-  Widget build(BuildContext context) {
-    final clamped = weight.clamp(0, 1).toDouble();
-    return FDeterminateProgress(
-      value: clamped,
-      style: FDeterminateProgressStyle(
-        constraints: const BoxConstraints.tightFor(height: 5),
-        trackDecoration: ShapeDecoration(
-          shape: RoundedSuperellipseBorder(
-            borderRadius: context.theme.style.borderRadius.pill,
-          ),
-          color: context.theme.colors.secondary,
-        ),
-        fillDecoration: ShapeDecoration(
-          shape: RoundedSuperellipseBorder(
-            borderRadius: context.theme.style.borderRadius.pill,
-          ),
-          color: context.theme.colors.primary,
-        ),
-      ),
     );
   }
 }

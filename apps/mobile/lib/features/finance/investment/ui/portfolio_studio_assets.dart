@@ -1,5 +1,66 @@
 part of 'portfolio_hub_page.dart';
 
+enum _PortfolioAssetSource { positions, cash }
+
+Future<void> _showPortfolioAssetSourceSheet(
+  BuildContext context, {
+  String? preferredGroupId,
+  Decimal? suggestedAmount,
+}) async {
+  final l10n = AppLocalizations.of(context);
+  final source = await showAppSheet<_PortfolioAssetSource>(
+    context: context,
+    title: l10n.portfolioStudioAddAssetsAction,
+    subtitle: l10n.portfolioStudioAddAssetsHint,
+    builder: (sheetContext) => AppGroupedSurface(
+      padding: EdgeInsets.zero,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FTile(
+            prefix: const Icon(FLucideIcons.briefcaseBusiness),
+            title: Text(l10n.portfolioStudioIncludePositionAction),
+            suffix: const Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.sm,
+            ),
+            onPress: () =>
+                Navigator.of(sheetContext).pop(_PortfolioAssetSource.positions),
+          ),
+          const AppGroupedDivider(
+            indent: AppSpacing.s12,
+            endIndent: AppSpacing.s12,
+          ),
+          FTile(
+            prefix: const Icon(FLucideIcons.walletCards),
+            title: Text(l10n.portfolioStudioIncludeCashAction),
+            suffix: const Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.sm,
+            ),
+            onPress: () =>
+                Navigator.of(sheetContext).pop(_PortfolioAssetSource.cash),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (!context.mounted || source == null) return;
+  switch (source) {
+    case _PortfolioAssetSource.positions:
+      await showPortfolioLotAssignmentSheet(
+        context,
+        preferredGroupId: preferredGroupId,
+      );
+    case _PortfolioAssetSource.cash:
+      await showPortfolioCashAssignmentSheet(
+        context,
+        preferredGroupId: preferredGroupId,
+        suggestedAmount: suggestedAmount,
+      );
+  }
+}
+
 class _StudioAssets extends ConsumerWidget {
   const _StudioAssets({
     required this.portfolio,
@@ -96,23 +157,10 @@ class _StudioAssets extends ConsumerWidget {
           AppEmptyState(
             icon: FLucideIcons.listChecks,
             title: l10n.portfolioStudioNoIncludedAssets,
-            action: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                FButton(
-                  onPress: () => showPortfolioLotAssignmentSheet(context),
-                  prefix: const Icon(FLucideIcons.briefcaseBusiness),
-                  child: Text(l10n.portfolioStudioIncludePositionAction),
-                ),
-                const SizedBox(height: AppSpacing.s8),
-                FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => showPortfolioCashAssignmentSheet(context),
-                  prefix: const Icon(FLucideIcons.walletCards),
-                  child: Text(l10n.portfolioStudioIncludeCashAction),
-                ),
-              ],
+            action: FButton(
+              onPress: () => _showPortfolioAssetSourceSheet(context),
+              prefix: const Icon(FLucideIcons.plus),
+              child: Text(l10n.portfolioStudioAddAssetsAction),
             ),
           )
         else
@@ -137,38 +185,11 @@ class _StudioAssets extends ConsumerWidget {
             ),
           ),
         const SizedBox(height: AppSpacing.s12),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final stacked = constraints.maxWidth < Breakpoints.formColumn;
-            final positions = FButton(
-              onPress: () => showPortfolioLotAssignmentSheet(context),
-              prefix: const Icon(FLucideIcons.briefcaseBusiness),
-              child: Text(l10n.portfolioStudioIncludePositionAction),
-            );
-            final cash = FButton(
-              variant: FButtonVariant.outline,
-              onPress: () => showPortfolioCashAssignmentSheet(context),
-              prefix: const Icon(FLucideIcons.walletCards),
-              child: Text(l10n.portfolioStudioIncludeCashAction),
-            );
-            if (stacked) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  positions,
-                  const SizedBox(height: AppSpacing.s8),
-                  cash,
-                ],
-              );
-            }
-            return Row(
-              children: [
-                Expanded(child: positions),
-                const SizedBox(width: AppSpacing.s8),
-                Expanded(child: cash),
-              ],
-            );
-          },
+        FButton(
+          variant: FButtonVariant.outline,
+          onPress: () => _showPortfolioAssetSourceSheet(context),
+          prefix: const Icon(FLucideIcons.plus),
+          child: Text(l10n.portfolioStudioAddAssetsAction),
         ),
       ],
     );

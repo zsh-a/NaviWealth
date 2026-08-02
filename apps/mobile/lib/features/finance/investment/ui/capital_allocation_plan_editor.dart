@@ -79,11 +79,9 @@ class _CapitalAllocationPlanEditor extends StatefulWidget {
 class _CapitalAllocationPlanEditorState
     extends State<_CapitalAllocationPlanEditor> {
   late List<CapitalAllocationDraft> _drafts;
-  late final Map<String, TextEditingController> _weightControllers;
   late final Map<String, TextEditingController> _bandControllers;
   final _errors = <String, String>{};
   String? _expandedAdvancedId;
-  bool _showTotalError = false;
   bool _busy = false;
   bool _writingControllers = false;
 
@@ -97,12 +95,29 @@ class _CapitalAllocationPlanEditorState
         else
           draft,
     ];
-    _weightControllers = {
-      for (final draft in _drafts)
-        draft.id: TextEditingController(
-          text: _percentFromBps(draft.targetWeightBps),
-        ),
-    };
+    if (_drafts.length > 1 && _totalBps != 10000) {
+      final delta = 10000 - _totalBps;
+      final last = _drafts.last;
+      final adjustedLast = last.targetWeightBps + delta;
+      if (adjustedLast >= 0 && adjustedLast <= 10000) {
+        _drafts = [
+          ..._drafts.take(_drafts.length - 1),
+          last.copyWith(targetWeightBps: adjustedLast),
+        ];
+      } else {
+        final sourceTotal = _totalBps;
+        var assigned = 0;
+        final normalized = <CapitalAllocationDraft>[];
+        for (var index = 0; index < _drafts.length; index++) {
+          final weight = index == _drafts.length - 1
+              ? 10000 - assigned
+              : (_drafts[index].targetWeightBps * 10000) ~/ sourceTotal;
+          assigned += weight;
+          normalized.add(_drafts[index].copyWith(targetWeightBps: weight));
+        }
+        _drafts = normalized;
+      }
+    }
     _bandControllers = {
       for (final draft in _drafts)
         draft.id: TextEditingController(
@@ -111,9 +126,6 @@ class _CapitalAllocationPlanEditorState
     };
     for (var index = 0; index < _drafts.length; index++) {
       final draftId = _drafts[index].id;
-      _weightControllers[draftId]!.addListener(
-        () => _updateWeight(index, _weightControllers[draftId]!.text),
-      );
       _bandControllers[draftId]!.addListener(
         () => _updateBand(index, _bandControllers[draftId]!.text),
       );
@@ -122,10 +134,7 @@ class _CapitalAllocationPlanEditorState
 
   @override
   void dispose() {
-    for (final controller in [
-      ..._weightControllers.values,
-      ..._bandControllers.values,
-    ]) {
+    for (final controller in _bandControllers.values) {
       controller.dispose();
     }
     super.dispose();
@@ -150,9 +159,7 @@ class _CapitalAllocationPlanEditorState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final isMobile = Breakpoints.isMobile(MediaQuery.sizeOf(context).width);
-    final totalColor = _totalBps == 10000
-        ? context.theme.colors.primary
-        : context.theme.colors.destructive;
+    final totalColor = context.theme.colors.primary;
     return SizedBox(
       height: MediaQuery.sizeOf(context).height * (isMobile ? 0.84 : 0.72),
       child: Column(
@@ -198,19 +205,6 @@ class _CapitalAllocationPlanEditorState
                             l10n.capitalAllocationBalanceEvenlyAction,
                           ),
                         ),
-                        FButton(
-                          variant: FButtonVariant.ghost,
-                          onPress: _busy || _totalBps == 10000
-                              ? null
-                              : _fillRemainder,
-                          prefix: const Icon(
-                            FLucideIcons.sparkles,
-                            size: AppIconSizes.sm,
-                          ),
-                          child: Text(
-                            l10n.capitalAllocationFillRemainderAction,
-                          ),
-                        ),
                       ],
                     ),
                   ],
@@ -231,15 +225,6 @@ class _CapitalAllocationPlanEditorState
             const SizedBox(height: AppSpacing.s8),
             Text(widget.singleItemHint, style: context.captionStyle),
           ],
-          if (_showTotalError || _totalBps != 10000)
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.s8),
-              child: Text(
-                l10n.capitalAllocationTotalHint(_percentFromBps(_totalBps)),
-                style: context.captionStyle.copyWith(color: totalColor),
-                textAlign: TextAlign.center,
-              ),
-            ),
           const SizedBox(height: AppSpacing.s12),
           if (isMobile)
             AppBusyButton(onPress: _save, busy: _busy, label: l10n.commonSave)
@@ -278,7 +263,9 @@ class _CapitalAllocationPlanEditorState
                       ),
                       const SizedBox(height: AppSpacing.s2),
                       Text(
-                        _policyLabel(l10n, draft.transferPolicy),
+                        advancedExpanded
+                            ? _policyLabel(l10n, draft.transferPolicy)
+                            : widget.weightLabel,
                         style: context.microCaptionStyle,
                       ),
                     ],
@@ -303,17 +290,41 @@ class _CapitalAllocationPlanEditorState
               ],
             ),
             const SizedBox(height: AppSpacing.s8),
-            FTextFormField(
-              control: FTextFieldControl.managed(
-                controller: _weightControllers[draft.id]!,
-              ),
-              enabled: !_busy && _drafts.length > 1,
-              label: Text(widget.weightLabel),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: const [percentInputFormatter],
-              forceErrorText: _errors['weight:${draft.id}'],
+            Row(
+              children: [
+                Expanded(
+                  child: Semantics(
+                    label: '${draft.name}, ${widget.weightLabel}',
+                    value: '${_percentFromBps(draft.targetWeightBps)} percent',
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: Slider(
+                        value: draft.targetWeightBps.toDouble(),
+                        min: 0,
+                        max: 10000,
+                        divisions: 200,
+                        semanticFormatterCallback: (value) =>
+                            '${_percentFromBps(value.round())}%',
+                        onChanged: _busy || _drafts.length == 1
+                            ? null
+                            : (value) => _setWeightLocked(
+                                index,
+                                (value / 50).round() * 50,
+                              ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                SizedBox(
+                  width: AppSpacing.s56,
+                  child: Text(
+                    '${_percentFromBps(draft.targetWeightBps)}%',
+                    textAlign: TextAlign.end,
+                    style: TypographyTokens.numericBodyStrong,
+                  ),
+                ),
+              ],
             ),
             if (advancedExpanded) ...[
               const SizedBox(height: AppSpacing.s12),
@@ -359,25 +370,6 @@ class _CapitalAllocationPlanEditorState
     );
   }
 
-  void _updateWeight(int index, String value) {
-    if (_writingControllers) return;
-    final draft = _drafts[index];
-    final parsed = double.tryParse(value.trim());
-    setState(() {
-      if (parsed == null || parsed < 0 || parsed > 100) {
-        _errors['weight:${draft.id}'] = AppLocalizations.of(
-          context,
-        ).targetAllocationEditorRangeError;
-      } else {
-        _errors.remove('weight:${draft.id}');
-        _drafts[index] = draft.copyWith(
-          targetWeightBps: (parsed * 100).round(),
-        );
-      }
-      _showTotalError = false;
-    });
-  }
-
   void _updateBand(int index, String value) {
     if (_writingControllers) return;
     final draft = _drafts[index];
@@ -396,7 +388,6 @@ class _CapitalAllocationPlanEditorState
 
   Future<void> _save() async {
     if (!_isValid) {
-      setState(() => _showTotalError = true);
       return;
     }
     setState(() => _busy = true);
@@ -423,36 +414,52 @@ class _CapitalAllocationPlanEditorState
     ]);
   }
 
-  void _fillRemainder() {
-    final delta = 10000 - _totalBps;
-    final candidateIndex = _drafts.lastIndexWhere((draft) {
-      final next = draft.targetWeightBps + delta;
-      return next >= 0 && next <= 10000;
-    });
-    if (candidateIndex < 0) return;
-    _setWeights([
+  void _setWeightLocked(int selectedIndex, int selectedWeight) {
+    final clamped = selectedWeight.clamp(0, 10000);
+    final remaining = 10000 - clamped;
+    final otherIndexes = [
       for (var index = 0; index < _drafts.length; index++)
-        index == candidateIndex
-            ? _drafts[index].targetWeightBps + delta
-            : _drafts[index].targetWeightBps,
-    ]);
+        if (index != selectedIndex) index,
+    ];
+    final currentOtherTotal = otherIndexes.fold<int>(
+      0,
+      (sum, index) => sum + _drafts[index].targetWeightBps,
+    );
+    final weights = List<int>.filled(_drafts.length, 0);
+    weights[selectedIndex] = clamped;
+    if (otherIndexes.isEmpty) {
+      weights[selectedIndex] = 10000;
+      _setWeights(weights);
+      return;
+    }
+    if (currentOtherTotal == 0) {
+      final base = remaining ~/ otherIndexes.length;
+      var remainder = remaining - base * otherIndexes.length;
+      for (final index in otherIndexes) {
+        weights[index] = base + (remainder-- > 0 ? 1 : 0);
+      }
+    } else {
+      var assigned = 0;
+      for (var position = 0; position < otherIndexes.length; position++) {
+        final index = otherIndexes[position];
+        final next = position == otherIndexes.length - 1
+            ? remaining - assigned
+            : (_drafts[index].targetWeightBps * remaining) ~/ currentOtherTotal;
+        weights[index] = next;
+        assigned += next;
+      }
+    }
+    _setWeights(weights);
   }
 
   void _setWeights(List<int> weights) {
     _writingControllers = true;
     try {
       setState(() {
-        _errors.removeWhere((key, _) => key.startsWith('weight:'));
-        _showTotalError = false;
         _drafts = [
           for (var index = 0; index < _drafts.length; index++)
             _drafts[index].copyWith(targetWeightBps: weights[index]),
         ];
-        for (var index = 0; index < _drafts.length; index++) {
-          _weightControllers[_drafts[index].id]!.text = _percentFromBps(
-            weights[index],
-          );
-        }
       });
     } finally {
       _writingControllers = false;

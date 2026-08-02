@@ -294,29 +294,67 @@ class _InvestmentPortfolioFormState
             ),
             const SizedBox(height: AppSpacing.s16),
             if (widget.existing == null) ...[
-              FSelect<PortfolioStrategyKind>.rich(
-                format: (value) =>
-                    strategyTemplateForKind(
-                      ownerTemplates,
-                      value,
-                    )?.displayName(locale.languageCode) ??
-                    value.wire,
-                control: FSelectControl<PortfolioStrategyKind>.lifted(
-                  value: _strategy,
-                  onChange: (value) {
-                    if (value == null) return;
-                    setState(() => _strategy = value);
-                    widget.dirty.markDirty();
-                  },
+              Text(
+                l10n.portfolioCreateApproachTitle,
+                style: context.bodyCaptionStrongStyle,
+              ),
+              const SizedBox(height: AppSpacing.s4),
+              Text(
+                l10n.portfolioCreateApproachHint,
+                style: context.captionStyle,
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              AppGroupedSurface(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    for (
+                      var index = 0;
+                      index < ownerTemplates.length;
+                      index++
+                    ) ...[
+                      Semantics(
+                        selected: ownerTemplates[index].kind == _strategy,
+                        child: FTile(
+                          prefix: Icon(
+                            strategyTemplateIcon(ownerTemplates[index]),
+                          ),
+                          title: Text(
+                            ownerTemplates[index].displayName(
+                              locale.languageCode,
+                            ),
+                          ),
+                          subtitle: Text(
+                            ownerTemplates[index].kind ==
+                                    PortfolioStrategyKind.indexCore
+                                ? l10n.portfolioCreateRecommendedHint
+                                : l10n.portfolioCreateCustomizableHint,
+                          ),
+                          suffix: Icon(
+                            ownerTemplates[index].kind == _strategy
+                                ? FLucideIcons.circleCheck
+                                : FLucideIcons.circle,
+                            size: AppIconSizes.sm,
+                            color: ownerTemplates[index].kind == _strategy
+                                ? context.theme.colors.primary
+                                : context.theme.colors.mutedForeground,
+                          ),
+                          onPress: () {
+                            setState(
+                              () => _strategy = ownerTemplates[index].kind,
+                            );
+                            widget.dirty.markDirty();
+                          },
+                        ),
+                      ),
+                      if (index != ownerTemplates.length - 1)
+                        const AppGroupedDivider(
+                          indent: AppSpacing.s12,
+                          endIndent: AppSpacing.s12,
+                        ),
+                    ],
+                  ],
                 ),
-                label: Text(l10n.portfolioStrategyLabel),
-                children: [
-                  for (final template in ownerTemplates)
-                    FSelectItem<PortfolioStrategyKind>(
-                      value: template.kind,
-                      title: Text(template.displayName(locale.languageCode)),
-                    ),
-                ],
               ),
               const SizedBox(height: AppSpacing.s16),
             ],

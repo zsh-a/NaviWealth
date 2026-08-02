@@ -48,7 +48,6 @@ import 'portfolio_strategy_visuals.dart';
 import 'portfolio_studio_projection.dart';
 
 part 'portfolio_hub_engine_cards.dart';
-part 'portfolio_hub_group_detail.dart';
 part 'portfolio_hub_state.dart';
 part 'portfolio_hub_widgets.dart';
 part 'portfolio_studio_assets.dart';
@@ -65,9 +64,6 @@ class PortfolioHubPage extends ConsumerStatefulWidget {
 }
 
 class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
-  PortfolioHubView _view = PortfolioHubView.account;
-  _PortfolioSection _section = _PortfolioSection.positions;
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -85,15 +81,23 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
     final selectedPortfolioId = ref.watch(
       effectiveSelectedInvestmentPortfolioIdProvider,
     );
+    final needsRebalance =
+        allocationTree != null &&
+        allocationTree.childrenOf(allocationTree.root.id).any((node) {
+          final actual = actualPortfolioWeights[node.referenceId];
+          if (actual == null) return false;
+          return (actual - node.targetWeight).abs() > node.driftBandBps / 10000;
+        });
 
     return AppPageScaffold(
       title: l10n.portfolioHubTitle,
       actions: [
-        AppHeaderAction(
-          semanticsLabel: l10n.portfolioStudioRebalanceAction,
-          icon: const Icon(FLucideIcons.scale),
-          onPress: () => context.push(FinanceRoutes.planRebalance),
-        ),
+        if (needsRebalance)
+          AppHeaderAction(
+            semanticsLabel: l10n.portfolioStudioRebalanceAction,
+            icon: const Icon(FLucideIcons.triangleAlert),
+            onPress: () => context.push(FinanceRoutes.planRebalance),
+          ),
         AppHeaderAction(
           semanticsLabel: l10n.tradeEntryAppBarTitle,
           icon: const Icon(FLucideIcons.plus),
@@ -144,8 +148,6 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
         ),
         data: (data) => _PortfolioHubBody(
           data: data,
-          view: _view,
-          section: _section,
           portfolios: portfolios,
           allocationTree: allocationTree,
           actualPortfolioWeights: actualPortfolioWeights,
@@ -153,8 +155,6 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
           onPortfolioChanged: (id) {
             ref.read(selectedInvestmentPortfolioIdProvider.notifier).state = id;
           },
-          onViewChanged: (next) => setState(() => _view = next),
-          onSectionChanged: (next) => setState(() => _section = next),
         ),
       ),
     );
@@ -164,10 +164,6 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
 class _PortfolioHubBody extends StatefulWidget {
   const _PortfolioHubBody({
     required this.data,
-    required this.view,
-    required this.section,
-    required this.onViewChanged,
-    required this.onSectionChanged,
     required this.portfolios,
     required this.allocationTree,
     required this.actualPortfolioWeights,
@@ -176,10 +172,6 @@ class _PortfolioHubBody extends StatefulWidget {
   });
 
   final PortfolioHubState data;
-  final PortfolioHubView view;
-  final _PortfolioSection section;
-  final ValueChanged<PortfolioHubView> onViewChanged;
-  final ValueChanged<_PortfolioSection> onSectionChanged;
   final List<InvestmentPortfolio> portfolios;
   final PortfolioAllocationTree? allocationTree;
   final Map<String, double> actualPortfolioWeights;
@@ -192,6 +184,7 @@ class _PortfolioHubBody extends StatefulWidget {
 
 class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
   bool _showAllPositions = false;
+  bool _showInsights = false;
 
   // First-frame entrance stagger (doc 11 §5) — first-paint rows cascade in;
   // later builds (reveal-more, data ticks) appear instantly.
@@ -210,7 +203,6 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final data = widget.data;
-    final groups = data.groupsFor(widget.view, l10n);
     const previewCount = 6;
     final holdings = data.holdings;
     final previewHoldings = holdings.take(previewCount).toList(growable: false);
@@ -238,6 +230,8 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                _PortfolioSummary(data: data),
+                const SizedBox(height: AppSpacing.s20),
                 if (widget.allocationTree case final tree?) ...[
                   _PortfolioPlanStrip(
                     portfolios: widget.portfolios,
@@ -252,36 +246,44 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
                   holdingCount: data.holdings.length,
                   onChanged: widget.onPortfolioChanged,
                 ),
-                const SizedBox(height: AppSpacing.s12),
-                _PortfolioSummary(data: data),
-                const SizedBox(height: AppSpacing.s16),
-                _PortfolioSectionSegment(
-                  value: widget.section,
-                  onChanged: widget.onSectionChanged,
-                ),
                 const SizedBox(height: AppSpacing.s16),
               ],
             ),
           ),
-          ...switch (widget.section) {
-            _PortfolioSection.positions => [
-              _positionsSliver(
-                l10n: l10n,
-                holdings: visibleHoldings,
-                empty: holdings.isEmpty,
-                showReveal: showReveal,
-                overflowCount: overflowHoldings.length,
+          _positionsSliver(
+            l10n: l10n,
+            holdings: visibleHoldings,
+            empty: holdings.isEmpty,
+            showReveal: showReveal,
+            overflowCount: overflowHoldings.length,
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const _ConcentrationRiskSection(),
+                  FButton(
+                    variant: FButtonVariant.outline,
+                    onPress: () => setState(() {
+                      _showInsights = !_showInsights;
+                    }),
+                    prefix: Icon(
+                      _showInsights
+                          ? FLucideIcons.chevronUp
+                          : FLucideIcons.sparkles,
+                    ),
+                    child: Text(l10n.portfolioHubSectionInsights),
+                  ),
+                  if (_showInsights) ...[
+                    const SizedBox(height: AppSpacing.s12),
+                    _EngineExposureSection(baseCurrency: data.baseCurrency),
+                  ],
+                ],
               ),
-            ],
-            _PortfolioSection.allocation => [
-              _allocationSliver(l10n: l10n, groups: groups),
-            ],
-            _PortfolioSection.insights => [
-              SliverToBoxAdapter(
-                child: _EngineExposureSection(baseCurrency: data.baseCurrency),
-              ),
-            ],
-          },
+            ),
+          ),
         ],
       ),
     );
@@ -352,49 +354,6 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
             ),
           ),
       ],
-    );
-  }
-
-  Widget _allocationSliver({
-    required AppLocalizations l10n,
-    required List<PortfolioGroupRow> groups,
-  }) {
-    return SliverToBoxAdapter(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const _ConcentrationRiskSection(),
-          PortfolioHubViewSegment(
-            value: widget.view,
-            onChanged: widget.onViewChanged,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          if (groups.isEmpty)
-            _EmptyState(message: l10n.portfolioHubEmpty)
-          else
-            AppGroupedSurface(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  for (var i = 0; i < groups.length; i++) ...[
-                    _GroupRow(
-                      group: groups[i],
-                      onPressed: () => _showPortfolioGroupDetail(
-                        context: context,
-                        group: groups[i],
-                      ),
-                    ),
-                    if (i != groups.length - 1)
-                      const AppGroupedDivider(
-                        indent: AppSpacing.s12,
-                        endIndent: AppSpacing.s12,
-                      ),
-                  ],
-                ],
-              ),
-            ),
-        ],
-      ),
     );
   }
 }
@@ -510,36 +469,6 @@ class _PortfolioSelector extends StatelessWidget {
           );
         },
       ),
-    );
-  }
-}
-
-enum _PortfolioSection { positions, allocation, insights }
-
-class _PortfolioSectionSegment extends StatelessWidget {
-  const _PortfolioSectionSegment({
-    required this.value,
-    required this.onChanged,
-  });
-
-  final _PortfolioSection value;
-  final ValueChanged<_PortfolioSection> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return SegmentedRow<_PortfolioSection>(
-      options: _PortfolioSection.values,
-      value: value,
-      labelOf: (section) => switch (section) {
-        _PortfolioSection.positions => l10n.portfolioHubSectionPositions,
-        _PortfolioSection.allocation => l10n.portfolioHubSectionAllocation,
-        _PortfolioSection.insights => l10n.portfolioHubSectionInsights,
-      },
-      onChanged: (next) {
-        AppInteraction.signal(AppInteractionIntent.select);
-        onChanged(next);
-      },
     );
   }
 }

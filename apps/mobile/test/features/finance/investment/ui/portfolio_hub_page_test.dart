@@ -85,105 +85,100 @@ Lot _lot({
 }
 
 void main() {
-  testWidgets('portfolio studio presents one four-section workspace', (
-    tester,
-  ) async {
-    final portfolio = InvestmentPortfolio(
-      id: 'portfolio',
-      name: 'Long term',
-      baseCurrency: 'USD',
-      goalId: null,
-      color: null,
-      createdAt: DateTime.utc(2026, 7, 30),
-      archived: false,
-      sync: _meta(),
-    );
-    const root = AllocationNode(
-      id: 'plan',
-      parentId: null,
-      type: AllocationNodeType.plan,
-      name: 'Investment plan',
-      targetWeightBps: 10000,
-      driftBandBps: 0,
-      transferPolicy: GroupTransferPolicy.bidirectional,
-    );
-    const portfolioNode = AllocationNode(
-      id: 'portfolio:portfolio',
-      parentId: 'plan',
-      type: AllocationNodeType.portfolio,
-      name: 'Long term',
-      targetWeightBps: 10000,
-      driftBandBps: 500,
-      transferPolicy: GroupTransferPolicy.bidirectional,
-      referenceId: 'portfolio',
-    );
-    const sleeveNode = AllocationNode(
-      id: 'sleeve:core',
-      parentId: 'portfolio:portfolio',
-      type: AllocationNodeType.sleeve,
-      name: 'Index core',
-      targetWeightBps: 10000,
-      driftBandBps: 500,
-      transferPolicy: GroupTransferPolicy.bidirectional,
-      referenceId: 'core',
-    );
-    final tree = PortfolioAllocationTree(
-      root: root,
-      nodes: [root, portfolioNode, sleeveNode],
-      attachments: [],
-      inclusions: [],
-    );
+  testWidgets(
+    'portfolio studio presents status overview with setup drill-ins',
+    (tester) async {
+      final portfolio = InvestmentPortfolio(
+        id: 'portfolio',
+        name: 'Long term',
+        baseCurrency: 'USD',
+        goalId: null,
+        color: null,
+        createdAt: DateTime.utc(2026, 7, 30),
+        archived: false,
+        sync: _meta(),
+      );
+      const root = AllocationNode(
+        id: 'plan',
+        parentId: null,
+        type: AllocationNodeType.plan,
+        name: 'Investment plan',
+        targetWeightBps: 10000,
+        driftBandBps: 0,
+        transferPolicy: GroupTransferPolicy.bidirectional,
+      );
+      const portfolioNode = AllocationNode(
+        id: 'portfolio:portfolio',
+        parentId: 'plan',
+        type: AllocationNodeType.portfolio,
+        name: 'Long term',
+        targetWeightBps: 10000,
+        driftBandBps: 500,
+        transferPolicy: GroupTransferPolicy.bidirectional,
+        referenceId: 'portfolio',
+      );
+      const sleeveNode = AllocationNode(
+        id: 'sleeve:core',
+        parentId: 'portfolio:portfolio',
+        type: AllocationNodeType.sleeve,
+        name: 'Index core',
+        targetWeightBps: 10000,
+        driftBandBps: 500,
+        transferPolicy: GroupTransferPolicy.bidirectional,
+        referenceId: 'core',
+      );
+      final tree = PortfolioAllocationTree(
+        root: root,
+        nodes: [root, portfolioNode, sleeveNode],
+        attachments: [],
+        inclusions: [],
+      );
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          investmentPortfoliosProvider.overrideWith(
-            (ref) => Stream.value([portfolio]),
-          ),
-          portfolioAllocationTreeProvider.overrideWithValue(AsyncData(tree)),
-          portfolioTrendProvider(
-            const PortfolioTrendRequest(
-              portfolioId: 'portfolio',
-              range: PortfolioTrendRange.month,
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            investmentPortfoliosProvider.overrideWith(
+              (ref) => Stream.value([portfolio]),
             ),
-          ).overrideWith((ref) async => null),
-        ],
-        child: FTheme(
-          data: FThemes.slate.light.desktop,
-          child: MaterialApp(
-            theme: AppTheme.light(),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('en', 'US'),
-            home: const PortfolioStudioPage(portfolioId: 'portfolio'),
+            portfolioAllocationTreeProvider.overrideWithValue(AsyncData(tree)),
+            portfolioTrendProvider(
+              const PortfolioTrendRequest(
+                portfolioId: 'portfolio',
+                range: PortfolioTrendRange.month,
+              ),
+            ).overrideWith((ref) async => null),
+          ],
+          child: FTheme(
+            data: FThemes.slate.light.desktop,
+            child: MaterialApp(
+              theme: AppTheme.light(),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              locale: const Locale('en', 'US'),
+              home: const PortfolioStudioPage(portfolioId: 'portfolio'),
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Long term'), findsWidgets);
-    expect(find.text('Overview'), findsOneWidget);
-    expect(find.text('Structure'), findsNothing);
-    expect(find.text('Assets'), findsNothing);
+      expect(find.text('Long term'), findsWidgets);
+      expect(find.text('Capital path'), findsOneWidget);
+      expect(find.text('Index core'), findsOneWidget);
+      expect(find.text('Check rebalance'), findsNothing);
 
-    await tester.tap(find.text('Overview'));
-    await tester.pumpAndSettle();
-    expect(find.text('Structure'), findsOneWidget);
-    expect(find.text('Assets'), findsOneWidget);
-    await tester.tap(
-      find.descendant(
-        of: find.byType(AppSheet),
-        matching: find.text('Overview'),
-      ),
-    );
-    await tester.pumpAndSettle();
+      await tester.drag(find.byType(ListView).first, const Offset(0, -900));
+      await tester.pumpAndSettle();
+      expect(find.text('Structure'), findsOneWidget);
+      expect(find.text('Assets'), findsOneWidget);
+      expect(find.text('Portfolio setup'), findsOneWidget);
 
-    expect(find.text('Rules'), findsWidgets);
-    expect(find.text('Capital path'), findsOneWidget);
-    expect(find.text('Index core'), findsOneWidget);
-    expect(find.text('Check rebalance'), findsOneWidget);
-  });
+      await tester.tap(find.text('Structure'));
+      await tester.pumpAndSettle();
+      expect(find.text('Strategy sleeves'), findsOneWidget);
+      expect(find.text('Index core'), findsOneWidget);
+    },
+  );
 
   testWidgets('portfolio studio switches between value and performance trend', (
     tester,
@@ -513,106 +508,91 @@ void main() {
     await tester.pump(const Duration(milliseconds: 150));
   });
 
-  testWidgets('portfolio rows share grouped surfaces inside adaptive frame', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(430, 1400);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    final state = PortfolioHubState(
-      holdings: [
-        _holding(
-          assetId: 'us:AAPL',
-          type: AssetType.stock,
-          currency: 'USD',
-          marketValue: '100',
-          costBasis: '80',
-        ),
-      ],
-      lots: [
-        _lot(
-          id: 'aapl-1',
-          accountId: 'broker-a',
-          assetId: 'us:AAPL',
-          quantity: '10',
-          costPerUnit: '8',
-        ),
-      ],
-      accountById: {
-        'broker-a': Account(
-          id: 'broker-a',
-          type: AccountCategory.broker,
-          name: 'Broker A',
-          currency: 'USD',
-          sync: _meta(),
-        ),
-      },
-      baseCurrency: 'USD',
-      marketValueInBase: _d('100'),
-      costBasisInBase: _d('80'),
-      unrealizedPnlInBase: _d('20'),
-      ytdReturn: PortfolioReturnResult(
-        from: DateTime.utc(2026),
-        to: DateTime.utc(2026, 5, 17),
-        baseCurrency: 'USD',
-        cashFlows: const [],
-        solution: const XirrConverged(rate: 0.12, iterations: 3),
-      ),
-    );
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          portfolioHubProvider.overrideWith(
-            () => _StaticPortfolioHubNotifier(state),
+  testWidgets(
+    'portfolio hub keeps state, portfolios, and holdings in one flow',
+    (tester) async {
+      tester.view.physicalSize = const Size(430, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final state = PortfolioHubState(
+        holdings: [
+          _holding(
+            assetId: 'us:AAPL',
+            type: AssetType.stock,
+            currency: 'USD',
+            marketValue: '100',
+            costBasis: '80',
           ),
         ],
-        child: FTheme(
-          data: FThemes.slate.light.desktop,
-          child: MaterialApp(
-            theme: AppTheme.light(),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('en', 'US'),
-            home: const PortfolioHubPage(),
+        lots: [
+          _lot(
+            id: 'aapl-1',
+            accountId: 'broker-a',
+            assetId: 'us:AAPL',
+            quantity: '10',
+            costPerUnit: '8',
+          ),
+        ],
+        accountById: {
+          'broker-a': Account(
+            id: 'broker-a',
+            type: AccountCategory.broker,
+            name: 'Broker A',
+            currency: 'USD',
+            sync: _meta(),
+          ),
+        },
+        baseCurrency: 'USD',
+        marketValueInBase: _d('100'),
+        costBasisInBase: _d('80'),
+        unrealizedPnlInBase: _d('20'),
+        ytdReturn: PortfolioReturnResult(
+          from: DateTime.utc(2026),
+          to: DateTime.utc(2026, 5, 17),
+          baseCurrency: 'USD',
+          cashFlows: const [],
+          solution: const XirrConverged(rate: 0.12, iterations: 3),
+        ),
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            portfolioHubProvider.overrideWith(
+              () => _StaticPortfolioHubNotifier(state),
+            ),
+          ],
+          child: FTheme(
+            data: FThemes.slate.light.desktop,
+            child: MaterialApp(
+              theme: AppTheme.light(),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              locale: const Locale('en', 'US'),
+              home: const PortfolioHubPage(),
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.byType(AdaptiveContentFrame), findsOneWidget);
-    expect(find.byType(AppAdaptiveSelectionMenu<String>), findsOneWidget);
-    expect(find.byType(FSelect<String>), findsNothing);
-    expect(find.bySemanticsLabel('Portfolio: All holdings'), findsOneWidget);
-    expect(find.text('All holdings'), findsOneWidget);
-    // Positions use a virtualized DecoratedSliver group surface.
-    expect(find.byType(DecoratedSliver), findsOneWidget);
-    expect(find.text('Broker A'), findsNothing);
-    expect(find.text('us:AAPL'), findsWidgets);
-    expect(find.text('Cost basis'), findsOneWidget);
+      expect(find.byType(AdaptiveContentFrame), findsOneWidget);
+      expect(find.byType(AppAdaptiveSelectionMenu<String>), findsOneWidget);
+      expect(find.byType(FSelect<String>), findsNothing);
+      expect(find.bySemanticsLabel('Portfolio: All holdings'), findsOneWidget);
+      expect(find.text('All holdings'), findsOneWidget);
+      // Positions use a virtualized DecoratedSliver group surface.
+      expect(find.byType(DecoratedSliver), findsOneWidget);
+      expect(find.text('us:AAPL'), findsWidgets);
+      expect(find.text('Cost basis'), findsOneWidget);
+      // No concentration breaches → review surface stays hidden.
+      expect(find.text('Concentration risk'), findsNothing);
+      expect(find.text('Insights'), findsOneWidget);
+      expect(find.text('Allocation'), findsNothing);
+    },
+  );
 
-    await tester.tap(find.text('Allocation'));
-    await tester.pumpAndSettle();
-    expect(find.text('Broker A'), findsOneWidget);
-    // No concentration breaches → review surface stays hidden.
-    expect(find.text('Concentration risk'), findsNothing);
-
-    await tester.tap(find.text('Class'));
-    await tester.pumpAndSettle();
-    expect(find.byIcon(FLucideIcons.chevronRight), findsOneWidget);
-
-    await tester.tap(find.text('Stock'));
-    await tester.pumpAndSettle();
-    expect(
-      find.byKey(const ValueKey<String>('portfolio-group-detail')),
-      findsOneWidget,
-    );
-    expect(find.text('Market value'), findsWidgets);
-    expect(find.text('Unrealized P&L'), findsOneWidget);
-  });
-
-  testWidgets('allocation tab shows concentration breaches from provider', (
+  testWidgets('portfolio flow shows concentration breaches contextually', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(430, 1400);
@@ -693,9 +673,6 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Allocation'));
     await tester.pumpAndSettle();
 
     expect(find.text('Concentration risk'), findsOneWidget);
