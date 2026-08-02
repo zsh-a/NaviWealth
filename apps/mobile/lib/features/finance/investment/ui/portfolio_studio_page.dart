@@ -26,6 +26,17 @@ class _PortfolioStudioPageState extends ConsumerState<PortfolioStudioPage> {
     _section = widget.initialSection;
   }
 
+  Future<bool> _handleHeaderBack() async {
+    if (_section == PortfolioStudioSection.overview) return true;
+    setState(() => _section = PortfolioStudioSection.overview);
+    return false;
+  }
+
+  void _handleSystemBack(bool didPop, Object? _) {
+    if (didPop || _section == PortfolioStudioSection.overview) return;
+    setState(() => _section = PortfolioStudioSection.overview);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -35,52 +46,59 @@ class _PortfolioStudioPageState extends ConsumerState<PortfolioStudioPage> {
         ?.where((item) => item.id == widget.portfolioId)
         .firstOrNull;
 
-    return AppPageScaffold(
-      title: portfolio?.name ?? l10n.portfolioStudioTitle,
-      actions: [
-        if (portfolio != null)
-          AppHeaderAction(
-            semanticsLabel: l10n.portfolioEditTitle,
-            icon: const Icon(FLucideIcons.settings2),
-            onPress: () =>
-                showInvestmentPortfolioFormSheet(context, existing: portfolio),
-          ),
-      ],
-      childPad: false,
-      child: switch ((portfolios, tree)) {
-        (AsyncData(), AsyncData(value: final allocationTree))
-            when portfolio != null && allocationTree != null =>
-          _PortfolioStudioBody(
-            portfolio: portfolio,
-            tree: allocationTree,
-            section: _section,
-            transferIntent: widget.transferIntent,
-            portfolioNames: {
-              for (final item in portfolios.requireValue) item.id: item.name,
+    return PopScope(
+      canPop: _section == PortfolioStudioSection.overview,
+      onPopInvokedWithResult: _handleSystemBack,
+      child: AppPageScaffold(
+        title: portfolio?.name ?? l10n.portfolioStudioTitle,
+        confirmLeave: _handleHeaderBack,
+        actions: [
+          if (portfolio != null)
+            AppHeaderAction(
+              semanticsLabel: l10n.portfolioEditTitle,
+              icon: const Icon(FLucideIcons.settings2),
+              onPress: () => showInvestmentPortfolioFormSheet(
+                context,
+                existing: portfolio,
+              ),
+            ),
+        ],
+        childPad: false,
+        child: switch ((portfolios, tree)) {
+          (AsyncData(), AsyncData(value: final allocationTree))
+              when portfolio != null && allocationTree != null =>
+            _PortfolioStudioBody(
+              portfolio: portfolio,
+              tree: allocationTree,
+              section: _section,
+              transferIntent: widget.transferIntent,
+              portfolioNames: {
+                for (final item in portfolios.requireValue) item.id: item.name,
+              },
+              onSectionChanged: (next) => setState(() => _section = next),
+            ),
+          (AsyncError(:final error, :final stackTrace), _) ||
+          (_, AsyncError(:final error, :final stackTrace)) => kDefaultError(
+            context,
+            error,
+            stackTrace,
+            onRetry: () {
+              ref.invalidate(investmentPortfoliosProvider);
+              ref.invalidate(portfolioAllocationTreeProvider);
             },
-            onSectionChanged: (next) => setState(() => _section = next),
           ),
-        (AsyncError(:final error, :final stackTrace), _) ||
-        (_, AsyncError(:final error, :final stackTrace)) => kDefaultError(
-          context,
-          error,
-          stackTrace,
-          onRetry: () {
-            ref.invalidate(investmentPortfoliosProvider);
-            ref.invalidate(portfolioAllocationTreeProvider);
-          },
-        ),
-        (AsyncData(), AsyncData()) => AppEmptyState(
-          icon: FLucideIcons.layers,
-          title: l10n.portfolioStudioNotFound,
-          action: FButton(
-            variant: FButtonVariant.outline,
-            onPress: () => context.go(FinanceRoutes.wealthPortfolio),
-            child: Text(l10n.portfolioHubTitle),
+          (AsyncData(), AsyncData()) => AppEmptyState(
+            icon: FLucideIcons.layers,
+            title: l10n.portfolioStudioNotFound,
+            action: FButton(
+              variant: FButtonVariant.outline,
+              onPress: () => context.go(FinanceRoutes.wealthPortfolio),
+              child: Text(l10n.portfolioHubTitle),
+            ),
           ),
-        ),
-        _ => const _PortfolioHubSkeleton(),
-      },
+          _ => const _PortfolioHubSkeleton(),
+        },
+      ),
     );
   }
 }

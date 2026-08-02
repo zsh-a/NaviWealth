@@ -177,6 +177,22 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Strategy sleeves'), findsOneWidget);
       expect(find.text('Index core'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('app.back')));
+      await tester.pumpAndSettle();
+      expect(find.text('Capital path'), findsOneWidget);
+      expect(find.byType(PortfolioStudioPage), findsOneWidget);
+
+      await tester.drag(find.byType(ListView).first, const Offset(0, -900));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Structure'));
+      await tester.pumpAndSettle();
+      expect(find.text('Strategy sleeves'), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Capital path'), findsOneWidget);
+      expect(find.byType(PortfolioStudioPage), findsOneWidget);
     },
   );
 
