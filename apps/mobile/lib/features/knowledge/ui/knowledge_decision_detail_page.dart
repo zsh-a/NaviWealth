@@ -289,9 +289,27 @@ class _BodyState extends ConsumerState<_Body> {
         ),
         if (d.rationaleMd.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
-          KnowledgeSection.group(
+          KnowledgeDocumentSection(
             title: AppLocalizations.of(context).knowledgeDetailRationaleTitle,
-            children: [KnowledgeMarkdown(text: d.rationaleMd)],
+            child: KnowledgeMarkdown(text: d.rationaleMd),
+          ),
+        ],
+        if (d.expectedOutcome != null && d.expectedOutcome!.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeDocumentSection(
+            title: AppLocalizations.of(
+              context,
+            ).knowledgeDetailExpectedOutcomeTitle,
+            child: KnowledgeMarkdown(text: d.expectedOutcome!),
+          ),
+        ],
+        if (d.actualOutcomeMd != null && d.actualOutcomeMd!.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeDocumentSection(
+            title: AppLocalizations.of(
+              context,
+            ).knowledgeDetailActualOutcomeTitle,
+            child: KnowledgeMarkdown(text: d.actualOutcomeMd!),
           ),
         ],
         if (_principles.isNotEmpty) ...[
@@ -361,24 +379,6 @@ class _BodyState extends ConsumerState<_Body> {
                   ),
                 ),
             ],
-          ),
-        ],
-        if (d.expectedOutcome != null && d.expectedOutcome!.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s12),
-          KnowledgeSection.group(
-            title: AppLocalizations.of(
-              context,
-            ).knowledgeDetailExpectedOutcomeTitle,
-            children: [Text(d.expectedOutcome!, style: typography.body.sm)],
-          ),
-        ],
-        if (d.actualOutcomeMd != null && d.actualOutcomeMd!.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s12),
-          KnowledgeSection.group(
-            title: AppLocalizations.of(
-              context,
-            ).knowledgeDetailActualOutcomeTitle,
-            children: [KnowledgeMarkdown(text: d.actualOutcomeMd!)],
           ),
         ],
         if (d.contextSnapshot != null) ...[

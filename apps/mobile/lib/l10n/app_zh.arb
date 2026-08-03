@@ -2700,6 +2700,24 @@
   "knowledgeMarkdownEdit": "编辑",
   "knowledgeMarkdownPreview": "预览",
   "knowledgeMarkdownPreviewEmpty": "暂无内容预览。切回编辑模式输入。",
+  "knowledgeMarkdownBold": "加粗",
+  "knowledgeMarkdownLink": "链接",
+  "knowledgeMarkdownBulletedList": "项目列表",
+  "knowledgeMarkdownQuote": "引用",
+  "knowledgeMarkdownInlineCode": "行内代码",
+  "knowledgeMarkdownTableLabel": "表格，共 {rows} 行、{columns} 列",
+  "@knowledgeMarkdownTableLabel": {
+    "placeholders": {
+      "rows": { "type": "int" },
+      "columns": { "type": "int" }
+    }
+  },
+  "knowledgeMarkdownImageLabel": "图片：{description}",
+  "@knowledgeMarkdownImageLabel": {
+    "placeholders": {
+      "description": { "type": "String" }
+    }
+  },
   "knowledgeDecisionNotFound": "Decision 不存在或已删除",
   "knowledgeDecisionDetailTitle": "决策详情",
   "knowledgeDecisionActionPrompt": "将这个决策转化为一个具体的下一步。",

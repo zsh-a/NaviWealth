@@ -42,8 +42,31 @@ class _MarkdownEditorWithPreviewState extends State<MarkdownEditorWithPreview> {
   _MarkdownMode _mode = _MarkdownMode.edit;
 
   @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant MarkdownEditorWithPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller == widget.controller) return;
+    oldWidget.controller.removeListener(_onTextChanged);
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onTextChanged);
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -52,37 +75,275 @@ class _MarkdownEditorWithPreviewState extends State<MarkdownEditorWithPreview> {
           Text(widget.label!, style: context.labelStyle),
           const SizedBox(height: AppSpacing.s4),
         ],
-        SegmentedRow<_MarkdownMode>(
-          options: _MarkdownMode.values,
-          value: _mode,
-          labelOf: (m) => switch (m) {
-            _MarkdownMode.edit => l10n.knowledgeMarkdownEdit,
-            _MarkdownMode.preview => l10n.knowledgeMarkdownPreview,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth >= 640) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _editorPane(
+                      context,
+                      title: l10n.knowledgeMarkdownEdit,
+                      wide: true,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s16),
+                  Expanded(
+                    child: _previewPane(
+                      context,
+                      title: l10n.knowledgeMarkdownPreview,
+                    ),
+                  ),
+                ],
+              );
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SegmentedRow<_MarkdownMode>(
+                  options: _MarkdownMode.values,
+                  value: _mode,
+                  labelOf: (m) => switch (m) {
+                    _MarkdownMode.edit => l10n.knowledgeMarkdownEdit,
+                    _MarkdownMode.preview => l10n.knowledgeMarkdownPreview,
+                  },
+                  onChanged: (m) => setState(() => _mode = m),
+                ),
+                const SizedBox(height: AppSpacing.s8),
+                AnimatedSwitcher(
+                  duration: AppMotionPolicy.duration(context, Motion.fast),
+                  child: _mode == _MarkdownMode.edit
+                      ? _editorPane(context, key: const ValueKey('edit'))
+                      : _previewPane(context, key: const ValueKey('preview')),
+                ),
+              ],
+            );
           },
-          onChanged: (m) => setState(() => _mode = m),
         ),
-        const SizedBox(height: AppSpacing.s8),
-        if (_mode == _MarkdownMode.edit)
-          FTextField(
-            control: FTextFieldControl.managed(controller: widget.controller),
-            hint: widget.hint,
-            minLines: widget.minLines,
-            maxLines: widget.maxLines,
-          )
-        else
-          // Match detail reading skin (no muted "disabled field" fill).
-          SoftCard.flat(
-            padding: AppPageRhythm.densePadding,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 96),
-              child: widget.controller.text.trim().isEmpty
-                  ? Text(
-                      l10n.knowledgeMarkdownPreviewEmpty,
-                      style: context.bodyCaptionStyle.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    )
-                  : KnowledgeMarkdown(text: widget.controller.text),
+      ],
+    );
+  }
+
+  Widget _editorPane(
+    BuildContext context, {
+    Key? key,
+    String? title,
+    bool wide = false,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    final editor = CallbackShortcuts(
+      bindings: <ShortcutActivator, VoidCallback>{
+        const SingleActivator(LogicalKeyboardKey.keyB, control: true):
+            _toggleBold,
+        const SingleActivator(LogicalKeyboardKey.keyB, meta: true): _toggleBold,
+        const SingleActivator(LogicalKeyboardKey.keyK, control: true):
+            _insertLink,
+        const SingleActivator(LogicalKeyboardKey.keyK, meta: true): _insertLink,
+      },
+      child: FTextField(
+        control: FTextFieldControl.managed(controller: widget.controller),
+        hint: widget.hint,
+        minLines: wide ? math.max(widget.minLines, 6) : widget.minLines,
+        maxLines: wide ? math.max(widget.maxLines, 12) : widget.maxLines,
+      ),
+    );
+    return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (title != null) ...[
+          Text(title, style: context.labelStyle),
+          const SizedBox(height: AppSpacing.s6),
+        ],
+        _MarkdownToolbar(
+          actions: [
+            _MarkdownToolbarAction(
+              icon: FLucideIcons.bold,
+              label: l10n.knowledgeMarkdownBold,
+              onPress: _toggleBold,
+            ),
+            _MarkdownToolbarAction(
+              icon: FLucideIcons.link,
+              label: l10n.knowledgeMarkdownLink,
+              onPress: _insertLink,
+            ),
+            _MarkdownToolbarAction(
+              icon: FLucideIcons.list,
+              label: l10n.knowledgeMarkdownBulletedList,
+              onPress: () => _prefixLines('- '),
+            ),
+            _MarkdownToolbarAction(
+              icon: FLucideIcons.quote,
+              label: l10n.knowledgeMarkdownQuote,
+              onPress: () => _prefixLines('> '),
+            ),
+            _MarkdownToolbarAction(
+              icon: FLucideIcons.code,
+              label: l10n.knowledgeMarkdownInlineCode,
+              onPress: () => _wrapSelection('`', '`'),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s6),
+        editor,
+      ],
+    );
+  }
+
+  Widget _previewPane(BuildContext context, {Key? key, String? title}) {
+    final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (title != null) ...[
+          Text(title, style: context.labelStyle),
+          const SizedBox(height: AppSpacing.s6),
+        ],
+        SoftCard.flat(
+          padding: AppPageRhythm.cardPadding,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 120),
+            child: widget.controller.text.trim().isEmpty
+                ? Text(
+                    l10n.knowledgeMarkdownPreviewEmpty,
+                    style: context.bodyCaptionStyle.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                  )
+                : KnowledgeMarkdown(text: widget.controller.text),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _toggleBold() => _wrapSelection('**', '**');
+
+  void _insertLink() {
+    final value = widget.controller.value;
+    final selection = _safeSelection(value);
+    final selected = value.text.substring(selection.start, selection.end);
+    final replacement = '[${selected.isEmpty ? '' : selected}](https://)';
+    final text = value.text.replaceRange(
+      selection.start,
+      selection.end,
+      replacement,
+    );
+    final cursor = selected.isEmpty
+        ? selection.start + 1
+        : selection.start + replacement.length - 1;
+    widget.controller.value = value.copyWith(
+      text: text,
+      selection: TextSelection.collapsed(offset: cursor),
+      composing: TextRange.empty,
+    );
+  }
+
+  void _wrapSelection(String prefix, String suffix) {
+    final value = widget.controller.value;
+    final selection = _safeSelection(value);
+    final selected = value.text.substring(selection.start, selection.end);
+    final replacement = '$prefix$selected$suffix';
+    final text = value.text.replaceRange(
+      selection.start,
+      selection.end,
+      replacement,
+    );
+    final nextSelection = selected.isEmpty
+        ? TextSelection.collapsed(offset: selection.start + prefix.length)
+        : TextSelection(
+            baseOffset: selection.start + prefix.length,
+            extentOffset: selection.end + prefix.length,
+          );
+    widget.controller.value = value.copyWith(
+      text: text,
+      selection: nextSelection,
+      composing: TextRange.empty,
+    );
+  }
+
+  void _prefixLines(String prefix) {
+    final value = widget.controller.value;
+    final selection = _safeSelection(value);
+    final lineStart = selection.start == 0
+        ? 0
+        : value.text.lastIndexOf('\n', selection.start - 1) + 1;
+    final nextBreak = value.text.indexOf('\n', selection.end);
+    final lineEnd = nextBreak == -1 ? value.text.length : nextBreak;
+    final selectedLines = value.text.substring(lineStart, lineEnd);
+    final replacement = selectedLines
+        .split('\n')
+        .map((line) => '$prefix$line')
+        .join('\n');
+    final text = value.text.replaceRange(lineStart, lineEnd, replacement);
+    widget.controller.value = value.copyWith(
+      text: text,
+      selection: TextSelection(
+        baseOffset: lineStart,
+        extentOffset: lineStart + replacement.length,
+      ),
+      composing: TextRange.empty,
+    );
+  }
+
+  TextSelection _safeSelection(TextEditingValue value) {
+    final selection = value.selection;
+    if (!selection.isValid) {
+      return TextSelection.collapsed(offset: value.text.length);
+    }
+    return TextSelection(
+      baseOffset: math.min(selection.start, value.text.length),
+      extentOffset: math.min(selection.end, value.text.length),
+    );
+  }
+}
+
+class _MarkdownToolbarAction {
+  const _MarkdownToolbarAction({
+    required this.icon,
+    required this.label,
+    required this.onPress,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPress;
+}
+
+class _MarkdownToolbar extends StatelessWidget {
+  const _MarkdownToolbar({required this.actions});
+
+  final List<_MarkdownToolbarAction> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Wrap(
+      spacing: AppSpacing.s4,
+      runSpacing: AppSpacing.s4,
+      children: [
+        for (final action in actions)
+          FTooltip(
+            tipBuilder: (_, _) => Text(action.label),
+            child: Semantics(
+              button: true,
+              label: action.label,
+              child: AppTappable(
+                onPress: action.onPress,
+                child: SizedBox.square(
+                  dimension: AppControlHeights.touchTarget,
+                  child: Icon(
+                    action.icon,
+                    size: AppIconSizes.sm,
+                    color: colors.mutedForeground,
+                  ),
+                ),
+              ),
             ),
           ),
       ],

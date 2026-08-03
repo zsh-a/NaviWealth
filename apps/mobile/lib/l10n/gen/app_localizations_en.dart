@@ -9110,6 +9110,31 @@ class AppLocalizationsEn extends AppLocalizations {
       'No preview yet. Switch back to edit mode to enter content.';
 
   @override
+  String get knowledgeMarkdownBold => 'Bold';
+
+  @override
+  String get knowledgeMarkdownLink => 'Link';
+
+  @override
+  String get knowledgeMarkdownBulletedList => 'Bulleted list';
+
+  @override
+  String get knowledgeMarkdownQuote => 'Quote';
+
+  @override
+  String get knowledgeMarkdownInlineCode => 'Inline code';
+
+  @override
+  String knowledgeMarkdownTableLabel(int rows, int columns) {
+    return 'Table, $rows rows and $columns columns';
+  }
+
+  @override
+  String knowledgeMarkdownImageLabel(String description) {
+    return 'Image: $description';
+  }
+
+  @override
   String get knowledgeDecisionNotFound =>
       'Decision does not exist or was deleted';
 

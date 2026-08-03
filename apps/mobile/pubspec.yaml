@@ -58,6 +58,10 @@ dependencies:
   lifeos_native:
     path: rust_builder
   local_auth: ^3.0.2
+  # Standards-compliant CommonMark/GFM parsing for settled KnowledgeOS
+  # documents. Rendering remains local and token-driven; AI streaming keeps
+  # its tolerant lightweight parser.
+  markdown: ^7.3.1
   package_info_plus: ^10.2.1
   path: ^1.9.1
   path_provider: ^2.1.6

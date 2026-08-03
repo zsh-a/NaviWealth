@@ -74,6 +74,65 @@ class KnowledgeSection extends StatelessWidget {
   }
 }
 
+/// Continuous long-form section used for user-authored KnowledgeOS content.
+///
+/// Metadata and tools remain framed modules; prose sits directly on the page
+/// so multiple sections read as one document instead of a stack of cards.
+class KnowledgeDocumentSection extends StatelessWidget {
+  const KnowledgeDocumentSection({
+    super.key,
+    required this.title,
+    required this.child,
+  });
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s4,
+        vertical: AppSpacing.s8,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: AppSpacing.accentBar,
+                height: AppSpacing.s16,
+                decoration: BoxDecoration(
+                  color: colors.primary,
+                  borderRadius: BorderRadius.circular(AppRadius.full),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s10),
+              Expanded(
+                child: Semantics(
+                  header: true,
+                  child: Text(
+                    title,
+                    style: TypographyTokens.titleLarge.copyWith(
+                      color: colors.foreground,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s14),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
 /// Compact single-row surface for KnowledgeOS prompt/assistant controls.
 ///
 /// Keeps KnowledgeOS card chrome centralized while still allowing dense,

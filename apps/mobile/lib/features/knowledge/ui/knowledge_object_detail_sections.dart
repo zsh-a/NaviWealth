@@ -103,9 +103,9 @@ List<Widget> _noteSections(BuildContext context, KnowledgeNote n) {
     ),
     if (n.bodyMd.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s12),
-      KnowledgeSection.group(
+      KnowledgeDocumentSection(
         title: l10n.knowledgeDetailBodyTitle,
-        children: [KnowledgeMarkdown(text: n.bodyMd)],
+        child: KnowledgeMarkdown(text: n.bodyMd),
       ),
     ],
     if (n.sourceUrl != null && n.sourceUrl!.isNotEmpty) ...[
@@ -149,9 +149,9 @@ List<Widget> _conceptSections(
     ),
     if (c.summaryMd.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s12),
-      KnowledgeSection.group(
+      KnowledgeDocumentSection(
         title: AppLocalizations.of(context).knowledgeDetailSummaryTitle,
-        children: [KnowledgeMarkdown(text: c.summaryMd)],
+        child: KnowledgeMarkdown(text: c.summaryMd),
       ),
     ],
     if (relatedConcepts.isNotEmpty) ...[
@@ -237,9 +237,9 @@ List<Widget> _experimentSections(
     ],
     if (e.methodMd.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s12),
-      KnowledgeSection.group(
+      KnowledgeDocumentSection(
         title: AppLocalizations.of(context).knowledgeDetailMethodTitle,
-        children: [KnowledgeMarkdown(text: e.methodMd)],
+        child: KnowledgeMarkdown(text: e.methodMd),
       ),
     ],
     if (e.metrics.isNotEmpty) ...[
@@ -251,16 +251,16 @@ List<Widget> _experimentSections(
     ],
     if (e.resultMd != null && e.resultMd!.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s12),
-      KnowledgeSection.group(
+      KnowledgeDocumentSection(
         title: AppLocalizations.of(context).knowledgeDetailResultTitle,
-        children: [KnowledgeMarkdown(text: e.resultMd!)],
+        child: KnowledgeMarkdown(text: e.resultMd!),
       ),
     ],
     if (e.conclusionMd != null && e.conclusionMd!.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s12),
-      KnowledgeSection.group(
+      KnowledgeDocumentSection(
         title: AppLocalizations.of(context).knowledgeDetailConclusionTitle,
-        children: [KnowledgeMarkdown(text: e.conclusionMd!)],
+        child: KnowledgeMarkdown(text: e.conclusionMd!),
       ),
     ],
   ];
@@ -297,9 +297,9 @@ List<Widget> _principleSections(
     ),
     if (p.rationaleMd.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s12),
-      KnowledgeSection.group(
+      KnowledgeDocumentSection(
         title: AppLocalizations.of(context).knowledgeDetailRationaleTitle,
-        children: [KnowledgeMarkdown(text: p.rationaleMd)],
+        child: KnowledgeMarkdown(text: p.rationaleMd),
       ),
     ],
     if (referencingDecisions.isNotEmpty) ...[

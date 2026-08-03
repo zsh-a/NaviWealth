@@ -21,11 +21,15 @@
 /// scannable lists tighten to s12, summary panels relax to s16.
 library;
 
+import 'dart:math' as math;
+
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
+import 'package:markdown/markdown.dart' as md;
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/ai/visual/ai_markdown.dart';
-import '../../../core/ai/visual/ai_typography.dart';
+import '../../../core/ai/visual/flow_block.dart';
 import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';

@@ -15241,6 +15241,48 @@ abstract class AppLocalizations {
   /// **'No preview yet. Switch back to edit mode to enter content.'**
   String get knowledgeMarkdownPreviewEmpty;
 
+  /// No description provided for @knowledgeMarkdownBold.
+  ///
+  /// In en, this message translates to:
+  /// **'Bold'**
+  String get knowledgeMarkdownBold;
+
+  /// No description provided for @knowledgeMarkdownLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get knowledgeMarkdownLink;
+
+  /// No description provided for @knowledgeMarkdownBulletedList.
+  ///
+  /// In en, this message translates to:
+  /// **'Bulleted list'**
+  String get knowledgeMarkdownBulletedList;
+
+  /// No description provided for @knowledgeMarkdownQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote'**
+  String get knowledgeMarkdownQuote;
+
+  /// No description provided for @knowledgeMarkdownInlineCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Inline code'**
+  String get knowledgeMarkdownInlineCode;
+
+  /// No description provided for @knowledgeMarkdownTableLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Table, {rows} rows and {columns} columns'**
+  String knowledgeMarkdownTableLabel(int rows, int columns);
+
+  /// No description provided for @knowledgeMarkdownImageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Image: {description}'**
+  String knowledgeMarkdownImageLabel(String description);
+
   /// No description provided for @knowledgeDecisionNotFound.
   ///
   /// In en, this message translates to:

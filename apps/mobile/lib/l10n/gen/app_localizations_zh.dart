@@ -8641,6 +8641,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeMarkdownPreviewEmpty => '暂无内容预览。切回编辑模式输入。';
 
   @override
+  String get knowledgeMarkdownBold => '加粗';
+
+  @override
+  String get knowledgeMarkdownLink => '链接';
+
+  @override
+  String get knowledgeMarkdownBulletedList => '项目列表';
+
+  @override
+  String get knowledgeMarkdownQuote => '引用';
+
+  @override
+  String get knowledgeMarkdownInlineCode => '行内代码';
+
+  @override
+  String knowledgeMarkdownTableLabel(int rows, int columns) {
+    return '表格，共 $rows 行、$columns 列';
+  }
+
+  @override
+  String knowledgeMarkdownImageLabel(String description) {
+    return '图片：$description';
+  }
+
+  @override
   String get knowledgeDecisionNotFound => 'Decision 不存在或已删除';
 
   @override

@@ -4682,6 +4682,24 @@
   "knowledgeMarkdownEdit": "Edit",
   "knowledgeMarkdownPreview": "Preview",
   "knowledgeMarkdownPreviewEmpty": "No preview yet. Switch back to edit mode to enter content.",
+  "knowledgeMarkdownBold": "Bold",
+  "knowledgeMarkdownLink": "Link",
+  "knowledgeMarkdownBulletedList": "Bulleted list",
+  "knowledgeMarkdownQuote": "Quote",
+  "knowledgeMarkdownInlineCode": "Inline code",
+  "knowledgeMarkdownTableLabel": "Table, {rows} rows and {columns} columns",
+  "@knowledgeMarkdownTableLabel": {
+    "placeholders": {
+      "rows": { "type": "int" },
+      "columns": { "type": "int" }
+    }
+  },
+  "knowledgeMarkdownImageLabel": "Image: {description}",
+  "@knowledgeMarkdownImageLabel": {
+    "placeholders": {
+      "description": { "type": "String" }
+    }
+  },
   "knowledgeDecisionNotFound": "Decision does not exist or was deleted",
   "knowledgeDecisionDetailTitle": "Decision details",
   "knowledgeDecisionActionPrompt": "Turn this decision into one concrete next step.",
