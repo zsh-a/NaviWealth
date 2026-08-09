@@ -8,486 +8,487 @@ XRP-USD,crypto,crypto,USD,XRP,瑞波币,ripple
 SOL-USD,crypto,crypto,USD,Solana,索拉纳,solana
 TRX-USD,crypto,crypto,USD,TRON,波场,tron
 FIGR_HELOC-USD,crypto,crypto,USD,Figure Heloc,,figure-heloc
-WBT-USD,crypto,crypto,USD,WhiteBIT Coin,,whitebit
 HYPE-USD,crypto,crypto,USD,Hyperliquid,,hyperliquid
 DOGE-USD,crypto,crypto,USD,Dogecoin,狗狗币,dogecoin
 USDS-USD,crypto,crypto,USD,USDS,,usds
-LEO-USD,crypto,crypto,USD,LEO Token,,leo-token
 RAIN-USD,crypto,crypto,USD,Rain,,rain
+LEO-USD,crypto,crypto,USD,LEO Token,,leo-token
 ZEC-USD,crypto,crypto,USD,Zcash,,zcash
 ADA-USD,crypto,crypto,USD,Cardano,卡尔达诺,cardano
 XMR-USD,crypto,crypto,USD,Monero,,monero
+WBT-USD,crypto,crypto,USD,WhiteBIT Coin,,whitebit
 LINK-USD,crypto,crypto,USD,Chainlink,Chainlink,chainlink
 XLM-USD,crypto,crypto,USD,Stellar,恒星币,stellar
-CC-USD,crypto,crypto,USD,Canton,,canton-network
 DAI-USD,crypto,crypto,USD,Dai,,dai
 BCH-USD,crypto,crypto,USD,Bitcoin Cash,比特币现金,bitcoin-cash
 USD1-USD,crypto,crypto,USD,USD1,,usd1-wlfi
-GRAM-USD,crypto,crypto,USD,Gram (prev. Toncoin),,the-open-network
 USDE-USD,crypto,crypto,USD,Ethena USDe,,ethena-usde
+CC-USD,crypto,crypto,USD,Canton,,canton-network
+GRAM-USD,crypto,crypto,USD,Gram (prev. Toncoin),,the-open-network
 LTC-USD,crypto,crypto,USD,Litecoin,莱特币,litecoin
 USDG-USD,crypto,crypto,USD,Global Dollar,,global-dollar
 HBAR-USD,crypto,crypto,USD,Hedera,,hedera-hashgraph
 USYC-USD,crypto,crypto,USD,Circle USYC,,hashnote-usyc
-SHIB-USD,crypto,crypto,USD,Shiba Inu,柴犬币,shiba-inu
-AVAX-USD,crypto,crypto,USD,Avalanche,雪崩,avalanche-2
 SUI-USD,crypto,crypto,USD,Sui,,sui
+AVAX-USD,crypto,crypto,USD,Avalanche,雪崩,avalanche-2
 PYUSD-USD,crypto,crypto,USD,PayPal USD,,paypal-usd
+SHIB-USD,crypto,crypto,USD,Shiba Inu,柴犬币,shiba-inu
 BUIDL-USD,crypto,crypto,USD,BlackRock USD Institutional Digital Liquidity Fund,,blackrock-usd-institutional-digital-liquidity-fund
+XAUT-USD,crypto,crypto,USD,Tether Gold,,tether-gold
 UNI-USD,crypto,crypto,USD,Uniswap,Uniswap,uniswap
 CRO-USD,crypto,crypto,USD,Cronos,,crypto-com-chain
-XAUT-USD,crypto,crypto,USD,Tether Gold,,tether-gold
 NEAR-USD,crypto,crypto,USD,NEAR Protocol,NEAR,near
 USDY-USD,crypto,crypto,USD,Ondo US Dollar Yield,,ondo-us-dollar-yield
-ONDO-USD,crypto,crypto,USD,Ondo,,ondo-finance
 TAO-USD,crypto,crypto,USD,Bittensor,,bittensor
 OKB-USD,crypto,crypto,USD,OKB,,okb
 PAXG-USD,crypto,crypto,USD,PAX Gold,,pax-gold
+ONDO-USD,crypto,crypto,USD,Ondo,,ondo-finance
 WLFI-USD,crypto,crypto,USD,World Liberty Financial,,world-liberty-financial
 ASTER-USD,crypto,crypto,USD,Aster,,aster-2
 HTX-USD,crypto,crypto,USD,HTX DAO,,htx-dao
+RLUSD-USD,crypto,crypto,USD,Ripple USD,,ripple-usd
 USDD-USD,crypto,crypto,USD,USDD,,usdd
 M-USD,crypto,crypto,USD,MemeCore,,memecore
-RLUSD-USD,crypto,crypto,USD,Ripple USD,,ripple-usd
-AAVE-USD,crypto,crypto,USD,Aave,,aave
 USDF-USD,crypto,crypto,USD,Falcon USD,,falcon-finance
+AAVE-USD,crypto,crypto,USD,Aave,,aave
+MNT-USD,crypto,crypto,USD,Mantle,,mantle
 DOT-USD,crypto,crypto,USD,Polkadot,波卡,polkadot
 BFUSD-USD,crypto,crypto,USD,BFUSD,,bfusd
-MNT-USD,crypto,crypto,USD,Mantle,,mantle
 SKY-USD,crypto,crypto,USD,Sky,,sky
 MORPHO-USD,crypto,crypto,USD,Morpho,,morpho
 PEPE-USD,crypto,crypto,USD,Pepe,,pepe
 ICP-USD,crypto,crypto,USD,Internet Computer,,internet-computer
-BGB-USD,crypto,crypto,USD,Bitget Token,,bitget-token
+U-USD,crypto,crypto,USD,United Stables,,united-stables
+BEAT-USD,crypto,crypto,USD,Audiera,,audiera
 WLD-USD,crypto,crypto,USD,Worldcoin,,worldcoin-wld
 USDGO-USD,crypto,crypto,USD,USDGO,,usdgo
-U-USD,crypto,crypto,USD,United Stables,,united-stables
-ETC-USD,crypto,crypto,USD,Ethereum Classic,以太经典,ethereum-classic
-BEAT-USD,crypto,crypto,USD,Audiera,,audiera
-BCAP-USD,crypto,crypto,USD,Blockchain Capital,,blockchain-capital
+BGB-USD,crypto,crypto,USD,Bitget Token,,bitget-token
+PUMP-USD,crypto,crypto,USD,Pump.fun,,pump-fun
 EURSAFO-USD,crypto,crypto,USD,Spiko Amundi Overnight Swap Fund (EUR),,spiko-amundi-overnight-swap-fund-eur
+ETC-USD,crypto,crypto,USD,Ethereum Classic,以太经典,ethereum-classic
 PI-USD,crypto,crypto,USD,Pi Network,,pi-network
+USTB-USD,crypto,crypto,USD,Invesco Short Duration US Government Securities Fund,,superstate-short-duration-us-government-securities-fund-ustb
+BCAP-USD,crypto,crypto,USD,Blockchain Capital,,blockchain-capital
 EUTBL-USD,crypto,crypto,USD,Spiko EU T-Bills Money Market Fund,,eutbl
 KCS-USD,crypto,crypto,USD,KuCoin,,kucoin-shares
-USTB-USD,crypto,crypto,USD,Invesco Short Duration US Government Securities Fund,,superstate-short-duration-us-government-securities-fund-ustb
-QNT-USD,crypto,crypto,USD,Quant,,quant-network
 JTRSY-USD,crypto,crypto,USD,Janus Henderson Anemoy Treasury Fund,,janus-henderson-anemoy-treasury-fund
-JST-USD,crypto,crypto,USD,JUST,,just
 ENA-USD,crypto,crypto,USD,Ethena,,ethena
-PUMP-USD,crypto,crypto,USD,Pump.fun,,pump-fun
-STABLE-USD,crypto,crypto,USD,​​Stable,,stable-2
+QNT-USD,crypto,crypto,USD,Quant,,quant-network
+JST-USD,crypto,crypto,USD,JUST,,just
 POL-USD,crypto,crypto,USD,POL (ex-MATIC),,polygon-ecosystem-token
+STABLE-USD,crypto,crypto,USD,​​Stable,,stable-2
 ALGO-USD,crypto,crypto,USD,Algorand,,algorand
-KAS-USD,crypto,crypto,USD,Kaspa,,kaspa
 NEXO-USD,crypto,crypto,USD,NEXO,,nexo
-RENDER-USD,crypto,crypto,USD,Render,,render-token
-GT-USD,crypto,crypto,USD,Gate,,gatechain-token
-JAAA-USD,crypto,crypto,USD,Janus Henderson Anemoy AAA CLO Fund,,janus-henderson-anemoy-aaa-clo-fund
+KAS-USD,crypto,crypto,USD,Kaspa,,kaspa
 ATOM-USD,crypto,crypto,USD,Cosmos Hub,宇宙,cosmos
-JUP-USD,crypto,crypto,USD,Jupiter,,jupiter-exchange-solana
-GHO-USD,crypto,crypto,USD,GHO,,gho
+GT-USD,crypto,crypto,USD,Gate,,gatechain-token
 BDX-USD,crypto,crypto,USD,Beldex,,beldex
+GHO-USD,crypto,crypto,USD,GHO,,gho
+JAAA-USD,crypto,crypto,USD,Janus Henderson Anemoy AAA CLO Fund,,janus-henderson-anemoy-aaa-clo-fund
+RENDER-USD,crypto,crypto,USD,Render,,render-token
 YLDS-USD,crypto,crypto,USD,YLDS,,ylds
+JUP-USD,crypto,crypto,USD,Jupiter,,jupiter-exchange-solana
+LIT-USD,crypto,crypto,USD,Lighter,,lighter
 FIL-USD,crypto,crypto,USD,Filecoin,Filecoin,filecoin
-币安人生-USD,crypto,crypto,USD,币安人生 (BinanceLife),,bianrensheng
 VVV-USD,crypto,crypto,USD,Venice Token,,venice-token
-US-USD,crypto,crypto,USD,Talus,,talus
 USD0-USD,crypto,crypto,USD,Usual USD,,usual-usd
+XDC-USD,crypto,crypto,USD,XDC Network,,xdce-crowd-sale
 FLR-USD,crypto,crypto,USD,Flare,,flare-networks
 ARB-USD,crypto,crypto,USD,Arbitrum,Arbitrum,arbitrum
-XDC-USD,crypto,crypto,USD,XDC Network,,xdce-crowd-sale
+币安人生-USD,crypto,crypto,USD,币安人生 (BinanceLife),,bianrensheng
 USX-USD,crypto,crypto,USD,USX,,usx
-LIT-USD,crypto,crypto,USD,Lighter,,lighter
-INJ-USD,crypto,crypto,USD,Injective,,injective-protocol
-TUSD-USD,crypto,crypto,USD,TrueUSD,,true-usd
 APT-USD,crypto,crypto,USD,Aptos,Aptos,aptos
+TUSD-USD,crypto,crypto,USD,TrueUSD,,true-usd
 A7A5-USD,crypto,crypto,USD,A7A5,,a7a5
 CAKE-USD,crypto,crypto,USD,PancakeSwap,,pancakeswap-token
 EURC-USD,crypto,crypto,USD,EURC,,euro-coin
 HASH-USD,crypto,crypto,USD,Provenance Blockchain,,hash-2
-UB-USD,crypto,crypto,USD,Unibase,,unibase
+BTW-USD,crypto,crypto,USD,Bitway,,bitway
+INJ-USD,crypto,crypto,USD,Injective,,injective-protocol
+PENGU-USD,crypto,crypto,USD,Pudgy Penguins,,pudgy-penguins
 VET-USD,crypto,crypto,USD,VeChain,,vechain
+AERO-USD,crypto,crypto,USD,Aerodrome Finance,,aerodrome-finance
 DASH-USD,crypto,crypto,USD,Dash,,dash
 ETHFI-USD,crypto,crypto,USD,Ether.fi,,ether-fi
-PENGU-USD,crypto,crypto,USD,Pudgy Penguins,,pudgy-penguins
-AERO-USD,crypto,crypto,USD,Aerodrome Finance,,aerodrome-finance
 OUSG-USD,crypto,crypto,USD,Ondo Short-Term U.S. Government Bond Fund,,ousg
-VIRTUAL-USD,crypto,crypto,USD,Virtuals Protocol,,virtual-protocol
 TRUMP-USD,crypto,crypto,USD,Official Trump,,official-trump
+CRV-USD,crypto,crypto,USD,Curve DAO,,curve-dao-token
+VIRTUAL-USD,crypto,crypto,USD,Virtuals Protocol,,virtual-protocol
+QFI-USD,crypto,crypto,USD,Quantix Finance,,quantixai
 USDTB-USD,crypto,crypto,USD,USDtb,,usdtb
 FDUSD-USD,crypto,crypto,USD,First Digital USD,,first-digital-usd
 SUN-USD,crypto,crypto,USD,Sun Token,,sun-token
+UB-USD,crypto,crypto,USD,Unibase,,unibase
+PYTH-USD,crypto,crypto,USD,Pyth Network,,pyth-network
 ANTFUN-USD,crypto,crypto,USD,AntFun,,antfun
+TIA-USD,crypto,crypto,USD,Celestia,,celestia
 NIGHT-USD,crypto,crypto,USD,Midnight,,midnight-3
 FET-USD,crypto,crypto,USD,Artificial Superintelligence Alliance,,fetch-ai
-CRV-USD,crypto,crypto,USD,Curve DAO,,curve-dao-token
-TIA-USD,crypto,crypto,USD,Celestia,,celestia
-PYTH-USD,crypto,crypto,USD,Pyth Network,,pyth-network
-KAU-USD,crypto,crypto,USD,Kinesis Gold,,kinesis-gold
-SPX-USD,crypto,crypto,USD,SPX6900,,spx6900
 APXUSD-USD,crypto,crypto,USD,apxUSD,,apxusd
-CARDS-USD,crypto,crypto,USD,Collector Crypt,,collector-crypt
-LUNC-USD,crypto,crypto,USD,Terra Luna Classic,,terra-luna
-OHM-USD,crypto,crypto,USD,Olympus,,olympus
+SPX-USD,crypto,crypto,USD,SPX6900,,spx6900
+ZRO-USD,crypto,crypto,USD,LayerZero,,layerzero
+BSV-USD,crypto,crypto,USD,Bitcoin SV,,bitcoin-cash-sv
 SEI-USD,crypto,crypto,USD,Sei,,sei-network
 GNO-USD,crypto,crypto,USD,Gnosis,,gnosis
-CTOC-USD,crypto,crypto,USD,CTOC,,ctoc
-LDO-USD,crypto,crypto,USD,Lido DAO,,lido-dao
-NFT-USD,crypto,crypto,USD,AINFT,,apenft
-BCN-USD,crypto,crypto,USD,Bytecoin,,bytecoin
-ZRO-USD,crypto,crypto,USD,LayerZero,,layerzero
-BTT-USD,crypto,crypto,USD,BitTorrent,,bittorrent
-STX-USD,crypto,crypto,USD,Stacks,,blockstack
-KAITO-USD,crypto,crypto,USD,KAITO,,kaito
-BONK-USD,crypto,crypto,USD,Bonk,,bonk
-BSV-USD,crypto,crypto,USD,Bitcoin SV,,bitcoin-cash-sv
-ONYC-USD,crypto,crypto,USD,OnRe Tokenized Reinsurance,,onyc
-JTO-USD,crypto,crypto,USD,Jito,,jito-governance-token
-MON-USD,crypto,crypto,USD,Monad,,monad
-REAL-USD,crypto,crypto,USD,RealLink,,reallink
-AUSD-USD,crypto,crypto,USD,AUSD,,agora-dollar
+OHM-USD,crypto,crypto,USD,Olympus,,olympus
+LUNC-USD,crypto,crypto,USD,Terra Luna Classic,,terra-luna
 BC-USD,crypto,crypto,USD,BCGame Coin,,bc-token
-DEXE-USD,crypto,crypto,USD,DeXe,,dexe
+NFT-USD,crypto,crypto,USD,AINFT,,apenft
+JTO-USD,crypto,crypto,USD,Jito,,jito-governance-token
+CARDS-USD,crypto,crypto,USD,Collector Crypt,,collector-crypt
+BTT-USD,crypto,crypto,USD,BitTorrent,,bittorrent
+REAL-USD,crypto,crypto,USD,RealLink,,reallink
+ONYC-USD,crypto,crypto,USD,OnRe Tokenized Reinsurance,,onyc
+MON-USD,crypto,crypto,USD,Monad,,monad
+STX-USD,crypto,crypto,USD,Stacks,,blockstack
+LDO-USD,crypto,crypto,USD,Lido DAO,,lido-dao
 PENDLE-USD,crypto,crypto,USD,Pendle,,pendle
-DCR-USD,crypto,crypto,USD,Decred,,decred
-Q-USD,crypto,crypto,USD,Quack AI,,quack-ai
 KITE-USD,crypto,crypto,USD,Kite,,kite-2
-IMX-USD,crypto,crypto,USD,Immutable,,immutable-x
-CFX-USD,crypto,crypto,USD,Conflux,,conflux-token
+Q-USD,crypto,crypto,USD,Quack AI,,quack-ai
+DCR-USD,crypto,crypto,USD,Decred,,decred
 XTZ-USD,crypto,crypto,USD,Tezos,,tezos
-PIEVERSE-USD,crypto,crypto,USD,Pieverse,,pieverse
+IMX-USD,crypto,crypto,USD,Immutable,,immutable-x
+BONK-USD,crypto,crypto,USD,Bonk,,bonk
+CFX-USD,crypto,crypto,USD,Conflux,,conflux-token
 FRAX-USD,crypto,crypto,USD,Legacy Frax Dollar,,frax
-JASMY-USD,crypto,crypto,USD,JasmyCoin,,jasmycoin
+PIEVERSE-USD,crypto,crypto,USD,Pieverse,,pieverse
 CRVUSD-USD,crypto,crypto,USD,crvUSD,,crvusd
-APR-USD,crypto,crypto,USD,aPriori,,apriori
-KOGE-USD,crypto,crypto,USD,KOGE,,bnb48-club-token
-ULTIMA-USD,crypto,crypto,USD,Ultima,,ultima
-GRASS-USD,crypto,crypto,USD,Grass,,grass
 XPL-USD,crypto,crypto,USD,Plasma,,plasma
-PC0000031-USD,crypto,crypto,USD,Tradable NA Rent Financing Platform SSTN,,tradable-na-rent-financing-platform-sstn
-APEPE-USD,crypto,crypto,USD,Ape and Pepe,,ape-and-pepe
+DEXE-USD,crypto,crypto,USD,DeXe,,dexe
+AUSD-USD,crypto,crypto,USD,AUSD,,agora-dollar
 FLOKI-USD,crypto,crypto,USD,FLOKI,,floki
-KAG-USD,crypto,crypto,USD,Kinesis Silver,,kinesis-silver
 OP-USD,crypto,crypto,USD,Optimism,Optimism,optimism
-SYRUP-USD,crypto,crypto,USD,Maple Finance,,syrup
-VBILL-USD,crypto,crypto,USD,VanEck Treasury Fund,,vaneck-treasury-fund
-2Z-USD,crypto,crypto,USD,DoubleZero,,doublezero
-FF-USD,crypto,crypto,USD,Falcon Finance,,falcon-finance-ff
-ZBCN-USD,crypto,crypto,USD,Zebec Network,,zebec-network
+KOGE-USD,crypto,crypto,USD,KOGE,,bnb48-club-token
+PC0000031-USD,crypto,crypto,USD,Tradable NA Rent Financing Platform SSTN,,tradable-na-rent-financing-platform-sstn
+ULTIMA-USD,crypto,crypto,USD,Ultima,,ultima
+JASMY-USD,crypto,crypto,USD,JasmyCoin,,jasmycoin
+APEPE-USD,crypto,crypto,USD,Ape and Pepe,,ape-and-pepe
+APR-USD,crypto,crypto,USD,aPriori,,apriori
+GRASS-USD,crypto,crypto,USD,Grass,,grass
 COCO-USD,crypto,crypto,USD,coco,,coco-2
+2Z-USD,crypto,crypto,USD,DoubleZero,,doublezero
+KAG-USD,crypto,crypto,USD,Kinesis Silver,,kinesis-silver
+VBILL-USD,crypto,crypto,USD,VanEck Treasury Fund,,vaneck-treasury-fund
+SYRUP-USD,crypto,crypto,USD,Maple Finance,,syrup
+VELVET-USD,crypto,crypto,USD,Velvet,,velvet
+FF-USD,crypto,crypto,USD,Falcon Finance,,falcon-finance-ff
 USAT-USD,crypto,crypto,USD,USAT,,usa
 PEANUT-USD,crypto,crypto,USD,Peanut,,peanut-2-2
-WFI-USD,crypto,crypto,USD,WeFi,,wefi
-BTW-USD,crypto,crypto,USD,Bitway,,bitway
-ENS-USD,crypto,crypto,USD,Ethereum Name Service,,ethereum-name-service
-REUSD-USD,crypto,crypto,USD,Re Protocol reUSD,,re-protocol-reusd
 FGRS-USD,crypto,crypto,USD,FGRS (Figure Tokenized Stock),,fgrs-figure-tokenized-stock
-VELVET-USD,crypto,crypto,USD,Velvet,,velvet
-KAIA-USD,crypto,crypto,USD,Kaia,,kaia
-STRK-USD,crypto,crypto,USD,Starknet,,starknet
-TEL-USD,crypto,crypto,USD,Telcoin,,telcoin
-VCNT-USD,crypto,crypto,USD,ViciCoin,,vicicoin
-RAY-USD,crypto,crypto,USD,Raydium,,raydium
-COMP-USD,crypto,crypto,USD,Compound,,compound-governance-token
-B-USD,crypto,crypto,USD,BUILDon,,build-on
-PC0000033-USD,crypto,crypto,USD,Tradable APAC Diversified Finance Provider SSTN,,tradable-apac-diversified-finance-provider-sstn
 APYUSD-USD,crypto,crypto,USD,apyUSD,,apyusd
+ENS-USD,crypto,crypto,USD,Ethereum Name Service,,ethereum-name-service
+ZBCN-USD,crypto,crypto,USD,Zebec Network,,zebec-network
+KAIA-USD,crypto,crypto,USD,Kaia,,kaia
 USDAI-USD,crypto,crypto,USD,USDai,,usdai
-USTBL-USD,crypto,crypto,USD,Spiko US T-Bills Money Market Fund,,spiko-us-t-bills-money-market-fund
-TWT-USD,crypto,crypto,USD,Trust Wallet,,trust-wallet-token
-SAFO-USD,crypto,crypto,USD,Spiko Amundi Overnight Swap Fund,,safo
-GRT-USD,crypto,crypto,USD,The Graph,,the-graph
-EURCV-USD,crypto,crypto,USD,EUR CoinVertible,,societe-generale-forge-eurcv
-IOTA-USD,crypto,crypto,USD,IOTA,,iota
+RAY-USD,crypto,crypto,USD,Raydium,,raydium
+REUSD-USD,crypto,crypto,USD,Re Protocol reUSD,,re-protocol-reusd
+CYS-USD,crypto,crypto,USD,Cysic,,cysic
+STRK-USD,crypto,crypto,USD,Starknet,,starknet
+KAITO-USD,crypto,crypto,USD,KAITO,,kaito
 XPIN-USD,crypto,crypto,USD,XPIN Network,,xpin-network
-RUNE-USD,crypto,crypto,USD,THORChain,,thorchain
-H-USD,crypto,crypto,USD,Humanity,,humanity
-GUSD-USD,crypto,crypto,USD,GUSD,,gusd
-BTSE-USD,crypto,crypto,USD,BTSE Token,,btse-token
-MX-USD,crypto,crypto,USD,MX,,mx-token
-ZANO-USD,crypto,crypto,USD,Zano,,zano
-AXS-USD,crypto,crypto,USD,Axie Infinity,,axie-infinity
-EARNETH-USD,crypto,crypto,USD,Lido Earn ETH,,lido-earn-eth
-TAG-USD,crypto,crypto,USD,TAGGER,,tagger
-BORG-USD,crypto,crypto,USD,SwissBorg,,swissborg
-XEC-USD,crypto,crypto,USD,eCash,,ecash
-WIF-USD,crypto,crypto,USD,dogwifhat,,dogwifcoin
-LION-USD,crypto,crypto,USD,Loaded Lions,,loaded-lions
-AKT-USD,crypto,crypto,USD,Akash Network,,akash-network
-STRCX-USD,crypto,crypto,USD,Strategy PP Variable xStock,,strategy-pp-variable-xstock
-EIGEN-USD,crypto,crypto,USD,EigenCloud (prev. EigenLayer),,eigenlayer
-HOLO-USD,crypto,crypto,USD,Holoworld,,holoworld
-CHZ-USD,crypto,crypto,USD,Chiliz,,chiliz
-PC0000097-USD,crypto,crypto,USD,Tradable LatAm Fintech SSTN,,tradable-latam-fintech-sstn
-VSN-USD,crypto,crypto,USD,Vision,,vision-3
-APE-USD,crypto,crypto,USD,ApeCoin,,apecoin
-MANA-USD,crypto,crypto,USD,Decentraland,,decentraland
+COMP-USD,crypto,crypto,USD,Compound,,compound-governance-token
+VCNT-USD,crypto,crypto,USD,ViciCoin,,vicicoin
+IOTA-USD,crypto,crypto,USD,IOTA,,iota
+PC0000033-USD,crypto,crypto,USD,Tradable APAC Diversified Finance Provider SSTN,,tradable-apac-diversified-finance-provider-sstn
+TWT-USD,crypto,crypto,USD,Trust Wallet,,trust-wallet-token
+TEL-USD,crypto,crypto,USD,Telcoin,,telcoin
+EURCV-USD,crypto,crypto,USD,EUR CoinVertible,,societe-generale-forge-eurcv
 CVX-USD,crypto,crypto,USD,Convex Finance,,convex-finance
-FARTCOIN-USD,crypto,crypto,USD,Fartcoin,,fartcoin
-SAND-USD,crypto,crypto,USD,The Sandbox,,the-sandbox
-NEO-USD,crypto,crypto,USD,NEO,,neo
-EDGE-USD,crypto,crypto,USD,edgeX,,edgex
-JPYSC-USD,crypto,crypto,USD,JPYSC,,jpysc
-META-USD,crypto,crypto,USD,MetaDAO,,meta-2-2
+USTBL-USD,crypto,crypto,USD,Spiko US T-Bills Money Market Fund,,spiko-us-t-bills-money-market-fund
+GRT-USD,crypto,crypto,USD,The Graph,,the-graph
+KAU-USD,crypto,crypto,USD,Kinesis Gold,,kinesis-gold
+AXS-USD,crypto,crypto,USD,Axie Infinity,,axie-infinity
+H-USD,crypto,crypto,USD,Humanity,,humanity
+AKT-USD,crypto,crypto,USD,Akash Network,,akash-network
+GUSD-USD,crypto,crypto,USD,GUSD,,gusd
+MX-USD,crypto,crypto,USD,MX,,mx-token
+RUNE-USD,crypto,crypto,USD,THORChain,,thorchain
+STRCX-USD,crypto,crypto,USD,Strategy PP Variable xStock,,strategy-pp-variable-xstock
+TUT-USD,crypto,crypto,USD,Tutorial,,tutorial
+WIF-USD,crypto,crypto,USD,dogwifhat,,dogwifcoin
+SAFO-USD,crypto,crypto,USD,Spiko Amundi Overnight Swap Fund,,safo
+HOLO-USD,crypto,crypto,USD,Holoworld,,holoworld
+B-USD,crypto,crypto,USD,BUILDon,,build-on
+BTSE-USD,crypto,crypto,USD,BTSE Token,,btse-token
+BORG-USD,crypto,crypto,USD,SwissBorg,,swissborg
+CHZ-USD,crypto,crypto,USD,Chiliz,,chiliz
 THETA-USD,crypto,crypto,USD,Theta Network,,theta-token
-UAI-USD,crypto,crypto,USD,UnifAI Network,,unifai-network
-OZO-USD,crypto,crypto,USD,Ozone Chain,,ozone-chain
-GRX-USD,crypto,crypto,USD,GRX Chain,,grx-chain
-CASH-USD,crypto,crypto,USD,CASH,,cash-4
-SNX-USD,crypto,crypto,USD,Synthetix,,havven
-ZBT-USD,crypto,crypto,USD,ZEROBASE,,zerobase
-SHFL-USD,crypto,crypto,USD,Shuffle,,shuffle-2
-AIAT-USD,crypto,crypto,USD,AI Analysis Token,,ai-analysis-token
+VSN-USD,crypto,crypto,USD,Vision,,vision-3
+EDGE-USD,crypto,crypto,USD,edgeX,,edgex
+XEC-USD,crypto,crypto,USD,eCash,,ecash
+FARTCOIN-USD,crypto,crypto,USD,Fartcoin,,fartcoin
+CASHCAT-USD,crypto,crypto,USD,Cash Cat,,cash-cat
+PC0000097-USD,crypto,crypto,USD,Tradable LatAm Fintech SSTN,,tradable-latam-fintech-sstn
+US-USD,crypto,crypto,USD,Talus,,talus
+APE-USD,crypto,crypto,USD,ApeCoin,,apecoin
+EIGEN-USD,crypto,crypto,USD,EigenCloud (prev. EigenLayer),,eigenlayer
+ZANO-USD,crypto,crypto,USD,Zano,,zano
+MANA-USD,crypto,crypto,USD,Decentraland,,decentraland
+NEO-USD,crypto,crypto,USD,NEO,,neo
+TAG-USD,crypto,crypto,USD,TAGGER,,tagger
+LION-USD,crypto,crypto,USD,Loaded Lions,,loaded-lions
+JPYSC-USD,crypto,crypto,USD,JPYSC,,jpysc
 TRAC-USD,crypto,crypto,USD,OriginTrail,,origintrail
-GLIDR-USD,crypto,crypto,USD,Glidr,,glidr
-MWC-USD,crypto,crypto,USD,MimbleWimbleCoin,,mimblewimblecoin
+OZO-USD,crypto,crypto,USD,Ozone Chain,,ozone-chain
+SAND-USD,crypto,crypto,USD,The Sandbox,,the-sandbox
+SHFL-USD,crypto,crypto,USD,Shuffle,,shuffle-2
 AVUSD-USD,crypto,crypto,USD,Avant USD,,avant-usd
-THBILL-USD,crypto,crypto,USD,Theo Short Duration US Treasury Fund,,theo-short-duration-us-treasury-fund
+GRX-USD,crypto,crypto,USD,GRX Chain,,grx-chain
+SNX-USD,crypto,crypto,USD,Synthetix,,havven
+SFP-USD,crypto,crypto,USD,SafePal,,safepal
+CASH-USD,crypto,crypto,USD,CASH,,cash-4
+AIAT-USD,crypto,crypto,USD,AI Analysis Token,,ai-analysis-token
 XCN-USD,crypto,crypto,USD,Onyxcoin,,chain-2
+AR-USD,crypto,crypto,USD,Arweave,,arweave
+1INCH-USD,crypto,crypto,USD,1INCH,,1inch
+GLIDR-USD,crypto,crypto,USD,Glidr,,glidr
+SOSO-USD,crypto,crypto,USD,SoSoValue,,sosovalue
+THBILL-USD,crypto,crypto,USD,Theo Short Duration US Treasury Fund,,theo-short-duration-us-treasury-fund
 GOMINING-USD,crypto,crypto,USD,GoMining Token,,gmt-token
 ACRED-USD,crypto,crypto,USD,Apollo Diversified Credit Securitize Fund,,apollo-diversified-credit-securitize-fund
-1INCH-USD,crypto,crypto,USD,1INCH,,1inch
-AR-USD,crypto,crypto,USD,Arweave,,arweave
-ALFW-USD,crypto,crypto,USD,Alpha Bulgaria Warrants,,alpha-bulgaria-warrants
-AWE-USD,crypto,crypto,USD,AWE Network,,stp-network
-SOSO-USD,crypto,crypto,USD,SoSoValue,,sosovalue
-ZAMA-USD,crypto,crypto,USD,Zama,,zama
+PC0000023-USD,crypto,crypto,USD,Tradable Singapore Fintech SSL,,tradable-singapore-fintech-ssl-2
 GENIUS-USD,crypto,crypto,USD,Genius,,genius-3
-PC0000015-USD,crypto,crypto,USD,Tradable NA Third Party Online Merchant SSTN,,tradable-na-third-party-online-merchant-sstn
+ALFW-USD,crypto,crypto,USD,Alpha Bulgaria Warrants,,alpha-bulgaria-warrants
+META-USD,crypto,crypto,USD,MetaDAO,,meta-2-2
+AWE-USD,crypto,crypto,USD,AWE Network,,stp-network
 FRXUSD-USD,crypto,crypto,USD,Frax USD,,frax-usd
-SFP-USD,crypto,crypto,USD,SafePal,,safepal
-UQC-USD,crypto,crypto,USD,Uquid Coin,,uquid-coin
-USDAT-USD,crypto,crypto,USD,Saturn Dollar,,saturn-dollar
 RLB-USD,crypto,crypto,USD,Rollbit Coin,,rollbit-coin
-PC0000085-USD,crypto,crypto,USD,Tradable LatAm Middle-Market Lender SSTL,,tradable-latam-middle-market-lender-sstl
+PC0000015-USD,crypto,crypto,USD,Tradable NA Third Party Online Merchant SSTN,,tradable-na-third-party-online-merchant-sstn
+UQC-USD,crypto,crypto,USD,Uquid Coin,,uquid-coin
 A-USD,crypto,crypto,USD,Vaulta,,vaulta
-ICNT-USD,crypto,crypto,USD,Impossible Cloud Network Token,,impossible-cloud-network-token
-STAC-USD,crypto,crypto,USD,Securitize Tokenized AAA CLO Fund,,securitize-tokenized-aaa-clo-fund
-TKX-USD,crypto,crypto,USD,Tokenize Xchange,,tokenize-xchange
-AKE-USD,crypto,crypto,USD,Akedo,,akedo
+PC0000085-USD,crypto,crypto,USD,Tradable LatAm Middle-Market Lender SSTL,,tradable-latam-middle-market-lender-sstl
 CHEEMS-USD,crypto,crypto,USD,Cheems Token,,cheems-token
+SN64-USD,crypto,crypto,USD,Chutes,,chutes
+STAC-USD,crypto,crypto,USD,Securitize Tokenized AAA CLO Fund,,securitize-tokenized-aaa-clo-fund
+SNDKB-USD,crypto,crypto,USD,SanDisk (bStocks Tokenized Stock),,sandisk-bstocks-tokenized-stock
+SKYAI-USD,crypto,crypto,USD,SkyAI,,skyai
+INC-USD,crypto,crypto,USD,Incrypt,,incrypt
+FLUID-USD,crypto,crypto,USD,Fluid,,instadapp
+BAT-USD,crypto,crypto,USD,Basic Attention,,basic-attention-token
 PC0000077-USD,crypto,crypto,USD,Tradable Singapore Fintech SSL,,tradable-singapore-fintech-ssl
 UUSD-USD,crypto,crypto,USD,Unity USD,,unity-usd
-BAT-USD,crypto,crypto,USD,Basic Attention,,basic-attention-token
-SENT-USD,crypto,crypto,USD,Sentient,,sentient
+BANANAS31-USD,crypto,crypto,USD,Banana For Scale,,banana-for-scale-2
 WEMIX-USD,crypto,crypto,USD,WEMIX,,wemix-token
-DRV-USD,crypto,crypto,USD,Derive,,derive
-SHORT-USD,crypto,crypto,USD,Bermuda Shorts,,bermuda-shorts
-AB-USD,crypto,crypto,USD,AB,,newton-project
-USDA-USD,crypto,crypto,USD,USDa,,usda-2
-DYDX-USD,crypto,crypto,USD,dYdX,,dydx-chain
-GPS-USD,crypto,crypto,USD,GoPlus Security,,goplus-security
 TIBBIR-USD,crypto,crypto,USD,Ribbita by Virtuals,,ribbita-by-virtuals
-KMNO-USD,crypto,crypto,USD,Kamino,,kamino
+ZAMA-USD,crypto,crypto,USD,Zama,,zama
 BP-USD,crypto,crypto,USD,Backpack,,backpack
-FLUID-USD,crypto,crypto,USD,Fluid,,instadapp
+USDA-USD,crypto,crypto,USD,USDa,,usda-2
+USDAT-USD,crypto,crypto,USD,Saturn Dollar,,saturn-dollar
+SHORT-USD,crypto,crypto,USD,Bermuda Shorts,,bermuda-shorts
+DRV-USD,crypto,crypto,USD,Derive,,derive
+DYDX-USD,crypto,crypto,USD,dYdX,,dydx-chain
+SENT-USD,crypto,crypto,USD,Sentient,,sentient
+GPS-USD,crypto,crypto,USD,GoPlus Security,,goplus-security
+CRCLON-USD,crypto,crypto,USD,Circle Internet Group (Ondo Tokenized Stock),,circle-internet-group-ondo-tokenized-stock
+CUSD-USD,crypto,crypto,USD,Cap USD,,cap-usd
+AKE-USD,crypto,crypto,USD,Akedo,,akedo
+KMNO-USD,crypto,crypto,USD,Kamino,,kamino
+AB-USD,crypto,crypto,USD,AB,,newton-project
+ICNT-USD,crypto,crypto,USD,Impossible Cloud Network Token,,impossible-cloud-network-token
+S-USD,crypto,crypto,USD,Sonic,,sonic-3
 GLM-USD,crypto,crypto,USD,Golem,,golem
 BABYCLAW-USD,crypto,crypto,USD,Baby Claw,,baby-claw
-RIF-USD,crypto,crypto,USD,Rootstock Infrastructure Framework,,rif-token
-SPCXB-USD,crypto,crypto,USD,SpaceX (bStocks Tokenized Stock),,spacex-bstocks-tokenized-stock
-GEOD-USD,crypto,crypto,USD,Geodnet,,geodnet
-SN64-USD,crypto,crypto,USD,Chutes,,chutes
-NEX-USD,crypto,crypto,USD,Nexus,,nexus-4
-CRCLON-USD,crypto,crypto,USD,Circle Internet Group (Ondo Tokenized Stock),,circle-internet-group-ondo-tokenized-stock
-ANSEM-USD,crypto,crypto,USD,The Black Bull,,the-black-bull
+FORM-USD,crypto,crypto,USD,Four,,four
 MET-USD,crypto,crypto,USD,Meteora,,meteora
+BSPX-USD,crypto,crypto,USD,Bending Spoons xStock,,bending-spoons-xstock
+SPCXB-USD,crypto,crypto,USD,SpaceX (bStocks Tokenized Stock),,spacex-bstocks-tokenized-stock
 GALA-USD,crypto,crypto,USD,GALA,,gala
+YZY-USD,crypto,crypto,USD,YZY,,yzy
 SMILEK-USD,crypto,crypto,USD,Smilek to the Bank,,smilek
-RAIL-USD,crypto,crypto,USD,Railgun,,railgun
 NXM-USD,crypto,crypto,USD,Nexus Mutual,,nxm
-S-USD,crypto,crypto,USD,Sonic,,sonic-3
+RAIL-USD,crypto,crypto,USD,Railgun,,railgun
+NEX-USD,crypto,crypto,USD,Nexus,,nexus-4
 WM-USD,crypto,crypto,USD,WrappedM by M0,,wrappedm-by-m0
+ANVL-USD,crypto,crypto,USD,Anvil,,anvil
 DBR-USD,crypto,crypto,USD,deBridge,,debridge
-CUSD-USD,crypto,crypto,USD,Cap USD,,cap-usd
-DUSD-USD,crypto,crypto,USD,StandX DUSD,,standx-dusd
-EGLD-USD,crypto,crypto,USD,MultiversX,,elrond-erd-2
-SAPIEN-USD,crypto,crypto,USD,Sapien,,sapien-2
-RSR-USD,crypto,crypto,USD,Reserve Rights,,reserve-rights-token
-WOULD-USD,crypto,crypto,USD,would,,would
-PYBOBO-USD,crypto,crypto,USD,Capybobo,,capybobo
 PGOLD-USD,crypto,crypto,USD,Pleasing Gold,,pleasing-gold
-ZK-USD,crypto,crypto,USD,ZKsync,,zksync
-O-USD,crypto,crypto,USD,o1.exchange,,o1-exchange
-INC-USD,crypto,crypto,USD,Incrypt,,incrypt
-DATA-USD,crypto,crypto,USD,Data Network,,story-2
-USDON-USD,crypto,crypto,USD,Ondo U.S. Dollar Token,,ondo-u-s-dollar-token
+RAVE-USD,crypto,crypto,USD,RaveDAO,,ravedao
+SAPIEN-USD,crypto,crypto,USD,Sapien,,sapien-2
+GEOD-USD,crypto,crypto,USD,Geodnet,,geodnet
+EGLD-USD,crypto,crypto,USD,MultiversX,,elrond-erd-2
 ATH-USD,crypto,crypto,USD,Aethir,,aethir
-BRLV-USD,crypto,crypto,USD,Crown BRLV,,crown-brlv
+PYBOBO-USD,crypto,crypto,USD,Capybobo,,capybobo
+ZK-USD,crypto,crypto,USD,ZKsync,,zksync
+WOULD-USD,crypto,crypto,USD,would,,would
+RSR-USD,crypto,crypto,USD,Reserve Rights,,reserve-rights-token
+ZEN-USD,crypto,crypto,USD,Horizen,,zencash
+SAFE-USD,crypto,crypto,USD,SAFEbit,,safecoin
 PC0000101-USD,crypto,crypto,USD,Tradable NA Post-Settlement Legal Financing Receivables,,na-post-settlement-legal-financing-receivables
 MELANIA-USD,crypto,crypto,USD,Melania Meme,,melania-meme
-FORM-USD,crypto,crypto,USD,Four,,four
-YFI-USD,crypto,crypto,USD,yearn.finance,,yearn-finance
-SAFE-USD,crypto,crypto,USD,SAFEbit,,safecoin
 CGUSD-USD,crypto,crypto,USD,Cygnus Finance Global USD,,cygnus-finance-global-usd
-SOON-USD,crypto,crypto,USD,SOON,,soon-2
-PC0000023-USD,crypto,crypto,USD,Tradable NA Neobank SSTL,,tradable-na-neobank-sstl
-FEUSD-USD,crypto,crypto,USD,Felix feUSD,,felix-feusd
+MYX-USD,crypto,crypto,USD,MYX Finance,,myx-finance
 LISUSD-USD,crypto,crypto,USD,Lista USD,,helio-protocol-hay
 USDX-USD,crypto,crypto,USD,USDX,,usdx
-MYX-USD,crypto,crypto,USD,MYX Finance,,myx-finance
-XPR-USD,crypto,crypto,USD,XPR Network,,proton
-ZEN-USD,crypto,crypto,USD,Horizen,,zencash
-BEAM-USD,crypto,crypto,USD,Beam,,beam-2
+FEUSD-USD,crypto,crypto,USD,Felix feUSD,,felix-feusd
+DATA-USD,crypto,crypto,USD,Data Network,,story-2
 ORDI-USD,crypto,crypto,USD,ORDI,,ordinals
-BANANAS31-USD,crypto,crypto,USD,Banana For Scale,,banana-for-scale-2
-LBT-USD,crypto,crypto,USD,Law Blocks AI,,law-blocks
-BSPX-USD,crypto,crypto,USD,Bending Spoons xStock,,bending-spoons-xstock
-BAN-USD,crypto,crypto,USD,Comedian,,comedian
-ELG-USD,crypto,crypto,USD,Escoin,,escoin-token
-BAS-USD,crypto,crypto,USD,BNB Attestation Service,,bas
-RAVE-USD,crypto,crypto,USD,RaveDAO,,ravedao
-MF-ONE-USD,crypto,crypto,USD,Midas mF-ONE,,midas-mf-one
-NXPC-USD,crypto,crypto,USD,Nexpace,,nexpace
-TEMPLE-USD,crypto,crypto,USD,TempleDAO,,temple
-MAG7.SSI-USD,crypto,crypto,USD,MAG7.ssi,,mag7-ssi
-DGB-USD,crypto,crypto,USD,DigiByte,,digibyte
-QTUM-USD,crypto,crypto,USD,Qtum,,qtum
-IVVON-USD,crypto,crypto,USD,iShares Core S&P 500 ETF (Ondo Tokenized ETF),,ishares-core-s-p-500-etf-ondo-tokenized-etf
-UPUMP-USD,crypto,crypto,USD,Unit Pump,,unit-pump
+YFI-USD,crypto,crypto,USD,yearn.finance,,yearn-finance
 PLUME-USD,crypto,crypto,USD,Plume,,plume
-RSC-USD,crypto,crypto,USD,ResearchCoin,,researchcoin
-STAU-USD,crypto,crypto,USD,STAU,,stau
-CFG-USD,crypto,crypto,USD,Centrifuge,,centrifuge-2
-ORCA-USD,crypto,crypto,USD,Orca,,orca
-ZRX-USD,crypto,crypto,USD,0x Protocol,,0x
-NILA-USD,crypto,crypto,USD,MindWaveDAO,,mindwavedao
-PRL-USD,crypto,crypto,USD,Pearl,,pearl-2
-XAUM-USD,crypto,crypto,USD,Matrixdock Gold,,matrixdock-gold
-COW-USD,crypto,crypto,USD,CoW Protocol,,cow-protocol
-MUB-USD,crypto,crypto,USD,Micron Technology (bStocks Tokenized Stock),,micron-technology-bstock
-RE-USD,crypto,crypto,USD,RE,,re
-ADI-USD,crypto,crypto,USD,ADI,,adi-token
-TBK-USD,crypto,crypto,USD,TronBank,,tronbank
-ARKM-USD,crypto,crypto,USD,Arkham,,arkham
-QRL-USD,crypto,crypto,USD,Quantum Resistant Ledger,,quantum-resistant-ledger
-FXUSD-USD,crypto,crypto,USD,f(x) Protocol fxUSD,,f-x-protocol-fxusd
-LPT-USD,crypto,crypto,USD,Livepeer,,livepeer
-GMX-USD,crypto,crypto,USD,GMX,,gmx
-CYDX-USD,crypto,crypto,USD,CyberDEX,,cyberdex
-FDIT-USD,crypto,crypto,USD,Fidelity Digital Interest Token,,fidelity-digital-interest-token
-WAL-USD,crypto,crypto,USD,Walrus,,walrus-2
-COAI-USD,crypto,crypto,USD,ChainOpera AI,,chainopera-ai
-QUBIC-USD,crypto,crypto,USD,Qubic,,qubic-network
+SOON-USD,crypto,crypto,USD,SOON,,soon-2
+ALLO-USD,crypto,crypto,USD,Allora,,allora
+BRLV-USD,crypto,crypto,USD,Crown BRLV,,crown-brlv
 CRCLB-USD,crypto,crypto,USD,Circle Internet Group (bStocks Tokenized Stock),,circle-internet-group-bstock
-VELO-USD,crypto,crypto,USD,Velo,,velo
-PC0000019-USD,crypto,crypto,USD,Tradable North America PoS Lender SSTN,,tradable-north-america-pos-lender-sstn
-SWOP-USD,crypto,crypto,USD,Swop,,swop-2
-SHX-USD,crypto,crypto,USD,Stronghold,,stronghold-token
-REUR-USD,crypto,crypto,USD,Royal Euro,,royal-euro
-AIOZ-USD,crypto,crypto,USD,AIOZ Network,,aioz-network
-FONQ-USD,crypto,crypto,USD,FONQ,,fonq
-TSLAX-USD,crypto,crypto,USD,Tesla xStock,,tesla-xstock
+BOT-USD,crypto,crypto,USD,BOT,,bot
+ANSEM-USD,crypto,crypto,USD,The Black Bull,,the-black-bull
+IVVON-USD,crypto,crypto,USD,iShares Core S&P 500 ETF (Ondo Tokenized ETF),,ishares-core-s-p-500-etf-ondo-tokenized-etf
+BAN-USD,crypto,crypto,USD,Comedian,,comedian
+LBT-USD,crypto,crypto,USD,Law Blocks AI,,law-blocks
+O-USD,crypto,crypto,USD,o1.exchange,,o1-exchange
+ELG-USD,crypto,crypto,USD,Escoin,,escoin-token
+MAG7.SSI-USD,crypto,crypto,USD,MAG7.ssi,,mag7-ssi
+XPR-USD,crypto,crypto,USD,XPR Network,,proton
+MF-ONE-USD,crypto,crypto,USD,Midas mF-ONE,,midas-mf-one
+QTUM-USD,crypto,crypto,USD,Qtum,,qtum
+COAI-USD,crypto,crypto,USD,ChainOpera AI,,chainopera-ai
+BEAM-USD,crypto,crypto,USD,Beam,,beam-2
+XAUM-USD,crypto,crypto,USD,Matrixdock Gold,,matrixdock-gold
+ZRX-USD,crypto,crypto,USD,0x Protocol,,0x
+DGB-USD,crypto,crypto,USD,DigiByte,,digibyte
+NXPC-USD,crypto,crypto,USD,Nexpace,,nexpace
+PRL-USD,crypto,crypto,USD,Pearl,,pearl-2
+STAU-USD,crypto,crypto,USD,STAU,,stau
+USDON-USD,crypto,crypto,USD,Ondo U.S. Dollar Token,,ondo-u-s-dollar-token
+SN51-USD,crypto,crypto,USD,lium,,celium
+GMX-USD,crypto,crypto,USD,GMX,,gmx
+NILA-USD,crypto,crypto,USD,MindWaveDAO,,mindwavedao
+MUB-USD,crypto,crypto,USD,Micron Technology (bStocks Tokenized Stock),,micron-technology-bstock
+ARKM-USD,crypto,crypto,USD,Arkham,,arkham
+RIF-USD,crypto,crypto,USD,Rootstock Infrastructure Framework,,rif-token
+MTBILL-USD,crypto,crypto,USD,Midas mTBILL,,midas-mtbill
+BAS-USD,crypto,crypto,USD,BNB Attestation Service,,bas
+DUSD-USD,crypto,crypto,USD,StandX DUSD,,standx-dusd
+ORCA-USD,crypto,crypto,USD,Orca,,orca
+RE-USD,crypto,crypto,USD,RE,,re
+SN4-USD,crypto,crypto,USD,Targon,,targon
+ADI-USD,crypto,crypto,USD,ADI,,adi-token
+TEMPLE-USD,crypto,crypto,USD,TempleDAO,,temple
+FXUSD-USD,crypto,crypto,USD,f(x) Protocol fxUSD,,f-x-protocol-fxusd
+WAL-USD,crypto,crypto,USD,Walrus,,walrus-2
+QRL-USD,crypto,crypto,USD,Quantum Resistant Ledger,,quantum-resistant-ledger
 DOG-USD,crypto,crypto,USD,Dog (Bitcoin),,dog-go-to-the-moon-rune
-NMR-USD,crypto,crypto,USD,Numeraire,,numeraire
+TSLAX-USD,crypto,crypto,USD,Tesla xStock,,tesla-xstock
+BABYDOGE-USD,crypto,crypto,USD,Baby Doge Coin,,baby-doge-coin
+FDIT-USD,crypto,crypto,USD,Fidelity Digital Interest Token,,fidelity-digital-interest-token
+LPT-USD,crypto,crypto,USD,Livepeer,,livepeer
+CYDX-USD,crypto,crypto,USD,CyberDEX,,cyberdex
+QUBIC-USD,crypto,crypto,USD,Qubic,,qubic-network
+SWOP-USD,crypto,crypto,USD,Swop,,swop-2
+CFG-USD,crypto,crypto,USD,Centrifuge,,centrifuge-2
+ARC-USD,crypto,crypto,USD,AI Rig Complex,,ai-rig-complex
+NOPAL-USD,crypto,crypto,USD,Nest BlackOpal LiquidStone II Vault,,nest-blackopal-liquidstone-ii-vault
+PC0000019-USD,crypto,crypto,USD,Tradable North America PoS Lender SSTN,,tradable-north-america-pos-lender-sstn
+GAS-USD,crypto,crypto,USD,Gas,,gas
+COW-USD,crypto,crypto,USD,CoW Protocol,,cow-protocol
+REUR-USD,crypto,crypto,USD,Royal Euro,,royal-euro
+CAP-USD,crypto,crypto,USD,Cap,,cap-4
+TRUSD-USD,crypto,crypto,USD,Tori trUSD,,tori-trusd
+XDAI-USD,crypto,crypto,USD,XDAI,,xdai
+HOT-USD,crypto,crypto,USD,Holo,,holotoken
+TURBO-USD,crypto,crypto,USD,Turbo,,turbo
 MGLOBAL-USD,crypto,crypto,USD,Midas Fasanara Global,,midas-fasanara-global
 MHORSE-USD,crypto,crypto,USD,MEME HORSE,,meme-horse
-GAS-USD,crypto,crypto,USD,Gas,,gas
-QFI-USD,crypto,crypto,USD,Quantix Finance,,quantixai
-ALLO-USD,crypto,crypto,USD,Allora,,allora
-SN4-USD,crypto,crypto,USD,Targon,,targon
-HOT-USD,crypto,crypto,USD,Holo,,holotoken
-KTA-USD,crypto,crypto,USD,Keeta,,keeta
-PROS-USD,crypto,crypto,USD,Pharos,,pharos-network
-RVN-USD,crypto,crypto,USD,Ravencoin,,ravencoin
-XDAI-USD,crypto,crypto,USD,XDAI,,xdai
-FXSAVE-USD,crypto,crypto,USD,f(x) USD Saving,,fx-usd-saving
-NUSD-USD,crypto,crypto,USD,Neutrl USD,,nusd-2
+AIOZ-USD,crypto,crypto,USD,AIOZ Network,,aioz-network
 BILL-USD,crypto,crypto,USD,Billions Network,,billions-network
-SNDKB-USD,crypto,crypto,USD,SanDisk (bStocks Tokenized Stock),,sandisk-bstocks-tokenized-stock
-BABYDOGE-USD,crypto,crypto,USD,Baby Doge Coin,,baby-doge-coin
-ZIG-USD,crypto,crypto,USD,ZIGChain,,zignaly
-SN51-USD,crypto,crypto,USD,lium,,celium
-KSM-USD,crypto,crypto,USD,Kusama,,kusama
-TORN-USD,crypto,crypto,USD,Tornado Cash,,tornado-cash
+CHFAU-USD,crypto,crypto,USD,AllUnity CHF,,allunity-chf
+NMR-USD,crypto,crypto,USD,Numeraire,,numeraire
+MARSCOIN-USD,crypto,crypto,USD,MarsCoin,,marscoin-4
+RVN-USD,crypto,crypto,USD,Ravencoin,,ravencoin
 JELLYJELLY-USD,crypto,crypto,USD,Jelly-My-Jelly,,jelly-my-jelly
-JPYC-USD,crypto,crypto,USD,JPY Coin,,jpycoin
-TURBO-USD,crypto,crypto,USD,Turbo,,turbo
-TRUSD-USD,crypto,crypto,USD,Tori trUSD,,tori-trusd
-FUN-USD,crypto,crypto,USD,FUNToken,,funfair
-MTBILL-USD,crypto,crypto,USD,Midas mTBILL,,midas-mtbill
+TORN-USD,crypto,crypto,USD,Tornado Cash,,tornado-cash
+VELO-USD,crypto,crypto,USD,Velo,,velo
+FXSAVE-USD,crypto,crypto,USD,f(x) USD Saving,,fx-usd-saving
+BABY-USD,crypto,crypto,USD,Babylon,,babylon
+KSM-USD,crypto,crypto,USD,Kusama,,kusama
+SHX-USD,crypto,crypto,USD,Stronghold,,stronghold-token
+KTA-USD,crypto,crypto,USD,Keeta,,keeta
+UAI-USD,crypto,crypto,USD,UnifAI Network,,unifai-network
+BRZ-USD,crypto,crypto,USD,Brazilian Digital,,brz
+ZIG-USD,crypto,crypto,USD,ZIGChain,,zignaly
 TFUEL-USD,crypto,crypto,USD,Theta Fuel,,theta-fuel
-ARX-USD,crypto,crypto,USD,ARCS,,arcs
-FT-USD,crypto,crypto,USD,Flying Tulip,,flying-tulip
-APES-USD,crypto,crypto,USD,APES,,apes-2-2
+JPYC-USD,crypto,crypto,USD,JPY Coin,,jpycoin
+SUPER-USD,crypto,crypto,USD,SuperVerse,,superfarm
+PROS-USD,crypto,crypto,USD,Pharos,,pharos-network
 LINEA-USD,crypto,crypto,USD,Linea,,linea
-SCOR-USD,crypto,crypto,USD,Scor,,scor
-NOPAL-USD,crypto,crypto,USD,Nest BlackOpal LiquidStone II Vault,,nest-blackopal-liquidstone-ii-vault
+BIO-USD,crypto,crypto,USD,Bio Protocol,,bio-protocol
+XNO-USD,crypto,crypto,USD,Nano,,nano
+NUSD-USD,crypto,crypto,USD,Neutrl USD,,nusd-2
+CRCLX-USD,crypto,crypto,USD,Circle xStock,,circle-xstock
+APES-USD,crypto,crypto,USD,APES,,apes-2-2
+SKR-USD,crypto,crypto,USD,Seeker,,seeker
+FT-USD,crypto,crypto,USD,Flying Tulip,,flying-tulip
+W-USD,crypto,crypto,USD,Wormhole,,wormhole
 PC0000081-USD,crypto,crypto,USD,Tradable NA Legal Receivables SSL,,tradable-na-legal-receivables-ssl
 MINA-USD,crypto,crypto,USD,Mina Protocol,,mina-protocol
+BOME-USD,crypto,crypto,USD,BOOK OF MEME,,book-of-meme
 USDU-USD,crypto,crypto,USD,USDu,,usdu
-ARC-USD,crypto,crypto,USD,AI Rig Complex,,ai-rig-complex
 JUPUSD-USD,crypto,crypto,USD,JupUSD,,jupusd
-XNO-USD,crypto,crypto,USD,Nano,,nano
-SUPER-USD,crypto,crypto,USD,SuperVerse,,superfarm
-BRZ-USD,crypto,crypto,USD,Brazilian Digital,,brz
-IUSD-USD,crypto,crypto,USD,InfiniFi USD,,infinifi-usd
 EXOD-USD,crypto,crypto,USD,EXOD,,exod
-W-USD,crypto,crypto,USD,Wormhole,,wormhole
-ACRDX-USD,crypto,crypto,USD,Anemoy Tokenized Apollo Diversified Credit Fund,,anemoy-tokenized-apollo-diversified-credit-fund
-USELESS-USD,crypto,crypto,USD,Useless Coin,,useless-3
-REQ-USD,crypto,crypto,USD,Request,,request-network
-ANVL-USD,crypto,crypto,USD,Anvil,,anvil
 MEME-USD,crypto,crypto,USD,MEMETOON,,memetoon
+REQ-USD,crypto,crypto,USD,Request,,request-network
+ON-USD,crypto,crypto,USD,Orochi Network,,orochi-network
+RIVER-USD,crypto,crypto,USD,River,,river
+SCOR-USD,crypto,crypto,USD,Scor,,scor
 METAL-USD,crypto,crypto,USD,Metal Blockchain,,metal-blockchain
-IO-USD,crypto,crypto,USD,io.net,,io
-MAGMA-USD,crypto,crypto,USD,Magma Finance,,magma-finance
-CHIP-USD,crypto,crypto,USD,USD.AI,,chip-2
+BGBTC-USD,crypto,crypto,USD,Bitget Wrapped BTC,,bitget-wrapped-btc
+ACRDX-USD,crypto,crypto,USD,Anemoy Tokenized Apollo Diversified Credit Fund,,anemoy-tokenized-apollo-diversified-credit-fund
+DIEM-USD,crypto,crypto,USD,Diem,,diem
+ENJ-USD,crypto,crypto,USD,Enjin Coin,,enjincoin
+SUSHI-USD,crypto,crypto,USD,Sushi,,sushi
+PMUSD-USD,crypto,crypto,USD,Precious Metals USD,,precious-metals-usd
 AUSDT-USD,crypto,crypto,USD,Alloy Tether,,alloy-tether
 USDKG-USD,crypto,crypto,USD,USDKG,,usdkg
-DIEM-USD,crypto,crypto,USD,Diem,,diem
-BGBTC-USD,crypto,crypto,USD,Bitget Wrapped BTC,,bitget-wrapped-btc
-ZIL-USD,crypto,crypto,USD,Zilliqa,,zilliqa
-ENJ-USD,crypto,crypto,USD,Enjin Coin,,enjincoin
+XAN-USD,crypto,crypto,USD,Anoma,,anoma
+OZA-USD,crypto,crypto,USD,Ozapay,,ozapay
+OMI-USD,crypto,crypto,USD,ECOMI,,ecomi
+DOLA-USD,crypto,crypto,USD,DOLA,,dola-usd
+BERA-USD,crypto,crypto,USD,Berachain,,berachain-bera
+FLOW-USD,crypto,crypto,USD,Flow,,flow
 PC0000049-USD,crypto,crypto,USD,Tradable Eu/LatAm PoS Financing SSTL,,tradable-eu-latam-pos-financing-sstl
 ELF-USD,crypto,crypto,USD,aelf,,aelf
-BABY-USD,crypto,crypto,USD,Babylon,,babylon
-REKT-USD,crypto,crypto,USD,Rekt,,rekt-4
+IUSD-USD,crypto,crypto,USD,InfiniFi USD,,infinifi-usd
+IO-USD,crypto,crypto,USD,io.net,,io
 FIDD-USD,crypto,crypto,USD,Fidelity Digital Dollar,,fidelity-digital-dollar
-BCE-USD,crypto,crypto,USD,bitcastle Token,,bitcastle-token
-BIO-USD,crypto,crypto,USD,Bio Protocol,,bio-protocol
-RIVER-USD,crypto,crypto,USD,River,,river
-CRCLX-USD,crypto,crypto,USD,Circle xStock,,circle-xstock
+SN120-USD,crypto,crypto,USD,affine,,affine
+ESP-USD,crypto,crypto,USD,Espresso,,espresso
+CROSS-USD,crypto,crypto,USD,CROSS,,cross-2
+ARX-USD,crypto,crypto,USD,ARCS,,arcs
 FIUSD-USD,crypto,crypto,USD,Sygnum FIUSD Liquidity Fund,,sygnum-fiusd-liquidity-fund
-SPK-USD,crypto,crypto,USD,Spark,,spark-2
+XVS-USD,crypto,crypto,USD,Venus,,venus
 HDX-USD,crypto,crypto,USD,Hydration,,hydradx
 SPYX-USD,crypto,crypto,USD,SP500 xStock,,sp500-xstock
-AIOT-USD,crypto,crypto,USD,OKZOO,,okzoo
-FLOW-USD,crypto,crypto,USD,Flow,,flow
-CAP-USD,crypto,crypto,USD,Cap,,cap-4
-BERA-USD,crypto,crypto,USD,Berachain,,berachain-bera
-CYS-USD,crypto,crypto,USD,Cysic,,cysic
-DOLA-USD,crypto,crypto,USD,DOLA,,dola-usd
-STON-USD,crypto,crypto,USD,STON,,ston-2
+PEOPLE-USD,crypto,crypto,USD,ConstitutionDAO,,constitutiondao
+FUN-USD,crypto,crypto,USD,FUNToken,,funfair
+ZETA-USD,crypto,crypto,USD,ZetaChain,,zetachain
+SN44-USD,crypto,crypto,USD,Score,,score
+ZIL-USD,crypto,crypto,USD,Zilliqa,,zilliqa
+CHIP-USD,crypto,crypto,USD,USD.AI,,chip-2
+BCE-USD,crypto,crypto,USD,bitcastle Token,,bitcastle-token
 XP-USD,crypto,crypto,USD,Xphere,,xphere
-XVS-USD,crypto,crypto,USD,Venus,,venus
-LAB-USD,crypto,crypto,USD,LAB,,lab
-SUSHI-USD,crypto,crypto,USD,Sushi,,sushi
+SQD-USD,crypto,crypto,USD,SQD,,subsquid
+RECALL-USD,crypto,crypto,USD,Recall,,recall
+GWEI-USD,crypto,crypto,USD,ETHGas,,ethgas-2
+ROSE-USD,crypto,crypto,USD,Oasis,,oasis-network
+FM-USD,crypto,crypto,USD,Full Moon,,full-moon
+MSTRX-USD,crypto,crypto,USD,MicroStrategy xStock,,microstrategy-xstock
+UP-USD,crypto,crypto,USD,Unitas,,unitas
+SPK-USD,crypto,crypto,USD,Spark,,spark-2
+AXL-USD,crypto,crypto,USD,Axelar,,axelar
+STONKBROKER-USD,crypto,crypto,USD,StonkBroker,,stonkbroker
+NPC-USD,crypto,crypto,USD,Non-Playable Coin,,non-playable-coin
+REKT-USD,crypto,crypto,USD,Rekt,,rekt-4
+DEGEN-USD,crypto,crypto,USD,Degen,,degen-base
+OPEN-USD,crypto,crypto,USD,OpenLedger,,openledger-2
 FILQ-A-USD,crypto,crypto,USD,Fidelity USD Digital Liquidity Fund-Acc,,fidelity-usd-digital-liquidity-fund-acc
 XUSD-USD,crypto,crypto,USD,StraitsX XUSD,,straitsx-xusd
-SKR-USD,crypto,crypto,USD,Seeker,,seeker
-DEGEN-USD,crypto,crypto,USD,Degen,,degen-base
-OMI-USD,crypto,crypto,USD,ECOMI,,ecomi
-CROSS-USD,crypto,crypto,USD,CROSS,,cross-2
-ZETA-USD,crypto,crypto,USD,ZetaChain,,zetachain
-BASEDHYPE-USD,crypto,crypto,USD,BasedHype,,basedhype
-KAVA-USD,crypto,crypto,USD,Kava,,kava
-IDOL-USD,crypto,crypto,USD,MEET48,,meet48
-AXL-USD,crypto,crypto,USD,Axelar,,axelar
-PMUSD-USD,crypto,crypto,USD,Precious Metals USD,,precious-metals-usd
-ROSE-USD,crypto,crypto,USD,Oasis,,oasis-network
-TOSHI-USD,crypto,crypto,USD,Toshi,,toshi
-MUON-USD,crypto,crypto,USD,Micron Technology (Ondo Tokenized Stock),,micron-technology-ondo-tokenized-stock
-CCD-USD,crypto,crypto,USD,Concordium,,concordium
-POPCAT-USD,crypto,crypto,USD,Popcat,,popcat
+BICO-USD,crypto,crypto,USD,Biconomy,,biconomy
 SPYON-USD,crypto,crypto,USD,SPDR S&P 500 ETF (Ondo Tokenized ETF),,spdr-s-p-500-etf-ondo-tokenized-etf
-KUB-USD,crypto,crypto,USD,KUB Coin,,bitkub-coin
-BR-USD,crypto,crypto,USD,Bedrock,,bedrock-token
-BOME-USD,crypto,crypto,USD,BOOK OF MEME,,book-of-meme
-JCT-USD,crypto,crypto,USD,Janction,,janction
-CASHCAT-USD,crypto,crypto,USD,Cash Cat,,cash-cat
+CATI-USD,crypto,crypto,USD,Catizen,,catizen
+TOSHI-USD,crypto,crypto,USD,Toshi,,toshi
+KAVA-USD,crypto,crypto,USD,Kava,,kava
+POPCAT-USD,crypto,crypto,USD,Popcat,,popcat
+MMT-USD,crypto,crypto,USD,Momentum,,momentum-3
+AIX-USD,crypto,crypto,USD,AI XOVIA,,ai-xovia
 PRIZE-USD,crypto,crypto,USD,Prize Protocol,,prize-protocol
-ESP-USD,crypto,crypto,USD,Espresso,,espresso
-ZCHF-USD,crypto,crypto,USD,Frankencoin,,frankencoin
-ASTR-USD,crypto,crypto,USD,Astar,,astar
-RECALL-USD,crypto,crypto,USD,Recall,,recall
-POLYX-USD,crypto,crypto,USD,Polymesh,,polymesh
+MUON-USD,crypto,crypto,USD,Micron Technology (Ondo Tokenized Stock),,micron-technology-ondo-tokenized-stock
+CKB-USD,crypto,crypto,USD,Nervos Network,,nervos-network
+BRETT-USD,crypto,crypto,USD,Brett,,based-brett
