@@ -367,11 +367,19 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
       maxWidth: Breakpoints.readingColumn,
       expandSinglePrimary: true,
       padding: EdgeInsets.zero,
-      primary: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: shellTabContentPadding(context),
-        itemCount: itemBuilders.length,
-        itemBuilder: (context, index) => itemBuilders[index](context),
+      // Scope lives in this State, which stays mounted across refresh and
+      // the active/closed view toggle, so rows animate once on first reveal
+      // and never replay when the list recycles them.
+      primary: AppEntranceScope(
+        child: ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: shellTabContentPadding(context),
+          itemCount: itemBuilders.length,
+          itemBuilder: (context, index) => AppOnceEntrance(
+            index: index,
+            child: itemBuilders[index](context),
+          ),
+        ),
       ),
     );
   }

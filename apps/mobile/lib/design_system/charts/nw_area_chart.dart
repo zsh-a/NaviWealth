@@ -9,6 +9,10 @@ import 'nw_line_chart.dart';
 /// Filled-area variant of [NwLineChart]. Single-series → simple area chart;
 /// `stacked: true` with multiple series → cumulative stacked area.
 ///
+/// Status: experimental — exported but has no feature consumers yet. Prefer
+/// [NwLineChart] with `filled: true` for single-series area charts until a
+/// stacked use case lands.
+///
 /// Implementation note: stacking is done by transforming the input series
 /// into running cumulative Y values before delegating to the line renderer,
 /// which keeps a single touch / tooltip / drill-down code path.

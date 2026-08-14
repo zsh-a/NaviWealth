@@ -242,52 +242,59 @@ class _NotesList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notesAsync = ref.watch(knowledgeInboxNotesProvider);
     final l10n = AppLocalizations.of(context);
-    return notesAsync.when(
-      loading: () => const AppListPageSkeleton(itemCount: 5),
-      error: (e, stackTrace) => AppEmptyState.error(
-        title: AppLocalizations.of(context).knowledgeInboxLoadFailedTitle,
-        message: userSafeErrorMessage(
-          context,
-          e,
-          stackTrace: stackTrace,
-          operation: 'load knowledge inbox',
+    // Scope above the loading/data branches: the entrance watermark survives
+    // pull-to-refresh, and recycled rows (index <= watermark) never replay
+    // the entrance when they scroll back into view.
+    return AppEntranceScope(
+      child: notesAsync.when(
+        loading: () => const AppListPageSkeleton(itemCount: 5),
+        error: (e, stackTrace) => AppEmptyState.error(
+          title: AppLocalizations.of(context).knowledgeInboxLoadFailedTitle,
+          message: userSafeErrorMessage(
+            context,
+            e,
+            stackTrace: stackTrace,
+            operation: 'load knowledge inbox',
+          ),
+          retryLabel: l10n.commonRetry,
+          onRetry: () => ref.invalidate(knowledgeInboxNotesProvider),
         ),
-        retryLabel: l10n.commonRetry,
-        onRetry: () => ref.invalidate(knowledgeInboxNotesProvider),
-      ),
-      data: (notes) {
-        if (notes.isEmpty) {
+        data: (notes) {
+          if (notes.isEmpty) {
+            return AppRefreshIndicator(
+              onRefresh: () => _refreshKnowledgeRepository(ref),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: shellTabContentPadding(context, top: AppSpacing.s8),
+                children: [
+                  AppEmptyState.inline(
+                    icon: FLucideIcons.inbox,
+                    title: l10n.knowledgeInboxEmptyTitle,
+                    message: l10n.knowledgeInboxEmptyBody,
+                  ),
+                ],
+              ),
+            );
+          }
           return AppRefreshIndicator(
             onRefresh: () => _refreshKnowledgeRepository(ref),
-            child: ListView(
+            child: ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: shellTabContentPadding(context, top: AppSpacing.s8),
-              children: [
-                AppEmptyState.inline(
-                  icon: FLucideIcons.inbox,
-                  title: l10n.knowledgeInboxEmptyTitle,
-                  message: l10n.knowledgeInboxEmptyBody,
-                ),
-              ],
+              padding: shellTabContentPadding(
+                context,
+                top: AppSpacing.s8,
+                bottom: AppSpacing.s64,
+              ),
+              itemCount: notes.length,
+              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
+              itemBuilder: (context, i) => AppOnceEntrance(
+                index: i,
+                child: _NoteCard(note: notes[i]),
+              ),
             ),
           );
-        }
-        return AppRefreshIndicator(
-          onRefresh: () => _refreshKnowledgeRepository(ref),
-          child: ListView.separated(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: shellTabContentPadding(
-              context,
-              top: AppSpacing.s8,
-              bottom: AppSpacing.s64,
-            ),
-            itemCount: notes.length,
-            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
-            itemBuilder: (context, i) =>
-                AppEntrance(child: _NoteCard(note: notes[i])),
-          ),
-        );
-      },
+        },
+      ),
     );
   }
 }

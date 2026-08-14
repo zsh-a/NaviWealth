@@ -46,95 +46,113 @@ class SettingsOverview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
 
-    final accountGroup = _Section(
-      title: l10n.settingsAccountSection,
-      child: _AccountSection(),
+    final accountGroup = AppEntrance(
+      role: AppMotionRole.decorative,
+      child: _Section(
+        title: l10n.settingsAccountSection,
+        child: _AccountSection(),
+      ),
     );
-    final appearanceGroup = _Section(
-      title: l10n.settingsAppearanceSection,
-      child: const _AppearanceSection(),
+    final appearanceGroup = AppEntrance(
+      role: AppMotionRole.decorative,
+      child: _Section(
+        title: l10n.settingsAppearanceSection,
+        child: const _AppearanceSection(),
+      ),
     );
-    final aiGroup = _Section(
-      title: l10n.settingsAiSection,
-      child: InlineLinkRow(
-        icon: FLucideIcons.sparkles,
-        label: l10n.settingsAiHubTitle,
-        subtitle: l10n.settingsAiHubSubtitle,
-        onTap: () => context.pushNamed(SettingsRouteNames.ai),
+    final aiGroup = AppEntrance(
+      role: AppMotionRole.decorative,
+      child: _Section(
+        title: l10n.settingsAiSection,
+        child: InlineLinkRow(
+          icon: FLucideIcons.sparkles,
+          label: l10n.settingsAiHubTitle,
+          subtitle: l10n.settingsAiHubSubtitle,
+          onTap: () => context.pushNamed(SettingsRouteNames.ai),
+        ),
       ),
     );
     final isLocalOnly =
         ref.watch(auth_providers.authStateProvider) is AuthLocalOnly;
-    final dataGroup = _Section(
-      title: l10n.settingsDataSection,
-      child: Column(
-        children: [
-          if (!isLocalOnly) ...[
+    final dataGroup = AppEntrance(
+      role: AppMotionRole.decorative,
+      child: _Section(
+        title: l10n.settingsDataSection,
+        child: Column(
+          children: [
+            if (!isLocalOnly) ...[
+              InlineLinkRow(
+                icon: FLucideIcons.refreshCw,
+                label: l10n.settingsSyncTitle,
+                subtitle: l10n.settingsSyncSubtitle,
+                onTap: () => context.pushNamed(SettingsRouteNames.sync),
+              ),
+              const AppGradientDivider(),
+            ],
             InlineLinkRow(
-              icon: FLucideIcons.refreshCw,
-              label: l10n.settingsSyncTitle,
-              subtitle: l10n.settingsSyncSubtitle,
-              onTap: () => context.pushNamed(SettingsRouteNames.sync),
+              icon: FLucideIcons.database,
+              label: l10n.settingsDataManagementTitle,
+              subtitle: l10n.settingsDataManagementSubtitle,
+              onTap: () => context.pushNamed(SettingsRouteNames.dataManagement),
             ),
             const AppGradientDivider(),
+            InlineLinkRow(
+              icon: FLucideIcons.cloudUpload,
+              label: l10n.settingsDataTitle,
+              subtitle: l10n.settingsDataSubtitle,
+              onTap: () => context.pushNamed(SettingsRouteNames.backup),
+            ),
+            const AppGradientDivider(),
+            InlineLinkRow(
+              icon: FLucideIcons.bell,
+              label: l10n.settingsNotificationsTitle,
+              subtitle: l10n.settingsNotificationsSubtitle,
+              onTap: () => context.pushNamed(SettingsRouteNames.notifications),
+            ),
+            const AppGradientDivider(),
+            const _BiometricUnlockRow(),
+            const AppGradientDivider(),
+            const _CrashReportingRow(),
+            const AppGradientDivider(),
+            const _ProductMetricsRow(),
           ],
-          InlineLinkRow(
-            icon: FLucideIcons.database,
-            label: l10n.settingsDataManagementTitle,
-            subtitle: l10n.settingsDataManagementSubtitle,
-            onTap: () => context.pushNamed(SettingsRouteNames.dataManagement),
-          ),
-          const AppGradientDivider(),
-          InlineLinkRow(
-            icon: FLucideIcons.cloudUpload,
-            label: l10n.settingsDataTitle,
-            subtitle: l10n.settingsDataSubtitle,
-            onTap: () => context.pushNamed(SettingsRouteNames.backup),
-          ),
-          const AppGradientDivider(),
-          InlineLinkRow(
-            icon: FLucideIcons.bell,
-            label: l10n.settingsNotificationsTitle,
-            subtitle: l10n.settingsNotificationsSubtitle,
-            onTap: () => context.pushNamed(SettingsRouteNames.notifications),
-          ),
-          const AppGradientDivider(),
-          const _BiometricUnlockRow(),
-          const AppGradientDivider(),
-          const _CrashReportingRow(),
-          const AppGradientDivider(),
-          const _ProductMetricsRow(),
-        ],
+        ),
       ),
     );
     // Domain-specific settings live one level down so the overview stays
     // focused on global preference categories.
-    final domainsGroup = _Section(
-      title: l10n.settingsDomainsSection,
-      child: InlineLinkRow(
-        icon: FLucideIcons.blocks,
-        label: l10n.settingsDomainsTitle,
-        subtitle: l10n.settingsDomainsSubtitle,
-        onTap: () => context.pushNamed(SettingsRouteNames.domains),
+    final domainsGroup = AppEntrance(
+      role: AppMotionRole.decorative,
+      child: _Section(
+        title: l10n.settingsDomainsSection,
+        child: InlineLinkRow(
+          icon: FLucideIcons.blocks,
+          label: l10n.settingsDomainsTitle,
+          subtitle: l10n.settingsDomainsSubtitle,
+          onTap: () => context.pushNamed(SettingsRouteNames.domains),
+        ),
       ),
     );
     // Logs viewer is exposed in release as well — the talker history is
     // already kept in memory in every build, and dogfood users need a
     // way to copy diagnostics out (e.g. Health Connect permission flow)
     // without a debug attach.
-    final advancedGroup = _Section(
-      title: l10n.settingsAdvancedSection,
-      child: Column(
-        children: [
-          InlineLinkRow(
-            icon: FLucideIcons.settings2,
-            label: l10n.settingsAdvancedHubTitle,
-            subtitle: l10n.settingsAdvancedHubSubtitle,
-            onTap: () => context.pushNamed(SettingsRouteNames.advanced),
-          ),
-          const AppGradientDivider(),
-          const _AboutTile(),
-        ],
+    final advancedGroup = AppEntrance(
+      role: AppMotionRole.decorative,
+      child: _Section(
+        title: l10n.settingsAdvancedSection,
+        child: Column(
+          children: [
+            InlineLinkRow(
+              icon: FLucideIcons.settings2,
+              label: l10n.settingsAdvancedHubTitle,
+              subtitle: l10n.settingsAdvancedHubSubtitle,
+              onTap: () => context.pushNamed(SettingsRouteNames.advanced),
+            ),
+            const AppGradientDivider(),
+            const _AboutTile(),
+          ],
+        ),
       ),
     );
 

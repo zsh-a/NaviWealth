@@ -41,13 +41,18 @@ class AccountsGroupedSections extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final entry in groups.entries)
-          _AccountsSection(
-            title: accountCategoryLabel(l10n, entry.key),
-            accounts: entry.value,
-            balances: balances,
-            selectedId: selectedId,
-            heroEnabled: heroEnabled,
-            onAccountPressed: onAccountPressed,
+          // Column children stay mounted for the list's lifetime, so a plain
+          // one-shot entrance is safe here (no ListView recycling replay).
+          AppEntrance(
+            role: AppMotionRole.decorative,
+            child: _AccountsSection(
+              title: accountCategoryLabel(l10n, entry.key),
+              accounts: entry.value,
+              balances: balances,
+              selectedId: selectedId,
+              heroEnabled: heroEnabled,
+              onAccountPressed: onAccountPressed,
+            ),
           ),
       ],
     );

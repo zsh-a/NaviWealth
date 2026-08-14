@@ -244,8 +244,9 @@ class _TodayListState extends ConsumerState<_TodayList> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Text(
-                    '${snapshot.todayCount}',
+                  AnimatedValueText(
+                    value: snapshot.todayCount,
+                    format: (v) => '${v.round()}',
                     style: TypographyTokens.numericTitleStrong,
                   ),
                   if (snapshot.blockedCount > 0) ...[

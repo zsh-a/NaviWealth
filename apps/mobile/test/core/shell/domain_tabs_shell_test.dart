@@ -154,4 +154,115 @@ void main() {
     expect(probeBuilds, buildsBeforeSheet);
     expect(bottomPadding, paddingBeforeSheet);
   });
+
+  testWidgets('branch switch fades in and preserves offstage branch state', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final router = _router(one: const _CounterProbe());
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp.router(
+          routerConfig: router,
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          builder: (context, child) => FTheme(
+            data: FThemes.slate.light.desktop,
+            child: child ?? const SizedBox.shrink(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Mutate branch-one state, then leave the branch.
+    await tester.tap(find.byKey(const ValueKey<String>('counter-probe')));
+    await tester.pump();
+    expect(find.text('count: 1'), findsOneWidget);
+
+    const fadeKey = ValueKey<String>('domain-tabs-shell.branch-fade');
+    router.go('/two');
+    await tester.pump();
+
+    // The fade has just started; the shell itself is still mounted once.
+    expect(
+      tester.widget<FadeTransition>(find.byKey(fadeKey)).opacity.value,
+      lessThan(1),
+    );
+    expect(find.byType(StatefulNavigationShell), findsOneWidget);
+
+    await tester.pumpAndSettle();
+    expect(tester.widget<FadeTransition>(find.byKey(fadeKey)).opacity.value, 1);
+
+    // Back to branch one: its state survived the round trip offstage.
+    router.go('/one');
+    await tester.pumpAndSettle();
+    expect(find.text('count: 1'), findsOneWidget);
+  });
+
+  testWidgets('reduce motion keeps the branch switch instant', (tester) async {
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final router = _router();
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp.router(
+          routerConfig: router,
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          builder: (context, child) => FTheme(
+            data: FThemes.slate.light.desktop,
+            child: MediaQuery(
+              data: const MediaQueryData(disableAnimations: true),
+              child: child ?? const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    const fadeKey = ValueKey<String>('domain-tabs-shell.branch-fade');
+    router.go('/two');
+    await tester.pump();
+
+    expect(tester.widget<FadeTransition>(find.byKey(fadeKey)).opacity.value, 1);
+    expect(find.text('two'), findsOneWidget);
+  });
+}
+
+/// Branch-one probe with local state, to prove the indexed stack (and the
+/// fade wrapper around it) never remounts offstage branches.
+class _CounterProbe extends StatefulWidget {
+  const _CounterProbe();
+
+  @override
+  State<_CounterProbe> createState() => _CounterProbeState();
+}
+
+class _CounterProbeState extends State<_CounterProbe> {
+  int _count = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: GestureDetector(
+        key: const ValueKey<String>('counter-probe'),
+        onTap: () => setState(() => _count++),
+        child: Text('count: $_count'),
+      ),
+    );
+  }
 }

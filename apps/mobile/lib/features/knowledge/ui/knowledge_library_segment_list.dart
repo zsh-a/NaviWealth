@@ -195,8 +195,10 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
             physics: const AlwaysScrollableScrollPhysics(),
             itemCount: visibleItems.length,
             separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
-            itemBuilder: (context, i) =>
-                widget.tileBuilder(context, visibleItems[i], widget.query),
+            itemBuilder: (context, i) => AppOnceEntrance(
+              index: i,
+              child: widget.tileBuilder(context, visibleItems[i], widget.query),
+            ),
           ),
         );
         if (filterTrigger == null) {

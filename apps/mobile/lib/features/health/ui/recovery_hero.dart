@@ -39,7 +39,7 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
           data: (out) {
             final verdict = out?['verdict']?.toString() ?? 'insufficient_data';
             final score = out?['score'];
-            final scoreText = score == null ? '—' : '$score';
+            final scoreValue = score is num ? score : null;
             final confidence = out?['confidence']?.toString() ?? 'insufficient';
             final coverage = (out?['coverage'] as num?)?.toDouble() ?? 0;
             final freshnessHours = (out?['freshness_hours'] as num?)
@@ -102,8 +102,9 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Text(
-                      scoreText,
+                    AnimatedValueText(
+                      value: scoreValue,
+                      format: (v) => '${v.round()}',
                       style: TypographyTokens.numericDisplay.copyWith(
                         color: scoreColor,
                       ),

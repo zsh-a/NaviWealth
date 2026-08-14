@@ -67,12 +67,14 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell> {
         ? tabs[index].routePath
         : '';
     // Branch roots are already retained by StatefulShellRoute.indexedStack.
-    // Present the selected branch directly: animating the entire navigation
-    // shell forces full-screen opacity/transform compositing on every tab
-    // change, which is especially expensive for chart and glass surfaces.
+    // _BranchFadeIn plays a fast fade-in on the newly selected branch while
+    // keeping the shell at a stable element position — offstage branch state
+    // and ShellTabPause stream pausing are untouched. The fade is bounded to
+    // Motion.fast so the opacity compositing it forces on chart/glass
+    // surfaces lasts one short window per switch, not the whole transition.
     final shellChild = ProviderScope(
       overrides: [activeShellTabPathProvider.overrideWith((ref) => activePath)],
-      child: widget.shell,
+      child: _BranchFadeIn(activeIndex: index, child: widget.shell),
     );
 
     return LayoutBuilder(
@@ -105,6 +107,70 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell> {
           ),
         );
       },
+    );
+  }
+}
+
+/// Fast fade-in played on the newly selected shell branch.
+///
+/// The child is the [StatefulNavigationShell] itself — an indexed stack that
+/// keeps every branch alive — so this wrapper must never swap or unmount it.
+/// It stays at a fixed element position and only restarts its controller when
+/// [activeIndex] changes; the first render shows the branch at full opacity.
+///
+/// Reduced motion resolves to [Duration.zero] via [AppMotionPolicy], so the
+/// switch stays instant for users who opt out of animation.
+class _BranchFadeIn extends StatefulWidget {
+  const _BranchFadeIn({required this.activeIndex, required this.child});
+
+  final int activeIndex;
+  final Widget child;
+
+  @override
+  State<_BranchFadeIn> createState() => _BranchFadeInState();
+}
+
+class _BranchFadeInState extends State<_BranchFadeIn>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, value: 1);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _controller.duration = AppMotionPolicy.reduceMotion(context)
+        ? Duration.zero
+        : Motion.fast;
+  }
+
+  @override
+  void didUpdateWidget(covariant _BranchFadeIn oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.activeIndex != widget.activeIndex) {
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      key: const ValueKey<String>('domain-tabs-shell.branch-fade'),
+      opacity: CurvedAnimation(
+        parent: _controller,
+        curve: Motion.standardDecelerate,
+      ),
+      child: widget.child,
     );
   }
 }

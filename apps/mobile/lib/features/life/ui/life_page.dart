@@ -310,7 +310,7 @@ class _LifeHero extends StatelessWidget {
         ? colors.mutedForeground
         : colors.primary;
 
-    return SoftCard.raised(
+    return SoftCard.hero(
       key: const ValueKey('life-summary-card'),
       padding: AppPageRhythm.densePadding,
       child: Row(

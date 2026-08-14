@@ -42,12 +42,18 @@ class _MetricCard extends ConsumerWidget {
 class _ValueBig extends StatelessWidget {
   const _ValueBig({
     required this.value,
+    required this.format,
     required this.sub,
     this.unit,
     this.trend,
     this.metric,
   });
-  final String value;
+
+  /// Numeric headline value — rolls via [AnimatedValueText] when it changes.
+  final num value;
+
+  /// Renders the (possibly interpolated) value, e.g. `(v) => '${v.round()}'`.
+  final String Function(num value) format;
   final String sub;
   final String? unit;
   final MetricTrend? trend;
@@ -70,8 +76,9 @@ class _ValueBig extends StatelessWidget {
           children: [
             Flexible(
               fit: FlexFit.loose,
-              child: Text(
-                value,
+              child: AnimatedValueText(
+                value: value,
+                format: format,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: context.strongTitleStyle,

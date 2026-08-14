@@ -27,7 +27,8 @@ class _SleepCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _ValueBig(
-                value: '${_round(hours)}',
+                value: hours,
+                format: (v) => '${_round(v.toDouble())}',
                 unit: 'h',
                 sub: _ago(l10n, m.capturedAt),
                 trend: trend,
@@ -233,7 +234,8 @@ class _HrvCard extends StatelessWidget {
         data: (m) {
           if (m == null) return const _ValueDash();
           return _ValueBig(
-            value: '${_round(m.value)}',
+            value: m.value,
+            format: (v) => '${_round(v.toDouble())}',
             unit: m.unit,
             sub: _ago(l10n, m.capturedAt),
             trend: trend,
@@ -264,7 +266,8 @@ class _RhrCard extends StatelessWidget {
         data: (m) {
           if (m == null) return const _ValueDash();
           return _ValueBig(
-            value: '${m.value.round()}',
+            value: m.value,
+            format: (v) => '${v.round()}',
             sub: _ago(l10n, m.capturedAt),
             trend: trend,
             metric: m,
@@ -303,7 +306,8 @@ class _StepsCard extends ConsumerWidget {
               ? '${(wm.value / 1000.0).toStringAsFixed(1)} km · ${_ago(l10n, m.capturedAt)}'
               : _ago(l10n, m.capturedAt);
           return _ValueBig(
-            value: _formatSteps(m.value),
+            value: m.value,
+            format: (v) => _formatSteps(v.toDouble()),
             sub: sub,
             trend: trend,
             metric: m,

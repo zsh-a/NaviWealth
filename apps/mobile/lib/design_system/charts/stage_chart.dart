@@ -12,6 +12,9 @@ import 'nw_line_chart.dart';
 /// Living data stage: full-width scrubbable chart with a live value readout
 /// (Phase C).
 ///
+/// Status: experimental — exported but has no feature consumers yet; retained
+/// as the Phase C scrub-stage primitive.
+///
 /// While the user scrubs, [valueBuilder] / [labelBuilder] receive the active
 /// sample; on release they return to the latest point.
 class StageChart extends StatefulWidget {

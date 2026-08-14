@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
+import 'app_interaction.dart';
 
 /// The one pull-to-refresh affordance for every domain.
 ///
@@ -31,7 +32,13 @@ class AppRefreshIndicator extends StatelessWidget {
     final isDark = colors.brightness == Brightness.dark;
     final surfaces = context.appTheme.surfaces;
     return RefreshIndicator(
-      onRefresh: onRefresh,
+      onRefresh: () {
+        // RefreshIndicator invokes this only once the drag crosses the
+        // trigger threshold, so the haptic marks the actual commit — not
+        // every drag tick.
+        AppInteraction.signal(AppInteractionIntent.select);
+        return onRefresh();
+      },
       color: colors.primary,
       backgroundColor: isDark ? surfaces.raised : surfaces.card,
       strokeWidth: AppStroke.sparkline,

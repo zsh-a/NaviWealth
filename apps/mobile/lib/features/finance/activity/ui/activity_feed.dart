@@ -29,65 +29,70 @@ class ActivityFeed extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final feedAsync = ref.watch(activityFeedProvider);
 
-    return feedAsync.when(
-      data: (page) {
-        if (page.entries.isEmpty) {
+    // The scope sits above the loading/data branches so the entrance
+    // watermark survives pull-to-refresh: the initial load animates, a
+    // refresh re-showing the same rows does not replay.
+    return AppEntranceScope(
+      child: feedAsync.when(
+        data: (page) {
+          if (page.entries.isEmpty) {
+            return _RefreshableFeed(
+              onRefresh: () async {
+                ref.invalidate(activityFeedProvider);
+                await ref.read(activityFeedProvider.future);
+              },
+              child: _EmptyFeed(
+                message: page.isFiltered
+                    ? l10n.activityFeedFilteredEmpty
+                    : l10n.activityFeedEmpty,
+                actionLabel: page.isFiltered
+                    ? l10n.activityFeedFilterTitle
+                    : l10n.activityAddAction,
+                onAction: page.isFiltered
+                    ? () => ActivityFeedFilterSheet.show(context)
+                    : () => showActivityActionPanel(context),
+                filtered: page.isFiltered,
+              ),
+            );
+          }
+          final groups = groupActivityEntriesByDay(
+            page.entries,
+            accountsById: page.accountsById,
+          );
+          final totals = ActivityPageTotals.fromEntries(
+            page.entries,
+            accountsById: page.accountsById,
+          );
+          final formatter = AppFormatters(
+            locale: Localizations.localeOf(context),
+          );
           return _RefreshableFeed(
             onRefresh: () async {
               ref.invalidate(activityFeedProvider);
               await ref.read(activityFeedProvider.future);
             },
-            child: _EmptyFeed(
-              message: page.isFiltered
-                  ? l10n.activityFeedFilteredEmpty
-                  : l10n.activityFeedEmpty,
-              actionLabel: page.isFiltered
-                  ? l10n.activityFeedFilterTitle
-                  : l10n.activityAddAction,
-              onAction: page.isFiltered
-                  ? () => ActivityFeedFilterSheet.show(context)
-                  : () => showActivityActionPanel(context),
-              filtered: page.isFiltered,
+            child: _FeedList(
+              groups: groups,
+              pageTotals: totals,
+              accountsById: page.accountsById,
+              formatter: formatter,
+              l10n: l10n,
+              hasMore: page.hasMore,
+              onEntryOpen: onEntryOpen,
             ),
           );
-        }
-        final groups = groupActivityEntriesByDay(
-          page.entries,
-          accountsById: page.accountsById,
-        );
-        final totals = ActivityPageTotals.fromEntries(
-          page.entries,
-          accountsById: page.accountsById,
-        );
-        final formatter = AppFormatters(
-          locale: Localizations.localeOf(context),
-        );
-        return _RefreshableFeed(
-          onRefresh: () async {
-            ref.invalidate(activityFeedProvider);
-            await ref.read(activityFeedProvider.future);
-          },
-          child: _FeedList(
-            groups: groups,
-            pageTotals: totals,
-            accountsById: page.accountsById,
-            formatter: formatter,
-            l10n: l10n,
-            hasMore: page.hasMore,
-            onEntryOpen: onEntryOpen,
-          ),
-        );
-      },
-      loading: () => const PageSkeletonShell<Object>(
-        isLoading: true,
-        skeleton: ActivityFeedSkeleton(),
-        child: SizedBox.shrink(),
-      ),
-      error: (e, st) => kDefaultError(
-        context,
-        e,
-        st,
-        onRetry: () => ref.invalidate(activityFeedProvider),
+        },
+        loading: () => const PageSkeletonShell<Object>(
+          isLoading: true,
+          skeleton: ActivityFeedSkeleton(),
+          child: SizedBox.shrink(),
+        ),
+        error: (e, st) => kDefaultError(
+          context,
+          e,
+          st,
+          onRetry: () => ref.invalidate(activityFeedProvider),
+        ),
       ),
     );
   }
@@ -224,7 +229,7 @@ class _FeedListState extends ConsumerState<_FeedList> {
               onLoadMore: _tryLoadMore,
             ),
           };
-          return row;
+          return AppOnceEntrance(index: index, child: row);
         },
       ),
     );
