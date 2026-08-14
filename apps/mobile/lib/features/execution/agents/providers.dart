@@ -128,7 +128,7 @@ final pendingExecutionReviewRunProvider =
         final catchUp = await ref.read(
           agentBackgroundCatchUpRunnerProvider.future,
         );
-        return catchUp.runIfDue(
+        return await catchUp.runIfDue(
           binding: const AgentBackgroundTaskBinding(
             agentId: kExecutionReviewAgentId,
             domain: DomainScope.execution,

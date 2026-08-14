@@ -11,7 +11,7 @@ mixin GarminSyncControllerPersistenceMixin on Notifier<GarminSyncState> {
     try {
       logger.i('HealthOS Garmin persist start: bytes=${snapshotJson.length}');
       final writer = await ref.read(garminSnapshotWriterProvider.future);
-      return writer.writeSnapshotJson(snapshotJson);
+      return await writer.writeSnapshotJson(snapshotJson);
     } catch (e) {
       logger.e('HealthOS Garmin persist exception', error: e);
       return GarminWriteResult(

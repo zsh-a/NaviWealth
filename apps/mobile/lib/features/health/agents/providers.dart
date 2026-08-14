@@ -199,7 +199,7 @@ Future<AgentRunResult?> runDueMorningBriefingTick(Ref ref) async {
   final link = ref.keepAlive();
   try {
     final catchUp = await ref.read(agentBackgroundCatchUpRunnerProvider.future);
-    return catchUp.runIfDue(
+    return await catchUp.runIfDue(
       binding: const AgentBackgroundTaskBinding(
         agentId: kMorningBriefingAgentId,
         domain: DomainScope.health,

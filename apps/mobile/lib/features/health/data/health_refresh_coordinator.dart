@@ -90,7 +90,7 @@ class HealthRefreshCoordinator {
           errorCode: 'health-platform-permission-denied',
         );
       }
-      return _syncPlatform();
+      return await _syncPlatform();
     } on Object {
       return const HealthRefreshSourceResult(
         source: HealthRefreshSource.platform,

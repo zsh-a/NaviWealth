@@ -193,7 +193,7 @@ class FrbCaptureClassifier implements CaptureClassifier {
       final body = response['content'];
       if (body is! String || body.trim().isEmpty) {
         logger?.w('$_kLogTag FRB response missing content, falling back');
-        return fallback.classify(text: text);
+        return await fallback.classify(text: text);
       }
 
       final json = _extractJsonObject(body);
@@ -202,7 +202,7 @@ class FrbCaptureClassifier implements CaptureClassifier {
           '$_kLogTag FRB JSON extract failed, falling back. '
           'body preview="${_preview(body)}"',
         );
-        return fallback.classify(text: text);
+        return await fallback.classify(text: text);
       }
 
       final parsed = _parseCaptureClassification(json);
@@ -211,7 +211,7 @@ class FrbCaptureClassifier implements CaptureClassifier {
           '$_kLogTag FRB JSON parse rejected, falling back. '
           'keys=${json.keys.toList()}',
         );
-        return fallback.classify(text: text);
+        return await fallback.classify(text: text);
       }
 
       logger?.i(

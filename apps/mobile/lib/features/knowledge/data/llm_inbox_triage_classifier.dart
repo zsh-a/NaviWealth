@@ -189,12 +189,12 @@ class FrbInboxTriageClassifier implements InboxTriageClassifier {
       final body = response['content'];
       if (body is! String || body.trim().isEmpty) {
         logger?.w('$_kLogTag FRB response missing content, falling back');
-        return fallback.triage(note, decisions);
+        return await fallback.triage(note, decisions);
       }
       final json = _extractJsonObject(body);
       if (json == null) {
         logger?.w('$_kLogTag FRB JSON extract failed, falling back');
-        return fallback.triage(note, decisions);
+        return await fallback.triage(note, decisions);
       }
       final proposals = _parseInboxTriageProposals(note, decisions, json);
       logger?.i(
@@ -209,7 +209,7 @@ class FrbInboxTriageClassifier implements InboxTriageClassifier {
         error: err,
         stackTrace: st,
       );
-      return fallback.triage(note, decisions);
+      return await fallback.triage(note, decisions);
     }
   }
 }
