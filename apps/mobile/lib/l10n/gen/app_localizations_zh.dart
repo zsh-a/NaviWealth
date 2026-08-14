@@ -11852,6 +11852,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthTodayTitle => '今日';
 
   @override
+  String get healthTodayBriefSubtitle => '今日健康概览';
+
+  @override
   String get healthTrendTitle => '趋势';
 
   @override
@@ -13477,6 +13480,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionTodayTitle => '今天';
+
+  @override
+  String get executionTodayBriefSubtitle => '今日执行概览';
 
   @override
   String get executionCommitmentsTitle => '计划';

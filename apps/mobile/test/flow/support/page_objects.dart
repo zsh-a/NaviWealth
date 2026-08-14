@@ -610,19 +610,9 @@ class ExecutionTodayPageObject {
   }
 
   Future<void> openReview() async {
-    final reviewAction = find.byWidgetPredicate(
-      (widget) => widget is FHeaderAction && widget.semanticsLabel == 'Review',
-    );
-    if (reviewAction.evaluate().isNotEmpty) {
-      tester.widget<FHeaderAction>(reviewAction).onPress?.call();
-      await settle(tester);
-      return;
-    }
-    final more = find.bySemanticsLabel('More actions').hitTestable();
-    expect(more, findsOneWidget, reason: 'execution header menu missing');
-    await tester.tap(more);
-    await settle(tester);
-    final review = find.text('Review').hitTestable();
+    // Today is a headerless cockpit: the Review entry is an AppIconButton in
+    // the greeting header, exposed through its tooltip semantics label.
+    final review = find.bySemanticsLabel('Review').hitTestable();
     expect(review, findsOneWidget, reason: 'execution review action missing');
     await tester.tap(review);
     await settle(tester);

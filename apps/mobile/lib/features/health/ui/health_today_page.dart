@@ -5,8 +5,10 @@
 /// summary, and the latest Morning Briefing. Trend and Plan now have MVP
 /// surfaces; Today stays the dense operational entry point.
 ///
-/// Chrome matches the rest of LifeOS (`docs/architecture/lifeos-shell.md` §3): the
-/// ForUI `FScaffold` + `FHeader.nested` shell, `SoftCard` surfaces and
+/// Chrome matches the rest of LifeOS (`docs/architecture/lifeos-shell.md` §3): a
+/// headerless cockpit root (`ShellCanvasScaffold`) with the editorial
+/// greeting header ([HealthGreetingHeader]) inside the brief — the same
+/// pattern as FinanceOS Today — plus `SoftCard` surfaces and
 /// `context.theme` tokens — never Material `Scaffold` / `Theme.of` —
 /// so HealthOS reads as the same app as Finance / Knowledge.
 library;
@@ -46,6 +48,7 @@ import '../domain/health_metric_kind.dart';
 import 'body_measurement_entry_sheet.dart';
 import 'garmin_account_bind_sheet.dart';
 import 'garmin_sync_status_card.dart';
+import 'health_greeting_header.dart';
 import 'health_metric_colors.dart';
 import 'health_today_providers.dart';
 import 'health_trend_page.dart' show healthTrendPath;
@@ -81,44 +84,36 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final hasData = ref.watch(healthHasAnyDataProvider);
     final dataReady = hasData.value == true;
     final resolving = hasData.isLoading && !hasData.hasValue;
-    final stage = resolving
-        ? const _HealthTodayLoadingStage()
-        : hasData.hasError
-        ? _HealthTodayErrorStage(
-            onRetry: () => ref.invalidate(healthHasAnyDataProvider),
-          )
-        : dataReady
-        ? const FadeSlideIn(child: _RecoveryHero())
-        : const _HealthActivationCard();
-    return ShellTabScaffold(
-      title: l10n.healthTodayTitle,
-      actions: dataReady
-          ? [
-              ShellHeaderActionSpec(
-                icon: FLucideIcons.scale,
-                label: l10n.healthRecordBodyMetricAction,
-                onPress: () async {
-                  final saved = await showBodyMeasurementEntrySheet(
-                    context: context,
-                    initialKind: HealthMetricKind.weight,
-                  );
-                  if (saved == true) {
-                    ref.invalidate(healthTodaySnapshotProvider);
-                  }
-                },
-              ),
-            ]
-          : const [],
+    final error = hasData.error;
+    final stage = PageSkeletonShell<bool>(
+      skeleton: const _HealthTodayStageSkeleton(),
+      isLoading: resolving,
+      child: error != null
+          ? kDefaultError(
+              context,
+              error,
+              hasData.stackTrace ?? StackTrace.current,
+              onRetry: () => ref.invalidate(healthHasAnyDataProvider),
+            )
+          : dataReady
+          ? const FadeSlideIn(child: _RecoveryHero())
+          : const _HealthActivationCard(),
+    );
+    // Headerless cockpit root, same as FinanceOS Today: the editorial
+    // greeting ([HealthGreetingHeader]) replaces the static page title and
+    // hosts the injected shell chrome via [ShellActionRow]. Global chrome
+    // (sync strip, undo banner) is injected by DomainTabsShell.
+    return ShellCanvasScaffold(
+      childPad: false,
       child: ShellTabPause(
         routePath: HealthRoutes.today,
         child: BriefScaffold(
           padding: shellTabContentPadding(context),
           onRefresh: _refresh,
-          greeting: const SizedBox.shrink(),
+          greeting: const HealthGreetingHeader(),
           stage: stage,
           stickyBuilder: dataReady
               ? (context, progress) =>
@@ -159,35 +154,35 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
   }
 }
 
-class _HealthTodayLoadingStage extends StatelessWidget {
-  const _HealthTodayLoadingStage();
+/// Mirrors the recovery hero while `healthHasAnyDataProvider` resolves, so
+/// the stage swaps to real data without reflowing the brief.
+class _HealthTodayStageSkeleton extends StatelessWidget {
+  const _HealthTodayStageSkeleton();
 
   @override
   Widget build(BuildContext context) {
-    return const SoftCard.raised(
-      child: SizedBox(
-        height: AppControlHeights.compactLoadingState,
-        child: Center(child: FCircularProgress()),
-      ),
-    );
-  }
-}
-
-class _HealthTodayErrorStage extends StatelessWidget {
-  const _HealthTodayErrorStage({required this.onRetry});
-
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return SoftCard.raised(
-      child: AppEmptyState.error(
-        title: l10n.commonLoadFailed,
-        message: l10n.healthSyncFailed,
-        retryLabel: l10n.commonRetry,
-        onRetry: onRetry,
-        compact: true,
+    return const SkeletonCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              SkeletonBox(width: 36, height: 36, radius: AppRadius.sm),
+              SizedBox(width: AppSpacing.s12),
+              Expanded(child: SkeletonBox(height: 14)),
+              SizedBox(width: AppSpacing.s12),
+              SkeletonBox(width: 48, height: 28, radius: AppRadius.sm),
+            ],
+          ),
+          SizedBox(height: AppSpacing.s16),
+          SkeletonBox(width: 200, height: 30, radius: AppRadius.sm),
+          SizedBox(height: AppSpacing.s8),
+          SkeletonBox(height: 14),
+          SizedBox(height: AppSpacing.s4),
+          SkeletonBox(width: 240, height: 14),
+          SizedBox(height: AppSpacing.s12),
+          SkeletonBox(width: 160, height: 22, radius: AppRadius.full),
+        ],
       ),
     );
   }
@@ -629,14 +624,11 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: enabled ? _syncHealthKit : null,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-                      const SizedBox(width: AppSpacing.s6),
-                      Text(l10n.healthSyncAction),
-                    ],
+                  prefix: const Icon(
+                    FLucideIcons.refreshCw,
+                    size: AppIconSizes.xs,
                   ),
+                  child: Text(l10n.healthSyncAction),
                 ),
             ],
           ),

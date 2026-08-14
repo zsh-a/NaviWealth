@@ -229,10 +229,9 @@ class _DecisionLifecycleSheetState
               collapsible: true,
               children: [
                 if (_candidates.isEmpty)
-                  KnowledgeEmptyState(
+                  AppEmptyState.inline(
                     icon: FLucideIcons.gitBranch,
                     title: l10n.knowledgeDecisionSupersededByEmpty,
-                    density: KnowledgeStateDensity.section,
                   )
                 else
                   for (final c in _candidates)

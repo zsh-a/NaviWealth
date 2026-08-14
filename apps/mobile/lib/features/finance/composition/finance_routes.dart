@@ -7,7 +7,6 @@
 /// [preloadFinanceDeferredRoutesForTest].
 library;
 
-import 'package:decimal/decimal.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/assets/physical/ui/physical_asset_detail_page.dart'
     deferred as physical_detail_lib;
@@ -28,9 +27,6 @@ import 'package:naviwealth/features/finance/fire/ui/fire_page.dart'
 import 'package:naviwealth/features/finance/home/ui/home_page.dart';
 import 'package:naviwealth/features/finance/income_strategy/ui/income_strategy_page.dart'
     deferred as income_strategy_lib;
-import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart'
-    show TradeType;
-import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_prefill.dart';
 import 'package:naviwealth/features/finance/investment/ui/corporate_action_entry_route.dart'
     deferred as corp_action_lib;
 import 'package:naviwealth/features/finance/investment/ui/dca_simulator_page.dart'
@@ -75,6 +71,7 @@ import '../ui/plan_hub_page.dart';
 import '../ui/wealth/wealth_hub_page.dart';
 import 'finance_domain_shell.dart';
 import 'finance_route_paths.dart';
+import 'route_prefill.dart';
 
 /// FinanceOS `StatefulShellRoute`: 4 branches (Today / Activity / Wealth /
 /// Plan) backed by [DomainTabsShell]. Search + Settings are surfaced by the
@@ -148,32 +145,15 @@ StatefulShellRoute financeShellRoute() {
                 path: 'trade',
                 name: FinanceRouteNames.tradeEntry,
                 builder: (context, state) {
-                  final assetId = state.uri.queryParameters['assetId'];
-                  final accountId = state.uri.queryParameters['accountId'];
-                  final initialType =
-                      switch (state.uri.queryParameters['side']) {
-                        'buy' => TradeType.buy,
-                        'sell' => TradeType.sell,
-                        _ => null,
-                      };
                   final params = state.uri.queryParameters;
-                  final ingestPrefill = params['ingest'] == '1'
-                      ? TradeEntryPrefill(
-                          type: initialType ?? TradeType.buy,
-                          quantity:
-                              Decimal.tryParse(params['quantity'] ?? '') ??
-                              Decimal.zero,
-                          price: Decimal.tryParse(params['price'] ?? ''),
-                          currency: params['currency'] ?? 'USD',
-                          tradeDate: DateTime.tryParse(params['date'] ?? ''),
-                          note: params['note'],
-                          symbol: params['symbol'],
-                        )
-                      : null;
+                  final initialType = tradeTypeFromSideQuery(params);
                   return TradeEntryFormPage(
-                    assetId: assetId,
-                    accountId: accountId,
-                    prefill: ingestPrefill,
+                    assetId: params['assetId'],
+                    accountId: params['accountId'],
+                    prefill: tradeEntryPrefillFromQuery(
+                      params,
+                      initialType: initialType,
+                    ),
                     initialType: initialType,
                   );
                 },
@@ -303,8 +283,9 @@ StatefulShellRoute financeShellRoute() {
                           portfolio_hub_lib.PortfolioCashAssignmentPage(
                             preferredGroupId:
                                 state.uri.queryParameters['group'],
-                            suggestedAmount: Decimal.tryParse(
-                              state.uri.queryParameters['amount'] ?? '',
+                            suggestedAmount: decimalFromQuery(
+                              state.uri.queryParameters,
+                              'amount',
                             ),
                           ),
                     ),

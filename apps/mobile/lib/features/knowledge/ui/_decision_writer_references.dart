@@ -18,52 +18,52 @@ class _PrincipleAssumptionPicker extends ConsumerWidget {
       future: ref.watch(knowledgeOwnerUserIdProvider.future),
       builder: (context, ownerSnap) {
         if (!ownerSnap.hasData) {
-          return const KnowledgeLoadingState(
-            density: KnowledgeStateDensity.section,
-          );
+          return const KnowledgeSectionSkeleton();
         }
         final owner = ownerSnap.data!;
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
         return repoAsync.when(
-          loading: () => const KnowledgeLoadingState(
-            density: KnowledgeStateDensity.section,
-          ),
-          error: (e, stackTrace) => KnowledgeErrorState(
+          loading: () => const KnowledgeSectionSkeleton(),
+          error: (e, stackTrace) => AppEmptyState.inline(
+            icon: FLucideIcons.circleX,
             title: userSafeErrorMessage(
               context,
               e,
               stackTrace: stackTrace,
               operation: 'load knowledge principles',
             ),
+            tone: AppEmptyStateTone.error,
+            retryLabel: AppLocalizations.of(context).commonRetry,
             onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
-            density: KnowledgeStateDensity.section,
           ),
           data: (repo) => StreamBuilder<List<KnowledgePrinciple>>(
             stream: repo.watchPrinciples(ownerUserId: owner),
             builder: (context, principlesSnap) {
               if (principlesSnap.hasError) {
-                return KnowledgeErrorState(
+                return AppEmptyState.inline(
+                  icon: FLucideIcons.circleX,
                   title: userSafeErrorMessage(
                     context,
                     principlesSnap.error!,
                     stackTrace: principlesSnap.stackTrace,
                     operation: 'load decision principles',
                   ),
-                  density: KnowledgeStateDensity.section,
+                  tone: AppEmptyStateTone.error,
                 );
               }
               return StreamBuilder<List<KnowledgeAssumption>>(
                 stream: repo.watchAssumptions(ownerUserId: owner),
                 builder: (context, assumptionsSnap) {
                   if (assumptionsSnap.hasError) {
-                    return KnowledgeErrorState(
+                    return AppEmptyState.inline(
+                      icon: FLucideIcons.circleX,
                       title: userSafeErrorMessage(
                         context,
                         assumptionsSnap.error!,
                         stackTrace: assumptionsSnap.stackTrace,
                         operation: 'load decision assumptions',
                       ),
-                      density: KnowledgeStateDensity.section,
+                      tone: AppEmptyStateTone.error,
                     );
                   }
                   final principles =
@@ -75,12 +75,11 @@ class _PrincipleAssumptionPicker extends ConsumerWidget {
                           .where((a) => a.status == AssumptionStatus.active)
                           .toList(growable: false);
                   if (principles.isEmpty && assumptions.isEmpty) {
-                    return KnowledgeEmptyState(
+                    return AppEmptyState.inline(
                       icon: FLucideIcons.link,
                       title: AppLocalizations.of(
                         context,
                       ).knowledgeDecisionNoReferenceCandidates,
-                      density: KnowledgeStateDensity.section,
                     );
                   }
                   return Column(

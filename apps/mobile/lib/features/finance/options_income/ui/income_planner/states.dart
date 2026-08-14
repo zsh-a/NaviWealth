@@ -1,14 +1,5 @@
 part of 'income_planner_page.dart';
 
-class _LoadingState extends StatelessWidget {
-  const _LoadingState();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: FCircularProgress());
-  }
-}
-
 class _UnsupportedOnWebPage extends StatelessWidget {
   const _UnsupportedOnWebPage();
 

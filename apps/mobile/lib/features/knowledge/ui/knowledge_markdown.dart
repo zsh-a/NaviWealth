@@ -303,11 +303,12 @@ class _KnowledgeMarkdownState extends State<KnowledgeMarkdown> {
     md.Element? cell, {
     required bool header,
   }) {
-    final style = _bodyStyle(context).copyWith(
-      fontSize: TypographyTokens.bodyMedium.fontSize,
-      height: 1.5,
-      fontWeight: header ? FontWeight.w600 : FontWeight.w400,
-    );
+    final baseStyle = _bodyStyle(
+      context,
+    ).copyWith(fontSize: TypographyTokens.bodyMedium.fontSize, height: 1.5);
+    final style = header
+        ? TypographyTokens.semiboldEmphasis(baseStyle)
+        : baseStyle;
     final alignment = switch (cell?.attributes['align']) {
       'center' => AlignmentDirectional.center,
       'right' => AlignmentDirectional.centerEnd,
@@ -407,7 +408,7 @@ class _KnowledgeMarkdownState extends State<KnowledgeMarkdown> {
       }
       if (node is! md.Element) continue;
       final nextStyle = switch (node.tag) {
-        'strong' || 'b' => style.copyWith(fontWeight: FontWeight.w600),
+        'strong' || 'b' => TypographyTokens.semiboldEmphasis(style),
         'em' || 'i' => style.copyWith(fontStyle: FontStyle.italic),
         'del' => style.copyWith(decoration: TextDecoration.lineThrough),
         'sup' => style.copyWith(
@@ -514,7 +515,10 @@ class _KnowledgeMarkdownState extends State<KnowledgeMarkdown> {
                 color: context.theme.colors.mutedForeground,
               ),
               const SizedBox(width: AppSpacing.s4),
-              Text(label, style: base.copyWith(fontSize: 13)),
+              Text(
+                label,
+                style: TypographyTokens.bodySmall.copyWith(color: base.color),
+              ),
             ],
           ),
         ),
@@ -608,7 +612,7 @@ class _KnowledgeTaskMarker extends StatelessWidget {
           width: AppSpacing.s16,
           height: AppSpacing.s16,
           decoration: BoxDecoration(
-            color: checked ? colors.primary : const Color(0x00000000),
+            color: checked ? colors.primary : null,
             border: Border.all(
               color: checked ? colors.primary : colors.border,
               width: AppStroke.thin,

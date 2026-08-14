@@ -19,15 +19,17 @@ class _DueRoutinesCard extends ConsumerWidget {
           error: (e, stackTrace) => KnowledgeSection.group(
             title: l10n.knowledgeReviewRoutinesTitle,
             children: [
-              KnowledgeErrorState(
+              AppEmptyState.inline(
+                icon: FLucideIcons.circleX,
                 title: userSafeErrorMessage(
                   context,
                   e,
                   stackTrace: stackTrace,
                   operation: 'load routine reviews',
                 ),
+                tone: AppEmptyStateTone.error,
+                retryLabel: l10n.commonRetry,
                 onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
-                density: KnowledgeStateDensity.section,
               ),
             ],
           ),
@@ -39,14 +41,15 @@ class _DueRoutinesCard extends ConsumerWidget {
                   return KnowledgeSection.group(
                     title: l10n.knowledgeReviewRoutinesTitle,
                     children: [
-                      KnowledgeErrorState(
+                      AppEmptyState.inline(
+                        icon: FLucideIcons.circleX,
                         title: userSafeErrorMessage(
                           context,
                           snap.error!,
                           stackTrace: snap.stackTrace,
                           operation: 'load routine reviews',
                         ),
-                        density: KnowledgeStateDensity.section,
+                        tone: AppEmptyStateTone.error,
                       ),
                     ],
                   );

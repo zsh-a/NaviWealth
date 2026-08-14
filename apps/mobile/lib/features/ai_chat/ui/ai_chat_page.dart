@@ -122,7 +122,10 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
               onRetry: () => ref.invalidate(defaultChatSessionProvider(userId)),
             );
           }
-          return const _BootstrappingPane();
+          // First load hydrates from the local store in well under a frame
+          // budget — mirror the resolved conversation with the shared chat
+          // skeleton instead of a context-free spinner.
+          return const AiChatSkeleton();
         }
 
         if (isDesktop) {
@@ -407,29 +410,6 @@ class _SuggestionTile extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _BootstrappingPane extends StatelessWidget {
-  const _BootstrappingPane();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(
-            width: AppSpacing.s28,
-            height: AppSpacing.s28,
-            child: FCircularProgress(),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          Text(l10n.aiChatBootstrappingLabel, style: context.captionStyle),
-        ],
       ),
     );
   }

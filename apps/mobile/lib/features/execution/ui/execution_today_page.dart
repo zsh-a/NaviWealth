@@ -17,6 +17,7 @@ import '../data/providers.dart';
 import '../domain/execution_models.dart';
 import 'execution_action_card_controller.dart';
 import 'execution_action_sheet.dart';
+import 'execution_greeting_header.dart';
 import 'execution_progress_sheet.dart';
 import 'execution_source_route.dart';
 import 'execution_widgets.dart';
@@ -26,18 +27,12 @@ class ExecutionTodayPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    return ShellTabScaffold(
-      title: l10n.executionTodayTitle,
-      collapseOnScroll: false,
-      directActionBudget: 1,
-      actions: [
-        ShellHeaderActionSpec(
-          icon: FLucideIcons.history,
-          label: l10n.executionReviewTitle,
-          onPress: () => context.push(ExecutionRoutes.review),
-        ),
-      ],
+    // Headerless cockpit root, same as FinanceOS Today: the editorial
+    // greeting ([ExecutionGreetingHeader]) replaces the static page title
+    // and hosts the injected shell chrome via [ShellActionRow]. Global
+    // chrome (sync strip, undo banner) is injected by DomainTabsShell.
+    return ShellCanvasScaffold(
+      childPad: false,
       child: ShellTabPause(
         routePath: ExecutionRoutes.today,
         child: _TodayList(),
@@ -207,7 +202,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
             ),
           if (visibleActions.isEmpty) ...[
             if (!(_filter == ExecutionTodayFilter.focus && focusIds.isNotEmpty))
-              ExecutionStateView(
+              AppEmptyState(
                 icon: _filter == ExecutionTodayFilter.focus
                     ? FLucideIcons.checkCheck
                     : executionTodayFilterIcon(_filter),
@@ -225,7 +220,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
         return BriefLazyListScaffold(
           padding: shellTabContentPadding(context),
           onRefresh: _refresh,
-          greeting: const SizedBox.shrink(),
+          greeting: const ExecutionGreetingHeader(),
           stage: AppCollapsingStage(
             child: ExecutionOverviewStrip(
               snapshot: snapshot,

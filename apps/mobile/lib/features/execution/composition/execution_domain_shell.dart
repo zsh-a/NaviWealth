@@ -25,5 +25,13 @@ DomainShellSpec executionDomainShell(AppLocalizations l10n) {
         routePath: ExecutionRoutes.commitments,
       ),
     ],
+    hiddenTabs: <DomainShellTab>[
+      DomainShellTab(
+        icon: FLucideIcons.listChecks,
+        selectedIcon: FLucideIcons.listChecks,
+        label: l10n.executionReviewTitle,
+        routePath: ExecutionRoutes.review,
+      ),
+    ],
   );
 }

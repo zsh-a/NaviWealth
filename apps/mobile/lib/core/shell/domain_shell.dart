@@ -46,6 +46,7 @@ class DomainShellSpec {
     required this.icon,
     required this.selectedIcon,
     required this.tabs,
+    this.hiddenTabs = const <DomainShellTab>[],
   });
 
   /// Domain identity. Multi-domain dispatch (sync prefix, JWT claim,
@@ -62,9 +63,18 @@ class DomainShellSpec {
   /// Active-state variant of [icon].
   final IconData selectedIcon;
 
-  /// Domain-local tab list. Order matches the in-domain nav order
+  /// Domain-local tab list rendered by the nav chrome (dock / rail /
+  /// sidebar / switcher). Order matches the in-domain nav order
   /// (Finance: Today / Activity / Wealth / Plan).
   final List<DomainShellTab> tabs;
+
+  /// Routable shell branches that are intentionally absent from the nav
+  /// chrome — reachable via header actions, the command palette, or
+  /// contextual signals instead of a permanent tab (Knowledge/Execution
+  /// Review). They still count as branches of the domain's
+  /// `StatefulShellRoute` (declared after the visible branches) and still
+  /// resolve through [specOwnsPath] / [activeSpecForPath].
+  final List<DomainShellTab> hiddenTabs;
 }
 
 /// Active LifeOS domain shells, in render order.
@@ -117,9 +127,15 @@ typedef DomainShellSpecBuilder =
 // place stops the two call sites from drifting on what "this domain
 // owns the active route" means.
 
-/// True when [path] equals one of [spec]'s tab routes or sits below it.
+/// True when [path] equals one of [spec]'s tab routes (visible or hidden)
+/// or sits below it.
 bool specOwnsPath(DomainShellSpec spec, String path) {
   for (final t in spec.tabs) {
+    if (path == t.routePath || path.startsWith('${t.routePath}/')) {
+      return true;
+    }
+  }
+  for (final t in spec.hiddenTabs) {
     if (path == t.routePath || path.startsWith('${t.routePath}/')) {
       return true;
     }

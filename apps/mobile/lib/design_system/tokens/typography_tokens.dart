@@ -234,6 +234,13 @@ class TypographyTokens {
     fontFamily: fontFamilyMono,
   );
 
+  /// Relative emphasis — bumps any base style to semibold (w600) while
+  /// keeping the base size/height/colour. Use for content-driven emphasis
+  /// (markdown `strong`, table header cells) where the base style varies
+  /// and a fixed-size preset cannot fit.
+  static TextStyle semiboldEmphasis(TextStyle base) =>
+      base.copyWith(fontWeight: FontWeight.w600);
+
   /// Section header title — neutral by default so accent remains reserved for
   /// actions, active state, and key metrics.
   static TextStyle sectionHeaderTitle(Color color) =>

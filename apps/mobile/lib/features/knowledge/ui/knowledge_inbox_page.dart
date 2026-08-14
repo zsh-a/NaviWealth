@@ -243,8 +243,8 @@ class _NotesList extends ConsumerWidget {
     final notesAsync = ref.watch(knowledgeInboxNotesProvider);
     final l10n = AppLocalizations.of(context);
     return notesAsync.when(
-      loading: () => const KnowledgeLoadingState(),
-      error: (e, stackTrace) => KnowledgeErrorState(
+      loading: () => const AppListPageSkeleton(itemCount: 5),
+      error: (e, stackTrace) => AppEmptyState.error(
         title: AppLocalizations.of(context).knowledgeInboxLoadFailedTitle,
         message: userSafeErrorMessage(
           context,
@@ -252,6 +252,7 @@ class _NotesList extends ConsumerWidget {
           stackTrace: stackTrace,
           operation: 'load knowledge inbox',
         ),
+        retryLabel: l10n.commonRetry,
         onRetry: () => ref.invalidate(knowledgeInboxNotesProvider),
       ),
       data: (notes) {
@@ -262,11 +263,10 @@ class _NotesList extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: shellTabContentPadding(context, top: AppSpacing.s8),
               children: [
-                KnowledgeEmptyState(
+                AppEmptyState.inline(
                   icon: FLucideIcons.inbox,
                   title: l10n.knowledgeInboxEmptyTitle,
                   message: l10n.knowledgeInboxEmptyBody,
-                  density: KnowledgeStateDensity.section,
                 ),
               ],
             ),
@@ -283,7 +283,8 @@ class _NotesList extends ConsumerWidget {
             ),
             itemCount: notes.length,
             separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
-            itemBuilder: (context, i) => _NoteCard(note: notes[i]),
+            itemBuilder: (context, i) =>
+                AppEntrance(child: _NoteCard(note: notes[i])),
           ),
         );
       },

@@ -178,20 +178,21 @@ class _BodyState extends ConsumerState<_Body> {
   }
 
   Widget _buildBody(BuildContext context, KnowledgeDecision? d) {
-    if (_loading) return const KnowledgeLoadingState();
+    if (_loading) return const AppListPageSkeleton(itemCount: 5);
     final error = _error;
     if (error != null) {
-      return KnowledgeErrorState(
+      return AppEmptyState.error(
         title: userSafeErrorMessage(
           context,
           error,
           operation: 'load knowledge decision',
         ),
+        retryLabel: AppLocalizations.of(context).commonRetry,
         onRetry: _load,
       );
     }
     if (d == null) {
-      return KnowledgeEmptyState(
+      return AppEmptyState(
         icon: FLucideIcons.fileQuestion,
         title: AppLocalizations.of(context).knowledgeDecisionNotFound,
       );

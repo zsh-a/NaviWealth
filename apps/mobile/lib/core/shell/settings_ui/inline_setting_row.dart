@@ -91,10 +91,7 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
         },
       ),
       child: AppTappable(
-        onPress: () {
-          AppInteraction.signal(AppInteractionIntent.select);
-          _popover.toggle();
-        },
+        onPress: _popover.toggle,
         child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: AppSpacing.s14,

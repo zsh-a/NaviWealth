@@ -100,4 +100,8 @@ extension AppTextStyles on BuildContext {
   /// `typography.body.xl2` + semibold — empty-state and page hero titles.
   TextStyle get displayTitleStyle =>
       theme.typography.body.xl2.copyWith(fontWeight: FontWeight.w600);
+
+  /// [displayTitleStyle] with tight leading — Today brief greeting titles.
+  TextStyle get briefGreetingTitleStyle =>
+      displayTitleStyle.copyWith(height: 1.05);
 }

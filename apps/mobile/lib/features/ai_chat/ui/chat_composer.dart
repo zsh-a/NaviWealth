@@ -435,12 +435,7 @@ class _TrailingButton extends StatelessWidget {
       listenable: controller,
       builder: (context, _) {
         final canSend = !isStreaming && controller.text.trim().isNotEmpty;
-        return AnimatedSwitcher(
-          duration: AppMotionPolicy.duration(context, Motion.fast),
-          transitionBuilder: (child, anim) =>
-              FadeTransition(opacity: anim, child: child),
-          child: current(canSend),
-        );
+        return AppMorphingAction(child: current(canSend));
       },
     );
   }

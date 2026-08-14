@@ -71,7 +71,7 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
       stream: widget.stream,
       builder: (context, snap) {
         if (snap.hasError) {
-          return KnowledgeErrorState(
+          return AppEmptyState.error(
             title: userSafeErrorMessage(
               context,
               snap.error!,
@@ -83,7 +83,7 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
         final items = snap.data ?? <T>[];
         if (items.isEmpty) {
           if (normalizedQuery.isNotEmpty) {
-            return KnowledgeEmptyState(
+            return AppEmptyState(
               icon: FLucideIcons.search,
               title: l10n.knowledgeLibrarySearchEmptyTitle,
               message: widget.onSearchAll == null
@@ -99,7 +99,7 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
                     ),
             );
           }
-          return KnowledgeEmptyState(
+          return AppEmptyState(
             icon: widget.emptyIcon,
             title: widget.emptyTitle,
             message: widget.emptyMessage,
@@ -166,7 +166,7 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
                 const SizedBox(height: AppSpacing.s12),
               ],
               Expanded(
-                child: KnowledgeEmptyState(
+                child: AppEmptyState(
                   icon: FLucideIcons.search,
                   title: l10n.knowledgeLibrarySearchEmptyTitle,
                   message: widget.onSearchAll == null

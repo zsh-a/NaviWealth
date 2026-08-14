@@ -20919,6 +20919,12 @@ abstract class AppLocalizations {
   /// **'Today'**
   String get healthTodayTitle;
 
+  /// Subtitle under the HealthOS Today greeting
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s health overview'**
+  String get healthTodayBriefSubtitle;
+
   /// No description provided for @healthTrendTitle.
   ///
   /// In en, this message translates to:
@@ -23901,6 +23907,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Today'**
   String get executionTodayTitle;
+
+  /// Subtitle under the ExecutionOS Today greeting
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s execution overview'**
+  String get executionTodayBriefSubtitle;
 
   /// No description provided for @executionCommitmentsTitle.
   ///

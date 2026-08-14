@@ -141,7 +141,7 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
     ];
     if (_showWeekResults && empty) {
       itemBuilders.add(
-        (_) => ExecutionStateView(
+        (_) => AppEmptyState(
           icon: FLucideIcons.clipboardCheck,
           title: l10n.executionReviewEmptyTitle,
           message: l10n.executionReviewEmptyBody,

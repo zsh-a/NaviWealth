@@ -209,7 +209,7 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
     ];
     if (empty) {
       itemBuilders.add(
-        (_) => ExecutionStateView(
+        (_) => AppEmptyState(
           icon: activeView ? FLucideIcons.listTodo : FLucideIcons.archive,
           title: activeView
               ? l10n.executionCommitmentsEmptyTitle

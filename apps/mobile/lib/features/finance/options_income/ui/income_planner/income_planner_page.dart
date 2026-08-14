@@ -56,14 +56,11 @@ class IncomePlannerPage extends ConsumerWidget {
       title: l10n.incomePlannerTitle,
       actions: [?settingsAction],
       childPad: false,
-      child: profileAsync.when(
-        loading: () => const _LoadingState(),
-        error: (error, stackTrace) => kDefaultError(
-          context,
-          error,
-          stackTrace,
-          onRetry: () => ref.invalidate(optionsStrategyProfileProvider),
-        ),
+      child: profileAsync.whenOrLoading(
+        context: context,
+        onRetry: () => ref.invalidate(optionsStrategyProfileProvider),
+        // Match plain .when: keep showing data while a refresh is in flight.
+        skipLoadingOnRefresh: true,
         data: (profile) {
           if (profile == null || !profile.hasAcknowledgedRiskDisclosure) {
             return const _StartState();

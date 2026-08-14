@@ -22,6 +22,8 @@ on:
       - 'tool/lint-material-chrome.sh'
       - 'tool/lint-format-path.sh'
       - 'tool/lint-typography.sh'
+      - 'tool/lint-async-value.sh'
+      - 'tool/lint-interaction-primitives.sh'
       - 'tool/check-design-tokens-export.sh'
       - 'tool/check-android-native-libs.sh'
   pull_request:
@@ -43,6 +45,8 @@ on:
       - 'tool/lint-material-chrome.sh'
       - 'tool/lint-format-path.sh'
       - 'tool/lint-typography.sh'
+      - 'tool/lint-async-value.sh'
+      - 'tool/lint-interaction-primitives.sh'
       - 'tool/check-design-tokens-export.sh'
       - 'tool/check-android-native-libs.sh'
 

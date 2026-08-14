@@ -106,7 +106,10 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    // PageSkeletonShell holds the stage skeleton for Motion.fast (~120ms);
+    // pump past it so the shell swaps to real content and no timer is left
+    // pending at teardown.
+    await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.byType(AdaptiveSummaryGrid), findsOneWidget);
     expect(find.text('Morning Briefing'), findsOneWidget);
@@ -201,7 +204,7 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.text('Running'), findsNothing);
     expect(find.text('Recovery check in progress.'), findsOneWidget);

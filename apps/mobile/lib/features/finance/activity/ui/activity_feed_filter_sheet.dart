@@ -365,10 +365,7 @@ class _AccountFilterRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppTappable(
-      onPress: () {
-        AppInteraction.signal(AppInteractionIntent.select);
-        onToggle();
-      },
+      onPress: onToggle,
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s4,

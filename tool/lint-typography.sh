@@ -10,7 +10,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LIB="$ROOT/apps/mobile/lib"
 
-BASELINE=32
+BASELINE=31
 count="$({ grep -RhoE --include='*.dart' \
   'copyWith\([^)]*(fontSize:|fontWeight:|height:)' \
   "$LIB/app" "$LIB/core" "$LIB/features" || true; } | wc -l | tr -d ' ')"

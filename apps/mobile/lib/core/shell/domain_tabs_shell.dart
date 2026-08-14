@@ -53,6 +53,14 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell> {
   Widget build(BuildContext context) {
     final tabs = widget.spec.tabs;
     final index = widget.shell.currentIndex;
+    // Every shell branch must be declared on the spec — visible tabs first,
+    // then hidden (routable-only) branches — so an under-declared spec fails
+    // loudly in debug instead of silently dropping nav state.
+    assert(
+      index < tabs.length + widget.spec.hiddenTabs.length,
+      'DomainTabsShell: branch $index of ${widget.spec.scope} has no matching '
+      'visible or hidden tab in its DomainShellSpec',
+    );
     // Publish the active tab root so offstage branches can pause streams.
     // Guarded write avoids rebuild loops when the path is unchanged.
     final activePath = (index >= 0 && index < tabs.length)

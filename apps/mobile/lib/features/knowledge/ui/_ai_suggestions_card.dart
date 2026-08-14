@@ -61,15 +61,17 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
           error: (e, stackTrace) => KnowledgeSection.group(
             title: l10n.knowledgeAiSuggestionsTitle,
             children: [
-              KnowledgeErrorState(
+              AppEmptyState.inline(
+                icon: FLucideIcons.circleX,
                 title: userSafeErrorMessage(
                   context,
                   e,
                   stackTrace: stackTrace,
                   operation: 'load knowledge AI suggestions',
                 ),
+                tone: AppEmptyStateTone.error,
+                retryLabel: l10n.commonRetry,
                 onRetry: () => ref.invalidate(inboxTriageRepositoryProvider),
-                density: KnowledgeStateDensity.section,
               ),
             ],
           ),
@@ -82,14 +84,15 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
                 return KnowledgeSection.group(
                   title: l10n.knowledgeAiSuggestionsTitle,
                   children: [
-                    KnowledgeErrorState(
+                    AppEmptyState.inline(
+                      icon: FLucideIcons.circleX,
                       title: userSafeErrorMessage(
                         context,
                         snap.error!,
                         stackTrace: snap.stackTrace,
                         operation: 'load knowledge AI suggestions',
                       ),
-                      density: KnowledgeStateDensity.section,
+                      tone: AppEmptyStateTone.error,
                     ),
                   ],
                 );
@@ -169,26 +172,22 @@ class _NoteSuggestionGroupState extends ConsumerState<_NoteSuggestionGroup> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     if (_loading) {
-      return const KnowledgeLoadingState(
-        density: KnowledgeStateDensity.section,
-      );
+      return const KnowledgeSectionSkeleton();
     }
     final note = _note;
     if (note == null) {
-      return KnowledgeEmptyState(
+      return AppEmptyState.inline(
         icon: FLucideIcons.fileX,
         title: l10n.knowledgeNoteDeleted(widget.record.noteId),
-        density: KnowledgeStateDensity.section,
       );
     }
     final pending = widget.record.proposals
         .where((p) => p.status.isPending)
         .toList();
     if (pending.isEmpty) {
-      return KnowledgeEmptyState(
+      return AppEmptyState.inline(
         icon: FLucideIcons.sparkles,
         title: l10n.knowledgeAiSuggestionsEmpty,
-        density: KnowledgeStateDensity.section,
       );
     }
     return KnowledgeSection.item(
@@ -347,7 +346,7 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
             Expanded(
               child: Text(
                 widget.proposal.summaryZh,
-                style: context.theme.typography.body.sm.copyWith(height: 1.4),
+                style: context.theme.typography.body.sm,
                 maxLines: _expanded ? 8 : 3,
                 overflow: TextOverflow.ellipsis,
               ),

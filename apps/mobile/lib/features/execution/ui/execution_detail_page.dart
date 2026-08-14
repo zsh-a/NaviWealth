@@ -325,7 +325,7 @@ class _RelatedCommitmentsSection extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s8),
           if (commitments.isEmpty)
-            ExecutionStateView(
+            AppEmptyState(
               icon: FLucideIcons.target,
               title: l10n.executionNoCommitmentsAvailable,
               action: FButton(
@@ -405,7 +405,7 @@ class _RelatedActionsSection extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.s8),
             if (actions.isEmpty)
-              ExecutionStateView(
+              AppEmptyState(
                 icon: FLucideIcons.listTodo,
                 title: l10n.executionTodayFilteredEmptyTitle,
                 message: l10n.executionCommitmentsEmptyBody,
@@ -473,7 +473,7 @@ class _ProgressTimeline extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s8),
           if (items.isEmpty)
-            ExecutionStateView(
+            AppEmptyState(
               icon: FLucideIcons.messageSquareText,
               title: l10n.executionReviewEmptyTitle,
               message: emptyMessage,
@@ -551,7 +551,7 @@ class _DetailMissingState extends StatelessWidget {
     return ListView(
       padding: _detailPadding(context),
       children: [
-        ExecutionStateView(
+        AppEmptyState(
           icon: FLucideIcons.searchX,
           title: title,
           message: message,

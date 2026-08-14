@@ -12489,6 +12489,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthTodayTitle => 'Today';
 
   @override
+  String get healthTodayBriefSubtitle => 'Today\'s health overview';
+
+  @override
   String get healthTrendTitle => 'Trends';
 
   @override
@@ -14207,6 +14210,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionTodayTitle => 'Today';
+
+  @override
+  String get executionTodayBriefSubtitle => 'Today\'s execution overview';
 
   @override
   String get executionCommitmentsTitle => 'Plans';

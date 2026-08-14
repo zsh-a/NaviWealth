@@ -54,6 +54,11 @@ void main() {
     await tester.pump();
     expect(FocusManager.instance.primaryFocus, isNotNull);
     expect(tester.takeException(), isNull);
+    // Focusing the greeting-header action starts its FTooltip show timer;
+    // flush it so no timer is left pending at teardown (same pattern as
+    // shell_chrome_test's tooltip flush).
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('Today keeps unscheduled backlog out of the daily workspace', (

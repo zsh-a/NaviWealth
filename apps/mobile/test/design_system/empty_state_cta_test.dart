@@ -44,6 +44,14 @@ void main() {
       'lib/features/execution/ui/execution_relation_picker.dart',
       // Journal fills itself from recorded trades; true-empty explains it.
       'lib/features/finance/options_income/ui/income_planner/journal.dart',
+      // Detail-page "not found" states; the back affordance is the way out.
+      'lib/features/knowledge/ui/knowledge_object_detail_page.dart',
+      'lib/features/knowledge/ui/knowledge_decision_detail_page.dart',
+      // Section-level empties under their own section headers; the page
+      // already offers the create affordances above them.
+      'lib/features/execution/ui/execution_detail_page.dart',
+      // Week-results empty sits under the expanded disclosure toggle.
+      'lib/features/execution/ui/execution_review_page.dart',
     };
 
     final unexpected = offenders

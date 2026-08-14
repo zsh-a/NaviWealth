@@ -235,50 +235,48 @@ class _AssumptionTargetPicker extends ConsumerWidget {
       future: ref.watch(knowledgeOwnerUserIdProvider.future),
       builder: (context, ownerSnap) {
         if (!ownerSnap.hasData) {
-          return const KnowledgeLoadingState(
-            density: KnowledgeStateDensity.section,
-          );
+          return const KnowledgeSectionSkeleton();
         }
         final owner = ownerSnap.data!;
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
         return repoAsync.when(
-          loading: () => const KnowledgeLoadingState(
-            density: KnowledgeStateDensity.section,
-          ),
-          error: (e, stackTrace) => KnowledgeErrorState(
+          loading: () => const KnowledgeSectionSkeleton(),
+          error: (e, stackTrace) => AppEmptyState.inline(
+            icon: FLucideIcons.circleX,
             title: userSafeErrorMessage(
               context,
               e,
               stackTrace: stackTrace,
               operation: 'load knowledge assumptions',
             ),
+            tone: AppEmptyStateTone.error,
+            retryLabel: AppLocalizations.of(context).commonRetry,
             onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
-            density: KnowledgeStateDensity.section,
           ),
           data: (repo) => StreamBuilder<List<KnowledgeAssumption>>(
             stream: repo.watchAssumptions(ownerUserId: owner),
             builder: (context, snap) {
               if (snap.hasError) {
-                return KnowledgeErrorState(
+                return AppEmptyState.inline(
+                  icon: FLucideIcons.circleX,
                   title: userSafeErrorMessage(
                     context,
                     snap.error!,
                     stackTrace: snap.stackTrace,
                     operation: 'load knowledge experiment',
                   ),
-                  density: KnowledgeStateDensity.section,
+                  tone: AppEmptyStateTone.error,
                 );
               }
               final all = (snap.data ?? const <KnowledgeAssumption>[])
                   .where((a) => a.status == AssumptionStatus.active)
                   .toList(growable: false);
               if (all.isEmpty) {
-                return KnowledgeEmptyState(
+                return AppEmptyState.inline(
                   icon: FLucideIcons.badgeCheck,
                   title: AppLocalizations.of(
                     context,
                   ).knowledgeExperimentNoActiveAssumptions,
-                  density: KnowledgeStateDensity.section,
                 );
               }
               return Column(

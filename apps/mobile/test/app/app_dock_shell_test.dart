@@ -12,6 +12,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart' show FHeader;
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
@@ -216,7 +217,7 @@ void main() {
     });
 
     testWidgets(
-      '/health renders HealthTodayPage with plain title (no chevron)',
+      '/health renders HealthTodayPage with cockpit greeting (no FHeader)',
       (tester) async {
         final l10n = lookupAppLocalizations(const Locale('en'));
         final container = await _pumpAt(
@@ -233,9 +234,16 @@ void main() {
         expect(
           find.descendant(
             of: find.byType(HealthTodayPage),
-            matching: find.text(l10n.healthTodayTitle),
+            matching: find.text(l10n.healthTodayBriefSubtitle),
           ),
           findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: find.byType(HealthTodayPage),
+            matching: find.byType(FHeader),
+          ),
+          findsNothing,
         );
         expect(find.text('FinanceOS'), findsNothing);
         expect(find.byType(DomainSwitcherChip), findsOneWidget);

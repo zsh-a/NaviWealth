@@ -21,7 +21,7 @@ import '../share_intents/share_intent_service.dart';
 ///
 ///   ShellRoute (this)
 ///   ├── financeShellRoute    (4 branches → DomainTabsShell)
-///   ├── healthShellRoute     (3 branches → DomainTabsShell)
+///   ├── healthShellRoute     (2 branches → DomainTabsShell)
 ///   └── knowledgeShellRoute  (3 branches → DomainTabsShell)
 ///
 /// Responsibilities the inner per-domain shells should *not* duplicate:

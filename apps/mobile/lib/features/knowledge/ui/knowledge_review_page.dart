@@ -188,7 +188,7 @@ class _KnowledgeReviewCompleteState extends ConsumerWidget {
         final l10n = AppLocalizations.of(context);
         return Padding(
           padding: const EdgeInsets.only(top: AppSpacing.s24),
-          child: KnowledgeEmptyState(
+          child: AppEmptyState(
             icon: FLucideIcons.circleCheckBig,
             title: l10n.knowledgeReviewAllClearBadge,
             message: l10n.knowledgeReviewAllClearBody,

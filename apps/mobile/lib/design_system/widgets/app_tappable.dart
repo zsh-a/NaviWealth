@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
+import 'app_interaction.dart';
 
 /// The app's default tappable row/tile primitive.
 ///
@@ -12,6 +13,10 @@ import '../tokens/dimens_tokens.dart';
 ///
 /// * keyboard focus → the theme focus ring, rounded to [borderRadius];
 /// * Enter/Space activation comes with `FTappable` itself.
+///
+/// Every press also fires [AppInteractionIntent.select] feedback so standard
+/// taps share one uniform micro-interaction; call sites must not signal it
+/// again manually.
 ///
 /// Use it for every tappable row, tile and cell outside the design system.
 /// (`SoftCard` has its own richer treatment; buttons go through the
@@ -47,7 +52,10 @@ class AppTappable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FTappable(
-      onPress: onPress,
+      onPress: AppInteraction.wrap(
+        onPress,
+        intent: AppInteractionIntent.select,
+      ),
       onLongPress: onLongPress,
       semanticsLabel: semanticsLabel,
       selected: selected,

@@ -37,7 +37,7 @@ class HomeGreetingHeader extends StatelessWidget {
               Expanded(
                 child: Text(
                   greeting,
-                  style: context.displayTitleStyle.copyWith(height: 1.05),
+                  style: context.briefGreetingTitleStyle,
                 ),
               ),
               // Today has no `FHeader`, so the editorial greeting row is

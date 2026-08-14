@@ -368,17 +368,17 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _LabeledTextField(
-            label: l10n.incomePlannerSymbolLabel,
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _symbolCtl),
+            label: Text(l10n.incomePlannerSymbolLabel),
             hint: l10n.incomePlannerSymbolHint,
-            controller: _symbolCtl,
             validator: (value) => _requiredText(value, l10n),
           ),
           const SizedBox(height: AppSpacing.s12),
-          _LabeledTextField(
-            label: l10n.incomePlannerJournalOptionSymbolLabel,
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _optionSymbolCtl),
+            label: Text(l10n.incomePlannerJournalOptionSymbolLabel),
             hint: l10n.incomePlannerJournalOptionSymbolHint,
-            controller: _optionSymbolCtl,
             validator: (value) => _requiredText(value, l10n),
           ),
           const SizedBox(height: AppSpacing.s12),
@@ -448,10 +448,10 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             },
           ),
           const SizedBox(height: AppSpacing.s12),
-          _LabeledTextField(
-            label: l10n.incomePlannerJournalCreditLabel,
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _creditCtl),
+            label: Text(l10n.incomePlannerJournalCreditLabel),
             hint: l10n.incomePlannerJournalAmountHint,
-            controller: _creditCtl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             validator: (value) => _validateDecimal(
               value,
@@ -467,10 +467,10 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             currency: _currency,
           ),
           const SizedBox(height: AppSpacing.s12),
-          _LabeledTextField(
-            label: l10n.incomePlannerJournalDebitLabel,
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _debitCtl),
+            label: Text(l10n.incomePlannerJournalDebitLabel),
             hint: l10n.incomePlannerJournalAmountHint,
-            controller: _debitCtl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             validator: (value) => _validateDecimal(
               value,
@@ -480,10 +480,10 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             ),
           ),
           const SizedBox(height: AppSpacing.s12),
-          _LabeledTextField(
-            label: l10n.incomePlannerJournalStrikeLabel,
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _strikeCtl),
+            label: Text(l10n.incomePlannerJournalStrikeLabel),
             hint: l10n.incomePlannerJournalAmountHint,
-            controller: _strikeCtl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             validator: (value) => _validateDecimal(
               value,
@@ -493,26 +493,28 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             ),
           ),
           const SizedBox(height: AppSpacing.s12),
-          _LabeledTextField(
-            label: l10n.incomePlannerJournalContractSizeLabel,
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _contractSizeCtl),
+            label: Text(l10n.incomePlannerJournalContractSizeLabel),
             hint: '100',
-            controller: _contractSizeCtl,
             keyboardType: TextInputType.number,
             validator: (value) => _validatePositiveInt(value, l10n),
           ),
           const SizedBox(height: AppSpacing.s12),
-          _LabeledTextField(
-            label: l10n.incomePlannerJournalContractQuantityLabel,
+          FTextFormField(
+            control: FTextFieldControl.managed(
+              controller: _contractQuantityCtl,
+            ),
+            label: Text(l10n.incomePlannerJournalContractQuantityLabel),
             hint: '1',
-            controller: _contractQuantityCtl,
             keyboardType: TextInputType.number,
             validator: (value) => _validatePositiveInt(value, l10n),
           ),
           const SizedBox(height: AppSpacing.s12),
-          _LabeledTextField(
-            label: l10n.incomePlannerJournalFeesLabel,
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _feesCtl),
+            label: Text(l10n.incomePlannerJournalFeesLabel),
             hint: '0.00',
-            controller: _feesCtl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             validator: (value) => _validateDecimal(
               value,
@@ -551,10 +553,10 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             ),
           ),
           const SizedBox(height: AppSpacing.s12),
-          _LabeledTextField(
-            label: l10n.incomePlannerJournalNotesLabel,
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _notesCtl),
+            label: Text(l10n.incomePlannerJournalNotesLabel),
             hint: '',
-            controller: _notesCtl,
             maxLines: 3,
           ),
           const SizedBox(height: AppSpacing.s12),
@@ -597,47 +599,6 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
           : cashAccounts.first.id;
     }
     _hydratedAccounts = true;
-  }
-}
-
-class _LabeledTextField extends StatelessWidget {
-  const _LabeledTextField({
-    required this.label,
-    required this.hint,
-    required this.controller,
-    this.keyboardType,
-    this.maxLines = 1,
-    this.validator,
-  });
-
-  final String label;
-  final String hint;
-  final TextEditingController controller;
-  final TextInputType? keyboardType;
-  final int maxLines;
-  final FormFieldValidator<String>? validator;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: context.captionLabelStyle.copyWith(
-            color: context.theme.colors.mutedForeground,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.s4),
-        FTextFormField(
-          control: FTextFieldControl.managed(controller: controller),
-          hint: hint,
-          keyboardType: keyboardType,
-          maxLines: maxLines,
-          validator: validator,
-        ),
-      ],
-    );
   }
 }
 

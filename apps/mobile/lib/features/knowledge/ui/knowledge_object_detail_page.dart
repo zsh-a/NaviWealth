@@ -315,21 +315,22 @@ class _KnowledgeObjectDetailPageState
   };
 
   Widget _buildBody() {
-    if (_loading) return const KnowledgeLoadingState();
+    if (_loading) return const AppListPageSkeleton(itemCount: 5);
     final error = _error;
     if (error != null) {
-      return KnowledgeErrorState(
+      return AppEmptyState.error(
         title: userSafeErrorMessage(
           context,
           error,
           operation: 'load knowledge object',
         ),
+        retryLabel: AppLocalizations.of(context).commonRetry,
         onRetry: _load,
       );
     }
     final obj = _object;
     if (obj == null) {
-      return KnowledgeEmptyState(
+      return AppEmptyState(
         icon: FLucideIcons.fileQuestion,
         title: AppLocalizations.of(context).knowledgeObjectNotFound,
       );

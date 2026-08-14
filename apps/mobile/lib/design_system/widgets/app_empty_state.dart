@@ -29,6 +29,7 @@ class AppEmptyState extends StatelessWidget {
     this.tone = AppEmptyStateTone.neutral,
     this.iconSize = AppIconSizes.xl,
     this.compact = false,
+    this.inline = false,
   });
 
   /// Convenience constructor for "couldn't load" failures with an
@@ -69,6 +70,46 @@ class AppEmptyState extends StatelessWidget {
     );
   }
 
+  /// Compact inline variant for section / card bodies. Keeps the same
+  /// icon + title + optional message language, but as a left-aligned row
+  /// so summary cards can host an empty / error hint without handing over
+  /// the full viewport. [onRetry] builds the standard ghost retry action.
+  factory AppEmptyState.inline({
+    Key? key,
+    required IconData icon,
+    required String title,
+    String? message,
+    Widget? action,
+    AppEmptyStateTone tone = AppEmptyStateTone.neutral,
+    String? retryLabel,
+    VoidCallback? onRetry,
+  }) {
+    assert(
+      action == null || onRetry == null,
+      'Provide either action or onRetry, not both.',
+    );
+    assert(
+      onRetry == null || retryLabel != null,
+      'retryLabel is required when onRetry is provided.',
+    );
+    return AppEmptyState(
+      key: key,
+      icon: icon,
+      title: title,
+      message: message,
+      action: onRetry == null
+          ? action
+          : FButton(
+              variant: FButtonVariant.ghost,
+              prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
+              onPress: onRetry,
+              child: Text(retryLabel!),
+            ),
+      tone: tone,
+      inline: true,
+    );
+  }
+
   final IconData icon;
   final String title;
   final String? message;
@@ -76,6 +117,7 @@ class AppEmptyState extends StatelessWidget {
   final AppEmptyStateTone tone;
   final double iconSize;
   final bool compact;
+  final bool inline;
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +127,37 @@ class AppEmptyState extends StatelessWidget {
       AppEmptyStateTone.neutral => colors.primary,
       AppEmptyStateTone.error => colors.destructive,
     };
+    if (inline) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s2),
+              child: Icon(icon, size: AppIconSizes.sm, color: iconColor),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: context.labelStyle),
+                  if (message != null) ...[
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(message!, style: context.captionStyle),
+                  ],
+                  if (action != null) ...[
+                    const SizedBox(height: AppSpacing.s8),
+                    action!,
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Center(
       child: Padding(
         padding: EdgeInsets.all(compact ? AppSpacing.s16 : AppSpacing.s20),

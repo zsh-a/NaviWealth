@@ -85,21 +85,9 @@ class MessageBubble extends StatelessWidget {
         isLastAssistant: isLastAssistant,
       ),
     };
-    if (!animateIn) return child;
-    return TweenAnimationBuilder<double>(
+    return AppEntrance(
       key: ValueKey(message.id),
-      tween: Tween<double>(begin: 0, end: 1),
-      duration: AppMotionPolicy.duration(context, Motion.medium),
-      curve: Motion.standardDecelerate,
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value,
-          child: Transform.translate(
-            offset: Offset(0, 8 * (1 - value)),
-            child: child,
-          ),
-        );
-      },
+      enabled: animateIn,
       child: child,
     );
   }

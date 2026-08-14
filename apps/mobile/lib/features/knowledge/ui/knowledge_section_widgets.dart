@@ -254,3 +254,161 @@ class KnowledgeObjectHeader extends StatelessWidget {
     );
   }
 }
+
+/// Compact loading placeholder for KnowledgeOS sections: three shimmer
+/// lines that mirror the section body rhythm. Page-level loads use the
+/// design-system [AppListPageSkeleton] instead.
+class KnowledgeSectionSkeleton extends StatelessWidget {
+  const KnowledgeSectionSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SkeletonBox(height: 14, radius: AppRadius.sm),
+          SizedBox(height: AppSpacing.s8),
+          SkeletonBox(width: 220, height: 14, radius: AppRadius.sm),
+          SizedBox(height: AppSpacing.s8),
+          SkeletonBox(width: 160, height: 14, radius: AppRadius.sm),
+        ],
+      ),
+    );
+  }
+}
+
+/// Consistent selectable row for KnowledgeOS sheets.
+class KnowledgeSelectableRow extends StatelessWidget {
+  const KnowledgeSelectableRow({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onPress,
+    this.detail,
+    this.mode = KnowledgeSelectionMode.checkbox,
+    this.enabled = true,
+    this.maxLines = 3,
+  });
+
+  final String label;
+  final String? detail;
+  final bool selected;
+  final VoidCallback onPress;
+  final KnowledgeSelectionMode mode;
+  final bool enabled;
+  final int maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    final typography = context.theme.typography;
+    final control = switch (mode) {
+      KnowledgeSelectionMode.checkbox => FCheckbox(
+        value: selected,
+        onChange: enabled ? (_) => onPress() : null,
+      ),
+      KnowledgeSelectionMode.radio => FRadio(
+        value: selected,
+        onChange: enabled ? (_) => onPress() : null,
+        semanticsLabel: label,
+      ),
+    };
+    return AppTappable(
+      onPress: enabled ? onPress : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s2),
+              child: control,
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: enabled
+                        ? typography.body.sm
+                        : context.bodyCaptionStyle,
+                    maxLines: maxLines,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (detail != null) ...[
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(
+                      detail!,
+                      style: context.captionStyle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Text with a lightweight query highlight for KnowledgeOS search results.
+class KnowledgeHighlightedText extends StatelessWidget {
+  const KnowledgeHighlightedText({
+    super.key,
+    required this.text,
+    required this.query,
+    required this.style,
+    this.highlightStyle,
+    this.maxLines,
+    this.overflow = TextOverflow.ellipsis,
+  });
+
+  final String text;
+  final String query;
+  final TextStyle style;
+  final TextStyle? highlightStyle;
+  final int? maxLines;
+  final TextOverflow overflow;
+
+  @override
+  Widget build(BuildContext context) {
+    final normalizedQuery = query.trim().toLowerCase();
+    if (normalizedQuery.isEmpty) {
+      return Text(text, style: style, maxLines: maxLines, overflow: overflow);
+    }
+
+    final lower = text.toLowerCase();
+    final spans = <TextSpan>[];
+    var cursor = 0;
+    while (cursor < text.length) {
+      final match = lower.indexOf(normalizedQuery, cursor);
+      if (match < 0) {
+        spans.add(TextSpan(text: text.substring(cursor), style: style));
+        break;
+      }
+      if (match > cursor) {
+        spans.add(TextSpan(text: text.substring(cursor, match), style: style));
+      }
+      final end = match + normalizedQuery.length;
+      spans.add(
+        TextSpan(
+          text: text.substring(match, end),
+          style: highlightStyle ?? style.merge(context.searchHighlightStyle),
+        ),
+      );
+      cursor = end;
+    }
+    return RichText(
+      text: TextSpan(style: style, children: spans),
+      maxLines: maxLines,
+      overflow: overflow,
+    );
+  }
+}

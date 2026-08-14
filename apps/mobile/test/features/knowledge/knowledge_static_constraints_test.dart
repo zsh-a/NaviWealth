@@ -85,9 +85,11 @@ void main() {
         if (text.contains('_ErrorState')) {
           offenders.add('$path: legacy _ErrorState');
         }
-        if (!_isCentralKnowledgeWidgetsFile(path) &&
-            text.contains('AppEmptyState')) {
-          offenders.add('$path: direct AppEmptyState');
+        // Empty/error/loading states converge on the design system
+        // (AppEmptyState / AppEmptyState.inline / AppListPageSkeleton);
+        // do not re-grow Knowledge-local state wrappers.
+        if (RegExp(r'Knowledge(Empty|Error|Loading)State').hasMatch(text)) {
+          offenders.add('$path: Knowledge*State wrapper reintroduced');
         }
         if (!_isCentralKnowledgeWidgetsFile(path) &&
             text.contains('SoftCard(')) {

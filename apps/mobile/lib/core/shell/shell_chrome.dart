@@ -303,8 +303,9 @@ class ShellActionRow extends ConsumerWidget {
 /// Headerless top-level tab scaffold that still belongs to the app shell.
 ///
 /// Most domain tab roots should use [ShellTabScaffold]. A small number of
-/// cockpit-style roots, currently Finance Today, intentionally own their
-/// in-content hero/header instead of rendering an `FHeader`. Those pages still
+/// cockpit-style roots — the Today briefs (Finance, Health, Execution) —
+/// intentionally own their in-content hero/header instead of rendering an
+/// `FHeader`. Those pages still
 /// need to be shell-owned so global chrome, cross-platform back behavior, and
 /// tab padding stay centralized. Use [ShellActionRow] inside the page's hero
 /// row to render the injected domain switcher + global actions on compact

@@ -67,11 +67,16 @@ features/<domain>/
 |---|---|---|---|---|
 | FinanceOS | `finance` | Today, Activity, Wealth, Plan | `kFinanceDeviceTools` | Weekly Wealth Review, Cashflow Anomaly Review, FIRE Plan Drift Monitor, Options Income Risk Review |
 | HealthOS | `health` | Today, Trends | `kHealthDeviceTools` | Morning Briefing, Recovery Alert, Weekly Summary |
-| KnowledgeOS | `knowledge` | Inbox, Library | `kKnowledgeDeviceTools` | Review, Assumption, Contradiction, Inbox Triage |
-| ExecutionOS | `execution` | Today, Plans | `kExecutionDeviceTools` | Review, Due Action |
+| KnowledgeOS | `knowledge` | Inbox, Library (+ hidden Review) | `kKnowledgeDeviceTools` | Review, Assumption, Contradiction, Inbox Triage |
+| ExecutionOS | `execution` | Today, Plans (+ hidden Review) | `kExecutionDeviceTools` | Review, Due Action |
 
 Finance is always active. Health, Knowledge, and Execution are enabled through
 `domainOptInsProvider`.
+
+Hidden tabs are declared through `DomainShellSpec.hiddenTabs`: routable branches
+that own a real shell index but are not rendered in the tab bar, switcher, or
+sidebar (Review is reached via header actions, the command palette, and
+signals).
 
 ## Adding Or Changing A Domain
 

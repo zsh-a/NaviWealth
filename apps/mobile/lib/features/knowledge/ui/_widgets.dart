@@ -40,7 +40,6 @@ part 'knowledge_create_widgets.dart';
 part 'knowledge_editor_widgets.dart';
 part 'knowledge_markdown.dart';
 part 'knowledge_section_widgets.dart';
-part 'knowledge_state_widgets.dart';
 
 /// Max items a Review-tab summary card lists per section. Kept here so the
 /// three cards (Routines / Decisions / Assumptions) stay in agreement.
@@ -81,7 +80,5 @@ String knowledgeMonthDayFromIso(BuildContext context, String value) {
   if (month == null || day == null) return value;
   return formatter.monthDay(DateTime(2000, month, day));
 }
-
-enum KnowledgeStateDensity { page, section }
 
 enum KnowledgeSelectionMode { checkbox, radio }

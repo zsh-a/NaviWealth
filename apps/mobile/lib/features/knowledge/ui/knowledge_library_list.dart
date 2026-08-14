@@ -32,18 +32,19 @@ class _LibraryList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final owner = ref.watch(activeUserIdProvider);
-    if (owner == null) return const KnowledgeLoadingState();
+    if (owner == null) return const AppListPageSkeleton(itemCount: 5);
     final repoAsync = ref.watch(knowledgeRepositoryProvider);
     final l10n = AppLocalizations.of(context);
     return repoAsync.when(
-      loading: () => const KnowledgeLoadingState(),
-      error: (e, stackTrace) => KnowledgeErrorState(
+      loading: () => const AppListPageSkeleton(itemCount: 5),
+      error: (e, stackTrace) => AppEmptyState.error(
         title: userSafeErrorMessage(
           context,
           e,
           stackTrace: stackTrace,
           operation: 'load knowledge library',
         ),
+        retryLabel: l10n.commonRetry,
         onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
       ),
       data: (repo) => switch (segment) {

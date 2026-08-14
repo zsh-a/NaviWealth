@@ -201,8 +201,9 @@ class _BriefingHourSheetState extends State<_BriefingHourSheet> {
         separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s6),
         itemBuilder: (_, index) {
           final selected = index == widget.selectedHour;
-          return GestureDetector(
-            onTap: () => Navigator.of(context).pop(index),
+          return AppTappable(
+            onPress: () => Navigator.of(context).pop(index),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             child: AnimatedContainer(
               duration: AppMotionPolicy.duration(context, Motion.medium),
               curve: Motion.standardDecelerate,
