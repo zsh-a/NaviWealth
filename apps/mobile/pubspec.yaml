@@ -70,10 +70,17 @@ dependencies:
   # relies on Cargokit's CocoaPods build phase for Rust.
   receive_sharing_intent: 1.8.1
   record: ^7.1.1
-  sentry_flutter: ^9.24.0
+  # Sentry 9.25+ requires HybridSDK 8.58.4, but its macOS podspec still
+  # reports 10.14 while that SDK requires a higher deployment target.
+  # Keep the latest CocoaPods-compatible release until the plugin fixes its
+  # reported macOS target.
+  sentry_flutter: 9.24.0
   share_plus: ^13.2.1
   shared_preferences: ^2.5.5
-  sherpa_onnx: ^1.13.4
+  # 1.13.5 ships a macOS xcframework whose nested code signature fails the
+  # current Xcode/CocoaPods Debug build. Keep the latest dylib-based release
+  # until the upstream framework packaging is fixed.
+  sherpa_onnx: 1.13.4
   sqlite3: ^3.4.0
   talker: ^5.1.19
   talker_dio_logger: ^5.1.19
@@ -99,6 +106,9 @@ dependencies:
 # widens its pin or we replace `health` with a fork.
 dependency_overrides:
   device_info_plus: ^13.0.0
+  # sherpa_onnx 1.13.4 uses a caret constraint for platform packages, which
+  # otherwise resolves the macOS xcframework from 1.13.5.
+  sherpa_onnx_macos: 1.13.4
 
 dev_dependencies:
   build_runner: ^2.15.0
