@@ -68,7 +68,7 @@ dependencies:
   # Keep this pinned to the last CocoaPods-compatible release. 1.9.0 is
   # SwiftPM-only on iOS, but this app's local lifeos_native FFI plugin still
   # relies on Cargokit's CocoaPods build phase for Rust.
-  receive_sharing_intent: 1.8.1
+  receive_sharing_intent: 1.9.0
   record: ^7.1.1
   # Sentry 9.25+ requires HybridSDK 8.58.4, but its macOS podspec still
   # reports 10.14 while that SDK requires a higher deployment target.
