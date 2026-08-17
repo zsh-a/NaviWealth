@@ -74,7 +74,7 @@ dependencies:
   # reports 10.14 while that SDK requires a higher deployment target.
   # Keep the latest CocoaPods-compatible release until the plugin fixes its
   # reported macOS target.
-  sentry_flutter: 9.24.0
+  sentry_flutter: 9.27.0
   share_plus: ^13.2.1
   shared_preferences: ^2.5.5
   # 1.13.5 ships a macOS xcframework whose nested code signature fails the
