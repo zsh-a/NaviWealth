@@ -80,7 +80,7 @@ dependencies:
   # 1.13.5 ships a macOS xcframework whose nested code signature fails the
   # current Xcode/CocoaPods Debug build. Keep the latest dylib-based release
   # until the upstream framework packaging is fixed.
-  sherpa_onnx: 1.13.4
+  sherpa_onnx: 1.13.5
   sqlite3: ^3.4.0
   talker: ^5.1.19
   talker_dio_logger: ^5.1.19

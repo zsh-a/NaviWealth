@@ -1335,10 +1335,10 @@ packages:
     dependency: "direct main"
     description:
       name: sherpa_onnx
-      sha256: "889c03cf7a8788795e3a6d35bf9f20b66d1862ea7a73a1b6aaf6e450715c870a"
+      sha256: "94f9fc851a97215e1990ba112aeb5d7c0e47444b1ad9088194f4417655cfd31b"
       url: "https://pub.dev"
     source: hosted
-    version: "1.13.4"
+    version: "1.13.5"
   sherpa_onnx_android_arm64:
     dependency: transitive
     description:
@@ -1395,6 +1395,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.13.4"
+  sherpa_onnx_web:
+    dependency: transitive
+    description:
+      name: sherpa_onnx_web
+      sha256: "69d6b6d7e440e1daaea8b319c9c4780bb8269e817f355b0cc2194d8b07a1c67f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.13.5"
   sherpa_onnx_windows:
     dependency: transitive
     description:
