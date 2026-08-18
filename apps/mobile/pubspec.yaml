@@ -39,7 +39,7 @@ dependencies:
   # refreshes during widget build (riverpod#4765). Keep this exact until the
   # upstream lifecycle fix ships.
   flutter_riverpod: 3.2.1
-  flutter_rust_bridge: 2.13.0-beta.4
+  flutter_rust_bridge: 2.13.0-beta.6
   flutter_secure_storage: ^10.3.1
   flutter_svg: ^2.3.0
   flutter_web_plugins:
@@ -68,13 +68,13 @@ dependencies:
   # Keep this pinned to the last CocoaPods-compatible release. 1.9.0 is
   # SwiftPM-only on iOS, but this app's local lifeos_native FFI plugin still
   # relies on Cargokit's CocoaPods build phase for Rust.
-  receive_sharing_intent: 1.8.1
+  receive_sharing_intent: 1.9.0
   record: ^7.1.1
   # Sentry 9.25+ requires HybridSDK 8.58.4, but its macOS podspec still
   # reports 10.14 while that SDK requires a higher deployment target.
   # Keep the latest CocoaPods-compatible release until the plugin fixes its
   # reported macOS target.
-  sentry_flutter: 9.24.0
+  sentry_flutter: 9.27.0
   share_plus: ^13.2.1
   shared_preferences: ^2.5.5
   # 1.13.5 ships a macOS xcframework whose nested code signature fails the
@@ -93,7 +93,7 @@ dependencies:
   # D-2.5b: cross-platform background task scheduler (Android
   # WorkManager + iOS BGTaskScheduler). Used to fire the Morning
   # Briefing agent at 07:00 local even when the app is backgrounded.
-  workmanager: ^0.9.0+3
+  workmanager: ^0.10.7
   xml: ^7.0.1
 
 # D-2.2 (`docs/healthos-domain.md` §2): `health ^13.3.1` pins

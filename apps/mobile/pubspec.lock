@@ -508,10 +508,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_rust_bridge
-      sha256: "20861a4148ebb72f547366b2dd575ef803e32ff1cb6dc5aa0c9ffdbc774f2799"
+      sha256: "7e8f565714dcb06197d29c74a559ee826c4eab4d586d7ccf9826aa5dc9478015"
       url: "https://pub.dev"
     source: hosted
-    version: "2.13.0-beta.4"
+    version: "2.13.0-beta.6"
   flutter_secure_storage:
     dependency: "direct main"
     description:
@@ -1127,10 +1127,10 @@ packages:
     dependency: "direct main"
     description:
       name: receive_sharing_intent
-      sha256: ec76056e4d258ad708e76d85591d933678625318e411564dcb9059048ca3a593
+      sha256: "72f229a38f2910029c11d840770c173b27072e348ef3376130b37514bc4556f6"
       url: "https://pub.dev"
     source: hosted
-    version: "1.8.1"
+    version: "1.9.0"
   record:
     dependency: "direct main"
     description:
@@ -1215,18 +1215,18 @@ packages:
     dependency: transitive
     description:
       name: sentry
-      sha256: "09c573f98ff6c5e98d527f351f037eb8ea9ff684a6e9e84b2e91357144016254"
+      sha256: c2ecd8abe82e63cdcb6947f71320612ced56e10ba94db7529d85cc02be47cb3b
       url: "https://pub.dev"
     source: hosted
-    version: "9.24.0"
+    version: "9.27.0"
   sentry_flutter:
     dependency: "direct main"
     description:
       name: sentry_flutter
-      sha256: "4a04b7e1901b8128df783b6d36d48706b07b0cd055e621517c998de87f5dafb9"
+      sha256: ec89cc6ba939ca19155ea83900d9740a36544f50b3b6baf265518e3348fb0f50
       url: "https://pub.dev"
     source: hosted
-    version: "9.24.0"
+    version: "9.27.0"
   share_plus:
     dependency: "direct main"
     description:
@@ -1780,34 +1780,50 @@ packages:
     dependency: "direct main"
     description:
       name: workmanager
-      sha256: "53c2ae5d54f46b2eefacf541446efe01039471b1f0a605d5bbf3c77690702448"
+      sha256: "06fc5bdd83e2da35f33b682e25167245d0ccb8b56e9a9ada5bfa079fa3af4b9c"
       url: "https://pub.dev"
     source: hosted
-    version: "0.9.3"
+    version: "0.10.7"
   workmanager_android:
     dependency: transitive
     description:
       name: workmanager_android
-      sha256: "757fd2ef0761a130c6f71cd46ea656b7ea393d813ace46c1ef4fc24a7136953d"
+      sha256: f89029cbcf0695c772287aa8fbbd7af776f1ea63bc95b60a00617f69468ddaa0
       url: "https://pub.dev"
     source: hosted
-    version: "0.9.3"
+    version: "0.10.6"
   workmanager_apple:
     dependency: transitive
     description:
       name: workmanager_apple
-      sha256: f960e829eea48859c7bdd730f59c4972f22259fb052416d611798e3976a3f4eb
+      sha256: "15558fb54415a010910c3529eaf8f61f94d23903dac620331895c472602d6f6e"
       url: "https://pub.dev"
     source: hosted
-    version: "0.9.6"
+    version: "0.9.10"
+  workmanager_linux:
+    dependency: transitive
+    description:
+      name: workmanager_linux
+      sha256: "7d8520e1103b910a43d8bafe37ec2415f4c7c148afcb1eee0ec73ae67b4cdd22"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.1+1"
   workmanager_platform_interface:
     dependency: transitive
     description:
       name: workmanager_platform_interface
-      sha256: "687ce0e27f2f7ce716d8e66143381e63312478ecc4aa0880e8064c7bf72e3e90"
+      sha256: "378b392db15ee88cd878ab983d3a0b4b1e460cfbb0f096ff74fda2614b1ba172"
       url: "https://pub.dev"
     source: hosted
-    version: "0.9.4"
+    version: "0.10.4"
+  workmanager_web:
+    dependency: transitive
+    description:
+      name: workmanager_web
+      sha256: "2ac481ade599bdd957ee2891be09a0c34be87923a2c3ca4dfe36add6fc735ffd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   xdg_directories:
     dependency: transitive
     description:

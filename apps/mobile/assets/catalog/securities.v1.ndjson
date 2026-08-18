@@ -1,4 +1,4 @@
-{"version":"v1.20260809","checksum":"86a104333d8cfb39","count":23129}
+{"version":"v1.20260816","checksum":"36e53428da6b9943","count":23165}
 {"s":"000001","m":"cn_a","t":"stock","c":"CNY","nc":"平安银行","p":"pinganyinhang","pi":"payh"}
 {"s":"000002","m":"cn_a","t":"stock","c":"CNY","nc":"万 科Ａ\u0000","p":"wan keａ\u0000","pi":"w kａ"}
 {"s":"000006","m":"cn_a","t":"stock","c":"CNY","nc":"深振业Ａ","p":"shenzhenyeａ","pi":"szyａ"}
@@ -439,7 +439,7 @@
 {"s":"001229","m":"cn_a","t":"stock","c":"CNY","nc":"魅视科技","p":"meishikeji","pi":"mskj"}
 {"s":"001230","m":"cn_a","t":"stock","c":"CNY","nc":"劲旅环境","p":"jinglvhuanjing","pi":"jlhj"}
 {"s":"001231","m":"cn_a","t":"stock","c":"CNY","nc":"农心科技","p":"nongxinkeji","pi":"nxkj"}
-{"s":"001232","m":"cn_a","t":"stock","c":"CNY","nc":"C嘉立创\u0000","p":"cjialichuang\u0000","pi":"cjlc\u0000"}
+{"s":"001232","m":"cn_a","t":"stock","c":"CNY","nc":"嘉立创\u0000\u0000","p":"jialichuang\u0000\u0000","pi":"jlc\u0000"}
 {"s":"001233","m":"cn_a","t":"stock","c":"CNY","nc":"海安集团","p":"haianjituan","pi":"hajt"}
 {"s":"001234","m":"cn_a","t":"stock","c":"CNY","nc":"泰慕士\u0000\u0000","p":"taimushi\u0000\u0000","pi":"tms\u0000"}
 {"s":"001236","m":"cn_a","t":"stock","c":"CNY","nc":"弘业期货","p":"hongyeqihuo","pi":"hyqh"}
@@ -1554,7 +1554,6 @@
 {"s":"113652","m":"cn_a","t":"bond","c":"CNY","nc":"伟22转债","p":"wei22zhuanzhai","pi":"w2zz"}
 {"s":"113655","m":"cn_a","t":"bond","c":"CNY","nc":"欧22转债","p":"ou22zhuanzhai","pi":"o2zz"}
 {"s":"113656","m":"cn_a","t":"bond","c":"CNY","nc":"嘉诚转债","p":"jiachengzhuanzhai","pi":"jczz"}
-{"s":"113658","m":"cn_a","t":"bond","c":"CNY","nc":"密卫转债","p":"miweizhuanzhai","pi":"mwzz"}
 {"s":"113659","m":"cn_a","t":"bond","c":"CNY","nc":"莱克转债","p":"laikezhuanzhai","pi":"lkzz"}
 {"s":"113660","m":"cn_a","t":"bond","c":"CNY","nc":"寿22转债","p":"shou22zhuanzhai","pi":"s2zz"}
 {"s":"113661","m":"cn_a","t":"bond","c":"CNY","nc":"福22转债","p":"fu22zhuanzhai","pi":"f2zz"}
@@ -1662,6 +1661,8 @@
 {"s":"121635","m":"cn_a","t":"bond","c":"CNY","nc":"26长运优","p":"26zhangyunyou","pi":"2zyy"}
 {"s":"121636","m":"cn_a","t":"bond","c":"CNY","nc":"26长运次","p":"26zhangyunci","pi":"2zyc"}
 {"s":"121637","m":"cn_a","t":"bond","c":"CNY","nc":"26海伦优","p":"26hailunyou","pi":"2hly"}
+{"s":"121639","m":"cn_a","t":"bond","c":"CNY","nc":"零碳4优\u0000","p":"lingtan4you\u0000","pi":"lt4y\u0000"}
+{"s":"121640","m":"cn_a","t":"bond","c":"CNY","nc":"零碳4EA\u0000","p":"lingtan4ea\u0000","pi":"lt4"}
 {"s":"123064","m":"cn_a","t":"bond","c":"CNY","nc":"万孚转债","p":"wanfuzhuanzhai","pi":"wfzz"}
 {"s":"123065","m":"cn_a","t":"bond","c":"CNY","nc":"宝莱转债","p":"baolaizhuanzhai","pi":"blzz"}
 {"s":"123071","m":"cn_a","t":"bond","c":"CNY","nc":"天能转债","p":"tiannengzhuanzhai","pi":"tnzz"}
@@ -1708,7 +1709,6 @@
 {"s":"123180","m":"cn_a","t":"bond","c":"CNY","nc":"浙矿转债","p":"zhekuangzhuanzhai","pi":"zkzz"}
 {"s":"123183","m":"cn_a","t":"bond","c":"CNY","nc":"海顺转债","p":"haishunzhuanzhai","pi":"hszz"}
 {"s":"123187","m":"cn_a","t":"bond","c":"CNY","nc":"超达转债","p":"chaodazhuanzhai","pi":"cdzz"}
-{"s":"123188","m":"cn_a","t":"bond","c":"CNY","nc":"水羊转债","p":"shuiyangzhuanzhai","pi":"syzz"}
 {"s":"123189","m":"cn_a","t":"bond","c":"CNY","nc":"晓鸣转债","p":"xiaomingzhuanzhai","pi":"xmzz"}
 {"s":"123192","m":"cn_a","t":"bond","c":"CNY","nc":"科思转债","p":"kesizhuanzhai","pi":"kszz"}
 {"s":"123193","m":"cn_a","t":"bond","c":"CNY","nc":"海能转债","p":"hainengzhuanzhai","pi":"hnzz"}
@@ -1764,6 +1764,7 @@
 {"s":"123279","m":"cn_a","t":"bond","c":"CNY","nc":"天脉转债","p":"tianmaizhuanzhai","pi":"tmzz"}
 {"s":"123280","m":"cn_a","t":"bond","c":"CNY","nc":"三鑫转债","p":"sanxinzhuanzhai","pi":"sxzz"}
 {"s":"123281","m":"cn_a","t":"bond","c":"CNY","nc":"中仑转债","p":"zhonglunzhuanzhai","pi":"zlzz"}
+{"s":"123282","m":"cn_a","t":"bond","c":"CNY","nc":"震裕转02","p":"zhenyuzhuan02","pi":"zyz0"}
 {"s":"124025","m":"cn_a","t":"bond","c":"CNY","nc":"富乐定转","p":"fuledingzhuan","pi":"fldz"}
 {"s":"127025","m":"cn_a","t":"bond","c":"CNY","nc":"冀东转债","p":"jidongzhuanzhai","pi":"jdzz"}
 {"s":"127027","m":"cn_a","t":"bond","c":"CNY","nc":"能化转债","p":"nenghuazhuanzhai","pi":"nhzz"}
@@ -1821,8 +1822,8 @@
 {"s":"127114","m":"cn_a","t":"bond","c":"CNY","nc":"宜化转债","p":"yihuazhuanzhai","pi":"yhzz"}
 {"s":"127115","m":"cn_a","t":"bond","c":"CNY","nc":"炬申转债","p":"jushenzhuanzhai","pi":"jszz"}
 {"s":"128044","m":"cn_a","t":"bond","c":"CNY","nc":"岭南转债","p":"lingnanzhuanzhai","pi":"lnzz"}
-{"s":"128127","m":"cn_a","t":"bond","c":"CNY","nc":"文科转债","p":"wenkezhuanzhai","pi":"wkzz"}
-{"s":"128128","m":"cn_a","t":"bond","c":"CNY","nc":"齐翔转2\u0000","p":"qixiangzhuan2\u0000","pi":"qxz2"}
+{"s":"128127","m":"cn_a","t":"bond","c":"CNY","nc":"Z科转债\u0000","p":"zkezhuanzhai\u0000","pi":"zkzz\u0000"}
+{"s":"128128","m":"cn_a","t":"bond","c":"CNY","nc":"Z翔转2\u0000\u0000","p":"zxiangzhuan2\u0000\u0000","pi":"zxz2"}
 {"s":"128129","m":"cn_a","t":"bond","c":"CNY","nc":"青农转债","p":"qingnongzhuanzhai","pi":"qnzz"}
 {"s":"128134","m":"cn_a","t":"bond","c":"CNY","nc":"鸿路转债","p":"hongluzhuanzhai","pi":"hlzz"}
 {"s":"128135","m":"cn_a","t":"bond","c":"CNY","nc":"洽洽转债","p":"qiaqiazhuanzhai","pi":"qqzz"}
@@ -1837,6 +1838,7 @@
 {"s":"158008","m":"cn_a","t":"etf","c":"CNY","nc":"新能源电","p":"xinnengyuandian","pi":"xnyd"}
 {"s":"158009","m":"cn_a","t":"etf","c":"CNY","nc":"航天南方","p":"hangtiannanfang","pi":"htnf"}
 {"s":"158010","m":"cn_a","t":"etf","c":"CNY","nc":"医疗ETF","p":"yiliaoetf","pi":"yle"}
+{"s":"158011","m":"cn_a","t":"etf","c":"CNY","nc":"创业板软","p":"chuangyebanruan","pi":"cybr"}
 {"s":"158012","m":"cn_a","t":"etf","c":"CNY","nc":"云计算ET","p":"yunjisuanet","pi":"yjse"}
 {"s":"158013","m":"cn_a","t":"etf","c":"CNY","nc":"航空航天","p":"hangkonghangtian","pi":"hkht"}
 {"s":"158017","m":"cn_a","t":"etf","c":"CNY","nc":"化工ETF","p":"huagongetf","pi":"hge"}
@@ -1844,6 +1846,7 @@
 {"s":"158023","m":"cn_a","t":"etf","c":"CNY","nc":"红利低波","p":"honglidibo","pi":"hldb"}
 {"s":"158027","m":"cn_a","t":"etf","c":"CNY","nc":"工业互联","p":"gongyehulian","pi":"gyhl"}
 {"s":"158028","m":"cn_a","t":"etf","c":"CNY","nc":"稀有金属","p":"xiyoujinshu","pi":"xyjs"}
+{"s":"158032","m":"cn_a","t":"etf","c":"CNY","nc":"化工ETF","p":"huagongetf","pi":"hge"}
 {"s":"159001","m":"cn_a","t":"etf","c":"CNY","nc":"保证金\u0000\u0000","p":"baozhengjin\u0000\u0000","pi":"bzj\u0000"}
 {"s":"159003","m":"cn_a","t":"etf","c":"CNY","nc":"招商快线","p":"zhaoshangkuaixian","pi":"zskx"}
 {"s":"159005","m":"cn_a","t":"etf","c":"CNY","nc":"添富快钱","p":"tianfukuaiqian","pi":"tfkq"}
@@ -1864,6 +1867,7 @@
 {"s":"159021","m":"cn_a","t":"etf","c":"CNY","nc":"国证大盘","p":"guozhengdapan","pi":"gzdp"}
 {"s":"159022","m":"cn_a","t":"etf","c":"CNY","nc":"AI双创\u0000\u0000","p":"aishuangchuang\u0000\u0000","pi":"asc\u0000"}
 {"s":"159023","m":"cn_a","t":"etf","c":"CNY","nc":"养殖WJ\u0000\u0000","p":"yangzhiwj\u0000\u0000","pi":"yzw"}
+{"s":"159025","m":"cn_a","t":"etf","c":"CNY","nc":"家电ETF","p":"jiadianetf","pi":"jde"}
 {"s":"159026","m":"cn_a","t":"etf","c":"CNY","nc":"油气CS\u0000\u0000","p":"youqics\u0000\u0000","pi":"yqc"}
 {"s":"159027","m":"cn_a","t":"etf","c":"CNY","nc":"畜牧DC\u0000\u0000","p":"xumudc\u0000\u0000","pi":"xmd"}
 {"s":"159028","m":"cn_a","t":"etf","c":"CNY","nc":"港车TH\u0000\u0000","p":"gangcheth\u0000\u0000","pi":"gct"}
@@ -1892,7 +1896,7 @@
 {"s":"159055","m":"cn_a","t":"etf","c":"CNY","nc":"稀金属FG","p":"xijinshufg","pi":"xjsf"}
 {"s":"159056","m":"cn_a","t":"etf","c":"CNY","nc":"全指器械","p":"quanzhiqixie","pi":"qzqx"}
 {"s":"159057","m":"cn_a","t":"etf","c":"CNY","nc":"医用器械","p":"yiyongqixie","pi":"yyqx"}
-{"s":"159058","m":"cn_a","t":"etf","c":"CNY","nc":"证券ETF","p":"zhengquanetf","pi":"zqe"}
+{"s":"159058","m":"cn_a","t":"etf","c":"CNY","nc":"证券DC\u0000\u0000","p":"zhengquandc\u0000\u0000","pi":"zqd"}
 {"s":"159059","m":"cn_a","t":"etf","c":"CNY","nc":"电力DC\u0000\u0000","p":"dianlidc\u0000\u0000","pi":"dld"}
 {"s":"159060","m":"cn_a","t":"etf","c":"CNY","nc":"粮食PY\u0000\u0000","p":"liangshipy\u0000\u0000","pi":"lsp"}
 {"s":"159061","m":"cn_a","t":"etf","c":"CNY","nc":"绿电南方","p":"lvdiannanfang","pi":"ldnf"}
@@ -1909,11 +1913,11 @@
 {"s":"159073","m":"cn_a","t":"etf","c":"CNY","nc":"粮食ETF","p":"liangshietf","pi":"lse"}
 {"s":"159075","m":"cn_a","t":"etf","c":"CNY","nc":"互联工业","p":"huliangongye","pi":"hlgy"}
 {"s":"159076","m":"cn_a","t":"etf","c":"CNY","nc":"创新能HB","p":"chuangxinnenghb","pi":"cxnh"}
-{"s":"159077","m":"cn_a","t":"etf","c":"CNY","nc":"电池ETF","p":"dianchietf","pi":"dce"}
+{"s":"159077","m":"cn_a","t":"etf","c":"CNY","nc":"鑫元电池","p":"xinyuandianchi","pi":"xydc"}
 {"s":"159078","m":"cn_a","t":"etf","c":"CNY","nc":"A股富国\u0000","p":"agufuguo\u0000","pi":"agfg\u0000"}
 {"s":"159079","m":"cn_a","t":"etf","c":"CNY","nc":"价值兴全","p":"jiazhixingquan","pi":"jzxq"}
 {"s":"159082","m":"cn_a","t":"etf","c":"CNY","nc":"化工ETF","p":"huagongetf","pi":"hge"}
-{"s":"159083","m":"cn_a","t":"etf","c":"CNY","nc":"红利低波","p":"honglidibo","pi":"hldb"}
+{"s":"159083","m":"cn_a","t":"etf","c":"CNY","nc":"红利嘉实","p":"honglijiashi","pi":"hljs"}
 {"s":"159085","m":"cn_a","t":"etf","c":"CNY","nc":"价值MW\u0000\u0000","p":"jiazhimw\u0000\u0000","pi":"jzm"}
 {"s":"159086","m":"cn_a","t":"etf","c":"CNY","nc":"金科技GF","p":"jinkejigf","pi":"jkjg"}
 {"s":"159087","m":"cn_a","t":"etf","c":"CNY","nc":"化工WJ\u0000\u0000","p":"huagongwj\u0000\u0000","pi":"hgw"}
@@ -1921,7 +1925,7 @@
 {"s":"159093","m":"cn_a","t":"etf","c":"CNY","nc":"化工产业","p":"huagongchanye","pi":"hgcy"}
 {"s":"159095","m":"cn_a","t":"etf","c":"CNY","nc":"云计算ET","p":"yunjisuanet","pi":"yjse"}
 {"s":"159096","m":"cn_a","t":"etf","c":"CNY","nc":"价值ETF","p":"jiazhietf","pi":"jze"}
-{"s":"159098","m":"cn_a","t":"etf","c":"CNY","nc":"国证价值","p":"guozhengjiazhi","pi":"gzjz"}
+{"s":"159098","m":"cn_a","t":"etf","c":"CNY","nc":"价值招商","p":"jiazhizhaoshang","pi":"jzzs"}
 {"s":"159099","m":"cn_a","t":"etf","c":"CNY","nc":"云计算HB","p":"yunjisuanhb","pi":"yjsh"}
 {"s":"159100","m":"cn_a","t":"etf","c":"CNY","nc":"巴西\u0000\u0000\u0000\u0000","p":"baxi\u0000\u0000\u0000\u0000","pi":"bx\u0000"}
 {"s":"159101","m":"cn_a","t":"etf","c":"CNY","nc":"港科ETF\u0000","p":"gangkeetf\u0000","pi":"gke"}
@@ -3028,7 +3032,7 @@
 {"s":"300129","m":"cn_a","t":"stock","c":"CNY","nc":"泰胜风能","p":"taishengfengneng","pi":"tsfn"}
 {"s":"300130","m":"cn_a","t":"stock","c":"CNY","nc":"新国都\u0000\u0000","p":"xinguodu\u0000\u0000","pi":"xgd\u0000"}
 {"s":"300131","m":"cn_a","t":"stock","c":"CNY","nc":"英唐智控","p":"yingtangzhikong","pi":"ytzk"}
-{"s":"300132","m":"cn_a","t":"stock","c":"CNY","nc":"青松股份","p":"qingsonggufen","pi":"qsgf"}
+{"s":"300132","m":"cn_a","t":"stock","c":"CNY","nc":"诺斯贝尔","p":"nuosibeier","pi":"nsbe"}
 {"s":"300133","m":"cn_a","t":"stock","c":"CNY","nc":"华策影视","p":"huaceyingshi","pi":"hcys"}
 {"s":"300134","m":"cn_a","t":"stock","c":"CNY","nc":"大富科技","p":"dafukeji","pi":"dfkj"}
 {"s":"300135","m":"cn_a","t":"stock","c":"CNY","nc":"宝利国际","p":"baoliguoji","pi":"blgj"}
@@ -3113,7 +3117,7 @@
 {"s":"300220","m":"cn_a","t":"stock","c":"CNY","nc":"金运激光","p":"jinyunjiguang","pi":"jyjg"}
 {"s":"300221","m":"cn_a","t":"stock","c":"CNY","nc":"银禧科技","p":"yinxikeji","pi":"yxkj"}
 {"s":"300222","m":"cn_a","t":"stock","c":"CNY","nc":"科大智能","p":"kedazhineng","pi":"kdzn"}
-{"s":"300223","m":"cn_a","t":"stock","c":"CNY","nc":"北京君正","p":"beijingjunzheng","pi":"bjjz"}
+{"s":"300223","m":"cn_a","t":"stock","c":"CNY","nc":"君正股份","p":"junzhenggufen","pi":"jzgf"}
 {"s":"300224","m":"cn_a","t":"stock","c":"CNY","nc":"正海磁材","p":"zhenghaicicai","pi":"zhcc"}
 {"s":"300225","m":"cn_a","t":"stock","c":"CNY","nc":"金力泰\u0000\u0000","p":"jinlitai\u0000\u0000","pi":"jlt\u0000"}
 {"s":"300226","m":"cn_a","t":"stock","c":"CNY","nc":"上海钢联","p":"shanghaiganglian","pi":"shgl"}
@@ -4311,8 +4315,9 @@
 {"s":"301687","m":"cn_a","t":"stock","c":"CNY","nc":"新广益\u0000\u0000","p":"xinguangyi\u0000\u0000","pi":"xgy\u0000"}
 {"s":"301688","m":"cn_a","t":"stock","c":"CNY","nc":"格林生物","p":"gelinshengwu","pi":"glsw"}
 {"s":"301696","m":"cn_a","t":"stock","c":"CNY","nc":"三瑞智能","p":"sanruizhineng","pi":"srzn"}
-{"s":"301707","m":"cn_a","t":"stock","c":"CNY","nc":"N展芯\u0000\u0000\u0000","p":"nzhanxin\u0000\u0000\u0000","pi":"nzx\u0000"}
-{"s":"301717","m":"cn_a","t":"stock","c":"CNY","nc":"超纯应材","p":"chaochunyingcai","pi":"ccyc"}
+{"s":"301697","m":"cn_a","t":"stock","c":"CNY","nc":"贝特利\u0000\u0000","p":"beiteli\u0000\u0000","pi":"btl\u0000"}
+{"s":"301707","m":"cn_a","t":"stock","c":"CNY","nc":"展芯股份","p":"zhanxingufen","pi":"zxgf"}
+{"s":"301717","m":"cn_a","t":"stock","c":"CNY","nc":"C超纯\u0000\u0000\u0000","p":"cchaochun\u0000\u0000\u0000","pi":"ccc\u0000"}
 {"s":"302132","m":"cn_a","t":"stock","c":"CNY","nc":"中航成飞","p":"zhonghangchengfei","pi":"zhcf"}
 {"s":"501001","m":"cn_a","t":"etf","c":"CNY","nc":"财通精选","p":"caitongjingxuan","pi":"ctjx"}
 {"s":"501005","m":"cn_a","t":"etf","c":"CNY","nc":"精准医疗","p":"jingzhunyiliao","pi":"jzyl"}
@@ -4464,10 +4469,10 @@
 {"s":"508039","m":"cn_a","t":"etf","c":"CNY","nc":"首农REIT","p":"shounongreit","pi":"snr"}
 {"s":"508048","m":"cn_a","t":"etf","c":"CNY","nc":"外高REIT","p":"waigaoreit","pi":"wgr"}
 {"s":"508050","m":"cn_a","t":"etf","c":"CNY","nc":"中核清能","p":"zhongheqingneng","pi":"zhqn"}
-{"s":"508055","m":"cn_a","t":"etf","c":"CNY","nc":"XD地产租","p":"xddichanzu","pi":"xdcz"}
+{"s":"508055","m":"cn_a","t":"etf","c":"CNY","nc":"地产租住","p":"dichanzuzhu","pi":"dczz"}
 {"s":"508056","m":"cn_a","t":"etf","c":"CNY","nc":"普洛斯\u0000\u0000","p":"puluosi\u0000\u0000","pi":"pls\u0000"}
 {"s":"508058","m":"cn_a","t":"etf","c":"CNY","nc":"厦门安居","p":"xiamenanju","pi":"xmaj"}
-{"s":"508059","m":"cn_a","t":"etf","c":"CNY","nc":"N三峡\u0000\u0000\u0000","p":"nsanxia\u0000\u0000\u0000","pi":"nsx\u0000"}
+{"s":"508059","m":"cn_a","t":"etf","c":"CNY","nc":"三峡REIT","p":"sanxiareit","pi":"sxr"}
 {"s":"508060","m":"cn_a","t":"etf","c":"CNY","nc":"万国REIT","p":"wanguoreit","pi":"wgr"}
 {"s":"508066","m":"cn_a","t":"etf","c":"CNY","nc":"苏交REIT","p":"sujiaoreit","pi":"sjr"}
 {"s":"508068","m":"cn_a","t":"etf","c":"CNY","nc":"京保REIT","p":"jingbaoreit","pi":"jbr"}
@@ -4633,7 +4638,7 @@
 {"s":"512390","m":"cn_a","t":"etf","c":"CNY","nc":"MSCI低波","p":"mscidibo","pi":"mdb"}
 {"s":"512400","m":"cn_a","t":"etf","c":"CNY","nc":"有色ETF\u0000","p":"youseetf\u0000","pi":"yse"}
 {"s":"512410","m":"cn_a","t":"etf","c":"CNY","nc":"银行广发","p":"yinhangguangfa","pi":"yhgf"}
-{"s":"512420","m":"cn_a","t":"etf","c":"CNY","nc":"N机械\u0000\u0000\u0000","p":"njixie\u0000\u0000\u0000","pi":"njx\u0000"}
+{"s":"512420","m":"cn_a","t":"etf","c":"CNY","nc":"机械华安","p":"jixiehuaan","pi":"jxha"}
 {"s":"512430","m":"cn_a","t":"etf","c":"CNY","nc":"家电家居","p":"jiadianjiaju","pi":"jdjj"}
 {"s":"512450","m":"cn_a","t":"etf","c":"CNY","nc":"广发养殖","p":"guangfayangzhi","pi":"gfyz"}
 {"s":"512460","m":"cn_a","t":"etf","c":"CNY","nc":"电池主题","p":"dianchizhuti","pi":"dczt"}
@@ -4788,6 +4793,8 @@
 {"s":"515390","m":"cn_a","t":"etf","c":"CNY","nc":"HS300\u0000\u0000\u0000","p":"hs300\u0000\u0000\u0000","pi":"h"}
 {"s":"515400","m":"cn_a","t":"etf","c":"CNY","nc":"大数据\u0000\u0000","p":"dashuju\u0000\u0000","pi":"dsj\u0000"}
 {"s":"515440","m":"cn_a","t":"etf","c":"CNY","nc":"A股南方\u0000","p":"agunanfang\u0000","pi":"agnf\u0000"}
+{"s":"515443","m":"cn_a","t":"etf","c":"CNY","nc":"A股南方\u0000","p":"agunanfang\u0000","pi":"agnf\u0000"}
+{"s":"515444","m":"cn_a","t":"etf","c":"CNY","nc":"认购款\u0000\u0000","p":"rengoukuan\u0000\u0000","pi":"rgk\u0000"}
 {"s":"515450","m":"cn_a","t":"etf","c":"CNY","nc":"红利50\u0000\u0000","p":"hongli50\u0000\u0000","pi":"hl5"}
 {"s":"515460","m":"cn_a","t":"etf","c":"CNY","nc":"质量红利","p":"zhilianghongli","pi":"zlhl"}
 {"s":"515480","m":"cn_a","t":"etf","c":"CNY","nc":"红利一百","p":"hongliyibai","pi":"hlyb"}
@@ -5342,6 +5349,8 @@
 {"s":"561500","m":"cn_a","t":"etf","c":"CNY","nc":"漂亮50\u0000\u0000","p":"piaoliang50\u0000\u0000","pi":"pl5"}
 {"s":"561510","m":"cn_a","t":"etf","c":"CNY","nc":"中医药\u0000\u0000","p":"zhongyiyao\u0000\u0000","pi":"zyy\u0000"}
 {"s":"561530","m":"cn_a","t":"etf","c":"CNY","nc":"银华银行","p":"yinhuayinhang","pi":"yhyh"}
+{"s":"561533","m":"cn_a","t":"etf","c":"CNY","nc":"银华银行","p":"yinhuayinhang","pi":"yhyh"}
+{"s":"561534","m":"cn_a","t":"etf","c":"CNY","nc":"认购款\u0000\u0000","p":"rengoukuan\u0000\u0000","pi":"rgk\u0000"}
 {"s":"561550","m":"cn_a","t":"etf","c":"CNY","nc":"500指增\u0000","p":"500zhizeng\u0000","pi":"5zz\u0000"}
 {"s":"561560","m":"cn_a","t":"etf","c":"CNY","nc":"电力ETF\u0000","p":"dianlietf\u0000","pi":"dle"}
 {"s":"561570","m":"cn_a","t":"etf","c":"CNY","nc":"油气基金","p":"youqijijin","pi":"yqjj"}
@@ -5349,10 +5358,15 @@
 {"s":"561590","m":"cn_a","t":"etf","c":"CNY","nc":"1000增强","p":"1000zengqiang","pi":"1zq"}
 {"s":"561600","m":"cn_a","t":"etf","c":"CNY","nc":"消费电子","p":"xiaofeidianzi","pi":"xfdz"}
 {"s":"561610","m":"cn_a","t":"etf","c":"CNY","nc":"鑫元绿电","p":"xinyuanlvdian","pi":"xyld"}
+{"s":"561613","m":"cn_a","t":"etf","c":"CNY","nc":"鑫元绿电","p":"xinyuanlvdian","pi":"xyld"}
+{"s":"561614","m":"cn_a","t":"etf","c":"CNY","nc":"认购款\u0000\u0000","p":"rengoukuan\u0000\u0000","pi":"rgk\u0000"}
 {"s":"561620","m":"cn_a","t":"etf","c":"CNY","nc":"华泰化工","p":"huataihuagong","pi":"hthg"}
 {"s":"561630","m":"cn_a","t":"etf","c":"CNY","nc":"华泰质量","p":"huataizhiliang","pi":"htzl"}
 {"s":"561660","m":"cn_a","t":"etf","c":"CNY","nc":"通航基金","p":"tonghangjijin","pi":"thjj"}
 {"s":"561680","m":"cn_a","t":"etf","c":"CNY","nc":"A500红低","p":"a500hongdi","pi":"ahd"}
+{"s":"561690","m":"cn_a","t":"etf","c":"CNY","nc":"质量300\u0000","p":"zhiliang300\u0000","pi":"zl3"}
+{"s":"561693","m":"cn_a","t":"etf","c":"CNY","nc":"质量300\u0000","p":"zhiliang300\u0000","pi":"zl3"}
+{"s":"561694","m":"cn_a","t":"etf","c":"CNY","nc":"认购款\u0000\u0000","p":"rengoukuan\u0000\u0000","pi":"rgk\u0000"}
 {"s":"561700","m":"cn_a","t":"etf","c":"CNY","nc":"电力基金","p":"dianlijijin","pi":"dljj"}
 {"s":"561730","m":"cn_a","t":"etf","c":"CNY","nc":"中证A股\u0000","p":"zhongzhengagu\u0000","pi":"zzag\u0000"}
 {"s":"561733","m":"cn_a","t":"etf","c":"CNY","nc":"中证A股\u0000","p":"zhongzhengagu\u0000","pi":"zzag\u0000"}
@@ -5363,10 +5377,13 @@
 {"s":"561780","m":"cn_a","t":"etf","c":"CNY","nc":"1000指增","p":"1000zhizeng","pi":"1zz"}
 {"s":"561790","m":"cn_a","t":"etf","c":"CNY","nc":"现代能源","p":"xiandainengyuan","pi":"xdny"}
 {"s":"561800","m":"cn_a","t":"etf","c":"CNY","nc":"稀金属\u0000\u0000","p":"xijinshu\u0000\u0000","pi":"xjs\u0000"}
-{"s":"561810","m":"cn_a","t":"etf","c":"CNY","nc":"N器械\u0000\u0000\u0000","p":"nqixie\u0000\u0000\u0000","pi":"nqx\u0000"}
+{"s":"561810","m":"cn_a","t":"etf","c":"CNY","nc":"华泰医疗","p":"huataiyiliao","pi":"htyl"}
+{"s":"561830","m":"cn_a","t":"etf","c":"CNY","nc":"有色GTHT","p":"yousegtht","pi":"ysg"}
+{"s":"561833","m":"cn_a","t":"etf","c":"CNY","nc":"有色GTHT","p":"yousegtht","pi":"ysg"}
+{"s":"561834","m":"cn_a","t":"etf","c":"CNY","nc":"认购款\u0000\u0000","p":"rengoukuan\u0000\u0000","pi":"rgk\u0000"}
 {"s":"561870","m":"cn_a","t":"etf","c":"CNY","nc":"现金流指","p":"xianjinliuzhi","pi":"xjlz"}
 {"s":"561880","m":"cn_a","t":"etf","c":"CNY","nc":"A100指数","p":"a100zhishu","pi":"azs"}
-{"s":"561890","m":"cn_a","t":"etf","c":"CNY","nc":"NA股E\u0000\u0000\u0000","p":"nague\u0000\u0000\u0000","pi":"nge"}
+{"s":"561890","m":"cn_a","t":"etf","c":"CNY","nc":"A股E\u0000\u0000\u0000\u0000","p":"ague\u0000\u0000\u0000\u0000","pi":"age"}
 {"s":"561900","m":"cn_a","t":"etf","c":"CNY","nc":"沪深ESG\u0000","p":"hushenesg\u0000","pi":"hse"}
 {"s":"561910","m":"cn_a","t":"etf","c":"CNY","nc":"电池ETF\u0000","p":"dianchietf\u0000","pi":"dce"}
 {"s":"561920","m":"cn_a","t":"etf","c":"CNY","nc":"疫苗龙头","p":"yimiaolongtou","pi":"ymlt"}
@@ -5382,9 +5399,13 @@
 {"s":"562060","m":"cn_a","t":"etf","c":"CNY","nc":"标普红利","p":"biaopuhongli","pi":"bphl"}
 {"s":"562070","m":"cn_a","t":"etf","c":"CNY","nc":"300ETF增","p":"300etfzeng","pi":"3z"}
 {"s":"562080","m":"cn_a","t":"etf","c":"CNY","nc":"自由现金","p":"ziyouxianjin","pi":"zyxj"}
+{"s":"562150","m":"cn_a","t":"etf","c":"CNY","nc":"红利PH\u0000\u0000","p":"hongliph\u0000\u0000","pi":"hlp"}
 {"s":"562170","m":"cn_a","t":"etf","c":"CNY","nc":"300现金E","p":"300xianjine","pi":"3xje"}
 {"s":"562173","m":"cn_a","t":"etf","c":"CNY","nc":"300现金E","p":"300xianjine","pi":"3xje"}
 {"s":"562174","m":"cn_a","t":"etf","c":"CNY","nc":"认购款\u0000\u0000","p":"rengoukuan\u0000\u0000","pi":"rgk\u0000"}
+{"s":"562180","m":"cn_a","t":"etf","c":"CNY","nc":"红低A500","p":"hongdia500","pi":"hda"}
+{"s":"562183","m":"cn_a","t":"etf","c":"CNY","nc":"红低A500","p":"hongdia500","pi":"hda"}
+{"s":"562184","m":"cn_a","t":"etf","c":"CNY","nc":"认购款\u0000\u0000","p":"rengoukuan\u0000\u0000","pi":"rgk\u0000"}
 {"s":"562300","m":"cn_a","t":"etf","c":"CNY","nc":"低碳ETF\u0000","p":"ditanetf\u0000","pi":"dte"}
 {"s":"562310","m":"cn_a","t":"etf","c":"CNY","nc":"300成长\u0000","p":"300chengzhang\u0000","pi":"3cz\u0000"}
 {"s":"562320","m":"cn_a","t":"etf","c":"CNY","nc":"300价值A","p":"300jiazhia","pi":"3jza"}
@@ -5602,6 +5623,8 @@
 {"s":"589410","m":"cn_a","t":"etf","c":"CNY","nc":"科创AIJS","p":"kechuangaijs","pi":"kca"}
 {"s":"589420","m":"cn_a","t":"etf","c":"CNY","nc":"芯设计MW","p":"xinshejimw","pi":"xsjm"}
 {"s":"589430","m":"cn_a","t":"etf","c":"CNY","nc":"科芯片设","p":"kexinpianshe","pi":"kxps"}
+{"s":"589433","m":"cn_a","t":"etf","c":"CNY","nc":"科芯片设","p":"kexinpianshe","pi":"kxps"}
+{"s":"589434","m":"cn_a","t":"etf","c":"CNY","nc":"认购款\u0000\u0000","p":"rengoukuan\u0000\u0000","pi":"rgk\u0000"}
 {"s":"589460","m":"cn_a","t":"etf","c":"CNY","nc":"科200HB\u0000","p":"ke200hb\u0000","pi":"k2"}
 {"s":"589463","m":"cn_a","t":"etf","c":"CNY","nc":"科200HB\u0000","p":"ke200hb\u0000","pi":"k2"}
 {"s":"589464","m":"cn_a","t":"etf","c":"CNY","nc":"认购款\u0000\u0000","p":"rengoukuan\u0000\u0000","pi":"rgk\u0000"}
@@ -5672,7 +5695,7 @@
 {"s":"600057","m":"cn_a","t":"stock","c":"CNY","nc":"厦门象屿","p":"xiamenxiangyu","pi":"xmxy"}
 {"s":"600058","m":"cn_a","t":"stock","c":"CNY","nc":"五矿发展","p":"wukuangfazhan","pi":"wkfz"}
 {"s":"600059","m":"cn_a","t":"stock","c":"CNY","nc":"古越龙山","p":"guyuelongshan","pi":"gyls"}
-{"s":"600060","m":"cn_a","t":"stock","c":"CNY","nc":"XD海信视","p":"xdhaixinshi","pi":"xhxs"}
+{"s":"600060","m":"cn_a","t":"stock","c":"CNY","nc":"海信视像","p":"haixinshixiang","pi":"hxsx"}
 {"s":"600061","m":"cn_a","t":"stock","c":"CNY","nc":"国投资本","p":"guotouziben","pi":"gtzb"}
 {"s":"600062","m":"cn_a","t":"stock","c":"CNY","nc":"华润双鹤","p":"huarunshuanghe","pi":"hrsh"}
 {"s":"600063","m":"cn_a","t":"stock","c":"CNY","nc":"皖维高新","p":"wanweigaoxin","pi":"wwgx"}
@@ -5702,7 +5725,7 @@
 {"s":"600100","m":"cn_a","t":"stock","c":"CNY","nc":"同方股份","p":"tongfanggufen","pi":"tfgf"}
 {"s":"600101","m":"cn_a","t":"stock","c":"CNY","nc":"明星电力","p":"mingxingdianli","pi":"mxdl"}
 {"s":"600103","m":"cn_a","t":"stock","c":"CNY","nc":"青山纸业","p":"qingshanzhiye","pi":"qszy"}
-{"s":"600104","m":"cn_a","t":"stock","c":"CNY","nc":"XD上汽集","p":"xdshangqiji","pi":"xsqj"}
+{"s":"600104","m":"cn_a","t":"stock","c":"CNY","nc":"上汽集团","p":"shangqijituan","pi":"sqjt"}
 {"s":"600105","m":"cn_a","t":"stock","c":"CNY","nc":"永鼎股份","p":"yongdinggufen","pi":"ydgf"}
 {"s":"600106","m":"cn_a","t":"stock","c":"CNY","nc":"重庆路桥","p":"chongqingluqiao","pi":"cqlq"}
 {"s":"600107","m":"cn_a","t":"stock","c":"CNY","nc":"*ST尔雅\u0000","p":"*sterya\u0000","pi":"*ey\u0000"}
@@ -6013,7 +6036,7 @@
 {"s":"600525","m":"cn_a","t":"stock","c":"CNY","nc":"ST长园\u0000\u0000","p":"stzhangyuan\u0000\u0000","pi":"szy\u0000"}
 {"s":"600526","m":"cn_a","t":"stock","c":"CNY","nc":"菲达环保","p":"feidahuanbao","pi":"fdhb"}
 {"s":"600527","m":"cn_a","t":"stock","c":"CNY","nc":"江南高纤","p":"jiangnangaoxian","pi":"jngx"}
-{"s":"600528","m":"cn_a","t":"stock","c":"CNY","nc":"中铁工业","p":"zhongtiegongye","pi":"ztgy"}
+{"s":"600528","m":"cn_a","t":"stock","c":"CNY","nc":"XD中铁工","p":"xdzhongtiegong","pi":"xztg"}
 {"s":"600529","m":"cn_a","t":"stock","c":"CNY","nc":"山东药玻","p":"shandongyaobo","pi":"sdyb"}
 {"s":"600530","m":"cn_a","t":"stock","c":"CNY","nc":"ST交昂\u0000\u0000","p":"stjiaoang\u0000\u0000","pi":"sja\u0000"}
 {"s":"600531","m":"cn_a","t":"stock","c":"CNY","nc":"豫光金铅","p":"yuguangjinqian","pi":"ygjq"}
@@ -6092,10 +6115,10 @@
 {"s":"600620","m":"cn_a","t":"stock","c":"CNY","nc":"天宸股份","p":"tianchengufen","pi":"tcgf"}
 {"s":"600621","m":"cn_a","t":"stock","c":"CNY","nc":"华鑫股份","p":"huaxingufen","pi":"hxgf"}
 {"s":"600622","m":"cn_a","t":"stock","c":"CNY","nc":"光大嘉宝","p":"guangdajiabao","pi":"gdjb"}
-{"s":"600623","m":"cn_a","t":"stock","c":"CNY","nc":"XD华谊集","p":"xdhuayiji","pi":"xhyj"}
+{"s":"600623","m":"cn_a","t":"stock","c":"CNY","nc":"华谊集团","p":"huayijituan","pi":"hyjt"}
 {"s":"600624","m":"cn_a","t":"stock","c":"CNY","nc":"ST复华\u0000\u0000","p":"stfuhua\u0000\u0000","pi":"sfh\u0000"}
 {"s":"600626","m":"cn_a","t":"stock","c":"CNY","nc":"申达股份","p":"shendagufen","pi":"sdgf"}
-{"s":"600628","m":"cn_a","t":"stock","c":"CNY","nc":"新世界\u0000\u0000","p":"xinshijie\u0000\u0000","pi":"xsj\u0000"}
+{"s":"600628","m":"cn_a","t":"stock","c":"CNY","nc":"XD新世界","p":"xdxinshijie","pi":"xxsj"}
 {"s":"600629","m":"cn_a","t":"stock","c":"CNY","nc":"华建集团","p":"huajianjituan","pi":"hjjt"}
 {"s":"600630","m":"cn_a","t":"stock","c":"CNY","nc":"龙头股份","p":"longtougufen","pi":"ltgf"}
 {"s":"600633","m":"cn_a","t":"stock","c":"CNY","nc":"浙数文化","p":"zheshuwenhua","pi":"zswh"}
@@ -6120,7 +6143,7 @@
 {"s":"600658","m":"cn_a","t":"stock","c":"CNY","nc":"电子城\u0000\u0000","p":"dianzicheng\u0000\u0000","pi":"dzc\u0000"}
 {"s":"600660","m":"cn_a","t":"stock","c":"CNY","nc":"福耀玻璃","p":"fuyaoboli","pi":"fybl"}
 {"s":"600661","m":"cn_a","t":"stock","c":"CNY","nc":"昂立教育","p":"anglijiaoyu","pi":"aljy"}
-{"s":"600662","m":"cn_a","t":"stock","c":"CNY","nc":"外服控股","p":"waifukonggu","pi":"wfkg"}
+{"s":"600662","m":"cn_a","t":"stock","c":"CNY","nc":"XD外服控","p":"xdwaifukong","pi":"xwfk"}
 {"s":"600663","m":"cn_a","t":"stock","c":"CNY","nc":"陆家嘴\u0000\u0000","p":"lujiazui\u0000\u0000","pi":"ljz\u0000"}
 {"s":"600664","m":"cn_a","t":"stock","c":"CNY","nc":"哈药股份","p":"hayaogufen","pi":"hygf"}
 {"s":"600665","m":"cn_a","t":"stock","c":"CNY","nc":"天地源\u0000\u0000","p":"tiandiyuan\u0000\u0000","pi":"tdy\u0000"}
@@ -6254,7 +6277,7 @@
 {"s":"600820","m":"cn_a","t":"stock","c":"CNY","nc":"隧道股份","p":"suidaogufen","pi":"sdgf"}
 {"s":"600821","m":"cn_a","t":"stock","c":"CNY","nc":"金开新能","p":"jinkaixinneng","pi":"jkxn"}
 {"s":"600822","m":"cn_a","t":"stock","c":"CNY","nc":"上海物贸","p":"shanghaiwumao","pi":"shwm"}
-{"s":"600824","m":"cn_a","t":"stock","c":"CNY","nc":"益民集团","p":"yiminjituan","pi":"ymjt"}
+{"s":"600824","m":"cn_a","t":"stock","c":"CNY","nc":"XD益民集","p":"xdyiminji","pi":"xymj"}
 {"s":"600825","m":"cn_a","t":"stock","c":"CNY","nc":"新华传媒","p":"xinhuachuanmei","pi":"xhcm"}
 {"s":"600826","m":"cn_a","t":"stock","c":"CNY","nc":"兰生股份","p":"lanshenggufen","pi":"lsgf"}
 {"s":"600827","m":"cn_a","t":"stock","c":"CNY","nc":"百联股份","p":"bailiangufen","pi":"blgf"}
@@ -6266,7 +6289,7 @@
 {"s":"600834","m":"cn_a","t":"stock","c":"CNY","nc":"申通地铁","p":"shentongditie","pi":"stdt"}
 {"s":"600835","m":"cn_a","t":"stock","c":"CNY","nc":"上海机电","p":"shanghaijidian","pi":"shjd"}
 {"s":"600838","m":"cn_a","t":"stock","c":"CNY","nc":"上海九百","p":"shanghaijiubai","pi":"shjb"}
-{"s":"600839","m":"cn_a","t":"stock","c":"CNY","nc":"XD四川长","p":"xdsichuanzhang","pi":"xscz"}
+{"s":"600839","m":"cn_a","t":"stock","c":"CNY","nc":"四川长虹","p":"sichuanchanghong","pi":"scch"}
 {"s":"600841","m":"cn_a","t":"stock","c":"CNY","nc":"动力新科","p":"donglixinke","pi":"dlxk"}
 {"s":"600843","m":"cn_a","t":"stock","c":"CNY","nc":"上工申贝","p":"shanggongshenbei","pi":"sgsb"}
 {"s":"600844","m":"cn_a","t":"stock","c":"CNY","nc":"金煤科技","p":"jinmeikeji","pi":"jmkj"}
@@ -6306,7 +6329,7 @@
 {"s":"600883","m":"cn_a","t":"stock","c":"CNY","nc":"博闻科技","p":"bowenkeji","pi":"bwkj"}
 {"s":"600884","m":"cn_a","t":"stock","c":"CNY","nc":"杉杉股份","p":"shanshangufen","pi":"ssgf"}
 {"s":"600885","m":"cn_a","t":"stock","c":"CNY","nc":"宏发股份","p":"hongfagufen","pi":"hfgf"}
-{"s":"600886","m":"cn_a","t":"stock","c":"CNY","nc":"XD国投电","p":"xdguotoudian","pi":"xgtd"}
+{"s":"600886","m":"cn_a","t":"stock","c":"CNY","nc":"国投电力","p":"guotoudianli","pi":"gtdl"}
 {"s":"600887","m":"cn_a","t":"stock","c":"CNY","nc":"伊利股份","p":"yiligufen","pi":"ylgf"}
 {"s":"600888","m":"cn_a","t":"stock","c":"CNY","nc":"新疆众和","p":"xinjiangzhonghe","pi":"xjzh"}
 {"s":"600889","m":"cn_a","t":"stock","c":"CNY","nc":"*ST京化\u0000","p":"*stjinghua\u0000","pi":"*jh\u0000"}
@@ -6425,6 +6448,7 @@
 {"s":"601117","m":"cn_a","t":"stock","c":"CNY","nc":"中国化学","p":"zhongguohuaxue","pi":"zghx"}
 {"s":"601118","m":"cn_a","t":"stock","c":"CNY","nc":"海南橡胶","p":"hainanxiangjiao","pi":"hnxj"}
 {"s":"601121","m":"cn_a","t":"stock","c":"CNY","nc":"宝地矿业","p":"baodikuangye","pi":"bdky"}
+{"s":"601123","m":"cn_a","t":"stock","c":"CNY","nc":"马矿股份","p":"makuanggufen","pi":"mkgf"}
 {"s":"601126","m":"cn_a","t":"stock","c":"CNY","nc":"四方股份","p":"sifanggufen","pi":"sfgf"}
 {"s":"601127","m":"cn_a","t":"stock","c":"CNY","nc":"赛力斯\u0000\u0000","p":"sailisi\u0000\u0000","pi":"sls\u0000"}
 {"s":"601128","m":"cn_a","t":"stock","c":"CNY","nc":"常熟银行","p":"changshuyinhang","pi":"csyh"}
@@ -6473,13 +6497,13 @@
 {"s":"601328","m":"cn_a","t":"stock","c":"CNY","nc":"交通银行","p":"jiaotongyinhang","pi":"jtyh"}
 {"s":"601330","m":"cn_a","t":"stock","c":"CNY","nc":"绿色动力","p":"lvsedongli","pi":"lsdl"}
 {"s":"601333","m":"cn_a","t":"stock","c":"CNY","nc":"广深铁路","p":"guangshentielu","pi":"gstl"}
-{"s":"601336","m":"cn_a","t":"stock","c":"CNY","nc":"XD新华保","p":"xdxinhuabao","pi":"xxhb"}
+{"s":"601336","m":"cn_a","t":"stock","c":"CNY","nc":"新华保险","p":"xinhuabaoxian","pi":"xhbx"}
 {"s":"601339","m":"cn_a","t":"stock","c":"CNY","nc":"百隆东方","p":"bailongdongfang","pi":"bldf"}
 {"s":"601360","m":"cn_a","t":"stock","c":"CNY","nc":"三六零\u0000\u0000","p":"sanliuling\u0000\u0000","pi":"sll\u0000"}
 {"s":"601366","m":"cn_a","t":"stock","c":"CNY","nc":"利群股份","p":"liqungufen","pi":"lqgf"}
 {"s":"601368","m":"cn_a","t":"stock","c":"CNY","nc":"绿城水务","p":"lvchengshuiwu","pi":"lcsw"}
 {"s":"601369","m":"cn_a","t":"stock","c":"CNY","nc":"陕鼓动力","p":"shangudongli","pi":"sgdl"}
-{"s":"601375","m":"cn_a","t":"stock","c":"CNY","nc":"中原证券","p":"zhongyuanzhengquan","pi":"zyzq"}
+{"s":"601375","m":"cn_a","t":"stock","c":"CNY","nc":"XD中原证","p":"xdzhongyuanzheng","pi":"xzyz"}
 {"s":"601377","m":"cn_a","t":"stock","c":"CNY","nc":"兴业证券","p":"xingyezhengquan","pi":"xyzq"}
 {"s":"601388","m":"cn_a","t":"stock","c":"CNY","nc":"怡球资源","p":"yiqiuziyuan","pi":"yqzy"}
 {"s":"601390","m":"cn_a","t":"stock","c":"CNY","nc":"中国中铁","p":"zhongguozhongtie","pi":"zgzt"}
@@ -6492,7 +6516,7 @@
 {"s":"601518","m":"cn_a","t":"stock","c":"CNY","nc":"吉林高速","p":"jilingaosu","pi":"jlgs"}
 {"s":"601519","m":"cn_a","t":"stock","c":"CNY","nc":"大智慧\u0000\u0000","p":"dazhihui\u0000\u0000","pi":"dzh\u0000"}
 {"s":"601528","m":"cn_a","t":"stock","c":"CNY","nc":"瑞丰银行","p":"ruifengyinhang","pi":"rfyh"}
-{"s":"601555","m":"cn_a","t":"stock","c":"CNY","nc":"XD东吴证","p":"xddongwuzheng","pi":"xdwz"}
+{"s":"601555","m":"cn_a","t":"stock","c":"CNY","nc":"东吴证券","p":"dongwuzhengquan","pi":"dwzq"}
 {"s":"601566","m":"cn_a","t":"stock","c":"CNY","nc":"九牧王\u0000\u0000","p":"jiumuwang\u0000\u0000","pi":"jmw\u0000"}
 {"s":"601567","m":"cn_a","t":"stock","c":"CNY","nc":"三星电气","p":"sanxingdianqi","pi":"sxdq"}
 {"s":"601568","m":"cn_a","t":"stock","c":"CNY","nc":"北元化工","p":"beiyuanhuagong","pi":"byhg"}
@@ -6502,7 +6526,7 @@
 {"s":"601595","m":"cn_a","t":"stock","c":"CNY","nc":"上海电影","p":"shanghaidianying","pi":"shdy"}
 {"s":"601598","m":"cn_a","t":"stock","c":"CNY","nc":"中国外运","p":"zhongguowaiyun","pi":"zgwy"}
 {"s":"601599","m":"cn_a","t":"stock","c":"CNY","nc":"浙文影业","p":"zhewenyingye","pi":"zwyy"}
-{"s":"601600","m":"cn_a","t":"stock","c":"CNY","nc":"中国铝业","p":"zhongguolvye","pi":"zgly"}
+{"s":"601600","m":"cn_a","t":"stock","c":"CNY","nc":"XD中国铝","p":"xdzhongguolv","pi":"xzgl"}
 {"s":"601601","m":"cn_a","t":"stock","c":"CNY","nc":"中国太保","p":"zhongguotaibao","pi":"zgtb"}
 {"s":"601606","m":"cn_a","t":"stock","c":"CNY","nc":"长城军工","p":"changchengjungong","pi":"ccjg"}
 {"s":"601607","m":"cn_a","t":"stock","c":"CNY","nc":"上海医药","p":"shanghaiyiyao","pi":"shyy"}
@@ -6574,7 +6598,7 @@
 {"s":"601901","m":"cn_a","t":"stock","c":"CNY","nc":"方正证券","p":"fangzhengzhengquan","pi":"fzzq"}
 {"s":"601908","m":"cn_a","t":"stock","c":"CNY","nc":"京运通\u0000\u0000","p":"jingyuntong\u0000\u0000","pi":"jyt\u0000"}
 {"s":"601916","m":"cn_a","t":"stock","c":"CNY","nc":"浙商银行","p":"zheshangyinhang","pi":"zsyh"}
-{"s":"601918","m":"cn_a","t":"stock","c":"CNY","nc":"XD新集能","p":"xdxinjineng","pi":"xxjn"}
+{"s":"601918","m":"cn_a","t":"stock","c":"CNY","nc":"新集能源","p":"xinjinengyuan","pi":"xjny"}
 {"s":"601919","m":"cn_a","t":"stock","c":"CNY","nc":"中远海控","p":"zhongyuanhaikong","pi":"zyhk"}
 {"s":"601921","m":"cn_a","t":"stock","c":"CNY","nc":"浙版传媒","p":"zhebanchuanmei","pi":"zbcm"}
 {"s":"601928","m":"cn_a","t":"stock","c":"CNY","nc":"凤凰传媒","p":"fenghuangchuanmei","pi":"fhcm"}
@@ -6941,7 +6965,7 @@
 {"s":"603458","m":"cn_a","t":"stock","c":"CNY","nc":"勘设股份","p":"kanshegufen","pi":"ksgf"}
 {"s":"603459","m":"cn_a","t":"stock","c":"CNY","nc":"红板科技","p":"hongbankeji","pi":"hbkj"}
 {"s":"603466","m":"cn_a","t":"stock","c":"CNY","nc":"风语筑\u0000\u0000","p":"fengyuzhu\u0000\u0000","pi":"fyz\u0000"}
-{"s":"603468","m":"cn_a","t":"stock","c":"CNY","nc":"C津富\u0000\u0000\u0000","p":"cjinfu\u0000\u0000\u0000","pi":"cjf\u0000"}
+{"s":"603468","m":"cn_a","t":"stock","c":"CNY","nc":"津富士达","p":"jinfushida","pi":"jfsd"}
 {"s":"603477","m":"cn_a","t":"stock","c":"CNY","nc":"巨星农牧","p":"juxingnongmu","pi":"jxnm"}
 {"s":"603486","m":"cn_a","t":"stock","c":"CNY","nc":"科沃斯\u0000\u0000","p":"kewosi\u0000\u0000","pi":"kws\u0000"}
 {"s":"603488","m":"cn_a","t":"stock","c":"CNY","nc":"展鹏科技","p":"zhanpengkeji","pi":"zpkj"}
@@ -6982,7 +7006,7 @@
 {"s":"603577","m":"cn_a","t":"stock","c":"CNY","nc":"汇金通\u0000\u0000","p":"huijintong\u0000\u0000","pi":"hjt\u0000"}
 {"s":"603578","m":"cn_a","t":"stock","c":"CNY","nc":"三星新材","p":"sanxingxincai","pi":"sxxc"}
 {"s":"603579","m":"cn_a","t":"stock","c":"CNY","nc":"荣泰健康","p":"rongtaijiankang","pi":"rtjk"}
-{"s":"603580","m":"cn_a","t":"stock","c":"CNY","nc":"艾艾精工","p":"aiaijinggong","pi":"aajg"}
+{"s":"603580","m":"cn_a","t":"stock","c":"CNY","nc":"XD艾艾精","p":"xdaiaijing","pi":"xaaj"}
 {"s":"603583","m":"cn_a","t":"stock","c":"CNY","nc":"捷昌驱动","p":"jiechangqudong","pi":"jcqd"}
 {"s":"603585","m":"cn_a","t":"stock","c":"CNY","nc":"苏利股份","p":"suligufen","pi":"slgf"}
 {"s":"603586","m":"cn_a","t":"stock","c":"CNY","nc":"金麒麟\u0000\u0000","p":"jinqilin\u0000\u0000","pi":"jql\u0000"}
@@ -7020,7 +7044,7 @@
 {"s":"603637","m":"cn_a","t":"stock","c":"CNY","nc":"镇海股份","p":"zhenhaigufen","pi":"zhgf"}
 {"s":"603638","m":"cn_a","t":"stock","c":"CNY","nc":"艾迪精密","p":"aidijingmi","pi":"adjm"}
 {"s":"603639","m":"cn_a","t":"stock","c":"CNY","nc":"海利尔\u0000\u0000","p":"hailier\u0000\u0000","pi":"hle\u0000"}
-{"s":"603648","m":"cn_a","t":"stock","c":"CNY","nc":"畅联股份","p":"changliangufen","pi":"clgf"}
+{"s":"603648","m":"cn_a","t":"stock","c":"CNY","nc":"XD畅联股","p":"xdchangliangu","pi":"xclg"}
 {"s":"603650","m":"cn_a","t":"stock","c":"CNY","nc":"彤程新材","p":"tongchengxincai","pi":"tcxc"}
 {"s":"603655","m":"cn_a","t":"stock","c":"CNY","nc":"朗博科技","p":"langbokeji","pi":"lbkj"}
 {"s":"603656","m":"cn_a","t":"stock","c":"CNY","nc":"泰禾智能","p":"taihezhineng","pi":"thzn"}
@@ -7153,7 +7177,7 @@
 {"s":"603888","m":"cn_a","t":"stock","c":"CNY","nc":"新华网\u0000\u0000","p":"xinhuawang\u0000\u0000","pi":"xhw\u0000"}
 {"s":"603889","m":"cn_a","t":"stock","c":"CNY","nc":"新澳股份","p":"xinaogufen","pi":"xagf"}
 {"s":"603890","m":"cn_a","t":"stock","c":"CNY","nc":"春秋电子","p":"chunqiudianzi","pi":"cqdz"}
-{"s":"603893","m":"cn_a","t":"stock","c":"CNY","nc":"瑞芯微\u0000\u0000","p":"ruixinwei\u0000\u0000","pi":"rxw\u0000"}
+{"s":"603893","m":"cn_a","t":"stock","c":"CNY","nc":"XD瑞芯微","p":"xdruixinwei","pi":"xrxw"}
 {"s":"603895","m":"cn_a","t":"stock","c":"CNY","nc":"天永智能","p":"tianyongzhineng","pi":"tyzn"}
 {"s":"603896","m":"cn_a","t":"stock","c":"CNY","nc":"寿仙谷\u0000\u0000","p":"shouxiangu\u0000\u0000","pi":"sxg\u0000"}
 {"s":"603897","m":"cn_a","t":"stock","c":"CNY","nc":"长城科技","p":"changchengkeji","pi":"cckj"}
@@ -7491,7 +7515,7 @@
 {"s":"688184","m":"cn_a","t":"stock","c":"CNY","nc":"ST帕瓦\u0000\u0000","p":"stpawa\u0000\u0000","pi":"spw\u0000"}
 {"s":"688185","m":"cn_a","t":"stock","c":"CNY","nc":"康希诺\u0000\u0000","p":"kangxinuo\u0000\u0000","pi":"kxn\u0000"}
 {"s":"688186","m":"cn_a","t":"stock","c":"CNY","nc":"广大特材","p":"guangdatecai","pi":"gdtc"}
-{"s":"688187","m":"cn_a","t":"stock","c":"CNY","nc":"XD时代电","p":"xdshidaidian","pi":"xsdd"}
+{"s":"688187","m":"cn_a","t":"stock","c":"CNY","nc":"时代电气","p":"shidaidianqi","pi":"sddq"}
 {"s":"688188","m":"cn_a","t":"stock","c":"CNY","nc":"柏楚电子","p":"baichudianzi","pi":"bcdz"}
 {"s":"688189","m":"cn_a","t":"stock","c":"CNY","nc":"ST南新\u0000\u0000","p":"stnanxin\u0000\u0000","pi":"snx\u0000"}
 {"s":"688190","m":"cn_a","t":"stock","c":"CNY","nc":"云路股份","p":"yunlugufen","pi":"ylgf"}
@@ -7574,7 +7598,7 @@
 {"s":"688281","m":"cn_a","t":"stock","c":"CNY","nc":"华秦科技","p":"huaqinkeji","pi":"hqkj"}
 {"s":"688282","m":"cn_a","t":"stock","c":"CNY","nc":"理工导航","p":"ligongdaohang","pi":"lgdh"}
 {"s":"688283","m":"cn_a","t":"stock","c":"CNY","nc":"坤恒顺维","p":"kunhengshunwei","pi":"khsw"}
-{"s":"688285","m":"cn_a","t":"stock","c":"CNY","nc":"高铁电气","p":"gaotiedianqi","pi":"gtdq"}
+{"s":"688285","m":"cn_a","t":"stock","c":"CNY","nc":"XD高铁电","p":"xdgaotiedian","pi":"xgtd"}
 {"s":"688286","m":"cn_a","t":"stock","c":"CNY","nc":"敏芯股份","p":"minxingufen","pi":"mxgf"}
 {"s":"688288","m":"cn_a","t":"stock","c":"CNY","nc":"鸿泉技术","p":"hongquanjishu","pi":"hqjs"}
 {"s":"688289","m":"cn_a","t":"stock","c":"CNY","nc":"圣湘生物","p":"shengxiangshengwu","pi":"sxsw"}
@@ -7595,7 +7619,7 @@
 {"s":"688306","m":"cn_a","t":"stock","c":"CNY","nc":"均普智能","p":"junpuzhineng","pi":"jpzn"}
 {"s":"688307","m":"cn_a","t":"stock","c":"CNY","nc":"中润光学","p":"zhongrunguangxue","pi":"zrgx"}
 {"s":"688308","m":"cn_a","t":"stock","c":"CNY","nc":"欧科亿\u0000\u0000","p":"oukeyi\u0000\u0000","pi":"oky\u0000"}
-{"s":"688309","m":"cn_a","t":"stock","c":"CNY","nc":"恒誉环保","p":"hengyuhuanbao","pi":"hyhb"}
+{"s":"688309","m":"cn_a","t":"stock","c":"CNY","nc":"恒誉科技","p":"hengyukeji","pi":"hykj"}
 {"s":"688310","m":"cn_a","t":"stock","c":"CNY","nc":"迈得医疗","p":"maideyiliao","pi":"mdyl"}
 {"s":"688311","m":"cn_a","t":"stock","c":"CNY","nc":"盟升电子","p":"mengshengdianzi","pi":"msdz"}
 {"s":"688312","m":"cn_a","t":"stock","c":"CNY","nc":"燕麦科技","p":"yanmaikeji","pi":"ymkj"}
@@ -7685,7 +7709,7 @@
 {"s":"688418","m":"cn_a","t":"stock","c":"CNY","nc":"震有科技","p":"zhenyoukeji","pi":"zykj"}
 {"s":"688419","m":"cn_a","t":"stock","c":"CNY","nc":"耐科装备","p":"naikezhuangbei","pi":"nkzb"}
 {"s":"688420","m":"cn_a","t":"stock","c":"CNY","nc":"美腾科技","p":"meitengkeji","pi":"mtkj"}
-{"s":"688425","m":"cn_a","t":"stock","c":"CNY","nc":"XD铁建重","p":"xdtiejianzhong","pi":"xtjz"}
+{"s":"688425","m":"cn_a","t":"stock","c":"CNY","nc":"铁建重工","p":"tiejianzhonggong","pi":"tjzg"}
 {"s":"688426","m":"cn_a","t":"stock","c":"CNY","nc":"康为世纪","p":"kangweishiji","pi":"kwsj"}
 {"s":"688428","m":"cn_a","t":"stock","c":"CNY","nc":"诺诚健华","p":"nuochengjianhua","pi":"ncjh"}
 {"s":"688429","m":"cn_a","t":"stock","c":"CNY","nc":"时创能源","p":"shichuangnengyuan","pi":"scny"}
@@ -7831,7 +7855,7 @@
 {"s":"688636","m":"cn_a","t":"stock","c":"CNY","nc":"智明达\u0000\u0000","p":"zhimingda\u0000\u0000","pi":"zmd\u0000"}
 {"s":"688638","m":"cn_a","t":"stock","c":"CNY","nc":"誉辰智能","p":"yuchenzhineng","pi":"yczn"}
 {"s":"688639","m":"cn_a","t":"stock","c":"CNY","nc":"华恒生物","p":"huahengshengwu","pi":"hhsw"}
-{"s":"688646","m":"cn_a","t":"stock","c":"CNY","nc":"ST逸飞\u0000\u0000","p":"styifei\u0000\u0000","pi":"syf\u0000"}
+{"s":"688646","m":"cn_a","t":"stock","c":"CNY","nc":"逸飞激光","p":"yifeijiguang","pi":"yfjg"}
 {"s":"688648","m":"cn_a","t":"stock","c":"CNY","nc":"中邮科技","p":"zhongyoukeji","pi":"zykj"}
 {"s":"688651","m":"cn_a","t":"stock","c":"CNY","nc":"盛邦安全","p":"shengbanganquan","pi":"sbaq"}
 {"s":"688652","m":"cn_a","t":"stock","c":"CNY","nc":"京仪装备","p":"jingyizhuangbei","pi":"jyzb"}
@@ -7939,11 +7963,11 @@
 {"s":"688820","m":"cn_a","t":"stock","c":"CNY","nc":"盛合晶微","p":"shenghejingwei","pi":"shjw"}
 {"s":"688825","m":"cn_a","t":"stock","c":"CNY","nc":"长鑫科技","p":"zhangxinkeji","pi":"zxkj"}
 {"s":"688826","m":"cn_a","t":"stock","c":"CNY","nc":"频准激光","p":"pinzhunjiguang","pi":"pzjg"}
-{"s":"688828","m":"cn_a","t":"stock","c":"CNY","nc":"国仪公司","p":"guoyigongsi","pi":"gygs"}
+{"s":"688828","m":"cn_a","t":"stock","c":"CNY","nc":"C国仪\u0000\u0000\u0000","p":"cguoyi\u0000\u0000\u0000","pi":"cgy\u0000"}
 {"s":"688835","m":"cn_a","t":"stock","c":"CNY","nc":"高凯技术","p":"gaokaijishu","pi":"gkjs"}
 {"s":"688836","m":"cn_a","t":"stock","c":"CNY","nc":"宇树科技","p":"yushukeji","pi":"yskj"}
 {"s":"688981","m":"cn_a","t":"stock","c":"CNY","nc":"中芯国际","p":"zhongxinguoji","pi":"zxgj"}
-{"s":"689009","m":"cn_a","t":"stock","c":"CNY","nc":"XD九号公","p":"xdjiuhaogong","pi":"xjhg"}
+{"s":"689009","m":"cn_a","t":"stock","c":"CNY","nc":"九号公司","p":"jiuhaogongsi","pi":"jhgs"}
 {"s":"1INCH-USD","m":"crypto","t":"crypto","c":"USD","ne":"1INCH","a":"1inch"}
 {"s":"2Z-USD","m":"crypto","t":"crypto","c":"USD","ne":"DoubleZero","a":"doublezero"}
 {"s":"A-USD","m":"crypto","t":"crypto","c":"USD","ne":"Vaulta","a":"vaulta"}
@@ -7952,10 +7976,10 @@
 {"s":"AB-USD","m":"crypto","t":"crypto","c":"USD","ne":"AB","a":"newton-project"}
 {"s":"ACRDX-USD","m":"crypto","t":"crypto","c":"USD","ne":"Anemoy Tokenized Apollo Diversified Credit Fund","a":"anemoy-tokenized-apollo-diversified-credit-fund"}
 {"s":"ACRED-USD","m":"crypto","t":"crypto","c":"USD","ne":"Apollo Diversified Credit Securitize Fund","a":"apollo-diversified-credit-securitize-fund"}
+{"s":"ACU-USD","m":"crypto","t":"crypto","c":"USD","ne":"Acurast","a":"acurast"}
 {"s":"ADA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Cardano","nc":"卡尔达诺","p":"kaerdanuo","pi":"kedn","a":"cardano"}
 {"s":"ADI-USD","m":"crypto","t":"crypto","c":"USD","ne":"ADI","a":"adi-token"}
 {"s":"AERO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Aerodrome Finance","a":"aerodrome-finance"}
-{"s":"AIAT-USD","m":"crypto","t":"crypto","c":"USD","ne":"AI Analysis Token","a":"ai-analysis-token"}
 {"s":"AIOZ-USD","m":"crypto","t":"crypto","c":"USD","ne":"AIOZ Network","a":"aioz-network"}
 {"s":"AIX-USD","m":"crypto","t":"crypto","c":"USD","ne":"AI XOVIA","a":"ai-xovia"}
 {"s":"AKE-USD","m":"crypto","t":"crypto","c":"USD","ne":"Akedo","a":"akedo"}
@@ -7963,13 +7987,14 @@
 {"s":"ALFW-USD","m":"crypto","t":"crypto","c":"USD","ne":"Alpha Bulgaria Warrants","a":"alpha-bulgaria-warrants"}
 {"s":"ALGO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Algorand","a":"algorand"}
 {"s":"ALLO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Allora","a":"allora"}
+{"s":"ALT-USD","m":"crypto","t":"crypto","c":"USD","ne":"AltLayer","a":"altlayer"}
 {"s":"ANSEM-USD","m":"crypto","t":"crypto","c":"USD","ne":"The Black Bull","a":"the-black-bull"}
 {"s":"ANTFUN-USD","m":"crypto","t":"crypto","c":"USD","ne":"AntFun","a":"antfun"}
 {"s":"ANVL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Anvil","a":"anvil"}
 {"s":"APE-USD","m":"crypto","t":"crypto","c":"USD","ne":"ApeCoin","a":"apecoin"}
 {"s":"APEPE-USD","m":"crypto","t":"crypto","c":"USD","ne":"Ape and Pepe","a":"ape-and-pepe"}
 {"s":"APES-USD","m":"crypto","t":"crypto","c":"USD","ne":"APES","a":"apes-2-2"}
-{"s":"APR-USD","m":"crypto","t":"crypto","c":"USD","ne":"aPriori","a":"apriori"}
+{"s":"APR-USD","m":"crypto","t":"crypto","c":"USD","ne":"Capricorn","a":"apriori"}
 {"s":"APT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Aptos","nc":"Aptos","p":"aptos","pi":"a","a":"aptos"}
 {"s":"APXUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"apxUSD","a":"apxusd"}
 {"s":"APYUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"apyUSD","a":"apyusd"}
@@ -7995,6 +8020,7 @@
 {"s":"BAN-USD","m":"crypto","t":"crypto","c":"USD","ne":"Comedian","a":"comedian"}
 {"s":"BANANAS31-USD","m":"crypto","t":"crypto","c":"USD","ne":"Banana For Scale","a":"banana-for-scale-2"}
 {"s":"BAS-USD","m":"crypto","t":"crypto","c":"USD","ne":"BNB Attestation Service","a":"bas"}
+{"s":"BASEDHYPE-USD","m":"crypto","t":"crypto","c":"USD","ne":"BasedHype","a":"basedhype"}
 {"s":"BAT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Basic Attention","a":"basic-attention-token"}
 {"s":"BC-USD","m":"crypto","t":"crypto","c":"USD","ne":"BCGame Coin","a":"bc-token"}
 {"s":"BCAP-USD","m":"crypto","t":"crypto","c":"USD","ne":"Blockchain Capital","a":"blockchain-capital"}
@@ -8007,7 +8033,6 @@
 {"s":"BFUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"BFUSD","a":"bfusd"}
 {"s":"BGB-USD","m":"crypto","t":"crypto","c":"USD","ne":"Bitget Token","a":"bitget-token"}
 {"s":"BGBTC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Bitget Wrapped BTC","a":"bitget-wrapped-btc"}
-{"s":"BICO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Biconomy","a":"biconomy"}
 {"s":"BILL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Billions Network","a":"billions-network"}
 {"s":"BIO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Bio Protocol","a":"bio-protocol"}
 {"s":"BNB-USD","m":"crypto","t":"crypto","c":"USD","ne":"BNB","nc":"币安币","p":"bianbi","pi":"bab","a":"binancecoin"}
@@ -8016,8 +8041,9 @@
 {"s":"BORG-USD","m":"crypto","t":"crypto","c":"USD","ne":"SwissBorg","a":"swissborg"}
 {"s":"BOT-USD","m":"crypto","t":"crypto","c":"USD","ne":"BOT","a":"bot"}
 {"s":"BP-USD","m":"crypto","t":"crypto","c":"USD","ne":"Backpack","a":"backpack"}
-{"s":"BRETT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Brett","a":"based-brett"}
+{"s":"BR-USD","m":"crypto","t":"crypto","c":"USD","ne":"Bedrock","a":"bedrock-token"}
 {"s":"BRLV-USD","m":"crypto","t":"crypto","c":"USD","ne":"Crown BRLV","a":"crown-brlv"}
+{"s":"BRSRV-USD","m":"crypto","t":"crypto","c":"USD","ne":"BlackRock Daily Reinvestment Stablecoin Reserve Vehicle","a":"blackrock-daily-reinvestment-stablecoin-reserve-vehicle"}
 {"s":"BRZ-USD","m":"crypto","t":"crypto","c":"USD","ne":"Brazilian Digital","a":"brz"}
 {"s":"BSPX-USD","m":"crypto","t":"crypto","c":"USD","ne":"Bending Spoons xStock","a":"bending-spoons-xstock"}
 {"s":"BSV-USD","m":"crypto","t":"crypto","c":"USD","ne":"Bitcoin SV","a":"bitcoin-cash-sv"}
@@ -8031,8 +8057,8 @@
 {"s":"CARDS-USD","m":"crypto","t":"crypto","c":"USD","ne":"Collector Crypt","a":"collector-crypt"}
 {"s":"CASH-USD","m":"crypto","t":"crypto","c":"USD","ne":"CASH","a":"cash-4"}
 {"s":"CASHCAT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Cash Cat","a":"cash-cat"}
-{"s":"CATI-USD","m":"crypto","t":"crypto","c":"USD","ne":"Catizen","a":"catizen"}
 {"s":"CC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Canton","a":"canton-network"}
+{"s":"CCD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Concordium","a":"concordium"}
 {"s":"CFG-USD","m":"crypto","t":"crypto","c":"USD","ne":"Centrifuge","a":"centrifuge-2"}
 {"s":"CFX-USD","m":"crypto","t":"crypto","c":"USD","ne":"Conflux","a":"conflux-token"}
 {"s":"CGUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Cygnus Finance Global USD","a":"cygnus-finance-global-usd"}
@@ -8052,6 +8078,7 @@
 {"s":"CROSS-USD","m":"crypto","t":"crypto","c":"USD","ne":"CROSS","a":"cross-2"}
 {"s":"CRV-USD","m":"crypto","t":"crypto","c":"USD","ne":"Curve DAO","a":"curve-dao-token"}
 {"s":"CRVUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"crvUSD","a":"crvusd"}
+{"s":"CSPR-USD","m":"crypto","t":"crypto","c":"USD","ne":"Casper Network","a":"casper-network"}
 {"s":"CUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Cap USD","a":"cap-usd"}
 {"s":"CVX-USD","m":"crypto","t":"crypto","c":"USD","ne":"Convex Finance","a":"convex-finance"}
 {"s":"CYDX-USD","m":"crypto","t":"crypto","c":"USD","ne":"CyberDEX","a":"cyberdex"}
@@ -8061,16 +8088,18 @@
 {"s":"DATA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Data Network","a":"story-2"}
 {"s":"DBR-USD","m":"crypto","t":"crypto","c":"USD","ne":"deBridge","a":"debridge"}
 {"s":"DCR-USD","m":"crypto","t":"crypto","c":"USD","ne":"Decred","a":"decred"}
-{"s":"DEGEN-USD","m":"crypto","t":"crypto","c":"USD","ne":"Degen","a":"degen-base"}
 {"s":"DEXE-USD","m":"crypto","t":"crypto","c":"USD","ne":"DeXe","a":"dexe"}
 {"s":"DGB-USD","m":"crypto","t":"crypto","c":"USD","ne":"DigiByte","a":"digibyte"}
 {"s":"DIEM-USD","m":"crypto","t":"crypto","c":"USD","ne":"Diem","a":"diem"}
 {"s":"DOG-USD","m":"crypto","t":"crypto","c":"USD","ne":"Dog (Bitcoin)","a":"dog-go-to-the-moon-rune"}
 {"s":"DOGE-USD","m":"crypto","t":"crypto","c":"USD","ne":"Dogecoin","nc":"狗狗币","p":"gougoubi","pi":"ggb","a":"dogecoin"}
+{"s":"DOGO-USD","m":"crypto","t":"crypto","c":"USD","ne":"DogBull","a":"dogbull"}
 {"s":"DOLA-USD","m":"crypto","t":"crypto","c":"USD","ne":"DOLA","a":"dola-usd"}
+{"s":"DOS-USD","m":"crypto","t":"crypto","c":"USD","ne":"DAPPOS","a":"dappos"}
 {"s":"DOT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Polkadot","nc":"波卡","p":"boka","pi":"bk","a":"polkadot"}
 {"s":"DRV-USD","m":"crypto","t":"crypto","c":"USD","ne":"Derive","a":"derive"}
 {"s":"DUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"StandX DUSD","a":"standx-dusd"}
+{"s":"DUSK-USD","m":"crypto","t":"crypto","c":"USD","ne":"DUSK","a":"dusk-network"}
 {"s":"DYDX-USD","m":"crypto","t":"crypto","c":"USD","ne":"dYdX","a":"dydx-chain"}
 {"s":"EDGE-USD","m":"crypto","t":"crypto","c":"USD","ne":"edgeX","a":"edgex"}
 {"s":"EGLD-USD","m":"crypto","t":"crypto","c":"USD","ne":"MultiversX","a":"elrond-erd-2"}
@@ -8105,7 +8134,8 @@
 {"s":"FLOW-USD","m":"crypto","t":"crypto","c":"USD","ne":"Flow","a":"flow"}
 {"s":"FLR-USD","m":"crypto","t":"crypto","c":"USD","ne":"Flare","a":"flare-networks"}
 {"s":"FLUID-USD","m":"crypto","t":"crypto","c":"USD","ne":"Fluid","a":"instadapp"}
-{"s":"FM-USD","m":"crypto","t":"crypto","c":"USD","ne":"Full Moon","a":"full-moon"}
+{"s":"FO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Official FO","a":"official-fo"}
+{"s":"FONQ-USD","m":"crypto","t":"crypto","c":"USD","ne":"FONQ","a":"fonq"}
 {"s":"FORM-USD","m":"crypto","t":"crypto","c":"USD","ne":"Four","a":"four"}
 {"s":"FRAX-USD","m":"crypto","t":"crypto","c":"USD","ne":"Legacy Frax Dollar","a":"frax"}
 {"s":"FRXUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Frax USD","a":"frax-usd"}
@@ -8115,10 +8145,11 @@
 {"s":"FXUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"f(x) Protocol fxUSD","a":"f-x-protocol-fxusd"}
 {"s":"GALA-USD","m":"crypto","t":"crypto","c":"USD","ne":"GALA","a":"gala"}
 {"s":"GAS-USD","m":"crypto","t":"crypto","c":"USD","ne":"Gas","a":"gas"}
+{"s":"GCOIN-USD","m":"crypto","t":"crypto","c":"USD","ne":"Playnance","a":"playnance"}
 {"s":"GENIUS-USD","m":"crypto","t":"crypto","c":"USD","ne":"Genius","a":"genius-3"}
 {"s":"GEOD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Geodnet","a":"geodnet"}
+{"s":"GGBR-USD","m":"crypto","t":"crypto","c":"USD","ne":"Goldfish Gold","a":"goldfish-gold"}
 {"s":"GHO-USD","m":"crypto","t":"crypto","c":"USD","ne":"GHO","a":"gho"}
-{"s":"GLIDR-USD","m":"crypto","t":"crypto","c":"USD","ne":"Glidr","a":"glidr"}
 {"s":"GLM-USD","m":"crypto","t":"crypto","c":"USD","ne":"Golem","a":"golem"}
 {"s":"GMX-USD","m":"crypto","t":"crypto","c":"USD","ne":"GMX","a":"gmx"}
 {"s":"GNO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Gnosis","a":"gnosis"}
@@ -8139,10 +8170,8 @@
 {"s":"HOT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Holo","a":"holotoken"}
 {"s":"HTX-USD","m":"crypto","t":"crypto","c":"USD","ne":"HTX DAO","a":"htx-dao"}
 {"s":"HYPE-USD","m":"crypto","t":"crypto","c":"USD","ne":"Hyperliquid","a":"hyperliquid"}
-{"s":"ICNT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Impossible Cloud Network Token","a":"impossible-cloud-network-token"}
 {"s":"ICP-USD","m":"crypto","t":"crypto","c":"USD","ne":"Internet Computer","a":"internet-computer"}
 {"s":"IMX-USD","m":"crypto","t":"crypto","c":"USD","ne":"Immutable","a":"immutable-x"}
-{"s":"INC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Incrypt","a":"incrypt"}
 {"s":"INJ-USD","m":"crypto","t":"crypto","c":"USD","ne":"Injective","a":"injective-protocol"}
 {"s":"IO-USD","m":"crypto","t":"crypto","c":"USD","ne":"io.net","a":"io"}
 {"s":"IOTA-USD","m":"crypto","t":"crypto","c":"USD","ne":"IOTA","a":"iota"}
@@ -8170,12 +8199,12 @@
 {"s":"KOGE-USD","m":"crypto","t":"crypto","c":"USD","ne":"KOGE","a":"bnb48-club-token"}
 {"s":"KSM-USD","m":"crypto","t":"crypto","c":"USD","ne":"Kusama","a":"kusama"}
 {"s":"KTA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Keeta","a":"keeta"}
+{"s":"LAB-USD","m":"crypto","t":"crypto","c":"USD","ne":"LAB","a":"lab"}
 {"s":"LBT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Law Blocks AI","a":"law-blocks"}
 {"s":"LDO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Lido DAO","a":"lido-dao"}
 {"s":"LEO-USD","m":"crypto","t":"crypto","c":"USD","ne":"LEO Token","a":"leo-token"}
 {"s":"LINEA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Linea","a":"linea"}
 {"s":"LINK-USD","m":"crypto","t":"crypto","c":"USD","ne":"Chainlink","nc":"Chainlink","p":"chainlink","pi":"c","a":"chainlink"}
-{"s":"LION-USD","m":"crypto","t":"crypto","c":"USD","ne":"Loaded Lions","a":"loaded-lions"}
 {"s":"LISUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Lista USD","a":"helio-protocol-hay"}
 {"s":"LIT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Lighter","a":"lighter"}
 {"s":"LPT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Livepeer","a":"livepeer"}
@@ -8194,7 +8223,6 @@
 {"s":"MGLOBAL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Midas Fasanara Global","a":"midas-fasanara-global"}
 {"s":"MHORSE-USD","m":"crypto","t":"crypto","c":"USD","ne":"MEME HORSE","a":"meme-horse"}
 {"s":"MINA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Mina Protocol","a":"mina-protocol"}
-{"s":"MMT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Momentum","a":"momentum-3"}
 {"s":"MNT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Mantle","a":"mantle"}
 {"s":"MON-USD","m":"crypto","t":"crypto","c":"USD","ne":"Monad","a":"monad"}
 {"s":"MORPHO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Morpho","a":"morpho"}
@@ -8203,7 +8231,6 @@
 {"s":"MUB-USD","m":"crypto","t":"crypto","c":"USD","ne":"Micron Technology (bStocks Tokenized Stock)","a":"micron-technology-bstock"}
 {"s":"MUON-USD","m":"crypto","t":"crypto","c":"USD","ne":"Micron Technology (Ondo Tokenized Stock)","a":"micron-technology-ondo-tokenized-stock"}
 {"s":"MX-USD","m":"crypto","t":"crypto","c":"USD","ne":"MX","a":"mx-token"}
-{"s":"MYX-USD","m":"crypto","t":"crypto","c":"USD","ne":"MYX Finance","a":"myx-finance"}
 {"s":"NEAR-USD","m":"crypto","t":"crypto","c":"USD","ne":"NEAR Protocol","nc":"NEAR","p":"near","pi":"n","a":"near"}
 {"s":"NEO-USD","m":"crypto","t":"crypto","c":"USD","ne":"NEO","a":"neo"}
 {"s":"NEX-USD","m":"crypto","t":"crypto","c":"USD","ne":"Nexus","a":"nexus-4"}
@@ -8215,6 +8242,7 @@
 {"s":"NOPAL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Nest BlackOpal LiquidStone II Vault","a":"nest-blackopal-liquidstone-ii-vault"}
 {"s":"NPC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Non-Playable Coin","a":"non-playable-coin"}
 {"s":"NUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Neutrl USD","a":"nusd-2"}
+{"s":"NVDAON-USD","m":"crypto","t":"crypto","c":"USD","ne":"NVIDIA (Ondo Tokenized Stock)","a":"nvidia-ondo-tokenized-stock"}
 {"s":"NXM-USD","m":"crypto","t":"crypto","c":"USD","ne":"Nexus Mutual","a":"nxm"}
 {"s":"NXPC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Nexpace","a":"nexpace"}
 {"s":"O-USD","m":"crypto","t":"crypto","c":"USD","ne":"o1.exchange","a":"o1-exchange"}
@@ -8225,16 +8253,17 @@
 {"s":"ONDO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Ondo","a":"ondo-finance"}
 {"s":"ONYC-USD","m":"crypto","t":"crypto","c":"USD","ne":"OnRe Tokenized Reinsurance","a":"onyc"}
 {"s":"OP-USD","m":"crypto","t":"crypto","c":"USD","ne":"Optimism","nc":"Optimism","p":"optimism","pi":"o","a":"optimism"}
-{"s":"OPEN-USD","m":"crypto","t":"crypto","c":"USD","ne":"OpenLedger","a":"openledger-2"}
 {"s":"ORCA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Orca","a":"orca"}
 {"s":"ORDI-USD","m":"crypto","t":"crypto","c":"USD","ne":"ORDI","a":"ordinals"}
 {"s":"OUSG-USD","m":"crypto","t":"crypto","c":"USD","ne":"Ondo Short-Term U.S. Government Bond Fund","a":"ousg"}
 {"s":"OZA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Ozapay","a":"ozapay"}
 {"s":"OZO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Ozone Chain","a":"ozone-chain"}
 {"s":"PAXG-USD","m":"crypto","t":"crypto","c":"USD","ne":"PAX Gold","a":"pax-gold"}
+{"s":"PC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Pentagon Chain","a":"pentagon-chain"}
 {"s":"PC0000015-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tradable NA Third Party Online Merchant SSTN","a":"tradable-na-third-party-online-merchant-sstn"}
 {"s":"PC0000019-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tradable North America PoS Lender SSTN","a":"tradable-north-america-pos-lender-sstn"}
 {"s":"PC0000023-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tradable Singapore Fintech SSL","a":"tradable-singapore-fintech-ssl-2"}
+{"s":"PC0000027-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tradable LatAm BNPL SSTN","a":"tradable-latam-bnpl-sstn"}
 {"s":"PC0000031-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tradable NA Rent Financing Platform SSTN","a":"tradable-na-rent-financing-platform-sstn"}
 {"s":"PC0000033-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tradable APAC Diversified Finance Provider SSTN","a":"tradable-apac-diversified-finance-provider-sstn"}
 {"s":"PC0000049-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tradable Eu/LatAm PoS Financing SSTL","a":"tradable-eu-latam-pos-financing-sstl"}
@@ -8243,23 +8272,23 @@
 {"s":"PC0000085-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tradable LatAm Middle-Market Lender SSTL","a":"tradable-latam-middle-market-lender-sstl"}
 {"s":"PC0000097-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tradable LatAm Fintech SSTN","a":"tradable-latam-fintech-sstn"}
 {"s":"PC0000101-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tradable NA Post-Settlement Legal Financing Receivables","a":"na-post-settlement-legal-financing-receivables"}
-{"s":"PEANUT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Peanut","a":"peanut-2-2"}
+{"s":"PC0016245-USD","m":"crypto","t":"crypto","c":"USD","ne":"NA Capital-as-a-Service SSTN","a":"na-capital-as-a-service-sstn"}
 {"s":"PENDLE-USD","m":"crypto","t":"crypto","c":"USD","ne":"Pendle","a":"pendle"}
 {"s":"PENGU-USD","m":"crypto","t":"crypto","c":"USD","ne":"Pudgy Penguins","a":"pudgy-penguins"}
-{"s":"PEOPLE-USD","m":"crypto","t":"crypto","c":"USD","ne":"ConstitutionDAO","a":"constitutiondao"}
 {"s":"PEPE-USD","m":"crypto","t":"crypto","c":"USD","ne":"Pepe","a":"pepe"}
 {"s":"PGOLD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Pleasing Gold","a":"pleasing-gold"}
 {"s":"PI-USD","m":"crypto","t":"crypto","c":"USD","ne":"Pi Network","a":"pi-network"}
 {"s":"PIEVERSE-USD","m":"crypto","t":"crypto","c":"USD","ne":"Pieverse","a":"pieverse"}
 {"s":"PLUME-USD","m":"crypto","t":"crypto","c":"USD","ne":"Plume","a":"plume"}
 {"s":"PMUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Precious Metals USD","a":"precious-metals-usd"}
+{"s":"PNUT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Peanut the Squirrel","a":"peanut-the-squirrel"}
 {"s":"POL-USD","m":"crypto","t":"crypto","c":"USD","ne":"POL (ex-MATIC)","a":"polygon-ecosystem-token"}
 {"s":"POPCAT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Popcat","a":"popcat"}
 {"s":"PRIZE-USD","m":"crypto","t":"crypto","c":"USD","ne":"Prize Protocol","a":"prize-protocol"}
-{"s":"PRL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Pearl","a":"pearl-2"}
+{"s":"PRL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Perle","a":"perle"}
 {"s":"PROS-USD","m":"crypto","t":"crypto","c":"USD","ne":"Pharos","a":"pharos-network"}
 {"s":"PUMP-USD","m":"crypto","t":"crypto","c":"USD","ne":"Pump.fun","a":"pump-fun"}
-{"s":"PYBOBO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Capybobo","a":"capybobo"}
+{"s":"PURR-USD","m":"crypto","t":"crypto","c":"USD","ne":"Purr","a":"purr-2"}
 {"s":"PYTH-USD","m":"crypto","t":"crypto","c":"USD","ne":"Pyth Network","a":"pyth-network"}
 {"s":"PYUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"PayPal USD","a":"paypal-usd"}
 {"s":"Q-USD","m":"crypto","t":"crypto","c":"USD","ne":"Quack AI","a":"quack-ai"}
@@ -8274,7 +8303,7 @@
 {"s":"RAY-USD","m":"crypto","t":"crypto","c":"USD","ne":"Raydium","a":"raydium"}
 {"s":"RE-USD","m":"crypto","t":"crypto","c":"USD","ne":"RE","a":"re"}
 {"s":"REAL-USD","m":"crypto","t":"crypto","c":"USD","ne":"RealLink","a":"reallink"}
-{"s":"RECALL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Recall","a":"recall"}
+{"s":"RED-USD","m":"crypto","t":"crypto","c":"USD","ne":"RedStone","a":"redstone-oracles"}
 {"s":"REKT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Rekt","a":"rekt-4"}
 {"s":"RENDER-USD","m":"crypto","t":"crypto","c":"USD","ne":"Render","a":"render-token"}
 {"s":"REQ-USD","m":"crypto","t":"crypto","c":"USD","ne":"Request","a":"request-network"}
@@ -8292,10 +8321,9 @@
 {"s":"SAFE-USD","m":"crypto","t":"crypto","c":"USD","ne":"SAFEbit","a":"safecoin"}
 {"s":"SAFO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Spiko Amundi Overnight Swap Fund","a":"safo"}
 {"s":"SAND-USD","m":"crypto","t":"crypto","c":"USD","ne":"The Sandbox","a":"the-sandbox"}
-{"s":"SAPIEN-USD","m":"crypto","t":"crypto","c":"USD","ne":"Sapien","a":"sapien-2"}
-{"s":"SCOR-USD","m":"crypto","t":"crypto","c":"USD","ne":"Scor","a":"scor"}
 {"s":"SEI-USD","m":"crypto","t":"crypto","c":"USD","ne":"Sei","a":"sei-network"}
 {"s":"SENT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Sentient","a":"sentient"}
+{"s":"SENTIS-USD","m":"crypto","t":"crypto","c":"USD","ne":"SentismAI","a":"sentismai"}
 {"s":"SFP-USD","m":"crypto","t":"crypto","c":"USD","ne":"SafePal","a":"safepal"}
 {"s":"SHFL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Shuffle","a":"shuffle-2"}
 {"s":"SHIB-USD","m":"crypto","t":"crypto","c":"USD","ne":"Shiba Inu","nc":"柴犬币","p":"chaiquanbi","pi":"cqb","a":"shiba-inu"}
@@ -8310,7 +8338,6 @@
 {"s":"SN44-USD","m":"crypto","t":"crypto","c":"USD","ne":"Score","a":"score"}
 {"s":"SN51-USD","m":"crypto","t":"crypto","c":"USD","ne":"lium","a":"celium"}
 {"s":"SN64-USD","m":"crypto","t":"crypto","c":"USD","ne":"Chutes","a":"chutes"}
-{"s":"SNDKB-USD","m":"crypto","t":"crypto","c":"USD","ne":"SanDisk (bStocks Tokenized Stock)","a":"sandisk-bstocks-tokenized-stock"}
 {"s":"SNX-USD","m":"crypto","t":"crypto","c":"USD","ne":"Synthetix","a":"havven"}
 {"s":"SOL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Solana","nc":"索拉纳","p":"suolana","pi":"sln","a":"solana"}
 {"s":"SOON-USD","m":"crypto","t":"crypto","c":"USD","ne":"SOON","a":"soon-2"}
@@ -8324,7 +8351,6 @@
 {"s":"STABLE-USD","m":"crypto","t":"crypto","c":"USD","ne":"​​Stable","a":"stable-2"}
 {"s":"STAC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Securitize Tokenized AAA CLO Fund","a":"securitize-tokenized-aaa-clo-fund"}
 {"s":"STAU-USD","m":"crypto","t":"crypto","c":"USD","ne":"STAU","a":"stau"}
-{"s":"STONKBROKER-USD","m":"crypto","t":"crypto","c":"USD","ne":"StonkBroker","a":"stonkbroker"}
 {"s":"STRCX-USD","m":"crypto","t":"crypto","c":"USD","ne":"Strategy PP Variable xStock","a":"strategy-pp-variable-xstock"}
 {"s":"STRK-USD","m":"crypto","t":"crypto","c":"USD","ne":"Starknet","a":"starknet"}
 {"s":"STX-USD","m":"crypto","t":"crypto","c":"USD","ne":"Stacks","a":"blockstack"}
@@ -8343,7 +8369,6 @@
 {"s":"THETA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Theta Network","a":"theta-token"}
 {"s":"TIA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Celestia","a":"celestia"}
 {"s":"TIBBIR-USD","m":"crypto","t":"crypto","c":"USD","ne":"Ribbita by Virtuals","a":"ribbita-by-virtuals"}
-{"s":"TORN-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tornado Cash","a":"tornado-cash"}
 {"s":"TOSHI-USD","m":"crypto","t":"crypto","c":"USD","ne":"Toshi","a":"toshi"}
 {"s":"TRAC-USD","m":"crypto","t":"crypto","c":"USD","ne":"OriginTrail","a":"origintrail"}
 {"s":"TRUMP-USD","m":"crypto","t":"crypto","c":"USD","ne":"Official Trump","a":"official-trump"}
@@ -8352,7 +8377,6 @@
 {"s":"TSLAX-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tesla xStock","a":"tesla-xstock"}
 {"s":"TURBO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Turbo","a":"turbo"}
 {"s":"TUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"TrueUSD","a":"true-usd"}
-{"s":"TUT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tutorial","a":"tutorial"}
 {"s":"TWT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Trust Wallet","a":"trust-wallet-token"}
 {"s":"U-USD","m":"crypto","t":"crypto","c":"USD","ne":"United Stables","a":"united-stables"}
 {"s":"UAI-USD","m":"crypto","t":"crypto","c":"USD","ne":"UnifAI Network","a":"unifai-network"}
@@ -8360,7 +8384,6 @@
 {"s":"ULTIMA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Ultima","a":"ultima"}
 {"s":"UNI-USD","m":"crypto","t":"crypto","c":"USD","ne":"Uniswap","nc":"Uniswap","p":"uniswap","pi":"u","a":"uniswap"}
 {"s":"UP-USD","m":"crypto","t":"crypto","c":"USD","ne":"Unitas","a":"unitas"}
-{"s":"UQC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Uquid Coin","a":"uquid-coin"}
 {"s":"US-USD","m":"crypto","t":"crypto","c":"USD","ne":"Talus","a":"talus"}
 {"s":"USAT-USD","m":"crypto","t":"crypto","c":"USD","ne":"USAT","a":"usa"}
 {"s":"USD0-USD","m":"crypto","t":"crypto","c":"USD","ne":"Usual USD","a":"usual-usd"}
@@ -8380,15 +8403,13 @@
 {"s":"USDT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tether","nc":"泰达币","p":"taidabi","pi":"tdb","a":"tether"}
 {"s":"USDTB-USD","m":"crypto","t":"crypto","c":"USD","ne":"USDtb","a":"usdtb"}
 {"s":"USDU-USD","m":"crypto","t":"crypto","c":"USD","ne":"USDu","a":"usdu"}
-{"s":"USDX-USD","m":"crypto","t":"crypto","c":"USD","ne":"USDX","a":"usdx"}
 {"s":"USDY-USD","m":"crypto","t":"crypto","c":"USD","ne":"Ondo US Dollar Yield","a":"ondo-us-dollar-yield"}
+{"s":"USELESS-USD","m":"crypto","t":"crypto","c":"USD","ne":"Useless Coin","a":"useless-3"}
 {"s":"USTB-USD","m":"crypto","t":"crypto","c":"USD","ne":"Invesco Short Duration US Government Securities Fund","a":"superstate-short-duration-us-government-securities-fund-ustb"}
 {"s":"USTBL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Spiko US T-Bills Money Market Fund","a":"spiko-us-t-bills-money-market-fund"}
-{"s":"USX-USD","m":"crypto","t":"crypto","c":"USD","ne":"USX","a":"usx"}
 {"s":"USYC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Circle USYC","a":"hashnote-usyc"}
 {"s":"UUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Unity USD","a":"unity-usd"}
 {"s":"VBILL-USD","m":"crypto","t":"crypto","c":"USD","ne":"VanEck Treasury Fund","a":"vaneck-treasury-fund"}
-{"s":"VCNT-USD","m":"crypto","t":"crypto","c":"USD","ne":"ViciCoin","a":"vicicoin"}
 {"s":"VELO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Velo","a":"velo"}
 {"s":"VELVET-USD","m":"crypto","t":"crypto","c":"USD","ne":"Velvet","a":"velvet"}
 {"s":"VET-USD","m":"crypto","t":"crypto","c":"USD","ne":"VeChain","a":"vechain"}
@@ -8400,11 +8421,11 @@
 {"s":"WBT-USD","m":"crypto","t":"crypto","c":"USD","ne":"WhiteBIT Coin","a":"whitebit"}
 {"s":"WEMIX-USD","m":"crypto","t":"crypto","c":"USD","ne":"WEMIX","a":"wemix-token"}
 {"s":"WIF-USD","m":"crypto","t":"crypto","c":"USD","ne":"dogwifhat","a":"dogwifcoin"}
+{"s":"WKC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Wiki Cat","a":"wiki-cat"}
 {"s":"WLD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Worldcoin","a":"worldcoin-wld"}
 {"s":"WLFI-USD","m":"crypto","t":"crypto","c":"USD","ne":"World Liberty Financial","a":"world-liberty-financial"}
 {"s":"WM-USD","m":"crypto","t":"crypto","c":"USD","ne":"WrappedM by M0","a":"wrappedm-by-m0"}
 {"s":"WOULD-USD","m":"crypto","t":"crypto","c":"USD","ne":"would","a":"would"}
-{"s":"XAN-USD","m":"crypto","t":"crypto","c":"USD","ne":"Anoma","a":"anoma"}
 {"s":"XAUM-USD","m":"crypto","t":"crypto","c":"USD","ne":"Matrixdock Gold","a":"matrixdock-gold"}
 {"s":"XAUT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tether Gold","a":"tether-gold"}
 {"s":"XCN-USD","m":"crypto","t":"crypto","c":"USD","ne":"Onyxcoin","a":"chain-2"}
@@ -8422,14 +8443,17 @@
 {"s":"XTZ-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tezos","a":"tezos"}
 {"s":"XUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"StraitsX XUSD","a":"straitsx-xusd"}
 {"s":"XVS-USD","m":"crypto","t":"crypto","c":"USD","ne":"Venus","a":"venus"}
+{"s":"XYO-USD","m":"crypto","t":"crypto","c":"USD","ne":"XYO Network","a":"xyo-network"}
 {"s":"YFI-USD","m":"crypto","t":"crypto","c":"USD","ne":"yearn.finance","a":"yearn-finance"}
 {"s":"YLDS-USD","m":"crypto","t":"crypto","c":"USD","ne":"YLDS","a":"ylds"}
 {"s":"YZY-USD","m":"crypto","t":"crypto","c":"USD","ne":"YZY","a":"yzy"}
 {"s":"ZAMA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Zama","a":"zama"}
 {"s":"ZANO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Zano","a":"zano"}
 {"s":"ZBCN-USD","m":"crypto","t":"crypto","c":"USD","ne":"Zebec Network","a":"zebec-network"}
+{"s":"ZCHF-USD","m":"crypto","t":"crypto","c":"USD","ne":"Frankencoin","a":"frankencoin"}
 {"s":"ZEC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Zcash","a":"zcash"}
 {"s":"ZEN-USD","m":"crypto","t":"crypto","c":"USD","ne":"Horizen","a":"zencash"}
+{"s":"ZEREBRO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Zerebro","a":"zerebro"}
 {"s":"ZETA-USD","m":"crypto","t":"crypto","c":"USD","ne":"ZetaChain","a":"zetachain"}
 {"s":"ZIG-USD","m":"crypto","t":"crypto","c":"USD","ne":"ZIGChain","a":"zignaly"}
 {"s":"ZIL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Zilliqa","a":"zilliqa"}
@@ -8454,7 +8478,7 @@
 {"s":"0019.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SWIRE PACIFIC A"}
 {"s":"0020.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SENSETIME-W"}
 {"s":"0021.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GREAT CHI HLDGS"}
-{"s":"0022.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MEXAN-NEW"}
+{"s":"0022.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MEXAN"}
 {"s":"0023.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BANK OF E ASIA"}
 {"s":"0025.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHEVALIER INT'L"}
 {"s":"0026.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA MOTOR BUS"}
@@ -8475,6 +8499,7 @@
 {"s":"0046.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"COMPUTER & TECH"}
 {"s":"0048.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"C AUTO INT DECO"}
 {"s":"0050.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HK FERRY (HOLD)"}
+{"s":"0051.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HARBOUR CENTRE"}
 {"s":"0052.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FAIRWOOD HOLD"}
 {"s":"0053.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GUOCO GROUP"}
 {"s":"0055.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NEWAY GROUP"}
@@ -8513,13 +8538,14 @@
 {"s":"0093.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZERO FINTECH"}
 {"s":"0094.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GREENHEART GP"}
 {"s":"0095.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LVGEM CHINA"}
+{"s":"0096.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YUSEI"}
 {"s":"0097.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HENDERSON INV"}
 {"s":"0098.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"XINGFA ALUM"}
+{"s":"0099.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WONG'S INT'L"}
 {"s":"0100.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MINIMAX-W"}
 {"s":"0101.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HANG LUNG PPT"}
 {"s":"0103.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHOUGANG CENT"}
 {"s":"0104.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ASIA COMM HOLD"}
-{"s":"0105.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ASSO INT HOTELS"}
 {"s":"0107.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SICHUAN EXPRESS"}
 {"s":"0108.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SR MEDICAL"}
 {"s":"0110.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA FORTUNE"}
@@ -8531,7 +8557,6 @@
 {"s":"0118.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"COSMOS MACH"}
 {"s":"0119.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"POLY PROPERTY"}
 {"s":"0120.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"COSMOPOL INT'L"}
-{"s":"0122.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CROCODILE"}
 {"s":"0123.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YUEXIU PROPERTY"}
 {"s":"0124.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GD LAND"}
 {"s":"0125.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SUN HING VISION"}
@@ -8545,7 +8570,7 @@
 {"s":"0133.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA MERCHANTS"}
 {"s":"0135.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KUNLUN ENERGY"}
 {"s":"0136.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA RUYI"}
-{"s":"0138.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CCT FORTIS"}
+{"s":"0137.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JINHUI HOLDINGS"}
 {"s":"0139.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SMART FISH"}
 {"s":"0142.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FIRST PACIFIC"}
 {"s":"0144.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA MER PORT"}
@@ -8577,7 +8602,7 @@
 {"s":"0177.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JIANGSU EXPRESS"}
 {"s":"0178.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SA SA INT'L"}
 {"s":"0179.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JOHNSON ELEC H"}
-{"s":"0181.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FUJIAN HOLDINGS"}
+{"s":"0180.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KADER HOLDINGS"}
 {"s":"0182.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CONCORD NE"}
 {"s":"0183.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WINFULL GP"}
 {"s":"0184.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KECK SENG INV"}
@@ -8601,15 +8626,15 @@
 {"s":"0210.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DAPHNE INT'L"}
 {"s":"0211.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"STYLAND HOLD"}
 {"s":"0212.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NANYANG HOLD"}
-{"s":"0214.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ASIA ORIENT"}
+{"s":"0213.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NATIONAL ELEC H"}
 {"s":"0215.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HUTCHTEL HK"}
+{"s":"0216.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINNEY INV"}
 {"s":"0217.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA CHENGTONG"}
 {"s":"0218.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SWHYHK"}
+{"s":"0219.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHUNHO PROPERTY"}
 {"s":"0220.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"U-PRESID CHINA"}
 {"s":"0222.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MIN XIN HOLD"}
 {"s":"0223.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ELIFE HLDGS"}
-{"s":"0224.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PIONEER GLOBAL"}
-{"s":"0225.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"POKFULAM"}
 {"s":"0227.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FIRST SHANGHAI"}
 {"s":"0228.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA ENERGY"}
 {"s":"0229.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"RAYMOND IND"}
@@ -8627,8 +8652,6 @@
 {"s":"0245.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA VERED FIN"}
 {"s":"0248.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HKC INT'L HOLD"}
 {"s":"0251.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SEA HOLDINGS"}
-{"s":"0252.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SE ASIA PPT"}
-{"s":"0253.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHUNHO HOLDINGS"}
 {"s":"0254.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NUR HOLDINGS"}
 {"s":"0255.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LUNG KEE"}
 {"s":"0256.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CITYCHAMP"}
@@ -8638,7 +8661,6 @@
 {"s":"0261.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GBA HOLDINGS"}
 {"s":"0262.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DESON DEV INT'L"}
 {"s":"0264.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CN INT DEV CORP"}
-{"s":"0265.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GANGYU SERVICES"}
 {"s":"0267.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CITIC"}
 {"s":"0268.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KINGDEE INT'L"}
 {"s":"0269.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CRTG"}
@@ -8649,6 +8671,7 @@
 {"s":"0279.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ARTA TECHFIN"}
 {"s":"0280.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KING FOOK HOLD"}
 {"s":"0285.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BYD ELECTRONIC"}
+{"s":"0287.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WINFAIR INV"}
 {"s":"0288.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WH GROUP"}
 {"s":"0289.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WING ON CO"}
 {"s":"0290.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GOFINTECH QUANT"}
@@ -8667,7 +8690,6 @@
 {"s":"0306.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KWOON CHUNG BUS"}
 {"s":"0308.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA TRAVEL HK"}
 {"s":"0309.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"XH NEWS MEDIA"}
-{"s":"0310.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PROSP INV HOLD"}
 {"s":"0311.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LUEN THAI"}
 {"s":"0312.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHIRBLE STORE"}
 {"s":"0313.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"RICHLY FIELD"}
@@ -8686,7 +8708,7 @@
 {"s":"0329.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"OCI INTL"}
 {"s":"0330.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ESPRIT HOLDINGS"}
 {"s":"0331.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FSE LIFESTYLE"}
-{"s":"0332.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YUANHENGGAS-NEW"}
+{"s":"0332.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YUANHENG GAS"}
 {"s":"0333.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TOP FORM INT'L"}
 {"s":"0334.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CH DISPLAY OPT"}
 {"s":"0335.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"UPBEST GROUP"}
@@ -8718,6 +8740,7 @@
 {"s":"0369.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WING TAI PPT"}
 {"s":"0370.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HK ROBOTICS"}
 {"s":"0371.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BJ ENT WATER"}
+{"s":"0372.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PT INTL DEV"}
 {"s":"0373.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ALLIED GROUP"}
 {"s":"0375.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YGM TRADING"}
 {"s":"0376.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YUNFENG FIN"}
@@ -8732,7 +8755,6 @@
 {"s":"0386.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SINOPEC CORP"}
 {"s":"0387.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LEEPORT(HOLD)"}
 {"s":"0388.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HKEX"}
-{"s":"0389.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TONTINE WINES"}
 {"s":"0390.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA RAILWAY"}
 {"s":"0391.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MEI AH ENTER"}
 {"s":"0392.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BEIJING ENT"}
@@ -8747,7 +8769,6 @@
 {"s":"0406.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YAU LEE HOLD"}
 {"s":"0408.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YIP'S CHEMICAL"}
 {"s":"0410.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SOHO CHINA"}
-{"s":"0411.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LAM SOON (HK)"}
 {"s":"0412.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SDHG"}
 {"s":"0413.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SC HOLDINGS"}
 {"s":"0417.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TSE SUI LUEN"}
@@ -8780,11 +8801,11 @@
 {"s":"0470.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WUXI LEAD"}
 {"s":"0471.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SILKWAVE INC"}
 {"s":"0472.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NEW SILKROAD"}
+{"s":"0474.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ACESO LIFE SCI"}
 {"s":"0475.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CENTRAL DEV H"}
 {"s":"0476.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"EV DYNAMICS"}
 {"s":"0480.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HKR INT'L"}
 {"s":"0482.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SANDMARTIN INTL"}
-{"s":"0483.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BAUHAUS INT'L"}
 {"s":"0484.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FORGAME"}
 {"s":"0485.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINASINOSTAR"}
 {"s":"0486.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"RUSAL"}
@@ -8805,16 +8826,16 @@
 {"s":"0512.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GRAND PHARMA"}
 {"s":"0513.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CONTINENTAL H"}
 {"s":"0517.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"COSCO SHIP INTL"}
-{"s":"0518.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TUNGTEX (HOLD)"}
 {"s":"0519.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NOVAUTEK"}
 {"s":"0520.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"XIABUXIABU"}
 {"s":"0521.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CWT INT'L"}
 {"s":"0522.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ASMPT"}
-{"s":"0524.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GW TERROIR-10K"}
+{"s":"0524.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GW TERROIR"}
 {"s":"0525.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GUANGSHEN RAIL"}
 {"s":"0526.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LISI GP HOLD"}
-{"s":"0527.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"RUIFENG RENEW"}
+{"s":"0527.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"RF GREEN EN AI"}
 {"s":"0528.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KINGDOM HOLDING"}
+{"s":"0529.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SIS INT'L"}
 {"s":"0532.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WKK INTL (HOLD)"}
 {"s":"0533.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GOLDLION HOLD"}
 {"s":"0535.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GEMDALE PPT"}
@@ -8841,7 +8862,6 @@
 {"s":"0567.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JSMART TECH"}
 {"s":"0568.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHANDONG MOLONG"}
 {"s":"0570.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TRAD CHI MED"}
-{"s":"0571.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ESUN HOLDINGS"}
 {"s":"0572.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FW HOLDINGS"}
 {"s":"0573.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TAO HEUNG HLDGS"}
 {"s":"0575.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"REGENT PACIFIC"}
@@ -8862,12 +8882,12 @@
 {"s":"0598.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SINOTRANS"}
 {"s":"0599.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"E. BON HOLDINGS"}
 {"s":"0600.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"AXERA"}
-{"s":"0601.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"REMT"}
 {"s":"0603.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA OIL & GAS"}
 {"s":"0604.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHENZHEN INVEST"}
 {"s":"0605.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"C FIN SERVICES"}
 {"s":"0606.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SCE CM"}
 {"s":"0607.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FULLSHARE"}
+{"s":"0608.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HIGH FASHION"}
 {"s":"0609.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TIANDE CHEMICAL"}
 {"s":"0610.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WAI KEE HOLD"}
 {"s":"0611.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CNE TECH CORP"}
@@ -8894,7 +8914,6 @@
 {"s":"0640.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"INFINITY DEV"}
 {"s":"0641.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHTC FONG'S INT"}
 {"s":"0643.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CARRY WEALTH"}
-{"s":"0645.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ARES ASIA"}
 {"s":"0646.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA ENV TEC"}
 {"s":"0648.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SOFTMEDX"}
 {"s":"0650.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PRODUCTIVE TECH"}
@@ -8904,7 +8923,6 @@
 {"s":"0657.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"G-VISION INT'L"}
 {"s":"0658.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"C TRANSMISSION"}
 {"s":"0659.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CTF SERVICES"}
-{"s":"0660.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WAI CHUN BIOTEC"}
 {"s":"0661.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CDAYENONFER"}
 {"s":"0662.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ASIA FINANCIAL"}
 {"s":"0664.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TONGSHIFU"}
@@ -8917,20 +8935,19 @@
 {"s":"0673.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA HEALTH"}
 {"s":"0674.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA TANGSHANG"}
 {"s":"0675.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"K & P INT'L"}
-{"s":"0676.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PEGASUS INT'L"}
 {"s":"0677.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GOLDEN RES DEV"}
 {"s":"0679.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ASIA TELE-NET"}
 {"s":"0681.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHI PEOPLE HOLD"}
 {"s":"0682.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHAODA MODERN"}
 {"s":"0683.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KERRY PPT"}
 {"s":"0684.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ALLAN INT'L"}
+{"s":"0685.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MEDIA CHINESE"}
 {"s":"0686.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BJ ENERGY INTL"}
 {"s":"0687.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TYSAN HOLDINGS"}
 {"s":"0688.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA OVERSEAS"}
 {"s":"0689.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"EPI (HOLDINGS)"}
 {"s":"0690.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"UNI-BIO GROUP"}
 {"s":"0691.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHANSHUI CEMENT"}
-{"s":"0693.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TAN CHONG INT'L"}
 {"s":"0694.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BEIJING AIRPORT"}
 {"s":"0695.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DONGWU CEMENT"}
 {"s":"0696.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TRAVELSKY TECH"}
@@ -8939,6 +8956,7 @@
 {"s":"0699.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JOYSON ELEC"}
 {"s":"0700.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TENCENT"}
 {"s":"0701.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CNT GROUP"}
+{"s":"0703.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FUTURE BRIGHT"}
 {"s":"0709.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GIORDANO INT'L"}
 {"s":"0710.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BOE VARITRONIX"}
 {"s":"0711.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ASIA ALLIED INF"}
@@ -8963,18 +8981,16 @@
 {"s":"0737.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BAY AREA DEV"}
 {"s":"0738.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LE SAUNDA"}
 {"s":"0743.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ASIA CEMENT CH"}
-{"s":"0745.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CN CULTURE GP"}
+{"s":"0745.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CN CULTURE-2000"}
 {"s":"0746.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"L & M CHEMICAL"}
 {"s":"0747.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHENYANG PUBLIC"}
 {"s":"0750.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SFSY ENERGY"}
 {"s":"0751.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SKYWORTH GROUP"}
 {"s":"0752.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PICO FAR EAST"}
 {"s":"0753.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"AIR CHINA"}
-{"s":"0755.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DEVGREAT"}
 {"s":"0756.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SUMMI"}
 {"s":"0757.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SOLARGIGA"}
 {"s":"0759.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CEC INT'L HOLD"}
-{"s":"0760.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TALENT PPT GP"}
 {"s":"0762.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA UNICOM"}
 {"s":"0763.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZTE"}
 {"s":"0764.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ETERNITY INV"}
@@ -8991,8 +9007,8 @@
 {"s":"0784.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"AILIFE INTL"}
 {"s":"0788.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA TOWER"}
 {"s":"0789.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ARTINI HLDG-NEW"}
-{"s":"0794.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"COME SURE GROUP"}
 {"s":"0797.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"7ROAD"}
+{"s":"0798.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CEOVU"}
 {"s":"0799.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"IGG"}
 {"s":"0800.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WERIDE-W"}
 {"s":"0804.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PINESTONE"}
@@ -9030,7 +9046,6 @@
 {"s":"0840.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TIANYE WATER"}
 {"s":"0841.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CASSAVA RES"}
 {"s":"0842.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LEOCH INT'L"}
-{"s":"0844.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GREATIME INTL"}
 {"s":"0846.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MINGFA GROUP"}
 {"s":"0848.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MAOYE INT'L"}
 {"s":"0851.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHENG YUAN HLDG"}
@@ -9061,7 +9076,6 @@
 {"s":"0883.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CNOOC"}
 {"s":"0884.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CIFI HOLD GP"}
 {"s":"0887.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"EMPEROR WATCH&J"}
-{"s":"0888.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BLOCKFIN HLDG"}
 {"s":"0889.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DATRONIX HOLD"}
 {"s":"0893.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINAVTM MINING"}
 {"s":"0894.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MAN YUE TECH"}
@@ -9088,6 +9102,7 @@
 {"s":"0921.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HISENSE HA"}
 {"s":"0922.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ANXIANYUAN CH"}
 {"s":"0923.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"IWS"}
+{"s":"0926.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BESUNYEN"}
 {"s":"0927.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FUJIKON IND"}
 {"s":"0928.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KING INTL INV"}
 {"s":"0929.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"IPE GROUP"}
@@ -9102,6 +9117,7 @@
 {"s":"0943.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZHONGZHENG INTL"}
 {"s":"0945.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MANULIFE-S"}
 {"s":"0947.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MOBI DEV"}
+{"s":"0948.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ALPHA PRO HLDGS"}
 {"s":"0950.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LEE'S PHARM"}
 {"s":"0951.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHAOWEI POWER"}
 {"s":"0952.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"QUAM PLUS FIN"}
@@ -9138,6 +9154,7 @@
 {"s":"1002.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"V.S. INT'L"}
 {"s":"1003.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HUANXI MEDIA"}
 {"s":"1004.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"C SMARTERENERGY"}
+{"s":"1005.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MATRIX HOLDINGS"}
 {"s":"1008.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LITU HOLDINGS"}
 {"s":"1009.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"INT'L ENT"}
 {"s":"1010.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SKY BLUE 11"}
@@ -9175,7 +9192,6 @@
 {"s":"1060.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DAMAI ENT"}
 {"s":"1061.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ESSEX BIO-TECH"}
 {"s":"1062.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CDB INT'L INV"}
-{"s":"1063.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SUNCORP TECH"}
 {"s":"1064.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZHONG HUA INT'L"}
 {"s":"1065.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TIANJIN CAPITAL"}
 {"s":"1066.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WEIGAO GROUP"}
@@ -9216,13 +9232,13 @@
 {"s":"1115.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"5100 XIZANG"}
 {"s":"1116.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HC TECH GP"}
 {"s":"1117.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CH MODERN D"}
-{"s":"1118.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GOLIK HOLDINGS"}
 {"s":"1119.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"IDREAMSKY"}
 {"s":"1120.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ARTS OPTICAL"}
 {"s":"1121.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GOLDENSOLAR"}
 {"s":"1122.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"QINGLING MOTORS"}
 {"s":"1123.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA-HK PHOTO"}
 {"s":"1124.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"COASTAL GL"}
+{"s":"1125.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LAI FUNG HOLD"}
 {"s":"1126.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DREAM INT'L"}
 {"s":"1127.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LION ROCK GROUP"}
 {"s":"1128.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WYNN MACAU"}
@@ -9245,6 +9261,7 @@
 {"s":"1156.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINANEWENERGY"}
 {"s":"1157.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZOOMLION"}
 {"s":"1159.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SMART DIGI TECH"}
+{"s":"1160.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GOLDSTONE CAP"}
 {"s":"1161.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WATER OASIS GP"}
 {"s":"1162.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LUMINA GROUP"}
 {"s":"1163.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ADTIGER CORP"}
@@ -9254,6 +9271,8 @@
 {"s":"1168.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"Z FIN"}
 {"s":"1170.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KINGMAKER"}
 {"s":"1171.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YANKUANG ENERGY"}
+{"s":"1172.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MAGNUSCONCORDIA"}
+{"s":"1173.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"VEEKO INT'L"}
 {"s":"1176.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZHUGUANG HOLD"}
 {"s":"1177.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SBP GROUP"}
 {"s":"1179.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HWORLD-S"}
@@ -9280,6 +9299,7 @@
 {"s":"1208.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MMG"}
 {"s":"1209.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA RES MIXC"}
 {"s":"1211.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BYD COMPANY"}
+{"s":"1213.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MOBICON GROUP"}
 {"s":"1215.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KAI YUAN HLDGS"}
 {"s":"1216.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZYBANK"}
 {"s":"1217.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CH INNOVATION"}
@@ -9288,6 +9308,7 @@
 {"s":"1223.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SYMPHONY HOLD"}
 {"s":"1224.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"C C LAND"}
 {"s":"1225.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LERADO FIN"}
+{"s":"1226.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CH INV FIN GP"}
 {"s":"1228.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CANBRIDGE-B"}
 {"s":"1229.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NAN NAN RES"}
 {"s":"1232.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GW TIANDI"}
@@ -9334,6 +9355,7 @@
 {"s":"1289.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SUNLIT SCI"}
 {"s":"1290.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA HUIRONG"}
 {"s":"1292.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CMA LOGISTICS"}
+{"s":"1298.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YUNNAN ENERGY"}
 {"s":"1299.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"AIA"}
 {"s":"1300.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TRIGIANT"}
 {"s":"1301.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"D&G TECH"}
@@ -9363,7 +9385,7 @@
 {"s":"1336.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NCI"}
 {"s":"1338.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BAWANG GROUP"}
 {"s":"1339.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PICC GROUP"}
-{"s":"1340.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HUISHENG I-NEW"}
+{"s":"1340.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HUISHENG INTL"}
 {"s":"1343.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WEI YUAN HLDG"}
 {"s":"1345.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SH PIONEER HLDG"}
 {"s":"1346.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LEVER STYLE"}
@@ -9377,6 +9399,7 @@
 {"s":"1358.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PW MEDTECH"}
 {"s":"1359.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA CINDA"}
 {"s":"1361.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"361 DEGREES"}
+{"s":"1362.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SIS MOBILE"}
 {"s":"1364.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GUMING"}
 {"s":"1368.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"XTEP INT'L"}
 {"s":"1370.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"AOWEI HOLDING"}
@@ -9423,6 +9446,7 @@
 {"s":"1431.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YST DAIRY"}
 {"s":"1432.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINASHENGMU-PF"}
 {"s":"1440.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"STAR SHINE HLDG"}
+{"s":"1442.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"INFINITY L&T"}
 {"s":"1443.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FULUM GP HLDG"}
 {"s":"1446.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HUNGFOOKTONG"}
 {"s":"1447.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SFK"}
@@ -9433,7 +9457,6 @@
 {"s":"1455.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FOURACE IND GP"}
 {"s":"1456.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GLMS SEC"}
 {"s":"1458.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZHOU HEI YA"}
-{"s":"1459.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JUJIANG CONS"}
 {"s":"1460.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ICO GROUP"}
 {"s":"1461.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZHONGTAIFUTURES"}
 {"s":"1463.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"C-LINK SQ"}
@@ -9444,7 +9467,6 @@
 {"s":"1472.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SANG HING HLDGS"}
 {"s":"1473.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PANGAEA CONNECT"}
 {"s":"1475.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NISSIN FOODS"}
-{"s":"1476.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FIN STREET SEC"}
 {"s":"1477.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"OCUMENSION-B"}
 {"s":"1478.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"Q TECH"}
 {"s":"1480.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YAN TAT GROUP"}
@@ -9520,7 +9542,6 @@
 {"s":"1588.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHANJET"}
 {"s":"1591.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHUN WO GROUP"}
 {"s":"1592.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ANCHORSTONE"}
-{"s":"1593.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHEN LIN EDU"}
 {"s":"1596.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YICHEN IND"}
 {"s":"1597.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NATURE ENERGY T"}
 {"s":"1599.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"UCD"}
@@ -9556,7 +9577,7 @@
 {"s":"1645.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HAINA INTEL"}
 {"s":"1647.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GRANDSHORES"}
 {"s":"1650.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HYGIEIA GROUP"}
-{"s":"1651.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TSUGAMI CHI-500"}
+{"s":"1651.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TSUGAMI CHINA"}
 {"s":"1652.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FUSEN PHARM"}
 {"s":"1653.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MOS HOUSE"}
 {"s":"1655.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"OKURA HOLDINGS"}
@@ -9586,22 +9607,25 @@
 {"s":"1690.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LAP KEI ENGRG"}
 {"s":"1691.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JS GLOBAL LIFE"}
 {"s":"1692.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TOWNRAY HLDGS"}
+{"s":"1693.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BGMC"}
 {"s":"1695.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"S&P INTL HLDG"}
 {"s":"1696.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SISRAM MED"}
 {"s":"1697.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SDITC"}
 {"s":"1698.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TME-SW"}
 {"s":"1701.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TU YI HLDG"}
+{"s":"1702.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DONGGUANG CHEM"}
 {"s":"1703.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"EASYHOLD GROUP"}
 {"s":"1705.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"B & S INTL HLDG"}
+{"s":"1708.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SAMPLE TECH"}
 {"s":"1709.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DL HOLDINGS GP"}
 {"s":"1710.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TRIO IND ELEC"}
+{"s":"1711.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ULFERTS"}
 {"s":"1712.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DRAGON MINING"}
 {"s":"1713.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SICHUAN EN INV"}
 {"s":"1715.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"AI HEALTH TECH"}
 {"s":"1716.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MOST KWAI CHUNG"}
 {"s":"1717.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"AUSNUTRIA"}
 {"s":"1718.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WAN KEI GROUP"}
-{"s":"1719.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CIL GROUP"}
 {"s":"1720.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PUTIAN COMM"}
 {"s":"1722.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KIN PANG HLDGS"}
 {"s":"1723.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MOON INC"}
@@ -9613,13 +9637,13 @@
 {"s":"1732.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"XIANGXING TECH"}
 {"s":"1733.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"E-COMMODITIES"}
 {"s":"1735.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CENTRAL NEW EGY"}
-{"s":"1736.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PARENTING NET"}
 {"s":"1737.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"A & S GROUP"}
 {"s":"1738.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FS ANTHRACITE"}
 {"s":"1739.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"QEEKA HOME"}
 {"s":"1740.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"VALUES CULTURAL"}
 {"s":"1741.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHING CHI HLDGS"}
 {"s":"1742.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HPC HOLDINGS"}
+{"s":"1745.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LVJI TECH-NEW"}
 {"s":"1746.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MAN SHUN GP"}
 {"s":"1747.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HOME CONTROL"}
 {"s":"1749.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHANSHAN"}
@@ -9654,6 +9678,7 @@
 {"s":"1785.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHENGDU EXPWAY"}
 {"s":"1786.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CRCCE"}
 {"s":"1787.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SD GOLD"}
+{"s":"1788.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GUOTAI JUNAN I"}
 {"s":"1789.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"AK MEDICAL"}
 {"s":"1792.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CMON"}
 {"s":"1793.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WECON HOLDINGS"}
@@ -9692,7 +9717,6 @@
 {"s":"1841.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"A.PLUS GROUP"}
 {"s":"1842.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GROWN UP GROUP"}
 {"s":"1843.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SNACK EMPIRE"}
-{"s":"1845.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WG ENV TECH"}
 {"s":"1846.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"EUROEYES"}
 {"s":"1847.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GHPC"}
 {"s":"1848.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CALC"}
@@ -9783,7 +9807,6 @@
 {"s":"1958.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BAIC MOTOR"}
 {"s":"1959.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZHONG JU INVEST"}
 {"s":"1960.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TBKS HLDGS"}
-{"s":"1962.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"EVERGREEN PG"}
 {"s":"1963.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BCQ"}
 {"s":"1965.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LANDSEA LIFE"}
 {"s":"1966.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA SCE GROUP"}
@@ -9801,7 +9824,6 @@
 {"s":"1980.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TIANGE"}
 {"s":"1981.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CATHAY GP HLDGS"}
 {"s":"1982.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NAMESON HLDGS"}
-{"s":"1983.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LUZHOU BANK"}
 {"s":"1985.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MICROWARE"}
 {"s":"1986.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TSAKER NE"}
 {"s":"1987.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BENG SOON MACH"}
@@ -9891,6 +9913,7 @@
 {"s":"2160.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MP CARDIOFLOW-B"}
 {"s":"2161.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JBM HEALTHCARE"}
 {"s":"2162.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KEYMED BIO-B"}
+{"s":"2165.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LING YUE SER GP"}
 {"s":"2166.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SMART-CORE"}
 {"s":"2167.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TI CLOUD"}
 {"s":"2168.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KAISA PROSPER"}
@@ -9922,11 +9945,11 @@
 {"s":"2199.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"REGINA MIRACLE"}
 {"s":"2202.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA VANKE"}
 {"s":"2203.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BRAINHOLE TECH"}
-{"s":"2205.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KANGQIAO SER"}
 {"s":"2208.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GOLDWIND"}
 {"s":"2209.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YESASIA HLDGS"}
 {"s":"2210.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BEIJING JIAYE"}
 {"s":"2211.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"UNI HEALTH"}
+{"s":"2212.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FB MINING"}
 {"s":"2215.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DEXIN SER GROUP"}
 {"s":"2216.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BRONCUS-B"}
 {"s":"2218.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ANDRE JUICE"}
@@ -10099,6 +10122,7 @@
 {"s":"2480.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LUZHU BIOTECH-B"}
 {"s":"2481.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SL GEMINI"}
 {"s":"2482.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LOGORY"}
+{"s":"2483.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"K CASH"}
 {"s":"2486.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PLUS GP HOLDING"}
 {"s":"2487.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CUTIA-B"}
 {"s":"2488.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LAUNCH TECH"}
@@ -10131,9 +10155,10 @@
 {"s":"2520.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHANXI INSTALL"}
 {"s":"2521.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHENGHUI CLEAN"}
 {"s":"2522.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"RIMAG GROUP"}
-{"s":"2525.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HESAI-W-NEW"}
+{"s":"2525.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HESAI-W"}
 {"s":"2526.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DIAGENS-B"}
 {"s":"2528.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FW FASHION INT"}
+{"s":"2529.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HOLLWIN URBAN"}
 {"s":"2530.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NUMANS"}
 {"s":"2531.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CARLINK TECH"}
 {"s":"2533.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BLACK SESAME"}
@@ -10181,6 +10206,7 @@
 {"s":"2592.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CLOUDBREAK-B"}
 {"s":"2593.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HERBS GROUP"}
 {"s":"2595.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GENFLEET-B"}
+{"s":"2596.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YIBIN BANK"}
 {"s":"2597.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"XUNZHONG"}
 {"s":"2598.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LIANLIAN"}
 {"s":"2600.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHALCO"}
@@ -10228,12 +10254,13 @@
 {"s":"2668.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PAK TAK INT'L"}
 {"s":"2669.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA OVS PPT"}
 {"s":"2670.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YUNJI"}
+{"s":"2671.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"USAS BUILDING"}
 {"s":"2672.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BAIGE DIGITAL"}
 {"s":"2675.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"EDGE MEDICAL-B"}
 {"s":"2676.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NOVOSENSE"}
 {"s":"2677.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DISTINCT HEALTH"}
 {"s":"2678.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TEXHONG INTL GP"}
-{"s":"2680.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"INNOVAX HLDGS"}
+{"s":"2680.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"AUSTRAX HLDGS"}
 {"s":"2682.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YUN LEE MARINE"}
 {"s":"2683.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WAHSUN HANDBAGS"}
 {"s":"2685.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"QUANTGROUP"}
@@ -10307,7 +10334,6 @@
 {"s":"2839.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CAM MSCI A50"}
 {"s":"2840.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"SPDR GOLD TRT"}
 {"s":"2841.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"GX CN MEDTECH"}
-{"s":"2843.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"AMUNDI A50"}
 {"s":"2845.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"GX CN EV BATT"}
 {"s":"2846.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"ISHARESCSI300"}
 {"s":"2848.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"TRMSCIKOREA"}
@@ -10319,6 +10345,7 @@
 {"s":"2877.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHINEWAY PHARM"}
 {"s":"2878.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SOLOMON SYSTECH"}
 {"s":"2880.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LIAONING PORT"}
+{"s":"2881.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WUHAN YOUJI"}
 {"s":"2882.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"3DG HOLDINGS"}
 {"s":"2883.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA OILFIELD"}
 {"s":"2885.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PEIPORT HOLD"}
@@ -10326,26 +10353,23 @@
 {"s":"2888.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"STANCHART"}
 {"s":"2889.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PATEO"}
 {"s":"2899.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZIJIN MINING"}
-{"s":"2900.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LVJI TECH"}
+{"s":"2900.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LVJI TECH-OLD"}
+{"s":"2901.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FANTASIA"}
 {"s":"2902.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BIOSYSEN RTS"}
 {"s":"2903.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SUNCORP TECH"}
-{"s":"2975.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YOUZAN-OLD"}
+{"s":"2904.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CMON RTS"}
 {"s":"2983.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HESAI-W-OLD"}
-{"s":"2986.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HUISHENG I-OLD"}
-{"s":"2987.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MOG DIGITEC RTS"}
 {"s":"2991.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"POLY XVERSE-OLD"}
-{"s":"2993.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"IMPERIUM T RTS"}
 {"s":"3001.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"PP CNUSDPROP"}
 {"s":"3003.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CSOP MSCI A 50"}
 {"s":"3004.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CSOP VIETNAM30"}
 {"s":"3005.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"X CSOPCSI500"}
 {"s":"3006.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A GX AI TECH"}
-{"s":"3007.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"TR MSCI CHINA A"}
 {"s":"3008.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"BOS HSK BTC"}
 {"s":"3009.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"BOS HSK ETH"}
 {"s":"3010.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"ISHARES AXJ"}
 {"s":"3011.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A CICC USD"}
-{"s":"3012.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"AMUNDI HK35"}
+{"s":"3015.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"X TRNIFTY50"}
 {"s":"3020.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"X TRMSCIUSA"}
 {"s":"3024.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"WISE SSE50ETF"}
 {"s":"3029.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"GX HS ESG"}
@@ -10385,7 +10409,6 @@
 {"s":"3101.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CSOP A500"}
 {"s":"3102.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"ICBCU KS KWEB"}
 {"s":"3104.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A GX EM ASIA"}
-{"s":"3108.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"HGI ESGLEADER"}
 {"s":"3109.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CSOP STAR 50"}
 {"s":"3110.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"GX HS HIGHDIV"}
 {"s":"3111.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"EFUNDMSCIA50"}
@@ -10395,8 +10418,6 @@
 {"s":"3119.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"GX ASIA SEMICON"}
 {"s":"3121.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CSOP KOSPI"}
 {"s":"3122.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A CSOP RMB MM"}
-{"s":"3128.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"HS AINDTOPETF"}
-{"s":"3129.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"BOCGBACLIMATE"}
 {"s":"3132.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"SAMSUNG SEMICON"}
 {"s":"3133.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CSOP CSI300"}
 {"s":"3134.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CSOP CSI PV"}
@@ -10425,10 +10446,7 @@
 {"s":"3173.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"PP CN NEWECON"}
 {"s":"3174.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CSOP HSBIOTECH"}
 {"s":"3175.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"F SAMSUNG OIL"}
-{"s":"3176.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A TK USD MM"}
 {"s":"3179.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"HGI ETH"}
-{"s":"3181.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"PREMIAASIATEC"}
-{"s":"3182.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"WISE NEWECONESG"}
 {"s":"3184.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"GX INDIA TOP 10"}
 {"s":"3185.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"GX FINTECH"}
 {"s":"3186.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"EFUND BIOPHAR"}
@@ -10437,8 +10455,10 @@
 {"s":"3189.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"EFUND LIQUOR"}
 {"s":"3190.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"FB SSH HIGH DIV"}
 {"s":"3191.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"GX CN SEMICON"}
+{"s":"3192.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A BOS RMB MM"}
 {"s":"3193.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CSOP CSI 5G"}
 {"s":"3195.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"HS S&P500"}
+{"s":"3196.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A BOS USD MM"}
 {"s":"3199.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"ICBCCSOP CGPB"}
 {"s":"3200.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HANS CNC"}
 {"s":"3268.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MEIG"}
@@ -10475,7 +10495,6 @@
 {"s":"3348.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA PENGFEI"}
 {"s":"3355.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FS.COM"}
 {"s":"3360.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FE HORIZON"}
-{"s":"3363.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZHENGYE INT'L"}
 {"s":"3366.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"OCT (ASIA)"}
 {"s":"3368.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PARKSON GROUP"}
 {"s":"3369.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"QHD PORT"}
@@ -10493,12 +10512,13 @@
 {"s":"3398.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA TING"}
 {"s":"3399.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YUEYUN TRANS"}
 {"s":"3401.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"GX AI INFRA"}
-{"s":"3402.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"GX G2TECH"}
 {"s":"3403.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CAM HSI ESG"}
 {"s":"3404.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CAM MSCIINDIA"}
 {"s":"3406.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"PA TECHSELECT"}
 {"s":"3410.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"HS JAPAN TPX100"}
 {"s":"3411.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"PP ASIA IGUSD"}
+{"s":"3412.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A DOO PAYMENTS"}
+{"s":"3413.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A DOO AI"}
 {"s":"3415.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A GXS&P500CC"}
 {"s":"3416.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A GX HSCEICC"}
 {"s":"3417.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A GX HSTCC"}
@@ -10507,7 +10527,7 @@
 {"s":"3421.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A VP HKD MM"}
 {"s":"3422.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"GX INNO TOP 10"}
 {"s":"3423.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CMS HS TECH"}
-{"s":"3428.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"GX CL HK-US"}
+{"s":"3425.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"MBC ETH"}
 {"s":"3430.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"MBC BTC"}
 {"s":"3431.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CSOP HKKRTECH"}
 {"s":"3432.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CSOP HKCNCON"}
@@ -10522,7 +10542,6 @@
 {"s":"3442.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CSOP HKUSTECH"}
 {"s":"3443.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CSOP HK EQUITY"}
 {"s":"3444.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"HS HK EQUITY"}
-{"s":"3447.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CSOP AP REITS"}
 {"s":"3448.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"GX CHINA TECH"}
 {"s":"3450.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"GX 3-5Y UST"}
 {"s":"3451.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A GXNASDAQCC"}
@@ -10539,11 +10558,11 @@
 {"s":"3473.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CSOP ASIA TECH"}
 {"s":"3476.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A HSJPUSINCOME"}
 {"s":"3477.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"PA EW SELECT"}
+{"s":"3480.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A VP USD MM"}
 {"s":"3483.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"EFUND APAC HD"}
 {"s":"3486.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"EFUND A SEMICON"}
 {"s":"3488.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"VP DIV LO VOL"}
 {"s":"3489.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"EFUND AI"}
-{"s":"3509.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"EFUND MPF CN A"}
 {"s":"3519.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A HSCEICC"}
 {"s":"3533.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"XA GX GOLD CC"}
 {"s":"3537.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"A CSOP KOSPICC"}
@@ -10588,6 +10607,7 @@
 {"s":"3708.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WORLD DIGI ECON"}
 {"s":"3709.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"EEKA FASHION"}
 {"s":"3718.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BJ ENT URBAN"}
+{"s":"3728.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHING LEE"}
 {"s":"3737.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZHONGZHIPHARM"}
 {"s":"3738.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"VOBILE GROUP"}
 {"s":"3750.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CATL"}
@@ -10611,12 +10631,11 @@
 {"s":"3836.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HARMONY AUTO"}
 {"s":"3838.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA STARCH"}
 {"s":"3839.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CPBIO"}
-{"s":"3848.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HAOSEN FINT-NEW"}
+{"s":"3848.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HAOSEN FINTECH"}
 {"s":"3858.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JIAXIN INTL RES"}
 {"s":"3860.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"EPS HEALTH TECH"}
 {"s":"3866.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BQD"}
 {"s":"3868.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"XINYI ENERGY"}
-{"s":"3869.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HOSPITAL CORP"}
 {"s":"3877.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CSSC SHIPPING"}
 {"s":"3878.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"VICON HOLDINGS"}
 {"s":"3880.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MEDTIDE"}
@@ -10718,7 +10737,7 @@
 {"s":"6600.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ONEROBOTICS"}
 {"s":"6601.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHEERWIN GP"}
 {"s":"6603.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"IFBH"}
-{"s":"6608.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BAIRONG-W"}
+{"s":"6608.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BAIRONG AI-W"}
 {"s":"6609.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HEARTCARE-B"}
 {"s":"6610.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FLOWING CLOUD"}
 {"s":"6613.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LENS"}
@@ -10781,7 +10800,6 @@
 {"s":"6860.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FINGERTANGO"}
 {"s":"6862.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HAIDILAO"}
 {"s":"6865.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FLAT GLASS"}
-{"s":"6866.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZUOLI KECHUANG"}
 {"s":"6868.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TENFU"}
 {"s":"6869.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YOFC"}
 {"s":"6871.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ROBOTPHOENIX"}
@@ -10793,6 +10811,7 @@
 {"s":"6885.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JINMA ENERGY"}
 {"s":"6886.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HTSC"}
 {"s":"6887.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SUNSHINE PHARMA"}
+{"s":"6888.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FREETECH"}
 {"s":"6889.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DYNAM JAPAN"}
 {"s":"6890.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KANGLI INT HLDG"}
 {"s":"6893.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HINSANG GROUP"}
@@ -10800,6 +10819,7 @@
 {"s":"6898.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA ALUMCAN"}
 {"s":"6908.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HG SEMI"}
 {"s":"6909.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BETTERLIFE HLDG"}
+{"s":"6911.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LANCANG TEA"}
 {"s":"6913.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SCVE GROUP"}
 {"s":"6915.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JIANGXI BIO"}
 {"s":"6918.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JIUTAI DIGITAL"}
@@ -10817,6 +10837,7 @@
 {"s":"6959.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHANGJIU HLDGS"}
 {"s":"6960.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHUANGDENG"}
 {"s":"6963.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SUNSHINE INS"}
+{"s":"6966.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"C WAN TONG YUAN"}
 {"s":"6968.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GANGLONG CHINA"}
 {"s":"6969.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SMOORE INTL"}
 {"s":"6978.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"IMMUNOTECH-B"}
@@ -10870,6 +10891,7 @@
 {"s":"8007.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GLOBALSTRAT"}
 {"s":"8017.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TRADEGO"}
 {"s":"8018.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FINSOFT FIN"}
+{"s":"8019.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HAO WEN HLDGS"}
 {"s":"8020.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"UNITAS HOLD"}
 {"s":"8021.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WLS HOLDINGS"}
 {"s":"8023.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KWONG MAN KEE"}
@@ -10890,9 +10912,7 @@
 {"s":"8050.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CITY COOLXUAN"}
 {"s":"8051.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CIRCUTECH"}
 {"s":"8056.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LIFE CONCEPTS"}
-{"s":"8057.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MADISON HLDG"}
 {"s":"8059.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GLORY FLAME"}
-{"s":"8060.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GLOBAL LINK"}
 {"s":"8062.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"EFT SOLUTIONS"}
 {"s":"8065.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KML TECH"}
 {"s":"8066.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PHOENITRON HOLD"}
@@ -10908,16 +10928,13 @@
 {"s":"8082.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"QINGHUA HOLD"}
 {"s":"8087.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA 33 GROUP"}
 {"s":"8090.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BAOGAI"}
-{"s":"8091.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"OOH HOLDINGS"}
 {"s":"8092.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ITE HOLDINGS"}
 {"s":"8093.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WEB3 META"}
 {"s":"8095.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BEIDA JADE BIRD"}
 {"s":"8096.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TASTY CONCEPTS"}
-{"s":"8098.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CL GROUP"}
 {"s":"8100.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FAMOUS TECH INT"}
 {"s":"8106.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"XINHUA LANDE"}
 {"s":"8107.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FICUS TECH"}
-{"s":"8112.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CORNERSTONE FIN"}
 {"s":"8113.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"V&V TECH"}
 {"s":"8117.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHI P ENERGY"}
 {"s":"8120.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CH DEMETER FIN"}
@@ -10933,18 +10950,15 @@
 {"s":"8140.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BOSATECH"}
 {"s":"8143.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GF HEALTHCARE"}
 {"s":"8146.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GRACEWINE"}
-{"s":"8147.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MILLENNIUM PG"}
+{"s":"8147.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YUNJING DIGITEC"}
 {"s":"8148.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WUXI LIFE"}
 {"s":"8152.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"M&L HOLDINGS"}
 {"s":"8153.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JIADING INTL GP"}
-{"s":"8156.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SINOPHARM TECH"}
 {"s":"8158.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CRMI"}
 {"s":"8160.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GOLDWAY EDU"}
 {"s":"8162.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LOCO HK"}
 {"s":"8163.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NOIZ GROUP"}
 {"s":"8168.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"AMASSE CAPITAL"}
-{"s":"8169.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ECO-TEK HLDGS"}
-{"s":"8173.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HEPHAESTUS HLDG"}
 {"s":"8176.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SUPERROBOTICS"}
 {"s":"8178.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA INFO TECH"}
 {"s":"8179.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PALINDA GROUP"}
@@ -10960,7 +10974,6 @@
 {"s":"8198.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CRYPTO FLOW"}
 {"s":"8200.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SAU SAN TONG"}
 {"s":"8201.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PPS INT'L"}
-{"s":"8205.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JIAODA WITHUB"}
 {"s":"8208.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"RADIANCE GLO GP"}
 {"s":"8210.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DLC ASIA"}
 {"s":"8213.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"STARGLORY HLDGS"}
@@ -10971,6 +10984,7 @@
 {"s":"8221.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GAOYU FINANCE"}
 {"s":"8222.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"E LIGHTING"}
 {"s":"8223.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZYY"}
+{"s":"8225.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"C HEALTH GP"}
 {"s":"8226.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KOALA FIN GP"}
 {"s":"8227.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HAITIAN ANTENNA"}
 {"s":"8229.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FUTURE DATA"}
@@ -10982,6 +10996,7 @@
 {"s":"8245.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CANOPY SKYFIRE"}
 {"s":"8246.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZHONGHUA GAS"}
 {"s":"8247.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BIOSINO BIO-TEC"}
+{"s":"8249.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"RUIYUAN IC TECH"}
 {"s":"8250.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DU DU HLDGS"}
 {"s":"8262.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SUPER STRONG"}
 {"s":"8267.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LINEKONG"}
@@ -10997,37 +11012,37 @@
 {"s":"8282.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GAMEONE"}
 {"s":"8283.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZHONGSHI MINAN"}
 {"s":"8285.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SLING GROUP"}
+{"s":"8286.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CCOE"}
 {"s":"8290.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"AHSAY BACKUP"}
+{"s":"8291.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HK ENT INTL"}
 {"s":"8292.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"VSING"}
 {"s":"8293.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SINGASIA HLDG"}
 {"s":"8295.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KINGWISOFT TECH"}
+{"s":"8296.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SINO-LIFE GROUP"}
 {"s":"8299.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GT GOLD"}
 {"s":"8300.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JIN MI FANG GP"}
 {"s":"8305.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ST HLDGS"}
+{"s":"8308.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GUDOU HLDGS"}
 {"s":"8309.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MANSHING GLOBAL"}
+{"s":"8310.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YANCHENG PORT"}
 {"s":"8311.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"PERFECT OPT"}
-{"s":"8315.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CEN PLAZA HOTEL"}
+{"s":"8313.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZACD"}
 {"s":"8316.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA HONGBAO"}
 {"s":"8317.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FINET GROUP"}
 {"s":"8319.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"EXPERT SYS"}
-{"s":"8320.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"AEC GROUP"}
-{"s":"8321.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TAI KAM HLDGS"}
-{"s":"8326.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TK NEW ENERGY"}
 {"s":"8328.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"XY ELEC STORAGE"}
-{"s":"8329.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NEP INTERLONG"}
 {"s":"8331.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"P.B. GROUP"}
 {"s":"8333.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ASTRUM FIN"}
-{"s":"8337.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DIRECTEL"}
 {"s":"8340.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZIJING INTL FIN"}
 {"s":"8341.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"AESO HOLDING"}
+{"s":"8347.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"F8 ENT"}
 {"s":"8348.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BINHAI TEDA"}
 {"s":"8350.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WELL LINK SEC"}
 {"s":"8356.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TSUN YIP HLDGS"}
 {"s":"8357.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"REPUBLIC HC"}
-{"s":"8362.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WINNING TOWER"}
+{"s":"8360.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BASIC H NEWLIFE"}
 {"s":"8365.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HATCHER GROUP"}
 {"s":"8366.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZJ UNITED INV"}
-{"s":"8367.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SIMPLICITY HLDG"}
 {"s":"8368.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CREATIVE CHINA"}
 {"s":"8370.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZHI SHENG GP"}
 {"s":"8371.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TASTEGOURMET GP"}
@@ -11045,26 +11060,21 @@
 {"s":"8403.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DEFENG SOLIFE"}
 {"s":"8406.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA ORAL IND"}
 {"s":"8411.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"K W NELSON GP"}
-{"s":"8412.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NEW AMANTE"}
 {"s":"8413.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ASIA GROCERY"}
 {"s":"8416.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HM INTL HLDGS"}
 {"s":"8417.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DADI EDU"}
 {"s":"8418.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"OPTIMA AUTO"}
-{"s":"8419.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"AV PROMOTIONS"}
 {"s":"8420.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NEXION TECH"}
 {"s":"8422.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WT GROUP"}
-{"s":"8423.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHI HO DEV"}
 {"s":"8425.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HING MING HLDGS"}
 {"s":"8426.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MODERN LIVING"}
 {"s":"8427.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WS-SK TARGET"}
 {"s":"8429.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SV VISION"}
-{"s":"8430.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"C&N HOLDINGS"}
 {"s":"8431.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HAO BAI INTL"}
 {"s":"8432.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BAR PACIFIC"}
 {"s":"8436.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TAKBO GROUP"}
 {"s":"8439.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SOMERLEY CAP"}
 {"s":"8445.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NOBLE ENG GP"}
-{"s":"8446.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BRIGHTSTAR TECH"}
 {"s":"8447.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MS CONCEPT"}
 {"s":"8448.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"UNI PRINTSHOP"}
 {"s":"8450.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"EDICO HOLDINGS"}
@@ -11078,16 +11088,19 @@
 {"s":"8472.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"LAPCO HOLDINGS"}
 {"s":"8473.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MI MING MART"}
 {"s":"8480.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"FURNIWEB"}
+{"s":"8481.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHENGLONG INTL"}
 {"s":"8482.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WAN LEADER"}
 {"s":"8483.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MAX SIGHT GROUP"}
 {"s":"8487.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ISP GLOBAL"}
 {"s":"8489.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GP LOGISTICS"}
 {"s":"8490.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NICHE-TECH SEMI"}
 {"s":"8491.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"COOL LINK"}
-{"s":"8495.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"1957 & CO."}
 {"s":"8501.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SANBASE CORP"}
 {"s":"8502.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"OCEAN LINE PORT"}
 {"s":"8507.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"I.CENTURY HLDG"}
+{"s":"8509.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WINE'S LINK"}
+{"s":"8510.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TOPSTANDARDCORP"}
+{"s":"8511.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MIN FU INTL"}
 {"s":"8512.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HYFUSIN GROUP"}
 {"s":"8513.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"MAXWIN INT HLDG"}
 {"s":"8516.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ZY INTL"}
@@ -11105,7 +11118,6 @@
 {"s":"8549.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"GOLDEN LEAF INT"}
 {"s":"8577.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BRIGHTSTAR TECH"}
 {"s":"8601.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BOLTEK"}
-{"s":"8606.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"KINETIX SYSTEMS"}
 {"s":"8610.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BBSB INTL"}
 {"s":"8611.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JUFEEL"}
 {"s":"8612.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WORLD SUPER"}
@@ -11113,10 +11125,8 @@
 {"s":"8616.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SUNRAY ENG GP"}
 {"s":"8619.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NIU HOLDINGS"}
 {"s":"8620.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"AE LOGISTICS"}
-{"s":"8621.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"METROPOLIS CAP"}
 {"s":"8622.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"JOYZYME GROUP"}
 {"s":"8623.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA SAFTOWER"}
-{"s":"8627.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ORANGE TOUR"}
 {"s":"8629.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SYNTRUST GK"}
 {"s":"8635.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ELEPHANT HLDGS"}
 {"s":"8637.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"METASURFACE"}
@@ -11124,7 +11134,6 @@
 {"s":"8646.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHINA HONGGUANG"}
 {"s":"8657.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"TRUE PARTNER"}
 {"s":"8659.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YIK WO INTL"}
-{"s":"8668.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"YING HAI GROUP"}
 {"s":"9600.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"NEWLINK TECH"}
 {"s":"9606.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"DUALITYBIO-B"}
 {"s":"9608.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SUNDY SERVICE"}
@@ -11144,7 +11153,6 @@
 {"s":"9668.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CBHB"}
 {"s":"9669.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"BEISEN HOLDING"}
 {"s":"9676.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"SHIYUE DAOTIAN"}
-{"s":"9677.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"WEIHAI BANK"}
 {"s":"9678.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"UNISOUND"}
 {"s":"9680.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"CHENQI TECH"}
 {"s":"9686.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"XIKANG CLOUD"}
@@ -11351,14 +11359,17 @@
 {"s":"ACON","m":"us_stock","t":"stock","c":"USD","ne":"Aclarion, Inc."}
 {"s":"ACP","m":"us_stock","t":"stock","c":"USD","ne":"abrdn Income Credit Strategies Fund Common Shares"}
 {"s":"ACP$A","m":"us_stock","t":"stock","c":"USD","ne":"abrdn Income Credit Strategies Fund 5.250% Series A Perpetual Preferred Stock"}
+{"s":"ACQQ","m":"us_stock","t":"etf","c":"USD","ne":"ProShares Nasdaq-100 Autocallable Income ETF"}
 {"s":"ACR","m":"us_stock","t":"stock","c":"USD","ne":"ACRES Commercial Realty Corp."}
 {"s":"ACR$C","m":"us_stock","t":"stock","c":"USD","ne":"ACRES Commercial Realty Corp. 8.625% Fixed-to-Floating Series C Cumulative Redeemable Preferred Stock"}
 {"s":"ACR$D","m":"us_stock","t":"stock","c":"USD","ne":"ACRES Commercial Realty Corp. 7.875% Series D Cumulative Redeemable Preferred Stock"}
 {"s":"ACRE","m":"us_stock","t":"stock","c":"USD","ne":"Ares Commercial Real Estate Corp"}
 {"s":"ACRS","m":"us_stock","t":"stock","c":"USD","ne":"Aclaris Therapeutics, Inc."}
+{"s":"ACRT","m":"us_stock","t":"etf","c":"USD","ne":"ProShares Russell 2000 Autocallable Income ETF"}
 {"s":"ACRV","m":"us_stock","t":"stock","c":"USD","ne":"Acrivon Therapeutics, Inc."}
 {"s":"ACSG","m":"us_stock","t":"etf","c":"USD","ne":"American Century Small Cap Growth Insights ETF"}
 {"s":"ACSI","m":"us_stock","t":"etf","c":"USD","ne":"American Customer Satisfaction ETF"}
+{"s":"ACSP","m":"us_stock","t":"etf","c":"USD","ne":"ProShares S&P 500 Autocallable Income ETF"}
 {"s":"ACSV","m":"us_stock","t":"etf","c":"USD","ne":"American Century Small Cap Value Insights ETF"}
 {"s":"ACT","m":"us_stock","t":"stock","c":"USD","ne":"Enact Holdings, Inc."}
 {"s":"ACTG","m":"us_stock","t":"stock","c":"USD","ne":"ACACIA RESEARCH CORP"}
@@ -11506,7 +11517,6 @@
 {"s":"AGPU","m":"us_stock","t":"stock","c":"USD","ne":"Axe Compute Inc."}
 {"s":"AGQ","m":"us_stock","t":"etf","c":"USD","ne":"ProShares Ultra Silver"}
 {"s":"AGQI","m":"us_stock","t":"etf","c":"USD","ne":"First Trust Active Global Quality Income ETF"}
-{"s":"AGRH","m":"us_stock","t":"etf","c":"USD","ne":"iShares Interest Rate Hedged U.S. Aggregate Bond ETF"}
 {"s":"AGRO","m":"us_stock","t":"stock","c":"USD","ne":"Adecoagro S.A. Common Shares"}
 {"s":"AGRW","m":"us_stock","t":"etf","c":"USD","ne":"Allspring LT Large Growth ETF"}
 {"s":"AGRZ","m":"us_stock","t":"stock","c":"USD","ne":"Agroz Inc."}
@@ -11772,8 +11782,8 @@
 {"s":"ANNX","m":"us_stock","t":"stock","c":"USD","ne":"Annexon, Inc. - common stock"}
 {"s":"ANPA","m":"us_stock","t":"stock","c":"USD","ne":"Rich Sparkle Holdings Limited - Ordinary Shares"}
 {"s":"ANRO","m":"us_stock","t":"stock","c":"USD","ne":"Alto Neuroscience, Inc."}
-{"s":"ANSC","m":"us_stock","t":"stock","c":"USD","ne":"Agriculture & Natural Solutions Acquisition Corp"}
 {"s":"ANTA","m":"us_stock","t":"stock","c":"USD","ne":"Antalpha Platform Holding Co"}
+{"s":"ANTW","m":"us_stock","t":"etf","c":"USD","ne":"Anthropic AI Lab Ecosystem ETF"}
 {"s":"ANTX","m":"us_stock","t":"stock","c":"USD","ne":"AN2 Therapeutics, Inc."}
 {"s":"ANV","m":"us_stock","t":"etf","c":"USD","ne":"GraniteShares Autocallable NVDA ETF"}
 {"s":"ANVS","m":"us_stock","t":"stock","c":"USD","ne":"Annovis Bio, Inc."}
@@ -11885,6 +11895,7 @@
 {"s":"ARGT","m":"us_stock","t":"etf","c":"USD","ne":"Global X MSCI Argentina ETF"}
 {"s":"ARHS","m":"us_stock","t":"stock","c":"USD","ne":"Arhaus, Inc."}
 {"s":"ARI","m":"us_stock","t":"stock","c":"USD","ne":"Apollo Commercial Real Estate Finance, Inc"}
+{"s":"ARIA","m":"us_stock","t":"etf","c":"USD","ne":"ARIA Opportunities ETF"}
 {"s":"ARIS","m":"us_stock","t":"stock","c":"USD","ne":"Aris Mining Corporation Common Shares"}
 {"s":"ARKB","m":"us_stock","t":"etf","c":"USD","ne":"ARK 21Shares Bitcoin ETF"}
 {"s":"ARKD","m":"us_stock","t":"etf","c":"USD","ne":"ARK DIET Q1 Buffer ETF"}
@@ -12353,8 +12364,8 @@
 {"s":"BEGS","m":"us_stock","t":"etf","c":"USD","ne":"Rareview 2x Bull Cryptocurrency & Precious Metals ETF"}
 {"s":"BELFA","m":"us_stock","t":"stock","c":"USD","ne":"BEL FUSE INC /NJ"}
 {"s":"BELFB","m":"us_stock","t":"stock","c":"USD","ne":"BEL FUSE INC /NJ"}
-{"s":"BELT","m":"us_stock","t":"etf","c":"USD","ne":"iShares U.S. Select Equity Active ETF"}
 {"s":"BEMB","m":"us_stock","t":"etf","c":"USD","ne":"iShares J.P. Morgan Broad USD Emerging Markets Bond ETF"}
+{"s":"BEMD","m":"us_stock","t":"etf","c":"USD","ne":"BNY Mellon Emerging Markets Debt ETF"}
 {"s":"BEN","m":"us_stock","t":"stock","c":"USD","ne":"FRANKLIN RESOURCES INC"}
 {"s":"BENF","m":"us_stock","t":"stock","c":"USD","ne":"Beneficient"}
 {"s":"BENJ","m":"us_stock","t":"etf","c":"USD","ne":"Horizon Landmark ETF"}
@@ -12533,7 +12544,6 @@
 {"s":"BKR","m":"us_stock","t":"stock","c":"USD","ne":"Baker Hughes Co"}
 {"s":"BKSE","m":"us_stock","t":"etf","c":"USD","ne":"BNY Mellon US Small Cap Core Equity ETF"}
 {"s":"BKSY","m":"us_stock","t":"stock","c":"USD","ne":"BlackSky Technology Inc."}
-{"s":"BKSY.W","m":"us_stock","t":"stock","c":"USD","ne":"BlackSky Technology Inc. Redeemable Warrants, each whole Warrant exercisable for one share of Class A Common Stock"}
 {"s":"BKT","m":"us_stock","t":"stock","c":"USD","ne":"BlackRock Income Trust Inc. (The)"}
 {"s":"BKTI","m":"us_stock","t":"stock","c":"USD","ne":"BK Technologies Corp"}
 {"s":"BKU","m":"us_stock","t":"stock","c":"USD","ne":"BankUnited, Inc."}
@@ -12631,7 +12641,6 @@
 {"s":"BNMC","m":"us_stock","t":"etf","c":"USD","ne":"Corgi BMNR 2x Daily ETF"}
 {"s":"BNO","m":"us_stock","t":"etf","c":"USD","ne":"United States Brent Oil Fund, LP ETV"}
 {"s":"BNOV","m":"us_stock","t":"etf","c":"USD","ne":"Innovator U.S. Equity Buffer ETF - November"}
-{"s":"BNRG","m":"us_stock","t":"stock","c":"USD","ne":"Brenmiller Energy Ltd - Ordinary Shares"}
 {"s":"BNS","m":"us_stock","t":"stock","c":"USD","ne":"Bank Nova Scotia Halifax Pfd 3 Ordinary Shares"}
 {"s":"BNT","m":"us_stock","t":"stock","c":"USD","ne":"Brookfield Wealth Solutions Ltd. Class A Exchangeable Limited Voting Shares"}
 {"s":"BNTC","m":"us_stock","t":"stock","c":"USD","ne":"Benitec Biopharma Inc."}
@@ -12719,6 +12728,7 @@
 {"s":"BRLS","m":"us_stock","t":"stock","c":"USD","ne":"Borealis Foods Inc."}
 {"s":"BRLT","m":"us_stock","t":"stock","c":"USD","ne":"Brilliant Earth Group, Inc."}
 {"s":"BRN","m":"us_stock","t":"stock","c":"USD","ne":"BARNWELL INDUSTRIES INC"}
+{"s":"BRNX","m":"us_stock","t":"stock","c":"USD","ne":"BrenX Ltd. - Ordinary Shares"}
 {"s":"BRNY","m":"us_stock","t":"etf","c":"USD","ne":"Burney U.S. Factor Rotation ETF"}
 {"s":"BRO","m":"us_stock","t":"stock","c":"USD","ne":"BROWN & BROWN, INC."}
 {"s":"BROL","m":"us_stock","t":"etf","c":"USD","ne":"Baron Risk Optimized Large Cap ETF"}
@@ -12894,7 +12904,6 @@
 {"s":"BWLP","m":"us_stock","t":"stock","c":"USD","ne":"BW LPG Limited Common Shares"}
 {"s":"BWMN","m":"us_stock","t":"stock","c":"USD","ne":"Bowman Consulting Group Ltd."}
 {"s":"BWMX","m":"us_stock","t":"stock","c":"USD","ne":"Betterware de Mexico, S.A.P.I. de C.V. Ordinary Shares"}
-{"s":"BWNB","m":"us_stock","t":"stock","c":"USD","ne":"Babcock & Wilcox Enterprises, Inc. 6.50% Senior Notes due 2026"}
 {"s":"BWOW","m":"us_stock","t":"etf","c":"USD","ne":"Bitwise Dogecoin ETF"}
 {"s":"BWQG","m":"us_stock","t":"etf","c":"USD","ne":"BWM Quality Growth ETF"}
 {"s":"BWTG","m":"us_stock","t":"etf","c":"USD","ne":"Brendan Wood TopGun Index ETF"}
@@ -13187,6 +13196,7 @@
 {"s":"CGO","m":"us_stock","t":"stock","c":"USD","ne":"Calamos Global Total Return Fund - Closed End Fund"}
 {"s":"CGON","m":"us_stock","t":"stock","c":"USD","ne":"CG Oncology, Inc. - Common stock"}
 {"s":"CGOV","m":"us_stock","t":"etf","c":"USD","ne":"Corgi 0-3 Month T-Bill ETF"}
+{"s":"CGPT","m":"us_stock","t":"etf","c":"USD","ne":"VegaShares AI Inference ETF"}
 {"s":"CGRO","m":"us_stock","t":"etf","c":"USD","ne":"CoreValues Alpha Greater China Growth ETF"}
 {"s":"CGSD","m":"us_stock","t":"etf","c":"USD","ne":"Capital Group Short Duration Income ETF"}
 {"s":"CGSM","m":"us_stock","t":"etf","c":"USD","ne":"Capital Group Short Duration Municipal Income ETF"}
@@ -13399,7 +13409,7 @@
 {"s":"CNH","m":"us_stock","t":"stock","c":"USD","ne":"CNH Industrial N.V. Common Shares"}
 {"s":"CNI","m":"us_stock","t":"stock","c":"USD","ne":"CANADIAN NATIONAL RAILWAY CO"}
 {"s":"CNK","m":"us_stock","t":"stock","c":"USD","ne":"Cinemark Holdings, Inc."}
-{"s":"CNL","m":"us_stock","t":"stock","c":"USD","ne":"Collective Mining Ltd. Common Shares"}
+{"s":"CNL","m":"us_stock","t":"stock","c":"USD","ne":"Collective Mining Ltd."}
 {"s":"CNM","m":"us_stock","t":"stock","c":"USD","ne":"Core & Main, Inc."}
 {"s":"CNMD","m":"us_stock","t":"stock","c":"USD","ne":"CONMED Corp"}
 {"s":"CNNE","m":"us_stock","t":"stock","c":"USD","ne":"Cannae Holdings, Inc."}
@@ -13469,6 +13479,7 @@
 {"s":"CONY","m":"us_stock","t":"etf","c":"USD","ne":"YieldMax COIN Option Income Strategy ETF"}
 {"s":"COO","m":"us_stock","t":"stock","c":"USD","ne":"COOPER COMPANIES, INC."}
 {"s":"COOK","m":"us_stock","t":"stock","c":"USD","ne":"Traeger, Inc."}
+{"s":"COOL","m":"us_stock","t":"etf","c":"USD","ne":"VegaShares AI Thermal, Cooling & Power Management ETF"}
 {"s":"COOT","m":"us_stock","t":"stock","c":"USD","ne":"Australian Oilseeds Holdings Limited - Ordinary Shares"}
 {"s":"COP","m":"us_stock","t":"stock","c":"USD","ne":"CONOCOPHILLIPS"}
 {"s":"COPA","m":"us_stock","t":"etf","c":"USD","ne":"Themes Copper Miners ETF"}
@@ -13658,6 +13669,7 @@
 {"s":"CSQ","m":"us_stock","t":"stock","c":"USD","ne":"Calamos Strategic Total Return Fund - Closed End Fund"}
 {"s":"CSQR","m":"us_stock","t":"stock","c":"USD","ne":"Csquare, Inc."}
 {"s":"CSR","m":"us_stock","t":"stock","c":"USD","ne":"CENTERSPACE"}
+{"s":"CSRA","m":"us_stock","t":"etf","c":"USD","ne":"Cohen & Steers Real Assets Active ETF"}
 {"s":"CSRE","m":"us_stock","t":"etf","c":"USD","ne":"Cohen & Steers Real Estate Active ETF"}
 {"s":"CSSD","m":"us_stock","t":"etf","c":"USD","ne":"Cohen & Steers Short Duration Preferred and Income Active ETF"}
 {"s":"CSTE","m":"us_stock","t":"stock","c":"USD","ne":"Caesarstone Ltd. - Ordinary Shares"}
@@ -13795,6 +13807,7 @@
 {"s":"DAAQ","m":"us_stock","t":"stock","c":"USD","ne":"Digital Asset Acquisition Corp."}
 {"s":"DABS","m":"us_stock","t":"etf","c":"USD","ne":"DoubleLine Asset-Backed Securities ETF"}
 {"s":"DAC","m":"us_stock","t":"stock","c":"USD","ne":"Danaos Corp"}
+{"s":"DACL","m":"us_stock","t":"etf","c":"USD","ne":"REX Defensive Autocallable Income ETF"}
 {"s":"DADS","m":"us_stock","t":"etf","c":"USD","ne":"Digital Asset Debt Strategy ETF"}
 {"s":"DAIC","m":"us_stock","t":"stock","c":"USD","ne":"CID Holdco, Inc."}
 {"s":"DAIO","m":"us_stock","t":"stock","c":"USD","ne":"DATA I/O CORP"}
@@ -13920,6 +13933,7 @@
 {"s":"DEM","m":"us_stock","t":"etf","c":"USD","ne":"WisdomTree Emerging Markets High Dividend Fund"}
 {"s":"DEMZ","m":"us_stock","t":"etf","c":"USD","ne":"Democratic Large Cap Core ETF"}
 {"s":"DEO","m":"us_stock","t":"stock","c":"USD","ne":"DIAGEO PLC"}
+{"s":"DEPW","m":"us_stock","t":"etf","c":"USD","ne":"Google DeepMind AI Lab Ecosystem ETF"}
 {"s":"DERM","m":"us_stock","t":"stock","c":"USD","ne":"Journey Medical Corp"}
 {"s":"DES","m":"us_stock","t":"etf","c":"USD","ne":"WisdomTree U.S. SmallCap Dividend Fund"}
 {"s":"DESK","m":"us_stock","t":"etf","c":"USD","ne":"VanEck Office and Commercial REIT ETF"}
@@ -14305,10 +14319,6 @@
 {"s":"EAGL","m":"us_stock","t":"etf","c":"USD","ne":"Eagle Capital Select Equity ETF"}
 {"s":"EAI","m":"us_stock","t":"stock","c":"USD","ne":"Entergy Arkansas, LLC First Mortgage Bonds, 4.875% Series Due September 1, 2066"}
 {"s":"EALT","m":"us_stock","t":"etf","c":"USD","ne":"Innovator U.S. Equity 5 to 15 Buffer ETF - Quarterly"}
-{"s":"EAOA","m":"us_stock","t":"etf","c":"USD","ne":"iShares ESG Aware 80/20 Aggressive Allocation ETF"}
-{"s":"EAOK","m":"us_stock","t":"etf","c":"USD","ne":"iShares ESG Aware 30/70 Conservative Allocation ETF"}
-{"s":"EAOM","m":"us_stock","t":"etf","c":"USD","ne":"iShares ESG Aware 40/60 Moderate Allocation ETF"}
-{"s":"EAOR","m":"us_stock","t":"etf","c":"USD","ne":"iShares ESG Aware 60/40 Balanced Allocation ETF"}
 {"s":"EAPR","m":"us_stock","t":"etf","c":"USD","ne":"Innovator Emerging Markets Power Buffer ETF April"}
 {"s":"EARN","m":"us_stock","t":"stock","c":"USD","ne":"Ellington Credit Company Common Shares of Beneficial Interest"}
 {"s":"EART","m":"us_stock","t":"etf","c":"USD","ne":"Global X Rare Earth & Critical Materials ETF"}
@@ -14773,6 +14783,7 @@
 {"s":"EVYM","m":"us_stock","t":"etf","c":"USD","ne":"Eaton Vance High Income Municipal ETF"}
 {"s":"EW","m":"us_stock","t":"stock","c":"USD","ne":"Edwards Lifesciences Corp"}
 {"s":"EWA","m":"us_stock","t":"etf","c":"USD","ne":"iShares MSCI Australia Index Fund"}
+{"s":"EWAV","m":"us_stock","t":"stock","c":"USD","ne":"East West Ave Acquisition Corp."}
 {"s":"EWBC","m":"us_stock","t":"stock","c":"USD","ne":"EAST WEST BANCORP INC"}
 {"s":"EWC","m":"us_stock","t":"etf","c":"USD","ne":"iShares MSCI Canada Index Fund"}
 {"s":"EWD","m":"us_stock","t":"etf","c":"USD","ne":"iShares MSCI Sweden ETF"}
@@ -14813,6 +14824,7 @@
 {"s":"EXP","m":"us_stock","t":"stock","c":"USD","ne":"EAGLE MATERIALS INC"}
 {"s":"EXPD","m":"us_stock","t":"stock","c":"USD","ne":"EXPEDITORS INTERNATIONAL OF WASHINGTON INC"}
 {"s":"EXPE","m":"us_stock","t":"stock","c":"USD","ne":"Expedia Group, Inc."}
+{"s":"EXPN","m":"us_stock","t":"etf","c":"USD","ne":"Horizon Expansion Leaders ETF"}
 {"s":"EXPO","m":"us_stock","t":"stock","c":"USD","ne":"EXPONENT INC"}
 {"s":"EXR","m":"us_stock","t":"stock","c":"USD","ne":"Extra Space Storage Inc."}
 {"s":"EXTR","m":"us_stock","t":"stock","c":"USD","ne":"EXTREME NETWORKS INC"}
@@ -14918,7 +14930,6 @@
 {"s":"FCRS.U","m":"us_stock","t":"stock","c":"USD","ne":"FutureCrest Acquisition Corp. Units, each consisting of one Class A ordinary share and one-quarter of one redeemable warrant"}
 {"s":"FCRS.W","m":"us_stock","t":"stock","c":"USD","ne":"FutureCrest Acquisition Corp. Redeemable warrants, each whole warrant exercisable for one Class A ordinary share at an exercise price of $11.50"}
 {"s":"FCSH","m":"us_stock","t":"etf","c":"USD","ne":"Federated Hermes Short Duration Corporate ETF"}
-{"s":"FCT","m":"us_stock","t":"stock","c":"USD","ne":"First Trust Senior Floating Rate Income Fund II Common Shares of Beneficial Interest"}
 {"s":"FCTE","m":"us_stock","t":"etf","c":"USD","ne":"SMI 3Fourteen Full-Cycle Trend ETF"}
 {"s":"FCTR","m":"us_stock","t":"etf","c":"USD","ne":"First Trust Lunt U.S. Factor Rotation ETF"}
 {"s":"FCUS","m":"us_stock","t":"etf","c":"USD","ne":"Pinnacle Focused Opportunities ETF"}
@@ -15027,6 +15038,7 @@
 {"s":"FFLG","m":"us_stock","t":"etf","c":"USD","ne":"Fidelity Fundamental Large Cap Growth ETF"}
 {"s":"FFLS","m":"us_stock","t":"etf","c":"USD","ne":"The Future Fund Long/Short ETF"}
 {"s":"FFLV","m":"us_stock","t":"etf","c":"USD","ne":"Fidelity Fundamental Large Cap Value ETF"}
+{"s":"FFLX","m":"us_stock","t":"etf","c":"USD","ne":"First Trust Flexible Income ETF"}
 {"s":"FFND","m":"us_stock","t":"etf","c":"USD","ne":"One Global ETF"}
 {"s":"FFOG","m":"us_stock","t":"etf","c":"USD","ne":"Franklin Focused Growth ETF"}
 {"s":"FFOX","m":"us_stock","t":"etf","c":"USD","ne":"FundX Future Fund Opportunities ETF"}
@@ -15491,6 +15503,7 @@
 {"s":"GAING","m":"us_stock","t":"stock","c":"USD","ne":"Gladstone Investment Corporation - 7.125% Notes due 2031"}
 {"s":"GAINI","m":"us_stock","t":"stock","c":"USD","ne":"Gladstone Investment Corporation - 7.875% Notes due 2030"}
 {"s":"GAINZ","m":"us_stock","t":"stock","c":"USD","ne":"Gladstone Investment Corporation - 4.875% Notes due 2028"}
+{"s":"GAIQ","m":"us_stock","t":"etf","c":"USD","ne":"Guinness Atkinson Global Innovators Fund: ETF Class Shares"}
 {"s":"GAL","m":"us_stock","t":"etf","c":"USD","ne":"State Street Global Allocation ETF"}
 {"s":"GALT","m":"us_stock","t":"stock","c":"USD","ne":"GALECTIN THERAPEUTICS INC"}
 {"s":"GALX","m":"us_stock","t":"etf","c":"USD","ne":"VistaShares Space Supercycle ETF"}
@@ -15529,13 +15542,14 @@
 {"s":"GCAL","m":"us_stock","t":"etf","c":"USD","ne":"Goldman Sachs Dynamic California Municipal Income ETF"}
 {"s":"GCBC","m":"us_stock","t":"stock","c":"USD","ne":"GREENE COUNTY BANCORP INC"}
 {"s":"GCC","m":"us_stock","t":"etf","c":"USD","ne":"WisdomTree EnhancedContinuous Commodity Index Fund"}
-{"s":"GCDT","m":"us_stock","t":"stock","c":"USD","ne":"Green Circle Decarbonize Technology Limited Ordinary Shares"}
+{"s":"GCDT","m":"us_stock","t":"stock","c":"USD","ne":"Green Circle Decarbonize Technology Limited Class A Ordinary Shares"}
 {"s":"GCGR","m":"us_stock","t":"stock","c":"USD","ne":"General Catalyst Global Resilience Merger Corp."}
 {"s":"GCL","m":"us_stock","t":"stock","c":"USD","ne":"GCL Global Holdings Ltd - Ordinary Shares"}
 {"s":"GCMG","m":"us_stock","t":"stock","c":"USD","ne":"GCM Grosvenor Inc."}
 {"s":"GCO","m":"us_stock","t":"stock","c":"USD","ne":"GENESCO INC"}
 {"s":"GCOR","m":"us_stock","t":"etf","c":"USD","ne":"Goldman Sachs Access U.S. Aggregate Bond ETF"}
 {"s":"GCOW","m":"us_stock","t":"etf","c":"USD","ne":"Pacer Global Cash Cows Dividend ETF"}
+{"s":"GCPB","m":"us_stock","t":"etf","c":"USD","ne":"Goldman Sachs Core Plus Bond ETF"}
 {"s":"GCSH","m":"us_stock","t":"etf","c":"USD","ne":"Guggenheim Ultra Short Income ETF"}
 {"s":"GCT","m":"us_stock","t":"stock","c":"USD","ne":"GigaCloud Technology Inc"}
 {"s":"GCTK","m":"us_stock","t":"stock","c":"USD","ne":"Glucotrack, Inc."}
@@ -15618,6 +15632,7 @@
 {"s":"GFL","m":"us_stock","t":"stock","c":"USD","ne":"GFL Environmental Inc. Subordinate voting shares, no par value"}
 {"s":"GFLW","m":"us_stock","t":"etf","c":"USD","ne":"VictoryShares Free Cash Flow Growth ETF"}
 {"s":"GFR","m":"us_stock","t":"stock","c":"USD","ne":"Greenfire Resources Ltd. Common Shares"}
+{"s":"GFR.V","m":"us_stock","t":"stock","c":"USD","ne":"Greenfire Resources Ltd. Rights (expiring September 15, 2026) Rights when issued"}
 {"s":"GFS","m":"us_stock","t":"stock","c":"USD","ne":"GlobalFoundries Inc. - Ordinary Share"}
 {"s":"GFSG","m":"us_stock","t":"etf","c":"USD","ne":"Leverage Shares 2X Long GFS Daily ETF"}
 {"s":"GFUZ","m":"us_stock","t":"stock","c":"USD","ne":"General Fusion Group Ltd. - Common Shares"}
@@ -15645,6 +15660,7 @@
 {"s":"GHM","m":"us_stock","t":"stock","c":"USD","ne":"GRAHAM CORP"}
 {"s":"GHRS","m":"us_stock","t":"stock","c":"USD","ne":"GH Research PLC - Ordinary Shares"}
 {"s":"GHTA","m":"us_stock","t":"etf","c":"USD","ne":"Goose Hollow Tactical Allocation ETF"}
+{"s":"GHXI","m":"us_stock","t":"stock","c":"USD","ne":"Gores Holdings XI, Inc."}
 {"s":"GHY","m":"us_stock","t":"stock","c":"USD","ne":"PGIM Global High Yield Fund, Inc."}
 {"s":"GHYB","m":"us_stock","t":"etf","c":"USD","ne":"Goldman Sachs Access High Yield Corporate Bond ETF"}
 {"s":"GHYG","m":"us_stock","t":"etf","c":"USD","ne":"iShares US & Intl High Yield Corp Bond ETF"}
@@ -15662,6 +15678,7 @@
 {"s":"GIL","m":"us_stock","t":"stock","c":"USD","ne":"Gildan Activewear Inc."}
 {"s":"GILD","m":"us_stock","t":"stock","c":"USD","ne":"GILEAD SCIENCES, INC."}
 {"s":"GILT","m":"us_stock","t":"stock","c":"USD","ne":"Gilat Satellite Networks Ltd. - Ordinary Shares"}
+{"s":"GINC","m":"us_stock","t":"etf","c":"USD","ne":"Goldman Sachs Income ETF"}
 {"s":"GIND","m":"us_stock","t":"etf","c":"USD","ne":"Goldman Sachs India Equity ETF"}
 {"s":"GINN","m":"us_stock","t":"etf","c":"USD","ne":"Goldman Sachs Innovate Equity ETF"}
 {"s":"GINX","m":"us_stock","t":"etf","c":"USD","ne":"SGI Enhanced Global Income ETF"}
@@ -16014,6 +16031,7 @@
 {"s":"HAUS","m":"us_stock","t":"etf","c":"USD","ne":"Residential REIT ETF"}
 {"s":"HAUZ","m":"us_stock","t":"etf","c":"USD","ne":"Xtrackers International Real Estate ETF"}
 {"s":"HAVA","m":"us_stock","t":"stock","c":"USD","ne":"Harvard Ave Acquisition Corp"}
+{"s":"HAWG","m":"us_stock","t":"etf","c":"USD","ne":"HCM Hedged Equity ETF"}
 {"s":"HAWK","m":"us_stock","t":"stock","c":"USD","ne":"HawkEye 360, Inc."}
 {"s":"HAWX","m":"us_stock","t":"etf","c":"USD","ne":"iShares Currency Hedged MSCI ACWI ex U.S. ETF"}
 {"s":"HAYW","m":"us_stock","t":"stock","c":"USD","ne":"Hayward Holdings, Inc."}
@@ -16021,6 +16039,7 @@
 {"s":"HBB","m":"us_stock","t":"stock","c":"USD","ne":"Hamilton Beach Brands Holding Co"}
 {"s":"HBCP","m":"us_stock","t":"stock","c":"USD","ne":"HOME BANCORP, INC."}
 {"s":"HBDC","m":"us_stock","t":"etf","c":"USD","ne":"Hilton BDC Corporate Bond ETF"}
+{"s":"HBIL","m":"us_stock","t":"etf","c":"USD","ne":"Harbor Short Term Treasury ETF"}
 {"s":"HBIO","m":"us_stock","t":"stock","c":"USD","ne":"HARVARD BIOSCIENCE INC"}
 {"s":"HBM","m":"us_stock","t":"stock","c":"USD","ne":"Hudbay Minerals Inc. Ordinary Shares (Canada)"}
 {"s":"HBMX","m":"us_stock","t":"etf","c":"USD","ne":"Tuttle Capital Concentrated Memory Stack ETF"}
@@ -16305,8 +16324,10 @@
 {"s":"HYFM","m":"us_stock","t":"stock","c":"USD","ne":"HYDROFARM HOLDINGS GROUP, INC."}
 {"s":"HYFT","m":"us_stock","t":"stock","c":"USD","ne":"MindWalk Holdings Corp."}
 {"s":"HYG","m":"us_stock","t":"etf","c":"USD","ne":"iShares iBoxx $ High Yield Corporate Bond ETF"}
+{"s":"HYGD","m":"us_stock","t":"etf","c":"USD","ne":"MicroSectors -3x Short High Yield Corporate Bond (HYG) ETNs"}
 {"s":"HYGH","m":"us_stock","t":"etf","c":"USD","ne":"iShares Interest Rate Hedged High Yield Bond ETF"}
 {"s":"HYGM","m":"us_stock","t":"etf","c":"USD","ne":"Amplify HYG High Yield 10% Target Income ETF"}
+{"s":"HYGU","m":"us_stock","t":"etf","c":"USD","ne":"MicroSectors 3x Long High Yield Corporate Bond (HYG) ETNs"}
 {"s":"HYGV","m":"us_stock","t":"etf","c":"USD","ne":"FlexShares High Yield Value-Scored Bond Index Fund"}
 {"s":"HYGW","m":"us_stock","t":"etf","c":"USD","ne":"iShares High Yield Corporate Bond BuyWrite Strategy ETF"}
 {"s":"HYHG","m":"us_stock","t":"etf","c":"USD","ne":"ProShares High Yield Interest Rate Hedged"}
@@ -16857,7 +16878,6 @@
 {"s":"IVOV","m":"us_stock","t":"etf","c":"USD","ne":"Vanguard S&P Mid-Cap 400 Value ETF"}
 {"s":"IVR","m":"us_stock","t":"stock","c":"USD","ne":"Invesco Mortgage Capital Inc."}
 {"s":"IVR$C","m":"us_stock","t":"stock","c":"USD","ne":"INVESCO MORTGAGE CAPITAL INC 7.5% Fixed-to-Floating Series C Cumulative Redeemable Preferred Stock, Liquation Preference $25.00 per Share"}
-{"s":"IVRS","m":"us_stock","t":"etf","c":"USD","ne":"iShares Future Metaverse Tech and Communications ETF"}
 {"s":"IVSI","m":"us_stock","t":"etf","c":"USD","ne":"Applied Finance IVS International Large ETF"}
 {"s":"IVSS","m":"us_stock","t":"etf","c":"USD","ne":"Applied Finance IVS US SMID ETF"}
 {"s":"IVSX","m":"us_stock","t":"etf","c":"USD","ne":"Applied Finance IVS International SMID ETF"}
@@ -17057,7 +17077,6 @@
 {"s":"JOBC","m":"us_stock","t":"etf","c":"USD","ne":"Corgi JOBY 2x Daily ETF"}
 {"s":"JOBX","m":"us_stock","t":"etf","c":"USD","ne":"Tradr 2X Long JOBY Daily ETF"}
 {"s":"JOBY","m":"us_stock","t":"stock","c":"USD","ne":"Joby Aviation, Inc."}
-{"s":"JOBY.W","m":"us_stock","t":"stock","c":"USD","ne":"Joby Aviation, Inc. Warrants"}
 {"s":"JOE","m":"us_stock","t":"stock","c":"USD","ne":"ST JOE Co"}
 {"s":"JOET","m":"us_stock","t":"etf","c":"USD","ne":"Virtus Terranova U.S. Quality Momentum ETF"}
 {"s":"JOF","m":"us_stock","t":"stock","c":"USD","ne":"JAPAN SMALLER CAPITALIZATION FUND INC"}
@@ -17536,6 +17555,7 @@
 {"s":"LIT","m":"us_stock","t":"etf","c":"USD","ne":"Global X Lithium & Battery Tech ETF"}
 {"s":"LITC","m":"us_stock","t":"etf","c":"USD","ne":"Corgi LITE 2x Daily ETF"}
 {"s":"LITE","m":"us_stock","t":"stock","c":"USD","ne":"Lumentum Holdings Inc."}
+{"s":"LITG","m":"us_stock","t":"etf","c":"USD","ne":"Leverage Shares 2X Long LITE Daily ETF"}
 {"s":"LITL","m":"us_stock","t":"etf","c":"USD","ne":"Simplify Piper Sandler US Small-Cap PLUS Income ETF"}
 {"s":"LITP","m":"us_stock","t":"etf","c":"USD","ne":"Sprott Lithium Miners ETF"}
 {"s":"LITS","m":"us_stock","t":"stock","c":"USD","ne":"Lite Strategy, Inc."}
@@ -17620,10 +17640,12 @@
 {"s":"LQD","m":"us_stock","t":"etf","c":"USD","ne":"iShares iBoxx $ Investment Grade Corporate Bond ETF"}
 {"s":"LQDA","m":"us_stock","t":"stock","c":"USD","ne":"Liquidia Corp"}
 {"s":"LQDB","m":"us_stock","t":"etf","c":"USD","ne":"iShares BBB Rated Corporate Bond ETF"}
+{"s":"LQDD","m":"us_stock","t":"etf","c":"USD","ne":"MicroSectors -3x Short Investment Grade Corporate Bond (LQD) ETNs"}
 {"s":"LQDH","m":"us_stock","t":"etf","c":"USD","ne":"iShares Interest Rate Hedged Corporate Bond ETF"}
 {"s":"LQDI","m":"us_stock","t":"etf","c":"USD","ne":"iShares Inflation Hedged Corporate Bond ETF"}
 {"s":"LQDM","m":"us_stock","t":"etf","c":"USD","ne":"Amplify LQD Investment Grade 12% Target Income ETF"}
 {"s":"LQDT","m":"us_stock","t":"stock","c":"USD","ne":"LIQUIDITY SERVICES INC"}
+{"s":"LQDU","m":"us_stock","t":"etf","c":"USD","ne":"MicroSectors 3x Long Investment Grade Corporate Bond (LQD) ETNs"}
 {"s":"LQDW","m":"us_stock","t":"etf","c":"USD","ne":"iShares Investment Grade Corporate Bond BuyWrite Strategy ETF"}
 {"s":"LQID","m":"us_stock","t":"etf","c":"USD","ne":"Kurv Enhanced Short Maturity ETF"}
 {"s":"LQTI","m":"us_stock","t":"etf","c":"USD","ne":"FT Vest Investment Grade & Target Income ETF"}
@@ -17850,8 +17872,6 @@
 {"s":"MDST","m":"us_stock","t":"etf","c":"USD","ne":"Westwood Salient Enhanced Midstream Income ETF"}
 {"s":"MDT","m":"us_stock","t":"stock","c":"USD","ne":"Medtronic plc. Ordinary Shares"}
 {"s":"MDU","m":"us_stock","t":"stock","c":"USD","ne":"MDU RESOURCES GROUP INC"}
-{"s":"MDV","m":"us_stock","t":"stock","c":"USD","ne":"MODIV INDUSTRIAL, INC."}
-{"s":"MDV$A","m":"us_stock","t":"stock","c":"USD","ne":"Modiv Industrial, Inc. 7.375% Series A Cumulative Redeemable Perpetual Preferred Stock"}
 {"s":"MDWD","m":"us_stock","t":"stock","c":"USD","ne":"MediWound Ltd. - Ordinary Shares"}
 {"s":"MDXG","m":"us_stock","t":"stock","c":"USD","ne":"MIMEDX GROUP, INC."}
 {"s":"MDXH","m":"us_stock","t":"stock","c":"USD","ne":"MDxHealth SA - Ordinary Shares"}
@@ -18111,7 +18131,11 @@
 {"s":"MPAA","m":"us_stock","t":"stock","c":"USD","ne":"MOTORCAR PARTS OF AMERICA INC"}
 {"s":"MPB","m":"us_stock","t":"stock","c":"USD","ne":"MID PENN BANCORP INC"}
 {"s":"MPC","m":"us_stock","t":"stock","c":"USD","ne":"Marathon Petroleum Corp"}
+{"s":"MPDB","m":"us_stock","t":"etf","c":"USD","ne":"m+ DynaBuffer ETF"}
+{"s":"MPDY","m":"us_stock","t":"etf","c":"USD","ne":"m+ DualYield Autocall ETF"}
 {"s":"MPG","m":"us_stock","t":"etf","c":"USD","ne":"Leverage Shares 2X Long MP Daily ETF"}
+{"s":"MPIA","m":"us_stock","t":"etf","c":"USD","ne":"m+ Nasdaq-100 Accelerator Autocall ETF"}
+{"s":"MPIM","m":"us_stock","t":"etf","c":"USD","ne":"m+ Income Momentum Autocall ETF"}
 {"s":"MPL","m":"us_stock","t":"etf","c":"USD","ne":"Defiance Daily Target 2X Long MP ETF"}
 {"s":"MPLT","m":"us_stock","t":"stock","c":"USD","ne":"MapLight Therapeutics, Inc."}
 {"s":"MPLX","m":"us_stock","t":"stock","c":"USD","ne":"MPLX LP Common Units Representing Limited Partner Interests"}
@@ -18130,6 +18154,7 @@
 {"s":"MRA","m":"us_stock","t":"etf","c":"USD","ne":"GraniteShares Autocallable MARA ETF"}
 {"s":"MRAL","m":"us_stock","t":"etf","c":"USD","ne":"GraniteShares 2x Long MARA Daily ETF"}
 {"s":"MRAM","m":"us_stock","t":"stock","c":"USD","ne":"EVERSPIN TECHNOLOGIES INC."}
+{"s":"MRAX","m":"us_stock","t":"etf","c":"USD","ne":"Tradr 2X Long MRAM Daily ETF"}
 {"s":"MRBK","m":"us_stock","t":"stock","c":"USD","ne":"Meridian Corp"}
 {"s":"MRCP","m":"us_stock","t":"etf","c":"USD","ne":"PGIM S&P 500 Buffer 12 ETF - March"}
 {"s":"MRCY","m":"us_stock","t":"stock","c":"USD","ne":"MERCURY SYSTEMS INC"}
@@ -18179,7 +18204,7 @@
 {"s":"MSGE","m":"us_stock","t":"stock","c":"USD","ne":"Madison Square Garden Entertainment Corp."}
 {"s":"MSGM","m":"us_stock","t":"stock","c":"USD","ne":"Motorsport Games Inc."}
 {"s":"MSGS","m":"us_stock","t":"stock","c":"USD","ne":"Madison Square Garden Sports Corp."}
-{"s":"MSGY","m":"us_stock","t":"stock","c":"USD","ne":"Masonglory Limited - Ordinary Shares"}
+{"s":"MSGY","m":"us_stock","t":"stock","c":"USD","ne":"Masonglory Ltd"}
 {"s":"MSI","m":"us_stock","t":"stock","c":"USD","ne":"Motorola Solutions, Inc."}
 {"s":"MSIF","m":"us_stock","t":"stock","c":"USD","ne":"MSC INCOME FUND, INC."}
 {"s":"MSIX","m":"us_stock","t":"etf","c":"USD","ne":"Corgi MSI 2x Daily ETF"}
@@ -18214,6 +18239,7 @@
 {"s":"MTAL","m":"us_stock","t":"stock","c":"USD","ne":"Metals Acquisition Corp. II Class A Ordinary Shares"}
 {"s":"MTAL.U","m":"us_stock","t":"stock","c":"USD","ne":"Metals Acquisition Corp. II Units, each consisting of one Class A ordinary share and one-third of one redeemable warrant"}
 {"s":"MTAL.W","m":"us_stock","t":"stock","c":"USD","ne":"Metals Acquisition Corp. II Warrants, each whole warrant exercisable for one Class A ordinary share at an exercise price of $11.50 per share"}
+{"s":"MTAW","m":"us_stock","t":"etf","c":"USD","ne":"Meta AI Lab Ecosystem ETF"}
 {"s":"MTB","m":"us_stock","t":"stock","c":"USD","ne":"M&T BANK CORP"}
 {"s":"MTB$H","m":"us_stock","t":"stock","c":"USD","ne":"M&T Bank Corporation Perpetual Fixed-to-Floating Rate Non-Cumulative Preferred Stock, Series H"}
 {"s":"MTBA","m":"us_stock","t":"etf","c":"USD","ne":"Simplify MBS ETF"}
@@ -18298,6 +18324,7 @@
 {"s":"MXF","m":"us_stock","t":"stock","c":"USD","ne":"MEXICO FUND INC"}
 {"s":"MXI","m":"us_stock","t":"etf","c":"USD","ne":"iShares Global Materials ETF"}
 {"s":"MXL","m":"us_stock","t":"stock","c":"USD","ne":"MAXLINEAR, INC"}
+{"s":"MXLL","m":"us_stock","t":"etf","c":"USD","ne":"Leverage Shares 2X Long MXL Daily ETF"}
 {"s":"MYCF","m":"us_stock","t":"etf","c":"USD","ne":"State Street My2026 Corporate Bond ETF"}
 {"s":"MYCG","m":"us_stock","t":"etf","c":"USD","ne":"State Street My2027 Corporate Bond ETF"}
 {"s":"MYCH","m":"us_stock","t":"etf","c":"USD","ne":"State Street My2028 Corporate Bond ETF"}
@@ -18710,7 +18737,6 @@
 {"s":"NUSA","m":"us_stock","t":"etf","c":"USD","ne":"Nuveen ESG 1-5 Year U.S. Aggregate Bond ETF"}
 {"s":"NUSB","m":"us_stock","t":"etf","c":"USD","ne":"Nuveen Ultra Short Income ETF"}
 {"s":"NUSC","m":"us_stock","t":"etf","c":"USD","ne":"Nuveen ESG Small-Cap ETF"}
-{"s":"NUTR","m":"us_stock","t":"stock","c":"USD","ne":"NUSATRIP Inc"}
 {"s":"NUTX","m":"us_stock","t":"stock","c":"USD","ne":"Nutex Health Inc."}
 {"s":"NUV","m":"us_stock","t":"stock","c":"USD","ne":"NUVEEN MUNICIPAL VALUE FUND INC"}
 {"s":"NUVB","m":"us_stock","t":"stock","c":"USD","ne":"Nuvation Bio Inc."}
@@ -18816,6 +18842,7 @@
 {"s":"OACP","m":"us_stock","t":"etf","c":"USD","ne":"OneAscent Core Plus Bond ETF"}
 {"s":"OAEM","m":"us_stock","t":"etf","c":"USD","ne":"OneAscent Emerging Markets ETF"}
 {"s":"OAIM","m":"us_stock","t":"etf","c":"USD","ne":"OneAscent International Equity ETF"}
+{"s":"OAIW","m":"us_stock","t":"etf","c":"USD","ne":"OpenAI Lab Ecosystem ETF"}
 {"s":"OAK$A","m":"us_stock","t":"stock","c":"USD","ne":"Brookfield Oaktree Holdings, LLC 6.625% Series A Preferred Units"}
 {"s":"OAK$B","m":"us_stock","t":"stock","c":"USD","ne":"Brookfield Oaktree Holdings, LLC 6.550% Series B Preferred Units"}
 {"s":"OAKG","m":"us_stock","t":"etf","c":"USD","ne":"Oakmark Global Large Cap ETF"}
@@ -19365,6 +19392,7 @@
 {"s":"PHM","m":"us_stock","t":"stock","c":"USD","ne":"PULTEGROUP INC/MI/"}
 {"s":"PHO","m":"us_stock","t":"etf","c":"USD","ne":"Invesco Water Resources ETF"}
 {"s":"PHOE","m":"us_stock","t":"stock","c":"USD","ne":"Phoenix Asia Holdings Limited - Ordinary Shares"}
+{"s":"PHOX","m":"us_stock","t":"etf","c":"USD","ne":"Aura AI Photonics ETF"}
 {"s":"PHR","m":"us_stock","t":"stock","c":"USD","ne":"Phreesia, Inc."}
 {"s":"PHUN","m":"us_stock","t":"stock","c":"USD","ne":"Phunware, Inc."}
 {"s":"PHVS","m":"us_stock","t":"stock","c":"USD","ne":"Pharvaris N.V. - Ordinary Shares"}
@@ -19420,6 +19448,7 @@
 {"s":"PLBL","m":"us_stock","t":"stock","c":"USD","ne":"Polibeli Group Ltd"}
 {"s":"PLBY","m":"us_stock","t":"stock","c":"USD","ne":"Playboy, Inc."}
 {"s":"PLCE","m":"us_stock","t":"stock","c":"USD","ne":"Childrens Place, Inc."}
+{"s":"PLCI","m":"us_stock","t":"stock","c":"USD","ne":"Pelican Acquisition II Corporation - Ordinary Shares"}
 {"s":"PLD","m":"us_stock","t":"stock","c":"USD","ne":"Prologis, Inc."}
 {"s":"PLG","m":"us_stock","t":"stock","c":"USD","ne":"Platinum Group Metals Ltd. Ordinary Shares (Canada)"}
 {"s":"PLGI","m":"us_stock","t":"etf","c":"USD","ne":"PL Growth and Income ETF"}
@@ -19858,7 +19887,6 @@
 {"s":"QMFE","m":"us_stock","t":"etf","c":"USD","ne":"FT Vest Nasdaq-100 Moderate Buffer ETF - February"}
 {"s":"QMID","m":"us_stock","t":"etf","c":"USD","ne":"WisdomTree U.S. MidCap Quality Growth Fund"}
 {"s":"QMLS","m":"us_stock","t":"stock","c":"USD","ne":"QumulusAI, Inc."}
-{"s":"QMMM","m":"us_stock","t":"stock","c":"USD","ne":"QMMM Holdings Ltd"}
 {"s":"QMMY","m":"us_stock","t":"etf","c":"USD","ne":"FT Vest Nasdaq-100 Moderate Buffer ETF - May"}
 {"s":"QMNV","m":"us_stock","t":"etf","c":"USD","ne":"FT Vest Nasdaq-100 Moderate Buffer ETF - November"}
 {"s":"QMOM","m":"us_stock","t":"etf","c":"USD","ne":"Alpha Architect U.S. Quantitative Momentum ETF"}
@@ -19951,7 +19979,7 @@
 {"s":"QUS","m":"us_stock","t":"etf","c":"USD","ne":"State Street SPDR MSCI USA StrategicFactors ETF"}
 {"s":"QUSA","m":"us_stock","t":"etf","c":"USD","ne":"VistaShares Target 15 USA Quality Income ETF"}
 {"s":"QVAL","m":"us_stock","t":"etf","c":"USD","ne":"Alpha Architect U.S. Quantitative Value ETF"}
-{"s":"QVC","m":"us_stock","t":"stock","c":"USD","ne":"QVC Group, Inc. - Common Stock"}
+{"s":"QVCG","m":"us_stock","t":"stock","c":"USD","ne":"QVC Group, Inc. - Common Stock"}
 {"s":"QVML","m":"us_stock","t":"etf","c":"USD","ne":"Invesco S&P 500 QVM Multi-factor ETF"}
 {"s":"QVMM","m":"us_stock","t":"etf","c":"USD","ne":"Invesco S&P MidCap 400 QVM Multi-factor ETF"}
 {"s":"QVMS","m":"us_stock","t":"etf","c":"USD","ne":"Invesco S&P SmallCap 600 QVM Multi-factor ETF"}
@@ -20362,6 +20390,7 @@
 {"s":"RUSHB","m":"us_stock","t":"stock","c":"USD","ne":"RUSH ENTERPRISES INC \\TX\\"}
 {"s":"RVER","m":"us_stock","t":"etf","c":"USD","ne":"Trenchless Fund ETF"}
 {"s":"RVI","m":"us_stock","t":"stock","c":"USD","ne":"Robinhood Ventures Fund I Common Shares of Beneficial Interest"}
+{"s":"RVII","m":"us_stock","t":"stock","c":"USD","ne":"Robinhood Ventures Fund II Common Shares of Beneficial Interest"}
 {"s":"RVLV","m":"us_stock","t":"stock","c":"USD","ne":"Revolve Group, Inc."}
 {"s":"RVMD","m":"us_stock","t":"stock","c":"USD","ne":"Revolution Medicines, Inc."}
 {"s":"RVNL","m":"us_stock","t":"etf","c":"USD","ne":"GraniteShares 2x Long RIVN Daily ETF"}
@@ -20646,7 +20675,6 @@
 {"s":"SERA","m":"us_stock","t":"stock","c":"USD","ne":"SERA PROGNOSTICS, INC."}
 {"s":"SERV","m":"us_stock","t":"stock","c":"USD","ne":"Serve Robotics Inc. /DE/"}
 {"s":"SES","m":"us_stock","t":"stock","c":"USD","ne":"SES AI Corp"}
-{"s":"SES.W","m":"us_stock","t":"stock","c":"USD","ne":"SES AI Corporation Warrants, each whole warrant exercisable for one share of Class A Common Stock at an exercise price of $11.50 per share"}
 {"s":"SETH","m":"us_stock","t":"etf","c":"USD","ne":"ProShares Short Ether ETF"}
 {"s":"SETM","m":"us_stock","t":"etf","c":"USD","ne":"Sprott Critical Materials ETF"}
 {"s":"SEUS","m":"us_stock","t":"etf","c":"USD","ne":"SEI QiM U.S. Equity Factor Allocation Active ETF"}
@@ -20765,6 +20793,7 @@
 {"s":"SITC","m":"us_stock","t":"stock","c":"USD","ne":"SITE Centers Corp."}
 {"s":"SITE","m":"us_stock","t":"stock","c":"USD","ne":"SiteOne Landscape Supply, Inc."}
 {"s":"SITM","m":"us_stock","t":"stock","c":"USD","ne":"SITIME Corp"}
+{"s":"SITX","m":"us_stock","t":"etf","c":"USD","ne":"Tradr 2X Long SITM Daily ETF"}
 {"s":"SIVR","m":"us_stock","t":"etf","c":"USD","ne":"abrdn Physical Silver Shares ETF"}
 {"s":"SIXA","m":"us_stock","t":"etf","c":"USD","ne":"ETC 6 Meridian Mega Cap Equity ETF"}
 {"s":"SIXD","m":"us_stock","t":"etf","c":"USD","ne":"AllianzIM U.S. Large Cap 6 Month Buffer10 Jun/Dec ETF"}
@@ -20958,6 +20987,7 @@
 {"s":"SNPE","m":"us_stock","t":"etf","c":"USD","ne":"Xtrackers S&P 500 Scored & Screened ETF"}
 {"s":"SNPG","m":"us_stock","t":"etf","c":"USD","ne":"Xtrackers S&P 500 Growth Scored & Screened ETF"}
 {"s":"SNPS","m":"us_stock","t":"stock","c":"USD","ne":"SYNOPSYS INC"}
+{"s":"SNSC","m":"us_stock","t":"stock","c":"USD","ne":"SunScout Holding Limited Class A Ordinary Shares"}
 {"s":"SNSR","m":"us_stock","t":"etf","c":"USD","ne":"Global X Internet of Things ETF"}
 {"s":"SNT","m":"us_stock","t":"stock","c":"USD","ne":"Senstar Technologies Corporation - Common Shares"}
 {"s":"SNTG","m":"us_stock","t":"stock","c":"USD","ne":"Sentage Holdings Inc."}
@@ -21227,6 +21257,7 @@
 {"s":"STKS","m":"us_stock","t":"stock","c":"USD","ne":"ONE Group Hospitality, Inc."}
 {"s":"STLA","m":"us_stock","t":"stock","c":"USD","ne":"Stellantis N.V. Common Shares"}
 {"s":"STLD","m":"us_stock","t":"stock","c":"USD","ne":"STEEL DYNAMICS INC"}
+{"s":"STLL","m":"us_stock","t":"etf","c":"USD","ne":"Leverage Shares 2X Long STRL Daily ETF"}
 {"s":"STLN","m":"us_stock","t":"stock","c":"USD","ne":"Starling Oncology, Inc. - Common Stock"}
 {"s":"STLR","m":"us_stock","t":"etf","c":"USD","ne":"Stellar ETF"}
 {"s":"STLU","m":"us_stock","t":"etf","c":"USD","ne":"2x Stellar ETF"}
@@ -21249,7 +21280,6 @@
 {"s":"STRO","m":"us_stock","t":"stock","c":"USD","ne":"SUTRO BIOPHARMA, INC."}
 {"s":"STRR","m":"us_stock","t":"stock","c":"USD","ne":"Star Equity Holdings, Inc."}
 {"s":"STRRP","m":"us_stock","t":"stock","c":"USD","ne":"Star Equity Holdings, Inc. - 10% Series A Cumulative Perpetual Preferred Stock"}
-{"s":"STRS","m":"us_stock","t":"stock","c":"USD","ne":"STRATUS PROPERTIES INC"}
 {"s":"STRT","m":"us_stock","t":"stock","c":"USD","ne":"STRATTEC SECURITY CORP"}
 {"s":"STRW","m":"us_stock","t":"stock","c":"USD","ne":"Strawberry Fields REIT, Inc."}
 {"s":"STRZ","m":"us_stock","t":"stock","c":"USD","ne":"Starz Entertainment Corp. - Common Shares"}
@@ -21539,6 +21569,7 @@
 {"s":"THC","m":"us_stock","t":"stock","c":"USD","ne":"TENET HEALTHCARE CORP"}
 {"s":"THCH","m":"us_stock","t":"stock","c":"USD","ne":"TH International Limited - Ordinary shares"}
 {"s":"THD","m":"us_stock","t":"etf","c":"USD","ne":"iShares MSCI Thailand ETF"}
+{"s":"THEO","m":"us_stock","t":"stock","c":"USD","ne":"BOA Acquisition Corp. II - Class A Ordinary Shares"}
 {"s":"THEQ","m":"us_stock","t":"etf","c":"USD","ne":"T. Rowe Price Hedged Equity ETF"}
 {"s":"THFF","m":"us_stock","t":"stock","c":"USD","ne":"FIRST FINANCIAL CORP /IN/"}
 {"s":"THG","m":"us_stock","t":"stock","c":"USD","ne":"Hanover Insurance Group Inc"}
@@ -21590,7 +21621,7 @@
 {"s":"TISI","m":"us_stock","t":"stock","c":"USD","ne":"TEAM INC"}
 {"s":"TITN","m":"us_stock","t":"stock","c":"USD","ne":"Titan Machinery Inc."}
 {"s":"TJAN","m":"us_stock","t":"etf","c":"USD","ne":"Innovator Equity Defined Protection ETF - 2 Yr to January 2027"}
-{"s":"TJGC","m":"us_stock","t":"stock","c":"USD","ne":"TJGC Group Limited - ordinary shares"}
+{"s":"TJGC","m":"us_stock","t":"stock","c":"USD","ne":"TJGC GROUP Ltd"}
 {"s":"TJUL","m":"us_stock","t":"etf","c":"USD","ne":"Innovator Equity Defined Protection ETF - 2 Yr to July 2027"}
 {"s":"TJUN","m":"us_stock","t":"etf","c":"USD","ne":"FT Vest Emerging Markets Buffer ETF - June"}
 {"s":"TJX","m":"us_stock","t":"stock","c":"USD","ne":"TJX COMPANIES INC /DE/"}
@@ -22041,6 +22072,7 @@
 {"s":"UMAY","m":"us_stock","t":"etf","c":"USD","ne":"Innovator U.S. Equity Ultra Buffer ETF - May"}
 {"s":"UMBF","m":"us_stock","t":"stock","c":"USD","ne":"UMB FINANCIAL CORP"}
 {"s":"UMC","m":"us_stock","t":"stock","c":"USD","ne":"UNITED MICROELECTRONICS CORP"}
+{"s":"UMCU","m":"us_stock","t":"etf","c":"USD","ne":"Tradr 2X Long UMC Daily ETF"}
 {"s":"UMCX","m":"us_stock","t":"etf","c":"USD","ne":"Corgi UMC 2x Daily ETF"}
 {"s":"UMDD","m":"us_stock","t":"etf","c":"USD","ne":"UltraPro MidCap400"}
 {"s":"UMH","m":"us_stock","t":"stock","c":"USD","ne":"UMH PROPERTIES, INC."}
@@ -22403,6 +22435,7 @@
 {"s":"VO","m":"us_stock","t":"etf","c":"USD","ne":"Vanguard Morningstar Mid-Cap ETF"}
 {"s":"VOC","m":"us_stock","t":"stock","c":"USD","ne":"VOC Energy Trust Units of Beneficial Interest"}
 {"s":"VOE","m":"us_stock","t":"etf","c":"USD","ne":"Vanguard Morningstar Mid-Cap Value ETF"}
+{"s":"VOGX","m":"us_stock","t":"stock","c":"USD","ne":"Vogenx, Inc."}
 {"s":"VOLT","m":"us_stock","t":"etf","c":"USD","ne":"Tema Electrification ETF"}
 {"s":"VONE","m":"us_stock","t":"etf","c":"USD","ne":"Vanguard Russell 1000 ETF"}
 {"s":"VONG","m":"us_stock","t":"etf","c":"USD","ne":"Vanguard Russell 1000 Growth ETF"}
@@ -22641,6 +22674,7 @@
 {"s":"WKC","m":"us_stock","t":"stock","c":"USD","ne":"WORLD KINECT CORP"}
 {"s":"WKHS","m":"us_stock","t":"stock","c":"USD","ne":"Workhorse Group Inc."}
 {"s":"WKSP","m":"us_stock","t":"stock","c":"USD","ne":"Worksport Ltd"}
+{"s":"WLCO","m":"us_stock","t":"stock","c":"USD","ne":"Wilco 63 Corp"}
 {"s":"WLDN","m":"us_stock","t":"stock","c":"USD","ne":"Willdan Group, Inc."}
 {"s":"WLDR","m":"us_stock","t":"etf","c":"USD","ne":"Simplify Affinity World Leaders Equity ETF"}
 {"s":"WLDS","m":"us_stock","t":"stock","c":"USD","ne":"Wearable Devices Ltd. - Ordinary Share"}
@@ -22737,7 +22771,7 @@
 {"s":"WUGI","m":"us_stock","t":"etf","c":"USD","ne":"AXS Esoterica NextG Economy ETF"}
 {"s":"WULF","m":"us_stock","t":"stock","c":"USD","ne":"TERAWULF INC."}
 {"s":"WULX","m":"us_stock","t":"etf","c":"USD","ne":"Tradr 2X Long WULF Daily ETF"}
-{"s":"WVE","m":"us_stock","t":"stock","c":"USD","ne":"Wave Life Sciences Ltd. - Ordinary Shares"}
+{"s":"WVE","m":"us_stock","t":"stock","c":"USD","ne":"Wave Life Sciences Ltd."}
 {"s":"WVVI","m":"us_stock","t":"stock","c":"USD","ne":"WILLAMETTE VALLEY VINEYARDS INC"}
 {"s":"WVVIP","m":"us_stock","t":"stock","c":"USD","ne":"Willamette Valley Vineyards, Inc. - Series A Redeemable Preferred Stock"}
 {"s":"WW","m":"us_stock","t":"stock","c":"USD","ne":"WW INTERNATIONAL, INC."}
@@ -22758,6 +22792,7 @@
 {"s":"XAGG","m":"us_stock","t":"etf","c":"USD","ne":"Eaton Vance Income Opportunities ETF"}
 {"s":"XAGI","m":"us_stock","t":"etf","c":"USD","ne":"Corgi AGIX 2x Daily ETF"}
 {"s":"XAIR","m":"us_stock","t":"stock","c":"USD","ne":"Beyond Air, Inc."}
+{"s":"XAIW","m":"us_stock","t":"etf","c":"USD","ne":"SpaceXAI Lab Ecosystem ETF"}
 {"s":"XAIX","m":"us_stock","t":"etf","c":"USD","ne":"Xtrackers Artificial Intelligence and Big Data ETF"}
 {"s":"XAPR","m":"us_stock","t":"etf","c":"USD","ne":"FT Vest U.S. Equity Enhance & Moderate Buffer ETF - April"}
 {"s":"XAR","m":"us_stock","t":"etf","c":"USD","ne":"State Street SPDR S&P Aerospace & Defense ETF"}
@@ -23023,6 +23058,7 @@
 {"s":"YLD","m":"us_stock","t":"etf","c":"USD","ne":"Principal Active High Yield ETF"}
 {"s":"YLDE","m":"us_stock","t":"etf","c":"USD","ne":"Franklin ClearBridge Enhanced Income ETF"}
 {"s":"YLDW","m":"us_stock","t":"etf","c":"USD","ne":"Westwood Enhanced Income Opportunity ETF"}
+{"s":"YLDY","m":"us_stock","t":"etf","c":"USD","ne":"Horizon High Income ETF"}
 {"s":"YMAG","m":"us_stock","t":"etf","c":"USD","ne":"YieldMax Magnificent 7 Fund of Option Income ETFs"}
 {"s":"YMAR","m":"us_stock","t":"etf","c":"USD","ne":"FT Vest International Equity Moderate Buffer ETF - March"}
 {"s":"YMAT","m":"us_stock","t":"stock","c":"USD","ne":"J-Star Holding Co., Ltd."}
