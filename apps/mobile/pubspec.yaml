@@ -38,7 +38,7 @@ dependencies:
   # 3.3.2 regresses resumed provider chains by scheduling ProviderScope
   # refreshes during widget build (riverpod#4765). Keep this exact until the
   # upstream lifecycle fix ships.
-  flutter_riverpod: 3.2.1
+  flutter_riverpod: 3.4.2
   flutter_rust_bridge: 2.13.0-beta.6
   flutter_secure_storage: ^11.0.0
   flutter_svg: ^2.3.0
