@@ -190,7 +190,9 @@ class AppEmptyState extends StatelessWidget {
             if (action != null) ...[
               SizedBox(height: compact ? AppSpacing.s10 : AppSpacing.s16),
               ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 280),
+                constraints: const BoxConstraints(
+                  maxWidth: AppControlWidths.emptyStateAction,
+                ),
                 child: SizedBox(width: double.infinity, child: action!),
               ),
             ],

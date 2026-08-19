@@ -8,7 +8,6 @@ import '../../l10n/gen/app_localizations.dart';
 import '../ai/write/persistent_undo_banner.dart';
 import 'domain_shell.dart';
 import 'domain_switcher.dart';
-import 'shell_visibility.dart';
 import 'sync_activity_strip.dart';
 
 const double _kMobileDockHorizontalPadding = AppSpacing.s16;
@@ -61,21 +60,13 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell> {
       'DomainTabsShell: branch $index of ${widget.spec.scope} has no matching '
       'visible or hidden tab in its DomainShellSpec',
     );
-    // Publish the active tab root so offstage branches can pause streams.
-    // Guarded write avoids rebuild loops when the path is unchanged.
-    final activePath = (index >= 0 && index < tabs.length)
-        ? tabs[index].routePath
-        : '';
     // Branch roots are already retained by StatefulShellRoute.indexedStack.
     // _BranchFadeIn plays a fast fade-in on the newly selected branch while
     // keeping the shell at a stable element position — offstage branch state
     // and ShellTabPause stream pausing are untouched. The fade is bounded to
     // Motion.fast so the opacity compositing it forces on chart/glass
     // surfaces lasts one short window per switch, not the whole transition.
-    final shellChild = ProviderScope(
-      overrides: [activeShellTabPathProvider.overrideWith((ref) => activePath)],
-      child: _BranchFadeIn(activeIndex: index, child: widget.shell),
-    );
+    final shellChild = _BranchFadeIn(activeIndex: index, child: widget.shell);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -376,11 +367,9 @@ class _TabletLayout extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Tablet widths have no always-visible domain dock, so the rail itself
-    // carries the cross-domain switcher and the Ask-AI entry — previously
-    // both were phone/desktop-only (blueprint doc 15 §7.2).
-    final specs = ref.watch(activeDomainShellsProvider);
-    final switcherHomePath = ref.watch(domainSwitcherHomePathProvider);
+    // Compact and tablet widths share the header workspace switcher. Keep
+    // this rail domain-local so there is exactly one discoverable switcher
+    // per shell tier; Ask AI remains available as a global rail action.
     final assistantAction = ref.watch(domainTabsAssistantActionProvider);
     final l10n = AppLocalizations.of(context);
     return FScaffold(
@@ -392,17 +381,6 @@ class _TabletLayout extends ConsumerWidget {
         width: AppControlWidths.tabletRail,
         child: FSidebar(
           children: [
-            if (specs.length >= 2) ...[
-              _TabletRailAction(
-                icon: FLucideIcons.layoutGrid,
-                label: l10n.shellSwitchDomainTitle,
-                onTap: () {
-                  AppInteraction.signal(AppInteractionIntent.navigate);
-                  showDomainSwitcherSheet(context, specs, switcherHomePath);
-                },
-              ),
-              const FDivider(),
-            ],
             for (var i = 0; i < tabs.length; i++)
               _TabletRailItem(
                 tab: tabs[i],

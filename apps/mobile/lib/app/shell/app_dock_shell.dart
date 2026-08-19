@@ -201,7 +201,11 @@ class _DockChrome extends StatelessWidget {
         }
         return Row(
           children: [
-            _UnifiedDesktopSidebar(specs: specs, activePath: activePath),
+            _UnifiedDesktopSidebar(
+              specs: specs,
+              activePath: activePath,
+              forceCollapsed: viewportWidth < Breakpoints.shellExpandedSidebar,
+            ),
             Expanded(child: child),
           ],
         );
@@ -211,10 +215,15 @@ class _DockChrome extends StatelessWidget {
 }
 
 class _UnifiedDesktopSidebar extends ConsumerWidget {
-  const _UnifiedDesktopSidebar({required this.specs, required this.activePath});
+  const _UnifiedDesktopSidebar({
+    required this.specs,
+    required this.activePath,
+    required this.forceCollapsed,
+  });
 
   final List<DomainShellSpec> specs;
   final String activePath;
+  final bool forceCollapsed;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -237,12 +246,13 @@ class _UnifiedDesktopSidebar extends ConsumerWidget {
         selectedIcon: FLucideIcons.house,
         label: l10n.lifeNavLabel,
       ),
-      for (final tab in activeSpec.tabs)
-        DesktopSidebarDestination(
-          icon: tab.icon,
-          selectedIcon: tab.selectedIcon,
-          label: tab.label,
-        ),
+      if (!onLife)
+        for (final tab in activeSpec.tabs)
+          DesktopSidebarDestination(
+            icon: tab.icon,
+            selectedIcon: tab.selectedIcon,
+            label: tab.label,
+          ),
     ];
     return DesktopSidebar(
       workspace: DesktopSidebarWorkspace(
@@ -272,6 +282,7 @@ class _UnifiedDesktopSidebar extends ConsumerWidget {
           emphasized: true,
         ),
       ],
+      forceCollapsed: forceCollapsed,
     );
   }
 }

@@ -11,7 +11,7 @@ class _NetWorthHeader extends ConsumerWidget {
     final formatters = context.formatters(ref);
     final hasData = !snapshot.isEmpty;
     final value = hasData ? snapshot.netWorth.amount.toDouble() : null;
-    final metricsAsync = ref.watch(dashboardHeaderMetricsProvider);
+    final dailyChangeAsync = ref.watch(dashboardDailyChangeProvider);
     final amountsHidden = ref.watch(_financeAmountsHiddenProvider);
     final privacyLabel = amountsHidden
         ? l10n.financePrivacyShowAmountsTooltip
@@ -80,7 +80,7 @@ class _NetWorthHeader extends ConsumerWidget {
             ),
             if (hasData) ...[
               const SizedBox(height: AppPageRhythm.row),
-              _TodayDeltaMetric(metrics: metricsAsync),
+              _TodayDeltaMetric(dailyChange: dailyChangeAsync),
             ],
             if (!hasData) ...[
               const SizedBox(height: AppPageRhythm.row),
@@ -97,17 +97,17 @@ class _NetWorthHeader extends ConsumerWidget {
 }
 
 class _TodayDeltaMetric extends StatelessWidget {
-  const _TodayDeltaMetric({required this.metrics});
+  const _TodayDeltaMetric({required this.dailyChange});
 
-  final AsyncValue<DashboardHeaderMetrics> metrics;
+  final AsyncValue<DashboardDailyChange> dailyChange;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return metrics.when(
+    return dailyChange.when(
       loading: () => const SkeletonBox(width: 96, height: 14, radius: 4),
       error: (_, _) => const SizedBox.shrink(),
-      data: (m) => m.dailyChange == null
+      data: (daily) => daily.change == null
           ? const SizedBox.shrink()
           : Row(
               mainAxisSize: MainAxisSize.min,
@@ -118,9 +118,9 @@ class _TodayDeltaMetric extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.s6),
                 DeltaText(
-                  value: m.dailyChange!.amount.toDouble(),
+                  value: daily.change!.amount.toDouble(),
                   format: DeltaFormat.currency,
-                  currencyCode: m.baseCurrency,
+                  currencyCode: daily.baseCurrency,
                 ),
               ],
             ),

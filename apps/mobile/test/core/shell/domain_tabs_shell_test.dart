@@ -31,7 +31,39 @@ const _shellSpec = DomainShellSpec(
   ],
 );
 
-GoRouter _router({Widget one = const Center(child: Text('one'))}) => GoRouter(
+const _shellSpecWithHiddenReview = DomainShellSpec(
+  scope: DomainScope.finance,
+  label: 'TestOS',
+  icon: Icons.home_outlined,
+  selectedIcon: Icons.home,
+  tabs: <DomainShellTab>[
+    DomainShellTab(
+      icon: Icons.looks_one_outlined,
+      selectedIcon: Icons.looks_one,
+      label: 'One',
+      routePath: '/one',
+    ),
+    DomainShellTab(
+      icon: Icons.looks_two_outlined,
+      selectedIcon: Icons.looks_two,
+      label: 'Two',
+      routePath: '/two',
+    ),
+  ],
+  hiddenTabs: <DomainShellTab>[
+    DomainShellTab(
+      icon: Icons.rate_review_outlined,
+      selectedIcon: Icons.rate_review,
+      label: 'Review',
+      routePath: '/review',
+    ),
+  ],
+);
+
+GoRouter _router({
+  Widget one = const Center(child: Text('one')),
+  bool wrapOneWithPause = true,
+}) => GoRouter(
   initialLocation: '/one',
   routes: <RouteBase>[
     StatefulShellRoute.indexedStack(
@@ -42,8 +74,9 @@ GoRouter _router({Widget one = const Center(child: Text('one'))}) => GoRouter(
           routes: <RouteBase>[
             GoRoute(
               path: '/one',
-              builder: (context, state) =>
-                  ShellTabPause(routePath: '/one', child: one),
+              builder: (context, state) => wrapOneWithPause
+                  ? ShellTabPause(routePath: '/one', child: one)
+                  : one,
             ),
           ],
         ),
@@ -54,6 +87,51 @@ GoRouter _router({Widget one = const Center(child: Text('one'))}) => GoRouter(
               builder: (context, state) => const ShellTabPause(
                 routePath: '/two',
                 child: Center(child: Text('two')),
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  ],
+);
+
+GoRouter _routerWithHiddenReview() => GoRouter(
+  initialLocation: '/one',
+  routes: <RouteBase>[
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, shell) =>
+          DomainTabsShell(shell: shell, spec: _shellSpecWithHiddenReview),
+      branches: <StatefulShellBranch>[
+        StatefulShellBranch(
+          routes: <RouteBase>[
+            GoRoute(
+              path: '/one',
+              builder: (context, state) => const ShellTabPause(
+                routePath: '/one',
+                child: Center(child: Text('one-live')),
+              ),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: <RouteBase>[
+            GoRoute(
+              path: '/two',
+              builder: (context, state) => const ShellTabPause(
+                routePath: '/two',
+                child: Center(child: Text('two-live')),
+              ),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: <RouteBase>[
+            GoRoute(
+              path: '/review',
+              builder: (context, state) => const ShellTabPause(
+                routePath: '/review',
+                child: Center(child: Text('review-live')),
               ),
             ),
           ],
@@ -162,7 +240,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
-    final router = _router(one: const _CounterProbe());
+    final router = _router(one: const _CounterProbe(), wrapOneWithPause: false);
     addTearDown(router.dispose);
 
     await tester.pumpWidget(
@@ -241,6 +319,40 @@ void main() {
     expect(tester.widget<FadeTransition>(find.byKey(fadeKey)).opacity.value, 1);
     expect(find.text('two'), findsOneWidget);
   });
+
+  testWidgets('hidden branch keeps every offstage visible tab paused', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final router = _routerWithHiddenReview();
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp.router(
+          routerConfig: router,
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          builder: (context, child) => FTheme(
+            data: FTheme.neutral.light.desktop,
+            child: child ?? const SizedBox.shrink(),
+          ),
+        ),
+      ),
+    );
+
+    router.go('/review');
+    await tester.pumpAndSettle();
+
+    expect(find.text('one-live', skipOffstage: false), findsNothing);
+    expect(find.text('two-live', skipOffstage: false), findsNothing);
+    expect(find.text('review-live'), findsOneWidget);
+  });
 }
 
 /// Branch-one probe with local state, to prove the indexed stack (and the
@@ -257,11 +369,14 @@ class _CounterProbeState extends State<_CounterProbe> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: GestureDetector(
-        key: const ValueKey<String>('counter-probe'),
-        onTap: () => setState(() => _count++),
-        child: Text('count: $_count'),
+    return ShellTabPause(
+      routePath: '/one',
+      child: Center(
+        child: GestureDetector(
+          key: const ValueKey<String>('counter-probe'),
+          onTap: () => setState(() => _count++),
+          child: Text('count: $_count'),
+        ),
       ),
     );
   }

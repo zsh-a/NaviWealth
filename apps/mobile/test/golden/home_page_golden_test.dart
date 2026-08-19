@@ -261,6 +261,9 @@ DashboardHeaderMetrics _headerMetrics() => DashboardHeaderMetrics(
   ytdChangePct: 0.0917,
 );
 
+DashboardDailyChange _dailyChange() =>
+    DashboardDailyChange(baseCurrency: 'CNY', change: Money(_d('1280'), 'CNY'));
+
 List<Override> _homeOverrides(
   SharedPreferences prefs, {
   DashboardSnapshot? snapshot,
@@ -305,6 +308,7 @@ List<Override> _homeOverrides(
         DashboardSnapshot.empty(asOf: _goldenNow, baseCurrency: 'CNY'),
   ),
   dashboardHeaderMetricsProvider.overrideWith((_) async => _headerMetrics()),
+  dashboardDailyChangeProvider.overrideWith((_) async => _dailyChange()),
   activityFeedProvider.overrideWith(
     (_) => Stream.value(
       activityFeed ??

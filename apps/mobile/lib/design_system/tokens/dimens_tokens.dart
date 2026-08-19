@@ -459,6 +459,10 @@ class AppControlWidths {
   /// Minimum readable Bento module width at the default text scale.
   static const double bentoTile = 320;
 
+  /// Maximum width for a centred empty-state action. Leaves enough room for
+  /// localized labels at large text scales while remaining compact.
+  static const double emptyStateAction = 320;
+
   /// Short statistic tile in sheet summary grids.
   static const double statsTile = 140;
 

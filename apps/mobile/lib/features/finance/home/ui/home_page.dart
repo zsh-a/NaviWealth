@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
@@ -73,27 +74,15 @@ class _HomeLiveBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
-    return PageSkeletonShell<DashboardSnapshot>(
-      skeleton: const HomeSkeleton(),
-      isLoading: snapshotAsync.isLoading && !snapshotAsync.hasValue,
-      child: SafeArea(
-        bottom: false,
-        child: snapshotAsync.when(
-          loading: () => const HomeSkeleton(),
-          error: (e, st) => kDefaultError(
-            context,
-            e,
-            st,
-            onRetry: () => ref.invalidate(dashboardSnapshotProvider),
-          ),
-          data: (snapshot) => Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ValuationTrustNotice(snapshot: snapshot),
-              Expanded(child: _DashboardBody(snapshot: snapshot)),
-            ],
-          ),
-        ),
+    final snapshot = snapshotAsync.value;
+    return SafeArea(
+      bottom: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (snapshot != null) ValuationTrustNotice(snapshot: snapshot),
+          Expanded(child: _DashboardBody(snapshotAsync: snapshotAsync)),
+        ],
       ),
     );
   }

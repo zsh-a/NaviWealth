@@ -20,8 +20,8 @@ void main() {
     test('matches nested routes under the tab root', () {
       expect(
         isShellTabPathActive(
-          activeTabPath: '/activity',
-          routePath: '/activity/spending',
+          activeTabPath: '/activity/spending',
+          routePath: '/activity',
         ),
         isTrue,
       );

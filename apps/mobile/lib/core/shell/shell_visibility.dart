@@ -3,20 +3,23 @@
 ///
 /// Indexed-stack tabs stay mounted when inactive. Without a pause signal,
 /// their Riverpod watches keep Drift streams and chart rebuilds alive in the
-/// background. [DomainTabsShell] publishes the active tab root path here;
-/// tab pages gate live work with [shellTabIsActiveProvider] / [ShellTabPause].
+/// background. [ShellTabPause] listens to the active GoRouter configuration
+/// directly so visible and hidden shell branches share the same semantics.
+/// The providers remain a lightweight fallback for standalone surfaces and
+/// tests that intentionally render without a router.
 library;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-/// Route path of the currently visible domain-tab root (e.g. `/activity`).
+/// Active route path fallback for trees rendered without GoRouter.
 ///
 /// Empty string means "unknown / not under a domain shell" — treat as active
 /// so standalone routes and tests keep working without shell plumbing.
 final activeShellTabPathProvider = Provider<String>((ref) => '');
 
-/// Whether [routePath] is the active shell tab (or a nested route under it).
+/// Whether the fallback active route belongs to the [routePath] tab root.
 final shellTabIsActiveProvider = Provider.family<bool, String>((
   ref,
   routePath,
@@ -32,7 +35,7 @@ bool isShellTabPathActive({
 }) {
   if (activeTabPath.isEmpty) return true;
   if (routePath.isEmpty) return true;
-  return routePath == activeTabPath || routePath.startsWith('$activeTabPath/');
+  return routePath == activeTabPath || activeTabPath.startsWith('$routePath/');
 }
 
 /// Unmounts [child] while its shell tab is offstage so Riverpod watches and
@@ -59,10 +62,39 @@ class ShellTabPause extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final active = ref.watch(shellTabIsActiveProvider(routePath));
+    final router = GoRouter.maybeOf(context);
+    if (router == null) {
+      return _buildForActive(ref.watch(shellTabIsActiveProvider(routePath)));
+    }
+    return AnimatedBuilder(
+      animation: router.routerDelegate,
+      builder: (context, _) {
+        return _buildForActive(
+          isShellTabPathActive(
+            activeTabPath: _activeRouterPath(router),
+            routePath: routePath,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildForActive(bool active) {
     if (!active) {
       return TickerMode(enabled: false, child: placeholder);
     }
     return child;
   }
+}
+
+String _activeRouterPath(GoRouter router) {
+  final configuration = router.routerDelegate.currentConfiguration;
+  if (configuration.isEmpty) {
+    return router.routeInformationProvider.value.uri.path;
+  }
+  final last = configuration.last;
+  if (last is ImperativeRouteMatch) {
+    return last.matches.uri.path;
+  }
+  return configuration.uri.path;
 }

@@ -19,12 +19,15 @@ import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/app/routing/router.dart';
 import 'package:naviwealth/app/shell/shell_chrome.dart';
 import 'package:naviwealth/core/ai/composition/ai_context.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/shell/desktop_sidebar.dart';
 import 'package:naviwealth/core/shell/domain_shell.dart';
+import 'package:naviwealth/core/shell/shell_preferences.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_domain_shell.dart';
 import 'package:naviwealth/features/finance/home/ui/home_page.dart';
@@ -34,6 +37,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/persistence/test_database.dart';
+import '../features/finance/data/repositories/_stub_stamper.dart';
 
 const Size _mobileSize = Size(400, 800);
 const Size _desktopSize = Size(1440, 900);
@@ -60,6 +64,9 @@ Future<ProviderContainer> _pumpAt(
   final container = ProviderContainer(
     overrides: [
       appDatabaseProvider.overrideWith((_) async => db),
+      mutationStamperProvider.overrideWith((_) async => makeStubStamper()),
+      currentUserIdProvider.overrideWithValue(() async => 'u-test'),
+      activeUserIdProvider.overrideWithValue('u-test'),
       sharedPreferencesProvider.overrideWithValue(prefs),
       ...appShellChromeOverrides(),
       // Register the production pack inventory so the router has routes
@@ -137,6 +144,52 @@ void main() {
       expect(find.text(l10n.lifeNavLabel), findsOneWidget);
       expect(find.text(l10n.navToday), findsOneWidget);
     });
+
+    for (final testCase in <({double width, double sidebarWidth})>[
+      (width: 1200, sidebarWidth: kSidebarCollapsedWidth),
+      (width: 1359, sidebarWidth: kSidebarCollapsedWidth),
+      (width: 1360, sidebarWidth: kSidebarExpandedWidth),
+      (width: 1440, sidebarWidth: kSidebarExpandedWidth),
+    ]) {
+      testWidgets(
+        'desktop sidebar is ${testCase.sidebarWidth}dp at ${testCase.width}px',
+        (tester) async {
+          final l10n = lookupAppLocalizations(const Locale('en'));
+          await _pumpAt(
+            tester,
+            viewportSize: Size(testCase.width, 900),
+            domains: <DomainShellSpec>[financeDomainShell(l10n)],
+          );
+
+          expect(
+            tester.getSize(find.byType(DesktopSidebar)).width,
+            testCase.sidebarWidth,
+          );
+        },
+      );
+    }
+
+    testWidgets('Life workspace does not inherit Finance destinations', (
+      tester,
+    ) async {
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await _pumpAt(
+        tester,
+        initialLocation: AppRoutes.life,
+        viewportSize: _desktopSize,
+        domains: <DomainShellSpec>[financeDomainShell(l10n)],
+      );
+
+      expect(find.byType(DesktopSidebar), findsOneWidget);
+      expect(find.text(l10n.lifeNavLabel), findsWidgets);
+      expect(
+        find.descendant(
+          of: find.byType(DesktopSidebar),
+          matching: find.text(l10n.navToday),
+        ),
+        findsNothing,
+      );
+    });
   });
 
   group('Multi-domain dock (Health opt-in)', () {
@@ -180,6 +233,24 @@ void main() {
         }
       });
     }
+
+    testWidgets('tablet rail does not duplicate the header switcher', (
+      tester,
+    ) async {
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await _pumpAt(
+        tester,
+        initialLocation: AppRoutes.activity,
+        viewportSize: const Size(600, 900),
+        domains: <DomainShellSpec>[
+          financeDomainShell(l10n),
+          healthDomainShell(l10n),
+        ],
+      );
+
+      expect(find.byType(DomainSwitcherChip), findsOneWidget);
+      expect(find.text(l10n.shellSwitchDomainTitle), findsNothing);
+    });
 
     testWidgets('mobile exposes current-domain switcher above bottom nav', (
       tester,

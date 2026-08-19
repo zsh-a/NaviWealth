@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/dimens_tokens.dart';
+import '../tokens/window_class.dart';
 import 'adaptive_summary_grid.dart';
 import 'adaptive_supporting_pane.dart';
 import 'app_collapsing_stage.dart';
@@ -82,28 +83,36 @@ class BriefScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compactHeight = AppWindowClass.of(context).hasCompactHeight;
     final contentPadding =
         padding ??
         EdgeInsets.fromLTRB(
           AppSpacing.s16,
-          AppSpacing.s8,
+          compactHeight ? AppSpacing.s4 : AppSpacing.s8,
           AppSpacing.s16,
-          AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
+          (compactHeight ? AppSpacing.s16 : AppSpacing.s24) +
+              MediaQuery.paddingOf(context).bottom,
         );
 
     final adaptiveTiles = summaryTiles;
     final leadingChildren = <Widget>[
       greeting,
-      const SizedBox(height: AppPageRhythm.module),
+      SizedBox(
+        height: compactHeight ? AppPageRhythm.row : AppPageRhythm.module,
+      ),
       stage,
     ];
     final columnChildren = <Widget>[
       ...leadingChildren,
       if (adaptiveTiles != null && adaptiveTiles.isNotEmpty) ...[
-        const SizedBox(height: AppPageRhythm.section),
+        SizedBox(
+          height: compactHeight ? AppPageRhythm.module : AppPageRhythm.section,
+        ),
         AdaptiveSummaryGrid(items: adaptiveTiles),
       ] else if (modules.isNotEmpty) ...[
-        const SizedBox(height: AppPageRhythm.section),
+        SizedBox(
+          height: compactHeight ? AppPageRhythm.module : AppPageRhythm.section,
+        ),
         if (adaptiveSupportingPane && secondary.isNotEmpty)
           AdaptiveSupportingPane(
             primary: _BriefModuleColumn(items: modules),

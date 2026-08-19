@@ -38,6 +38,12 @@ class Breakpoints {
   /// content width after navigation.
   static const double shellDesktop = desktop;
 
+  /// Width at which a desktop window can afford the labelled 240dp sidebar
+  /// without regressing the usable canvas at the 1200dp shell transition.
+  /// Below this threshold desktop chrome stays icon-only while preserving the
+  /// user's persisted expanded/collapsed preference for wider windows.
+  static const double shellExpandedSidebar = 1360;
+
   /// Threshold for master/detail and supporting-pane compositions. Bento
   /// grids derive their columns from a minimum tile width instead.
   static const double contentTwoColumn = 1024;

@@ -28,7 +28,7 @@ import '../../../core/persistence/test_database.dart';
 import '../../finance/data/repositories/_stub_stamper.dart';
 
 void main() {
-  testWidgets('Today keeps review reachable and leaves creation to Plans', (
+  testWidgets('Today keeps review reachable and offers focused capture', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -46,8 +46,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.bySemanticsLabel('Review'), findsWidgets);
-    expect(find.bySemanticsLabel('New Action'), findsNothing);
-    expect(find.text('New Action'), findsNothing);
+    expect(find.text('New Action'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);

@@ -26,6 +26,7 @@ class DesktopSidebar extends ConsumerWidget {
     required this.onDestinationSelected,
     this.workspace,
     this.footerActions = const <DesktopSidebarAction>[],
+    this.forceCollapsed = false,
   });
 
   final List<DesktopSidebarDestination> destinations;
@@ -34,13 +35,21 @@ class DesktopSidebar extends ConsumerWidget {
   final DesktopSidebarWorkspace? workspace;
   final List<DesktopSidebarAction> footerActions;
 
+  /// Temporarily renders the icon-only rail without changing the persisted
+  /// user preference. Used by constrained desktop windows where the expanded
+  /// sidebar would make content narrower than it was in the tablet tier.
+  final bool forceCollapsed;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final collapsed = ref.watch(sidebarCollapsedProvider);
+    final effectiveCollapsed = forceCollapsed || collapsed;
     return AnimatedContainer(
       duration: AppMotionPolicy.duration(context, Motion.fast),
       curve: Motion.standardDecelerate,
-      width: collapsed ? kSidebarCollapsedWidth : kSidebarExpandedWidth,
+      width: effectiveCollapsed
+          ? kSidebarCollapsedWidth
+          : kSidebarExpandedWidth,
       child: ClipRect(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -101,11 +110,13 @@ class DesktopSidebar extends ConsumerWidget {
                         collapsed: visuallyCollapsed,
                       ),
                     _SettingsPinnedRow(collapsed: visuallyCollapsed),
-                    _CollapseToggle(
-                      collapsed: visuallyCollapsed,
-                      onToggle: () =>
-                          ref.read(sidebarCollapsedProvider.notifier).toggle(),
-                    ),
+                    if (!forceCollapsed)
+                      _CollapseToggle(
+                        collapsed: visuallyCollapsed,
+                        onToggle: () => ref
+                            .read(sidebarCollapsedProvider.notifier)
+                            .toggle(),
+                      ),
                   ],
                 ),
               ),

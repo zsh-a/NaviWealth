@@ -15,7 +15,28 @@ class FinancialInboxCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final count = ref.watch(financialInboxProvider).value?.length ?? 0;
+    final inbox = ref.watch(financialInboxProvider);
+    final items = inbox.value;
+    final status = items != null
+        ? Text(
+            items.isEmpty
+                ? l10n.financialInboxEmptyTitle
+                : l10n.financialInboxCount(items.length),
+            style: context.captionStyle,
+          )
+        : inbox.hasError
+        ? Text(
+            l10n.commonLoadFailed,
+            style: context.captionStyle.copyWith(
+              color: context.theme.colors.destructive,
+            ),
+          )
+        : const SkeletonBox(
+            key: ValueKey<String>('financial-inbox.loading'),
+            width: 112,
+            height: 14,
+            radius: AppRadius.sm,
+          );
     return SoftCard.raised(
       onPress: () {
         ref
@@ -34,12 +55,7 @@ class FinancialInboxCard extends ConsumerWidget {
               children: [
                 Text(l10n.financialInboxTitle, style: context.labelStyle),
                 const SizedBox(height: AppSpacing.s4),
-                Text(
-                  count == 0
-                      ? l10n.financialInboxEmptyTitle
-                      : l10n.financialInboxCount(count),
-                  style: context.captionStyle,
-                ),
+                status,
               ],
             ),
           ),

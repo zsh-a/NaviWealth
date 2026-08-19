@@ -212,7 +212,16 @@ class _TodayListState extends ConsumerState<_TodayList> {
                 message: _filter == ExecutionTodayFilter.focus
                     ? l10n.executionTodayEmptyBody
                     : l10n.executionTodayFilteredEmptyBody,
-                action: null,
+                action: _filter == ExecutionTodayFilter.focus
+                    ? AppActionButton(
+                        onPress: () =>
+                            showExecutionActionSheet(context: context),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(l10n.executionCreateActionTitle),
+                        ),
+                      )
+                    : null,
               ),
           ],
         ];

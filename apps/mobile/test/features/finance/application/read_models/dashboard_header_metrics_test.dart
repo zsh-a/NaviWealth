@@ -3,9 +3,44 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_granularity.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_time_range.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_trend_builder.dart';
 
 void main() {
+  test('Today daily delta requests only yesterday and today', () async {
+    final now = DateTime.utc(2026, 8, 15, 12);
+    final today = DateTime.utc(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    DashboardTimeRange? requestedRange;
+    final container = ProviderContainer(
+      overrides: [
+        dashboardHeaderClockProvider.overrideWithValue(() => now),
+        dashboardBaseCurrencyProvider.overrideWith((_) => 'USD'),
+        dashboardTrendProvider.overrideWith((_, range) async {
+          requestedRange = range;
+          return DashboardTrend(
+            range: range,
+            baseCurrency: 'USD',
+            points: [
+              _point(yesterday, 980, TrendPointQuality.complete),
+              _point(today, 1000, TrendPointQuality.complete),
+            ],
+          );
+        }),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final daily = await container.read(dashboardDailyChangeProvider.future);
+
+    expect(requestedRange?.from, yesterday);
+    expect(requestedRange?.to, today);
+    expect(requestedRange?.granularity, NetWorthGranularity.day);
+    expect(daily.baseCurrency, 'USD');
+    expect(daily.change?.amount, Decimal.fromInt(20));
+  });
+
   test('header deltas are unavailable when a baseline is incomplete', () async {
     final now = DateTime.utc(2026, 8, 15, 12);
     final today = DateTime.utc(now.year, now.month, now.day);
