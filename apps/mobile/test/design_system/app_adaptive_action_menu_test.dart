@@ -10,7 +10,7 @@ Widget _wrap({
   return MaterialApp(
     theme: AppTheme.light().copyWith(platform: platform),
     home: FTheme(
-      data: FThemes.slate.light.desktop,
+      data: FTheme.neutral.light.desktop,
       child: Scaffold(
         body: Align(
           alignment: Alignment.topRight,

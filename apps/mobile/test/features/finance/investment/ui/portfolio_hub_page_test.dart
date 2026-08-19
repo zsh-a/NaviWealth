@@ -149,7 +149,7 @@ void main() {
             ).overrideWith((ref) async => null),
           ],
           child: FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: MaterialApp(
               theme: AppTheme.light(),
               localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -285,7 +285,7 @@ void main() {
           ).overrideWith((ref) async => trend),
         ],
         child: FTheme(
-          data: FThemes.slate.light.desktop,
+          data: FTheme.neutral.light.desktop,
           child: MaterialApp(
             theme: AppTheme.light(),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -451,7 +451,7 @@ void main() {
           ).overrideWith((ref) async => null),
         ],
         child: FTheme(
-          data: FThemes.slate.light.desktop,
+          data: FTheme.neutral.light.desktop,
           child: MaterialApp(
             theme: AppTheme.light(),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -494,7 +494,7 @@ void main() {
       ProviderScope(
         overrides: [portfolioHubProvider.overrideWith(() => notifier)],
         child: FTheme(
-          data: FThemes.slate.light.desktop,
+          data: FTheme.neutral.light.desktop,
           child: MaterialApp(
             theme: AppTheme.light(),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -579,7 +579,7 @@ void main() {
             ),
           ],
           child: FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: MaterialApp(
               theme: AppTheme.light(),
               localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -679,7 +679,7 @@ void main() {
           ),
         ],
         child: FTheme(
-          data: FThemes.slate.light.desktop,
+          data: FTheme.neutral.light.desktop,
           child: MaterialApp(
             theme: AppTheme.light(),
             localizationsDelegates: AppLocalizations.localizationsDelegates,

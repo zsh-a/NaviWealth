@@ -31,7 +31,7 @@ Widget _wrap(Widget child, {List<Override> overrides = const <Override>[]}) {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: FTheme(
-        data: FThemes.slate.light.desktop,
+        data: FTheme.neutral.light.desktop,
         child: FScaffold(childPad: false, child: Center(child: child)),
       ),
     ),
@@ -479,7 +479,7 @@ void main() {
         GoRoute(
           path: '/',
           builder: (context, state) => FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: FScaffold(
               childPad: false,
               child: _artifactDetailContent(_artifact()),
@@ -489,7 +489,7 @@ void main() {
         GoRoute(
           path: '/evidence',
           builder: (_, _) => FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: const FScaffold(
               childPad: false,
               child: Text('evidence detail'),
@@ -532,7 +532,7 @@ void main() {
         GoRoute(
           path: '/',
           builder: (context, state) => FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: FScaffold(
               childPad: false,
               child: _artifactDetailContent(_artifact()),
@@ -542,7 +542,7 @@ void main() {
         GoRoute(
           path: '/plan',
           builder: (_, _) => FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: const FScaffold(childPad: false, child: Text('plan detail')),
           ),
         ),
@@ -613,7 +613,7 @@ void main() {
         GoRoute(
           path: '/',
           builder: (context, state) => FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: FScaffold(
               childPad: false,
               child: _artifactDetailContent(_artifact()),
@@ -623,7 +623,7 @@ void main() {
         GoRoute(
           path: '${SettingsRoutes.aiTransparency}/:requestId',
           builder: (_, state) => FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: FScaffold(
               childPad: false,
               child: Text('trace detail ${state.pathParameters['requestId']}'),

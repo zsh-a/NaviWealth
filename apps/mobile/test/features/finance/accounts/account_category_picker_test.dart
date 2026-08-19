@@ -13,7 +13,7 @@ Widget _wrap(Widget child) {
     supportedLocales: AppLocalizations.supportedLocales,
     locale: const Locale('zh', 'CN'),
     home: FTheme(
-      data: FThemes.slate.light.desktop,
+      data: FTheme.neutral.light.desktop,
       child: Scaffold(body: child),
     ),
   );

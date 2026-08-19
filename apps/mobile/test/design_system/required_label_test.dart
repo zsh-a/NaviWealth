@@ -7,7 +7,7 @@ Widget _wrap(Widget child) {
   return MaterialApp(
     theme: AppTheme.light(),
     home: FTheme(
-      data: FThemes.slate.light.desktop,
+      data: FTheme.neutral.light.desktop,
       child: FScaffold(
         childPad: false,
         child: Center(child: SizedBox(width: 180, child: child)),

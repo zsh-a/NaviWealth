@@ -206,7 +206,7 @@ class SkeletonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FCard.raw(
+    return FCard(
       child: Padding(padding: padding, child: child),
     );
   }

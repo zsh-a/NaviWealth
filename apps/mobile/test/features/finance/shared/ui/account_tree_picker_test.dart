@@ -54,7 +54,7 @@ Widget _wrap(Widget child, {Locale locale = const Locale('en', 'US')}) =>
       supportedLocales: AppLocalizations.supportedLocales,
       locale: locale,
       home: FTheme(
-        data: FThemes.slate.light.desktop,
+        data: FTheme.neutral.light.desktop,
         child: Scaffold(
           body: Padding(padding: const EdgeInsets.all(16), child: child),
         ),

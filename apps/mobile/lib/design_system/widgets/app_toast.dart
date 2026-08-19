@@ -32,8 +32,13 @@ class AppMessenger {
   FToasterState? _cachedToaster;
 
   /// Install the toaster host. Call in [MaterialApp.builder].
-  static Widget init({required Widget child}) =>
-      _ToasterHost(child: FToaster(child: child));
+  ///
+  /// The toaster renders entries in an overlay beside [child], so a route-level
+  /// [FTheme] below it cannot provide Forui's accessibility scope. Forui 0.25
+  /// requires that scope for toast motion and auto-dismiss behavior.
+  static Widget init({required Widget child}) => FAccessibilityScope(
+    child: _ToasterHost(child: FToaster(child: child)),
+  );
 
   /// Cache the surrounding [FToaster] state so that [show] can post toasts
   /// even after the calling [context] is unmounted (e.g. after a pop).

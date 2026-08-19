@@ -8,7 +8,7 @@ Widget _wrap(Widget child) {
   return MaterialApp(
     theme: AppTheme.light(),
     builder: (context, child) => AppMessenger.init(child: child!),
-    home: FTheme(data: FThemes.slate.light.desktop, child: child),
+    home: FTheme(data: FTheme.neutral.light.desktop, child: child),
   );
 }
 

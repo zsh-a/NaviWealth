@@ -9,8 +9,8 @@ Widget _wrap(
   Brightness brightness = Brightness.light,
 }) {
   final fTheme = brightness == Brightness.dark
-      ? FThemes.slate.dark.desktop
-      : FThemes.slate.light.desktop;
+      ? FTheme.neutral.dark.desktop
+      : FTheme.neutral.light.desktop;
   return MaterialApp(
     theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
     home: MediaQuery(

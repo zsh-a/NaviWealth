@@ -16,7 +16,7 @@ Widget _wrap(Widget child, {required double keyboardInset}) {
   return MaterialApp(
     theme: AppTheme.light(),
     home: FTheme(
-      data: FThemes.slate.light.desktop,
+      data: FTheme.neutral.light.desktop,
       child: MediaQuery(
         data: MediaQueryData(
           viewInsets: EdgeInsets.only(bottom: keyboardInset),

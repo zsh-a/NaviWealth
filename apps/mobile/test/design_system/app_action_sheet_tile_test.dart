@@ -7,7 +7,7 @@ Widget _wrap(Widget child) {
   return MaterialApp(
     theme: AppTheme.light(),
     home: FTheme(
-      data: FThemes.slate.light.desktop,
+      data: FTheme.neutral.light.desktop,
       // Mirrors the AppSheet body (scrollable Column) so we catch any
       // sliver-vs-box layout regression in the grouped list.
       child: Scaffold(

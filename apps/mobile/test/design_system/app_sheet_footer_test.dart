@@ -7,7 +7,7 @@ Widget _wrap({required Size size, double textScale = 1}) {
   return MaterialApp(
     theme: AppTheme.light(),
     home: FTheme(
-      data: FThemes.slate.light.desktop,
+      data: FTheme.neutral.light.desktop,
       child: MediaQuery(
         data: MediaQueryData(
           size: size,

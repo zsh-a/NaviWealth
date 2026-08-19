@@ -785,7 +785,7 @@ Widget _wrap(Widget child) {
     theme: AppTheme.light(),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: FTheme(data: FThemes.slate.light.desktop, child: child),
+    home: FTheme(data: FTheme.neutral.light.desktop, child: child),
   );
 }
 

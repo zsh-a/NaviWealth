@@ -156,7 +156,7 @@ void main() {
           );
         },
         home: FTheme(
-          data: FThemes.slate.light.desktop,
+          data: FTheme.neutral.light.desktop,
           child: const SyncStatusPage(),
         ),
       ),

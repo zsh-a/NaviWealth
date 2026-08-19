@@ -319,7 +319,7 @@ final class _PlatformFileCaptureFile implements IngestCaptureFile {
   String? get mimeType => null;
 
   @override
-  Future<int?> length() async => file.size > 0 ? file.size : file.length();
+  Future<int?> length() async => file.length();
 
   @override
   Stream<List<int>> openRead() => file.readAsByteStream();

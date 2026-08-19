@@ -194,7 +194,7 @@ Future<void> _pumpLibrary(
   final preferences = await SharedPreferences.getInstance();
 
   final page = FTheme(
-    data: FThemes.slate.light.desktop,
+    data: FTheme.neutral.light.desktop,
     child: const KnowledgeLibraryPage(),
   );
   GoRouter? router;

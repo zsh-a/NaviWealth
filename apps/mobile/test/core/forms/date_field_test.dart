@@ -16,7 +16,7 @@ Widget _wrap(
     home: MediaQuery(
       data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
       child: FTheme(
-        data: FThemes.slate.light.desktop,
+        data: FTheme.neutral.light.desktop,
         child: Scaffold(
           body: Form(
             autovalidateMode: AutovalidateMode.onUserInteraction,

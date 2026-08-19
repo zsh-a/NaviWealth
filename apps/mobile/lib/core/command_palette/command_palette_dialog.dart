@@ -31,7 +31,7 @@ Future<void> showCommandPalette(
     context: context,
     barrierDismissible: true,
     routeSettings: const RouteSettings(name: _kCommandPaletteRouteName),
-    // NB: we intentionally do *not* wrap in `FDialog.raw`. forui's dialog
+    // NB: we intentionally do *not* wrap in `FDialog`. forui's dialog
     // vertically centres its (min-sized) child and reserves the keyboard as
     // bottom padding, so on mobile the palette floats to the middle and leaves
     // a keyboard-sized blank band once the list shrinks while typing. The

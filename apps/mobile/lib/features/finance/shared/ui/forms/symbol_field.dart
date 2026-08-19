@@ -389,7 +389,7 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
         if (showDropdown)
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.s4),
-            child: FCard.raw(
+            child: FCard(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxHeight: 320),
                 child: ListView(
@@ -472,15 +472,24 @@ class _ReadOnlySummary extends StatelessWidget {
       choice.currency,
     ];
     return FCard(
-      title: Text(
-        choice.name == null
-            ? choice.symbol
-            : '${choice.symbol} — ${choice.name}',
-        style: context.labelStyle,
-      ),
-      subtitle: Text(
-        subtitleParts.join(' · '),
-        style: context.theme.typography.body.xs,
+      builder: (context, style, _) => Padding(
+        padding: style.padding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              choice.name == null
+                  ? choice.symbol
+                  : '${choice.symbol} — ${choice.name}',
+              style: context.labelStyle,
+            ),
+            const SizedBox(height: AppSpacing.s4),
+            Text(
+              subtitleParts.join(' · '),
+              style: context.theme.typography.body.xs,
+            ),
+          ],
+        ),
       ),
     );
   }

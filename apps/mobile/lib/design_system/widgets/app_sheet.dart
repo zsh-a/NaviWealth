@@ -145,6 +145,7 @@ Future<T?> _showAppModalSheet<T>({
       style: context.theme.modalSheetStyle,
       builder: builder,
       mainAxisMaxRatio: mainAxisMaxRatio,
+      capturedFTheme: FTheme.capture(from: context, to: navigator.context),
       capturedThemes: InheritedTheme.capture(
         from: context,
         to: navigator.context,
@@ -164,6 +165,7 @@ class _AppModalSheetRoute<T> extends FModalSheetRoute<T> {
     required super.style,
     required super.builder,
     required super.mainAxisMaxRatio,
+    required super.capturedFTheme,
     required super.capturedThemes,
     required super.barrierLabel,
     required super.barrierOnTapHint,

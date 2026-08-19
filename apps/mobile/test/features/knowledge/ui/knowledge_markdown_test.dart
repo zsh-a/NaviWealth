@@ -19,7 +19,7 @@ Future<void> _pump(
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(
     FTheme(
-      data: dark ? FThemes.slate.dark.desktop : FThemes.slate.light.desktop,
+      data: dark ? FTheme.neutral.dark.desktop : FTheme.neutral.light.desktop,
       child: MaterialApp(
         theme: dark ? AppTheme.dark() : AppTheme.light(),
         localizationsDelegates: AppLocalizations.localizationsDelegates,

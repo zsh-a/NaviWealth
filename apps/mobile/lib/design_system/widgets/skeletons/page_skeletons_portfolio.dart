@@ -236,7 +236,7 @@ class AssetsListSkeleton extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: AppSpacing.s8),
           child: SkeletonBox(width: 100, height: 18),
         ),
-        FCard.raw(
+        FCard(
           child: Column(
             children: [
               for (var i = 0; i < rowCount; i++) ...[
@@ -251,7 +251,7 @@ class AssetsListSkeleton extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: AppSpacing.s8),
           child: SkeletonBox(width: 120, height: 18),
         ),
-        FCard.raw(child: Column(children: [_row(), const FDivider(), _row()])),
+        FCard(child: Column(children: [_row(), const FDivider(), _row()])),
       ],
     );
   }

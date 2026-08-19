@@ -13,7 +13,7 @@ void main() {
     List<CapitalAllocationDraft>? saved;
     await tester.pumpWidget(
       FTheme(
-        data: FThemes.slate.light.desktop,
+        data: FTheme.neutral.light.desktop,
         child: MaterialApp(
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -81,7 +81,7 @@ void main() {
 
     await tester.pumpWidget(
       FTheme(
-        data: FThemes.slate.light.desktop,
+        data: FTheme.neutral.light.desktop,
         child: MaterialApp(
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,

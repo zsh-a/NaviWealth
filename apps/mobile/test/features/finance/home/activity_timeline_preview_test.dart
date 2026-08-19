@@ -135,7 +135,7 @@ Widget _wrapStream({
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en', 'US'),
       builder: (context, child) =>
-          FTheme(data: FThemes.slate.light.desktop, child: child!),
+          FTheme(data: FTheme.neutral.light.desktop, child: child!),
     ),
   );
 }

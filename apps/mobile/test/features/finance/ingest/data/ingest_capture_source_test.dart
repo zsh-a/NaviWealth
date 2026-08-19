@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:cross_file/cross_file.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_capture_policy.dart';
@@ -213,7 +214,7 @@ void main() {
       'pathless PlatformFile returns unreadable instead of throwing',
       () async {
         final outcome = await platformFileToIngestSource(
-          PlatformFile(name: 'saf.pdf', size: 1),
+          _UnreadablePlatformFile(),
         );
 
         expect(_failureCode(outcome), IngestCaptureFailureCode.unreadable);
@@ -223,6 +224,30 @@ void main() {
 }
 
 final Uint8List _oneByte = Uint8List.fromList(const [1]);
+
+final class _UnreadablePlatformFile extends PlatformFile {
+  @override
+  final String name = 'saf.pdf';
+
+  @override
+  final Uri uri = Uri.parse('content://naviwealth/saf.pdf');
+
+  @override
+  XFile get xFile => throw StateError('xFile unavailable');
+
+  @override
+  Future<int> length() async => 1;
+
+  @override
+  Future<Uint8List> readAsBytes() async {
+    throw StateError('bytes unavailable');
+  }
+
+  @override
+  Stream<Uint8List> readAsByteStream() {
+    return Stream<Uint8List>.error(StateError('stream unavailable'));
+  }
+}
 
 IngestCaptureFailureCode _failureCode(IngestCaptureOutcome outcome) =>
     (outcome as IngestCaptureFailure).code;

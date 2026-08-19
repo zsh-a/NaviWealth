@@ -177,11 +177,9 @@ void main() {
         sessionId: session.id,
       );
 
-      expect(
-        result.completedItemIds,
-        [session.items[1].id],
-        reason: result.failures.map((failure) => failure.cause).join('\n'),
-      );
+      expect(result.completedItemIds, [
+        session.items[1].id,
+      ], reason: result.failures.map((failure) => failure.cause).join('\n'));
       expect(
         result.failures.single.code,
         RebalanceExecutionFailureCode.businessFailed,

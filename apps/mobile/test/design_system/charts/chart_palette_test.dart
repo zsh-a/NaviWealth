@@ -12,8 +12,8 @@ Widget _wrap(
       ? AppTheme.dark()
       : AppTheme.light();
   final baseFTheme = brightness == Brightness.dark
-      ? FThemes.slate.dark.desktop
-      : FThemes.slate.light.desktop;
+      ? FTheme.neutral.dark.desktop
+      : FTheme.neutral.light.desktop;
   final fTheme = FThemeData(
     touch: false,
     colors: baseFTheme.colors.copyWith(

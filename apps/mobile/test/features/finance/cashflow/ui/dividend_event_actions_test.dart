@@ -113,7 +113,7 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => AppMessenger.init(child: child!),
           home: FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: _ActionHost(event: event),
           ),
         ),

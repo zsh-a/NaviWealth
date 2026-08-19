@@ -8,9 +8,8 @@ enum GroupTransferPolicy { bidirectional, inflowsOnly, isolated }
 GroupTransferPolicy groupTransferPolicyFromWire(String wire) {
   return GroupTransferPolicy.values.firstWhere(
     (value) => value.name == wire,
-    orElse: () => throw FormatException(
-      'Unknown group transfer policy: $wire.',
-    ),
+    orElse: () =>
+        throw FormatException('Unknown group transfer policy: $wire.'),
   );
 }
 
@@ -87,9 +86,5 @@ class PortfolioRebalanceTarget {
       groups.every(
         (group) => group.hasValidWeight && group.internalTarget.isValid,
       ) &&
-      groups.fold<int>(
-            0,
-            (sum, group) => sum + group.targetWeightBps,
-          ) ==
-          10000;
+      groups.fold<int>(0, (sum, group) => sum + group.targetWeightBps) == 10000;
 }

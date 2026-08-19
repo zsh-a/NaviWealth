@@ -29,7 +29,7 @@ Widget _wrap({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => FTheme(
-        data: FThemes.slate.light.desktop,
+        data: FTheme.neutral.light.desktop,
         child: AppMessenger.init(child: child ?? const SizedBox.shrink()),
       ),
       home: const DatabaseUnlockGate(child: Text('Private database content')),

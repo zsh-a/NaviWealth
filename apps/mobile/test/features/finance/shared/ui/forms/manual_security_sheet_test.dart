@@ -88,7 +88,7 @@ Future<LocalSecurityChoice?> _openSheet(
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('zh'),
         home: FTheme(
-          data: FThemes.slate.light.desktop,
+          data: FTheme.neutral.light.desktop,
           child: Builder(
             builder: (ctx) => Scaffold(
               body: Center(
@@ -135,7 +135,7 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('zh'),
           home: FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: MediaQuery(
               data: const MediaQueryData(
                 viewInsets: EdgeInsets.only(bottom: keyboardInset),
@@ -284,7 +284,7 @@ void main() {
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('zh'),
             home: FTheme(
-              data: FThemes.slate.light.desktop,
+              data: FTheme.neutral.light.desktop,
               child: Builder(
                 builder: (ctx) => Scaffold(
                   body: Center(

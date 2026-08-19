@@ -65,7 +65,7 @@ class AppTheme {
     // overlays) sit on the same canvas as the design system.
     final oled = surfaceStyle == AppSurfaceStyle.oled && isDark;
     final highContrast = surfaceStyle == AppSurfaceStyle.highContrast;
-    final f = isDark ? FColors.slateDark : FColors.slateLight;
+    final f = isDark ? FColors.neutralDark : FColors.neutralLight;
     final accent = AccentColors.primary(brightness, seed: accentSeed);
     final onAccent = AccentColors.onPrimary(brightness);
     final pageBackground = isDark

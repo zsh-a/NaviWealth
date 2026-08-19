@@ -10,7 +10,7 @@ Widget _harness({
   return MaterialApp(
     theme: AppTheme.light(),
     home: FTheme(
-      data: FThemes.slate.light.desktop,
+      data: FTheme.neutral.light.desktop,
       child: Builder(
         builder: (context) => Scaffold(
           body: Center(

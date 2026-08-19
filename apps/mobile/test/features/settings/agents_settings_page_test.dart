@@ -50,7 +50,7 @@ void main() {
         GoRoute(
           path: '/',
           builder: (context, state) => FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: const AgentsSettingsPage(),
           ),
         ),
@@ -58,7 +58,7 @@ void main() {
           path: SettingsRoutes.domains,
           name: SettingsRouteNames.domains,
           builder: (context, state) => FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: const Text('Domain management route'),
           ),
         ),
@@ -164,7 +164,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: const AgentsSettingsPage(),
           ),
         ),
@@ -240,7 +240,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: const AgentsSettingsPage(),
           ),
         ),
@@ -362,7 +362,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: const AgentsSettingsPage(),
           ),
         ),
@@ -404,7 +404,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: const AdvancedSettingsPage(),
           ),
         ),
@@ -467,7 +467,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: const AgentsSettingsPage(),
           ),
         ),
@@ -537,7 +537,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: const AgentsSettingsPage(),
           ),
         ),
@@ -622,7 +622,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: const AgentsSettingsPage(),
           ),
         ),
@@ -693,7 +693,7 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => AppMessenger.init(child: child!),
           home: FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: const AgentsSettingsPage(),
           ),
         ),
@@ -767,7 +767,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: const AgentsSettingsPage(),
           ),
         ),
@@ -853,14 +853,14 @@ void main() {
         GoRoute(
           path: '/',
           builder: (context, state) => FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: const AgentsSettingsPage(),
           ),
         ),
         GoRoute(
           path: AgentArtifactRoutes.detailPath,
           builder: (context, state) => FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: AgentArtifactPage(
               artifactId: state.pathParameters['artifactId'] ?? '',
             ),
@@ -1014,7 +1014,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: const AgentsSettingsPage(),
           ),
         ),
@@ -1108,7 +1108,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: const AgentsSettingsPage(),
           ),
         ),

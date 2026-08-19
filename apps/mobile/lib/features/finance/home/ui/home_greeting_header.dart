@@ -35,10 +35,7 @@ class HomeGreetingHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child: Text(
-                  greeting,
-                  style: context.briefGreetingTitleStyle,
-                ),
+                child: Text(greeting, style: context.briefGreetingTitleStyle),
               ),
               // Today has no `FHeader`, so the editorial greeting row is
               // where the cross-domain shell chrome lands (domain switch +

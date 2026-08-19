@@ -140,10 +140,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
                 pendingFinalizeIds: _pendingFinalize.keys.toSet(),
               );
         if (viewData != null) {
-          _scheduleSelectionPrune(
-            viewData.items,
-            ensureFocus: true,
-          );
+          _scheduleSelectionPrune(viewData.items, ensureFocus: true);
         }
         final selectedItems = viewData?.items
             .where((item) => _selection.isSelected(item.draft.draftId))

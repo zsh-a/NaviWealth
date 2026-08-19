@@ -54,13 +54,9 @@ void main() {
       expect(frb.embeddingDim(), 768);
     }, skip: skipReason);
 
-    test(
-      'embedderFingerprint() top-level matches the expected constant',
-      () {
-        expect(frb.embedderFingerprint(), 'embeddinggemma-300m-onnx-int8-d768');
-      },
-      skip: skipReason,
-    );
+    test('embedderFingerprint() top-level matches the expected constant', () {
+      expect(frb.embedderFingerprint(), 'embeddinggemma-300m-onnx-int8-d768');
+    }, skip: skipReason);
 
     test('GemmaEmbedder.load throws on empty model dir', () async {
       await expectLater(

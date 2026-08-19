@@ -11,7 +11,7 @@ import 'app_type_scale.dart';
 
 /// Builds the production Forui theme for NaviWealth.
 ///
-/// Slate supplies the component styles and touch/desktop density. NaviWealth's
+/// Neutral supplies the component styles and touch/desktop density. NaviWealth's
 /// brand colors then replace the palette fields shared with the Material
 /// theme so both widget systems render the same surface language.
 FThemeData buildAppForuiTheme({
@@ -25,7 +25,7 @@ FThemeData buildAppForuiTheme({
   // forui widgets must sit on the same canvas as design-system components.
   final oled = surfaceStyle == AppSurfaceStyle.oled && isDark;
   final highContrast = surfaceStyle == AppSurfaceStyle.highContrast;
-  final platform = isDark ? FThemes.slate.dark : FThemes.slate.light;
+  final platform = isDark ? FTheme.neutral.dark : FTheme.neutral.light;
   final base = touch ? platform.touch : platform.desktop;
   final colors = base.colors.copyWith(
     primary: AccentColors.primary(brightness, seed: accentSeed),

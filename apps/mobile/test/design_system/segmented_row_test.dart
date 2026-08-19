@@ -14,7 +14,7 @@ Widget _wrap(Widget child, {double width = 400, double textScale = 1}) {
     home: MediaQuery(
       data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
       child: FTheme(
-        data: FThemes.slate.light.desktop,
+        data: FTheme.neutral.light.desktop,
         child: FScaffold(
           childPad: false,
           child: Center(

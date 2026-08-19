@@ -23,7 +23,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: Align(
               alignment: AlignmentDirectional.centerStart,
               child: DesktopSidebar(

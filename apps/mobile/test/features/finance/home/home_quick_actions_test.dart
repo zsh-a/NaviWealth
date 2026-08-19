@@ -19,7 +19,7 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: FTheme(
-          data: FThemes.slate.light.desktop,
+          data: FTheme.neutral.light.desktop,
           child: const Scaffold(
             body: Padding(
               padding: EdgeInsets.all(8),
@@ -53,7 +53,7 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: FTheme(
-          data: FThemes.slate.light.desktop,
+          data: FTheme.neutral.light.desktop,
           child: const Scaffold(
             body: Padding(
               padding: EdgeInsets.all(8),
@@ -81,7 +81,7 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: FTheme(
-          data: FThemes.slate.light.desktop,
+          data: FTheme.neutral.light.desktop,
           child: const Scaffold(
             body: Padding(
               padding: EdgeInsets.all(8),

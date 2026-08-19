@@ -216,57 +216,53 @@ void main() {
       tags: 'integration',
     );
 
-    test(
-      'currency-mismatched quotes fall back to cost basis safely',
-      () async {
-        final env = await IntegrationEnv.create(
-          extraOverrides: [
-            holdingPriceSourceProvider.overrideWith(
-              (_) async => InMemoryHoldingPriceSource([
-                HoldingPriceObservation(
-                  assetId: 'NASDAQ:AAPL',
-                  price: Decimal.fromInt(40),
-                  currency: 'USD',
-                  asOf: DateTime.utc(2026, 1, 10),
-                ),
-              ]),
-            ),
-          ],
-        );
-        await _seedLedger(env.db);
-        final repository = await env.container.read(
-          journalEntryRepositoryProvider.future,
-        );
-        final buy = JournalEntryBuilders.buy(
-          date: DateTime.utc(2026, 1, 10),
-          accountId: 'broker',
-          cashAccountId: 'cash',
-          assetUnit: 'NASDAQ:AAPL',
-          qty: Decimal.fromInt(10),
-          price: Decimal.fromInt(20),
-          quoteCurrency: 'CNY',
-        );
-        await repository.create(entry: buy.entry, postings: buy.postings);
+    test('currency-mismatched quotes fall back to cost basis safely', () async {
+      final env = await IntegrationEnv.create(
+        extraOverrides: [
+          holdingPriceSourceProvider.overrideWith(
+            (_) async => InMemoryHoldingPriceSource([
+              HoldingPriceObservation(
+                assetId: 'NASDAQ:AAPL',
+                price: Decimal.fromInt(40),
+                currency: 'USD',
+                asOf: DateTime.utc(2026, 1, 10),
+              ),
+            ]),
+          ),
+        ],
+      );
+      await _seedLedger(env.db);
+      final repository = await env.container.read(
+        journalEntryRepositoryProvider.future,
+      );
+      final buy = JournalEntryBuilders.buy(
+        date: DateTime.utc(2026, 1, 10),
+        accountId: 'broker',
+        cashAccountId: 'cash',
+        assetUnit: 'NASDAQ:AAPL',
+        qty: Decimal.fromInt(10),
+        price: Decimal.fromInt(20),
+        quoteCurrency: 'CNY',
+      );
+      await repository.create(entry: buy.entry, postings: buy.postings);
 
-        final service = await env.container.read(holdingServiceProvider.future);
-        final sample = (await service.computeAtSamples([
-          DateTime.utc(2026, 1, 12),
-        ])).single;
+      final service = await env.container.read(holdingServiceProvider.future);
+      final sample = (await service.computeAtSamples([
+        DateTime.utc(2026, 1, 12),
+      ])).single;
 
-        final snapshot = sample.snapshots['NASDAQ:AAPL'];
-        expect(snapshot, isNotNull);
-        expect(snapshot!.assetCurrency, 'CNY');
-        expect(snapshot.unitPriceInAssetCurrency, Decimal.fromInt(20));
-        expect(snapshot.marketValueInAssetCurrency, Decimal.fromInt(200));
-        expect(sample.issues.single.assetId, 'NASDAQ:AAPL');
-        expect(sample.issues.single.currency, 'CNY');
-        expect(
-          sample.issues.single.cause,
-          HoldingValuationIssueCause.currencyMismatch,
-        );
-      },
-      tags: 'integration',
-    );
+      final snapshot = sample.snapshots['NASDAQ:AAPL'];
+      expect(snapshot, isNotNull);
+      expect(snapshot!.assetCurrency, 'CNY');
+      expect(snapshot.unitPriceInAssetCurrency, Decimal.fromInt(20));
+      expect(snapshot.marketValueInAssetCurrency, Decimal.fromInt(200));
+      expect(sample.issues.single.assetId, 'NASDAQ:AAPL');
+      expect(sample.issues.single.currency, 'CNY');
+      expect(
+        sample.issues.single.cause,
+        HoldingValuationIssueCause.currencyMismatch,
+      );
+    }, tags: 'integration');
   });
 }
 

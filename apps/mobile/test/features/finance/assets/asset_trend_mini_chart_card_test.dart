@@ -81,7 +81,7 @@ Future<void> _pumpChart(
         ),
       ],
       child: FTheme(
-        data: FThemes.slate.light.desktop,
+        data: FTheme.neutral.light.desktop,
         child: MaterialApp(
           theme: AppTheme.light(),
           locale: const Locale('en'),

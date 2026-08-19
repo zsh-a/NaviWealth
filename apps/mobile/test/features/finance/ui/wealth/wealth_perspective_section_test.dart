@@ -137,7 +137,7 @@ Widget _wrap({DashboardSnapshot? snapshot}) {
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en', 'US'),
       home: FTheme(
-        data: FThemes.slate.light.desktop,
+        data: FTheme.neutral.light.desktop,
         child: const Scaffold(body: WealthPerspectiveSection()),
       ),
     ),

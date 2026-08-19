@@ -86,7 +86,7 @@ void main() {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             builder: (context, child) => AppMessenger.init(
-              child: FTheme(data: FThemes.slate.light.desktop, child: child!),
+              child: FTheme(data: FTheme.neutral.light.desktop, child: child!),
             ),
             home: Builder(
               builder: (context) => Scaffold(

@@ -47,7 +47,7 @@ void main() {
 
     await tester.pumpWidget(
       FTheme(
-        data: FThemes.slate.light.desktop,
+        data: FTheme.neutral.light.desktop,
         child: Directionality(
           textDirection: TextDirection.ltr,
           child: MediaQuery(

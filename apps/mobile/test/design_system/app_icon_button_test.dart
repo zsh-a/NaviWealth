@@ -10,7 +10,7 @@ Widget wrap(Widget child) {
   return MaterialApp(
     theme: AppTheme.light(),
     home: FTheme(
-      data: FThemes.slate.light.desktop,
+      data: FTheme.neutral.light.desktop,
       child: Scaffold(body: Center(child: child)),
     ),
   );

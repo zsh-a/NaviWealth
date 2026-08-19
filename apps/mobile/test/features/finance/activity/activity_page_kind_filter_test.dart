@@ -46,7 +46,7 @@ Widget _wrap({required ProviderContainer container, double textScale = 1}) {
         data: MediaQuery.of(
           context,
         ).copyWith(textScaler: TextScaler.linear(textScale)),
-        child: FTheme(data: FThemes.slate.light.desktop, child: child!),
+        child: FTheme(data: FTheme.neutral.light.desktop, child: child!),
       ),
     ),
   );

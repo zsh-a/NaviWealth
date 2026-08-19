@@ -579,7 +579,7 @@ Widget _wrap(
       home: Builder(
         builder: (context) => MediaQuery(
           data: MediaQuery.of(context).copyWith(textScaler: textScaler),
-          child: FTheme(data: FThemes.slate.light.desktop, child: child),
+          child: FTheme(data: FTheme.neutral.light.desktop, child: child),
         ),
       ),
     ),

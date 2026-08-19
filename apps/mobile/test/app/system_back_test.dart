@@ -138,32 +138,30 @@ void main() {
     ];
 
     for (final root in firstTabRoots) {
-      testWidgets(
-        '$root root → first back arms, second back exits',
-        (tester) async {
-          final platform = _capturePlatformBackCalls(tester);
+      testWidgets('$root root → first back arms, second back exits', (
+        tester,
+      ) async {
+        final platform = _capturePlatformBackCalls(tester);
 
-          final router = await _boot(tester, root);
-          expect(_path(router), root);
-          expect(
-            platform.lastFrameworkHandlesBack,
-            isTrue,
-            reason: 'Android gesture must be routed to Flutter at app roots',
-          );
+        final router = await _boot(tester, root);
+        expect(_path(router), root);
+        expect(
+          platform.lastFrameworkHandlesBack,
+          isTrue,
+          reason: 'Android gesture must be routed to Flutter at app roots',
+        );
 
-          final first = await tester.binding.handlePopRoute();
-          await _drain(tester);
-          expect(first, isTrue);
-          expect(_path(router), root);
-          expect(platform.pop, 0);
+        final first = await tester.binding.handlePopRoute();
+        await _drain(tester);
+        expect(first, isTrue);
+        expect(_path(router), root);
+        expect(platform.pop, 0);
 
-          final second = await tester.binding.handlePopRoute();
-          await _drain(tester);
-          expect(second, isTrue);
-          expect(platform.pop, 1);
-        },
-        variant: TargetPlatformVariant.only(TargetPlatform.android),
-      );
+        final second = await tester.binding.handlePopRoute();
+        await _drain(tester);
+        expect(second, isTrue);
+        expect(platform.pop, 1);
+      }, variant: TargetPlatformVariant.only(TargetPlatform.android));
     }
 
     // Non-first tab roots step back to the domain's first tab before the
@@ -207,75 +205,69 @@ void main() {
       );
     });
 
-    testWidgets(
-      'navigating after first back disarms root exit',
-      (tester) async {
-        final platform = _capturePlatformBackCalls(tester);
+    testWidgets('navigating after first back disarms root exit', (
+      tester,
+    ) async {
+      final platform = _capturePlatformBackCalls(tester);
 
-        final router = await _boot(tester, AppRoutes.home);
-        expect(_path(router), AppRoutes.home);
+      final router = await _boot(tester, AppRoutes.home);
+      expect(_path(router), AppRoutes.home);
 
-        final first = await tester.binding.handlePopRoute();
-        await _drain(tester);
-        expect(first, isTrue);
-        expect(platform.pop, 0);
+      final first = await tester.binding.handlePopRoute();
+      await _drain(tester);
+      expect(first, isTrue);
+      expect(platform.pop, 0);
 
-        router.go(AppRoutes.activity);
-        await _drain(tester);
-        expect(_path(router), AppRoutes.activity);
-        expect(
-          platform.lastFrameworkHandlesBack,
-          isTrue,
-          reason: 'Android gesture handling must survive tab navigation',
-        );
+      router.go(AppRoutes.activity);
+      await _drain(tester);
+      expect(_path(router), AppRoutes.activity);
+      expect(
+        platform.lastFrameworkHandlesBack,
+        isTrue,
+        reason: 'Android gesture handling must survive tab navigation',
+      );
 
-        // /activity is not Finance's first tab: back first returns to
-        // /home (doc 15 §7.5 step 4), then arms, then exits.
-        final second = await tester.binding.handlePopRoute();
-        await _drain(tester);
-        expect(second, isTrue);
-        expect(_path(router), AppRoutes.home);
-        expect(platform.pop, 0);
+      // /activity is not Finance's first tab: back first returns to
+      // /home (doc 15 §7.5 step 4), then arms, then exits.
+      final second = await tester.binding.handlePopRoute();
+      await _drain(tester);
+      expect(second, isTrue);
+      expect(_path(router), AppRoutes.home);
+      expect(platform.pop, 0);
 
-        final third = await tester.binding.handlePopRoute();
-        await _drain(tester);
-        expect(third, isTrue);
-        expect(_path(router), AppRoutes.home);
-        expect(platform.pop, 0);
+      final third = await tester.binding.handlePopRoute();
+      await _drain(tester);
+      expect(third, isTrue);
+      expect(_path(router), AppRoutes.home);
+      expect(platform.pop, 0);
 
-        final fourth = await tester.binding.handlePopRoute();
-        await _drain(tester);
-        expect(fourth, isTrue);
-        expect(platform.pop, 1);
-      },
-      variant: TargetPlatformVariant.only(TargetPlatform.android),
-    );
+      final fourth = await tester.binding.handlePopRoute();
+      await _drain(tester);
+      expect(fourth, isTrue);
+      expect(platform.pop, 1);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
 
-    testWidgets(
-      'Android back handling stays enabled after app resume',
-      (tester) async {
-        final platform = _capturePlatformBackCalls(tester);
+    testWidgets('Android back handling stays enabled after app resume', (
+      tester,
+    ) async {
+      final platform = _capturePlatformBackCalls(tester);
 
-        final router = await _boot(tester, AppRoutes.healthTrend);
-        expect(_path(router), AppRoutes.healthTrend);
-        expect(platform.lastFrameworkHandlesBack, isTrue);
+      final router = await _boot(tester, AppRoutes.healthTrend);
+      expect(_path(router), AppRoutes.healthTrend);
+      expect(platform.lastFrameworkHandlesBack, isTrue);
 
-        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-        await tester.pump();
-        tester.binding.handleAppLifecycleStateChanged(
-          AppLifecycleState.resumed,
-        );
-        await _drain(tester);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await _drain(tester);
 
-        expect(_path(router), AppRoutes.healthTrend);
-        expect(
-          platform.lastFrameworkHandlesBack,
-          isTrue,
-          reason: 'Android gesture handling must be restored after resume',
-        );
-      },
-      variant: TargetPlatformVariant.only(TargetPlatform.android),
-    );
+      expect(_path(router), AppRoutes.healthTrend);
+      expect(
+        platform.lastFrameworkHandlesBack,
+        isTrue,
+        reason: 'Android gesture handling must be restored after resume',
+      );
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
 
     testWidgets('/login root → first back arms, second back exits', (
       tester,

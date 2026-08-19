@@ -6,7 +6,7 @@ import 'package:naviwealth/features/finance/home/ui/home_section.dart';
 Widget _wrap(Widget child) {
   return MaterialApp(
     home: FTheme(
-      data: FThemes.slate.light.desktop,
+      data: FTheme.neutral.light.desktop,
       child: Scaffold(body: child),
     ),
   );

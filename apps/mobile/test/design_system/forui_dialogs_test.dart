@@ -6,7 +6,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 Widget _wrap(Widget child) {
   return MaterialApp(
     theme: AppTheme.light(),
-    home: FTheme(data: FThemes.slate.light.desktop, child: child),
+    home: FTheme(data: FTheme.neutral.light.desktop, child: child),
   );
 }
 

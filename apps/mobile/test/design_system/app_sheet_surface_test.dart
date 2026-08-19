@@ -7,7 +7,7 @@ Widget _wrap(Widget child, {MediaQueryData? mediaQueryData}) {
   return MaterialApp(
     theme: AppTheme.light(),
     home: FTheme(
-      data: FThemes.slate.light.desktop,
+      data: FTheme.neutral.light.desktop,
       child: MediaQuery(
         data: mediaQueryData ?? const MediaQueryData(),
         child: Scaffold(body: child),

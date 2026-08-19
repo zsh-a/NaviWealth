@@ -36,12 +36,11 @@ final backupRestoreFilePickerProvider = Provider<BackupRestoreFilePicker>((
   ref,
 ) {
   return () async {
-    final result = await FilePicker.pickFiles(
+    final file = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: ['bak'],
     );
-    if (result == null || result.files.isEmpty) return null;
-    final file = result.files.first;
+    if (file == null) return null;
     return PickedBackupFile(name: file.name, bytes: await file.readAsBytes());
   };
 });

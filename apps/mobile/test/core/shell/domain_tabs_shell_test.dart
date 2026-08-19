@@ -85,7 +85,7 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           builder: (context, child) => FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: child ?? const SizedBox.shrink(),
           ),
         ),
@@ -135,7 +135,7 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           builder: (context, child) => FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: child ?? const SizedBox.shrink(),
           ),
         ),
@@ -174,7 +174,7 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           builder: (context, child) => FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: child ?? const SizedBox.shrink(),
           ),
         ),
@@ -224,7 +224,7 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           builder: (context, child) => FTheme(
-            data: FThemes.slate.light.desktop,
+            data: FTheme.neutral.light.desktop,
             child: MediaQuery(
               data: const MediaQueryData(disableAnimations: true),
               child: child ?? const SizedBox.shrink(),

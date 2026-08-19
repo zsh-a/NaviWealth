@@ -20,7 +20,7 @@ Widget _wrap(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en'),
-      home: FTheme(data: FThemes.slate.light.desktop, child: child),
+      home: FTheme(data: FTheme.neutral.light.desktop, child: child),
     ),
   );
 }

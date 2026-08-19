@@ -95,7 +95,7 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: router,
           builder: (context, child) =>
-              FTheme(data: FThemes.slate.light.desktop, child: child!),
+              FTheme(data: FTheme.neutral.light.desktop, child: child!),
         ),
       ),
     );
@@ -180,7 +180,7 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: router,
           builder: (context, child) =>
-              FTheme(data: FThemes.slate.light.desktop, child: child!),
+              FTheme(data: FTheme.neutral.light.desktop, child: child!),
         ),
       ),
     );
@@ -249,7 +249,7 @@ void main() {
             supportedLocales: AppLocalizations.supportedLocales,
             routerConfig: router,
             builder: (context, child) =>
-                FTheme(data: FThemes.slate.light.desktop, child: child!),
+                FTheme(data: FTheme.neutral.light.desktop, child: child!),
           ),
         ),
       );

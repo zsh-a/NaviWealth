@@ -360,7 +360,7 @@ void main() {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             builder: (context, child) => FTheme(
-              data: FThemes.slate.light.desktop,
+              data: FTheme.neutral.light.desktop,
               child: Consumer(
                 builder: (context, ref, _) {
                   container = ProviderScope.containerOf(context, listen: false);

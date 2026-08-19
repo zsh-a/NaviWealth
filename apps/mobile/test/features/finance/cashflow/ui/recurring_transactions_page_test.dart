@@ -121,7 +121,7 @@ Widget _wrap(RecurringTransactionRepository repository) {
       locale: const Locale('en', 'US'),
       builder: (context, child) => AppMessenger.init(child: child!),
       home: FTheme(
-        data: FThemes.slate.light.desktop,
+        data: FTheme.neutral.light.desktop,
         child: const RecurringTransactionsPage(),
       ),
     ),

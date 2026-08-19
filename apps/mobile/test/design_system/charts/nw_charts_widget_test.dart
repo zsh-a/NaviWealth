@@ -8,8 +8,8 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap(Widget child, {Brightness brightness = Brightness.light}) {
   final baseFTheme = brightness == Brightness.dark
-      ? FThemes.slate.dark.desktop
-      : FThemes.slate.light.desktop;
+      ? FTheme.neutral.dark.desktop
+      : FTheme.neutral.light.desktop;
   final fTheme = FThemeData(
     touch: false,
     colors: baseFTheme.colors.copyWith(

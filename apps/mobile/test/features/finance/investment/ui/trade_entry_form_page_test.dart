@@ -88,7 +88,10 @@ Account _account({
 Widget _wrap(Widget child, {TextScaler? textScaler}) {
   return MaterialApp(
     builder: (context, child) {
-      Widget content = FTheme(data: FThemes.slate.light.desktop, child: child!);
+      Widget content = FTheme(
+        data: FTheme.neutral.light.desktop,
+        child: child!,
+      );
       if (textScaler != null) {
         content = MediaQuery(
           data: MediaQuery.of(context).copyWith(textScaler: textScaler),

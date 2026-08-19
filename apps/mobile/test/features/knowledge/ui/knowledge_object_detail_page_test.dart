@@ -71,7 +71,7 @@ void main() {
           ...overrides,
         ],
         child: FTheme(
-          data: FThemes.slate.light.desktop,
+          data: FTheme.neutral.light.desktop,
           child: MaterialApp(
             theme: AppTheme.light(),
             localizationsDelegates: AppLocalizations.localizationsDelegates,

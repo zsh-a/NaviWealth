@@ -91,7 +91,7 @@ Future<Widget> _wrapCreatePage({List<Account>? accounts}) async {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => AppMessenger.init(
-        child: FTheme(data: FThemes.slate.light.desktop, child: child!),
+        child: FTheme(data: FTheme.neutral.light.desktop, child: child!),
       ),
       home: const LiabilityFormPage(),
     ),
@@ -231,7 +231,7 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: router,
           builder: (context, child) => AppMessenger.init(
-            child: FTheme(data: FThemes.slate.light.desktop, child: child!),
+            child: FTheme(data: FTheme.neutral.light.desktop, child: child!),
           ),
         ),
       ),
@@ -346,7 +346,7 @@ void main() {
             supportedLocales: AppLocalizations.supportedLocales,
             routerConfig: router,
             builder: (context, child) => AppMessenger.init(
-              child: FTheme(data: FThemes.slate.light.desktop, child: child!),
+              child: FTheme(data: FTheme.neutral.light.desktop, child: child!),
             ),
           ),
         ),

@@ -7,7 +7,7 @@ Widget _wrap(Widget child, {double width = 390}) {
   return MaterialApp(
     theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
     home: FTheme(
-      data: FThemes.slate.light.desktop,
+      data: FTheme.neutral.light.desktop,
       child: Scaffold(
         body: Align(
           alignment: Alignment.topLeft,

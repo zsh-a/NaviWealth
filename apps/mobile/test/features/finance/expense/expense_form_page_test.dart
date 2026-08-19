@@ -174,7 +174,7 @@ Widget _expensePage({String? expenseId, required double keyboardInset}) {
       child: page,
     );
   }
-  return FTheme(data: FThemes.slate.light.desktop, child: page);
+  return FTheme(data: FTheme.neutral.light.desktop, child: page);
 }
 
 void _expectSubmitWiring(WidgetTester tester, {required bool enabled}) {

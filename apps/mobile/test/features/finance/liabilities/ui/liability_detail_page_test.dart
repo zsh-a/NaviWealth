@@ -91,7 +91,7 @@ Future<Widget> _wrapDetailPage() async {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => AppMessenger.init(
-        child: FTheme(data: FThemes.slate.light.desktop, child: child!),
+        child: FTheme(data: FTheme.neutral.light.desktop, child: child!),
       ),
       home: const LiabilityDetailPage(id: 'liability-1'),
     ),
@@ -152,7 +152,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => AppMessenger.init(
-            child: FTheme(data: FThemes.slate.light.desktop, child: child!),
+            child: FTheme(data: FTheme.neutral.light.desktop, child: child!),
           ),
           home: LiabilityDetailPage(id: liability.id),
         ),
@@ -239,7 +239,7 @@ void main() {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             builder: (context, child) => AppMessenger.init(
-              child: FTheme(data: FThemes.slate.light.desktop, child: child!),
+              child: FTheme(data: FTheme.neutral.light.desktop, child: child!),
             ),
             home: LiabilityDetailPage(id: liability.id),
           ),

@@ -220,7 +220,7 @@ Widget _wrap(Widget child, {required List<Override> overrides}) {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en', 'US'),
-      home: FTheme(data: FThemes.slate.light.desktop, child: child),
+      home: FTheme(data: FTheme.neutral.light.desktop, child: child),
     ),
   );
 }
