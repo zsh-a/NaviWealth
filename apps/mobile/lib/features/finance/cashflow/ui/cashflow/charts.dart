@@ -54,7 +54,7 @@ class _ChartsPanelState extends State<_ChartsPanel> {
           ),
           const SizedBox(height: AppSpacing.s12),
           AnimatedSwitcher(
-            duration: Motion.fast,
+            duration: AppMotionPolicy.duration(context, Motion.fast),
             child: switch (_mode) {
               _CashFlowTrendMode.incomeExpense => NwBarChart(
                 key: const ValueKey('cash-flow-income-expense-chart'),

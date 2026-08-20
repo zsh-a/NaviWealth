@@ -23,12 +23,14 @@ import '../tokens/motion_tokens.dart';
 class AppPageTransitionsBuilder extends PageTransitionsBuilder {
   const AppPageTransitionsBuilder();
 
-  @override
-  Widget buildTransitions<T>(
-    PageRoute<T> route,
+  /// The shared transition visual: width-aware slide (mobile) or a 16dp
+  /// translate + fade (wide viewports), plain cross-fade under reduce-motion.
+  ///
+  /// Exposed statically so imperative routes ([buildAppPageRoute]) default to
+  /// the exact same motion as theme-driven declarative routes.
+  static Widget buildAppTransition(
     BuildContext context,
     Animation<double> animation,
-    Animation<double> secondaryAnimation,
     Widget child,
   ) {
     if (AppMotionPolicy.reduceMotion(context)) {
@@ -60,5 +62,16 @@ class AppPageTransitionsBuilder extends PageTransitionsBuilder {
         child: child,
       ),
     );
+  }
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return buildAppTransition(context, animation, child);
   }
 }

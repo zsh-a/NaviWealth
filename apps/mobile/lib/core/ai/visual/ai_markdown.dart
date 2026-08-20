@@ -35,7 +35,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import 'ai_motion.dart';
 import 'ai_tone.dart';
 import 'ai_typography.dart';
 import 'flow_block.dart';
@@ -134,8 +133,8 @@ class _AiMarkdownState extends State<AiMarkdown> {
     // layout thrash. Only smooth height changes once the turn settles.
     if (widget.streaming) return column;
     return AnimatedSize(
-      duration: AppMotionPolicy.duration(context, AiMotion.short),
-      curve: AiMotion.standard,
+      duration: AppMotionPolicy.duration(context, Motion.fast),
+      curve: Motion.aiCalm,
       alignment: Alignment.topLeft,
       child: column,
     );

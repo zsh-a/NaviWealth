@@ -726,7 +726,7 @@ class _KnowledgeCodeBlockState extends State<_KnowledgeCodeBlock> {
     await Clipboard.setData(ClipboardData(text: widget.code));
     if (!mounted) return;
     setState(() => _copied = true);
-    await Future<void>.delayed(const Duration(milliseconds: 1400));
+    await Future<void>.delayed(Motion.copyFeedback);
     if (mounted) setState(() => _copied = false);
   }
 }

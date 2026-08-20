@@ -5,7 +5,7 @@
 /// when present, hides otherwise. Tap "撤销" calls
 /// `DriftUndoStack.take(token)` and dismisses the banner.
 ///
-/// Uses `AiSparkle` / `AiType` / `AiMotion` from
+/// Uses `AiSparkle` / `AiType` from
 /// `core/ai/visual/` so the banner shares the visual language of
 /// every other AI surface.
 library;
@@ -39,9 +39,9 @@ class PersistentUndoBanner extends ConsumerWidget {
       }
     }
     return AnimatedSwitcher(
-      duration: AppMotionPolicy.duration(context, AiMotion.medium),
-      switchInCurve: AiMotion.standard,
-      switchOutCurve: AiMotion.standard,
+      duration: AppMotionPolicy.duration(context, Motion.medium),
+      switchInCurve: Motion.aiCalm,
+      switchOutCurve: Motion.aiCalm,
       transitionBuilder: (child, anim) =>
           FadeTransition(opacity: anim, child: child),
       child: top == null

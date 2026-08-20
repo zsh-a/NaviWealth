@@ -14,7 +14,7 @@ class _StatusOrbState extends State<_StatusOrb>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
-    duration: Motion.shimmerCycle,
+    duration: Motion.statusPulse,
   );
   bool _running = false;
 

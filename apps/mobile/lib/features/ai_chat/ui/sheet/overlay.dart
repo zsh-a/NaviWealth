@@ -34,7 +34,7 @@ class _SheetFrame extends StatelessWidget {
       height: height,
       child: AnimatedPadding(
         duration: AppMotionPolicy.duration(context, Motion.fast),
-        curve: AiMotion.standard,
+        curve: Motion.aiCalm,
         padding: EdgeInsets.only(bottom: keyboard),
         child: child,
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../tokens/motion_tokens.dart';
 import 'fade_slide_in.dart';
 
 /// A [Column] that staggers its children's entrance animations.
@@ -24,8 +25,8 @@ class StaggeredColumn extends StatelessWidget {
   const StaggeredColumn({
     super.key,
     required this.children,
-    this.staggerDelay = const Duration(milliseconds: 40),
-    this.maxTotalDelay = const Duration(milliseconds: 200),
+    this.staggerDelay = Motion.staggerStep,
+    this.maxTotalDelay = Motion.staggerBudget,
     this.mainAxisAlignment = MainAxisAlignment.start,
     this.crossAxisAlignment = CrossAxisAlignment.center,
     this.mainAxisSize = MainAxisSize.min,
@@ -48,27 +49,22 @@ class StaggeredColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     if (children.isEmpty) return const SizedBox.shrink();
 
-    final effectiveDelay = _effectiveDelay();
-
     return Column(
       mainAxisAlignment: mainAxisAlignment,
       crossAxisAlignment: crossAxisAlignment,
       mainAxisSize: mainAxisSize,
       children: [
         for (var i = 0; i < children.length; i++)
-          FadeSlideIn(delay: effectiveDelay * i, child: children[i]),
+          FadeSlideIn(
+            delay: Motion.staggerDelayFor(
+              i,
+              children.length,
+              step: staggerDelay,
+              budget: maxTotalDelay,
+            ),
+            child: children[i],
+          ),
       ],
     );
-  }
-
-  Duration _effectiveDelay() {
-    if (children.length <= 1) return Duration.zero;
-
-    final totalStagger = staggerDelay * children.length;
-    if (totalStagger <= maxTotalDelay) return staggerDelay;
-
-    // Scale down so the last child enters within maxTotalDelay.
-    final scaledMs = maxTotalDelay.inMilliseconds / children.length;
-    return Duration(milliseconds: scaledMs.round());
   }
 }

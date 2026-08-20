@@ -274,7 +274,7 @@ class _CopyButtonState extends State<_CopyButton> {
           await Clipboard.setData(ClipboardData(text: widget.text));
           if (!mounted) return;
           setState(() => _copied = true);
-          Future<void>.delayed(const Duration(milliseconds: 1400), () {
+          Future<void>.delayed(Motion.copyFeedback, () {
             if (mounted) setState(() => _copied = false);
           });
         },

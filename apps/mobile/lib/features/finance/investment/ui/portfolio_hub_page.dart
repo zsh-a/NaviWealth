@@ -350,7 +350,7 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
               final row = _HoldingRow(holding: holdings[index]);
               if (_entranceStagger && index < _kStaggerRowCap) {
                 return FadeSlideIn(
-                  delay: Duration(milliseconds: 30 * index),
+                  delay: Motion.staggerDelayFor(index, _kStaggerRowCap),
                   child: row,
                 );
               }

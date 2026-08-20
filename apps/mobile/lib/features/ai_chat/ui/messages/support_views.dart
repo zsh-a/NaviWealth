@@ -225,7 +225,7 @@ class _CopyIconActionState extends State<_CopyIconAction> {
     AppInteraction.signal(AppInteractionIntent.success);
     if (!mounted) return;
     setState(() => _copied = true);
-    await Future<void>.delayed(const Duration(milliseconds: 1200));
+    await Future<void>.delayed(Motion.copyFeedback);
     if (mounted) setState(() => _copied = false);
   }
 

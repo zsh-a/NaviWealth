@@ -470,7 +470,8 @@ class _IconChoice extends StatelessWidget {
         dimension: AppControlHeights.touchTarget,
         child: Center(
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
+            duration: AppMotionPolicy.duration(context, Motion.fast),
+            curve: Motion.standardDecelerate,
             width: 42,
             height: 42,
             decoration: BoxDecoration(
@@ -519,7 +520,8 @@ class _ColorChoice extends StatelessWidget {
         dimension: AppControlHeights.touchTarget,
         child: Center(
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
+            duration: AppMotionPolicy.duration(context, Motion.fast),
+            curve: Motion.standardDecelerate,
             width: 34,
             height: 34,
             padding: const EdgeInsets.all(AppSpacing.accentBar),

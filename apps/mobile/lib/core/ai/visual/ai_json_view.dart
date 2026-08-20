@@ -15,7 +15,6 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
-import 'ai_motion.dart';
 import 'ai_tone.dart';
 import 'ai_typography.dart';
 
@@ -216,8 +215,8 @@ class _JsonNodeState extends State<_JsonNode> {
       children: [
         header,
         AnimatedSize(
-          duration: AppMotionPolicy.duration(context, AiMotion.short),
-          curve: AiMotion.standard,
+          duration: AppMotionPolicy.duration(context, Motion.fast),
+          curve: Motion.aiCalm,
           alignment: Alignment.topLeft,
           child: !_expanded
               ? const SizedBox(width: double.infinity)

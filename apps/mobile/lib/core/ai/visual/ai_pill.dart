@@ -15,7 +15,6 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
-import 'ai_motion.dart';
 import 'ai_tone.dart';
 import 'ai_typography.dart';
 
@@ -64,8 +63,8 @@ class AiPill extends StatelessWidget {
     };
 
     final pill = AnimatedContainer(
-      duration: AppMotionPolicy.duration(context, AiMotion.short),
-      curve: AiMotion.standard,
+      duration: AppMotionPolicy.duration(context, Motion.fast),
+      curve: Motion.aiCalm,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s10,
         vertical: AppSpacing.s4,

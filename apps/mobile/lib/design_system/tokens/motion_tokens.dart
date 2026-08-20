@@ -14,6 +14,40 @@ class Motion {
   static const Duration slow = Duration(milliseconds: 360);
   static const Duration ticker = Duration(milliseconds: 800);
 
+  /// "Copied" confirmation auto-revert delay for copy-to-clipboard
+  /// affordances. One value so every copy button's feedback lasts the same
+  /// beat regardless of which surface it lives on.
+  static const Duration copyFeedback = Duration(milliseconds: 1200);
+
+  /// Per-item cadence for staggered list/grid entrances.
+  static const Duration staggerStep = Duration(milliseconds: 40);
+
+  /// Total budget for a staggered entrance; per-item delays compress
+  /// proportionally when `count × staggerStep` would exceed this, so long
+  /// lists never look like items are still trickling in.
+  static const Duration staggerBudget = Duration(milliseconds: 200);
+
+  /// Ambient status-pulse period (sync orbs, live indicators). Same cadence
+  /// as [shimmerCycle] but semantically a *status* animation, not chrome
+  /// decoration.
+  static const Duration statusPulse = shimmerCycle;
+
+  /// Entrance delay for item [index] in a staggered reveal of [count]
+  /// items, compressed to fit [budget]. Shared by [StaggeredColumn] and
+  /// sliver lists that stagger their rows.
+  static Duration staggerDelayFor(
+    int index,
+    int count, {
+    Duration step = staggerStep,
+    Duration budget = staggerBudget,
+  }) {
+    if (count <= 1) return Duration.zero;
+    final Duration effective = step * count <= budget
+        ? step
+        : Duration(milliseconds: (budget.inMilliseconds / count).round());
+    return effective * index;
+  }
+
   /// One-shot chart entrance reveal (left → right draw-in on first data).
   static const Duration chartEnter = Duration(milliseconds: 600);
 
@@ -44,6 +78,13 @@ class Motion {
   /// Linear fallback for reduced-motion contexts where [Duration.zero]
   /// is too abrupt but a cubic ease would feel wrong.
   static const Curve reducedMotion = Curves.linear;
+
+  /// Linear-style ease-out for AI surfaces (`cubicBezier(0.32, 0.72, 0, 1)`).
+  /// Material's `easeOut` reads "springy" on AI panels (sheet entrance, chip
+  /// pop-in, undo banner reveal); this quicker-start, longer-tail curve reads
+  /// as "calm computation" instead. Formerly the standalone `AiMotion` token
+  /// class — folded into [Motion] so the app has one motion vocabulary.
+  static const Curve aiCalm = Cubic(0.32, 0.72, 0.0, 1.0);
 
   // --- Semantic aliases (scenario → duration) ---
   // Map UX intent to the right tier. Adjust the underlying constants
