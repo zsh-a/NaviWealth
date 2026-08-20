@@ -13,11 +13,15 @@ import 'shell_preferences.dart';
 ///
 /// Two visual states:
 ///
-///  * Expanded (240dp) — icon + label per destination, selected row gets a
-///    primary-tinted pill background and 2dp leading indicator.
-///  * Collapsed (72dp) — icons only, label travels into the [FTooltip] so a
-///    pointer hover surfaces the destination name without re-flowing the
-///    layout.
+///  * Expanded (240dp) — icon + label per destination. Rows use a single
+///    selection signal (a soft `muted` fill); pointer hover gets a lighter
+///    tint of the same fill, so the rail reads as one quiet surface.
+///  * Collapsed (72dp) — centered icons only; the label travels into the
+///    [FTooltip] so a pointer hover surfaces the destination name without
+///    re-flowing the layout.
+///
+/// Labels fade in/out continuously with the animated width (see
+/// [_SidebarMetrics]) instead of popping at a single breakpoint.
 class DesktopSidebar extends ConsumerWidget {
   const DesktopSidebar({
     super.key,
@@ -42,6 +46,7 @@ class DesktopSidebar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final collapsed = ref.watch(sidebarCollapsedProvider);
     final effectiveCollapsed = forceCollapsed || collapsed;
     return AnimatedContainer(
@@ -53,22 +58,13 @@ class DesktopSidebar extends ConsumerWidget {
       child: ClipRect(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // Drive label visibility from the animated width, not from the
-            // target preference. This keeps both directions overflow-free:
-            // labels leave before the rail becomes too narrow and return only
-            // after enough room is available.
-            final visuallyCollapsed =
-                constraints.maxWidth < _kSidebarLabelBreakpoint;
+            // Drive layout + label opacity from the animated width, not from
+            // the target preference. Icons recenter only once the rail is
+            // near its collapsed width, and labels fade out before the rail
+            // becomes too narrow — both directions stay overflow-free.
+            final metrics = _SidebarMetrics(constraints.maxWidth);
             return DecoratedBox(
-              decoration: BoxDecoration(
-                color: context.appTheme.surfaces.card,
-                border: Border(
-                  right: BorderSide(
-                    color: context.appTheme.surfaces.border,
-                    width: AppStroke.hairline,
-                  ),
-                ),
-              ),
+              decoration: BoxDecoration(color: context.appTheme.surfaces.card),
               child: SafeArea(
                 right: false,
                 child: Column(
@@ -76,17 +72,24 @@ class DesktopSidebar extends ConsumerWidget {
                   children: [
                     const SizedBox(height: AppSpacing.s12),
                     if (workspace case final workspace?) ...[
-                      _WorkspaceSwitcherRow(
-                        workspace: workspace,
-                        collapsed: visuallyCollapsed,
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppSpacing.s12,
-                          vertical: AppSpacing.s8,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s8,
                         ),
-                        child: FDivider(),
+                        child: _SidebarRow(
+                          icon: workspace.icon,
+                          label: workspace.label,
+                          onPress: workspace.onPress,
+                          collapsed: metrics.collapsed,
+                          labelOpacity: metrics.labelOpacity,
+                          trailing: Icon(
+                            FLucideIcons.chevronsUpDown,
+                            color: context.theme.colors.mutedForeground,
+                            size: AppIconSizes.sm,
+                          ),
+                        ),
                       ),
+                      const SizedBox(height: AppSpacing.s8),
                     ],
                     Expanded(
                       child: ListView.builder(
@@ -95,28 +98,74 @@ class DesktopSidebar extends ConsumerWidget {
                           vertical: AppSpacing.s4,
                         ),
                         itemCount: destinations.length,
-                        itemBuilder: (_, i) => _SidebarItem(
-                          destination: destinations[i],
+                        itemBuilder: (_, i) => _SidebarRow(
+                          icon: i == selectedIndex
+                              ? destinations[i].selectedIcon
+                              : destinations[i].icon,
+                          label: destinations[i].label,
                           selected: i == selectedIndex,
-                          collapsed: visuallyCollapsed,
-                          onTap: () => onDestinationSelected(i),
+                          collapsed: metrics.collapsed,
+                          labelOpacity: metrics.labelOpacity,
+                          onPress: () => onDestinationSelected(i),
                         ),
                       ),
                     ),
-                    const FDivider(),
+                    const SizedBox(height: AppSpacing.s4),
                     for (final action in footerActions)
-                      _PinnedActionRow(
-                        action: action,
-                        collapsed: visuallyCollapsed,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s8,
+                        ),
+                        child: _SidebarRow(
+                          icon: action.icon,
+                          label: action.label,
+                          emphasized: action.emphasized,
+                          collapsed: metrics.collapsed,
+                          labelOpacity: metrics.labelOpacity,
+                          onPress: action.onPress,
+                        ),
                       ),
-                    _SettingsPinnedRow(collapsed: visuallyCollapsed),
-                    if (!forceCollapsed)
-                      _CollapseToggle(
-                        collapsed: visuallyCollapsed,
-                        onToggle: () => ref
-                            .read(sidebarCollapsedProvider.notifier)
-                            .toggle(),
+                    // Settings and the collapse toggle share one compact
+                    // footer row when expanded; the collapsed rail stacks
+                    // them as centered icon rows.
+                    if (metrics.collapsed) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s8,
+                        ),
+                        child: _SidebarRow(
+                          icon: FLucideIcons.settings,
+                          label: l10n.navSettings,
+                          collapsed: true,
+                          onPress: () => context.push(SettingsRoutes.root),
+                        ),
                       ),
+                      if (!forceCollapsed)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.s8,
+                          ),
+                          child: _SidebarRow(
+                            icon: FLucideIcons.chevronRight,
+                            label: l10n.shellExpandSidebarShortcut,
+                            collapsed: true,
+                            onPress: () => ref
+                                .read(sidebarCollapsedProvider.notifier)
+                                .toggle(),
+                          ),
+                        ),
+                    ] else
+                      _ExpandedFooterRow(
+                        settingsLabel: l10n.navSettings,
+                        toggleTooltip: l10n.shellCollapseSidebarShortcut,
+                        onSettings: () => context.push(SettingsRoutes.root),
+                        onToggle: forceCollapsed
+                            ? null
+                            : () => ref
+                                  .read(sidebarCollapsedProvider.notifier)
+                                  .toggle(),
+                      ),
+                    const SizedBox(height: AppSpacing.s8),
                   ],
                 ),
               ),
@@ -128,7 +177,25 @@ class DesktopSidebar extends ConsumerWidget {
   }
 }
 
-const double _kSidebarLabelBreakpoint = 144;
+/// Layout metrics derived from the sidebar's *animated* width.
+///
+///  * [collapsed] flips the rows to centered, icon-only layout and moves
+///    labels into tooltips once the rail is near its collapsed width.
+///  * [labelOpacity] ramps 0 → 1 across a 48dp fade band above that, so
+///    labels cross-fade with the width animation instead of popping.
+class _SidebarMetrics {
+  _SidebarMetrics(double width)
+    : collapsed = width < _collapsedLayoutWidth,
+      labelOpacity = width < _collapsedLayoutWidth
+          ? 0
+          : ((width - _collapsedLayoutWidth) / _labelFadeRange).clamp(0.0, 1.0);
+
+  final bool collapsed;
+  final double labelOpacity;
+
+  static const double _collapsedLayoutWidth = 120;
+  static const double _labelFadeRange = 48;
+}
 
 /// One row in the sidebar.
 class DesktopSidebarDestination {
@@ -174,293 +241,245 @@ class DesktopSidebarAction {
   final bool emphasized;
 }
 
-class _WorkspaceSwitcherRow extends StatelessWidget {
-  const _WorkspaceSwitcherRow({
-    required this.workspace,
-    required this.collapsed,
+/// The single row primitive behind every sidebar entry: destinations,
+/// workspace switcher, pinned actions, and Settings.
+///
+/// Selected rows get a soft `muted` fill as the *only* emphasis (plus a
+/// heavier label weight); unselected rows reveal the same fill at a lighter
+/// alpha on pointer hover. Collapsed rows center their icon and surface the
+/// label through an [FTooltip].
+class _SidebarRow extends StatefulWidget {
+  const _SidebarRow({
+    required this.icon,
+    required this.label,
+    required this.onPress,
+    this.selected = false,
+    this.emphasized = false,
+    this.collapsed = false,
+    this.labelOpacity = 1,
+    this.trailing,
   });
 
-  final DesktopSidebarWorkspace workspace;
+  final IconData icon;
+  final String label;
+  final VoidCallback onPress;
+  final bool selected;
+  final bool emphasized;
   final bool collapsed;
+  final double labelOpacity;
+
+  /// Optional trailing affordance (e.g. the workspace switcher chevron).
+  /// Only rendered in the expanded layout.
+  final Widget? trailing;
 
   @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final row = Container(
-      height: AppSpacing.s48,
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
-      decoration: BoxDecoration(
-        color: colors.muted.withValues(alpha: AppOpacity.medium),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: AppSpacing.s40,
-            child: Icon(workspace.icon, color: colors.primary),
-          ),
-          if (!collapsed) ...[
-            Expanded(
-              child: Text(
-                workspace.label,
-                style: context.labelStyle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Icon(
-              FLucideIcons.chevronsUpDown,
-              color: colors.mutedForeground,
-              size: AppIconSizes.sm,
-            ),
-          ],
-        ],
-      ),
-    );
-    final tap = AppTappable(
-      semanticsLabel: workspace.label,
-      onPress: workspace.onPress,
-      child: row,
-    );
-    if (!collapsed) return tap;
-    return FTooltip(tipBuilder: (_, _) => Text(workspace.label), child: tap);
-  }
+  State<_SidebarRow> createState() => _SidebarRowState();
 }
 
-class _PinnedActionRow extends StatelessWidget {
-  const _PinnedActionRow({required this.action, required this.collapsed});
-
-  final DesktopSidebarAction action;
-  final bool collapsed;
+class _SidebarRowState extends State<_SidebarRow> {
+  bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final foreground = action.emphasized
+    final foreground = widget.selected
+        ? colors.foreground
+        : widget.emphasized
         ? colors.primary
         : colors.mutedForeground;
-    final row = Container(
-      height: AppSpacing.s48,
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: AppSpacing.s2,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: AppSpacing.s40,
-            child: Icon(action.icon, color: foreground),
-          ),
-          if (!collapsed)
-            Expanded(
-              child: Text(
-                action.label,
-                style: context.mediumLabelStyle.copyWith(color: foreground),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-        ],
-      ),
-    );
-    final tap = AppTappable(
-      semanticsLabel: action.label,
-      onPress: action.onPress,
-      child: row,
-    );
-    if (!collapsed) return tap;
-    return FTooltip(tipBuilder: (_, _) => Text(action.label), child: tap);
-  }
-}
-
-class _SidebarItem extends StatelessWidget {
-  const _SidebarItem({
-    required this.destination,
-    required this.selected,
-    required this.collapsed,
-    required this.onTap,
-  });
-
-  final DesktopSidebarDestination destination;
-  final bool selected;
-  final bool collapsed;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final iconColor = selected ? colors.primary : colors.mutedForeground;
-    final labelStyle =
-        (selected ? context.labelStyle : context.mediumLabelStyle).copyWith(
-          color: selected ? colors.primary : colors.foreground,
-        );
-    final row = Row(
-      children: [
-        SizedBox(
-          width: AppSpacing.s40,
-          child: Icon(
-            selected ? destination.selectedIcon : destination.icon,
-            color: iconColor,
-          ),
-        ),
-        if (!collapsed)
-          Expanded(
-            child: Text(
-              destination.label,
-              style: labelStyle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-      ],
-    );
-
-    final Color background = selected
-        ? colors.primary.withValues(alpha: AppOpacity.subtle)
+    final background = widget.selected
+        ? colors.muted
+        : _hovered
+        ? colors.muted.withValues(alpha: AppOpacity.prominent)
         : Colors.transparent;
 
-    final content = Stack(
-      children: [
-        if (selected)
-          Positioned(
-            left: 0,
-            top: AppSpacing.s4,
-            bottom: AppSpacing.s4,
-            child: Container(
-              width: AppStroke.accent,
-              decoration: BoxDecoration(
-                color: colors.primary,
-                borderRadius: const BorderRadius.horizontal(
-                  right: Radius.circular(AppRadius.sm),
-                ),
-              ),
-            ),
-          ),
-        Container(
-          height: 48,
+    final icon = Icon(widget.icon, color: foreground, size: AppIconSizes.md);
+
+    final row = MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AppTappable(
+        semanticsLabel: widget.label,
+        onPress: widget.onPress,
+        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.sm)),
+        child: AnimatedContainer(
+          duration: AppMotionPolicy.duration(context, Motion.fast),
+          curve: Motion.standardDecelerate,
+          height: AppSpacing.s40,
           margin: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
+          padding: EdgeInsets.symmetric(
+            horizontal: widget.collapsed ? 0 : AppSpacing.s8,
+          ),
           decoration: BoxDecoration(
             color: background,
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
-          alignment: Alignment.centerLeft,
-          child: row,
-        ),
-      ],
-    );
-
-    final tap = AppTappable(onPress: onTap, child: content);
-
-    if (collapsed) {
-      return FTooltip(
-        tipBuilder: (_, _) => Text(destination.label),
-        child: tap,
-      );
-    }
-    return tap;
-  }
-}
-
-/// Pinned bottom row that pushes /settings.
-///
-/// Renders as a small icon-only square when [collapsed], or as a full
-/// row with an outlined gear + label when expanded. Mirrors the visual
-/// language of [_SidebarItem] minus the "selected" affordance — Settings
-/// is never the active tab.
-class _SettingsPinnedRow extends StatelessWidget {
-  const _SettingsPinnedRow({required this.collapsed});
-
-  final bool collapsed;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
-    final label = l10n.navSettings;
-    final iconColor = colors.mutedForeground;
-    final row = Row(
-      children: [
-        SizedBox(
-          width: AppSpacing.s40,
-          child: Icon(FLucideIcons.settings, color: iconColor),
-        ),
-        if (!collapsed)
-          Expanded(
-            child: Text(
-              label,
-              style: context.mediumLabelStyle.copyWith(
-                color: colors.foreground,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-      ],
-    );
-    final tile = Container(
-      height: 48,
-      margin: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
-      alignment: Alignment.centerLeft,
-      child: row,
-    );
-    final tap = AppTappable(
-      onPress: () => context.push(SettingsRoutes.root),
-      child: tile,
-    );
-    final padded = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
-      child: tap,
-    );
-    if (collapsed) {
-      return FTooltip(tipBuilder: (_, _) => Text(label), child: padded);
-    }
-    return padded;
-  }
-}
-
-class _CollapseToggle extends StatelessWidget {
-  const _CollapseToggle({required this.collapsed, required this.onToggle});
-
-  final bool collapsed;
-  final VoidCallback onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: AppSpacing.s8,
-      ),
-      child: FTooltip(
-        tipBuilder: (_, _) => Text(
-          collapsed
-              ? l10n.shellExpandSidebarShortcut
-              : l10n.shellCollapseSidebarShortcut,
-        ),
-        child: AppTappable(
-          onPress: onToggle,
-          child: SizedBox(
-            height: AppControlHeights.sidebarToggle,
-            child: Row(
-              mainAxisAlignment: collapsed
-                  ? MainAxisAlignment.center
-                  : MainAxisAlignment.end,
-              children: [
-                Icon(
-                  collapsed
-                      ? FLucideIcons.chevronRight
-                      : FLucideIcons.chevronLeft,
-                  color: colors.mutedForeground,
+          child: Row(
+            children: [
+              if (widget.collapsed)
+                Expanded(child: Center(child: icon))
+              else ...[
+                SizedBox(
+                  width: AppSpacing.s32,
+                  child: Align(alignment: Alignment.centerLeft, child: icon),
                 ),
+                if (widget.labelOpacity > 0)
+                  Expanded(
+                    child: Opacity(
+                      opacity: widget.labelOpacity,
+                      child: Text(
+                        widget.label,
+                        style:
+                            (widget.selected
+                                    ? context.labelStyle
+                                    : context.mediumLabelStyle)
+                                .copyWith(
+                                  color: widget.emphasized && !widget.selected
+                                      ? colors.primary
+                                      : colors.foreground,
+                                ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  )
+                else
+                  const Spacer(),
+                ?widget.trailing,
               ],
-            ),
+            ],
           ),
+        ),
+      ),
+    );
+
+    if (!widget.collapsed) return row;
+    return FTooltip(tipBuilder: (_, _) => Text(widget.label), child: row);
+  }
+}
+
+/// Expanded footer: the Settings row with the collapse toggle parked at its
+/// trailing edge, so the footer reads as one quiet control strip instead of
+/// stacked full-height rows.
+class _ExpandedFooterRow extends StatelessWidget {
+  const _ExpandedFooterRow({
+    required this.settingsLabel,
+    required this.toggleTooltip,
+    required this.onSettings,
+    required this.onToggle,
+  });
+
+  final String settingsLabel;
+  final String toggleTooltip;
+  final VoidCallback onSettings;
+
+  /// Null when the sidebar is force-collapsed by the viewport and the user
+  /// preference toggle does not apply.
+  final VoidCallback? onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
+      child: SizedBox(
+        height: AppSpacing.s40,
+        child: Row(
+          children: [
+            Expanded(
+              child: _FooterHoverRegion(
+                semanticsLabel: settingsLabel,
+                onPress: onSettings,
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: AppSpacing.s32,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Icon(
+                          FLucideIcons.settings,
+                          color: context.theme.colors.mutedForeground,
+                          size: AppIconSizes.md,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        settingsLabel,
+                        style: context.mediumLabelStyle.copyWith(
+                          color: context.theme.colors.foreground,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (onToggle case final onToggle?)
+              FTooltip(
+                tipBuilder: (_, _) => Text(toggleTooltip),
+                child: _FooterHoverRegion(
+                  semanticsLabel: toggleTooltip,
+                  onPress: onToggle,
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.s8),
+                    child: Icon(
+                      FLucideIcons.chevronLeft,
+                      color: context.theme.colors.mutedForeground,
+                      size: AppIconSizes.sm,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Shared hover-fill wrapper for the expanded footer controls.
+class _FooterHoverRegion extends StatefulWidget {
+  const _FooterHoverRegion({
+    required this.semanticsLabel,
+    required this.onPress,
+    required this.child,
+  });
+
+  final String semanticsLabel;
+  final VoidCallback onPress;
+  final Widget child;
+
+  @override
+  State<_FooterHoverRegion> createState() => _FooterHoverRegionState();
+}
+
+class _FooterHoverRegionState extends State<_FooterHoverRegion> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AppTappable(
+        semanticsLabel: widget.semanticsLabel,
+        onPress: widget.onPress,
+        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.sm)),
+        child: AnimatedContainer(
+          duration: AppMotionPolicy.duration(context, Motion.fast),
+          curve: Motion.standardDecelerate,
+          decoration: BoxDecoration(
+            color: _hovered
+                ? context.theme.colors.muted.withValues(
+                    alpha: AppOpacity.prominent,
+                  )
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
+          child: widget.child,
         ),
       ),
     );
