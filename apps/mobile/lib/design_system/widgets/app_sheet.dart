@@ -625,13 +625,9 @@ class AppSheetSurface extends StatelessWidget {
     return Align(
       alignment: Alignment.bottomCenter,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: _kWideSheetMaxWidth),
+        constraints: const BoxConstraints(maxWidth: Breakpoints.sheetFormMax),
         child: surfaceWidget,
       ),
     );
   }
 }
-
-/// Max sheet width on tablet/desktop viewports (design doc
-/// 01-responsive-layout §2.4: form dialogs cap at 720).
-const double _kWideSheetMaxWidth = 720;

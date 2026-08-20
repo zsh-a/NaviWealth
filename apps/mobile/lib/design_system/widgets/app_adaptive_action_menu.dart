@@ -6,6 +6,7 @@ import 'package:forui/forui.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
 import 'app_action_sheet_tile.dart';
+import 'app_overlay_surface.dart';
 import 'app_sheet.dart';
 
 typedef AppAdaptiveActionCallback = FutureOr<void> Function();
@@ -95,11 +96,7 @@ class _AppAdaptiveActionMenuState extends State<AppAdaptiveActionMenu>
       control: FPopoverControl.managed(controller: _popover),
       popoverAnchor: AlignmentDirectional.topEnd,
       childAnchor: AlignmentDirectional.bottomEnd,
-      constraints: const FPortalConstraints(
-        minWidth: 208,
-        maxWidth: 280,
-        maxHeight: 360,
-      ),
+      constraints: kAppPopoverMenuConstraints,
       popoverBuilder: (context, _) => _AnchoredActionMenu(
         actions: widget.actions,
         onSelected: _selectAnchoredAction,
@@ -158,7 +155,7 @@ class _AnchoredActionMenu extends StatelessWidget {
     final colors = context.theme.colors;
     return SingleChildScrollView(
       key: const ValueKey<String>('app-adaptive-action-menu.popover'),
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+      padding: const EdgeInsets.all(AppSpacing.s4),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -169,34 +166,36 @@ class _AnchoredActionMenu extends StatelessWidget {
               label: action.title,
               child: FTappable(
                 onPress: () => onSelected(action),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s12,
-                    vertical: AppSpacing.s10,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        action.icon,
-                        size: AppIconSizes.h18,
-                        color: action.destructive
-                            ? colors.destructive
-                            : colors.mutedForeground,
-                      ),
-                      const SizedBox(width: AppSpacing.s10),
-                      Expanded(
-                        child: Text(
-                          action.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: context.mediumLabelStyle.copyWith(
-                            color: action.destructive
-                                ? colors.destructive
-                                : colors.foreground,
+                child: AppHoverFill(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s12,
+                      vertical: AppSpacing.s10,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          action.icon,
+                          size: AppIconSizes.h18,
+                          color: action.destructive
+                              ? colors.destructive
+                              : colors.mutedForeground,
+                        ),
+                        const SizedBox(width: AppSpacing.s10),
+                        Expanded(
+                          child: Text(
+                            action.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.mediumLabelStyle.copyWith(
+                              color: action.destructive
+                                  ? colors.destructive
+                                  : colors.foreground,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

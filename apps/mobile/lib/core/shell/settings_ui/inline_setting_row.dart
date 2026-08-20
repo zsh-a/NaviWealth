@@ -77,11 +77,7 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
       // Without explicit constraints, the inner Column.stretch + scroll
       // view chain leaves the portal child unsized and the first hit
       // test against it crashes.
-      constraints: const FPortalConstraints(
-        minWidth: 200,
-        maxWidth: 320,
-        maxHeight: 360,
-      ),
+      constraints: kAppPopoverMenuConstraints,
       popoverBuilder: (popoverContext, _) => _PopoverContent<T>(
         options: widget.options,
         selected: widget.value,

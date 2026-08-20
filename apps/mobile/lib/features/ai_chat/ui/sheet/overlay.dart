@@ -196,70 +196,57 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
           top: pos.dy,
           width: sheetSize.width,
           height: sheetSize.height,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            child: Container(
-              decoration: BoxDecoration(
-                color: colors.background,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(
-                  color: colors.border,
-                  width: AppStroke.hairline,
-                ),
-                boxShadow: AppShadow.desktopSheet,
-              ),
-              child: Stack(
-                children: [
-                  Column(
-                    children: [
-                      // Full-width draggable header strip. Anywhere on
-                      // the top hit area counts as a drag handle.
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onPanUpdate: (d) => _onHeaderDrag(d, screenSize),
-                        onPanEnd: (_) => _onHeaderDragEnd(),
-                        child: MouseRegion(
-                          cursor: SystemMouseCursors.move,
-                          child: SizedBox(
-                            height: AppControlHeights.sheetDragHandleHitArea,
-                            child: AppSheetDragHandle(colors: colors),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: AiSheetShell.conversation(
-                          prefill: widget.prefill,
-                        ),
-                      ),
-                    ],
-                  ),
-                  // SE-corner resize affordance: three short diagonal
-                  // strokes, with a hit area extending past the visual.
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: GestureDetector(
+          child: AppOverlaySurface(
+            clip: true,
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    // Full-width draggable header strip. Anywhere on
+                    // the top hit area counts as a drag handle.
+                    GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onPanUpdate: _onResize,
-                      onPanEnd: (_) => _onResizeEnd(screenSize),
+                      onPanUpdate: (d) => _onHeaderDrag(d, screenSize),
+                      onPanEnd: (_) => _onHeaderDragEnd(),
                       child: MouseRegion(
-                        cursor: SystemMouseCursors.resizeDownRight,
+                        cursor: SystemMouseCursors.move,
                         child: SizedBox(
-                          width: AppIconSizes.mlg,
-                          height: AppIconSizes.mlg,
-                          child: CustomPaint(
-                            painter: _ResizeGripPainter(
-                              color: colors.mutedForeground.withValues(
-                                alpha: AppOpacity.scrim,
-                              ),
+                          height: AppControlHeights.sheetDragHandleHitArea,
+                          child: AppSheetDragHandle(colors: colors),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: AiSheetShell.conversation(prefill: widget.prefill),
+                    ),
+                  ],
+                ),
+                // SE-corner resize affordance: three short diagonal
+                // strokes, with a hit area extending past the visual.
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onPanUpdate: _onResize,
+                    onPanEnd: (_) => _onResizeEnd(screenSize),
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.resizeDownRight,
+                      child: SizedBox(
+                        width: AppIconSizes.mlg,
+                        height: AppIconSizes.mlg,
+                        child: CustomPaint(
+                          painter: _ResizeGripPainter(
+                            color: colors.mutedForeground.withValues(
+                              alpha: AppOpacity.scrim,
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

@@ -5,8 +5,10 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../theme/app_theme_scope.dart';
+import '../tokens/breakpoints.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
+import 'app_overlay_surface.dart';
 import 'app_sheet.dart';
 import 'app_status_banner.dart';
 
@@ -16,7 +18,7 @@ import 'app_status_banner.dart';
 Future<T?> showAppContentDialog<T>({
   required BuildContext context,
   required Widget child,
-  double maxWidth = 560,
+  double maxWidth = Breakpoints.dialogWide,
   bool barrierDismissible = true,
 }) {
   return showFDialog<T>(
@@ -250,7 +252,7 @@ class _DialogFrame extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = math.min(
-          460.0,
+          Breakpoints.dialogMax,
           math.max(0.0, constraints.maxWidth - AppSpacing.s32),
         );
         return Center(
@@ -278,28 +280,8 @@ class _AppDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final surface = colors.background;
-    final borderColor = colors.foreground.withValues(
-      alpha: colors.brightness == Brightness.dark
-          ? AppOpacity.light
-          : AppOpacity.subtle,
-    );
-
-    return DecoratedBox(
+    return AppOverlaySurface(
       key: const ValueKey<String>('app-dialog-surface'),
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: borderColor, width: AppStroke.hairline),
-        boxShadow: [
-          BoxShadow(
-            color: colors.foreground.withValues(alpha: AppOpacity.whisper),
-            blurRadius: AppSpacing.s32,
-            offset: const Offset(0, AppSpacing.s12),
-          ),
-        ],
-      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

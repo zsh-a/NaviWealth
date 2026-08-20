@@ -72,7 +72,7 @@ void main() {
     );
     expect(dialogSize.height, lessThan(320));
     expect(dialogSize.height, greaterThan(120));
-    expect(dialogSize.width, lessThanOrEqualTo(460));
+    expect(dialogSize.width, lessThanOrEqualTo(Breakpoints.dialogMax));
     final cancelCenter = tester.getCenter(find.text('Cancel'));
     final deleteCenter = tester.getCenter(find.text('Delete'));
     expect((cancelCenter.dy - deleteCenter.dy).abs(), lessThan(4));

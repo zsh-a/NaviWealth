@@ -6,6 +6,7 @@ import 'package:forui/forui.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
 import 'app_grouped_action_list.dart';
+import 'app_overlay_surface.dart';
 import 'app_sheet.dart';
 import 'app_tappable.dart';
 
@@ -98,14 +99,10 @@ class _AppAdaptiveSelectionMenuState<T>
       control: FPopoverControl.managed(controller: _popover),
       popoverAnchor: AlignmentDirectional.topStart,
       childAnchor: AlignmentDirectional.bottomStart,
-      constraints: const FPortalConstraints(
-        minWidth: 260,
-        maxWidth: 340,
-        maxHeight: 420,
-      ),
+      constraints: kAppPopoverSelectionConstraints,
       popoverBuilder: (context, _) => SingleChildScrollView(
         key: const ValueKey<String>('app-adaptive-selection-menu.popover'),
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+        padding: const EdgeInsets.all(AppSpacing.s4),
         child: _SelectionList<T>(
           options: widget.options,
           value: widget.value,
@@ -205,65 +202,68 @@ class _SelectionRow<T> extends StatelessWidget {
       child: AppTappable(
         selected: selected,
         onPress: onPress,
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.s12,
-            vertical: hasSubtitle ? AppSpacing.s10 : AppSpacing.s12,
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: AppSpacing.s28,
-                height: AppSpacing.s28,
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: AppOpacity.faint),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: AppHoverFill(
+          selected: selected,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.s12,
+              vertical: hasSubtitle ? AppSpacing.s10 : AppSpacing.s12,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: AppSpacing.s28,
+                  height: AppSpacing.s28,
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: AppOpacity.faint),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    option.icon,
+                    size: AppIconSizes.sm,
+                    color: selected ? colors.primary : colors.mutedForeground,
+                  ),
                 ),
-                alignment: Alignment.center,
-                child: Icon(
-                  option.icon,
-                  size: AppIconSizes.sm,
-                  color: selected ? colors.primary : colors.mutedForeground,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      option.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.labelStyle.copyWith(
-                        color: colors.foreground,
-                      ),
-                    ),
-                    if (hasSubtitle) ...[
-                      const SizedBox(height: AppSpacing.s2),
+                const SizedBox(width: AppSpacing.s12),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        subtitle,
+                        option.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: context.captionStyle,
+                        style: context.labelStyle.copyWith(
+                          color: colors.foreground,
+                        ),
                       ),
+                      if (hasSubtitle) ...[
+                        const SizedBox(height: AppSpacing.s2),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.captionStyle,
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.s10),
-              SizedBox.square(
-                dimension: AppIconSizes.sm,
-                child: selected
-                    ? Icon(
-                        FLucideIcons.check,
-                        size: AppIconSizes.sm,
-                        color: colors.primary,
-                      )
-                    : null,
-              ),
-            ],
+                const SizedBox(width: AppSpacing.s10),
+                SizedBox.square(
+                  dimension: AppIconSizes.sm,
+                  child: selected
+                      ? Icon(
+                          FLucideIcons.check,
+                          size: AppIconSizes.sm,
+                          color: colors.primary,
+                        )
+                      : null,
+                ),
+              ],
+            ),
           ),
         ),
       ),

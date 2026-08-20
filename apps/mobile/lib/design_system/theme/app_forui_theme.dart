@@ -50,6 +50,9 @@ FThemeData buildAppForuiTheme({
             ColorPalette.navyGlass,
           )
         : ColorPalette.surfaceOverlay,
+    // Single scrim source for every overlay (sheets, dialogs, popovers):
+    // the same palette values that AppSurfaces.scrim exposes.
+    barrier: isDark ? ColorPalette.scrimDark : ColorPalette.scrimLight,
   );
   // One authored slot table for every density (see kAppTypefaceSlots) —
   // the legacy touch/desktop ±2px fork is deliberately gone. Density still

@@ -73,6 +73,10 @@ class Breakpoints {
   /// Wide dialog cap (command palette, rich pickers).
   static const double dialogWide = 560;
 
+  /// Wide-viewport cap for bottom sheets (design doc 01-responsive-layout
+  /// §2.4: form dialogs cap at 720). Below `mobile` sheets stay full-width.
+  static const double sheetFormMax = 720;
+
   /// Reading column for long-form content (chat panes, article bodies).
   static const double readingColumn = 960;
 

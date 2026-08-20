@@ -201,7 +201,6 @@ class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final AppLocalizations l10n = AppLocalizations.of(context);
     final MediaQueryData media = MediaQuery.of(context);
     final Size mediaSize = media.size;
@@ -218,76 +217,69 @@ class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
 
     final Widget card = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: colors.background,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: colors.border, width: AppStroke.hairline),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Focus(
-                onKeyEvent: _onKey,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.s12,
-                    AppSpacing.s12,
-                    AppSpacing.s12,
-                    AppSpacing.s8,
+      child: AppOverlaySurface(
+        clip: true,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Focus(
+              onKeyEvent: _onKey,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s12,
+                  AppSpacing.s12,
+                  AppSpacing.s12,
+                  AppSpacing.s8,
+                ),
+                child: FTextField(
+                  control: FTextFieldControl.managed(
+                    controller: _searchController,
                   ),
-                  child: FTextField(
-                    control: FTextFieldControl.managed(
-                      controller: _searchController,
-                    ),
-                    focusNode: _searchFocus,
-                    autofocus: true,
-                    textInputAction: TextInputAction.search,
-                    hint: l10n.commandPaletteSearchHint,
-                    prefixBuilder: (ctx, style, variants) => const Padding(
-                      padding: EdgeInsetsDirectional.only(start: 12, end: 8),
-                      child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
-                    ),
+                  focusNode: _searchFocus,
+                  autofocus: true,
+                  textInputAction: TextInputAction.search,
+                  hint: l10n.commandPaletteSearchHint,
+                  prefixBuilder: (ctx, style, variants) => const Padding(
+                    padding: EdgeInsetsDirectional.only(start: 12, end: 8),
+                    child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
                   ),
                 ),
               ),
-              const FDivider(),
-              if (_query.isNotEmpty && localQueryResultPaneBuilder != null)
-                localQueryResultPaneBuilder(
-                  query: _query,
-                  now: DateTime.now(),
-                  onContinueInChat: widget.onAskAi == null
-                      ? null
-                      : _onContinueInChat,
-                ),
-              Flexible(
-                child: _filtered.isEmpty
-                    ? _EmptyState(message: l10n.commandPaletteEmpty)
-                    : ListView.builder(
-                        controller: _listScroll,
-                        shrinkWrap: true,
-                        itemCount: _filtered.length,
-                        itemExtent: _kCommandRowExtent,
-                        itemBuilder: (BuildContext _, int i) {
-                          final CommandPaletteEntry entry = _filtered[i];
-                          final bool selected = i == _selectedIndex;
-                          return _CommandRow(
-                            entry: entry,
-                            selected: selected,
-                            onTap: () => _invoke(entry),
-                            onHover: (bool hovering) {
-                              if (hovering && !selected) {
-                                setState(() => _selectedIndex = i);
-                              }
-                            },
-                          );
-                        },
-                      ),
+            ),
+            const FDivider(),
+            if (_query.isNotEmpty && localQueryResultPaneBuilder != null)
+              localQueryResultPaneBuilder(
+                query: _query,
+                now: DateTime.now(),
+                onContinueInChat: widget.onAskAi == null
+                    ? null
+                    : _onContinueInChat,
               ),
-            ],
-          ),
+            Flexible(
+              child: _filtered.isEmpty
+                  ? _EmptyState(message: l10n.commandPaletteEmpty)
+                  : ListView.builder(
+                      controller: _listScroll,
+                      shrinkWrap: true,
+                      itemCount: _filtered.length,
+                      itemExtent: _kCommandRowExtent,
+                      itemBuilder: (BuildContext _, int i) {
+                        final CommandPaletteEntry entry = _filtered[i];
+                        final bool selected = i == _selectedIndex;
+                        return _CommandRow(
+                          entry: entry,
+                          selected: selected,
+                          onTap: () => _invoke(entry),
+                          onHover: (bool hovering) {
+                            if (hovering && !selected) {
+                              setState(() => _selectedIndex = i);
+                            }
+                          },
+                        );
+                      },
+                    ),
+            ),
+          ],
         ),
       ),
     );

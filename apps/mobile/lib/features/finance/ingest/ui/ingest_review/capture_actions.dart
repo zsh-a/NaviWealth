@@ -42,13 +42,9 @@ class _CapturePopoverActionState extends State<_CapturePopoverAction>
       control: FPopoverControl.managed(controller: _controller),
       popoverAnchor: AlignmentDirectional.topEnd,
       childAnchor: AlignmentDirectional.bottomEnd,
-      constraints: const FPortalConstraints(
-        minWidth: 200,
-        maxWidth: 280,
-        maxHeight: 360,
-      ),
+      constraints: kAppPopoverMenuConstraints,
       popoverBuilder: (context, _) => SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+        padding: const EdgeInsets.all(AppSpacing.s4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -109,17 +105,19 @@ class _CaptureOption extends StatelessWidget {
       excludeSemantics: true,
       child: AppTappable(
         onPress: onPress,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s12,
-            vertical: AppSpacing.s10,
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: AppIconSizes.sm),
-              const SizedBox(width: AppSpacing.s10),
-              Expanded(child: Text(label)),
-            ],
+        child: AppHoverFill(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s12,
+              vertical: AppSpacing.s10,
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: AppIconSizes.sm),
+                const SizedBox(width: AppSpacing.s10),
+                Expanded(child: Text(label)),
+              ],
+            ),
           ),
         ),
       ),

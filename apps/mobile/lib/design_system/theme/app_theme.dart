@@ -103,7 +103,7 @@ class AppTheme {
       inverseSurface: isDark ? ColorPalette.navy50 : ColorPalette.navy900,
       onInverseSurface: pageBackground,
       shadow: ColorPalette.shadowMedium,
-      scrim: f.barrier,
+      scrim: isDark ? ColorPalette.scrimDark : ColorPalette.scrimLight,
     );
     final textTheme = TypographyTokens.textTheme().apply(
       bodyColor: scheme.onSurface,
