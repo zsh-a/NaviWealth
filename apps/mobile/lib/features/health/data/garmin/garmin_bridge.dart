@@ -6,6 +6,7 @@ library;
 
 import 'dart:convert' as convert;
 
+import 'package:naviwealth/core/native/lifeos_native_runtime.dart';
 import 'package:naviwealth/src/rust/api/health.dart' as rust;
 
 /// Garmin authentication states (mirrors Rust `GarminAuthState`).
@@ -128,18 +129,98 @@ class GarminSyncOutcome {
   }
 }
 
+/// Injectable raw native surface used by [GarminBridge].
+///
+/// Keeping generated FRB calls behind this interface lets cold-start runtime
+/// ordering be tested without loading the native library.
+abstract interface class GarminNativeApi {
+  Future<Object?> initialize({String? storedTokenJson, required bool isCn});
+  Future<Object?> authenticate({
+    required String email,
+    required String password,
+  });
+  Future<Object?> submitMfa({required String code});
+  Future<Object?> authState();
+  Future<Object?> syncRange({required String from, required String to});
+  Stream<rust.GarminSyncProgress> syncRangeWithProgress({
+    required String from,
+    required String to,
+  });
+  Future<void> cancelSync();
+  Future<Object?> syncCursors();
+  Future<void> logout();
+  Future<Object?> exportSession();
+}
+
+final class FrbGarminNativeApi implements GarminNativeApi {
+  const FrbGarminNativeApi();
+
+  @override
+  Future<Object?> initialize({String? storedTokenJson, required bool isCn}) =>
+      rust.garminInit(storedTokenJson: storedTokenJson, isCn: isCn);
+
+  @override
+  Future<Object?> authenticate({
+    required String email,
+    required String password,
+  }) => rust.garminAuthenticate(email: email, password: password);
+
+  @override
+  Future<Object?> submitMfa({required String code}) =>
+      rust.garminSubmitMfa(code: code);
+
+  @override
+  Future<Object?> authState() => rust.garminAuthState();
+
+  @override
+  Future<Object?> syncRange({required String from, required String to}) =>
+      rust.garminSyncRange(from: from, to: to);
+
+  @override
+  Stream<rust.GarminSyncProgress> syncRangeWithProgress({
+    required String from,
+    required String to,
+  }) => rust.garminSyncRangeStream(from: from, to: to);
+
+  @override
+  Future<void> cancelSync() => rust.garminSyncCancel();
+
+  @override
+  Future<Object?> syncCursors() => rust.garminSyncCursors();
+
+  @override
+  Future<void> logout() => rust.garminLogout();
+
+  @override
+  Future<Object?> exportSession() => rust.garminExportSession();
+}
+
 /// Bridge to the Rust Garmin client.
 ///
 /// All methods call FRB-generated async functions from
 /// `package:naviwealth/src/rust/api/health.dart`.
 class GarminBridge {
+  GarminBridge({
+    GarminNativeApi nativeApi = const FrbGarminNativeApi(),
+    LifeosNativeRuntimeInitializer initRuntime = initLifeosNativeRuntime,
+    String? libraryPath,
+  }) : _nativeApi = nativeApi,
+       _initRuntime = initRuntime,
+       _libraryPath = libraryPath;
+
+  final GarminNativeApi _nativeApi;
+  final LifeosNativeRuntimeInitializer _initRuntime;
+  final String? _libraryPath;
+  Future<void>? _initFuture;
+
   /// Initialize the Garmin client.
   Future<GarminAuthState> init({
     String? storedTokenJson,
     bool isCn = true,
   }) async {
+    await _ensureInitialized();
     // FRB returns String but SSE codec may auto-decode JSON.
-    final dynamic result = await rust.garminInit(
+    final result = await _nativeApi.initialize(
       storedTokenJson: storedTokenJson,
       isCn: isCn,
     );
@@ -148,7 +229,8 @@ class GarminBridge {
 
   /// Authenticate with email/password.
   Future<GarminAuthResult> authenticate(String email, String password) async {
-    final dynamic result = await rust.garminAuthenticate(
+    await _ensureInitialized();
+    final result = await _nativeApi.authenticate(
       email: email,
       password: password,
     );
@@ -157,19 +239,22 @@ class GarminBridge {
 
   /// Submit MFA code.
   Future<GarminAuthResult> submitMfa(String code) async {
-    final dynamic result = await rust.garminSubmitMfa(code: code);
+    await _ensureInitialized();
+    final result = await _nativeApi.submitMfa(code: code);
     return _parseAuthResult(result);
   }
 
   /// Get current auth state.
   Future<GarminAuthState> authState() async {
-    final dynamic result = await rust.garminAuthState();
+    await _ensureInitialized();
+    final result = await _nativeApi.authState();
     return _parseAuthState(result);
   }
 
   /// Sync health data for a date range.
   Future<List<GarminSyncOutcome>> syncRange(DateTime from, DateTime to) async {
-    final dynamic result = await rust.garminSyncRange(
+    await _ensureInitialized();
+    final result = await _nativeApi.syncRange(
       from: from.toIso8601String().substring(0, 10),
       to: to.toIso8601String().substring(0, 10),
     );
@@ -186,35 +271,57 @@ class GarminBridge {
   Stream<rust.GarminSyncProgress> syncRangeWithProgress(
     DateTime from,
     DateTime to,
-  ) {
-    return rust.garminSyncRangeStream(
+  ) async* {
+    await _ensureInitialized();
+    yield* _nativeApi.syncRangeWithProgress(
       from: from.toIso8601String().substring(0, 10),
       to: to.toIso8601String().substring(0, 10),
     );
   }
 
   /// Cancel an in-progress sync.
-  Future<void> cancelSync() => rust.garminSyncCancel();
+  Future<void> cancelSync() async {
+    await _ensureInitialized();
+    await _nativeApi.cancelSync();
+  }
 
   /// Get sync cursors.
   Future<Map<String, DateTime>> syncCursors() async {
-    final dynamic result = await rust.garminSyncCursors();
+    await _ensureInitialized();
+    final result = await _nativeApi.syncCursors();
     final map = _decodeJsonMap(result);
     return map.map((k, v) => MapEntry(k, DateTime.parse(v as String)));
   }
 
   /// Logout and clear stored credentials.
-  Future<void> logout() => rust.garminLogout();
+  Future<void> logout() async {
+    await _ensureInitialized();
+    await _nativeApi.logout();
+  }
 
   /// Export the current session JSON for persistent storage.
   ///
   /// Returns the session JSON string if authenticated, or `null`.
   Future<String?> exportSession() async {
-    final dynamic result = await rust.garminExportSession();
+    await _ensureInitialized();
+    final result = await _nativeApi.exportSession();
     if (result == null) return null;
     // FRB may return a String or auto-decode.
     if (result is String) return result.isEmpty ? null : result;
     return result.toString();
+  }
+
+  Future<void> _ensureInitialized() {
+    return _initFuture ??= _initializeRuntime();
+  }
+
+  Future<void> _initializeRuntime() async {
+    try {
+      await _initRuntime(libraryPath: _libraryPath);
+    } on Object {
+      _initFuture = null;
+      rethrow;
+    }
   }
 
   // ---------------------------------------------------------------------------

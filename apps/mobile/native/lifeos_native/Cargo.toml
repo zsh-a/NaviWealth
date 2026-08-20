@@ -37,7 +37,7 @@ futures = "0.3"
 # flutter_rust_bridge generates Dart bindings from these signatures.
 # Surface in `src/api/` is the only thing the codegen looks at;
 # everything else stays private to the crate.
-flutter_rust_bridge = "=2.13.0-beta.4"
+flutter_rust_bridge = "=2.13.0-beta.6"
 
 # Health / Garmin integration
 reqwest = { version = "0.13.4", features = ["json", "cookies", "rustls", "form"], default-features = false }

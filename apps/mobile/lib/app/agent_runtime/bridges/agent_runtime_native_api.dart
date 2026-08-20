@@ -3,8 +3,8 @@ library;
 
 import 'package:naviwealth/src/rust/api/agent_runtime.dart' as rust;
 
-typedef LifeosNativeRuntimeInitializer =
-    Future<void> Function({String? libraryPath});
+export 'package:naviwealth/core/native/lifeos_native_runtime.dart'
+    show LifeosNativeRuntimeInitializer;
 
 abstract interface class AgentRuntimeNativeApi {
   Future<String> protocolVersion();

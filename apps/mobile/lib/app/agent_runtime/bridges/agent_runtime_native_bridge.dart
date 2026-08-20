@@ -11,9 +11,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_storage_policy.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_api.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
-import 'package:naviwealth/core/ai/local/embedding/rust_gemma_embedder.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_json.dart';
 import 'package:naviwealth/core/config/providers.dart';
+import 'package:naviwealth/core/native/lifeos_native_runtime.dart';
 
 export 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_api.dart';
 

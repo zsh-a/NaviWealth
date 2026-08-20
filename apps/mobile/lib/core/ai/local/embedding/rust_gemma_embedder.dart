@@ -20,11 +20,11 @@
 /// the plugin loader) and dev-machine experimentation.
 library;
 
+import 'package:naviwealth/core/native/lifeos_native_runtime.dart'
+    as native_runtime;
 import 'package:naviwealth/src/rust/api/embedder.dart' as frb;
 
 import 'embedder.dart';
-import 'lifeos_native_runtime_io.dart'
-    if (dart.library.js_interop) 'lifeos_native_runtime_web.dart';
 
 /// Thrown when the Rust embedder can't be constructed (missing
 /// native library, missing model files, malformed config, etc.).
@@ -38,35 +38,20 @@ class RustEmbedderUnavailable implements Exception {
       'RustEmbedderUnavailable: $message${cause == null ? '' : ' ($cause)'}';
 }
 
-// Top-level guard so `RustLib.init` runs exactly once per process,
-// even if [RustGemmaEmbedder.load] is called more than once. The
-// first init call wins the library path; subsequent calls return
-// the cached future.
-Future<void>? _rustLibInitFuture;
-
 /// Initialise the FRB runtime against [libraryPath] (or the default
 /// cargokit-managed loader when `null`). Idempotent — repeat calls
-/// share the same underlying future.
+/// share the domain-neutral runtime's underlying future.
 ///
 /// Throws [RustEmbedderUnavailable] if the dylib can't be loaded.
 /// In production (`flutter run` / `flutter build`) pass `null` and
 /// let cargokit's plugin path resolution find the bundled lib.
 Future<void> initLifeosNativeRuntime({String? libraryPath}) {
-  final cached = _rustLibInitFuture;
-  if (cached != null) return cached;
-  final future = _runInit(libraryPath);
-  _rustLibInitFuture = future;
-  // If init fails, clear the cache so the next attempt can retry
-  // (otherwise we'd be wedged on a failed future).
-  future.catchError((_) {
-    _rustLibInitFuture = null;
-  });
-  return future;
+  return _initEmbedderRuntime(libraryPath: libraryPath);
 }
 
-Future<void> _runInit(String? libraryPath) async {
+Future<void> _initEmbedderRuntime({String? libraryPath}) async {
   try {
-    await initRustLibRuntime(libraryPath: libraryPath);
+    await native_runtime.initLifeosNativeRuntime(libraryPath: libraryPath);
   } on Object catch (e) {
     throw RustEmbedderUnavailable(
       'failed to initialise lifeos_native runtime',
