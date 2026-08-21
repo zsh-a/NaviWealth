@@ -201,7 +201,7 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
     _searchDebounce = Timer(_searchDebounceDuration, () {
       if (!mounted) return;
       controller.mutateQuery((q) => q.copyWith(searchText: value));
-      setState(() => _pendingSearchText = null);
+      _pendingSearchText = null;
     });
   }
 
@@ -228,9 +228,11 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final query = ref.watch(activityFeedQueryProvider);
+    final query = ref.read(activityFeedQueryProvider);
     final controller = ref.read(activityFeedQueryProvider.notifier);
-    final filterLabel = _filterSummary(l10n, query);
+    final filterLabel = ref.watch(
+      activityFeedQueryProvider.select((value) => _filterSummary(l10n, value)),
+    );
 
     // Hydrate the initial deep-linked query once. Afterwards panel visibility
     // remains a user choice, even while a search filter stays active.
@@ -242,6 +244,35 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
       _syncSearchText(query.searchText);
     }
 
+    Widget searchField() => FTextField(
+      control: FTextFieldControl.managed(
+        controller: _searchController,
+        onChange: (value) => _scheduleSearch(controller, value.text),
+      ),
+      focusNode: _searchFocus,
+      textInputAction: TextInputAction.search,
+      prefixBuilder: (_, _, _) => const Padding(
+        padding: EdgeInsetsDirectional.only(
+          start: AppSpacing.s12,
+          end: AppSpacing.s8,
+        ),
+        child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
+      ),
+      hint: l10n.activityFeedSearchHint,
+    );
+
+    Widget filterButton() => ConstrainedBox(
+      constraints: const BoxConstraints(
+        minHeight: AppControlHeights.touchTarget,
+      ),
+      child: AppQuietButton(
+        label: filterLabel,
+        expanded: true,
+        prefix: const Icon(FLucideIcons.listFilter),
+        onPress: () => ActivityFeedFilterSheet.show(context),
+      ),
+    );
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s16,
@@ -249,72 +280,68 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
         AppSpacing.s16,
         AppSpacing.s4,
       ),
-      child: AnimatedSwitcher(
-        duration: AppMotionPolicy.duration(
-          context,
-          Motion.fast,
-          role: AppMotionRole.transition,
-        ),
-        switchInCurve: Motion.standardDecelerate,
-        switchOutCurve: Motion.standardAccelerate,
-        child: _searchOpen
-            ? Row(
-                key: const ValueKey<String>('activity-search'),
-                children: [
-                  Expanded(
-                    child: FTextField(
-                      control: FTextFieldControl.managed(
-                        controller: _searchController,
-                        onChange: (value) =>
-                            _scheduleSearch(controller, value.text),
-                      ),
-                      focusNode: _searchFocus,
-                      textInputAction: TextInputAction.search,
-                      prefixBuilder: (_, _, _) => const Padding(
-                        padding: EdgeInsetsDirectional.only(
-                          start: AppSpacing.s12,
-                          end: AppSpacing.s8,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth >= Breakpoints.mobile) {
+            return Row(
+              key: const ValueKey<String>('activity-wide-toolbar'),
+              children: [
+                Expanded(flex: 3, child: searchField()),
+                const SizedBox(width: AppSpacing.s4),
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _searchController,
+                  builder: (context, value, child) {
+                    final hidden = value.text.isEmpty;
+                    return IgnorePointer(
+                      ignoring: hidden,
+                      child: AnimatedOpacity(
+                        opacity: hidden ? 0 : 1,
+                        duration: AppMotionPolicy.duration(
+                          context,
+                          Motion.fast,
+                          role: AppMotionRole.transition,
                         ),
-                        child: Icon(
-                          FLucideIcons.search,
-                          size: AppIconSizes.h18,
+                        child: AppIconButton(
+                          icon: FLucideIcons.x,
+                          tooltip: l10n.formDateFieldClearTooltip,
+                          onPress: () => _clearSearch(controller),
                         ),
                       ),
-                      hint: l10n.activityFeedSearchHint,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.s8),
-                  AppIconButton(
-                    icon: FLucideIcons.x,
-                    tooltip: l10n.commonClose,
-                    onPress: () => _closeSearch(controller),
-                  ),
-                ],
-              )
-            : Row(
-                key: const ValueKey<String>('activity-toolbar'),
-                children: [
-                  Expanded(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        minHeight: AppControlHeights.touchTarget,
-                      ),
-                      child: AppQuietButton(
-                        label: filterLabel,
-                        expanded: true,
-                        prefix: const Icon(FLucideIcons.listFilter),
-                        onPress: () => ActivityFeedFilterSheet.show(context),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.s8),
-                  AppIconButton(
-                    icon: FLucideIcons.search,
-                    tooltip: l10n.activityFeedSearchAction,
-                    onPress: _openSearch,
-                  ),
-                ],
+                    );
+                  },
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(flex: 2, child: filterButton()),
+              ],
+            );
+          }
+          if (_searchOpen) {
+            return Row(
+              key: const ValueKey<String>('activity-search'),
+              children: [
+                Expanded(child: searchField()),
+                const SizedBox(width: AppSpacing.s8),
+                AppIconButton(
+                  icon: FLucideIcons.x,
+                  tooltip: l10n.commonClose,
+                  onPress: () => _closeSearch(controller),
+                ),
+              ],
+            );
+          }
+          return Row(
+            key: const ValueKey<String>('activity-toolbar'),
+            children: [
+              Expanded(child: filterButton()),
+              const SizedBox(width: AppSpacing.s8),
+              AppIconButton(
+                icon: FLucideIcons.search,
+                tooltip: l10n.activityFeedSearchAction,
+                onPress: _openSearch,
               ),
+            ],
+          );
+        },
       ),
     );
   }

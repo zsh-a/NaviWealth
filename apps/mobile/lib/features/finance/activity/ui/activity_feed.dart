@@ -412,6 +412,9 @@ class _PageSummaryStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = context.appTheme.status;
     final net = totals.incomeTotal - totals.expenseTotal;
+    final scopeLabel = hasMore
+        ? l10n.activityFeedSummaryShown(totals.count)
+        : l10n.activityFeedSummaryCountValue(totals.count);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s4,
@@ -433,15 +436,9 @@ class _PageSummaryStrip extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  l10n.activityFeedSummaryNet,
+                  '${l10n.activityFeedSummaryNet} · $scopeLabel',
                   style: context.captionMediumStyle,
                 ),
-              ),
-              Text(
-                hasMore
-                    ? l10n.activityFeedSummaryShown(totals.count)
-                    : l10n.activityFeedSummaryCountValue(totals.count),
-                style: context.captionStyle,
               ),
             ],
           ),

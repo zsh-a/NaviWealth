@@ -4,6 +4,8 @@ import 'package:forui/forui.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
 import '../tokens/typography_tokens.dart';
+import 'amount_privacy_placeholder.dart';
+import 'amount_privacy_scope.dart';
 import 'app_divider.dart';
 
 /// One flat metric cell inside a parent surface — never a nested card.
@@ -13,12 +15,17 @@ class AppMetricItem {
     required this.value,
     this.flex = 1,
     this.maxLines = 2,
+    this.sensitive = false,
   });
 
   final String label;
   final String value;
   final int flex;
   final int maxLines;
+
+  /// Whether [value] contains an exact monetary amount that should respect
+  /// the nearest [AmountPrivacyScope].
+  final bool sensitive;
 }
 
 /// Divider-separated metric cluster for hero / raised modules.
@@ -105,14 +112,25 @@ class _MetricCell extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         SizedBox(height: dense ? AppSpacing.s2 : AppSpacing.s4),
-        Text(
-          item.value,
-          style: dense
-              ? TypographyTokens.numericBodyStrong
-              : context.labelStyle,
-          maxLines: item.maxLines,
-          overflow: TextOverflow.ellipsis,
-        ),
+        if (item.sensitive && AmountPrivacyScope.isHiddenOf(context))
+          AmountPrivacyPlaceholder(
+            density: dense
+                ? AmountPrivacyPlaceholderDensity.body
+                : AmountPrivacyPlaceholderDensity.title,
+            style: dense
+                ? TypographyTokens.numericBodyStrong
+                : context.labelStyle,
+            semanticsLabel: AmountPrivacyScope.hiddenSemanticsLabelOf(context),
+          )
+        else
+          Text(
+            item.value,
+            style: dense
+                ? TypographyTokens.numericBodyStrong
+                : context.labelStyle,
+            maxLines: item.maxLines,
+            overflow: TextOverflow.ellipsis,
+          ),
       ],
     );
   }

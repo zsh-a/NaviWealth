@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
@@ -16,15 +14,19 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/activation/data/finance_activation_providers.dart';
 import 'package:naviwealth/features/finance/activation/data/finance_activation_store.dart';
 import 'package:naviwealth/features/finance/activation/ui/finance_activation_card.dart';
+import 'package:naviwealth/features/finance/activity/data/activity_feed_provider.dart';
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
-import 'package:naviwealth/features/finance/cashflow/ui/cashflow_calendar_card.dart';
 import 'package:naviwealth/features/finance/composition/finance_domain_shell.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/market/sync/price_sync_coordinator.dart';
 import 'package:naviwealth/features/finance/data/market/sync/price_sync_providers.dart';
+import 'package:naviwealth/features/finance/data/preferences/finance_amount_privacy_preference.dart';
+import 'package:naviwealth/features/finance/inbox/data/financial_inbox_providers.dart';
 import 'package:naviwealth/features/finance/inbox/ui/financial_inbox_card.dart';
+import 'package:naviwealth/features/finance/runway/data/money_runway_providers.dart';
+import 'package:naviwealth/features/finance/runway/domain/money_runway.dart';
 import 'package:naviwealth/features/finance/runway/ui/money_runway_card.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -38,13 +40,11 @@ part 'home_dashboard_body.dart';
 part 'home_net_worth_header.dart';
 part 'home_quick_actions.dart';
 
-final _financeAmountsHiddenProvider = StateProvider<bool>((ref) => false);
-
 /// FinanceOS Today brief.
 ///
 /// Today owns current context and immediate actions: net-worth pulse (no
-/// full trend chart), one agent signal, recent activity, and a compact
-/// cash-flow card. Trends and allocation live on Wealth.
+/// full trend chart), actionable signals, and recent activity. Detailed cash
+/// flow, trends, and allocation stay in their dedicated workspaces.
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
@@ -80,7 +80,8 @@ class _HomeLiveBody extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (snapshot != null) ValuationTrustNotice(snapshot: snapshot),
+          if (snapshot != null)
+            ValuationTrustNotice(snapshot: snapshot, showHealthy: false),
           Expanded(child: _DashboardBody(snapshotAsync: snapshotAsync)),
         ],
       ),

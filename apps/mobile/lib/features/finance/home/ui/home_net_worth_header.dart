@@ -12,7 +12,7 @@ class _NetWorthHeader extends ConsumerWidget {
     final hasData = !snapshot.isEmpty;
     final value = hasData ? snapshot.netWorth.amount.toDouble() : null;
     final dailyChangeAsync = ref.watch(dashboardDailyChangeProvider);
-    final amountsHidden = ref.watch(_financeAmountsHiddenProvider);
+    final amountsHidden = ref.watch(financeAmountsHiddenProvider);
     final privacyLabel = amountsHidden
         ? l10n.financePrivacyShowAmountsTooltip
         : l10n.financePrivacyHideAmountsTooltip;
@@ -45,8 +45,9 @@ class _NetWorthHeader extends ConsumerWidget {
                     child: FButton.icon(
                       variant: FButtonVariant.ghost,
                       onPress: () {
-                        ref.read(_financeAmountsHiddenProvider.notifier).state =
-                            !amountsHidden;
+                        ref
+                            .read(financeAmountsHiddenProvider.notifier)
+                            .toggle();
                       },
                       child: Icon(
                         amountsHidden

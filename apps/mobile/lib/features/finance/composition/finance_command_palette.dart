@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -96,67 +97,71 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
       ],
       run: (BuildContext ctx) => ctx.go(FinanceRoutes.planFire),
     ),
-    CommandPaletteEntry(
-      id: 'nav.incomeStrategy',
-      label: l10n.incomeStrategyTitle,
-      icon: FLucideIcons.candlestickChart,
-      keywords: <String>[
-        FinanceRoutes.planIncome,
-        '/accounts/income',
-        'income strategy',
-        'options',
-        'sell put',
-        'covered call',
-        l10n.commandKeywordOptionsCn,
-        l10n.commandKeywordCashFlowCn,
-        l10n.commandKeywordSellPutCn,
-        l10n.commandKeywordCoveredCallCn,
-      ],
-      run: (BuildContext ctx) => ctx.go(FinanceRoutes.planIncome),
-    ),
-    CommandPaletteEntry(
-      id: 'nav.optionsWorkspace',
-      label: l10n.incomePlannerTitle,
-      icon: FLucideIcons.scanSearch,
-      keywords: <String>[
-        FinanceRoutes.planIncomeOptions,
-        'options workspace',
-        'scan',
-        'opportunities',
-        'journal',
-        l10n.commandKeywordOptionsCn,
-        l10n.commandKeywordSellPutCn,
-        l10n.commandKeywordCoveredCallCn,
-      ],
-      run: (BuildContext ctx) => ctx.go(FinanceRoutes.planIncomeOptions),
-    ),
-    CommandPaletteEntry(
-      id: 'nav.wheelCycles',
-      label: l10n.planWheelTitle,
-      icon: FLucideIcons.refreshCw,
-      keywords: const <String>[
-        FinanceRoutes.planWheel,
-        'wheel',
-        'leaps',
-        '轮动',
-        '周期',
-      ],
-      run: (BuildContext ctx) => ctx.go(FinanceRoutes.planWheel),
-    ),
-    CommandPaletteEntry(
-      id: 'nav.optionsReview',
-      label: l10n.incomePlannerStatsTitle,
-      icon: FLucideIcons.chartNoAxesColumnIncreasing,
-      keywords: const <String>[
-        FinanceRoutes.planIncomeStats,
-        'options review',
-        'stats',
-        'win rate',
-        '复盘',
-        '胜率',
-      ],
-      run: (BuildContext ctx) => ctx.go(FinanceRoutes.planIncomeStats),
-    ),
+    if (!kIsWeb)
+      CommandPaletteEntry(
+        id: 'nav.incomeStrategy',
+        label: l10n.incomeStrategyTitle,
+        icon: FLucideIcons.candlestickChart,
+        keywords: <String>[
+          FinanceRoutes.planIncome,
+          '/accounts/income',
+          'income strategy',
+          'options',
+          'sell put',
+          'covered call',
+          l10n.commandKeywordOptionsCn,
+          l10n.commandKeywordCashFlowCn,
+          l10n.commandKeywordSellPutCn,
+          l10n.commandKeywordCoveredCallCn,
+        ],
+        run: (BuildContext ctx) => ctx.go(FinanceRoutes.planIncome),
+      ),
+    if (!kIsWeb)
+      CommandPaletteEntry(
+        id: 'nav.optionsWorkspace',
+        label: l10n.incomePlannerTitle,
+        icon: FLucideIcons.scanSearch,
+        keywords: <String>[
+          FinanceRoutes.planIncomeOptions,
+          'options workspace',
+          'scan',
+          'opportunities',
+          'journal',
+          l10n.commandKeywordOptionsCn,
+          l10n.commandKeywordSellPutCn,
+          l10n.commandKeywordCoveredCallCn,
+        ],
+        run: (BuildContext ctx) => ctx.go(FinanceRoutes.planIncomeOptions),
+      ),
+    if (!kIsWeb)
+      CommandPaletteEntry(
+        id: 'nav.wheelCycles',
+        label: l10n.planWheelTitle,
+        icon: FLucideIcons.refreshCw,
+        keywords: const <String>[
+          FinanceRoutes.planWheel,
+          'wheel',
+          'leaps',
+          '轮动',
+          '周期',
+        ],
+        run: (BuildContext ctx) => ctx.go(FinanceRoutes.planWheel),
+      ),
+    if (!kIsWeb)
+      CommandPaletteEntry(
+        id: 'nav.optionsReview',
+        label: l10n.incomePlannerStatsTitle,
+        icon: FLucideIcons.chartNoAxesColumnIncreasing,
+        keywords: const <String>[
+          FinanceRoutes.planIncomeStats,
+          'options review',
+          'stats',
+          'win rate',
+          '复盘',
+          '胜率',
+        ],
+        run: (BuildContext ctx) => ctx.go(FinanceRoutes.planIncomeStats),
+      ),
     ...rebalanceCommandPaletteEntries(l10n),
     CommandPaletteEntry(
       id: 'action.newTrade',

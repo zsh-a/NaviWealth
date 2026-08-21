@@ -114,60 +114,46 @@ class _NextActionSection extends StatelessWidget {
     final tone = next?.tone ?? AppBadgeTone.neutral;
     final icon = hasAttention ? next!.icon : FLucideIcons.loaderCircle;
 
-    return SoftCard.raised(
-      padding: AppPageRhythm.cardPadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return AppSection.group(
+      title: l10n.planAttentionTitle,
+      trailing: hasAttention || status.isLoading
+          ? AppBadge(
+              label: status.isLoading && !hasAttention
+                  ? l10n.commonLoading
+                  : _toneLabel(context, tone),
+              size: AppBadgeSize.compact,
+              tone: status.isLoading && !hasAttention
+                  ? AppBadgeTone.neutral
+                  : tone,
+              icon: icon,
+            )
+          : null,
+      children: [
+        if (hasAttention)
+          _AttentionRow(spec: next!)
+        else if (status.isLoading)
+          const _AttentionSkeleton(),
+        if (status.hasError) ...[
+          if (hasAttention || status.isLoading)
+            const SizedBox(height: AppSpacing.s10),
           Row(
             children: [
+              Icon(
+                FLucideIcons.cloudAlert,
+                size: AppIconSizes.sm,
+                color: context.appTheme.status.warning.fg,
+              ),
+              const SizedBox(width: AppSpacing.s6),
               Expanded(
                 child: Text(
-                  l10n.planAttentionTitle,
-                  style: context.mutedLabelStyle,
+                  l10n.planStatusPartiallyUnavailable,
+                  style: context.captionStyle,
                 ),
               ),
-              if (hasAttention || status.isLoading)
-                AppBadge(
-                  label: status.isLoading && !hasAttention
-                      ? l10n.commonLoading
-                      : _toneLabel(context, tone),
-                  size: AppBadgeSize.compact,
-                  tone: status.isLoading && !hasAttention
-                      ? AppBadgeTone.neutral
-                      : tone,
-                  icon: icon,
-                ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s12),
-          if (hasAttention)
-            _AttentionRow(spec: next!)
-          else if (status.isLoading)
-            const _AttentionSkeleton()
-          else if (!status.hasError)
-            const SizedBox.shrink(),
-          if (status.hasError) ...[
-            const SizedBox(height: AppSpacing.s12),
-            Row(
-              children: [
-                Icon(
-                  FLucideIcons.cloudAlert,
-                  size: AppIconSizes.sm,
-                  color: context.appTheme.status.warning.fg,
-                ),
-                const SizedBox(width: AppSpacing.s6),
-                Expanded(
-                  child: Text(
-                    l10n.planStatusPartiallyUnavailable,
-                    style: context.captionStyle,
-                  ),
-                ),
-              ],
-            ),
-          ],
         ],
-      ),
+      ],
     );
   }
 }
@@ -180,40 +166,40 @@ class _AttentionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _toneColor(context, spec.tone);
-    return SoftCard.flat(
-      tinted: false,
-      onPress: () => context.push(spec.path),
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: AppOpacity.subtle),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            alignment: Alignment.center,
-            child: Icon(spec.icon, size: AppIconSizes.sm, color: color),
+    return Semantics(
+      button: true,
+      label: '${spec.title}, ${spec.subtitle}',
+      excludeSemantics: true,
+      child: AppTappable(
+        onPress: () => context.push(spec.path),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+          child: Row(
+            children: [
+              SizedBox.square(
+                dimension: 36,
+                child: Icon(spec.icon, size: AppIconSizes.sm, color: color),
+              ),
+              const SizedBox(width: AppSpacing.s10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(spec.title, style: context.labelStyle),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(spec.subtitle, style: context.captionStyle),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              Icon(
+                FLucideIcons.chevronRight,
+                size: AppIconSizes.sm,
+                color: context.theme.colors.mutedForeground,
+              ),
+            ],
           ),
-          const SizedBox(width: AppSpacing.s10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(spec.title, style: context.labelStyle),
-                const SizedBox(height: AppSpacing.s2),
-                Text(spec.subtitle, style: context.captionStyle),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          Icon(
-            FLucideIcons.chevronRight,
-            size: AppIconSizes.sm,
-            color: context.theme.colors.mutedForeground,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -416,59 +402,62 @@ class _PlanRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _toneColor(context, spec.tone);
-    return SoftCard.flat(
-      tinted: false,
-      onPress: () => context.push(spec.path),
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: AppOpacity.subtle),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            alignment: Alignment.center,
-            child: Icon(spec.icon, size: AppIconSizes.sm, color: color),
-          ),
-          const SizedBox(width: AppSpacing.s10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  spec.title,
-                  style: context.labelStyle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+    final needsAttention =
+        spec.tone == AppBadgeTone.warning || spec.tone == AppBadgeTone.error;
+    final iconColor = needsAttention
+        ? color
+        : context.theme.colors.mutedForeground;
+    return Semantics(
+      button: true,
+      label: '${spec.title}, ${spec.subtitle}',
+      excludeSemantics: true,
+      child: AppTappable(
+        onPress: () => context.push(spec.path),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
+          child: Row(
+            children: [
+              SizedBox.square(
+                dimension: 36,
+                child: Icon(spec.icon, size: AppIconSizes.sm, color: iconColor),
+              ),
+              const SizedBox(width: AppSpacing.s10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      spec.title,
+                      style: context.labelStyle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(
+                      spec.subtitle,
+                      style: context.captionStyle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.s2),
-                Text(
-                  spec.subtitle,
-                  style: context.captionStyle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              if (needsAttention)
+                AppBadge(
+                  label: spec.badge ?? _toneLabel(context, spec.tone),
+                  tone: spec.tone,
+                  size: AppBadgeSize.compact,
+                )
+              else
+                Icon(
+                  FLucideIcons.chevronRight,
+                  size: AppIconSizes.sm,
+                  color: context.theme.colors.mutedForeground,
                 ),
-                if (spec.tone == AppBadgeTone.warning ||
-                    spec.tone == AppBadgeTone.error) ...[
-                  const SizedBox(height: AppSpacing.s4),
-                  AppBadge(
-                    label: spec.badge ?? _toneLabel(context, spec.tone),
-                    tone: spec.tone,
-                    size: AppBadgeSize.compact,
-                  ),
-                ],
-              ],
-            ),
+            ],
           ),
-          const SizedBox(width: AppSpacing.s8),
-          Icon(
-            FLucideIcons.chevronRight,
-            size: AppIconSizes.sm,
-            color: context.theme.colors.mutedForeground,
-          ),
-        ],
+        ),
       ),
     );
   }

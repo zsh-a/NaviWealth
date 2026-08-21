@@ -13,7 +13,7 @@ import 'home_section.dart';
 
 /// Last [kHomeActivityPreviewCount] journal entries, using the shared
 /// [ActivityFeedEntryRow] so Home and Activity stay visually aligned.
-const int kHomeActivityPreviewCount = 5;
+const int kHomeActivityPreviewCount = 3;
 
 class ActivityTimelinePreview extends ConsumerWidget {
   const ActivityTimelinePreview({super.key});

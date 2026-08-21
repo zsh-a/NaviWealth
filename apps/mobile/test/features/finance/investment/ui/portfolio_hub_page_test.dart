@@ -152,6 +152,7 @@ void main() {
             data: FTheme.neutral.light.desktop,
             child: MaterialApp(
               theme: AppTheme.light(),
+              builder: (context, child) => AppMessenger.init(child: child!),
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               locale: const Locale('en', 'US'),
@@ -288,6 +289,7 @@ void main() {
           data: FTheme.neutral.light.desktop,
           child: MaterialApp(
             theme: AppTheme.light(),
+            builder: (context, child) => AppMessenger.init(child: child!),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('en', 'US'),
@@ -454,6 +456,7 @@ void main() {
           data: FTheme.neutral.light.desktop,
           child: MaterialApp(
             theme: AppTheme.light(),
+            builder: (context, child) => AppMessenger.init(child: child!),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('en', 'US'),
@@ -497,6 +500,7 @@ void main() {
           data: FTheme.neutral.light.desktop,
           child: MaterialApp(
             theme: AppTheme.light(),
+            builder: (context, child) => AppMessenger.init(child: child!),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('en', 'US'),
@@ -582,6 +586,7 @@ void main() {
             data: FTheme.neutral.light.desktop,
             child: MaterialApp(
               theme: AppTheme.light(),
+              builder: (context, child) => AppMessenger.init(child: child!),
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               locale: const Locale('en', 'US'),
@@ -682,6 +687,7 @@ void main() {
           data: FTheme.neutral.light.desktop,
           child: MaterialApp(
             theme: AppTheme.light(),
+            builder: (context, child) => AppMessenger.init(child: child!),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('en', 'US'),

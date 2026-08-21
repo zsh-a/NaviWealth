@@ -16,9 +16,14 @@ import '../domain/dashboard_models.dart';
 /// daily-close and manual valuations still show their as-of time so users can
 /// tell what the headline number actually represents.
 class ValuationTrustNotice extends StatelessWidget {
-  const ValuationTrustNotice({required this.snapshot, super.key});
+  const ValuationTrustNotice({
+    required this.snapshot,
+    this.showHealthy = true,
+    super.key,
+  });
 
   final DashboardSnapshot snapshot;
+  final bool showHealthy;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +54,7 @@ class ValuationTrustNotice extends StatelessWidget {
           )
         : l10n.dashboardValuationTrustReady(quality, asOf);
     if (!hasMissingFx && !isLowTrust) {
+      if (!showHealthy) return const SizedBox.shrink();
       return AppStatusLine(
         icon: FLucideIcons.shieldCheck,
         message: message,

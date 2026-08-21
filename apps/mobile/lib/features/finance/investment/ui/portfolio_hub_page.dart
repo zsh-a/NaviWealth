@@ -236,8 +236,6 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
               padding: const EdgeInsets.only(bottom: AppSpacing.s20),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final wideInsights =
-                      constraints.maxWidth >= Breakpoints.contentTwoColumn;
                   return AdaptiveSummaryGrid(
                     gap: AppSpacing.s16,
                     items: [
@@ -270,9 +268,9 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
                           ],
                         ),
                       ),
-                      if (wideInsights || _showInsights)
+                      if (_showInsights)
                         AdaptiveSummaryTile(
-                          role: AdaptiveSummaryTileRole.featured,
+                          role: AdaptiveSummaryTileRole.continuous,
                           child: _EngineExposureSection(
                             baseCurrency: data.baseCurrency,
                           ),
@@ -281,7 +279,7 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
                         AdaptiveSummaryTile(
                           role: AdaptiveSummaryTileRole.continuous,
                           child: FButton(
-                            variant: FButtonVariant.outline,
+                            variant: FButtonVariant.ghost,
                             onPress: () => setState(() {
                               _showInsights = true;
                             }),

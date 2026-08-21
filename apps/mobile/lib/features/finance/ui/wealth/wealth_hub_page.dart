@@ -222,10 +222,11 @@ class _BalanceOverview extends ConsumerWidget {
                   style: context.mutedLabelStyle,
                 ),
               ),
-              AppBadge(
-                label: baseCurrency,
-                size: AppBadgeSize.compact,
-                tone: AppBadgeTone.accent,
+              Text(
+                baseCurrency,
+                style: context.captionLabelStyle.copyWith(
+                  color: context.theme.colors.mutedForeground,
+                ),
               ),
             ],
           ),
@@ -255,6 +256,7 @@ class _BalanceOverview extends ConsumerWidget {
               AppMetricItem(
                 label: l10n.dashboardNetWorthAssetsLabel,
                 value: formatters.currency(totalAssets, code: baseCurrency),
+                sensitive: true,
                 maxLines: 1,
               ),
               AppMetricItem(
@@ -263,6 +265,7 @@ class _BalanceOverview extends ConsumerWidget {
                   totalLiabilities,
                   code: baseCurrency,
                 ),
+                sensitive: true,
                 maxLines: 1,
               ),
             ],

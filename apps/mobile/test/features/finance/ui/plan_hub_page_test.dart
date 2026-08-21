@@ -34,7 +34,7 @@ Widget _wrapAsync(
       data: MediaQuery.of(
         context,
       ).copyWith(textScaler: TextScaler.linear(textScale)),
-      child: child!,
+      child: AppMessenger.init(child: child!),
     ),
     home: const PlanHubPage(),
   ),
@@ -52,6 +52,7 @@ Widget _wrapRouter(
     theme: AppTheme.light(),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
+    builder: (context, child) => AppMessenger.init(child: child!),
     routerConfig: GoRouter(
       initialLocation: AppRoutes.plan,
       routes: [

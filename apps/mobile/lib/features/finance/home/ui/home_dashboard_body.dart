@@ -18,7 +18,7 @@ class _DashboardBodyContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshot = snapshotAsync.value;
-    final amountsHidden = ref.watch(_financeAmountsHiddenProvider);
+    final amountsHidden = ref.watch(financeAmountsHiddenProvider);
     final activation = ref.watch(financeActivationProvider).value;
     final importConfirmed = ref.watch(financeImportConfirmedProvider);
     final activationDismissed = ref.watch(financeActivationDismissedProvider);
@@ -173,7 +173,7 @@ class _NetWorthStageError extends StatelessWidget {
   }
 }
 
-class _HomeSummaryLayout extends StatelessWidget {
+class _HomeSummaryLayout extends ConsumerWidget {
   const _HomeSummaryLayout({
     required this.showActivation,
     required this.showAgentResults,
@@ -185,102 +185,45 @@ class _HomeSummaryLayout extends StatelessWidget {
   final HomeQuickActionMode quickActionMode;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasActivity =
+        ref.watch(activityFeedPreviewProvider).value?.entries.isNotEmpty ==
+        true;
+    final hasInbox =
+        ref.watch(financialInboxProvider).value?.isNotEmpty == true;
+    final runway = ref.watch(moneyRunwayProvider).value;
+    final runwayNeedsAttention =
+        runway?.hasData == true && runway?.status != MoneyRunwayStatus.healthy;
+    final primary = showActivation
+        ? const FinanceActivationCard()
+        : HomeQuickActions(mode: quickActionMode);
     final ordered = <AdaptiveSummaryTile>[
-      if (showActivation)
-        const AdaptiveSummaryTile(child: FinanceActivationCard()),
       AdaptiveSummaryTile(
         role: AdaptiveSummaryTileRole.featured,
-        child: HomeQuickActions(mode: quickActionMode),
+        child: primary,
       ),
-      const AdaptiveSummaryTile(child: FinancialInboxCard()),
+      if (hasInbox)
+        const AdaptiveSummaryTile(
+          role: AdaptiveSummaryTileRole.supporting,
+          child: FinancialInboxCard(),
+        ),
+      if (runwayNeedsAttention)
+        const AdaptiveSummaryTile(
+          role: AdaptiveSummaryTileRole.supporting,
+          child: MoneyRunwayCard(),
+        ),
       if (showAgentResults)
         const AdaptiveSummaryTile(
+          role: AdaptiveSummaryTileRole.featured,
           child: FinanceAgentResultsPanel(showPlaceholderStates: false),
         ),
-      const AdaptiveSummaryTile(child: ActivityTimelinePreview()),
-      const AdaptiveSummaryTile(child: MoneyRunwayCard()),
-      const AdaptiveSummaryTile(child: CashflowCalendarCard()),
+      if (hasActivity)
+        const AdaptiveSummaryTile(
+          role: AdaptiveSummaryTileRole.continuous,
+          child: ActivityTimelinePreview(),
+        ),
     ];
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final desktop =
-            MediaQuery.sizeOf(context).width >= Breakpoints.shellDesktop;
-        final textScale = MediaQuery.textScalerOf(context).scale(16) / 16;
-        if (!desktop ||
-            constraints.maxWidth < Breakpoints.contentTwoColumn ||
-            textScale > 1.25) {
-          return AdaptiveSummaryGrid(items: ordered);
-        }
-
-        var order = 0.0;
-        Widget orderedChild(Widget child) {
-          final currentOrder = order++;
-          return Semantics(
-            sortKey: OrdinalSortKey(currentOrder),
-            child: FocusTraversalOrder(
-              order: NumericFocusOrder(currentOrder),
-              child: child,
-            ),
-          );
-        }
-
-        final activation = showActivation
-            ? orderedChild(const FinanceActivationCard())
-            : null;
-        final quickActions = orderedChild(
-          HomeQuickActions(mode: quickActionMode),
-        );
-        final inbox = orderedChild(const FinancialInboxCard());
-        final agentResults = showAgentResults
-            ? orderedChild(
-                const FinanceAgentResultsPanel(showPlaceholderStates: false),
-              )
-            : null;
-        final activity = orderedChild(const ActivityTimelinePreview());
-        final runway = orderedChild(const MoneyRunwayCard());
-        final cashflow = orderedChild(const CashflowCalendarCard());
-        return FocusTraversalGroup(
-          policy: OrderedTraversalPolicy(),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 2,
-                child: _HomeModuleColumn(
-                  children: [?activation, quickActions, activity, cashflow],
-                ),
-              ),
-              const SizedBox(width: AppPageRhythm.module),
-              Expanded(
-                child: _HomeModuleColumn(
-                  children: [inbox, ?agentResults, runway],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _HomeModuleColumn extends StatelessWidget {
-  const _HomeModuleColumn({required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (var index = 0; index < children.length; index++) ...[
-          if (index > 0) const SizedBox(height: AppPageRhythm.module),
-          children[index],
-        ],
-      ],
-    );
+    return AdaptiveSummaryGrid(items: ordered);
   }
 }
 

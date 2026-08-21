@@ -105,7 +105,11 @@ Widget _wrap({
       theme: AppTheme.light(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const Scaffold(body: ActivityFeed()),
+      builder: (context, child) => AppMessenger.init(child: child!),
+      home: FTheme(
+        data: FTheme.neutral.light.desktop,
+        child: const Scaffold(body: ActivityFeed()),
+      ),
     ),
   );
 }
@@ -193,7 +197,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Net cash flow'), findsOneWidget);
+    expect(find.textContaining('Net cash flow'), findsOneWidget);
     // Day rows are virtualized with DecoratedBox chrome (not one
     // AppGroupedSurface wrapping the whole day).
     expect(find.byType(ActivityFeedEntryRow), findsOneWidget);

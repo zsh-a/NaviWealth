@@ -67,6 +67,7 @@ import '../monthly_close/ui/monthly_close_page.dart';
 import '../rebalance/ui/rebalance_execution_workspace_page.dart'
     deferred as rebalance_execution_lib;
 import '../rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
+import '../ui/finance_amount_privacy_scope.dart';
 import '../ui/plan_hub_page.dart';
 import '../ui/wealth/wealth_hub_page.dart';
 import 'finance_domain_shell.dart';
@@ -78,9 +79,11 @@ import 'route_prefill.dart';
 /// shared header chrome (`core/shell/shell_chrome.dart`), not a bottom-nav slot.
 StatefulShellRoute financeShellRoute() {
   return StatefulShellRoute.indexedStack(
-    builder: (context, state, shell) => DomainTabsShell(
-      shell: shell,
-      spec: financeDomainShell(AppLocalizations.of(context)),
+    builder: (context, state, shell) => FinanceAmountPrivacyScope(
+      child: DomainTabsShell(
+        shell: shell,
+        spec: financeDomainShell(AppLocalizations.of(context)),
+      ),
     ),
     branches: [
       // ── Branch 0: Today ──────────────────────────────────────────────

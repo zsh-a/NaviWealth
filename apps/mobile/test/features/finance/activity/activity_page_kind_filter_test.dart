@@ -46,7 +46,9 @@ Widget _wrap({required ProviderContainer container, double textScale = 1}) {
         data: MediaQuery.of(
           context,
         ).copyWith(textScaler: TextScaler.linear(textScale)),
-        child: FTheme(data: FTheme.neutral.light.desktop, child: child!),
+        child: AppMessenger.init(
+          child: FTheme(data: FTheme.neutral.light.desktop, child: child!),
+        ),
       ),
     ),
   );
@@ -179,21 +181,16 @@ void main() {
     expect(container.read(activityFeedQueryProvider).kinds, isEmpty);
   });
 
-  testWidgets('search debounces updates and closing clears the query', (
-    tester,
-  ) async {
+  testWidgets('wide search debounces query updates', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     final container = _container();
     addTearDown(container.dispose);
 
     await tester.pumpWidget(_wrap(container: container));
     await tester.pumpAndSettle();
 
-    final searchButton = find.widgetWithIcon(
-      AppIconButton,
-      FLucideIcons.search,
-    );
-    await tester.tap(searchButton);
-    await tester.pump();
     expect(find.byType(FTextField), findsOneWidget);
 
     await tester.enterText(find.byType(FTextField), 'coffee');
@@ -202,10 +199,21 @@ void main() {
 
     await tester.pump(const Duration(milliseconds: 150));
     expect(container.read(activityFeedQueryProvider).searchText, 'coffee');
+  });
 
-    await tester.tap(find.widgetWithIcon(AppIconButton, FLucideIcons.x));
+  testWidgets('wide toolbar keeps search and filters visible together', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(760, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final container = _container();
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container));
     await tester.pumpAndSettle();
-    expect(find.byType(FTextField), findsNothing);
-    expect(container.read(activityFeedQueryProvider).searchText, isEmpty);
+
+    expect(find.byType(FTextField), findsOneWidget);
+    expect(find.text('All dates · All kinds'), findsOneWidget);
   });
 }

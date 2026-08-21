@@ -15,6 +15,7 @@ Widget _wrap({
   int staleHoldingCount = 0,
   bool empty = false,
   String baseCurrency = 'CNY',
+  bool showHealthy = true,
 }) {
   final zero = Money.zero(baseCurrency);
   return MaterialApp(
@@ -25,6 +26,7 @@ Widget _wrap({
       data: FTheme.neutral.light.desktop,
       child: Scaffold(
         body: ValuationTrustNotice(
+          showHealthy: showHealthy,
           snapshot: DashboardSnapshot(
             asOf: DateTime.utc(2026, 7, 31, 8),
             baseCurrency: baseCurrency,
@@ -69,6 +71,30 @@ void main() {
     expect(find.byType(AppStatusLine), findsOneWidget);
     expect(find.byType(AppStatusBanner), findsNothing);
     expect(find.textContaining('Daily close'), findsOneWidget);
+  });
+
+  testWidgets('can keep a trusted valuation quiet on summary surfaces', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_wrap(mismatches: const [], showHealthy: false));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppStatusLine), findsNothing);
+    expect(find.byType(AppStatusBanner), findsNothing);
+  });
+
+  testWidgets('still shows warnings when healthy status is suppressed', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        mismatches: const [CurrencyMismatch(id: 'aapl', currency: 'USD')],
+        showHealthy: false,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppStatusBanner), findsOneWidget);
   });
 
   testWidgets('renders warning when mismatches are present', (tester) async {
