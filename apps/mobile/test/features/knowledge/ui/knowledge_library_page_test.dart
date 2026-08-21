@@ -78,11 +78,11 @@ void main() {
     expect(find.text('Knowledge type'), findsOneWidget);
     expect(find.text('Core'), findsOneWidget);
     expect(find.text('Sources'), findsOneWidget);
-    expect(find.text('Thinking'), findsNothing);
-    expect(find.text('Action'), findsNothing);
-    expect(find.text('Concepts'), findsNothing);
-    expect(find.text('Experiments'), findsNothing);
-    expect(find.text('Routines'), findsNothing);
+    expect(find.text('Thinking'), findsOneWidget);
+    expect(find.text('Action'), findsOneWidget);
+    expect(find.text('Concepts'), findsOneWidget);
+    expect(find.text('Experiments'), findsOneWidget);
+    expect(find.text('Routines'), findsOneWidget);
     expect(find.text('Keep raw observations and sources'), findsOneWidget);
 
     await tester.tap(find.text('Notes'));
@@ -110,9 +110,29 @@ void main() {
 
     expect(find.text('Search all knowledge'), findsOneWidget);
     await tester.tap(find.text('Search all knowledge'));
-    await tester.pumpAndSettle();
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 80), EnginePhase.paint);
+    }
 
     expect(find.text('All · 0 items'), findsOneWidget);
+  });
+
+  testWidgets('advanced types remain browsable without a primary create path', (
+    tester,
+  ) async {
+    await _pumpLibrary(tester, width: 390);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('knowledge-library.type-picker')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Concepts'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Concepts · 0 items'), findsOneWidget);
+    expect(find.text('New Concept'), findsNothing);
+    expect(find.byIcon(FLucideIcons.plus), findsNothing);
+    expect(find.byIcon(FLucideIcons.clipboardCheck), findsOneWidget);
   });
 
   testWidgets('keeps the taxonomy behind one picker on wide layouts', (
@@ -175,6 +195,10 @@ void main() {
     await tester.pump();
 
     expect(find.text('Enter at least two different options.'), findsNothing);
+    expect(find.text('Choose the option you decided to take.'), findsOneWidget);
+    await tester.tap(find.byType(FRadio).first);
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(find.text('Choose the option you decided to take.'), findsNothing);
     expect(find.byType(FCircularProgress), findsNothing);
   });
 }

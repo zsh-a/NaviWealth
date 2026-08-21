@@ -146,20 +146,35 @@ class _KnowledgeMarkdownState extends State<KnowledgeMarkdown> {
     required int depth,
   }) {
     final checked = _taskState(item);
+    final bodyStyle = _bodyStyle(context);
     final content = <Widget>[];
+    final inlineRun = <md.Node>[];
+
+    void flushInlineRun() {
+      if (inlineRun.isEmpty) return;
+      content.add(_richChildren(List<md.Node>.of(inlineRun), bodyStyle));
+      inlineRun.clear();
+    }
+
     for (final child in item.children ?? const <md.Node>[]) {
       if (child is md.Element && child.tag == 'input') continue;
       if (child is md.Element && (child.tag == 'ul' || child.tag == 'ol')) {
+        flushInlineRun();
         content.add(const SizedBox(height: AppSpacing.s6));
         content.add(
           _list(context, child, ordered: child.tag == 'ol', depth: depth + 1),
         );
       } else if (child is md.Element && child.tag == 'p') {
-        content.add(_richChildren(child.children, _bodyStyle(context)));
+        flushInlineRun();
+        content.add(_richChildren(child.children, bodyStyle));
+      } else if (child is md.Element && _isBlockTag(child.tag)) {
+        flushInlineRun();
+        content.add(_block(context, child, depth: depth));
       } else {
-        content.add(_rich(child, _bodyStyle(context)));
+        inlineRun.add(child);
       }
     }
+    flushInlineRun();
     return Padding(
       padding: EdgeInsetsDirectional.only(start: depth * AppSpacing.s12),
       child: Row(

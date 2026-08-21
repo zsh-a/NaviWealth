@@ -49,6 +49,11 @@ class KnowledgeImageInsertButton extends ConsumerWidget {
         return;
       }
       insertKnowledgeAttachmentMarkdown(controller, attachment);
+      AppMessenger.show(
+        context,
+        ToastKind.info,
+        l10n.knowledgeImageLocalOnlyToast,
+      );
     }
 
     Future<void> pick(ImageSource source) async {

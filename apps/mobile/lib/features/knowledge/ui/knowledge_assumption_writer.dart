@@ -13,7 +13,7 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
     text: widget.initial?.statement ?? '',
   );
   late final _scopeCtrl = TextEditingController(
-    text: widget.initial?.scope ?? '*',
+    text: widget.initial?.scope == '*' ? '' : widget.initial?.scope ?? '',
   );
   late double _confidence = widget.initial?.confidence ?? 0.7;
   bool _saving = false;
@@ -81,9 +81,14 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final editing = widget.initial != null;
     return AppSheet(
-      title: l10n.knowledgeAssumptionWriterTitle,
-      subtitle: l10n.knowledgeAssumptionWriterSubtitle2,
+      title: editing
+          ? l10n.knowledgeAssumptionEditTitle
+          : l10n.knowledgeAssumptionWriterTitle,
+      subtitle: editing
+          ? l10n.knowledgeAssumptionEditSubtitle
+          : l10n.knowledgeAssumptionWriterSubtitle2,
       footer: AppSheetFooter(
         submitLabel: _saving ? l10n.commonSaving : l10n.commonSave,
         cancelLabel: l10n.commonCancel,
@@ -105,14 +110,10 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
                 label: Text(l10n.knowledgeWriterStatementLabel),
                 hint: l10n.knowledgeAssumptionStatementHint,
               ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          KnowledgeWriterSection(
-            title: l10n.knowledgeWriterEvidenceSectionTitle,
-            collapsible: true,
-            initiallyExpanded: false,
-            children: [
+              Text(
+                l10n.knowledgeWriterConfidenceLabel,
+                style: context.captionLabelStyle,
+              ),
               SegmentedRow<double>(
                 options: const <double>[0.3, 0.7, 0.95],
                 value: _confidencePresetValue(_confidence),
@@ -126,6 +127,14 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
                   widget.dirty.markDirty();
                 },
               ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterContextSectionTitle,
+            collapsible: true,
+            initiallyExpanded: false,
+            children: [
               FTextField(
                 control: FTextFieldControl.managed(controller: _scopeCtrl),
                 label: Text(l10n.knowledgeWriterScopeLabel),

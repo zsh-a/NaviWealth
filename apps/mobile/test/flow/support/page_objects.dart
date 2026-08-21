@@ -536,17 +536,23 @@ class KnowledgeInboxPageObject {
     final add = find.bySemanticsLabel('New capture');
     expect(add, findsWidgets, reason: 'knowledge capture action missing');
     await tester.tap(add.first);
-    await settle(tester);
+    await _settleKnowledgeCapture(tester);
 
     await tester.enterText(find.widgetWithText(FTextField, 'Content'), body);
-    final save = find.text('Save and analyze').hitTestable();
+    final save = find.text('Save').hitTestable();
     expect(save, findsOneWidget, reason: 'knowledge save action missing');
     await tester.tap(save);
-    await settle(tester);
+    await _settleKnowledgeCapture(tester);
   }
 
   void expectNoteVisible(String body) {
     expect(find.textContaining(body), findsWidgets);
+  }
+}
+
+Future<void> _settleKnowledgeCapture(WidgetTester tester) async {
+  for (var i = 0; i < 8; i++) {
+    await tester.pump(const Duration(milliseconds: 100), EnginePhase.paint);
   }
 }
 

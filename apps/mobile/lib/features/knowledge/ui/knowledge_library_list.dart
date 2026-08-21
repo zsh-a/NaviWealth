@@ -18,8 +18,8 @@ class _LibraryList extends ConsumerWidget {
 
   final _LibrarySegment segment;
   final String segmentLabel;
-  final String createLabel;
-  final VoidCallback onCreate;
+  final String? createLabel;
+  final VoidCallback? onCreate;
   final ValueChanged<_LibrarySegment> onSegmentChanged;
   final String query;
   final bool showSearchAssist;

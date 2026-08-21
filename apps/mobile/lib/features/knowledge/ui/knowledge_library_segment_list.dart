@@ -32,8 +32,8 @@ class _SegmentList<T> extends StatefulWidget {
   final String query;
   final bool showSearchAssist;
   final String scopeLabel;
-  final String createLabel;
-  final VoidCallback onCreate;
+  final String? createLabel;
+  final VoidCallback? onCreate;
   final VoidCallback? onSearchAll;
   final String Function(T item) searchableText;
   final List<String> Function(BuildContext context, T item) searchSuggestions;
@@ -103,11 +103,14 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
             icon: widget.emptyIcon,
             title: widget.emptyTitle,
             message: widget.emptyMessage,
-            action: FButton(
-              onPress: widget.onCreate,
-              prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.xs),
-              child: Text(widget.createLabel),
-            ),
+            action: switch ((widget.onCreate, widget.createLabel)) {
+              (final onCreate?, final createLabel?) => FButton(
+                onPress: onCreate,
+                prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.xs),
+                child: Text(createLabel),
+              ),
+              _ => null,
+            },
           );
         }
 

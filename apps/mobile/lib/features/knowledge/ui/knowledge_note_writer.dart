@@ -144,7 +144,7 @@ class _NoteWriterState extends ConsumerState<_NoteWriter> {
               ),
               FTextField(
                 control: FTextFieldControl.managed(controller: _tagsCtrl),
-                label: Text(l10n.knowledgeWriterAliasLabel),
+                label: Text(l10n.knowledgeNoteTagsLabel),
                 hint: l10n.knowledgeNoteTagsHint,
               ),
               FTextField(

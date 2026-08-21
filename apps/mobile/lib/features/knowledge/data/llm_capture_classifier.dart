@@ -23,8 +23,9 @@ import 'knowledge_llm_client.dart';
 const String _kLogTag = '[capture-llm]';
 
 const String _kCaptureSystemPrompt =
-    '你是 NaviWealth KnowledgeOS 的捕获分类器 + 文本润色助手。'
-    '给定用户刚输入的一段自由文本,做两件事:\n'
+    '你是 NaviWealth KnowledgeOS 的捕获分类器 + 内容编辑助手。'
+    '输入可能是一段自由文本，也可能是包含 original_title 与 original_body_md 的 JSON。'
+    '做两件事:\n'
     '\n'
     '【一】分类到这 7 类之一,并抽取结构化字段:\n'
     '- note: 普通笔记 (默认 fallback,没有明显结构)\n'
@@ -38,13 +39,16 @@ const String _kCaptureSystemPrompt =
     '\n'
     '不确定就选 note;不要为了"显得有用"硬升级。confidence < 0.6 也优先 note。\n'
     '\n'
-    '【二】润色:产出更清晰的 polished_title 和 polished_body。规则:\n'
-    '- 含义必须与原文完全一致,不增不减事实,**不要补充任何用户没写的细节**\n'
-    '- 修正拼写 / 标点 / 错别字 / 重复字 / 中英文混排留意空格\n'
-    '- 可以把口语化短句改写为简洁陈述,但不要变成"文章风格"\n'
-    '- 若用户原文已经清晰干净,就把对应字段输出为 null,不要硬润色\n'
-    '- 用户原文是中文就输出中文,英文就输出英文 (跟随原语言)\n'
-    '- polished_title 用一个短标题(≤ 20 字符), polished_body 是完整正文(Markdown 可用)\n'
+    '【二】完整整理:必须产出 polished_title 和 polished_body。规则:\n'
+    '- 含义必须与原文完全一致,不增不减事实,**不要补充任何用户没写的结论、日期、数字或细节**\n'
+    '- 保留原文中的数字、专有名词、URL、代码、引用和 attachment:// 引用，不得改写或遗漏\n'
+    '- 修正拼写、标点、错别字、重复字和中英文混排空格；去掉无意义重复与口头填充词\n'
+    '- polished_title 是自然、具体、可检索的短标题，不加引号或 Markdown #；避免“关于…的思考”一类空标题\n'
+    '- polished_body 是完整正文，不能只给摘要，也不要在正文重复标题\n'
+    '- 使用克制、现代的 Markdown 阅读层级：相关内容分段；并列项或步骤用列表；'
+    '只有原文确实包含多个主题时才使用 ## / ###；比较数据适合时可用表格；明确引用才用 >\n'
+    '- 不要机械添加“摘要 / 背景 / 结论 / 下一步”等原文没有内容支撑的章节，不要过度分段或装饰\n'
+    '- 用户原文是中文就输出中文，英文就输出英文；混合语言保持用户的主要语言\n'
     '- 当内容包含明确的步骤、流程、决策路径时,在 polished_body 中使用 '
     '```flow fenced block 渲染为流程图:\n'
     '  ```flow\n'
@@ -71,8 +75,8 @@ const String _kCaptureSystemPrompt =
     '  "assumption_confidence": 数字 0..1 (assumption 时必填),\n'
     '  "experiment_metrics": ["成功指标"] (experiment 时至少一项),\n'
     '  "experiment_method": "验证方法" (experiment 时必填),\n'
-    '  "polished_title": "润色后的标题或 null",\n'
-    '  "polished_body": "润色后的正文或 null"\n'
+    '  "polished_title": "整理后的完整标题，必填",\n'
+    '  "polished_body": "整理后的完整 Markdown 正文，必填"\n'
     '}';
 
 String _preview(String s) {
@@ -178,6 +182,7 @@ class FrbCaptureClassifier implements CaptureClassifier {
               },
               <String, Object?>{'role': 'user', 'content': trimmed},
             ],
+            temperature: 0.2,
             maxOutputTokens: maxTokens,
             metadata: const <String, Object?>{
               'surface': 'knowledge_capture',

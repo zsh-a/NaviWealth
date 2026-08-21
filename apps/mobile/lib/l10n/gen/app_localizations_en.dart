@@ -8896,12 +8896,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String knowledgeAiSuggestionsSubtitle(Object count) {
-    return '$count pending suggestions from on-device triage of Inbox notes.';
+    return '$count background organization suggestions, ready for your review.';
   }
 
   @override
   String get knowledgeAiSuggestionsEmpty =>
-      'No pending AI suggestions. New notes are triaged within 15 minutes.';
+      'No organization suggestions are waiting.';
 
   @override
   String knowledgeAiSuggestionCount(Object count) {
@@ -8955,6 +8955,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeAiSuggestionFeedbackToast => 'Feedback saved.';
+
+  @override
+  String get knowledgeAiSuggestionMoreActions => 'More actions';
+
+  @override
+  String knowledgeAiSuggestionClassificationSummary(String kind) {
+    return 'Organize as $kind';
+  }
+
+  @override
+  String knowledgeAiSuggestionTagsSummary(String tags) {
+    return 'Add tags: $tags';
+  }
+
+  @override
+  String knowledgeAiSuggestionDecisionLinksSummary(int count) {
+    return 'Link to $count related decisions';
+  }
+
+  @override
+  String get knowledgeAiSuggestionFieldTags => 'Tags';
+
+  @override
+  String get knowledgeAiSuggestionFieldDecisions => 'Related decisions';
 
   @override
   String get knowledgeAgentAssumptionTitle =>
@@ -12934,6 +12958,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Checking asynchronous AI suggestions…';
 
   @override
+  String get knowledgeInboxSuggestionsLoadFailed =>
+      'Organization status failed to load. Tap to retry.';
+
+  @override
   String get knowledgeInboxAiUnavailable =>
       'Notes save normally. Configure a device LLM to receive asynchronous classification and tag suggestions.';
 
@@ -13010,7 +13038,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeInboxEmptyBody =>
-      'Use the create action to capture a thought. AI can suggest whether it should stay a Note or become a Routine, Decision, or other knowledge object.';
+      'Capture the thought first. KnowledgeOS organizes it in the background, and you approve every upgrade.';
 
   @override
   String get knowledgeInboxLoadFailedTitle => 'Inbox failed to load';
@@ -13049,7 +13077,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeCaptureComposeSubtitle =>
-      'Write free-form Markdown. AI can suggest an upgrade after saving.';
+      'Write naturally. AI can shape the title and Markdown before anything is saved.';
 
   @override
   String get knowledgeCaptureClassifyingSubtitle =>
@@ -13091,7 +13119,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeCaptureKindExperiment => 'Experiment';
 
   @override
-  String get knowledgeCaptureSave => 'Save and analyze';
+  String get knowledgeCaptureSave => 'Save';
+
+  @override
+  String get knowledgeCaptureSavedToast =>
+      'Saved to Inbox. Classification and links will be suggested in the background.';
+
+  @override
+  String get knowledgeCaptureOrganizeAction => 'Organize & preview';
+
+  @override
+  String get knowledgeCaptureOrganizing => 'Organizing...';
+
+  @override
+  String get knowledgeCaptureOrganizingSubtitle =>
+      'AI is shaping the title, hierarchy, and Markdown while preserving your meaning.';
+
+  @override
+  String get knowledgeCaptureOrganizingBody =>
+      'Creating a complete, readable draft. Your original remains unchanged until you approve it.';
+
+  @override
+  String get knowledgeCaptureOrganizedSubtitle =>
+      'Review the rendered result, or switch to Edit for final adjustments before saving.';
+
+  @override
+  String get knowledgeCaptureAiOrganizationHint =>
+      'AI will improve the title, structure, and reading flow without adding new facts.';
+
+  @override
+  String get knowledgeCaptureSaveWithoutAi => 'Save original';
+
+  @override
+  String get knowledgeCaptureSaveOrganized => 'Save organized note';
+
+  @override
+  String get knowledgeCaptureReviewDraftTitle => 'Organized draft';
+
+  @override
+  String get knowledgeCaptureReviewDraftSubtitle =>
+      'Preview first; every field remains editable.';
+
+  @override
+  String get knowledgeCaptureOrganizeFailed =>
+      'AI could not produce a safe complete draft. Your original is unchanged.';
 
   @override
   String knowledgeCaptureSaveTyped(String kind) {
@@ -13129,7 +13200,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get knowledgeCapturePolishedVersionTitle => 'AI polished version';
+  String get knowledgeCapturePolishedVersionTitle => 'Review organized note';
 
   @override
   String get knowledgeCaptureTitleDiffLabel => 'Title';
@@ -13211,6 +13282,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeAiPromptHint => 'Ask or search your knowledge...';
 
   @override
+  String get knowledgeAiAskAction => 'Ask KnowledgeOS';
+
+  @override
   String get knowledgeAiDedupeAction => 'Deduplicate';
 
   @override
@@ -13242,7 +13316,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeLibraryEmptyAllBody =>
-      'Capture a Note from Inbox, or use the create action to add a Decision, Assumption, Routine, or another knowledge object.';
+      'Capture a quick note, or create a structured Decision or Assumption.';
 
   @override
   String get knowledgeLibraryEmptyDecisionsTitle => 'No Decisions yet';
@@ -13270,7 +13344,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeLibraryEmptyNotesBody =>
-      'Notes are captured from Inbox. This view is for browsing.';
+      'Capture a note, then let KnowledgeOS suggest tags, links, or an upgrade.';
 
   @override
   String get knowledgeLibraryEmptyConceptsTitle => 'No Concept nodes yet';
@@ -13694,6 +13768,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Decision as memory: question, options, rationale, review';
 
   @override
+  String get knowledgeDecisionEditTitle => 'Edit Decision';
+
+  @override
+  String get knowledgeDecisionEditSubtitle =>
+      'Update options, rationale, expected outcome, and review plan';
+
+  @override
   String get knowledgeDecisionAddOption => 'Add option';
 
   @override
@@ -13743,6 +13824,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get knowledgeDecisionOptionsRequirement =>
       'Enter at least two different options.';
+
+  @override
+  String get knowledgeDecisionSelectionRequirement =>
+      'Choose the option you decided to take.';
 
   @override
   String knowledgeDecisionOptionLabelHint(Object index) {
@@ -13875,6 +13960,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeAssumptionWriterTitle => 'New Assumption';
 
   @override
+  String get knowledgeAssumptionEditTitle => 'Edit Assumption';
+
+  @override
+  String get knowledgeAssumptionEditSubtitle =>
+      'Update the statement, confidence, and scope';
+
+  @override
   String get knowledgeAssumptionWriterSubtitle =>
       'Falsifiable belief with confidence';
 
@@ -14005,6 +14097,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeWriterEvidenceSectionTitle => 'Evidence and rationale';
 
   @override
+  String get knowledgeWriterContextSectionTitle => 'Additional context';
+
+  @override
   String get knowledgeWriterReferencesSectionTitle => 'References';
 
   @override
@@ -14025,6 +14120,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get knowledgeNotesHintBody =>
       'The Notes segment is for browsing. Close this panel, switch to Inbox, and use the create action there.';
+
+  @override
+  String get knowledgeNoteTagsLabel => 'Tags (comma separated)';
 
   @override
   String get amountHidden => 'Amount hidden';
@@ -17594,4 +17692,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeImageImportFailed => 'Couldn\'t import the image';
+
+  @override
+  String get knowledgeImageLocalOnlyToast =>
+      'Image inserted. It is currently stored on this device only.';
 }

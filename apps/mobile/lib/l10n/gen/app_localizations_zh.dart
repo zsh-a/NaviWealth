@@ -8434,12 +8434,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String knowledgeAiSuggestionsSubtitle(Object count) {
-    return '$count 条待处理建议，来自收件箱 Note 的端侧 triage。';
+    return '$count 条后台整理建议，应用前由你确认。';
   }
 
   @override
-  String get knowledgeAiSuggestionsEmpty =>
-      '当前无待处理的 AI 建议。新写的 Note 会在 15 分钟内被 triage。';
+  String get knowledgeAiSuggestionsEmpty => '当前没有待处理的整理建议。';
 
   @override
   String knowledgeAiSuggestionCount(Object count) {
@@ -8490,6 +8489,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeAiSuggestionFeedbackToast => '反馈已保存。';
+
+  @override
+  String get knowledgeAiSuggestionMoreActions => '更多操作';
+
+  @override
+  String knowledgeAiSuggestionClassificationSummary(String kind) {
+    return '建议整理为$kind';
+  }
+
+  @override
+  String knowledgeAiSuggestionTagsSummary(String tags) {
+    return '建议添加标签：$tags';
+  }
+
+  @override
+  String knowledgeAiSuggestionDecisionLinksSummary(int count) {
+    return '建议关联 $count 条相关决策';
+  }
+
+  @override
+  String get knowledgeAiSuggestionFieldTags => '标签';
+
+  @override
+  String get knowledgeAiSuggestionFieldDecisions => '相关决策';
 
   @override
   String get knowledgeAgentAssumptionTitle => '本月待校验假设';
@@ -12277,6 +12300,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeInboxSuggestionsLoading => '正在检查异步 AI 建议…';
 
   @override
+  String get knowledgeInboxSuggestionsLoadFailed => '整理状态加载失败，点击重试';
+
+  @override
   String get knowledgeInboxAiUnavailable => '笔记仍会正常保存；配置设备端 LLM 后可获得异步分类与标签建议。';
 
   @override
@@ -12351,8 +12377,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeInboxEmptyTitle => '收件箱空空如也';
 
   @override
-  String get knowledgeInboxEmptyBody =>
-      '使用创建入口写一条想法。AI 会判断它适合保留为 Note，还是升级为 Routine、Decision 或其他知识对象。';
+  String get knowledgeInboxEmptyBody => '先记下想法，KnowledgeOS 会在后台整理；任何升级都由你确认。';
 
   @override
   String get knowledgeInboxLoadFailedTitle => '收件箱加载失败';
@@ -12389,7 +12414,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeCaptureComposeSubtitle =>
-      '自由格式 Markdown。保存后 AI 会判断是否值得升级。';
+      '自然写下内容；保存前可由 AI 完整整理标题与 Markdown。';
 
   @override
   String get knowledgeCaptureClassifyingSubtitle =>
@@ -12429,7 +12454,45 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeCaptureKindExperiment => '实验';
 
   @override
-  String get knowledgeCaptureSave => '保存并分析';
+  String get knowledgeCaptureSave => '保存';
+
+  @override
+  String get knowledgeCaptureSavedToast => '已保存到收件箱，分类与关联建议将在后台生成。';
+
+  @override
+  String get knowledgeCaptureOrganizeAction => '整理并预览';
+
+  @override
+  String get knowledgeCaptureOrganizing => '正在整理…';
+
+  @override
+  String get knowledgeCaptureOrganizingSubtitle =>
+      'AI 正在保持原意的前提下整理标题、层级与 Markdown。';
+
+  @override
+  String get knowledgeCaptureOrganizingBody => '正在生成完整、易读的内容草稿；确认前不会改动原文。';
+
+  @override
+  String get knowledgeCaptureOrganizedSubtitle => '先查看阅读效果，也可切换到编辑模式微调后再保存。';
+
+  @override
+  String get knowledgeCaptureAiOrganizationHint =>
+      'AI 会优化标题、内容结构与阅读节奏，不补充原文没有的事实。';
+
+  @override
+  String get knowledgeCaptureSaveWithoutAi => '保存原文';
+
+  @override
+  String get knowledgeCaptureSaveOrganized => '保存整理稿';
+
+  @override
+  String get knowledgeCaptureReviewDraftTitle => '整理后的草稿';
+
+  @override
+  String get knowledgeCaptureReviewDraftSubtitle => '默认先预览，标题和正文仍可编辑。';
+
+  @override
+  String get knowledgeCaptureOrganizeFailed => 'AI 未能生成安全、完整的整理稿，原文没有变化。';
 
   @override
   String knowledgeCaptureSaveTyped(String kind) {
@@ -12467,7 +12530,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get knowledgeCapturePolishedVersionTitle => 'AI 润色后的版本';
+  String get knowledgeCapturePolishedVersionTitle => '确认整理稿';
 
   @override
   String get knowledgeCaptureTitleDiffLabel => '标题';
@@ -12542,6 +12605,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeAiPromptHint => '提问或搜索知识…';
 
   @override
+  String get knowledgeAiAskAction => '询问 KnowledgeOS';
+
+  @override
   String get knowledgeAiDedupeAction => '查重';
 
   @override
@@ -12570,8 +12636,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeLibraryEmptyAllTitle => '资料库还没有内容';
 
   @override
-  String get knowledgeLibraryEmptyAllBody =>
-      '先从收件箱记录 Note，或直接创建 Decision、Assumption、Routine 等知识对象。';
+  String get knowledgeLibraryEmptyAllBody => '先快速记录一条笔记，或直接创建决策和假设。';
 
   @override
   String get knowledgeLibraryEmptyDecisionsTitle => '还没有 Decision';
@@ -12597,7 +12662,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeLibraryEmptyNotesTitle => '资料库里还没有 Note';
 
   @override
-  String get knowledgeLibraryEmptyNotesBody => 'Note 在收件箱录入；这里只做浏览。';
+  String get knowledgeLibraryEmptyNotesBody =>
+      '记录一条笔记，之后可由 KnowledgeOS 建议标签、关联或升级。';
 
   @override
   String get knowledgeLibraryEmptyConceptsTitle => '还没有 Concept 节点';
@@ -12784,13 +12850,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeReviewRunNow => '运行 Knowledge Review';
 
   @override
-  String get knowledgeReviewRoutinesTitle => '本周到期的 Routine';
+  String get knowledgeReviewRoutinesTitle => '本周到期的例行事项';
 
   @override
   String get knowledgeReviewRoutinesEmpty => '未来 7 天内没有到期的 Routine。';
 
   @override
-  String get knowledgeReviewDecisionsTitle => '待复盘的 Decision';
+  String get knowledgeReviewDecisionsTitle => '待复盘的决策';
 
   @override
   String get knowledgeReviewDecisionsEmpty => '当前没有到期的 Decision 复盘。';
@@ -12838,7 +12904,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get knowledgeReviewAssumptionsTitle => '未校验的 Assumption';
+  String get knowledgeReviewAssumptionsTitle => '待验证的假设';
 
   @override
   String knowledgeReviewAssumptionsEmpty(Object days) {
@@ -12856,7 +12922,7 @@ class AppLocalizationsZh extends AppLocalizations {
     Object days,
     Object statement,
   ) {
-    return '· $statement（$days 天，conf $confidence）';
+    return '· $statement（$days 天，置信度 $confidence）';
   }
 
   @override
@@ -13002,6 +13068,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeDecisionWriterSubtitle => '记录决策的问题、选项、理由和复盘';
 
   @override
+  String get knowledgeDecisionEditTitle => '编辑决策';
+
+  @override
+  String get knowledgeDecisionEditSubtitle => '更新选项、理由、预期结果和复盘计划';
+
+  @override
   String get knowledgeDecisionAddOption => '添加选项';
 
   @override
@@ -13045,6 +13117,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeDecisionOptionsRequirement => '至少填写两个不同的选项。';
+
+  @override
+  String get knowledgeDecisionSelectionRequirement => '请选择最终决定采用的选项。';
 
   @override
   String knowledgeDecisionOptionLabelHint(Object index) {
@@ -13167,6 +13242,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeAssumptionWriterTitle => '新建假设';
 
   @override
+  String get knowledgeAssumptionEditTitle => '编辑假设';
+
+  @override
+  String get knowledgeAssumptionEditSubtitle => '更新陈述、置信度和适用范围';
+
+  @override
   String get knowledgeAssumptionWriterSubtitle => '可证伪的信念 + 置信度';
 
   @override
@@ -13283,6 +13364,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeWriterEvidenceSectionTitle => '证据与理由';
 
   @override
+  String get knowledgeWriterContextSectionTitle => '补充信息';
+
+  @override
   String get knowledgeWriterReferencesSectionTitle => '关联';
 
   @override
@@ -13302,6 +13386,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeNotesHintBody => '资料库用于浏览已保存的笔记。临时想法请先记入收件箱，再在复盘中整理。';
+
+  @override
+  String get knowledgeNoteTagsLabel => '标签（用逗号分隔）';
 
   @override
   String get amountHidden => '金额已隐藏';
@@ -16703,4 +16790,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeImageImportFailed => '图片导入失败';
+
+  @override
+  String get knowledgeImageLocalOnlyToast => '图片已插入，目前仅保存在此设备。';
 }

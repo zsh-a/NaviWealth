@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/visual/flow_block.dart';
@@ -18,22 +19,24 @@ Future<void> _pump(
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(
-    FTheme(
-      data: dark ? FTheme.neutral.dark.desktop : FTheme.neutral.light.desktop,
-      child: MaterialApp(
-        theme: dark ? AppTheme.dark() : AppTheme.light(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(textScale)),
-          child: child!,
-        ),
-        home: Scaffold(
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: child,
+    ProviderScope(
+      child: FTheme(
+        data: dark ? FTheme.neutral.dark.desktop : FTheme.neutral.light.desktop,
+        child: MaterialApp(
+          theme: dark ? AppTheme.dark() : AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
+            child: child!,
+          ),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: child,
+            ),
           ),
         ),
       ),
@@ -108,6 +111,32 @@ void main() {
     );
   });
 
+  testWidgets('keeps formatted content in one tight-list text flow', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      const KnowledgeMarkdown(
+        text:
+            '### 发起转账\n\n'
+            '1. 转账金额需遵循尾号规则：若你的账户尾号为`0765`，'
+            '转账金额建议为`107.65`、`1076.5`等对应尾号的数值',
+      ),
+    );
+
+    final textFlows = tester
+        .widgetList<SelectableText>(find.byType(SelectableText))
+        .map((widget) => widget.data ?? widget.textSpan?.toPlainText() ?? '')
+        .where(
+          (text) => text.contains('转账金额需遵循尾号规则') && text.contains('等对应尾号的数值'),
+        );
+
+    expect(textFlows, hasLength(1));
+    expect(find.text('0765'), findsOneWidget);
+    expect(find.text('107.65'), findsOneWidget);
+    expect(find.text('1076.5'), findsOneWidget);
+  });
+
   testWidgets('renders flow fences as diagrams and code fences with copy', (
     tester,
   ) async {
@@ -171,7 +200,7 @@ void main() {
 
     await _pump(tester, MarkdownEditorWithPreview(controller: controller));
     await tester.tap(find.byIcon(FLucideIcons.bold));
-    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pump(const Duration(milliseconds: 250), EnginePhase.paint);
 
     expect(controller.text, '**重要结论**');
   });

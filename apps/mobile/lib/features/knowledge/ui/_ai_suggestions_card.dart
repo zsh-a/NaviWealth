@@ -345,7 +345,7 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
             const SizedBox(width: AppSpacing.s8),
             Expanded(
               child: Text(
-                widget.proposal.summaryZh,
+                _proposalSummary(context, widget.proposal),
                 style: context.theme.typography.body.sm,
                 maxLines: _expanded ? 8 : 3,
                 overflow: TextOverflow.ellipsis,
@@ -368,20 +368,6 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
             FButton(
               variant: FButtonVariant.outline,
               size: FButtonSizeVariant.sm,
-              onPress: _busy ? null : _dismiss,
-              prefix: const Icon(FLucideIcons.x, size: AppIconSizes.xs),
-              child: Text(l10n.knowledgeAiSuggestionDismiss),
-            ),
-            FButton(
-              variant: FButtonVariant.ghost,
-              size: FButtonSizeVariant.sm,
-              onPress: _busy ? null : _snooze,
-              prefix: const Icon(FLucideIcons.clock, size: AppIconSizes.xs),
-              child: Text(l10n.knowledgeAiSuggestionSnoozeOneDay),
-            ),
-            FButton(
-              variant: FButtonVariant.ghost,
-              size: FButtonSizeVariant.sm,
               onPress: _busy
                   ? null
                   : () => setState(() => _expanded = !_expanded),
@@ -393,6 +379,32 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
                 _expanded
                     ? l10n.knowledgeAiSuggestionHideDetails
                     : l10n.knowledgeAiSuggestionDetails,
+              ),
+            ),
+            AppAdaptiveActionMenu(
+              title: l10n.knowledgeAiSuggestionMoreActions,
+              actions: <AppAdaptiveAction>[
+                AppAdaptiveAction(
+                  icon: FLucideIcons.clock,
+                  title: l10n.knowledgeAiSuggestionSnoozeOneDay,
+                  onPress: _snooze,
+                ),
+                AppAdaptiveAction(
+                  icon: FLucideIcons.x,
+                  title: l10n.knowledgeAiSuggestionDismiss,
+                  destructive: true,
+                  onPress: _dismiss,
+                ),
+              ],
+              triggerBuilder: (context, openMenu, focusNode) => Focus(
+                focusNode: focusNode,
+                child: AppIconButton(
+                  icon: FLucideIcons.ellipsis,
+                  tooltip: l10n.knowledgeAiSuggestionMoreActions,
+                  onPress: _busy ? null : openMenu,
+                  size: AppControlHeights.touchTarget,
+                  iconSize: AppIconSizes.sm,
+                ),
               ),
             ),
           ],
@@ -415,6 +427,39 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
     );
   }
 }
+
+String _proposalSummary(BuildContext context, InboxProposal proposal) {
+  if (Localizations.localeOf(context).languageCode == 'zh') {
+    return proposal.summaryZh;
+  }
+  final l10n = AppLocalizations.of(context);
+  return switch (proposal.kind) {
+    InboxProposalKind.classification =>
+      l10n.knowledgeAiSuggestionClassificationSummary(
+        _captureKindLabel(l10n, proposal.payload['kind']),
+      ),
+    InboxProposalKind.tags => l10n.knowledgeAiSuggestionTagsSummary(
+      _formatPayloadValue(proposal.payload['tags']),
+    ),
+    InboxProposalKind.linkToDecision =>
+      l10n.knowledgeAiSuggestionDecisionLinksSummary(
+        proposal.payload['related_decision_ids'] is List
+            ? (proposal.payload['related_decision_ids']! as List).length
+            : 0,
+      ),
+  };
+}
+
+String _captureKindLabel(AppLocalizations l10n, Object? raw) => switch (raw) {
+  'decision' => l10n.knowledgeCaptureKindDecision,
+  'assumption' => l10n.knowledgeCaptureKindAssumption,
+  'principle' => l10n.knowledgeCaptureKindPrinciple,
+  'concept' => l10n.knowledgeCaptureKindConcept,
+  'experiment' => l10n.knowledgeCaptureKindExperiment,
+  'routine' => l10n.knowledgeCaptureKindRoutine,
+  'note' || null => l10n.knowledgeCaptureKindNote,
+  _ => _formatPayloadValue(raw),
+};
 
 String _proposalKindLabel(AppLocalizations l10n, InboxProposalKind kind) {
   return switch (kind) {
@@ -464,7 +509,7 @@ class _ProposalDetailsPanel extends StatelessWidget {
                   SizedBox(
                     width: AppControlWidths.payloadKey,
                     child: Text(
-                      entry.key,
+                      _proposalPayloadLabel(l10n, entry.key),
                       style: context.captionStyle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -521,6 +566,19 @@ class _ProposalDetailsPanel extends StatelessWidget {
     );
   }
 }
+
+String _proposalPayloadLabel(AppLocalizations l10n, String key) =>
+    switch (key) {
+      'kind' || 'detected_kind' => l10n.knowledgeProposalRowType,
+      'tags' => l10n.knowledgeAiSuggestionFieldTags,
+      'project_tag' => l10n.knowledgeDetailProjectLabel,
+      'related_decision_ids' => l10n.knowledgeAiSuggestionFieldDecisions,
+      'decision_options' => l10n.knowledgeDecisionOptionsLabel,
+      'expected_outcome' => l10n.knowledgeDecisionExpectedOutcomeLabel,
+      'confidence' => l10n.knowledgeProposalRowConfidence,
+      'reason' || 'reason_zh' => l10n.knowledgeWriterRationaleMarkdownLabel,
+      _ => key,
+    };
 
 String _formatPayloadValue(Object? value) {
   if (value == null) return '';

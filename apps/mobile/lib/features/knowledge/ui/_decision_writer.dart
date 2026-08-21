@@ -114,7 +114,10 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
   void _onAnyChange() {
     if (!mounted) return;
     setState(() {
-      _selectedLabel = _activeLabel(prefer: _selectedLabel);
+      final selected = _selectedLabel;
+      if (selected != null && !_validOptionLabels.contains(selected)) {
+        _selectedLabel = null;
+      }
     });
   }
 
@@ -132,7 +135,9 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
   bool get _canSave {
     if (_saving) return false;
     if (_questionCtrl.text.trim().isEmpty) return false;
-    return _validOptionLabels.length >= 2;
+    if (_validOptionLabels.length < 2) return false;
+    return _selectedLabel != null &&
+        _validOptionLabels.contains(_selectedLabel);
   }
 
   List<String> get _validOptionLabels => _options
@@ -161,7 +166,7 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
             ),
           )
           .toList(growable: false);
-      final selected = _selectedLabel ?? activeOptions.first.label;
+      final selected = _selectedLabel!;
       // Snapshot cross-domain "state of mind" at decision time
       // (§3 + §9 context_snapshot_json). Non-blocking — null on any
       // failure / no events, the column stays NULL and the detail page
@@ -213,9 +218,14 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final editing = widget.initial != null;
     return AppSheet(
-      title: l10n.knowledgeDecisionWriterTitle,
-      subtitle: l10n.knowledgeDecisionWriterSubtitle,
+      title: editing
+          ? l10n.knowledgeDecisionEditTitle
+          : l10n.knowledgeDecisionWriterTitle,
+      subtitle: editing
+          ? l10n.knowledgeDecisionEditSubtitle
+          : l10n.knowledgeDecisionWriterSubtitle,
       footer: AppSheetFooter(
         submitLabel: _saving ? l10n.commonSaving : l10n.commonSave,
         cancelLabel: l10n.commonCancel,
@@ -260,7 +270,7 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
                       ? null
                       : () => setState(() {
                           _options.removeAt(i).dispose();
-                          _selectedLabel = _activeLabel();
+                          _selectedLabel = null;
                           widget.dirty.markDirty();
                         }),
                 ),
@@ -269,6 +279,16 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
                   liveRegion: true,
                   child: Text(
                     l10n.knowledgeDecisionOptionsRequirement,
+                    style: context.captionStyle.copyWith(
+                      color: context.theme.colors.destructive,
+                    ),
+                  ),
+                ),
+              if (_validOptionLabels.length >= 2 && _selectedLabel == null)
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    l10n.knowledgeDecisionSelectionRequirement,
                     style: context.captionStyle.copyWith(
                       color: context.theme.colors.destructive,
                     ),
@@ -388,15 +408,5 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
         ],
       ),
     );
-  }
-
-  String? _activeLabel({String? prefer}) {
-    final labels = _options
-        .map((o) => o.labelCtrl.text.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
-    if (labels.isEmpty) return null;
-    if (prefer != null && labels.contains(prefer)) return prefer;
-    return labels.first;
   }
 }

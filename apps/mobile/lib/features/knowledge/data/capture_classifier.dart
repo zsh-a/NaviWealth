@@ -54,12 +54,10 @@ class CaptureClassification {
   final List<String> experimentMetrics;
   final String? experimentMethod;
 
-  /// Optional AI rewrite of the user's title / body. Same meaning, just
-  /// clearer / fixes typos / restructures Markdown. The LLM populates
-  /// these when it sees room to improve; the heuristic leaves them
-  /// null. Empty / whitespace-only strings are normalised to null at
-  /// the parse boundary so the sheet can rely on `!= null` as the
-  /// "polish exists" gate.
+  /// Optional at the contract boundary because the heuristic and failed LLM
+  /// fallback leave these null. A successful LLM capture call returns a
+  /// complete title + Markdown body with the same meaning; empty values are
+  /// normalized to null so the sheet can reject incomplete organization.
   final String? polishedTitle;
   final String? polishedBody;
 

@@ -44,7 +44,8 @@ Contributions:
 - Shell: `features/knowledge/composition/knowledge_domain_shell.dart`.
 - Routes: `features/knowledge/composition/knowledge_routes.dart`.
 - Primary tabs: Inbox, Library. Review is a contextual destination reached from
-  due signals and the command palette rather than a permanent shell tab.
+  the Inbox and Library header actions, due signals, and the command palette
+  rather than a permanent shell tab.
 - Tools: `features/knowledge/knowledge_ai_tools.dart`.
 - Agents: `features/knowledge/agents/providers.dart`.
 - Command palette: `features/knowledge/composition/knowledge_command_palette.dart`.
@@ -108,7 +109,7 @@ workflow state.
 
 | Tab | Purpose |
 |---|---|
-| Inbox | Fast capture with no synchronous LLM call |
+| Inbox | Fast capture with optional pre-save AI organization and an offline original-text path |
 | Library | Browse, search, and edit the complete knowledge collection; Decision is the primary object |
 | Review (contextual) | Due decisions, stale assumptions, contradictions, inbox AI suggestions, and existing due routines |
 
@@ -121,18 +122,25 @@ Key files:
 - `features/knowledge/ui/knowledge_decision_detail_page.dart`
 - `features/knowledge/ui/knowledge_object_detail_page.dart`
 
-Capture rule: saving to Inbox must remain fast and offline. Inbox capture always
-creates a Note from title and body; it does not expose the object taxonomy or
-call the LLM synchronously. AI classification, tags, links, and merge
-suggestions are asynchronous review work. Users create an explicitly structured
-object from Library only when they already know the intended type.
+Capture rule: Inbox capture always creates a Note and never exposes the object
+taxonomy. With an active native LLM profile, the primary capture action may
+produce an ephemeral pre-save draft that organizes the title and complete
+Markdown body. The draft must preserve facts, numbers, links, code, and local
+attachment references; it opens in rendered preview, remains editable, and is
+not persisted until the user confirms it. The user can restore or save the
+original at any time. Web, missing-profile, failed, malformed, or unsafe AI
+output falls back to the fast offline original-text save path. Classification,
+tags, links, and merge suggestions remain asynchronous review work after save.
+Users create an explicitly structured object from Library only when they already
+know the intended type.
 
-Library exposes Notes, Decisions, and Assumptions in its adaptive picker and
-creation sheet. Existing advanced objects remain searchable in All, but
-Principles, Concepts, Experiments, and Routines are no longer creation choices
-in the primary UI. Library filtering has one contextual dimension: All filters
-by object type, while a typed collection filters by its status. Tags, scope,
-and dates remain searchable content rather than separate filter configuration.
+Library exposes every object family in its adaptive picker for browsing.
+Creation remains intentionally narrower: Notes, Decisions, and Assumptions are
+the primary user-authored choices, while Principles, Concepts, Experiments, and
+Routines have no primary create action. Library filtering has one contextual
+dimension: All filters by object type, while a typed collection filters by its
+status. Tags, scope, and dates remain searchable content rather than separate
+filter configuration.
 
 Decision detail exposes one source-preserving follow-up action when ExecutionOS
 is active. Creation uses the domain-neutral Life action dispatcher with

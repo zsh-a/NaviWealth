@@ -19,6 +19,7 @@ class MarkdownEditorWithPreview extends ConsumerStatefulWidget {
     this.hint,
     this.minLines = 3,
     this.maxLines = 6,
+    this.initialPreview = false,
   });
 
   final TextEditingController controller;
@@ -31,6 +32,10 @@ class MarkdownEditorWithPreview extends ConsumerStatefulWidget {
   final int minLines;
   final int maxLines;
 
+  /// Opens the compact mobile layout on the rendered document. Editing is
+  /// still one tap away; wide layouts continue to show both panes.
+  final bool initialPreview;
+
   @override
   ConsumerState<MarkdownEditorWithPreview> createState() =>
       _MarkdownEditorWithPreviewState();
@@ -40,11 +45,12 @@ enum _MarkdownMode { edit, preview }
 
 class _MarkdownEditorWithPreviewState
     extends ConsumerState<MarkdownEditorWithPreview> {
-  _MarkdownMode _mode = _MarkdownMode.edit;
+  late _MarkdownMode _mode;
 
   @override
   void initState() {
     super.initState();
+    _mode = widget.initialPreview ? _MarkdownMode.preview : _MarkdownMode.edit;
     widget.controller.addListener(_onTextChanged);
   }
 

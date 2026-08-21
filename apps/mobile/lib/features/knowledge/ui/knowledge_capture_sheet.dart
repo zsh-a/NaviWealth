@@ -1,11 +1,14 @@
 /// Unified KnowledgeOS Capture sheet
 /// (`docs/domains/knowledgeos-domain.md` §3 + §5 + §14).
 ///
-/// One sheet, one textarea, one Save. Capture always persists a [KnowledgeNote]
-/// and closes immediately. Repository change scheduling then runs Inbox Triage
-/// and contradiction detection in the background, so capture never waits for
-/// an LLM or asks the user to understand the domain taxonomy up front.
+/// Capture always persists a [KnowledgeNote] and never exposes the object
+/// taxonomy. When device AI is available, it can first produce an ephemeral
+/// title + Markdown draft for user preview; the original remains available and
+/// nothing is written until confirmation. Repository change scheduling still
+/// runs classification, links, and contradiction work in the background.
 library;
+
+import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -17,6 +20,7 @@ import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../data/knowledge_llm_client.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_widgets.dart';
@@ -24,11 +28,18 @@ import 'knowledge_image_insert.dart';
 
 part 'knowledge_capture_views.dart';
 
-Future<void> showKnowledgeCaptureSheet(BuildContext context) {
-  return showGuardedFormSheet<void>(
+Future<void> showKnowledgeCaptureSheet(BuildContext context) async {
+  final saved = await showGuardedFormSheet<bool>(
     context: context,
     builder: (sheetContext, dirty) => _KnowledgeCaptureSheet(dirty: dirty),
   );
+  if (saved == true && context.mounted) {
+    AppMessenger.show(
+      context,
+      ToastKind.success,
+      AppLocalizations.of(context).knowledgeCaptureSavedToast,
+    );
+  }
 }
 
 class _KnowledgeCaptureSheet extends ConsumerStatefulWidget {
@@ -40,7 +51,7 @@ class _KnowledgeCaptureSheet extends ConsumerStatefulWidget {
       _KnowledgeCaptureSheetState();
 }
 
-enum _CaptureStage { composing, saving }
+enum _CaptureStage { composing, organizing, reviewing, saving }
 
 class _KnowledgeCaptureSheetState
     extends ConsumerState<_KnowledgeCaptureSheet> {
@@ -48,6 +59,8 @@ class _KnowledgeCaptureSheetState
   final _bodyCtrl = TextEditingController();
   final _bodyFocus = FocusNode();
   _CaptureStage _stage = _CaptureStage.composing;
+  String? _originalTitle;
+  String? _originalBody;
 
   @override
   void initState() {
@@ -61,7 +74,9 @@ class _KnowledgeCaptureSheetState
   }
 
   void _onTextChange() {
-    if (_stage == _CaptureStage.composing && mounted) {
+    if ((_stage == _CaptureStage.composing ||
+            _stage == _CaptureStage.reviewing) &&
+        mounted) {
       setState(() {});
     }
   }
@@ -75,20 +90,83 @@ class _KnowledgeCaptureSheetState
   }
 
   bool get _canSave =>
+      (_stage == _CaptureStage.composing ||
+          _stage == _CaptureStage.reviewing) &&
+      _bodyCtrl.text.trim().isNotEmpty;
+
+  bool get _canOrganize =>
       _stage == _CaptureStage.composing && _bodyCtrl.text.trim().isNotEmpty;
+
+  Future<void> _organize() async {
+    if (!_canOrganize) return;
+    final originalTitle = _titleCtrl.text.trim();
+    final originalBody = _bodyCtrl.text.trim();
+    _originalTitle = originalTitle;
+    _originalBody = originalBody;
+    _bodyFocus.unfocus();
+    setState(() => _stage = _CaptureStage.organizing);
+    try {
+      final result = await ref
+          .read(captureClassifierProvider)
+          .classify(
+            text: jsonEncode(<String, Object?>{
+              'original_title': originalTitle,
+              'original_body_md': originalBody,
+            }),
+          );
+      if (!mounted) return;
+      final organizedBody = result.polishedBody?.trim();
+      if (organizedBody == null ||
+          organizedBody.isEmpty ||
+          !_preservesKnowledgeAttachments(originalBody, organizedBody)) {
+        throw const _CaptureOrganizationRejected();
+      }
+      final organizedTitle = result.polishedTitle?.trim();
+      _replaceText(
+        _titleCtrl,
+        organizedTitle == null || organizedTitle.isEmpty
+            ? _organizedFallbackTitle(organizedBody)
+            : organizedTitle,
+      );
+      _replaceText(_bodyCtrl, organizedBody);
+      setState(() => _stage = _CaptureStage.reviewing);
+    } on Object {
+      if (!mounted) return;
+      setState(() => _stage = _CaptureStage.composing);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).knowledgeCaptureOrganizeFailed,
+      );
+    }
+  }
+
+  void _restoreOriginal() {
+    _replaceText(_titleCtrl, _originalTitle ?? '');
+    _replaceText(_bodyCtrl, _originalBody ?? '');
+    _originalTitle = null;
+    _originalBody = null;
+    setState(() => _stage = _CaptureStage.composing);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _bodyFocus.requestFocus();
+    });
+  }
 
   Future<void> _save() async {
     if (!_canSave) return;
+    final previousStage = _stage;
     setState(() => _stage = _CaptureStage.saving);
     widget.dirty.busy = true;
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
+      final body = _bodyCtrl.text;
+      final typedTitle = _titleCtrl.text.trim();
       final note = KnowledgeNote(
         id: kKnowledgeUuid.v4(),
-        title: _titleCtrl.text.trim(),
-        bodyMd: _bodyCtrl.text,
+        title: typedTitle.isEmpty ? _organizedFallbackTitle(body) : typedTitle,
+        bodyMd: body,
         tags: const <String>[],
         createdAt: stamp.now,
         sync: SyncMeta(
@@ -100,10 +178,10 @@ class _KnowledgeCaptureSheetState
       );
       await repo.upsertNote(note);
       widget.dirty.markPristine();
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) Navigator.of(context).pop(true);
     } catch (_) {
       if (mounted) {
-        setState(() => _stage = _CaptureStage.composing);
+        setState(() => _stage = previousStage);
         AppMessenger.show(
           context,
           ToastKind.error,
@@ -124,7 +202,12 @@ class _KnowledgeCaptureSheetState
     if (!keyboard.isControlPressed && !keyboard.isMetaPressed) {
       return KeyEventResult.ignored;
     }
-    _save();
+    if (_stage == _CaptureStage.composing &&
+        ref.read(knowledgeLlmProfileClientProvider) != null) {
+      _organize();
+    } else {
+      _save();
+    }
     return KeyEventResult.handled;
   }
 
@@ -132,26 +215,97 @@ class _KnowledgeCaptureSheetState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final stage = _stage;
+    final aiAvailable = ref.watch(knowledgeLlmProfileClientProvider) != null;
+    final title = switch (stage) {
+      _CaptureStage.reviewing => l10n.knowledgeCapturePolishedVersionTitle,
+      _ => l10n.knowledgeCaptureTitle,
+    };
+    final subtitle = switch (stage) {
+      _CaptureStage.composing => l10n.knowledgeCaptureComposeSubtitle,
+      _CaptureStage.organizing => l10n.knowledgeCaptureOrganizingSubtitle,
+      _CaptureStage.reviewing => l10n.knowledgeCaptureOrganizedSubtitle,
+      _CaptureStage.saving => null,
+    };
+    final footer = switch (stage) {
+      _CaptureStage.composing => AppSheetFooter(
+        submitLabel: aiAvailable
+            ? l10n.knowledgeCaptureOrganizeAction
+            : l10n.knowledgeCaptureSave,
+        cancelLabel: l10n.knowledgeCaptureCancel,
+        enabled: aiAvailable ? _canOrganize : _canSave,
+        onSubmit: aiAvailable ? _organize : _save,
+      ),
+      _CaptureStage.organizing => AppSheetFooter(
+        submitLabel: l10n.knowledgeCaptureOrganizing,
+        cancelLabel: l10n.knowledgeCaptureCancel,
+        busy: true,
+        enabled: false,
+        onSubmit: _organize,
+      ),
+      _CaptureStage.reviewing => AppSheetFooter(
+        submitLabel: l10n.knowledgeCaptureSaveOrganized,
+        cancelLabel: l10n.knowledgeCaptureKeepOriginal,
+        enabled: _canSave,
+        onCancel: _restoreOriginal,
+        onSubmit: _save,
+      ),
+      _CaptureStage.saving => AppSheetFooter(
+        submitLabel: l10n.commonSaving,
+        cancelLabel: l10n.knowledgeCaptureCancel,
+        busy: true,
+        enabled: false,
+        onSubmit: _save,
+      ),
+    };
     return Focus(
       onKeyEvent: _onKeyEvent,
       child: AppSheet(
-        title: l10n.knowledgeCaptureTitle,
-        subtitle: l10n.knowledgeCaptureComposeSubtitle,
-        footer: AppSheetFooter(
-          submitLabel: stage == _CaptureStage.saving
-              ? l10n.commonSaving
-              : l10n.knowledgeCaptureSave,
-          cancelLabel: l10n.knowledgeCaptureCancel,
-          busy: stage == _CaptureStage.saving,
-          enabled: _canSave,
-          onSubmit: _save,
-        ),
-        child: _ComposeBody(
-          titleController: _titleCtrl,
-          bodyController: _bodyCtrl,
-          bodyFocusNode: _bodyFocus,
-        ),
+        title: title,
+        subtitle: subtitle,
+        footer: footer,
+        child: switch (stage) {
+          _CaptureStage.composing => _ComposeBody(
+            titleController: _titleCtrl,
+            bodyController: _bodyCtrl,
+            bodyFocusNode: _bodyFocus,
+            aiAvailable: aiAvailable,
+            onSaveOriginal: _canSave ? _save : null,
+          ),
+          _CaptureStage.organizing => const _CaptureProgressBody(),
+          _CaptureStage.reviewing => _OrganizedReviewBody(
+            titleController: _titleCtrl,
+            bodyController: _bodyCtrl,
+          ),
+          _CaptureStage.saving => const _CaptureProgressBody(saving: true),
+        },
       ),
     );
   }
+}
+
+void _replaceText(TextEditingController controller, String text) {
+  controller.value = TextEditingValue(
+    text: text,
+    selection: TextSelection.collapsed(offset: text.length),
+  );
+}
+
+bool _preservesKnowledgeAttachments(String original, String organized) {
+  final references = RegExp(
+    r'attachment://[^\s)]+',
+  ).allMatches(original).map((match) => match.group(0)!).toSet();
+  return references.every(organized.contains);
+}
+
+String _organizedFallbackTitle(String body) {
+  final firstLine = body
+      .split('\n')
+      .map((line) => line.trim())
+      .firstWhere((line) => line.isNotEmpty, orElse: () => body.trim())
+      .replaceFirst(RegExp(r'^#{1,6}\s+'), '');
+  return knowledgeExcerpt(firstLine);
+}
+
+class _CaptureOrganizationRejected implements Exception {
+  const _CaptureOrganizationRejected();
 }

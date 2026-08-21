@@ -141,6 +141,33 @@ Sure, here's the classification:
       expect(r.hasSuggestion, isTrue);
     });
 
+    test('keeps a complete structured Markdown organization draft', () async {
+      final bridge = _FakeLlmBridge(
+        responseText: '''
+{
+  "kind": "note",
+  "confidence": 0.8,
+  "reason_zh": "整理标题和阅读层级",
+  "polished_title": "现金管理方案比较",
+  "polished_body": "## 核心判断\\n\\n优先保证流动性。\\n\\n## 方案比较\\n\\n| 方案 | 特点 |\\n| --- | --- |\\n| A | 灵活 |\\n| B | 稳定 |"
+}''',
+      );
+      final c = FrbCaptureClassifier(llmClient: bridge);
+
+      final r = await c.classify(
+        text: '{"original_title":"","original_body_md":"A 灵活，B 稳定，优先保证流动性"}',
+      );
+
+      expect(r.polishedTitle, '现金管理方案比较');
+      expect(r.polishedBody, contains('## 核心判断'));
+      expect(r.polishedBody, contains('| 方案 | 特点 |'));
+      expect(
+        bridge.lastMessages.first['content'],
+        contains('polished_body 是完整正文'),
+      );
+      expect(bridge.lastTemperature, 0.2);
+    });
+
     test('empty polish strings normalize to null', () async {
       final bridge = _FakeLlmBridge(
         responseText: '''
@@ -226,6 +253,7 @@ class _FakeLlmBridge implements KnowledgeLlmProfileClient {
   var calls = 0;
   List<Map<String, Object?>> lastMessages = const <Map<String, Object?>>[];
   Map<String, Object?> lastMetadata = const <String, Object?>{};
+  double? lastTemperature;
 
   @override
   Future<Map<String, Object?>> completeProfile({
@@ -238,6 +266,7 @@ class _FakeLlmBridge implements KnowledgeLlmProfileClient {
     calls += 1;
     lastMessages = messages;
     lastMetadata = metadata;
+    lastTemperature = temperature;
     final e = error;
     if (e != null) throw e;
     return <String, Object?>{

@@ -186,14 +186,20 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
     return ShellTabScaffold(
       title: l10n.knowledgeLibraryTitle,
       actions: [
+        if (_canCreateForSegment(_segment))
+          ShellHeaderActionSpec(
+            icon: FLucideIcons.plus,
+            label: _segment == _LibrarySegment.all
+                ? l10n.knowledgeNewChooserTitle
+                : _createLabel(l10n, _segment),
+            onPress: () => _segment == _LibrarySegment.all
+                ? _openCreateSheet(context, ref)
+                : _createForSegment(context, ref, _segment),
+          ),
         ShellHeaderActionSpec(
-          icon: FLucideIcons.plus,
-          label: _segment == _LibrarySegment.all
-              ? l10n.knowledgeNewChooserTitle
-              : _createLabel(l10n, _segment),
-          onPress: () => _segment == _LibrarySegment.all
-              ? _openCreateSheet(context, ref)
-              : _createForSegment(context, ref, _segment),
+          icon: FLucideIcons.clipboardCheck,
+          label: l10n.knowledgeTabReview,
+          onPress: () => context.push(KnowledgeRoutes.review),
         ),
       ],
       child: ShellTabPause(
@@ -280,10 +286,14 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
           child: _LibraryList(
             segment: _segment,
             segmentLabel: _segmentLabel(l10n, _segment),
-            createLabel: _createLabel(l10n, _segment),
-            onCreate: () => _segment == _LibrarySegment.all
-                ? _openCreateSheet(context, ref)
-                : _createForSegment(context, ref, _segment),
+            createLabel: _canCreateForSegment(_segment)
+                ? _createLabel(l10n, _segment)
+                : null,
+            onCreate: _canCreateForSegment(_segment)
+                ? () => _segment == _LibrarySegment.all
+                      ? _openCreateSheet(context, ref)
+                      : _createForSegment(context, ref, _segment)
+                : null,
             onSegmentChanged: (segment) => setState(() => _segment = segment),
             query: _searchQuery,
             showSearchAssist: _searchFocus.hasFocus,
@@ -298,6 +308,14 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
     );
   }
 }
+
+bool _canCreateForSegment(_LibrarySegment segment) => switch (segment) {
+  _LibrarySegment.all ||
+  _LibrarySegment.decisions ||
+  _LibrarySegment.assumptions ||
+  _LibrarySegment.notes => true,
+  _ => false,
+};
 
 class _KnowledgeMasterDetailScope extends InheritedWidget {
   const _KnowledgeMasterDetailScope({
@@ -359,7 +377,7 @@ void _openKnowledgeLibraryDetail(
   );
 }
 
-/// Icon-only FAB that opens the knowledge type picker sheet.
+/// Header creation action for the primary, user-authored object families.
 void _createForSegment(
   BuildContext context,
   WidgetRef ref,

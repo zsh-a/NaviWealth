@@ -332,6 +332,18 @@ Future<_LibrarySegment?> _showLibraryTypePicker({
       l10n.knowledgeLibraryTypeGroupSources,
       const <_LibrarySegment>[_LibrarySegment.notes],
     ),
+    (
+      l10n.knowledgeLibraryTypeGroupThinking,
+      const <_LibrarySegment>[
+        _LibrarySegment.principles,
+        _LibrarySegment.concepts,
+        _LibrarySegment.experiments,
+      ],
+    ),
+    (
+      l10n.knowledgeLibraryTypeGroupAction,
+      const <_LibrarySegment>[_LibrarySegment.routines],
+    ),
   ];
   return showAppSheet<_LibrarySegment>(
     context: context,

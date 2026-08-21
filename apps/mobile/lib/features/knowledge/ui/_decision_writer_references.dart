@@ -118,7 +118,9 @@ class _PrincipleAssumptionPicker extends ConsumerWidget {
                                 (a) => _CheckboxItem(
                                   id: a.id,
                                   label:
-                                      '${a.statement}（conf ${a.confidence.toStringAsFixed(2)}）',
+                                      '${a.statement} · '
+                                      '${AppLocalizations.of(context).knowledgeWriterConfidenceLabel} '
+                                      '${a.confidence.toStringAsFixed(2)}',
                                   selected: assumptionIds.contains(a.id),
                                 ),
                               )

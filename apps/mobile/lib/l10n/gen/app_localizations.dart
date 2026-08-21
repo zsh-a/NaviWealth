@@ -14934,13 +14934,13 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeAiSuggestionsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'{count} pending suggestions from on-device triage of Inbox notes.'**
+  /// **'{count} background organization suggestions, ready for your review.'**
   String knowledgeAiSuggestionsSubtitle(Object count);
 
   /// No description provided for @knowledgeAiSuggestionsEmpty.
   ///
   /// In en, this message translates to:
-  /// **'No pending AI suggestions. New notes are triaged within 15 minutes.'**
+  /// **'No organization suggestions are waiting.'**
   String get knowledgeAiSuggestionsEmpty;
 
   /// No description provided for @knowledgeAiSuggestionCount.
@@ -15038,6 +15038,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Feedback saved.'**
   String get knowledgeAiSuggestionFeedbackToast;
+
+  /// No description provided for @knowledgeAiSuggestionMoreActions.
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get knowledgeAiSuggestionMoreActions;
+
+  /// No description provided for @knowledgeAiSuggestionClassificationSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Organize as {kind}'**
+  String knowledgeAiSuggestionClassificationSummary(String kind);
+
+  /// No description provided for @knowledgeAiSuggestionTagsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Add tags: {tags}'**
+  String knowledgeAiSuggestionTagsSummary(String tags);
+
+  /// No description provided for @knowledgeAiSuggestionDecisionLinksSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to {count} related decisions'**
+  String knowledgeAiSuggestionDecisionLinksSummary(int count);
+
+  /// No description provided for @knowledgeAiSuggestionFieldTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get knowledgeAiSuggestionFieldTags;
+
+  /// No description provided for @knowledgeAiSuggestionFieldDecisions.
+  ///
+  /// In en, this message translates to:
+  /// **'Related decisions'**
+  String get knowledgeAiSuggestionFieldDecisions;
 
   /// No description provided for @knowledgeAgentAssumptionTitle.
   ///
@@ -21729,6 +21765,12 @@ abstract class AppLocalizations {
   /// **'Checking asynchronous AI suggestions…'**
   String get knowledgeInboxSuggestionsLoading;
 
+  /// No description provided for @knowledgeInboxSuggestionsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization status failed to load. Tap to retry.'**
+  String get knowledgeInboxSuggestionsLoadFailed;
+
   /// No description provided for @knowledgeInboxAiUnavailable.
   ///
   /// In en, this message translates to:
@@ -21876,7 +21918,7 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeInboxEmptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Use the create action to capture a thought. AI can suggest whether it should stay a Note or become a Routine, Decision, or other knowledge object.'**
+  /// **'Capture the thought first. KnowledgeOS organizes it in the background, and you approve every upgrade.'**
   String get knowledgeInboxEmptyBody;
 
   /// No description provided for @knowledgeInboxLoadFailedTitle.
@@ -21948,7 +21990,7 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeCaptureComposeSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Write free-form Markdown. AI can suggest an upgrade after saving.'**
+  /// **'Write naturally. AI can shape the title and Markdown before anything is saved.'**
   String get knowledgeCaptureComposeSubtitle;
 
   /// No description provided for @knowledgeCaptureClassifyingSubtitle.
@@ -22026,8 +22068,80 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeCaptureSave.
   ///
   /// In en, this message translates to:
-  /// **'Save and analyze'**
+  /// **'Save'**
   String get knowledgeCaptureSave;
+
+  /// No description provided for @knowledgeCaptureSavedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to Inbox. Classification and links will be suggested in the background.'**
+  String get knowledgeCaptureSavedToast;
+
+  /// No description provided for @knowledgeCaptureOrganizeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Organize & preview'**
+  String get knowledgeCaptureOrganizeAction;
+
+  /// No description provided for @knowledgeCaptureOrganizing.
+  ///
+  /// In en, this message translates to:
+  /// **'Organizing...'**
+  String get knowledgeCaptureOrganizing;
+
+  /// No description provided for @knowledgeCaptureOrganizingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI is shaping the title, hierarchy, and Markdown while preserving your meaning.'**
+  String get knowledgeCaptureOrganizingSubtitle;
+
+  /// No description provided for @knowledgeCaptureOrganizingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating a complete, readable draft. Your original remains unchanged until you approve it.'**
+  String get knowledgeCaptureOrganizingBody;
+
+  /// No description provided for @knowledgeCaptureOrganizedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the rendered result, or switch to Edit for final adjustments before saving.'**
+  String get knowledgeCaptureOrganizedSubtitle;
+
+  /// No description provided for @knowledgeCaptureAiOrganizationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'AI will improve the title, structure, and reading flow without adding new facts.'**
+  String get knowledgeCaptureAiOrganizationHint;
+
+  /// No description provided for @knowledgeCaptureSaveWithoutAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Save original'**
+  String get knowledgeCaptureSaveWithoutAi;
+
+  /// No description provided for @knowledgeCaptureSaveOrganized.
+  ///
+  /// In en, this message translates to:
+  /// **'Save organized note'**
+  String get knowledgeCaptureSaveOrganized;
+
+  /// No description provided for @knowledgeCaptureReviewDraftTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Organized draft'**
+  String get knowledgeCaptureReviewDraftTitle;
+
+  /// No description provided for @knowledgeCaptureReviewDraftSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview first; every field remains editable.'**
+  String get knowledgeCaptureReviewDraftSubtitle;
+
+  /// No description provided for @knowledgeCaptureOrganizeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'AI could not produce a safe complete draft. Your original is unchanged.'**
+  String get knowledgeCaptureOrganizeFailed;
 
   /// Submit button when the user manually chooses a capture kind
   ///
@@ -22092,7 +22206,7 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeCapturePolishedVersionTitle.
   ///
   /// In en, this message translates to:
-  /// **'AI polished version'**
+  /// **'Review organized note'**
   String get knowledgeCapturePolishedVersionTitle;
 
   /// No description provided for @knowledgeCaptureTitleDiffLabel.
@@ -22209,6 +22323,12 @@ abstract class AppLocalizations {
   /// **'Ask or search your knowledge...'**
   String get knowledgeAiPromptHint;
 
+  /// No description provided for @knowledgeAiAskAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask KnowledgeOS'**
+  String get knowledgeAiAskAction;
+
   /// Knowledge AI quick action: deduplicate notes
   ///
   /// In en, this message translates to:
@@ -22266,7 +22386,7 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeLibraryEmptyAllBody.
   ///
   /// In en, this message translates to:
-  /// **'Capture a Note from Inbox, or use the create action to add a Decision, Assumption, Routine, or another knowledge object.'**
+  /// **'Capture a quick note, or create a structured Decision or Assumption.'**
   String get knowledgeLibraryEmptyAllBody;
 
   /// No description provided for @knowledgeLibraryEmptyDecisionsTitle.
@@ -22314,7 +22434,7 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeLibraryEmptyNotesBody.
   ///
   /// In en, this message translates to:
-  /// **'Notes are captured from Inbox. This view is for browsing.'**
+  /// **'Capture a note, then let KnowledgeOS suggest tags, links, or an upgrade.'**
   String get knowledgeLibraryEmptyNotesBody;
 
   /// No description provided for @knowledgeLibraryEmptyConceptsTitle.
@@ -22990,6 +23110,18 @@ abstract class AppLocalizations {
   /// **'Decision as memory: question, options, rationale, review'**
   String get knowledgeDecisionWriterSubtitle;
 
+  /// No description provided for @knowledgeDecisionEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Decision'**
+  String get knowledgeDecisionEditTitle;
+
+  /// No description provided for @knowledgeDecisionEditSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update options, rationale, expected outcome, and review plan'**
+  String get knowledgeDecisionEditSubtitle;
+
   /// No description provided for @knowledgeDecisionAddOption.
   ///
   /// In en, this message translates to:
@@ -23079,6 +23211,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter at least two different options.'**
   String get knowledgeDecisionOptionsRequirement;
+
+  /// No description provided for @knowledgeDecisionSelectionRequirement.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the option you decided to take.'**
+  String get knowledgeDecisionSelectionRequirement;
 
   /// No description provided for @knowledgeDecisionOptionLabelHint.
   ///
@@ -23301,6 +23439,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New Assumption'**
   String get knowledgeAssumptionWriterTitle;
+
+  /// No description provided for @knowledgeAssumptionEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Assumption'**
+  String get knowledgeAssumptionEditTitle;
+
+  /// No description provided for @knowledgeAssumptionEditSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update the statement, confidence, and scope'**
+  String get knowledgeAssumptionEditSubtitle;
 
   /// No description provided for @knowledgeAssumptionWriterSubtitle.
   ///
@@ -23530,6 +23680,12 @@ abstract class AppLocalizations {
   /// **'Evidence and rationale'**
   String get knowledgeWriterEvidenceSectionTitle;
 
+  /// No description provided for @knowledgeWriterContextSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional context'**
+  String get knowledgeWriterContextSectionTitle;
+
   /// No description provided for @knowledgeWriterReferencesSectionTitle.
   ///
   /// In en, this message translates to:
@@ -23571,6 +23727,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The Notes segment is for browsing. Close this panel, switch to Inbox, and use the create action there.'**
   String get knowledgeNotesHintBody;
+
+  /// No description provided for @knowledgeNoteTagsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags (comma separated)'**
+  String get knowledgeNoteTagsLabel;
 
   /// Screen reader label when monetary amount is hidden by privacy mode
   ///
@@ -29516,6 +29678,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t import the image'**
   String get knowledgeImageImportFailed;
+
+  /// No description provided for @knowledgeImageLocalOnlyToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Image inserted. It is currently stored on this device only.'**
+  String get knowledgeImageLocalOnlyToast;
 }
 
 class _AppLocalizationsDelegate

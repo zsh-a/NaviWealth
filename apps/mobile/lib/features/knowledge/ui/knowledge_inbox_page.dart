@@ -10,8 +10,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/ai/llm_credentials/providers.dart';
-import '../../../core/shell/settings_route_paths.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
@@ -38,14 +36,23 @@ class KnowledgeInboxPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final pendingSuggestions = ref.watch(
+      _knowledgeInboxPendingSuggestionsProvider,
+    );
     return ShellTabScaffold(
       title: l10n.knowledgeInboxTitle,
-      directActionBudget: 1,
+      directActionBudget: 2,
       actions: [
         ShellHeaderActionSpec(
           icon: FLucideIcons.plus,
           label: l10n.knowledgeCaptureAction,
           onPress: () => showKnowledgeCaptureSheet(context),
+        ),
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.clipboardCheck,
+          label: l10n.knowledgeTabReview,
+          badgeCount: pendingSuggestions.value ?? 0,
+          onPress: () => context.push(KnowledgeRoutes.review),
         ),
       ],
       child: const ShellTabPause(
@@ -61,9 +68,8 @@ class _InboxBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // The Inbox is the KnowledgeOS "AI 助理" front door: the bar stays
-    // pinned above the note list (visible even while loading / empty) so
-    // add / query / dedupe / suggest are always one tap away.
+    // Capture remains the primary Inbox action. AI utilities stay available
+    // from the trailing menu without competing with the user's write path.
     return const AppAtmosphere(
       child: AdaptiveContentFrame(
         maxWidth: Breakpoints.readingColumn,
@@ -71,7 +77,7 @@ class _InboxBody extends ConsumerWidget {
         padding: EdgeInsets.zero,
         primary: Column(
           children: [
-            _AiAssistantBar(),
+            _InboxCaptureBar(),
             _InboxTriageStatus(),
             Expanded(child: _NotesList()),
           ],
@@ -87,18 +93,29 @@ class _InboxTriageStatus extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final aiAvailable = ref.watch(deviceLlmAvailableProvider);
     final pending = ref.watch(_knowledgeInboxPendingSuggestionsProvider);
     final count = pending.value ?? 0;
-    if ((!aiAvailable || count == 0) &&
-        !pending.isLoading &&
-        !pending.hasError) {
+    if (pending.hasError) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s16,
+          AppSpacing.s4,
+          AppSpacing.s16,
+          AppSpacing.s4,
+        ),
+        child: AppStatusBanner(
+          compact: true,
+          kind: AppStatusKind.error,
+          icon: FLucideIcons.refreshCw,
+          message: l10n.knowledgeInboxSuggestionsLoadFailed,
+          onPress: () =>
+              ref.invalidate(_knowledgeInboxPendingSuggestionsProvider),
+        ),
+      );
+    }
+    if (pending.isLoading || count == 0) {
       return const SizedBox.shrink();
     }
-    final message = count > 0
-        ? l10n.knowledgeInboxSuggestionsPending(count)
-        : l10n.knowledgeInboxSuggestionsLoading;
-    final route = count > 0 ? KnowledgeRoutes.review : SettingsRoutes.aiLlm;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s16,
@@ -108,20 +125,18 @@ class _InboxTriageStatus extends ConsumerWidget {
       ),
       child: AppStatusBanner(
         compact: true,
-        kind: count > 0 ? AppStatusKind.info : AppStatusKind.neutral,
-        icon: count > 0 ? FLucideIcons.sparkles : FLucideIcons.cpu,
-        message: message,
-        onPress: pending.hasError ? null : () => context.push(route),
+        kind: AppStatusKind.info,
+        icon: FLucideIcons.sparkles,
+        message: l10n.knowledgeInboxSuggestionsPending(count),
+        onPress: () => context.push(KnowledgeRoutes.review),
       ),
     );
   }
 }
 
-/// The agent entry: a compact ask/capture target + icon quick actions.
-/// Each routes through `askAi` conversation mode, which (on the knowledge
-/// route) opens the device agent loop scoped to KnowledgeOS tools + prompt
-/// with the composer seeded. The user sends; the agent then chains the
-/// right tools:
+/// Primary quick-capture target with AI utilities grouped behind one menu.
+/// AI actions route through `askAi` conversation mode, scoped to KnowledgeOS
+/// tools and prompts:
 ///
 ///  - prompt   → empty composer (type a capture or a question freeform)
 ///  - 查重     → seeds dedupe (agent → find_similar_knowledge → propose_merge)
@@ -131,8 +146,8 @@ class _InboxTriageStatus extends ConsumerWidget {
 /// Conversation prefill (not auto-fired invocation intents) keeps this
 /// off the regression-corpus / renderer fixture path while still
 /// delivering the full agentic loop on send.
-class _AiAssistantBar extends ConsumerWidget {
-  const _AiAssistantBar();
+class _InboxCaptureBar extends ConsumerWidget {
+  const _InboxCaptureBar();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -140,6 +155,13 @@ class _AiAssistantBar extends ConsumerWidget {
     final colors = context.theme.colors;
     final chrome = ref.watch(shellChromeBuildersProvider);
     final actions = [
+      DomainAiPromptAction(
+        label: l10n.knowledgeAiAskAction,
+        icon: FLucideIcons.sparkles,
+        onPress: () {
+          chrome.openAi(context, ref, prefill: '');
+        },
+      ),
       DomainAiPromptAction(
         label: l10n.knowledgeAiDedupeAction,
         icon: FLucideIcons.gitMerge,
@@ -175,24 +197,24 @@ class _AiAssistantBar extends ConsumerWidget {
             Expanded(
               child: Semantics(
                 button: true,
-                label: l10n.knowledgeAiPromptHint,
+                label: l10n.knowledgeCaptureAction,
                 child: AppTappable(
                   onPress: () {
-                    chrome.openAi(context, ref, prefill: '');
+                    showKnowledgeCaptureSheet(context);
                   },
                   child: SizedBox(
                     height: AppSpacing.s40,
                     child: Row(
                       children: [
                         Icon(
-                          FLucideIcons.sparkles,
+                          FLucideIcons.filePlus,
                           size: AppIconSizes.sm,
                           color: colors.primary,
                         ),
                         const SizedBox(width: AppSpacing.s8),
                         Expanded(
                           child: Text(
-                            l10n.knowledgeAiPromptHint,
+                            l10n.knowledgeCaptureTitle,
                             style: context.bodyCaptionStyle,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

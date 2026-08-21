@@ -2,6 +2,7 @@
 library;
 
 import 'package:cross_file/cross_file.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/lifeos/share_intent.dart';
@@ -40,11 +41,12 @@ class KnowledgeShareIntentHandler extends DomainShareIntentHandler {
       firstLine,
       max: kKnowledgeSharedTitleMaxChars,
     );
+    final displayTitle = isUrl ? knowledgeSharedUrlTitle(raw) : title;
 
     await repo.upsertNote(
       KnowledgeNote(
         id: kKnowledgeUuid.v4(),
-        title: title.isEmpty ? '(shared)' : title,
+        title: displayTitle.isEmpty ? '(shared)' : displayTitle,
         bodyMd: raw,
         sourceUrl: isUrl ? raw : null,
         tags: const <String>['source:share'],
@@ -114,4 +116,19 @@ class KnowledgeShareIntentHandler extends DomainShareIntentHandler {
       destinationPath: KnowledgeRoutes.inbox,
     );
   }
+}
+
+@visibleForTesting
+String knowledgeSharedUrlTitle(String raw) {
+  final uri = Uri.tryParse(raw);
+  final host = uri?.host.replaceFirst(RegExp(r'^www\.'), '') ?? '';
+  if (host.isEmpty) {
+    return knowledgeExcerpt(raw, max: kKnowledgeSharedTitleMaxChars);
+  }
+  final pathLabel = uri!.pathSegments.reversed
+      .map((segment) => segment.trim())
+      .where((segment) => segment.isNotEmpty)
+      .firstOrNull;
+  final title = pathLabel == null ? host : '$host · $pathLabel';
+  return knowledgeExcerpt(title, max: kKnowledgeSharedTitleMaxChars);
 }
