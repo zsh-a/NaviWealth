@@ -142,11 +142,20 @@ void main() {
     expect(find.text('Preview'), findsOneWidget);
     expect(find.text('Edit'), findsOneWidget);
     expect(find.text('Save organized note'), findsOneWidget);
+    expect(find.text('View original'), findsOneWidget);
     expect(classifier.lastText, contains('original_body_md'));
     expect(
       classifier.lastText,
       contains('rough note: one thing, another thing'),
     );
+
+    await tester.tap(find.text('View original'));
+    await pumpVisualTransition(tester);
+    expect(find.text('Original'), findsOneWidget);
+    expect(find.text('rough note: one thing, another thing'), findsOneWidget);
+    await tester.tap(find.text('View organized'));
+    await pumpVisualTransition(tester);
+    expect(find.text('A clear, searchable title'), findsOneWidget);
 
     await tester.tap(find.text('Keep original'));
     await pumpVisualTransition(tester);

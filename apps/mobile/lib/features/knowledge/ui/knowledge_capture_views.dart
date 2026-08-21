@@ -97,14 +97,25 @@ class _CaptureProgressBody extends StatelessWidget {
   }
 }
 
-class _OrganizedReviewBody extends StatelessWidget {
+class _OrganizedReviewBody extends StatefulWidget {
   const _OrganizedReviewBody({
     required this.titleController,
     required this.bodyController,
+    required this.originalTitle,
+    required this.originalBody,
   });
 
   final TextEditingController titleController;
   final TextEditingController bodyController;
+  final String originalTitle;
+  final String originalBody;
+
+  @override
+  State<_OrganizedReviewBody> createState() => _OrganizedReviewBodyState();
+}
+
+class _OrganizedReviewBodyState extends State<_OrganizedReviewBody> {
+  bool _showOriginal = false;
 
   @override
   Widget build(BuildContext context) {
@@ -113,17 +124,61 @@ class _OrganizedReviewBody extends StatelessWidget {
       title: l10n.knowledgeCaptureReviewDraftTitle,
       subtitle: l10n.knowledgeCaptureReviewDraftSubtitle,
       children: [
-        FTextField(
-          control: FTextFieldControl.managed(controller: titleController),
-          label: Text(l10n.knowledgeCaptureTitleDiffLabel),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                _showOriginal
+                    ? l10n.knowledgeCaptureOriginalVersion
+                    : l10n.knowledgeCaptureOrganizedVersion,
+                style: context.labelStyle,
+              ),
+            ),
+            AppQuietButton(
+              label: _showOriginal
+                  ? l10n.knowledgeCaptureShowOrganized
+                  : l10n.knowledgeCaptureShowOriginal,
+              onPress: () => setState(() => _showOriginal = !_showOriginal),
+            ),
+          ],
         ),
-        MarkdownEditorWithPreview(
-          controller: bodyController,
-          label: l10n.knowledgeCaptureBodyDiffLabel,
-          minLines: 6,
-          maxLines: 12,
-          initialPreview: true,
-        ),
+        if (_showOriginal)
+          Container(
+            padding: AppPageRhythm.densePadding,
+            decoration: BoxDecoration(
+              color: context.theme.colors.muted,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: context.theme.colors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  widget.originalTitle.isEmpty
+                      ? l10n.knowledgeCaptureUntitledOriginal
+                      : widget.originalTitle,
+                  style: TypographyTokens.headlineSmall,
+                ),
+                const SizedBox(height: AppSpacing.s12),
+                KnowledgeMarkdown(text: widget.originalBody),
+              ],
+            ),
+          )
+        else ...[
+          FTextField(
+            control: FTextFieldControl.managed(
+              controller: widget.titleController,
+            ),
+            label: Text(l10n.knowledgeCaptureTitleDiffLabel),
+          ),
+          MarkdownEditorWithPreview(
+            controller: widget.bodyController,
+            label: l10n.knowledgeCaptureBodyDiffLabel,
+            minLines: 6,
+            maxLines: 12,
+            initialPreview: true,
+          ),
+        ],
       ],
     );
   }

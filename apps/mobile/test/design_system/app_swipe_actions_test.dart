@@ -4,17 +4,25 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-Widget _wrap(Widget child, {TextDirection direction = TextDirection.ltr}) {
+Widget _wrap(
+  Widget child, {
+  TextDirection direction = TextDirection.ltr,
+  TargetPlatform platform = TargetPlatform.android,
+  TextScaler textScaler = TextScaler.noScaling,
+}) {
   return MaterialApp(
-    theme: AppTheme.light(),
+    theme: AppTheme.light().copyWith(platform: platform),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: FTheme(
       data: FTheme.neutral.light.desktop,
       child: Directionality(
         textDirection: direction,
-        child: Scaffold(
-          body: Center(child: SizedBox(width: 320, child: child)),
+        child: MediaQuery(
+          data: MediaQueryData(textScaler: textScaler),
+          child: Scaffold(
+            body: Center(child: SizedBox(width: 320, child: child)),
+          ),
         ),
       ),
     ),
@@ -177,5 +185,89 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(edited, isTrue);
+  });
+
+  testWidgets('scrolling the list closes the open row', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        SizedBox(
+          height: 180,
+          child: AppSwipeActionGroup(
+            child: ListView(
+              children: [
+                _row(
+                  label: 'Scrollable row',
+                  onEdit: () {},
+                  onContext: () {},
+                  onDelete: () {},
+                ),
+                const SizedBox(height: 400),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final original = tester.getCenter(find.text('Scrollable row')).dx;
+    await tester.drag(find.text('Scrollable row'), const Offset(150, 0));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getCenter(find.text('Scrollable row')).dx,
+      greaterThan(original),
+    );
+
+    await tester.drag(find.byType(ListView), const Offset(0, -20));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getCenter(find.text('Scrollable row')).dx,
+      closeTo(original, 1),
+    );
+  });
+
+  testWidgets('iOS system back edge is not claimed by a row swipe', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        _row(
+          label: 'Edge row',
+          onEdit: () {},
+          onContext: () {},
+          onDelete: () {},
+        ),
+        platform: TargetPlatform.iOS,
+      ),
+    );
+
+    final row = find.byType(AppSwipeActions);
+    final original = tester.getCenter(find.text('Edge row')).dx;
+    final gesture = await tester.startGesture(
+      tester.getTopLeft(row) + const Offset(8, 40),
+    );
+    await gesture.moveBy(const Offset(150, 0));
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(tester.getCenter(find.text('Edge row')).dx, closeTo(original, 1));
+  });
+
+  testWidgets('large text keeps action labels layout-safe', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        _row(
+          label: 'Large text row',
+          onEdit: () {},
+          onContext: () {},
+          onDelete: () {},
+        ),
+        textScaler: const TextScaler.linear(2),
+      ),
+    );
+
+    await tester.drag(find.text('Large text row'), const Offset(190, 0));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Organize'), findsOneWidget);
   });
 }

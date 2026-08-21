@@ -132,7 +132,21 @@ class KnowledgeRepository
     required SyncMeta sync,
   }) async {
     final deletedAt = sync.deletedAt ?? sync.updatedAt;
+    final relationIds = <String>[];
     await _db.transaction(() async {
+      final relationRows =
+          await (_db.select(_db.knowledgeRelations)..where(
+                (table) =>
+                    table.ownerUserId.equals(sync.ownerUserId) &
+                    table.deletedAt.isNull() &
+                    ((table.fromKind.equals(kind.name) &
+                            table.fromId.equals(id)) |
+                        (table.toKind.equals(kind.name) &
+                            table.toId.equals(id))),
+              ))
+              .get();
+      relationIds.addAll(relationRows.map((row) => row.id));
+
       final changed = await _db.customUpdate(
         '''
 UPDATE ${kind.tableName}
@@ -152,8 +166,40 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       if (changed > 0) {
         await _outbox.enqueue(table: kind.tableName, rowId: id);
       }
+
+      if (relationIds.isNotEmpty) {
+        await _db.customUpdate(
+          '''
+UPDATE $_knowledgeRelationsTable
+SET updated_at = ?, updated_by_device = ?, hlc = ?, deleted_at = ?
+WHERE owner_user_id = ? AND deleted_at IS NULL
+  AND ((from_kind = ? AND from_id = ?) OR (to_kind = ? AND to_id = ?))
+''',
+          variables: [
+            Variable<DateTime>(sync.updatedAt),
+            Variable<String>(sync.updatedByDevice),
+            Variable<String>(sync.hlc.toString()),
+            Variable<DateTime>(deletedAt),
+            Variable<String>(sync.ownerUserId),
+            Variable<String>(kind.name),
+            Variable<String>(id),
+            Variable<String>(kind.name),
+            Variable<String>(id),
+          ],
+          updates: {_db.knowledgeRelations},
+        );
+        for (final relationId in relationIds) {
+          await _outbox.enqueue(
+            table: _knowledgeRelationsTable,
+            rowId: relationId,
+          );
+        }
+      }
     });
     _onRowChanged?.call(kind.tableName, id);
+    for (final relationId in relationIds) {
+      _onRowChanged?.call(_knowledgeRelationsTable, relationId);
+    }
   }
 
   TableInfo<Table, Object?> _tableFor(KnowledgeEntryKind kind) =>

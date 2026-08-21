@@ -69,6 +69,24 @@ mixin KnowledgeRelationsRepositoryMixin {
     return rows.map(knowledgeRelationFromRow).toList(growable: false);
   }
 
+  /// Lists every live relation touching an object, regardless of direction.
+  Future<List<KnowledgeRelation>> listRelationsForObject({
+    required String ownerUserId,
+    required String kind,
+    required String id,
+  }) async {
+    final rows =
+        await (_db.select(_db.knowledgeRelations)..where(
+              (table) =>
+                  table.ownerUserId.equals(ownerUserId) &
+                  table.deletedAt.isNull() &
+                  ((table.fromKind.equals(kind) & table.fromId.equals(id)) |
+                      (table.toKind.equals(kind) & table.toId.equals(id))),
+            ))
+            .get();
+    return rows.map(knowledgeRelationFromRow).toList(growable: false);
+  }
+
   /// Returns ids of objects of [kind] that participate in any live relation.
   ///
   /// This intentionally checks both directions: a Note linked *to* a

@@ -15784,6 +15784,17 @@ abstract class AppLocalizations {
   /// **'\"{title}\" will be removed from Library and cleaned from AI memory after the next index sync.'**
   String knowledgeLibraryDeleteBody(Object title);
 
+  /// No description provided for @knowledgeLibraryDeleteImpactBody.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{title}\" has {relationCount} relation(s), {referenceCount} inline reference(s), and {attachmentCount} attachment(s). Relations will be detached; referenced items and attachment files remain. You can undo this deletion.'**
+  String knowledgeLibraryDeleteImpactBody(
+    Object attachmentCount,
+    Object referenceCount,
+    Object relationCount,
+    Object title,
+  );
+
   /// No description provided for @knowledgeObjectNotFound.
   ///
   /// In en, this message translates to:
@@ -22137,6 +22148,36 @@ abstract class AppLocalizations {
   /// **'Preview first; every field remains editable.'**
   String get knowledgeCaptureReviewDraftSubtitle;
 
+  /// No description provided for @knowledgeCaptureOriginalVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Original'**
+  String get knowledgeCaptureOriginalVersion;
+
+  /// No description provided for @knowledgeCaptureOrganizedVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'AI-organized draft'**
+  String get knowledgeCaptureOrganizedVersion;
+
+  /// No description provided for @knowledgeCaptureShowOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'View original'**
+  String get knowledgeCaptureShowOriginal;
+
+  /// No description provided for @knowledgeCaptureShowOrganized.
+  ///
+  /// In en, this message translates to:
+  /// **'View organized'**
+  String get knowledgeCaptureShowOrganized;
+
+  /// No description provided for @knowledgeCaptureUntitledOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled original'**
+  String get knowledgeCaptureUntitledOriginal;
+
   /// No description provided for @knowledgeCaptureOrganizeFailed.
   ///
   /// In en, this message translates to:
@@ -22632,6 +22673,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'AI organize'**
   String get knowledgeItemOrganize;
+
+  /// No description provided for @knowledgeItemLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get knowledgeItemLink;
+
+  /// No description provided for @knowledgeRelationSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Link related knowledge'**
+  String get knowledgeRelationSheetTitle;
+
+  /// No description provided for @knowledgeRelationSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search knowledge'**
+  String get knowledgeRelationSearchHint;
+
+  /// No description provided for @knowledgeRelationNoTargets.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything available is already linked'**
+  String get knowledgeRelationNoTargets;
+
+  /// No description provided for @knowledgeRelationLinkedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked to {title}'**
+  String knowledgeRelationLinkedToast(Object title);
 
   /// No description provided for @knowledgeItemReview.
   ///

@@ -8,6 +8,7 @@
 /// runs classification, links, and contradiction work in the background.
 library;
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
@@ -28,12 +29,24 @@ import 'knowledge_image_insert.dart';
 
 part 'knowledge_capture_views.dart';
 
+class _KnowledgeCaptureSaveResult {
+  const _KnowledgeCaptureSaveResult({
+    required this.saved,
+    this.previous,
+    required this.organized,
+  });
+
+  final KnowledgeNote saved;
+  final KnowledgeNote? previous;
+  final bool organized;
+}
+
 Future<void> showKnowledgeCaptureSheet(BuildContext context) async {
-  final saved = await showGuardedFormSheet<bool>(
+  final result = await showGuardedFormSheet<_KnowledgeCaptureSaveResult>(
     context: context,
     builder: (sheetContext, dirty) => _KnowledgeCaptureSheet(dirty: dirty),
   );
-  if (saved == true && context.mounted) {
+  if (result != null && context.mounted) {
     AppMessenger.show(
       context,
       ToastKind.success,
@@ -48,7 +61,8 @@ Future<void> showOrganizeKnowledgeNoteSheet(
   BuildContext context,
   KnowledgeNote note,
 ) async {
-  final saved = await showGuardedFormSheet<bool>(
+  final container = ProviderScope.containerOf(context);
+  final result = await showGuardedFormSheet<_KnowledgeCaptureSaveResult>(
     context: context,
     builder: (sheetContext, dirty) => _KnowledgeCaptureSheet(
       dirty: dirty,
@@ -56,12 +70,77 @@ Future<void> showOrganizeKnowledgeNoteSheet(
       organizeOnOpen: true,
     ),
   );
-  if (saved == true && context.mounted) {
+  if (result != null && context.mounted) {
+    final l10n = AppLocalizations.of(context);
     AppMessenger.show(
       context,
       ToastKind.success,
-      AppLocalizations.of(context).knowledgeCaptureSavedToast,
+      l10n.knowledgeCaptureSavedToast,
+      actionLabel: result.organized && result.previous != null
+          ? l10n.commonUndo
+          : null,
+      onAction: result.organized && result.previous != null
+          ? () => unawaited(
+              _undoOrganizedNote(
+                context: context,
+                container: container,
+                previous: result.previous!,
+                saved: result.saved,
+              ),
+            )
+          : null,
     );
+  }
+}
+
+Future<void> _undoOrganizedNote({
+  required BuildContext context,
+  required ProviderContainer container,
+  required KnowledgeNote previous,
+  required KnowledgeNote saved,
+}) async {
+  final l10n = AppLocalizations.of(context);
+  try {
+    final repo = await container.read(knowledgeRepositoryProvider.future);
+    final latest = await repo.findNote(
+      ownerUserId: saved.sync.ownerUserId,
+      id: saved.id,
+    );
+    if (latest == null ||
+        latest.title != saved.title ||
+        latest.bodyMd != saved.bodyMd) {
+      throw StateError('The note changed after organization.');
+    }
+    final stamper = await container.read(mutationStamperProvider.future);
+    final stamp = await stamper.stamp();
+    await repo.upsertNote(
+      KnowledgeNote(
+        id: latest.id,
+        title: previous.title,
+        bodyMd: previous.bodyMd,
+        sourceUrl: latest.sourceUrl,
+        tags: latest.tags,
+        projectTag: latest.projectTag,
+        createdAt: latest.createdAt,
+        promotedToKind: latest.promotedToKind,
+        promotedToId: latest.promotedToId,
+        promotedAt: latest.promotedAt,
+        mergedIntoId: latest.mergedIntoId,
+        sync: SyncMeta(
+          ownerUserId: stamp.ownerUserId,
+          updatedAt: stamp.now,
+          updatedByDevice: stamp.deviceId,
+          hlc: stamp.hlc,
+        ),
+      ),
+    );
+    if (context.mounted) {
+      AppMessenger.show(context, ToastKind.success, l10n.commonUndoSucceeded);
+    }
+  } catch (_) {
+    if (context.mounted) {
+      AppMessenger.show(context, ToastKind.error, l10n.commonUndoFailed);
+    }
   }
 }
 
@@ -224,7 +303,15 @@ class _KnowledgeCaptureSheetState
       );
       await repo.upsertNote(note);
       widget.dirty.markPristine();
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) {
+        Navigator.of(context).pop(
+          _KnowledgeCaptureSaveResult(
+            saved: note,
+            previous: existing,
+            organized: previousStage == _CaptureStage.reviewing,
+          ),
+        );
+      }
     } catch (_) {
       if (mounted) {
         setState(() => _stage = previousStage);
@@ -321,6 +408,8 @@ class _KnowledgeCaptureSheetState
           _CaptureStage.reviewing => _OrganizedReviewBody(
             titleController: _titleCtrl,
             bodyController: _bodyCtrl,
+            originalTitle: _originalTitle ?? '',
+            originalBody: _originalBody ?? '',
           ),
           _CaptureStage.saving => const _CaptureProgressBody(saving: true),
         },

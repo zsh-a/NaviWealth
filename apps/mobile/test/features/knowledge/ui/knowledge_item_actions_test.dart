@@ -202,9 +202,88 @@ void main() {
     expect(find.textContaining('Review'), findsOneWidget);
     expect(find.textContaining('Pause'), findsOneWidget);
     expect(find.textContaining('Verify'), findsOneWidget);
-    expect(find.textContaining('Copy summary'), findsOneWidget);
+    expect(find.textContaining('Link'), findsOneWidget);
     expect(find.textContaining('Start'), findsOneWidget);
     expect(find.textContaining('Done'), findsOneWidget);
+  });
+
+  testWidgets('link command creates a synchronized cross-object relation', (
+    tester,
+  ) async {
+    final AppDatabase db = makeTestDatabase();
+    addTearDown(db.close);
+    final repo = KnowledgeRepository(db: db, outbox: InMemoryOutboxStore());
+    final concept = KnowledgeConcept(
+      id: 'concept-source',
+      name: 'Optionality',
+      aliases: const <String>[],
+      summaryMd: '',
+      relatedConceptIds: const <String>[],
+      createdAt: _created,
+      sync: _meta(),
+    );
+    final note = KnowledgeNote(
+      id: 'note-target',
+      title: 'Target note',
+      bodyMd: 'Body',
+      tags: const <String>[],
+      createdAt: _created,
+      sync: _meta(),
+    );
+    await repo.upsertConcept(concept);
+    await repo.upsertNote(note);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          knowledgeRepositoryProvider.overrideWith((_) async => repo),
+          mutationStamperProvider.overrideWith(
+            (_) async => makeStubStamper(userId: 'user', deviceId: 'device'),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          home: FTheme(
+            data: FTheme.neutral.light.desktop,
+            child: AppMessenger.init(
+              child: Scaffold(
+                body: Consumer(
+                  builder: (context, ref, _) {
+                    final action = knowledgeItemActions(
+                      context: context,
+                      ref: ref,
+                      item: concept,
+                      aiAvailable: false,
+                    ).swipeActions.last;
+                    return FButton(
+                      onPress: action.onPressed,
+                      child: Text(action.label),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Link'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Target note'));
+    await tester.pumpAndSettle();
+
+    expect(
+      await repo.listRelationsForObject(
+        ownerUserId: 'user',
+        kind: 'concept',
+        id: concept.id,
+      ),
+      hasLength(1),
+    );
   });
 
   testWidgets('status-driven commands change without changing row grammar', (

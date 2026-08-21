@@ -355,6 +355,7 @@ class _NoteCard extends ConsumerWidget {
       kind: KnowledgeEntryKind.note,
       id: note.id,
       title: title,
+      ownerUserId: note.sync.ownerUserId,
     );
     return AppSwipeActions(
       key: ValueKey<String>('inbox-note-${note.id}'),

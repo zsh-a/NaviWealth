@@ -12,6 +12,7 @@ Future<void> _deleteEntry({
   required KnowledgeEntryKind kind,
   required String id,
   required String title,
+  required String ownerUserId,
 }) async {
   await deleteKnowledgeEntry(
     context: context,
@@ -20,5 +21,6 @@ Future<void> _deleteEntry({
     kind: kind,
     id: id,
     title: title,
+    ownerUserId: ownerUserId,
   );
 }

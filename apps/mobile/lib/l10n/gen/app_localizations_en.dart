@@ -9431,6 +9431,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String knowledgeLibraryDeleteImpactBody(
+    Object attachmentCount,
+    Object referenceCount,
+    Object relationCount,
+    Object title,
+  ) {
+    return '\"$title\" has $relationCount relation(s), $referenceCount inline reference(s), and $attachmentCount attachment(s). Relations will be detached; referenced items and attachment files remain. You can undo this deletion.';
+  }
+
+  @override
   String get knowledgeObjectNotFound => 'Item does not exist or was deleted';
 
   @override
@@ -13161,6 +13171,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Preview first; every field remains editable.';
 
   @override
+  String get knowledgeCaptureOriginalVersion => 'Original';
+
+  @override
+  String get knowledgeCaptureOrganizedVersion => 'AI-organized draft';
+
+  @override
+  String get knowledgeCaptureShowOriginal => 'View original';
+
+  @override
+  String get knowledgeCaptureShowOrganized => 'View organized';
+
+  @override
+  String get knowledgeCaptureUntitledOriginal => 'Untitled original';
+
+  @override
   String get knowledgeCaptureOrganizeFailed =>
       'AI could not produce a safe complete draft. Your original is unchanged.';
 
@@ -13467,6 +13492,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeItemOrganize => 'AI organize';
+
+  @override
+  String get knowledgeItemLink => 'Link';
+
+  @override
+  String get knowledgeRelationSheetTitle => 'Link related knowledge';
+
+  @override
+  String get knowledgeRelationSearchHint => 'Search knowledge';
+
+  @override
+  String get knowledgeRelationNoTargets =>
+      'Everything available is already linked';
+
+  @override
+  String knowledgeRelationLinkedToast(Object title) {
+    return 'Linked to $title';
+  }
 
   @override
   String get knowledgeItemReview => 'Review';

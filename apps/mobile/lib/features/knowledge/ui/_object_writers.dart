@@ -75,6 +75,18 @@ Future<void> showNewExperimentSheet(BuildContext context, WidgetRef _) =>
       builder: (_, dirty) => _ExperimentWriter(dirty: dirty),
     );
 
+/// Starts a new experiment pre-filled from an abandoned historical run.
+/// The source row remains untouched so its result and conclusion stay in the
+/// knowledge timeline.
+Future<void> showRestartExperimentSheet(
+  BuildContext context,
+  WidgetRef _,
+  KnowledgeExperiment source,
+) => showGuardedFormSheet<void>(
+  context: context,
+  builder: (_, dirty) => _ExperimentWriter(template: source, dirty: dirty),
+);
+
 Future<void> showEditExperimentSheet(
   BuildContext context,
   WidgetRef _,

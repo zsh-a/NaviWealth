@@ -132,29 +132,12 @@ class _StaleAssumptionRowState extends ConsumerState<_StaleAssumptionRow> {
     if (confirmed != true || !mounted) return false;
     setState(() => _busy = true);
     try {
-      final repo = await ref.read(knowledgeRepositoryProvider.future);
-      final stamper = await ref.read(mutationStamperProvider.future);
-      final stamp = await stamper.stamp();
-      final a = widget.assumption;
-      await repo.upsertAssumption(
-        KnowledgeAssumption(
-          id: a.id,
-          statement: a.statement,
-          confidence: a.confidence,
-          scope: a.scope,
-          evidenceIds: a.evidenceIds,
-          status: a.status,
-          declaredAt: a.declaredAt,
-          lastVerifiedAt: stamp.now,
-          mergedIntoId: a.mergedIntoId,
-          sync: SyncMeta(
-            ownerUserId: stamp.ownerUserId,
-            updatedAt: stamp.now,
-            updatedByDevice: stamp.deviceId,
-            hlc: stamp.hlc,
-          ),
-        ),
+      final service = await ref.read(knowledgeLifecycleServiceProvider.future);
+      final change = await service.verifyAssumption(
+        ownerUserId: widget.assumption.sync.ownerUserId,
+        id: widget.assumption.id,
       );
+      if (change == null) return false;
       if (mounted) {
         ref.read(_reviewActionsRefreshProvider.notifier).state++;
         AppMessenger.show(

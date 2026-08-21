@@ -131,28 +131,11 @@ Future<void> _markRoutinesDone({
   if (routines.isEmpty) return;
   final l10n = AppLocalizations.of(context);
   try {
-    final repo = await ref.read(knowledgeRepositoryProvider.future);
-    final stamper = await ref.read(mutationStamperProvider.future);
+    final service = await ref.read(knowledgeLifecycleServiceProvider.future);
     for (final r in routines) {
-      final stamp = await stamper.stamp();
-      final next = stamp.now.add(Duration(days: r.intervalDays));
-      await repo.upsertRoutine(
-        KnowledgeRoutine(
-          id: r.id,
-          statement: r.statement,
-          intervalDays: r.intervalDays,
-          nextDueAt: next,
-          lastDoneAt: stamp.now,
-          scope: r.scope,
-          status: r.status,
-          createdAt: r.createdAt,
-          sync: SyncMeta(
-            ownerUserId: stamp.ownerUserId,
-            updatedAt: stamp.now,
-            updatedByDevice: stamp.deviceId,
-            hlc: stamp.hlc,
-          ),
-        ),
+      await service.completeOrResumeRoutine(
+        ownerUserId: r.sync.ownerUserId,
+        id: r.id,
       );
     }
     ref.read(_reviewActionsRefreshProvider.notifier).state++;
@@ -190,36 +173,25 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
     setState(() => _busy = true);
     final l10n = AppLocalizations.of(context);
     try {
-      final repo = await ref.read(knowledgeRepositoryProvider.future);
-      final stamper = await ref.read(mutationStamperProvider.future);
-      final stamp = await stamper.stamp();
-      final r = widget.routine;
-      final next = stamp.now.add(Duration(days: r.intervalDays));
-      await repo.upsertRoutine(
-        KnowledgeRoutine(
-          id: r.id,
-          statement: r.statement,
-          intervalDays: r.intervalDays,
-          nextDueAt: next,
-          lastDoneAt: stamp.now,
-          scope: r.scope,
-          status: r.status,
-          createdAt: r.createdAt,
-          sync: SyncMeta(
-            ownerUserId: stamp.ownerUserId,
-            updatedAt: stamp.now,
-            updatedByDevice: stamp.deviceId,
-            hlc: stamp.hlc,
-          ),
-        ),
+      final service = await ref.read(knowledgeLifecycleServiceProvider.future);
+      final change = await service.completeOrResumeRoutine(
+        ownerUserId: widget.routine.sync.ownerUserId,
+        id: widget.routine.id,
       );
+      if (change == null) return false;
       if (mounted) {
         ref.read(_reviewActionsRefreshProvider.notifier).state++;
+        final repo = await ref.read(knowledgeRepositoryProvider.future);
+        final updated = await repo.findRoutine(
+          ownerUserId: widget.routine.sync.ownerUserId,
+          id: widget.routine.id,
+        );
+        if (!mounted || updated == null) return true;
         AppMessenger.show(
           context,
           ToastKind.success,
           l10n.knowledgeReviewRoutineDone(
-            knowledgeDate(context, next, long: true),
+            knowledgeDate(context, updated.nextDueAt, long: true),
           ),
         );
       }

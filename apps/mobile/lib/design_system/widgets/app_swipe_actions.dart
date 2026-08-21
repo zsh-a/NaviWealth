@@ -60,7 +60,13 @@ class _AppSwipeActionGroupState extends State<AppSwipeActionGroup> {
 
   @override
   Widget build(BuildContext context) {
-    return _AppSwipeActionGroupScope(state: this, child: widget.child);
+    return NotificationListener<ScrollStartNotification>(
+      onNotification: (notification) {
+        if (notification.dragDetails != null) _closeCurrent?.call();
+        return false;
+      },
+      child: _AppSwipeActionGroupScope(state: this, child: widget.child),
+    );
   }
 }
 
@@ -92,6 +98,7 @@ class AppSwipeActions extends StatefulWidget {
     this.trailingActions = const <AppSwipeAction>[],
     this.actionExtent = 72,
     this.borderRadius = AppRadius.md,
+    this.systemBackGestureInset = 24,
   }) : assert(
          leadingActions.length <= 3 && trailingActions.length <= 3,
          'Keep swipe panes short; move lower-frequency commands to a menu.',
@@ -102,6 +109,7 @@ class AppSwipeActions extends StatefulWidget {
   final List<AppSwipeAction> trailingActions;
   final double actionExtent;
   final double borderRadius;
+  final double systemBackGestureInset;
 
   @override
   State<AppSwipeActions> createState() => _AppSwipeActionsState();
@@ -117,11 +125,17 @@ class _AppSwipeActionsState extends State<AppSwipeActions>
   );
   _AppSwipeActionGroupState? _group;
   double _dragStartOffset = 0;
+  bool _busy = false;
 
   double get _leadingExtent =>
-      widget.leadingActions.length * widget.actionExtent;
+      widget.leadingActions.length * _resolvedActionExtent;
   double get _trailingExtent =>
-      widget.trailingActions.length * widget.actionExtent;
+      widget.trailingActions.length * _resolvedActionExtent;
+  double get _resolvedActionExtent {
+    final scale = MediaQuery.textScalerOf(context).scale(1);
+    final extra = ((scale - 1).clamp(0, 1)) * 16;
+    return widget.actionExtent + extra;
+  }
 
   @override
   void didChangeDependencies() {
@@ -203,13 +217,24 @@ class _AppSwipeActionsState extends State<AppSwipeActions>
   }
 
   Future<void> _activate(AppSwipeAction action) async {
+    if (_busy) return;
+    _busy = true;
     AppInteraction.signal(switch (action.tone) {
       AppSwipeActionTone.danger => AppInteractionIntent.destroy,
       AppSwipeActionTone.primary => AppInteractionIntent.commit,
       AppSwipeActionTone.neutral => AppInteractionIntent.select,
     });
-    await _animateTo(0);
-    await action.onPressed();
+    try {
+      await _animateTo(0);
+      await action.onPressed();
+    } finally {
+      _busy = false;
+    }
+  }
+
+  bool _shouldAcceptClosedDrag(PointerEvent event) {
+    if (Theme.of(context).platform != TargetPlatform.iOS) return true;
+    return event.localPosition.dx > widget.systemBackGestureInset;
   }
 
   @override
@@ -245,7 +270,7 @@ class _AppSwipeActionsState extends State<AppSwipeActions>
                     width: _leadingExtent,
                     child: _ActionPane(
                       actions: widget.leadingActions,
-                      actionExtent: widget.actionExtent,
+                      actionExtent: _resolvedActionExtent,
                       onPressed: _activate,
                     ),
                   ),
@@ -257,7 +282,7 @@ class _AppSwipeActionsState extends State<AppSwipeActions>
                     width: _trailingExtent,
                     child: _ActionPane(
                       actions: widget.trailingActions,
-                      actionExtent: widget.actionExtent,
+                      actionExtent: _resolvedActionExtent,
                       onPressed: _activate,
                     ),
                   ),
@@ -283,19 +308,44 @@ class _AppSwipeActionsState extends State<AppSwipeActions>
               ],
             );
           },
-          child: GestureDetector(
+          child: RawGestureDetector(
             behavior: HitTestBehavior.translucent,
-            dragStartBehavior: DragStartBehavior.down,
-            onHorizontalDragStart: _handleDragStart,
-            onHorizontalDragUpdate: _handleDragUpdate,
-            onHorizontalDragEnd: _handleDragEnd,
-            onHorizontalDragCancel: _closeFromGroup,
+            gestures: <Type, GestureRecognizerFactory>{
+              _EdgeAwareHorizontalDragGestureRecognizer:
+                  GestureRecognizerFactoryWithHandlers<
+                    _EdgeAwareHorizontalDragGestureRecognizer
+                  >(
+                    () => _EdgeAwareHorizontalDragGestureRecognizer(
+                      shouldAccept: _shouldAcceptClosedDrag,
+                    ),
+                    (recognizer) {
+                      recognizer
+                        ..shouldAccept = _shouldAcceptClosedDrag
+                        ..dragStartBehavior = DragStartBehavior.down
+                        ..onStart = _handleDragStart
+                        ..onUpdate = _handleDragUpdate
+                        ..onEnd = _handleDragEnd
+                        ..onCancel = _closeFromGroup;
+                    },
+                  ),
+            },
             child: widget.child,
           ),
         ),
       ),
     );
   }
+}
+
+class _EdgeAwareHorizontalDragGestureRecognizer
+    extends HorizontalDragGestureRecognizer {
+  _EdgeAwareHorizontalDragGestureRecognizer({required this.shouldAccept});
+
+  bool Function(PointerEvent event) shouldAccept;
+
+  @override
+  bool isPointerAllowed(PointerEvent event) =>
+      shouldAccept(event) && super.isPointerAllowed(event);
 }
 
 class _ActionPane extends StatelessWidget {
@@ -372,6 +422,9 @@ class _ActionButton extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
+                    textScaler: TextScaler.linear(
+                      MediaQuery.textScalerOf(context).scale(1).clamp(1, 1.3),
+                    ),
                     style: context.labelStyle.copyWith(color: role.foreground),
                   ),
                 ],

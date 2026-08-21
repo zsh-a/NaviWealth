@@ -6,9 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/sync/mutation_context.dart';
-import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../application/knowledge_deletion_service.dart';
+import '../application/knowledge_lifecycle_service.dart';
 import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
@@ -17,6 +18,7 @@ import '_decision_writer.dart';
 import '_object_writers.dart';
 import '_routine_writer.dart';
 import 'knowledge_capture_sheet.dart';
+import 'knowledge_relation_sheet.dart';
 
 class KnowledgeItemActionSet {
   const KnowledgeItemActionSet({
@@ -44,6 +46,7 @@ KnowledgeItemActionSet knowledgeItemActions({
     aiAvailable: aiAvailable,
   );
   final swipe = <AppSwipeAction>[edit, ?contextual];
+  final link = _relationAction(context: context, ref: ref, item: item);
   return KnowledgeItemActionSet(
     swipeActions: swipe,
     menuActions: [
@@ -53,9 +56,27 @@ KnowledgeItemActionSet knowledgeItemActions({
           title: action.label,
           onPress: action.onPressed,
         ),
+      if (contextual?.id != link.id)
+        AppAdaptiveAction(
+          icon: link.icon,
+          title: link.label,
+          onPress: link.onPressed,
+        ),
     ],
   );
 }
+
+AppSwipeAction _relationAction({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Object item,
+}) => AppSwipeAction(
+  id: 'link',
+  icon: FLucideIcons.link,
+  label: AppLocalizations.of(context).knowledgeItemLink,
+  tone: AppSwipeActionTone.primary,
+  onPressed: () => showKnowledgeRelationSheet(context, ref, item),
+);
 
 AppSwipeAction _editAction({
   required BuildContext context,
@@ -94,7 +115,11 @@ AppSwipeAction? _contextualAction({
       tone: AppSwipeActionTone.primary,
       onPressed: () => showOrganizeKnowledgeNoteSheet(context, value),
     ),
-    KnowledgeNote() => null,
+    KnowledgeNote value => _relationAction(
+      context: context,
+      ref: ref,
+      item: value,
+    ),
     KnowledgeDecision value => AppSwipeAction(
       id: 'review',
       icon: FLucideIcons.gitBranch,
@@ -102,16 +127,22 @@ AppSwipeAction? _contextualAction({
       tone: AppSwipeActionTone.primary,
       onPressed: () => showDecisionLifecycleSheet(context, ref, value),
     ),
-    KnowledgePrinciple value => AppSwipeAction(
-      id: value.status == PrincipleStatus.active ? 'pause' : 'resume',
-      icon: value.status == PrincipleStatus.active
-          ? FLucideIcons.pause
-          : FLucideIcons.play,
-      label: value.status == PrincipleStatus.active
-          ? l10n.knowledgeItemPause
-          : l10n.knowledgeItemResume,
-      tone: AppSwipeActionTone.primary,
-      onPressed: () => _togglePrinciple(context, ref, value),
+    KnowledgePrinciple value when value.status != PrincipleStatus.retired =>
+      AppSwipeAction(
+        id: value.status == PrincipleStatus.active ? 'pause' : 'resume',
+        icon: value.status == PrincipleStatus.active
+            ? FLucideIcons.pause
+            : FLucideIcons.play,
+        label: value.status == PrincipleStatus.active
+            ? l10n.knowledgeItemPause
+            : l10n.knowledgeItemResume,
+        tone: AppSwipeActionTone.primary,
+        onPressed: () => _togglePrinciple(context, ref, value),
+      ),
+    KnowledgePrinciple value => _relationAction(
+      context: context,
+      ref: ref,
+      item: value,
     ),
     KnowledgeAssumption value
         when value.status == AssumptionStatus.active ||
@@ -123,25 +154,33 @@ AppSwipeAction? _contextualAction({
         tone: AppSwipeActionTone.primary,
         onPressed: () => _verifyAssumption(context, ref, value),
       ),
-    KnowledgeAssumption() => null,
-    KnowledgeConcept value => AppSwipeAction(
-      id: 'copy-summary',
-      icon: FLucideIcons.copy,
-      label: l10n.knowledgeItemCopySummary,
-      tone: AppSwipeActionTone.primary,
-      onPressed: () => _copyConcept(context, value),
+    KnowledgeAssumption value => _relationAction(
+      context: context,
+      ref: ref,
+      item: value,
+    ),
+    KnowledgeConcept value => _relationAction(
+      context: context,
+      ref: ref,
+      item: value,
     ),
     KnowledgeExperiment value => _experimentAction(context, ref, value),
-    KnowledgeRoutine value => AppSwipeAction(
-      id: value.status == RoutineStatus.active ? 'complete' : 'resume',
-      icon: value.status == RoutineStatus.active
-          ? FLucideIcons.circleCheck
-          : FLucideIcons.play,
-      label: value.status == RoutineStatus.active
-          ? l10n.knowledgeReviewMarkDone
-          : l10n.knowledgeItemResume,
-      tone: AppSwipeActionTone.primary,
-      onPressed: () => _runRoutineAction(context, ref, value),
+    KnowledgeRoutine value when value.status != RoutineStatus.archived =>
+      AppSwipeAction(
+        id: value.status == RoutineStatus.active ? 'complete' : 'resume',
+        icon: value.status == RoutineStatus.active
+            ? FLucideIcons.circleCheck
+            : FLucideIcons.play,
+        label: value.status == RoutineStatus.active
+            ? l10n.knowledgeReviewMarkDone
+            : l10n.knowledgeItemResume,
+        tone: AppSwipeActionTone.primary,
+        onPressed: () => _runRoutineAction(context, ref, value),
+      ),
+    KnowledgeRoutine value => _relationAction(
+      context: context,
+      ref: ref,
+      item: value,
     ),
     _ => null,
   };
@@ -185,7 +224,7 @@ AppSwipeAction _experimentAction(
       icon: FLucideIcons.rotateCcw,
       label: l10n.knowledgeItemRestartExperiment,
       tone: AppSwipeActionTone.primary,
-      onPressed: () => _startExperiment(context, ref, experiment),
+      onPressed: () => showRestartExperimentSheet(context, ref, experiment),
     ),
   };
 }
@@ -196,13 +235,44 @@ Future<void> deleteKnowledgeEntry({
   required KnowledgeEntryKind kind,
   required String id,
   required String title,
+  required String ownerUserId,
   KnowledgeRepository? repository,
 }) async {
   final l10n = AppLocalizations.of(context);
+  late final KnowledgeDeletionService deletionService;
+  late final KnowledgeDeleteImpact impact;
+  try {
+    final KnowledgeRepository repo =
+        repository ?? (await ref.read(knowledgeRepositoryProvider.future));
+    deletionService = KnowledgeDeletionService(
+      repository: repo,
+      stamper: await ref.read(mutationStamperProvider.future),
+    );
+    impact = await deletionService.analyze(
+      ownerUserId: ownerUserId,
+      kind: kind,
+      id: id,
+    );
+  } catch (_) {
+    if (context.mounted) {
+      AppMessenger.show(context, ToastKind.error, l10n.commonDeleteFailed);
+    }
+    return;
+  }
+  if (!context.mounted) return;
   final confirmed = await showConfirmDialog(
     context: context,
     title: Text(l10n.knowledgeLibraryDeleteTitle),
-    body: Text(l10n.knowledgeLibraryDeleteBody(title)),
+    body: Text(
+      impact.hasDependencies
+          ? l10n.knowledgeLibraryDeleteImpactBody(
+              title,
+              impact.relationCount,
+              impact.referenceCount,
+              impact.attachmentCount,
+            )
+          : l10n.knowledgeLibraryDeleteBody(title),
+    ),
     confirmLabel: l10n.commonDelete,
     cancelLabel: l10n.commonCancel,
     destructive: true,
@@ -210,16 +280,27 @@ Future<void> deleteKnowledgeEntry({
   if (confirmed != true || !context.mounted) return;
 
   try {
-    final KnowledgeRepository repo =
-        repository ?? (await ref.read(knowledgeRepositoryProvider.future));
-    final sync = await _stamp(ref);
-    await repo.deleteEntry(
+    final change = await deletionService.delete(
+      ownerUserId: ownerUserId,
       kind: kind,
       id: id,
-      sync: sync.copyWith(deletedAt: sync.updatedAt),
     );
+    if (change == null) return;
     if (context.mounted) {
-      AppMessenger.show(context, ToastKind.success, l10n.knowledgeDeletedToast);
+      AppMessenger.show(
+        context,
+        ToastKind.success,
+        l10n.knowledgeDeletedToast,
+        actionLabel: l10n.commonUndo,
+        onAction: () => unawaited(
+          _undoMutation(
+            context: context,
+            undo: change.undo,
+            successMessage: l10n.commonUndoSucceeded,
+            failureMessage: l10n.commonUndoFailed,
+          ),
+        ),
+      );
     }
   } catch (_) {
     if (context.mounted) {
@@ -228,28 +309,20 @@ Future<void> deleteKnowledgeEntry({
   }
 }
 
-Future<SyncMeta> _stamp(WidgetRef ref) async {
-  final stamper = await ref.read(mutationStamperProvider.future);
-  final stamp = await stamper.stamp();
-  return SyncMeta(
-    ownerUserId: stamp.ownerUserId,
-    updatedAt: stamp.now,
-    updatedByDevice: stamp.deviceId,
-    hlc: stamp.hlc,
-  );
-}
-
-Future<void> _runUndoableMutation({
+Future<void> _runLifecycleMutation({
   required BuildContext context,
   required WidgetRef ref,
-  required Future<void> Function(KnowledgeRepository repo, SyncMeta sync) apply,
-  required Future<void> Function(KnowledgeRepository repo, SyncMeta sync) undo,
+  required Future<KnowledgeLifecycleChange?> Function(
+    KnowledgeLifecycleService service,
+  )
+  apply,
   required String successMessage,
 }) async {
   final l10n = AppLocalizations.of(context);
   try {
-    final repo = await ref.read(knowledgeRepositoryProvider.future);
-    await apply(repo, await _stamp(ref));
+    final service = await ref.read(knowledgeLifecycleServiceProvider.future);
+    final change = await apply(service);
+    if (change == null) return;
     if (!context.mounted) return;
     AppMessenger.show(
       context,
@@ -259,9 +332,7 @@ Future<void> _runUndoableMutation({
       onAction: () => unawaited(
         _undoMutation(
           context: context,
-          ref: ref,
-          repository: repo,
-          undo: undo,
+          undo: change.undo,
           successMessage: l10n.commonUndoSucceeded,
           failureMessage: l10n.commonUndoFailed,
         ),
@@ -276,14 +347,18 @@ Future<void> _runUndoableMutation({
 
 Future<void> _undoMutation({
   required BuildContext context,
-  required WidgetRef ref,
-  required KnowledgeRepository repository,
-  required Future<void> Function(KnowledgeRepository repo, SyncMeta sync) undo,
+  required Future<bool> Function() undo,
   required String successMessage,
   required String failureMessage,
 }) async {
   try {
-    await undo(repository, await _stamp(ref));
+    final undone = await undo();
+    if (!undone) {
+      if (context.mounted) {
+        AppMessenger.show(context, ToastKind.warning, failureMessage);
+      }
+      return;
+    }
     if (context.mounted) {
       AppMessenger.show(context, ToastKind.success, successMessage);
     }
@@ -299,36 +374,16 @@ Future<void> _togglePrinciple(
   WidgetRef ref,
   KnowledgePrinciple principle,
 ) {
-  final next = principle.status == PrincipleStatus.active
-      ? PrincipleStatus.paused
-      : PrincipleStatus.active;
-  return _runUndoableMutation(
+  return _runLifecycleMutation(
     context: context,
     ref: ref,
     successMessage: AppLocalizations.of(context).knowledgeItemUpdatedToast,
-    apply: (repo, sync) => repo.upsertPrinciple(
-      _principleWith(principle, status: next, sync: sync),
-    ),
-    undo: (repo, sync) => repo.upsertPrinciple(
-      _principleWith(principle, status: principle.status, sync: sync),
+    apply: (service) => service.togglePrinciple(
+      ownerUserId: principle.sync.ownerUserId,
+      id: principle.id,
     ),
   );
 }
-
-KnowledgePrinciple _principleWith(
-  KnowledgePrinciple value, {
-  required PrincipleStatus status,
-  required SyncMeta sync,
-}) => KnowledgePrinciple(
-  id: value.id,
-  statement: value.statement,
-  rationaleMd: value.rationaleMd,
-  scope: value.scope,
-  status: status,
-  declaredAt: value.declaredAt,
-  mergedIntoId: value.mergedIntoId,
-  sync: sync,
-);
 
 Future<void> _verifyAssumption(
   BuildContext context,
@@ -345,160 +400,47 @@ Future<void> _verifyAssumption(
     icon: FLucideIcons.badgeCheck,
   );
   if (confirmed != true || !context.mounted) return;
-  await _runUndoableMutation(
+  await _runLifecycleMutation(
     context: context,
     ref: ref,
     successMessage: l10n.knowledgeReviewAssumptionVerified,
-    apply: (repo, sync) => repo.upsertAssumption(
-      _assumptionWith(assumption, lastVerifiedAt: sync.updatedAt, sync: sync),
-    ),
-    undo: (repo, sync) => repo.upsertAssumption(
-      _assumptionWith(
-        assumption,
-        lastVerifiedAt: assumption.lastVerifiedAt,
-        sync: sync,
-      ),
+    apply: (service) => service.verifyAssumption(
+      ownerUserId: assumption.sync.ownerUserId,
+      id: assumption.id,
     ),
   );
 }
-
-KnowledgeAssumption _assumptionWith(
-  KnowledgeAssumption value, {
-  required DateTime? lastVerifiedAt,
-  required SyncMeta sync,
-}) => KnowledgeAssumption(
-  id: value.id,
-  statement: value.statement,
-  confidence: value.confidence,
-  scope: value.scope,
-  evidenceIds: value.evidenceIds,
-  status: value.status,
-  declaredAt: value.declaredAt,
-  lastVerifiedAt: lastVerifiedAt,
-  mergedIntoId: value.mergedIntoId,
-  sync: sync,
-);
 
 Future<void> _startExperiment(
   BuildContext context,
   WidgetRef ref,
   KnowledgeExperiment experiment,
 ) {
-  return _runUndoableMutation(
+  return _runLifecycleMutation(
     context: context,
     ref: ref,
     successMessage: AppLocalizations.of(context).knowledgeItemUpdatedToast,
-    apply: (repo, sync) => repo.upsertExperiment(
-      _experimentWith(
-        experiment,
-        status: ExperimentStatus.running,
-        endedAt: null,
-        sync: sync,
-      ),
-    ),
-    undo: (repo, sync) => repo.upsertExperiment(
-      _experimentWith(
-        experiment,
-        status: experiment.status,
-        endedAt: experiment.endedAt,
-        sync: sync,
-      ),
+    apply: (service) => service.startExperiment(
+      ownerUserId: experiment.sync.ownerUserId,
+      id: experiment.id,
     ),
   );
 }
-
-KnowledgeExperiment _experimentWith(
-  KnowledgeExperiment value, {
-  required ExperimentStatus status,
-  required DateTime? endedAt,
-  required SyncMeta sync,
-}) => KnowledgeExperiment(
-  id: value.id,
-  hypothesis: value.hypothesis,
-  methodMd: value.methodMd,
-  metrics: value.metrics,
-  status: status,
-  resultMd: value.resultMd,
-  conclusionMd: value.conclusionMd,
-  targetAssumptionId: value.targetAssumptionId,
-  startedAt: value.startedAt,
-  endedAt: endedAt,
-  mergedIntoId: value.mergedIntoId,
-  sync: sync,
-);
 
 Future<void> _runRoutineAction(
   BuildContext context,
   WidgetRef ref,
   KnowledgeRoutine routine,
 ) {
-  return _runUndoableMutation(
+  return _runLifecycleMutation(
     context: context,
     ref: ref,
     successMessage: AppLocalizations.of(context).knowledgeItemUpdatedToast,
-    apply: (repo, sync) {
-      final active = routine.status == RoutineStatus.active;
-      return repo.upsertRoutine(
-        _routineWith(
-          routine,
-          status: RoutineStatus.active,
-          nextDueAt: active
-              ? sync.updatedAt.add(Duration(days: routine.intervalDays))
-              : routine.nextDueAt,
-          lastDoneAt: active ? sync.updatedAt : routine.lastDoneAt,
-          sync: sync,
-        ),
-      );
-    },
-    undo: (repo, sync) => repo.upsertRoutine(
-      _routineWith(
-        routine,
-        status: routine.status,
-        nextDueAt: routine.nextDueAt,
-        lastDoneAt: routine.lastDoneAt,
-        sync: sync,
-      ),
+    apply: (service) => service.completeOrResumeRoutine(
+      ownerUserId: routine.sync.ownerUserId,
+      id: routine.id,
     ),
   );
-}
-
-KnowledgeRoutine _routineWith(
-  KnowledgeRoutine value, {
-  required RoutineStatus status,
-  required DateTime nextDueAt,
-  required DateTime? lastDoneAt,
-  required SyncMeta sync,
-}) => KnowledgeRoutine(
-  id: value.id,
-  statement: value.statement,
-  intervalDays: value.intervalDays,
-  nextDueAt: nextDueAt,
-  lastDoneAt: lastDoneAt,
-  scope: value.scope,
-  status: status,
-  createdAt: value.createdAt,
-  sync: sync,
-);
-
-Future<void> _copyConcept(
-  BuildContext context,
-  KnowledgeConcept concept,
-) async {
-  await Clipboard.setData(
-    ClipboardData(
-      text: [
-        concept.name,
-        if (concept.summaryMd.trim().isNotEmpty) concept.summaryMd.trim(),
-      ].join('\n\n'),
-    ),
-  );
-  if (context.mounted) {
-    AppMessenger.show(
-      context,
-      ToastKind.success,
-      AppLocalizations.of(context).knowledgeItemCopiedToast,
-    );
-  }
 }
 
 Future<void> _copyExperimentResult(

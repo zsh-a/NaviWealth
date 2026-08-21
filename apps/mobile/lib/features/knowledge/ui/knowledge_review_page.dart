@@ -23,6 +23,7 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as knowledge_agent_providers;
 import '../agents/routine_due_agent.dart';
+import '../application/knowledge_lifecycle_service.dart';
 import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';

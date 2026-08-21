@@ -8953,6 +8953,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String knowledgeLibraryDeleteImpactBody(
+    Object attachmentCount,
+    Object referenceCount,
+    Object relationCount,
+    Object title,
+  ) {
+    return '“$title”关联了 $relationCount 条关系、$referenceCount 处内联引用和 $attachmentCount 个附件。关系会解除，引用对象与附件文件会保留；删除后可撤销。';
+  }
+
+  @override
   String get knowledgeObjectNotFound => '条目不存在或已删除';
 
   @override
@@ -12492,6 +12502,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeCaptureReviewDraftSubtitle => '默认先预览，标题和正文仍可编辑。';
 
   @override
+  String get knowledgeCaptureOriginalVersion => '原始内容';
+
+  @override
+  String get knowledgeCaptureOrganizedVersion => 'AI 整理稿';
+
+  @override
+  String get knowledgeCaptureShowOriginal => '查看原文';
+
+  @override
+  String get knowledgeCaptureShowOrganized => '查看整理稿';
+
+  @override
+  String get knowledgeCaptureUntitledOriginal => '无标题原文';
+
+  @override
   String get knowledgeCaptureOrganizeFailed => 'AI 未能生成安全、完整的整理稿，原文没有变化。';
 
   @override
@@ -12777,6 +12802,23 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeItemOrganize => 'AI 整理';
+
+  @override
+  String get knowledgeItemLink => '建立关联';
+
+  @override
+  String get knowledgeRelationSheetTitle => '关联知识';
+
+  @override
+  String get knowledgeRelationSearchHint => '搜索知识';
+
+  @override
+  String get knowledgeRelationNoTargets => '可用内容均已关联';
+
+  @override
+  String knowledgeRelationLinkedToast(Object title) {
+    return '已关联至“$title”';
+  }
 
   @override
   String get knowledgeItemReview => '复盘';

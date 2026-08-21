@@ -3,10 +3,12 @@ part of '_object_writers.dart';
 class _ExperimentWriter extends ConsumerStatefulWidget {
   const _ExperimentWriter({
     this.initial,
+    this.template,
     required this.dirty,
     this.focusEvidence = false,
-  });
+  }) : assert(initial == null || template == null);
   final KnowledgeExperiment? initial;
+  final KnowledgeExperiment? template;
   final FormDirtyController dirty;
   final bool focusEvidence;
   @override
@@ -15,13 +17,16 @@ class _ExperimentWriter extends ConsumerStatefulWidget {
 
 class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
   late final _hypoCtrl = TextEditingController(
-    text: widget.initial?.hypothesis ?? '',
+    text: widget.initial?.hypothesis ?? widget.template?.hypothesis ?? '',
   );
   late final _methodCtrl = TextEditingController(
-    text: widget.initial?.methodMd ?? '',
+    text: widget.initial?.methodMd ?? widget.template?.methodMd ?? '',
   );
   late final _metricsCtrl = TextEditingController(
-    text: widget.initial?.metrics.join(', ') ?? '',
+    text:
+        widget.initial?.metrics.join(', ') ??
+        widget.template?.metrics.join(', ') ??
+        '',
   );
   late final _resultCtrl = TextEditingController(
     text: widget.initial?.resultMd ?? '',
@@ -31,7 +36,8 @@ class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
   );
   late ExperimentStatus _status =
       widget.initial?.status ?? ExperimentStatus.planned;
-  late String? _targetAssumptionId = widget.initial?.targetAssumptionId;
+  late String? _targetAssumptionId =
+      widget.initial?.targetAssumptionId ?? widget.template?.targetAssumptionId;
   bool _saving = false;
 
   @override
