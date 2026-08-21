@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/knowledge/data/capture_classifier.dart';
 import 'package:naviwealth/features/knowledge/data/capture_kind.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_llm_client.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
+import 'package:naviwealth/features/knowledge/ui/knowledge_capture_sheet.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_inbox_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -171,6 +174,60 @@ void main() {
         .widgetList<EditableText>(find.byType(EditableText))
         .toList(growable: false);
     expect(fields.last.controller.text, original);
+  });
+
+  testWidgets('organizes an existing note from its current complete content', (
+    tester,
+  ) async {
+    final classifier = _OrganizedCaptureClassifier();
+    final created = DateTime.utc(2026, 8, 21);
+    final note = KnowledgeNote(
+      id: 'existing-note',
+      title: 'Rough title',
+      bodyMd: 'rough note: one thing, another thing',
+      tags: const <String>['durable'],
+      projectTag: 'knowledge',
+      createdAt: created,
+      sync: SyncMeta(
+        ownerUserId: 'user',
+        updatedAt: created,
+        updatedByDevice: 'device',
+        hlc: Hlc.zero('device'),
+      ),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          knowledgeLlmProfileClientProvider.overrideWithValue(
+            const _AvailableKnowledgeLlmClient(),
+          ),
+          captureClassifierProvider.overrideWithValue(classifier),
+        ],
+        child: FTheme(
+          data: FTheme.neutral.light.desktop,
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en', 'US'),
+            home: Builder(
+              builder: (context) => FButton(
+                onPress: () => showOrganizeKnowledgeNoteSheet(context, note),
+                child: const Text('Organize existing'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Organize existing'));
+    await pumpVisualTransition(tester);
+
+    expect(find.text('Review organized note'), findsOneWidget);
+    expect(find.text('A clear, searchable title'), findsOneWidget);
+    expect(classifier.lastText, contains('Rough title'));
+    expect(classifier.lastText, contains(note.bodyMd));
   });
 }
 

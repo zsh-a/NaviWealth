@@ -22627,6 +22627,72 @@ abstract class AppLocalizations {
   /// **'Knowledge item actions'**
   String get knowledgeLibraryItemActions;
 
+  /// No description provided for @knowledgeItemOrganize.
+  ///
+  /// In en, this message translates to:
+  /// **'AI organize'**
+  String get knowledgeItemOrganize;
+
+  /// No description provided for @knowledgeItemReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get knowledgeItemReview;
+
+  /// No description provided for @knowledgeItemPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get knowledgeItemPause;
+
+  /// No description provided for @knowledgeItemResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get knowledgeItemResume;
+
+  /// No description provided for @knowledgeItemCopySummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy summary'**
+  String get knowledgeItemCopySummary;
+
+  /// No description provided for @knowledgeItemStartExperiment.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get knowledgeItemStartExperiment;
+
+  /// No description provided for @knowledgeItemRecordResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Record result'**
+  String get knowledgeItemRecordResult;
+
+  /// No description provided for @knowledgeItemCopyResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy result'**
+  String get knowledgeItemCopyResult;
+
+  /// No description provided for @knowledgeItemRestartExperiment.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart'**
+  String get knowledgeItemRestartExperiment;
+
+  /// No description provided for @knowledgeItemUpdatedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge updated'**
+  String get knowledgeItemUpdatedToast;
+
+  /// No description provided for @knowledgeItemCopiedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get knowledgeItemCopiedToast;
+
   /// No description provided for @knowledgeLibrarySearchRecent.
   ///
   /// In en, this message translates to:

@@ -12776,6 +12776,39 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeLibraryItemActions => '知识条目操作';
 
   @override
+  String get knowledgeItemOrganize => 'AI 整理';
+
+  @override
+  String get knowledgeItemReview => '复盘';
+
+  @override
+  String get knowledgeItemPause => '暂停';
+
+  @override
+  String get knowledgeItemResume => '恢复';
+
+  @override
+  String get knowledgeItemCopySummary => '复制摘要';
+
+  @override
+  String get knowledgeItemStartExperiment => '开始';
+
+  @override
+  String get knowledgeItemRecordResult => '记录结果';
+
+  @override
+  String get knowledgeItemCopyResult => '复制结果';
+
+  @override
+  String get knowledgeItemRestartExperiment => '重新开始';
+
+  @override
+  String get knowledgeItemUpdatedToast => '知识已更新';
+
+  @override
+  String get knowledgeItemCopiedToast => '已复制';
+
+  @override
   String get knowledgeLibrarySearchRecent => '最近';
 
   @override

@@ -80,6 +80,7 @@ export 'widgets/app_selectable_text.dart';
 export 'widgets/app_sheet.dart';
 export 'widgets/app_status_banner.dart';
 export 'widgets/app_status_line.dart';
+export 'widgets/app_swipe_actions.dart';
 export 'widgets/app_tappable.dart';
 export 'widgets/app_task_scaffold.dart';
 export 'widgets/app_toast.dart';

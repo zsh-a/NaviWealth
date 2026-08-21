@@ -78,10 +78,15 @@ Future<void> showNewExperimentSheet(BuildContext context, WidgetRef _) =>
 Future<void> showEditExperimentSheet(
   BuildContext context,
   WidgetRef _,
-  KnowledgeExperiment experiment,
-) => showGuardedFormSheet<void>(
+  KnowledgeExperiment experiment, {
+  bool focusEvidence = false,
+}) => showGuardedFormSheet<void>(
   context: context,
-  builder: (_, dirty) => _ExperimentWriter(initial: experiment, dirty: dirty),
+  builder: (_, dirty) => _ExperimentWriter(
+    initial: experiment,
+    dirty: dirty,
+    focusEvidence: focusEvidence,
+  ),
 );
 
 Future<void> showEditNoteSheet(

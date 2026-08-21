@@ -17,6 +17,33 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  testWidgets('reveals edit and type action on right swipe', (tester) async {
+    await _pumpLibrary(
+      tester,
+      width: 390,
+      repository: _EmptyKnowledgeRepository(
+        decisions: [_decision('review-me', DecisionStatus.active)],
+      ),
+    );
+
+    final tile = find.byKey(
+      const ValueKey<String>('lib-tile-decision:review-me'),
+    );
+    expect(tile, findsOneWidget);
+
+    await tester.drag(tile, const Offset(150, 0));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey<String>('app-swipe-action.edit')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('app-swipe-action.review')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('uses one immediate contextual filter', (tester) async {
     await _pumpLibrary(
       tester,

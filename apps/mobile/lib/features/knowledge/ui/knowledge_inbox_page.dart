@@ -15,11 +15,14 @@ import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/knowledge_route_paths.dart';
+import '../data/knowledge_llm_client.dart';
+import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_ai_suggestions_card.dart';
 import '_widgets.dart';
 import 'knowledge_capture_sheet.dart';
+import 'knowledge_item_actions.dart';
 
 final _knowledgeInboxPendingSuggestionsProvider =
     FutureProvider.autoDispose<int>((ref) async {
@@ -300,18 +303,21 @@ class _NotesList extends ConsumerWidget {
           }
           return AppRefreshIndicator(
             onRefresh: () => _refreshKnowledgeRepository(ref),
-            child: ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: shellTabContentPadding(
-                context,
-                top: AppSpacing.s8,
-                bottom: AppSpacing.s64,
-              ),
-              itemCount: notes.length,
-              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
-              itemBuilder: (context, i) => AppOnceEntrance(
-                index: i,
-                child: _NoteCard(note: notes[i]),
+            child: AppSwipeActionGroup(
+              child: ListView.separated(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: shellTabContentPadding(
+                  context,
+                  top: AppSpacing.s8,
+                  bottom: AppSpacing.s64,
+                ),
+                itemCount: notes.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: AppSpacing.s8),
+                itemBuilder: (context, i) => AppOnceEntrance(
+                  index: i,
+                  child: _NoteCard(note: notes[i]),
+                ),
               ),
             ),
           );
@@ -327,56 +333,110 @@ Future<void> _refreshKnowledgeRepository(WidgetRef ref) async {
   await ref.read(knowledgeRepositoryProvider.future);
 }
 
-class _NoteCard extends StatelessWidget {
+class _NoteCard extends ConsumerWidget {
   const _NoteCard({required this.note});
   final KnowledgeNote note;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
-    return KnowledgeSection.item(
-      onPress: () => context.pushNamed(
-        KnowledgeRouteNames.objectDetail,
-        pathParameters: {'kind': 'note', 'id': note.id},
-      ),
-      title: note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
-      children: [
-        if (note.bodyMd.isNotEmpty)
-          Text(knowledgeExcerpt(note.bodyMd), style: context.bodyCaptionStyle),
-        const SizedBox(height: AppSpacing.s6),
-        Row(
-          children: [
-            Icon(
-              FLucideIcons.clock,
-              size: AppIconSizes.xs,
-              color: colors.mutedForeground,
+    final aiAvailable = ref.watch(knowledgeLlmProfileClientProvider) != null;
+    final actions = knowledgeItemActions(
+      context: context,
+      ref: ref,
+      item: note,
+      aiAvailable: aiAvailable,
+    );
+    final title = note.title.isEmpty ? l10n.knowledgeUntitled : note.title;
+    Future<void> delete() => deleteKnowledgeEntry(
+      context: context,
+      ref: ref,
+      kind: KnowledgeEntryKind.note,
+      id: note.id,
+      title: title,
+    );
+    return AppSwipeActions(
+      key: ValueKey<String>('inbox-note-${note.id}'),
+      leadingActions: actions.swipeActions,
+      trailingActions: <AppSwipeAction>[
+        AppSwipeAction(
+          id: 'delete',
+          icon: FLucideIcons.trash2,
+          label: l10n.commonDelete,
+          tone: AppSwipeActionTone.danger,
+          onPressed: delete,
+        ),
+      ],
+      borderRadius: AppRadius.sm,
+      child: KnowledgeSection.item(
+        onPress: () => context.pushNamed(
+          KnowledgeRouteNames.objectDetail,
+          pathParameters: {'kind': 'note', 'id': note.id},
+        ),
+        title: title,
+        trailing: AppAdaptiveActionMenu(
+          title: l10n.knowledgeLibraryItemActions,
+          actions: [
+            ...actions.menuActions,
+            AppAdaptiveAction(
+              icon: FLucideIcons.trash2,
+              title: l10n.commonDelete,
+              destructive: true,
+              onPress: delete,
             ),
-            const SizedBox(width: AppSpacing.s4),
+          ],
+          triggerBuilder: (context, openMenu, focusNode) => Focus(
+            focusNode: focusNode,
+            child: AppIconButton(
+              icon: FLucideIcons.ellipsis,
+              tooltip: l10n.knowledgeLibraryItemActions,
+              onPress: openMenu,
+              size: AppControlHeights.touchTarget,
+              iconSize: AppIconSizes.xs,
+            ),
+          ),
+        ),
+        children: [
+          if (note.bodyMd.isNotEmpty)
             Text(
-              knowledgeDate(context, note.createdAt),
-              style: context.captionStyle,
+              knowledgeExcerpt(note.bodyMd),
+              style: context.bodyCaptionStyle,
             ),
-            if (note.projectTag != null && note.projectTag!.isNotEmpty) ...[
-              const SizedBox(width: AppSpacing.s8),
+          const SizedBox(height: AppSpacing.s6),
+          Row(
+            children: [
               Icon(
-                FLucideIcons.folder,
+                FLucideIcons.clock,
                 size: AppIconSizes.xs,
                 color: colors.mutedForeground,
               ),
               const SizedBox(width: AppSpacing.s4),
-              Flexible(
-                child: Text(
-                  note.projectTag!,
-                  style: context.captionStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              Text(
+                knowledgeDate(context, note.createdAt),
+                style: context.captionStyle,
               ),
+              if (note.projectTag != null && note.projectTag!.isNotEmpty) ...[
+                const SizedBox(width: AppSpacing.s8),
+                Icon(
+                  FLucideIcons.folder,
+                  size: AppIconSizes.xs,
+                  color: colors.mutedForeground,
+                ),
+                const SizedBox(width: AppSpacing.s4),
+                Flexible(
+                  child: Text(
+                    note.projectTag!,
+                    style: context.captionStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ],
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }

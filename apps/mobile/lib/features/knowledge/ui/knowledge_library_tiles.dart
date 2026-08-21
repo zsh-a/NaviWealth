@@ -2,6 +2,9 @@ part of 'knowledge_library_page.dart';
 
 Widget _buildLibraryTile(
   BuildContext context, {
+  required WidgetRef ref,
+  required Object item,
+  required bool aiAvailable,
   required String title,
   required String query,
   required VoidCallback onPress,
@@ -13,16 +16,29 @@ Widget _buildLibraryTile(
   List<Widget> subtitle = const <Widget>[],
 }) {
   final colors = context.theme.colors;
-  return AppDismissible(
-    itemKey: ValueKey<String>('lib-tile-${itemKey ?? title}'),
-    // The delete dialog owns the mutation; the row snaps back.
-    removeRow: false,
-    onTrigger: onDelete,
+  final l10n = AppLocalizations.of(context);
+  final actions = knowledgeItemActions(
+    context: context,
+    ref: ref,
+    item: item,
+    aiAvailable: aiAvailable,
+  );
+  final deleteSwipeAction = AppSwipeAction(
+    id: 'delete',
+    icon: FLucideIcons.trash2,
+    label: l10n.commonDelete,
+    tone: AppSwipeActionTone.danger,
+    onPressed: onDelete,
+  );
+  return AppSwipeActions(
+    key: ValueKey<String>('lib-tile-${itemKey ?? title}'),
+    leadingActions: actions.swipeActions,
+    trailingActions: <AppSwipeAction>[deleteSwipeAction],
     borderRadius: AppRadius.sm,
     child: Semantics(
       button: true,
       label: [
-        title.isEmpty ? AppLocalizations.of(context).knowledgeUntitled : title,
+        title.isEmpty ? l10n.knowledgeUntitled : title,
         ?statusBadge,
       ].join(', '),
       child: KnowledgeSection.item(
@@ -53,13 +69,12 @@ Widget _buildLibraryTile(
                   const SizedBox(width: AppSpacing.s4),
                 ],
                 AppAdaptiveActionMenu(
-                  title: AppLocalizations.of(
-                    context,
-                  ).knowledgeLibraryItemActions,
+                  title: l10n.knowledgeLibraryItemActions,
                   actions: [
+                    ...actions.menuActions,
                     AppAdaptiveAction(
                       icon: FLucideIcons.trash2,
-                      title: AppLocalizations.of(context).commonDelete,
+                      title: l10n.commonDelete,
                       destructive: true,
                       onPress: onDelete,
                     ),
@@ -68,9 +83,7 @@ Widget _buildLibraryTile(
                     focusNode: focusNode,
                     child: AppIconButton(
                       icon: FLucideIcons.ellipsis,
-                      tooltip: AppLocalizations.of(
-                        context,
-                      ).knowledgeLibraryItemActions,
+                      tooltip: l10n.knowledgeLibraryItemActions,
                       onPress: openMenu,
                       size: AppControlHeights.touchTarget,
                       iconSize: AppIconSizes.xs,
@@ -90,6 +103,8 @@ Widget _buildLibraryTile(
 Widget _buildAllTile(
   BuildContext context,
   _LibraryEntry entry, {
+  required WidgetRef ref,
+  required bool aiAvailable,
   required String query,
   required VoidCallback onDelete,
 }) {
@@ -98,6 +113,8 @@ Widget _buildAllTile(
     KnowledgeEntryKind.decision => _buildDecisionTile(
       context,
       entry.value as KnowledgeDecision,
+      ref: ref,
+      aiAvailable: aiAvailable,
       query: query,
       onDelete: onDelete,
       itemKey: itemKey,
@@ -105,6 +122,8 @@ Widget _buildAllTile(
     KnowledgeEntryKind.principle => _buildPrincipleTile(
       context,
       entry.value as KnowledgePrinciple,
+      ref: ref,
+      aiAvailable: aiAvailable,
       query: query,
       onDelete: onDelete,
       itemKey: itemKey,
@@ -112,6 +131,8 @@ Widget _buildAllTile(
     KnowledgeEntryKind.assumption => _buildAssumptionTile(
       context,
       entry.value as KnowledgeAssumption,
+      ref: ref,
+      aiAvailable: aiAvailable,
       query: query,
       onDelete: onDelete,
       itemKey: itemKey,
@@ -119,6 +140,8 @@ Widget _buildAllTile(
     KnowledgeEntryKind.note => _buildNoteTile(
       context,
       entry.value as KnowledgeNote,
+      ref: ref,
+      aiAvailable: aiAvailable,
       query: query,
       onDelete: onDelete,
       itemKey: itemKey,
@@ -126,6 +149,8 @@ Widget _buildAllTile(
     KnowledgeEntryKind.concept => _buildConceptTile(
       context,
       entry.value as KnowledgeConcept,
+      ref: ref,
+      aiAvailable: aiAvailable,
       query: query,
       onDelete: onDelete,
       itemKey: itemKey,
@@ -133,6 +158,8 @@ Widget _buildAllTile(
     KnowledgeEntryKind.experiment => _buildExperimentTile(
       context,
       entry.value as KnowledgeExperiment,
+      ref: ref,
+      aiAvailable: aiAvailable,
       query: query,
       onDelete: onDelete,
       itemKey: itemKey,
@@ -140,6 +167,8 @@ Widget _buildAllTile(
     KnowledgeEntryKind.routine => _buildRoutineTile(
       context,
       entry.value as KnowledgeRoutine,
+      ref: ref,
+      aiAvailable: aiAvailable,
       query: query,
       onDelete: onDelete,
       itemKey: itemKey,
@@ -150,6 +179,8 @@ Widget _buildAllTile(
 Widget _buildDecisionTile(
   BuildContext context,
   KnowledgeDecision d, {
+  required WidgetRef ref,
+  required bool aiAvailable,
   required String query,
   required VoidCallback onDelete,
   String? itemKey,
@@ -174,6 +205,9 @@ Widget _buildDecisionTile(
   ];
   return _buildLibraryTile(
     context,
+    ref: ref,
+    item: d,
+    aiAvailable: aiAvailable,
     title: d.question,
     query: query,
     itemKey: itemKey,
@@ -190,6 +224,8 @@ Widget _buildDecisionTile(
 Widget _buildNoteTile(
   BuildContext context,
   KnowledgeNote n, {
+  required WidgetRef ref,
+  required bool aiAvailable,
   required String query,
   required VoidCallback onDelete,
   String? itemKey,
@@ -206,6 +242,9 @@ Widget _buildNoteTile(
   ];
   return _buildLibraryTile(
     context,
+    ref: ref,
+    item: n,
+    aiAvailable: aiAvailable,
     title: n.title.isEmpty ? l10n.knowledgeUntitled : n.title,
     query: query,
     itemKey: itemKey,
@@ -220,6 +259,8 @@ Widget _buildNoteTile(
 Widget _buildPrincipleTile(
   BuildContext context,
   KnowledgePrinciple p, {
+  required WidgetRef ref,
+  required bool aiAvailable,
   required String query,
   required VoidCallback onDelete,
   String? itemKey,
@@ -238,6 +279,9 @@ Widget _buildPrincipleTile(
   ];
   return _buildLibraryTile(
     context,
+    ref: ref,
+    item: p,
+    aiAvailable: aiAvailable,
     title: p.statement,
     query: query,
     itemKey: itemKey,
@@ -256,6 +300,8 @@ Widget _buildPrincipleTile(
 Widget _buildAssumptionTile(
   BuildContext context,
   KnowledgeAssumption a, {
+  required WidgetRef ref,
+  required bool aiAvailable,
   required String query,
   required VoidCallback onDelete,
   String? itemKey,
@@ -272,6 +318,9 @@ Widget _buildAssumptionTile(
   ];
   return _buildLibraryTile(
     context,
+    ref: ref,
+    item: a,
+    aiAvailable: aiAvailable,
     title: a.statement,
     query: query,
     itemKey: itemKey,
@@ -290,6 +339,8 @@ Widget _buildAssumptionTile(
 Widget _buildConceptTile(
   BuildContext context,
   KnowledgeConcept c, {
+  required WidgetRef ref,
+  required bool aiAvailable,
   required String query,
   required VoidCallback onDelete,
   String? itemKey,
@@ -304,6 +355,9 @@ Widget _buildConceptTile(
   ];
   return _buildLibraryTile(
     context,
+    ref: ref,
+    item: c,
+    aiAvailable: aiAvailable,
     title: c.name,
     query: query,
     itemKey: itemKey,
@@ -319,12 +373,17 @@ Widget _buildConceptTile(
 Widget _buildExperimentTile(
   BuildContext context,
   KnowledgeExperiment e, {
+  required WidgetRef ref,
+  required bool aiAvailable,
   required String query,
   required VoidCallback onDelete,
   String? itemKey,
 }) {
   return _buildLibraryTile(
     context,
+    ref: ref,
+    item: e,
+    aiAvailable: aiAvailable,
     title: e.hypothesis,
     query: query,
     itemKey: itemKey,
@@ -342,6 +401,8 @@ Widget _buildExperimentTile(
 Widget _buildRoutineTile(
   BuildContext context,
   KnowledgeRoutine r, {
+  required WidgetRef ref,
+  required bool aiAvailable,
   required String query,
   required VoidCallback onDelete,
   String? itemKey,
@@ -364,6 +425,9 @@ Widget _buildRoutineTile(
   ];
   return _buildLibraryTile(
     context,
+    ref: ref,
+    item: r,
+    aiAvailable: aiAvailable,
     title: r.statement,
     query: query,
     itemKey: itemKey,

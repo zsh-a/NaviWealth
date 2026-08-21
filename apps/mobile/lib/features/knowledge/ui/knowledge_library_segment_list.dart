@@ -191,16 +191,22 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
 
         final list = AppRefreshIndicator(
           onRefresh: widget.onRefresh,
-          child: ListView.separated(
-            key: PageStorageKey<String>(
-              'knowledge-library.${widget.storageKey}',
-            ),
-            physics: const AlwaysScrollableScrollPhysics(),
-            itemCount: visibleItems.length,
-            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
-            itemBuilder: (context, i) => AppOnceEntrance(
-              index: i,
-              child: widget.tileBuilder(context, visibleItems[i], widget.query),
+          child: AppSwipeActionGroup(
+            child: ListView.separated(
+              key: PageStorageKey<String>(
+                'knowledge-library.${widget.storageKey}',
+              ),
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: visibleItems.length,
+              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
+              itemBuilder: (context, i) => AppOnceEntrance(
+                index: i,
+                child: widget.tileBuilder(
+                  context,
+                  visibleItems[i],
+                  widget.query,
+                ),
+              ),
             ),
           ),
         );

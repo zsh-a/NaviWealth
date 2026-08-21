@@ -42,10 +42,39 @@ Future<void> showKnowledgeCaptureSheet(BuildContext context) async {
   }
 }
 
+/// Re-runs the capture organizer for an existing note without mutating it
+/// until the user reviews and accepts the polished draft.
+Future<void> showOrganizeKnowledgeNoteSheet(
+  BuildContext context,
+  KnowledgeNote note,
+) async {
+  final saved = await showGuardedFormSheet<bool>(
+    context: context,
+    builder: (sheetContext, dirty) => _KnowledgeCaptureSheet(
+      dirty: dirty,
+      initialNote: note,
+      organizeOnOpen: true,
+    ),
+  );
+  if (saved == true && context.mounted) {
+    AppMessenger.show(
+      context,
+      ToastKind.success,
+      AppLocalizations.of(context).knowledgeCaptureSavedToast,
+    );
+  }
+}
+
 class _KnowledgeCaptureSheet extends ConsumerStatefulWidget {
-  const _KnowledgeCaptureSheet({required this.dirty});
+  const _KnowledgeCaptureSheet({
+    required this.dirty,
+    this.initialNote,
+    this.organizeOnOpen = false,
+  });
 
   final FormDirtyController dirty;
+  final KnowledgeNote? initialNote;
+  final bool organizeOnOpen;
   @override
   ConsumerState<_KnowledgeCaptureSheet> createState() =>
       _KnowledgeCaptureSheetState();
@@ -55,8 +84,12 @@ enum _CaptureStage { composing, organizing, reviewing, saving }
 
 class _KnowledgeCaptureSheetState
     extends ConsumerState<_KnowledgeCaptureSheet> {
-  final _titleCtrl = TextEditingController();
-  final _bodyCtrl = TextEditingController();
+  late final _titleCtrl = TextEditingController(
+    text: widget.initialNote?.title ?? '',
+  );
+  late final _bodyCtrl = TextEditingController(
+    text: widget.initialNote?.bodyMd ?? '',
+  );
   final _bodyFocus = FocusNode();
   _CaptureStage _stage = _CaptureStage.composing;
   String? _originalTitle;
@@ -69,7 +102,13 @@ class _KnowledgeCaptureSheetState
     _titleCtrl.addListener(_onTextChange);
     widget.dirty.bindTextControllers([_titleCtrl, _bodyCtrl]);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _bodyFocus.requestFocus();
+      if (!mounted) return;
+      if (widget.organizeOnOpen &&
+          ref.read(knowledgeLlmProfileClientProvider) != null) {
+        _organize();
+      } else {
+        _bodyFocus.requestFocus();
+      }
     });
   }
 
@@ -163,12 +202,19 @@ class _KnowledgeCaptureSheetState
       final stamp = await stamper.stamp();
       final body = _bodyCtrl.text;
       final typedTitle = _titleCtrl.text.trim();
+      final existing = widget.initialNote;
       final note = KnowledgeNote(
-        id: kKnowledgeUuid.v4(),
+        id: existing?.id ?? kKnowledgeUuid.v4(),
         title: typedTitle.isEmpty ? _organizedFallbackTitle(body) : typedTitle,
         bodyMd: body,
-        tags: const <String>[],
-        createdAt: stamp.now,
+        sourceUrl: existing?.sourceUrl,
+        tags: existing?.tags ?? const <String>[],
+        projectTag: existing?.projectTag,
+        createdAt: existing?.createdAt ?? stamp.now,
+        promotedToKind: existing?.promotedToKind,
+        promotedToId: existing?.promotedToId,
+        promotedAt: existing?.promotedAt,
+        mergedIntoId: existing?.mergedIntoId,
         sync: SyncMeta(
           ownerUserId: stamp.ownerUserId,
           updatedAt: stamp.now,

@@ -13466,6 +13466,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeLibraryItemActions => 'Knowledge item actions';
 
   @override
+  String get knowledgeItemOrganize => 'AI organize';
+
+  @override
+  String get knowledgeItemReview => 'Review';
+
+  @override
+  String get knowledgeItemPause => 'Pause';
+
+  @override
+  String get knowledgeItemResume => 'Resume';
+
+  @override
+  String get knowledgeItemCopySummary => 'Copy summary';
+
+  @override
+  String get knowledgeItemStartExperiment => 'Start';
+
+  @override
+  String get knowledgeItemRecordResult => 'Record result';
+
+  @override
+  String get knowledgeItemCopyResult => 'Copy result';
+
+  @override
+  String get knowledgeItemRestartExperiment => 'Restart';
+
+  @override
+  String get knowledgeItemUpdatedToast => 'Knowledge updated';
+
+  @override
+  String get knowledgeItemCopiedToast => 'Copied';
+
+  @override
   String get knowledgeLibrarySearchRecent => 'Recent';
 
   @override

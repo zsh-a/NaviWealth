@@ -34,6 +34,7 @@ class _LibraryList extends ConsumerWidget {
     final owner = ref.watch(activeUserIdProvider);
     if (owner == null) return const AppListPageSkeleton(itemCount: 5);
     final repoAsync = ref.watch(knowledgeRepositoryProvider);
+    final aiAvailable = ref.watch(knowledgeLlmProfileClientProvider) != null;
     final l10n = AppLocalizations.of(context);
     // Scope above the loading/data branches: pull-to-refresh reuses the
     // same entrance watermark, so refreshed rows don't replay the entrance.
@@ -66,6 +67,8 @@ class _LibraryList extends ConsumerWidget {
             tileBuilder: (context, entry, query) => _buildAllTile(
               context,
               entry,
+              ref: ref,
+              aiAvailable: aiAvailable,
               query: query,
               onDelete: () => _deleteEntry(
                 context: context,
@@ -101,6 +104,8 @@ class _LibraryList extends ConsumerWidget {
             tileBuilder: (context, d, query) => _buildDecisionTile(
               context,
               d,
+              ref: ref,
+              aiAvailable: aiAvailable,
               query: query,
               onDelete: () => _deleteEntry(
                 context: context,
@@ -125,6 +130,8 @@ class _LibraryList extends ConsumerWidget {
             tileBuilder: (context, p, query) => _buildPrincipleTile(
               context,
               p,
+              ref: ref,
+              aiAvailable: aiAvailable,
               query: query,
               onDelete: () => _deleteEntry(
                 context: context,
@@ -156,6 +163,8 @@ class _LibraryList extends ConsumerWidget {
             tileBuilder: (context, a, query) => _buildAssumptionTile(
               context,
               a,
+              ref: ref,
+              aiAvailable: aiAvailable,
               query: query,
               onDelete: () => _deleteEntry(
                 context: context,
@@ -185,6 +194,8 @@ class _LibraryList extends ConsumerWidget {
             tileBuilder: (context, n, query) => _buildNoteTile(
               context,
               n,
+              ref: ref,
+              aiAvailable: aiAvailable,
               query: query,
               onDelete: () => _deleteEntry(
                 context: context,
@@ -213,6 +224,8 @@ class _LibraryList extends ConsumerWidget {
             tileBuilder: (context, c, query) => _buildConceptTile(
               context,
               c,
+              ref: ref,
+              aiAvailable: aiAvailable,
               query: query,
               onDelete: () => _deleteEntry(
                 context: context,
@@ -241,6 +254,8 @@ class _LibraryList extends ConsumerWidget {
             tileBuilder: (context, e, query) => _buildExperimentTile(
               context,
               e,
+              ref: ref,
+              aiAvailable: aiAvailable,
               query: query,
               onDelete: () => _deleteEntry(
                 context: context,
@@ -264,6 +279,8 @@ class _LibraryList extends ConsumerWidget {
             tileBuilder: (context, r, query) => _buildRoutineTile(
               context,
               r,
+              ref: ref,
+              aiAvailable: aiAvailable,
               query: query,
               onDelete: () => _deleteEntry(
                 context: context,

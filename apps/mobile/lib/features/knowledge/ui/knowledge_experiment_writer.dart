@@ -1,9 +1,14 @@
 part of '_object_writers.dart';
 
 class _ExperimentWriter extends ConsumerStatefulWidget {
-  const _ExperimentWriter({this.initial, required this.dirty});
+  const _ExperimentWriter({
+    this.initial,
+    required this.dirty,
+    this.focusEvidence = false,
+  });
   final KnowledgeExperiment? initial;
   final FormDirtyController dirty;
+  final bool focusEvidence;
   @override
   ConsumerState<_ExperimentWriter> createState() => _ExperimentWriterState();
 }
@@ -182,6 +187,7 @@ class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
             title: l10n.knowledgeWriterEvidenceSectionTitle,
             collapsible: true,
             initiallyExpanded:
+                widget.focusEvidence ||
                 _status == ExperimentStatus.done ||
                 _resultCtrl.text.isNotEmpty ||
                 _conclusionCtrl.text.isNotEmpty,
