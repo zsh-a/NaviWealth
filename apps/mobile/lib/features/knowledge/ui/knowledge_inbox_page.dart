@@ -47,11 +47,6 @@ class KnowledgeInboxPage extends ConsumerWidget {
       directActionBudget: 2,
       actions: [
         ShellHeaderActionSpec(
-          icon: FLucideIcons.plus,
-          label: l10n.knowledgeCaptureAction,
-          onPress: () => showKnowledgeCaptureSheet(context),
-        ),
-        ShellHeaderActionSpec(
           icon: FLucideIcons.clipboardCheck,
           label: l10n.knowledgeTabReview,
           badgeCount: pendingSuggestions.value ?? 0,
@@ -243,7 +238,7 @@ class _InboxCaptureBar extends ConsumerWidget {
               triggerBuilder: (context, openMenu, focusNode) => Focus(
                 focusNode: focusNode,
                 child: AppIconButton(
-                  icon: FLucideIcons.ellipsis,
+                  icon: FLucideIcons.sparkles,
                   tooltip: l10n.knowledgeAiSuggestionsTitle,
                   onPress: openMenu,
                   size: AppSpacing.s40,

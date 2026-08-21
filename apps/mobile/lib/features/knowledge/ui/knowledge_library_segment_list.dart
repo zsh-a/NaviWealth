@@ -54,13 +54,31 @@ class _SegmentList<T> extends StatefulWidget {
 
 class _SegmentListState<T> extends State<_SegmentList<T>> {
   String? _statusFilter;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void didUpdateWidget(covariant _SegmentList<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.emptyTitle != widget.emptyTitle) {
       _statusFilter = null;
+      _resetScroll();
+    } else if (oldWidget.query != widget.query) {
+      _resetScroll();
     }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _resetScroll() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _scrollController.hasClients) {
+        _scrollController.jumpTo(0);
+      }
+    });
   }
 
   @override
@@ -79,6 +97,9 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
               operation: 'load knowledge library segment',
             ),
           );
+        }
+        if (snap.connectionState == ConnectionState.waiting && !snap.hasData) {
+          return const AppListPageSkeleton(itemCount: 5);
         }
         final items = snap.data ?? <T>[];
         if (items.isEmpty) {
@@ -197,6 +218,7 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
                 'knowledge-library.${widget.storageKey}',
               ),
               physics: const AlwaysScrollableScrollPhysics(),
+              controller: _scrollController,
               itemCount: visibleItems.length,
               separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
               itemBuilder: (context, i) => AppOnceEntrance(
@@ -261,6 +283,7 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
     );
     if (!mounted || selection == null) return;
     setState(() => _statusFilter = selection.isEmpty ? null : selection);
+    _resetScroll();
   }
 
   List<String> _suggestionsFor(

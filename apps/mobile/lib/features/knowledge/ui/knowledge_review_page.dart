@@ -182,8 +182,25 @@ class _KnowledgeReviewCompleteState extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final empty = ref.watch(_knowledgeReviewIsEmptyProvider);
     return empty.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+      loading: () => const Padding(
+        padding: EdgeInsets.only(top: AppSpacing.s12),
+        child: KnowledgeSectionSkeleton(),
+      ),
+      error: (error, stackTrace) => Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.s12),
+        child: AppEmptyState.inline(
+          icon: FLucideIcons.refreshCw,
+          title: userSafeErrorMessage(
+            context,
+            error,
+            stackTrace: stackTrace,
+            operation: 'load knowledge review state',
+          ),
+          tone: AppEmptyStateTone.error,
+          retryLabel: AppLocalizations.of(context).commonRetry,
+          onRetry: () => ref.invalidate(_knowledgeReviewIsEmptyProvider),
+        ),
+      ),
       data: (isEmpty) {
         if (!isEmpty) return const SizedBox.shrink();
         final l10n = AppLocalizations.of(context);

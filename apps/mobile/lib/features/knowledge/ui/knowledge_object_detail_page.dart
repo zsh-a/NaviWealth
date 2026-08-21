@@ -17,6 +17,7 @@ import 'package:go_router/go_router.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/knowledge_route_paths.dart';
+import '../data/knowledge_llm_client.dart';
 import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
@@ -24,6 +25,7 @@ import '_object_writers.dart';
 import '_routine_writer.dart';
 import '_widgets.dart';
 import 'knowledge_execution_action.dart';
+import 'knowledge_item_actions.dart';
 import 'knowledge_status_labels.dart';
 
 part 'knowledge_object_detail_links.dart';
@@ -72,6 +74,7 @@ class _KnowledgeObjectDetailPageState
   List<KnowledgeExperiment> _targetingExperiments =
       const <KnowledgeExperiment>[];
   bool _loading = true;
+  int _loadGeneration = 0;
 
   KnowledgeObjectKind? get _kind => KnowledgeObjectKind.parse(widget.kind);
 
@@ -81,7 +84,23 @@ class _KnowledgeObjectDetailPageState
     _load();
   }
 
+  @override
+  void didUpdateWidget(covariant KnowledgeObjectDetailPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.kind != widget.kind || oldWidget.id != widget.id) {
+      _object = null;
+      _relatedConcepts = const <KnowledgeConcept>[];
+      _targetAssumption = null;
+      _evidenceNotes = const <KnowledgeNote>[];
+      _referencingDecisions = const <KnowledgeDecision>[];
+      _linkedDecisions = const <KnowledgeDecision>[];
+      _targetingExperiments = const <KnowledgeExperiment>[];
+      _load();
+    }
+  }
+
   Future<void> _load() async {
+    final generation = ++_loadGeneration;
     setState(() {
       _loading = true;
       _error = null;
@@ -102,7 +121,7 @@ class _KnowledgeObjectDetailPageState
         kind,
         widget.id,
       );
-      if (mounted) {
+      if (mounted && generation == _loadGeneration) {
         setState(() {
           _object = obj;
           _relatedConcepts = related.relatedConcepts;
@@ -120,7 +139,7 @@ class _KnowledgeObjectDetailPageState
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && generation == _loadGeneration) {
         setState(() {
           _error = e;
           _loading = false;
@@ -255,6 +274,16 @@ class _KnowledgeObjectDetailPageState
 
   @override
   Widget build(BuildContext context) {
+    final obj = _object;
+    final moreActions = obj == null
+        ? const <AppAdaptiveAction>[]
+        : knowledgeItemActions(
+            context: context,
+            ref: ref,
+            item: obj,
+            aiAvailable: ref.watch(knowledgeLlmProfileClientProvider) != null,
+            includeEditInMenu: false,
+          ).menuActions;
     return ObjectDetailScaffold(
       title: _title(context),
       actions: [
@@ -264,6 +293,31 @@ class _KnowledgeObjectDetailPageState
             icon: const Icon(FLucideIcons.pencil),
             onPress: () => _editObject(context),
           ),
+        if (moreActions.isNotEmpty)
+          AppAdaptiveActionMenu(
+            title: AppLocalizations.of(context).knowledgeLibraryItemActions,
+            actions: [
+              for (final action in moreActions)
+                AppAdaptiveAction(
+                  icon: action.icon,
+                  title: action.title,
+                  subtitle: action.subtitle,
+                  destructive: action.destructive,
+                  onPress: () async {
+                    await action.onPress();
+                    if (mounted) await _load();
+                  },
+                ),
+            ],
+            triggerBuilder: (context, openMenu, focusNode) => AppHeaderAction(
+              semanticsLabel: AppLocalizations.of(
+                context,
+              ).knowledgeLibraryItemActions,
+              icon: const Icon(FLucideIcons.ellipsis),
+              focusNode: focusNode,
+              onPress: openMenu,
+            ),
+          ),
       ],
       child: _buildBody(),
     );
@@ -271,25 +325,26 @@ class _KnowledgeObjectDetailPageState
 
   bool get _canEdit => _object != null && _kind != null;
 
-  void _editObject(BuildContext context) {
+  Future<void> _editObject(BuildContext context) async {
     final obj = _object;
     if (obj == null) return;
     switch (obj) {
       case final KnowledgeNote n:
-        showEditNoteSheet(context, ref, n);
+        await showEditNoteSheet(context, ref, n);
       case final KnowledgeConcept c:
-        showEditConceptSheet(context, ref, c);
+        await showEditConceptSheet(context, ref, c);
       case final KnowledgePrinciple p:
-        showEditPrincipleSheet(context, ref, p);
+        await showEditPrincipleSheet(context, ref, p);
       case final KnowledgeAssumption a:
-        showEditAssumptionSheet(context, ref, a);
+        await showEditAssumptionSheet(context, ref, a);
       case final KnowledgeExperiment e:
-        showEditExperimentSheet(context, ref, e);
+        await showEditExperimentSheet(context, ref, e);
       case final KnowledgeRoutine r:
-        showEditRoutineSheet(context, ref, r);
+        await showEditRoutineSheet(context, ref, r);
       default:
-        break;
+        return;
     }
+    if (mounted) await _load();
   }
 
   String _title(BuildContext context) => switch (_kind) {

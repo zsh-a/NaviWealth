@@ -7,6 +7,7 @@ import 'package:naviwealth/core/lifeos/action_dispatcher.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
@@ -68,6 +69,17 @@ void main() {
         overrides: [
           knowledgeRepositoryProvider.overrideWith((ref) async => repo),
           knowledgeOwnerUserIdProvider.overrideWith((ref) async => owner),
+          mutationStamperProvider.overrideWith(
+            (ref) async => MutationStamper(
+              currentUserId: () async => owner,
+              deviceId: () async => 'dev-test',
+              stampHlc: () async => Hlc(
+                wallMillis: created.millisecondsSinceEpoch + 1,
+                counter: 0,
+                nodeId: 'dev-test',
+              ),
+            ),
+          ),
           ...overrides,
         ],
         child: FTheme(
@@ -208,5 +220,54 @@ void main() {
     expect(captured?.sourceRowFamily, 'know:knowledge_experiments');
     expect(captured?.sourceRowId, experiment.id);
     expect(find.text('Open action'), findsOneWidget);
+  });
+
+  testWidgets('manages and removes existing knowledge relations', (
+    tester,
+  ) async {
+    final source = concept(id: 'source', name: 'Source concept');
+    final related = concept(id: 'related', name: 'Related concept');
+    await repo.upsertConcept(source);
+    await repo.upsertConcept(related);
+    await repo.upsertRelation(
+      KnowledgeRelation(
+        id: knowledgeRelationId(
+          fromKind: 'concept',
+          fromId: source.id,
+          relation: KnowledgeRelationType.relatedTo,
+          toKind: 'concept',
+          toId: related.id,
+        ),
+        fromKind: 'concept',
+        fromId: source.id,
+        relation: KnowledgeRelationType.relatedTo,
+        toKind: 'concept',
+        toId: related.id,
+        createdAt: created,
+        sync: meta(),
+      ),
+    );
+
+    await pumpDetail(tester, source.id);
+    await tester.tap(find.byIcon(FLucideIcons.ellipsis));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Link'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Linked'), findsOneWidget);
+    expect(find.text('Related concept'), findsWidgets);
+    expect(find.text('Concepts · Remove link'), findsOneWidget);
+
+    await tester.tap(find.text('Related concept').last);
+    await tester.pumpAndSettle();
+    expect(
+      await repo.listRelationsForObject(
+        ownerUserId: owner,
+        kind: 'concept',
+        id: source.id,
+      ),
+      isEmpty,
+    );
+    expect(find.text('Available knowledge'), findsOneWidget);
   });
 }

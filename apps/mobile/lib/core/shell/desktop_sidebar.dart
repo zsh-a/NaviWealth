@@ -368,8 +368,16 @@ class _SidebarRowState extends State<_SidebarRow> {
       ),
     );
 
-    if (!widget.collapsed) return row;
-    return FTooltip(tipBuilder: (_, _) => Text(widget.label), child: row);
+    final semanticRow = Semantics(
+      container: true,
+      selected: widget.selected,
+      child: row,
+    );
+    if (!widget.collapsed) return semanticRow;
+    return FTooltip(
+      tipBuilder: (_, _) => Text(widget.label),
+      child: semanticRow,
+    );
   }
 }
 

@@ -8479,6 +8479,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeAiSuggestionAppliedToast => '建议已应用到笔记。';
 
   @override
+  String get knowledgeAiSuggestionViewAction => '查看';
+
+  @override
+  String get knowledgeAiSuggestionDismissedToast => '已忽略建议。';
+
+  @override
   String get knowledgeAiSuggestionFeedbackLabel => '这条建议有帮助吗？';
 
   @override
@@ -12402,6 +12408,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeCaptureTitle => '写一条想法';
 
   @override
+  String get knowledgeCaptureDraftRecovered => '已恢复这台设备上未完成的录入。';
+
+  @override
+  String get knowledgeCaptureDraftDiscard => '丢弃草稿';
+
+  @override
+  String get knowledgeCaptureDraftCleared => '草稿已清除';
+
+  @override
   String get knowledgeCaptureTitleField => '标题（可选）';
 
   @override
@@ -12818,6 +12833,22 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String knowledgeRelationLinkedToast(Object title) {
     return '已关联至“$title”';
+  }
+
+  @override
+  String get knowledgeRelationLinkedTitle => '已关联';
+
+  @override
+  String get knowledgeRelationAvailableTitle => '可关联知识';
+
+  @override
+  String knowledgeRelationRemoveLink(Object kind) {
+    return '$kind · 解除关联';
+  }
+
+  @override
+  String knowledgeRelationUnlinkedToast(Object title) {
+    return '已解除与“$title”的关联';
   }
 
   @override

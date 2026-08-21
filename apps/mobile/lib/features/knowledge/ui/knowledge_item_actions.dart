@@ -37,6 +37,7 @@ KnowledgeItemActionSet knowledgeItemActions({
   required WidgetRef ref,
   required Object item,
   required bool aiAvailable,
+  bool includeEditInMenu = true,
 }) {
   final edit = _editAction(context: context, ref: ref, item: item);
   final contextual = _contextualAction(
@@ -51,11 +52,12 @@ KnowledgeItemActionSet knowledgeItemActions({
     swipeActions: swipe,
     menuActions: [
       for (final action in swipe)
-        AppAdaptiveAction(
-          icon: action.icon,
-          title: action.label,
-          onPress: action.onPressed,
-        ),
+        if (includeEditInMenu || action.id != edit.id)
+          AppAdaptiveAction(
+            icon: action.icon,
+            title: action.label,
+            onPress: action.onPressed,
+          ),
       if (contextual?.id != link.id)
         AppAdaptiveAction(
           icon: link.icon,

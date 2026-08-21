@@ -16,6 +16,7 @@ import 'package:go_router/go_router.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/knowledge_route_paths.dart';
+import '../data/knowledge_llm_client.dart';
 import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
@@ -23,6 +24,7 @@ import '_decision_lifecycle_sheet.dart';
 import '_decision_writer.dart';
 import '_widgets.dart';
 import 'knowledge_execution_action.dart';
+import 'knowledge_item_actions.dart';
 import 'knowledge_status_labels.dart';
 
 class KnowledgeDecisionDetailPage extends ConsumerWidget {
@@ -50,6 +52,7 @@ class _BodyState extends ConsumerState<_Body> {
   List<KnowledgeAssumption> _assumptions = const <KnowledgeAssumption>[];
   List<KnowledgeDecision> _linkedDecisions = const <KnowledgeDecision>[];
   bool _loading = true;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -57,7 +60,21 @@ class _BodyState extends ConsumerState<_Body> {
     _load();
   }
 
+  @override
+  void didUpdateWidget(covariant _Body oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.decisionId != widget.decisionId) {
+      _decision = null;
+      _chain = const <KnowledgeDecision>[];
+      _principles = const <KnowledgePrinciple>[];
+      _assumptions = const <KnowledgeAssumption>[];
+      _linkedDecisions = const <KnowledgeDecision>[];
+      _load();
+    }
+  }
+
   Future<void> _load() async {
+    final generation = ++_loadGeneration;
     setState(() {
       _loading = true;
       _error = null;
@@ -70,7 +87,9 @@ class _BodyState extends ConsumerState<_Body> {
         id: widget.decisionId,
       );
       if (d == null) {
-        if (mounted) setState(() => _loading = false);
+        if (mounted && generation == _loadGeneration) {
+          setState(() => _loading = false);
+        }
         return;
       }
 
@@ -122,7 +141,7 @@ class _BodyState extends ConsumerState<_Body> {
         if (linked != null) linkedDecisions.add(linked);
       }
 
-      if (mounted) {
+      if (mounted && generation == _loadGeneration) {
         setState(() {
           _decision = d;
           _chain = chain;
@@ -133,7 +152,7 @@ class _BodyState extends ConsumerState<_Body> {
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && generation == _loadGeneration) {
         setState(() {
           _error = e;
           _loading = false;
@@ -155,6 +174,15 @@ class _BodyState extends ConsumerState<_Body> {
   @override
   Widget build(BuildContext context) {
     final d = _decision;
+    final moreActions = d == null
+        ? const <AppAdaptiveAction>[]
+        : knowledgeItemActions(
+            context: context,
+            ref: ref,
+            item: d,
+            aiAvailable: ref.watch(knowledgeLlmProfileClientProvider) != null,
+            includeEditInMenu: false,
+          ).menuActions;
     return ObjectDetailScaffold(
       title: AppLocalizations.of(context).knowledgeDecisionDetailTitle,
       actions: [
@@ -171,6 +199,31 @@ class _BodyState extends ConsumerState<_Body> {
             ).knowledgeDecisionLifecycleTitle,
             icon: const Icon(FLucideIcons.gitBranch),
             onPress: () => _openLifecycle(d),
+          ),
+        if (moreActions.isNotEmpty)
+          AppAdaptiveActionMenu(
+            title: AppLocalizations.of(context).knowledgeLibraryItemActions,
+            actions: [
+              for (final action in moreActions)
+                AppAdaptiveAction(
+                  icon: action.icon,
+                  title: action.title,
+                  subtitle: action.subtitle,
+                  destructive: action.destructive,
+                  onPress: () async {
+                    await action.onPress();
+                    if (mounted) await _load();
+                  },
+                ),
+            ],
+            triggerBuilder: (context, openMenu, focusNode) => AppHeaderAction(
+              semanticsLabel: AppLocalizations.of(
+                context,
+              ).knowledgeLibraryItemActions,
+              icon: const Icon(FLucideIcons.ellipsis),
+              focusNode: focusNode,
+              onPress: openMenu,
+            ),
           ),
       ],
       child: _buildBody(context, d),

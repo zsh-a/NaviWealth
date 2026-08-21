@@ -7,12 +7,18 @@ class _ComposeBody extends StatelessWidget {
     required this.bodyFocusNode,
     required this.aiAvailable,
     required this.onSaveOriginal,
+    required this.restoredDraft,
+    required this.draftDiscarded,
+    required this.onDiscardDraft,
   });
   final TextEditingController titleController;
   final TextEditingController bodyController;
   final FocusNode bodyFocusNode;
   final bool aiAvailable;
   final VoidCallback? onSaveOriginal;
+  final bool restoredDraft;
+  final bool draftDiscarded;
+  final VoidCallback onDiscardDraft;
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +26,59 @@ class _ComposeBody extends StatelessWidget {
     return KnowledgeWriterSection(
       title: l10n.knowledgeCaptureTitle,
       children: [
+        if (restoredDraft)
+          Row(
+            children: [
+              Icon(
+                FLucideIcons.history,
+                size: AppIconSizes.xs,
+                color: context.theme.colors.primary,
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              Expanded(
+                child: Text(
+                  draftDiscarded
+                      ? l10n.knowledgeCaptureDraftCleared
+                      : l10n.knowledgeCaptureDraftRecovered,
+                  style: context.bodyCaptionStyle,
+                ),
+              ),
+              Semantics(
+                button: true,
+                enabled: !draftDiscarded,
+                label: draftDiscarded
+                    ? l10n.knowledgeCaptureDraftCleared
+                    : l10n.knowledgeCaptureDraftDiscard,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  excludeFromSemantics: true,
+                  onTap: draftDiscarded ? null : onDiscardDraft,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: AppControlHeights.touchTarget,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.s8,
+                      ),
+                      child: Center(
+                        child: Text(
+                          draftDiscarded
+                              ? l10n.knowledgeCaptureDraftCleared
+                              : l10n.knowledgeCaptureDraftDiscard,
+                          style: context.mediumLabelStyle.copyWith(
+                            color: draftDiscarded
+                                ? context.theme.colors.mutedForeground
+                                : context.theme.colors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         FTextField(
           control: FTextFieldControl.managed(controller: titleController),
           label: Text(l10n.knowledgeCaptureTitleField),
@@ -124,61 +183,122 @@ class _OrganizedReviewBodyState extends State<_OrganizedReviewBody> {
       title: l10n.knowledgeCaptureReviewDraftTitle,
       subtitle: l10n.knowledgeCaptureReviewDraftSubtitle,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                _showOriginal
-                    ? l10n.knowledgeCaptureOriginalVersion
-                    : l10n.knowledgeCaptureOrganizedVersion,
-                style: context.labelStyle,
-              ),
-            ),
-            AppQuietButton(
-              label: _showOriginal
-                  ? l10n.knowledgeCaptureShowOrganized
-                  : l10n.knowledgeCaptureShowOriginal,
-              onPress: () => setState(() => _showOriginal = !_showOriginal),
-            ),
-          ],
-        ),
-        if (_showOriginal)
-          Container(
-            padding: AppPageRhythm.densePadding,
-            decoration: BoxDecoration(
-              color: context.theme.colors.muted,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: context.theme.colors.border),
-            ),
-            child: Column(
+        LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth >= Breakpoints.dialogWide) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _versionPanel(
+                      context,
+                      label: l10n.knowledgeCaptureOriginalVersion,
+                      child: _originalPanel(context),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s16),
+                  Expanded(
+                    child: _versionPanel(
+                      context,
+                      label: l10n.knowledgeCaptureOrganizedVersion,
+                      child: _organizedPanel(context),
+                    ),
+                  ),
+                ],
+              );
+            }
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  widget.originalTitle.isEmpty
-                      ? l10n.knowledgeCaptureUntitledOriginal
-                      : widget.originalTitle,
-                  style: TypographyTokens.headlineSmall,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _showOriginal
+                            ? l10n.knowledgeCaptureOriginalVersion
+                            : l10n.knowledgeCaptureOrganizedVersion,
+                        style: context.labelStyle,
+                      ),
+                    ),
+                    AppQuietButton(
+                      label: _showOriginal
+                          ? l10n.knowledgeCaptureShowOrganized
+                          : l10n.knowledgeCaptureShowOriginal,
+                      onPress: () =>
+                          setState(() => _showOriginal = !_showOriginal),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.s12),
-                KnowledgeMarkdown(text: widget.originalBody),
+                const SizedBox(height: AppSpacing.s8),
+                if (_showOriginal)
+                  _originalPanel(context)
+                else
+                  _organizedPanel(context),
               ],
-            ),
-          )
-        else ...[
-          FTextField(
-            control: FTextFieldControl.managed(
-              controller: widget.titleController,
-            ),
-            label: Text(l10n.knowledgeCaptureTitleDiffLabel),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _versionPanel(
+    BuildContext context, {
+    required String label,
+    required Widget child,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(label, style: context.labelStyle),
+        const SizedBox(height: AppSpacing.s8),
+        child,
+      ],
+    );
+  }
+
+  Widget _originalPanel(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: AppPageRhythm.densePadding,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: context.theme.colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            widget.originalTitle.isEmpty
+                ? l10n.knowledgeCaptureUntitledOriginal
+                : widget.originalTitle,
+            style: TypographyTokens.headlineSmall,
           ),
-          MarkdownEditorWithPreview(
-            controller: widget.bodyController,
-            label: l10n.knowledgeCaptureBodyDiffLabel,
-            minLines: 6,
-            maxLines: 12,
-            initialPreview: true,
-          ),
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeMarkdown(text: widget.originalBody),
         ],
+      ),
+    );
+  }
+
+  Widget _organizedPanel(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FTextField(
+          control: FTextFieldControl.managed(
+            controller: widget.titleController,
+          ),
+          label: Text(l10n.knowledgeCaptureTitleDiffLabel),
+        ),
+        MarkdownEditorWithPreview(
+          controller: widget.bodyController,
+          label: l10n.knowledgeCaptureBodyDiffLabel,
+          minLines: 6,
+          maxLines: 12,
+          initialPreview: true,
+        ),
       ],
     );
   }

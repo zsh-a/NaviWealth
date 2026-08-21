@@ -12,6 +12,7 @@ import 'package:naviwealth/features/knowledge/composition/knowledge_route_paths.
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
+import 'package:naviwealth/features/knowledge/ui/knowledge_decision_detail_page.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_library_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -199,6 +200,49 @@ void main() {
     expect(find.textContaining('Select an item'), findsOneWidget);
   });
 
+  testWidgets('updates same-kind desktop detail without retaining old state', (
+    tester,
+  ) async {
+    final repository = _EmptyKnowledgeRepository(
+      decisions: [
+        _decision('first', DecisionStatus.active),
+        _decision('second', DecisionStatus.active),
+      ],
+    );
+    await _pumpLibrary(
+      tester,
+      width: 1400,
+      withRouter: true,
+      repository: repository,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('lib-tile-decision:first')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<KnowledgeDecisionDetailPage>(
+            find.byType(KnowledgeDecisionDetailPage),
+          )
+          .decisionId,
+      'first',
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('lib-tile-decision:second')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<KnowledgeDecisionDetailPage>(
+            find.byType(KnowledgeDecisionDetailPage),
+          )
+          .decisionId,
+      'second',
+    );
+  });
+
   testWidgets('decision form distinguishes validation from saving', (
     tester,
   ) async {
@@ -319,6 +363,19 @@ class _EmptyKnowledgeRepository implements KnowledgeRepository {
   _EmptyKnowledgeRepository({this.decisions = const <KnowledgeDecision>[]});
 
   final List<KnowledgeDecision> decisions;
+
+  @override
+  Future<KnowledgeDecision?> findDecision({
+    required String ownerUserId,
+    required String id,
+  }) async => decisions.where((item) => item.id == id).firstOrNull;
+
+  @override
+  Future<List<KnowledgeRelation>> listRelationsFrom({
+    required String ownerUserId,
+    required String fromKind,
+    required String fromId,
+  }) async => const <KnowledgeRelation>[];
 
   @override
   Stream<List<KnowledgeDecision>> watchDecisions({

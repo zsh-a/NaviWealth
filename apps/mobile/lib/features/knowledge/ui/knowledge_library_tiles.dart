@@ -23,6 +23,10 @@ Widget _buildLibraryTile(
     item: item,
     aiAvailable: aiAvailable,
   );
+  final selectionKey = _knowledgeItemSelectionKey(item);
+  final selected =
+      _KnowledgeMasterDetailScope.of(context) &&
+      selectedQueryOf(context) == selectionKey;
   final deleteSwipeAction = AppSwipeAction(
     id: 'delete',
     icon: FLucideIcons.trash2,
@@ -36,69 +40,94 @@ Widget _buildLibraryTile(
     trailingActions: <AppSwipeAction>[deleteSwipeAction],
     borderRadius: AppRadius.sm,
     child: Semantics(
-      button: true,
+      container: true,
+      selected: selected,
       label: [
         title.isEmpty ? l10n.knowledgeUntitled : title,
         ?statusBadge,
       ].join(', '),
-      child: KnowledgeSection.item(
-        onPress: onPress,
+      child: Stack(
         children: [
-          _LibraryTileHeader(
-            title: title,
-            query: query,
-            leading: typeIcon != null
-                ? Padding(
-                    padding: const EdgeInsets.only(right: AppSpacing.s8),
-                    child: AppIconTile(
-                      icon: typeIcon,
-                      color: typeColor ?? colors.primary,
-                      size: 28,
-                      iconSize: AppIconSizes.xs,
-                      radius: AppRadius.sm,
-                      backgroundOpacity: AppOpacity.subtle,
-                      foregroundOpacity: 1,
-                    ),
-                  )
-                : null,
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (statusBadge != null) ...[
-                  KnowledgeStatusLabel(label: statusBadge),
-                  const SizedBox(width: AppSpacing.s4),
-                ],
-                AppAdaptiveActionMenu(
-                  title: l10n.knowledgeLibraryItemActions,
-                  actions: [
-                    ...actions.menuActions,
-                    AppAdaptiveAction(
-                      icon: FLucideIcons.trash2,
-                      title: l10n.commonDelete,
-                      destructive: true,
-                      onPress: onDelete,
+          KnowledgeSection.item(
+            onPress: onPress,
+            children: [
+              _LibraryTileHeader(
+                title: title,
+                query: query,
+                leading: typeIcon != null
+                    ? Padding(
+                        padding: const EdgeInsets.only(right: AppSpacing.s8),
+                        child: AppIconTile(
+                          icon: typeIcon,
+                          color: typeColor ?? colors.primary,
+                          size: 28,
+                          iconSize: AppIconSizes.xs,
+                          radius: AppRadius.sm,
+                          backgroundOpacity: AppOpacity.subtle,
+                          foregroundOpacity: 1,
+                        ),
+                      )
+                    : null,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (statusBadge != null) ...[
+                      KnowledgeStatusLabel(label: statusBadge),
+                      const SizedBox(width: AppSpacing.s4),
+                    ],
+                    AppAdaptiveActionMenu(
+                      title: l10n.knowledgeLibraryItemActions,
+                      actions: [
+                        ...actions.menuActions,
+                        AppAdaptiveAction(
+                          icon: FLucideIcons.trash2,
+                          title: l10n.commonDelete,
+                          destructive: true,
+                          onPress: onDelete,
+                        ),
+                      ],
+                      triggerBuilder: (context, openMenu, focusNode) => Focus(
+                        focusNode: focusNode,
+                        child: AppIconButton(
+                          icon: FLucideIcons.ellipsis,
+                          tooltip: l10n.knowledgeLibraryItemActions,
+                          onPress: openMenu,
+                          size: AppControlHeights.touchTarget,
+                          iconSize: AppIconSizes.xs,
+                        ),
+                      ),
                     ),
                   ],
-                  triggerBuilder: (context, openMenu, focusNode) => Focus(
-                    focusNode: focusNode,
-                    child: AppIconButton(
-                      icon: FLucideIcons.ellipsis,
-                      tooltip: l10n.knowledgeLibraryItemActions,
-                      onPress: openMenu,
-                      size: AppControlHeights.touchTarget,
-                      iconSize: AppIconSizes.xs,
-                    ),
-                  ),
                 ),
-              ],
+              ),
+              ...subtitle,
+            ],
+          ),
+          PositionedDirectional(
+            start: 0,
+            top: AppSpacing.s16,
+            child: AppSelectionIndicator(
+              selected: selected,
+              axis: Axis.vertical,
+              length: AppSpacing.s24,
             ),
           ),
-          ...subtitle,
         ],
       ),
     ),
   );
 }
+
+String _knowledgeItemSelectionKey(Object item) => switch (item) {
+  KnowledgeDecision value => 'decision:${value.id}',
+  KnowledgePrinciple value => 'principle:${value.id}',
+  KnowledgeAssumption value => 'assumption:${value.id}',
+  KnowledgeNote value => 'note:${value.id}',
+  KnowledgeConcept value => 'concept:${value.id}',
+  KnowledgeExperiment value => 'experiment:${value.id}',
+  KnowledgeRoutine value => 'routine:${value.id}',
+  _ => '',
+};
 
 Widget _buildAllTile(
   BuildContext context,

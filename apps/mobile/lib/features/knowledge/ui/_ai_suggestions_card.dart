@@ -239,17 +239,23 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
       );
       ref.read(aiSuggestionsRefreshProvider.notifier).state++;
       if (mounted) {
+        final route = promoted == null
+            ? null
+            : promoted.kind == KnowledgeEntryKind.decision
+            ? KnowledgeRoutes.decision(promoted.id)
+            : KnowledgeRoutes.object(promoted.kind.name, promoted.id);
+        final router = route == null ? null : GoRouter.of(context);
         AppMessenger.show(
           context,
           ToastKind.success,
           AppLocalizations.of(context).knowledgeAiSuggestionAppliedToast,
+          actionLabel: route == null
+              ? null
+              : AppLocalizations.of(context).knowledgeAiSuggestionViewAction,
+          onAction: route == null || router == null
+              ? null
+              : () => unawaited(router.push<Object?>(route)),
         );
-        if (promoted != null) {
-          final route = promoted.kind == KnowledgeEntryKind.decision
-              ? KnowledgeRoutes.decision(promoted.id)
-              : KnowledgeRoutes.object(promoted.kind.name, promoted.id);
-          unawaited(context.push<Object?>(route));
-        }
       }
     } catch (error) {
       if (mounted) {
@@ -270,6 +276,7 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
     if (_busy) return;
     setState(() => _busy = true);
     try {
+      final container = ProviderScope.containerOf(context);
       final triage = await ref.read(inboxTriageRepositoryProvider.future);
       await triage.resolve(
         noteId: widget.note.id,
@@ -277,9 +284,47 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
         status: InboxProposalStatus.dismissed,
       );
       ref.read(aiSuggestionsRefreshProvider.notifier).state++;
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          AppLocalizations.of(context).knowledgeAiSuggestionDismissedToast,
+          actionLabel: AppLocalizations.of(context).commonUndo,
+          onAction: () => unawaited(
+            _undoDismiss(
+              triage: triage,
+              container: container,
+              noteId: widget.note.id,
+              kind: widget.proposal.kind,
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).commonSaveFailed,
+        );
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _undoDismiss({
+    required InboxTriageRepository triage,
+    required ProviderContainer container,
+    required String noteId,
+    required InboxProposalKind kind,
+  }) async {
+    await triage.resolve(
+      noteId: noteId,
+      kind: kind,
+      status: InboxProposalStatus.pending,
+    );
+    container.read(aiSuggestionsRefreshProvider.notifier).state++;
   }
 
   Future<void> _snooze() async {

@@ -15015,6 +15015,18 @@ abstract class AppLocalizations {
   /// **'Suggestion applied to the note.'**
   String get knowledgeAiSuggestionAppliedToast;
 
+  /// No description provided for @knowledgeAiSuggestionViewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get knowledgeAiSuggestionViewAction;
+
+  /// No description provided for @knowledgeAiSuggestionDismissedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestion dismissed.'**
+  String get knowledgeAiSuggestionDismissedToast;
+
   /// No description provided for @knowledgeAiSuggestionFeedbackLabel.
   ///
   /// In en, this message translates to:
@@ -21956,6 +21968,24 @@ abstract class AppLocalizations {
   /// **'Capture a thought'**
   String get knowledgeCaptureTitle;
 
+  /// No description provided for @knowledgeCaptureDraftRecovered.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovered your unfinished capture from this device.'**
+  String get knowledgeCaptureDraftRecovered;
+
+  /// No description provided for @knowledgeCaptureDraftDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard draft'**
+  String get knowledgeCaptureDraftDiscard;
+
+  /// No description provided for @knowledgeCaptureDraftCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft cleared'**
+  String get knowledgeCaptureDraftCleared;
+
   /// No description provided for @knowledgeCaptureTitleField.
   ///
   /// In en, this message translates to:
@@ -22703,6 +22733,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Linked to {title}'**
   String knowledgeRelationLinkedToast(Object title);
+
+  /// No description provided for @knowledgeRelationLinkedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked'**
+  String get knowledgeRelationLinkedTitle;
+
+  /// No description provided for @knowledgeRelationAvailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Available knowledge'**
+  String get knowledgeRelationAvailableTitle;
+
+  /// No description provided for @knowledgeRelationRemoveLink.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind} · Remove link'**
+  String knowledgeRelationRemoveLink(Object kind);
+
+  /// No description provided for @knowledgeRelationUnlinkedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed link to {title}'**
+  String knowledgeRelationUnlinkedToast(Object title);
 
   /// No description provided for @knowledgeItemReview.
   ///

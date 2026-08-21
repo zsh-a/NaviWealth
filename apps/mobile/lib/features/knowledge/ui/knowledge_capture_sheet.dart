@@ -16,6 +16,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/auth/current_user.dart';
 import '../../../core/forms/form_dirty_guard.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
@@ -173,10 +174,21 @@ class _KnowledgeCaptureSheetState
   _CaptureStage _stage = _CaptureStage.composing;
   String? _originalTitle;
   String? _originalBody;
+  Timer? _draftSaveDebounce;
+  Timer? _draftDiscardTimer;
+  bool _restoredDraft = false;
+  bool _draftDiscarded = false;
+  bool _suppressTextChange = false;
+
+  String get _draftKey {
+    final owner = ref.read(activeUserIdProvider) ?? kLocalOnlyUserId;
+    return 'knowledge.$owner.capture_draft.v1';
+  }
 
   @override
   void initState() {
     super.initState();
+    _restoreDraftIfAvailable();
     _bodyCtrl.addListener(_onTextChange);
     _titleCtrl.addListener(_onTextChange);
     widget.dirty.bindTextControllers([_titleCtrl, _bodyCtrl]);
@@ -192,15 +204,80 @@ class _KnowledgeCaptureSheetState
   }
 
   void _onTextChange() {
+    if (_suppressTextChange) return;
     if ((_stage == _CaptureStage.composing ||
             _stage == _CaptureStage.reviewing) &&
         mounted) {
       setState(() {});
     }
+    _scheduleDraftSave();
+  }
+
+  void _restoreDraftIfAvailable() {
+    if (widget.initialNote != null) return;
+    final encoded = ref.read(sharedPreferencesProvider).getString(_draftKey);
+    if (encoded == null || encoded.isEmpty) return;
+    try {
+      final decoded = jsonDecode(encoded);
+      if (decoded is! Map<String, Object?>) return;
+      final title = decoded['title'];
+      final body = decoded['body'];
+      if (title is! String || body is! String || body.trim().isEmpty) return;
+      _titleCtrl.text = title;
+      _bodyCtrl.text = body;
+      _restoredDraft = true;
+    } on FormatException {
+      unawaited(ref.read(sharedPreferencesProvider).remove(_draftKey));
+    }
+  }
+
+  void _scheduleDraftSave() {
+    if (widget.initialNote != null) return;
+    _draftSaveDebounce?.cancel();
+    _draftSaveDebounce = Timer(const Duration(milliseconds: 450), () {
+      final title = _titleCtrl.text;
+      final body = _bodyCtrl.text;
+      final prefs = ref.read(sharedPreferencesProvider);
+      if (title.trim().isEmpty && body.trim().isEmpty) {
+        unawaited(prefs.remove(_draftKey));
+        return;
+      }
+      unawaited(
+        prefs.setString(
+          _draftKey,
+          jsonEncode(<String, Object?>{
+            'title': title,
+            'body': body,
+            'savedAt': DateTime.now().toUtc().toIso8601String(),
+          }),
+        ),
+      );
+    });
+  }
+
+  void _discardRestoredDraft() {
+    _bodyFocus.unfocus();
+    _draftDiscardTimer?.cancel();
+    _draftDiscardTimer = Timer(const Duration(milliseconds: 150), () {
+      if (!mounted) return;
+      _draftSaveDebounce?.cancel();
+      _suppressTextChange = true;
+      try {
+        _replaceText(_titleCtrl, '');
+        _replaceText(_bodyCtrl, '');
+      } finally {
+        _suppressTextChange = false;
+      }
+      unawaited(ref.read(sharedPreferencesProvider).remove(_draftKey));
+      widget.dirty.markPristine();
+      setState(() => _draftDiscarded = true);
+    });
   }
 
   @override
   void dispose() {
+    _draftSaveDebounce?.cancel();
+    _draftDiscardTimer?.cancel();
     _titleCtrl.dispose();
     _bodyCtrl.dispose();
     _bodyFocus.dispose();
@@ -264,6 +341,7 @@ class _KnowledgeCaptureSheetState
     _replaceText(_bodyCtrl, _originalBody ?? '');
     _originalTitle = null;
     _originalBody = null;
+    if (widget.initialNote != null) widget.dirty.markPristine();
     setState(() => _stage = _CaptureStage.composing);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _bodyFocus.requestFocus();
@@ -302,6 +380,10 @@ class _KnowledgeCaptureSheetState
         ),
       );
       await repo.upsertNote(note);
+      _draftSaveDebounce?.cancel();
+      if (widget.initialNote == null) {
+        await ref.read(sharedPreferencesProvider).remove(_draftKey);
+      }
       widget.dirty.markPristine();
       if (mounted) {
         Navigator.of(context).pop(
@@ -403,6 +485,9 @@ class _KnowledgeCaptureSheetState
             bodyFocusNode: _bodyFocus,
             aiAvailable: aiAvailable,
             onSaveOriginal: _canSave ? _save : null,
+            restoredDraft: _restoredDraft,
+            draftDiscarded: _draftDiscarded,
+            onDiscardDraft: _discardRestoredDraft,
           ),
           _CaptureStage.organizing => const _CaptureProgressBody(),
           _CaptureStage.reviewing => _OrganizedReviewBody(

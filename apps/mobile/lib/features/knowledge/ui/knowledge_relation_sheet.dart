@@ -36,7 +36,7 @@ class _KnowledgeRelationSheet extends ConsumerStatefulWidget {
 
 class _KnowledgeRelationSheetState
     extends ConsumerState<_KnowledgeRelationSheet> {
-  late final Future<List<_RelationTarget>> _targets = _loadTargets();
+  late Future<_RelationSheetData> _data = _loadData();
   final _search = TextEditingController();
   String? _busyKey;
 
@@ -58,7 +58,7 @@ class _KnowledgeRelationSheetState
     if (mounted) setState(() {});
   }
 
-  Future<List<_RelationTarget>> _loadTargets() async {
+  Future<_RelationSheetData> _loadData() async {
     final repo = await ref.read(knowledgeRepositoryProvider.future);
     final owner = widget.source.ownerUserId;
     final relations = await repo.listRelationsForObject(
@@ -66,38 +66,51 @@ class _KnowledgeRelationSheetState
       kind: widget.source.kind,
       id: widget.source.id,
     );
-    final linked = <String>{
-      for (final relation in relations)
-        relation.fromKind == widget.source.kind &&
-                relation.fromId == widget.source.id
-            ? '${relation.toKind}:${relation.toId}'
-            : '${relation.fromKind}:${relation.fromId}',
+    final allTargets = <_RelationTarget>[
+      for (final value in await repo.listNotes(ownerUserId: owner))
+        _RelationTarget.from(value)!,
+      for (final value in await repo.listPrinciples(ownerUserId: owner))
+        _RelationTarget.from(value)!,
+      for (final value in await repo.listAssumptions(ownerUserId: owner))
+        _RelationTarget.from(value)!,
+      for (final value in await repo.listDecisions(ownerUserId: owner))
+        _RelationTarget.from(value)!,
+      for (final value in await repo.listConcepts(ownerUserId: owner))
+        _RelationTarget.from(value)!,
+      for (final value in await repo.listExperiments(ownerUserId: owner))
+        _RelationTarget.from(value)!,
+      for (final value in await repo.listRoutines(ownerUserId: owner))
+        _RelationTarget.from(value)!,
+    ]..removeWhere((target) => target.key == widget.source.key);
+    final byKey = <String, _RelationTarget>{
+      for (final target in allTargets) target.key: target,
     };
-    final targets =
-        <_RelationTarget>[
-          for (final value in await repo.listNotes(ownerUserId: owner))
-            _RelationTarget.from(value)!,
-          for (final value in await repo.listPrinciples(ownerUserId: owner))
-            _RelationTarget.from(value)!,
-          for (final value in await repo.listAssumptions(ownerUserId: owner))
-            _RelationTarget.from(value)!,
-          for (final value in await repo.listDecisions(ownerUserId: owner))
-            _RelationTarget.from(value)!,
-          for (final value in await repo.listConcepts(ownerUserId: owner))
-            _RelationTarget.from(value)!,
-          for (final value in await repo.listExperiments(ownerUserId: owner))
-            _RelationTarget.from(value)!,
-          for (final value in await repo.listRoutines(ownerUserId: owner))
-            _RelationTarget.from(value)!,
-        ]..removeWhere(
-          (target) =>
-              target.key == widget.source.key || linked.contains(target.key),
-        );
+    final linked = <_LinkedRelation>[];
+    for (final relation in relations) {
+      final key =
+          relation.fromKind == widget.source.kind &&
+              relation.fromId == widget.source.id
+          ? '${relation.toKind}:${relation.toId}'
+          : '${relation.fromKind}:${relation.fromId}';
+      final target = byKey[key];
+      if (target != null) {
+        linked.add(_LinkedRelation(relation: relation, target: target));
+      }
+    }
+    final linkedKeys = linked.map((item) => item.target.key).toSet();
+    final targets = allTargets
+        .where((target) => !linkedKeys.contains(target.key))
+        .toList(growable: false);
     targets.sort(
       (left, right) =>
           left.title.toLowerCase().compareTo(right.title.toLowerCase()),
     );
-    return targets;
+    linked.sort(
+      (left, right) => left.target.title.toLowerCase().compareTo(
+        right.target.title.toLowerCase(),
+      ),
+    );
+    return _RelationSheetData(linked: linked, targets: targets);
   }
 
   Future<void> _link(_RelationTarget target) async {
@@ -131,7 +144,7 @@ class _KnowledgeRelationSheetState
       );
       await repo.upsertRelation(relation);
       if (!mounted) return;
-      Navigator.of(context).pop();
+      setState(() => _data = _loadData());
       AppMessenger.show(
         context,
         ToastKind.success,
@@ -146,11 +159,44 @@ class _KnowledgeRelationSheetState
     }
   }
 
+  Future<void> _unlink(_LinkedRelation linked) async {
+    if (_busyKey != null) return;
+    setState(() => _busyKey = 'unlink:${linked.relation.id}');
+    final l10n = AppLocalizations.of(context);
+    try {
+      final repo = await ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await ref.read(mutationStamperProvider.future);
+      final stamp = await stamper.stamp();
+      await repo.deleteRelation(
+        id: linked.relation.id,
+        sync: SyncMeta(
+          ownerUserId: stamp.ownerUserId,
+          updatedAt: stamp.now,
+          updatedByDevice: stamp.deviceId,
+          hlc: stamp.hlc,
+        ),
+      );
+      if (!mounted) return;
+      setState(() => _data = _loadData());
+      AppMessenger.show(
+        context,
+        ToastKind.success,
+        l10n.knowledgeRelationUnlinkedToast(linked.target.title),
+      );
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
+      }
+    } finally {
+      if (mounted) setState(() => _busyKey = null);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FutureBuilder<List<_RelationTarget>>(
-      future: _targets,
+    return FutureBuilder<_RelationSheetData>(
+      future: _data,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return AppEmptyState.inline(
@@ -161,7 +207,16 @@ class _KnowledgeRelationSheetState
         }
         if (!snapshot.hasData) return const Center(child: FCircularProgress());
         final query = _search.text.trim().toLowerCase();
-        final targets = snapshot.data!
+        final data = snapshot.data!;
+        final linked = data.linked
+            .where(
+              (item) =>
+                  query.isEmpty ||
+                  item.target.title.toLowerCase().contains(query) ||
+                  item.target.kind.toLowerCase().contains(query),
+            )
+            .toList(growable: false);
+        final targets = data.targets
             .where(
               (target) =>
                   query.isEmpty ||
@@ -193,17 +248,49 @@ class _KnowledgeRelationSheetState
                     ),
               ),
             ),
-            if (targets.isEmpty)
+            if (linked.isNotEmpty) ...[
               Padding(
-                padding: AppPageRhythm.densePadding,
-                child: AppEmptyState.inline(
-                  icon: FLucideIcons.link,
-                  title: query.isEmpty
-                      ? l10n.knowledgeRelationNoTargets
-                      : l10n.knowledgeLibrarySearchEmptyTitle,
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s16,
+                  AppSpacing.s4,
+                  AppSpacing.s16,
+                  AppSpacing.s6,
                 ),
-              )
-            else
+                child: Text(
+                  l10n.knowledgeRelationLinkedTitle,
+                  style: context.captionLabelStyle,
+                ),
+              ),
+              AppActionSheetList(
+                children: [
+                  for (final item in linked)
+                    AppActionSheetTile(
+                      icon: FLucideIcons.link2Off,
+                      title: item.target.title,
+                      subtitle: l10n.knowledgeRelationRemoveLink(
+                        item.target.kindLabel(l10n),
+                      ),
+                      destructive: true,
+                      showChevron: false,
+                      onPress: () => _unlink(item),
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s12),
+            ],
+            if (targets.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s16,
+                  AppSpacing.s4,
+                  AppSpacing.s16,
+                  AppSpacing.s6,
+                ),
+                child: Text(
+                  l10n.knowledgeRelationAvailableTitle,
+                  style: context.captionLabelStyle,
+                ),
+              ),
               AppActionSheetList(
                 children: [
                   for (final target in targets)
@@ -218,11 +305,35 @@ class _KnowledgeRelationSheetState
                     ),
                 ],
               ),
+            ] else if (linked.isEmpty)
+              Padding(
+                padding: AppPageRhythm.densePadding,
+                child: AppEmptyState.inline(
+                  icon: FLucideIcons.link,
+                  title: query.isEmpty
+                      ? l10n.knowledgeRelationNoTargets
+                      : l10n.knowledgeLibrarySearchEmptyTitle,
+                ),
+              ),
           ],
         );
       },
     );
   }
+}
+
+class _RelationSheetData {
+  const _RelationSheetData({required this.linked, required this.targets});
+
+  final List<_LinkedRelation> linked;
+  final List<_RelationTarget> targets;
+}
+
+class _LinkedRelation {
+  const _LinkedRelation({required this.relation, required this.target});
+
+  final KnowledgeRelation relation;
+  final _RelationTarget target;
 }
 
 class _RelationTarget {

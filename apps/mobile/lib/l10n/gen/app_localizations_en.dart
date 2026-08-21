@@ -8944,6 +8944,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Suggestion applied to the note.';
 
   @override
+  String get knowledgeAiSuggestionViewAction => 'View';
+
+  @override
+  String get knowledgeAiSuggestionDismissedToast => 'Suggestion dismissed.';
+
+  @override
   String get knowledgeAiSuggestionFeedbackLabel =>
       'Was this suggestion useful?';
 
@@ -13063,6 +13069,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeCaptureTitle => 'Capture a thought';
 
   @override
+  String get knowledgeCaptureDraftRecovered =>
+      'Recovered your unfinished capture from this device.';
+
+  @override
+  String get knowledgeCaptureDraftDiscard => 'Discard draft';
+
+  @override
+  String get knowledgeCaptureDraftCleared => 'Draft cleared';
+
+  @override
   String get knowledgeCaptureTitleField => 'Title (optional)';
 
   @override
@@ -13509,6 +13525,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String knowledgeRelationLinkedToast(Object title) {
     return 'Linked to $title';
+  }
+
+  @override
+  String get knowledgeRelationLinkedTitle => 'Linked';
+
+  @override
+  String get knowledgeRelationAvailableTitle => 'Available knowledge';
+
+  @override
+  String knowledgeRelationRemoveLink(Object kind) {
+    return '$kind · Remove link';
+  }
+
+  @override
+  String knowledgeRelationUnlinkedToast(Object title) {
+    return 'Removed link to $title';
   }
 
   @override

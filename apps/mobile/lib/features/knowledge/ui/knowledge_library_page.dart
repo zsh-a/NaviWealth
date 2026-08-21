@@ -114,6 +114,12 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   KeyEventResult _onSearchKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
     final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.escape && _searchCtrl.text.isNotEmpty) {
+      _searchDebounce?.cancel();
+      _searchCtrl.clear();
+      _searchFocus.requestFocus();
+      return KeyEventResult.handled;
+    }
     if (key == LogicalKeyboardKey.enter ||
         key == LogicalKeyboardKey.numpadEnter) {
       _commitSearch();
@@ -347,8 +353,15 @@ Widget _knowledgeLibraryDetail(BuildContext context, String? selected) {
   final kind = selected.substring(0, separator);
   final id = selected.substring(separator + 1);
   return kind == 'decision'
-      ? KnowledgeDecisionDetailPage(decisionId: id)
-      : KnowledgeObjectDetailPage(kind: kind, id: id);
+      ? KnowledgeDecisionDetailPage(
+          key: ValueKey<String>('decision:$id'),
+          decisionId: id,
+        )
+      : KnowledgeObjectDetailPage(
+          key: ValueKey<String>('$kind:$id'),
+          kind: kind,
+          id: id,
+        );
 }
 
 void _openKnowledgeLibraryDetail(

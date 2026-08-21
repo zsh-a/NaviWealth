@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -13,15 +14,26 @@ import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_capture_sheet.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_inbox_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   Future<void> pumpInbox(
     WidgetTester tester, {
     CaptureClassifier? captureClassifier,
+    Map<String, Object> preferences = const <String, Object>{},
+    double width = 390,
   }) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = Size(width, 844);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    SharedPreferences.setMockInitialValues(preferences);
+    final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          activeUserIdProvider.overrideWithValue('user-1'),
           knowledgeInboxNotesProvider.overrideWith(
             (_) => Stream<List<KnowledgeNote>>.value(const <KnowledgeNote>[]),
           ),
@@ -61,11 +73,11 @@ void main() {
 
     expect(find.text('Capture a thought'), findsWidgets);
     expect(find.byIcon(FLucideIcons.filePlus), findsOneWidget);
-    expect(find.byIcon(FLucideIcons.sparkles), findsNothing);
+    expect(find.byIcon(FLucideIcons.sparkles), findsOneWidget);
     expect(find.byIcon(FLucideIcons.gitMerge), findsNothing);
     expect(find.text('Deduplicate'), findsNothing);
 
-    await tester.tap(find.byIcon(FLucideIcons.ellipsis));
+    await tester.tap(find.byIcon(FLucideIcons.sparkles));
     await tester.pumpAndSettle();
 
     expect(find.text('Ask KnowledgeOS'), findsOneWidget);
@@ -74,12 +86,14 @@ void main() {
     expect(find.text('Search knowledge'), findsOneWidget);
   });
 
-  testWidgets('keeps capture in the shared shell header', (tester) async {
+  testWidgets('keeps one capture entry and review in the shell header', (
+    tester,
+  ) async {
     await pumpInbox(tester);
 
     expect(find.text('Inbox'), findsWidgets);
     expect(find.text('Inbox · KnowledgeOS'), findsNothing);
-    expect(find.byIcon(FLucideIcons.plus), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.plus), findsNothing);
     expect(find.byIcon(FLucideIcons.clipboardCheck), findsOneWidget);
   });
 
@@ -106,7 +120,7 @@ void main() {
   ) async {
     await pumpInbox(tester);
 
-    await tester.tap(find.byIcon(FLucideIcons.plus).first);
+    await tester.tap(find.byIcon(FLucideIcons.filePlus));
     await pumpVisualTransition(tester);
     await tester.enterText(find.byType(FTextField).last, 'A durable thought');
     await tester.tap(find.text('Cancel'));
@@ -114,6 +128,41 @@ void main() {
 
     expect(find.text('Discard changes?'), findsOneWidget);
     expect(find.text('Keep editing'), findsOneWidget);
+  });
+
+  testWidgets('recovers and can discard an unfinished local capture', (
+    tester,
+  ) async {
+    await pumpInbox(
+      tester,
+      preferences: const <String, Object>{
+        'knowledge.user-1.capture_draft.v1':
+            '{"title":"Recovered title","body":"Recovered body"}',
+      },
+    );
+
+    await tester.tap(find.byIcon(FLucideIcons.filePlus));
+    await pumpVisualTransition(tester);
+
+    expect(
+      find.text('Recovered your unfinished capture from this device.'),
+      findsOneWidget,
+    );
+    final fields = tester
+        .widgetList<EditableText>(find.byType(EditableText))
+        .toList(growable: false);
+    expect(fields.first.controller.text, 'Recovered title');
+    expect(fields.last.controller.text, 'Recovered body');
+
+    await tester.tap(find.text('Discard draft'));
+    await tester.pump(const Duration(milliseconds: 151));
+    await tester.pumpAndSettle();
+    expect(fields.first.controller.text, isEmpty);
+    expect(fields.last.controller.text, isEmpty);
+    expect(
+      find.text('Recovered your unfinished capture from this device.'),
+      findsNothing,
+    );
   });
 
   testWidgets('organizes the complete note and opens on rendered preview', (
@@ -185,6 +234,32 @@ void main() {
     expect(fields.last.controller.text, original);
   });
 
+  testWidgets('shows original and organized drafts side by side when wide', (
+    tester,
+  ) async {
+    await pumpInbox(
+      tester,
+      width: 1100,
+      captureClassifier: _OrganizedCaptureClassifier(),
+    );
+
+    await tester.tap(find.byIcon(FLucideIcons.filePlus));
+    await pumpVisualTransition(tester);
+    await tester.enterText(
+      find.byType(FTextField).last,
+      'rough note: one thing, another thing',
+    );
+    await pumpVisualTransition(tester);
+    await tester.tap(find.text('Organize & preview'));
+    await pumpVisualTransition(tester);
+
+    expect(find.text('Original'), findsOneWidget);
+    expect(find.text('AI-organized draft'), findsOneWidget);
+    expect(find.text('View original'), findsNothing);
+    expect(find.text('rough note: one thing, another thing'), findsOneWidget);
+    expect(find.text('A clear, searchable title'), findsOneWidget);
+  });
+
   testWidgets('organizes an existing note from its current complete content', (
     tester,
   ) async {
@@ -237,6 +312,13 @@ void main() {
     expect(find.text('A clear, searchable title'), findsOneWidget);
     expect(classifier.lastText, contains('Rough title'));
     expect(classifier.lastText, contains(note.bodyMd));
+
+    await tester.tap(find.text('Keep original'));
+    await pumpVisualTransition(tester);
+    await tester.tap(find.text('Cancel'));
+    await pumpVisualTransition(tester);
+    expect(find.text('Discard changes?'), findsNothing);
+    expect(find.byType(AppSheet), findsNothing);
   });
 }
 
