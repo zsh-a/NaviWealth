@@ -5258,5 +5258,10 @@
   "knowledgeCaptureNeedsStructure": "创建 {kind} 前需要补齐结构化字段：决策选项、假设置信度，或实验方法与指标。",
   "@knowledgeCaptureNeedsStructure": {
     "placeholders": { "kind": { "type": "String" } }
-  }
+  },
+  "knowledgeMarkdownInsertImage": "插入图片",
+  "knowledgeImageSourceCamera": "拍照",
+  "knowledgeImageSourceGallery": "相册",
+  "knowledgeImageSourceFile": "选择文件",
+  "knowledgeImageImportFailed": "图片导入失败"
 }

@@ -29486,6 +29486,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{kind} needs its structured fields before it can be created. Add decision options, assumption confidence, or experiment method and metrics.'**
   String knowledgeCaptureNeedsStructure(String kind);
+
+  /// No description provided for @knowledgeMarkdownInsertImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert image'**
+  String get knowledgeMarkdownInsertImage;
+
+  /// No description provided for @knowledgeImageSourceCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get knowledgeImageSourceCamera;
+
+  /// No description provided for @knowledgeImageSourceGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo library'**
+  String get knowledgeImageSourceGallery;
+
+  /// No description provided for @knowledgeImageSourceFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose file'**
+  String get knowledgeImageSourceFile;
+
+  /// No description provided for @knowledgeImageImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t import the image'**
+  String get knowledgeImageImportFailed;
 }
 
 class _AppLocalizationsDelegate

@@ -16688,4 +16688,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String knowledgeCaptureNeedsStructure(String kind) {
     return '创建 $kind 前需要补齐结构化字段：决策选项、假设置信度，或实验方法与指标。';
   }
+
+  @override
+  String get knowledgeMarkdownInsertImage => '插入图片';
+
+  @override
+  String get knowledgeImageSourceCamera => '拍照';
+
+  @override
+  String get knowledgeImageSourceGallery => '相册';
+
+  @override
+  String get knowledgeImageSourceFile => '选择文件';
+
+  @override
+  String get knowledgeImageImportFailed => '图片导入失败';
 }

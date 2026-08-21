@@ -15,9 +15,12 @@ Future<void> _reindexNotes(
   );
   for (final n in notes) {
     final id = '$kKnowledgeNoteMemorySource:episodic:${n.id}';
+    // Attachment references carry no semantic signal — index the compact
+    // marker form so `attachment://` ids never reach embeddings.
+    final bodyForIndex = knowledgeMarkdownWithoutAttachments(n.bodyMd);
     final summary = n.bodyMd.isEmpty
         ? n.title
-        : '${n.title.isEmpty ? "(untitled)" : n.title}: ${_truncate(n.bodyMd)}';
+        : '${n.title.isEmpty ? "(untitled)" : n.title}: ${_truncate(bodyForIndex)}';
     await runtime.remember(
       MemoryRecord(
         id: id,
@@ -29,7 +32,7 @@ Future<void> _reindexNotes(
         title: n.title.isEmpty ? untitled : n.title,
         summary: summary,
         payload: <String, Object?>{
-          'body_md': n.bodyMd,
+          'body_md': bodyForIndex,
           'tags': n.tags,
           if (n.projectTag != null) 'project_tag': n.projectTag,
           if (n.sourceUrl != null) 'source_url': n.sourceUrl,

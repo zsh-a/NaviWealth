@@ -101,7 +101,7 @@ class SummarizeTopicEvolutionTool implements DeviceTool {
     for (final n in notes) {
       if (!inWindow(n.createdAt)) continue;
       final hay =
-          '${n.title} ${n.bodyMd} ${n.tags.join(' ')} '
+          '${n.title} ${knowledgeMarkdownWithoutAttachments(n.bodyMd)} ${n.tags.join(' ')} '
                   '${n.projectTag ?? ''}'
               .toLowerCase();
       if (!terms.any(hay.contains)) continue;

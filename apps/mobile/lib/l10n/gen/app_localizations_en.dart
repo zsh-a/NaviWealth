@@ -17579,4 +17579,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String knowledgeCaptureNeedsStructure(String kind) {
     return '$kind needs its structured fields before it can be created. Add decision options, assumption confidence, or experiment method and metrics.';
   }
+
+  @override
+  String get knowledgeMarkdownInsertImage => 'Insert image';
+
+  @override
+  String get knowledgeImageSourceCamera => 'Take photo';
+
+  @override
+  String get knowledgeImageSourceGallery => 'Photo library';
+
+  @override
+  String get knowledgeImageSourceFile => 'Choose file';
+
+  @override
+  String get knowledgeImageImportFailed => 'Couldn\'t import the image';
 }

@@ -92,7 +92,7 @@ class ListInboxTriageCandidatesTool implements DeviceTool {
     return <String, Object?>{
       'id': note.id,
       'title': note.title,
-      'body_md': note.bodyMd,
+      'body_md': knowledgeMarkdownWithoutAttachments(note.bodyMd),
       'excerpt': knowledgeExcerpt(note.bodyMd),
       'tags': note.tags,
       'project_tag': note.projectTag,

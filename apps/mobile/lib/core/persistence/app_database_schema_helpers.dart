@@ -391,6 +391,12 @@ Future<void> _createKnowledgeInboxTriage(AppDatabase db) async {
   }
 }
 
+Future<void> _createKnowledgeAttachments(AppDatabase db) async {
+  for (final stmt in knowledgeAttachmentDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
 Future<void> _createAgentFindings(AppDatabase db) async {
   for (final stmt in agentFindingDdl) {
     await db.customStatement(stmt);

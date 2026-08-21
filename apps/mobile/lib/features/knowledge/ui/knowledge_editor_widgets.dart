@@ -11,7 +11,7 @@ part of '_widgets.dart';
 ///
 /// Owns the segmented control's mode state; the caller owns the
 /// text [controller].
-class MarkdownEditorWithPreview extends StatefulWidget {
+class MarkdownEditorWithPreview extends ConsumerStatefulWidget {
   const MarkdownEditorWithPreview({
     super.key,
     required this.controller,
@@ -32,13 +32,14 @@ class MarkdownEditorWithPreview extends StatefulWidget {
   final int maxLines;
 
   @override
-  State<MarkdownEditorWithPreview> createState() =>
+  ConsumerState<MarkdownEditorWithPreview> createState() =>
       _MarkdownEditorWithPreviewState();
 }
 
 enum _MarkdownMode { edit, preview }
 
-class _MarkdownEditorWithPreviewState extends State<MarkdownEditorWithPreview> {
+class _MarkdownEditorWithPreviewState
+    extends ConsumerState<MarkdownEditorWithPreview> {
   _MarkdownMode _mode = _MarkdownMode.edit;
 
   @override
@@ -141,11 +142,17 @@ class _MarkdownEditorWithPreviewState extends State<MarkdownEditorWithPreview> {
             _insertLink,
         const SingleActivator(LogicalKeyboardKey.keyK, meta: true): _insertLink,
       },
-      child: FTextField(
-        control: FTextFieldControl.managed(controller: widget.controller),
-        hint: widget.hint,
-        minLines: wide ? math.max(widget.minLines, 6) : widget.minLines,
-        maxLines: wide ? math.max(widget.maxLines, 12) : widget.maxLines,
+      // Desktop drag-and-drop: dropping an image file onto the editor
+      // imports it as an attachment and inserts the markdown reference.
+      child: DropTarget(
+        onDragDone: (details) =>
+            _importDroppedImages(details.files, AppLocalizations.of(context)),
+        child: FTextField(
+          control: FTextFieldControl.managed(controller: widget.controller),
+          hint: widget.hint,
+          minLines: wide ? math.max(widget.minLines, 6) : widget.minLines,
+          maxLines: wide ? math.max(widget.maxLines, 12) : widget.maxLines,
+        ),
       ),
     );
     return Column(
@@ -185,6 +192,7 @@ class _MarkdownEditorWithPreviewState extends State<MarkdownEditorWithPreview> {
               onPress: () => _wrapSelection('`', '`'),
             ),
           ],
+          trailing: KnowledgeImageInsertButton(controller: widget.controller),
         ),
         const SizedBox(height: AppSpacing.s6),
         editor,
@@ -223,6 +231,31 @@ class _MarkdownEditorWithPreviewState extends State<MarkdownEditorWithPreview> {
   }
 
   void _toggleBold() => _wrapSelection('**', '**');
+
+  Future<void> _importDroppedImages(
+    List<DropItem> files,
+    AppLocalizations l10n,
+  ) async {
+    for (final file in files) {
+      final ext = file.name.split('.').last.toLowerCase();
+      if (!kKnowledgeAttachmentImageTypes.containsKey(ext)) continue;
+      final attachment = await importKnowledgeImageBytes(
+        ref,
+        fileName: file.name,
+        bytes: await file.readAsBytes(),
+      );
+      if (!mounted) return;
+      if (attachment == null) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          l10n.knowledgeImageImportFailed,
+        );
+        continue;
+      }
+      insertKnowledgeAttachmentMarkdown(widget.controller, attachment);
+    }
+  }
 
   void _insertLink() {
     final value = widget.controller.value;
@@ -316,9 +349,13 @@ class _MarkdownToolbarAction {
 }
 
 class _MarkdownToolbar extends StatelessWidget {
-  const _MarkdownToolbar({required this.actions});
+  const _MarkdownToolbar({required this.actions, this.trailing});
 
   final List<_MarkdownToolbarAction> actions;
+
+  /// Optional trailing affordance (the image insert menu). Hidden by its own
+  /// logic where attachment storage is unsupported.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -346,6 +383,7 @@ class _MarkdownToolbar extends StatelessWidget {
               ),
             ),
           ),
+        ?trailing,
       ],
     );
   }

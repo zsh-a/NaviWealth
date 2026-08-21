@@ -23,8 +23,10 @@ library;
 
 import 'dart:math' as math;
 
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:url_launcher/url_launcher.dart';
@@ -33,6 +35,10 @@ import '../../../core/ai/visual/flow_block.dart';
 import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../data/attachments/knowledge_attachment_store.dart';
+import '../domain/knowledge_text.dart';
+import 'knowledge_attachment_image.dart';
+import 'knowledge_image_insert.dart';
 
 export '../domain/knowledge_text.dart';
 

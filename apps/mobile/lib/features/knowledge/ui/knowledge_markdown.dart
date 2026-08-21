@@ -79,7 +79,7 @@ class _KnowledgeMarkdownState extends State<KnowledgeMarkdown> {
       );
     }
     return switch (tag) {
-      'p' => _richChildren(node.children, base),
+      'p' => _paragraph(context, node, base),
       'blockquote' => _quote(context, node),
       'ul' => _list(context, node, ordered: false, depth: depth),
       'ol' => _list(context, node, ordered: true, depth: depth),
@@ -480,6 +480,28 @@ class _KnowledgeMarkdownState extends State<KnowledgeMarkdown> {
     );
   }
 
+  /// A paragraph whose only content is one attachment image renders as a
+  /// block-level image instead of an inline chip in the text run.
+  Widget _paragraph(BuildContext context, md.Element node, TextStyle base) {
+    final meaningful = (node.children ?? const <md.Node>[])
+        .where((child) => child is! md.Text || child.text.trim().isNotEmpty)
+        .toList(growable: false);
+    if (meaningful.length == 1 && meaningful.first is md.Element) {
+      final only = meaningful.first as md.Element;
+      final attachmentId = knowledgeAttachmentIdFromSrc(
+        only.attributes['src'] ?? '',
+      );
+      if (only.tag == 'img' && attachmentId != null) {
+        return KnowledgeAttachmentImage(
+          attachmentId: attachmentId,
+          alt: only.attributes['alt'] ?? only.textContent,
+          block: true,
+        );
+      }
+    }
+    return _richChildren(node.children, base);
+  }
+
   InlineSpan _image(md.Element element, TextStyle base) {
     final description = element.attributes['alt']?.trim().isNotEmpty == true
         ? element.attributes['alt']!.trim()
@@ -489,6 +511,18 @@ class _KnowledgeMarkdownState extends State<KnowledgeMarkdown> {
     final label = AppLocalizations.of(
       context,
     ).knowledgeMarkdownImageLabel(description);
+    final attachmentId = knowledgeAttachmentIdFromSrc(
+      element.attributes['src'] ?? '',
+    );
+    if (attachmentId != null) {
+      return WidgetSpan(
+        alignment: PlaceholderAlignment.middle,
+        child: KnowledgeAttachmentImage(
+          attachmentId: attachmentId,
+          alt: description,
+        ),
+      );
+    }
     return WidgetSpan(
       alignment: PlaceholderAlignment.middle,
       child: Semantics(

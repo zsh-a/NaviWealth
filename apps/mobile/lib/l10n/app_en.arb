@@ -8288,5 +8288,10 @@
   "knowledgeCaptureNeedsStructure": "{kind} needs its structured fields before it can be created. Add decision options, assumption confidence, or experiment method and metrics.",
   "@knowledgeCaptureNeedsStructure": {
     "placeholders": { "kind": { "type": "String" } }
-  }
+  },
+  "knowledgeMarkdownInsertImage": "Insert image",
+  "knowledgeImageSourceCamera": "Take photo",
+  "knowledgeImageSourceGallery": "Photo library",
+  "knowledgeImageSourceFile": "Choose file",
+  "knowledgeImageImportFailed": "Couldn't import the image"
 }

@@ -588,6 +588,46 @@ const List<String> knowledgeInboxTriageDdl = [
 ];
 
 // ----------------------------------------------------------------------
+// KnowledgeOS image attachments (local-only)
+// ----------------------------------------------------------------------
+//
+// Metadata for images referenced from Note bodies as
+// `![alt](attachment://<id>)`. The bytes live on the local filesystem
+// (platform storage under `knowledge_attachments/`), never in this row —
+// sync v3 caps a row payload at 64 KiB, so attachments stay device-local
+// until a binary sync channel exists (docs/sync/sync-v3.md). `note_id` is
+// the owning Note when known; attachments captured before their Note is
+// saved may carry NULL until the first referencing save.
+const String createKnowledgeAttachments = '''
+CREATE TABLE IF NOT EXISTS knowledge_attachments (
+  id            TEXT PRIMARY KEY,
+  owner_user_id TEXT NOT NULL,
+  note_id       TEXT,
+  file_name     TEXT NOT NULL,
+  mime_type     TEXT NOT NULL,
+  byte_size     INTEGER NOT NULL,
+  sha256        TEXT NOT NULL,
+  created_at    INTEGER NOT NULL         -- millis since epoch (UTC)
+)
+''';
+
+const String createKnowledgeAttachmentsOwnerIndex = '''
+CREATE INDEX IF NOT EXISTS idx_knowledge_attachments_owner_created
+  ON knowledge_attachments(owner_user_id, created_at DESC)
+''';
+
+const String createKnowledgeAttachmentsNoteIndex = '''
+CREATE INDEX IF NOT EXISTS idx_knowledge_attachments_note
+  ON knowledge_attachments(note_id)
+''';
+
+const List<String> knowledgeAttachmentDdl = [
+  createKnowledgeAttachments,
+  createKnowledgeAttachmentsOwnerIndex,
+  createKnowledgeAttachmentsNoteIndex,
+];
+
+// ----------------------------------------------------------------------
 // Money Runway forecast evaluation (derived, local-only)
 // ----------------------------------------------------------------------
 const List<String> forecastEvaluationDdl = [

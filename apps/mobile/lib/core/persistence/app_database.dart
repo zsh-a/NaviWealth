@@ -154,7 +154,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 70;
+  int get schemaVersion => 71;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -177,6 +177,7 @@ class AppDatabase extends _$AppDatabase {
       await _createRecurringPatternObservations(this);
       await _createMemoryRuntime(this);
       await _createKnowledgeInboxTriage(this);
+      await _createKnowledgeAttachments(this);
       await _createAgentRuns(this);
       await _createAgentRuntimeCheckpoints(this);
       await _createAgentRuntimeChatSnapshots(this);
@@ -1048,6 +1049,12 @@ class AppDatabase extends _$AppDatabase {
       // of truth.
       if (from < 70) {
         await m.createTable(firePlans);
+      }
+      // v70 -> v71: KnowledgeOS image attachments — local-only metadata
+      // side table; the bytes live on the device filesystem and never
+      // ride sync (row payloads cap at 64 KiB).
+      if (from < 71) {
+        await _createKnowledgeAttachments(this);
       }
     },
     beforeOpen: (details) async {

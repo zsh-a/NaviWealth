@@ -31,7 +31,13 @@ class _ComposeBody extends StatelessWidget {
         ),
         Align(
           alignment: Alignment.centerRight,
-          child: SpeechInputButton(controller: bodyController),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              KnowledgeImageInsertButton(controller: bodyController),
+              SpeechInputButton(controller: bodyController),
+            ],
+          ),
         ),
       ],
     );

@@ -15,6 +15,7 @@ import 'dart:convert';
 
 import '../../../core/logging/app_logger.dart';
 import '../domain/knowledge_models.dart';
+import '../domain/knowledge_text.dart';
 import 'inbox_triage_classifier.dart';
 import 'inbox_triage_repository.dart';
 import 'knowledge_llm_client.dart';
@@ -69,7 +70,7 @@ String _buildInboxTriageUserMessage(
     ..writeln('title: ${note.title}')
     ..writeln('tags: ${note.tags.isEmpty ? "(无)" : note.tags.join(", ")}')
     ..writeln('body:')
-    ..writeln(note.bodyMd)
+    ..writeln(knowledgeMarkdownWithoutAttachments(note.bodyMd))
     ..writeln()
     ..writeln('## 候选 Decisions');
   if (decisions.isEmpty) {
@@ -155,7 +156,9 @@ class FrbInboxTriageClassifier implements InboxTriageClassifier {
     KnowledgeNote note,
     List<KnowledgeDecision> decisions,
   ) async {
-    final corpus = '${note.title}\n${note.bodyMd}'.trim();
+    final corpus =
+        '${note.title}\n${knowledgeMarkdownWithoutAttachments(note.bodyMd)}'
+            .trim();
     if (corpus.isEmpty) {
       return fallback.triage(note, decisions);
     }

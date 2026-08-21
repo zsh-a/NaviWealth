@@ -20,6 +20,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_widgets.dart';
+import 'knowledge_image_insert.dart';
 
 part 'knowledge_capture_views.dart';
 
