@@ -49,10 +49,8 @@ class _ComposeBody extends StatelessWidget {
                 label: draftDiscarded
                     ? l10n.knowledgeCaptureDraftCleared
                     : l10n.knowledgeCaptureDraftDiscard,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  excludeFromSemantics: true,
-                  onTap: draftDiscarded ? null : onDiscardDraft,
+                child: AppTappable(
+                  onPress: draftDiscarded ? null : onDiscardDraft,
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(
                       minHeight: AppControlHeights.touchTarget,
