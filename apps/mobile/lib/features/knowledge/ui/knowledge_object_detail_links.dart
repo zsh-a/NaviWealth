@@ -24,11 +24,7 @@ class _MetadataSectionState extends State<_MetadataSection> {
     return KnowledgeSection.group(
       title: l10n.knowledgeDetailMetadataTitle,
       children: [
-        Wrap(
-          spacing: AppSpacing.s6,
-          runSpacing: AppSpacing.s6,
-          children: visibleChildren,
-        ),
+        AppMetadataStrip(children: visibleChildren),
         if (needsCollapse) ...[
           const SizedBox(height: AppSpacing.s4),
           AppRevealControl(
@@ -45,41 +41,28 @@ class _MetadataSectionState extends State<_MetadataSection> {
   }
 }
 
-/// Compact metadata chip. Borderless, muted fill — scannable without
-/// visual weight.
-class _MetaPill extends StatelessWidget {
-  const _MetaPill({required this.label, required this.value});
+/// Compact metadata pair on the parent surface.
+class _MetaItem extends StatelessWidget {
+  const _MetaItem({required this.label, required this.value});
 
   final String label;
   final String value;
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard.flat(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: AppSpacing.s4,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: context.captionStyle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: AppSpacing.s2),
-          Text(
-            value,
-            style: context.mediumLabelStyle,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
+    return AppMetadataItem(label: label, value: value);
+  }
+}
+
+class _MetaTags extends StatelessWidget {
+  const _MetaTags({required this.label, required this.values});
+
+  final String label;
+  final List<String> values;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppMetadataTags(label: label, values: values);
   }
 }
 

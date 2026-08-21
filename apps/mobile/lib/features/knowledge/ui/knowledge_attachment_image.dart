@@ -38,7 +38,9 @@ class KnowledgeAttachmentImage extends ConsumerWidget {
       image: true,
       label: label,
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: block ? AppSpacing.s4 : 0),
+        padding: EdgeInsets.symmetric(
+          vertical: block ? AppSpacing.s4 : AppSpacing.s0,
+        ),
         child: switch (bytes) {
           AsyncData(:final value) when value != null => ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.lg),

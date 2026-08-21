@@ -109,6 +109,8 @@ void main() {
     expect(find.text('Margin of Safety'), findsWidgets);
     expect(find.text('XIRR'), findsWidgets);
     expect(find.text('MOS'), findsWidgets);
+    expect(find.byType(AppMetadataStrip), findsOneWidget);
+    expect(find.byType(AppMetadataTags), findsOneWidget);
   });
 
   testWidgets('omits related links when there are no related concepts', (

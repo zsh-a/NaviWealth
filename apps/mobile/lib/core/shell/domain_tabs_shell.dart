@@ -462,41 +462,59 @@ class _TabletRailItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final iconColor = selected ? colors.primary : colors.mutedForeground;
-    final fill = selected ? colors.muted : Colors.transparent;
-    return AppTappable(
-      onPress: onTap,
-      child: Container(
-        margin: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s8,
-          vertical: AppSpacing.s4,
-        ),
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s10),
-        decoration: BoxDecoration(
-          color: fill,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              selected ? tab.selectedIcon : tab.icon,
-              color: iconColor,
-              size: AppIconSizes.mlg,
-            ),
-            const SizedBox(height: AppSpacing.s4),
-            Text(
-              tab.label,
-              style:
-                  (selected
-                          ? context.captionLabelStyle
-                          : context.captionMediumStyle)
-                      .copyWith(
-                        color: selected ? colors.primary : colors.foreground,
-                      ),
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: tab.label,
+      excludeSemantics: true,
+      child: AppTappable(
+        onPress: onTap,
+        child: Container(
+          margin: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s8,
+            vertical: AppSpacing.s4,
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: AppSelectionIndicator(
+                  selected: selected,
+                  axis: Axis.vertical,
+                  length: AppSpacing.s24,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.s10),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      selected ? tab.selectedIcon : tab.icon,
+                      color: iconColor,
+                      size: AppIconSizes.mlg,
+                    ),
+                    const SizedBox(height: AppSpacing.s4),
+                    Text(
+                      tab.label,
+                      style:
+                          (selected
+                                  ? context.captionLabelStyle
+                                  : context.captionMediumStyle)
+                              .copyWith(
+                                color: selected
+                                    ? colors.primary
+                                    : colors.mutedForeground,
+                              ),
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

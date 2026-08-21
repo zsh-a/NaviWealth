@@ -13,9 +13,8 @@ import 'shell_preferences.dart';
 ///
 /// Two visual states:
 ///
-///  * Expanded (240dp) — icon + label per destination. Rows use a single
-///    selection signal (a soft `muted` fill); pointer hover gets a lighter
-///    tint of the same fill, so the rail reads as one quiet surface.
+///  * Expanded (240dp) — icon + label per destination. A slim edge marker
+///    carries selection while a whisper tint is reserved for pointer hover.
 ///  * Collapsed (72dp) — centered icons only; the label travels into the
 ///    [FTooltip] so a pointer hover surfaces the destination name without
 ///    re-flowing the layout.
@@ -244,10 +243,9 @@ class DesktopSidebarAction {
 /// The single row primitive behind every sidebar entry: destinations,
 /// workspace switcher, pinned actions, and Settings.
 ///
-/// Selected rows get a soft `muted` fill as the *only* emphasis (plus a
-/// heavier label weight); unselected rows reveal the same fill at a lighter
-/// alpha on pointer hover. Collapsed rows center their icon and surface the
-/// label through an [FTooltip].
+/// Selected rows use a slim edge marker plus accent foreground; a transient
+/// whisper tint communicates pointer hover. Collapsed rows center their icon
+/// and surface the label through an [FTooltip].
 class _SidebarRow extends StatefulWidget {
   const _SidebarRow({
     required this.icon,
@@ -283,14 +281,12 @@ class _SidebarRowState extends State<_SidebarRow> {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final foreground = widget.selected
-        ? colors.foreground
+        ? colors.primary
         : widget.emphasized
         ? colors.primary
         : colors.mutedForeground;
-    final background = widget.selected
-        ? colors.muted
-        : _hovered
-        ? colors.muted.withValues(alpha: AppOpacity.prominent)
+    final background = _hovered
+        ? colors.foreground.withValues(alpha: AppOpacity.whisper)
         : Colors.transparent;
 
     final icon = Icon(widget.icon, color: foreground, size: AppIconSizes.md);
@@ -307,46 +303,65 @@ class _SidebarRowState extends State<_SidebarRow> {
           curve: Motion.standardDecelerate,
           height: AppSpacing.s40,
           margin: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
-          padding: EdgeInsets.symmetric(
-            horizontal: widget.collapsed ? 0 : AppSpacing.s8,
-          ),
           decoration: BoxDecoration(
             color: background,
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
-          child: Row(
+          child: Stack(
+            fit: StackFit.expand,
             children: [
-              if (widget.collapsed)
-                Expanded(child: Center(child: icon))
-              else ...[
-                SizedBox(
-                  width: AppSpacing.s32,
-                  child: Align(alignment: Alignment.centerLeft, child: icon),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: AppSelectionIndicator(
+                  selected: widget.selected,
+                  axis: Axis.vertical,
+                  length: AppSpacing.s20,
                 ),
-                if (widget.labelOpacity > 0)
-                  Expanded(
-                    child: Opacity(
-                      opacity: widget.labelOpacity,
-                      child: Text(
-                        widget.label,
-                        style:
-                            (widget.selected
-                                    ? context.labelStyle
-                                    : context.mediumLabelStyle)
-                                .copyWith(
-                                  color: widget.emphasized && !widget.selected
-                                      ? colors.primary
-                                      : colors.foreground,
-                                ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: widget.collapsed ? 0 : AppSpacing.s8,
+                ),
+                child: Row(
+                  children: [
+                    if (widget.collapsed)
+                      Expanded(child: Center(child: icon))
+                    else ...[
+                      SizedBox(
+                        width: AppSpacing.s32,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: icon,
+                        ),
                       ),
-                    ),
-                  )
-                else
-                  const Spacer(),
-                ?widget.trailing,
-              ],
+                      if (widget.labelOpacity > 0)
+                        Expanded(
+                          child: Opacity(
+                            opacity: widget.labelOpacity,
+                            child: Text(
+                              widget.label,
+                              style:
+                                  (widget.selected
+                                          ? context.labelStyle
+                                          : context.mediumLabelStyle)
+                                      .copyWith(
+                                        color:
+                                            widget.selected || widget.emphasized
+                                            ? colors.primary
+                                            : colors.foreground,
+                                      ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                      else
+                        const Spacer(),
+                      ?widget.trailing,
+                    ],
+                  ],
+                ),
+              ),
             ],
           ),
         ),

@@ -7,6 +7,7 @@ import '../tokens/motion_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'app_glass.dart';
 import 'app_interaction.dart';
+import 'app_selection_indicator.dart';
 
 const double kFloatingGlassNavBarHeight = AppSpacing.s64;
 const double _kDestinationHeight = 52;
@@ -134,7 +135,7 @@ class _NavTabButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final iconColor = selected ? colors.primary : colors.mutedForeground;
-    final labelColor = selected ? colors.foreground : colors.mutedForeground;
+    final labelColor = selected ? colors.primary : colors.mutedForeground;
     return Semantics(
       button: true,
       selected: selected,
@@ -146,59 +147,54 @@ class _NavTabButton extends StatelessWidget {
           }
           onTap();
         },
-        child: AnimatedContainer(
-          duration: AppMotionPolicy.duration(
-            context,
-            Motion.fast,
-            role: AppMotionRole.decorative,
-          ),
-          curve: Motion.standardDecelerate,
+        child: SizedBox(
           height: _kDestinationHeight,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s6,
-            vertical: AppSpacing.s4,
-          ),
-          decoration: BoxDecoration(
-            // Quiet selected state: whisper fill, not a loud brand pill.
-            color: selected
-                ? colors.primary.withValues(alpha: AppOpacity.faint)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: _kIconSlotSize,
-                height: _kIconSlotSize,
-                child: AnimatedSwitcher(
-                  duration: AppMotionPolicy.duration(
-                    context,
-                    Motion.fast,
-                    role: AppMotionRole.decorative,
-                  ),
-                  switchInCurve: Motion.standardDecelerate,
-                  switchOutCurve: Motion.standardAccelerate,
-                  child: Icon(
-                    selected ? tab.selectedIcon : tab.icon,
-                    key: ValueKey<bool>(selected),
-                    color: iconColor,
-                    size: AppIconSizes.h18,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s6,
+              vertical: AppSpacing.s4,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: _kIconSlotSize,
+                  height: _kIconSlotSize,
+                  child: AnimatedSwitcher(
+                    duration: AppMotionPolicy.duration(
+                      context,
+                      Motion.fast,
+                      role: AppMotionRole.decorative,
+                    ),
+                    switchInCurve: Motion.standardDecelerate,
+                    switchOutCurve: Motion.standardAccelerate,
+                    child: Icon(
+                      selected ? tab.selectedIcon : tab.icon,
+                      key: ValueKey<bool>(selected),
+                      color: iconColor,
+                      size: AppIconSizes.h18,
+                    ),
                   ),
                 ),
-              ),
-              Text(
-                tab.label,
-                style:
-                    (selected
-                            ? TypographyTokens.labelSmall
-                            : TypographyTokens.labelSmallMedium)
-                        .copyWith(color: labelColor, height: 1.15),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+                Text(
+                  tab.label,
+                  style:
+                      (selected
+                              ? TypographyTokens.labelSmall
+                              : TypographyTokens.labelSmallMedium)
+                          .copyWith(color: labelColor, height: 1.15),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.s2),
+                AppSelectionIndicator(
+                  selected: selected,
+                  length: AppSpacing.s16,
+                  thickness: AppSpacing.s2,
+                ),
+              ],
+            ),
           ),
         ),
       ),

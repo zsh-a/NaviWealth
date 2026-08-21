@@ -33,11 +33,11 @@ class AppFilterChip extends StatelessWidget {
     final colors = context.theme.colors;
     final foreground = active ? colors.primary : colors.foreground;
     final background = active
-        ? colors.primary.withValues(alpha: AppOpacity.light)
-        : colors.muted.withValues(alpha: AppOpacity.disabled);
+        ? colors.primary.withValues(alpha: AppOpacity.faint)
+        : colors.background.withValues(alpha: AppOpacity.transparent);
     final border = active
         ? colors.primary.withValues(alpha: AppOpacity.highlight)
-        : colors.border.withValues(alpha: AppOpacity.highlight);
+        : colors.border.withValues(alpha: AppOpacity.muted);
 
     final showClear = active && onClear != null;
     return AnimatedContainer(

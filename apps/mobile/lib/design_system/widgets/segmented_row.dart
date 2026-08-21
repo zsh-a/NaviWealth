@@ -6,6 +6,7 @@ import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/text_style_presets.dart';
 import 'app_interaction.dart';
+import 'app_selection_indicator.dart';
 
 /// Shared Forui-based segmented control with a quiet single-surface chrome.
 ///
@@ -109,12 +110,12 @@ class SegmentedRow<T> extends StatelessWidget {
 
         final surface = DecoratedBox(
           decoration: BoxDecoration(
-            color: colors.muted.withValues(alpha: AppOpacity.disabled),
+            color: colors.foreground.withValues(alpha: AppOpacity.whisper),
             borderRadius: BorderRadius.circular(
-              fits ? AppRadius.full : AppRadius.lg,
+              fits ? AppRadius.md : AppRadius.lg,
             ),
             border: Border.all(
-              color: colors.border.withValues(alpha: AppOpacity.highlight),
+              color: colors.border.withValues(alpha: AppOpacity.subtle),
             ),
           ),
           child: Padding(
@@ -137,7 +138,7 @@ class SegmentedRow<T> extends StatelessWidget {
     final colors = context.theme.colors;
     final icon = iconOf?.call(option);
     final selected = option == value;
-    final foreground = selected ? colors.foreground : colors.mutedForeground;
+    final foreground = selected ? colors.primary : colors.mutedForeground;
     final label = labelOf(option);
     final semanticLabel = semanticLabelOf?.call(option) ?? label;
     final duration = AppMotionPolicy.duration(
@@ -180,9 +181,7 @@ class SegmentedRow<T> extends StatelessWidget {
       excludeSemantics: true,
       child: FTappable(
         onPress: () => _select(option),
-        child: AnimatedContainer(
-          duration: duration,
-          curve: Motion.standard,
+        child: Container(
           constraints: const BoxConstraints(
             minHeight: AppControlHeights.touchTarget,
           ),
@@ -190,15 +189,19 @@ class SegmentedRow<T> extends StatelessWidget {
             horizontal: AppSpacing.s12,
             vertical: AppSpacing.s8,
           ),
-          decoration: BoxDecoration(
-            color: selected
-                ? colors.background
-                : colors.background.withValues(alpha: AppOpacity.transparent),
-            borderRadius: BorderRadius.circular(AppRadius.full),
-            boxShadow: selected ? AppShadow.elevation1 : const [],
-          ),
           alignment: Alignment.center,
-          child: content,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              content,
+              const SizedBox(height: AppSpacing.s2),
+              AppSelectionIndicator(
+                selected: selected,
+                length: AppSpacing.s16,
+                thickness: AppSpacing.s2,
+              ),
+            ],
+          ),
         ),
       ),
     );

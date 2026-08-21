@@ -169,6 +169,22 @@ void main() {
       );
       expect(glassSurface.boxShadow, hasLength(1));
       expect(glassSurface.borderRadius, BorderRadius.circular(AppRadius.full));
+      final selectionIndicators = find.descendant(
+        of: find.byType(FloatingGlassNavBar),
+        matching: find.byType(AppSelectionIndicator),
+      );
+      expect(selectionIndicators, findsNWidgets(3));
+      expect(
+        tester
+            .widgetList<AnimatedOpacity>(
+              find.descendant(
+                of: selectionIndicators,
+                matching: find.byType(AnimatedOpacity),
+              ),
+            )
+            .map((widget) => widget.opacity),
+        orderedEquals(const [0.0, 1.0, 0.0]),
+      );
       final assistant = find.byKey(
         const ValueKey<String>('floating-nav.assistant'),
       );

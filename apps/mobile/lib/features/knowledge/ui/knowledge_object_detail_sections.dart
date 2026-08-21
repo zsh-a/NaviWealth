@@ -81,24 +81,21 @@ List<Widget> _noteSections(BuildContext context, KnowledgeNote n) {
     const SizedBox(height: AppSpacing.s12),
     _MetadataSection(
       children: [
-        _MetaPill(
+        _MetaItem(
           label: l10n.knowledgeDetailCreatedLabel,
           value: knowledgeDate(context, n.createdAt, long: true),
         ),
-        _MetaPill(
+        _MetaItem(
           label: l10n.knowledgeDetailUpdatedLabel,
           value: knowledgeDate(context, n.sync.updatedAt, long: true),
         ),
         if (n.projectTag != null && n.projectTag!.isNotEmpty)
-          _MetaPill(
+          _MetaTags(
             label: l10n.knowledgeDetailProjectLabel,
-            value: n.projectTag!,
+            values: [n.projectTag!],
           ),
         if (n.tags.isNotEmpty)
-          _MetaPill(
-            label: l10n.knowledgeDetailTagsLabel,
-            value: n.tags.join(' · '),
-          ),
+          _MetaTags(label: l10n.knowledgeDetailTagsLabel, values: n.tags),
       ],
     ),
     if (n.bodyMd.isNotEmpty) ...[
@@ -132,18 +129,18 @@ List<Widget> _conceptSections(
     const SizedBox(height: AppSpacing.s12),
     _MetadataSection(
       children: [
-        _MetaPill(
+        _MetaItem(
           label: AppLocalizations.of(context).knowledgeDetailCreatedLabel,
           value: knowledgeDate(context, c.createdAt, long: true),
         ),
-        _MetaPill(
+        _MetaItem(
           label: AppLocalizations.of(context).knowledgeDetailUpdatedLabel,
           value: knowledgeDate(context, c.sync.updatedAt, long: true),
         ),
         if (c.aliases.isNotEmpty)
-          _MetaPill(
+          _MetaTags(
             label: AppLocalizations.of(context).knowledgeDetailAliasesLabel,
-            value: c.aliases.join(' · '),
+            values: c.aliases,
           ),
       ],
     ),
@@ -196,16 +193,16 @@ List<Widget> _experimentSections(
     const SizedBox(height: AppSpacing.s12),
     _MetadataSection(
       children: [
-        _MetaPill(
+        _MetaItem(
           label: AppLocalizations.of(context).knowledgeDetailStartedLabel,
           value: knowledgeDate(context, e.startedAt, long: true),
         ),
         if (e.endedAt != null)
-          _MetaPill(
+          _MetaItem(
             label: AppLocalizations.of(context).knowledgeDetailEndedLabel,
             value: knowledgeDate(context, e.endedAt!, long: true),
           ),
-        _MetaPill(
+        _MetaItem(
           label: AppLocalizations.of(context).knowledgeDetailUpdatedLabel,
           value: knowledgeDate(context, e.sync.updatedAt, long: true),
         ),
@@ -281,15 +278,15 @@ List<Widget> _principleSections(
     const SizedBox(height: AppSpacing.s12),
     _MetadataSection(
       children: [
-        _MetaPill(
+        _MetaItem(
           label: AppLocalizations.of(context).knowledgeDetailScopeLabel,
           value: p.scope,
         ),
-        _MetaPill(
+        _MetaItem(
           label: AppLocalizations.of(context).knowledgeDetailDeclaredLabel,
           value: knowledgeDate(context, p.declaredAt, long: true),
         ),
-        _MetaPill(
+        _MetaItem(
           label: AppLocalizations.of(context).knowledgeDetailUpdatedLabel,
           value: knowledgeDate(context, p.sync.updatedAt, long: true),
         ),
@@ -326,26 +323,26 @@ List<Widget> _assumptionSections(
     const SizedBox(height: AppSpacing.s12),
     _MetadataSection(
       children: [
-        _MetaPill(
+        _MetaItem(
           label: AppLocalizations.of(context).knowledgeDetailConfidenceLabel,
           value: a.confidence.toStringAsFixed(2),
         ),
-        _MetaPill(
+        _MetaItem(
           label: AppLocalizations.of(context).knowledgeDetailScopeLabel,
           value: a.scope,
         ),
-        _MetaPill(
+        _MetaItem(
           label: AppLocalizations.of(context).knowledgeDetailDeclaredLabel,
           value: knowledgeDate(context, a.declaredAt, long: true),
         ),
         if (a.lastVerifiedAt != null)
-          _MetaPill(
+          _MetaItem(
             label: AppLocalizations.of(
               context,
             ).knowledgeDetailLastVerifiedLabel,
             value: knowledgeDate(context, a.lastVerifiedAt!, long: true),
           ),
-        _MetaPill(
+        _MetaItem(
           label: AppLocalizations.of(context).knowledgeDetailUpdatedLabel,
           value: knowledgeDate(context, a.sync.updatedAt, long: true),
         ),
@@ -424,26 +421,26 @@ List<Widget> _routineSections(BuildContext context, KnowledgeRoutine r) {
     const SizedBox(height: AppSpacing.s12),
     _MetadataSection(
       children: [
-        _MetaPill(
+        _MetaItem(
           label: l10n.knowledgeDetailNextDueLabel,
           value:
               '${knowledgeDate(context, r.nextDueAt, long: true)} · $dueLabel',
         ),
         if (r.lastDoneAt != null)
-          _MetaPill(
+          _MetaItem(
             label: l10n.knowledgeDetailLastDoneLabel,
             value: knowledgeDate(context, r.lastDoneAt!, long: true),
           ),
-        _MetaPill(
+        _MetaItem(
           label: l10n.knowledgeDetailIntervalLabel,
           value: l10n.knowledgeProposalIntervalDays(r.intervalDays),
         ),
-        _MetaPill(label: l10n.knowledgeDetailScopeLabel, value: r.scope),
-        _MetaPill(
+        _MetaItem(label: l10n.knowledgeDetailScopeLabel, value: r.scope),
+        _MetaItem(
           label: l10n.knowledgeDetailCreatedLabel,
           value: knowledgeDate(context, r.createdAt, long: true),
         ),
-        _MetaPill(
+        _MetaItem(
           label: l10n.knowledgeDetailUpdatedLabel,
           value: knowledgeDate(context, r.sync.updatedAt, long: true),
         ),
