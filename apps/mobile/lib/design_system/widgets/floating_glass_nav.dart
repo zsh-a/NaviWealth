@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
-import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
-import '../tokens/motion_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'app_glass.dart';
 import 'app_interaction.dart';
@@ -161,17 +159,12 @@ class _NavTabButton extends StatelessWidget {
                 SizedBox(
                   width: _kIconSlotSize,
                   height: _kIconSlotSize,
-                  child: AnimatedSwitcher(
-                    duration: AppMotionPolicy.duration(
-                      context,
-                      Motion.fast,
-                      role: AppMotionRole.decorative,
-                    ),
-                    switchInCurve: Motion.standardDecelerate,
-                    switchOutCurve: Motion.standardAccelerate,
+                  // Selection is signalled by the accent colour plus the
+                  // underline indicator below; the icon glyph stays fixed so
+                  // tabs do not need paired outline/filled assets.
+                  child: Center(
                     child: Icon(
-                      selected ? tab.selectedIcon : tab.icon,
-                      key: ValueKey<bool>(selected),
+                      tab.icon,
                       color: iconColor,
                       size: AppIconSizes.h18,
                     ),

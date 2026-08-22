@@ -13,11 +13,13 @@ import 'shell_preferences.dart';
 ///
 /// Two visual states:
 ///
-///  * Expanded (240dp) — icon + label per destination. A slim edge marker
-///    carries selection while a whisper tint is reserved for pointer hover.
+///  * Expanded (240dp) — icon + label per destination. A slim accent marker
+///    sits beside the icon on the selected row, while a whisper tint is
+///    reserved for pointer hover (navigation rows and footer alike).
 ///  * Collapsed (72dp) — centered icons only; the label travels into the
 ///    [FTooltip] so a pointer hover surfaces the destination name without
-///    re-flowing the layout.
+///    re-flowing the layout, and the selection marker falls back to a
+///    leading-edge overlay.
 ///
 /// Labels fade in/out continuously with the animated width (see
 /// [_SidebarMetrics]) instead of popping at a single breakpoint.
@@ -81,6 +83,10 @@ class DesktopSidebar extends ConsumerWidget {
                           onPress: workspace.onPress,
                           collapsed: metrics.collapsed,
                           labelOpacity: metrics.labelOpacity,
+                          // The workspace slot is the brand position: give its
+                          // icon a tinted tile so it never reads as a
+                          // duplicate of the Today destination below.
+                          iconTile: true,
                           trailing: Icon(
                             FLucideIcons.chevronsUpDown,
                             color: context.theme.colors.mutedForeground,
@@ -243,9 +249,10 @@ class DesktopSidebarAction {
 /// The single row primitive behind every sidebar entry: destinations,
 /// workspace switcher, pinned actions, and Settings.
 ///
-/// Selected rows use a slim edge marker plus accent foreground; a transient
-/// whisper tint communicates pointer hover. Collapsed rows center their icon
-/// and surface the label through an [FTooltip].
+/// Selected rows use a slim accent marker next to the icon plus accent
+/// foreground; a transient whisper tint communicates pointer hover. Collapsed
+/// rows center their icon, surface the label through an [FTooltip], and keep
+/// the marker as a leading-edge overlay.
 class _SidebarRow extends StatefulWidget {
   const _SidebarRow({
     required this.icon,
@@ -255,6 +262,7 @@ class _SidebarRow extends StatefulWidget {
     this.emphasized = false,
     this.collapsed = false,
     this.labelOpacity = 1,
+    this.iconTile = false,
     this.trailing,
   });
 
@@ -265,6 +273,11 @@ class _SidebarRow extends StatefulWidget {
   final bool emphasized;
   final bool collapsed;
   final double labelOpacity;
+
+  /// Renders the icon inside an [AppIconTile] container instead of as a bare
+  /// glyph. Used by the workspace (brand) row so its icon stays visually
+  /// distinct from same-shaped destination icons.
+  final bool iconTile;
 
   /// Optional trailing affordance (e.g. the workspace switcher chevron).
   /// Only rendered in the expanded layout.
@@ -289,7 +302,9 @@ class _SidebarRowState extends State<_SidebarRow> {
         ? colors.foreground.withValues(alpha: AppOpacity.whisper)
         : Colors.transparent;
 
-    final icon = Icon(widget.icon, color: foreground, size: AppIconSizes.md);
+    final Widget icon = widget.iconTile
+        ? AppIconTile(icon: widget.icon, color: colors.primary)
+        : Icon(widget.icon, color: foreground, size: AppIconSizes.md);
 
     final row = MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
@@ -310,14 +325,18 @@ class _SidebarRowState extends State<_SidebarRow> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: AppSelectionIndicator(
-                  selected: widget.selected,
-                  axis: Axis.vertical,
-                  length: AppSpacing.s20,
+              // Collapsed rows center their icon, so the selection marker
+              // stays as a leading-edge overlay; expanded rows carry the
+              // marker in the row flow next to the icon (see below).
+              if (widget.collapsed)
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: AppSelectionIndicator(
+                    selected: widget.selected,
+                    axis: Axis.vertical,
+                    length: AppSpacing.s20,
+                  ),
                 ),
-              ),
               Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: widget.collapsed ? 0 : AppSpacing.s8,
@@ -327,6 +346,16 @@ class _SidebarRowState extends State<_SidebarRow> {
                     if (widget.collapsed)
                       Expanded(child: Center(child: icon))
                     else ...[
+                      // In-flow marker: its slot never changes size, so
+                      // selection does not shift the icon or label, and the
+                      // marker reads as part of the row instead of floating
+                      // at the sidebar edge.
+                      AppSelectionIndicator(
+                        selected: widget.selected,
+                        axis: Axis.vertical,
+                        length: AppSpacing.s20,
+                      ),
+                      const SizedBox(width: AppSpacing.s6),
                       SizedBox(
                         width: AppSpacing.s32,
                         child: Align(
@@ -495,8 +524,8 @@ class _FooterHoverRegionState extends State<_FooterHoverRegion> {
           curve: Motion.standardDecelerate,
           decoration: BoxDecoration(
             color: _hovered
-                ? context.theme.colors.muted.withValues(
-                    alpha: AppOpacity.prominent,
+                ? context.theme.colors.foreground.withValues(
+                    alpha: AppOpacity.whisper,
                   )
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.sm),

@@ -129,6 +129,67 @@ void main() {
       );
       expect(palette.accentAt(11), palette.accentSequence[11 % 8]);
     });
+
+    testWidgets('accent hues are spread and free of market hues', (
+      tester,
+    ) async {
+      double hueOf(Color c) => HSLColor.fromColor(c).hue;
+      double satOf(Color c) => HSLColor.fromColor(c).saturation;
+      double hueDist(Color a, Color b) {
+        final d = (hueOf(a) - hueOf(b)).abs() % 360;
+        return d > 180 ? 360 - d : d;
+      }
+
+      for (final brightness in [Brightness.light, Brightness.dark]) {
+        late ChartPalette palette;
+        await tester.pumpWidget(
+          _wrap(
+            Builder(
+              builder: (ctx) {
+                palette = ChartPalette.of(ctx);
+                return const SizedBox();
+              },
+            ),
+            brightness: brightness,
+          ),
+        );
+        final seq = palette.accentSequence;
+
+        // Hue spacing only applies to saturated accents; the slate slot is
+        // a deliberate desaturated neutral for long-tail series.
+        final saturated = seq.where((c) => satOf(c) >= 0.3).toList();
+        for (var i = 0; i < saturated.length; i++) {
+          for (var j = i + 1; j < saturated.length; j++) {
+            expect(
+              hueDist(saturated[i], saturated[j]),
+              greaterThanOrEqualTo(29.5),
+              reason:
+                  '${brightness.name}: accent hues $i and $j are nearer '
+                  'than 30°',
+            );
+          }
+        }
+
+        // Slots 4 & 8 (0-based 3 & 7) must not read as market up/down, so
+        // neutral categorical data never reads as profit/loss.
+        final market = MarketColors.fromMode(
+          MarketColorMode.redUpGreenDown,
+          brightness: brightness,
+        );
+        for (final slot in [3, 7]) {
+          if (satOf(seq[slot]) < 0.3) continue; // neutral slate — hue-free
+          for (final marketColor in [market.up, market.down]) {
+            expect(
+              hueDist(seq[slot], marketColor),
+              greaterThanOrEqualTo(29.5),
+              reason:
+                  '${brightness.name}: accent slot ${slot + 1} collides '
+                  'with a market hue',
+            );
+          }
+        }
+      }
+    });
   });
 
   group('resolveSeriesColor', () {

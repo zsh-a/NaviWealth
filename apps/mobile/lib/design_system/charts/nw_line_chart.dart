@@ -60,6 +60,7 @@ class NwLineChart extends StatefulWidget {
     this.showTouchXAxisLabel = false,
     this.minimal = false,
     this.onScrub,
+    this.onScrubChanged,
     this.minX,
     this.maxX,
   });
@@ -72,6 +73,16 @@ class NwLineChart extends StatefulWidget {
 
   /// Live scrub sample while the user pans/long-presses. `null` on release.
   final ValueChanged<ChartPoint?>? onScrub;
+
+  /// Richer scrub callback for callers that render the scrubbed value in
+  /// their own header outside the chart (Robinhood/Copilot-style readout).
+  /// Carries the touched point plus its series; `null` on release/cancel so
+  /// the header can restore its resting (latest value) state.
+  ///
+  /// When this is set, the in-chart corner tooltip is suppressed — the
+  /// chart keeps only the crosshair line/dot so the eye stays on the
+  /// header. Without it, the legacy corner tooltip is shown as before.
+  final ValueChanged<NwScrubState?>? onScrubChanged;
 
   /// Optional forced X bounds (e.g. pin to a selected date range so sparse
   /// history leaves a calm empty lead-in instead of stretching the line).
@@ -187,12 +198,20 @@ class _NwLineChartState extends State<NwLineChart> {
       touchStartPoint: point,
     );
     widget.onScrub?.call(point);
+    widget.onScrubChanged?.call(
+      NwScrubState(
+        point: point,
+        seriesName: processed.first.name,
+        seriesIndex: 0,
+      ),
+    );
   }
 
   void _clearKeyboardSpot() {
     _keyboardSpotIndex = -1;
     _touchNotifier.value = null;
     widget.onScrub?.call(null);
+    widget.onScrubChanged?.call(null);
   }
 
   KeyEventResult _handleKeyEvent(
@@ -403,7 +422,12 @@ class _NwLineChartState extends State<NwLineChart> {
                     ),
                   ),
                 ),
-                if (spotIndex >= 0 &&
+                // Header-owning callers (onScrubChanged) get only the
+                // crosshair on the chart — the corner tooltip stays off so
+                // the live readout lives in their header, not a floating
+                // badge the eye must travel to.
+                if (widget.onScrubChanged == null &&
+                    spotIndex >= 0 &&
                     spotIndex < chartDataObj.processed.first.points.length)
                   Positioned.fill(
                     child: IgnorePointer(

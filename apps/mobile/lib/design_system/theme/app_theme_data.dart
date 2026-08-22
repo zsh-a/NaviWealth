@@ -127,7 +127,7 @@ class AppMarket {
   final Color upMuted;
   final Color downMuted;
 
-  /// Radial glow behind hero numbers; emerald in every mode by design.
+  /// Radial glow behind hero numbers; follows the [up] hue of the active mode.
   final Color profitGlow;
 
   /// Resolve the role for a signed delta (null/zero → [flat]).

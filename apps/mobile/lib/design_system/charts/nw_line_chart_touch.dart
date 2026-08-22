@@ -61,10 +61,15 @@ extension _NwLineChartInteraction on _NwLineChartState {
           _fireCrossingHaptic(response, processed);
           return;
         }
-        if (event is FlLongPressEnd || event is FlPanEndEvent) {
+        if (event is FlLongPressEnd ||
+            event is FlPanEndEvent ||
+            event is FlPanCancelEvent) {
           final dd = widget.drillDown;
           final touched = response?.lineBarSpots;
-          if (touched != null && touched.isNotEmpty && dd is PointDrillDown) {
+          if (event is! FlPanCancelEvent &&
+              touched != null &&
+              touched.isNotEmpty &&
+              dd is PointDrillDown) {
             final s = processed[touched.first.barIndex];
             final idx = touched.first.spotIndex.clamp(0, s.points.length - 1);
             dd.onTap(s.points[idx]);
@@ -72,6 +77,7 @@ extension _NwLineChartInteraction on _NwLineChartState {
           _lastSpotIndex = -1;
           _touchNotifier.value = null;
           widget.onScrub?.call(null);
+          widget.onScrubChanged?.call(null);
           return;
         }
         if (event is FlTapUpEvent) {
@@ -97,6 +103,7 @@ extension _NwLineChartInteraction on _NwLineChartState {
           _lastSpotIndex = -1;
           _touchNotifier.value = null;
           widget.onScrub?.call(null);
+          widget.onScrubChanged?.call(null);
         }
       },
     );
@@ -113,19 +120,30 @@ extension _NwLineChartInteraction on _NwLineChartState {
 
   void _emitScrub(LineTouchResponse? response, List<ChartSeries> processed) {
     final onScrub = widget.onScrub;
-    if (onScrub == null) return;
+    final onScrubChanged = widget.onScrubChanged;
+    if (onScrub == null && onScrubChanged == null) return;
     final touched = _primaryTouchedSpot(response);
     if (touched == null) {
-      onScrub(null);
+      onScrub?.call(null);
+      onScrubChanged?.call(null);
       return;
     }
     final s = processed[touched.barIndex];
     if (s.points.isEmpty) {
-      onScrub(null);
+      onScrub?.call(null);
+      onScrubChanged?.call(null);
       return;
     }
     final idx = touched.spotIndex.clamp(0, s.points.length - 1);
-    onScrub(s.points[idx]);
+    final point = s.points[idx];
+    onScrub?.call(point);
+    onScrubChanged?.call(
+      NwScrubState(
+        point: point,
+        seriesName: s.name,
+        seriesIndex: touched.barIndex,
+      ),
+    );
   }
 
   void _fireCrossingHaptic(

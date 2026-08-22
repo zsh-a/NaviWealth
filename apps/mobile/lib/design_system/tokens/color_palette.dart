@@ -72,11 +72,13 @@ class ColorPalette {
   static const Color neutral1000 = Color(0xFF000000);
 
   // ── Light surfaces ──────────────────────────────────────────────────────
-  // Cool canvas + pure white modules. SoftCard differentiates levels with
-  // shadow / hero wash rather than stacking near-identical greys.
+  // Cool canvas + pure white cards. Raised / hero levels add a stepped cool
+  // tint (alphaBlend of cyanBrand700 over white at 2% / 4%) so the elevation
+  // ladder reads without relying on shadow alone.
   static const Color surfaceBackground = Color(0xFFF4F7F7);
   static const Color surface = neutral0;
-  static const Color surfaceRaised = neutral0;
+  static const Color surfaceRaised = Color(0xFFFAFDFD); // 2% cyanBrand700 wash
+  static const Color surfaceHero = Color(0xFFF6FAFB); // 4% cyanBrand700 wash
   static const Color surfaceOverlay = Color(0xFFEEF6F7);
   static const Color surfaceHairline = Color(0xFFD5E0E2);
 
@@ -136,8 +138,8 @@ class ColorPalette {
   static const Color shadowNavy08 = Color(0x14002A38);
   static const Color shadowNavy10 = Color(0x1A002A38);
   static const Color shadowCyan04 = Color(0x0A3BC6D9);
-  static const Color profitGlowDark = Color(0x6610B981);
-  static const Color profitGlowLight = Color(0x66059669);
+  // The hero profit glow is derived in MarketColors.fromMode (mode's `up`
+  // foreground at AppOpacity.glow) so it follows the active market mode.
 
   // ── Violet (knowledge concepts + accent seed ramp) ─────────────────────
   static const Color violet50 = Color(0xFFF5F3FF);
@@ -176,18 +178,25 @@ class ColorPalette {
 
   // ── Chart categorical series accents ─────────────────────────────────
   // Chart-only sequence tokens. Regular UI controls should keep using
-  // semantic / market tokens instead of these categorical hues.
+  // semantic / market tokens instead of these categorical hues. Saturated
+  // hues are spread ≥30° apart and deliberately avoid the market up/down
+  // ramps (emerald ~160°, rose ~346°) so neutral categorical data never
+  // reads as profit/loss. The slate slots are desaturated neutrals for
+  // long-tail / "other" series, where hue separation does not apply.
   static const Color chartCyanDark = Color(0xFF67D6F0);
   static const Color chartPurpleDark = Color(0xFFB497F1);
-  static const Color chartEmeraldDark = Color(0xFF34D399);
+  static const Color chartLimeDark = Color(0xFFA3E635);
   static const Color chartPinkDark = Color(0xFFEB7BB1);
-  static const Color chartYellowDark = Color(0xFFE8D45A);
-  static const Color chartBlueDark = Color(0xFF7AB7FB);
-  static const Color chartRoseDark = Color(0xFFFB7185);
+  static const Color chartBlueDark = Color(0xFF8EA8F6);
+  static const Color chartMagentaDark = Color(0xFFE879F9);
+  static const Color chartSlateDark = Color(0xFF94A3B8);
 
   static const Color chartPurpleLight = Color(0xFF7C3AED);
+  static const Color chartLimeLight = Color(0xFF65A30D);
   static const Color chartPinkLight = Color(0xFFDB2777);
-  static const Color chartYellowLight = Color(0xFFCA8A04);
+  static const Color chartBlueLight = Color(0xFF1D4ED8);
+  static const Color chartMagentaLight = Color(0xFFC026D3);
+  static const Color chartSlateLight = Color(0xFF64748B);
 }
 
 /// Knowledge-type accent colours.

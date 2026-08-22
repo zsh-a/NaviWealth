@@ -118,7 +118,12 @@ class LifePage extends ConsumerWidget {
                 ),
               )
             else if (priorityEvents.isEmpty)
-              AdaptiveSummaryTile(child: _LifeEmptySection(l10n: l10n)),
+              // Full row so the empty state shares the hero's width instead
+              // of collapsing to one bento column on wide canvases.
+              AdaptiveSummaryTile(
+                role: AdaptiveSummaryTileRole.continuous,
+                child: _LifeEmptySection(l10n: l10n),
+              ),
           ],
         ),
       ),

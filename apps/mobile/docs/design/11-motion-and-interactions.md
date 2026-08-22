@@ -16,7 +16,7 @@
 | `Motion.ticker` | 800ms | 数字滚动 / 变化脉冲 |
 | `Motion.shimmerCycle` | 1400ms | 骨架 shimmer 循环 |
 
-曲线:`Motion.standard` / `Motion.emphasized` = `Cubic(0.2,0,0,1)`,
+曲线:`Motion.standard` = `Cubic(0.2,0,0,1)`(导出的 `emphasized` token 是它的别名),
 `Motion.emphasizedDecelerate` = `Cubic(0.05,0.7,0.1,1)`,
 `Motion.standardDecelerate` = `Cubic(0,0,0,1)`,
 `Motion.standardAccelerate` = `Cubic(0.3,0,1,1)`。无 spring 体系(有意省略)。

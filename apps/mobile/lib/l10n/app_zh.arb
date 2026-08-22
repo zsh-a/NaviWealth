@@ -705,7 +705,7 @@
   "lifeTimelineTitle": "最新动态",
   "lifeTimelinePriorityTitle": "优先处理",
   "lifeTimelineEmptyTitle": "今天很安静",
-  "lifeTimelineEmpty": "暂无需要处理的动态。你仍可以进入各功能领域查看详情。",
+  "lifeTimelineEmpty": "你仍可以进入各功能领域查看详情。",
   "lifeTimelineShowMore": "还有 {count} 条",
   "lifeTimelineShowLess": "收起",
   "lifeDomainFinance": "财务",

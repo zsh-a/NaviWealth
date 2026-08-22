@@ -2316,7 +2316,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lifeTimelineEmpty =>
-      'Nothing needs your attention. You can still open a domain to view its details.';
+      'You can still open a domain to view its details.';
 
   @override
   String lifeTimelineShowMore(int count) {

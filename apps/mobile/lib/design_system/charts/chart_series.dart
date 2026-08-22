@@ -19,6 +19,30 @@ class ChartPoint {
   final Object? meta;
 }
 
+/// Scrub sample delivered through `NwLineChart.onScrubChanged` while the
+/// user drags across the chart (or steps through it with the keyboard /
+/// assistive actions). Intended for callers that render the live value in
+/// their own header outside the chart instead of the in-chart corner
+/// tooltip.
+@immutable
+class NwScrubState {
+  const NwScrubState({
+    required this.point,
+    required this.seriesName,
+    required this.seriesIndex,
+  });
+
+  /// The scrubbed sample — `x` is the time/category coordinate, `y` the
+  /// value, and `meta` carries the caller's original domain object.
+  final ChartPoint point;
+
+  /// Display name of the series the sample belongs to.
+  final String seriesName;
+
+  /// Index of the series in the chart's (processed) series list.
+  final int seriesIndex;
+}
+
 /// One series on a line / area / stacked-area chart.
 @immutable
 class ChartSeries {

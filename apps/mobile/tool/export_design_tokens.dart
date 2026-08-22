@@ -216,6 +216,7 @@ Map<String, Object> _colorGroup() => {
     'background': _color(ColorPalette.surfaceBackground),
     'surface': _color(ColorPalette.surface),
     'raised': _color(ColorPalette.surfaceRaised),
+    'hero': _color(ColorPalette.surfaceHero),
     'overlay': _color(ColorPalette.surfaceOverlay),
     'hairline': _color(ColorPalette.surfaceHairline),
   },
@@ -301,8 +302,8 @@ Map<String, Object> _colorGroup() => {
   },
   'overlay': {
     r'$description':
-        'Shadow / scrim / glow colors — ColorPalette.shadow*, scrim*, '
-        'profitGlow*.',
+        'Shadow / scrim colors — ColorPalette.shadow*, scrim*. The hero '
+        'profit glow is derived per market mode (color.market.*.profitGlow).',
     'shadowMedium': _color(ColorPalette.shadowMedium),
     'shadowDarkRaised': _color(ColorPalette.shadowDarkRaised),
     'shadowDarkHero': _color(ColorPalette.shadowDarkHero),
@@ -312,22 +313,25 @@ Map<String, Object> _colorGroup() => {
     'shadowNavy08': _color(ColorPalette.shadowNavy08),
     'shadowNavy10': _color(ColorPalette.shadowNavy10),
     'shadowCyan04': _color(ColorPalette.shadowCyan04),
-    'profitGlowDark': _color(ColorPalette.profitGlowDark),
-    'profitGlowLight': _color(ColorPalette.profitGlowLight),
   },
   'chart': {
     r'$description':
-        'Chart-only categorical series accents — ColorPalette.chart*.',
+        'Chart-only categorical series accents — ColorPalette.chart*. '
+        'De-semanticized (no market up/down hues), hues spread ≥30° apart; '
+        'slate slots are desaturated neutrals for long-tail series.',
     'cyanDark': _color(ColorPalette.chartCyanDark),
     'purpleDark': _color(ColorPalette.chartPurpleDark),
-    'emeraldDark': _color(ColorPalette.chartEmeraldDark),
+    'limeDark': _color(ColorPalette.chartLimeDark),
     'pinkDark': _color(ColorPalette.chartPinkDark),
-    'yellowDark': _color(ColorPalette.chartYellowDark),
     'blueDark': _color(ColorPalette.chartBlueDark),
-    'roseDark': _color(ColorPalette.chartRoseDark),
+    'magentaDark': _color(ColorPalette.chartMagentaDark),
+    'slateDark': _color(ColorPalette.chartSlateDark),
     'purpleLight': _color(ColorPalette.chartPurpleLight),
+    'limeLight': _color(ColorPalette.chartLimeLight),
     'pinkLight': _color(ColorPalette.chartPinkLight),
-    'yellowLight': _color(ColorPalette.chartYellowLight),
+    'blueLight': _color(ColorPalette.chartBlueLight),
+    'magentaLight': _color(ColorPalette.chartMagentaLight),
+    'slateLight': _color(ColorPalette.chartSlateLight),
   },
   'knowledge': {
     r'$description': 'Knowledge object-type accents — KnowledgeTypeColors.',
@@ -517,6 +521,7 @@ Map<String, Object> _opacityGroup() => {
   'highlight': _number(AppOpacity.highlight),
   'halo': _number(AppOpacity.halo),
   'muted': _number(AppOpacity.muted),
+  'glow': _number(AppOpacity.glow),
   'disabled': _number(AppOpacity.disabled),
   'scrim': _number(AppOpacity.scrim),
   'prominent': _number(AppOpacity.prominent),
@@ -630,7 +635,7 @@ Map<String, Object> _motionGroup() => {
   },
   'easing': {
     r'$description': 'Easing curves — Motion.',
-    'emphasized': _easing(Motion.emphasized),
+    'emphasized': _easing(Motion.standard),
     'emphasizedDecelerate': _easing(Motion.emphasizedDecelerate),
     'standard': _easing(Motion.standard),
     'standardDecelerate': _easing(Motion.standardDecelerate),

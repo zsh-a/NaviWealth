@@ -3980,7 +3980,7 @@ abstract class AppLocalizations {
   /// Empty state for the life signal list
   ///
   /// In en, this message translates to:
-  /// **'Nothing needs your attention. You can still open a domain to view its details.'**
+  /// **'You can still open a domain to view its details.'**
   String get lifeTimelineEmpty;
 
   /// Expand collapsed attention list

@@ -1089,7 +1089,7 @@
   "@lifeTimelinePriorityTitle": { "description": "High-priority signal group title on Life hub" },
   "lifeTimelineEmptyTitle": "Quiet day",
   "@lifeTimelineEmptyTitle": { "description": "Empty attention list title" },
-  "lifeTimelineEmpty": "Nothing needs your attention. You can still open a domain to view its details.",
+  "lifeTimelineEmpty": "You can still open a domain to view its details.",
   "@lifeTimelineEmpty": { "description": "Empty state for the life signal list" },
   "lifeTimelineShowMore": "Show {count} more",
   "@lifeTimelineShowMore": {

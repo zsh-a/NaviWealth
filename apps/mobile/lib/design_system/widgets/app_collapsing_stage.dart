@@ -202,7 +202,7 @@ class AppCollapsedSummaryBar extends StatelessWidget {
     super.key,
     required this.child,
     this.progress = 0,
-    this.showAfter = 0.55,
+    this.showAfter = 0.8,
     this.visible,
     this.padding = const EdgeInsets.symmetric(
       horizontal: AppSpacing.s14,

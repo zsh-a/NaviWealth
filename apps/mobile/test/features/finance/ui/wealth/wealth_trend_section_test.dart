@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -77,6 +78,35 @@ void main() {
     expect(_chart(tester).series.single.emphasis, SeriesEmphasis.dashed);
     expect(find.text('—'), findsOneWidget);
     expect(find.textContaining('Estimated from cost basis'), findsOneWidget);
+  });
+
+  testWidgets('header scrubs the readout and restores the latest value', (
+    tester,
+  ) async {
+    await _setSurface(tester, width: 390);
+    await tester.pumpWidget(_wrap(trend: _trend()));
+    await tester.pumpAndSettle();
+
+    // Resting: the header readout shows the latest net worth.
+    expect(find.text('\$1,200'), findsOneWidget);
+
+    final chartRect = tester.getRect(
+      find.byKey(const ValueKey('wealth-trend-chart')),
+    );
+    final gesture = await tester.startGesture(
+      Offset(chartRect.left + 4, chartRect.center.dy),
+    );
+    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 1));
+    await tester.pump();
+
+    // While scrubbing, the header shows the scrubbed point's value instead.
+    expect(find.text('\$1,000'), findsOneWidget);
+    expect(find.text('\$1,200'), findsNothing);
+
+    await gesture.up();
+    await tester.pump();
+    expect(find.text('\$1,200'), findsOneWidget);
+    expect(find.text('\$1,000'), findsNothing);
   });
 }
 

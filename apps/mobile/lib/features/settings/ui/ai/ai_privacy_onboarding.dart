@@ -45,11 +45,19 @@ class _AiPrivacyOnboardingMountState
           _onboardingInFlight = false;
           return;
         }
+        // Capture session-stable handles before the async gap: the mount can
+        // unmount while the sheet is open (Settings lives outside the dock
+        // shell), so `ref` is not safe to touch in the completion callback.
+        final prefs = ref.read(sharedPreferencesProvider);
+        final container = ProviderScope.containerOf(context, listen: false);
         showAiPrivacyOnboardingSheet(context).whenComplete(() async {
           _onboardingInFlight = false;
-          await markAiPrivacyOnboardingSeen(
-            ref.read(sharedPreferencesProvider),
-          );
+          await markAiPrivacyOnboardingSeen(prefs);
+          // The provider snapshots prefs once; without invalidation it keeps
+          // returning false for the rest of the session, so every shell
+          // remount (e.g. returning from Settings) re-fired the sheet — and
+          // an open sheet suppresses the mobile floating dock.
+          container.invalidate(aiPrivacyOnboardingSeenProvider);
         });
       });
     }

@@ -71,4 +71,52 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('dismissed onboarding does not re-fire after a shell remount', (
+    tester,
+  ) async {
+    resetAiPrivacyOnboardingForTest();
+    addTearDown(resetAiPrivacyOnboardingForTest);
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final container = ProviderContainer(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    );
+    addTearDown(container.dispose);
+
+    Widget app() => UncontrolledProviderScope(
+      container: container,
+      child: MaterialApp(
+        theme: AppTheme.light(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('zh', 'CN'),
+        home: FTheme(
+          data: FTheme.neutral.light.desktop,
+          child: const Scaffold(body: AiPrivacyOnboardingMount()),
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    expect(find.text('选择你的 AI 隐私偏好'), findsOneWidget);
+
+    await tester.tap(find.text('好的'));
+    await tester.pumpAndSettle();
+    expect(find.text('选择你的 AI 隐私偏好'), findsNothing);
+
+    // Settings lives outside the dock shell, so a settings detour unmounts
+    // the mount; returning remounts it with fresh state. The seen flag must
+    // hold for the rest of the session — a re-fired sheet suppresses the
+    // mobile floating dock every time the user comes back to Today.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    expect(find.text('选择你的 AI 隐私偏好'), findsNothing);
+  });
 }

@@ -69,7 +69,7 @@ class AppTypeScale {
   /// 11px w600 +0.5 — micro status tags.
   TextStyle get micro => TypographyTokens.labelSmall;
 
-  /// 10px w500 — chart-internal annotations only.
+  /// 11px w500 — chart-internal annotations only.
   TextStyle get chartCaption => TypographyTokens.chartCaption;
 
   // ── Numerics (tabular by construction) ─────────────────────────────────
@@ -89,8 +89,8 @@ class AppTypeScale {
 ///
 /// | slot | px / line-height | semantic |
 /// |------|------------------|----------|
-/// | xs3  | 10 / 1.3  | chartCaption |
-/// | xs2  | 11 / 1.3  | micro |
+/// | xs3  | 10 / 1.3  | (legacy Forui slot — no design-system token maps here) |
+/// | xs2  | 11 / 1.3  | micro / chartCaption |
 /// | xs   | 12 / 1.35 | caption / labelSmall |
 /// | sm   | 14 / 1.5  | bodySmall / titleSmall / label |
 /// | md   | 16 / 1.5  | body / title |

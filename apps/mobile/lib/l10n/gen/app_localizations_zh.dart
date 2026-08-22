@@ -2221,7 +2221,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeTimelineEmptyTitle => '今天很安静';
 
   @override
-  String get lifeTimelineEmpty => '暂无需要处理的动态。你仍可以进入各功能领域查看详情。';
+  String get lifeTimelineEmpty => '你仍可以进入各功能领域查看详情。';
 
   @override
   String lifeTimelineShowMore(int count) {

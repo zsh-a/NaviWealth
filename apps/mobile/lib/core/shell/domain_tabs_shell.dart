@@ -286,49 +286,54 @@ class _MobileLayout extends ConsumerWidget {
                   // Passed through ValueListenableBuilder.child so opening a
                   // sheet cannot rebuild or relayout the routed page.
                   content!,
-                  // Floating dock — layered above content.
+                  // Floating dock — layered above content. _DockReveal
+                  // slides + fades the chrome while its slot collapses, so
+                  // sheets and pushed pages don't hard-cut the dock.
                   Positioned(
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    child: sheetOpen
-                        ? const SizedBox.shrink()
-                        : Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const PersistentUndoBanner(),
-                              if (showNav)
-                                Padding(
-                                  padding: EdgeInsets.fromLTRB(
-                                    _kMobileDockHorizontalPadding,
-                                    _kMobileDockTopPadding,
-                                    _kMobileDockHorizontalPadding,
-                                    _kMobileDockBottomPadding + safeAreaBottom,
-                                  ),
-                                  child: GestureDetector(
-                                    behavior: HitTestBehavior.deferToChild,
-                                    onLongPress: hasSwitcher
-                                        ? () => showDomainSwitcherSheet(
-                                            context,
-                                            specs,
-                                            switcherHomePath,
-                                          )
-                                        : null,
-                                    child: FloatingGlassNavBar(
-                                      items: navTabs,
-                                      selectedIndex: selectedIndex,
-                                      onIndexChanged: onDestinationSelected,
-                                      onAssistantAction: assistantAction == null
-                                          ? null
-                                          : () => assistantAction(context, ref),
-                                      assistantLabel: l10n.navAskAi,
-                                      assistantSemanticLabel:
-                                          l10n.commandPaletteOpenAi,
-                                    ),
-                                  ),
+                    child: _DockReveal(
+                      visible: !sheetOpen,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const PersistentUndoBanner(),
+                          _DockReveal(
+                            visible: showNav,
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                _kMobileDockHorizontalPadding,
+                                _kMobileDockTopPadding,
+                                _kMobileDockHorizontalPadding,
+                                _kMobileDockBottomPadding + safeAreaBottom,
+                              ),
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.deferToChild,
+                                onLongPress: hasSwitcher
+                                    ? () => showDomainSwitcherSheet(
+                                        context,
+                                        specs,
+                                        switcherHomePath,
+                                      )
+                                    : null,
+                                child: FloatingGlassNavBar(
+                                  items: navTabs,
+                                  selectedIndex: selectedIndex,
+                                  onIndexChanged: onDestinationSelected,
+                                  onAssistantAction: assistantAction == null
+                                      ? null
+                                      : () => assistantAction(context, ref),
+                                  assistantLabel: l10n.navAskAi,
+                                  assistantSemanticLabel:
+                                      l10n.commandPaletteOpenAi,
                                 ),
-                            ],
+                              ),
+                            ),
                           ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -336,6 +341,53 @@ class _MobileLayout extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+/// Animated show/hide for mobile dock chrome.
+///
+/// The outgoing child slides down and fades while its slot collapses, so a
+/// sheet opening or a pushed page no longer hard-cuts the floating dock.
+/// Duration comes from [Motion.fast] and is halved under reduce-motion via
+/// [AppMotionPolicy]'s transition role, matching the branch fade-in above.
+class _DockReveal extends StatelessWidget {
+  const _DockReveal({required this.visible, required this.child});
+
+  final bool visible;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final duration = AppMotionPolicy.duration(context, Motion.fast);
+    return AnimatedSize(
+      duration: duration,
+      curve: Motion.standardDecelerate,
+      alignment: Alignment.bottomCenter,
+      child: AnimatedSwitcher(
+        duration: duration,
+        switchInCurve: Motion.standardDecelerate,
+        switchOutCurve: Motion.standardAccelerate,
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        ),
+        child: visible
+            ? KeyedSubtree(
+                key: const ValueKey<String>('dock-reveal.visible'),
+                child: child,
+              )
+            : const SizedBox(
+                key: ValueKey<String>('dock-reveal.hidden'),
+                width: double.infinity,
+              ),
+      ),
     );
   }
 }

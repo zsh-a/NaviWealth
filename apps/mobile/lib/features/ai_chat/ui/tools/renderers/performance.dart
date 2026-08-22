@@ -229,9 +229,9 @@ class _NetWorthSparklineState extends State<_NetWorthSparkline> {
               showYAxis: false,
               showTouchXAxisLabel: true,
               curved: false,
-              onScrub: (point) {
+              onScrubChanged: (state) {
                 if (!mounted) return;
-                setState(() => _scrub = point);
+                setState(() => _scrub = state?.point);
               },
             ),
           ),

@@ -173,50 +173,39 @@ class TypographyTokens {
   // semantic alias so call sites that explicitly want "this is a number"
   // can keep reading.
   //
+  // Sizes are NOT re-authored here: each alias reuses the matching main-scale
+  // style and only stacks the numeric-specific deltas (weight, letterSpacing,
+  // height) on top, so a given size has exactly one source of truth.
+  //
   // Secondary marquee (Wealth sub-metrics, plan secondary). Page-level
   // hero numbers should use [displayLarge] (Outfit 40) instead.
-  static final TextStyle numericDisplay = _t(
-    32,
+  static final TextStyle numericDisplay = displayMedium.copyWith(
     height: 1.12,
-    weight: FontWeight.w700,
     letterSpacing: -0.4,
   );
-  static final TextStyle numericTitle = _t(
-    20,
-    height: 1.3,
-    weight: FontWeight.w600,
+  static final TextStyle numericTitle = headlineMedium;
+  static final TextStyle numericTitleStrong = headlineMedium.copyWith(
+    fontWeight: FontWeight.w700,
   );
-  static final TextStyle numericTitleStrong = _t(
-    20,
-    height: 1.3,
-    weight: FontWeight.w700,
+  static final TextStyle numericBody = titleMedium.copyWith(
+    fontWeight: FontWeight.w500,
   );
-  static final TextStyle numericBody = _t(
-    14,
-    height: 1.4,
-    weight: FontWeight.w500,
+  static final TextStyle numericBodyStrong = titleMedium.copyWith(
+    fontWeight: FontWeight.w700,
   );
-  static final TextStyle numericBodyStrong = _t(
-    14,
-    height: 1.4,
-    weight: FontWeight.w700,
+  static final TextStyle numericCaption = labelMedium.copyWith(
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0,
   );
-  static final TextStyle numericCaption = _t(
-    12,
-    height: 1.3,
-    weight: FontWeight.w500,
-  );
-  static final TextStyle numericCaptionStrong = _t(
-    12,
-    height: 1.3,
-    weight: FontWeight.w600,
+  static final TextStyle numericCaptionStrong = labelMedium.copyWith(
+    letterSpacing: 0,
   );
 
   /// Chart-internal caption (axis annotations, slice labels, crosshair
-  /// readouts). The only sanctioned 10px style — chart code must consume
-  /// this token instead of a raw `fontSize: 10`.
+  /// readouts). 11px — aligned with [labelSmall]; chart code must consume
+  /// this token instead of a raw `fontSize` literal.
   static final TextStyle chartCaption = _t(
-    10,
+    11,
     height: 1.3,
     weight: FontWeight.w500,
   );
@@ -227,10 +216,7 @@ class TypographyTokens {
   /// proportional Inter + tabular-figures default; reach for
   /// this token only when a surface needs every character to occupy the
   /// same width.
-  static final TextStyle numericMono = _t(
-    14,
-    height: 1.4,
-    weight: FontWeight.w500,
+  static final TextStyle numericMono = numericBody.copyWith(
     fontFamily: fontFamilyMono,
   );
 

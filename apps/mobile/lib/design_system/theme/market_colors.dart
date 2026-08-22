@@ -53,9 +53,9 @@ class MarketColors {
   /// Inner color of the radial profit-glow used behind hero numbers. The
   /// outer stop is fully transparent — render as
   /// `RadialGradient(colors: [profitGlow, profitGlow.withValues(alpha: AppOpacity.transparent)])`.
-  /// Always emerald-tinted regardless of [mode] so the visual treatment
-  /// stays "this is your money, in the green" even under green-down or
-  /// colorblind preferences.
+  /// Follows the [up] hue of the active [mode] (at [AppOpacity.glow]) so
+  /// the hero treatment always matches the direction colors on screen —
+  /// e.g. red-up (CN) mode gets a red glow, not a green one.
   final Color profitGlow;
 
   /// Pick the foreground color for a delta value.
@@ -98,10 +98,6 @@ class MarketColors {
     final blue = _BlueTone.forBrightness(isDark);
     final orange = _OrangeTone.forBrightness(isDark);
 
-    final glow = isDark
-        ? ColorPalette.profitGlowDark
-        : ColorPalette.profitGlowLight;
-
     switch (mode) {
       case MarketColorMode.redUpGreenDown:
         return MarketColors(
@@ -118,7 +114,7 @@ class MarketColors {
           onDownContainer: profit.onContainer,
           flat: flat,
           onFlat: onFlat,
-          profitGlow: glow,
+          profitGlow: loss.fg.withValues(alpha: AppOpacity.glow),
         );
       case MarketColorMode.greenUpRedDown:
         return MarketColors(
@@ -135,7 +131,7 @@ class MarketColors {
           onDownContainer: loss.onContainer,
           flat: flat,
           onFlat: onFlat,
-          profitGlow: glow,
+          profitGlow: profit.fg.withValues(alpha: AppOpacity.glow),
         );
       case MarketColorMode.colorblind:
         return MarketColors(
@@ -152,7 +148,7 @@ class MarketColors {
           onDownContainer: orange.onContainer,
           flat: flat,
           onFlat: onFlat,
-          profitGlow: glow,
+          profitGlow: blue.fg.withValues(alpha: AppOpacity.glow),
         );
     }
   }

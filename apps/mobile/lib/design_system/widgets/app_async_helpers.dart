@@ -20,12 +20,15 @@ Widget kDefaultError(
   StackTrace stackTrace, {
   VoidCallback? onRetry,
 }) {
+  final l10n = AppLocalizations.of(context);
+  final message = userSafeErrorMessage(context, error, stackTrace: stackTrace);
   return AppEmptyState.error(
-    title: AppLocalizations.of(context).commonLoadFailed,
-    message: userSafeErrorMessage(context, error, stackTrace: stackTrace),
-    retryLabel: onRetry == null
-        ? null
-        : AppLocalizations.of(context).commonRetry,
+    title: l10n.commonLoadFailed,
+    // The generic fallback sentence paraphrases the title ("couldn't load /
+    // try again"); rendering both reads as the same message twice. Specific
+    // `UserFacingError` copy still surfaces.
+    message: message == l10n.commonSafeErrorMessage ? null : message,
+    retryLabel: onRetry == null ? null : l10n.commonRetry,
     onRetry: onRetry,
   );
 }

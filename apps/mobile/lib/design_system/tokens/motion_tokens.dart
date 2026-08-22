@@ -68,10 +68,9 @@ class Motion {
   /// Streaming caret blink period.
   static const Duration caretBlink = Duration(milliseconds: 900);
 
-  // Easings — Material 3 emphasized + decelerate.
-  static const Curve emphasized = Cubic(0.2, 0.0, 0.0, 1.0);
-  static const Curve emphasizedDecelerate = Cubic(0.05, 0.7, 0.1, 1.0);
+  // Easings — Material 3 standard + decelerate/accelerate pair.
   static const Curve standard = Cubic(0.2, 0.0, 0.0, 1.0);
+  static const Curve emphasizedDecelerate = Cubic(0.05, 0.7, 0.1, 1.0);
   static const Curve standardDecelerate = Cubic(0.0, 0.0, 0.0, 1.0);
   static const Curve standardAccelerate = Cubic(0.3, 0.0, 1.0, 1.0);
 

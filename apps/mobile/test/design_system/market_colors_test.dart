@@ -100,21 +100,28 @@ void main() {
       expect(m.mutedForDelta(null), m.flat);
     });
 
-    test('profitGlow stays emerald under every market mode', () {
-      // Hue-locked — even when `up` is red (CN convention) the hero
-      // glow keeps its emerald tint so the Hero treatment doesn't
-      // invert.
-      for (final mode in MarketColorMode.values) {
-        final m = MarketColors.fromMode(mode, brightness: Brightness.dark);
-        final hsl = HSLColor.fromColor(m.profitGlow);
-        // Emerald sits roughly around hue 158–162 in HSL.
-        expect(
-          hsl.hue,
-          inInclusiveRange(140, 175),
-          reason: 'profitGlow should be emerald-hued under $mode',
-        );
-        // 40% alpha base.
-        expect(m.profitGlow.a, closeTo(0.4, 0.02));
+    test('profitGlow follows the up hue under every market mode', () {
+      // The hero glow tracks the mode's `up` color so the hero treatment
+      // never contradicts the delta hue on screen (red-up CN mode gets a
+      // red glow; green-up gets green; colorblind gets blue).
+      for (final brightness in [Brightness.light, Brightness.dark]) {
+        for (final mode in MarketColorMode.values) {
+          final m = MarketColors.fromMode(mode, brightness: brightness);
+          final glowHsl = HSLColor.fromColor(m.profitGlow);
+          final upHsl = HSLColor.fromColor(m.up);
+          expect(
+            glowHsl.hue,
+            closeTo(upHsl.hue, 1.0),
+            reason:
+                'profitGlow should match the up hue under '
+                '$mode/${brightness.name}',
+          );
+          expect(
+            m.profitGlow.a,
+            closeTo(AppOpacity.glow, 0.02),
+            reason: 'profitGlow keeps the shared glow base alpha',
+          );
+        }
       }
     });
   });

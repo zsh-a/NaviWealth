@@ -184,6 +184,48 @@ void main() {
     expect(find.text('two'), findsOneWidget);
   });
 
+  testWidgets('dock hides while a sheet is open and returns after it closes', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final router = _router();
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp.router(
+          routerConfig: router,
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          builder: (context, child) => FTheme(
+            data: FTheme.neutral.light.desktop,
+            child: child ?? const SizedBox.shrink(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(FloatingGlassNavBar), findsOneWidget);
+
+    // Sheet opens: the dock slides/fades out.
+    appSheetOverlayDepthListenable.value = 1;
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byType(FloatingGlassNavBar), findsNothing);
+
+    // Sheet closes: the dock must come back (first-launch regression — a
+    // stuck sheet depth used to suppress the dock indefinitely).
+    appSheetOverlayDepthListenable.value = 0;
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byType(FloatingGlassNavBar), findsOneWidget);
+  });
+
   testWidgets('opening a sheet keeps routed content layout stable', (
     tester,
   ) async {

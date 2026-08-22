@@ -63,31 +63,33 @@ class ChartPalette {
   Color accentAt(int i) => accentSequence[i.abs() % accentSequence.length];
 
   static List<Color> _accentSequence({required bool isDark}) {
-    // The 4th and 8th slots stay aligned with `MarketColors.up/down` so a
-    // benchmark series labelled "profit" / "loss" reads the same hue as the
-    // dashboard's hero number. These were swapped to emerald / soft
-    // crimson; the rest of the sequence is unchanged.
+    // Fully de-semanticized: no slot tracks `MarketColors.up/down`
+    // (emerald ~160° / rose ~346°), so neutral categorical data (expense
+    // pie, allocation slices) never reads as profit/loss. Saturated hues
+    // are spread ≥30° apart on the wheel. The last slot is a desaturated
+    // slate for long-tail / "other" series — hue spacing is only
+    // meaningful for saturated accents.
     if (isDark) {
       return const [
         ColorPalette.chartCyanDark,
         ColorPalette.chartPurpleDark,
         ColorPalette.cbOrangeLight,
-        ColorPalette.chartEmeraldDark,
+        ColorPalette.chartLimeDark,
         ColorPalette.chartPinkDark,
-        ColorPalette.chartYellowDark,
         ColorPalette.chartBlueDark,
-        ColorPalette.chartRoseDark,
+        ColorPalette.chartMagentaDark,
+        ColorPalette.chartSlateDark,
       ];
     }
     return const [
       ColorPalette.cyan500,
       ColorPalette.chartPurpleLight,
       ColorPalette.amber500,
-      ColorPalette.green600,
+      ColorPalette.chartLimeLight,
       ColorPalette.chartPinkLight,
-      ColorPalette.chartYellowLight,
-      ColorPalette.cyanBrand700,
-      ColorPalette.red600,
+      ColorPalette.chartBlueLight,
+      ColorPalette.chartMagentaLight,
+      ColorPalette.chartSlateLight,
     ];
   }
 }

@@ -449,6 +449,64 @@ void main() {
       await gesture.up();
     });
 
+    testWidgets('onScrubChanged moves the readout off the chart', (
+      tester,
+    ) async {
+      final days = [
+        DateTime(2026, 1),
+        DateTime(2026, 1, 2),
+        DateTime(2026, 1, 3),
+      ];
+      final states = <NwScrubState?>[];
+      await tester.pumpWidget(
+        _wrap(
+          NwLineChart(
+            series: [
+              ChartSeries(
+                name: 'main',
+                points: [
+                  for (var i = 0; i < days.length; i++)
+                    ChartPoint(
+                      x: days[i].millisecondsSinceEpoch.toDouble(),
+                      y: i.toDouble(),
+                    ),
+                ],
+              ),
+            ],
+            xAxis: const TimeAxis(format: AxisDateFormat.dayMonth),
+            showXAxis: false,
+            showTouchXAxisLabel: true,
+            onScrubChanged: states.add,
+          ),
+        ),
+      );
+
+      final chartRect = tester.getRect(find.byType(LineChart));
+      const leftAxisWidth = 44.0;
+      final expectedCenterX =
+          chartRect.left +
+          leftAxisWidth +
+          (chartRect.width - leftAxisWidth) / 2;
+      final gesture = await tester.startGesture(
+        Offset(expectedCenterX, chartRect.center.dy),
+      );
+      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 1));
+      await tester.pump();
+
+      // The scrub state carries point + series so the caller can render its
+      // own header readout…
+      expect(states.last?.point.y, 1);
+      expect(states.last?.seriesName, 'main');
+      // …and the corner tooltip is suppressed: only the touch bubble shows
+      // the focused date (the default corner tooltip would render a second
+      // copy — see the test above).
+      expect(find.text('Jan 2, 2026'), findsOneWidget);
+
+      await gesture.up();
+      await tester.pump();
+      expect(states.last, isNull);
+    });
+
     testWidgets('showYAxis: false removes the left axis gutter', (
       tester,
     ) async {

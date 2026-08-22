@@ -71,7 +71,7 @@ AppSurfaceLadder resolveSurfaceLadder({
           canvas: ColorPalette.surfaceBackground,
           card: ColorPalette.surface,
           raised: ColorPalette.surfaceRaised,
-          hero: ColorPalette.surface,
+          hero: ColorPalette.surfaceHero,
           border: highContrast
               ? ColorPalette.navy400
               : ColorPalette.surfaceHairline,

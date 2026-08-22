@@ -61,13 +61,24 @@ class WealthTrendSection extends ConsumerWidget {
   }
 }
 
-class _WealthTrendBody extends StatelessWidget {
+class _WealthTrendBody extends StatefulWidget {
   const _WealthTrendBody({required this.trend});
 
   final DashboardTrend trend;
 
   @override
+  State<_WealthTrendBody> createState() => _WealthTrendBodyState();
+}
+
+class _WealthTrendBodyState extends State<_WealthTrendBody> {
+  // Live scrub sample — drives the header readout (Robinhood/Copilot
+  // pattern: the value/date move to the header while the chart keeps only
+  // the crosshair). `null` restores the resting latest-value state.
+  NwScrubState? _scrub;
+
+  @override
   Widget build(BuildContext context) {
+    final trend = widget.trend;
     final l10n = AppLocalizations.of(context);
     final segments = trend.chartableSegments;
     if (segments.isEmpty) {
@@ -144,6 +155,8 @@ class _WealthTrendBody extends StatelessWidget {
                 .where((p) => p.quality != TrendPointQuality.incomplete)
                 .length;
 
+    final xAxis = TimeAxis(format: _dateFormatFor(trend.range), maxLabels: 4);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -151,6 +164,8 @@ class _WealthTrendBody extends StatelessWidget {
           currency: trend.baseCurrency,
           baseline: !estimatedOnly && values.length > 1 ? values.first : null,
           current: values.last,
+          scrub: _scrub,
+          formatScrubDate: xAxis.formatPrecise,
         ),
         const SizedBox(height: AppSpacing.s16),
         SizedBox(
@@ -161,7 +176,7 @@ class _WealthTrendBody extends StatelessWidget {
             // Tight fit around real data so short histories fill the plot.
             minX: dataMinX,
             maxX: dataMaxX <= dataMinX ? null : dataMaxX,
-            xAxis: TimeAxis(format: _dateFormatFor(trend.range), maxLabels: 4),
+            xAxis: xAxis,
             yAxis: ValueAxis.currency(
               currencyCode: trend.baseCurrency,
               maxLabels: 3,
@@ -177,6 +192,7 @@ class _WealthTrendBody extends StatelessWidget {
             showTouchXAxisLabel: true,
             minimal: allFlat,
             semanticLabel: '${l10n.wealthTrendTitle}, $seriesName',
+            onScrubChanged: (state) => setState(() => _scrub = state),
           ),
         ),
         if (allFlat) ...[
@@ -208,11 +224,20 @@ class _WealthTrendSummary extends StatelessWidget {
     required this.currency,
     required this.baseline,
     required this.current,
+    required this.scrub,
+    required this.formatScrubDate,
   });
 
   final String currency;
   final Decimal? baseline;
   final Decimal current;
+
+  /// Live scrub sample from the trend chart — while scrubbing, the header
+  /// shows the scrubbed value and its date instead of the resting readout.
+  final NwScrubState? scrub;
+
+  /// Formats a scrubbed point's X coordinate (ms since epoch) for display.
+  final String Function(double x) formatScrubDate;
 
   @override
   Widget build(BuildContext context) {
@@ -223,35 +248,68 @@ class _WealthTrendSummary extends StatelessWidget {
         ? null
         : delta!.toDouble() / baselineDouble.abs();
     final hidden = AmountPrivacyScope.isHiddenOf(context);
+    final scrub = this.scrub;
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: Text(
-            l10n.dashboardTrendMetricChange,
-            style: context.microCaptionStyle,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                scrub != null
+                    ? formatScrubDate(scrub.point.x)
+                    : l10n.dashboardTrendMetricChange,
+                style: context.microCaptionStyle,
+              ),
+              const SizedBox(height: AppSpacing.s2),
+              // Scrubbed value while dragging, latest value at rest. Plain
+              // MoneyText (no count-up) so the readout tracks the finger
+              // 1:1; tabular figures come from the global type tokens.
+              MoneyText(
+                key: const ValueKey('wealth-trend-scrub-value'),
+                amount: scrub?.point.y ?? current.toDouble(),
+                currencyCode: currency,
+                fractionDigits: 0,
+                style: TypographyTokens.numericTitleStrong,
+                color: context.theme.colors.foreground,
+              ),
+            ],
           ),
         ),
         if (delta == null)
-          Text('—', style: TypographyTokens.numericBodyStrong)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.s16),
+            child: Text('—', style: TypographyTokens.numericBodyStrong),
+          )
         else ...[
-          DeltaText(
-            value: delta.toDouble(),
-            format: DeltaFormat.currency,
-            currencyCode: currency,
-            fractionDigits: 0,
-            showIcon: false,
-            style: TypographyTokens.numericBodyStrong,
-          ),
-          if (ratio != null && !hidden) ...[
-            const SizedBox(width: AppSpacing.s8),
-            DeltaText.percentFromRatio(
-              ratio: ratio,
-              fractionDigits: 1,
-              showIcon: false,
-              style: context.microCaptionStyle,
+          const SizedBox(width: AppSpacing.s8),
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.s16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                DeltaText(
+                  value: delta.toDouble(),
+                  format: DeltaFormat.currency,
+                  currencyCode: currency,
+                  fractionDigits: 0,
+                  showIcon: false,
+                  style: TypographyTokens.numericBodyStrong,
+                ),
+                if (ratio != null && !hidden) ...[
+                  const SizedBox(height: AppSpacing.s2),
+                  DeltaText.percentFromRatio(
+                    ratio: ratio,
+                    fractionDigits: 1,
+                    showIcon: false,
+                    style: context.microCaptionStyle,
+                  ),
+                ],
+              ],
             ),
-          ],
+          ),
         ],
       ],
     );
