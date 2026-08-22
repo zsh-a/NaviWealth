@@ -59,11 +59,7 @@ class PlanHubPage extends ConsumerWidget {
                   _NextActionSection(status: status, items: attentionItems),
                   const SizedBox(height: AppSpacing.s20),
                 ],
-                _PlanningSections(
-                  status: status,
-                  fire: fire,
-                  excludedPath: attentionItems.firstOrNull?.path,
-                ),
+                _PlanningSections(status: status, fire: fire),
               ],
             ),
           ),
@@ -100,41 +96,78 @@ Future<void> _refreshPlanningWorkspace(WidgetRef ref) async {
   }
 }
 
-class _NextActionSection extends StatelessWidget {
+class _NextActionSection extends StatefulWidget {
   const _NextActionSection({required this.status, required this.items});
 
   final PlanningHubStatus status;
   final List<_PlanEntrySpec> items;
 
   @override
+  State<_NextActionSection> createState() => _NextActionSectionState();
+}
+
+class _NextActionSectionState extends State<_NextActionSection> {
+  bool _expanded = false;
+
+  @override
+  void didUpdateWidget(covariant _NextActionSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.items.length <= 1 && _expanded) _expanded = false;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final next = items.firstOrNull;
-    final hasAttention = items.isNotEmpty;
+    final next = widget.items.firstOrNull;
+    final hasAttention = widget.items.isNotEmpty;
     final tone = next?.tone ?? AppBadgeTone.neutral;
-    final icon = hasAttention ? next!.icon : FLucideIcons.loaderCircle;
+    final visibleItems = _expanded
+        ? widget.items
+        : widget.items.take(1).toList(growable: false);
 
     return AppSection.group(
       title: l10n.planAttentionTitle,
-      trailing: hasAttention || status.isLoading
+      trailing: hasAttention || widget.status.isLoading
           ? AppBadge(
-              label: status.isLoading && !hasAttention
+              label: widget.status.isLoading && !hasAttention
                   ? l10n.commonLoading
-                  : _toneLabel(context, tone),
+                  : l10n.planAttentionCount(widget.items.length),
               size: AppBadgeSize.compact,
-              tone: status.isLoading && !hasAttention
+              tone: widget.status.isLoading && !hasAttention
                   ? AppBadgeTone.neutral
                   : tone,
-              icon: icon,
+              icon: hasAttention ? next!.icon : FLucideIcons.loaderCircle,
             )
           : null,
       children: [
-        if (hasAttention)
-          _AttentionRow(spec: next!)
-        else if (status.isLoading)
+        if (hasAttention) ...[
+          for (final (index, item) in visibleItems.indexed) ...[
+            if (index > 0) const FDivider(),
+            _AttentionRow(spec: item),
+          ],
+          if (widget.items.length > 1) ...[
+            const SizedBox(height: AppSpacing.s6),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: FButton(
+                variant: FButtonVariant.ghost,
+                onPress: () => setState(() => _expanded = !_expanded),
+                prefix: Icon(
+                  _expanded ? FLucideIcons.chevronUp : FLucideIcons.listChecks,
+                  size: AppIconSizes.sm,
+                ),
+                child: Text(
+                  _expanded
+                      ? l10n.planAttentionCollapse
+                      : l10n.planAttentionShowAll(widget.items.length - 1),
+                ),
+              ),
+            ),
+          ],
+        ] else if (widget.status.isLoading)
           const _AttentionSkeleton(),
-        if (status.hasError) ...[
-          if (hasAttention || status.isLoading)
+        if (widget.status.hasError) ...[
+          if (hasAttention || widget.status.isLoading)
             const SizedBox(height: AppSpacing.s10),
           Row(
             children: [
@@ -230,15 +263,10 @@ class _AttentionSkeleton extends StatelessWidget {
 }
 
 class _PlanningSections extends StatelessWidget {
-  const _PlanningSections({
-    required this.status,
-    required this.fire,
-    required this.excludedPath,
-  });
+  const _PlanningSections({required this.status, required this.fire});
 
   final PlanningHubStatus status;
   final AsyncValue<FireDashboardView> fire;
-  final String? excludedPath;
 
   @override
   Widget build(BuildContext context) {
@@ -246,50 +274,15 @@ class _PlanningSections extends StatelessWidget {
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final outlook = <_PlanEntrySpec>[
       _runwayEntry(l10n, status),
+      _budgetEntry(l10n, status),
       _fireEntry(l10n, formatters, fire),
-    ].where((entry) => entry.path != excludedPath).toList(growable: false);
+    ];
     final investments = <_PlanEntrySpec>[
-      if ((status.dcaPlanCount ?? 0) > 0) _dcaEntry(context, l10n, status),
-      if (status.rebalance == PlanningRebalanceStatus.attention ||
-          status.rebalance == PlanningRebalanceStatus.active)
-        _rebalanceEntry(l10n, status),
-      if (!kIsWeb && (status.wheelCycleCount ?? 0) > 0)
-        _incomeStrategyEntry(l10n, status),
-    ].where((entry) => entry.path != excludedPath).toList(growable: false);
-    final reviews = <_PlanEntrySpec>[
-      if ((status.pendingLifeEventReviews ?? 0) > 0)
-        _PlanEntrySpec(
-          icon: FLucideIcons.waypoints,
-          title: l10n.lifeEventScenariosTitle,
-          subtitle: status.pendingLifeEventReviews == null
-              ? l10n.planStatusLoading
-              : status.pendingLifeEventReviews == 0
-              ? l10n.planStatusNoPendingReviews
-              : l10n.planStatusPendingReviews(status.pendingLifeEventReviews!),
-          path: FinanceRoutes.planLifeEvents,
-          tone: status.pendingLifeEventReviews == null
-              ? AppBadgeTone.neutral
-              : status.pendingLifeEventReviews! > 0
-              ? AppBadgeTone.warning
-              : AppBadgeTone.success,
-        ),
-    ].where((entry) => entry.path != excludedPath).toList(growable: false);
-    final overviewSpan = investments.isNotEmpty || reviews.isNotEmpty
-        ? AdaptiveSummaryTileRole.supporting
-        : AdaptiveSummaryTileRole.continuous;
-    final companion = investments.isNotEmpty
-        ? _PlanSection(
-            key: const ValueKey('plan-investments-section'),
-            title: l10n.planMyPlansTitle,
-            entries: investments,
-          )
-        : reviews.isNotEmpty
-        ? _PlanSection(
-            key: const ValueKey('plan-reviews-section'),
-            title: l10n.lifeEventDecisionHistory,
-            entries: reviews,
-          )
-        : null;
+      _dcaEntry(context, l10n, status),
+      _rebalanceEntry(l10n, status),
+      if (!kIsWeb) _incomeStrategyEntry(l10n, status),
+    ];
+    final reviews = <_PlanEntrySpec>[_lifeEventsEntry(l10n, status)];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -298,72 +291,99 @@ class _PlanningSections extends StatelessWidget {
           gap: AppSpacing.s20,
           items: [
             AdaptiveSummaryTile(
-              role: overviewSpan,
+              role: AdaptiveSummaryTileRole.supporting,
               child: _PlanSection(
                 key: const ValueKey('plan-outlook-section'),
                 title: l10n.planOverviewTitle,
                 entries: outlook,
               ),
             ),
-            if (companion != null)
-              AdaptiveSummaryTile(
-                role: AdaptiveSummaryTileRole.featured,
-                child: companion,
+            AdaptiveSummaryTile(
+              role: AdaptiveSummaryTileRole.featured,
+              child: _PlanSection(
+                key: const ValueKey('plan-investments-section'),
+                title: l10n.planMyPlansTitle,
+                entries: investments,
               ),
-            if (investments.isNotEmpty && reviews.isNotEmpty)
-              AdaptiveSummaryTile(
-                role: AdaptiveSummaryTileRole.continuous,
-                child: _PlanSection(
-                  key: const ValueKey('plan-reviews-section'),
-                  title: l10n.lifeEventDecisionHistory,
-                  entries: reviews,
-                ),
+            ),
+            AdaptiveSummaryTile(
+              role: AdaptiveSummaryTileRole.continuous,
+              child: _PlanSection(
+                key: const ValueKey('plan-reviews-section'),
+                title: l10n.lifeEventDecisionHistory,
+                entries: reviews,
               ),
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.s12),
-        Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: AppAdaptiveActionMenu(
-            title: l10n.planAddPlanAction,
-            actions: [
+        AppAdaptiveActionMenu(
+          title: l10n.planAddPlanAction,
+          actions: [
+            AppAdaptiveAction(
+              icon: FLucideIcons.piggyBank,
+              title: l10n.planBudgetSectionTitle,
+              onPress: () => context.push(FinanceRoutes.planBudget),
+            ),
+            AppAdaptiveAction(
+              icon: FLucideIcons.scale,
+              title: l10n.planRebalanceSectionTitle,
+              onPress: () => context.push(FinanceRoutes.planRebalance),
+            ),
+            AppAdaptiveAction(
+              icon: FLucideIcons.calendarClock,
+              title: l10n.planDcaPlanTitle,
+              onPress: () => context.push(FinanceRoutes.planDca),
+            ),
+            if (!kIsWeb)
               AppAdaptiveAction(
-                icon: FLucideIcons.piggyBank,
-                title: l10n.planBudgetSectionTitle,
-                onPress: () => context.push(FinanceRoutes.planBudget),
+                icon: FLucideIcons.candlestickChart,
+                title: l10n.incomeStrategyTitle,
+                onPress: () => context.push(FinanceRoutes.planIncome),
               ),
-              AppAdaptiveAction(
-                icon: FLucideIcons.scale,
-                title: l10n.planRebalanceSectionTitle,
-                onPress: () => context.push(FinanceRoutes.planRebalance),
-              ),
-              AppAdaptiveAction(
-                icon: FLucideIcons.calendarClock,
-                title: l10n.planDcaPlanTitle,
-                onPress: () => context.push(FinanceRoutes.planDca),
-              ),
-              if (!kIsWeb)
-                AppAdaptiveAction(
-                  icon: FLucideIcons.candlestickChart,
-                  title: l10n.incomeStrategyTitle,
-                  onPress: () => context.push(FinanceRoutes.planIncome),
-                ),
-              AppAdaptiveAction(
-                icon: FLucideIcons.waypoints,
-                title: l10n.lifeEventScenariosTitle,
-                onPress: () => context.push(FinanceRoutes.planLifeEvents),
-              ),
-            ],
-            triggerBuilder: (context, openMenu, focusNode) => FButton(
-              variant: FButtonVariant.ghost,
-              focusNode: focusNode,
-              onPress: openMenu,
-              prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
-              child: Flexible(
-                child: Text(
-                  l10n.planAddPlanAction,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+            AppAdaptiveAction(
+              icon: FLucideIcons.waypoints,
+              title: l10n.lifeEventScenariosTitle,
+              onPress: () => context.push(FinanceRoutes.planLifeEvents),
+            ),
+          ],
+          triggerBuilder: (context, openMenu, focusNode) => Focus(
+            focusNode: focusNode,
+            child: Semantics(
+              button: true,
+              label: l10n.planAddPlanAction,
+              child: AppGroupedSurface(
+                padding: EdgeInsets.zero,
+                child: AppTappable(
+                  onPress: openMenu,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s16,
+                      vertical: AppSpacing.s12,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          FLucideIcons.layoutGrid,
+                          size: AppIconSizes.sm,
+                          color: context.theme.colors.primary,
+                        ),
+                        const SizedBox(width: AppSpacing.s10),
+                        Expanded(
+                          child: Text(
+                            l10n.planAddPlanAction,
+                            style: context.labelStyle,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.s8),
+                        Icon(
+                          FLucideIcons.chevronRight,
+                          size: AppIconSizes.sm,
+                          color: context.theme.colors.mutedForeground,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -450,11 +470,13 @@ class _PlanRow extends StatelessWidget {
                   size: AppBadgeSize.compact,
                 )
               else
-                Icon(
-                  FLucideIcons.chevronRight,
-                  size: AppIconSizes.sm,
-                  color: context.theme.colors.mutedForeground,
-                ),
+                const SizedBox.shrink(),
+              if (needsAttention) const SizedBox(width: AppSpacing.s6),
+              Icon(
+                FLucideIcons.chevronRight,
+                size: AppIconSizes.sm,
+                color: context.theme.colors.mutedForeground,
+              ),
             ],
           ),
         ),
@@ -580,6 +602,59 @@ _PlanEntrySpec _runwayEntry(AppLocalizations l10n, PlanningHubStatus status) {
       PlanningRunwayStatus.shortfall => AppBadgeTone.error,
       PlanningRunwayStatus.needsData || null => AppBadgeTone.neutral,
     },
+  );
+}
+
+_PlanEntrySpec _budgetEntry(AppLocalizations l10n, PlanningHubStatus status) {
+  final signal = status.budgetSignal;
+  final count = status.budgetCount;
+  final progress = status.budgetProgress;
+  final subtitle = count == null
+      ? l10n.planStatusLoading
+      : count == 0 || signal == BudgetSignal.noData
+      ? l10n.planStatusNeedsSetup
+      : signal == BudgetSignal.overBudget
+      ? l10n.planStatusBudgetOver
+      : signal == BudgetSignal.strained
+      ? l10n.planStatusBudgetStrained
+      : progress == null
+      ? l10n.planStatusBudgetComfortable
+      : l10n.planStatusBudgetUsed(
+          (progress * 100).clamp(0, 999).toStringAsFixed(0),
+        );
+  return _PlanEntrySpec(
+    icon: FLucideIcons.piggyBank,
+    title: l10n.planBudgetSectionTitle,
+    subtitle: subtitle,
+    path: FinanceRoutes.planBudget,
+    tone: switch (signal) {
+      BudgetSignal.overBudget => AppBadgeTone.error,
+      BudgetSignal.strained => AppBadgeTone.warning,
+      BudgetSignal.comfortable => AppBadgeTone.success,
+      BudgetSignal.noData || null => AppBadgeTone.neutral,
+    },
+  );
+}
+
+_PlanEntrySpec _lifeEventsEntry(
+  AppLocalizations l10n,
+  PlanningHubStatus status,
+) {
+  final pending = status.pendingLifeEventReviews;
+  return _PlanEntrySpec(
+    icon: FLucideIcons.waypoints,
+    title: l10n.lifeEventScenariosTitle,
+    subtitle: pending == null
+        ? l10n.planStatusLoading
+        : pending == 0
+        ? l10n.planStatusNoPendingReviews
+        : l10n.planStatusPendingReviews(pending),
+    path: FinanceRoutes.planLifeEvents,
+    tone: pending == null
+        ? AppBadgeTone.neutral
+        : pending > 0
+        ? AppBadgeTone.warning
+        : AppBadgeTone.success,
   );
 }
 

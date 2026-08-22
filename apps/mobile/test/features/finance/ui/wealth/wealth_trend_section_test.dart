@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
@@ -12,7 +13,7 @@ import 'package:naviwealth/features/finance/ui/wealth/wealth_trend_section.dart'
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
-  testWidgets('keeps net worth primary and moves ranges into one menu', (
+  testWidgets('keeps net worth primary and exposes direct range controls', (
     tester,
   ) async {
     await _setSurface(tester, width: 390);
@@ -99,10 +100,13 @@ Widget _wrap({required DashboardTrend trend, double textScale = 1}) {
         ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
-      home: const Scaffold(
-        body: SingleChildScrollView(
-          padding: EdgeInsets.all(AppSpacing.s16),
-          child: WealthTrendSection(),
+      home: FTheme(
+        data: FTheme.neutral.light.desktop,
+        child: const Scaffold(
+          body: SingleChildScrollView(
+            padding: EdgeInsets.all(AppSpacing.s16),
+            child: WealthTrendSection(),
+          ),
         ),
       ),
     ),

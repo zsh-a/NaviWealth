@@ -27,52 +27,35 @@ Future<void> showWealthActionPanel(BuildContext context) {
     title: l10n.accountsActionsTitle,
     subtitle: l10n.wealthActionPanelSubtitle,
     maxHeightFactor: 0.9,
-    builder: (sheetContext) => AppActionSheetList(
-      children: [
-        AppActionSheetTile(
-          icon: FLucideIcons.landmark,
-          title: l10n.accountFormCreateTitle,
-          subtitle: l10n.accountsActionAccountHint,
-          onPress: () => _closeAndPush(
-            sheetContext,
-            context,
-            FinanceRoutes.wealthAccountNew,
-          ),
-        ),
-        AppActionSheetTile(
-          icon: FLucideIcons.walletCards,
-          title: l10n.superFabAsset,
-          subtitle: l10n.wealthActionPanelAssetHint,
-          onPress: () => closeSheetThen(
-            sheetContext,
-            () => _showWealthAssetTypePanel(context),
-          ),
-        ),
-        AppActionSheetTile(
-          icon: FLucideIcons.arrowDownRight,
-          title: l10n.superFabLiability,
-          subtitle: l10n.accountsActionLiabilityHint,
-          onPress: () => _closeAndPush(
-            sheetContext,
-            context,
-            FinanceRoutes.wealthLiabilityNew,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Future<void> _showWealthAssetTypePanel(BuildContext context) {
-  final l10n = AppLocalizations.of(context);
-  return showAppSheet<void>(
-    context: context,
-    title: l10n.superFabAsset,
-    subtitle: l10n.wealthActionPanelAssetSubtitle,
-    maxHeightFactor: 0.9,
     builder: (sheetContext) => Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _WealthActionSection(
+          title: l10n.wealthObjectsTitle,
+          actions: [
+            _WealthAction(
+              icon: FLucideIcons.landmark,
+              title: l10n.accountFormCreateTitle,
+              subtitle: l10n.accountsActionAccountHint,
+              onPress: () => _closeAndPush(
+                sheetContext,
+                context,
+                FinanceRoutes.wealthAccountNew,
+              ),
+            ),
+            _WealthAction(
+              icon: FLucideIcons.arrowDownRight,
+              title: l10n.superFabLiability,
+              subtitle: l10n.accountsActionLiabilityHint,
+              onPress: () => _closeAndPush(
+                sheetContext,
+                context,
+                FinanceRoutes.wealthLiabilityNew,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s16),
         _WealthActionSection(
           title: l10n.wealthActionPanelFinancialGroup,
           actions: [

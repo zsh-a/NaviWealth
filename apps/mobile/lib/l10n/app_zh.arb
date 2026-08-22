@@ -41,7 +41,7 @@
   "@planAttentionCount": { "placeholders": { "count": { "type": "int" } } },
   "planOverviewTitle": "财务展望",
   "planMyPlansTitle": "进行中的投资计划",
-  "planAddPlanAction": "添加或探索",
+  "planAddPlanAction": "规划工具",
   "planExploreActiveOptions": "{count, plural, other{有 {count} 个期权持仓}}",
   "@planExploreActiveOptions": { "placeholders": { "count": { "type": "int" } } },
   "planDcaPlanTitle": "定投计划",

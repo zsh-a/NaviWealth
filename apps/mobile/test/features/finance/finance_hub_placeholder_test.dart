@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/theme/app_theme.dart';
 import 'package:naviwealth/features/finance/accounts/data/account_balances_provider.dart';
 import 'package:naviwealth/features/finance/application/planning_hub_status.dart';
@@ -18,35 +19,37 @@ import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
-  testWidgets('Plan hub keeps loading state focused on financial outlook', (
-    tester,
-  ) async {
-    await _setDesktopSurface(tester);
-    await tester.pumpWidget(
-      _wrap(
-        overrides: [
-          fireDashboardViewProvider.overrideWith(
-            (_) => const AsyncValue.loading(),
-          ),
-          planningHubStatusProvider.overrideWith(
-            (_) => const PlanningHubStatus.loading(),
-          ),
-        ],
-        child: const PlanHubPage(),
-      ),
-    );
-    await tester.pump();
+  testWidgets(
+    'Plan hub keeps all planning capabilities visible while loading',
+    (tester) async {
+      await _setDesktopSurface(tester);
+      await tester.pumpWidget(
+        _wrap(
+          overrides: [
+            fireDashboardViewProvider.overrideWith(
+              (_) => const AsyncValue.loading(),
+            ),
+            planningHubStatusProvider.overrideWith(
+              (_) => const PlanningHubStatus.loading(),
+            ),
+          ],
+          child: const PlanHubPage(),
+        ),
+      );
+      await tester.pump();
 
-    expect(find.text('Needs attention'), findsOneWidget);
-    expect(find.text('Financial outlook'), findsOneWidget);
-    expect(find.text('Money runway'), findsOneWidget);
-    expect(find.text('Financial independence'), findsOneWidget);
-    expect(find.text('Active investment plans'), findsNothing);
-    expect(find.text('Income Planner'), findsNothing);
-    expect(find.text('Scenario analytics'), findsNothing);
-    expect(find.text('Scenarios'), findsNothing);
-    expect(find.text('Goals'), findsNothing);
-  });
+      expect(find.text('Needs attention'), findsOneWidget);
+      expect(find.text('Financial outlook'), findsOneWidget);
+      expect(find.text('Money runway'), findsOneWidget);
+      expect(find.text('Financial independence'), findsOneWidget);
+      expect(find.text('Active investment plans'), findsOneWidget);
+      expect(find.text('Budget'), findsOneWidget);
+      expect(find.text('Income Planner'), findsNothing);
+      expect(find.text('Scenario analytics'), findsNothing);
+      expect(find.text('Scenarios'), findsNothing);
+      expect(find.text('Goals'), findsNothing);
+    },
+  );
 
   testWidgets('Plan hub pairs outlook with active plans on wide canvas', (
     tester,
@@ -123,6 +126,40 @@ void main() {
     expect(find.text('Income projection'), findsNothing);
   });
 
+  testWidgets('Wealth add menu exposes asset types without a second sheet', (
+    tester,
+  ) async {
+    await _setDesktopSurface(tester);
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await tester.pumpWidget(
+      _wrap(
+        overrides: [
+          accountsStreamProvider.overrideWith((_) => Stream.value(const [])),
+          accountBalancesByIdProvider.overrideWith(
+            (_) => Stream.value(const {}),
+          ),
+          dashboardSnapshotProvider.overrideWith(
+            (_) async => DashboardSnapshot.empty(
+              asOf: DateTime.utc(2026, 6, 1),
+              baseCurrency: 'USD',
+            ),
+          ),
+        ],
+        child: const WealthHubPage(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(FLucideIcons.plus).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.accountFormCreateTitle), findsOneWidget);
+    expect(find.text(l10n.assetsAddCashTitle), findsOneWidget);
+    expect(find.text(l10n.assetsAddDepositTitle), findsOneWidget);
+    expect(find.text(l10n.physicalAssetAddRealEstate), findsOneWidget);
+    expect(find.text(l10n.superFabLiability), findsOneWidget);
+  });
+
   testWidgets(
     'Wealth hub pairs object navigation with the trend on wide canvas',
     (tester) async {
@@ -162,8 +199,8 @@ void main() {
         find.byKey(const ValueKey('wealth-perspective-section')),
       );
 
-      expect(trend.top, destinations.top);
-      expect(destinations.left, greaterThan(trend.right));
+      expect(destinations.top, trend.top);
+      expect(trend.left, greaterThan(destinations.right));
       expect(trend.width, greaterThan(destinations.width * 1.9));
       expect(perspective.top, greaterThan(trend.bottom));
     },
@@ -198,7 +235,7 @@ Widget _wrap({required Widget child, List<Override> overrides = const []}) {
       theme: AppTheme.light(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: child,
+      home: FTheme(data: FTheme.neutral.light.desktop, child: child),
     ),
   );
 }

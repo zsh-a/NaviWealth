@@ -107,8 +107,8 @@ void main() {
     expect(find.text(l10n.planAttentionTitle), findsOneWidget);
     expect(find.byType(SkeletonBox), findsWidgets);
     expect(find.text(l10n.planOverviewTitle), findsOneWidget);
-    expect(find.text(l10n.planMyPlansTitle), findsNothing);
-    expect(find.text(l10n.planBudgetSectionTitle), findsNothing);
+    expect(find.text(l10n.planMyPlansTitle), findsOneWidget);
+    expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
   });
 
   testWidgets('keeps the workspace usable when FIRE status errors', (
@@ -125,7 +125,7 @@ void main() {
     expect(find.text(l10n.planStatusUnavailable), findsOneWidget);
     expect(find.text('Bad state: fire failed'), findsNothing);
     expect(find.text(l10n.planOverviewTitle), findsOneWidget);
-    expect(find.text(l10n.planBudgetSectionTitle), findsNothing);
+    expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
   });
 
   testWidgets('keeps unconfigured FIRE secondary to the planning workspace', (
@@ -141,9 +141,9 @@ void main() {
     expect(find.text(l10n.planAttentionTitle), findsOneWidget);
     expect(find.text(l10n.planFireGoalNotConfigured), findsOneWidget);
     expect(find.text(l10n.planFireGoalTitle), findsOneWidget);
-    expect(find.text(l10n.planRebalanceSectionTitle), findsNothing);
-    expect(find.text(l10n.planBudgetSectionTitle), findsNothing);
-    expect(find.text(l10n.planDcaPlanTitle), findsNothing);
+    expect(find.text(l10n.planRebalanceSectionTitle), findsOneWidget);
+    expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
+    expect(find.text(l10n.planDcaPlanTitle), findsOneWidget);
     expect(find.text(l10n.planAddPlanAction), findsOneWidget);
     expect(find.text(l10n.incomePlannerTitle), findsNothing);
   });
@@ -199,11 +199,11 @@ void main() {
     expect(find.text('On track'), findsWidgets);
     expect(
       find.text('2 reviews due'),
-      findsOneWidget,
-      reason: 'The promoted next decision must not repeat in the plan list.',
+      findsNWidgets(2),
+      reason: 'Attention promotion must not hide the stable plan entry.',
     );
     expect(find.text('7.5% drift'), findsWidgets);
-    expect(find.text('62% used this month'), findsNothing);
+    expect(find.text('62% used this month'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.text(l10n.incomeStrategyTitle),
@@ -255,7 +255,11 @@ void main() {
 
     expect(find.text(l10n.planStatusActionRequired), findsWidgets);
     expect(find.text(l10n.moneyRunwayStatusShortfall), findsWidgets);
-    expect(find.text(l10n.planAttentionCount(5)), findsNothing);
+    expect(find.text(l10n.planAttentionCount(5)), findsOneWidget);
+    expect(find.text(l10n.planAttentionShowAll(4)), findsOneWidget);
+    await tester.tap(find.text(l10n.planAttentionShowAll(4)));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.planAttentionCollapse), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text(l10n.planStatusPendingReviews(2)),
       120,
@@ -264,7 +268,7 @@ void main() {
     expect(
       find.text(l10n.planStatusPendingReviews(2)),
       findsOneWidget,
-      reason: 'Every plan keeps a stable position below the single next step.',
+      reason: 'The stable plan entry remains available after expansion.',
     );
   });
 
@@ -276,14 +280,16 @@ void main() {
     await tester.pumpWidget(_wrapRouter(_view(FireGoal.unset())));
     await tester.pump();
 
+    await tester.ensureVisible(find.text(l10n.planAddPlanAction));
+    await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.planAddPlanAction));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.incomeStrategyTitle));
+    await tester.tap(find.text(l10n.incomeStrategyTitle).last);
     await tester.pumpAndSettle();
     expect(find.text('income-route'), findsOneWidget);
   });
 
-  testWidgets('budget is not duplicated as a permanent planning tool', (
+  testWidgets('keeps budget visible as a permanent planning capability', (
     tester,
   ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
@@ -291,7 +297,7 @@ void main() {
     await tester.pumpWidget(_wrapRouter(_view(FireGoal.unset())));
     await tester.pump();
 
-    expect(find.text(l10n.planBudgetSectionTitle), findsNothing);
+    expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
   });
 
   testWidgets('rebalance action navigates to rebalance route', (tester) async {

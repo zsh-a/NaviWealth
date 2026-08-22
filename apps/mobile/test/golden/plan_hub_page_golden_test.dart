@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/features/finance/application/planning_hub_status.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/budget_signal.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_calculator.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_goal.dart';
@@ -44,6 +45,7 @@ void main() {
       tester,
       name: 'plan_hub_page',
       variant: variant,
+      routePath: FinanceRoutes.plan,
       overrides: [
         fireDashboardViewProvider.overrideWith(
           (_) => AsyncValue.data(_fireView),

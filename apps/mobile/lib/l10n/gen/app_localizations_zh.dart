@@ -131,7 +131,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planMyPlansTitle => '进行中的投资计划';
 
   @override
-  String get planAddPlanAction => '添加或探索';
+  String get planAddPlanAction => '规划工具';
 
   @override
   String planExploreActiveOptions(int count) {

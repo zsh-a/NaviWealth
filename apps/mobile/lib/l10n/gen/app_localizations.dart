@@ -323,7 +323,7 @@ abstract class AppLocalizations {
   /// No description provided for @planAddPlanAction.
   ///
   /// In en, this message translates to:
-  /// **'Add or explore'**
+  /// **'Planning tools'**
   String get planAddPlanAction;
 
   /// No description provided for @planExploreActiveOptions.

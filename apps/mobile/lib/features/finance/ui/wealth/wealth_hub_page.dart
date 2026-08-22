@@ -151,15 +151,15 @@ class _WealthHubBody extends ConsumerWidget {
                 role: AdaptiveSummaryTileRole.continuous,
                 child: ValuationTrustNotice(snapshot: snapshot),
               ),
+            const AdaptiveSummaryTile(
+              role: AdaptiveSummaryTileRole.supporting,
+              child: _WealthDestinations(),
+            ),
             if (!isEmpty)
               const AdaptiveSummaryTile(
                 role: AdaptiveSummaryTileRole.featured,
                 child: WealthTrendSection(),
               ),
-            const AdaptiveSummaryTile(
-              role: AdaptiveSummaryTileRole.supporting,
-              child: _WealthDestinations(),
-            ),
             if (isEmpty)
               AdaptiveSummaryTile(
                 role: AdaptiveSummaryTileRole.continuous,

@@ -73,7 +73,7 @@
   "@planAttentionCount": { "placeholders": { "count": { "type": "int" } } },
   "planOverviewTitle": "Financial outlook",
   "planMyPlansTitle": "Active investment plans",
-  "planAddPlanAction": "Add or explore",
+  "planAddPlanAction": "Planning tools",
   "planExploreActiveOptions": "{count, plural, =1{1 options position active} other{{count} options positions active}}",
   "@planExploreActiveOptions": { "placeholders": { "count": { "type": "int" } } },
   "planDcaPlanTitle": "Recurring investment plan",

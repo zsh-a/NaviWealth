@@ -186,6 +186,7 @@ Future<void> pumpAndSnapshotMobile(
   required Widget child,
   List<Override> overrides = const [],
   Locale locale = const Locale('en'),
+  String routePath = '/',
 }) async {
   await loadGoldenFonts();
   await tester.binding.setSurfaceSize(kGoldenLogicalSize);
@@ -200,13 +201,12 @@ Future<void> pumpAndSnapshotMobile(
   });
 
   // Wrap every page in a GoRouter so calls like `selectedQueryOf(context)`
-  // and `context.push(...)` resolve. The router serves [child] at `/` and
-  // declares the path-only `/_unused/...` catch-all so any context.push
-  // target invoked from the page (FAB onPressed, etc.) doesn't fail at
-  // build time — pushes into nowhere are silently absorbed at the lookup,
-  // since the test never actually triggers them.
+  // and `context.push(...)` resolve. Shell-tab pages must pass their real
+  // [routePath] so ShellTabPause mounts the live subtree instead of its cheap
+  // offstage placeholder.
   final router = GoRouter(
-    routes: [GoRoute(path: '/', builder: (_, _) => child)],
+    initialLocation: routePath,
+    routes: [GoRoute(path: routePath, builder: (_, _) => child)],
     errorBuilder: (_, _) => const SizedBox.shrink(),
   );
   addTearDown(router.dispose);

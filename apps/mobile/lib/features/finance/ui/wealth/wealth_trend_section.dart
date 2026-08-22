@@ -22,7 +22,7 @@ class WealthTrendSection extends ConsumerWidget {
     final trendAsync = ref.watch(dashboardTrendProvider(range));
     final baseCurrency = ref.watch(dashboardBaseCurrencyProvider);
 
-    return SoftCard.raised(
+    return SoftCard.flat(
       key: const ValueKey('wealth-trend-section'),
       padding: AppPageRhythm.cardPadding,
       child: Column(
@@ -40,7 +40,7 @@ class WealthTrendSection extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppPageRhythm.module),
+          const SizedBox(height: AppSpacing.s12),
           ContentCrossFade(
             child: KeyedSubtree(
               key: ValueKey('wealth-trend-${range.preset.name}'),
@@ -53,7 +53,7 @@ class WealthTrendSection extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(height: AppPageRhythm.module),
+          const SizedBox(height: AppSpacing.s12),
           const _WealthTrendRangeSelector(),
         ],
       ),
@@ -155,7 +155,7 @@ class _WealthTrendBody extends StatelessWidget {
         const SizedBox(height: AppSpacing.s16),
         SizedBox(
           key: const ValueKey('wealth-trend-chart'),
-          height: allFlat ? AppChartHeights.standard : AppChartHeights.full,
+          height: AppChartHeights.compact,
           child: NwLineChart(
             series: series,
             // Tight fit around real data so short histories fill the plot.
@@ -217,7 +217,6 @@ class _WealthTrendSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     final delta = baseline == null ? null : current - baseline!;
     final baselineDouble = baseline?.toDouble();
     final ratio = baselineDouble == null || baselineDouble.abs() <= 0
@@ -225,77 +224,35 @@ class _WealthTrendSummary extends StatelessWidget {
         : delta!.toDouble() / baselineDouble.abs();
     final hidden = AmountPrivacyScope.isHiddenOf(context);
 
-    // Keep current + change on one baseline row; compact money stays inline
-    // (`¥13.8万`) via MoneyText → AppFormatters.compactCurrency.
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: _TrendMetricValue(
-            label: l10n.dashboardTrendMetricCurrent,
-            child: MoneyText(
-              amount: current.toDouble(),
-              currencyCode: currency,
-              compact: true,
-              style: TypographyTokens.numericTitleStrong,
-            ),
+          child: Text(
+            l10n.dashboardTrendMetricChange,
+            style: context.microCaptionStyle,
           ),
         ),
-        Container(
-          width: AppStroke.hairline,
-          height: AppSpacing.s48,
-          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
-          color: colors.border.withValues(alpha: AppOpacity.highlight),
-        ),
-        Expanded(
-          child: _TrendMetricValue(
-            label: l10n.dashboardTrendMetricChange,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (delta == null)
-                  Text('—', style: TypographyTokens.numericBodyStrong)
-                else
-                  DeltaText(
-                    value: delta.toDouble(),
-                    format: DeltaFormat.currency,
-                    currencyCode: currency,
-                    fractionDigits: 0,
-                    showIcon: false,
-                    style: TypographyTokens.numericBodyStrong,
-                  ),
-                if (ratio != null && !hidden) ...[
-                  const SizedBox(height: AppSpacing.s2),
-                  DeltaText.percentFromRatio(
-                    ratio: ratio,
-                    fractionDigits: 1,
-                    showIcon: false,
-                    style: context.microCaptionStyle,
-                  ),
-                ],
-              ],
-            ),
+        if (delta == null)
+          Text('—', style: TypographyTokens.numericBodyStrong)
+        else ...[
+          DeltaText(
+            value: delta.toDouble(),
+            format: DeltaFormat.currency,
+            currencyCode: currency,
+            fractionDigits: 0,
+            showIcon: false,
+            style: TypographyTokens.numericBodyStrong,
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TrendMetricValue extends StatelessWidget {
-  const _TrendMetricValue({required this.label, required this.child});
-
-  final String label;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: context.microCaptionStyle),
-        const SizedBox(height: AppSpacing.s4),
-        child,
+          if (ratio != null && !hidden) ...[
+            const SizedBox(width: AppSpacing.s8),
+            DeltaText.percentFromRatio(
+              ratio: ratio,
+              fractionDigits: 1,
+              showIcon: false,
+              style: context.microCaptionStyle,
+            ),
+          ],
+        ],
       ],
     );
   }
@@ -325,63 +282,16 @@ class _WealthTrendRangeSelector extends ConsumerWidget {
       DashboardRangePreset.m6 => l10n.dashboardRange6M,
       DashboardRangePreset.custom => l10n.dashboardRangeCustom,
     };
-    return Align(
-      alignment: AlignmentDirectional.centerStart,
-      child: AppAdaptiveSelectionMenu<DashboardRangePreset>(
-        title: l10n.wealthTrendTitle,
-        subtitle: l10n.dashboardRangeCustom,
-        options: [
-          for (final range in _ranges)
-            AppAdaptiveSelection(
-              value: range,
-              title: labelOf(range),
-              icon: FLucideIcons.calendarRange,
-            ),
-        ],
-        value: selected,
-        onChanged: (range) {
-          ref.read(dashboardCustomRangeProvider.notifier).state = null;
-          ref.read(dashboardSelectedRangeProvider.notifier).state = range;
-        },
-        triggerBuilder: (context, openMenu, focusNode) => Focus(
-          focusNode: focusNode,
-          child: Semantics(
-            button: true,
-            label: '${l10n.wealthTrendTitle}: ${labelOf(selected)}',
-            child: AppTappable(
-              onPress: openMenu,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: AppSpacing.s48),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s10,
-                    vertical: AppSpacing.s8,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        FLucideIcons.calendarRange,
-                        size: AppIconSizes.sm,
-                        color: context.theme.colors.mutedForeground,
-                      ),
-                      const SizedBox(width: AppSpacing.s8),
-                      Text(labelOf(selected), style: context.labelStyle),
-                      const SizedBox(width: AppSpacing.s6),
-                      Icon(
-                        FLucideIcons.chevronDown,
-                        size: AppIconSizes.h18,
-                        color: context.theme.colors.mutedForeground,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+    return SegmentedRow<DashboardRangePreset>(
+      options: _ranges,
+      value: selected,
+      labelOf: labelOf,
+      semanticLabelOf: (range) => '${l10n.wealthTrendTitle}: ${labelOf(range)}',
+      minSegmentWidth: AppSpacing.s48,
+      onChanged: (range) {
+        ref.read(dashboardCustomRangeProvider.notifier).state = null;
+        ref.read(dashboardSelectedRangeProvider.notifier).state = range;
+      },
     );
   }
 }
