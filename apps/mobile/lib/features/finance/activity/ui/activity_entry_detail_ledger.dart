@@ -180,7 +180,6 @@ class _DetailUnitBalanceRow extends StatelessWidget {
             unit: _displayUnit(unit),
             formatters: formatters,
             style: context.captionLabelStyle,
-            color: colors.destructive,
           ),
         ],
       ),

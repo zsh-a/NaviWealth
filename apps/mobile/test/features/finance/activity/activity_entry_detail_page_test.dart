@@ -94,6 +94,37 @@ JournalEntryWithPostings _entry({required String narration, String? payee}) {
   );
 }
 
+JournalEntryWithPostings _multiUnitEntry() {
+  return JournalEntryWithPostings(
+    entry: JournalEntry(
+      id: 'je-multi-unit',
+      date: DateTime.utc(2026, 8, 21, 16, 42),
+      narration: 'AAPL put assignment',
+      sync: _sync,
+    ),
+    postings: [
+      Posting(
+        id: 'p-aapl',
+        journalEntryId: 'je-multi-unit',
+        position: 0,
+        accountId: 'assets:brokerage',
+        units: Decimal.fromInt(100),
+        unit: 'AAPL',
+        sync: _sync,
+      ),
+      Posting(
+        id: 'p-usd',
+        journalEntryId: 'je-multi-unit',
+        position: 1,
+        accountId: 'assets:brokerage',
+        units: Decimal.fromInt(-32500),
+        unit: 'USD',
+        sync: _sync,
+      ),
+    ],
+  );
+}
+
 Widget _wrap({
   required JournalEntryWithPostings entry,
   Locale locale = const Locale('en'),
@@ -121,7 +152,10 @@ Widget _wrap({
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: ActivityEntryDetailPage(entry: entry, accountsById: accounts),
+      home: FTheme(
+        data: FTheme.neutral.light.desktop,
+        child: ActivityEntryDetailPage(entry: entry, accountsById: accounts),
+      ),
     ),
   );
 }
@@ -169,7 +203,10 @@ Widget _deleteWrap({
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => AppMessenger.init(child: child!),
+      builder: (context, child) => FTheme(
+        data: FTheme.neutral.light.desktop,
+        child: AppMessenger.init(child: child!),
+      ),
     ),
   );
 }
@@ -199,6 +236,56 @@ void main() {
       ),
       findsAtLeastNWidgets(1),
     );
+  });
+
+  testWidgets('uses directional colors for positive and negative unit totals', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_wrap(entry: _multiUnitEntry()));
+    await tester.pumpAndSettle();
+
+    final positiveLabel = find.text('Σ AAPL');
+    final negativeLabel = find.text('Σ USD');
+    expect(positiveLabel, findsOneWidget);
+    expect(negativeLabel, findsOneWidget);
+
+    final positiveRow = find
+        .ancestor(of: positiveLabel, matching: find.byType(Row))
+        .first;
+    final negativeRow = find
+        .ancestor(of: negativeLabel, matching: find.byType(Row))
+        .first;
+    final positiveAmount = find.descendant(
+      of: positiveRow,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            widget.data?.startsWith('+') == true &&
+            widget.data?.contains('100') == true,
+      ),
+    );
+    final negativeAmount = find.descendant(
+      of: negativeRow,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            widget.data?.startsWith('-') == true &&
+            widget.data?.contains('32,500') == true,
+      ),
+    );
+    expect(positiveAmount, findsOneWidget);
+    expect(negativeAmount, findsOneWidget);
+
+    final appTheme = tester.element(positiveLabel).appTheme;
+    expect(
+      tester.widget<Text>(positiveAmount).style?.color,
+      appTheme.market.up.fg,
+    );
+    expect(
+      tester.widget<Text>(negativeAmount).style?.color,
+      appTheme.market.down.fg,
+    );
+    expect(appTheme.market.up.fg, isNot(appTheme.market.down.fg));
   });
 
   testWidgets('hides the insight card when no client is available', (
