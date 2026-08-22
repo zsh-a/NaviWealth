@@ -63,10 +63,10 @@ abstract final class AppRoutes {
   static const plan = FinanceRoutes.plan;
 
   // ── HealthOS (Phase D-2.3) — gated by domain opt-in (Health OFF by
-  // default). Tabs mirror healthos-domain.md §5: Today / Trend / Plan.
+  // default). Tabs: Today / Trend. `/health/plan` is a legacy deep-link that
+  // redirects to Today (see health_routes.dart).
   static const healthToday = HealthRoutes.today;
   static const healthTrend = HealthRoutes.trend;
-  static const healthPlan = HealthRoutes.plan;
 
   // ── KnowledgeOS (`docs/domains/knowledgeos-domain.md` §5) — gated by domain
   // opt-in. Primary tabs: Inbox / Library; Review is contextual.
@@ -226,10 +226,9 @@ abstract final class AppRouteNames {
   static const wealthPortfolio = FinanceRouteNames.wealthPortfolio;
   static const wealthWatchlist = FinanceRouteNames.wealthWatchlist;
 
-  // ── HealthOS — gated by opt-in. 3 tabs per healthos-domain.md §5. ─────
+  // ── HealthOS — gated by opt-in. Tabs: Today / Trend. ──────────────────
   static const healthToday = HealthRouteNames.today;
   static const healthTrend = HealthRouteNames.trend;
-  static const healthPlan = HealthRouteNames.plan;
 
   // ── KnowledgeOS — gated by opt-in. Review is contextual, not a tab.
   static const knowledgeInbox = KnowledgeRouteNames.inbox;

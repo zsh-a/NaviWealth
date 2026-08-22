@@ -23,7 +23,16 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
         child: async.when(
           loading: () => const SizedBox(
             height: AppControlHeights.compactLoadingState,
-            child: Center(child: FCircularProgress()),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonBox(width: 96, height: 12, radius: AppRadius.sm),
+                SizedBox(height: AppSpacing.s8),
+                SkeletonBox(width: 140, height: 28, radius: AppRadius.sm),
+                SizedBox(height: AppSpacing.s8),
+                SkeletonBox(width: 180, height: 12, radius: AppRadius.sm),
+              ],
+            ),
           ),
           error: (error, _) => AppEmptyState.error(
             title: l10n.commonLoadFailed,

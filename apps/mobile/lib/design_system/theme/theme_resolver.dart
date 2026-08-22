@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 
-import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import 'accent_colors.dart';
 import 'accent_seed.dart';
@@ -12,6 +11,7 @@ import 'component_specs.dart';
 import 'market_color_mode.dart';
 import 'market_colors.dart';
 import 'semantic_colors.dart';
+import 'surface_ladder.dart';
 
 /// Density axis, replacing Forui's implicit touch/desktop fork with an
 /// explicit resolver input. Consumed by the semantic type scale (phase P5);
@@ -171,41 +171,26 @@ AppThemeData resolveAppTheme(ThemeInputs inputs) {
           ),
         );
 
-  final surfaces = isDark
-      ? AppSurfaces(
-          canvas: oled ? ColorPalette.oledCanvas : ColorPalette.navy950,
-          card: oled ? ColorPalette.oledCard : ColorPalette.navyGlass,
-          raised: oled ? ColorPalette.oledRaised : ColorPalette.navyRaised,
-          hero: oled ? ColorPalette.oledHero : ColorPalette.navyHero,
-          border: highContrast ? ColorPalette.navy500 : ColorPalette.navy800,
-          scrim: ColorPalette.scrimDark,
-        )
-      : AppSurfaces(
-          canvas: ColorPalette.surfaceBackground,
-          card: ColorPalette.surface,
-          raised: ColorPalette.surfaceRaised,
-          hero: ColorPalette.surface,
-          border: highContrast
-              ? ColorPalette.navy400
-              : ColorPalette.surfaceHairline,
-          scrim: ColorPalette.scrimLight,
-        );
-
-  // High contrast tightens the text ladder toward WCAG AAA (7:1) on card;
-  // the contrast test enforces the raised threshold per style.
-  final content = isDark
-      ? AppContent(
-          strong: ColorPalette.neutral0,
-          body: ColorPalette.navy50,
-          muted: highContrast ? ColorPalette.navy100 : ColorPalette.navy300,
-          faint: highContrast ? ColorPalette.navy300 : ColorPalette.navy400,
-        )
-      : AppContent(
-          strong: ColorPalette.neutral1000,
-          body: ColorPalette.navy900,
-          muted: highContrast ? ColorPalette.navy700 : ColorPalette.navy500,
-          faint: highContrast ? ColorPalette.navy500 : ColorPalette.neutral400,
-        );
+  // Surface/content values come from the shared ladder in surface_ladder.dart
+  // so Material and Forui themes resolve the identical ramp.
+  final ladder = resolveSurfaceLadder(
+    brightness: inputs.brightness,
+    surfaceStyle: inputs.surfaceStyle,
+  );
+  final surfaces = AppSurfaces(
+    canvas: ladder.canvas,
+    card: ladder.card,
+    raised: ladder.raised,
+    hero: ladder.hero,
+    border: ladder.border,
+    scrim: ladder.scrim,
+  );
+  final content = AppContent(
+    strong: ladder.contentStrong,
+    body: ladder.contentBody,
+    muted: ladder.contentMuted,
+    faint: ladder.contentFaint,
+  );
 
   final accent = ColorRole(
     fg: AccentColors.primary(inputs.brightness, seed: inputs.accentSeed),

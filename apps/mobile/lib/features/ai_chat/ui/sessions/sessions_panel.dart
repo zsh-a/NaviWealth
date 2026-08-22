@@ -16,7 +16,8 @@ part 'states.dart';
 part 'tiles.dart';
 
 /// List of past chat sessions. Used as a permanent sidebar on
-/// tablet/desktop, and as a right-slide [showFSheet] panel on mobile.
+/// tablet/desktop, and presented on mobile through [showAppFormSheet]
+/// with an [AppSheetSurface] frame (see `ai_chat_page.dart`).
 ///
 /// Renders an empty-state cell when the user has never chatted, plus a
 /// "+" affordance the surrounding page handles by opening a brand-new

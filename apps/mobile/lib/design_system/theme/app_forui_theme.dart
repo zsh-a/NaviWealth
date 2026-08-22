@@ -8,6 +8,7 @@ import 'accent_colors.dart';
 import 'accent_seed.dart';
 import 'app_surface_style.dart';
 import 'app_type_scale.dart';
+import 'surface_ladder.dart';
 
 /// Builds the production Forui theme for NaviWealth.
 ///
@@ -21,28 +22,22 @@ FThemeData buildAppForuiTheme({
   AppAccentSeed accentSeed = AppAccentSeed.cyan,
 }) {
   final isDark = brightness == Brightness.dark;
-  // Keep these in lockstep with resolveAppTheme's surface/content tables —
-  // forui widgets must sit on the same canvas as design-system components.
-  final oled = surfaceStyle == AppSurfaceStyle.oled && isDark;
-  final highContrast = surfaceStyle == AppSurfaceStyle.highContrast;
+  // Surface/content ramp comes from the shared ladder (surface_ladder.dart)
+  // so forui widgets sit on the same canvas as design-system components.
+  final ladder = resolveSurfaceLadder(
+    brightness: brightness,
+    surfaceStyle: surfaceStyle,
+  );
   final platform = isDark ? FTheme.neutral.dark : FTheme.neutral.light;
   final base = touch ? platform.touch : platform.desktop;
   final colors = base.colors.copyWith(
     primary: AccentColors.primary(brightness, seed: accentSeed),
     primaryForeground: AccentColors.onPrimary(brightness),
-    background: isDark
-        ? (oled ? ColorPalette.oledCanvas : ColorPalette.navy950)
-        : ColorPalette.surfaceBackground,
-    foreground: isDark ? ColorPalette.navy50 : ColorPalette.navy900,
-    mutedForeground: isDark
-        ? (highContrast ? ColorPalette.navy100 : ColorPalette.navy300)
-        : (highContrast ? ColorPalette.navy700 : ColorPalette.navy500),
-    card: isDark
-        ? (oled ? ColorPalette.oledCard : ColorPalette.navyGlass)
-        : ColorPalette.surface,
-    border: isDark
-        ? (highContrast ? ColorPalette.navy500 : ColorPalette.navy800)
-        : (highContrast ? ColorPalette.navy400 : ColorPalette.surfaceHairline),
+    background: ladder.canvas,
+    foreground: ladder.contentBody,
+    mutedForeground: ladder.contentMuted,
+    card: ladder.card,
+    border: ladder.border,
     // Muted fills stay cooler than pure slate so SoftCard modules lift cleanly.
     muted: isDark
         ? Color.alphaBlend(
@@ -51,8 +46,8 @@ FThemeData buildAppForuiTheme({
           )
         : ColorPalette.surfaceOverlay,
     // Single scrim source for every overlay (sheets, dialogs, popovers):
-    // the same palette values that AppSurfaces.scrim exposes.
-    barrier: isDark ? ColorPalette.scrimDark : ColorPalette.scrimLight,
+    // the same value that AppSurfaces.scrim exposes.
+    barrier: ladder.scrim,
   );
   // One authored slot table for every density (see kAppTypefaceSlots) —
   // the legacy touch/desktop ±2px fork is deliberately gone. Density still

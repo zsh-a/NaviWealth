@@ -72,7 +72,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
           order: 20,
         ),
         ShellHeaderActionSpec(
-          icon: FLucideIcons.inbox,
+          icon: FLucideIcons.fileInput,
           label: l10n.ingestReviewTitle,
           onPress: () => context.push(FinanceRoutes.activityIngest),
           order: 30,

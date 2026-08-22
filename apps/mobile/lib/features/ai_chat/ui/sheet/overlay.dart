@@ -2,7 +2,8 @@ part of 'ai_sheet.dart';
 
 /// Bottom-sheet frame that stays usable while the soft keyboard is up.
 ///
-/// `showFSheet` slides a fixed-height box up from the bottom. This
+/// The sheet route (opened via [showAppFormSheet]) slides a fixed-height
+/// box up from the bottom. This
 /// route opts out of forui's automatic inset shifting so keyboard
 /// avoidance has a single owner here: without compensation the composer
 /// / footer buttons sit behind the keyboard and can't be tapped. This frame:

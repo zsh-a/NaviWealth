@@ -603,58 +603,32 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     final summary = hasCosts || hasNote
         ? l10n.tradeEntryAdvancedConfigured
         : l10n.tradeEntryAdvancedSummary;
-    return FAccordion(
-      control: FAccordionControl.lifted(
-        expanded: (_) => _showAdvancedDetails,
-        onChange: (_, expanded) =>
-            setState(() => _showAdvancedDetails = expanded),
-      ),
+    return AppFormSection.collapsible(
+      itemKey: const Key('trade-entry-advanced-summary'),
+      titleKey: const Key('trade-entry-advanced-toggle-label'),
+      detailsKey: const Key('trade-entry-advanced-details'),
+      focusNode: _advancedFocus,
+      icon: FLucideIcons.slidersHorizontal,
+      title: l10n.tradeEntryAdvancedTitle,
+      summary: summary,
+      expanded: _showAdvancedDetails,
+      onChanged: (expanded) => setState(() => _showAdvancedDetails = expanded),
       children: [
-        FAccordionItem(
-          key: const Key('trade-entry-advanced-summary'),
-          focusNode: _advancedFocus,
-          title: _disclosureTitle(
-            key: const Key('trade-entry-advanced-toggle-label'),
-            icon: FLucideIcons.slidersHorizontal,
-            title: l10n.tradeEntryAdvancedTitle,
-            summary: summary,
-            expanded: _showAdvancedDetails,
-          ),
-          child: Offstage(
-            key: const Key('trade-entry-advanced-details'),
-            offstage: !_showAdvancedDetails,
-            child: ExcludeFocus(
-              excluding: !_showAdvancedDetails,
-              child: ExcludeSemantics(
-                excluding: !_showAdvancedDetails,
-                child: Column(
-                  children: [
-                    DateField(
-                      label: l10n.tradeEntryDateLabel,
-                      initialValue: _tradeDate,
-                      required: true,
-                      includeTime: true,
-                      onChanged: (date) {
-                        if (date == null) return;
-                        setState(() {
-                          _tradeDate = date;
-                          dirty.markDirty();
-                        });
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.s12),
-                    _buildTradeCosts(l10n),
-                    const SizedBox(height: AppSpacing.s12),
-                    NoteField(
-                      controller: _noteController,
-                      focusNode: _noteFocus,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+        DateField(
+          label: l10n.tradeEntryDateLabel,
+          initialValue: _tradeDate,
+          required: true,
+          includeTime: true,
+          onChanged: (date) {
+            if (date == null) return;
+            setState(() {
+              _tradeDate = date;
+              dirty.markDirty();
+            });
+          },
         ),
+        _buildTradeCosts(l10n),
+        NoteField(controller: _noteController, focusNode: _noteFocus),
       ],
     );
   }

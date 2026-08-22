@@ -112,7 +112,7 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
                     compact: true,
                   )
                 : _loading
-                ? const Center(child: FCircularProgress())
+                ? kDefaultLoading
                 : _visibleHits.isEmpty
                 ? AppEmptyState(
                     icon: FLucideIcons.searchX,

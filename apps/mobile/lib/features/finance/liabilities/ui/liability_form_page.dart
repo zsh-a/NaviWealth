@@ -230,27 +230,29 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
         compact: true,
       ),
       const SizedBox(height: AppSpacing.s12),
-      FTextFormField(
-        control: FTextFieldControl.managed(controller: _name),
-        label: RequiredLabel(l10n.liabilityFieldName),
-        focusNode: _nameFocus,
-        textInputAction: TextInputAction.next,
-        validator: (v) => (v == null || v.trim().isEmpty)
-            ? l10n.liabilityValidationRequired
-            : null,
-        onSubmit: (_) => _noteFocus.requestFocus(),
-      ),
-      const SizedBox(height: AppSpacing.s12),
-      _payerAccountField(l10n, accountsAsync),
-      const SizedBox(height: AppSpacing.s12),
-      FTextFormField(
-        control: FTextFieldControl.managed(controller: _note),
-        label: Text(l10n.liabilityFieldNote),
-        focusNode: _noteFocus,
-        minLines: 3,
-        maxLines: 6,
-        textInputAction: TextInputAction.done,
-        onSubmit: (_) => _saving ? null : _save(),
+      AppFormSection(
+        children: [
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _name),
+            label: RequiredLabel(l10n.liabilityFieldName),
+            focusNode: _nameFocus,
+            textInputAction: TextInputAction.next,
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? l10n.liabilityValidationRequired
+                : null,
+            onSubmit: (_) => _noteFocus.requestFocus(),
+          ),
+          _payerAccountField(l10n, accountsAsync),
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _note),
+            label: Text(l10n.liabilityFieldNote),
+            focusNode: _noteFocus,
+            minLines: 3,
+            maxLines: 6,
+            textInputAction: TextInputAction.done,
+            onSubmit: (_) => _saving ? null : _save(),
+          ),
+        ],
       ),
     ];
   }
@@ -260,231 +262,190 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
     AsyncValue<List<Account>> accountsAsync,
   ) {
     return [
-      FSelect<LiabilityType>(
-        key: const Key('liability-type-field'),
-        items: {
-          for (final t in LiabilityType.values) liabilityTypeLabel(l10n, t): t,
-        },
-        control: FSelectControl<LiabilityType>.managed(
-          initial: _type,
-          onChange: (v) => setState(() {
-            _type = v ?? _type;
-            dirty.markDirty();
-          }),
-        ),
-        label: Text(l10n.liabilityFieldType),
-      ),
-      const SizedBox(height: AppSpacing.s12),
-      FTextFormField(
-        control: FTextFieldControl.managed(controller: _name),
-        label: RequiredLabel(l10n.liabilityFieldName),
-        focusNode: _nameFocus,
-        textInputAction: TextInputAction.next,
-        validator: (v) => (v == null || v.trim().isEmpty)
-            ? l10n.liabilityValidationRequired
-            : null,
-        onSubmit: (_) => _principalFocus.requestFocus(),
-      ),
-      const SizedBox(height: AppSpacing.s12),
-      FTextFormField(
-        control: FTextFieldControl.managed(controller: _principal),
-        label: RequiredLabel(l10n.liabilityFieldPrincipal),
-        focusNode: _principalFocus,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        textInputAction: TextInputAction.next,
-        validator: _validatePositive(l10n),
-        onSubmit: (_) => _rateFocus.requestFocus(),
-      ),
-      const SizedBox(height: AppSpacing.s12),
-      FTextFormField(
-        control: FTextFieldControl.managed(controller: _rate),
-        label: RequiredLabel(l10n.liabilityFieldInterestRate),
-        focusNode: _rateFocus,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        textInputAction: TextInputAction.next,
-        validator: (v) {
-          if (v == null || v.trim().isEmpty) {
-            return l10n.liabilityValidationRequired;
-          }
-          final d = Decimal.tryParse(v.trim());
-          if (d == null || d.sign < 0) {
-            return l10n.liabilityValidationPositive;
-          }
-          return null;
-        },
-        onSubmit: (_) => _currencyFocus.requestFocus(),
-      ),
-      const SizedBox(height: AppSpacing.s12),
-      FTextFormField(
-        control: FTextFieldControl.managed(controller: _currency),
-        label: RequiredLabel(l10n.liabilityFieldCurrency),
-        focusNode: _currencyFocus,
-        textInputAction: TextInputAction.next,
-        textCapitalization: TextCapitalization.characters,
-        validator: (v) {
-          if (v == null || v.trim().length < 3) {
-            return l10n.liabilityValidationRequired;
-          }
-          final selectedAccount = accountsAsync.value
-              ?.where((account) => account.id == _accountId)
-              .firstOrNull;
-          if (selectedAccount != null &&
-              selectedAccount.currency.toUpperCase() !=
-                  v.trim().toUpperCase()) {
-            return l10n.liabilityValidationAccountCurrency(
-              selectedAccount.currency,
-            );
-          }
-          return null;
-        },
-        onSubmit: (_) => _isCreditCard
-            ? _detailsFocus.requestFocus()
-            : _termFocus.requestFocus(),
-      ),
-      const SizedBox(height: AppSpacing.s12),
-      _payerAccountField(l10n, accountsAsync),
-      if (!_isCreditCard) ...[
-        const SizedBox(height: AppSpacing.s12),
-        FTextFormField(
-          control: FTextFieldControl.managed(controller: _term),
-          label: RequiredLabel(l10n.liabilityFieldTerm),
-          focusNode: _termFocus,
-          keyboardType: TextInputType.number,
-          textInputAction: TextInputAction.done,
-          validator: (v) {
-            final n = int.tryParse((v ?? '').trim());
-            if (n == null || n <= 0) {
-              return l10n.liabilityValidationPositive;
-            }
-            return null;
-          },
-          onSubmit: (_) => _saving ? null : _save(),
-        ),
-      ],
-      const SizedBox(height: AppSpacing.s12),
-      FAccordion(
-        control: FAccordionControl.lifted(
-          expanded: (_) => _detailsExpanded,
-          onChange: (_, expanded) =>
-              setState(() => _detailsExpanded = expanded),
-        ),
+      AppFormSection(
         children: [
-          FAccordionItem(
-            key: const Key('liability-details-disclosure'),
-            focusNode: _detailsFocus,
-            title: Semantics(
-              key: const Key('liability-details-toggle-label'),
-              expanded: _detailsExpanded,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l10n.liabilityDetailsTitle),
-                  const SizedBox(height: AppSpacing.s2),
-                  Text(
-                    _isCreditCard
-                        ? l10n.liabilityDetailsCardSummary
-                        : l10n.liabilityDetailsLoanSummary,
-                    style: context.captionStyle,
-                  ),
-                ],
-              ),
+          FSelect<LiabilityType>(
+            key: const Key('liability-type-field'),
+            items: {
+              for (final t in LiabilityType.values)
+                liabilityTypeLabel(l10n, t): t,
+            },
+            control: FSelectControl<LiabilityType>.managed(
+              initial: _type,
+              onChange: (v) => setState(() {
+                _type = v ?? _type;
+                dirty.markDirty();
+              }),
             ),
-            child: Offstage(
-              key: const Key('liability-details-fields'),
-              offstage: !_detailsExpanded,
-              child: ExcludeFocus(
-                excluding: !_detailsExpanded,
-                child: ExcludeSemantics(
-                  excluding: !_detailsExpanded,
-                  child: Column(
-                    children: [
-                      FSelect<LiabilityRateType>(
-                        items: {
-                          for (final r in LiabilityRateType.values)
-                            rateTypeLabel(l10n, r): r,
-                        },
-                        control: FSelectControl<LiabilityRateType>.managed(
-                          initial: _rateType,
-                          onChange: (v) => setState(() {
-                            _rateType = v ?? _rateType;
-                            dirty.markDirty();
-                          }),
-                        ),
-                        label: Text(l10n.liabilityFieldRateType),
-                      ),
-                      if (!_isCreditCard) ...[
-                        const SizedBox(height: AppSpacing.s12),
-                        DateField(
-                          label: l10n.liabilityFieldStartDate,
-                          initialValue: _startDate,
-                          firstDate: DateTime(1990),
-                          lastDate: DateTime(2100),
-                          required: true,
-                          enabled: !_saving,
-                          onChanged: (v) {
-                            if (v == null) return;
-                            setState(() {
-                              _startDate = v;
-                              dirty.markDirty();
-                            });
-                          },
-                        ),
-                        const SizedBox(height: AppSpacing.s12),
-                        FSelect<RepaymentMethod>(
-                          items: {
-                            for (final m in RepaymentMethod.values)
-                              repaymentMethodLabel(l10n, m): m,
-                          },
-                          control: FSelectControl<RepaymentMethod>.managed(
-                            initial: _method,
-                            onChange: (v) => setState(() {
-                              _method = v ?? _method;
-                              dirty.markDirty();
-                            }),
-                          ),
-                          label: Text(l10n.liabilityFieldMethod),
-                        ),
-                      ] else ...[
-                        const SizedBox(height: AppSpacing.s12),
-                        FTextFormField(
-                          key: const Key('liability-statement-day-field'),
-                          control: FTextFieldControl.managed(
-                            controller: _statementDay,
-                          ),
-                          label: Text(l10n.liabilityFieldStatementDay),
-                          focusNode: _statementDayFocus,
-                          keyboardType: TextInputType.number,
-                          textInputAction: TextInputAction.next,
-                          validator: _validateOptionalDay(l10n),
-                          onSubmit: (_) => _paymentDueDayFocus.requestFocus(),
-                        ),
-                        const SizedBox(height: AppSpacing.s12),
-                        FTextFormField(
-                          key: const Key('liability-payment-due-day-field'),
-                          control: FTextFieldControl.managed(
-                            controller: _paymentDueDay,
-                          ),
-                          label: Text(l10n.liabilityFieldPaymentDueDay),
-                          focusNode: _paymentDueDayFocus,
-                          keyboardType: TextInputType.number,
-                          textInputAction: TextInputAction.next,
-                          validator: _validateOptionalDay(l10n),
-                          onSubmit: (_) => _noteFocus.requestFocus(),
-                        ),
-                      ],
-                      const SizedBox(height: AppSpacing.s12),
-                      FTextFormField(
-                        control: FTextFieldControl.managed(controller: _note),
-                        label: Text(l10n.liabilityFieldNote),
-                        focusNode: _noteFocus,
-                        minLines: 3,
-                        maxLines: 6,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            label: Text(l10n.liabilityFieldType),
+          ),
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _name),
+            label: RequiredLabel(l10n.liabilityFieldName),
+            focusNode: _nameFocus,
+            textInputAction: TextInputAction.next,
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? l10n.liabilityValidationRequired
+                : null,
+            onSubmit: (_) => _principalFocus.requestFocus(),
+          ),
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _principal),
+            label: RequiredLabel(l10n.liabilityFieldPrincipal),
+            focusNode: _principalFocus,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textInputAction: TextInputAction.next,
+            validator: _validatePositive(l10n),
+            onSubmit: (_) => _rateFocus.requestFocus(),
+          ),
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _rate),
+            label: RequiredLabel(l10n.liabilityFieldInterestRate),
+            focusNode: _rateFocus,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textInputAction: TextInputAction.next,
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) {
+                return l10n.liabilityValidationRequired;
+              }
+              final d = Decimal.tryParse(v.trim());
+              if (d == null || d.sign < 0) {
+                return l10n.liabilityValidationPositive;
+              }
+              return null;
+            },
+            onSubmit: (_) => _currencyFocus.requestFocus(),
+          ),
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _currency),
+            label: RequiredLabel(l10n.liabilityFieldCurrency),
+            focusNode: _currencyFocus,
+            textInputAction: TextInputAction.next,
+            textCapitalization: TextCapitalization.characters,
+            validator: (v) {
+              if (v == null || v.trim().length < 3) {
+                return l10n.liabilityValidationRequired;
+              }
+              final selectedAccount = accountsAsync.value
+                  ?.where((account) => account.id == _accountId)
+                  .firstOrNull;
+              if (selectedAccount != null &&
+                  selectedAccount.currency.toUpperCase() !=
+                      v.trim().toUpperCase()) {
+                return l10n.liabilityValidationAccountCurrency(
+                  selectedAccount.currency,
+                );
+              }
+              return null;
+            },
+            onSubmit: (_) => _isCreditCard
+                ? _detailsFocus.requestFocus()
+                : _termFocus.requestFocus(),
+          ),
+          _payerAccountField(l10n, accountsAsync),
+          if (!_isCreditCard)
+            FTextFormField(
+              control: FTextFieldControl.managed(controller: _term),
+              label: RequiredLabel(l10n.liabilityFieldTerm),
+              focusNode: _termFocus,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.done,
+              validator: (v) {
+                final n = int.tryParse((v ?? '').trim());
+                if (n == null || n <= 0) {
+                  return l10n.liabilityValidationPositive;
+                }
+                return null;
+              },
+              onSubmit: (_) => _saving ? null : _save(),
             ),
+        ],
+      ),
+      const SizedBox(height: AppSpacing.s12),
+      AppFormSection.collapsible(
+        itemKey: const Key('liability-details-disclosure'),
+        titleKey: const Key('liability-details-toggle-label'),
+        detailsKey: const Key('liability-details-fields'),
+        focusNode: _detailsFocus,
+        title: l10n.liabilityDetailsTitle,
+        summary: _isCreditCard
+            ? l10n.liabilityDetailsCardSummary
+            : l10n.liabilityDetailsLoanSummary,
+        expanded: _detailsExpanded,
+        onChanged: (expanded) => setState(() => _detailsExpanded = expanded),
+        children: [
+          FSelect<LiabilityRateType>(
+            items: {
+              for (final r in LiabilityRateType.values)
+                rateTypeLabel(l10n, r): r,
+            },
+            control: FSelectControl<LiabilityRateType>.managed(
+              initial: _rateType,
+              onChange: (v) => setState(() {
+                _rateType = v ?? _rateType;
+                dirty.markDirty();
+              }),
+            ),
+            label: Text(l10n.liabilityFieldRateType),
+          ),
+          if (!_isCreditCard) ...[
+            DateField(
+              label: l10n.liabilityFieldStartDate,
+              initialValue: _startDate,
+              firstDate: DateTime(1990),
+              lastDate: DateTime(2100),
+              required: true,
+              enabled: !_saving,
+              onChanged: (v) {
+                if (v == null) return;
+                setState(() {
+                  _startDate = v;
+                  dirty.markDirty();
+                });
+              },
+            ),
+            FSelect<RepaymentMethod>(
+              items: {
+                for (final m in RepaymentMethod.values)
+                  repaymentMethodLabel(l10n, m): m,
+              },
+              control: FSelectControl<RepaymentMethod>.managed(
+                initial: _method,
+                onChange: (v) => setState(() {
+                  _method = v ?? _method;
+                  dirty.markDirty();
+                }),
+              ),
+              label: Text(l10n.liabilityFieldMethod),
+            ),
+          ] else ...[
+            FTextFormField(
+              key: const Key('liability-statement-day-field'),
+              control: FTextFieldControl.managed(controller: _statementDay),
+              label: Text(l10n.liabilityFieldStatementDay),
+              focusNode: _statementDayFocus,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.next,
+              validator: _validateOptionalDay(l10n),
+              onSubmit: (_) => _paymentDueDayFocus.requestFocus(),
+            ),
+            FTextFormField(
+              key: const Key('liability-payment-due-day-field'),
+              control: FTextFieldControl.managed(controller: _paymentDueDay),
+              label: Text(l10n.liabilityFieldPaymentDueDay),
+              focusNode: _paymentDueDayFocus,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.next,
+              validator: _validateOptionalDay(l10n),
+              onSubmit: (_) => _noteFocus.requestFocus(),
+            ),
+          ],
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _note),
+            label: Text(l10n.liabilityFieldNote),
+            focusNode: _noteFocus,
+            minLines: 3,
+            maxLines: 6,
           ),
         ],
       ),

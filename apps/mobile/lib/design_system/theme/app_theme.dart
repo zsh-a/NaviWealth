@@ -10,6 +10,7 @@ import 'accent_colors.dart';
 import 'accent_seed.dart';
 import 'app_page_transitions.dart';
 import 'app_surface_style.dart';
+import 'surface_ladder.dart';
 
 /// Resolves pointer-oriented density from both platform and window class.
 ///
@@ -60,26 +61,20 @@ class AppTheme {
     AppSurfaceStyle surfaceStyle,
   ) {
     final isDark = brightness == Brightness.dark;
-    // Keep in lockstep with resolveAppTheme's surface/content tables so
-    // widgets that fall through to Material chrome (Scaffold backgrounds,
+    // Surface/content ramp comes from the shared ladder (surface_ladder.dart)
+    // so widgets that fall through to Material chrome (Scaffold backgrounds,
     // overlays) sit on the same canvas as the design system.
-    final oled = surfaceStyle == AppSurfaceStyle.oled && isDark;
-    final highContrast = surfaceStyle == AppSurfaceStyle.highContrast;
+    final ladder = resolveSurfaceLadder(
+      brightness: brightness,
+      surfaceStyle: surfaceStyle,
+    );
     final f = isDark ? FColors.neutralDark : FColors.neutralLight;
     final accent = AccentColors.primary(brightness, seed: accentSeed);
     final onAccent = AccentColors.onPrimary(brightness);
-    final pageBackground = isDark
-        ? (oled ? ColorPalette.oledCanvas : ColorPalette.navy950)
-        : ColorPalette.surfaceBackground;
-    final cardSurface = isDark
-        ? (oled ? ColorPalette.oledCard : ColorPalette.navyGlass)
-        : ColorPalette.surface;
-    final mutedForeground = isDark
-        ? (highContrast ? ColorPalette.navy100 : ColorPalette.navy300)
-        : (highContrast ? ColorPalette.navy700 : ColorPalette.navy500);
-    final outline = isDark
-        ? (highContrast ? ColorPalette.navy500 : ColorPalette.navy800)
-        : (highContrast ? ColorPalette.navy400 : ColorPalette.surfaceHairline);
+    final pageBackground = ladder.canvas;
+    final cardSurface = ladder.card;
+    final mutedForeground = ladder.contentMuted;
+    final outline = ladder.border;
     final scheme = ColorScheme(
       brightness: brightness,
       primary: accent,
@@ -91,7 +86,7 @@ class AppTheme {
       error: f.destructive,
       onError: f.destructiveForeground,
       surface: pageBackground,
-      onSurface: isDark ? ColorPalette.navy50 : ColorPalette.navy900,
+      onSurface: ladder.contentBody,
       surfaceContainerLowest: pageBackground,
       surfaceContainerLow: cardSurface,
       surfaceContainer: isDark ? cardSurface : ColorPalette.surfaceOverlay,
@@ -100,10 +95,10 @@ class AppTheme {
       onSurfaceVariant: mutedForeground,
       outline: outline,
       outlineVariant: outline,
-      inverseSurface: isDark ? ColorPalette.navy50 : ColorPalette.navy900,
+      inverseSurface: ladder.contentBody,
       onInverseSurface: pageBackground,
       shadow: ColorPalette.shadowMedium,
-      scrim: isDark ? ColorPalette.scrimDark : ColorPalette.scrimLight,
+      scrim: ladder.scrim,
     );
     final textTheme = TypographyTokens.textTheme().apply(
       bodyColor: scheme.onSurface,

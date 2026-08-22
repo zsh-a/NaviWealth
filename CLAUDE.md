@@ -189,7 +189,7 @@ Project lint gates:
 
 ## UI Conventions
 
-- UI uses Forui plus the local design system. Prefer `FCard`, `FButton`, `FTheme`, `AppSpacing`, `AppRadius`, and chart components already in `design_system/`.
+- UI uses Forui plus the local design system. Prefer `SoftCard`/`AppSection` for surfaces (`FCard` is nearly unused in features), `FButton`, `FTheme`, `AppSpacing`, `AppRadius`, and chart components already in `design_system/`.
 - Keep domain shells dense and task-oriented. Do not add marketing pages or explanatory hero screens inside the app.
 - Use existing domain routes and `DomainTabsShell`; do not invent a second navigation model.
 - Cards are for repeated items, modals, and framed tools. Do not nest cards or turn every section into a card.

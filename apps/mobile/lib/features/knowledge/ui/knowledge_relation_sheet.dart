@@ -205,7 +205,7 @@ class _KnowledgeRelationSheetState
             tone: AppEmptyStateTone.error,
           );
         }
-        if (!snapshot.hasData) return const Center(child: FCircularProgress());
+        if (!snapshot.hasData) return kDefaultLoading;
         final query = _search.text.trim().toLowerCase();
         final data = snapshot.data!;
         final linked = data.linked

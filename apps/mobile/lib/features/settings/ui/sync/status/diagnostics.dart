@@ -77,9 +77,17 @@ class _LocalCountsCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
 
     if (counts == null) {
-      return const SoftCard.raised(
+      return const SkeletonCard(
         padding: EdgeInsets.all(AppSpacing.s12),
-        child: Center(child: FCircularProgress()),
+        child: Column(
+          children: [
+            SkeletonBox(height: 14),
+            SizedBox(height: AppSpacing.s12),
+            SkeletonBox(height: 14),
+            SizedBox(height: AppSpacing.s12),
+            SkeletonBox(height: 14),
+          ],
+        ),
       );
     }
 

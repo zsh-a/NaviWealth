@@ -37,20 +37,14 @@ class _DashboardBodyContent extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final basePadding = Breakpoints.isMobile(width)
-            ? const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s16,
-                vertical: AppSpacing.s8,
-              )
-            : const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s24,
-                vertical: AppSpacing.s16,
-              );
-        final padding = basePadding.copyWith(
-          bottom:
-              basePadding.bottom +
-              MediaQuery.paddingOf(context).bottom +
-              AppSpacing.s16,
+        final isMobile = Breakpoints.isMobile(width);
+        final hPad = isMobile ? AppSpacing.s16 : AppSpacing.s24;
+        final padding = shellTabContentPadding(
+          context,
+          left: hPad,
+          top: isMobile ? AppSpacing.s8 : AppSpacing.s16,
+          right: hPad,
+          bottom: isMobile ? AppSpacing.s24 : AppSpacing.s32,
         );
 
         Future<void> onRefresh() async {
