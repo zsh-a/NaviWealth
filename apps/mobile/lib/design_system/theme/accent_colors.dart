@@ -15,8 +15,9 @@ class AccentColors {
 
   /// Foreground / interaction color (used as `colors.primary`).
   ///
-  /// Light mode → a deep cyan that stays legible on pale surfaces.
-  /// Dark mode  → medium cyan, avoiding the neon read of cyanBrand400.
+  /// Light mode → cyanBrand800, a deep cyan legible on pale surfaces.
+  /// Dark mode  → cyanBrand500, a medium cyan avoiding the neon read of
+  /// cyanBrand400.
   static Color primary(
     Brightness brightness, {
     AppAccentSeed seed = AppAccentSeed.cyan,

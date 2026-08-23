@@ -99,6 +99,17 @@ Map<String, Object> _easing(Curve curve) => {
   r'$type': 'cubicBezier',
 };
 
+Map<String, Object> _spring(SpringDescription spring, [String? description]) =>
+    {
+      r'$value': {
+        'stiffness': _numStr(spring.stiffness),
+        'damping': _numStr(spring.damping),
+        'mass': _numStr(spring.mass),
+      },
+      r'$type': 'spring',
+      r'$description': ?description,
+    };
+
 Map<String, Object> _shadow(List<BoxShadow> layers) => {
   r'$type': 'shadow',
   r'$value': [
@@ -162,11 +173,11 @@ Map<String, Object> _colorGroup() => {
     '100': _color(ColorPalette.cyanBrand100),
     '200': _color(ColorPalette.cyanBrand200),
     '300': _color(ColorPalette.cyanBrand300),
-    '400': _color(ColorPalette.cyanBrand400, 'Dark-mode primary fg'),
-    '500': _color(ColorPalette.cyanBrand500, 'Light-mode primary fg'),
+    '400': _color(ColorPalette.cyanBrand400, 'Dark-mode info fg'),
+    '500': _color(ColorPalette.cyanBrand500, 'Dark-mode primary fg'),
     '600': _color(ColorPalette.cyanBrand600),
-    '700': _color(ColorPalette.cyanBrand700),
-    '800': _color(ColorPalette.cyanBrand800),
+    '700': _color(ColorPalette.cyanBrand700, 'Light-mode info fg'),
+    '800': _color(ColorPalette.cyanBrand800, 'Light-mode primary fg'),
     '900': _color(ColorPalette.cyanBrand900),
   },
   'navy': {
@@ -641,6 +652,13 @@ Map<String, Object> _motionGroup() => {
     'standardDecelerate': _easing(Motion.standardDecelerate),
     'standardAccelerate': _easing(Motion.standardAccelerate),
     'reducedMotion': _easing(Motion.reducedMotion),
+  },
+  'spring': {
+    r'$description':
+        'Spring physics presets — Motion.spring*. stiffness/damping/mass map '
+        'directly to Flutter SpringDescription.',
+    'gentle': _spring(Motion.springGentle, 'Calm one-shot settle (ζ ≈ 0.82)'),
+    'snappy': _spring(Motion.springSnappy, 'Press-release rebound (ζ ≈ 0.7)'),
   },
 };
 

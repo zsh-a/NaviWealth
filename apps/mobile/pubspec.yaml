@@ -14,6 +14,7 @@ hooks:
       source: sqlcipher
 
 dependencies:
+  animations: ^3.0.0
   archive: ^4.1.0
   charset: ^2.0.1
   collection: ^1.19.1

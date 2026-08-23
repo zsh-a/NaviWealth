@@ -45,8 +45,9 @@ class AccountDetailPage extends ConsumerWidget {
 
     return ObjectDetailScaffold(
       title: account?.name ?? l10n.navAccounts,
-      // Hero pair for the accounts list row name (`account-{id}-name`); the
-      // list disables its side in master-detail, so no `enabled` gate here.
+      // Hero pair for the account edit form (`account-{id}-name`). The
+      // accounts list row no longer carries the other side — it opens this
+      // page through AppContainerTransform instead — so no `enabled` gate.
       titleWidget: account == null
           ? null
           : OptionalHero(

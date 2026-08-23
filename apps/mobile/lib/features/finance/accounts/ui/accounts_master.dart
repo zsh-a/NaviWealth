@@ -194,7 +194,7 @@ class _AccountsByType extends StatelessWidget {
               accounts: accounts,
               balances: balances,
               selectedId: selectedId,
-              heroEnabled: !inMasterDetail,
+              containerTransformEnabled: !inMasterDetail,
               onAccountPressed: _openAccount,
             ),
           ],
@@ -204,6 +204,9 @@ class _AccountsByType extends StatelessWidget {
   }
 
   void _openAccount(BuildContext context, Account account) {
+    // Push-mode rows navigate through their own AppContainerTransform, so
+    // this callback effectively only fires from the master-detail surface;
+    // the `push` branch stays as a safety net for non-transform callers.
     if (inMasterDetail) {
       replaceSelectedQuery(
         context,

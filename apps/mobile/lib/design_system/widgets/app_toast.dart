@@ -7,6 +7,7 @@ import '../../core/haptics/haptics.dart';
 import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
+import 'app_success_celebration.dart';
 
 /// Toast severity levels.
 enum ToastKind { success, warning, error, info }
@@ -185,11 +186,19 @@ class _AppToastSurface extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          palette.icon,
-                          color: palette.accent,
-                          size: AppIconSizes.md,
-                        ),
+                        // Success toasts celebrate with a drawn check;
+                        // other kinds keep a static severity icon.
+                        if (kind == ToastKind.success)
+                          AppSuccessCelebration(
+                            size: AppIconSizes.md,
+                            color: palette.accent,
+                          )
+                        else
+                          Icon(
+                            palette.icon,
+                            color: palette.accent,
+                            size: AppIconSizes.md,
+                          ),
                         const SizedBox(width: AppSpacing.s10),
                         Flexible(
                           child: Text(

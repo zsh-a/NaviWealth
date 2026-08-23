@@ -8,6 +8,7 @@ import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import 'app_interaction.dart';
+import 'spring_press_scale.dart';
 
 enum SoftCardLevel { flat, raised, hero }
 
@@ -194,10 +195,8 @@ class _SoftCardState extends State<SoftCard> {
       Motion.fast,
       role: AppMotionRole.decorative,
     );
-    return AnimatedScale(
-      scale: pressed ? context.appTheme.press.scale : 1,
-      duration: duration,
-      curve: Motion.standardDecelerate,
+    return SpringPressScale(
+      pressed: pressed,
       child: AnimatedContainer(
         duration: duration,
         curve: Motion.standardDecelerate,

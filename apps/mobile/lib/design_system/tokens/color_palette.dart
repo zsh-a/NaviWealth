@@ -8,20 +8,22 @@ import 'package:flutter/material.dart';
 class ColorPalette {
   const ColorPalette._();
 
-  // ── Cyan brand (spec primary) — bright turquoise interaction color ─────
-  // The primary brand hue per the fintech UI spec. Interaction foregrounds
-  // resolve through AccentColors so text contrast can differ from chart and
-  // decorative cyan roles.
-  static const Color cyanBrand50 = Color(0xFFEAFBFC);
-  static const Color cyanBrand100 = Color(0xFFD0F7F9);
-  static const Color cyanBrand200 = Color(0xFFA8EFF2);
-  static const Color cyanBrand300 = Color(0xFF7AE8EC);
-  static const Color cyanBrand400 = Color(0xFF6BE8E8); // dark mode primary fg
-  static const Color cyanBrand500 = Color(0xFF3BC6D9); // light mode primary fg
-  static const Color cyanBrand600 = Color(0xFF17A8B0);
-  static const Color cyanBrand700 = Color(0xFF138A90);
-  static const Color cyanBrand800 = Color(0xFF0F6D72);
-  static const Color cyanBrand900 = Color(0xFF0A4F52);
+  // ── Cyan brand (spec primary) — quiet, desaturated turquoise ──────────
+  // The primary brand hue per the fintech UI spec, tuned down ~20% in
+  // saturation (hue preserved ~183°) so interaction surfaces read calm and
+  // modern rather than neon. Interaction foregrounds resolve through
+  // AccentColors / AccentSeedSlots so text contrast can differ from chart
+  // and decorative cyan roles.
+  static const Color cyanBrand50 = Color(0xFFEBFAFB);
+  static const Color cyanBrand100 = Color(0xFFD3F5F6);
+  static const Color cyanBrand200 = Color(0xFFAEEAEC);
+  static const Color cyanBrand300 = Color(0xFF84DEE2);
+  static const Color cyanBrand400 = Color(0xFF77DCDC); // dark mode info fg
+  static const Color cyanBrand500 = Color(0xFF3AABBB); // dark mode primary fg
+  static const Color cyanBrand600 = Color(0xFF269AA1); // chart series
+  static const Color cyanBrand700 = Color(0xFF207F84); // light mode info fg
+  static const Color cyanBrand800 = Color(0xFF175D61); // light mode primary fg
+  static const Color cyanBrand900 = Color(0xFF0F4A4D);
 
   // ── Navy (spec text) — deep blue-black, not pure black ────────────────
   // Primary text color per the fintech UI spec. navy900 is the default
@@ -137,7 +139,7 @@ class ColorPalette {
   static const Color shadowNavy04 = Color(0x0A002A38);
   static const Color shadowNavy08 = Color(0x14002A38);
   static const Color shadowNavy10 = Color(0x1A002A38);
-  static const Color shadowCyan04 = Color(0x0A3BC6D9);
+  static const Color shadowCyan04 = Color(0x0A3AABBB); // 4% cyanBrand500
   // The hero profit glow is derived in MarketColors.fromMode (mode's `up`
   // foreground at AppOpacity.glow) so it follows the active market mode.
 

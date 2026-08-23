@@ -62,6 +62,7 @@ Widget _wrap({required SharedPreferences prefs, required double contentWidth}) {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,
+      builder: (context, child) => AppMessenger.init(child: child!),
     ),
   );
 }
@@ -94,9 +95,8 @@ void main() {
     expect(find.text('single-account-detail'), findsNothing);
   });
 
-  testWidgets('pushes a detail route when the local pane is narrow', (
-    tester,
-  ) async {
+  testWidgets('opens the detail through a container transform when the local '
+      'pane is narrow', (tester) async {
     await _setSurface(tester, 1600);
     final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(_wrap(prefs: prefs, contentWidth: 900));
@@ -104,9 +104,17 @@ void main() {
 
     expect(find.byType(MasterDetailLayout), findsNothing);
     await tester.tap(find.text('Checking account'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(Motion.pageTransition ~/ 2);
 
-    expect(find.text('single-account-detail'), findsOneWidget);
+    // Mid-flight the container morph is already carrying the real
+    // AccountDetailPage (pushed by the row's AppContainerTransform), not
+    // the '/wealth/accounts/:id' stub from this test's router.
+    expect(find.byType(AccountDetailPage), findsOneWidget);
+
+    await tester.pumpAndSettle();
+    expect(find.byType(AccountDetailPage), findsOneWidget);
+    expect(find.text('single-account-detail'), findsNothing);
   });
 
   testWidgets('keeps the account collection compact on mobile', (tester) async {

@@ -1,4 +1,5 @@
 import 'package:flutter/animation.dart';
+import 'package:flutter/physics.dart';
 
 /// Duration + easing scale for animations.
 ///
@@ -85,6 +86,29 @@ class Motion {
   /// class — folded into [Motion] so the app has one motion vocabulary.
   static const Curve aiCalm = Cubic(0.32, 0.72, 0.0, 1.0);
 
+  // Springs — physics presets for settle/release moments where a duration +
+  // curve cannot carry the gesture's velocity. Drive them through
+  // [MotionSpringX.animateWithSpring]; both presets are decorative-role
+  // motion and must be gated through AppMotionPolicy like any press scale.
+
+  /// Slightly underdamped, calm settle (damping ratio ≈ 0.82). Used for
+  /// one-shot entrances that should land softly without a visible bounce —
+  /// e.g. the [AppSuccessCelebration] scale-in.
+  static const SpringDescription springGentle = SpringDescription(
+    mass: 1,
+    stiffness: 180,
+    damping: 22,
+  );
+
+  /// Quick, lightly underdamped snap (damping ratio ≈ 0.7). Used for
+  /// gesture-release feedback — e.g. [SpringPressScale] rebounding to its
+  /// resting scale — where the spring inherits the release velocity.
+  static const SpringDescription springSnappy = SpringDescription(
+    mass: 1,
+    stiffness: 400,
+    damping: 28,
+  );
+
   // --- Semantic aliases (scenario → duration) ---
   // Map UX intent to the right tier. Adjust the underlying constants
   // above to shift the app's overall feel without touching call sites.
@@ -100,4 +124,20 @@ class Motion {
 
   /// Page route transition. → [slow]
   static const Duration pageTransition = slow;
+}
+
+/// Shared spring-drive helper so widgets don't hand-roll
+/// `SpringSimulation` (and so release velocity is always preserved).
+extension MotionSpringX on AnimationController {
+  /// Animates from the current value to [target] under [spring], seeded
+  /// with the controller's current velocity (or an explicit override).
+  TickerFuture animateWithSpring(
+    SpringDescription spring,
+    double target, {
+    double? velocity,
+  }) {
+    return animateWith(
+      SpringSimulation(spring, value, target, velocity ?? this.velocity),
+    );
+  }
 }

@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_theme_scope.dart';
-import '../tokens/app_motion_policy.dart';
-import '../tokens/motion_tokens.dart';
 import 'app_interaction.dart';
+import 'spring_press_scale.dart';
 
 /// A lightweight tap-feedback wrapper that scales its child down on press.
 ///
 /// Use for icons, chips, and small tappable surfaces where a full
-/// [SoftCard] (tint + shadow) would be too heavy. The scale animation
-/// is 120ms ([Motion.fast]) with [Motion.standardDecelerate] so it
-/// feels immediate and settles quickly.
+/// [SoftCard] (tint + shadow) would be too heavy. Press-down is a fast
+/// curve ([Motion.tapFeedback]); release rebounds with the shared
+/// [Motion.springSnappy] spring via [SpringPressScale]. Under reduce-motion
+/// the press scale is disabled entirely.
 ///
 /// Haptics go through [AppInteraction] so the emotional grammar stays shared
 /// with SoftCard / FAB / filters. Set [haptic] false for purely visual press.
@@ -59,16 +58,7 @@ class _PressableScaleState extends State<PressableScale> {
         setState(() => _pressed = false);
         widget.onTap?.call();
       },
-      child: AnimatedScale(
-        scale: _pressed ? context.appTheme.press.scale : 1,
-        duration: AppMotionPolicy.duration(
-          context,
-          Motion.fast,
-          role: AppMotionRole.decorative,
-        ),
-        curve: Motion.standardDecelerate,
-        child: widget.child,
-      ),
+      child: SpringPressScale(pressed: _pressed, child: widget.child),
     );
   }
 }
