@@ -13,6 +13,7 @@ import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
+import '../../../core/ai/contracts/context_evidence.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
@@ -111,6 +112,8 @@ class WeeklySummaryAgent implements Agent {
     final memory = MemoryRecord(
       id: memoryId,
       kind: MemoryKind.episodic,
+      role: MemoryRole.pattern,
+      authority: EvidenceAuthority.deterministicDerived,
       ownerUserId: ownerUserId,
       scope: '*',
       source: kWeeklySummaryMemorySource,

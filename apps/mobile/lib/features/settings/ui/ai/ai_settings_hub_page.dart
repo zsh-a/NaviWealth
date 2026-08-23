@@ -53,6 +53,14 @@ class AiSettingsHubPage extends StatelessWidget {
             title: l10n.settingsAiHubTrustSection,
             children: [
               InlineLinkRow(
+                icon: FLucideIcons.brain,
+                label: l10n.personalMemoryTitle,
+                subtitle: l10n.personalMemorySubtitle,
+                onTap: () =>
+                    context.pushNamed(SettingsRouteNames.personalMemory),
+              ),
+              const AppGradientDivider(),
+              InlineLinkRow(
                 icon: FLucideIcons.lock,
                 label: l10n.settingsAiPrivacyTitle,
                 subtitle: l10n.settingsAiPrivacySubtitle,

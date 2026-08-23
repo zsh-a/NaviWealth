@@ -321,6 +321,12 @@ void main() {
         rationaleMd: '长期 AI 需求仍然成立',
         principleIds: const [],
         assumptionIds: const [],
+        revisitConditions: const [
+          DecisionRevisitCondition(
+            statement: '现金缓冲低于 12 个月',
+            sourceReferences: ['fin:cash-runway'],
+          ),
+        ],
         status: DecisionStatus.active,
         decidedAt: created,
         sync: meta(),
@@ -364,6 +370,15 @@ void main() {
       final decisions = (out['decisions'] as List).cast<Object?>();
       expect(decisions.single as Map, containsPair('id', 'd1'));
       expect(decisions.single as Map, contains('score'));
+      expect(
+        decisions.single as Map,
+        containsPair('revisit_conditions', [
+          {
+            'statement': '现金缓冲低于 12 个月',
+            'source_references': ['fin:cash-runway'],
+          },
+        ]),
+      );
       final evidence = readEvidence(out);
       expect(evidence.single.entityTable, 'knowledge_decisions');
       expect(evidence.single.entityId, 'd1');

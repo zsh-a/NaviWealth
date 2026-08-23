@@ -7609,6 +7609,88 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAiHubTrustSection => 'Privacy & transparency';
 
   @override
+  String get personalMemoryTitle => 'Personal memory';
+
+  @override
+  String get personalMemorySubtitle =>
+      'Manage goals, preferences, constraints, and rules used by AI';
+
+  @override
+  String get personalMemorySection => 'Confirmed profile';
+
+  @override
+  String get personalMemoryEmpty => 'No confirmed profile facts yet.';
+
+  @override
+  String get personalMemoryAdd => 'Add profile fact';
+
+  @override
+  String get personalMemoryCreateTitle => 'Add profile fact';
+
+  @override
+  String get personalMemoryEditTitle => 'Edit profile fact';
+
+  @override
+  String get personalMemoryKind => 'Type';
+
+  @override
+  String get personalMemoryKindGoal => 'Goal';
+
+  @override
+  String get personalMemoryKindPreference => 'Preference';
+
+  @override
+  String get personalMemoryKindConstraint => 'Constraint';
+
+  @override
+  String get personalMemoryKindRule => 'Rule';
+
+  @override
+  String get personalMemoryKey => 'Key';
+
+  @override
+  String get personalMemoryKeyHint => 'For example: cash_buffer_months';
+
+  @override
+  String get personalMemoryValue => 'Value';
+
+  @override
+  String get personalMemoryValueHint => 'Text or JSON value';
+
+  @override
+  String get personalMemorySummary => 'Summary';
+
+  @override
+  String get personalMemorySummaryHint =>
+      'A clear fact the agent may use as evidence';
+
+  @override
+  String get personalMemoryDomain => 'Domain (optional)';
+
+  @override
+  String get personalMemoryDomainHint =>
+      'finance, health, knowledge, or execution';
+
+  @override
+  String get personalMemoryRequired => 'Key and summary are required';
+
+  @override
+  String get personalMemoryDeleteTitle => 'Forget this profile fact?';
+
+  @override
+  String get personalMemoryDeleteBody =>
+      'It will stop appearing in future AI context. This cannot be undone from this screen.';
+
+  @override
+  String get personalMemoryInactiveDomain =>
+      'Kept locally; excluded from AI while this domain is off';
+
+  @override
+  String personalMemoryLoadFailed(String error) {
+    return 'Could not load personal memory: $error';
+  }
+
+  @override
   String get settingsAdvancedHubTitle => 'Advanced diagnostics';
 
   @override
@@ -13891,6 +13973,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get knowledgeDecisionExpectedOutcomeLabel =>
       'Expected outcome (optional)';
+
+  @override
+  String get knowledgeDecisionRevisitConditionsLabel =>
+      'Review when (optional)';
+
+  @override
+  String get knowledgeDecisionRevisitConditionsHint =>
+      'One condition per line, for example: cash runway falls below 12 months';
+
+  @override
+  String get knowledgeDecisionRevisitConditionsTitle => 'Review conditions';
 
   @override
   String get knowledgeAssumptionWriterSubtitle2 =>

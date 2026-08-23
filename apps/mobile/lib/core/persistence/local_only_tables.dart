@@ -33,6 +33,51 @@
 /// See also the parallel pattern in `event_log_tables.dart`.
 library;
 
+const String createPersonalProfileFacts = '''
+CREATE TABLE IF NOT EXISTS personal_profile_facts (
+  id                  TEXT PRIMARY KEY,
+  owner_user_id       TEXT NOT NULL,
+  kind                TEXT NOT NULL CHECK (
+    kind IN ('goal', 'preference', 'constraint', 'rule')
+  ),
+  fact_key            TEXT NOT NULL,
+  value_json          TEXT NOT NULL,
+  summary             TEXT NOT NULL,
+  domain_scope        TEXT,
+  authority           TEXT NOT NULL CHECK (authority = 'user_confirmed'),
+  provenance_json     TEXT NOT NULL,
+  confidence          REAL NOT NULL,
+  confirmed_at        INTEGER NOT NULL,
+  valid_from          INTEGER NOT NULL,
+  valid_until         INTEGER,
+  supersedes_fact_id  TEXT,
+  created_at          INTEGER NOT NULL,
+  updated_at          INTEGER NOT NULL
+)
+''';
+
+const String createPersonalProfileFactsActiveIndex = '''
+CREATE UNIQUE INDEX IF NOT EXISTS idx_personal_profile_facts_active_key
+ON personal_profile_facts(
+  owner_user_id,
+  COALESCE(domain_scope, ''),
+  kind,
+  fact_key
+)
+WHERE valid_until IS NULL
+''';
+
+const String createPersonalProfileFactsOwnerIndex = '''
+CREATE INDEX IF NOT EXISTS idx_personal_profile_facts_owner_updated
+ON personal_profile_facts(owner_user_id, updated_at DESC)
+''';
+
+const List<String> personalProfileDdl = <String>[
+  createPersonalProfileFacts,
+  createPersonalProfileFactsActiveIndex,
+  createPersonalProfileFactsOwnerIndex,
+];
+
 const String createDataMaintenanceRuns = '''
 CREATE TABLE IF NOT EXISTS data_maintenance_runs (
   id             TEXT PRIMARY KEY,
@@ -93,14 +138,17 @@ CREATE TABLE IF NOT EXISTS memory_candidates (
   id                 TEXT PRIMARY KEY,
   proposal_id        TEXT NOT NULL UNIQUE,
   owner_user_id      TEXT NOT NULL,
+  target_type        TEXT NOT NULL CHECK (
+    target_type IN ('memory', 'profile_fact')
+  ),
   operation          TEXT NOT NULL CHECK (
     operation IN ('create', 'supersede', 'forget')
   ),
   status             TEXT NOT NULL CHECK (
     status IN ('pending', 'applying', 'applied', 'rejected', 'undone', 'failed')
   ),
-  target_memory_id   TEXT,
-  applied_memory_id  TEXT,
+  target_record_id   TEXT,
+  applied_record_id  TEXT,
   payload_json       TEXT NOT NULL,
   created_at         INTEGER NOT NULL,
   updated_at         INTEGER NOT NULL,
@@ -451,6 +499,10 @@ const String createMemories = '''
 CREATE TABLE IF NOT EXISTS memories (
   id               TEXT PRIMARY KEY,
   kind             TEXT NOT NULL,            -- event|semantic|episodic|procedural
+  role             TEXT NOT NULL,            -- decision|episode|pattern|guidance|legacy
+  authority        TEXT NOT NULL,            -- user_confirmed|source_fact|deterministic_derived|model_derived|legacy_unknown
+  provenance_json  TEXT NOT NULL,
+  supersedes_id    TEXT,
   scope            TEXT NOT NULL DEFAULT '*',
   owner_user_id    TEXT NOT NULL,
   source           TEXT,                     -- e.g. 'options_trade_journal'
@@ -489,6 +541,11 @@ CREATE INDEX IF NOT EXISTS idx_memories_owner_scope
 const String createMemoriesSourceIndex = '''
 CREATE INDEX IF NOT EXISTS idx_memories_source
   ON memories(source, source_id)
+''';
+
+const String createMemoriesSupersedesIndex = '''
+CREATE INDEX IF NOT EXISTS idx_memories_supersedes
+  ON memories(supersedes_id)
 ''';
 
 /// Vectors keyed by memory id. 1:1 with memories (FK CASCADE). Stored
@@ -549,6 +606,7 @@ const List<String> memoryRuntimeDdl = [
   createMemoriesOwnerKindIndex,
   createMemoriesOwnerScopeIndex,
   createMemoriesSourceIndex,
+  createMemoriesSupersedesIndex,
   createMemoryEmbeddings,
   createMemoryEmbeddingsFingerprintIndex,
   createEvents,

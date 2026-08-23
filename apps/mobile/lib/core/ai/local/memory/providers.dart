@@ -12,6 +12,7 @@ import '../../../../core/persistence/providers.dart';
 import '../embedding/embedder.dart';
 import 'context_builder.dart';
 import 'event_store.dart';
+import 'memory_access_policy.dart';
 import 'memory_candidate_store.dart';
 import 'memory_runtime.dart';
 import 'memory_store.dart';
@@ -36,6 +37,12 @@ final eventStoreProvider = FutureProvider<EventStore>((ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
   return SqliteEventStore(db: db);
 });
+
+/// Deny by default. The app composition root replaces this with the union of
+/// global user-owned sources and active DomainPack source prefixes.
+final memoryAccessPolicyProvider = Provider<MemoryAccessPolicy>(
+  (ref) => const MemoryAccessPolicy.denyAll(),
+);
 
 final memoryCandidateStoreProvider = FutureProvider<MemoryCandidateStore>((
   ref,

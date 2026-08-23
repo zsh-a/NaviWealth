@@ -10,12 +10,14 @@ import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
+import 'package:naviwealth/core/ai/local/memory/memory_access_policy.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_candidate_store.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_proposal_applier.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_context_block.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
+import 'package:naviwealth/core/lifeos/personal_profile/personal_profile_store.dart';
 import 'package:naviwealth/design_system/theme/app_theme.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_history_store.dart';
@@ -42,12 +44,18 @@ void main() {
       final applier = MemoryProposalApplier(
         ownerUserId: 'user-1',
         runtime: runtime,
+        profileStore: SqlitePersonalProfileStore(db),
         candidateStore: candidateStore,
+        accessPolicy: MemoryAccessPolicy.allowPrefixes(const <String>[
+          'user_confirmed_ai',
+        ]),
+        activeProfileDomainScopes: const <String>{},
       );
       const payload = <String, Object?>{
         'candidate_id': 'candidate-1',
+        'target_type': 'memory',
         'operation': 'create',
-        'memory_id': 'memory-1',
+        'record_id': 'memory-1',
         'memory_kind': 'semantic',
         'title': '本地优先',
         'summary': '用户偏好本地优先。',
@@ -64,6 +72,7 @@ void main() {
           proposalId: 'proposal-1',
           ownerUserId: 'user-1',
           operation: MemoryCandidateOperation.create,
+          targetType: MemoryCandidateTargetType.memory,
           status: MemoryCandidateStatus.pending,
           payload: payload,
           createdAt: now,
@@ -121,12 +130,15 @@ void main() {
             theme: AppTheme.light(),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(
-              body: ProposeCard(
-                sessionId: 'session-1',
-                message: message,
-                invocation: invocation,
-                plan: plan,
+            home: FTheme(
+              data: FTheme.neutral.light.desktop,
+              child: Scaffold(
+                body: ProposeCard(
+                  sessionId: 'session-1',
+                  message: message,
+                  invocation: invocation,
+                  plan: plan,
+                ),
               ),
             ),
           ),

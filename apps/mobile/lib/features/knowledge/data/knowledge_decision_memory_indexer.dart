@@ -9,6 +9,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/ai/contracts/context_evidence.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';
 import '../domain/knowledge_models.dart';
@@ -37,6 +38,13 @@ class KnowledgeDecisionMemoryIndexer {
       final memory = MemoryRecord(
         id: memoryId,
         kind: MemoryKind.episodic,
+        role: MemoryRole.decision,
+        authority: EvidenceAuthority.sourceFact,
+        provenance: EvidenceProvenance(
+          source: kKnowledgeDecisionMemorySource,
+          sourceId: d.id,
+          observedAt: d.sync.updatedAt,
+        ),
         ownerUserId: ownerUserId,
         scope: '*',
         source: kKnowledgeDecisionMemorySource,
@@ -47,6 +55,7 @@ class KnowledgeDecisionMemoryIndexer {
           'context':
               'decision recorded at ${d.decidedAt.toUtc().toIso8601String()}',
           'decision': d.selectedLabel,
+          'options': d.options.map((option) => option.toJson()).toList(),
           'reasoning': d.rationaleMd,
           'outcome': <String, Object?>{
             'expected': d.expectedOutcome,
@@ -56,6 +65,9 @@ class KnowledgeDecisionMemoryIndexer {
           'principle_ids': d.principleIds,
           'assumption_ids': d.assumptionIds,
           'review_date': d.reviewDate?.toUtc().toIso8601String(),
+          'revisit_conditions': d.revisitConditions
+              .map((condition) => condition.toJson())
+              .toList(growable: false),
         },
         entities: <String>{
           'knowledge_decision',

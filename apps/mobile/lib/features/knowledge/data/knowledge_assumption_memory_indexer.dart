@@ -18,6 +18,8 @@ Future<void> _reindexAssumptions(
       MemoryRecord(
         id: id,
         kind: MemoryKind.semantic,
+        role: MemoryRole.guidance,
+        authority: EvidenceAuthority.sourceFact,
         ownerUserId: ownerUserId,
         scope: a.scope,
         source: kKnowledgeAssumptionMemorySource,

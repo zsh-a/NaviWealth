@@ -16,6 +16,7 @@ MemoryChangeCandidate _candidate({
     proposalId: proposalId,
     ownerUserId: owner,
     operation: MemoryCandidateOperation.create,
+    targetType: MemoryCandidateTargetType.memory,
     status: MemoryCandidateStatus.pending,
     payload: const <String, Object?>{
       'operation': 'create',
@@ -78,7 +79,7 @@ void main() {
       await store.markApplied(
         ownerUserId: 'user-1',
         candidateId: 'candidate-1',
-        appliedMemoryId: 'memory-1',
+        appliedRecordId: 'memory-1',
         acceptedPayload: const <String, Object?>{
           'operation': 'create',
           'title': 'edited by user',
@@ -90,7 +91,7 @@ void main() {
         candidateId: 'candidate-1',
       );
       expect(applied?.status, MemoryCandidateStatus.applied);
-      expect(applied?.appliedMemoryId, 'memory-1');
+      expect(applied?.appliedRecordId, 'memory-1');
       expect(applied?.payload['title'], 'edited by user');
       expect(applied?.decidedAt, at);
     });

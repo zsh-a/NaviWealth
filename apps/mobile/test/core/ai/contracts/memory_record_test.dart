@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/contracts/context_evidence.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 
@@ -21,6 +22,14 @@ void main() {
       final original = MemoryRecord(
         id: 'mem-1',
         kind: MemoryKind.episodic,
+        role: MemoryRole.decision,
+        authority: EvidenceAuthority.sourceFact,
+        provenance: EvidenceProvenance(
+          source: 'options_trade_journal',
+          sourceId: 'trade-42',
+          observedAt: now,
+        ),
+        supersedesId: 'mem-0',
         ownerUserId: 'u1',
         scope: 'options_trading',
         source: 'options_trade_journal',
@@ -44,6 +53,10 @@ void main() {
       final back = MemoryRecord.fromJson(original.toJson());
       expect(back.id, 'mem-1');
       expect(back.kind, MemoryKind.episodic);
+      expect(back.role, MemoryRole.decision);
+      expect(back.authority, EvidenceAuthority.sourceFact);
+      expect(back.provenance.sourceId, 'trade-42');
+      expect(back.supersedesId, 'mem-0');
       expect(back.scope, 'options_trading');
       expect(back.source, 'options_trade_journal');
       expect(back.sourceId, 'trade-42');

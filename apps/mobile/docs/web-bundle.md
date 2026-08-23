@@ -160,7 +160,7 @@ woff2 is already brotli-compressed, so the on-disk size *is* the wire size.
 It is **not** part of the `main.dart.js` 800 KB target above — it is a
 separate first-paint asset, HTTP-cached after the cold visit.
 
-**Budget: `BASE_BUDGET_BYTES` = 315,000 B (~308 KiB).** This is a tripwire,
+**Budget: `BASE_BUDGET_BYTES` = 335,000 B (~327 KiB).** This is a tripwire,
 not a hard limit: the build fails when `base` exceeds it so a human looks at
 *why* it grew before the line moves.
 
@@ -179,6 +179,10 @@ changes landed together:
    UI source and ARB copy without coupling font generation to a lint baseline.
 3. The resulting budget gives the legitimate, ever-growing l10n/UI corpus
    headroom without nuisance CI failures per feature.
+4. The budget moved from 315,000 B to 335,000 B on 2026-08-23 for the
+   user-visible Personal Memory management and Knowledge Decision revisit
+   condition copy. The generated base subset measured 324,024 B; these glyphs
+   are real Settings/Knowledge UI and cannot be scoped out as model-only text.
 
 When the build fails on this budget:
 

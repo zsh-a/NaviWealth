@@ -108,6 +108,9 @@ final class MemoryAnswerQualityReport {
 Set<String> memoryAnswerEvidenceIds(ContextPackMemory pack) => <String>{
   for (final memory in pack.userPreferences) memory.id,
   for (final memory in pack.relatedDecisions) memory.id,
+  for (final memory in pack.relatedEpisodes) memory.id,
+  for (final memory in pack.derivedPatterns) memory.id,
+  for (final memory in pack.derivedGuidance) memory.id,
   for (final memory in pack.applicableRules) memory.id,
   for (final event in pack.recentEvents) event.id,
   for (final event in pack.relatedEvents) event.id,

@@ -190,6 +190,7 @@ void main() {
         expect(old!.validUntil, now);
         final created = await rt.memoryStore.readMemory('new-pref');
         expect(created, isNotNull);
+        expect(created?.supersedesId, 'old-pref');
       },
     );
   });

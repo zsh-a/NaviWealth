@@ -7,6 +7,7 @@ import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/context_builder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
+import 'package:naviwealth/core/ai/local/memory/memory_access_policy.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
@@ -14,6 +15,9 @@ import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart'
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/build_context_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
+import 'package:naviwealth/core/lifeos/personal_profile/personal_profile_snapshot.dart';
+import 'package:naviwealth/core/lifeos/personal_profile/personal_profile_store.dart';
+import 'package:naviwealth/core/lifeos/personal_profile/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 
 import '../../../../../core/persistence/test_database.dart';
@@ -31,15 +35,32 @@ Future<MemoryRuntime> _newRuntime() async {
   );
 }
 
-ProviderContainer _container(MemoryRuntime runtime) => ProviderContainer(
-  overrides: [
-    memoryRuntimeProvider.overrideWith((ref) async => runtime),
-    contextBuilderProvider.overrideWith(
-      (ref) async => ContextBuilder(runtime: runtime),
-    ),
-    currentUserIdProvider.overrideWithValue(() async => _kOwner),
-  ],
-);
+ProviderContainer _container(MemoryRuntime runtime) {
+  final profileDb = makeTestDatabase();
+  return ProviderContainer(
+    overrides: [
+      memoryRuntimeProvider.overrideWith((ref) async => runtime),
+      contextBuilderProvider.overrideWith(
+        (ref) async => ContextBuilder(runtime: runtime),
+      ),
+      memoryAccessPolicyProvider.overrideWith(
+        (ref) => MemoryAccessPolicy.allowPrefixes(const <String>[
+          'test',
+          'options_trade_journal',
+        ]),
+      ),
+      currentUserIdProvider.overrideWithValue(() async => _kOwner),
+      personalProfileSnapshotBuilderProvider.overrideWith((ref) async {
+        ref.onDispose(() {
+          profileDb.close();
+        });
+        return PersonalProfileSnapshotBuilder(
+          SqlitePersonalProfileStore(profileDb),
+        );
+      }),
+    ],
+  );
+}
 
 Future<T> _withRef<T>(ProviderContainer c, Future<T> Function(Ref ref) body) {
   final probe = FutureProvider<T>((ref) => body(ref));
@@ -71,9 +92,11 @@ MemoryRecord _mem({
   String title = '',
   String summary = '',
   Set<String> entities = const {},
+  MemoryRole role = MemoryRole.legacy,
 }) => MemoryRecord(
   id: id,
   kind: kind,
+  role: role,
   ownerUserId: _kOwner,
   scope: scope,
   source: 'test',
@@ -99,7 +122,7 @@ void main() {
       expect(descriptor.sideEffect, SideEffect.none);
     });
 
-    test('returns five labeled slots + guidance when empty', () async {
+    test('returns role-classified slots + guidance when empty', () async {
       final rt = await _newRuntime();
       final c = _container(rt);
       addTearDown(c.dispose);
@@ -111,6 +134,9 @@ void main() {
           'user_preferences',
           'applicable_rules',
           'related_decisions',
+          'related_episodes',
+          'derived_patterns',
+          'derived_guidance',
           'recent_events',
           'related_events',
         ]),
@@ -125,7 +151,12 @@ void main() {
       );
       await rt.remember(_mem(id: 'rule', kind: MemoryKind.procedural));
       await rt.remember(
-        _mem(id: 'decision', kind: MemoryKind.episodic, summary: 'NVDA put'),
+        _mem(
+          id: 'decision',
+          kind: MemoryKind.episodic,
+          role: MemoryRole.decision,
+          summary: 'NVDA put',
+        ),
       );
       await rt.recordEvent(
         EventRecord(

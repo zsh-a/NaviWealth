@@ -70,6 +70,14 @@ mixin _HealthMetricTrendMemoryBuilder on _HealthMetricMemoryFormatting {
     return MemoryRecord(
       id: '$kHealthSource:semantic:trend:${trend.kind.wire}',
       kind: MemoryKind.semantic,
+      role: MemoryRole.pattern,
+      authority: EvidenceAuthority.deterministicDerived,
+      provenance: EvidenceProvenance(
+        source: kHealthSource,
+        sourceId: 'trend:${trend.kind.wire}',
+        algorithmVersion: 'health_trend_v1',
+        observedAt: trend.to,
+      ),
       ownerUserId: ownerUserId,
       scope: 'health',
       source: kHealthSource,
@@ -114,6 +122,14 @@ mixin _HealthMetricTrendMemoryBuilder on _HealthMetricMemoryFormatting {
     return MemoryRecord(
       id: '$kHealthSource:procedural:trend:${trend.kind.wire}',
       kind: MemoryKind.procedural,
+      role: MemoryRole.guidance,
+      authority: EvidenceAuthority.deterministicDerived,
+      provenance: EvidenceProvenance(
+        source: kHealthSource,
+        sourceId: 'trend:${trend.kind.wire}',
+        algorithmVersion: 'health_trend_v1',
+        observedAt: trend.to,
+      ),
       ownerUserId: ownerUserId,
       scope: 'health',
       source: kHealthSource,

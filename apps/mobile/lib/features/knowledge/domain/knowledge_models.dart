@@ -221,6 +221,48 @@ class DecisionOption {
       jsonEncode(opts.map((o) => o.toJson()).toList(growable: false));
 }
 
+/// A human-readable condition that should trigger a Decision review.
+///
+/// V1 intentionally stores source references without evaluating a metric DSL.
+class DecisionRevisitCondition {
+  const DecisionRevisitCondition({
+    required this.statement,
+    this.sourceReferences = const <String>[],
+  });
+
+  final String statement;
+  final List<String> sourceReferences;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'statement': statement,
+    'source_references': sourceReferences,
+  };
+
+  static DecisionRevisitCondition fromJson(Map<String, Object?> json) {
+    final refs = json['source_references'];
+    return DecisionRevisitCondition(
+      statement: (json['statement'] as String?) ?? '',
+      sourceReferences: refs is List
+          ? refs.whereType<String>().toList(growable: false)
+          : const <String>[],
+    );
+  }
+
+  static List<DecisionRevisitCondition> decode(String jsonString) {
+    if (jsonString.isEmpty) return const <DecisionRevisitCondition>[];
+    final value = jsonDecode(jsonString);
+    if (value is! List) return const <DecisionRevisitCondition>[];
+    return value
+        .whereType<Map<String, Object?>>()
+        .map(DecisionRevisitCondition.fromJson)
+        .where((condition) => condition.statement.trim().isNotEmpty)
+        .toList(growable: false);
+  }
+
+  static String encode(List<DecisionRevisitCondition> conditions) =>
+      jsonEncode(conditions.map((condition) => condition.toJson()).toList());
+}
+
 class KnowledgeDecision {
   KnowledgeDecision({
     required this.id,
@@ -232,6 +274,7 @@ class KnowledgeDecision {
     required this.assumptionIds,
     this.expectedOutcome,
     this.reviewDate,
+    this.revisitConditions = const <DecisionRevisitCondition>[],
     this.actualOutcomeMd,
     required this.status,
     this.supersededByDecisionId,
@@ -250,6 +293,7 @@ class KnowledgeDecision {
   final List<String> assumptionIds;
   final String? expectedOutcome;
   final DateTime? reviewDate;
+  final List<DecisionRevisitCondition> revisitConditions;
   final String? actualOutcomeMd;
   final DecisionStatus status;
   final String? supersededByDecisionId;

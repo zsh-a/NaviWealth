@@ -13,6 +13,7 @@
 library;
 
 import 'package:naviwealth/core/auth/current_user.dart';
+import '../../../contracts/context_evidence.dart';
 import '../../../contracts/memory_record.dart';
 import '../../../local/memory/memory_runtime.dart';
 import '../../../local/memory/providers.dart';
@@ -85,12 +86,22 @@ class QueryMemoryTool implements DeviceTool {
     };
 
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
+    final accessPolicy = ctx.ref.read(memoryAccessPolicyProvider);
+    if (source != null &&
+        source.isNotEmpty &&
+        !accessPolicy.allowsSource(source)) {
+      return <String, Object?>{
+        'error': 'memory source is not active for this turn',
+        'code': 'policy_denied',
+      };
+    }
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final hits = await runtime.recall(
       ownerUserId: ownerUserId,
       queryText: query,
       kinds: kinds.isEmpty ? null : kinds,
       source: (source == null || source.isEmpty) ? null : source,
+      sourcePrefixes: accessPolicy.sourcePrefixes,
       topK: topK,
     );
 
@@ -112,7 +123,15 @@ class QueryMemoryTool implements DeviceTool {
   static Map<String, Object?> _hitToWire(MemoryHit h) => <String, Object?>{
     'id': h.record.id,
     'kind': h.record.kind.wire,
+    'role': h.record.role.wire,
+    'authority': h.record.authority.wire,
     'source': h.record.source ?? '',
+    'provenance': h.record.provenance.toJson(),
+    if (h.record.validFrom != null)
+      'valid_from': h.record.validFrom!.toUtc().toIso8601String(),
+    if (h.record.validUntil != null)
+      'valid_until': h.record.validUntil!.toUtc().toIso8601String(),
+    if (h.record.supersedesId != null) 'supersedes': h.record.supersedesId,
     'title': h.record.title,
     'excerpt': _excerpt(h.record.summary),
     'score': h.score,

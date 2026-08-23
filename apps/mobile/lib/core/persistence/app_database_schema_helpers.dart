@@ -80,6 +80,12 @@ Future<void> _createMemoryCandidates(AppDatabase db) async {
   }
 }
 
+Future<void> _createPersonalProfile(AppDatabase db) async {
+  for (final stmt in personalProfileDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
 Future<void> _createChatSessionsTable(AppDatabase db) async {
   await db.customStatement('''
 CREATE TABLE IF NOT EXISTS chat_sessions (

@@ -74,6 +74,9 @@ KnowledgeDecisionsCompanion knowledgeDecisionCompanion(KnowledgeDecision d) {
     assumptionIdsJson: Value(encodeStringList(d.assumptionIds)),
     expectedOutcome: Value(d.expectedOutcome),
     reviewDate: Value(d.reviewDate),
+    revisitConditionsJson: Value(
+      DecisionRevisitCondition.encode(d.revisitConditions),
+    ),
     actualOutcomeMd: Value(d.actualOutcomeMd),
     status: Value(d.status.wire),
     supersededByDecisionId: Value(d.supersededByDecisionId),
@@ -216,6 +219,9 @@ KnowledgeDecision knowledgeDecisionFromRow(KnowledgeDecisionRow r) =>
       assumptionIds: decodeStringList(r.assumptionIdsJson),
       expectedOutcome: r.expectedOutcome,
       reviewDate: r.reviewDate,
+      revisitConditions: DecisionRevisitCondition.decode(
+        r.revisitConditionsJson,
+      ),
       actualOutcomeMd: r.actualOutcomeMd,
       status: DecisionStatus.parse(r.status),
       supersededByDecisionId: r.supersededByDecisionId,

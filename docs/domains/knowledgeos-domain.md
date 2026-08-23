@@ -62,7 +62,7 @@ KnowledgeOS is active only when the user enables it in Settings.
 | Concept | Named concept with aliases and summary | `knowledge_concepts` |
 | Principle | Long-lived worldview or operating rule | `knowledge_principles` |
 | Assumption | Falsifiable belief used by decisions | `knowledge_assumptions` |
-| Decision | Chosen option, rationale, assumptions, outcome, review lifecycle | `knowledge_decisions` |
+| Decision | Chosen option, rationale, assumptions, outcome, revisit conditions, review lifecycle | `knowledge_decisions` |
 | Experiment | Hypothesis, method, metrics, result | `knowledge_experiments` |
 | Routine | Recurring personal reminder with next due date | `knowledge_routines` |
 | Relation | Typed, queryable edge between knowledge objects | `knowledge_relations` |
@@ -245,7 +245,14 @@ Memory sources:
 Rules:
 
 - Knowledge objects remain source-of-truth in Drift tables.
+- A Decision may carry user-editable `revisit_conditions`, each represented as
+  a statement plus optional source references. V1 does not evaluate a metric
+  DSL; Agents may recommend review but cannot automatically rewrite a Decision.
 - Memory mirrors make cross-domain recall work without a Knowledge-specific retrieval engine.
+- Decision mirrors use `authority=source_fact` and `role=decision`, and include
+  complete options, linked assumptions/principles, expected/actual outcome,
+  review date, status, revisit conditions, and source-row provenance. Other
+  Knowledge episodic rows do not enter the Decision context slot.
 - Search tools iterate concrete `know:*` sources because Memory Runtime source filtering is exact-match.
 - Memory Runtime stays in `core/ai/local/memory/` and does not import KnowledgeOS.
 

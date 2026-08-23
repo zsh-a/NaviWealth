@@ -10,6 +10,7 @@ void main() {
       final expected = kSyncTableRegistrations
           .where((registration) => registration.backupEligible)
           .map((registration) => registration.table)
+          .followedBy(const <String>['personal_profile_facts'])
           .toList(growable: false);
 
       expect(kBackupTables, expected);
@@ -17,7 +18,7 @@ void main() {
       expect(kBackupTables, contains('fx_rates'));
     });
 
-    test('registrations are unique and target Drift tables', () {
+    test('registrations are unique and target local tables', () async {
       final db = makeTestDatabase();
       addTearDown(db.close);
       final seen = <String>{};
@@ -28,11 +29,11 @@ void main() {
           isTrue,
           reason: '${registration.table} is registered more than once',
         );
-        final table = db.allTables.firstWhere(
-          (table) => table.actualTableName == registration.table,
-          orElse: () => fail('missing Drift table: ${registration.table}'),
-        );
-        final columns = table.$columns.map((column) => column.name).toSet();
+        final rows = await db
+            .customSelect('PRAGMA table_info(${registration.table})')
+            .get();
+        final columns = rows.map((row) => row.read<String>('name')).toSet();
+        expect(columns, isNotEmpty, reason: registration.table);
         expect(columns, contains(registration.primaryKey));
       }
     });

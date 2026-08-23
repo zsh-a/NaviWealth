@@ -43,6 +43,7 @@ nav:
       - Device AI Architecture: ai/ai-architecture.md
       - Runtime Event Contract: ai/ai-protocol.md
       - Agent Experience: ai/agent-experience.md
+      - Personal Memory V1 Plan: ai/personal-memory-implementation-plan.md
   - Sync:
       - Sync v3 Protocol: sync/sync-v3.md
       - Protocol Test Catalogue: sync/sync-protocol-tests.md

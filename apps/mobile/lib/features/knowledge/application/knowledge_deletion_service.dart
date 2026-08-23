@@ -289,6 +289,7 @@ Object _entryWithSync(Object entry, SyncMeta sync) => switch (entry) {
     assumptionIds: value.assumptionIds,
     expectedOutcome: value.expectedOutcome,
     reviewDate: value.reviewDate,
+    revisitConditions: value.revisitConditions,
     actualOutcomeMd: value.actualOutcomeMd,
     status: value.status,
     supersededByDecisionId: value.supersededByDecisionId,

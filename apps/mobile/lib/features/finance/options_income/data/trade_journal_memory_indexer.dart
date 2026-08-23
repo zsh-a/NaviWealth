@@ -26,6 +26,7 @@ library;
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/core/ai/contracts/context_evidence.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
@@ -125,6 +126,8 @@ class TradeJournalMemoryIndexer {
     return MemoryRecord(
       id: memoryId,
       kind: MemoryKind.episodic,
+      role: MemoryRole.episode,
+      authority: EvidenceAuthority.sourceFact,
       ownerUserId: ownerUserId,
       scope: 'options_trading',
       source: kTradeJournalSource,

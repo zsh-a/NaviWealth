@@ -290,6 +290,11 @@ class DataManagementService {
         values: sourceNames,
         ownerColumn: 'owner_user_id',
       );
+      affected += await _deleteWhere(
+        'personal_profile_facts',
+        'owner_user_id = ? AND domain_scope = ?',
+        <Object?>[_ownerUserId, scope.wire],
+      );
       affected += await _deleteIn(
         table: 'events',
         column: 'source',

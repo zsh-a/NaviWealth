@@ -7,22 +7,44 @@
 ///   saved). Usually mirrored from the [events] table; kept in
 ///   memories when the event itself is durable signal (e.g. "made
 ///   first $1k of options income").
-/// - **semantic** — a long-term fact about the user (preferences,
-///   goals, constraints, principles). Stable across months.
-/// - **episodic** — a specific decision with reasoning + outcome. The
-///   "why did I do X last time" memory.
+/// - **semantic** — a durable fact or derived pattern. Authoritative goals,
+///   preferences, constraints, and rules live in Personal Profile instead.
+/// - **episodic** — a Decision projection or important experience. [role]
+///   distinguishes those retrieval meanings.
 /// - **procedural** — an actionable rule the user (or AI on their
 ///   behalf) should apply ("close put when premium captured >= 70%").
 ///
 /// All four share the same envelope (this class); the kind-specific
 /// fields live in [payload]. Contract layer is **domain-neutral**:
 /// `source` / `scope` / `entities` are free-form strings,
-/// `MemoryKind` is the only closed set.
+/// `MemoryKind` and [MemoryRole] are domain-neutral closed sets.
 library;
 
 import 'dart:convert';
 
+import 'context_evidence.dart';
+
 enum MemoryKind { event, semantic, episodic, procedural }
+
+enum MemoryRole { decision, episode, pattern, guidance, legacy }
+
+extension MemoryRoleWire on MemoryRole {
+  String get wire => switch (this) {
+    MemoryRole.decision => 'decision',
+    MemoryRole.episode => 'episode',
+    MemoryRole.pattern => 'pattern',
+    MemoryRole.guidance => 'guidance',
+    MemoryRole.legacy => 'legacy',
+  };
+
+  static MemoryRole parse(String? wire) => switch (wire) {
+    'decision' => MemoryRole.decision,
+    'episode' => MemoryRole.episode,
+    'pattern' => MemoryRole.pattern,
+    'guidance' => MemoryRole.guidance,
+    _ => MemoryRole.legacy,
+  };
+}
 
 extension MemoryKindWire on MemoryKind {
   String get wire => switch (this) {
@@ -46,7 +68,7 @@ extension MemoryKindWire on MemoryKind {
 /// scored by [HybridScorer], assembled into a [ContextPack] by
 /// [ContextBuilder].
 class MemoryRecord {
-  const MemoryRecord({
+  MemoryRecord({
     required this.id,
     required this.kind,
     required this.ownerUserId,
@@ -65,7 +87,17 @@ class MemoryRecord {
     this.validFrom,
     this.validUntil,
     this.lastAccessedAt,
-  });
+    this.authority = EvidenceAuthority.legacyUnknown,
+    this.role = MemoryRole.legacy,
+    EvidenceProvenance? provenance,
+    this.supersedesId,
+  }) : provenance =
+           provenance ??
+           EvidenceProvenance(
+             source: source,
+             sourceId: sourceId,
+             sourceEventId: sourceEventId,
+           );
 
   /// Opaque stable id. Convention: `<source>:<kind>:<sourceId>` so
   /// re-extraction is naturally idempotent. Treat as opaque outside the
@@ -73,6 +105,16 @@ class MemoryRecord {
   final String id;
 
   final MemoryKind kind;
+
+  final MemoryRole role;
+
+  final EvidenceAuthority authority;
+
+  final EvidenceProvenance provenance;
+
+  /// Prior MemoryRecord replaced by this record. The prior row remains as
+  /// temporal history with a closed [validUntil].
+  final String? supersedesId;
 
   /// Owner scope for multi-user data isolation. Mirrors every other
   /// owner_user_id column.
@@ -88,7 +130,8 @@ class MemoryRecord {
   /// Kind-specific structured payload. Free-form map so HealthOS /
   /// TimeOS don't need new contract types when they add memory.
   ///
-  /// Suggested per-kind shapes (not enforced):
+  /// Suggested per-kind shapes (not enforced; [role] selects the context
+  /// slot):
   ///
   /// - `event`: `{type, ...domain-specific}`
   /// - `semantic`: `{statement, scope}` (e.g. "user prefers local-first")
@@ -158,10 +201,18 @@ class MemoryRecord {
     DateTime? validUntil,
     DateTime? lastAccessedAt,
     DateTime? updatedAt,
+    EvidenceAuthority? authority,
+    MemoryRole? role,
+    EvidenceProvenance? provenance,
+    String? supersedesId,
   }) => MemoryRecord(
     id: id,
     ownerUserId: ownerUserId,
     kind: kind ?? this.kind,
+    role: role ?? this.role,
+    authority: authority ?? this.authority,
+    provenance: provenance ?? this.provenance,
+    supersedesId: supersedesId ?? this.supersedesId,
     scope: scope ?? this.scope,
     source: source ?? this.source,
     sourceId: sourceId ?? this.sourceId,
@@ -182,6 +233,10 @@ class MemoryRecord {
   Map<String, Object?> toJson() => <String, Object?>{
     'id': id,
     'kind': kind.wire,
+    'role': role.wire,
+    'authority': authority.wire,
+    'provenance': provenance.toJson(),
+    if (supersedesId != null) 'supersedes_id': supersedesId,
     'owner_user_id': ownerUserId,
     'scope': scope,
     if (source != null) 'source': source,
@@ -207,6 +262,10 @@ class MemoryRecord {
     return MemoryRecord(
       id: (json['id'] as String?) ?? '',
       kind: MemoryKindWire.parse(json['kind'] as String? ?? 'event'),
+      role: MemoryRoleWire.parse(json['role'] as String?),
+      authority: EvidenceAuthorityWire.parse(json['authority'] as String?),
+      provenance: EvidenceProvenance.fromJson(_payloadOf(json['provenance'])),
+      supersedesId: json['supersedes_id'] as String?,
       ownerUserId: (json['owner_user_id'] as String?) ?? '',
       scope: (json['scope'] as String?) ?? '*',
       source: json['source'] as String?,

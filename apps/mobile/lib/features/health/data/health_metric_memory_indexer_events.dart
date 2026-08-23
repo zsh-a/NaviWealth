@@ -75,6 +75,8 @@ mixin _HealthMetricEventMapper on _HealthMetricMemoryFormatting {
     return MemoryRecord(
       id: '$kHealthSource:episodic:${metric.id}',
       kind: MemoryKind.episodic,
+      role: MemoryRole.episode,
+      authority: EvidenceAuthority.sourceFact,
       ownerUserId: ownerUserId,
       scope: 'health',
       source: kHealthSource,

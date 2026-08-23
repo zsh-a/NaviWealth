@@ -2,14 +2,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
+import 'package:naviwealth/core/ai/contracts/context_evidence.dart';
 import 'package:naviwealth/core/ai/contracts/memory_candidate.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
+import 'package:naviwealth/core/ai/local/memory/memory_access_policy.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_candidate_store.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_proposal_applier.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
+import 'package:naviwealth/core/lifeos/personal_profile/personal_profile_store.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 
 import '../../../persistence/test_database.dart';
@@ -21,12 +24,14 @@ void main() {
   group('MemoryProposalApplier', () {
     late AppDatabase db;
     late SqliteMemoryCandidateStore candidateStore;
+    late SqlitePersonalProfileStore profileStore;
     late MemoryRuntime runtime;
     late MemoryProposalApplier applier;
 
     setUp(() {
       db = makeTestDatabase();
       candidateStore = SqliteMemoryCandidateStore(db: db);
+      profileStore = SqlitePersonalProfileStore(db);
       runtime = MemoryRuntime(
         embedder: StubEmbedder(),
         memoryStore: SqliteMemoryStore(db: db),
@@ -36,7 +41,13 @@ void main() {
       applier = MemoryProposalApplier(
         ownerUserId: _owner,
         runtime: runtime,
+        profileStore: profileStore,
         candidateStore: candidateStore,
+        accessPolicy: MemoryAccessPolicy.allowPrefixes(const <String>[
+          'user_confirmed_ai',
+          'test',
+        ]),
+        activeProfileDomainScopes: const <String>{'finance'},
         clock: () => _now,
       );
     });
@@ -97,21 +108,89 @@ void main() {
       );
     });
 
+    test('confirmed profile candidate materializes and undoes fact', () async {
+      const payload = <String, Object?>{
+        'candidate_id': 'candidate-1',
+        'target_type': 'profile_fact',
+        'operation': 'create',
+        'record_id': 'profile-fact-1',
+        'profile_kind': 'constraint',
+        'key': 'cash_buffer_months',
+        'value': 12,
+        'summary': '保留 12 个月现金缓冲。',
+        'domain_scope': 'finance',
+        'reason': '用户明确确认',
+      };
+      await _insertCandidate(
+        candidateStore,
+        operation: MemoryCandidateOperation.create,
+        targetType: MemoryCandidateTargetType.profileFact,
+        payload: payload,
+      );
+
+      final state = await applier.apply(_plan(payload));
+
+      expect(state.appliedTable, kPersonalProfileAppliedTable);
+      final fact = await profileStore.read(
+        ownerUserId: _owner,
+        id: 'profile-fact-1',
+      );
+      expect(fact?.value, 12);
+      expect(fact?.authority, EvidenceAuthority.userConfirmed);
+
+      await applier.undo(state);
+      expect(
+        await profileStore.read(ownerUserId: _owner, id: 'profile-fact-1'),
+        isNull,
+      );
+    });
+
+    test('profile payload cannot be edited after staging', () async {
+      const payload = <String, Object?>{
+        'candidate_id': 'candidate-1',
+        'target_type': 'profile_fact',
+        'operation': 'create',
+        'record_id': 'profile-fact-1',
+        'profile_kind': 'constraint',
+        'key': 'cash_buffer_months',
+        'value': 12,
+        'summary': '保留 12 个月现金缓冲。',
+        'domain_scope': 'finance',
+        'reason': '用户明确确认',
+      };
+      await _insertCandidate(
+        candidateStore,
+        operation: MemoryCandidateOperation.create,
+        targetType: MemoryCandidateTargetType.profileFact,
+        payload: payload,
+      );
+
+      await expectLater(
+        applier.apply(_plan(<String, Object?>{...payload, 'value': 24})),
+        throwsA(isA<ProposalApplyException>()),
+      );
+
+      expect(
+        await profileStore.read(ownerUserId: _owner, id: 'profile-fact-1'),
+        isNull,
+      );
+    });
+
     test('supersede preserves prior state for undo', () async {
       final prior = _memory(id: 'old-memory', summary: '旧偏好');
       await runtime.remember(prior);
       final payload = <String, Object?>{
         ..._createPayload(),
         'operation': 'supersede',
-        'target_memory_id': prior.id,
-        'memory_id': 'new-memory',
+        'target_record_id': prior.id,
+        'record_id': 'new-memory',
         'summary': '新偏好',
       };
       await _insertCandidate(
         candidateStore,
         operation: MemoryCandidateOperation.supersede,
         payload: payload,
-        targetMemoryId: prior.id,
+        targetRecordId: prior.id,
       );
 
       final state = await applier.apply(_plan(payload));
@@ -137,14 +216,15 @@ void main() {
       const payload = <String, Object?>{
         'candidate_id': 'candidate-1',
         'operation': 'forget',
-        'target_memory_id': 'old-memory',
+        'target_type': 'memory',
+        'target_record_id': 'old-memory',
         'reason': '用户明确要求忘记',
       };
       await _insertCandidate(
         candidateStore,
         operation: MemoryCandidateOperation.forget,
         payload: payload,
-        targetMemoryId: prior.id,
+        targetRecordId: prior.id,
       );
 
       final state = await applier.apply(_plan(payload));
@@ -219,14 +299,14 @@ void main() {
       final payload = <String, Object?>{
         ..._createPayload(),
         'operation': 'supersede',
-        'target_memory_id': prior.id,
-        'memory_id': 'new-memory',
+        'target_record_id': prior.id,
+        'record_id': 'new-memory',
       };
       await _insertCandidate(
         candidateStore,
         operation: MemoryCandidateOperation.supersede,
         payload: payload,
-        targetMemoryId: prior.id,
+        targetRecordId: prior.id,
       );
 
       await expectLater(
@@ -252,7 +332,7 @@ void main() {
         );
         final modified = <String, Object?>{
           ...payload,
-          'memory_id': 'modified-memory',
+          'record_id': 'modified-memory',
         };
 
         await expectLater(
@@ -294,8 +374,9 @@ void main() {
 
 Map<String, Object?> _createPayload() => const <String, Object?>{
   'candidate_id': 'candidate-1',
+  'target_type': 'memory',
   'operation': 'create',
-  'memory_id': 'memory-1',
+  'record_id': 'memory-1',
   'memory_kind': 'semantic',
   'title': '本地优先',
   'summary': '用户偏好本地优先。',
@@ -319,7 +400,8 @@ Future<void> _insertCandidate(
   SqliteMemoryCandidateStore store, {
   required MemoryCandidateOperation operation,
   required Map<String, Object?> payload,
-  String? targetMemoryId,
+  MemoryCandidateTargetType targetType = MemoryCandidateTargetType.memory,
+  String? targetRecordId,
 }) {
   return store.insert(
     MemoryChangeCandidate(
@@ -327,8 +409,9 @@ Future<void> _insertCandidate(
       proposalId: 'proposal-1',
       ownerUserId: _owner,
       operation: operation,
+      targetType: targetType,
       status: MemoryCandidateStatus.pending,
-      targetMemoryId: targetMemoryId,
+      targetRecordId: targetRecordId,
       payload: payload,
       createdAt: _now,
       updatedAt: _now,
@@ -345,6 +428,7 @@ MemoryRecord _memory({
     id: id,
     kind: MemoryKind.semantic,
     ownerUserId: ownerUserId,
+    source: 'test',
     title: id,
     summary: summary,
     payload: const <String, Object?>{},

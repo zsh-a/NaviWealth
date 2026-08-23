@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/contracts/context_evidence.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 
@@ -25,9 +26,14 @@ MemoryRecord _mem({
   DateTime? updatedAt,
   DateTime? validFrom,
   DateTime? validUntil,
+  MemoryRole role = MemoryRole.legacy,
+  EvidenceAuthority authority = EvidenceAuthority.legacyUnknown,
+  String? supersedesId,
 }) => MemoryRecord(
   id: id,
   kind: kind,
+  role: role,
+  authority: authority,
   ownerUserId: _kOwner,
   scope: scope,
   source: source,
@@ -40,6 +46,7 @@ MemoryRecord _mem({
   confidence: confidence,
   validFrom: validFrom,
   validUntil: validUntil,
+  supersedesId: supersedesId,
   createdAt: createdAt ?? _t(1),
   updatedAt: updatedAt ?? _t(1),
 );
@@ -54,13 +61,21 @@ void main() {
   group('SqliteMemoryStore CRUD', () {
     test('writeMemory + readMemory round-trips all typed fields', () async {
       await store.writeMemory(
-        _mem(id: 'm1'),
+        _mem(
+          id: 'm1',
+          role: MemoryRole.decision,
+          authority: EvidenceAuthority.sourceFact,
+          supersedesId: 'm0',
+        ),
         vector: const <double>[1, 0],
         fingerprint: _kFp,
       );
       final back = await store.readMemory('m1');
       expect(back, isNotNull);
       expect(back!.kind, MemoryKind.episodic);
+      expect(back.role, MemoryRole.decision);
+      expect(back.authority, EvidenceAuthority.sourceFact);
+      expect(back.supersedesId, 'm0');
       expect(back.scope, 'options_trading');
       expect(back.entities, {'NVDA'});
       expect(back.payload['outcome'], 'closed');
@@ -163,6 +178,22 @@ void main() {
       expect(episodic.map((c) => c.record.id), isNot(contains('rule-1')));
     });
 
+    test('filters by retrieval role', () async {
+      await store.writeMemoryWithoutVector(
+        _mem(id: 'decision', role: MemoryRole.decision),
+      );
+      await store.writeMemoryWithoutVector(
+        _mem(id: 'episode', role: MemoryRole.episode),
+      );
+
+      final decisions = await store.queryMemories(
+        ownerUserId: _kOwner,
+        roles: const <MemoryRole>{MemoryRole.decision},
+      );
+
+      expect(decisions.map((candidate) => candidate.record.id), ['decision']);
+    });
+
     test("scope filter: '*' records apply to any specific scope", () async {
       await seed();
       final scoped = await store.queryMemories(
@@ -230,6 +261,14 @@ void main() {
       final at = _t(10);
       final live = await store.queryMemories(ownerUserId: _kOwner, validAt: at);
       expect(live.map((c) => c.record.id), isNot(contains('expired-rule')));
+      final atBoundary = await store.queryMemories(
+        ownerUserId: _kOwner,
+        validAt: _t(5),
+      );
+      expect(
+        atBoundary.map((candidate) => candidate.record.id),
+        isNot(contains('expired-rule')),
+      );
     });
 
     test('other owners are excluded', () async {

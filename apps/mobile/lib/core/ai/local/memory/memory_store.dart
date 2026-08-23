@@ -11,12 +11,14 @@
 /// reindex without losing payload / lifecycle / entities.
 library;
 
+import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:drift/drift.dart';
 
 import '../../../../core/persistence/app_database.dart';
+import '../../contracts/context_evidence.dart';
 import '../../contracts/memory_record.dart';
 
 /// One row pulled from a candidate scan. [semanticSim] is the cosine
@@ -71,6 +73,7 @@ abstract class MemoryStore {
   Future<List<MemoryCandidate>> queryMemories({
     required String ownerUserId,
     Set<MemoryKind>? kinds,
+    Set<MemoryRole>? roles,
     String? scope,
     String? source,
     Set<String>? sourcePrefixes,
@@ -116,13 +119,18 @@ class SqliteMemoryStore implements MemoryStore {
   Future<void> _upsertMemoryRow(MemoryRecord r) async {
     await _db.customStatement(
       'INSERT OR REPLACE INTO memories ('
-      '  id, kind, scope, owner_user_id, source, source_id, source_event_id,'
+      '  id, kind, role, authority, provenance_json, supersedes_id,'
+      '  scope, owner_user_id, source, source_id, source_event_id,'
       '  title, summary, payload_json, entities_json, importance, confidence,'
       '  valid_from, valid_until, created_at, updated_at, last_accessed_at'
-      ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       <Object?>[
         r.id,
         r.kind.wire,
+        r.role.wire,
+        r.authority.wire,
+        jsonEncode(r.provenance.toJson()),
+        r.supersedesId,
         r.scope,
         r.ownerUserId,
         r.source,
@@ -206,6 +214,7 @@ class SqliteMemoryStore implements MemoryStore {
   Future<List<MemoryCandidate>> queryMemories({
     required String ownerUserId,
     Set<MemoryKind>? kinds,
+    Set<MemoryRole>? roles,
     String? scope,
     String? source,
     Set<String>? sourcePrefixes,
@@ -231,6 +240,13 @@ class SqliteMemoryStore implements MemoryStore {
       filters.add('m.kind IN ($placeholders)');
       for (final k in kinds) {
         vars.add(Variable.withString(k.wire));
+      }
+    }
+    if (roles != null && roles.isNotEmpty) {
+      final placeholders = List<String>.filled(roles.length, '?').join(', ');
+      filters.add('m.role IN ($placeholders)');
+      for (final role in roles) {
+        vars.add(Variable.withString(role.wire));
       }
     }
     if (scope != null) {
@@ -261,7 +277,7 @@ class SqliteMemoryStore implements MemoryStore {
       final ms = validAt.toUtc().millisecondsSinceEpoch;
       filters.add('(m.valid_from IS NULL OR m.valid_from <= ?)');
       vars.add(Variable.withInt(ms));
-      filters.add('(m.valid_until IS NULL OR m.valid_until >= ?)');
+      filters.add('(m.valid_until IS NULL OR m.valid_until > ?)');
       vars.add(Variable.withInt(ms));
     }
 
@@ -329,6 +345,12 @@ String _escapeLike(String value) =>
 MemoryRecord _rowToMemory(QueryRow row) => MemoryRecord(
   id: row.read<String>('id'),
   kind: MemoryKindWire.parse(row.read<String>('kind')),
+  role: MemoryRoleWire.parse(row.read<String>('role')),
+  authority: EvidenceAuthorityWire.parse(row.read<String>('authority')),
+  provenance: EvidenceProvenance.fromJson(
+    MemoryRecord.decodePayload(row.read<String>('provenance_json')),
+  ),
+  supersedesId: row.readNullable<String>('supersedes_id'),
   scope: row.read<String>('scope'),
   ownerUserId: row.read<String>('owner_user_id'),
   source: row.read<String?>('source'),

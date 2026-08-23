@@ -56,8 +56,10 @@ FRB primitive frames 映射为 `AiChatEvent`，执行 active `DomainPack` 暴露
 
 ```text
 active DomainPacks.memorySourcePrefixes
-  -> ContextBuilder / MemoryRuntime（memory + recent events）
-  -> untrusted ContextBlock(kind=memory)
+  -> MemoryAccessPolicy
+PersonalProfileStore -> PersonalProfileSnapshot
+MemoryRuntime / EventStore -> role-classified memory + recent events
+  -> untrusted ContextBlock(kind=profile|memory)
 persisted chat prefix omitted by ContextWindow
   -> source-fingerprinted structured conversation checkpoint
   -> untrusted ContextBlock(kind=compaction_summary)
@@ -65,11 +67,13 @@ persisted chat prefix omitted by ContextWindow
   -> provider request
 ```
 
-Host 负责 Drift、embedding、当前 route/entity 和领域启用策略；Rust 负责 block 校验、
-token 预算、优先级选择、BLAKE3 hash、渲染、压缩记录和恢复快照。Memory 与 Resource
-都只是不可信证据，不能携带指令权限；Host context 只进入当前轮，不写入持久 transcript。
-关闭领域后，其本地数据仍保留，但 memory 与 recent events 均被 source allow-list
-阻止进入 AI 上下文。
+Host 负责 Drift、embedding、Personal Profile、当前 route/entity 和领域启用策略；Rust
+负责 block/evidence 校验、时间与 supersede 过滤、token 预算、优先级选择、BLAKE3 hash、
+渲染、压缩记录和恢复快照。Memory、Profile 与 Resource 都只是不可信证据，不能携带
+指令权限；`user_confirmed` 只是最高数据可信度，不是 instruction。Host context 只进入
+当前轮，不写入持久 transcript。关闭领域后，其本地数据仍保留，但同一个
+`MemoryAccessPolicy` 会在自动 assembly、主动工具 recall、proposal target lookup 和
+apply 四处阻止访问。
 
 长会话 checkpoint 存于 local-only `conversation_checkpoints`，记录摘要截止消息、
 源指纹、消息数量以及 topic / verified tool evidence / decisions / rejected options /
@@ -145,14 +149,17 @@ confirmation 派生交互强度。
 
 ### 3.3 用户审批后的长期 Memory
 
-`propose_memory` 只能写 local-only `memory_candidates`，不能直接写 `memories`。用户
-确认后，`MemoryProposalApplier` 才执行 `create` / `supersede` / `forget`；reject、
+`propose_memory` 只能写 local-only `memory_candidates`，不能直接写 `memories` 或
+`personal_profile_facts`。Candidate 通过 `target_type=memory|profile_fact` 区分目标；
+用户确认后，`MemoryProposalApplier` 才执行 `create` / `supersede` / `forget`；reject、
 cancel 与 undo 也走同一 proposal/interaction seam。
 
-Apply 时重新校验 owner、candidate 终态、目标 Memory、operation 与模型提供的 id，禁止
-重复确认、跨用户覆盖或篡改目标。确认后的 Memory 固定 provenance 为
-`user_confirmed_ai`、confidence 为 `0.95`。应用失败保留 retry 能力，终态 candidate
-按 owner 隔离并在 90 天后清理。Conversation checkpoint 不会自动升级为长期 Memory。
+Apply 时重新校验 owner、candidate 终态、active-domain policy、目标记录、operation 与
+模型提供的 id，禁止重复确认、跨用户覆盖或篡改目标。确认后的 AI Memory/Profile 使用
+`authority=user_confirmed`、provenance source `user_confirmed_ai`；Memory confidence 为
+`0.95`。应用失败保留 retry 能力，终态 candidate 按 owner 隔离并在 90 天后清理。
+Settings 直接维护的 Profile 同样是 user-confirmed，但不经过模型。Conversation
+checkpoint 不会自动升级为长期 Memory。
 
 ### 3.4 Trace
 
@@ -164,10 +171,11 @@ token、model、stop reason、状态和可选 I/O。`ai_traces`、`ai_undo_stack
 
 - **§4.1 ContextPack**：由 BaseContext、TaskContext（`route` / `intent` /
   `signals`）和 PrivacyBudget 组成，只在端侧构造和消费。
-- **§4.1a ContextBlock**：通用 runtime 上下文单位。Host 可提供 Memory、
-  Resource、CompactionSummary 等数据块；Runtime 重算 token/hash，按
-  `ContextPolicy` 选择并保存 `ContextSnapshot`。Runtime/Agent/Command
-  instruction blocks 始终保留且与数据块分权。
+- **§4.1a ContextBlock**：通用 runtime 上下文单位。Host 可提供 Profile、Memory、
+  Resource、CompactionSummary 等数据块；数据块可携带 `ContextEvidence`（authority、
+  provenance、validity、supersedes）。Runtime 重算 token/hash，过滤无效 evidence，
+  按 `ContextPolicy` 选择并保存含 omission reason 的 `ContextSnapshot`。
+  Runtime/Agent/Command instruction blocks 始终保留且与数据块分权。
 - **§4.2 本地真值**：工具直接读取 Drift 或端侧 provider。
 - **§4.3 写入边界**：所有写入和外部动作遵循 §3.2。
 - **§4.4 Interaction**：问题、审批和 typed confirmation 使用

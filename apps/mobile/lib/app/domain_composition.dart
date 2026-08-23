@@ -26,6 +26,7 @@ import '../core/ai/composition/system_prompt_blocks.dart';
 import '../core/ai/composition/tool_descriptor_lookup.dart';
 import '../core/ai/contracts/tool_descriptor.dart';
 import '../core/ai/intent/intent.dart';
+import '../core/ai/local/memory/memory_access_policy.dart';
 import '../core/ai/local/memory/memory_proposal_applier.dart';
 import '../core/ai/local/memory/providers.dart';
 import '../core/ai/runtime/device/tools/device_tool.dart';
@@ -38,6 +39,7 @@ import '../core/command_palette/command_palette_entry.dart';
 import '../core/lifeos/action_dispatcher.dart';
 import '../core/lifeos/action_outcome.dart';
 import '../core/lifeos/domain_pack.dart';
+import '../core/lifeos/personal_profile/providers.dart';
 import '../core/shell/domain_shell.dart';
 import '../core/shell/domain_tabs_shell.dart';
 import '../core/shell/entity_route_resolver.dart';
@@ -72,6 +74,14 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
           (context, widgetRef) => askAi(context, widgetRef),
     ),
     domainPackRegistryProvider.overrideWith((ref) => resolvedPacks),
+    memoryAccessPolicyProvider.overrideWith(
+      (ref) => memoryAccessPolicyForPacks(ref.watch(activeDomainPacksProvider)),
+    ),
+    activePersonalProfileDomainScopesProvider.overrideWith(
+      (ref) => Set<String>.unmodifiable(
+        ref.watch(activeDomainPacksProvider).map((pack) => pack.scope.wire),
+      ),
+    ),
     actionOutcomeSummariesProvider.overrideWith((ref) {
       final outcomes = <String, ActionOutcomeSummary>{
         ...watchLifeActionOutcomes(ref),
@@ -201,6 +211,15 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
     }),
     ...domainProviderOverrides(resolvedPacks),
   ];
+}
+
+const Set<String> kGlobalMemorySourcePrefixes = <String>{'user_confirmed_ai'};
+
+MemoryAccessPolicy memoryAccessPolicyForPacks(List<DomainPack> packs) {
+  return MemoryAccessPolicy.allowPrefixes(<String>{
+    ...kGlobalMemorySourcePrefixes,
+    for (final pack in packs) ...pack.memorySourcePrefixes,
+  });
 }
 
 Future<String> _dispatchLifeAction(Ref ref, LifeActionDraft draft) async {
@@ -419,10 +438,18 @@ Future<List<ProposalApplierRoute>> domainProposalApplierRoutes(
         readApplier: (ref) async => MemoryProposalApplier(
           ownerUserId: ownerUserId,
           runtime: await ref.read(memoryRuntimeProvider.future),
+          profileStore: await ref.read(personalProfileStoreProvider.future),
           candidateStore: await ref.read(memoryCandidateStoreProvider.future),
+          accessPolicy: ref.read(memoryAccessPolicyProvider),
+          activeProfileDomainScopes: ref.read(
+            activePersonalProfileDomainScopesProvider,
+          ),
         ),
         kinds: const <String>{kMemoryChangeProposalKind},
-        tablePrefixes: const <String>{kMemoryAppliedTable},
+        tablePrefixes: const <String>{
+          kMemoryAppliedTable,
+          kPersonalProfileAppliedTable,
+        },
       ),
     );
   }

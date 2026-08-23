@@ -232,11 +232,14 @@ Core types:
 
 - `EventRecord`
 - `MemoryRecord`
+- `MemoryAccessPolicy`
 - `MemoryRuntime`
 - `MemoryStore`
 - `EventStore`
 - `ContextBuilder`
 - `Embedder`
+- `PersonalProfileFact`
+- `PersonalProfileSnapshot`
 
 Indexers:
 
@@ -252,27 +255,41 @@ Rules:
 - Domain indexers live in domain `data/`.
 - Domain indexers are contributed through `DomainPack.memoryBootstrapBuilder`;
   the app bootstrap only loops active packs.
-- Every domain also declares `DomainPack.memorySourcePrefixes`. Interactive
-  Chat unions only active packs' prefixes and applies that hard allow-list to
-  both memory and recent-event retrieval; rows from disabled domains remain
-  local but cannot enter the AI context.
+- Every domain also declares `DomainPack.memorySourcePrefixes`. App composition
+  turns active packs into one `MemoryAccessPolicy`; automatic Chat assembly,
+  `build_context`, `query_memory`, proposal target lookup, and proposal apply
+  all reuse it. Rows from disabled domains remain local but cannot be recalled
+  or mutated by AI through a different path.
 - Memory embeddings are derived local data and can be rebuilt.
 - `build_context` is the preferred LLM retrieval tool for contextual answers; `query_memory` remains a flat fallback.
-- App-level retrieval emits untrusted `ContextBlock(kind=memory)` records.
-  Rust validates, hashes, budgets, snapshots, and renders them; memory text is
-  evidence and never instruction authority.
+- Memory records carry an explicit retrieval role (`decision`, `episode`,
+  `pattern`, `guidance`, or `legacy`) plus authority, provenance, temporal
+  validity, and supersede lineage. `ContextBuilder` keeps these roles in
+  separate bounded slots instead of treating every episodic row as a Decision.
+- Host-owned `personal_profile_facts` stores structured goals, preferences,
+  constraints, and rules without embeddings. The Settings UI may manage all
+  local facts; `PersonalProfileSnapshot` injects only temporally current global
+  facts and facts scoped to active domains. Profile is encrypted-backup-only
+  and does not enter Sync v3.
+- App-level retrieval emits profile facts as untrusted
+  `ContextBlock(kind=profile)` records and other recalled data as untrusted
+  memory blocks. Rust validates evidence intervals, filters expired and
+  superseded blocks, hashes, budgets, snapshots, and renders them. Even
+  `user_confirmed` evidence never receives instruction authority.
 - Long-chat transcript compaction is separate from Memory Runtime. The chat
   feature stores a source-fingerprinted structured checkpoint locally and
   emits it as untrusted `ContextBlock(kind=compaction_summary)`. It never
   syncs or becomes durable user memory; editing/deleting summarized source
   turns invalidates it.
-- Models stage durable memory changes through `propose_memory`; they never
-  write `memories` directly. Local-only `memory_candidates` become Memory only
-  after explicit user approval through the proposal seam.
+- Models stage durable memory or Profile changes through `propose_memory`; they
+  never write `memories` or `personal_profile_facts` directly. Local-only
+  `memory_candidates` use a generic `memory | profile_fact` target and become
+  formal records only after explicit user approval through the proposal seam.
 - Candidate apply supports create, supersede, forget, reject, retry, and undo.
-  Owner and target-memory isolation are revalidated at apply time. Confirmed
-  AI memory uses provenance `user_confirmed_ai`; terminal candidates are
-  pruned per owner after 90 days.
+  Owner, active-domain access, target identity, and destination conflicts are
+  revalidated at apply time. Confirmed AI records carry
+  `authority=user_confirmed` and provenance `user_confirmed_ai`; terminal
+  candidates are pruned per owner after 90 days.
 
 ## Human Interaction Contract
 

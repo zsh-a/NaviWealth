@@ -64,6 +64,9 @@ class ListDueReviewsTool implements DeviceTool {
                 'selected': d.selectedLabel,
                 'status': d.status.wire,
                 'review_date': d.reviewDate?.toUtc().toIso8601String(),
+                'revisit_conditions': d.revisitConditions
+                    .map((condition) => condition.toJson())
+                    .toList(growable: false),
                 'days_overdue': d.daysOverdue(asOf),
                 'age_days': now.difference(d.decidedAt.toUtc()).inDays,
               },

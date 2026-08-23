@@ -10,10 +10,13 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 
+import '../../contracts/context_evidence.dart';
+
 enum AgentRuntimeContextBlockKind {
   runtimeInstructions('runtime_instructions'),
   agentInstructions('agent_instructions'),
   commandInstructions('command_instructions'),
+  profile('profile'),
   memory('memory'),
   compactionSummary('compaction_summary'),
   message('message'),
@@ -26,6 +29,31 @@ enum AgentRuntimeContextBlockKind {
   final String wire;
 }
 
+class AgentRuntimeContextEvidence {
+  const AgentRuntimeContextEvidence({
+    required this.authority,
+    required this.provenance,
+    this.validFrom,
+    this.validUntil,
+    this.supersedes,
+  });
+
+  final EvidenceAuthority authority;
+  final EvidenceProvenance provenance;
+  final DateTime? validFrom;
+  final DateTime? validUntil;
+  final String? supersedes;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'authority': authority.wire,
+    'provenance': provenance.toJson(),
+    if (validFrom != null) 'valid_from': validFrom!.toUtc().toIso8601String(),
+    if (validUntil != null)
+      'valid_until': validUntil!.toUtc().toIso8601String(),
+    if (supersedes != null) 'supersedes': supersedes,
+  };
+}
+
 class AgentRuntimeContextBlock {
   AgentRuntimeContextBlock({
     required this.id,
@@ -34,6 +62,7 @@ class AgentRuntimeContextBlock {
     required this.content,
     this.priority = 0,
     this.metadata = const <String, Object?>{},
+    this.evidence,
   }) : assert(id != ''),
        assert(source != '');
 
@@ -43,6 +72,7 @@ class AgentRuntimeContextBlock {
   final Object? content;
   final int priority;
   final Map<String, Object?> metadata;
+  final AgentRuntimeContextEvidence? evidence;
 
   Map<String, Object?> toJson() {
     final encoded = jsonEncode(content);
@@ -57,6 +87,7 @@ class AgentRuntimeContextBlock {
       'token_estimate': 0,
       'content_hash': 'sha256:${sha256.convert(utf8.encode(encoded))}',
       'content': content,
+      if (evidence != null) 'evidence': evidence!.toJson(),
       'metadata': metadata,
     };
   }

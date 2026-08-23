@@ -16,6 +16,7 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
+import '../../../core/ai/contracts/context_evidence.dart';
 import '../../../core/ai/contracts/event_record.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';

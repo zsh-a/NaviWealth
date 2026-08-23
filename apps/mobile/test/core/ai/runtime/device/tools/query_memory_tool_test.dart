@@ -5,6 +5,7 @@ import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
+import 'package:naviwealth/core/ai/local/memory/memory_access_policy.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
@@ -37,7 +38,7 @@ MemoryRecord _mem({
   String scope = 'options_trading',
   String title = '',
   String summary = '',
-  String? source,
+  String? source = 'note',
   Set<String> entities = const {},
   double importance = 0.6,
 }) => MemoryRecord(
@@ -59,6 +60,12 @@ MemoryRecord _mem({
 ProviderContainer _container(MemoryRuntime runtime) => ProviderContainer(
   overrides: [
     memoryRuntimeProvider.overrideWith((ref) async => runtime),
+    memoryAccessPolicyProvider.overrideWith(
+      (ref) => MemoryAccessPolicy.allowPrefixes(const <String>[
+        'options_trade_journal',
+        'note',
+      ]),
+    ),
     currentUserIdProvider.overrideWithValue(() async => _kOwner),
   ],
 );

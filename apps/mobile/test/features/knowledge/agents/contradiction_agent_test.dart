@@ -113,8 +113,10 @@ class _FakeRuntime implements MemoryRuntime {
   Future<List<MemoryHit>> recall({
     required String ownerUserId,
     String? queryText,
+    List<double>? queryVector,
     Set<String>? entityFilter,
     Set<MemoryKind>? kinds,
+    Set<MemoryRole>? roles,
     String? scope,
     String? source,
     Set<String>? sourcePrefixes,

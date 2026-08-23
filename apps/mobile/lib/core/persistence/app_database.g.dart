@@ -39319,6 +39319,18 @@ class $KnowledgeDecisionsTable extends KnowledgeDecisions
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _revisitConditionsJsonMeta =
+      const VerificationMeta('revisitConditionsJson');
+  @override
+  late final GeneratedColumn<String> revisitConditionsJson =
+      GeneratedColumn<String>(
+        'revisit_conditions_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('[]'),
+      );
   static const VerificationMeta _actualOutcomeMdMeta = const VerificationMeta(
     'actualOutcomeMd',
   );
@@ -39400,6 +39412,7 @@ class $KnowledgeDecisionsTable extends KnowledgeDecisions
     assumptionIdsJson,
     expectedOutcome,
     reviewDate,
+    revisitConditionsJson,
     actualOutcomeMd,
     status,
     supersededByDecisionId,
@@ -39528,6 +39541,15 @@ class $KnowledgeDecisionsTable extends KnowledgeDecisions
         reviewDate.isAcceptableOrUnknown(data['review_date']!, _reviewDateMeta),
       );
     }
+    if (data.containsKey('revisit_conditions_json')) {
+      context.handle(
+        _revisitConditionsJsonMeta,
+        revisitConditionsJson.isAcceptableOrUnknown(
+          data['revisit_conditions_json']!,
+          _revisitConditionsJsonMeta,
+        ),
+      );
+    }
     if (data.containsKey('actual_outcome_md')) {
       context.handle(
         _actualOutcomeMdMeta,
@@ -39645,6 +39667,10 @@ class $KnowledgeDecisionsTable extends KnowledgeDecisions
         DriftSqlType.dateTime,
         data['${effectivePrefix}review_date'],
       ),
+      revisitConditionsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}revisit_conditions_json'],
+      )!,
       actualOutcomeMd: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}actual_outcome_md'],
@@ -39712,6 +39738,7 @@ class KnowledgeDecisionRow extends DataClass
   final String assumptionIdsJson;
   final String? expectedOutcome;
   final DateTime? reviewDate;
+  final String revisitConditionsJson;
   final String? actualOutcomeMd;
   final String status;
   final String? supersededByDecisionId;
@@ -39740,6 +39767,7 @@ class KnowledgeDecisionRow extends DataClass
     required this.assumptionIdsJson,
     this.expectedOutcome,
     this.reviewDate,
+    required this.revisitConditionsJson,
     this.actualOutcomeMd,
     required this.status,
     this.supersededByDecisionId,
@@ -39774,6 +39802,7 @@ class KnowledgeDecisionRow extends DataClass
     if (!nullToAbsent || reviewDate != null) {
       map['review_date'] = Variable<DateTime>(reviewDate);
     }
+    map['revisit_conditions_json'] = Variable<String>(revisitConditionsJson);
     if (!nullToAbsent || actualOutcomeMd != null) {
       map['actual_outcome_md'] = Variable<String>(actualOutcomeMd);
     }
@@ -39815,6 +39844,7 @@ class KnowledgeDecisionRow extends DataClass
       reviewDate: reviewDate == null && nullToAbsent
           ? const Value.absent()
           : Value(reviewDate),
+      revisitConditionsJson: Value(revisitConditionsJson),
       actualOutcomeMd: actualOutcomeMd == null && nullToAbsent
           ? const Value.absent()
           : Value(actualOutcomeMd),
@@ -39852,6 +39882,9 @@ class KnowledgeDecisionRow extends DataClass
       assumptionIdsJson: serializer.fromJson<String>(json['assumptionIdsJson']),
       expectedOutcome: serializer.fromJson<String?>(json['expectedOutcome']),
       reviewDate: serializer.fromJson<DateTime?>(json['reviewDate']),
+      revisitConditionsJson: serializer.fromJson<String>(
+        json['revisitConditionsJson'],
+      ),
       actualOutcomeMd: serializer.fromJson<String?>(json['actualOutcomeMd']),
       status: serializer.fromJson<String>(json['status']),
       supersededByDecisionId: serializer.fromJson<String?>(
@@ -39882,6 +39915,7 @@ class KnowledgeDecisionRow extends DataClass
       'assumptionIdsJson': serializer.toJson<String>(assumptionIdsJson),
       'expectedOutcome': serializer.toJson<String?>(expectedOutcome),
       'reviewDate': serializer.toJson<DateTime?>(reviewDate),
+      'revisitConditionsJson': serializer.toJson<String>(revisitConditionsJson),
       'actualOutcomeMd': serializer.toJson<String?>(actualOutcomeMd),
       'status': serializer.toJson<String>(status),
       'supersededByDecisionId': serializer.toJson<String?>(
@@ -39908,6 +39942,7 @@ class KnowledgeDecisionRow extends DataClass
     String? assumptionIdsJson,
     Value<String?> expectedOutcome = const Value.absent(),
     Value<DateTime?> reviewDate = const Value.absent(),
+    String? revisitConditionsJson,
     Value<String?> actualOutcomeMd = const Value.absent(),
     String? status,
     Value<String?> supersededByDecisionId = const Value.absent(),
@@ -39931,6 +39966,7 @@ class KnowledgeDecisionRow extends DataClass
         ? expectedOutcome.value
         : this.expectedOutcome,
     reviewDate: reviewDate.present ? reviewDate.value : this.reviewDate,
+    revisitConditionsJson: revisitConditionsJson ?? this.revisitConditionsJson,
     actualOutcomeMd: actualOutcomeMd.present
         ? actualOutcomeMd.value
         : this.actualOutcomeMd,
@@ -39978,6 +40014,9 @@ class KnowledgeDecisionRow extends DataClass
       reviewDate: data.reviewDate.present
           ? data.reviewDate.value
           : this.reviewDate,
+      revisitConditionsJson: data.revisitConditionsJson.present
+          ? data.revisitConditionsJson.value
+          : this.revisitConditionsJson,
       actualOutcomeMd: data.actualOutcomeMd.present
           ? data.actualOutcomeMd.value
           : this.actualOutcomeMd,
@@ -40012,6 +40051,7 @@ class KnowledgeDecisionRow extends DataClass
           ..write('assumptionIdsJson: $assumptionIdsJson, ')
           ..write('expectedOutcome: $expectedOutcome, ')
           ..write('reviewDate: $reviewDate, ')
+          ..write('revisitConditionsJson: $revisitConditionsJson, ')
           ..write('actualOutcomeMd: $actualOutcomeMd, ')
           ..write('status: $status, ')
           ..write('supersededByDecisionId: $supersededByDecisionId, ')
@@ -40023,7 +40063,7 @@ class KnowledgeDecisionRow extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     ownerUserId,
     updatedAt,
     updatedByDevice,
@@ -40038,13 +40078,14 @@ class KnowledgeDecisionRow extends DataClass
     assumptionIdsJson,
     expectedOutcome,
     reviewDate,
+    revisitConditionsJson,
     actualOutcomeMd,
     status,
     supersededByDecisionId,
     contextSnapshotJson,
     decidedAt,
     mergedIntoId,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -40063,6 +40104,7 @@ class KnowledgeDecisionRow extends DataClass
           other.assumptionIdsJson == this.assumptionIdsJson &&
           other.expectedOutcome == this.expectedOutcome &&
           other.reviewDate == this.reviewDate &&
+          other.revisitConditionsJson == this.revisitConditionsJson &&
           other.actualOutcomeMd == this.actualOutcomeMd &&
           other.status == this.status &&
           other.supersededByDecisionId == this.supersededByDecisionId &&
@@ -40087,6 +40129,7 @@ class KnowledgeDecisionsCompanion
   final Value<String> assumptionIdsJson;
   final Value<String?> expectedOutcome;
   final Value<DateTime?> reviewDate;
+  final Value<String> revisitConditionsJson;
   final Value<String?> actualOutcomeMd;
   final Value<String> status;
   final Value<String?> supersededByDecisionId;
@@ -40109,6 +40152,7 @@ class KnowledgeDecisionsCompanion
     this.assumptionIdsJson = const Value.absent(),
     this.expectedOutcome = const Value.absent(),
     this.reviewDate = const Value.absent(),
+    this.revisitConditionsJson = const Value.absent(),
     this.actualOutcomeMd = const Value.absent(),
     this.status = const Value.absent(),
     this.supersededByDecisionId = const Value.absent(),
@@ -40132,6 +40176,7 @@ class KnowledgeDecisionsCompanion
     this.assumptionIdsJson = const Value.absent(),
     this.expectedOutcome = const Value.absent(),
     this.reviewDate = const Value.absent(),
+    this.revisitConditionsJson = const Value.absent(),
     this.actualOutcomeMd = const Value.absent(),
     this.status = const Value.absent(),
     this.supersededByDecisionId = const Value.absent(),
@@ -40161,6 +40206,7 @@ class KnowledgeDecisionsCompanion
     Expression<String>? assumptionIdsJson,
     Expression<String>? expectedOutcome,
     Expression<DateTime>? reviewDate,
+    Expression<String>? revisitConditionsJson,
     Expression<String>? actualOutcomeMd,
     Expression<String>? status,
     Expression<String>? supersededByDecisionId,
@@ -40184,6 +40230,8 @@ class KnowledgeDecisionsCompanion
       if (assumptionIdsJson != null) 'assumption_ids_json': assumptionIdsJson,
       if (expectedOutcome != null) 'expected_outcome': expectedOutcome,
       if (reviewDate != null) 'review_date': reviewDate,
+      if (revisitConditionsJson != null)
+        'revisit_conditions_json': revisitConditionsJson,
       if (actualOutcomeMd != null) 'actual_outcome_md': actualOutcomeMd,
       if (status != null) 'status': status,
       if (supersededByDecisionId != null)
@@ -40211,6 +40259,7 @@ class KnowledgeDecisionsCompanion
     Value<String>? assumptionIdsJson,
     Value<String?>? expectedOutcome,
     Value<DateTime?>? reviewDate,
+    Value<String>? revisitConditionsJson,
     Value<String?>? actualOutcomeMd,
     Value<String>? status,
     Value<String?>? supersededByDecisionId,
@@ -40234,6 +40283,8 @@ class KnowledgeDecisionsCompanion
       assumptionIdsJson: assumptionIdsJson ?? this.assumptionIdsJson,
       expectedOutcome: expectedOutcome ?? this.expectedOutcome,
       reviewDate: reviewDate ?? this.reviewDate,
+      revisitConditionsJson:
+          revisitConditionsJson ?? this.revisitConditionsJson,
       actualOutcomeMd: actualOutcomeMd ?? this.actualOutcomeMd,
       status: status ?? this.status,
       supersededByDecisionId:
@@ -40292,6 +40343,11 @@ class KnowledgeDecisionsCompanion
     if (reviewDate.present) {
       map['review_date'] = Variable<DateTime>(reviewDate.value);
     }
+    if (revisitConditionsJson.present) {
+      map['revisit_conditions_json'] = Variable<String>(
+        revisitConditionsJson.value,
+      );
+    }
     if (actualOutcomeMd.present) {
       map['actual_outcome_md'] = Variable<String>(actualOutcomeMd.value);
     }
@@ -40337,6 +40393,7 @@ class KnowledgeDecisionsCompanion
           ..write('assumptionIdsJson: $assumptionIdsJson, ')
           ..write('expectedOutcome: $expectedOutcome, ')
           ..write('reviewDate: $reviewDate, ')
+          ..write('revisitConditionsJson: $revisitConditionsJson, ')
           ..write('actualOutcomeMd: $actualOutcomeMd, ')
           ..write('status: $status, ')
           ..write('supersededByDecisionId: $supersededByDecisionId, ')
@@ -65818,6 +65875,7 @@ typedef $$KnowledgeDecisionsTableCreateCompanionBuilder =
       Value<String> assumptionIdsJson,
       Value<String?> expectedOutcome,
       Value<DateTime?> reviewDate,
+      Value<String> revisitConditionsJson,
       Value<String?> actualOutcomeMd,
       Value<String> status,
       Value<String?> supersededByDecisionId,
@@ -65842,6 +65900,7 @@ typedef $$KnowledgeDecisionsTableUpdateCompanionBuilder =
       Value<String> assumptionIdsJson,
       Value<String?> expectedOutcome,
       Value<DateTime?> reviewDate,
+      Value<String> revisitConditionsJson,
       Value<String?> actualOutcomeMd,
       Value<String> status,
       Value<String?> supersededByDecisionId,
@@ -65928,6 +65987,11 @@ class $$KnowledgeDecisionsTableFilterComposer
 
   ColumnFilters<DateTime> get reviewDate => $composableBuilder(
     column: $table.reviewDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get revisitConditionsJson => $composableBuilder(
+    column: $table.revisitConditionsJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -66041,6 +66105,11 @@ class $$KnowledgeDecisionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get revisitConditionsJson => $composableBuilder(
+    column: $table.revisitConditionsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get actualOutcomeMd => $composableBuilder(
     column: $table.actualOutcomeMd,
     builder: (column) => ColumnOrderings(column),
@@ -66141,6 +66210,11 @@ class $$KnowledgeDecisionsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get revisitConditionsJson => $composableBuilder(
+    column: $table.revisitConditionsJson,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get actualOutcomeMd => $composableBuilder(
     column: $table.actualOutcomeMd,
     builder: (column) => column,
@@ -66222,6 +66296,7 @@ class $$KnowledgeDecisionsTableTableManager
                 Value<String> assumptionIdsJson = const Value.absent(),
                 Value<String?> expectedOutcome = const Value.absent(),
                 Value<DateTime?> reviewDate = const Value.absent(),
+                Value<String> revisitConditionsJson = const Value.absent(),
                 Value<String?> actualOutcomeMd = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<String?> supersededByDecisionId = const Value.absent(),
@@ -66244,6 +66319,7 @@ class $$KnowledgeDecisionsTableTableManager
                 assumptionIdsJson: assumptionIdsJson,
                 expectedOutcome: expectedOutcome,
                 reviewDate: reviewDate,
+                revisitConditionsJson: revisitConditionsJson,
                 actualOutcomeMd: actualOutcomeMd,
                 status: status,
                 supersededByDecisionId: supersededByDecisionId,
@@ -66268,6 +66344,7 @@ class $$KnowledgeDecisionsTableTableManager
                 Value<String> assumptionIdsJson = const Value.absent(),
                 Value<String?> expectedOutcome = const Value.absent(),
                 Value<DateTime?> reviewDate = const Value.absent(),
+                Value<String> revisitConditionsJson = const Value.absent(),
                 Value<String?> actualOutcomeMd = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<String?> supersededByDecisionId = const Value.absent(),
@@ -66290,6 +66367,7 @@ class $$KnowledgeDecisionsTableTableManager
                 assumptionIdsJson: assumptionIdsJson,
                 expectedOutcome: expectedOutcome,
                 reviewDate: reviewDate,
+                revisitConditionsJson: revisitConditionsJson,
                 actualOutcomeMd: actualOutcomeMd,
                 status: status,
                 supersededByDecisionId: supersededByDecisionId,

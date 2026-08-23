@@ -98,6 +98,9 @@ void main() {
       INSERT INTO memories (
         id,
         kind,
+        role,
+        authority,
+        provenance_json,
         scope,
         owner_user_id,
         title,
@@ -106,11 +109,14 @@ void main() {
         entities_json,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ''',
       [
         'mem-1',
         'semantic',
+        'legacy',
+        'legacy_unknown',
+        '{}',
         '*',
         'user-1',
         'Preference',

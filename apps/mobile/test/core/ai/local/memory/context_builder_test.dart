@@ -23,9 +23,11 @@ MemoryRecord _mem({
   Set<String> entities = const {},
   double importance = 0.6,
   double confidence = 0.85,
+  MemoryRole role = MemoryRole.legacy,
 }) => MemoryRecord(
   id: id,
   kind: kind,
+  role: role,
   ownerUserId: _kOwner,
   scope: scope,
   source: source,
@@ -72,6 +74,7 @@ void main() {
         _mem(
           id: 'decision',
           kind: MemoryKind.episodic,
+          role: MemoryRole.decision,
           summary: 'NVDA put closed',
         ),
       );
@@ -98,6 +101,7 @@ void main() {
       expect(pack.userPreferences.map((m) => m.id), ['pref']);
       expect(pack.applicableRules.map((m) => m.id), ['rule']);
       expect(pack.relatedDecisions.map((m) => m.id), ['decision']);
+      expect(pack.relatedEpisodes, isEmpty);
       expect(pack.recentEvents.map((e) => e.id), ['event-1']);
     });
 
@@ -266,7 +270,7 @@ void main() {
       expect(pack.applicableRules, hasLength(3));
     });
 
-    test('ContextPackMemory.toJson exposes all five slots', () async {
+    test('ContextPackMemory.toJson exposes all role slots', () async {
       final b = _builder();
       await b.runtime.remember(
         _mem(id: 'pref', kind: MemoryKind.semantic, scope: '*'),
@@ -282,6 +286,9 @@ void main() {
           'user_preferences',
           'recent_events',
           'related_decisions',
+          'related_episodes',
+          'derived_patterns',
+          'derived_guidance',
           'applicable_rules',
           'related_events',
         ]),

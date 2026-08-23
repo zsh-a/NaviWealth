@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 70', () {
-      expect(db.schemaVersion, 70);
+    test('is 72', () {
+      expect(db.schemaVersion, 72);
     });
   });
 
@@ -62,10 +62,11 @@ void main() {
           'id',
           'proposal_id',
           'owner_user_id',
+          'target_type',
           'operation',
           'status',
-          'target_memory_id',
-          'applied_memory_id',
+          'target_record_id',
+          'applied_record_id',
           'payload_json',
           'created_at',
           'updated_at',
@@ -73,6 +74,38 @@ void main() {
           'error_message',
         ]),
       );
+      expect(columns, isNot(contains('hlc')));
+    });
+  });
+
+  group('Personal profile', () {
+    test('stores authoritative temporal facts locally', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(personal_profile_facts)')
+          .get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll(<String>[
+          'id',
+          'owner_user_id',
+          'kind',
+          'fact_key',
+          'value_json',
+          'summary',
+          'domain_scope',
+          'authority',
+          'provenance_json',
+          'confirmed_at',
+          'valid_from',
+          'valid_until',
+          'supersedes_fact_id',
+        ]),
+      );
+      final confirmedAt = result.singleWhere(
+        (row) => row.read<String>('name') == 'confirmed_at',
+      );
+      expect(confirmedAt.read<int>('notnull'), 1);
       expect(columns, isNot(contains('hlc')));
     });
   });
@@ -337,6 +370,16 @@ void main() {
           'promoted_to_id',
           'promoted_at',
         ]),
+      );
+    });
+
+    test('knowledge decisions persist review conditions', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(knowledge_decisions)')
+          .get();
+      expect(
+        result.map((row) => row.read<String>('name')).toSet(),
+        contains('revisit_conditions_json'),
       );
     });
 

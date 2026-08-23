@@ -25,6 +25,7 @@ import '../../features/settings/ui/ai/ai_models_page.dart';
 import '../../features/settings/ui/ai/ai_privacy_page.dart';
 import '../../features/settings/ui/ai/ai_settings_hub_page.dart';
 import '../../features/settings/ui/ai/ai_transparency_page.dart';
+import '../../features/settings/ui/ai/personal_memory_page.dart';
 import '../../features/settings/ui/backup/backup_page.dart';
 import '../../features/settings/ui/data_management/data_management_page.dart';
 import '../../features/settings/ui/domains_settings_page.dart';
@@ -247,6 +248,11 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
         path: 'ai-models',
         name: SettingsRouteNames.aiModels,
         builder: (context, state) => _backSafe(const AiModelsPage()),
+      ),
+      GoRoute(
+        path: 'personal-memory',
+        name: SettingsRouteNames.personalMemory,
+        builder: (context, state) => _backSafe(const PersonalMemoryPage()),
       ),
       GoRoute(
         path: 'agents',

@@ -7,6 +7,21 @@ library;
 
 enum MemoryCandidateOperation { create, supersede, forget }
 
+enum MemoryCandidateTargetType { memory, profileFact }
+
+extension MemoryCandidateTargetTypeWire on MemoryCandidateTargetType {
+  String get wire => switch (this) {
+    MemoryCandidateTargetType.memory => 'memory',
+    MemoryCandidateTargetType.profileFact => 'profile_fact',
+  };
+
+  static MemoryCandidateTargetType? tryParse(String? wire) => switch (wire) {
+    'memory' => MemoryCandidateTargetType.memory,
+    'profile_fact' => MemoryCandidateTargetType.profileFact,
+    _ => null,
+  };
+}
+
 extension MemoryCandidateOperationWire on MemoryCandidateOperation {
   String get wire => switch (this) {
     MemoryCandidateOperation.create => 'create',
@@ -58,12 +73,13 @@ final class MemoryChangeCandidate {
     required this.proposalId,
     required this.ownerUserId,
     required this.operation,
+    required this.targetType,
     required this.status,
     required this.payload,
     required this.createdAt,
     required this.updatedAt,
-    this.targetMemoryId,
-    this.appliedMemoryId,
+    this.targetRecordId,
+    this.appliedRecordId,
     this.decidedAt,
     this.errorMessage,
   });
@@ -72,9 +88,10 @@ final class MemoryChangeCandidate {
   final String proposalId;
   final String ownerUserId;
   final MemoryCandidateOperation operation;
+  final MemoryCandidateTargetType targetType;
   final MemoryCandidateStatus status;
-  final String? targetMemoryId;
-  final String? appliedMemoryId;
+  final String? targetRecordId;
+  final String? appliedRecordId;
   final Map<String, Object?> payload;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -83,7 +100,7 @@ final class MemoryChangeCandidate {
 
   MemoryChangeCandidate copyWith({
     MemoryCandidateStatus? status,
-    String? appliedMemoryId,
+    String? appliedRecordId,
     DateTime? updatedAt,
     DateTime? decidedAt,
     String? errorMessage,
@@ -94,9 +111,10 @@ final class MemoryChangeCandidate {
       proposalId: proposalId,
       ownerUserId: ownerUserId,
       operation: operation,
+      targetType: targetType,
       status: status ?? this.status,
-      targetMemoryId: targetMemoryId,
-      appliedMemoryId: appliedMemoryId ?? this.appliedMemoryId,
+      targetRecordId: targetRecordId,
+      appliedRecordId: appliedRecordId ?? this.appliedRecordId,
       payload: payload,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

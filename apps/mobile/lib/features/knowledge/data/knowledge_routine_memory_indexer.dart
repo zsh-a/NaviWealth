@@ -18,6 +18,8 @@ Future<void> _reindexRoutines(
       MemoryRecord(
         id: id,
         kind: MemoryKind.episodic,
+        role: MemoryRole.guidance,
+        authority: EvidenceAuthority.sourceFact,
         ownerUserId: ownerUserId,
         scope: r.scope,
         source: kKnowledgeRoutineMemorySource,

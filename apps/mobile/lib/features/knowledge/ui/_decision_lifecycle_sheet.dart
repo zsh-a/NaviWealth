@@ -148,11 +148,13 @@ class _DecisionLifecycleSheetState
         assumptionIds: d.assumptionIds,
         expectedOutcome: d.expectedOutcome,
         reviewDate: d.reviewDate,
+        revisitConditions: d.revisitConditions,
         actualOutcomeMd: outcome.isEmpty ? null : outcome,
         status: _status,
         supersededByDecisionId: supersededBy,
         contextSnapshot: d.contextSnapshot,
         decidedAt: d.decidedAt,
+        mergedIntoId: d.mergedIntoId,
         sync: SyncMeta(
           ownerUserId: stamp.ownerUserId,
           updatedAt: stamp.now,

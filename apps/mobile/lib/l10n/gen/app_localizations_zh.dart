@@ -7215,6 +7215,83 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAiHubTrustSection => '隐私与透明度';
 
   @override
+  String get personalMemoryTitle => '个人记忆';
+
+  @override
+  String get personalMemorySubtitle => '管理 AI 使用的目标、偏好、约束与规则';
+
+  @override
+  String get personalMemorySection => '已确认个人资料';
+
+  @override
+  String get personalMemoryEmpty => '暂无已确认的个人资料事实。';
+
+  @override
+  String get personalMemoryAdd => '添加个人资料事实';
+
+  @override
+  String get personalMemoryCreateTitle => '添加个人资料事实';
+
+  @override
+  String get personalMemoryEditTitle => '编辑个人资料事实';
+
+  @override
+  String get personalMemoryKind => '类型';
+
+  @override
+  String get personalMemoryKindGoal => '目标';
+
+  @override
+  String get personalMemoryKindPreference => '偏好';
+
+  @override
+  String get personalMemoryKindConstraint => '约束';
+
+  @override
+  String get personalMemoryKindRule => '规则';
+
+  @override
+  String get personalMemoryKey => '键';
+
+  @override
+  String get personalMemoryKeyHint => '例如：cash_buffer_months';
+
+  @override
+  String get personalMemoryValue => '值';
+
+  @override
+  String get personalMemoryValueHint => '文本或 JSON 值';
+
+  @override
+  String get personalMemorySummary => '摘要';
+
+  @override
+  String get personalMemorySummaryHint => '一条可供 Agent 作为证据使用的清晰事实';
+
+  @override
+  String get personalMemoryDomain => '领域（可选）';
+
+  @override
+  String get personalMemoryDomainHint => 'finance、health、knowledge 或 execution';
+
+  @override
+  String get personalMemoryRequired => '键和摘要为必填项';
+
+  @override
+  String get personalMemoryDeleteTitle => '忘记这条个人资料事实？';
+
+  @override
+  String get personalMemoryDeleteBody => '它将不再进入后续 AI 上下文。此页面无法撤销该操作。';
+
+  @override
+  String get personalMemoryInactiveDomain => '已保留在本地；该领域关闭时不会进入 AI 上下文';
+
+  @override
+  String personalMemoryLoadFailed(String error) {
+    return '无法加载个人记忆：$error';
+  }
+
+  @override
   String get settingsAdvancedHubTitle => '高级诊断';
 
   @override
@@ -13187,6 +13264,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeDecisionExpectedOutcomeLabel => '预期结果（可选）';
+
+  @override
+  String get knowledgeDecisionRevisitConditionsLabel => '满足这些条件时复盘（可选）';
+
+  @override
+  String get knowledgeDecisionRevisitConditionsHint => '每行一个条件，例如：现金缓冲低于 12 个月';
+
+  @override
+  String get knowledgeDecisionRevisitConditionsTitle => '复盘条件';
 
   @override
   String get knowledgeAssumptionWriterSubtitle2 => '可证伪的信念，设置置信度以便后续复盘';

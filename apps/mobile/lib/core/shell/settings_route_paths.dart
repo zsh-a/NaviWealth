@@ -22,6 +22,7 @@ abstract final class SettingsRoutes {
   // Bring-your-own LLM key for the on-device AI runtime.
   static const aiLlm = '/settings/ai-llm';
   static const aiModels = '/settings/ai-models';
+  static const personalMemory = '/settings/personal-memory';
   static const agents = '/settings/agents';
   // Investment preferences — risk appetite SSOT + advanced
   // concentration thresholds.
@@ -56,6 +57,7 @@ abstract final class SettingsRouteNames {
   static const aiPrivacy = 'ai-privacy';
   static const aiLlm = 'ai-llm';
   static const aiModels = 'ai-models';
+  static const personalMemory = 'personal-memory';
   static const agents = 'agents';
   static const riskThresholds = 'risk-thresholds';
   static const stressTest = 'stress-test';

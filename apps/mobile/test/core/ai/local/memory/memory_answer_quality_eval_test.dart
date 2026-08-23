@@ -214,6 +214,9 @@ void main() {
       userPreferences: [],
       recentEvents: [],
       relatedDecisions: [],
+      relatedEpisodes: [],
+      derivedPatterns: [],
+      derivedGuidance: [],
       applicableRules: [],
       relatedEvents: [],
     );

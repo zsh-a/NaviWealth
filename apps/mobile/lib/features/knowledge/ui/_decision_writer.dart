@@ -71,6 +71,11 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
   late final _expectedCtrl = TextEditingController(
     text: widget.initial?.expectedOutcome ?? '',
   );
+  late final _revisitConditionsCtrl = TextEditingController(
+    text: widget.initial?.revisitConditions
+        .map((condition) => condition.statement)
+        .join('\n'),
+  );
   late final List<_OptionDraft> _options =
       widget.initial?.options.isNotEmpty == true
       ? <_OptionDraft>[
@@ -104,6 +109,7 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
       _questionCtrl,
       _rationaleCtrl,
       _expectedCtrl,
+      _revisitConditionsCtrl,
       for (final option in _options) ...[
         option.labelCtrl,
         option.rationaleCtrl,
@@ -126,6 +132,7 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
     _questionCtrl.dispose();
     _rationaleCtrl.dispose();
     _expectedCtrl.dispose();
+    _revisitConditionsCtrl.dispose();
     for (final o in _options) {
       o.dispose();
     }
@@ -189,6 +196,12 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
             ? null
             : _expectedCtrl.text.trim(),
         reviewDate: _reviewDate?.toUtc(),
+        revisitConditions: _revisitConditionsCtrl.text
+            .split('\n')
+            .map((statement) => statement.trim())
+            .where((statement) => statement.isNotEmpty)
+            .map((statement) => DecisionRevisitCondition(statement: statement))
+            .toList(growable: false),
         actualOutcomeMd: initial?.actualOutcomeMd,
         status: initial?.status ?? DecisionStatus.active,
         supersededByDecisionId: initial?.supersededByDecisionId,
@@ -362,6 +375,16 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
                 hint: l10n.knowledgeDecisionExpectedOutcomeHint,
                 maxLines: 3,
                 minLines: 1,
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              FTextField(
+                control: FTextFieldControl.managed(
+                  controller: _revisitConditionsCtrl,
+                ),
+                label: Text(l10n.knowledgeDecisionRevisitConditionsLabel),
+                hint: l10n.knowledgeDecisionRevisitConditionsHint,
+                maxLines: 5,
+                minLines: 2,
               ),
               Row(
                 children: [

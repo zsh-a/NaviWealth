@@ -268,12 +268,16 @@ Future<void> _insertSharedHistory(
   );
   await db.customStatement(
     'INSERT INTO memories '
-    '(id, kind, scope, owner_user_id, title, summary, payload_json, '
-    'entities_json, importance, confidence, created_at, updated_at) '
-    'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    '(id, kind, role, authority, provenance_json, scope, owner_user_id, '
+    'title, summary, payload_json, entities_json, importance, confidence, '
+    'created_at, updated_at) '
+    'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     <Object?>[
       'memory-$suffix',
       'semantic',
+      'legacy',
+      'legacy_unknown',
+      '{}',
       '*',
       owner,
       'Memory',
@@ -288,13 +292,14 @@ Future<void> _insertSharedHistory(
   );
   await db.customStatement(
     'INSERT INTO memory_candidates ('
-    'id, proposal_id, owner_user_id, operation, status, payload_json, '
+    'id, proposal_id, owner_user_id, target_type, operation, status, payload_json, '
     'created_at, updated_at'
-    ') VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
     <Object?>[
       'candidate-$suffix',
       'proposal-$suffix',
       owner,
+      'memory',
       'create',
       'pending',
       '{}',

@@ -154,7 +154,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 71;
+  int get schemaVersion => 72;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -166,6 +166,7 @@ class AppDatabase extends _$AppDatabase {
       await _createChatTables(this);
       await _createConversationCheckpoints(this);
       await _createMemoryCandidates(this);
+      await _createPersonalProfile(this);
       await _createSecuritiesCatalogFts(this);
       await _createSecuritiesCatalogIndexes(this);
       await _createDomainEventLog(this);
@@ -1055,6 +1056,50 @@ class AppDatabase extends _$AppDatabase {
       // ride sync (row payloads cap at 64 KiB).
       if (from < 71) {
         await _createKnowledgeAttachments(this);
+      }
+      // v71 -> v72: Memory records gain explicit evidence authority,
+      // provenance, retrieval role, and supersede lineage.
+      if (from < 72) {
+        // Some development/test databases predate the local Memory Runtime
+        // table while carrying a later user_version. Materialize the current
+        // base table before adding columns or indexes.
+        await customStatement(createMemories);
+        await _addColumnIfMissing(
+          this,
+          table: 'knowledge_decisions',
+          column: 'revisit_conditions_json',
+          definition: "TEXT NOT NULL DEFAULT '[]'",
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'memories',
+          column: 'role',
+          definition: "TEXT NOT NULL DEFAULT 'legacy'",
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'memories',
+          column: 'authority',
+          definition: "TEXT NOT NULL DEFAULT 'legacy_unknown'",
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'memories',
+          column: 'provenance_json',
+          definition: "TEXT NOT NULL DEFAULT '{}'",
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'memories',
+          column: 'supersedes_id',
+          definition: 'TEXT',
+        );
+        await _createMemoryRuntime(this);
+        await _createPersonalProfile(this);
+        // Pending AI candidates are disposable staging state. Rebuild the
+        // table around the generic memory/profile target contract.
+        await customStatement('DROP TABLE IF EXISTS memory_candidates');
+        await _createMemoryCandidates(this);
       }
     },
     beforeOpen: (details) async {

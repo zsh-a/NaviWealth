@@ -103,6 +103,8 @@ class KnowledgeDecisions extends Table with SyncableTable {
       text().withDefault(const Constant('[]'))();
   TextColumn get expectedOutcome => text().nullable()();
   DateTimeColumn get reviewDate => dateTime().nullable()();
+  TextColumn get revisitConditionsJson =>
+      text().withDefault(const Constant('[]'))();
   TextColumn get actualOutcomeMd => text().nullable()();
   TextColumn get status => text().withDefault(const Constant('active'))();
   TextColumn get supersededByDecisionId => text().nullable()();

@@ -94,6 +94,13 @@ class MemoryRuntime {
       await memoryStore.writeMemoryWithoutVector(
         prior.copyWith(validUntil: now, updatedAt: now),
       );
+      await remember(
+        newRecord.copyWith(
+          supersedesId: prior.id,
+          validFrom: newRecord.validFrom ?? now,
+        ),
+      );
+      return;
     }
     await remember(newRecord);
   }
@@ -101,8 +108,10 @@ class MemoryRuntime {
   /// Hybrid-scored recall.
   ///
   /// - [queryText] supplied → semantic similarity contributes
+  /// - [queryVector] may be supplied by an orchestrator that reuses one
+  ///   embedding across several role-filtered recalls
   /// - [entityFilter] supplied → entity overlap contributes
-  /// - [kinds] / [scope] / [source] / [validAt] are hard filters
+  /// - [kinds] / [roles] / [scope] / [source] / [validAt] are hard filters
   /// - Result is sorted by hybrid score desc and cut to [topK]
   ///
   /// Touches `last_accessed_at` on the returned ids as a side effect
@@ -110,8 +119,10 @@ class MemoryRuntime {
   Future<List<MemoryHit>> recall({
     required String ownerUserId,
     String? queryText,
+    List<double>? queryVector,
     Set<String>? entityFilter,
     Set<MemoryKind>? kinds,
+    Set<MemoryRole>? roles,
     String? scope,
     String? source,
     Set<String>? sourcePrefixes,
@@ -122,9 +133,11 @@ class MemoryRuntime {
     if (topK <= 0) return const <MemoryHit>[];
     final now = _clock();
 
-    List<double>? queryVec;
+    List<double>? queryVec = queryVector;
     String? fingerprint;
-    if (queryText != null && queryText.trim().isNotEmpty) {
+    if (queryVec != null && queryVec.isNotEmpty) {
+      fingerprint = embedder.fingerprint;
+    } else if (queryText != null && queryText.trim().isNotEmpty) {
       queryVec = await embedder.embed(queryText.trim());
       fingerprint = embedder.fingerprint;
     }
@@ -132,6 +145,7 @@ class MemoryRuntime {
     final candidates = await memoryStore.queryMemories(
       ownerUserId: ownerUserId,
       kinds: kinds,
+      roles: roles,
       scope: scope,
       source: source,
       sourcePrefixes: sourcePrefixes,

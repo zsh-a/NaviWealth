@@ -36,13 +36,13 @@ void main() {
     );
     await db.customStatement(
       'INSERT INTO memory_candidates '
-      '(id, proposal_id, owner_user_id, operation, status, payload_json, '
+      '(id, proposal_id, owner_user_id, target_type, operation, status, payload_json, '
       'created_at, updated_at, decided_at) VALUES '
-      "('old-terminal', 'proposal-old', 'user-a', 'create', 'rejected', "
+      "('old-terminal', 'proposal-old', 'user-a', 'memory', 'create', 'rejected', "
       "'{}', ?, ?, ?), "
-      "('old-pending', 'proposal-pending', 'user-a', 'create', 'pending', "
+      "('old-pending', 'proposal-pending', 'user-a', 'memory', 'create', 'pending', "
       "'{}', ?, ?, NULL), "
-      "('other-owner', 'proposal-other', 'user-b', 'create', 'rejected', "
+      "('other-owner', 'proposal-other', 'user-b', 'memory', 'create', 'rejected', "
       "'{}', ?, ?, ?)",
       <Object?>[
         oldMillis,

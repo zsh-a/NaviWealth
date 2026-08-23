@@ -8,6 +8,7 @@
 /// it is collapsed here so a new agent declares only the parts that differ.
 library;
 
+import '../../../core/ai/contracts/context_evidence.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/format/formatters.dart';
 
@@ -36,6 +37,10 @@ import '../../../core/format/formatters.dart';
     record: MemoryRecord(
       id: memoryId,
       kind: kind,
+      role: kind == MemoryKind.episodic
+          ? MemoryRole.episode
+          : MemoryRole.guidance,
+      authority: EvidenceAuthority.modelDerived,
       ownerUserId: ownerUserId,
       scope: scope,
       source: source,

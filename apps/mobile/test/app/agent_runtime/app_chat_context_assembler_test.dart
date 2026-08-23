@@ -6,11 +6,13 @@ import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/context_builder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
+import 'package:naviwealth/core/ai/local/memory/memory_access_policy.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_context_block.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
-import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/core/lifeos/personal_profile/personal_profile_snapshot.dart';
+import 'package:naviwealth/core/lifeos/personal_profile/personal_profile_store.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_context_block_prep.dart';
 
 import '../../core/persistence/test_database.dart';
@@ -85,12 +87,13 @@ void main() {
 
       final blocks = await prepareAppChatContextBlocks(
         contextBuilder: ContextBuilder(runtime: runtime),
-        activePacks: const <DomainPack>[
-          DomainPack(
-            scope: DomainScope.finance,
-            memorySourcePrefixes: <String>['options_trade_journal'],
-          ),
-        ],
+        accessPolicy: MemoryAccessPolicy.allowPrefixes(const <String>[
+          'options_trade_journal',
+        ]),
+        profileBuilder: PersonalProfileSnapshotBuilder(
+          SqlitePersonalProfileStore(db),
+        ),
+        activeDomainScopes: const <String>{'finance'},
         aiContext: const AiContext(
           path: '/wealth',
           domain: DomainScope.finance,
@@ -140,7 +143,11 @@ void main() {
 
     final blocks = await prepareAppChatContextBlocks(
       contextBuilder: ContextBuilder(runtime: runtime),
-      activePacks: const <DomainPack>[DomainPack(scope: DomainScope.finance)],
+      accessPolicy: const MemoryAccessPolicy.denyAll(),
+      profileBuilder: PersonalProfileSnapshotBuilder(
+        SqlitePersonalProfileStore(db),
+      ),
+      activeDomainScopes: const <String>{},
       aiContext: const AiContext(path: '/'),
       request: const ChatContextPrepRequest(
         ownerUserId: _owner,

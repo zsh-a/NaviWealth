@@ -13,6 +13,7 @@ import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
+import '../../../core/ai/contracts/context_evidence.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';
@@ -100,6 +101,8 @@ class CashflowAnomalyReviewAgent implements Agent {
     final memory = MemoryRecord(
       id: memoryId,
       kind: MemoryKind.episodic,
+      role: MemoryRole.episode,
+      authority: EvidenceAuthority.deterministicDerived,
       ownerUserId: ownerUserId,
       scope: 'finance',
       source: kCashflowAnomalyReviewMemorySource,

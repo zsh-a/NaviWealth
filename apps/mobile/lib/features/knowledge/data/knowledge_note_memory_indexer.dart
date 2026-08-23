@@ -25,6 +25,8 @@ Future<void> _reindexNotes(
       MemoryRecord(
         id: id,
         kind: MemoryKind.episodic,
+        role: MemoryRole.episode,
+        authority: EvidenceAuthority.sourceFact,
         ownerUserId: ownerUserId,
         scope: '*',
         source: kKnowledgeNoteMemorySource,

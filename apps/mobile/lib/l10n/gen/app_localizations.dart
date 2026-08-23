@@ -12799,6 +12799,156 @@ abstract class AppLocalizations {
   /// **'Privacy & transparency'**
   String get settingsAiHubTrustSection;
 
+  /// No description provided for @personalMemoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal memory'**
+  String get personalMemoryTitle;
+
+  /// No description provided for @personalMemorySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage goals, preferences, constraints, and rules used by AI'**
+  String get personalMemorySubtitle;
+
+  /// No description provided for @personalMemorySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed profile'**
+  String get personalMemorySection;
+
+  /// No description provided for @personalMemoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No confirmed profile facts yet.'**
+  String get personalMemoryEmpty;
+
+  /// No description provided for @personalMemoryAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add profile fact'**
+  String get personalMemoryAdd;
+
+  /// No description provided for @personalMemoryCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add profile fact'**
+  String get personalMemoryCreateTitle;
+
+  /// No description provided for @personalMemoryEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile fact'**
+  String get personalMemoryEditTitle;
+
+  /// No description provided for @personalMemoryKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get personalMemoryKind;
+
+  /// No description provided for @personalMemoryKindGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal'**
+  String get personalMemoryKindGoal;
+
+  /// No description provided for @personalMemoryKindPreference.
+  ///
+  /// In en, this message translates to:
+  /// **'Preference'**
+  String get personalMemoryKindPreference;
+
+  /// No description provided for @personalMemoryKindConstraint.
+  ///
+  /// In en, this message translates to:
+  /// **'Constraint'**
+  String get personalMemoryKindConstraint;
+
+  /// No description provided for @personalMemoryKindRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule'**
+  String get personalMemoryKindRule;
+
+  /// No description provided for @personalMemoryKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Key'**
+  String get personalMemoryKey;
+
+  /// No description provided for @personalMemoryKeyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For example: cash_buffer_months'**
+  String get personalMemoryKeyHint;
+
+  /// No description provided for @personalMemoryValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get personalMemoryValue;
+
+  /// No description provided for @personalMemoryValueHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Text or JSON value'**
+  String get personalMemoryValueHint;
+
+  /// No description provided for @personalMemorySummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get personalMemorySummary;
+
+  /// No description provided for @personalMemorySummaryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A clear fact the agent may use as evidence'**
+  String get personalMemorySummaryHint;
+
+  /// No description provided for @personalMemoryDomain.
+  ///
+  /// In en, this message translates to:
+  /// **'Domain (optional)'**
+  String get personalMemoryDomain;
+
+  /// No description provided for @personalMemoryDomainHint.
+  ///
+  /// In en, this message translates to:
+  /// **'finance, health, knowledge, or execution'**
+  String get personalMemoryDomainHint;
+
+  /// No description provided for @personalMemoryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Key and summary are required'**
+  String get personalMemoryRequired;
+
+  /// No description provided for @personalMemoryDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget this profile fact?'**
+  String get personalMemoryDeleteTitle;
+
+  /// No description provided for @personalMemoryDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It will stop appearing in future AI context. This cannot be undone from this screen.'**
+  String get personalMemoryDeleteBody;
+
+  /// No description provided for @personalMemoryInactiveDomain.
+  ///
+  /// In en, this message translates to:
+  /// **'Kept locally; excluded from AI while this domain is off'**
+  String get personalMemoryInactiveDomain;
+
+  /// No description provided for @personalMemoryLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load personal memory: {error}'**
+  String personalMemoryLoadFailed(String error);
+
   /// No description provided for @settingsAdvancedHubTitle.
   ///
   /// In en, this message translates to:
@@ -23330,6 +23480,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Expected outcome (optional)'**
   String get knowledgeDecisionExpectedOutcomeLabel;
+
+  /// No description provided for @knowledgeDecisionRevisitConditionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Review when (optional)'**
+  String get knowledgeDecisionRevisitConditionsLabel;
+
+  /// No description provided for @knowledgeDecisionRevisitConditionsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One condition per line, for example: cash runway falls below 12 months'**
+  String get knowledgeDecisionRevisitConditionsHint;
+
+  /// No description provided for @knowledgeDecisionRevisitConditionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review conditions'**
+  String get knowledgeDecisionRevisitConditionsTitle;
 
   /// No description provided for @knowledgeAssumptionWriterSubtitle2.
   ///

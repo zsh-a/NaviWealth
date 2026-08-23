@@ -11,11 +11,15 @@
 /// Reads only — no scan / network.
 library;
 
+import 'package:naviwealth/core/ai/contracts/context_evidence.dart';
+import 'package:naviwealth/core/ai/contracts/context_pack_memory.dart';
+import 'package:naviwealth/core/ai/contracts/event_record.dart';
+import 'package:naviwealth/core/ai/contracts/memory_record.dart';
+import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
-import '../../../contracts/context_pack_memory.dart';
-import '../../../contracts/event_record.dart';
-import '../../../contracts/memory_record.dart';
-import '../../../local/memory/providers.dart';
+import 'package:naviwealth/core/lifeos/personal_profile/personal_profile_fact.dart';
+import 'package:naviwealth/core/lifeos/personal_profile/providers.dart';
+
 import 'device_tool.dart';
 
 class BuildContextTool implements DeviceTool {
@@ -27,7 +31,8 @@ class BuildContextTool implements DeviceTool {
   @override
   String get description =>
       '从本地 Memory Runtime 组装"按用途分槽"的上下文包,**优先于** `query_memory` 使用。'
-      '返回 5 个槽: user_preferences(长期偏好)/ applicable_rules(规则)/ '
+      '返回 personal_profile(用户确认的目标/偏好/约束/规则)以及 '
+      'user_preferences(旧长期偏好)/ applicable_rules(旧规则)/ '
       'related_decisions(历史决策+理由+结果)/ recent_events(最近事件流)/ '
       'related_events(按 entity 过滤后的事件)。'
       '回答涉及"以前 / 上次 / 我当时为什么 / 我的偏好是 / 是否应该"这类问题前先调用。'
@@ -92,7 +97,17 @@ class BuildContextTool implements DeviceTool {
     };
 
     final builder = await ctx.ref.read(contextBuilderProvider.future);
+    final accessPolicy = ctx.ref.read(memoryAccessPolicyProvider);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
+    final profileBuilder = await ctx.ref.read(
+      personalProfileSnapshotBuilderProvider.future,
+    );
+    final profile = await profileBuilder.build(
+      ownerUserId: ownerUserId,
+      activeDomainScopes: ctx.ref.read(
+        activePersonalProfileDomainScopesProvider,
+      ),
+    );
     final pack = await builder.build(
       ownerUserId: ownerUserId,
       intent: ContextIntent(
@@ -101,10 +116,14 @@ class BuildContextTool implements DeviceTool {
         scope: (scope == null || scope.isEmpty) ? null : scope,
         kindHints: kinds,
       ),
+      sourcePrefixes: accessPolicy.sourcePrefixes,
       perSlotLimit: perSlot,
     );
 
     final result = <String, Object?>{
+      'personal_profile': profile.facts
+          .map(_profileToWire)
+          .toList(growable: false),
       'user_preferences': pack.userPreferences
           .map(_memoryToWire)
           .toList(growable: false),
@@ -114,6 +133,15 @@ class BuildContextTool implements DeviceTool {
       'related_decisions': pack.relatedDecisions
           .map(_memoryToWire)
           .toList(growable: false),
+      'related_episodes': pack.relatedEpisodes
+          .map(_memoryToWire)
+          .toList(growable: false),
+      'derived_patterns': pack.derivedPatterns
+          .map(_memoryToWire)
+          .toList(growable: false),
+      'derived_guidance': pack.derivedGuidance
+          .map(_memoryToWire)
+          .toList(growable: false),
       'recent_events': pack.recentEvents
           .map(_eventToWire)
           .toList(growable: false),
@@ -121,7 +149,7 @@ class BuildContextTool implements DeviceTool {
           .map(_eventToWire)
           .toList(growable: false),
     };
-    if (pack.isEmpty) {
+    if (pack.isEmpty && profile.isEmpty) {
       result['guidance'] =
           '记忆库目前为空或没有匹配条目。请避免基于此结果断言"用户从未做过 X";'
           '可继续调用 read_* / get_* 工具补足上下文。';
@@ -129,11 +157,31 @@ class BuildContextTool implements DeviceTool {
     return result;
   }
 
+  static Map<String, Object?> _profileToWire(PersonalProfileFact fact) =>
+      <String, Object?>{
+        'id': fact.id,
+        'kind': fact.kind.wire,
+        'key': fact.key,
+        'value': fact.value,
+        'summary': fact.summary,
+        if (fact.domainScope != null) 'domain_scope': fact.domainScope,
+        'authority': fact.authority.wire,
+        'provenance': fact.provenance.toJson(),
+        'confidence': fact.confidence,
+        'valid_from': fact.validFrom.toUtc().toIso8601String(),
+        if (fact.validUntil != null)
+          'valid_until': fact.validUntil!.toUtc().toIso8601String(),
+        if (fact.supersedesFactId != null) 'supersedes': fact.supersedesFactId,
+      };
+
   static Map<String, Object?> _memoryToWire(
     MemoryRecord m,
   ) => <String, Object?>{
     'id': m.id,
     'kind': m.kind.wire,
+    'role': m.role.wire,
+    'authority': m.authority.wire,
+    'provenance': m.provenance.toJson(),
     'title': m.title,
     'summary': m.summary,
     'scope': m.scope,
@@ -143,6 +191,11 @@ class BuildContextTool implements DeviceTool {
     'importance': m.importance,
     'confidence': m.confidence,
     'payload': m.payload,
+    if (m.validFrom != null)
+      'valid_from': m.validFrom!.toUtc().toIso8601String(),
+    if (m.validUntil != null)
+      'valid_until': m.validUntil!.toUtc().toIso8601String(),
+    if (m.supersedesId != null) 'supersedes': m.supersedesId,
     'updated_at': m.updatedAt.toUtc().toIso8601String(),
   };
 
@@ -151,6 +204,12 @@ class BuildContextTool implements DeviceTool {
     'type': e.type,
     'timestamp': e.timestamp.toUtc().toIso8601String(),
     'source': e.source,
+    'authority': EvidenceAuthority.sourceFact.wire,
+    'provenance': <String, Object?>{
+      'source': e.source,
+      'source_id': e.id,
+      'observed_at': e.timestamp.toUtc().toIso8601String(),
+    },
     if (e.title != null) 'title': e.title,
     'summary': e.summary,
     if (e.entities.isNotEmpty) 'entities': e.entities.toList(growable: false),

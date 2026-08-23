@@ -109,6 +109,9 @@ class RecallDecisionTool implements DeviceTool {
       'status': d.status.wire,
       'decided_at': d.decidedAt.toUtc().toIso8601String(),
       'review_date': d.reviewDate?.toUtc().toIso8601String(),
+      'revisit_conditions': d.revisitConditions
+          .map((condition) => condition.toJson())
+          .toList(growable: false),
       'age_days': now.difference(d.decidedAt.toUtc()).inDays.clamp(0, 100000),
       'score': double.parse(hit.hit.score.toStringAsFixed(4)),
       'semantic_sim': hit.hit.semanticSim == null

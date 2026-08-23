@@ -1,10 +1,12 @@
+import 'package:naviwealth/core/ai/composition/proposal_envelope.dart';
+import 'package:naviwealth/core/ai/contracts/memory_candidate.dart';
+import 'package:naviwealth/core/ai/contracts/memory_record.dart';
+import 'package:naviwealth/core/ai/local/memory/providers.dart';
+import 'package:naviwealth/core/auth/providers.dart';
+import 'package:naviwealth/core/lifeos/personal_profile/personal_profile_fact.dart';
+import 'package:naviwealth/core/lifeos/personal_profile/providers.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../../auth/providers.dart';
-import '../../../composition/proposal_envelope.dart';
-import '../../../contracts/memory_candidate.dart';
-import '../../../contracts/memory_record.dart';
-import '../../../local/memory/providers.dart';
 import 'device_tool.dart';
 
 const Uuid _uuid = Uuid();
@@ -31,6 +33,11 @@ final class ProposeMemoryTool implements DeviceTool {
     'type': 'object',
     'additionalProperties': false,
     'properties': <String, Object?>{
+      'record_type': <String, Object?>{
+        'type': 'string',
+        'enum': <String>['memory', 'profile_fact'],
+        'description': '目标是可检索经历/模式，还是稳定的个人目标、偏好、约束或规则。',
+      },
       'operation': <String, Object?>{
         'type': 'string',
         'enum': <String>['create', 'supersede', 'forget'],
@@ -39,6 +46,22 @@ final class ProposeMemoryTool implements DeviceTool {
         'type': 'string',
         'enum': <String>['semantic', 'episodic', 'procedural'],
         'description': 'create/supersede 时必填。',
+      },
+      'profile_kind': <String, Object?>{
+        'type': 'string',
+        'enum': <String>['goal', 'preference', 'constraint', 'rule'],
+        'description': 'profile_fact create/supersede 时必填。',
+      },
+      'key': <String, Object?>{
+        'type': 'string',
+        'description': 'profile_fact 的稳定机器 key。',
+      },
+      'value': <String, Object?>{
+        'description': 'profile_fact 的结构化 JSON value。',
+      },
+      'domain_scope': <String, Object?>{
+        'type': 'string',
+        'description': 'profile_fact 所属 active domain；跨域事实不传。',
       },
       'title': <String, Object?>{
         'type': 'string',
@@ -67,9 +90,9 @@ final class ProposeMemoryTool implements DeviceTool {
         'maximum': 1,
         'default': 0.8,
       },
-      'target_memory_id': <String, Object?>{
+      'target_record_id': <String, Object?>{
         'type': 'string',
-        'description': 'supersede/forget 时必填，必须来自 query_memory。',
+        'description': 'supersede/forget 时必填，必须来自当前可访问的记录。',
       },
       'valid_from': <String, Object?>{
         'type': 'string',
@@ -84,7 +107,7 @@ final class ProposeMemoryTool implements DeviceTool {
         'description': '为什么这项变更值得长期保留或移除。',
       },
     },
-    'required': <String>['operation', 'reason'],
+    'required': <String>['record_type', 'operation', 'reason'],
   };
 
   @override
@@ -99,64 +122,56 @@ final class ProposeMemoryTool implements DeviceTool {
     final operation = MemoryCandidateOperationWire.tryParse(
       (input['operation'] as String?)?.trim(),
     );
+    final targetType = MemoryCandidateTargetTypeWire.tryParse(
+      (input['record_type'] as String?)?.trim(),
+    );
     final reason = (input['reason'] as String?)?.trim() ?? '';
-    if (operation == null || reason.isEmpty) {
-      return proposalBadRequest('operation / reason 必填。');
+    if (operation == null || targetType == null || reason.isEmpty) {
+      return proposalBadRequest('record_type / operation / reason 必填。');
     }
 
-    final targetMemoryId = (input['target_memory_id'] as String?)?.trim() ?? '';
+    final targetRecordId = (input['target_record_id'] as String?)?.trim() ?? '';
     String? targetTitle;
     if (operation != MemoryCandidateOperation.create) {
-      if (targetMemoryId.isEmpty) {
-        return proposalBadRequest('supersede/forget 必须提供 target_memory_id。');
+      if (targetRecordId.isEmpty) {
+        return proposalBadRequest('supersede/forget 必须提供 target_record_id。');
       }
-      final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
-      final prior = await runtime.memoryStore.readMemory(targetMemoryId);
-      if (prior == null || prior.ownerUserId != session.userId) {
-        return proposalNotFound('找不到可变更的长期记忆。', <String>[targetMemoryId]);
+      switch (targetType) {
+        case MemoryCandidateTargetType.memory:
+          final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
+          final prior = await runtime.memoryStore.readMemory(targetRecordId);
+          final accessPolicy = ctx.ref.read(memoryAccessPolicyProvider);
+          if (prior == null ||
+              prior.ownerUserId != session.userId ||
+              !accessPolicy.allowsSource(prior.source)) {
+            return proposalNotFound('找不到可变更的长期记忆。', <String>[targetRecordId]);
+          }
+          targetTitle = prior.title;
+        case MemoryCandidateTargetType.profileFact:
+          final store = await ctx.ref.read(personalProfileStoreProvider.future);
+          final prior = await store.read(
+            ownerUserId: session.userId,
+            id: targetRecordId,
+          );
+          final activeDomains = ctx.ref.read(
+            activePersonalProfileDomainScopesProvider,
+          );
+          if (prior == null ||
+              (prior.domainScope != null &&
+                  !activeDomains.contains(prior.domainScope))) {
+            return proposalNotFound('找不到可变更的个人资料事实。', <String>[targetRecordId]);
+          }
+          targetTitle = prior.summary;
       }
-      targetTitle = prior.title;
     }
 
     final payload = <String, Object?>{
+      'target_type': targetType.wire,
       'operation': operation.wire,
-      if (targetMemoryId.isNotEmpty) 'target_memory_id': targetMemoryId,
+      if (targetRecordId.isNotEmpty) 'target_record_id': targetRecordId,
       'reason': reason,
     };
     if (operation != MemoryCandidateOperation.forget) {
-      final kind = MemoryKindWire.parse(
-        (input['memory_kind'] as String?)?.trim() ?? '',
-      );
-      final kindWire = (input['memory_kind'] as String?)?.trim() ?? '';
-      final title = (input['title'] as String?)?.trim() ?? '';
-      final summary = (input['summary'] as String?)?.trim() ?? '';
-      if (!const <String>{
-            'semantic',
-            'episodic',
-            'procedural',
-          }.contains(kindWire) ||
-          kind == MemoryKind.event ||
-          title.isEmpty ||
-          summary.isEmpty) {
-        return proposalBadRequest(
-          'create/supersede 必须提供 semantic/episodic/procedural、title 和 summary。',
-        );
-      }
-      final entitiesRaw = input['entities'];
-      final entities = entitiesRaw is List
-          ? entitiesRaw
-                .whereType<String>()
-                .map((value) => value.trim())
-                .where((value) => value.isNotEmpty)
-                .toSet()
-                .toList(growable: false)
-          : const <String>[];
-      final memoryPayloadRaw = input['payload'];
-      final memoryPayload = memoryPayloadRaw is Map
-          ? memoryPayloadRaw.map((key, value) => MapEntry('$key', value))
-          : const <String, Object?>{};
-      final importance = ((input['importance'] as num?)?.toDouble() ?? 0.8)
-          .clamp(0.0, 1.0);
       final validFrom = _optionalDate(input['valid_from']);
       final validUntil = _optionalDate(input['valid_until']);
       if (input['valid_from'] != null && validFrom == null ||
@@ -168,25 +183,92 @@ final class ProposeMemoryTool implements DeviceTool {
           !validUntil.isAfter(validFrom)) {
         return proposalBadRequest('valid_until 必须晚于 valid_from。');
       }
-      payload.addAll(<String, Object?>{
-        'memory_id': 'user_memory:${_uuid.v4()}',
-        'memory_kind': kind.wire,
-        'title': title,
-        'summary': summary,
-        'scope': (input['scope'] as String?)?.trim().isNotEmpty == true
-            ? (input['scope'] as String).trim()
-            : '*',
-        'entities': entities,
-        'memory_payload': memoryPayload,
-        'importance': importance,
-        // This becomes true only after confirmation. The value represents
-        // provenance, not model confidence.
-        'confidence': 0.95,
-        if (validFrom != null)
-          'valid_from': validFrom.toUtc().toIso8601String(),
-        if (validUntil != null)
-          'valid_until': validUntil.toUtc().toIso8601String(),
-      });
+      if (targetType == MemoryCandidateTargetType.profileFact) {
+        final profileKind = PersonalProfileFactKindWire.tryParse(
+          (input['profile_kind'] as String?)?.trim(),
+        );
+        final key = (input['key'] as String?)?.trim() ?? '';
+        final summary = (input['summary'] as String?)?.trim() ?? '';
+        if (profileKind == null || key.isEmpty || summary.isEmpty) {
+          return proposalBadRequest(
+            'profile_fact 必须提供 profile_kind、key、value 和 summary。',
+          );
+        }
+        final domainScope = (input['domain_scope'] as String?)?.trim();
+        if (domainScope != null &&
+            domainScope.isNotEmpty &&
+            !ctx.ref
+                .read(activePersonalProfileDomainScopesProvider)
+                .contains(domainScope)) {
+          return proposalBadRequest('domain_scope 当前未启用。');
+        }
+        payload.addAll(<String, Object?>{
+          'record_id': 'profile_fact:${_uuid.v4()}',
+          'profile_kind': profileKind.wire,
+          'key': key,
+          'value': input['value'],
+          'summary': summary,
+          if (domainScope != null && domainScope.isNotEmpty)
+            'domain_scope': domainScope,
+          if (validFrom != null)
+            'valid_from': validFrom.toUtc().toIso8601String(),
+          if (validUntil != null)
+            'valid_until': validUntil.toUtc().toIso8601String(),
+        });
+      } else {
+        final kind = MemoryKindWire.parse(
+          (input['memory_kind'] as String?)?.trim() ?? '',
+        );
+        final kindWire = (input['memory_kind'] as String?)?.trim() ?? '';
+        final title = (input['title'] as String?)?.trim() ?? '';
+        final summary = (input['summary'] as String?)?.trim() ?? '';
+        if (!const <String>{
+              'semantic',
+              'episodic',
+              'procedural',
+            }.contains(kindWire) ||
+            kind == MemoryKind.event ||
+            title.isEmpty ||
+            summary.isEmpty) {
+          return proposalBadRequest(
+            'create/supersede 必须提供 semantic/episodic/procedural、title 和 summary。',
+          );
+        }
+        final entitiesRaw = input['entities'];
+        final entities = entitiesRaw is List
+            ? entitiesRaw
+                  .whereType<String>()
+                  .map((value) => value.trim())
+                  .where((value) => value.isNotEmpty)
+                  .toSet()
+                  .toList(growable: false)
+            : const <String>[];
+        final memoryPayloadRaw = input['payload'];
+        final memoryPayload = memoryPayloadRaw is Map
+            ? memoryPayloadRaw.map((key, value) => MapEntry('$key', value))
+            : const <String, Object?>{};
+        final importance = ((input['importance'] as num?)?.toDouble() ?? 0.8)
+            .clamp(0.0, 1.0);
+        payload.addAll(<String, Object?>{
+          'record_id': 'user_memory:${_uuid.v4()}',
+          'memory_kind': kind.wire,
+          'title': title,
+          'summary': summary,
+          'scope': (input['scope'] as String?)?.trim().isNotEmpty == true
+              ? (input['scope'] as String).trim()
+              : '*',
+          'entities': entities,
+          'memory_payload': memoryPayload,
+          'importance': importance,
+          // This becomes true only after confirmation. The value represents
+          // provenance, not model confidence.
+          'confidence': 0.95,
+          if (validFrom != null)
+            'valid_from': validFrom.toUtc().toIso8601String(),
+          if (validUntil != null)
+            'valid_until': validUntil.toUtc().toIso8601String(),
+        });
+      }
     }
 
     final candidateId = _uuid.v4();
@@ -200,26 +282,33 @@ final class ProposeMemoryTool implements DeviceTool {
         proposalId: proposalId,
         ownerUserId: session.userId,
         operation: operation,
+        targetType: targetType,
         status: MemoryCandidateStatus.pending,
-        targetMemoryId: targetMemoryId.isEmpty ? null : targetMemoryId,
+        targetRecordId: targetRecordId.isEmpty ? null : targetRecordId,
         payload: Map<String, Object?>.unmodifiable(payload),
         createdAt: now,
         updatedAt: now,
       ),
     );
 
+    final recordLabel = targetType == MemoryCandidateTargetType.memory
+        ? '长期记忆'
+        : '个人资料';
+    final proposedTitle = payload['title'] ?? payload['summary'];
     final summaryZh = switch (operation) {
-      MemoryCandidateOperation.create => '建议记住：“${payload['title']}” — $reason',
+      MemoryCandidateOperation.create =>
+        '建议写入$recordLabel：“$proposedTitle” — $reason',
       MemoryCandidateOperation.supersede =>
-        '建议更新长期记忆“$targetTitle”为“${payload['title']}” — $reason',
-      MemoryCandidateOperation.forget => '建议忘记长期记忆“$targetTitle” — $reason',
+        '建议更新$recordLabel“$targetTitle”为“$proposedTitle” — $reason',
+      MemoryCandidateOperation.forget =>
+        '建议删除$recordLabel“$targetTitle” — $reason',
     };
     return readyPlan(
       proposalId: proposalId,
       kind: 'memory_change',
       summaryZh: summaryZh,
       payload: payload,
-      note: '这是待确认的长期记忆候选；确认前不会写入或删除正式 Memory。',
+      note: '这是待确认的长期记忆候选；确认前不会写入或删除正式记录。',
     );
   }
 }

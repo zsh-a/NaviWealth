@@ -235,6 +235,7 @@ Future<DateTime> _upsertDecisionReviewDate({
       assumptionIds: decision.assumptionIds,
       expectedOutcome: decision.expectedOutcome,
       reviewDate: nextReview,
+      revisitConditions: decision.revisitConditions,
       actualOutcomeMd: decision.actualOutcomeMd,
       status: decision.status,
       supersededByDecisionId: decision.supersededByDecisionId,

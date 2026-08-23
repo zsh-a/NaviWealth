@@ -27,6 +27,7 @@ final List<BackupTableRegistration> kBackupTableRegistrations =
             primaryKey: registration.primaryKey,
             enqueueRestoreOp: kSyncableTables.contains(registration.table),
           ),
+      const BackupTableRegistration('personal_profile_facts'),
     ]);
 
 final List<String> kBackupTables = List<String>.unmodifiable(

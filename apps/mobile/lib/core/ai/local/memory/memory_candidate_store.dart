@@ -28,7 +28,7 @@ abstract interface class MemoryCandidateStore {
   Future<void> markApplied({
     required String ownerUserId,
     required String candidateId,
-    required String? appliedMemoryId,
+    required String? appliedRecordId,
     required Map<String, Object?> acceptedPayload,
     required DateTime at,
   });
@@ -64,18 +64,19 @@ final class SqliteMemoryCandidateStore implements MemoryCandidateStore {
   Future<void> insert(MemoryChangeCandidate candidate) {
     return _db.customStatement(
       'INSERT INTO memory_candidates ('
-      'id, proposal_id, owner_user_id, operation, status, target_memory_id, '
-      'applied_memory_id, payload_json, created_at, updated_at, decided_at, '
+      'id, proposal_id, owner_user_id, target_type, operation, status, '
+      'target_record_id, applied_record_id, payload_json, created_at, updated_at, decided_at, '
       'error_message'
-      ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       <Object?>[
         candidate.id,
         candidate.proposalId,
         candidate.ownerUserId,
+        candidate.targetType.wire,
         candidate.operation.wire,
         candidate.status.wire,
-        candidate.targetMemoryId,
-        candidate.appliedMemoryId,
+        candidate.targetRecordId,
+        candidate.appliedRecordId,
         jsonEncode(candidate.payload),
         candidate.createdAt.toUtc().millisecondsSinceEpoch,
         candidate.updatedAt.toUtc().millisecondsSinceEpoch,
@@ -146,20 +147,20 @@ final class SqliteMemoryCandidateStore implements MemoryCandidateStore {
   Future<void> markApplied({
     required String ownerUserId,
     required String candidateId,
-    required String? appliedMemoryId,
+    required String? appliedRecordId,
     required Map<String, Object?> acceptedPayload,
     required DateTime at,
   }) async {
     final changed = await _db.customUpdate(
       'UPDATE memory_candidates SET status = ?, updated_at = ?, '
-      'decided_at = ?, applied_memory_id = ?, payload_json = ?, '
+      'decided_at = ?, applied_record_id = ?, payload_json = ?, '
       'error_message = NULL '
       'WHERE id = ? AND owner_user_id = ? AND status = ?',
       variables: <Variable<Object>>[
         Variable.withString(MemoryCandidateStatus.applied.wire),
         Variable.withInt(at.toUtc().millisecondsSinceEpoch),
         Variable.withInt(at.toUtc().millisecondsSinceEpoch),
-        _nullableString(appliedMemoryId),
+        _nullableString(appliedRecordId),
         Variable.withString(jsonEncode(acceptedPayload)),
         Variable.withString(candidateId),
         Variable.withString(ownerUserId),
@@ -230,7 +231,7 @@ final class SqliteMemoryCandidateStore implements MemoryCandidateStore {
     required MemoryCandidateStatus to,
     required DateTime at,
     DateTime? decidedAt,
-    String? appliedMemoryId,
+    String? appliedRecordId,
     String? errorMessage,
   }) async {
     final placeholders = List<String>.filled(from.length, '?').join(', ');
@@ -238,7 +239,7 @@ final class SqliteMemoryCandidateStore implements MemoryCandidateStore {
       Variable.withString(to.wire),
       Variable.withInt(at.toUtc().millisecondsSinceEpoch),
       _nullableInt(decidedAt?.toUtc().millisecondsSinceEpoch),
-      _nullableString(appliedMemoryId),
+      _nullableString(appliedRecordId),
       _nullableString(errorMessage),
       Variable.withString(candidateId),
       Variable.withString(ownerUserId),
@@ -247,7 +248,7 @@ final class SqliteMemoryCandidateStore implements MemoryCandidateStore {
     final changed = await _db.customUpdate(
       'UPDATE memory_candidates SET status = ?, updated_at = ?, '
       'decided_at = COALESCE(?, decided_at), '
-      'applied_memory_id = COALESCE(?, applied_memory_id), '
+      'applied_record_id = COALESCE(?, applied_record_id), '
       'error_message = ? '
       'WHERE id = ? AND owner_user_id = ? '
       'AND status IN ($placeholders)',
@@ -284,9 +285,14 @@ final class SqliteMemoryCandidateStore implements MemoryCandidateStore {
             row.read<String>('operation'),
           ) ??
           MemoryCandidateOperation.create,
+      targetType:
+          MemoryCandidateTargetTypeWire.tryParse(
+            row.read<String>('target_type'),
+          ) ??
+          MemoryCandidateTargetType.memory,
       status: MemoryCandidateStatusWire.parse(row.read<String>('status')),
-      targetMemoryId: row.readNullable<String>('target_memory_id'),
-      appliedMemoryId: row.readNullable<String>('applied_memory_id'),
+      targetRecordId: row.readNullable<String>('target_record_id'),
+      appliedRecordId: row.readNullable<String>('applied_record_id'),
       payload: payloadRaw is Map
           ? payloadRaw.map((key, value) => MapEntry('$key', value))
           : const <String, Object?>{},

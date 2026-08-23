@@ -108,6 +108,35 @@ void main() {
     );
   }
 
+  Future<void> insertTestProfile(AppDatabase db) async {
+    final now = DateTime.utc(2026, 1, 1).millisecondsSinceEpoch;
+    await db.customStatement(
+      'INSERT INTO personal_profile_facts ('
+      'id, owner_user_id, kind, fact_key, value_json, summary, domain_scope, '
+      'authority, provenance_json, confidence, confirmed_at, valid_from, '
+      'valid_until, supersedes_fact_id, created_at, updated_at'
+      ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      <Object?>[
+        'profile-1',
+        'user-1',
+        'constraint',
+        'cash_buffer_months',
+        '12',
+        'Keep a 12 month cash buffer.',
+        'finance',
+        'user_confirmed',
+        '{"source":"settings_profile","source_id":"profile-1"}',
+        1.0,
+        now,
+        now,
+        null,
+        null,
+        now,
+        now,
+      ],
+    );
+  }
+
   Future<void> insertOptionsStrategyProfile(AppDatabase db) async {
     final now = DateTime.utc(2026, 1, 1).toIso8601String();
     const hlc = Hlc(
@@ -385,6 +414,7 @@ void main() {
         currency: 'USD',
       );
       await insertTestTag(sourceDb, id: 'tag-1', name: 'Important');
+      await insertTestProfile(sourceDb);
 
       service = makeService(sourceDb);
       final bytes = await service.exportBackup(
@@ -405,15 +435,16 @@ void main() {
       // Verify row counts.
       expect(result.tableCounts['accounts'], 2);
       expect(result.tableCounts['tags'], 1);
+      expect(result.tableCounts['personal_profile_facts'], 1);
       expect(result.archiveSchemaVersion, targetDb.schemaVersion);
       expect(result.archiveDomain, isNull);
       expect(result.tableCount, kBackupTables.length);
-      expect(result.totalRows, 3);
+      expect(result.totalRows, 4);
       expect(result.toDiagnosticJson(), <String, Object>{
         'schema_version': targetDb.schemaVersion,
         'domain': 'full',
         'table_count': kBackupTables.length,
-        'row_count': 3,
+        'row_count': 4,
       });
       final diagnosticJson = jsonEncode(result.toDiagnosticJson());
       expect(diagnosticJson, isNot(contains('accounts')));
@@ -422,6 +453,15 @@ void main() {
       // Verify actual data.
       expect(await countRows(targetDb, 'accounts'), 2);
       expect(await countRows(targetDb, 'tags'), 1);
+      final profile = await targetDb
+          .customSelect(
+            'SELECT * FROM personal_profile_facts WHERE id = ?',
+            variables: <Variable<Object>>[const Variable<String>('profile-1')],
+          )
+          .getSingle();
+      expect(profile.read<String>('authority'), 'user_confirmed');
+      expect(profile.read<String>('provenance_json'), contains('profile-1'));
+      expect(profile.readNullable<int>('valid_until'), isNull);
     });
 
     test('wrong passphrase throws BackupAuthenticationException', () async {
@@ -544,6 +584,25 @@ void main() {
           .map((row) => row.read<String>('table_name'))
           .toSet();
       expect(tableNames, containsAll(['accounts', 'tags']));
+    });
+
+    test('profile restore never enqueues a sync outbox pointer', () async {
+      final sourceDb = makeTestDatabase();
+      addTearDown(sourceDb.close);
+      await insertTestProfile(sourceDb);
+      final bytes = await makeService(sourceDb).exportBackup(
+        passphrase: testPassphrase,
+        overrideIterations: testIterations,
+      );
+      final targetDb = makeTestDatabase();
+      addTearDown(targetDb.close);
+
+      await makeService(
+        targetDb,
+      ).restoreBackup(passphrase: testPassphrase, fileBytes: bytes);
+
+      expect(await countRows(targetDb, 'personal_profile_facts'), 1);
+      expect(await countRows(targetDb, 'op_outbox'), 0);
     });
 
     test(

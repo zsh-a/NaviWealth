@@ -18,6 +18,8 @@ Future<void> _reindexConcepts(
       MemoryRecord(
         id: id,
         kind: MemoryKind.semantic,
+        role: MemoryRole.guidance,
+        authority: EvidenceAuthority.sourceFact,
         ownerUserId: ownerUserId,
         scope: '*',
         source: kKnowledgeConceptMemorySource,

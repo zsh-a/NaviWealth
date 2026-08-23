@@ -40,6 +40,7 @@ KnowledgeDecision _redirectKnowledgeDecision(
     assumptionIds: assumptionIds ?? d.assumptionIds,
     expectedOutcome: d.expectedOutcome,
     reviewDate: d.reviewDate,
+    revisitConditions: d.revisitConditions,
     actualOutcomeMd: d.actualOutcomeMd,
     status: d.status,
     supersededByDecisionId: supersededByDecisionId ?? d.supersededByDecisionId,

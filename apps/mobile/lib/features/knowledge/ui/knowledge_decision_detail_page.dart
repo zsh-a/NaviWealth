@@ -357,6 +357,35 @@ class _BodyState extends ConsumerState<_Body> {
             child: KnowledgeMarkdown(text: d.expectedOutcome!),
           ),
         ],
+        if (d.revisitConditions.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeSection.group(
+            title: l10n.knowledgeDecisionRevisitConditionsTitle,
+            children: [
+              for (final condition in d.revisitConditions)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        FLucideIcons.rotateCcw,
+                        size: AppIconSizes.xs,
+                        color: colors.mutedForeground,
+                      ),
+                      const SizedBox(width: AppSpacing.s8),
+                      Expanded(
+                        child: Text(
+                          condition.statement,
+                          style: context.theme.typography.body.sm,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ],
         if (d.actualOutcomeMd != null && d.actualOutcomeMd!.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
           KnowledgeDocumentSection(

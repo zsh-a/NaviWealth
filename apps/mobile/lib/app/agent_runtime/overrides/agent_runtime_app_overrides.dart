@@ -20,7 +20,7 @@ import 'package:naviwealth/core/ai/llm_credentials/providers.dart'
     as llm_credentials;
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
-import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/core/lifeos/personal_profile/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/ai_chat/data/providers.dart'
     as ai_chat_providers;
@@ -69,9 +69,14 @@ List<Override> agentRuntimeAppProviderOverrides() => <Override>[
   ai_chat_providers.chatContextBlockPrepProvider.overrideWith((ref) {
     return (request) async {
       final contextBuilder = await ref.read(contextBuilderProvider.future);
+      final profileBuilder = await ref.read(
+        personalProfileSnapshotBuilderProvider.future,
+      );
       return prepareAppChatContextBlocks(
         contextBuilder: contextBuilder,
-        activePacks: ref.read(activeDomainPacksProvider),
+        accessPolicy: ref.read(memoryAccessPolicyProvider),
+        profileBuilder: profileBuilder,
+        activeDomainScopes: ref.read(activePersonalProfileDomainScopesProvider),
         aiContext: ref.read(aiContextProvider),
         request: request,
       );

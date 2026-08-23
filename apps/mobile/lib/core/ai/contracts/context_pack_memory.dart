@@ -4,7 +4,7 @@
 /// Named `context_pack_memory.dart` to avoid colliding with the older
 /// [ContextPack] in `task_context.dart` (legacy chat-prompt envelope —
 /// kept untouched). This module is the **Memory Runtime's** output
-/// shape, structured by the four memory kinds.
+/// shape, structured by explicit retrieval roles plus the recent event stream.
 ///
 /// Distinct from raw retrieval hits: the builder pre-filters by intent
 /// (entity / scope / time-window / kind) and pre-classifies hits into
@@ -48,6 +48,9 @@ class ContextPackMemory {
     required this.userPreferences,
     required this.recentEvents,
     required this.relatedDecisions,
+    required this.relatedEpisodes,
+    required this.derivedPatterns,
+    required this.derivedGuidance,
     required this.applicableRules,
     required this.relatedEvents,
   });
@@ -61,9 +64,17 @@ class ContextPackMemory {
   /// timeline feed, used for "what was the user doing lately".
   final List<EventRecord> recentEvents;
 
-  /// `episodic` memories ranked by hybrid score against the intent.
-  /// "Last time I did X, my reasoning was Y, outcome was Z".
+  /// Source-of-truth Decision projections ranked against the intent.
   final List<MemoryRecord> relatedDecisions;
+
+  /// Important experiences and legacy episodic records ranked by intent.
+  final List<MemoryRecord> relatedEpisodes;
+
+  /// Deterministic or model-derived patterns; never instruction authority.
+  final List<MemoryRecord> derivedPatterns;
+
+  /// Retrieved guidance that remains evidence rather than an instruction.
+  final List<MemoryRecord> derivedGuidance;
 
   /// `procedural` memories matching scope. Rules the LLM should
   /// follow when proposing actions.
@@ -78,6 +89,9 @@ class ContextPackMemory {
       userPreferences.isEmpty &&
       recentEvents.isEmpty &&
       relatedDecisions.isEmpty &&
+      relatedEpisodes.isEmpty &&
+      derivedPatterns.isEmpty &&
+      derivedGuidance.isEmpty &&
       applicableRules.isEmpty;
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -88,6 +102,15 @@ class ContextPackMemory {
         .map((e) => e.toJson())
         .toList(growable: false),
     'related_decisions': relatedDecisions
+        .map((m) => m.toJson())
+        .toList(growable: false),
+    'related_episodes': relatedEpisodes
+        .map((m) => m.toJson())
+        .toList(growable: false),
+    'derived_patterns': derivedPatterns
+        .map((m) => m.toJson())
+        .toList(growable: false),
+    'derived_guidance': derivedGuidance
         .map((m) => m.toJson())
         .toList(growable: false),
     'applicable_rules': applicableRules

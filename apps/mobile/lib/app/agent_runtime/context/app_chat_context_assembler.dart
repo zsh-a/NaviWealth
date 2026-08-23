@@ -6,44 +6,102 @@
 library;
 
 import 'package:naviwealth/core/ai/composition/ai_context.dart';
+import 'package:naviwealth/core/ai/contracts/context_evidence.dart';
 import 'package:naviwealth/core/ai/contracts/context_pack_memory.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/context_builder.dart';
+import 'package:naviwealth/core/ai/local/memory/memory_access_policy.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_context_block.dart';
-import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/core/lifeos/personal_profile/personal_profile_fact.dart';
+import 'package:naviwealth/core/lifeos/personal_profile/personal_profile_snapshot.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_context_block_prep.dart';
 
 Future<List<AgentRuntimeContextBlock>> prepareAppChatContextBlocks({
   required ContextBuilder contextBuilder,
-  required List<DomainPack> activePacks,
+  required MemoryAccessPolicy accessPolicy,
+  required PersonalProfileSnapshotBuilder profileBuilder,
+  required Set<String> activeDomainScopes,
   required AiContext aiContext,
   required ChatContextPrepRequest request,
 }) async {
-  final sourcePrefixes = <String>{
-    for (final pack in activePacks)
-      for (final prefix in pack.memorySourcePrefixes)
-        if (prefix.trim().isNotEmpty) prefix.trim(),
-  };
-  if (sourcePrefixes.isEmpty) return const <AgentRuntimeContextBlock>[];
-
+  final sourcePrefixes = accessPolicy.sourcePrefixes;
   final entities = <String>{
     if (aiContext.entityId case final id? when id.trim().isNotEmpty) id.trim(),
   };
-  final pack = await contextBuilder.build(
+  final profile = await profileBuilder.build(
     ownerUserId: request.ownerUserId,
-    intent: ContextIntent(
-      freeText: request.userMessage,
-      // `*` deliberately allows cross-domain recall for the LifeOS steward.
-      // The source-prefix allow-list is the hard active-domain boundary.
-      scope: '*',
-      entities: entities,
-    ),
-    sourcePrefixes: sourcePrefixes,
-    perSlotLimit: 4,
+    activeDomainScopes: activeDomainScopes,
   );
+  final pack = sourcePrefixes.isEmpty
+      ? const ContextPackMemory(
+          userPreferences: <MemoryRecord>[],
+          recentEvents: <EventRecord>[],
+          relatedDecisions: <MemoryRecord>[],
+          relatedEpisodes: <MemoryRecord>[],
+          derivedPatterns: <MemoryRecord>[],
+          derivedGuidance: <MemoryRecord>[],
+          applicableRules: <MemoryRecord>[],
+          relatedEvents: <EventRecord>[],
+        )
+      : await contextBuilder.build(
+          ownerUserId: request.ownerUserId,
+          intent: ContextIntent(
+            freeText: request.userMessage,
+            // `*` deliberately allows cross-domain recall for the LifeOS steward.
+            // The source-prefix allow-list is the hard active-domain boundary.
+            scope: '*',
+            entities: entities,
+          ),
+          sourcePrefixes: sourcePrefixes,
+          perSlotLimit: 4,
+        );
 
-  return _blocksForPack(pack, aiContext: aiContext);
+  return <AgentRuntimeContextBlock>[
+    for (final fact in profile.facts) _profileBlock(fact, aiContext: aiContext),
+    ..._blocksForPack(pack, aiContext: aiContext),
+  ];
+}
+
+AgentRuntimeContextBlock _profileBlock(
+  PersonalProfileFact fact, {
+  required AiContext aiContext,
+}) {
+  final priority = switch (fact.kind) {
+    PersonalProfileFactKind.constraint => 110,
+    PersonalProfileFactKind.rule => 105,
+    PersonalProfileFactKind.goal => 100,
+    PersonalProfileFactKind.preference => 95,
+  };
+  return AgentRuntimeContextBlock(
+    id: 'profile:${fact.id}',
+    kind: AgentRuntimeContextBlockKind.profile,
+    source: fact.provenance.source ?? 'personal_profile',
+    priority: priority,
+    content: <String, Object?>{
+      'profile_kind': fact.kind.wire,
+      'key': fact.key,
+      'value': fact.value,
+      'summary': fact.summary,
+      if (fact.domainScope != null) 'domain_scope': fact.domainScope,
+      'confidence': fact.confidence,
+    },
+    evidence: AgentRuntimeContextEvidence(
+      authority: fact.authority,
+      provenance: fact.provenance,
+      validFrom: fact.validFrom,
+      validUntil: fact.validUntil,
+      supersedes: fact.supersedesFactId == null
+          ? null
+          : 'profile:${fact.supersedesFactId}',
+    ),
+    metadata: <String, Object?>{
+      'slot': 'personal_profile',
+      'route': aiContext.path,
+      'current_domain': aiContext.domain?.wire,
+      'trusted_as_instruction': false,
+    },
+  );
 }
 
 List<AgentRuntimeContextBlock> _blocksForPack(
@@ -78,6 +136,36 @@ List<AgentRuntimeContextBlock> _blocksForPack(
         record,
         priority: 80,
         slot: 'related_decisions',
+        aiContext: aiContext,
+      ),
+    );
+  }
+  for (final record in pack.relatedEpisodes) {
+    blocks.add(
+      _memoryBlock(
+        record,
+        priority: 75,
+        slot: 'related_episodes',
+        aiContext: aiContext,
+      ),
+    );
+  }
+  for (final record in pack.derivedPatterns) {
+    blocks.add(
+      _memoryBlock(
+        record,
+        priority: 70,
+        slot: 'derived_patterns',
+        aiContext: aiContext,
+      ),
+    );
+  }
+  for (final record in pack.derivedGuidance) {
+    blocks.add(
+      _memoryBlock(
+        record,
+        priority: 65,
+        slot: 'derived_guidance',
         aiContext: aiContext,
       ),
     );
@@ -123,8 +211,16 @@ AgentRuntimeContextBlock _memoryBlock(
       if (record.validUntil != null)
         'valid_until': record.validUntil!.toUtc().toIso8601String(),
     },
+    evidence: AgentRuntimeContextEvidence(
+      authority: record.authority,
+      provenance: record.provenance,
+      validFrom: record.validFrom,
+      validUntil: record.validUntil,
+      supersedes: record.supersedesId == null
+          ? null
+          : 'memory:${record.supersedesId}',
+    ),
     metadata: <String, Object?>{
-      'authority': 'domain_indexed',
       'slot': slot,
       'scope': record.scope,
       'source': record.source,
@@ -157,8 +253,16 @@ AgentRuntimeContextBlock _eventBlock(
       'payload': event.payload,
       'entities': event.entities.toList(growable: false),
     },
+    evidence: AgentRuntimeContextEvidence(
+      authority: EvidenceAuthority.sourceFact,
+      provenance: EvidenceProvenance(
+        source: event.source,
+        sourceId: event.id,
+        observedAt: event.timestamp,
+      ),
+      validFrom: event.timestamp,
+    ),
     metadata: <String, Object?>{
-      'authority': 'domain_indexed',
       'slot': 'recent_events',
       'scope': aiContext.domain?.wire ?? '*',
       'source': event.source,

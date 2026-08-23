@@ -162,6 +162,9 @@ Map<String, Object?> snapshotKnowledgeDecision(KnowledgeDecision d) =>
       'assumption_ids': d.assumptionIds,
       'expected_outcome': d.expectedOutcome,
       'review_date': d.reviewDate?.toUtc().toIso8601String(),
+      'revisit_conditions': [
+        for (final condition in d.revisitConditions) condition.toJson(),
+      ],
       'actual_outcome_md': d.actualOutcomeMd,
       'status': d.status.wire,
       'superseded_by_decision_id': d.supersededByDecisionId,
@@ -284,6 +287,10 @@ KnowledgeDecision knowledgeDecisionFromSnapshot(
   assumptionIds: _stringList(s['assumption_ids']),
   expectedOutcome: s['expected_outcome'] as String?,
   reviewDate: _dateOrNull(s['review_date']),
+  revisitConditions: [
+    for (final raw in knowledgeProposalMapList(s['revisit_conditions']))
+      DecisionRevisitCondition.fromJson(raw),
+  ],
   actualOutcomeMd: s['actual_outcome_md'] as String?,
   status: DecisionStatus.parse(_string(s, 'status')),
   supersededByDecisionId: s['superseded_by_decision_id'] as String?,

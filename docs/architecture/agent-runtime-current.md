@@ -156,17 +156,23 @@ need both the final result and the captured `AgentTrace`.
 ## Context Pipeline
 
 `agent-core::ContextBlock` is the provider-neutral context unit. A ChatTurn may
-carry runtime, agent, or command instructions plus untrusted memory, compaction
-summary, resource, and metadata blocks. The runtime:
+carry runtime, agent, or command instructions plus untrusted profile, memory,
+compaction summary, resource, and metadata blocks. Data blocks may carry
+`ContextEvidence` with authority, provenance, validity, and supersede lineage.
+The runtime:
 
 1. validates block ids and rejects duplicate host ids;
 2. recomputes token estimates and BLAKE3 content hashes instead of trusting
    host-supplied values;
-3. separates instruction authority from untrusted evidence;
-4. selects blocks by priority within `ContextPolicy`, always preserving
+3. validates evidence intervals and filters expired, not-yet-valid, and
+   superseded data blocks;
+4. separates instruction authority from evidence authority — including
+   `user_confirmed` evidence;
+5. selects blocks by priority within `ContextPolicy`, always preserving
    instruction blocks and configured recent messages;
-5. records selected and omitted blocks in `ContextSnapshot`; and
-6. persists the snapshot in `ChatTurnState` so resume uses the same execution
+6. records selected and omitted blocks with omission reasons in
+   `ContextSnapshot`; and
+7. persists the snapshot in `ChatTurnState` so resume uses the same execution
    context.
 
 Host context is rendered for the current turn but is not appended to the
@@ -174,11 +180,12 @@ persistent transcript. This prevents retrieved memory and portfolio/resource
 snapshots from compounding across turns.
 
 Flutter owns retrieval policy. `ChatRepository` invokes the app-level
-`app_chat_context_assembler.dart`, which queries local Memory Runtime with the
-union of `memorySourcePrefixes` declared by active `DomainPack`s. Both memories
-and recent events use this hard allow-list. Each hit becomes an untrusted
-`memory` ContextBlock; Drift, embeddings, user/domain permissions, and
-repositories remain outside Rust.
+`app_chat_context_assembler.dart`, which uses one `MemoryAccessPolicy` derived
+from active `DomainPack.memorySourcePrefixes`. The same policy protects
+automatic context, explicit recall tools, proposal target lookup, and apply.
+Host-owned current Profile facts become untrusted `profile` blocks; retrieved
+memories and recent events become untrusted `memory` blocks. Drift, embeddings,
+Personal Profile, user/domain permissions, and repositories remain outside Rust.
 
 When the Flutter chat window omits older persisted turns, it also creates a
 local `conversation_checkpoints` row. The checkpoint stores a source
@@ -193,18 +200,20 @@ later without moving provenance or persistence authority into the model.
 
 ## Approved Long-Term Memory
 
-Models cannot write durable user memory directly. The shell tool
-`propose_memory` stages a local-only `memory_candidates` row and returns a
-`LocalProposal`. Only an explicit user approval may materialize the candidate
-in `memories`.
+Models cannot write durable user memory or Profile directly. The shell tool
+`propose_memory` stages a local-only `memory_candidates` row with a generic
+`memory | profile_fact` target and returns a `LocalProposal`. Only an explicit
+user approval may materialize the candidate in `memories` or
+`personal_profile_facts`.
 
 The candidate lifecycle supports `create`, `supersede`, and `forget`, plus
-reject and undo. Candidate ownership, target-memory ownership, operation, and
-model-proposed identifiers are revalidated at apply time; a candidate cannot
-be confirmed twice or mutate another user's memory. Confirmed AI memory uses
-the fixed provenance `user_confirmed_ai` and confidence `0.95`. Cancelled
-proposals reject their candidate, failed applications remain retryable, and
-terminal candidates are pruned after 90 days per owner.
+reject and undo. Candidate ownership, active-domain policy, target ownership,
+operation, and model-proposed identifiers are revalidated at apply time; a
+candidate cannot be confirmed twice or mutate another user's record. Confirmed
+AI records use `authority=user_confirmed` and fixed provenance
+`user_confirmed_ai`; Memory confidence is `0.95`. Cancelled proposals reject
+their candidate, failed applications remain retryable, and terminal candidates
+are pruned after 90 days per owner.
 
 This flow is separate from conversation checkpoints. Checkpoints preserve
 bounded conversational continuity; approved Memory represents a durable user

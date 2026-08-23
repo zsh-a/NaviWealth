@@ -6,6 +6,7 @@ import 'package:naviwealth/core/ai/contracts/memory_candidate.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
+import 'package:naviwealth/core/ai/local/memory/memory_access_policy.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_candidate_store.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
@@ -50,6 +51,11 @@ void main() {
           memoryCandidateStoreProvider.overrideWith(
             (ref) async => candidateStore,
           ),
+          memoryAccessPolicyProvider.overrideWith(
+            (ref) => MemoryAccessPolicy.allowPrefixes(const <String>[
+              'user_confirmed_ai',
+            ]),
+          ),
         ],
       );
     });
@@ -69,6 +75,7 @@ void main() {
 
     test('stages candidate but does not write formal memory', () async {
       final output = await _invoke(container, const <String, Object?>{
+        'record_type': 'memory',
         'operation': 'create',
         'memory_kind': 'semantic',
         'title': '本地优先',
@@ -94,20 +101,42 @@ void main() {
       expect(candidate?.status, MemoryCandidateStatus.pending);
       expect(candidate?.proposalId, output['proposal_id']);
       expect(
-        await runtime.memoryStore.readMemory(payload['memory_id']! as String),
+        await runtime.memoryStore.readMemory(payload['record_id']! as String),
         isNull,
       );
     });
 
     test('forget requires an owned memory id', () async {
       final output = await _invoke(container, const <String, Object?>{
+        'record_type': 'memory',
         'operation': 'forget',
-        'target_memory_id': 'missing',
+        'target_record_id': 'missing',
         'reason': '用户要求忘记',
       });
 
       expect(output['code'], 'not_found');
       expect(await candidateStore.listPending(_owner), isEmpty);
+    });
+
+    test('stages a profile fact without changing current profile', () async {
+      final output = await _invoke(container, const <String, Object?>{
+        'record_type': 'profile_fact',
+        'operation': 'create',
+        'profile_kind': 'goal',
+        'key': 'cash_buffer_months',
+        'value': 12,
+        'summary': 'Keep a 12 month cash buffer.',
+        'reason': 'The user explicitly confirmed this goal.',
+      });
+
+      expect(output['status'], 'ready');
+      final payload = (output['payload']! as Map).cast<String, Object?>();
+      expect(payload['target_type'], 'profile_fact');
+      final candidate = await candidateStore.findById(
+        ownerUserId: _owner,
+        candidateId: payload['candidate_id']! as String,
+      );
+      expect(candidate?.targetType, MemoryCandidateTargetType.profileFact);
     });
   });
 }
