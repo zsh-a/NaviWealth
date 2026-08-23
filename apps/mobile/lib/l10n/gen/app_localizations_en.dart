@@ -14420,7 +14420,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionReviewDetailsSubtitle =>
-      'Agent run status and data freshness';
+      'Data freshness and technical run details';
 
   @override
   String get executionCreateActionTitle => 'New Action';

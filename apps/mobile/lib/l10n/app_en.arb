@@ -7277,7 +7277,7 @@
   "executionReviewRecentActivity": "Recent activity · {count}",
   "@executionReviewRecentActivity": { "placeholders": { "count": { "type": "int" } } },
   "executionReviewDetailsTitle": "Review details",
-  "executionReviewDetailsSubtitle": "Agent run status and data freshness",
+  "executionReviewDetailsSubtitle": "Data freshness and technical run details",
   "executionCreateActionTitle": "New Action",
   "executionCreatePlanTitle": "Add",
   "executionCreateProjectTitle": "New Plan",

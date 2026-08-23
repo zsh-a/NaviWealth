@@ -4271,7 +4271,7 @@
   "executionReviewWeekResultsTitle": "本周结果",
   "executionReviewRecentActivity": "近期活动 · {count}",
   "executionReviewDetailsTitle": "复盘详情",
-  "executionReviewDetailsSubtitle": "Agent 运行状态与数据新鲜度",
+  "executionReviewDetailsSubtitle": "数据新鲜度与技术运行详情",
   "executionCreateActionTitle": "新建行动",
   "executionCreatePlanTitle": "添加",
   "executionCreateProjectTitle": "新建计划",

@@ -3,17 +3,13 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/ai/agents/agent_artifact_routes.dart';
 import '../../core/ai/contracts/source_identity.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/life_signal.dart';
-import '../../features/health/agents/providers.dart' as agents;
 import '../../features/health/composition/health_route_paths.dart';
 import '../../features/health/ui/health_today_providers.dart';
-import '../../features/life/data/life_events_provider.dart';
 
 const _metricFamily = 'health:health_metrics';
-const _artifactFamily = 'health:agent_artifacts';
 
 DomainLifeSignalSlice healthLifeSignals(Ref ref, DateTime now) {
   final events = <LifeEvent>[];
@@ -51,12 +47,6 @@ DomainLifeSignalSlice healthLifeSignals(Ref ref, DateTime now) {
     );
   }
 
-  final results = ref.watch(agents.latestHealthReviewAgentResultsProvider);
-  if (_settled(results)) evaluated.add(_artifactFamily);
-  final artifacts = _settled(results) ? results.value?.artifacts : null;
-  if (artifacts != null && artifacts.isNotEmpty) {
-    events.add(lifeEventForAgentArtifact(artifacts.first));
-  }
   return DomainLifeSignalSlice(
     events: List<LifeEvent>.unmodifiable(events),
     evaluatedSourceFamilies: Set<String>.unmodifiable(evaluated),
@@ -65,7 +55,6 @@ DomainLifeSignalSlice healthLifeSignals(Ref ref, DateTime now) {
 
 String? healthSourceRoute(String family, String rowId) => switch (family) {
   _metricFamily => HealthRoutes.trend,
-  _artifactFamily => AgentArtifactRoutes.detail(rowId),
   _ => null,
 };
 

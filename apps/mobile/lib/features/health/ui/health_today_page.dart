@@ -13,7 +13,6 @@
 /// so HealthOS reads as the same app as Finance / Knowledge.
 library;
 
-import 'dart:async' show FutureOr;
 import 'dart:convert' show jsonDecode;
 
 import 'package:flutter/material.dart';
@@ -21,11 +20,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/ai/agents/agent_artifact.dart';
-import '../../../core/ai/agents/agent_artifact_routes.dart';
-import '../../../core/ai/agents/agent_run_controller.dart';
-import '../../../core/ai/agents/agent_run_store.dart';
-import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
 import '../../../core/format/formatters.dart';
@@ -33,9 +27,6 @@ import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../agents/providers.dart' as health_agent_providers;
-import '../agents/recovery_alert_agent.dart' show kRecoveryAlertAgentId;
-import '../agents/weekly_summary_agent.dart' show kWeeklySummaryAgentId;
 import '../composition/health_route_paths.dart';
 import '../data/health_metric_source.dart';
 import '../data/health_sync_service.dart';
@@ -124,7 +115,6 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
                       lastRefresh: _lastRefresh,
                     ),
                   ),
-                  const AdaptiveSummaryTile(child: _RecoveryAlertPanel()),
                   const AdaptiveSummaryTile(
                     role: AdaptiveSummaryTileRole.featured,
                     child: _MetricGrid(),
@@ -378,9 +368,6 @@ DateTime? _latestDate(DateTime? left, DateTime? right) {
 void _invalidateHealthSurfaces(WidgetRef ref) {
   ref.invalidate(health_data.healthSyncStatusProvider);
   ref.invalidate(healthTodaySnapshotProvider);
-  ref.invalidate(health_agent_providers.latestRecoveryAlertArtifactProvider);
-  ref.invalidate(health_agent_providers.latestRecoveryAlertRunProvider);
-  ref.invalidate(health_agent_providers.latestHealthReviewAgentResultsProvider);
 }
 
 /// Sticky residual for the recovery stage — icon + verdict + score.

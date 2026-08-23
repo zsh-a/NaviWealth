@@ -1,16 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/ai/agents/agent_artifact_routes.dart';
 import '../../core/ai/contracts/source_identity.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/life_signal.dart';
-import '../../features/knowledge/agents/providers.dart' as agents;
 import '../../features/knowledge/composition/knowledge_route_paths.dart';
 import '../../features/knowledge/data/providers.dart';
-import '../../features/life/data/life_events_provider.dart';
 
 const _noteFamily = 'know:knowledge_notes';
-const _artifactFamily = 'knowledge:agent_artifacts';
 
 DomainLifeSignalSlice knowledgeLifeSignals(Ref ref, DateTime now) {
   final events = <LifeEvent>[];
@@ -45,12 +41,6 @@ DomainLifeSignalSlice knowledgeLifeSignals(Ref ref, DateTime now) {
     );
   }
 
-  final results = ref.watch(agents.latestKnowledgeReviewResultsProvider);
-  if (_settled(results)) evaluated.add(_artifactFamily);
-  final artifacts = _settled(results) ? results.value?.artifacts : null;
-  if (artifacts != null && artifacts.isNotEmpty) {
-    events.add(lifeEventForAgentArtifact(artifacts.first));
-  }
   return DomainLifeSignalSlice(
     events: List<LifeEvent>.unmodifiable(events),
     evaluatedSourceFamilies: Set<String>.unmodifiable(evaluated),
@@ -58,9 +48,6 @@ DomainLifeSignalSlice knowledgeLifeSignals(Ref ref, DateTime now) {
 }
 
 String? knowledgeSourceRoute(String family, String rowId) {
-  if (family == _artifactFamily) {
-    return AgentArtifactRoutes.detail(rowId);
-  }
   if (family == _noteFamily && rowId == 'inbox') {
     return KnowledgeRoutes.inbox;
   }

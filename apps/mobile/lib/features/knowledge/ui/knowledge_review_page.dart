@@ -11,9 +11,6 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/ai/agents/agent_artifact_routes.dart';
-import '../../../core/ai/agents/agent_run_controller.dart';
-import '../../../core/ai/agents/ui/agent_results_panel.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
@@ -21,7 +18,6 @@ import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../agents/providers.dart' as knowledge_agent_providers;
 import '../application/knowledge_lifecycle_service.dart';
 import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
@@ -56,9 +52,6 @@ final _knowledgeReviewIsEmptyProvider = FutureProvider.autoDispose<bool>((
   final owner = await ref.watch(knowledgeOwnerUserIdProvider.future);
   final repo = await ref.watch(knowledgeRepositoryProvider.future);
   final triage = await ref.watch(inboxTriageRepositoryProvider.future);
-  final results = await ref.watch(
-    knowledge_agent_providers.latestKnowledgeReviewResultsProvider.future,
-  );
   final now = DateTime.now();
   final routines = await repo.listDueRoutines(
     ownerUserId: owner,
@@ -77,8 +70,7 @@ final _knowledgeReviewIsEmptyProvider = FutureProvider.autoDispose<bool>((
   return routines.isEmpty &&
       decisions.isEmpty &&
       !hasStaleAssumption &&
-      pending.every((record) => record.pending.isEmpty) &&
-      results.artifacts.isEmpty;
+      pending.every((record) => record.pending.isEmpty);
 });
 
 @visibleForTesting
@@ -164,7 +156,6 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage> {
                 _DueRoutinesCard(),
                 _DueReviewsCard(),
                 _StaleAssumptionsCard(),
-                _KnowledgeReviewAgentResultPanel(),
                 _KnowledgeReviewCompleteState(),
               ],
             ),
@@ -225,47 +216,12 @@ class _KnowledgeReviewCompleteState extends ConsumerWidget {
 Future<void> _refreshReview(WidgetRef ref) async {
   ref.invalidate(knowledgeRepositoryProvider);
   ref.invalidate(inboxTriageRepositoryProvider);
-  ref.invalidate(
-    knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
-  );
-  ref.invalidate(knowledge_agent_providers.latestKnowledgeReviewRunProvider);
   ref.read(aiSuggestionsRefreshProvider.notifier).state++;
   ref.read(_reviewActionsRefreshProvider.notifier).state++;
   await Future.wait([
     ref.read(knowledgeRepositoryProvider.future),
     ref.read(inboxTriageRepositoryProvider.future),
   ]);
-}
-
-class _KnowledgeReviewAgentResultPanel extends ConsumerWidget {
-  const _KnowledgeReviewAgentResultPanel();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final resultsAsync = ref.watch(
-      knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
-    );
-    // Signal-first Review surface: quiet while loading and when empty.
-    return AgentResultsPanel(
-      resultsAsync: resultsAsync,
-      showPlaceholderStates: false,
-      bottomGap: AppSpacing.s0,
-      onReload: () => ref.invalidate(
-        knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
-      ),
-      onOpen: (artifact) =>
-          context.push(AgentArtifactRoutes.detail(artifact.id)),
-      onRunAgain: (agentId) => _retryKnowledgeAgent(ref, agentId),
-    );
-  }
-}
-
-Future<void> _retryKnowledgeAgent(WidgetRef ref, String agentId) async {
-  final controller = await ref.read(agentRunControllerProvider.future);
-  await controller.runOnceById(agentId);
-  ref.invalidate(
-    knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
-  );
 }
 
 void _toggleReviewSelection(Set<String> selectedIds, String id) {

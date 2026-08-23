@@ -583,12 +583,18 @@ class _TraceEntryTile extends StatelessWidget {
   }
 }
 
+// The artifact is a transient drill-down. Replace it when continuing to a
+// related/evidence route so the originating domain shell remains the single
+// back-stack owner. A plain push can clone that shell with its existing page
+// key (https://github.com/flutter/flutter/issues/140586).
 void _openArtifactRoute(BuildContext context, String route) {
   final router = GoRouter.of(context);
   if (appSheetOverlayDepthListenable.value > 0) {
-    unawaited(closeSheetThen(context, () => router.push<void>(route)));
+    unawaited(
+      closeSheetThen(context, () => router.pushReplacement<void>(route)),
+    );
   } else {
-    unawaited(router.push<void>(route));
+    unawaited(router.pushReplacement<void>(route));
   }
 }
 
@@ -601,7 +607,7 @@ void _openEvidenceRoute(
 
   void push() {
     try {
-      unawaited(router.push<void>(route));
+      unawaited(router.pushReplacement<void>(route));
       record(true);
     } on Object {
       record(false);

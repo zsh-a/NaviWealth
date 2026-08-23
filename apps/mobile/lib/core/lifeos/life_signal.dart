@@ -97,7 +97,6 @@ enum LifeActionTemplate {
   reviewFinanceBudget,
   protectRecovery,
   reviewKnowledgeInbox,
-  reviewAgentInsight,
 }
 
 enum LifeSignalPriority { high, normal }
@@ -109,5 +108,4 @@ enum LifeEventTemplate {
   executionBlocked,
   executionDue,
   knowledgeInbox,
-  agentResult,
 }

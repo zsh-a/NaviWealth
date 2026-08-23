@@ -13669,7 +13669,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionReviewDetailsTitle => '复盘详情';
 
   @override
-  String get executionReviewDetailsSubtitle => 'Agent 运行状态与数据新鲜度';
+  String get executionReviewDetailsSubtitle => '数据新鲜度与技术运行详情';
 
   @override
   String get executionCreateActionTitle => '新建行动';

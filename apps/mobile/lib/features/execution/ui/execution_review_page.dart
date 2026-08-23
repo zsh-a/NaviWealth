@@ -3,17 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/ai/agents/agent_artifact_routes.dart';
-import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
-import '../../../core/ai/agents/ui/agent_results_panel.dart';
+import '../../../core/ai/attention/attention_item.dart';
+import '../../../core/ai/attention/ui/attention_group.dart';
+import '../../../core/auth/domain_scope.dart';
 import '../../../core/lifeos/action_outcome.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as execution_agent_providers;
-import '../agents/review_agent.dart' show kExecutionReviewAgentId;
 import '../composition/execution_route_paths.dart';
 import '../data/execution_repository.dart';
 import '../data/providers.dart';
@@ -24,6 +23,202 @@ import 'execution_delete_confirm.dart';
 import 'execution_progress_sheet.dart';
 import 'execution_source_route.dart';
 import 'execution_widgets.dart';
+
+final _executionAttentionProvider =
+    Provider.autoDispose<AsyncValue<_ExecutionAttentionSnapshot>>((ref) {
+      final actions = ref.watch(executionOpenActionsProvider);
+      final projects = ref.watch(executionProjectsProvider);
+      final commitments = ref.watch(executionCommitmentsProvider);
+      if (actions.hasError && !actions.hasValue) {
+        return AsyncValue.error(
+          actions.error!,
+          actions.stackTrace ?? StackTrace.current,
+        );
+      }
+      if (projects.hasError && !projects.hasValue) {
+        return AsyncValue.error(
+          projects.error!,
+          projects.stackTrace ?? StackTrace.current,
+        );
+      }
+      if (commitments.hasError && !commitments.hasValue) {
+        return AsyncValue.error(
+          commitments.error!,
+          commitments.stackTrace ?? StackTrace.current,
+        );
+      }
+      if ((actions.isLoading && !actions.hasValue) ||
+          (projects.isLoading && !projects.hasValue) ||
+          (commitments.isLoading && !commitments.hasValue)) {
+        return const AsyncValue.loading();
+      }
+      return AsyncValue.data(
+        _ExecutionAttentionSnapshot.build(
+          actions: actions.value ?? const <ExecutionAction>[],
+          projects: projects.value ?? const <ExecutionProject>[],
+          commitments: commitments.value ?? const <ExecutionCommitment>[],
+          now: DateTime.now(),
+        ),
+      );
+    });
+
+class _ExecutionAttentionSnapshot {
+  const _ExecutionAttentionSnapshot({
+    required this.actions,
+    required this.targets,
+  });
+
+  factory _ExecutionAttentionSnapshot.build({
+    required List<ExecutionAction> actions,
+    required List<ExecutionProject> projects,
+    required List<ExecutionCommitment> commitments,
+    required DateTime now,
+  }) {
+    final actionItems = <_ExecutionActionAttention>[];
+    for (final action in actions) {
+      final blocked = action.status == ExecutionActionStatus.blocked;
+      final due = action.isDue(now);
+      final stalled =
+          action.status == ExecutionActionStatus.doing &&
+          now.toUtc().difference(action.sync.updatedAt.toUtc()).inDays >= 7;
+      if (blocked || due || stalled) {
+        actionItems.add(
+          _ExecutionActionAttention(
+            action: action,
+            blocked: blocked,
+            due: due,
+            stalled: stalled,
+          ),
+        );
+      }
+    }
+    actionItems.sort((left, right) {
+      final leftRank = left.blocked
+          ? 0
+          : left.due
+          ? 1
+          : 2;
+      final rightRank = right.blocked
+          ? 0
+          : right.due
+          ? 1
+          : 2;
+      return leftRank.compareTo(rightRank);
+    });
+
+    final projectIdsWithActions = actions
+        .map((action) => action.projectId)
+        .whereType<String>()
+        .toSet();
+    final commitmentIdsWithActions = actions
+        .map((action) => action.commitmentId)
+        .whereType<String>()
+        .toSet();
+    final targetItems = <_ExecutionTargetAttention>[
+      for (final project in projects)
+        if (!projectIdsWithActions.contains(project.id) ||
+            _isTargetOverdue(project.targetDate, now))
+          _ExecutionTargetAttention.project(
+            project,
+            missingNextAction: !projectIdsWithActions.contains(project.id),
+            overdue: _isTargetOverdue(project.targetDate, now),
+          ),
+      for (final commitment in commitments)
+        if (!commitmentIdsWithActions.contains(commitment.id) ||
+            _isTargetOverdue(commitment.targetDate, now))
+          _ExecutionTargetAttention.commitment(
+            commitment,
+            missingNextAction: !commitmentIdsWithActions.contains(
+              commitment.id,
+            ),
+            overdue: _isTargetOverdue(commitment.targetDate, now),
+          ),
+    ];
+    targetItems.sort((left, right) {
+      final leftRank = left.overdue ? 0 : 1;
+      final rightRank = right.overdue ? 0 : 1;
+      return leftRank.compareTo(rightRank);
+    });
+    return _ExecutionAttentionSnapshot(
+      actions: List.unmodifiable(actionItems),
+      targets: List.unmodifiable(targetItems),
+    );
+  }
+
+  final List<_ExecutionActionAttention> actions;
+  final List<_ExecutionTargetAttention> targets;
+
+  int get count => actions.length + targets.length;
+
+  List<String> get projectsWithoutNextAction => targets
+      .where((item) => item.project != null && item.missingNextAction)
+      .map((item) => item.project!.id)
+      .toList(growable: false);
+
+  List<String> get commitmentsWithoutNextAction => targets
+      .where((item) => item.commitment != null && item.missingNextAction)
+      .map((item) => item.commitment!.id)
+      .toList(growable: false);
+}
+
+class _ExecutionActionAttention {
+  const _ExecutionActionAttention({
+    required this.action,
+    required this.blocked,
+    required this.due,
+    required this.stalled,
+  });
+
+  final ExecutionAction action;
+  final bool blocked;
+  final bool due;
+  final bool stalled;
+}
+
+class _ExecutionTargetAttention {
+  const _ExecutionTargetAttention._({
+    this.project,
+    this.commitment,
+    required this.missingNextAction,
+    required this.overdue,
+  });
+
+  factory _ExecutionTargetAttention.project(
+    ExecutionProject value, {
+    required bool missingNextAction,
+    required bool overdue,
+  }) => _ExecutionTargetAttention._(
+    project: value,
+    missingNextAction: missingNextAction,
+    overdue: overdue,
+  );
+
+  factory _ExecutionTargetAttention.commitment(
+    ExecutionCommitment value, {
+    required bool missingNextAction,
+    required bool overdue,
+  }) => _ExecutionTargetAttention._(
+    commitment: value,
+    missingNextAction: missingNextAction,
+    overdue: overdue,
+  );
+
+  final ExecutionProject? project;
+  final ExecutionCommitment? commitment;
+  final bool missingNextAction;
+  final bool overdue;
+
+  String get id => project?.id ?? commitment!.id;
+  String get title => project?.title ?? commitment!.title;
+  String get description => project?.description ?? commitment!.description;
+  DateTime? get targetDate => project?.targetDate ?? commitment?.targetDate;
+  String get route => project != null
+      ? ExecutionRoutes.project(project!.id)
+      : ExecutionRoutes.commitment(commitment!.id);
+}
+
+bool _isTargetOverdue(DateTime? target, DateTime now) =>
+    target != null && !target.toUtc().isAfter(now.toUtc());
 
 class ExecutionReviewPage extends ConsumerWidget {
   const ExecutionReviewPage({super.key});
@@ -43,6 +238,9 @@ class ExecutionReviewPage extends ConsumerWidget {
             ref.invalidate(executionRecentProgressProvider);
             ref.invalidate(executionClosedActionsProvider);
             ref.invalidate(executionReviewRelationsProvider);
+            ref.invalidate(executionOpenActionsProvider);
+            ref.invalidate(executionProjectsProvider);
+            ref.invalidate(executionCommitmentsProvider);
             await Future.wait([
               ref.read(executionRecentProgressProvider.future),
               ref.read(executionClosedActionsProvider.future),
@@ -71,15 +269,6 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
     final closedActionsAsync = ref.watch(executionClosedActionsProvider);
     final relations = ref.watch(executionReviewRelationsProvider).value;
     final outcomes = ref.watch(actionOutcomeSummariesProvider);
-    final attentionCount =
-        ref
-            .watch(
-              execution_agent_providers.latestExecutionReviewResultsProvider,
-            )
-            .value
-            ?.artifacts
-            .length ??
-        0;
     final error = progressAsync.error ?? closedActionsAsync.error;
     if (error != null) {
       return AppEmptyState.error(
@@ -111,15 +300,7 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
     final empty = entries.isEmpty && closedActions.isEmpty;
 
     final itemBuilders = <WidgetBuilder>[
-      (_) => ExecutionSectionHeader(
-        title: l10n.executionReviewNeedsAttentionTitle,
-        count: attentionCount,
-        icon: FLucideIcons.triangleAlert,
-      ),
-      (_) => const SizedBox(height: AppSpacing.s8),
-      (_) => const _ExecutionReviewAgentPanel(),
-      (_) => const SizedBox(height: AppSpacing.s8),
-      (_) => const _ReviewNextActionsBatch(),
+      (_) => const _ExecutionAttentionSection(),
       (_) => const SizedBox(height: AppSpacing.s20),
       (_) => ExecutionSectionHeader(
         title: l10n.executionReviewWeekResultsTitle,
@@ -256,6 +437,156 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
   }
 }
 
+class _ExecutionAttentionSection extends ConsumerWidget {
+  const _ExecutionAttentionSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final async = ref.watch(_executionAttentionProvider);
+    return async.when(
+      loading: () => const SizedBox.shrink(),
+      error: (error, stackTrace) => AppEmptyState.inline(
+        icon: FLucideIcons.triangleAlert,
+        title: userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'load execution attention',
+        ),
+        tone: AppEmptyStateTone.error,
+        retryLabel: l10n.commonRetry,
+        onRetry: () => ref.invalidate(_executionAttentionProvider),
+      ),
+      data: (snapshot) {
+        if (snapshot.count == 0) return const SizedBox.shrink();
+        final items = <AttentionItem>[
+          for (final entry in snapshot.actions)
+            _actionAttentionItem(context, l10n, entry),
+          for (final entry in snapshot.targets)
+            _targetAttentionItem(context, l10n, entry),
+        ];
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AttentionGroup(
+              title: l10n.executionReviewNeedsAttentionTitle,
+              items: items,
+              onOpen: (item) => showAttentionItemSheet(
+                context: context,
+                item: item,
+                evidenceTitle: l10n.agentResultEvidenceSection,
+                actionLabel: l10n.agentResultOpenRelatedPage,
+                onAction: () => context.push(item.route!),
+              ),
+            ),
+            if (snapshot.projectsWithoutNextAction.isNotEmpty ||
+                snapshot.commitmentsWithoutNextAction.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.s10),
+              _ReviewNextActionsBatch(
+                projectIds: snapshot.projectsWithoutNextAction,
+                commitmentIds: snapshot.commitmentsWithoutNextAction,
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  AttentionItem _actionAttentionItem(
+    BuildContext context,
+    AppLocalizations l10n,
+    _ExecutionActionAttention entry,
+  ) {
+    final action = entry.action;
+    final reasons = <String>[
+      if (entry.blocked) l10n.executionAgentReviewInsightBlockedTitle,
+      if (entry.due) l10n.executionAgentReviewInsightDueTitle,
+      if (entry.stalled) l10n.executionAgentReviewInsightStalledTitle,
+    ];
+    return AttentionItem(
+      id: 'execution:action:${action.id}',
+      domain: DomainScope.execution,
+      headline: action.title,
+      rationale: reasons.join(' · '),
+      severity: entry.blocked || entry.stalled
+          ? AttentionItemSeverity.warning
+          : AttentionItemSeverity.attention,
+      facts: <AttentionFact>[
+        AttentionFact(
+          label: l10n.executionStatusField,
+          value: executionStatusLabel(l10n, action.status),
+        ),
+        if (action.dueAt != null)
+          AttentionFact(
+            label: l10n.executionDueAtField,
+            value: executionDate(context, action.dueAt!),
+          ),
+      ],
+      evidence: <AttentionEvidence>[
+        AttentionEvidence(
+          label: l10n.executionActionField,
+          detail: action.note.trim().isEmpty ? null : action.note.trim(),
+          route: ExecutionRoutes.action(action.id),
+        ),
+      ],
+      route: ExecutionRoutes.action(action.id),
+      observedAt: action.sync.updatedAt,
+    );
+  }
+
+  AttentionItem _targetAttentionItem(
+    BuildContext context,
+    AppLocalizations l10n,
+    _ExecutionTargetAttention entry,
+  ) {
+    final reasons = <String>[
+      if (entry.overdue) l10n.executionAgentReviewInsightOverdueTargetsTitle,
+      if (entry.missingNextAction)
+        l10n.executionAgentReviewInsightNoNextActionTitle,
+    ];
+    return AttentionItem(
+      id: 'execution:${entry.project != null ? 'project' : 'commitment'}:${entry.id}',
+      domain: DomainScope.execution,
+      headline: entry.title,
+      rationale: reasons.join(' · '),
+      severity: entry.overdue
+          ? AttentionItemSeverity.warning
+          : AttentionItemSeverity.attention,
+      facts: <AttentionFact>[
+        AttentionFact(
+          label: entry.project != null
+              ? l10n.executionProjectField
+              : l10n.executionCommitmentField,
+          value: entry.missingNextAction
+              ? l10n.executionAgentReviewInsightNoNextActionTitle
+              : l10n.executionAgentReviewInsightOverdueTargetsTitle,
+        ),
+        if (entry.targetDate != null)
+          AttentionFact(
+            label: l10n.executionTargetDateField,
+            value: executionDate(context, entry.targetDate!),
+          ),
+      ],
+      evidence: <AttentionEvidence>[
+        AttentionEvidence(
+          label: entry.project != null
+              ? l10n.executionProjectField
+              : l10n.executionCommitmentField,
+          detail: entry.description.trim().isEmpty
+              ? null
+              : entry.description.trim(),
+          route: entry.route,
+        ),
+      ],
+      route: entry.route,
+      observedAt:
+          entry.project?.sync.updatedAt ?? entry.commitment?.sync.updatedAt,
+    );
+  }
+}
+
 class _ReviewDisclosure extends StatelessWidget {
   const _ReviewDisclosure({
     required this.icon,
@@ -318,7 +649,13 @@ class _ReviewDisclosure extends StatelessWidget {
 }
 
 class _ReviewNextActionsBatch extends ConsumerStatefulWidget {
-  const _ReviewNextActionsBatch();
+  const _ReviewNextActionsBatch({
+    required this.projectIds,
+    required this.commitmentIds,
+  });
+
+  final List<String> projectIds;
+  final List<String> commitmentIds;
 
   @override
   ConsumerState<_ReviewNextActionsBatch> createState() =>
@@ -329,25 +666,16 @@ class _ReviewNextActionsBatchState
     extends ConsumerState<_ReviewNextActionsBatch> {
   @override
   Widget build(BuildContext context) {
-    final artifact = ref
-        .watch(execution_agent_providers.latestExecutionReviewArtifactProvider)
-        .value;
-    final plan = artifact?.actions
-        .where((action) => action.kind == 'proposal')
-        .firstOrNull;
-    if (plan == null) return const SizedBox.shrink();
-    final projectIds = _stringIds(plan.payload['projects_without_next_action']);
-    final commitmentIds = _stringIds(
-      plan.payload['commitments_without_next_action'],
-    );
-    final count = projectIds.length + commitmentIds.length;
+    final count = widget.projectIds.length + widget.commitmentIds.length;
     if (count == 0) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
     return Align(
       alignment: Alignment.centerLeft,
       child: FButton(
-        onPress: () =>
-            _review(projectIds: projectIds, commitmentIds: commitmentIds),
+        onPress: () => _review(
+          projectIds: widget.projectIds,
+          commitmentIds: widget.commitmentIds,
+        ),
         child: Text(l10n.executionReviewDraftNextActions(count)),
       ),
     );
@@ -536,10 +864,6 @@ class _ReviewBatchDraftSheetState extends State<_ReviewBatchDraftSheet> {
   }
 }
 
-List<String> _stringIds(Object? value) => value is List
-    ? value.whereType<String>().toList(growable: false)
-    : const [];
-
 class _ReviewSummary extends StatelessWidget {
   const _ReviewSummary({required this.entries, required this.closedActions});
 
@@ -616,64 +940,6 @@ class _ExecutionReviewRunStatusState
       message: message,
     );
   }
-}
-
-class _ExecutionReviewAgentPanel extends ConsumerStatefulWidget {
-  const _ExecutionReviewAgentPanel();
-
-  @override
-  ConsumerState<_ExecutionReviewAgentPanel> createState() =>
-      _ExecutionReviewAgentPanelState();
-}
-
-class _ExecutionReviewAgentPanelState
-    extends ConsumerState<_ExecutionReviewAgentPanel> {
-  bool _running = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final resultsAsync = ref.watch(
-      execution_agent_providers.latestExecutionReviewResultsProvider,
-    );
-    // Signal-first Review surface: quiet while loading, CTA when empty.
-    return AgentResultsPanel(
-      resultsAsync: resultsAsync,
-      showPlaceholderStates: false,
-      onReload: () => ref.invalidate(
-        execution_agent_providers.latestExecutionReviewResultsProvider,
-      ),
-      onOpen: (artifact) =>
-          context.push(AgentArtifactRoutes.detail(artifact.id)),
-      onRunAgain: (_) => _retryExecutionReview(ref),
-      onGenerate: _running ? null : _runReview,
-      generating: _running,
-    );
-  }
-
-  Future<void> _runReview() async {
-    setState(() => _running = true);
-    try {
-      await _retryExecutionReview(ref);
-    } catch (error, stackTrace) {
-      if (mounted) {
-        AppMessenger.show(
-          context,
-          ToastKind.error,
-          userSafeErrorMessage(context, error, stackTrace: stackTrace),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _running = false);
-    }
-  }
-}
-
-Future<void> _retryExecutionReview(WidgetRef ref) async {
-  final controller = await ref.read(agentRunControllerProvider.future);
-  await controller.runOnceById(kExecutionReviewAgentId);
-  ref.invalidate(
-    execution_agent_providers.latestExecutionReviewResultsProvider,
-  );
 }
 
 String? _fallbackRelationLabel(String? id) {

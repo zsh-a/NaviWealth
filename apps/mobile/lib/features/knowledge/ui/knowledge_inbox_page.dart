@@ -76,57 +76,9 @@ class _InboxBody extends ConsumerWidget {
         primary: Column(
           children: [
             _InboxCaptureBar(),
-            _InboxTriageStatus(),
             Expanded(child: _NotesList()),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _InboxTriageStatus extends ConsumerWidget {
-  const _InboxTriageStatus();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final pending = ref.watch(_knowledgeInboxPendingSuggestionsProvider);
-    final count = pending.value ?? 0;
-    if (pending.hasError) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.s16,
-          AppSpacing.s4,
-          AppSpacing.s16,
-          AppSpacing.s4,
-        ),
-        child: AppStatusBanner(
-          compact: true,
-          kind: AppStatusKind.error,
-          icon: FLucideIcons.refreshCw,
-          message: l10n.knowledgeInboxSuggestionsLoadFailed,
-          onPress: () =>
-              ref.invalidate(_knowledgeInboxPendingSuggestionsProvider),
-        ),
-      );
-    }
-    if (pending.isLoading || count == 0) {
-      return const SizedBox.shrink();
-    }
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s16,
-        AppSpacing.s4,
-        AppSpacing.s16,
-        AppSpacing.s4,
-      ),
-      child: AppStatusBanner(
-        compact: true,
-        kind: AppStatusKind.info,
-        icon: FLucideIcons.sparkles,
-        message: l10n.knowledgeInboxSuggestionsPending(count),
-        onPress: () => context.push(KnowledgeRoutes.review),
       ),
     );
   }

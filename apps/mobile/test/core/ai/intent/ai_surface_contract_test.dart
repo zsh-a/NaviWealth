@@ -116,13 +116,14 @@ void main() {
     expect(contextualCapsule, contains('intent: intent'));
     expect(contextualCapsule, contains('AiContextChipScope.contextMapOf'));
 
-    final ambientPanel = File(
+    final financeHome = File(
       'lib/features/finance/home/ui/home_dashboard_body.dart',
     ).readAsStringSync();
-    expect(ambientPanel, contains('class FinanceAgentResultsPanel'));
-    // The ambient surface now mounts the legislated cross-domain panel
-    // (blueprint §8.5), which renders AgentResultsSection internally.
-    expect(ambientPanel, contains('AgentResultsPanel('));
+    // Finance attention is owned by the domain inbox. Agent artifacts remain
+    // available to the contextual chat rail, but are not rendered a second
+    // time as an ambient dashboard panel.
+    expect(financeHome, contains('FinancialInboxCard()'));
+    expect(financeHome, isNot(contains('AgentResultsPanel(')));
 
     final agentArtifactRail = File(
       'lib/features/finance/home/composition/finance_chat_rail_provider.dart',

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -77,4 +79,95 @@ void main() {
 
     expect(find.text('Portfolio page'), findsOneWidget);
   });
+
+  testWidgets(
+    'opens a related route already present below the artifact shell stack',
+    (tester) async {
+      const artifactId = 'knowledge-artifact-1';
+      const reviewPath = '/knowledge-review';
+      final artifact = AgentArtifact(
+        id: artifactId,
+        ownerUserId: 'user-1',
+        agentId: 'knowledge_review',
+        domain: 'knowledge',
+        kind: AgentArtifactKind.review,
+        severity: AgentArtifactSeverity.attention,
+        title: 'Knowledge review conclusion',
+        summary: 'One assumption needs another look.',
+        insights: const [
+          AgentInsight(
+            id: 'stale-assumption',
+            title: 'Stale assumption',
+            body: 'Review the original assumption and its evidence.',
+            route: reviewPath,
+          ),
+        ],
+        createdAt: DateTime.utc(2026, 8, 23),
+      );
+      final router = GoRouter(
+        initialLocation: reviewPath,
+        routes: [
+          ShellRoute(
+            builder: (_, _, child) => child,
+            routes: [
+              GoRoute(
+                path: AgentArtifactRoutes.detailPath,
+                builder: (_, state) => AgentArtifactPage(
+                  artifactId: state.pathParameters['artifactId']!,
+                ),
+              ),
+              StatefulShellRoute.indexedStack(
+                builder: (_, _, navigationShell) => navigationShell,
+                branches: [
+                  StatefulShellBranch(
+                    routes: [
+                      GoRoute(
+                        path: reviewPath,
+                        builder: (_, _) =>
+                            const Scaffold(body: Text('Knowledge review page')),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            agentArtifactProvider(
+              artifactId,
+            ).overrideWith((ref) async => artifact),
+          ],
+          child: MaterialApp.router(
+            theme: AppTheme.light(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: router,
+            builder: (context, child) =>
+                FTheme(data: FTheme.neutral.light.desktop, child: child!),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      unawaited(router.push<void>(AgentArtifactRoutes.detail(artifactId)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Stale assumption'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Open related page'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Knowledge review page'), findsOneWidget);
+
+      router.pop();
+      await tester.pumpAndSettle();
+      expect(find.text('Knowledge review page'), findsOneWidget);
+    },
+  );
 }

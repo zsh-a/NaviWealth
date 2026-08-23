@@ -1,20 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/ai/agents/agent_artifact_routes.dart';
 import '../../core/ai/contracts/source_identity.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/life_signal.dart';
 import '../../features/finance/activity/data/activity_feed_provider.dart';
-import '../../features/finance/agents/providers.dart' as agents;
 import '../../features/finance/cashflow/domain/budget_signal.dart';
 import '../../features/finance/composition/finance_route_paths.dart';
 import '../../features/finance/data/repositories/providers.dart';
 import '../../features/finance/domain/models/entry_kind.dart';
-import '../../features/life/data/life_events_provider.dart';
 
 const _journalFamily = 'fin:journal_entries';
 const _budgetFamily = 'fin:budgets';
-const _artifactFamily = 'finance:agent_artifacts';
 
 DomainLifeSignalSlice financeLifeSignals(Ref ref, DateTime now) {
   final events = <LifeEvent>[];
@@ -101,12 +97,6 @@ DomainLifeSignalSlice financeLifeSignals(Ref ref, DateTime now) {
     }
   }
 
-  final results = ref.watch(agents.latestFinanceAgentResultsProvider);
-  if (_settled(results)) evaluated.add(_artifactFamily);
-  final artifacts = _settled(results) ? results.value?.artifacts : null;
-  if (artifacts != null && artifacts.isNotEmpty) {
-    events.add(lifeEventForAgentArtifact(artifacts.first));
-  }
   return DomainLifeSignalSlice(
     events: List<LifeEvent>.unmodifiable(events),
     evaluatedSourceFamilies: Set<String>.unmodifiable(evaluated),
@@ -121,7 +111,6 @@ String? financeSourceRoute(String family, String rowId) {
     'fin:accounts' => FinanceRoutes.wealthAccount(rowId),
     'fin:assets' => FinanceRoutes.wealthAsset(rowId),
     'fin:liabilities' => FinanceRoutes.wealthLiability(rowId),
-    _artifactFamily => AgentArtifactRoutes.detail(rowId),
     _ => null,
   };
 }

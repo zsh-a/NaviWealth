@@ -112,11 +112,6 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
                   tone: AppBadgeTone.info,
                 ),
                 children: [
-                  Text(
-                    l10n.knowledgeAiSuggestionsSubtitle(pendingCount),
-                    style: context.captionStyle,
-                  ),
-                  const SizedBox(height: AppSpacing.s8),
                   for (final rec in list)
                     Padding(
                       padding: const EdgeInsets.only(top: AppSpacing.s8),

@@ -22,14 +22,8 @@ class _DashboardBodyContent extends ConsumerWidget {
     final activation = ref.watch(financeActivationProvider).value;
     final importConfirmed = ref.watch(financeImportConfirmedProvider);
     final activationDismissed = ref.watch(financeActivationDismissedProvider);
-    final agentResults = ref.watch(
-      finance_agent_providers.latestFinanceAgentResultsProvider,
-    );
     final showActivation =
         !activationDismissed && activation != null && !activation.isComplete;
-    final showAgentResults =
-        (agentResults.hasError && !agentResults.hasValue) ||
-        agentResults.value?.visibleEntries.isNotEmpty == true;
     final hasEstablishedData =
         snapshot?.isEmpty == false ||
         activation?.hasLedgerData == true ||
@@ -101,7 +95,6 @@ class _DashboardBodyContent extends ConsumerWidget {
             modules: [
               _HomeSummaryLayout(
                 showActivation: showActivation,
-                showAgentResults: showAgentResults,
                 quickActionMode: hasEstablishedData
                     ? HomeQuickActionMode.active
                     : HomeQuickActionMode.onboarding,
@@ -161,12 +154,10 @@ class _NetWorthStageError extends StatelessWidget {
 class _HomeSummaryLayout extends ConsumerWidget {
   const _HomeSummaryLayout({
     required this.showActivation,
-    required this.showAgentResults,
     required this.quickActionMode,
   });
 
   final bool showActivation;
-  final bool showAgentResults;
   final HomeQuickActionMode quickActionMode;
 
   @override
@@ -197,11 +188,6 @@ class _HomeSummaryLayout extends ConsumerWidget {
           role: AdaptiveSummaryTileRole.supporting,
           child: MoneyRunwayCard(),
         ),
-      if (showAgentResults)
-        const AdaptiveSummaryTile(
-          role: AdaptiveSummaryTileRole.featured,
-          child: FinanceAgentResultsPanel(showPlaceholderStates: false),
-        ),
       if (hasActivity)
         const AdaptiveSummaryTile(
           role: AdaptiveSummaryTileRole.continuous,
@@ -209,38 +195,5 @@ class _HomeSummaryLayout extends ConsumerWidget {
         ),
     ];
     return AdaptiveSummaryGrid(items: staggeredSummaryTiles(ordered));
-  }
-}
-
-class FinanceAgentResultsPanel extends ConsumerWidget {
-  const FinanceAgentResultsPanel({
-    super.key,
-    this.showPlaceholderStates = true,
-  });
-
-  final bool showPlaceholderStates;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final resultsAsync = ref.watch(
-      finance_agent_providers.latestFinanceAgentResultsProvider,
-    );
-    return AgentResultsPanel(
-      resultsAsync: resultsAsync,
-      showPlaceholderStates: showPlaceholderStates,
-      bottomGap: AppSpacing.s20,
-      onReload: () => ref.invalidate(
-        finance_agent_providers.latestFinanceAgentResultsProvider,
-      ),
-      onOpen: (artifact) =>
-          context.push(AgentArtifactRoutes.detail(artifact.id)),
-      onRunAgain: (agentId) async {
-        final controller = await ref.read(agentRunControllerProvider.future);
-        await controller.runOnceById(agentId);
-        ref.invalidate(
-          finance_agent_providers.latestFinanceAgentResultsProvider,
-        );
-      },
-    );
   }
 }

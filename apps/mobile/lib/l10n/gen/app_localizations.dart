@@ -24302,7 +24302,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionReviewDetailsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Agent run status and data freshness'**
+  /// **'Data freshness and technical run details'**
   String get executionReviewDetailsSubtitle;
 
   /// No description provided for @executionCreateActionTitle.

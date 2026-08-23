@@ -1,8 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
-import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
-import 'package:naviwealth/core/ai/contracts/source_identity.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/features/life/domain/life_event.dart';
@@ -36,42 +33,6 @@ final lifeSignalSnapshotProvider = Provider<LifeSignalSnapshot>((ref) {
     evaluatedSourceFamiliesByDomain: Map.unmodifiable(evaluatedByDomain),
   );
 });
-
-/// Adapts a persisted Agent result to the Life hub without discarding its
-/// stable identity. The artifact detail route owns conclusion-level routing;
-/// the optional Execution action remains a separate interaction.
-LifeEvent lifeEventForAgentArtifact(AgentArtifact artifact) {
-  final domain = DomainScope.tryParse(artifact.domain);
-  if (domain == null) {
-    throw ArgumentError.value(
-      artifact.domain,
-      'artifact.domain',
-      'Agent artifact domain must be a registered DomainScope wire value',
-    );
-  }
-  return LifeEvent(
-    id: 'sig-agent-${artifact.id}',
-    at: artifact.createdAt,
-    domain: domain,
-    template: LifeEventTemplate.agentResult,
-    params: [artifact.title.trim()],
-    routePath: AgentArtifactRoutes.detail(artifact.id),
-    actionSuggestion: LifeActionSuggestion(
-      template: LifeActionTemplate.reviewAgentInsight,
-      sourceRowFamily: '${domain.wire}:agent_artifacts',
-      sourceRowId: artifact.id,
-    ),
-    evidence: <SourceIdentity>[
-      SourceIdentity(
-        domain: domain,
-        rowFamily: '${domain.wire}:agent_artifacts',
-        rowId: artifact.id,
-        fingerprint:
-            artifact.traceId ?? artifact.createdAt.toUtc().toIso8601String(),
-      ),
-    ],
-  );
-}
 
 /// Signal-only Life feed candidates. Outcome evaluation consumes the snapshot
 /// above so loading/error absence can never masquerade as a cleared signal.
