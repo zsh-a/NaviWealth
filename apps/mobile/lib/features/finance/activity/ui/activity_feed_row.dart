@@ -73,6 +73,9 @@ class ActivityFeedEntryRow extends StatelessWidget {
     final iconData = activityKindIcon(classification.kind);
     final padH = compact ? AppSpacing.s14 : AppSpacing.s12;
     final padV = compact ? AppSpacing.s10 : AppSpacing.s12;
+    final colorAmountByDirection = activityKindUsesDirectionalAmountColor(
+      classification.kind,
+    );
 
     final semantics = <String>[
       title,
@@ -128,10 +131,8 @@ class ActivityFeedEntryRow extends StatelessWidget {
                       amount: headline.units,
                       unit: headline.unit,
                       formatters: formatter,
-                      colorBySign: classification.kind == EntryKind.income,
-                      color: classification.kind == EntryKind.income
-                          ? null
-                          : colors.foreground,
+                      colorBySign: colorAmountByDirection,
+                      color: colorAmountByDirection ? null : colors.foreground,
                       style: compact
                           ? context.labelStyle
                           : context.strongLabelStyle,
@@ -175,6 +176,21 @@ class ActivityFeedEntryRow extends StatelessWidget {
     );
   }
 }
+
+/// Whether a feed amount represents real cash-flow direction.
+///
+/// Income, expense, and debt payments change spendable cash and benefit from
+/// directional color. Trades, transfers, openings, and adjustments rearrange
+/// the balance sheet; coloring those by a single headline leg would falsely
+/// imply profit or loss.
+bool activityKindUsesDirectionalAmountColor(EntryKind kind) => switch (kind) {
+  EntryKind.income || EntryKind.expense || EntryKind.payment => true,
+  EntryKind.trade ||
+  EntryKind.transfer ||
+  EntryKind.adjustment ||
+  EntryKind.opening ||
+  EntryKind.other => false,
+};
 
 /// Grouped-surface chrome shared by Activity and raw journal timelines.
 ///

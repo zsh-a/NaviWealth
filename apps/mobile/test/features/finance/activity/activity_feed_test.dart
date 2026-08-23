@@ -13,6 +13,7 @@ import 'package:naviwealth/features/finance/activity/ui/activity_feed_row.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/entry_kind.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/journal_entry.dart';
 import 'package:naviwealth/features/finance/domain/models/posting.dart';
@@ -190,12 +191,16 @@ void main() {
     expect(find.text('Blue Bottle'), findsOneWidget);
     // Merchant is primary; note and category remain available as metadata.
     expect(find.textContaining('Coffee'), findsOneWidget);
+    final expenseAmount = find.descendant(
+      of: find.byType(ActivityFeedEntryRow),
+      matching: find.text('-¥32'),
+    );
+    expect(expenseAmount, findsOneWidget);
+    final expenseText = tester.widget<Text>(expenseAmount);
+    final expenseContext = tester.element(expenseAmount);
     expect(
-      find.descendant(
-        of: find.byType(ActivityFeedEntryRow),
-        matching: find.text('-¥32'),
-      ),
-      findsOneWidget,
+      expenseText.style?.color,
+      expenseContext.appTheme.market.roleForDelta(-1).fg,
     );
     expect(find.textContaining('Net cash flow'), findsOneWidget);
     // Day rows are virtualized with DecoratedBox chrome (not one
@@ -242,8 +247,27 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('-¥50.12'), findsOneWidget);
+    final tradeAmount = find.text('-¥50.12');
+    final tradeText = tester.widget<Text>(tradeAmount);
+    final tradeContext = tester.element(tradeAmount);
+    expect(tradeText.style?.color, tradeContext.theme.colors.foreground);
     expect(find.textContaining('50.123456'), findsNothing);
     expect(find.textContaining('1000.12345678 600519'), findsOneWidget);
+  });
+
+  test('directional amount colors are limited to real cash-flow kinds', () {
+    expect(activityKindUsesDirectionalAmountColor(EntryKind.income), isTrue);
+    expect(activityKindUsesDirectionalAmountColor(EntryKind.expense), isTrue);
+    expect(activityKindUsesDirectionalAmountColor(EntryKind.payment), isTrue);
+    for (final kind in const [
+      EntryKind.trade,
+      EntryKind.transfer,
+      EntryKind.adjustment,
+      EntryKind.opening,
+      EntryKind.other,
+    ]) {
+      expect(activityKindUsesDirectionalAmountColor(kind), isFalse);
+    }
   });
 
   testWidgets('uses a quiet automatic-pagination footer when more exists', (
