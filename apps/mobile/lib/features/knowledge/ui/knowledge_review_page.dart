@@ -172,7 +172,8 @@ class _KnowledgeReviewCompleteState extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final empty = ref.watch(_knowledgeReviewIsEmptyProvider);
-    return empty.when(
+    return empty.whenOrLoading(
+      context: context,
       loading: () => const Padding(
         padding: EdgeInsets.only(top: AppSpacing.s12),
         child: KnowledgeSectionSkeleton(),
