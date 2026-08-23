@@ -11,38 +11,25 @@ class _Section extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _SectionHeader(title: title),
+        // Quiet inset-grouped section label. Typography carries the
+        // hierarchy; no decorative accent is needed beside every settings
+        // group.
+        SectionHeader(
+          title: title,
+          titleStyle: context.captionLabelStyle,
+          titleColor: context.theme.colors.mutedForeground,
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s4,
+            AppSpacing.s20,
+            AppSpacing.s4,
+            AppSpacing.s8,
+          ),
+        ),
         AppGroupedSurface(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
           child: child,
         ),
       ],
-    );
-  }
-}
-
-/// Quiet inset-grouped section label. Typography carries the hierarchy; no
-/// decorative accent is needed beside every settings group.
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s4,
-        AppSpacing.s20,
-        AppSpacing.s4,
-        AppSpacing.s8,
-      ),
-      child: Text(
-        title,
-        style: context.captionLabelStyle.copyWith(
-          color: context.theme.colors.mutedForeground,
-        ),
-      ),
     );
   }
 }

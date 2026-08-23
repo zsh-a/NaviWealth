@@ -65,23 +65,14 @@ class _DashboardBodyContent extends ConsumerWidget {
           final l10n = AppLocalizations.of(context);
           return AppCollapsedSummaryBar(
             progress: progress,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.homeNetWorthTitle,
-                    style: context.mutedLabelStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                MoneyText(
-                  amount: currentSnapshot.netWorth.amount.toDouble(),
-                  currencyCode: currentSnapshot.baseCurrency,
-                  compact: true,
-                  style: TypographyTokens.numericTitleStrong,
-                ),
-              ],
+            child: AppCollapsedSummaryContent(
+              label: l10n.homeNetWorthTitle,
+              value: MoneyText(
+                amount: currentSnapshot.netWorth.amount.toDouble(),
+                currencyCode: currentSnapshot.baseCurrency,
+                compact: true,
+                style: TypographyTokens.numericTitleStrong,
+              ),
             ),
           );
         }
@@ -217,7 +208,7 @@ class _HomeSummaryLayout extends ConsumerWidget {
           child: ActivityTimelinePreview(),
         ),
     ];
-    return AdaptiveSummaryGrid(items: ordered);
+    return AdaptiveSummaryGrid(items: staggeredSummaryTiles(ordered));
   }
 }
 

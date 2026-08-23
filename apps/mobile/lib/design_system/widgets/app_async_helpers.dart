@@ -47,13 +47,14 @@ extension AsyncValueWhenX<T> on AsyncValue<T> {
   Widget whenOrLoading({
     required BuildContext context,
     required Widget Function(T data) data,
+    Widget Function()? loading,
     Widget Function(Object error, StackTrace stack)? error,
     VoidCallback? onRetry,
     bool skipLoadingOnRefresh = false,
     bool skipLoadingOnReload = false,
   }) {
     return when(
-      loading: () => kDefaultLoading,
+      loading: loading ?? () => kDefaultLoading,
       error:
           error ?? (e, st) => kDefaultError(context, e, st, onRetry: onRetry),
       data: data,

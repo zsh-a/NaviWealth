@@ -202,10 +202,11 @@ class _FeedListState extends ConsumerState<_FeedList> {
             ),
             _FeedDayHeaderItem(:final section) => Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-              child: _DaySectionHeader(
-                section: section,
-                formatter: widget.formatter,
-                l10n: widget.l10n,
+              child: _daySectionHeader(
+                context,
+                section,
+                widget.formatter,
+                widget.l10n,
               ),
             ),
             _FeedEntryItem(
@@ -519,34 +520,25 @@ class _SummaryMetric extends StatelessWidget {
   }
 }
 
-class _DaySectionHeader extends StatelessWidget {
-  const _DaySectionHeader({
-    required this.section,
-    required this.formatter,
-    required this.l10n,
-  });
-
-  final ActivityDaySection section;
-  final AppFormatters formatter;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    final title = _dayTitle(section.day, l10n, formatter);
-    final trailing = _dayTrailing(section, formatter, l10n);
-    return SectionHeader(
-      title: title,
-      trailing: trailing == null
-          ? null
-          : Text(trailing, style: context.captionStyle),
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s4,
-        AppSpacing.s8,
-        AppSpacing.s4,
-        AppSpacing.s8,
-      ),
-    );
-  }
+Widget _daySectionHeader(
+  BuildContext context,
+  ActivityDaySection section,
+  AppFormatters formatter,
+  AppLocalizations l10n,
+) {
+  final trailing = _dayTrailing(section, formatter, l10n);
+  return SectionHeader(
+    title: _dayTitle(section.day, l10n, formatter),
+    trailing: trailing == null
+        ? null
+        : Text(trailing, style: context.captionStyle),
+    padding: const EdgeInsets.fromLTRB(
+      AppSpacing.s4,
+      AppSpacing.s8,
+      AppSpacing.s4,
+      AppSpacing.s8,
+    ),
+  );
 }
 
 String _dayTitle(DateTime day, AppLocalizations l10n, AppFormatters formatter) {

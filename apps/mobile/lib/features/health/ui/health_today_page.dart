@@ -120,7 +120,7 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
                     _HealthRecoveryStickyBar(progress: progress)
               : null,
           summaryTiles: dataReady
-              ? [
+              ? staggeredSummaryTiles([
                   AdaptiveSummaryTile(
                     role: AdaptiveSummaryTileRole.continuous,
                     child: _HealthDataFreshnessBanner(
@@ -141,13 +141,13 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
                     child: _SourcesSection(),
                   ),
                   const AdaptiveSummaryTile(child: _WeeklySummaryPanel()),
-                ]
-              : const [
+                ])
+              : staggeredSummaryTiles(const [
                   AdaptiveSummaryTile(
                     role: AdaptiveSummaryTileRole.continuous,
                     child: _SourcesSection(),
                   ),
-                ],
+                ]),
         ),
       ),
     );
@@ -416,34 +416,26 @@ class _HealthRecoveryStickyBar extends ConsumerWidget {
 
     return AppCollapsedSummaryBar(
       progress: progress,
-      child: Row(
-        children: [
-          AppIconTile(
-            icon: RecoveryVerdict.icon(verdict),
-            color: accent,
-            size: 28,
-            iconSize: AppIconSizes.sm,
-            radius: AppRadius.sm,
-            backgroundOpacity: AppOpacity.subtle,
-            foregroundOpacity: 1,
-          ),
-          const SizedBox(width: AppSpacing.s10),
-          Expanded(
-            child: Text(
-              RecoveryVerdict.label(verdict, l10n),
-              style: context.labelStyle.copyWith(color: accent),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (scoreText != null)
-            Text(
-              scoreText,
-              style: TypographyTokens.numericTitleStrong.copyWith(
-                color: accent,
+      child: AppCollapsedSummaryContent(
+        leading: AppIconTile(
+          icon: RecoveryVerdict.icon(verdict),
+          color: accent,
+          size: 28,
+          iconSize: AppIconSizes.sm,
+          radius: AppRadius.sm,
+          backgroundOpacity: AppOpacity.subtle,
+          foregroundOpacity: 1,
+        ),
+        label: RecoveryVerdict.label(verdict, l10n),
+        labelStyle: context.labelStyle.copyWith(color: accent),
+        value: scoreText == null
+            ? null
+            : Text(
+                scoreText,
+                style: TypographyTokens.numericTitleStrong.copyWith(
+                  color: accent,
+                ),
               ),
-            ),
-        ],
       ),
     );
   }

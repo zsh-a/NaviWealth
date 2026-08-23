@@ -217,8 +217,12 @@ class KnowledgeTypeColors {
 /// Expense-category accent colours.
 ///
 /// Named tokens for expense UI (picker chips, list avatars, report pie).
-/// Hex values match `kExpenseCategorySeedHexByPath` in the Finance expense
-/// domain — keep both sides in lockstep when adjusting hues.
+/// Hex values mirror `kExpenseCategorySeedHexByPath` / `kExpenseColor*` in
+/// the Finance expense domain (`expense_category_seed_colors.dart`), which
+/// is the source of truth for DB seeds. Neither side may import the other
+/// (features must not import `ColorPalette`), so parity is enforced by
+/// `test/design_system/tokens/expense_category_colors_lockstep_test.dart` —
+/// adjust hues on both sides together.
 ///
 /// Palette rules:
 /// - every taxonomy leaf has a unique hex

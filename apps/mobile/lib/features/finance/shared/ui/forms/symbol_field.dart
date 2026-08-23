@@ -397,12 +397,12 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
                   shrinkWrap: true,
                   children: [
                     if (owned.isNotEmpty) ...[
-                      _SectionHeader(text: l10n.localSecuritiesMyAssets),
+                      _sectionHeader(context, l10n.localSecuritiesMyAssets),
                       for (final hit in owned)
                         _HitTile(hit: hit, onTap: () => _select(hit)),
                     ],
                     if (catalog.isNotEmpty) ...[
-                      _SectionHeader(text: l10n.localSecuritiesCatalog),
+                      _sectionHeader(context, l10n.localSecuritiesCatalog),
                       for (final hit in catalog)
                         _HitTile(hit: hit, onTap: () => _select(hit)),
                     ],
@@ -495,28 +495,19 @@ class _ReadOnlySummary extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s16,
-        AppSpacing.s12,
-        AppSpacing.s16,
-        AppSpacing.s4,
-      ),
-      child: Text(
-        text,
-        style: context.captionLabelStyle.copyWith(
-          color: context.theme.colors.primary,
-        ),
-      ),
-    );
-  }
+/// Quiet caption label for the picker result groups.
+Widget _sectionHeader(BuildContext context, String text) {
+  return SectionHeader(
+    title: text,
+    titleStyle: context.captionLabelStyle,
+    titleColor: context.theme.colors.primary,
+    padding: const EdgeInsets.fromLTRB(
+      AppSpacing.s16,
+      AppSpacing.s12,
+      AppSpacing.s16,
+      AppSpacing.s4,
+    ),
+  );
 }
 
 class _HitTile extends StatelessWidget {

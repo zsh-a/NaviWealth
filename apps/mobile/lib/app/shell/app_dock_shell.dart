@@ -46,7 +46,6 @@ class AppDockShell extends ConsumerStatefulWidget {
 class _AppDockShellState extends ConsumerState<AppDockShell> {
   late final ShareIntentService _shareIntentService;
   GoRouter? _router;
-  String _location = '';
   bool _routeSyncScheduled = false;
 
   @override
@@ -107,9 +106,6 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
         domain: nextDomain,
       );
     }
-    if (_location != location) {
-      setState(() => _location = location);
-    }
   }
 
   /// Root back-button strategy. Defers steps 1–3 ("pop a pushed page /
@@ -143,19 +139,28 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
 
   @override
   Widget build(BuildContext context) {
-    final location = _location.isEmpty
-        ? GoRouter.of(context).routeInformationProvider.value.uri.path
-        : _location;
-
     final specs = ref.watch(activeDomainShellsProvider);
-    final shellChild = specs.isEmpty
-        ? widget.child
-        : _DockChrome(specs: specs, activePath: location, child: widget.child);
+    final router = GoRouter.of(context);
+    return AnimatedBuilder(
+      animation: router.routerDelegate,
+      child: widget.child,
+      builder: (context, child) {
+        final location = router.routeInformationProvider.value.uri.path;
+        final routedChild = child ?? const SizedBox.shrink();
+        final shellChild = specs.isEmpty
+            ? routedChild
+            : _DockChrome(
+                specs: specs,
+                activePath: location,
+                child: routedChild,
+              );
 
-    return ExitConfirmingSystemBackScope(
-      onBack: _handleSystemBackBeforeExit,
-      disarmKey: location,
-      child: _ShellGlobalMounts(child: shellChild),
+        return ExitConfirmingSystemBackScope(
+          onBack: _handleSystemBackBeforeExit,
+          disarmKey: location,
+          child: _ShellGlobalMounts(child: shellChild),
+        );
+      },
     );
   }
 }

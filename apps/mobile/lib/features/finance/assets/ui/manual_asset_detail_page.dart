@@ -72,6 +72,12 @@ class _ManualAssetDetailPageState extends ConsumerState<ManualAssetDetailPage> {
         : accounts.where((item) => item.id == metadata.accountId).firstOrNull;
     return ObjectDetailScaffold(
       title: asset.name ?? asset.symbol,
+      // Hero pair for portfolio holding rows (`asset-{id}-name`), same tag
+      // as the equity detail header.
+      titleWidget: OptionalHero(
+        tag: 'asset-${asset.id}-name',
+        child: Text(asset.name ?? asset.symbol),
+      ),
       actions: [
         AppHeaderAction(
           key: const Key('manual-asset-edit-primary'),

@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import '../theme/app_theme_scope.dart';
 import '../tokens/color_palette.dart';
+import '../tokens/dimens_tokens.dart';
 
 /// Chart-only color sequence and theme-derived palette helpers.
 ///
@@ -51,7 +52,9 @@ class ChartPalette {
       // a chart explicitly opts into showGrid, but never competes with
       // the data trace. Replaces the old `colors.border` (~10–15%) which
       // turned the chart into a graph-paper grid.
-      gridLine: colors.foreground.withValues(alpha: isDark ? 0.06 : 0.04),
+      gridLine: colors.foreground.withValues(
+        alpha: isDark ? AppOpacity.faint : AppOpacity.whisper,
+      ),
       axisLabel: colors.mutedForeground,
       tooltipBackground: colors.foreground,
       tooltipForeground: colors.background,

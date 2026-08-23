@@ -186,15 +186,25 @@ class _HoldingRow extends StatelessWidget {
                     child: _TitleSubtitle(
                       title: holding.title,
                       subtitle: subtitle,
+                      // Hero source for the asset detail header
+                      // (`asset-{id}-name`); this list always pushes a new
+                      // route, so the pair never shares a navigator screen.
+                      heroTag: 'asset-${holding.assetId}-name',
                     ),
                   ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      AnimatedMoneyText(
-                        amount: holding.marketValueInBase.toDouble(),
-                        currencyCode: holding.baseCurrency,
-                        style: context.labelStyle,
+                      // Hero source for the detail's market-value metric
+                      // (`asset-{id}-value`); the target lives in
+                      // AssetHoldingCard on the equity detail page.
+                      OptionalHero(
+                        tag: 'asset-${holding.assetId}-value',
+                        child: AnimatedMoneyText(
+                          amount: holding.marketValueInBase.toDouble(),
+                          currencyCode: holding.baseCurrency,
+                          style: context.labelStyle,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.s4),
                       AnimatedMoneyText(
@@ -275,22 +285,32 @@ class _HoldingMetric extends StatelessWidget {
 }
 
 class _TitleSubtitle extends StatelessWidget {
-  const _TitleSubtitle({required this.title, required this.subtitle});
+  const _TitleSubtitle({
+    required this.title,
+    required this.subtitle,
+    this.heroTag,
+  });
 
   final String title;
   final String subtitle;
 
+  /// When set, the title flies to the pushed detail header via [OptionalHero].
+  final Object? heroTag;
+
   @override
   Widget build(BuildContext context) {
+    final titleText = Text(
+      title,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: context.labelStyle,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.labelStyle,
-        ),
+        heroTag == null
+            ? titleText
+            : OptionalHero(tag: heroTag!, child: titleText),
         const SizedBox(height: AppSpacing.s4),
         Text(
           subtitle,

@@ -2,7 +2,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../tokens/app_motion_policy.dart';
+import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
+import '../tokens/motion_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'axes.dart';
 import 'chart_palette.dart';
@@ -19,7 +22,7 @@ import 'empty_chart_placeholder.dart';
 ///
 /// Categories must align by index. Callers should pad missing categories
 /// with `value: 0` rather than relying on label matching.
-class NwBarChart extends StatelessWidget {
+class NwBarChart extends StatefulWidget {
   const NwBarChart({
     super.key,
     required this.series,
@@ -40,10 +43,19 @@ class NwBarChart extends StatelessWidget {
   final String? semanticLabel;
 
   @override
+  State<NwBarChart> createState() => _NwBarChartState();
+}
+
+class _NwBarChartState extends State<NwBarChart> {
+  // First-paint entrance reveal has completed (or was skipped).
+  bool _revealDone = false;
+
+  @override
   Widget build(BuildContext context) {
+    final series = widget.series;
     if (series.isEmpty || series.every((s) => s.data.isEmpty)) {
       return AspectRatio(
-        aspectRatio: aspectRatio,
+        aspectRatio: widget.aspectRatio,
         child: const EmptyChartPlaceholder(),
       );
     }
@@ -71,7 +83,7 @@ class NwBarChart extends StatelessWidget {
       double stackTop = 0;
       double stackBottom = 0;
       final rods = <BarChartRodData>[];
-      if (stacked) {
+      if (widget.stacked) {
         // Build a single rod with stacked items.
         final stackItems = <BarChartRodStackItem>[];
         for (var si = 0; si < series.length; si++) {
@@ -100,7 +112,7 @@ class NwBarChart extends StatelessWidget {
           BarChartRodData(
             toY: stackTop,
             fromY: stackBottom,
-            width: barWidth,
+            width: widget.barWidth,
             rodStackItems: stackItems,
             borderRadius: const BorderRadius.all(Radius.circular(AppRadius.sm)),
           ),
@@ -117,7 +129,7 @@ class NwBarChart extends StatelessWidget {
           rods.add(
             BarChartRodData(
               toY: datum.value,
-              width: barWidth,
+              width: widget.barWidth,
               color: color,
               borderRadius: const BorderRadius.all(
                 Radius.circular(AppRadius.sm),
@@ -136,32 +148,61 @@ class NwBarChart extends StatelessWidget {
     final chartMaxY = maxY + yPad;
     final yRange = (chartMaxY - chartMinY).abs();
 
-    return Semantics(
-      label: semanticLabel,
-      container: true,
-      child: AspectRatio(
-        aspectRatio: aspectRatio,
-        child: RepaintBoundary(
-          child: BarChart(
-            BarChartData(
-              barGroups: groups,
-              minY: chartMinY,
-              maxY: chartMaxY,
-              gridData: FlGridData(
-                show: yAxis.showGrid,
-                drawVerticalLine: false,
-                getDrawingHorizontalLine: (_) => FlLine(
-                  color: palette.gridLine,
-                  strokeWidth: AppStroke.hairline,
-                ),
-              ),
-              borderData: FlBorderData(show: false),
-              titlesData: _buildTitles(palette, yRange),
-              barTouchData: _buildTouchData(context, palette, colors),
+    Widget chartWidget = RepaintBoundary(
+      child: BarChart(
+        BarChartData(
+          barGroups: groups,
+          minY: chartMinY,
+          maxY: chartMaxY,
+          gridData: FlGridData(
+            show: widget.yAxis.showGrid,
+            drawVerticalLine: false,
+            getDrawingHorizontalLine: (_) => FlLine(
+              color: palette.gridLine,
+              strokeWidth: AppStroke.hairline,
             ),
           ),
+          borderData: FlBorderData(show: false),
+          titlesData: _buildTitles(palette, yRange),
+          barTouchData: _buildTouchData(context, palette, colors),
         ),
       ),
+    );
+
+    // First-data entrance: a one-shot left → right reveal, same contract as
+    // NwLineChart (decorative role, so reduce-motion skips the motion; value
+    // updates still morph through fl_chart's own tween). A ShaderMask (not a
+    // clip) keeps layout AND hit testing intact.
+    if (!_revealDone) {
+      chartWidget = TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: 0, end: 1),
+        duration: AppMotionPolicy.duration(
+          context,
+          Motion.chartEnter,
+          role: AppMotionRole.decorative,
+        ),
+        curve: Motion.emphasizedDecelerate,
+        onEnd: () => _revealDone = true,
+        builder: (context, t, child) => ShaderMask(
+          blendMode: BlendMode.dstIn,
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [
+              ColorPalette.neutral0,
+              ColorPalette.neutral0,
+              ColorPalette.neutral0.withValues(alpha: AppOpacity.transparent),
+            ],
+            stops: [0, t, (t + 0.08).clamp(0.0, 1.0)],
+          ).createShader(bounds),
+          child: child,
+        ),
+        child: chartWidget,
+      );
+    }
+
+    return Semantics(
+      label: widget.semanticLabel,
+      container: true,
+      child: AspectRatio(aspectRatio: widget.aspectRatio, child: chartWidget),
     );
   }
 
@@ -179,9 +220,9 @@ class NwBarChart extends StatelessWidget {
           getTitlesWidget: (value, meta) {
             final ci = value.toInt();
             // Use the first non-empty series for category labels.
-            final source = series.firstWhere(
+            final source = widget.series.firstWhere(
               (s) => s.data.length > ci,
-              orElse: () => series.first,
+              orElse: () => widget.series.first,
             );
             if (ci < 0 || ci >= source.data.length) return const SizedBox();
             return Padding(
@@ -205,14 +246,14 @@ class NwBarChart extends StatelessWidget {
               value: value,
               meta: meta,
               range: yRange,
-              maxLabels: yAxis.maxLabels,
+              maxLabels: widget.yAxis.maxLabels,
             )) {
               return const SizedBox.shrink();
             }
             return Padding(
               padding: const EdgeInsets.only(right: AppSpacing.s4),
               child: Text(
-                yAxis.formatValue(value),
+                widget.yAxis.formatValue(value),
                 style: labelStyle,
                 maxLines: 1,
                 softWrap: false,
@@ -231,7 +272,8 @@ class NwBarChart extends StatelessWidget {
     ChartPalette palette,
     List<Color> colors,
   ) {
-    final dd = drillDown;
+    final dd = widget.drillDown;
+    final series = widget.series;
     return BarTouchData(
       enabled: true,
       touchTooltipData: BarTouchTooltipData(
@@ -243,14 +285,14 @@ class NwBarChart extends StatelessWidget {
         ),
         getTooltipItem: (group, groupIndex, rod, rodIndex) {
           final ci = group.x;
-          final si = stacked ? rodIndex : rodIndex;
+          final si = widget.stacked ? rodIndex : rodIndex;
           if (si >= series.length) return null;
           final source = series[si];
           if (ci >= source.data.length) return null;
           final datum = source.data[ci];
           return BarTooltipItem(
             '${source.name}\n${datum.tooltipLabel ?? datum.label} · '
-            '${yAxis.formatValue(datum.value)}',
+            '${widget.yAxis.formatValue(datum.value)}',
             TypographyTokens.numericCaption.copyWith(
               color: palette.tooltipForeground,
             ),
@@ -266,7 +308,7 @@ class NwBarChart extends StatelessWidget {
         // For stacked, the touched stack item index identifies the series
         // that owns the segment under the finger; for grouped bars, the
         // rod index does the same.
-        final si = stacked
+        final si = widget.stacked
             ? (spot.touchedStackItemIndex >= 0 ? spot.touchedStackItemIndex : 0)
             : spot.touchedRodDataIndex;
         if (si >= series.length || ci >= series[si].data.length) return;

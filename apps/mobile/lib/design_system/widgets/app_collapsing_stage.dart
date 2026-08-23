@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 
 import '../theme/component_specs.dart';
 import '../tokens/dimens_tokens.dart';
+import '../tokens/text_style_presets.dart';
 import 'app_glass.dart';
 
 /// Default scroll distance (logical px) from rest to fully collapsed stage.
@@ -254,6 +255,67 @@ class AppCollapsedSummaryBar extends StatelessWidget {
   }
 }
 
+/// Standard content row for [AppCollapsedSummaryBar]: muted label on the
+/// leading edge, strong numeric value on the trailing edge, with an optional
+/// leading icon and an optional trailing status chip.
+///
+/// The value stays a widget so call sites keep their formatter of choice
+/// (`MoneyText`, `AnimatedValueText`, plain `Text`, …); pass it pre-styled
+/// with `TypographyTokens.numericTitleStrong`.
+class AppCollapsedSummaryContent extends StatelessWidget {
+  const AppCollapsedSummaryContent({
+    super.key,
+    required this.label,
+    this.value,
+    this.leading,
+    this.trailing,
+    this.labelStyle,
+  });
+
+  /// Leading-edge label. Defaults to the muted label style; override with
+  /// [labelStyle] for verdicts that carry a semantic colour.
+  final String label;
+
+  /// Trailing numeric content (typically styled `numericTitleStrong`).
+  final Widget? value;
+
+  /// Optional leading icon tile (e.g. a recovery verdict icon).
+  final Widget? leading;
+
+  /// Optional chip/badge rendered after [value] (e.g. a blocked-count badge).
+  final Widget? trailing;
+
+  final TextStyle? labelStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    final leading = this.leading;
+    final value = this.value;
+    final trailing = this.trailing;
+    return Row(
+      children: [
+        if (leading != null) ...[
+          leading,
+          const SizedBox(width: AppSpacing.s10),
+        ],
+        Expanded(
+          child: Text(
+            label,
+            style: labelStyle ?? context.mutedLabelStyle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        ?value,
+        if (trailing != null) ...[
+          const SizedBox(width: AppSpacing.s8),
+          trailing,
+        ],
+      ],
+    );
+  }
+}
+
 /// Sticky residual surface — the compact counterpart of the floating dock.
 class _StickyGlassChrome extends StatelessWidget {
   const _StickyGlassChrome({required this.child, required this.padding});
@@ -265,6 +327,9 @@ class _StickyGlassChrome extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppGlassSurface(
       role: AppGlassRole.sticky,
+      // Sticky chrome remains visible while its backdrop scrolls. Avoid a
+      // per-frame blur pass; the raised fill and shadow retain separation.
+      frosted: false,
       borderRadius: BorderRadius.circular(AppRadius.lg),
       boxShadow: AppShadow.elevation2,
       padding: padding,

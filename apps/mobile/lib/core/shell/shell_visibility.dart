@@ -38,11 +38,13 @@ bool isShellTabPathActive({
   return routePath == activeTabPath || activeTabPath.startsWith('$routePath/');
 }
 
-/// Unmounts [child] while its shell tab is offstage so Riverpod watches and
-/// animations stop. When the tab becomes active again, [child] remounts.
+/// Keeps [child] mounted while its indexed-stack branch is offstage.
 ///
-/// Local [State] above this widget (page-level controllers) is preserved by
-/// the outer indexed stack; only the gated subtree tears down.
+/// Replacing the live subtree with a placeholder used to dispose list state,
+/// auto-dispose providers, and chart caches on every tab switch. The retained
+/// subtree is hidden and has tickers disabled instead, so returning to a tab is
+/// a warm reveal. The cheap [placeholder] remains available to standalone
+/// harnesses that drive this gate without an outer indexed stack.
 class ShellTabPause extends ConsumerWidget {
   const ShellTabPause({
     super.key,
@@ -54,7 +56,7 @@ class ShellTabPause extends ConsumerWidget {
   /// Tab root path this surface belongs to (e.g. [FinanceRoutes.home]).
   final String routePath;
 
-  /// Live tree — only mounted while the tab is active.
+  /// Live tree retained across active and inactive tab states.
   final Widget child;
 
   /// Shown while offstage. Keep this cheap (no providers / charts).
@@ -80,10 +82,16 @@ class ShellTabPause extends ConsumerWidget {
   }
 
   Widget _buildForActive(bool active) {
-    if (!active) {
-      return TickerMode(enabled: false, child: placeholder);
-    }
-    return child;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Offstage(
+          offstage: !active,
+          child: TickerMode(enabled: active, child: child),
+        ),
+        if (!active) placeholder,
+      ],
+    );
   }
 }
 

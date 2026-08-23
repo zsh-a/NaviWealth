@@ -65,6 +65,10 @@ class FloatingGlassNavBar extends StatelessWidget {
         final compactAssistant =
             constraints.maxWidth < _kAssistantLabelBreakpoint;
         return AppGlassSurface(
+          // This surface sits above continuously moving list content. A live
+          // BackdropFilter must resample that content on every scroll frame,
+          // so use the same glass material hierarchy with an opaque fill.
+          frosted: false,
           borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: AppShadow.nav,
           padding: const EdgeInsets.symmetric(

@@ -31,7 +31,7 @@ class BriefScaffold extends StatelessWidget {
     this.secondary = const <Widget>[],
     this.padding,
     this.atmosphere = true,
-    this.stagger = true,
+    this.stagger = false,
     this.onRefresh,
     this.stickyBuilder,
     this.stickyPadding,

@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 
 import '../tokens/dimens_tokens.dart';
+import '../tokens/motion_tokens.dart';
+import 'fade_slide_in.dart';
 
 /// A content-ordered Bento layout for bounded overview modules.
 ///
@@ -128,6 +130,27 @@ class AdaptiveSummaryTile {
 
   final Widget child;
   final AdaptiveSummaryTileRole role;
+}
+
+/// Wraps each tile's child in a staggered one-shot [FadeSlideIn] entrance on
+/// the shared [Motion] cadence, preserving roles and order.
+///
+/// For tab-root brief surfaces whose first screen should cascade in rather
+/// than pop. The entrance is decorative: it plays once per tile mount, never
+/// replays on rebuild, and is skipped outright under reduce-motion.
+List<AdaptiveSummaryTile> staggeredSummaryTiles(
+  List<AdaptiveSummaryTile> tiles,
+) {
+  return [
+    for (var i = 0; i < tiles.length; i++)
+      AdaptiveSummaryTile(
+        role: tiles[i].role,
+        child: FadeSlideIn(
+          delay: Motion.staggerDelayFor(i, tiles.length),
+          child: tiles[i].child,
+        ),
+      ),
+  ];
 }
 
 /// Content priority supplied by a feature; column spans remain design-system

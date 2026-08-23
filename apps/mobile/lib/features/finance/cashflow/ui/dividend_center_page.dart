@@ -104,13 +104,6 @@ class _DividendCenterBody extends ConsumerWidget {
             now: ref.watch(dividendCenterNowProvider),
             heldAssetIds: heldIds,
           );
-    final resilience = const DividendResilienceService().analyze(
-      events: snapshot.events,
-      now: ref.watch(dividendCenterNowProvider),
-      corporateActions: ref.watch(dividendForecastDeclaredActionsProvider),
-      excludedEventCount: snapshot.fxExclusions.length,
-    );
-
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         AppSpacing.s16,
@@ -148,8 +141,7 @@ class _DividendCenterBody extends ConsumerWidget {
             ] else ...[
               _KpiGrid(snapshot: snapshot),
               const SizedBox(height: AppSpacing.s16),
-              _DividendResilienceSection(
-                report: resilience,
+              _DividendResilienceAsyncSection(
                 currency: snapshot.baseCurrency,
                 focusAssetId: focusAssetId,
               ),
@@ -162,6 +154,60 @@ class _DividendCenterBody extends ConsumerWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Keeps the isolate-backed result scoped to this section. Completing the
+/// analysis should not rebuild the KPI, forecast, ranking, and timeline trees
+/// around it, and empty dividend centers never mount this consumer at all.
+class _DividendResilienceAsyncSection extends ConsumerWidget {
+  const _DividendResilienceAsyncSection({
+    required this.currency,
+    required this.focusAssetId,
+  });
+
+  final String currency;
+  final String? focusAssetId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return ref
+        .watch(dividendResilienceProvider)
+        .whenOrLoading(
+          context: context,
+          loading: () => const _DividendResilienceSkeleton(),
+          error: (_, _) => AppStatusBanner(
+            kind: AppStatusKind.warning,
+            message: l10n.commonLoadFailed,
+          ),
+          data: (resilience) => _DividendResilienceSection(
+            report: resilience,
+            currency: currency,
+            focusAssetId: focusAssetId,
+          ),
+        );
+  }
+}
+
+class _DividendResilienceSkeleton extends StatelessWidget {
+  const _DividendResilienceSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SkeletonCard(
+      padding: EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SkeletonBox(width: 160, height: 16, radius: AppRadius.sm),
+          SizedBox(height: AppSpacing.s12),
+          SkeletonBox(height: AppChartHeights.compact, radius: AppRadius.sm),
+          SizedBox(height: AppSpacing.s12),
+          SkeletonBox(width: 220, height: 14, radius: AppRadius.sm),
+        ],
       ),
     );
   }

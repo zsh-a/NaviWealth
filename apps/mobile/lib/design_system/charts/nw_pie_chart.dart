@@ -5,8 +5,10 @@ import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../l10n/gen/app_localizations.dart';
+import '../tokens/app_motion_policy.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
+import '../tokens/motion_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import '../widgets/app_tappable.dart';
 import 'chart_palette.dart';
@@ -64,6 +66,9 @@ class NwPieChart extends StatefulWidget {
 
 class _NwPieChartState extends State<NwPieChart> {
   int _highlightedIndex = -1;
+
+  // First-paint entrance reveal has completed (or was skipped).
+  bool _revealDone = false;
 
   // Cache NumberFormat — constructing it is expensive and unnecessary
   // on every frame during touch drag.
@@ -137,6 +142,39 @@ class _NwPieChartState extends State<NwPieChart> {
       ],
     );
 
+    // First-data entrance: a one-shot radial draw-in from the center, the
+    // donut-shaped counterpart of NwLineChart's left → right reveal
+    // (decorative role, so reduce-motion skips the motion; value updates
+    // still morph through fl_chart's own tween). A ShaderMask (not a clip)
+    // keeps layout AND hit testing intact.
+    final revealedChart = _revealDone
+        ? chartWidget
+        : TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: 1),
+            duration: AppMotionPolicy.duration(
+              context,
+              Motion.chartEnter,
+              role: AppMotionRole.decorative,
+            ),
+            curve: Motion.emphasizedDecelerate,
+            onEnd: () => _revealDone = true,
+            builder: (context, t, child) => ShaderMask(
+              blendMode: BlendMode.dstIn,
+              shaderCallback: (bounds) => RadialGradient(
+                colors: [
+                  ColorPalette.neutral0,
+                  ColorPalette.neutral0,
+                  ColorPalette.neutral0.withValues(
+                    alpha: AppOpacity.transparent,
+                  ),
+                ],
+                stops: [0, t, (t + 0.08).clamp(0.0, 1.0)],
+              ).createShader(bounds),
+              child: child,
+            ),
+            child: chartWidget,
+          );
+
     final legend = widget.legendBuilder?.call(
       context,
       widget.slices,
@@ -146,10 +184,10 @@ class _NwPieChartState extends State<NwPieChart> {
     final content = AspectRatio(
       aspectRatio: widget.aspectRatio,
       child: legend == null
-          ? chartWidget
+          ? revealedChart
           : Row(
               children: [
-                Expanded(child: chartWidget),
+                Expanded(child: revealedChart),
                 legend,
               ],
             ),

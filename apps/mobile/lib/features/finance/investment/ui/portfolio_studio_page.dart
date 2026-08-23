@@ -552,6 +552,9 @@ class _AllocationPathRow extends StatelessWidget {
   }
 }
 
+/// Studio-local quiet header: small title + hint + optional trailing action.
+/// Thin wrapper over the canonical [SectionHeader] so the studio pages share
+/// the standard header chrome.
 class _StudioSectionHeader extends StatelessWidget {
   const _StudioSectionHeader({
     required this.title,
@@ -565,21 +568,14 @@ class _StudioSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return SectionHeader(
+      title: title,
+      subtitle: subtitle,
+      titleStyle: context.theme.typography.body.sm,
+      subtitleStyle: context.captionStyle,
+      trailing: action,
       crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: context.theme.typography.body.sm),
-              const SizedBox(height: AppSpacing.s4),
-              Text(subtitle, style: context.captionStyle),
-            ],
-          ),
-        ),
-        ?action,
-      ],
+      padding: EdgeInsets.zero,
     );
   }
 }

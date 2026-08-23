@@ -118,67 +118,67 @@ class _RecurringTransactionsPageState
   }
 }
 
-class _RecurringList extends ConsumerWidget {
+class _RecurringList extends StatelessWidget {
   const _RecurringList({required this.rules});
 
   final List<RecurringTransaction> rules;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return SingleChildScrollView(
+  Widget build(BuildContext context) {
+    return AdaptiveContentFrame(
+      maxWidth: AdaptiveMaxWidth.page,
+      expandSinglePrimary: true,
       padding: EdgeInsets.fromLTRB(
         AppSpacing.s16,
         AppSpacing.s16,
         AppSpacing.s16,
         AppSpacing.s16 + MediaQuery.paddingOf(context).bottom,
       ),
-      child: AdaptiveContentFrame(
-        maxWidth: AdaptiveMaxWidth.page,
+      primary: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.zero,
-        primary: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var i = 0; i < rules.length; i++) ...[
-              if (i != 0) const SizedBox(height: AppSpacing.s12),
-              _RecurringRow(rule: rules[i]),
-            ],
-          ],
-        ),
+        itemCount: rules.length,
+        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s12),
+        itemBuilder: (context, index) => _RecurringRow(rule: rules[index]),
       ),
     );
   }
 }
 
-class _RecurringRow extends ConsumerWidget {
+class _RecurringRow extends ConsumerStatefulWidget {
   const _RecurringRow({required this.rule});
 
   final RecurringTransaction rule;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_RecurringRow> createState() => _RecurringRowState();
+}
+
+class _RecurringRowState extends ConsumerState<_RecurringRow> {
+  late _RecurringRowData _data = _RecurringRowData.parse(widget.rule);
+
+  @override
+  void didUpdateWidget(covariant _RecurringRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.rule.templateJournalBuildJson !=
+            widget.rule.templateJournalBuildJson ||
+        oldWidget.rule.rrule != widget.rule.rrule) {
+      _data = _RecurringRowData.parse(widget.rule);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rule = widget.rule;
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final muted = context.theme.colors.mutedForeground;
-    final completed = _isCompleted(rule);
-
-    String title;
-    Decimal? signedAmount;
-    String amountUnit = '';
-    try {
-      final template = JournalBuildTemplateCodec.decode(
-        rule.templateJournalBuildJson,
-      );
-      final cash = template.postings.isNotEmpty
-          ? template.postings.first
-          : null;
-      title = template.entry.narration.trim().isEmpty
-          ? l10n.recurringDefaultNarration
-          : template.entry.narration;
-      signedAmount = cash?.units;
-      amountUnit = cash?.unit ?? '';
-    } catch (_) {
-      title = l10n.recurringTemplateCorrupt;
-    }
+    final completed = _isCompleted(rule, _data.recurrence);
+    final title = _data.templateCorrupt
+        ? l10n.recurringTemplateCorrupt
+        : _data.narration.trim().isEmpty
+        ? l10n.recurringDefaultNarration
+        : _data.narration;
 
     return SoftCard.raised(
       onPress: () => showRecurringTransactionForm(context, ref, existing: rule),
@@ -213,7 +213,7 @@ class _RecurringRow extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.s4),
                 Text(
                   [
-                    _describeRecurrence(l10n, rule.rrule),
+                    _describeRecurrence(l10n, rule.rrule, _data.recurrence),
                     if (rule.enabled)
                       l10n.recurringNextDue(formatters.date(rule.nextDueAt)),
                   ].join(' · '),
@@ -225,10 +225,10 @@ class _RecurringRow extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.s12),
-          if (signedAmount != null)
+          if (_data.signedAmount != null)
             SignedMoneyText(
-              amount: signedAmount,
-              unit: amountUnit,
+              amount: _data.signedAmount,
+              unit: _data.amountUnit,
               formatters: formatters,
               style: context.strongLabelStyle,
             ),
@@ -305,6 +305,53 @@ class _RecurringRow extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _RecurringRowData {
+  const _RecurringRowData({
+    required this.narration,
+    required this.signedAmount,
+    required this.amountUnit,
+    required this.recurrence,
+    required this.templateCorrupt,
+  });
+
+  factory _RecurringRowData.parse(RecurringTransaction rule) {
+    RecurrenceRule? recurrence;
+    try {
+      recurrence = const RecurrenceEngine().parse(rule.rrule);
+    } catch (_) {
+      // Preserve the raw RRULE in the UI when parsing fails.
+    }
+
+    try {
+      final template = JournalBuildTemplateCodec.decode(
+        rule.templateJournalBuildJson,
+      );
+      final cash = template.postings.isEmpty ? null : template.postings.first;
+      return _RecurringRowData(
+        narration: template.entry.narration,
+        signedAmount: cash?.units,
+        amountUnit: cash?.unit ?? '',
+        recurrence: recurrence,
+        templateCorrupt: false,
+      );
+    } catch (_) {
+      return _RecurringRowData(
+        narration: '',
+        signedAmount: null,
+        amountUnit: '',
+        recurrence: recurrence,
+        templateCorrupt: true,
+      );
+    }
+  }
+
+  final String narration;
+  final Decimal? signedAmount;
+  final String amountUnit;
+  final RecurrenceRule? recurrence;
+  final bool templateCorrupt;
 }
 
 Future<void> _disableRule(
@@ -445,13 +492,12 @@ Future<void> _restoreDeletedRule(
   }
 }
 
-String _describeRecurrence(AppLocalizations l10n, String rrule) {
-  final RecurrenceRule rule;
-  try {
-    rule = const RecurrenceEngine().parse(rrule);
-  } catch (_) {
-    return rrule;
-  }
+String _describeRecurrence(
+  AppLocalizations l10n,
+  String rrule,
+  RecurrenceRule? rule,
+) {
+  if (rule == null) return rrule;
   final base = switch (rule.frequency) {
     RecurrenceFrequency.daily => l10n.recurringEveryDay(rule.interval),
     RecurrenceFrequency.weekly => l10n.recurringEveryWeek(rule.interval),
@@ -472,16 +518,12 @@ String _describeRecurrence(AppLocalizations l10n, String rrule) {
   return parts.join(' · ');
 }
 
-bool _isCompleted(RecurringTransaction rule) {
-  try {
-    final until = const RecurrenceEngine().parse(rule.rrule).until;
-    if (until == null) return false;
-    final now = DateTime.now().toUtc();
-    final today = DateTime.utc(now.year, now.month, now.day);
-    return rule.nextDueAt.isAfter(until) || until.isBefore(today);
-  } catch (_) {
-    return false;
-  }
+bool _isCompleted(RecurringTransaction rule, RecurrenceRule? recurrence) {
+  final until = recurrence?.until;
+  if (until == null) return false;
+  final now = DateTime.now().toUtc();
+  final today = DateTime.utc(now.year, now.month, now.day);
+  return rule.nextDueAt.isAfter(until) || until.isBefore(today);
 }
 
 class _RecurringSkeleton extends StatelessWidget {

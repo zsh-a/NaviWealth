@@ -183,7 +183,11 @@ void main() {
         .reduce((a, b) => a > b ? a : b);
     expect(shown, 1);
     expect(find.byType(AppGlassSurface), findsOneWidget);
-    expect(find.byType(BackdropFilter), findsOneWidget);
+    expect(find.byType(BackdropFilter), findsNothing);
+    expect(
+      tester.widget<AppGlassSurface>(find.byType(AppGlassSurface)).frosted,
+      isFalse,
+    );
   });
 
   test('appScrollCollapseProgress clamps into 0–1', () {

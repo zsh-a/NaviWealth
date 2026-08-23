@@ -780,7 +780,19 @@ class PlanPageObject {
   Future<void> _openExploreAction(String label) async {
     var action = find.text(label).hitTestable();
     if (action.evaluate().isEmpty) {
-      final explore = find.text('Add or explore').hitTestable();
+      // The plan hub is a lazy brief list: scroll the section into view
+      // before falling back to the "Planning tools" action menu.
+      final scrollable = find.byType(Scrollable).hitTestable().first;
+      await tester.scrollUntilVisible(
+        find.text(label),
+        200,
+        scrollable: scrollable,
+      );
+      await settle(tester);
+      action = find.text(label).hitTestable();
+    }
+    if (action.evaluate().isEmpty) {
+      final explore = find.text('Planning tools').hitTestable();
       expect(explore, findsOneWidget, reason: 'plan actions menu missing');
       await tester.ensureVisible(explore);
       await tester.tap(explore);

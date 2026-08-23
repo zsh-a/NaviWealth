@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -11,6 +12,7 @@ import 'package:naviwealth/features/finance/cashflow/data/dividend_forecast_repo
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_event.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_kind.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/dividend_center.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/dividend_resilience.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/dividend_center_page.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
@@ -52,12 +54,22 @@ void main() {
               confidence: DividendForecastConfidence.low,
             ),
           ),
+          dividendResilienceProvider.overrideWith(
+            (_) async => const DividendResilienceService().analyze(
+              events: const [],
+              now: DateTime.utc(2026, 7, 1),
+            ),
+          ),
         ],
         child: MaterialApp.router(
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: router,
+          builder: (context, child) => FTheme(
+            data: FTheme.neutral.light.desktop,
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
     );
@@ -154,6 +166,12 @@ void main() {
               meanRelativeError: 0.2,
             ),
           ),
+          dividendResilienceProvider.overrideWith(
+            (_) async => const DividendResilienceService().analyze(
+              events: snapshot.events,
+              now: DateTime.utc(2026, 7, 1),
+            ),
+          ),
         ],
         child: MaterialApp(
           theme: AppTheme.light(),
@@ -161,6 +179,10 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en', 'US'),
           home: const DividendCenterPage(focusAssetId: 'us:AAPL'),
+          builder: (context, child) => FTheme(
+            data: FTheme.neutral.light.desktop,
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
     );

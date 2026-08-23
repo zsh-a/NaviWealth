@@ -275,14 +275,14 @@ void main() {
     expect(bottomPadding, paddingBeforeSheet);
   });
 
-  testWidgets('branch switch fades in and preserves offstage branch state', (
+  testWidgets('branch switch is immediate and preserves paused branch state', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(400, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
-    final router = _router(one: const _CounterProbe(), wrapOneWithPause: false);
+    final router = _router(one: const _CounterProbe());
     addTearDown(router.dispose);
 
     await tester.pumpWidget(
@@ -307,62 +307,23 @@ void main() {
     await tester.pump();
     expect(find.text('count: 1'), findsOneWidget);
 
-    const fadeKey = ValueKey<String>('domain-tabs-shell.branch-fade');
     router.go('/two');
     await tester.pump();
 
-    // The fade has just started; the shell itself is still mounted once.
+    // Switching branches does not add a full-shell opacity layer.
     expect(
-      tester.widget<FadeTransition>(find.byKey(fadeKey)).opacity.value,
-      lessThan(1),
+      find.byKey(const ValueKey<String>('domain-tabs-shell.branch-fade')),
+      findsNothing,
     );
     expect(find.byType(StatefulNavigationShell), findsOneWidget);
 
-    await tester.pumpAndSettle();
-    expect(tester.widget<FadeTransition>(find.byKey(fadeKey)).opacity.value, 1);
-
-    // Back to branch one: its state survived the round trip offstage.
+    // Back to branch one: state below ShellTabPause survives the round trip.
     router.go('/one');
     await tester.pumpAndSettle();
     expect(find.text('count: 1'), findsOneWidget);
   });
 
-  testWidgets('reduce motion keeps the branch switch instant', (tester) async {
-    tester.view.physicalSize = const Size(400, 800);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-
-    final router = _router();
-    addTearDown(router.dispose);
-
-    await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp.router(
-          routerConfig: router,
-          theme: AppTheme.light(),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en'),
-          builder: (context, child) => FTheme(
-            data: FTheme.neutral.light.desktop,
-            child: MediaQuery(
-              data: const MediaQueryData(disableAnimations: true),
-              child: child ?? const SizedBox.shrink(),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    const fadeKey = ValueKey<String>('domain-tabs-shell.branch-fade');
-    router.go('/two');
-    await tester.pump();
-
-    expect(tester.widget<FadeTransition>(find.byKey(fadeKey)).opacity.value, 1);
-    expect(find.text('two'), findsOneWidget);
-  });
-
-  testWidgets('hidden branch keeps every offstage visible tab paused', (
+  testWidgets('hidden branch retains every offstage visible tab subtree', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(400, 800);
@@ -388,17 +349,24 @@ void main() {
       ),
     );
 
+    // StatefulShellRoute initializes branches lazily. Visit the second branch
+    // before hiding both visible tabs so the assertion measures retention,
+    // not eager branch creation.
+    router.go('/two');
+    await tester.pumpAndSettle();
     router.go('/review');
     await tester.pumpAndSettle();
 
-    expect(find.text('one-live', skipOffstage: false), findsNothing);
-    expect(find.text('two-live', skipOffstage: false), findsNothing);
+    expect(find.text('one-live'), findsNothing);
+    expect(find.text('two-live'), findsNothing);
+    expect(find.text('one-live', skipOffstage: false), findsOneWidget);
+    expect(find.text('two-live', skipOffstage: false), findsOneWidget);
     expect(find.text('review-live'), findsOneWidget);
   });
 }
 
 /// Branch-one probe with local state, to prove the indexed stack (and the
-/// fade wrapper around it) never remounts offstage branches.
+/// pause gate inside it) never remounts offstage branches.
 class _CounterProbe extends StatefulWidget {
   const _CounterProbe();
 

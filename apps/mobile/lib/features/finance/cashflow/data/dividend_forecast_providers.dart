@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/core/async/isolate_runner.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
@@ -11,6 +12,7 @@ import 'package:naviwealth/features/finance/investment/domain/models/cash_divide
 import 'package:naviwealth/features/finance/investment/domain/models/corporate_actions.dart';
 import '../domain/dividend_cash_projection.dart';
 import '../domain/dividend_center.dart';
+import '../domain/dividend_resilience.dart';
 import 'cash_flow_providers.dart';
 import 'dividend_center_providers.dart';
 import 'dividend_forecast_repository.dart';
@@ -36,6 +38,24 @@ final dividendForecastDeclaredActionsProvider =
     Provider.autoDispose<List<CorporateAction>>((ref) {
       return ref.watch(recordedCorporateActionsProvider).value ??
           const <CorporateAction>[];
+    });
+
+/// Historical dividend analysis is CPU-bound and scales with the length of
+/// the recorded history. Keep it outside widget build and off the UI isolate
+/// so route transitions and scrolling do not share a frame with the analysis.
+final dividendResilienceProvider =
+    FutureProvider.autoDispose<DividendResilienceReport>((ref) async {
+      final center = await ref.watch(dividendCenterSnapshotProvider.future);
+      final now = ref.watch(dividendCenterNowProvider);
+      final declared = ref.watch(dividendForecastDeclaredActionsProvider);
+      return runInIsolate(
+        () => const DividendResilienceService().analyze(
+          events: center.events,
+          now: now,
+          corporateActions: declared,
+          excludedEventCount: center.fxExclusions.length,
+        ),
+      );
     });
 
 final dividendForecast12mProvider =

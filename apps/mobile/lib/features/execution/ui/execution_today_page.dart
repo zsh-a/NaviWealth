@@ -167,147 +167,160 @@ class _TodayListState extends ConsumerState<_TodayList> {
       );
     });
     final viewAsync = ref.watch(_executionTodayViewProvider(_filter));
-    return viewAsync.when(
-      loading: () =>
-          AppListPageSkeleton(padding: shellTabContentPadding(context)),
-      error: (error, stackTrace) => kDefaultError(
-        context,
-        error,
-        stackTrace,
-        onRetry: () => ref.invalidate(executionTodayActionsProvider),
-      ),
-      data: (view) {
-        final openActions = view.openActions;
-        final projects = view.projects;
-        final commitments = view.commitments;
-        final relations = view.relations;
-        final focusIds = view.focusIds;
-        final visibleActions = view.visibleActions;
-        final snapshot = view.snapshot;
-        final suggestedFocus = view.suggestedFocus;
+    // Scope above the loading/data branches: the entrance watermark survives
+    // pull-to-refresh and filter switches, so recycled rows never replay the
+    // entrance when they scroll back into view.
+    return AppEntranceScope(
+      child: viewAsync.when(
+        loading: () =>
+            AppListPageSkeleton(padding: shellTabContentPadding(context)),
+        error: (error, stackTrace) => kDefaultError(
+          context,
+          error,
+          stackTrace,
+          onRetry: () => ref.invalidate(executionTodayActionsProvider),
+        ),
+        data: (view) {
+          final openActions = view.openActions;
+          final projects = view.projects;
+          final commitments = view.commitments;
+          final relations = view.relations;
+          final focusIds = view.focusIds;
+          final visibleActions = view.visibleActions;
+          final snapshot = view.snapshot;
+          final suggestedFocus = view.suggestedFocus;
 
-        final actionModules = <Widget>[
-          if (_filter == ExecutionTodayFilter.focus && openActions.isNotEmpty)
-            _DailyFocusPanel(
-              actions: openActions,
-              selectedIds: focusIds,
-              suggestedActions: suggestedFocus,
-              onAdoptSuggestions: suggestedFocus.isEmpty
-                  ? null
-                  : () => ref
-                        .read(executionDailyFocusProvider.notifier)
-                        .set(suggestedFocus.map((action) => action.id)),
-              onOpen: (action) =>
-                  context.push(ExecutionRoutes.action(action.id)),
-            ),
-          if (visibleActions.isEmpty) ...[
-            if (!(_filter == ExecutionTodayFilter.focus && focusIds.isNotEmpty))
-              AppEmptyState(
-                icon: _filter == ExecutionTodayFilter.focus
-                    ? FLucideIcons.checkCheck
-                    : executionTodayFilterIcon(_filter),
-                title: _filter == ExecutionTodayFilter.focus
-                    ? l10n.executionTodayEmptyTitle
-                    : l10n.executionTodayFilteredEmptyTitle,
-                message: _filter == ExecutionTodayFilter.focus
-                    ? l10n.executionTodayEmptyBody
-                    : l10n.executionTodayFilteredEmptyBody,
-                action: _filter == ExecutionTodayFilter.focus
-                    ? AppActionButton(
-                        onPress: () =>
-                            showExecutionActionSheet(context: context),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(l10n.executionCreateActionTitle),
-                        ),
-                      )
-                    : null,
+          final actionModules = <Widget>[
+            if (_filter == ExecutionTodayFilter.focus && openActions.isNotEmpty)
+              _DailyFocusPanel(
+                actions: openActions,
+                selectedIds: focusIds,
+                suggestedActions: suggestedFocus,
+                onAdoptSuggestions: suggestedFocus.isEmpty
+                    ? null
+                    : () => ref
+                          .read(executionDailyFocusProvider.notifier)
+                          .set(suggestedFocus.map((action) => action.id)),
+                onOpen: (action) =>
+                    context.push(ExecutionRoutes.action(action.id)),
               ),
-          ],
-        ];
+            if (visibleActions.isEmpty) ...[
+              if (!(_filter == ExecutionTodayFilter.focus &&
+                  focusIds.isNotEmpty))
+                AppEmptyState(
+                  icon: _filter == ExecutionTodayFilter.focus
+                      ? FLucideIcons.checkCheck
+                      : executionTodayFilterIcon(_filter),
+                  title: _filter == ExecutionTodayFilter.focus
+                      ? l10n.executionTodayEmptyTitle
+                      : l10n.executionTodayFilteredEmptyTitle,
+                  message: _filter == ExecutionTodayFilter.focus
+                      ? l10n.executionTodayEmptyBody
+                      : l10n.executionTodayFilteredEmptyBody,
+                  action: _filter == ExecutionTodayFilter.focus
+                      ? AppActionButton(
+                          onPress: () =>
+                              showExecutionActionSheet(context: context),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(l10n.executionCreateActionTitle),
+                          ),
+                        )
+                      : null,
+                ),
+            ],
+          ];
 
-        return BriefLazyListScaffold(
-          padding: shellTabContentPadding(context),
-          onRefresh: _refresh,
-          greeting: const ExecutionGreetingHeader(),
-          stage: AppCollapsingStage(
-            child: ExecutionOverviewStrip(
-              snapshot: snapshot,
-              selectedFilter: _filter,
-              onFilterChanged: (filter) => setState(() => _filter = filter),
+          return BriefLazyListScaffold(
+            padding: shellTabContentPadding(context),
+            onRefresh: _refresh,
+            greeting: const ExecutionGreetingHeader(),
+            stage: AppCollapsingStage(
+              child: ExecutionOverviewStrip(
+                snapshot: snapshot,
+                selectedFilter: _filter,
+                onFilterChanged: (filter) => setState(() => _filter = filter),
+              ),
             ),
-          ),
-          stickyBuilder: (context, progress) {
-            final subtitle = snapshot.blockedCount > 0
-                ? '${l10n.executionOverviewBlocked} ${snapshot.blockedCount}'
-                : l10n.executionOverviewFocus;
-            return AppCollapsedSummaryBar(
-              progress: progress,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.executionOverviewFocus,
-                      style: context.mutedLabelStyle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  AnimatedValueText(
+            stickyBuilder: (context, progress) {
+              final subtitle = snapshot.blockedCount > 0
+                  ? '${l10n.executionOverviewBlocked} ${snapshot.blockedCount}'
+                  : l10n.executionOverviewFocus;
+              return AppCollapsedSummaryBar(
+                progress: progress,
+                child: AppCollapsedSummaryContent(
+                  label: l10n.executionOverviewFocus,
+                  value: AnimatedValueText(
                     value: snapshot.todayCount,
                     format: (v) => '${v.round()}',
                     style: TypographyTokens.numericTitleStrong,
                   ),
-                  if (snapshot.blockedCount > 0) ...[
-                    const SizedBox(width: AppSpacing.s8),
-                    AppBadge(
-                      label: subtitle,
-                      size: AppBadgeSize.compact,
-                      tone: AppBadgeTone.warning,
-                    ),
-                  ],
-                ],
-              ),
-            );
-          },
-          modules: actionModules,
-          listHeader: visibleActions.isEmpty
-              ? null
-              : ExecutionSectionHeader(
-                  title: _filter == ExecutionTodayFilter.focus
-                      ? l10n.executionTodayNextActions
-                      : executionTodayFilterLabel(l10n, _filter),
-                  count: visibleActions.length,
-                  icon: executionTodayFilterIcon(_filter),
+                  trailing: snapshot.blockedCount > 0
+                      ? AppBadge(
+                          label: subtitle,
+                          size: AppBadgeSize.compact,
+                          tone: AppBadgeTone.warning,
+                        )
+                      : null,
                 ),
-          itemCount: visibleActions.length,
-          itemBuilder: (context, index) {
-            final action = visibleActions[index];
-            return ExecutionActionCardController(
-              action: action,
-              projectLabel:
-                  relations?.projectLabel(action.projectId) ??
-                  executionProjectRelationLabel(projects, action.projectId),
-              commitmentLabel:
-                  relations?.commitmentLabel(action.commitmentId) ??
-                  executionCommitmentRelationLabel(
-                    commitments,
-                    action.commitmentId,
+              );
+            },
+            modules: [
+              for (var i = 0; i < actionModules.length; i++)
+                FadeSlideIn(
+                  delay: Motion.staggerDelayFor(i, actionModules.length),
+                  child: actionModules[i],
+                ),
+            ],
+            listHeader: visibleActions.isEmpty
+                ? null
+                : ExecutionSectionHeader(
+                    title: _filter == ExecutionTodayFilter.focus
+                        ? l10n.executionTodayNextActions
+                        : executionTodayFilterLabel(l10n, _filter),
+                    count: visibleActions.length,
+                    icon: executionTodayFilterIcon(_filter),
                   ),
-              onOpen: () => context.push(ExecutionRoutes.action(action.id)),
-              onSourceOpen: executionSourceOpen(context, ref, action.source),
-              onEdit: () =>
-                  showExecutionActionSheet(context: context, action: action),
-              onRecordProgress: () =>
-                  showExecutionProgressSheet(context: context, action: action),
-              doneProgressNote: l10n.executionProgressDoneDefault,
-              droppedProgressNote: l10n.executionProgressDroppedDefault,
-              focusSelected: focusIds.contains(action.id),
-              onToggleFocus: () => _toggleFocus(action, openActions),
-            );
-          },
-        );
-      },
+            itemCount: visibleActions.length,
+            itemBuilder: (context, index) {
+              final action = visibleActions[index];
+              return AppOnceEntrance(
+                index: index,
+                child: ExecutionActionCardController(
+                  action: action,
+                  projectLabel:
+                      relations?.projectLabel(action.projectId) ??
+                      executionProjectRelationLabel(projects, action.projectId),
+                  commitmentLabel:
+                      relations?.commitmentLabel(action.commitmentId) ??
+                      executionCommitmentRelationLabel(
+                        commitments,
+                        action.commitmentId,
+                      ),
+                  onOpen: () => context.push(ExecutionRoutes.action(action.id)),
+                  onSourceOpen: executionSourceOpen(
+                    context,
+                    ref,
+                    action.source,
+                  ),
+                  onEdit: () => showExecutionActionSheet(
+                    context: context,
+                    action: action,
+                  ),
+                  onRecordProgress: () => showExecutionProgressSheet(
+                    context: context,
+                    action: action,
+                  ),
+                  doneProgressNote: l10n.executionProgressDoneDefault,
+                  droppedProgressNote: l10n.executionProgressDroppedDefault,
+                  focusSelected: focusIds.contains(action.id),
+                  onToggleFocus: () => _toggleFocus(action, openActions),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 

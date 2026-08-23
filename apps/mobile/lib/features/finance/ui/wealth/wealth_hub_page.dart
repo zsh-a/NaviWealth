@@ -17,6 +17,11 @@ import 'wealth_action_panel.dart';
 import 'wealth_perspective_section.dart';
 import 'wealth_trend_section.dart';
 
+/// Wealth hub intentionally renders no in-body greeting row: identity comes
+/// from the [ShellTabScaffold] title and the balance stage leads the brief —
+/// the same contract as the Plan hub.
+const Widget _kNoGreetingHeader = SizedBox.shrink();
+
 /// Wealth hub — landing page for the Wealth tab (IA contract §1).
 ///
 /// Renders a Net Worth Hero, compact owned-object navigation, and allocation.
@@ -115,7 +120,7 @@ class _WealthHubBody extends ConsumerWidget {
               ref.read(dashboardTrendProvider(range).future),
             ]);
           },
-          greeting: const SizedBox.shrink(),
+          greeting: _kNoGreetingHeader,
           stage: AppCollapsingStage(
             child: _BalanceOverview(
               baseCurrency: baseCurrency,
@@ -126,26 +131,17 @@ class _WealthHubBody extends ConsumerWidget {
           ),
           stickyBuilder: (context, progress) => AppCollapsedSummaryBar(
             progress: progress,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.homeNetWorthTitle,
-                    style: context.mutedLabelStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                MoneyText(
-                  amount: netWorth.toDouble(),
-                  currencyCode: baseCurrency,
-                  compact: true,
-                  style: TypographyTokens.numericTitleStrong,
-                ),
-              ],
+            child: AppCollapsedSummaryContent(
+              label: l10n.homeNetWorthTitle,
+              value: MoneyText(
+                amount: netWorth.toDouble(),
+                currencyCode: baseCurrency,
+                compact: true,
+                style: TypographyTokens.numericTitleStrong,
+              ),
             ),
           ),
-          summaryTiles: [
+          summaryTiles: staggeredSummaryTiles([
             if (showValuationTrust)
               AdaptiveSummaryTile(
                 role: AdaptiveSummaryTileRole.continuous,
@@ -179,7 +175,7 @@ class _WealthHubBody extends ConsumerWidget {
                 role: AdaptiveSummaryTileRole.continuous,
                 child: WealthPerspectiveSection(),
               ),
-          ],
+          ]),
         );
       },
     );
@@ -340,63 +336,11 @@ class _WealthDestinationRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Semantics(
-      button: true,
-      label: '${spec.title}, ${spec.subtitle}',
-      child: ExcludeSemantics(
-        child: AppTappable(
-          onPress: () => context.push(spec.path),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s14,
-              vertical: AppSpacing.s12,
-            ),
-            child: Row(
-              children: [
-                SizedBox.square(
-                  dimension: AppSpacing.s40,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(
-                        alpha: AppOpacity.whisper,
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                    child: Icon(
-                      spec.icon,
-                      size: AppIconSizes.md,
-                      color: colors.primary,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(spec.title, style: context.labelStyle),
-                      const SizedBox(height: AppSpacing.s2),
-                      Text(
-                        spec.subtitle,
-                        style: context.captionStyle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s8),
-                Icon(
-                  FLucideIcons.chevronRight,
-                  size: AppIconSizes.h18,
-                  color: colors.mutedForeground,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return AppNavRow.tinted(
+      icon: spec.icon,
+      title: spec.title,
+      subtitle: spec.subtitle,
+      onTap: () => context.push(spec.path),
     );
   }
 }

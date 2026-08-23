@@ -72,26 +72,17 @@ class LifePage extends ConsumerWidget {
           ),
           stickyBuilder: (context, progress) => AppCollapsedSummaryBar(
             progress: progress,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    hero.localizedMetricLabel(l10n),
-                    style: context.mutedLabelStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Text(
-                  hero.localizedSticky(l10n),
-                  style: TypographyTokens.numericTitleStrong,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+            child: AppCollapsedSummaryContent(
+              label: hero.localizedMetricLabel(l10n),
+              value: Text(
+                hero.localizedSticky(l10n),
+                style: TypographyTokens.numericTitleStrong,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
-          summaryTiles: [
+          summaryTiles: staggeredSummaryTiles([
             if (priorityEvents.isNotEmpty)
               AdaptiveSummaryTile(
                 role: AdaptiveSummaryTileRole.featured,
@@ -124,7 +115,7 @@ class LifePage extends ConsumerWidget {
                 role: AdaptiveSummaryTileRole.continuous,
                 child: _LifeEmptySection(l10n: l10n),
               ),
-          ],
+          ]),
         ),
       ),
     );

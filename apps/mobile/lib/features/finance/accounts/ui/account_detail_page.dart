@@ -45,6 +45,14 @@ class AccountDetailPage extends ConsumerWidget {
 
     return ObjectDetailScaffold(
       title: account?.name ?? l10n.navAccounts,
+      // Hero pair for the accounts list row name (`account-{id}-name`); the
+      // list disables its side in master-detail, so no `enabled` gate here.
+      titleWidget: account == null
+          ? null
+          : OptionalHero(
+              tag: 'account-${account.id}-name',
+              child: Text(account.name),
+            ),
       actions: [
         if (account != null)
           AppHeaderAction(

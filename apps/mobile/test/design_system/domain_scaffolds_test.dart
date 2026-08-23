@@ -160,13 +160,14 @@ void main() {
         tester.getSize(find.byType(FloatingGlassNavBar)).height,
         kFloatingGlassNavBarHeight,
       );
-      expect(find.byType(BackdropFilter), findsOneWidget);
+      expect(find.byType(BackdropFilter), findsNothing);
       final glassSurface = tester.widget<AppGlassSurface>(
         find.descendant(
           of: find.byType(FloatingGlassNavBar),
           matching: find.byType(AppGlassSurface),
         ),
       );
+      expect(glassSurface.frosted, isFalse);
       expect(glassSurface.boxShadow, hasLength(1));
       expect(glassSurface.borderRadius, BorderRadius.circular(AppRadius.full));
       final selectionIndicators = find.descendant(

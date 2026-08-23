@@ -240,17 +240,33 @@ List<RollingDividendPoint> _rolling(
     ];
   }
   final result = <RollingDividendPoint>[];
+  var startIndex = 0;
+  var endIndex = 0;
+  var gross = Decimal.zero;
+  var net = Decimal.zero;
   for (
     var end = firstFullEnd;
     !end.isAfter(currentMonth);
     end = _addMonths(end, 1)
   ) {
-    final window = _inWindow(rows, _addMonths(end, -12), end);
+    final start = _addMonths(end, -12);
+    while (endIndex < rows.length &&
+        rows[endIndex].event.date.toUtc().isBefore(end)) {
+      gross += rows[endIndex].grossInBase;
+      net += rows[endIndex].netInBase;
+      endIndex++;
+    }
+    while (startIndex < endIndex &&
+        rows[startIndex].event.date.toUtc().isBefore(start)) {
+      gross -= rows[startIndex].grossInBase;
+      net -= rows[startIndex].netInBase;
+      startIndex++;
+    }
     result.add(
       RollingDividendPoint(
         asOf: end,
-        gross: _gross(window),
-        net: _net(window),
+        gross: gross,
+        net: net,
         hasFullWindow: true,
       ),
     );

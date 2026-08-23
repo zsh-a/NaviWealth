@@ -8,6 +8,13 @@
 /// Values are spaced for categorical distinguishability (wide hue steps,
 /// no shared hex across taxonomy leaves). Keep this list aligned with
 /// seeded `expense:*` paths.
+///
+/// `ExpenseCategoryColors` in `design_system/tokens/color_palette.dart`
+/// mirrors these values for UI code. Neither side may import the other
+/// (features must not import `ColorPalette`; design_system must not depend
+/// on features). Parity is enforced by
+/// `test/design_system/tokens/expense_category_colors_lockstep_test.dart` —
+/// adjust hues on both sides together.
 library;
 
 /// Root expense account — family marker, not a pie slice.
