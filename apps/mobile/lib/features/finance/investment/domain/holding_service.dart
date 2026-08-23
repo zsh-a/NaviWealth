@@ -1,3 +1,4 @@
+import 'holding_price_source.dart';
 import 'models/holding_snapshot.dart';
 import 'models/lot.dart';
 
@@ -57,6 +58,20 @@ abstract class HoldingService {
 /// understand chart sampling.
 abstract interface class SampledHoldingService implements HoldingService {
   Future<List<HoldingSample>> computeAtSamples(Iterable<DateTime> dates);
+}
+
+/// Optional sampling capability for callers that already loaded a price
+/// series tailored to their requested window.
+///
+/// The regular holdings path owns the live + ledger price source. Long-range
+/// charts can supply cached historical bars here without teaching the ledger
+/// lot replay about market-data providers or issuing one lookup per sample.
+abstract interface class RepriceableSampledHoldingService
+    implements SampledHoldingService {
+  Future<List<HoldingSample>> computeAtSamplesWithPriceSource(
+    Iterable<DateTime> dates, {
+    required HoldingPriceSource priceSource,
+  });
 }
 
 extension HoldingServiceSampling on HoldingService {

@@ -8,6 +8,7 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
@@ -23,10 +24,14 @@ import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_time_range.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_trend_builder.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/domain/holding_price_source.dart';
 import 'package:naviwealth/features/finance/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
 import 'package:naviwealth/features/finance/liabilities/domain/liability_summary.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
+import 'package:naviwealth/features/finance/market/domain/price_confidence.dart';
 
 part 'dashboard_header_metrics.dart';
 part 'dashboard_manual_valuations.dart';
@@ -275,7 +280,20 @@ final dashboardTrendProvider = FutureProvider.autoDispose
       final sampleInstants = [
         for (final date in sampleDates) _endOfUtcDay(date),
       ];
-      final rawSamples = await service.computeAtSamples(sampleInstants);
+      final rawSamples = service is RepriceableSampledHoldingService
+          ? await service.computeAtSamplesWithPriceSource(
+              sampleInstants,
+              priceSource: await _securityTrendPriceSource(
+                market: await ref.watch(marketDataServiceProvider.future),
+                current: await ref.watch(holdingPriceSourceProvider.future),
+                assets: [
+                  for (final asset in assetList)
+                    if (securityAssetIds.contains(asset.id)) asset,
+                ],
+                range: range,
+              ),
+            )
+          : await service.computeAtSamples(sampleInstants);
       final rawByInstant = {
         for (final sample in rawSamples) sample.asOf: sample,
       };
@@ -321,4 +339,115 @@ DateTime _endOfUtcDay(DateTime date) {
     utc.month,
     utc.day + 1,
   ).subtract(const Duration(microseconds: 1));
+}
+
+/// Adds provider-backed daily bars to the live/ledger holding price source.
+///
+/// The regular holdings source intentionally resolves only "now" plus rows
+/// already persisted in `prices`. That is correct for current valuation, but
+/// it made a dashboard range look flat whenever daily snapshot persistence
+/// was disabled. One cached history request per security fills those middle
+/// samples while the overlay keeps manual prices and newer live quotes ahead
+/// of market bars.
+Future<HoldingPriceSource> _securityTrendPriceSource({
+  required MarketDataService market,
+  required HoldingPriceSource current,
+  required List<Asset> assets,
+  required DashboardTimeRange range,
+}) async {
+  if (assets.isEmpty) return current;
+  final observations = <HoldingPriceObservation>[];
+  final from = range.from.subtract(const Duration(days: 14));
+  final to = _endOfUtcDay(range.to);
+  const concurrency = 4;
+  for (var start = 0; start < assets.length; start += concurrency) {
+    final end = (start + concurrency).clamp(0, assets.length);
+    final batch = assets.sublist(start, end);
+    final resolved = await Future.wait(
+      batch.map(
+        (asset) => _historicalObservationsForAsset(
+          market: market,
+          asset: asset,
+          from: from,
+          to: to,
+        ),
+      ),
+    );
+    for (final rows in resolved) {
+      observations.addAll(rows);
+    }
+  }
+  if (observations.isEmpty) return current;
+  return _HistoricalTrendPriceSource(
+    current: current,
+    historical: InMemoryHoldingPriceSource(observations),
+  );
+}
+
+Future<List<HoldingPriceObservation>> _historicalObservationsForAsset({
+  required MarketDataService market,
+  required Asset asset,
+  required DateTime from,
+  required DateTime to,
+}) async {
+  if (asset.symbol.trim().isEmpty) return const [];
+  try {
+    final response = await market.getHistorical(
+      asset.symbol,
+      from: from,
+      to: to,
+      market: assetMarketFromWire(asset.market),
+    );
+    final confidence = response.isStale
+        ? PriceConfidence.stale
+        : PriceConfidence.dailyClose;
+    return [
+      for (final bar in response.data)
+        HoldingPriceObservation(
+          assetId: asset.id,
+          price: bar.adjustedClose ?? bar.close,
+          currency: asset.currency,
+          asOf: bar.asOf.toUtc(),
+          confidence: confidence,
+          source: 'historical-bar:${response.source}',
+        ),
+    ];
+  } on Object {
+    // History is an enhancement over the existing live/ledger path. Offline
+    // or unsupported providers retain the previous estimated behaviour.
+    return const [];
+  }
+}
+
+class _HistoricalTrendPriceSource implements HoldingPriceSource {
+  const _HistoricalTrendPriceSource({
+    required this.current,
+    required this.historical,
+  });
+
+  final HoldingPriceSource current;
+  final HoldingPriceSource historical;
+
+  @override
+  HoldingPrice? priceFor(String assetId, {required DateTime asOf}) {
+    final currentPrice = current.priceFor(assetId, asOf: asOf);
+    final historicalPrice = historical.priceFor(assetId, asOf: asOf);
+    if (currentPrice == null) return historicalPrice;
+    if (historicalPrice == null || _isManualPrice(currentPrice)) {
+      return currentPrice;
+    }
+    final currentAt = currentPrice.asOf;
+    final historicalAt = historicalPrice.asOf;
+    if (currentAt == null || currentAt.isAfter(asOf)) return historicalPrice;
+    if (historicalAt == null || currentAt.isAfter(historicalAt)) {
+      return currentPrice;
+    }
+    return historicalPrice;
+  }
+
+  bool _isManualPrice(HoldingPrice price) {
+    if (price.confidence == PriceConfidence.manual) return true;
+    final source = price.source?.toLowerCase();
+    return source == 'manual' || source?.startsWith('manual:') == true;
+  }
 }

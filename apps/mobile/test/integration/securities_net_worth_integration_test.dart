@@ -20,11 +20,18 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_buil
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_granularity.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_time_range.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/holding_price_source.dart';
 import 'package:naviwealth/features/finance/investment/domain/holding_service.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
+import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/features/finance/market/domain/price_confidence.dart';
+import 'package:naviwealth/features/finance/market/domain/quote.dart';
 import 'package:naviwealth/features/finance/market/domain/resolved_price.dart';
+import 'package:naviwealth/features/finance/market/domain/symbol_info.dart';
 
 import 'support/integration_env.dart';
 
@@ -54,6 +61,44 @@ class _FixedPriceResolver implements PriceResolver {
     Iterable<Asset> assets, {
     DateTime? asOf,
   }) async => {for (final a in assets) a.id: _p()};
+}
+
+class _HistoricalMarket implements MarketDataService {
+  const _HistoricalMarket(this.bars);
+
+  final List<HistoricalBar> bars;
+
+  @override
+  Future<MarketResponse<List<HistoricalBar>>> getHistorical(
+    String symbol, {
+    required DateTime from,
+    required DateTime to,
+    BarInterval interval = BarInterval.day,
+    AssetMarket? market,
+  }) async => MarketResponse(
+    data: [
+      for (final bar in bars)
+        if (bar.symbol == symbol &&
+            !bar.asOf.isBefore(from) &&
+            !bar.asOf.isAfter(to))
+          bar,
+    ],
+    freshness: DataFreshness.live,
+    source: 'history-test',
+    fetchedAt: to,
+  );
+
+  @override
+  Future<MarketResponse<Quote>> getQuote(
+    String symbol, {
+    AssetMarket? market,
+  }) => throw UnimplementedError('quote is not used by this test');
+
+  @override
+  Future<MarketResponse<List<SymbolInfo>>> searchSymbol(
+    String query, {
+    AssetMarket? market,
+  }) => throw UnimplementedError('search is not used by this test');
 }
 
 void main() {
@@ -216,6 +261,60 @@ void main() {
       tags: 'integration',
     );
 
+    test(
+      'dashboard trend reprices intermediate dates from historical bars',
+      () async {
+        final bars = [
+          _bar(DateTime.utc(2026, 1, 10), 20),
+          _bar(DateTime.utc(2026, 1, 15), 25),
+          _bar(DateTime.utc(2026, 1, 20), 30),
+        ];
+        final env = await IntegrationEnv.create(
+          extraOverrides: [
+            holdingPriceSourceProvider.overrideWith(
+              (_) async => InMemoryHoldingPriceSource(const []),
+            ),
+            marketDataServiceProvider.overrideWith(
+              (_) async => _HistoricalMarket(bars),
+            ),
+          ],
+        );
+        await _seedLedger(env.db);
+        final repository = await env.container.read(
+          journalEntryRepositoryProvider.future,
+        );
+        final buy = JournalEntryBuilders.buy(
+          date: DateTime.utc(2026, 1, 10),
+          accountId: 'broker',
+          cashAccountId: 'cash',
+          assetUnit: 'NASDAQ:AAPL',
+          qty: Decimal.fromInt(100),
+          price: Decimal.fromInt(20),
+          quoteCurrency: 'CNY',
+        );
+        await repository.create(entry: buy.entry, postings: buy.postings);
+
+        final range = DashboardTimeRange(
+          preset: DashboardRangePreset.custom,
+          from: DateTime.utc(2026, 1, 9),
+          to: DateTime.utc(2026, 1, 20),
+          granularity: NetWorthGranularity.day,
+        );
+        final provider = dashboardTrendProvider(range);
+        final subscription = env.container.listen(provider, (_, _) {});
+        addTearDown(subscription.close);
+        final trend = await env.container.read(provider.future);
+        final valuesByDay = {
+          for (final point in trend.points) point.asOf.day: point.assets.amount,
+        };
+
+        expect(valuesByDay[10], Decimal.fromInt(2000));
+        expect(valuesByDay[15], Decimal.fromInt(2500));
+        expect(valuesByDay[20], Decimal.fromInt(3000));
+      },
+      tags: 'integration',
+    );
+
     test('currency-mismatched quotes fall back to cost basis safely', () async {
       final env = await IntegrationEnv.create(
         extraOverrides: [
@@ -265,6 +364,15 @@ void main() {
     }, tags: 'integration');
   });
 }
+
+HistoricalBar _bar(DateTime asOf, int close) => HistoricalBar(
+  symbol: 'AAPL',
+  asOf: asOf,
+  open: Decimal.fromInt(close),
+  high: Decimal.fromInt(close),
+  low: Decimal.fromInt(close),
+  close: Decimal.fromInt(close),
+);
 
 /// Seeds the ledger accounts and the security row the buy posting refers
 /// to. Inserted directly (mirroring portfolio_return_service_test) so the

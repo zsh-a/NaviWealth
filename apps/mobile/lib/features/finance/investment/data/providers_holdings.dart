@@ -62,7 +62,7 @@ final holdingsSnapshotProvider =
       return service.computeAt(DateTime.now().toUtc());
     });
 
-class _LedgerHoldingService implements SampledHoldingService {
+class _LedgerHoldingService implements RepriceableSampledHoldingService {
   _LedgerHoldingService({
     required AppDatabase db,
     required this.ownerUserId,
@@ -86,7 +86,19 @@ class _LedgerHoldingService implements SampledHoldingService {
   }
 
   @override
-  Future<List<HoldingSample>> computeAtSamples(Iterable<DateTime> dates) async {
+  Future<List<HoldingSample>> computeAtSamples(Iterable<DateTime> dates) =>
+      _computeAtSamples(dates, priceSource: prices);
+
+  @override
+  Future<List<HoldingSample>> computeAtSamplesWithPriceSource(
+    Iterable<DateTime> dates, {
+    required HoldingPriceSource priceSource,
+  }) => _computeAtSamples(dates, priceSource: priceSource);
+
+  Future<List<HoldingSample>> _computeAtSamples(
+    Iterable<DateTime> dates, {
+    required HoldingPriceSource priceSource,
+  }) async {
     final sorted = dates.map((date) => date.toUtc()).toSet().toList()..sort();
     if (sorted.isEmpty) return const [];
     final lotsByDate = await _lotReader.allLotsAtSamples(
@@ -95,11 +107,19 @@ class _LedgerHoldingService implements SampledHoldingService {
     );
     return [
       for (final date in sorted)
-        _valueLots(date, lotsByDate[date] ?? const <Lot>[]),
+        _valueLots(
+          date,
+          lotsByDate[date] ?? const <Lot>[],
+          priceSource: priceSource,
+        ),
     ];
   }
 
-  HoldingSample _valueLots(DateTime asOf, List<Lot> lots) {
+  HoldingSample _valueLots(
+    DateTime asOf,
+    List<Lot> lots, {
+    required HoldingPriceSource priceSource,
+  }) {
     final byAsset = <String, _HoldingAccumulator>{};
     for (final lot in lots.where((l) => !l.isClosed)) {
       final acc = byAsset.putIfAbsent(
@@ -116,7 +136,7 @@ class _LedgerHoldingService implements SampledHoldingService {
       final acc = entry.value;
       if (acc.quantity == Decimal.zero) continue;
 
-      final resolvedPrice = prices.priceFor(entry.key, asOf: asOf);
+      final resolvedPrice = priceSource.priceFor(entry.key, asOf: asOf);
       final hasCurrencyMismatch =
           resolvedPrice != null &&
           resolvedPrice.currency.toUpperCase() != acc.currency.toUpperCase();
